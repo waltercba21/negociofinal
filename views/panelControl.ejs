@@ -1,0 +1,64 @@
+<%- include ./layouts/head.ejs %>
+<%- include ./layouts/header.ejs %>
+<body>
+ 
+<div class="container"> 
+    <br/>
+    <br/>
+    <a href="/productos/crear" class="btn btn-primary" type="button">Crear un nuevo producto</a>
+    <br/>
+    <br/>
+    <table class="table table-light">
+    <thead class="thead-light">
+      <tr>
+        <th>#</th>
+        <th>Nombre</th>
+        <th>Imagen</th>
+        <th>Acciones</th>
+
+      </tr>
+    </thead>
+    <tbody>
+       
+
+        <% for( let producto = 0; producto< productos.length; producto++ ) { %>
+          <tr>
+        
+        <td><%= productos[producto].id %></td> 
+        <td><%= productos[producto].nombre %></td>
+
+        <td>
+          <img class="img-thumbnail" width= '150' src="/images/<%= productos[producto].imagen %>" alt="">
+          
+        </td>
+
+        <td>
+
+          <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+
+            <form class="form-inline" method="get" action="/productos/editar/<%= productos[producto].id %>">
+                <button class="btn btn-warning" type="submit">Editar</button>
+            </form>
+
+          </div>
+           
+          <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+
+            <form class="form-inline" method="post" action="/productos/eliminar/<%= productos[producto].id %>">
+
+                <button class="btn btn-danger" type="submit">Borrar</button>
+                
+            </form>
+          </div>
+        
+        </td>
+        </tr>
+        <% } %>
+        
+     
+    </tbody>
+  </table>
+</div>
+</body>
+
+<%- include ./layouts/footer.ejs %>

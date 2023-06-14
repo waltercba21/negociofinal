@@ -1,0 +1,38 @@
+<header>
+    
+  <a href="/">
+    <img class="logo" src="/images/logo.png" width="200rem" alt="LOGO" />
+  </a>
+
+  <nav class="navbar">
+    <a class="nav-link" href="/">INICIO</a>
+    <a class="nav-link" href="productos">PRODUCTOS</a>
+    <a class="nav-link" href="/productos/crear">CREAR</a>
+    <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
+  </nav>
+  
+  <div class="icons">
+    
+    <% if (locals.isLogged) { %>
+
+    <div class="logueado"> 
+    
+      <a href="/users/profile"> 
+      <img src="/img/users/<%= locals.userLogged.imagenUsuario %> ">
+      <p>Hola <%= locals.userLogged.nombre  %> </p> 
+      </a>
+
+      <a href="/users/logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </a>
+
+      <% } else { %>
+
+      <a href="/users/login">Iniciar Sesión</a>
+      <a class="register-link" href="/users/login">Registrarme</a>
+
+    <% } %> 
+  </div>
+</div>
+</header>
+</div>
