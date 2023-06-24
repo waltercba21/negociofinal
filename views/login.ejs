@@ -1,0 +1,22 @@
+
+<%- include ./layouts/head.ejs %>
+<%- include ./layouts/header.ejs %>
+<body class="body-login">
+
+  <div class="login-form">
+
+    <h2>Login Usuario</h2>
+
+    <form action="auth" method="post" class="formulario-login">
+        <input type="text" name="usuario" id="usuario" placeholder="Usuario" required>
+        <input type="password" name="password" id="password" placeholder="Contraseña" required>
+        <input type="submit" class="btn-login" value="Login">
+    </form>
+    
+    <a href="register" class="btn-register">Registrate</a>
+  </div>
+     
+    <%- include ./layouts/footer.ejs %>
+</body>
+
+ 

@@ -4,17 +4,25 @@ var path = require('path');
 var cookieParser = require('cookie-parser'); 
 var bodyParser = require('body-parser');
 var logger = require('morgan');
+const session = require('express-session');
+const bcryptjs = require('bcryptjs');
 
 //Rutas
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var productosRouter = require('./routes/productos');
-
 var app = express();
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
+app.use(session({
+  secret:'123456',
+  resave: true,
+  saveUninitialized: true
+}))
 
 app.use(logger('dev'));
 app.use(express.json());
