@@ -15,7 +15,7 @@ module.exports = {
             res.render('productos', { title: 'Productos', productos:datos });
         })
     },
-
+ 
     crear: function(req,res){
         res.render('crear')
     },
@@ -30,7 +30,7 @@ module.exports = {
     eliminar: function(req,res){
 
        producto.retornarDatosId(conexion,req.params.id,function (error, registros){
-        var nombreImagen = 'public/images/' + (registros [0].imagen);
+        var nombreImagen = '/public/images/' + (registros [0].imagen);
         
 
         if(borrar.existsSync(nombreImagen)){
@@ -45,34 +45,32 @@ module.exports = {
 
     editar : function (req,res){
         producto.retornarDatosId(conexion,req.params.id,function (error, registros){
-            
+            console.log(registros[0])
             res.render('editar', {producto: registros[0]});
         });
     },
     
-    actualizar: function (req,res){
-        
-        if(req.file){
-            if(req.file.filename){
-                 
-                producto.retornarDatosId(conexion,req.body.id,function (error, registros){
-                    var nombreImagen = 'public/images/' + (registros [0].imagen);
-                    
-                    if (borrar.existsSync(nombreImagen)){
-                        borrar.unlinkSync(nombreImagen);
-                    }
-                    producto.actualizarArchivo(conexion,req.body,req.file, function (error){});
-                });
-            }
+    actualizar: function (req, res) {    
+    if(req.file){
+        if(req.file.filename){
+            producto.retornarDatosId(conexion,req.body.id,function (error, registros){
+                var nombreImagen = '/public/images/' + (registros [0].imagen);
+                
+                if(borrar.existsSync(nombreImagen)){
+                    borrar.unlinkSync(nombreImagen);
+                }
+               producto.actualizarArchivo(conexion,req.body, req.file, function (error){})
+
+               });
         }
-        if(req.body.nombre){
-            producto.actualizar(conexion, req.body,function (error){
+    }
+    if(req.body.nombre){producto.actualizar(conexion,req.body,function(error){
+
         });
-        
-        }
-        res.redirect('/productos');
-        
-    },
+    }
+    res.redirect('/productos');
+    
+},
     carrito : function (req,res){
         res.render('carrito');
 },

@@ -13,10 +13,10 @@ module.exports ={
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
     actualizar: function (conexion, datos, funcion) {
-        conexion.query('UPDATE productos SET nombre = ?, imagen = ? WHERE id = ?', [datos.nombre, datos.imagen, datos.id], funcion);
-      },
+        conexion.query("UPDATE productos SET nombre=? WHERE id=?",[datos.nombre, datos.id], funcion);
+      },    
     actualizarArchivo: function(conexion,datos,archivo,funcion){
         
-        conexion.query('UPDATE productos SET imagen= ? WHERE id = ?',[archivo.filename, datos.id],funcion);
+        conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
     }
 }
