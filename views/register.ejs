@@ -1,15 +1,30 @@
 
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
+<html>
 <body>
 
-  <div class="register-form">
-
+   <div class="register-form">
+    
     <h2>Registrate</h2>
 
-    <form action="register" method="post" class="formulario-register">
-        <label for="usuario">Nombre Usuario</label>
+    <form action="./register" method="post" class="formulario-register">
+     
+    
+        <label for="usuario" >Usuario</label>
         <input type="text" name="usuario" required>
+
+        <label for="nombre">Nombre Completo</label>
+        <input type="text" name="nombre" required>
+
+        <label for="email" >Email</label>
+        <input type="text" name="email" required>
+
+        <label for="rol" >Rol</label>
+        <select name="rol" id="rol" class="select-css">
+          <option value="admin" selected> Administrador</option>
+          <option value="data entry">Data Entry</option>
+        </select>
 
         <label for="password">Contraseña</label>
         <input type="password" name="password" required>
@@ -27,5 +42,5 @@
      
     <%- include ./layouts/footer.ejs %>
 </body>
-
+</html>
  

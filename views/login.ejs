@@ -5,15 +5,17 @@
 
   <div class="login-form">
 
-    <h2>Login Usuario</h2>
+    <h2>Iniciar Sesión</h2>
 
     <form action="auth" method="post" class="formulario-login">
         <input type="text" name="usuario" id="usuario" placeholder="Usuario" required>
         <input type="password" name="password" id="password" placeholder="Contraseña" required>
-        <input type="submit" class="btn-login" value="Login">
+        <div class="btn-ingresar">
+        <input type="submit" class="btn-login" value="Ingresar">
+        <a href="register" class="btn-register">Registrate</a>
+        </div>
     </form>
     
-    <a href="register" class="btn-register">Registrate</a>
   </div>
      
     <%- include ./layouts/footer.ejs %>
