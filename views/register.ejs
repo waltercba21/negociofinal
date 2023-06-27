@@ -12,22 +12,36 @@
      
     
         <label for="usuario" >Usuario</label>
-        <input type="text" name="usuario" required>
+        <input type="text" name="usuario" value="<%= locals.oldData ? oldData.usuario : null %>">
+        <% if (locals.errors && errors.usuario) { %>
+         <div class="error">
+          <%= errors.usuario.msg %>
+         </div>
+        <% } %>
 
         <label for="nombre">Nombre Completo</label>
-        <input type="text" name="nombre" required>
+        <input type="text" name="nombre" value="<%= locals.oldData ? oldData.nombre : null %>">
+        <% if (locals.errors && errors.nombre) { %>
+          <div class="error">
+           <%= errors.nombre.msg %>
+          </div>
+         <% } %>
 
         <label for="email" >Email</label>
-        <input type="text" name="email" required>
-
-        <label for="rol" >Rol</label>
-        <select name="rol" id="rol" class="select-css">
-          <option value="admin" selected> Administrador</option>
-          <option value="data entry">Data Entry</option>
-        </select>
+        <input type="text" name="email" value="<%= locals.oldData ? oldData.email : null %>">
+        <% if (locals.errors && errors.email) { %>
+          <div class="error">
+           <%= errors.email.msg %>
+          </div>
+         <% } %>
 
         <label for="password">Contraseña</label>
-        <input type="password" name="password" required>
+        <input type="password" name="password" value="<%= locals.oldData ? oldData.password : null %>">
+        <% if (locals.errors && errors.password) { %>
+          <div class="error">
+           <%= errors.password.msg %>
+          </div>
+         <% } %>
 
         <div class="btn-guardar">
            

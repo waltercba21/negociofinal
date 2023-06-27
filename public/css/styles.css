@@ -405,6 +405,7 @@ footer {
   margin-bottom: 50px;
   text-align: left !important;
   box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
+  border-radius: 10px;  
 }
 .register-form h2 {
   text-align: center;
@@ -413,6 +414,13 @@ footer {
   font-weight: bold;
   padding: 70px 0 10 0;
 
+}
+.register-form .error{
+  color: #d90429;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 12px;
+  text-align: center;
 }
 .btn-guardar{
   display: flex;
@@ -487,7 +495,7 @@ footer {
 .formulario-register label{
   text-align: center;
   color: #1F487E;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: bold;
 }
 .formulario-register input {
