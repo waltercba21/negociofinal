@@ -524,3 +524,167 @@ footer {
   margin: 0;
   background-color: #fff;
 }
+
+/* -------EDITAR-------*/
+.container-editar {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+  margin-bottom: 30px;
+  margin-left: 25%;
+  width: 50%;
+}
+.contenido-editar{
+  align-items: center;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  width: 600px;
+  margin-top: 15px;
+  margin-bottom: 50px;
+  text-align: left !important;
+  box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
+  border-radius: 10px;  
+}
+.editar-titulo{
+  text-align: center;
+  color: #1F487E;
+  font-size: 28px;
+  font-weight: bold;
+  padding: 70px 0 10 0;
+}
+.contenido-editar input {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #ced4da;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+}
+.contenido-editar label {
+  text-align: center;
+  color: #1F487E;
+  font-size: 16px;
+  font-weight: bold;
+}
+.botones-editar{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: center;
+  margin-left: 60px;
+  padding: 20px;
+}
+.botones-editar button{
+  margin-right: 50px;
+}
+
+/*------Crear------*/
+
+.container-crear{
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+  margin-bottom: 30px;
+  margin-left: 25%;
+  width: 50%;
+}
+.contenido-crear{
+  align-items: center;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  width: 600px;
+  margin-top: 15px;
+  margin-bottom: 50px;
+  text-align: left !important;
+  box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
+  border-radius: 10px;  
+}
+.titulo-crear{
+  text-align: center;
+  color: #1F487E;
+  font-size: 28px;
+  font-weight: bold;
+  padding: 70px 0 10 0;
+}
+
+.card-body input{
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #ced4da;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+}
+
+.card-body label{
+  text-align: center;
+  color: #1F487E;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.botones-crear {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: center;
+  margin-left: 60px;
+  padding: 20px;
+}
+.botones-crear button{
+  margin-right: 80px;
+} 
+
+
+/*-----Todos los Productos */
+
+.titulo-principal{
+  text-align: center;
+  color: #1F487E;
+  font-size: 28px;
+  font-weight: bold;
+  padding: 70px 0 10 0;
+  margin-bottom: 50px;
+}
+
+.contenedor-productos{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 10px;
+
+}
+.card {
+  position: relative;
+  width: 300px;
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 0 auto;
+  box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
+  margin-bottom: 10%;
+}
+
+.imagen-producto img{
+  max-width: 300px;
+  border: none;
+  height: 200px;
+}
+
+.titulo-producto h3 {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1F487E;
+  text-align: center;
+  margin-top: 15px;
+  margin-bottom: 50px;
+}
+
+.precio-producto p{
+  font-size: 20px; 
+  font-weight:bold;
+  text-align: center;
+  color: #d90429;
+  margin-top: 25px;
+}
+
+

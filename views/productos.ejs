@@ -3,19 +3,31 @@
 <%- include ./layouts/header.ejs %>
 <body>
 
-<main>
-    <h2 class="titulo-principal" id="titulo-principal">Todos los productos</h2>
+  <main>
+    <h2 class="titulo-principal" id="titulo-principal">
+      Todos los productos
+    </h2>
+
     <div id="contenedor-productos" class="contenedor-productos">
       <% productos.forEach(producto => { %>
-        <div>
-          <h3><%= producto.nombre %></h3>
-          <img class="img-thumbnail" src="../../images/<%=producto.imagen%>" width="100" alt="">
-          <!-- Agrega aquí cualquier otra información que quieras mostrar -->
+
+        <div class="card"> 
+          <div class="imagen-producto">
+            <img src="../../images/<%=producto.imagen%>" alt="Imagen de <%= producto.nombre %>">
+          </div>
+          <div class="titulo-producto">
+            <h3 class="nombre"><%= producto.nombre %></h3>
+          </div> 
+          <div class="precio-producto">
+            <p class="precio">$<%= producto.precio %></p>
+          </div>
+
+          
         </div>
+
       <% }); %>
     </div>
-  </main>
-  
+</main>
     
       <%- include ./layouts/footer.ejs %>
   </body>

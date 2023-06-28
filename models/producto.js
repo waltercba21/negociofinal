@@ -3,8 +3,9 @@ module.exports ={
         conexion.query('SELECT * FROM productos',funcion);
     },
     insertar: function(conexion,datos,archivos,funcion){
-        
-     conexion.query('INSERT INTO productos (nombre,imagen) VALUES (?,?)',[datos.nombre,archivos.filename],funcion);
+     conexion.query
+     ('INSERT INTO productos (nombre,imagen,descripcion,proveedor,precio) VALUES (?,?,?,?,?)',
+     [datos.nombre,archivos.filename,datos.descripcion,datos.proveedor,datos.precio],funcion);
     },
     retornarDatosId: function (conexion,id,funcion){
         conexion.query('SELECT * FROM productos WHERE id = ? ',[id],funcion);
@@ -13,7 +14,8 @@ module.exports ={
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
     actualizar: function (conexion, datos, funcion) {
-        conexion.query("UPDATE productos SET nombre=? WHERE id=?",[datos.nombre, datos.id], funcion);
+        conexion.query("UPDATE productos SET nombre=?, descripcion=?, precio=?, proveedor=? WHERE id=?",
+        [datos.nombre,datos.descripcion,datos.precio,datos.proveedor, datos.id], funcion);
       },    
     actualizarArchivo: function(conexion,datos,archivo,funcion){
         

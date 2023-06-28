@@ -1,25 +1,45 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body>
- 
+ <div class="container-editar">
+    <div class="contenido-editar">
+        <div class="editar-titulo">
+            Editar Producto
+        </div>
+
     <form method="post" action="../actualizar/" enctype="multipart/form-data">
-    
+        <label for="my-input">ID</label>
         <input type="text" name="id" value="<%= producto.id %>">
 
         <div class="form-group">
-            <label for="my-input">Nombre:</label>
+            <label for="my-input">Imagen</label>
+            <img class="img-thumbnail" src="../../images/<%= producto.imagen %>" width="100" alt="">
+            <input id="my-input" class=" form-control" type="file" name="archivo">
+        </div>  
+
+        <div class="form-group">
+            <label for="my-input">Nombre</label>
             <input id="my-input" value="<%= producto.nombre %>" class="form-control" type="text" name="nombre">
         </div>
-        
         <div class="form-group">
-            <label for="my-input">Imagen</label>
-
-            <img class="img-thumbnail" src="../../images/<%= producto.imagen %>" width="100" alt="">
-
-            <input id="my-input" class=" form-control-file" type="file" name="archivo">
+            <label for="my-input">Descripcion</label>
+            <input id="my-input" class="form-control" value="<%= producto.descripcion %>" type="text" name="descripcion">
+        </div>
+        <div class="form-group">
+            <label for="my-input">Proveedor</label>
+            <input id="my-input" class="form-control" value="<%= producto.proveedor %>" type="text" name="proveedor">
+        </div>
+        <div class="form-group">
+            <label for="my-input">Precio</label>
+            <input id="my-input" class="form-control" value="<%= producto.precio %>" type="text" name="precio">
+        </div>
+        <div class="botones-editar">
         <button class="btn btn-success" type="submit">Guardar</button>
         <a class='btn btn-primary'href="/productos">Cancelar</a>
+        </div>
     </form>
+    </div>
+</div>
 
 </body>
 

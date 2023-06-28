@@ -2,36 +2,54 @@
 <%- include ./layouts/header.ejs %>
 <br/><br/>
 <body>
-    <div class="container"> 
-<div class="card">
-    <div class="card-header">
+<div class="container-crear"> 
+    <div class="contenido-crear">
+
+        <div class="titulo-crear">
         Crear Producto
-    </div>
-    <div class="card-body">
-        <h5 class="card-title">Datos del Producto</h5>
-        <p class="card-text">
+        </div>
 
-<form method="post" action="/productos" enctype="multipart/form-data">
-    
-    <div class="form-group">
-        <label for="my-input">Nombre:</label>
-        <input id="my-input" class="form-control" type="text" name="nombre">
-    </div>
-    
-    <div class="form-group">
-        <label for="my-input">Imagen</label>
-        <input id="my-input" class="form-control-file" type="file" name="archivo">
-    </div>
-    <button class="btn btn-success" type="submit">Guardar</button>
-    <a class='btn btn-primary'href="/productos">Cancelar</a>
-</form>
-</p>
-    </div>
-</div>
-</div>
-</body>
+        <div class="card-body">
+        
 
-<br/>
-<br/>
+            <form method="post" action="/productos" enctype="multipart/form-data">
+
+                <div class="form-group">
+                <label for="my-input">Imagen</label>
+                <input id="my-input" class="form-control-file" type="file" name="archivo">
+                </div>
+                
+                <div class="form-group">
+                <label for="my-input">Nombre:</label>
+                <input id="my-input" class="form-control" type="text" name="nombre">
+                </div>
+
+                <div class="form-group">
+                <label for="my-input">Descripcion:</label>
+                <input id="my-input" class="form-control" type="text" name="descripcion">
+                </div>
+
+                <div class="form-group">
+                <label for="my-input">Proveedor:</label>
+                <input id="my-input" class="form-control" type="text" name="proveedor">
+                </div>
+
+                <div class="form-group">
+                <label for="my-input">Precio:</label>
+                <input id="my-input" class="form-control" type="text" name="precio">
+                </div>
+    
+                <div class="botones-crear">
+                <button class="btn btn-success" type="submit">Guardar</button>
+                <a class='btn btn-primary'href="/productos">Cancelar</a>
+                </div>
+            </form>
+
+    </div>
+    </div>
+    </div>
+    </body>
+
+
 
 <%- include ./layouts/footer.ejs %>
