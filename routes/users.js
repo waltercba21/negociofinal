@@ -22,6 +22,7 @@ router.post('/register',validations, usuariosController.processRegister);
 
 //Formulario de Login 
 router.get('/login', usuariosController.login);
+router.post('/login',validations, usuariosController.lista)
 
 //Perfil de Usuario 
 router.post('/profile', usuariosController.profile)

@@ -7,9 +7,23 @@
 
     <h2>Iniciar Sesión</h2>
 
-    <form action="auth" method="post" class="formulario-login">
+    <form action="./login" method="post" class="formulario-login">
+
         <input type="text" name="usuario" id="usuario" placeholder="Usuario" >
+        <% if (locals.errors && errors.usuario) { %>
+          <div class="error">
+           <%= errors.usuario.msg %>
+          </div>
+         <% } %>
+
         <input type="password" name="password" id="password" placeholder="Contraseña">
+        <% if (locals.errors && errors.password) { %>
+          <div class="error">
+           <%= errors.password.msg %>
+          </div>
+         <% } %>
+
+
         <div class="btn-ingresar">
         <input type="submit" class="btn-login" value="Ingresar">
         <a href="register" class="btn-register">Registrate</a>

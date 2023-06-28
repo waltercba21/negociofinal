@@ -1,5 +1,5 @@
 const conexion = require('../config/conexion')
-const usuario= require('../models/usuarios')
+const usuario= require('../models/usuario')
 const bcryptjs= require('bcryptjs')
 const { validationResult } = require ('express-validator')
 var borrar = require('fs');
@@ -18,10 +18,18 @@ module.exports = {
             oldData : req.body
         });
        }
-       return res.render('login');
+       
+       usuario.crear(conexion,req.body,function(error){
+        res.render('login');
+   })
     },
     login: (req,res)=>{
         return res.render('login');
+    },
+    lista : (req,res)=>{
+        usuario.obtener(conexion,function(error,datos){
+            res.render('profile', { title: 'Usuarios', usuarios:datos });
+        })
     },
     profile: (req,res)=>{
         return res.render('profile');
