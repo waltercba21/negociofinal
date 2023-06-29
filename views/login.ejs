@@ -9,10 +9,10 @@
 
     <form action="./login" method="post" class="formulario-login">
 
-        <input type="text" name="usuario" id="usuario" placeholder="Usuario" >
-        <% if (locals.errors && errors.usuario) { %>
+        <input type="text" name="email" id="email" placeholder="Email" >
+        <% if (locals.errors && errors.email) { %>
           <div class="error">
-           <%= errors.usuario.msg %>
+           <%= errors.email.msg %>
           </div>
          <% } %>
 

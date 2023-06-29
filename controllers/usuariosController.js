@@ -63,6 +63,30 @@ module.exports = {
     login: (req,res)=>{
         return res.render('login');
     },
+    processLogin: (req, res) => {
+        const email = req.body.email;
+        const contraseña = req.body.password;
+      
+        usuario.obtenerPorEmailYContraseña(conexion, email, contraseña, function (error, datos) {
+          if (error) {
+            // Manejar el error
+          }
+      
+          if (datos.length === 0) {
+            // No se encontró ningún usuario con el correo electrónico y la contraseña proporcionados
+            return res.render('login', {
+              error: 'Credenciales inválidas',
+              oldData: req.body,
+            });
+          }
+      
+          // Iniciar sesión exitosamente
+          req.session.usuario = datos[0]; // Almacena los datos del usuario en la sesión
+      
+          // Redirigir al usuario a la página de inicio o a cualquier otra página deseada
+          res.render('profile');
+        });
+      },
     lista : (req,res)=>{
         usuario.obtener(conexion,function(error,datos){
             res.render('profile', { title: 'Usuarios', usuarios:datos });
