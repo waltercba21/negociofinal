@@ -9,20 +9,57 @@ module.exports = {
     register: (req,res)=>{
         return res.render('register');
     },
-    processRegister: (req, res)=>{
-       const resultValidation= validationResult(req);
-        
-       if(resultValidation.errors.length > 0){
-        return res.render('register', {
-            errors : resultValidation.mapped(),
-            oldData : req.body
+    processRegister: (req, res) => {
+        const resultValidation = validationResult(req);
+      
+        if (resultValidation.errors.length > 0) {
+          return res.render('register', {
+            errors: resultValidation.mapped(),
+            oldData: req.body,
+          });
+        }
+      
+        const email = req.body.email;
+      
+        // Verificar si el email ya está registrado
+        usuario.obtenerPorEmail(conexion, email, function (error, datos) {
+          if (error) {
+            // Manejar el error
+          }
+      
+          if (datos.length > 0) {
+            // El email ya está registrado, manejar en consecuencia
+            return res.render('register', {
+              errors: {
+                emailExists: { msg: 'El email ya está registrado' }
+              },
+              oldData: req.body,
+            });
+          }
+      
+          const password = req.body.password;
+      
+          // Generar un salt para el hashing
+          bcryptjs.genSalt(10, function (err, salt) {
+            if (err) {
+              // Manejar el error
+            }
+      
+            // Hash del password utilizando el salt generado
+            bcryptjs.hash(password, salt, function (err, hash) {
+              if (err) {
+                // Manejar el error
+              }
+      
+              // Almacenar el password hasheado en la base de datos
+              usuario.crear(conexion, { ...req.body, password: hash }, function (error) {
+                res.render('login');
+              });
+            });
+          });
         });
-       }
-       
-       usuario.crear(conexion,req.body,function(error){
-        res.render('login');
-   })
-    },
+      },
+      
     login: (req,res)=>{
         return res.render('login');
     },

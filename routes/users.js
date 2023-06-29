@@ -6,7 +6,7 @@ const { body } = require ('express-validator')
 
 
 const validations = [
-  body('usuario').notEmpty().withMessage('Tienes que crear un usuario'),
+  
   body('nombre').notEmpty().withMessage('Tienes que escribir un nombre'),
   body('email')
       .notEmpty().withMessage('Tienes que escribir tu email').bail()
@@ -17,7 +17,6 @@ const validations = [
 
 //Formulario de Registo 
 router.get('/register', usuariosController.register)
-
 router.post('/register',validations, usuariosController.processRegister);
 
 //Formulario de Login 

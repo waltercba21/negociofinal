@@ -1,4 +1,3 @@
-
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <html>
@@ -9,18 +8,9 @@
     <h2>Registrate</h2>
 
     <form action="./register" method="post" class="formulario-register">
-     
-    
-        <label for="usuario" >Usuario</label>
-        <input type="text" name="usuario" value="<%= locals.oldData ? oldData.usuario : null %>">
-        <% if (locals.errors && errors.usuario) { %>
-         <div class="error">
-          <%= errors.usuario.msg %>
-         </div>
-        <% } %>
 
         <label for="nombre">Nombre Completo</label>
-        <input type="text" name="nombre" value="<%= locals.oldData ? oldData.nombre : null %>">
+        <input type="text" name="nombre" value="<%= locals.oldData ? oldData.nombre : '' %>">
         <% if (locals.errors && errors.nombre) { %>
           <div class="error">
            <%= errors.nombre.msg %>
@@ -28,15 +18,20 @@
          <% } %>
 
         <label for="email" >Email</label>
-        <input type="text" name="email" value="<%= locals.oldData ? oldData.email : null %>">
+        <input type="text" name="email" value="<%= locals.oldData ? oldData.email : '' %>">
         <% if (locals.errors && errors.email) { %>
           <div class="error">
            <%= errors.email.msg %>
           </div>
          <% } %>
+         <% if (locals.errors && errors.emailExists) { %>
+          <div class="error">
+           <%= errors.emailExists.msg %>
+          </div>
+         <% } %>
 
         <label for="password">Contraseña</label>
-        <input type="password" name="password" value="<%= locals.oldData ? oldData.password : null %>">
+        <input type="password" name="password" value="<%= locals.oldData ? oldData.password : '' %>">
         <% if (locals.errors && errors.password) { %>
           <div class="error">
            <%= errors.password.msg %>
@@ -57,4 +52,5 @@
     <%- include ./layouts/footer.ejs %>
 </body>
 </html>
+
  

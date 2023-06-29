@@ -40,7 +40,7 @@ header .navbar a {
   text-decoration: none;
   color: #1F487E;
   font-family: "Montserrat";
-  font-weight: 600;
+  font-weight: bold;
   z-index: 10;
 }
 .navbar .nav-link:hover {
@@ -58,7 +58,7 @@ header .icons a {
   flex-direction: row;
   width: 70%;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: bold;
   text-decoration: none;
   color: #1F487E;
   margin-top: 10px;
