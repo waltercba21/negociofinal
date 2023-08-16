@@ -64,37 +64,50 @@ module.exports = {
         oldData: req.body,
       });
     }
+    
     const email = req.body.email;
     const password = req.body.password;
+    
     usuario.obtenerPorEmail(email, function (error, datos) {
       if (error) {
         // Manejar el error
       }
+      
       if (datos.length === 0) {
         return res.render('login', {
           error: 'Credenciales inválidas',
           oldData: req.body,
         });
       }
+      
       const storedPasswordHash = datos[0].password; // Obtén el hash almacenado de la base de datos
+      
       bcryptjs.compare(password, storedPasswordHash, function (err, result) {
         if (err) {
           // Manejar el error
         }
+          
         if (!result) {
           return res.render('login', {
             error: 'Credenciales inválidas',
             oldData: req.body,
           });
         }
+          
+        // Verificar si el usuario es el administrador específico
+        const isAdminUser = (email === 'waltercordobadev@gmail.com');
+          
+        // Pasar la información del usuario y estado de autenticación a la vista
         req.session.usuario = datos[0];
-        res.render('profile');
+        const isLogged = true;
+        const userLogged = datos[0]; // Agregar esta línea
+        res.render('profile', { usuario: datos[0], isLogged, isAdminUser, userLogged });
       });
     });
   },
   profile: (req,res) => {
     
-      return res.render('profile', {usuario: req.session.usuario})
+      return res.render('profile')
   
   }
   
