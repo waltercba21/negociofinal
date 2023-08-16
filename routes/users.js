@@ -4,28 +4,31 @@ const path = require('path');
 const usuariosController = require('../controllers/usuariosController')
 const { body } = require ('express-validator') 
 
-
-const validations = [
-  
+const registerValidations = [
   body('nombre').notEmpty().withMessage('Tienes que escribir un nombre'),
   body('email')
-      .notEmpty().withMessage('Tienes que escribir tu email').bail()
-      .isEmail().withMessage('Tienes que escribir un mail válido'),
+    .notEmpty().withMessage('Tienes que escribir tu email').bail()
+    .isEmail().withMessage('Tienes que escribir un mail válido'),
   body('password').notEmpty().withMessage('Tienes que colocar una contraseña'),
 ]
 
+const loginValidations = [
+  body('email')
+    .notEmpty().withMessage('Tienes que escribir tu email').bail()
+    .isEmail().withMessage('Tienes que escribir un mail válido'),
+  body('password').notEmpty().withMessage('Tienes que colocar una contraseña'),
+]
 
-//Formulario de Registo 
-router.get('/register', usuariosController.register)
-router.post('/register',validations, usuariosController.processRegister);
+// Formulario de Registro
+router.get('/register', usuariosController.register);
+router.post('/register', registerValidations, usuariosController.processRegister);
 
-//Formulario de Login 
+// Formulario de Login
 router.get('/login', usuariosController.login);
-router.post('/login',validations, usuariosController.lista)
-
-//Perfil de Usuario 
-router.post('/profile', usuariosController.profile)
+router.post('/login', loginValidations, usuariosController.processLogin);
 
 
+// Perfil de Usuario
+router.get('/profile', usuariosController.profile);
 
 module.exports = router;

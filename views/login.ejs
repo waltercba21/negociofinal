@@ -1,4 +1,3 @@
-
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body class="body-login">
@@ -10,19 +9,23 @@
     <form action="./login" method="post" class="formulario-login">
 
         <input type="text" name="email" id="email" placeholder="Email" >
-        <% if (locals.errors && errors.email) { %>
+        <% if (locals.errors && locals.errors.email) { %>
           <div class="error">
-           <%= errors.email.msg %>
+           <%= locals.errors.email.msg %>
           </div>
          <% } %>
 
         <input type="password" name="password" id="password" placeholder="Contraseña">
-        <% if (locals.errors && errors.password) { %>
+        <% if (locals.errors && locals.errors.password) { %>
           <div class="error">
-           <%= errors.password.msg %>
+           <%= locals.errors.password.msg %>
           </div>
          <% } %>
-
+        <% if (locals.error) { %>
+          <div class="error">
+           <%= locals.error %>
+          </div>
+         <% } %>
 
         <div class="btn-ingresar">
         <input type="submit" class="btn-login" value="Ingresar">
@@ -34,5 +37,3 @@
      
     <%- include ./layouts/footer.ejs %>
 </body>
-
- 
