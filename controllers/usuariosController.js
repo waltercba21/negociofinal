@@ -94,14 +94,10 @@ module.exports = {
           });
         }
           
-        // Verificar si el usuario es el administrador específico
-        const isAdminUser = (email === 'waltercordobadev@gmail.com');
-          
-        // Pasar la información del usuario y estado de autenticación a la vista
         req.session.usuario = datos[0];
         const isLogged = true;
-        const userLogged = datos[0]; // Agregar esta línea
-        res.render('profile', { usuario: datos[0], isLogged, isAdminUser, userLogged });
+        const isAdminUser = (email === 'waltercordobadev@gmail.com');
+        res.render('profile', { usuario: datos[0], isLogged, isAdminUser });
       });
     });
   },
@@ -109,6 +105,16 @@ module.exports = {
     
       return res.render('profile')
   
+  },
+  logout: (req, res) => {
+    // Destruir la sesión
+    req.session.destroy((error) => {
+      if (error) {
+        // Manejar el error si es necesario
+      }
+      // Redirigir al usuario al inicio después de cerrar sesión
+      res.redirect('/');
+    });
   }
   
 }

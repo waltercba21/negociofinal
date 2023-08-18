@@ -5,7 +5,8 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var logger = require('morgan');
 const session = require('express-session');
-
+const adminMiddleware = require('./middleware/adminMiddleware');
+const middlewares = require('./middleware/middlewares');
 
 //Rutas
 var indexRouter = require('./routes/index');
@@ -19,10 +20,14 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(session({
-  secret:'123456',
+  // configuración de la sesión
+  secret: 'mi-secreto-seguro',
   resave: true,
-  saveUninitialized: true
-}))
+  saveUninitialized: true,
+  cookie: { secure: false }, // Cambiar a true en producción si usas HTTPS
+  // Agregar el valor isAdminUser a la sesión
+  isAdminUser: false, // Por defecto, no es admin hasta que se identifique
+}));
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -33,7 +38,15 @@ app.use(bodyParser.urlencoded({extends: false}));
 app.use(bodyParser.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(adminMiddleware)
+// Usar el middleware global
+app.use(middlewares.setGlobalVariables);
+app.use((req, res, next) => {
+  res.locals.isLogged = req.session.usuario !== undefined;
+  res.locals.userLogged = req.session.usuario || {}; // Inicializar como objeto vacío si no hay usuario en sesión
+  next();
+})
+  
 //Utilizacion de las Rutas
 app.use('/', indexRouter);
 app.use('/users', usersRouter);

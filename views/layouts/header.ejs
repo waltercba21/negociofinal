@@ -6,25 +6,24 @@
   <nav class="navbar">
     <a class="nav-link" href="/">INICIO</a>
     <a class="nav-link" href="/productos">PRODUCTOS</a>
-    <% if (locals.isLogged && locals.isAdminUser) { %>
-
+    <% if (isAdminUser) { %>
       <a class="nav-link" href="/productos/crear">CREAR</a>
       <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
     <% } %>
   </nav>
   
   <div class="icons">
-    <% if (locals.isLogged) { %>
+    <% if (isLogged) { %>
       <div class="logueado"> 
         <a href="/users/profile"> 
-          <img src="/img/users/<%= locals.userLogged.imagenUsuario %> ">
-          <p>Hola <%= locals.userLogged.nombre  %> </p> 
+          <img src="/img/users/<%= userLogged.imagenUsuario %> "> <!-- Cambiado de usuario.imagenUsuario a userLogged.imagenUsuario -->
+          <p>Hola <%= userLogged.nombre %> </p> <!-- Cambiado de usuario.nombre a userLogged.nombre -->
         </a>
         <a href="/users/logout">
           <i class="fa-solid fa-right-from-bracket"></i>
         </a>
       </div>
-    <% } else { %>
+    <% } else if (!isAdminUser) { %> <!-- Agregamos esta condición para no mostrar esto al admin -->
       <a href="/users/login">Iniciar Sesión</a>
       <a class="register-link" href="/users/register">Registrarme</a>
     <% } %> 
