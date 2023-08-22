@@ -7,7 +7,8 @@
     <h2 class="titulo-principal" id="titulo-principal">
       Todos los productos
     </h2>
-
+    <input type="text" id="busqueda" placeholder="Buscar productos...">
+    <div id="resultados-busqueda"></div>
     <div id="contenedor-productos" class="contenedor-productos">
       <% productos.forEach(producto => { %>
 
@@ -21,8 +22,6 @@
           <div class="precio-producto">
             <p class="precio">$<%= producto.precio %></p>
           </div>
-
-          
         </div>
 
       <% }); %>
@@ -30,5 +29,6 @@
 </main>
     
       <%- include ./layouts/footer.ejs %>
+      <script src="js/buscador.js"></script>
   </body>
  

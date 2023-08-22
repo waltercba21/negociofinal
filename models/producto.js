@@ -20,5 +20,9 @@ module.exports ={
     actualizarArchivo: function(conexion,datos,archivo,funcion){
         
         conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
-    }
+    },
+    obtenerPorNombre: function (conexion, nombre, funcion) {
+        conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
+      }
+      
 }

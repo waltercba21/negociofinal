@@ -4,35 +4,26 @@ var borrar = require('fs');
 
 
 module.exports = {
-
     index : function (req,res){
                 res.render('index');
     },
-
     lista: function (req,res){
-
         producto.obtener(conexion,function(error,datos){
             res.render('productos', { title: 'Productos', productos:datos });
         })
     },
- 
     crear: function(req,res){
         res.render('crear')
     },
-
-    guardar: function(req,res){
-        
+    guardar: function(req,res){  
         producto.insertar(conexion,req.body,req.file,function(error){
              res.redirect('/productos');
         })
     },
-
     eliminar: function(req,res){
-
        producto.retornarDatosId(conexion,req.params.id,function (error, registros){
         var nombreImagen = '/public/images/' + (registros [0].imagen);
         
-
         if(borrar.existsSync(nombreImagen)){
             borrar.unlinkSync(nombreImagen);
         }
@@ -80,5 +71,20 @@ module.exports = {
         res.render('panelControl', { title: 'Productos', productos:datos });
     })
 },
-
+buscarPorNombre: function (req, res) {
+    const query = req.query.query;
+  
+    if (!query) {
+      return res.status(400).json({ message: 'No se proporcionó una consulta de búsqueda.' });
+    }
+  
+    producto.obtenerPorNombre(conexion, query, function (error, datos) {
+      if (error) {
+        return res.status(500).json({ message: 'Error al buscar productos.' });
+      }
+  
+      res.status(200).json(datos);
+    });
+  }
+  
 }

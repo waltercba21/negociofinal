@@ -34,4 +34,7 @@ router.get('/editar/:id', productosController.editar)
 
 router.post('/actualizar',cargar.single('archivo'), productosController.actualizar);
 
+// Ruta para buscar productos
+router.get('/api/buscar', productosController.buscarPorNombre);
+
 module.exports = router;
