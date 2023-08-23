@@ -15,7 +15,7 @@ module.exports ={
     },
     actualizar: function (conexion, datos, funcion) {
         conexion.query("UPDATE productos SET nombre=?, descripcion=?, precio=?, proveedor=?, categoria=? WHERE id=?",
-        [datos.nombre,datos.descripcion,datos.precio,datos.proveedor, datos.id], funcion);
+        [datos.nombre,datos.descripcion,datos.precio,datos.proveedor,datos.categoria, datos.id], funcion);
       },    
     actualizarArchivo: function(conexion,datos,archivo,funcion){
         
