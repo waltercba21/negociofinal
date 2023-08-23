@@ -74,10 +74,6 @@ module.exports = {
 buscarPorNombre: function (req, res) {
     const query = req.query.query;
   
-    if (!query) {
-      return res.status(400).json({ message: 'No se proporcionó una consulta de búsqueda.' });
-    }
-  
     producto.obtenerPorNombre(conexion, query, function (error, datos) {
       if (error) {
         return res.status(500).json({ message: 'Error al buscar productos.' });

@@ -11,25 +11,39 @@
         <label for="my-input">ID</label>
         <input type="text" name="id" value="<%= producto.id %>">
 
-        <div class="form-group">
+        <div class="form-group-crear">
             <label for="my-input">Imagen</label>
             <img class="img-thumbnail" src="../../images/<%= producto.imagen %>" width="100" alt="">
             <input id="my-input" class=" form-control" type="file" name="archivo">
         </div>  
 
-        <div class="form-group">
+        <div class="form-group-crear">
             <label for="my-input">Nombre</label>
             <input id="my-input" value="<%= producto.nombre %>" class="form-control" type="text" name="nombre">
         </div>
-        <div class="form-group">
+        <div class="form-group-crear">
             <label for="my-input">Descripcion</label>
             <input id="my-input" class="form-control" value="<%= producto.descripcion %>" type="text" name="descripcion">
         </div>
-        <div class="form-group">
-            <label for="my-input">Proveedor</label>
-            <input id="my-input" class="form-control" value="<%= producto.proveedor %>" type="text" name="proveedor">
+        <div class="form-group-crear">
+            <label for="my-input">Categoria</label>
+            <select id="categoria" name="categoria">
+                <% var opciones = ["Faros Traseros", "Faros Delanteros", "Opticas", "Faros Led", "Faros camiones"]; %>
+                <% for(var i = 0; i < opciones.length; i++) { %>
+                    <option value='<%= opciones[i] %>' <%= producto.categoria == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
+                <% } %>
+            </select>
         </div>
-        <div class="form-group">
+        <div class="form-group-crear">
+            <label for="my-input">Proveedor</label>
+            <select id="proveedor" name="proveedor">
+                <% var opciones = ["LAM", "LIDERCAR", "MYL", "DM", "DAM"]; %>
+                <% for(var i = 0; i < opciones.length; i++) { %>
+                    <option value='<%= opciones[i] %>' <%= producto.categoria == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
+                <% } %>
+            </select>
+        </div>
+        <div class="form-group-crear">
             <label for="my-input">Precio</label>
             <input id="my-input" class="form-control" value="<%= producto.precio %>" type="text" name="precio">
         </div>

@@ -607,6 +607,22 @@ footer {
   font-weight: bold;
   padding: 70px 0 10 0;
 }
+.form-group-crear{
+  display: flex;
+  flex-direction: column;
+}
+.form-group-crear select {
+  margin:auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 50%;
+  margin-bottom: 15px;
+  font-size: medium;
+  font-weight: bold;
+  color: #d90429;
+}
 
 .card-body input{
   width: 100%;

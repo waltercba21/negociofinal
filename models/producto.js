@@ -4,8 +4,8 @@ module.exports ={
     },
     insertar: function(conexion,datos,archivos,funcion){
      conexion.query
-     ('INSERT INTO productos (nombre,imagen,descripcion,proveedor,precio) VALUES (?,?,?,?,?)',
-     [datos.nombre,archivos.filename,datos.descripcion,datos.proveedor,datos.precio],funcion);
+     ('INSERT INTO productos (nombre,imagen,descripcion,proveedor,precio,categoria) VALUES (?,?,?,?,?,?)',
+     [datos.nombre,archivos.filename,datos.descripcion,datos.proveedor,datos.precio,datos.categoria],funcion);
     },
     retornarDatosId: function (conexion,id,funcion){
         conexion.query('SELECT * FROM productos WHERE id = ? ',[id],funcion);
@@ -14,7 +14,7 @@ module.exports ={
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
     actualizar: function (conexion, datos, funcion) {
-        conexion.query("UPDATE productos SET nombre=?, descripcion=?, precio=?, proveedor=? WHERE id=?",
+        conexion.query("UPDATE productos SET nombre=?, descripcion=?, precio=?, proveedor=?, categoria=? WHERE id=?",
         [datos.nombre,datos.descripcion,datos.precio,datos.proveedor, datos.id], funcion);
       },    
     actualizarArchivo: function(conexion,datos,archivo,funcion){

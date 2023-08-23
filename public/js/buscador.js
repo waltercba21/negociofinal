@@ -1,21 +1,29 @@
-const input = document.querySelector('#searchInput')
-const productosContainer = document.querySelector('#contenedor-productos')
+const entrada = document.querySelector('#entradaBusqueda')
+const contenedorProductos = document.querySelector('#contenedor-productos')
 
 window.addEventListener('DOMContentLoaded', (e) => {
-  loadProducts()
+  cargarProductos()
 })
 
-async function loadProducts() {
-  const response = await fetch('http://localhost:3000/productos/api/buscar')
-  const data = await response.json()
-  console.log('Data from API:', data)
-  displayProducts(data.productos)  // Accede a la propiedad 'productos' del objeto
+async function cargarProductos() {
+  const respuesta = await fetch('http://localhost:3000/productos/api/buscar?query')
+  const datos = await respuesta.json()
+  console.log('Datos de la API:', datos)
+  if (Array.isArray(datos)) {
+    mostrarProductos(datos)  // Pasar el array de productos directamente
+    console.log(mostrarProductos)
+  } else {
+    console.error('Respuesta inesperada de la API:', datos)
+  }
 }
 
-function displayProducts(productos) {
-  productosContainer.innerHTML = ''
+// Llama a cargarProductos inmediatamente después de su definición
+cargarProductos();
+
+function mostrarProductos(productos) {
+  contenedorProductos.innerHTML = ''
   productos.forEach(producto => {
-    const productCard = `
+    const tarjetaProducto = `
       <div class="card"> 
         <div class="imagen-producto">
           <img src="../../images/${producto.imagen}" alt="Imagen de ${producto.nombre}">
@@ -28,20 +36,23 @@ function displayProducts(productos) {
         </div>
       </div>
     `
-    productosContainer.innerHTML += productCard
+    contenedorProductos.innerHTML += tarjetaProducto
   })
 }
 
-input.addEventListener('input', e => {
-  const query = e.target.value
-  if (query) {
-    fetch(`http://localhost:3000/productos/api/buscar?query=${query}`)
-      .then(response => response.json())
-      .then(data => {
-        displayProducts(data)
+entrada.addEventListener('input', e => {
+  const consulta = e.target.value
+  if (consulta) {
+    fetch(`http://localhost:3000/productos/api/buscar?query=${consulta}`)
+      .then(respuesta => respuesta.json())
+      .then(datos => {
+        if (Array.isArray(datos)) {
+          mostrarProductos(datos)
+        } else {
+          console.error('Respuesta inesperada de la API:', datos)
+        }
       })
   } else {
-    // Aquí puedes decidir qué hacer cuando el campo de entrada está vacío.
-    // Por ejemplo, podrías cargar todos los productos o limpiar los resultados de búsqueda.
+    cargarProductos()
   }
 })
