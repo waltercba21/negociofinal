@@ -1,4 +1,3 @@
-
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body>
@@ -7,8 +6,10 @@
     <h2 class="titulo-principal" id="titulo-principal">
       Todos los productos
     </h2>
-    <input type="text" id="busqueda" placeholder="Buscar productos...">
-    <div id="resultados-busqueda"></div>
+    <input type="text" id="searchInput" placeholder="Buscar productos..." oninput="buscarProductos(this.value)">
+    <ol id="productos">
+
+    </ol>
     <div id="contenedor-productos" class="contenedor-productos">
       <% productos.forEach(producto => { %>
 
@@ -31,4 +32,3 @@
       <%- include ./layouts/footer.ejs %>
       <script src="js/buscador.js"></script>
   </body>
- 
