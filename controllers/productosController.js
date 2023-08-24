@@ -7,10 +7,12 @@ module.exports = {
     index : function (req,res){
                 res.render('index');
     },
-    lista: function (req,res){
-        producto.obtener(conexion,function(error,datos){
-            res.render('productos', { title: 'Productos', productos:datos });
-        })
+    lista: function (req, res) {
+        var categoria = req.query.categoria;
+        producto.obtenerPorCategoria(conexion, categoria, function (error, productos) {
+          res.render('productos', { productos: productos });
+        });
+      
     },
     crear: function(req,res){
         res.render('crear')
