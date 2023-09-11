@@ -37,4 +37,6 @@ router.post('/actualizar',cargar.single('archivo'), productosController.actualiz
 // Ruta para buscar productos
 router.get('/api/buscar', productosController.buscarPorNombre);
 
+
+
 module.exports = router;

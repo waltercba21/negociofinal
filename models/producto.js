@@ -10,7 +10,7 @@ module.exports ={
     retornarDatosId: function (conexion,id,funcion){
         conexion.query('SELECT * FROM productos WHERE id = ? ',[id],funcion);
     },
-    borrar: function (conexion,id,funcion){
+    borrar: function (conexion,id,funcion){ 
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
     actualizar: function (conexion, datos, funcion) {
@@ -25,7 +25,7 @@ module.exports ={
         conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
       },
     obtenerPorCategoria: function (conexion, categoria, funcion) {
-        conexion.query('SELECT * FROM productos WHERE categoria = ?', [categoria], funcion);
+        conexion.query('SELECT * FROM productos WHERE categoria LIKE ?', [`%${categoria}%`], funcion);
       }
       
 }

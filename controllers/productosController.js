@@ -9,11 +9,17 @@ module.exports = {
     },
     lista: function (req, res) {
         var categoria = req.query.categoria;
+        console.log('Categoría recibida:', categoria);
         producto.obtenerPorCategoria(conexion, categoria, function (error, productos) {
-          res.render('productos', { productos: productos });
+            if (error) {
+                console.log('Error al obtener productos por categoría:', error);
+            } else {
+                console.log('Productos obtenidos:', productos);
+                res.render('productos', { productos: productos, categoria: categoria });
+            }
         });
-      
     },
+    
     crear: function(req,res){
         res.render('crear')
     },
@@ -83,6 +89,7 @@ buscarPorNombre: function (req, res) {
   
       res.status(200).json(datos);
     });
-  }
+  },
+  
   
 }

@@ -8,12 +8,12 @@ window.addEventListener('DOMContentLoaded', (e) => {
 async function cargarProductos() {
   const respuesta = await fetch('http://localhost:3000/productos/api/buscar?query')
   const datos = await respuesta.json()
-  console.log('Datos de la API:', datos)
+  
   if (Array.isArray(datos)) {
     mostrarProductos(datos)  // Pasar el array de productos directamente
-    console.log(mostrarProductos)
+    
   } else {
-    console.error('Respuesta inesperada de la API:', datos)
+    
   }
 }
 

@@ -28,6 +28,14 @@ flechaIzquierda.addEventListener('click', ( ) =>{
         indicadorActivo.previousSibling.classList.add('activo');
         indicadorActivo.classList.remove('activo');
     }  
+});    
+
+peliculas.forEach((pelicula) => {
+    pelicula.addEventListener('click', () => {
+        const categoria = pelicula.dataset.categoria;
+        console.log('Categoría seleccionada:', categoria);
+        window.location.href = `/productos?categoria=${categoria}`;
+    });
 });
 
 // ---------------PAGINACION--------------------------------//
@@ -73,3 +81,14 @@ peliculas.forEach ((pelicula) => {
 fila.addEventListener('mouseleave', () => {
     peliculas.forEach (pelicula => pelicula.classList.remove('hover'));
 })
+// Suponiendo que tus imágenes tienen una clase 'imagen-carrusel' y el nombre de la categoría está en un atributo 'data-categoria'
+const imagenesCarrusel = document.querySelectorAll('.imagen-carrusel');
+
+imagenesCarrusel.forEach(imagen => {
+  imagen.addEventListener('click', () => {
+    const categoria = imagen.getAttribute('data-categoria');
+    window.location.href = `/productos?categoria=${categoria}`;
+  });
+});
+
+
