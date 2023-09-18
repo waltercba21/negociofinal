@@ -14,7 +14,7 @@ var rutaAlmacen = multer.diskStorage({
         callback(null, fecha + '_' + file.originalname);
     }
 });
-var cargar =multer({storage: rutaAlmacen});
+var cargar = multer({storage: rutaAlmacen});
 
 
 
@@ -34,8 +34,10 @@ router.get('/editar/:id', productosController.editar)
 
 router.post('/actualizar',cargar.single('archivo'), productosController.actualizar);
 
-// Ruta para buscar productos
+// Ruta para buscar productos por nombre
 router.get('/api/buscar', productosController.buscarPorNombre);
+
+router.get('/productos', productosController.todos);
 
 
 

@@ -11,53 +11,34 @@
     </div>
 
     <div id="contenedor-productos" class="contenedor-productos">
-      <% productos.forEach(producto => { %>
-        <div class="card">
-          <div class="cover__card">
-            <img src="../../images/<%= producto.imagen %>" alt="Imagen de <%= producto.nombre %>">
-          </div>
-          <div class="titulo-producto">
-            <h3 class="nombre"><%= producto.nombre %></h3>
-          </div>
-          <hr>
-          <div class="categoria-producto">
-            <h3 class="categoria"><%= producto.categoria %></h3>
-          </div>
-          <hr>
-          <div class="precio-producto">
-            <p class="precio">$<%= producto.precio %></p>
-          </div>
-          <div class="cantidad-producto">
-            <input type="number" class="cantidad" value="1" min="1">
-            <button class="agregar-carrito">Agregar al carrito</button>
-          </div>
-          <a href="/comprar/<%= producto._id %>" class="enlace-detalle">
-            <div class="ver-detalle">
-              Ver detalle
+    
+      <div id="contenedor-productos" class="contenedor-productos">
+        <% productos.forEach(producto => { %>
+          <div class="card">
+            <div class="cover__card">
+              <img src="../../images/<%= producto.imagen %>" alt="Imagen de <%= producto.nombre %>">
             </div>
-          </a>
-        </div>
-      <% }); %>
+            <div class="titulo-producto">
+              <h3 class="nombre"><%= producto.nombre %></h3>
+            </div>
+            <hr>
+            <div class="categoria-producto">
+              <h6 class="categoria"><%= producto.categoria %></h6>
+            </div>
+            <hr>
+            <div class="precio-producto">
+              <p class="precio">$<%= producto.precio %></p>
+            </div>
+            <div class="cantidad-producto">
+              <h6>Cantidad</h6>
+              <input type="number" class="cantidad" value="1" min="1">
+              <button class="agregar-carrito">Agregar al carrito</button>
+            </div>
+            
+          </div>
+        <% }); %>
     </div>
-
   </main>
   <%- include ./layouts/footer.ejs %>
   <script src="js/buscador.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const agregarCarritoButtons = document.querySelectorAll(".agregar-carrito");
-      
-      agregarCarritoButtons.forEach(button => {
-        button.addEventListener("click", function () {
-          const card = this.closest(".card");
-          const cantidadInput = card.querySelector(".cantidad");
-          const cantidad = parseInt(cantidadInput.value);
-          const productoId = card.querySelector("a").getAttribute("href").split("/").pop();
-          
-          // Aquí puedes realizar la lógica para agregar el producto al carrito
-          // Puedes usar la cantidad y el productoId para enviar esta información al servidor
-        });
-      });
-    });
-  </script>
 </body>

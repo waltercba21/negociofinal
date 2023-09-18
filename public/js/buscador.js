@@ -34,6 +34,11 @@ function mostrarProductos(productos) {
         <div class="precio-producto">
           <p class="precio">$${producto.precio}</p>
         </div>
+        <div class="cantidad-producto">
+          <h6>Cantidad</h6>
+          <input type="number" class="cantidad" value="1" min="1">
+          <button class="agregar-carrito">Agregar al carrito</button>
+        </div>
       </div>
     `
     contenedorProductos.innerHTML += tarjetaProducto
@@ -46,8 +51,8 @@ entrada.addEventListener('input', e => {
     fetch(`http://localhost:3000/productos/api/buscar?query=${consulta}`)
       .then(respuesta => respuesta.json())
       .then(datos => {
-        if (Array.isArray(datos)) {
-          mostrarProductos(datos)
+        if (Array.isArray(datos.productos)) { // Modificación 1
+          mostrarProductos(datos.productos)  // Modificación 2
         } else {
           console.error('Respuesta inesperada de la API:', datos)
         }

@@ -8,14 +8,12 @@ module.exports = {
                 res.render('index');
     },
     lista: function (req, res) {
-        var categoria = req.query.categoria;
-        console.log('Categoría recibida:', categoria);
-        producto.obtenerPorCategoria(conexion, categoria, function (error, productos) {
+        producto.obtener(conexion, function (error, productos) {
             if (error) {
-                console.log('Error al obtener productos por categoría:', error);
+                console.log('Error al obtener productos:', error);
             } else {
                 console.log('Productos obtenidos:', productos);
-                res.render('productos', { productos: productos, categoria: categoria });
+                res.render('productos', { productos: productos });
             }
         });
     },
@@ -80,16 +78,37 @@ module.exports = {
     })
 },
 buscarPorNombre: function (req, res) {
-    const query = req.query.query;
-  
-    producto.obtenerPorNombre(conexion, query, function (error, datos) {
-      if (error) {
-        return res.status(500).json({ message: 'Error al buscar productos.' });
-      }
-  
-      res.status(200).json(datos);
+    const nombre = req.query.query; // 
+
+    if (!nombre) {
+        producto.obtenerTodos(conexion, (error, productos) => {
+            if (error) {
+                console.error(error);
+                res.status(500).send('Error interno del servidor');
+                return;
+            }
+            res.json({ productos });
+        });
+    } else {
+        producto.obtenerPorNombre(conexion, nombre, (error, productos) => {
+          if (error) {
+            console.error(error);
+            res.status(500).send('Error interno del servidor');
+            return;
+          }
+
+          res.json({ productos });
+        });
+    }   
+},
+todos: function (req, res) {
+    producto.obtener(conexion, function (error, productos) {
+        if (error) {
+            console.log('Error al obtener productos:', error);
+        } else {
+            console.log('Productos obtenidos:', productos);
+            res.render('productos', { productos: productos });
+        }
     });
-  },
-  
-  
+},
 }
