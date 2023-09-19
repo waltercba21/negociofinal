@@ -8,14 +8,26 @@ module.exports = {
                 res.render('index');
     },
     lista: function (req, res) {
-        producto.obtener(conexion, function (error, productos) {
-            if (error) {
-                console.log('Error al obtener productos:', error);
-            } else {
-                console.log('Productos obtenidos:', productos);
-                res.render('productos', { productos: productos });
-            }
-        });
+        const categoria = req.query.categoria;
+        if (categoria) {
+            producto.obtenerPorCategoria(conexion, categoria, function (error, productos) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
+                } else {
+                    console.log('Productos obtenidos:', productos);
+                    res.render('productos', { productos: productos });
+                }
+            });
+        } else {
+            producto.obtener(conexion, function (error, productos) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
+                } else {
+                    console.log('Productos obtenidos:', productos);
+                    res.render('productos', { productos: productos });
+                }
+            });
+        }
     },
     
     crear: function(req,res){

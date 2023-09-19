@@ -24,9 +24,15 @@ module.exports ={
     obtenerPorNombre: function (conexion, nombre, funcion) {
         conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
       },
-    obtenerPorCategoria: function (conexion, categoria, funcion) {
-        conexion.query('SELECT * FROM productos WHERE categoria LIKE ?', [`%${categoria}%`], funcion);
-      },
+      obtenerPorCategoria: function (conexion, categoria, funcion) {
+        conexion.query('SELECT * FROM productos WHERE categoria LIKE ?', [`%${categoria}%`], function(error, resultados) {
+            if (error) {
+                console.log('Error al obtener productos por categoría:', error);
+            } else {
+                funcion(null, resultados);
+            }
+        });
+    },
       obtenerTodos: function (conexion, funcion) {
         conexion.query('SELECT * FROM productos', funcion);
     },

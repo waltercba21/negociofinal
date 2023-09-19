@@ -1,7 +1,7 @@
+document.addEventListener('DOMContentLoaded', (event) => {
+    console.log('DOM completamente cargo y analizado');
 const fila = document.querySelector ('.contenedor-carrousel');
-
 const peliculas = document.querySelectorAll('.pelicula');
-
 const flechaIzquierda = document.getElementById('flecha-izquierda');
 const flechaDerecha = document.getElementById('flecha-derecha');
 
@@ -30,13 +30,7 @@ flechaIzquierda.addEventListener('click', ( ) =>{
     }  
 });    
 
-peliculas.forEach((pelicula) => {
-    pelicula.addEventListener('click', () => {
-        const categoria = pelicula.dataset.categoria;
-        console.log('Categoría seleccionada:', categoria);
-        window.location.href = `/productos?categoria=${categoria}`;
-    });
-});
+
 
 // ---------------PAGINACION--------------------------------//
 //---CALCULAMOS CUANTAS PAGINAS TENEMOS EN EL CARROUSEL 
@@ -64,31 +58,33 @@ for (let i = 0; i < numeroPaginas; i++){
 
 // ------ Trabajamos con el HOVER de las imagenes ------//
 
-// (peliculas) es un arreglo que vamos a iterar 
-peliculas.forEach ((pelicula) => {
-    //Por cada (pelicula) que tengamos, agregamos un eventListener
-    pelicula.addEventListener('mouseenter', (e) => {
-        //obtenemos el (elemento) por donde pasamos el cursor
-        const elemento = e.currentTarget;
-        // y despues de 300 milisengudos nos ejecuta este codigo, donde le va a quitar la clase de 'hover'.
-        setTimeout(() => {
-            peliculas.forEach (pelicula => pelicula.classList.remove('hover'));
-            elemento.classList.add('hover');
-        },300)
-    })
-});
+// (peliculas) es un arreglo que vamos a iterar
 
-fila.addEventListener('mouseleave', () => {
-    peliculas.forEach (pelicula => pelicula.classList.remove('hover'));
-})
-// Suponiendo que tus imágenes tienen una clase 'imagen-carrusel' y el nombre de la categoría está en un atributo 'data-categoria'
-const imagenesCarrusel = document.querySelectorAll('.imagen-carrusel');
-
-imagenesCarrusel.forEach(imagen => {
-  imagen.addEventListener('click', () => {
+peliculas.forEach(pelicula => {
+  pelicula.addEventListener('click', () => {
+    console.log('Película clickeada:');
+    const imagen = pelicula.querySelector('.imagen-carrusel');
     const categoria = imagen.getAttribute('data-categoria');
+    console.log('Categoría:', categoria); 
     window.location.href = `/productos?categoria=${categoria}`;
   });
 });
 
+  fila.addEventListener('mouseleave', () => {
+    console.log('mouse salió del carrousel');
+    peliculas.forEach(pelicula => pelicula.classList.remove('hover'));
+  });
+// Suponiendo que tus imágenes tienen una clase 'imagen-carrusel' y el nombre de la categoría está en un atributo 'data-categoria'
+const imagenesCarrusel = document.querySelectorAll('.imagen-carrusel');
+console.log('Imágenes del carrusel:', imagenesCarrusel.length);
 
+imagenesCarrusel.forEach(imagen => {
+  imagen.addEventListener('click', () => {
+    console.log('Imagen del carrusel clickeada:');
+    const categoria = imagen.getAttribute('data-categoria');
+    console.log('Categoría:', categoria); 
+    window.location.href = `/productos?categoria=${categoria}`;
+  });
+});
+});
+ 
