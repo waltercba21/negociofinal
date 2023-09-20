@@ -34,11 +34,6 @@ function mostrarProductos(productos) {
         <div class="precio-producto">
           <p class="precio">$${producto.precio}</p>
         </div>
-        <div class="cantidad-producto">
-          <h6>Cantidad</h6>
-          <input type="number" class="cantidad" value="1" min="1">
-          <button class="agregar-carrito">Agregar al carrito</button>
-        </div>
       </div>
     `
     contenedorProductos.innerHTML += tarjetaProducto

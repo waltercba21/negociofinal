@@ -80,8 +80,12 @@ module.exports = {
     res.redirect('/productos');
     
 },
-    carrito : function (req,res){
-        res.render('carrito');
+carrito : function (req,res){
+    // Obtener los productos en el carrito de la sesión
+    var productosEnCarrito = req.session.carrito || [];
+
+    // Renderizar la vista del carrito y pasar los productos en el carrito a la vista
+    res.render('carrito', { productos: productosEnCarrito });
 },
     panelControl: function (req,res){
 
@@ -123,4 +127,38 @@ todos: function (req, res) {
         }
     });
 },
+agregarAlCarrito: function (req, res) {
+    console.log ('Funcion agregarAlCarrito llamada con el id:', req.params.id)
+
+    const productoId = req.params.id;
+    producto.retornarDatosId(conexion, productoId, function (error, productos) {
+        if (error) {
+            console.log('Error al obtener el producto:', error);
+            res.redirect('/productos');
+        } else {
+            // Agregar el producto al carrito en la sesión
+            if (!req.session.carrito) {
+                req.session.carrito = [];
+            }
+            req.session.carrito.push(productos[0]); // Agregar solo el primer producto al carrito
+
+            // Redirigir al usuario a la vista del carrito
+            res.redirect('/productos/carrito');
+        }
+    });
+},
+eliminarDelCarrito: function(req, res) {
+    const productoId = Number(req.params.id);
+    const carrito = req.session.carrito || [];
+
+    for (var i = 0; i < carrito.length; i++) {
+      if (Number(carrito[i].id) === productoId) {
+        carrito.splice(i, 1);
+        break;
+      }
+    }
+
+    req.session.carrito = carrito;
+    res.redirect('/productos/carrito');
+}
 }

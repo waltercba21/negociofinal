@@ -10,7 +10,6 @@
       <input type="text" id="entradaBusqueda" placeholder="Buscar productos...">
     </div>
 
-    <div id="contenedor-productos" class="contenedor-productos">
     
       <div id="contenedor-productos" class="contenedor-productos">
         <% productos.forEach(producto => { %>
@@ -30,9 +29,8 @@
               <p class="precio">$<%= producto.precio %></p>
             </div>
             <div class="cantidad-producto">
-              <h6>Cantidad</h6>
-              <input type="number" class="cantidad" value="1" min="1">
-              <button class="agregar-carrito">Agregar al carrito</button>
+             
+              <a href="/productos/carrito/agregar/<%= producto.id %>" class="agregar-carrito">Agregar al carrito</a>
             </div>
             
           </div>

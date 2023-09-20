@@ -792,14 +792,114 @@ footer {
 
 .cantidad-producto .agregar-carrito {
   padding: 10px 20px;
+  height: auto;
   background-color: #1F487E;
   color: #fff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
 }
 
 .cantidad-producto .agregar-carrito:hover {
   background-color: #0056b3;
+}
+
+/* --------------------------CARRITO----------------------------------------*/
+
+.carrito {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.carrito h2 {
+  margin-bottom: 20px;
+}
+
+.carrito-productos {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.mini-tarjeta {
+  display: flex;
+  margin-right: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+  width: 200px;
+}
+
+.mini-tarjeta-imagen {
+  flex: 1;
+}
+
+.mini-tarjeta-imagen img {
+  width: 100%;
+  height: auto;
+}
+
+.mini-tarjeta-detalles {
+  flex: 2;
+  padding: 10px;
+}
+
+.mini-tarjeta-nombre {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.mini-tarjeta-precio {
+  margin: 0;
+  font-weight: bold;
+}
+
+.quitar-carrito {
+  display: block;
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #f44336;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.quitar-carrito:hover {
+  background-color: #d32f2f;
+}
+
+.tarjeta-grande {
+  margin-top: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 20px;
+}
+
+.tarjeta-grande h3 {
+  margin-top: 0;
+}
+
+.mini-tarjetas {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.total {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.total h3 {
+  margin-top: 0;
+}
+
+.total-precio {
+  margin: 0;
+  font-weight: bold;
 }
