@@ -21,6 +21,9 @@ body {
   font-family: 'Montserrat', sans-serif;
   
 }
+main {
+  margin-bottom: 100px; 
+}
 
 /* -----------------------------------------HEADER--------------------------------*/
 header {
@@ -85,24 +88,29 @@ header .icons .register-link:hover {
 }
 
 header .logueado{
-  display: flex;
-  flex-direction: column;
-  margin-right: 200px;
-  margin-bottom: 100px;
-  position: relative;
+  
+    display: flex;
+    align-items: center; /* Esto alinea los elementos verticalmente en el centro */
+    gap: 10px; /* Esto añade un pequeño espacio entre los elementos */
+
 }
 
 header .icons .logueado a{
-  position: absolute;
-  margin-top: 10px;
-  flex-direction: row;
+  position: relative;
+  margin-right: 10px;
 }
 header .icons .logueado a i {
-  position: absolute;
-  margin-top: 70px;
-  font-size: 20px;
-}
+  position: relative;
+  margin-top: 0;
 
+}
+header .icons .logueado a i {
+  font-size: 24px; /* Ajusta este valor para cambiar el tamaño del icono */
+  vertical-align: middle; /* Esto alinea el icono con el texto */
+}
+header .icons .logueado a span {
+  margin-left: 5px; /* Añade un poco de espacio a la izquierda del texto */
+}
 header .logueado img {
   width: 60px;
   height: 60px;
@@ -118,6 +126,7 @@ header .icons p {
 footer {
   background-color: #fff;
   box-shadow: 0px 0px 25px rgba(189, 189, 189, 0.52);
+  width: 100%;
 }
 
 .main-footer {
@@ -809,53 +818,71 @@ footer {
 }
 
 /* --------------------------CARRITO----------------------------------------*/
-
-.carrito {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.carrito h2 {
-  margin-bottom: 20px;
-}
-
+/* Estilos para la sección de productos en el carrito */
 .carrito-productos {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
+  padding-left: 50px;
+  
+}
+.carrito h2{
+  text-align: center;
+  color: #1F487E;
+  font-size: 28px;
+  font-weight: bold;
+  padding: 70px 0 10 0;
+  margin-bottom: 50px;
+}
+
+.carrito-productos p {
+  text-align: center;
+  color: #d90429;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 70px 0 10 0;
+  margin-bottom: 50px;
 }
 
 .mini-tarjeta {
-  display: flex;
-  margin-right: 20px;
-  margin-bottom: 20px;
-  border: 1px solid #ccc;
+  margin-right: 50px;
+  margin-bottom: 10px;
+  height: 500px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3), 0 18px 18px rgba(0, 0, 0, 0.22);
   border-radius: 5px;
   overflow: hidden;
-  width: 200px;
 }
 
 .mini-tarjeta-imagen {
-  flex: 1;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  height: 170px;
+  overflow: hidden;
 }
 
 .mini-tarjeta-imagen img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  
 }
 
 .mini-tarjeta-detalles {
-  flex: 2;
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 15px;
+  padding: 15px;
 }
 
 .mini-tarjeta-nombre {
-  margin-top: 0;
-  margin-bottom: 10px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
 }
 
 .mini-tarjeta-precio {
-  margin: 0;
+  font-size: 20px;
   font-weight: bold;
 }
 
@@ -863,43 +890,85 @@ footer {
   display: block;
   margin-top: 10px;
   padding: 5px 10px;
-  background-color: #f44336;
+  background-color: #ef233c;
   color: #fff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
 }
 
-.quitar-carrito:hover {
-  background-color: #d32f2f;
-}
-
+/* Estilos para la sección de total en el carrito */
 .tarjeta-grande {
   margin-top: 20px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
   padding: 20px;
-}
-
-.tarjeta-grande h3 {
-  margin-top: 0;
+  border-radius: 5px;
 }
 
 .mini-tarjetas {
   display: flex;
-  flex-wrap: wrap;
+  
 }
 
 .total {
   margin-top: 20px;
-  text-align: right;
-}
 
-.total h3 {
-  margin-top: 0;
 }
 
 .total-precio {
-  margin: 0;
+  font-size: 16px;
   font-weight: bold;
+}
+/*---------------PROFILE---------------*/
+.user-card {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin: 20px auto;
+  max-width: 500px;
+  padding: 20px;
+}
+
+.user-card h2 {
+  margin-bottom: 20px;
+  text-align: center;
+  color: #0056b3;
+  font-size: 24px; /* Adjust this value to make the font larger */
+}.saludo {
+  margin-top: 20px;
+  color: #0056b3;
+  text-align: center;
+}
+
+.saludo h1 {
+  font-size: 2em; /* Adjust this value to make the font larger */
+}
+
+.user-card form {
+  display: grid;
+  gap: 10px;
+}
+
+.user-card label {
+  font-weight: bold;
+}
+
+.user-card input[type="text"],
+.user-card input[type="email"] {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.user-card input[type="submit"] {
+  background-color: #007BFF;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  padding: 10px;
+  text-align: center;
+}
+
+.user-card input[type="submit"]:hover {
+  background-color: #0056b3;
 }

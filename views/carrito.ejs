@@ -1,6 +1,7 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body>
+    <main>
     <div class="carrito">
         <h2>Carrito de compras</h2>
         <div class="carrito-productos">
@@ -43,10 +44,12 @@
                     </div>
                 </div>
             <% } else { %>
-                <p>No hay artículos en el carrito.</p>
+                <p>No hay artículos en el carrito</p>
             <% } %>
         </div>
     </div>
-    <%- include ./layouts/footer.ejs %>
+   </main>
+    <%- include ./layouts/footer.ejs %> 
+
 </body>
 </html>

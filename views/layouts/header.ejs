@@ -13,20 +13,22 @@
     <% } %>
   </nav>
   
-  <div class="icons">
-    <% if (isLogged) { %>
-      <div class="logueado"> 
-        <a href="/users/profile"> 
-          <img src="/img/users/<%= userLogged.imagenUsuario %> "> <!-- Cambiado de usuario.imagenUsuario a userLogged.imagenUsuario -->
-          <p>Hola <%= userLogged.nombre %> </p> <!-- Cambiado de usuario.nombre a userLogged.nombre -->
-        </a>
-        <a href="/users/logout">
-          <i class="fa-solid fa-right-from-bracket"></i>
-        </a>
-      </div>
-    <% } else if (!isAdminUser) { %> <!-- Agregamos esta condición para no mostrar esto al admin -->
-      <a href="/users/login">Iniciar Sesión</a>
-      <a class="register-link" href="/users/register">Registrarme</a>
-    <% } %> 
-  </div>
+  
+    <div class="icons">
+      <% if (isLogged) { %>
+        <div class="logueado"> 
+          <a href="/users/profile"> 
+            <p>Hola <%= userLogged.nombre %> </p> <!-- Cambiado de usuario.nombre a userLogged.nombre -->
+          </a>
+          <a href="/users/logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Salir</span> <!-- Aquí se añade el texto "Salir" -->
+          </a>
+        </div>
+      <% } else if (!isAdminUser) { %> <!-- Agregamos esta condición para no mostrar esto al admin -->
+        <a href="/users/login">Iniciar Sesión</a>
+        <a class="register-link" href="/users/register">Registrarme</a>
+      <% } %> 
+    </div>
+
 </header>

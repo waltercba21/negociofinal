@@ -3,9 +3,41 @@
 <%- include ./layouts/header.ejs %>
 <body>
 
-<main>
-   Hola! <%= usuario.nombre %>
-</main>
+   <main>
+      <div class="saludo">
+         <h1>Hola <%= usuario.nombre %>!</h1>
+      </div>
+      
+    
+      <div class="user-card">
+        <h2>Mis Datos</h2>
+    
+        <form action="/users/profile" method="POST">
+          <label for="nombre">Nombre:</label>
+          <input type="text" id="nombre" name="nombre" value="<%= usuario.nombre %>" required>
+    
+          <label for="apellido">Apellido:</label>
+          <input type="text" id="apellido" name="apellido" value="<%= usuario.apellido %>" required>
+    
+          <label for="celular">Celular:</label>
+          <input type="text" id="celular" name="celular" value="<%= usuario.celular %>" required>
+    
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" value="<%= usuario.email %>" required>
+    
+          <label for="direccion">Dirección:</label>
+          <input type="text" id="direccion" name="direccion" value="<%= usuario.direccion %>" required>
+    
+          <label for="localidad">Localidad:</label>
+          <input type="text" id="localidad" name="localidad" value="<%= usuario.localidad %>" required>
+    
+          <label for="provincia">Provincia:</label>
+          <input type="text" id="provincia" name="provincia" value="<%= usuario.provincia %>" required>
+    
+          <input type="submit" value="Guardar cambios">
+        </form>
+      </div>
+    </main>
     
       <%- include ./layouts/footer.ejs %>
   </body>

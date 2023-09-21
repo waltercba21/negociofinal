@@ -10,16 +10,44 @@ module.exports = {
   obtenerPorEmail: function (email, funcion) {
     conexion.query('SELECT * FROM usuarios WHERE email = ?', [email], funcion);
   },
-  obtenerPorEmailYContraseña: function (email, contraseña, callback) {
-    const query = "SELECT * FROM usuarios WHERE email = ? AND password = ?";
-    const values = [email, contraseña];
+obtenerPorEmailYContraseña: function (email, contraseña, callback) {
+  const query = "SELECT * FROM usuarios WHERE email = ?";
+  const values = [email];
 
-    conexion.query(query, values, function (error, resultados) {
-      if (error) {
-        return callback(error, null);
+  conexion.query(query, values, function (error, resultados) {
+    if (error) {
+      return callback(error, null);
+    }
+
+    if (resultados.length === 0) {
+      return callback(null, null);
+    }
+
+    const usuario = resultados[0];
+
+    bcrypt.compare(contraseña, usuario.password, function (err, result) {
+      if (err) {
+        return callback(err, null);
       }
 
-      return callback(null, resultados);
+      if (!result) {
+        return callback(null, null);
+      }
+
+      return callback(null, usuario);
+    });
+  });
+},
+  actualizar: function (id, datos, funcion) {
+    const query = "UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, celular = ?, direccion = ?, localidad = ?, provincia = ? WHERE id = ?";
+    const values = [datos.nombre, datos.apellido, datos.email, datos.celular, datos.direccion, datos.localidad, datos.provincia, id];
+  
+    conexion.query(query, values, function (error, resultados) {
+      if (error) {
+        return funcion(error, null);
+      }
+  
+      return funcion(null, resultados);
     });
   }
 };

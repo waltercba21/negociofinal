@@ -30,8 +30,11 @@ router.post('/login', loginValidations, usuariosController.processLogin);
 
 // Perfil de Usuario
 router.get('/profile', usuariosController.profile);
+router.post('/profile', usuariosController.updateProfile);
 
 //Cerrar Sesión
 router.get('/logout', usuariosController.logout);
+
+
 
 module.exports = router;

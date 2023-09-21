@@ -97,14 +97,18 @@ module.exports = {
         req.session.usuario = datos[0];
         const isLogged = true;
         const isAdminUser = (email === 'waltercordobadev@gmail.com');
-        res.render('profile', { usuario: datos[0], isLogged, isAdminUser });
+        res.redirect('/users/profile');
       });
     });
   },
-  profile: (req,res) => {
-    
-      return res.render('profile')
-  
+  profile: (req, res) => {
+    if (req.session && req.session.usuario) {
+      console.log(req.session.usuario); // Añade esta línea
+      return res.render('profile', { usuario: req.session.usuario });
+    } else {
+      // Redirige al usuario a la página de inicio de sesión si no hay una sesión de usuario
+      return res.redirect('/users/login');
+    }
   },
   logout: (req, res) => {
     // Destruir la sesión
@@ -115,6 +119,23 @@ module.exports = {
       // Redirigir al usuario al inicio después de cerrar sesión
       res.redirect('/');
     });
-  }
+  },
+  updateProfile: (req, res) => {
+    const userId = req.session.usuario.id;
+    const updatedData = req.body;
+  
+    usuario.actualizar(userId, updatedData, function (error) {
+      if (error) {
+        // Manejar el error
+      }
+    
+      console.log(updatedData); // Añade esta línea
+    
+      // Actualizar los datos del usuario en la sesión
+      req.session.usuario = { ...req.session.usuario, ...updatedData };
+      console.log(req.session.usuario); // Añade esta línea
+      res.redirect('/users/profile');
+    });
+  },
   
 }
