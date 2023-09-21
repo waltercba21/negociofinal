@@ -140,6 +140,8 @@ agregarAlCarrito: function (req, res) {
             if (!req.session.carrito) {
                 req.session.carrito = [];
             }
+            // Agregar una propiedad de cantidad al producto
+            productos[0].cantidad = 1; // puedes cambiar esto por la cantidad que el usuario seleccionó
             req.session.carrito.push(productos[0]); // Agregar solo el primer producto al carrito
 
             // Redirigir al usuario a la vista del carrito
@@ -154,6 +156,21 @@ eliminarDelCarrito: function(req, res) {
     for (var i = 0; i < carrito.length; i++) {
       if (Number(carrito[i].id) === productoId) {
         carrito.splice(i, 1);
+        break;
+      }
+    }
+
+    req.session.carrito = carrito;
+    res.redirect('/productos/carrito');
+},
+actualizarCantidadCarrito: function(req, res) {
+    const productoId = Number(req.params.id);
+    const nuevaCantidad = Number(req.body.cantidad);
+    const carrito = req.session.carrito || [];
+
+    for (var i = 0; i < carrito.length; i++) {
+      if (Number(carrito[i].id) === productoId) {
+        carrito[i].cantidad = nuevaCantidad;
         break;
       }
     }

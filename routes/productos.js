@@ -50,4 +50,22 @@ router.get('/carrito', productosController.carrito)
 // Ruta para eliminar un producto del carrito de compras
 router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
 
+// Ruta para actualizar la cantidad de un producto en el carrito de compras
+router.post('/carrito/actualizar/:id', function(req, res) {
+    const productoId = Number(req.params.id);
+    const nuevaCantidad = Number(req.body.cantidad);
+    const carrito = req.session.carrito || [];
+
+    for (var i = 0; i < carrito.length; i++) {
+      if (Number(carrito[i].id) === productoId) {
+        carrito[i].cantidad = nuevaCantidad;
+        break;
+      }
+    }
+
+    req.session.carrito = carrito;
+    res.redirect('/productos/carrito');
+});
+router.post('/productos/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
+
 module.exports = router;
