@@ -4,86 +4,89 @@
     <main>
         <div class="carrito">
             <h2>Tu Carrito</h2>
-            <div class="carrito-productos">
-                <% if (productos.length > 0) { %>
-                    <div class="tarjeta-productos">
-                        <h3>Artículos en el carrito</h3>
-                        <div class="mini-tarjetas">
-                            <% for (var i = 0; i < productos.length; i++) { %>
-                                <div class="mini-tarjeta">
-                                    <div class="mini-tarjeta-imagen">
-                                        <img src="../../images/<%= productos[i].imagen %>" alt="Imagen de <%= productos[i].nombre %>">
-                                    </div>
-                                    <div class="mini-tarjeta-detalles">
-                                        <h4 class="mini-tarjeta-nombre"><%= productos[i].nombre %></h4>
-                                        <p class="mini-tarjeta-precio">$<%= productos[i].precio %></p>
-                                        <div class="mini-tarjeta-cantidad">
-                                            <form action="/productos/carrito/actualizar/<%= productos[i].id %>" method="post">
-                                                <label for="cantidad-<%= productos[i].id %>">Cantidad:</label>
-                                                <input type="number" id="cantidad-<%= productos[i].id %>" name="cantidad" value="<%= productos[i].cantidad %>" min="1" max="10">
-                                                <button type="submit">Actualizar cantidad</button>
-                                            </form>
-                                        </div>
-                                        <form action="/productos/carrito/eliminar/<%= productos[i].id %>" method="post">
-                                            <input type="hidden" name="_method" value="delete">
-                                            <button type="submit" class="quitar-carrito">Quitar del carrito</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            <% } %>
-                        </div>
-                    </div>
-                    <div class="tarjeta-total">
-                        <h3>Subtotal</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Producto</th>
-                                    <th>Cantidad</th>
-                                    <th>Precio</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% var totalCantidad = 0; var totalPrecio = 0; %>
+            <div class="carrito-contenedor">
+                <div class="carrito-productos">
+                    <% if (productos.length > 0) { %>
+                        <div class="tarjeta-productos">
+                            <h3>Artículos en el carrito</h3>
+                            <div class="mini-tarjetas">
                                 <% for (var i = 0; i < productos.length; i++) { %>
-                                    <% totalCantidad += productos[i].cantidad; totalPrecio += productos[i].precio * productos[i].cantidad; %>
-                                    <tr>
-                                        <td><%= productos[i].nombre %></td>
-                                        <td><%= productos[i].cantidad %></td>
-                                        <td>$<%= productos[i].precio * productos[i].cantidad %></td>
-                                    </tr>
+                                    <div class="mini-tarjeta">
+                                        <div class="mini-tarjeta-imagen">
+                                            <img src="../../images/<%= productos[i].imagen %>" alt="Imagen de <%= productos[i].nombre %>">
+                                        </div>
+                                        <div class="mini-tarjeta-detalles">
+                                            <h4 class="mini-tarjeta-nombre"><%= productos[i].nombre %></h4>
+                                            <p class="mini-tarjeta-precio">$<%= productos[i].precio %></p>
+                                            <div class="mini-tarjeta-cantidad">
+                                                <form action="/productos/carrito/actualizar/<%= productos[i].id %>" method="post">
+                                                    <label for="cantidad-<%= productos[i].id %>">Cantidad:</label>
+                                                    <input type="number" id="cantidad-<%= productos[i].id %>" name="cantidad" value="<%= productos[i].cantidad %>" min="1" max="10">
+                                                    <button type="submit"class='actualizar'>Actualizar cantidad</button>
+                                                </form>
+                                            
+                                            <form action="/productos/carrito/eliminar/<%= productos[i].id %>" method="post">
+                                                <input type="hidden" name="_method" value="delete">
+                                                <button type="submit" class="quitar-carrito">Quitar del carrito</button>
+                                            </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                 <% } %>
-                            </tbody>
-                            <tfoot>
+                            </div>
+                        </div>
+                </div>
+                <div class="tarjeta-total">
+                    <h3>Subtotal</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% var totalCantidad = 0; var totalPrecio = 0; %>
+                            <% for (var i = 0; i < productos.length; i++) { %>
+                                <% totalCantidad += productos[i].cantidad; totalPrecio += productos[i].precio * productos[i].cantidad; %>
                                 <tr>
-                                    <td>Total de productos:</td>
-                                    <td><%= totalCantidad %></td>
-                                    <td></td>
+                                    <td><%= productos[i].nombre %></td>
+                                    <td><%= productos[i].cantidad %></td>
+                                    <td>$<%= productos[i].precio * productos[i].cantidad %></td>
                                 </tr>
-                                <tr>
-                                    <td colspan="2">Total:</td>
-                                    <td id="total">$<%= totalPrecio.toFixed(2) %></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    <script>
-                        // Obtener los elementos de la tabla
-                        const tabla = document.querySelector('table');
-                        const filas = tabla.querySelectorAll('tbody tr');
-                        const totalElemento = document.querySelector('#total');
+                            <% } %>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>Total de productos:</td>
+                                <td><%= totalCantidad %></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">Total:</td>
+                                <td id="total">$<%= totalPrecio.toFixed(2) %></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <script>
+                    // Obtener los elementos de la tabla
+                    const tabla = document.querySelector('table');
+                    const filas = tabla.querySelectorAll('tbody tr');
+                    const totalElemento = document.querySelector('#total');
 
-                        // Calcular el total
-                        let total = 0;
-                        filas.forEach(fila => {
-                            const precio = parseFloat(fila.querySelector('td:nth-child(3)').textContent.slice(1));
-                            const cantidad = parseInt(fila.querySelector('td:nth-child(2)').textContent);
-                            total += precio * cantidad;
-                        });
+                    // Calcular el total
+                    let total = 0;
+                    filas.forEach(fila => {
+                        const precio = parseFloat(fila.querySelector('td:nth-child(3)').textContent.slice(1));
+                        
+                        total += precio ;
+                    });
 
-                        // Mostrar el total en la página
-                        totalElemento.textContent = '$' + total.toFixed(2);
-                    </script>
+                    // Mostrar el total en la página
+                    totalElemento.textContent = '$' + total.toFixed(2);
+                </script>
                 <% } else { %>
                     <div class="vacio">
                         <p>No hay artículos en el carrito</p>

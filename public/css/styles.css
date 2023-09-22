@@ -821,6 +821,10 @@ footer {
 /* Estilos para la página de carrito */
 
 /* Estilos generales */
+.carrito-contenedor {
+  display: flex;
+  justify-content: space-between;
+}
 .carrito {
   max-width: 1200px;
   margin: 0 auto;
@@ -828,14 +832,26 @@ footer {
 }
 
 .carrito h2 {
+  text-align: center;
   font-size: 2rem;
   margin-bottom: 20px;
+  color: #d32f2f;
+  font-weight: bold;
 }
 
 .carrito-productos {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  margin-top: 20px;
+  margin-right: 30px;
+  border-radius: 10px;
+}
+.carrito-productos h3{
+  color: #1F487E;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 15px;
 }
 
 .tarjeta-grande {
@@ -847,7 +863,15 @@ footer {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
-
+.tarjeta-total{
+  margin-top: 20px;
+}
+.tarjeta-total h3{
+  color: #1F487E;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 15px;
+}
 .articulos {
   width: 60%;
   padding: 20px;
@@ -873,6 +897,7 @@ footer {
 
 .mini-tarjeta {
   width: 48%;
+  min-height: 350px; /* Ajusta este valor según tus necesidades */
   margin-bottom: 20px;
   background-color: #fff;
   border-radius: 10px;
@@ -895,84 +920,86 @@ footer {
 .mini-tarjeta-detalles {
   padding: 20px;
 }
-
-.mini-tarjeta-nombre {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
+.mini-tarjeta-detalles h4 {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: bold;
 }
-
-.mini-tarjeta-precio {
+.mini-tarjeta-detalles p {
+  text-align: center;
   font-size: 1.2rem;
-  margin-bottom: 10px;
+  font-weight: bold;
+  color: #0056b3;
 }
 
 .mini-tarjeta-cantidad {
   margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; 
+}
+
+.mini-tarjeta-cantidad form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .mini-tarjeta-cantidad label {
-  font-size: 1.2rem;
+  font-size: 1rem;
   margin-right: 10px;
 }
 
 .mini-tarjeta-cantidad input {
-  font-size: 1.2rem;
-  padding: 5px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+    font-size: 1.2rem;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    width: 55px; 
+    height: 40px; 
+    visibility: visible; 
+  
 }
 
 .quitar-carrito {
-  font-size: 1.2rem;
-  padding: 5px 10px;
-  border-radius: 5px;
-  border: none;
-  background-color: #f44336;
-  color: #fff;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  text-align: center;
+  margin-top: 20px;
+  border-radius: 5px; 
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  background-color: #f50a0a; 
+  color: white; 
+  border: none; 
+  padding: 10px 24px; 
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer; 
+  transition: all 0.3s ease 0s; 
 }
 
 .quitar-carrito:hover {
-  background-color: #d32f2f;
+  background-color: #f40909;
 }
-
-/* Estilos para la tabla de total */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-}
-
-thead {
-  background-color: #f5f5f5;
-}
-
-th {
-  font-size: 1.2rem;
-  padding: 10px;
-  text-align: left;
-}
-
-tbody tr:nth-child(even) {
-  background-color: #f5f5f5;
-}
-
-td {
-  font-size: 1.2rem;
-  padding: 10px;
-}
-
-tfoot td {
-  font-size: 1.2rem;
-  padding: 10px;
-  text-align: right;
-}
-
-#total {
-  font-size: 1.2rem;
+.actualizar {
+  text-align: center;
+  margin-top: 20px;
+  border-radius: 5px; 
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  background-color: #0056b3; 
+  color: white; 
+  border: none; 
+  padding: 10px 24px; 
+  font-size: 1rem;
   font-weight: bold;
+  cursor: pointer; 
+  transition: all 0.3s ease 0s; 
 }
+
+.actualizar:hover {
+  background-color: #45a049; 
+}
+
 /*---------------PROFILE---------------*/
 .user-card {
   background-color: #fff;
