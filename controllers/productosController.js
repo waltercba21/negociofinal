@@ -177,5 +177,9 @@ actualizarCantidadCarrito: function(req, res) {
 
     req.session.carrito = carrito;
     res.redirect('/productos/carrito');
-}
+},
+vaciarCarrito : function(req, res) {
+    req.session.carrito = [];
+    res.redirect('/productos/carrito');
+  }
 }

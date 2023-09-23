@@ -67,5 +67,6 @@ router.post('/carrito/actualizar/:id', function(req, res) {
     res.redirect('/productos/carrito');
 });
 router.post('/productos/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
+router.post('/vaciar-carrito', productosController.vaciarCarrito);
 
 module.exports = router;

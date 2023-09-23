@@ -847,22 +847,16 @@ footer {
   margin-right: 30px;
   border-radius: 10px;
 }
-.carrito-productos h3{
+.tarjeta-productos h3{
   color: #1F487E;
+  margin-bottom: 15px;
   font-weight: bold;
   text-align: center;
   margin-bottom: 15px;
 }
 
-.tarjeta-grande {
-  width: 100%;
-  max-width: 800px;
-  margin-bottom: 20px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
+/*-----------------TARJETA TOTAL PRODUCTOS-----------------*/
+
 .tarjeta-total{
   margin-top: 20px;
 }
@@ -872,6 +866,7 @@ footer {
   text-align: center;
   margin-bottom: 15px;
 }
+
 .articulos {
   width: 60%;
   padding: 20px;
@@ -888,16 +883,16 @@ footer {
   margin-bottom: 20px;
 }
 
-/* Estilos para las mini tarjetas */
+
 .mini-tarjetas {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
 
 .mini-tarjeta {
-  width: 48%;
-  min-height: 350px; /* Ajusta este valor según tus necesidades */
+  min-width: 48%;
+  min-height: 350px; 
   margin-bottom: 20px;
   background-color: #fff;
   border-radius: 10px;
@@ -999,7 +994,87 @@ footer {
 .actualizar:hover {
   background-color: #45a049; 
 }
+/*---------------Total Tarjeta de productos ---------------*/
+.tarjeta-total {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  max-height: 600px; 
+  overflow-y: auto; 
+}
 
+.tarjeta-total h3 {
+  text-align: center;
+  color: #1F487E;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.tarjeta-total table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tarjeta-total td{
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.tarjeta-total th,
+.tarjeta-total td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.tarjeta-total th {
+  background-color: #1F487E;
+  color: white;
+}
+
+.tarjeta-total tfoot td {
+  font-weight: bold;
+}
+
+.tarjeta-total #total {
+  color: #0056b3;}
+
+.botones {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  .boton-pagar,
+  .boton-vaciar {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-bottom: 10px; /* Añade un margen en la parte inferior para separar los botones */
+  }
+  
+  .boton-pagar {
+    background-color: #0056b3;
+    color: white;
+  }
+  
+  .boton-pagar:hover {
+    background-color: #003f7d;
+  }
+  
+  .boton-vaciar {
+    background-color: #f50a0a;
+    color: white;
+  }
+  
+  .boton-vaciar:hover {
+    background-color: #b30707;
+  }
 /*---------------PROFILE---------------*/
 .user-card {
   background-color: #fff;

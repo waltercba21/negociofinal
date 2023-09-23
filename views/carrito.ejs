@@ -69,6 +69,11 @@
                             </tr>
                         </tfoot>
                     </table>
+                    <div class="botones">
+                        <button class="boton-pagar">Ir a Pagar</button>
+                        <button class="boton-vaciar">Vaciar Carrito</button>
+                      </div>
+                    </div>
                 </div>
                 <script>
                     // Obtener los elementos de la tabla
@@ -86,6 +91,20 @@
 
                     // Mostrar el total en la página
                     totalElemento.textContent = '$' + total.toFixed(2);
+                    document.addEventListener('DOMContentLoaded', function() {
+  document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
+    e.preventDefault();
+    fetch('/productos/vaciar-carrito', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(function() {
+      location.reload(); // Recarga la página para mostrar el carrito vacío
+    });
+  });
+});
                 </script>
                 <% } else { %>
                     <div class="vacio">
