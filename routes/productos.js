@@ -68,5 +68,8 @@ router.post('/carrito/actualizar/:id', function(req, res) {
 });
 router.post('/productos/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
 router.post('/vaciar-carrito', productosController.vaciarCarrito);
+router.get('/comprar', productosController.mostrarCompra);
+router.post('/comprar', productosController.completarCompra);
+
 
 module.exports = router;

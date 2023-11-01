@@ -1,0 +1,23 @@
+<%- include ./layouts/head.ejs %>
+<%- include ./layouts/header.ejs %>
+<body>
+    <main>
+        <div class="compra">
+            <h2>Finalizar Compra</h2>
+            <form action="/productos/comprar" method="post">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" required>
+
+                <label for="direccion">Dirección:</label>
+                <input type="text" id="direccion" name="direccion" required>
+
+                <label for="tarjeta">Número de Tarjeta:</label>
+                <input type="text" id="tarjeta" name="tarjeta" required>
+
+                <button type="submit">Comprar</button>
+            </form>
+        </div>
+    </main>
+    <%- include ./layouts/footer.ejs %>
+</body>
+</html>

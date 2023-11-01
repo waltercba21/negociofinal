@@ -5,36 +5,69 @@
         <div class="carrito">
             <h2>Tu Carrito</h2>
             <div class="carrito-contenedor">
-                <div class="carrito-productos">
+                <div class="carrito-productos">   
                     <% if (productos.length > 0) { %>
                         <div class="tarjeta-productos">
-                            <h3>Artículos en el carrito</h3>
                             <div class="mini-tarjetas">
+                                <h3>Artículos en el carrito</h3>
                                 <% for (var i = 0; i < productos.length; i++) { %>
-                                    <div class="mini-tarjeta">
+                                    <div class="mini-tarjeta" id="producto-<%= productos[i].id %>"> 
+                                        
                                         <div class="mini-tarjeta-imagen">
                                             <img src="../../images/<%= productos[i].imagen %>" alt="Imagen de <%= productos[i].nombre %>">
                                         </div>
                                         <div class="mini-tarjeta-detalles">
                                             <h4 class="mini-tarjeta-nombre"><%= productos[i].nombre %></h4>
-                                            <p class="mini-tarjeta-precio">$<%= productos[i].precio %></p>
+                                            <p class="mini-tarjeta-precio" id="precio-<%= productos[i].id %>">$<%= productos[i].precio %></p>
                                             <div class="mini-tarjeta-cantidad">
                                                 <form action="/productos/carrito/actualizar/<%= productos[i].id %>" method="post">
                                                     <label for="cantidad-<%= productos[i].id %>">Cantidad:</label>
-                                                    <input type="number" id="cantidad-<%= productos[i].id %>" name="cantidad" value="<%= productos[i].cantidad %>" min="1" max="10">
-                                                    <button type="submit"class='actualizar'>Actualizar cantidad</button>
+                                                    <div class="input-group-qty" style="display: flex; align-items: center;">
+                                                        <input type="text" id="cantidad-<%= productos[i].id %>" name="cantidad" value="<%= productos[i].cantidad %>" class="form-control input-cart-qty" size="1" data-maxval="10" onkeyup="actualizarCantidad('<%= productos[i].id %>')">
+                                                        <div class="qty-btns" style="display: flex; flex-direction: column; justify-content: center;">
+                                                            <button class="btn btn-qty qty-top" onclick="mas('<%= productos[i].id %>');return false;" type="button">
+                                                                <i class="fa fa-angle-up" aria-hidden="true"></i>
+                                                            </button>
+                                                            <button class="btn btn-qty qty-bottom" onclick="menos('<%= productos[i].id %>');return false;" type="button">
+                                                                <i class="fa fa-angle-down" aria-hidden="true"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    
                                                 </form>
                                             
-                                            <form action="/productos/carrito/eliminar/<%= productos[i].id %>" method="post">
-                                                <input type="hidden" name="_method" value="delete">
-                                                <button type="submit" class="quitar-carrito">Quitar del carrito</button>
-                                            </form>
+                                                <form action="/productos/carrito/eliminar/<%= productos[i].id %>" method="post">                  
+                                                    <button type="submit" class="quitar-carrito">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </div>
                                     </div>
                                 <% } %>
                             </div>
                         </div>
+                        
+                </div>
+                <div class="tarjeta-envio">
+                            <h3>Seleccion Envío</h3>
+                            <form action="/productos/envios" method="POST">
+                                <div>
+                                    <input type="radio" id="envio-dia" name="envio" value="envio-dia">
+                                    <label for="envio-dia">Envío en el día </label>
+                                    <p>(Dentro del radio de circunvalacion $1000)</p>
+                                </div>
+                                <div>
+                                    <input type="radio" id="retiro-local" name="envio" value="retiro-local">
+                                    <label for="retiro-local">Retiro por el local </label>
+                                    <p>(GRATIS)</p>
+                                </div>
+                                <div>
+                                    <input type="radio" id="envio-correo" name="envio" value="envio-correo">
+                                    <label for="envio-correo">Envío por correo </label>
+                                    <p>$2500</p>
+                                </div>
+                            </form>
                 </div>
                 <div class="tarjeta-total">
                     <h3>Subtotal</h3>
@@ -50,10 +83,10 @@
                             <% var totalCantidad = 0; var totalPrecio = 0; %>
                             <% for (var i = 0; i < productos.length; i++) { %>
                                 <% totalCantidad += productos[i].cantidad; totalPrecio += productos[i].precio * productos[i].cantidad; %>
-                                <tr>
+                                <tr id="fila-<%= productos[i].id %>">
                                     <td><%= productos[i].nombre %></td>
-                                    <td><%= productos[i].cantidad %></td>
-                                    <td>$<%= productos[i].precio * productos[i].cantidad %></td>
+                                    <td id="cantidad-tabla-<%= productos[i].id %>"><%= productos[i].cantidad %></td>
+                                    <td id="subtotal-<%= productos[i].id %>">$<%= productos[i].precio * productos[i].cantidad %></td>
                                 </tr>
                             <% } %>
                         </tbody>
@@ -63,25 +96,36 @@
                                 <td><%= totalCantidad %></td>
                                 <td></td>
                             </tr>
+                            <tr id="costo-envio-row" style="display: none;">
+                                <td>Costo de envío:</td>
+                                <td id="costo-envio">$0.00</td>
+                              </tr>
                             <tr>
+                                <tr id="costo-envio-retiro-local-row" style="display: none;">
+                                    <td>Costo de envío:</td>
+                                    <td id="costo-envio-retiro-local">Gratis</td>
+                                  </tr>
                                 <td colspan="2">Total:</td>
                                 <td id="total">$<%= totalPrecio.toFixed(2) %></td>
                             </tr>
                         </tfoot>
                     </table>
                     <div class="botones">
-                        <button class="boton-pagar">Ir a Pagar</button>
+                        <form action="/productos/envios" method="GET">
+                            <button class="boton-continuar-compra" type="submit">Continuar Compra</button>
+                        </form>
+                        
                         <button class="boton-vaciar">Vaciar Carrito</button>
                       </div>
                     </div>
                 </div>
                 <script>
-                    // Obtener los elementos de la tabla
+                // Obtener los elementos de la tabla
                     const tabla = document.querySelector('table');
                     const filas = tabla.querySelectorAll('tbody tr');
                     const totalElemento = document.querySelector('#total');
 
-                    // Calcular el total
+                // Calcular el total
                     let total = 0;
                     filas.forEach(fila => {
                         const precio = parseFloat(fila.querySelector('td:nth-child(3)').textContent.slice(1));
@@ -89,22 +133,116 @@
                         total += precio ;
                     });
 
-                    // Mostrar el total en la página
+                // Mostrar el total en la página
                     totalElemento.textContent = '$' + total.toFixed(2);
                     document.addEventListener('DOMContentLoaded', function() {
-  document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
-    e.preventDefault();
-    fetch('/productos/vaciar-carrito', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-    .then(function() {
-      location.reload(); // Recarga la página para mostrar el carrito vacío
+                    document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    fetch('/productos/vaciar-carrito', {
+                    method: 'POST',
+                    headers: {
+                     'Content-Type': 'application/json'
+                    }
+                 })
+                    .then(function() {
+                    location.reload(); // Recarga la página para mostrar el carrito vacío
+                    });
+                });
+            });
+
+
+
+
+function mas(id) {
+    const input = document.getElementById('cantidad-' + id);
+    let valor = parseInt(input.value, 10);
+    valor = isNaN(valor) ? 0 : valor;
+    valor++;
+    input.value = valor;
+
+    actualizarPrecio(id);
+}
+
+function menos(id) {
+    const input = document.getElementById('cantidad-' + id);
+    let valor = parseInt(input.value, 10);
+    valor = isNaN(valor) ? 0 : valor;
+    valor < 1 ? valor = 1 : '';
+    valor--;
+    input.value = valor;
+
+    actualizarPrecio(id);
+}
+
+function actualizarPrecio(id) {
+    const cantidad = document.getElementById('cantidad-' + id).value;
+    const precio = document.getElementById('precio-' + id).textContent.slice(1);
+    const subtotal = cantidad * precio;
+
+    document.getElementById('subtotal-' + id).textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('cantidad-tabla-' + id).textContent = cantidad;
+
+    // Recalcular el total
+    let total = 0;
+    const filas = document.querySelectorAll('tbody tr');
+    filas.forEach(fila => {
+        const precio = parseFloat(fila.querySelector('td:nth-child(3)').textContent.slice(1));
+        total += precio;
     });
-  });
-});
+    document.querySelector('#total').textContent = '$' + total.toFixed(2);
+}
+// Obtener los elementos de radio de envío
+const envioDia = document.getElementById('envio-dia');
+const retiroLocal = document.getElementById('retiro-local');
+const envioCorreo = document.getElementById('envio-correo');
+
+// Agregar un evento change a los elementos de radio de envío
+envioDia.addEventListener('change', actualizarTotal);
+retiroLocal.addEventListener('change', actualizarTotal);
+envioCorreo.addEventListener('change', actualizarTotal);
+
+// Variables para almacenar el costo de envío actual y el método de envío seleccionado anteriormente
+let costoEnvioActual = 0;
+let metodoEnvioAnterior = null;
+
+// Función para actualizar el total según el método de envío seleccionado
+function actualizarTotal() {
+  let total = parseFloat(document.getElementById('total').textContent.slice(1));
+
+  // Verificar si el método de envío seleccionado ha cambiado
+  if (metodoEnvioAnterior !== null && this.value !== metodoEnvioAnterior) {
+    if (metodoEnvioAnterior === 'envio-dia') {
+      total -= 1000;
+    } else if (metodoEnvioAnterior === 'envio-correo') {
+      total -= 2500;
+    }
+  }
+
+  // Actualizar el costo de envío actual y el método de envío seleccionado anteriormente
+  if (this.value === 'envio-dia') {
+    costoEnvioActual = 1000;
+    metodoEnvioAnterior = 'envio-dia';
+  } else if (this.value === 'retiro-local') {
+    costoEnvioActual = 0;
+    metodoEnvioAnterior = 'retiro-local';
+  } else if (this.value === 'envio-correo') {
+    costoEnvioActual = 2500;
+    metodoEnvioAnterior = 'envio-correo';
+  }
+
+  // Actualizar el valor del costo de envío en la tabla de subtotal
+  const costoEnvioElemento = document.getElementById('costo-envio');
+  if (costoEnvioActual > 0) {
+    costoEnvioElemento.parentElement.style.display = 'table-row';
+    costoEnvioElemento.textContent = '$' + costoEnvioActual.toFixed(2);
+  } else {
+    costoEnvioElemento.parentElement.style.display = 'none';
+  }
+
+  // Actualizar el valor del total en la página
+  total += costoEnvioActual;
+  document.getElementById('total').textContent = '$' + total.toFixed(2);
+}
                 </script>
                 <% } else { %>
                     <div class="vacio">
@@ -116,4 +254,4 @@
     </main>
     <%- include ./layouts/footer.ejs %>
 </body>
-</html>
+</html>  

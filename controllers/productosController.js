@@ -83,7 +83,8 @@ module.exports = {
 carrito : function (req,res){
     // Obtener los productos en el carrito de la sesión
     var productosEnCarrito = req.session.carrito || [];
-
+    // Imprimir los productos en el carrito
+    console.log('Productos en el carrito:', productosEnCarrito);
     // Renderizar la vista del carrito y pasar los productos en el carrito a la vista
     res.render('carrito', { productos: productosEnCarrito });
 },
@@ -131,39 +132,69 @@ agregarAlCarrito: function (req, res) {
     console.log ('Funcion agregarAlCarrito llamada con el id:', req.params.id)
 
     const productoId = req.params.id;
-    producto.retornarDatosId(conexion, productoId, function (error, productos) {
-        if (error) {
-            console.log('Error al obtener el producto:', error);
-            res.redirect('/productos');
-        } else {
-            // Agregar el producto al carrito en la sesión
-            if (!req.session.carrito) {
-                req.session.carrito = [];
-            }
-            // Agregar una propiedad de cantidad al producto
-            productos[0].cantidad = 1; // puedes cambiar esto por la cantidad que el usuario seleccionó
-            req.session.carrito.push(productos[0]); // Agregar solo el primer producto al carrito
+    const usuarioId = req.session.usuario.id; // Asegúrate de tener el id del usuario en la sesión
+    const cantidad = 1; // puedes cambiar esto por la cantidad que el usuario seleccionó
+    const metodoEnvio = req.body.metodo_envio; // obtén el método de envío
+    const imagen = req.body.imagen; // obtén la imagen del producto
 
-            // Redirigir al usuario a la vista del carrito
+    producto.retornarDatosId(conexion, productoId, function (error, productos) {
+      if (error) {
+        console.log('Error al obtener el producto:', error);
+        res.redirect('/productos');
+      } else {
+        // Agregar el producto al carrito en la sesión
+        if (!req.session.carrito) {
+          req.session.carrito = [];
+        }
+        // Agregar una propiedad de cantidad al producto
+        productos[0].cantidad = cantidad;
+        req.session.carrito.push(productos[0]); // Agregar solo el primer producto al carrito
+
+        // Obtén el precio del producto
+        const precio = productos[0].precio;
+        // Calcula el precio total que es el precio del producto multiplicado por la cantidad
+        const precioTotal = precio * cantidad;
+
+        // Insertar o actualizar el producto en el carrito en la base de datos
+        conexion.query('INSERT INTO carritos (usuario_id, producto_id, cantidad, precio_total, metodo_envio, imagen) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE cantidad = cantidad + ?', [usuarioId, productoId, cantidad, precioTotal, metodoEnvio, imagen, cantidad], function (error) {
+          if (error) {
+            console.log('Error al guardar el carrito en la base de datos:', error);
+          }
+
+          // Redirigir al usuario a la vista del carrito
+          res.redirect('/productos/carrito');
+        });
+      }
+    });
+},
+
+  eliminarDelCarrito : function(req, res) {
+    console.log('Función eliminarDelCarrito llamada');
+    const productoId = req.params.id;
+    console.log('productoId:', productoId);
+    const usuarioId = req.session.usuario.id; 
+    console.log('usuarioId:', usuarioId);
+
+    // Encuentra el producto en la sesión del carrito
+    const index = req.session.carrito.findIndex(producto => producto.producto_id === productoId);
+
+    // Si el producto está en el carrito, elimínalo
+    if (index !== -1) {
+        req.session.carrito.splice(index, 1);
+    }
+
+    // Elimina el producto del carrito de compras en la base de datos
+    conexion.query('DELETE FROM carritos WHERE producto_id = ? AND usuario_id = ?', [productoId, usuarioId], function (error) {
+        if (error) {
+            console.log('Error al eliminar el producto del carrito en la base de datos:', error);
+        } else {
+            // Redirige al usuario de vuelta al carrito
             res.redirect('/productos/carrito');
         }
     });
 },
-eliminarDelCarrito: function(req, res) {
-    const productoId = Number(req.params.id);
-    const carrito = req.session.carrito || [];
-
-    for (var i = 0; i < carrito.length; i++) {
-      if (Number(carrito[i].id) === productoId) {
-        carrito.splice(i, 1);
-        break;
-      }
-    }
-
-    req.session.carrito = carrito;
-    res.redirect('/productos/carrito');
-},
-actualizarCantidadCarrito: function(req, res) {
+  
+  actualizarCantidadCarrito: function(req, res) {
     const productoId = Number(req.params.id);
     const nuevaCantidad = Number(req.body.cantidad);
     const carrito = req.session.carrito || [];
@@ -181,5 +212,14 @@ actualizarCantidadCarrito: function(req, res) {
 vaciarCarrito : function(req, res) {
     req.session.carrito = [];
     res.redirect('/productos/carrito');
-  }
+},
+mostrarCompra : function(req, res) {
+    res.render('compra');
+  },
+completarCompra : function(req, res) {
+   
+    res.redirect('/');
+  },
+
+
 }
