@@ -1,6 +1,7 @@
 const usuario = require('../models/usuario');
 const bcryptjs = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
+const conexion = require('../config/conexion')
 
 module.exports = {
   register: (req, res) => {
@@ -97,7 +98,17 @@ module.exports = {
         req.session.usuario = datos[0];
         const isLogged = true;
         const isAdminUser = (email === 'waltercordobadev@gmail.com');
-        res.redirect('/users/profile');
+  
+       
+        // Cargar el carrito del usuario de la base de datos
+conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carritos JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [req.session.usuario.id], function (error, carritos) {
+  if (error) {
+    console.log('Error al cargar el carrito:', error);
+  } else {
+    req.session.carrito = carritos;
+    res.redirect('/users/profile');
+  }
+});
       });
     });
   },
