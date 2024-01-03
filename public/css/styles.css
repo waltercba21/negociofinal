@@ -748,15 +748,20 @@ footer {
 }
 
 .cover__card{
+  display: flex; /* Habilita flexbox */
+  justify-content: center; /* Centra los elementos hijos horizontalmente */
+  align-items: center; /* Centra los elementos hijos verticalmente */
   width: 100%;
   border-radius: 14px;
   overflow: hidden;
 }
 
 .cover__card img{
-  height: auto;
+  height: 200px; /* Cambia esto a la altura que desees */
+  width: auto; /* Esto asegurará que la imagen mantenga su relación de aspecto */
   border-radius: 14px;
   overflow: hidden;
+  object-fit: cover; /* Esto asegurará que la imagen cubra todo el espacio sin distorsionarse */
 }
 
 .titulo-producto h6 {
@@ -850,10 +855,10 @@ footer {
 }
 .tarjeta-productos h3{
   color: #1F487E;
+  margin-top: 5%;
   margin-bottom: 15px;
   font-weight: bold;
   text-align: center;
-  margin-bottom: 15px;
 }
 
 /*-----------------TARJETA TOTAL PRODUCTOS-----------------*/
@@ -861,6 +866,7 @@ footer {
 .mini-tarjeta {
   display: flex;
   flex-direction: column;
+  align-items: center;
   margin-bottom: 20px;
   background-color: #f5f5f5;
   border-radius: 5px;
@@ -868,6 +874,9 @@ footer {
 }
 
 .mini-tarjeta-imagen {
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
   width: 100px;
   height: 100px;
   overflow: hidden;

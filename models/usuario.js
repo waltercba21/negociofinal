@@ -38,16 +38,6 @@ obtenerPorEmailYContraseña: function (email, contraseña, callback) {
     });
   });
 },
-  actualizar: function (id, datos, funcion) {
-    const query = "UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, celular = ?, direccion = ?, localidad = ?, provincia = ? WHERE id = ?";
-    const values = [datos.nombre, datos.apellido, datos.email, datos.celular, datos.direccion, datos.localidad, datos.provincia, id];
+
   
-    conexion.query(query, values, function (error, resultados) {
-      if (error) {
-        return funcion(error, null);
-      }
-  
-      return funcion(null, resultados);
-    });
-  }
 };
