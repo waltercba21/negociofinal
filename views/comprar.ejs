@@ -1,0 +1,14 @@
+<%- include ./layouts/head.ejs %>
+<%- include ./layouts/header.ejs %>
+<body>
+    <main>
+        <div class="compra">
+            <h2>Finalizar Compra</h2>
+            <p>Al confirmar tu compra, se enviará tu pedido al carrito. Una vez que se confirme que hay stock y se confirme el precio del producto, se procederá al cobro.</p>
+            <form action="<%= urlWhatsapp %>" method="get">
+                <button type="submit">Confirmar pedido y Enviar</button>
+            </form>
+        </div>
+    </main>
+    <%- include ./layouts/footer.ejs %>
+</body>

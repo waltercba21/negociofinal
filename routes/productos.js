@@ -9,7 +9,6 @@ var methodOverride = require('method-override')
 router.use(methodOverride('_method'))
 
 var rutaAlmacen = multer.diskStorage({
-     
     destination : function (req,file,callback){
         callback(null, './public/images/')
     },
@@ -20,56 +19,29 @@ var rutaAlmacen = multer.diskStorage({
 });
 var cargar = multer({storage: rutaAlmacen});
 
-
 router.get('/', productosController.lista);
-
 router.get('/crear', productosController.crear);
-
 router.post('/',cargar.single('archivo'), productosController.guardar);
-
-router.get('/carrito', productosController.carrito)
-
 router.get('/panelControl', productosController.panelControl)
-
-router.post('/eliminar/:id', productosController.eliminar)
-
 router.get('/editar/:id', productosController.editar)
-
 router.post('/actualizar',cargar.single('archivo'), productosController.actualizar);
 
-// Ruta para buscar productos por nombre
+// Rutas de la API
 router.get('/api/buscar', productosController.buscarPorNombre);
+router.get('/api/carrito', productosController.getCarrito);
 
-router.get('/carrito/agregar/:id', ensureAuthenticated, function(req, res, next) {
-    console.log('Ruta /carrito/agregar/:id activada con ID de producto:', req.params.id);
-    next();
-}, productosController.agregarAlCarrito);
+// Rutas del carrito de compras
 
-router.get('/carrito', productosController.carrito)
-
-// Ruta para eliminar un producto del carrito de compras
-router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
-
-// Ruta para actualizar la cantidad de un producto en el carrito de compras
-router.post('/carrito/actualizar/:id', function(req, res) {
-    const productoId = Number(req.params.id);
-    const nuevaCantidad = Number(req.body.cantidad);
-    const carrito = req.session.carrito || [];
-
-    for (var i = 0; i < carrito.length; i++) {
-      if (Number(carrito[i].id) === productoId) {
-        carrito[i].cantidad = nuevaCantidad;
-        break;
-      }
-    }
-
-    req.session.carrito = carrito;
+router.get('/carrito', productosController.carrito);
+router.get('/carrito/agregar/:id', ensureAuthenticated, productosController.agregarAlCarrito);
+router.post('/envios', function(req, res) {
+    req.session.metodoEnvio = req.body.envio;
     res.redirect('/productos/carrito');
 });
-router.post('/productos/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
-router.post('/vaciar-carrito', productosController.vaciarCarrito);
+router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
+router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
+router.post('/carrito/envios', productosController.seleccionarEnvio);
+router.post('/carrito/vaciar', productosController.vaciarCarrito);
 router.get('/comprar', productosController.mostrarCompra);
-router.post('/comprar', productosController.completarCompra);
-
 
 module.exports = router;

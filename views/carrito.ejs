@@ -9,10 +9,9 @@
                     <% if (productos.length > 0) { %>
                         <div class="tarjeta-productos">
                             <div class="mini-tarjetas">
-                                <h3>Artículos en el carrito</h3>
                                 <% for (var i = 0; i < productos.length; i++) { %>
                                     <div class="mini-tarjeta" id="producto-<%= productos[i].id %>"> 
-                                        
+                                        <h3>Artículos en el carrito</h3>
                                         <div class="mini-tarjeta-imagen">
                                             <img src="../../images/<%= productos[i].imagen %>" alt="Imagen de <%= productos[i].nombre %>">
                                         </div>
@@ -47,28 +46,8 @@
                                 <% } %>
                             </div>
                         </div>
-                        
-                </div>
-                <div class="tarjeta-envio">
-                            <h3>Seleccion Envío</h3>
-                            <form action="/productos/envios" method="POST">
-                                <div>
-                                    <input type="radio" id="envio-dia" name="envio" value="envio-dia">
-                                    <label for="envio-dia">Envío en el día </label>
-                                    <p>(Dentro del radio de circunvalacion $1000)</p>
-                                </div>
-                                <div>
-                                    <input type="radio" id="retiro-local" name="envio" value="retiro-local">
-                                    <label for="retiro-local">Retiro por el local </label>
-                                    <p>(GRATIS)</p>
-                                </div>
-                                <div>
-                                    <input type="radio" id="envio-correo" name="envio" value="envio-correo">
-                                    <label for="envio-correo">Envío por correo </label>
-                                    <p>$2500</p>
-                                </div>
-                            </form>
-                </div>
+</div>
+
                 <div class="tarjeta-total">
                     <h3>Subtotal</h3>
                     <table>
@@ -96,161 +75,29 @@
                                 <td><%= totalCantidad %></td>
                                 <td></td>
                             </tr>
-                            <tr id="costo-envio-row" style="display: none;">
-                                <td>Costo de envío:</td>
-                                <td id="costo-envio">$0.00</td>
-                              </tr>
-                            <tr>
-                                <tr id="costo-envio-retiro-local-row" style="display: none;">
-                                    <td>Costo de envío:</td>
-                                    <td id="costo-envio-retiro-local">Gratis</td>
-                                  </tr>
+                            <tr>     
                                 <td colspan="2">Total:</td>
                                 <td id="total">$<%= totalPrecio.toFixed(2) %></td>
                             </tr>
                         </tfoot>
                     </table>
                     <div class="botones">
-                        <form action="/productos/envios" method="GET">
+                        <form action="/productos/comprar" method="GET">
                             <button class="boton-continuar-compra" type="submit">Continuar Compra</button>
                         </form>
-                        
-                        <button class="boton-vaciar">Vaciar Carrito</button>
-                      </div>
+                        <form action="/productos/carrito/vaciar" method="POST">
+                            <button class="boton-vaciar" type="submit">Vaciar Carrito</button>
+                        </form>
                     </div>
-                </div>
-                <script>
-                // Obtener los elementos de la tabla
-                    const tabla = document.querySelector('table');
-                    const filas = tabla.querySelectorAll('tbody tr');
-                    const totalElemento = document.querySelector('#total');
-
-                // Calcular el total
-                    let total = 0;
-                    filas.forEach(fila => {
-                        const precio = parseFloat(fila.querySelector('td:nth-child(3)').textContent.slice(1));
-                        
-                        total += precio ;
-                    });
-
-                // Mostrar el total en la página
-                    totalElemento.textContent = '$' + total.toFixed(2);
-                    document.addEventListener('DOMContentLoaded', function() {
-                    document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    fetch('/productos/vaciar-carrito', {
-                    method: 'POST',
-                    headers: {
-                     'Content-Type': 'application/json'
-                    }
-                 })
-                    .then(function() {
-                    location.reload(); // Recarga la página para mostrar el carrito vacío
-                    });
-                });
-            });
-
-
-
-
-function mas(id) {
-    const input = document.getElementById('cantidad-' + id);
-    let valor = parseInt(input.value, 10);
-    valor = isNaN(valor) ? 0 : valor;
-    valor++;
-    input.value = valor;
-
-    actualizarPrecio(id);
-}
-
-function menos(id) {
-    const input = document.getElementById('cantidad-' + id);
-    let valor = parseInt(input.value, 10);
-    valor = isNaN(valor) ? 0 : valor;
-    valor < 1 ? valor = 1 : '';
-    valor--;
-    input.value = valor;
-
-    actualizarPrecio(id);
-}
-
-function actualizarPrecio(id) {
-    const cantidad = document.getElementById('cantidad-' + id).value;
-    const precio = document.getElementById('precio-' + id).textContent.slice(1);
-    const subtotal = cantidad * precio;
-
-    document.getElementById('subtotal-' + id).textContent = '$' + subtotal.toFixed(2);
-    document.getElementById('cantidad-tabla-' + id).textContent = cantidad;
-
-    // Recalcular el total
-    let total = 0;
-    const filas = document.querySelectorAll('tbody tr');
-    filas.forEach(fila => {
-        const precio = parseFloat(fila.querySelector('td:nth-child(3)').textContent.slice(1));
-        total += precio;
-    });
-    document.querySelector('#total').textContent = '$' + total.toFixed(2);
-}
-// Obtener los elementos de radio de envío
-const envioDia = document.getElementById('envio-dia');
-const retiroLocal = document.getElementById('retiro-local');
-const envioCorreo = document.getElementById('envio-correo');
-
-// Agregar un evento change a los elementos de radio de envío
-envioDia.addEventListener('change', actualizarTotal);
-retiroLocal.addEventListener('change', actualizarTotal);
-envioCorreo.addEventListener('change', actualizarTotal);
-
-// Variables para almacenar el costo de envío actual y el método de envío seleccionado anteriormente
-let costoEnvioActual = 0;
-let metodoEnvioAnterior = null;
-
-// Función para actualizar el total según el método de envío seleccionado
-function actualizarTotal() {
-  let total = parseFloat(document.getElementById('total').textContent.slice(1));
-
-  // Verificar si el método de envío seleccionado ha cambiado
-  if (metodoEnvioAnterior !== null && this.value !== metodoEnvioAnterior) {
-    if (metodoEnvioAnterior === 'envio-dia') {
-      total -= 1000;
-    } else if (metodoEnvioAnterior === 'envio-correo') {
-      total -= 2500;
-    }
-  }
-
-  // Actualizar el costo de envío actual y el método de envío seleccionado anteriormente
-  if (this.value === 'envio-dia') {
-    costoEnvioActual = 1000;
-    metodoEnvioAnterior = 'envio-dia';
-  } else if (this.value === 'retiro-local') {
-    costoEnvioActual = 0;
-    metodoEnvioAnterior = 'retiro-local';
-  } else if (this.value === 'envio-correo') {
-    costoEnvioActual = 2500;
-    metodoEnvioAnterior = 'envio-correo';
-  }
-
-  // Actualizar el valor del costo de envío en la tabla de subtotal
-  const costoEnvioElemento = document.getElementById('costo-envio');
-  if (costoEnvioActual > 0) {
-    costoEnvioElemento.parentElement.style.display = 'table-row';
-    costoEnvioElemento.textContent = '$' + costoEnvioActual.toFixed(2);
-  } else {
-    costoEnvioElemento.parentElement.style.display = 'none';
-  }
-
-  // Actualizar el valor del total en la página
-  total += costoEnvioActual;
-  document.getElementById('total').textContent = '$' + total.toFixed(2);
-}
-                </script>
+                    </div>
+                </div>             
                 <% } else { %>
                     <div class="vacio">
                         <p>No hay artículos en el carrito</p>
                     </div>
                 <% } %>
             </div>
-        </div>
+        <script src="/js/carrito.js"></script>
     </main>
     <%- include ./layouts/footer.ejs %>
 </body>
