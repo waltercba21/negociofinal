@@ -25,13 +25,17 @@ router.post('/',cargar.single('archivo'), productosController.guardar);
 router.get('/panelControl', productosController.panelControl)
 router.get('/editar/:id', productosController.editar)
 router.post('/actualizar',cargar.single('archivo'), productosController.actualizar);
+router.post('/eliminar/:id', productosController.eliminar);
+
+// Nuevas rutas
+router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
+router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
 
 // Rutas de la API
 router.get('/api/buscar', productosController.buscarPorNombre);
 router.get('/api/carrito', productosController.getCarrito);
 
 // Rutas del carrito de compras
-
 router.get('/carrito', productosController.carrito);
 router.get('/carrito/agregar/:id', ensureAuthenticated, productosController.agregarAlCarrito);
 router.post('/envios', function(req, res) {

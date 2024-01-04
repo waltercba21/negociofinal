@@ -4,8 +4,8 @@ module.exports ={
     },
     insertar: function(conexion,datos,archivos,funcion){
      conexion.query
-     ('INSERT INTO productos (nombre,imagen,descripcion,proveedor,precio,categoria) VALUES (?,?,?,?,?,?)',
-     [datos.nombre,archivos.filename,datos.descripcion,datos.proveedor,datos.precio,datos.categoria],funcion);
+     ('INSERT INTO productos (nombre,codigo,imagen,descripcion,proveedor,precio,categoria) VALUES (?,?,?,?,?,?,?)',
+     [datos.nombre,datos.codigo,archivos.filename,datos.descripcion,datos.proveedor,datos.precio,datos.categoria],funcion);
     },
     retornarDatosId: function (conexion,id,funcion){
         conexion.query('SELECT * FROM productos WHERE id = ? ',[id],funcion);
@@ -14,13 +14,16 @@ module.exports ={
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
     actualizar: function (conexion, datos, funcion) {
-        conexion.query("UPDATE productos SET nombre=?, descripcion=?, precio=?, proveedor=?, categoria=? WHERE id=?",
-        [datos.nombre,datos.descripcion,datos.precio,datos.proveedor,datos.categoria, datos.id], funcion);
+        conexion.query("UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor=?, categoria=? WHERE id=?",
+        [datos.nombre,datos.codigo,datos.descripcion,datos.precio,datos.proveedor,datos.categoria, datos.id], funcion);
       },    
     actualizarArchivo: function(conexion,datos,archivo,funcion){
         
         conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
     },
+    obtenerPorCategoria: function (conexion, categoria, funcion) {
+      conexion.query('SELECT * FROM productos WHERE categoria = ?', [categoria], funcion);
+  },
     obtenerPorNombre: function (conexion, nombre, funcion) {
         conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
       },
@@ -36,18 +39,6 @@ module.exports ={
       obtenerTodos: function (conexion, funcion) {
         conexion.query('SELECT * FROM productos', funcion);
     },
-    actualizar: function (id, datos, funcion) {
-        const query = "UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, celular = ?, direccion = ?, localidad = ?, provincia = ? WHERE id = ?";
-        const values = [datos.nombre, datos.apellido, datos.email, datos.celular, datos.direccion, datos.localidad, datos.provincia, id];
-      
-        conexion.query(query, values, function (error, resultados) {
-          if (error) {
-            return funcion(error, null);
-          }
-      
-          return funcion(null, resultados);
-        });
-      },
       agregarAlCarrito: function (usuarioId, productoId, cantidad, imagen, callback) {
         const query = "INSERT INTO carritos (usuario_id, producto_id, cantidad, imagen) VALUES ( ?, ?, ?, ?)";
         const values = [usuarioId, productoId, cantidad, imagen];
@@ -73,5 +64,24 @@ module.exports ={
           return callback(null, resultados);
         });
       },
-      
+      obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
+        const query = 'SELECT * FROM productos WHERE proveedor = ?';
+        conexion.query(query, [proveedor], function (error, resultados) {
+            if (error) {
+                callback(error, null);
+            } else {
+                callback(null, resultados);
+            }
+        });
+    },
+    actualizarPreciosPorProveedor: function (conexion, proveedor, porcentajeAumento, callback) {
+      const query = 'UPDATE productos SET precio = precio + precio * ? WHERE proveedor = ?';
+      conexion.query(query, [porcentajeAumento, proveedor], function (error, resultados) {
+          if (error) {
+              callback(error, null);
+          } else {
+              callback(null, resultados);
+          }
+      });
+  },
 }

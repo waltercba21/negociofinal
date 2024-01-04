@@ -27,9 +27,13 @@
             <input id="descripcion-input" class="form-control" value="<%= producto.descripcion %>" type="text" name="descripcion">
         </div>
         <div class="form-group-crear">
+            <label for="codigo-input">Código</label>
+            <input id="codigo-input" value="<%= producto.codigo %>" class="form-control" type="text" name="codigo">
+        </div>
+        <div class="form-group-crear">
             <label for="categoria-input">Categoria</label>
             <select id="categoria-input" name="categoria">
-                <% var opciones = ["FAROS TRASEROS", "FAROS DELANTEROS", "OPTICAS", "FAROS LED", "FAROS CAMIONES"]; %>
+                <% var opciones = ["FAROS TRASEROS", "FAROS DELANTEROS", "OPTICAS", "FAROS LED", "FAROS CAMIONES","LAMPARAS"]; %>
                 <% for(var i = 0; i < opciones.length; i++) { %>
                     <option value='<%= opciones[i] %>' <%= producto.categoria == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
                 <% } %>

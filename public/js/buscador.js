@@ -24,18 +24,26 @@ function mostrarProductos(productos) {
   contenedorProductos.innerHTML = ''
   productos.forEach(producto => {
     const tarjetaProducto = `
-      <div class="card"> 
-        <div class="imagen-producto">
-          <img src="../../images/${producto.imagen}" alt="Imagen de ${producto.nombre}">
-        </div>
-        <div class="titulo-producto">
-          <h3 class="nombre">${producto.nombre}</h3>
-        </div> 
-        <div class="precio-producto">
-          <p class="precio">$${producto.precio}</p>
-        </div>
-      </div>
-    `
+    <div class="card"> 
+    <div class="cover__card">
+      <img src="../../images/${producto.imagen}" alt="Imagen de ${producto.nombre}">
+    </div>
+    <div class="titulo-producto">
+      <h3 class="nombre">${producto.nombre}</h3>
+    </div>
+    <hr>
+    <div class="categoria-producto">
+      <h6 class="categoria">${producto.categoria}</h6>
+    </div>
+    <hr>
+    <div class="precio-producto">
+      <p class="precio">$${producto.precio}</p>
+    </div>
+    <div class="cantidad-producto">
+      <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
+    </div>
+  </div>
+`
     contenedorProductos.innerHTML += tarjetaProducto
   })
 }
