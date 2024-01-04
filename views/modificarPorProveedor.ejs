@@ -1,0 +1,61 @@
+<%- include ./layouts/head.ejs %>
+<%- include ./layouts/header.ejs %>
+<body>
+ <main>
+<div class="container"> 
+    <br/>
+    <br/>
+    <form action="/productos/modificarPorProveedor" method="GET">
+      <label for="proveedor">Seleccione un proveedor:</label>
+      <select name="proveedor" id="proveedor">
+          <option value="">-- Seleccione --</option>
+          <% var opciones = ["LAM", "LIDERCAR", "MYL", "DM", "DAM","FAL","JR"]; %>
+          <% for(var i = 0; i < opciones.length; i++) { %>
+              <option value='<%= opciones[i] %>' <%= proveedor == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
+          <% } %>
+      </select>
+      <input type="submit" value="Ver productos">
+  </form>
+    <br/>
+    <form method="post" action="/productos/actualizarPorProveedor">
+      <input type="hidden" name="proveedor" value="<%= proveedor %>">
+      <label for="porcentaje">Porcentaje de cambio:</label>
+      <input type="number" id="porcentaje" name="porcentaje" min="0" max="100" step="0.01" required style="text-align: right;">
+      <span>%</span>
+      <label for="tipoCambio">Tipo de cambio:</label>
+      <select name="tipoCambio" id="tipoCambio">
+          <option value="aumento">Aumento</option>
+          <option value="descuento">Descuento</option>
+      </select>
+      <button type="submit" class="btn btn-primary">OK</button>
+  </form>
+    <br/>
+    <br/>
+    <table class="table table-light">
+    <thead class="thead-light">
+      <tr>
+        <th>#</th>
+        <th>Nombre</th>
+        <th>Imagen</th>
+        <th>Código</th>
+        <th>Precio</th> <!-- Nueva columna para el precio -->
+      </tr>
+    </thead>
+    <tbody>
+        <% for( let producto = 0; producto< productos.length; producto++ ) { %>
+          <tr>
+            <td><%= productos[producto].id %></td> 
+            <td><%= productos[producto].nombre %></td>
+            <td>
+              <img class="img-thumbnail" width= '150' src="/images/<%= productos[producto].imagen %>" alt="">
+            </td>
+            <td><%= productos[producto].codigo %></td>
+            <td>$<%= productos[producto].precio.toLocaleString('es-AR') %></td> 
+          </tr>
+        <% } %>
+    </tbody>
+  </table>
+</div>
+</main>
+<%- include ./layouts/footer.ejs %>
+</body>

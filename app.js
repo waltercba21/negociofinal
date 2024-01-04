@@ -23,10 +23,12 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(session({
-  secret: 'mi-secreto-seguro',
-  resave: true,
+  secret: 'tu secreto',
+  resave: false,
   saveUninitialized: true,
-  cookie: { secure: false }, 
+  cookie: { 
+    maxAge: 6200000 
+  }
 }));
 
 app.use((req, res, next) => {
@@ -34,6 +36,18 @@ app.use((req, res, next) => {
   req.session.carrito = req.session.carrito || [];
   next();
 });
+
+app.use((req, res, next) => {
+  // Si el usuario ha iniciado sesión y la sesión ha expirado, redirige al index
+  if (req.session.usuario && Date.now() > req.session.cookie.expires) {
+    res.redirect('/');
+    return;
+  }
+
+  // Si la sesión está activa o el usuario no ha iniciado sesión, continúa con la siguiente función middleware
+  next();
+});
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

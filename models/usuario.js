@@ -10,6 +10,18 @@ module.exports = {
   obtenerPorEmail: function (email, funcion) {
     conexion.query('SELECT * FROM usuarios WHERE email = ?', [email], funcion);
   },
+  actualizar: function (id, datos, callback) {
+    const query = 'UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, celular = ?, direccion = ?, localidad = ?, provincia = ? WHERE id = ?';
+    const values = [datos.nombre, datos.apellido, datos.email, datos.celular, datos.direccion, datos.localidad, datos.provincia, id];
+  
+    conexion.query(query, values, function (error, resultados) {
+      if (error) {
+        return callback(error);
+      }
+  
+      return callback(null);
+    });
+  },
 obtenerPorEmailYContraseña: function (email, contraseña, callback) {
   const query = "SELECT * FROM usuarios WHERE email = ?";
   const values = [email];

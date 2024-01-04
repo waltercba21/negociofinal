@@ -112,9 +112,8 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
       });
     });
   },
-  profile: (req, res) => {
+  profile: async (req, res) => {
     if (req.session && req.session.usuario) {
-      console.log(req.session.usuario); // Añade esta línea
       return res.render('profile', { usuario: req.session.usuario });
     } else {
       // Redirige al usuario a la página de inicio de sesión si no hay una sesión de usuario
@@ -139,13 +138,25 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
       if (error) {
         // Manejar el error
       }
-    
-      console.log(updatedData); // Añade esta línea
-    
+  
       // Actualizar los datos del usuario en la sesión
       req.session.usuario = { ...req.session.usuario, ...updatedData };
-      console.log(req.session.usuario); // Añade esta línea
-      res.redirect('/users/profile');
+  
+      // Guardar la provincia y localidad seleccionadas en la sesión
+      req.session.usuario.provincia = updatedData.provincia;
+      req.session.usuario.nombreProvincia = updatedData.nombreProvincia;
+      req.session.usuario.localidad = updatedData.localidad;
+      req.session.usuario.nombreLocalidad = updatedData.nombreLocalidad;
+  
+      // Guardar la sesión actualizada
+      req.session.save(function(err) {
+        // Manejar el error
+        if(err) {
+          console.log(err);
+        }
+  
+        res.redirect('/');
+      });
     });
   },
   

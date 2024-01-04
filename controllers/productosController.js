@@ -13,6 +13,11 @@ module.exports = {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
+                    // Formatear el precio de cada producto
+                    productos.forEach(producto => {
+                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                    });
+    
                     console.log('Productos obtenidos:', productos);
                     res.render('productos', { productos: productos });
                 }
@@ -22,6 +27,11 @@ module.exports = {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
+                    // Formatear el precio de cada producto
+                    productos.forEach(producto => {
+                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                    });
+    
                     console.log('Productos obtenidos:', productos);
                     res.render('productos', { productos: productos });
                 }
@@ -31,21 +41,53 @@ module.exports = {
     crear: function(req,res){
         res.render('crear')
     },
-    guardar: function(req,res){  
-        producto.insertar(conexion,req.body,req.file,function(error){
-             res.redirect('/productos');
-        })
+    guardar: function(req, res) {
+        const datos = req.body;
+        datos.precio = parseFloat(datos.precio);
+    
+        producto.insertar(conexion, datos, req.file, function(error) {
+            if (error) {
+                console.log('Error al guardar producto:', error);
+            } else {
+                res.redirect('/productos');
+            }
+        });
     },
     eliminar: function(req,res){
-       producto.retornarDatosId(conexion,req.params.id,function (error, registros){
-        var nombreImagen = '/public/images/' + (registros [0].imagen);
-        if(borrar.existsSync(nombreImagen)){
-            borrar.unlinkSync(nombreImagen);
-        }
-        producto.borrar(conexion,req.params.id, function (error){ 
-            res.redirect('/productos');
-        })
-       });
+        producto.retornarDatosId(conexion,req.params.id,function (error, registros){
+            if (error) {
+                console.error(error);
+                res.status(500).send('Error al obtener el producto');
+                return;
+            }
+            if (registros.length > 0) {
+                var nombreImagen = '/public/images/' + (registros [0].imagen);
+                if(borrar.existsSync(nombreImagen)){
+                    borrar.unlinkSync(nombreImagen);
+                }
+    
+                // Primero, elimina las referencias al producto en la tabla carritos
+                conexion.query('DELETE FROM carritos WHERE producto_id=?', [req.params.id], function(error, resultados) {
+                    if (error) {
+                        console.error(error);
+                        res.status(500).send('Error al eliminar las referencias al producto en el carrito');
+                        return;
+                    }
+    
+                    // Luego, elimina el producto
+                    producto.borrar(conexion,req.params.id, function (error){ 
+                        if (error) {
+                            console.error(error);
+                            res.status(500).send('Error al eliminar el producto');
+                            return;
+                        }
+                        res.redirect('/productos/panelControl');
+                    })
+                });
+            } else {
+                res.status(404).send('Producto no encontrado');
+            }
+        });
     },
     editar : function (req,res){
         producto.retornarDatosId(conexion,req.params.id,function (error, registros){
@@ -71,10 +113,19 @@ module.exports = {
     }
     res.redirect('/productos');  
 },
-panelControl: function (req,res){
-    producto.obtener(conexion,function(error,datos){
-        res.render('panelControl', { title: 'Productos', productos:datos });
-    })
+panelControl: function (req, res) {
+    producto.obtener(conexion, function (error, productos) {
+        if (error) {
+            console.log('Error al obtener productos:', error);
+        } else {
+            // Formatear el precio de cada producto
+            productos.forEach(producto => {
+                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+            });
+
+            res.render('panelControl', { title: 'Productos', productos: productos });
+        }
+    });
 },
 buscarPorNombre: function (req, res) {
     const nombre = req.query.query; 
@@ -85,6 +136,11 @@ buscarPorNombre: function (req, res) {
                 res.status(500).send('Error interno del servidor');
                 return;
             }
+            // Formatear el precio de cada producto
+            productos.forEach(producto => {
+                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+            });
+
             res.json({ productos });
         });
     } else {
@@ -94,6 +150,11 @@ buscarPorNombre: function (req, res) {
             res.status(500).send('Error interno del servidor');
             return;
           }
+          // Formatear el precio de cada producto
+          productos.forEach(producto => {
+              producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+          });
+
           res.json({ productos });
         });
     }   
@@ -103,6 +164,11 @@ todos: function (req, res) {
         if (error) {
             console.log('Error al obtener productos:', error);
         } else {
+            // Formatear el precio de cada producto
+            productos.forEach(producto => {
+                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+            });
+
             console.log('Productos obtenidos:', productos);
             res.render('productos', { productos: productos });
         }
@@ -269,4 +335,44 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
         });
     }
 },
+
+modificarPorProveedor: function (req, res) {
+    const proveedor = req.query.proveedor; // Obtén el proveedor de req.query
+    producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
+        if (error) {
+            console.log('Error al obtener productos:', error);
+        } else {
+            res.render('modificarPorProveedor', { productos: productos, proveedor: proveedor });
+        }
+    });
+},
+
+actualizarPorProveedor: function (req, res) {
+    let porcentajeCambio = req.body.porcentaje / 100;
+    const tipoCambio = req.body.tipoCambio;
+    const proveedor = req.body.proveedor; 
+
+    // Si el tipo de cambio es un descuento, cambia el signo del porcentaje
+    if (tipoCambio === 'descuento') {
+        porcentajeCambio = -porcentajeCambio;
+    }
+
+    // Obtiene todos los productos del proveedor
+    producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
+        if (error) {
+            console.log('Error al obtener productos:', error);
+            return;
+        }
+
+        // Actualiza el precio de cada producto
+        producto.actualizarPreciosPorProveedor(conexion, proveedor, porcentajeCambio, function(error, resultados) {
+            if (error) {
+                console.log('Error al actualizar precios:', error);
+                return;
+            }
+
+            res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedor);
+        });
+    });
+}
 }
