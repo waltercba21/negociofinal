@@ -65,28 +65,42 @@ window.onload = function(){
       console.log('El botón fue clickeado');
       e.preventDefault();
 
-      // Solicitar los datos del servidor
-      fetch('/productos/api/carrito')
-          .then(response => response.json())
-          .then(data => {
-            var productos = data.productos;
-            var totalCantidad = data.totalCantidad;
-            var totalPrecio = data.totalPrecio ? data.totalPrecio.toFixed(2) : '0.00';
+      // Obtener los datos del carrito desde el DOM
+      var filasProducto = document.querySelectorAll('tbody tr');
+      var productos = [];
+      filasProducto.forEach(function(fila) {
+        var id = fila.id.split('-')[1]; // Extraer el número del id de la fila
+        var nombreElemento = document.querySelector('#producto-' + id);
+        var cantidadElemento = document.querySelector('#cantidad-tabla-' + id);
+        var precioElemento = document.querySelector('#precio-' + id);
         
-            var mensaje = 'Pedido:\n';
-            for (var i = 0; i < productos.length; i++) {
-                var nombre = productos[i].nombre ? productos[i].nombre : 'Nombre no definido';
-                var cantidad = productos[i].cantidad ? productos[i].cantidad : 'Cantidad no definida';
-                var precio = productos[i].precio ? productos[i].precio.toFixed(2) : 'Precio no definido';
-                mensaje += nombre + ' - Cantidad: ' + cantidad + ' - Precio: ' + precio + '\n';
-            }
-            
-            mensaje += 'Total de productos: ' + totalCantidad + '\n';
-            mensaje += 'Total: ' + totalPrecio;
+        if (nombreElemento && cantidadElemento && precioElemento) {
+            var nombre = nombreElemento.textContent;
+            var cantidad = parseInt(cantidadElemento.textContent, 10);
+            var precio = parseFloat(precioElemento.textContent.replace('$', ''));
+            productos.push({nombre: nombre, cantidad: cantidad, precio: precio});
+        }
+      });
 
-            // Codificar el mensaje antes de añadirlo a la URL
-            var whatsapp_url = 'https://api.whatsapp.com/send?phone=543513820440&text=' + encodeURIComponent(mensaje);
-            window.location.href = whatsapp_url;
-          });
+      var totalCantidad = productos.reduce(function(total, producto) {
+        return total + producto.cantidad;
+      }, 0);
+
+      var totalPrecio = productos.reduce(function(total, producto) {
+        return total + (producto.precio * producto.cantidad);
+      }, 0).toFixed(2);
+
+      var mensaje = 'Pedido:\n';
+      for (var i = 0; i < productos.length; i++) {
+          mensaje += productos[i].nombre + ' - Cantidad: ' + productos[i].cantidad + ' - Precio: $' + productos[i].precio.toFixed(2) + '\n';
+      }
+      
+      mensaje += 'Total de productos: ' + totalCantidad + '\n';
+      mensaje += 'Total: $' + totalPrecio;
+
+    
+    // Codificar el mensaje antes de añadirlo a la URL
+var whatsapp_url = 'https://api.whatsapp.com/send?phone=543513820440&text=' + encodeURIComponent(mensaje);
+window.location.href = whatsapp_url;
   });
 };
