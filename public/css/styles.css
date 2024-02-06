@@ -555,7 +555,7 @@ footer {
   background-color: #fff;
 }
 
-/* -------EDITAR-------*/
+/* ------------------------------EDITAR----------------------*/
 .container-editar {
   display: flex;
   flex-direction: column;
@@ -608,7 +608,7 @@ footer {
   margin-right: 50px;
 }
 
-/*------Crear------*/
+/*-----------------------------CREAR--------------------------*/
 
 .container-crear{
   display: flex;
@@ -682,7 +682,7 @@ footer {
 } 
 
 
-/*-----Todos los Productos */
+/*---------------------------Todos los Productos -------------------------------*/
 
 .titulo-principal{
   text-align: center;
@@ -1070,6 +1070,13 @@ footer {
   max-width: 500px;
   padding: 20px;
 }
+.user-card select {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
 
 .user-card h2 {
   margin-bottom: 20px;
@@ -1288,4 +1295,77 @@ footer {
     margin: 20px 10px;
   }
 
+  /*------------Input Buscador-------------*/
+  .buscador input {
+    width: 80%;
+  }
+  .buscador input:focus {
+    box-shadow: 0 0 2px #719ECE;
+  }
+  .buscador input:valid {
+    animation: input-glow 3s infinite;
+  }
+
+  /*-------------login y register --------------*/
+ 
+    .login-form {
+      width: 90%;
+    }
+  
+    .login-form h2 {
+      font-size: 24px;
+      padding: 50px 0 10px 0;
+    }
+  
+    .login-form input[type="text"],
+    .login-form input[type="password"] {
+      padding: 10px;
+    }
+  
+    .btn-login {
+      padding: 10px;
+      font-size: medium;
+    }
+  
+    .register-form {
+      width: 90%;
+    }
+  
+    .register-form h2 {
+      font-size: 24px;
+      padding: 50px 0 10px 0;
+    }
+  
+    .btn-register {
+      padding: 10px;
+      font-size: medium;
+    }
+  
+    .btn-cancel {
+      padding: 10px;
+      font-size: medium;
+    }
+  
+    .select-css {
+      width: 100%;
+    }
+  /*------TODOS LOS PRODUCTOS------*/
+  .contenedor-productos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .card {
+    width: 90%; /* Ajusta el ancho de la tarjeta */
+    margin-bottom: 20px; /* Añade un margen en la parte inferior para separar las tarjetas */
+  }
+
+  /*------------------CARRITO--------------*/
+  .carrito-contenedor {
+    flex-direction: column;
+  }
+
+  .carrito-productos {
+    margin-right: 0;
+  }
 }
