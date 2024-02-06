@@ -1,17 +1,24 @@
-  // Obtener los elementos de la tabla
-  const tabla = document.querySelector('table');
-  const filas = tabla.querySelectorAll('tbody tr');
-  const totalElemento = document.querySelector('#total');
+// Función para eliminar espacios en blanco y saltos de línea innecesarios
+function eliminarEspacios(mensaje) {
+  mensaje = mensaje.replace(/\s\s+/g, ' ');
+  mensaje = mensaje.replace(/\n\n+/g, '\n');
+  mensaje = mensaje.trim();
+  return mensaje;
+}
+
+// Obtener los elementos de la tabla
+const tabla = document.querySelector('table');
+const filas = tabla.querySelectorAll('tbody tr');
+const totalElemento = document.querySelector('#total');
 
 // Calcular el total
-  let total = 0;
-  filas.forEach(fila => {
-      const precio = parseFloat(fila.querySelector('td:nth-child(3)').textContent.slice(1));
-      
-      total += precio ;
-  });
+let total = 0;
+filas.forEach(fila => {
+    const precio = parseFloat(fila.querySelector('td:nth-child(3)').textContent.slice(1));
+    total += precio;
+});
 
-  totalElemento.textContent = '$' + total.toFixed(2);
+totalElemento.textContent = '$' + total.toFixed(2);
 
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
@@ -24,39 +31,40 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function mas(id) {
-const input = document.getElementById('cantidad-' + id);
-let valor = parseInt(input.value, 10);
-valor = isNaN(valor) ? 0 : valor;
-valor++;
-input.value = valor;
-actualizarPrecio(id);
+  const input = document.getElementById('cantidad-' + id);
+  let valor = parseInt(input.value, 10);
+  valor = isNaN(valor) ? 0 : valor;
+  valor++;
+  input.value = valor;
+  actualizarPrecio(id);
 }
+
 function menos(id) {
-const input = document.getElementById('cantidad-' + id);
-let valor = parseInt(input.value, 10);
-valor = isNaN(valor) ? 0 : valor;
-valor < 1 ? valor = 1 : '';
-valor--;
-input.value = valor;
-actualizarPrecio(id);
+  const input = document.getElementById('cantidad-' + id);
+  let valor = parseInt(input.value, 10);
+  valor = isNaN(valor) ? 0 : valor;
+  valor < 1 ? valor = 1 : '';
+  valor--;
+  input.value = valor;
+  actualizarPrecio(id);
 }
 
 function actualizarPrecio(id) {
-const cantidad = document.getElementById('cantidad-' + id).value;
-const precio = document.getElementById('precio-' + id).textContent.slice(1);
-const subtotal = cantidad * precio;
+  const cantidad = document.getElementById('cantidad-' + id).value;
+  const precio = document.getElementById('precio-' + id).textContent.slice(1);
+  const subtotal = cantidad * precio;
 
-document.getElementById('subtotal-' + id).textContent = '$' + subtotal.toFixed(2);
-document.getElementById('cantidad-tabla-' + id).textContent = cantidad;
+  document.getElementById('subtotal-' + id).textContent = '$' + subtotal.toFixed(2);
+  document.getElementById('cantidad-tabla-' + id).textContent = cantidad;
 
-// Recalcular el total
-let total = 0;
-const filas = document.querySelectorAll('tbody tr');
-filas.forEach(fila => {
-const precio = parseFloat(fila.querySelector('td:nth-child(3)').textContent.slice(1));
-total += precio;
-});
-document.querySelector('#total').textContent = '$' + total.toFixed(2);
+  // Recalcular el total
+  let total = 0;
+  const filas = document.querySelectorAll('tbody tr');
+  filas.forEach(fila => {
+    const precio = parseFloat(fila.querySelector('td:nth-child(3)').textContent.slice(1));
+    total += precio;
+  });
+  document.querySelector('#total').textContent = '$' + total.toFixed(2);
 }
 
 window.onload = function(){
@@ -98,9 +106,11 @@ window.onload = function(){
       mensaje += 'Total de productos: ' + totalCantidad + '\n';
       mensaje += 'Total: $' + totalPrecio;
 
+      // Eliminar espacios en blanco y saltos de línea innecesarios
+      mensaje = eliminarEspacios(mensaje);
     
-    // Codificar el mensaje antes de añadirlo a la URL
-var whatsapp_url = 'https://api.whatsapp.com/send?phone=543513820440&text=' + encodeURIComponent(mensaje);
-window.location.href = whatsapp_url;
+      // Codificar el mensaje antes de añadirlo a la URL
+      var whatsapp_url = 'https://api.whatsapp.com/send?phone=543513820440&text=' + encodeURIComponent(mensaje);
+      window.location.href = whatsapp_url;
   });
 };

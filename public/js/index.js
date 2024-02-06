@@ -10,31 +10,34 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
   // Si no estamos en modo responsive, agregar los event listeners
   if (!responsive.matches) {
-      // ---------------EVENT LISTENER PARA LA FLECHA DERECHA--------//
-      flechaDerecha.addEventListener('click', () => {
-          fila.scrollLeft += fila.offsetWidth;
+// ---------------EVENT LISTENER PARA LA FLECHA DERECHA--------//
+if (flechaDerecha) {
+  flechaDerecha.addEventListener('click', () => {
+      fila.scrollLeft += fila.offsetWidth;
 
-          const indicadorActivo = document.querySelector('.indicadores .activo');
-          //le preguntamos si tiene un elemento a la derecha, en caso de que lo tenga accedemos
-          if (indicadorActivo.nextSibling) {
-              indicadorActivo.nextSibling.classList.add('activo');
-              indicadorActivo.classList.remove('activo');
-          }
-      });
+      const indicadorActivo = document.querySelector('.indicadores .activo');
+      //le preguntamos si tiene un elemento a la derecha, en caso de que lo tenga accedemos
+      if (indicadorActivo.nextSibling) {
+          indicadorActivo.nextSibling.classList.add('activo');
+          indicadorActivo.classList.remove('activo');
+      }
+  });
+}
 
-      // ---------------EVENT LISTENER PARA LA FLECHA IZQUIERDA--------//
-      flechaIzquierda.addEventListener('click', () => {
-          fila.scrollLeft -= fila.offsetWidth;
+// ---------------EVENT LISTENER PARA LA FLECHA IZQUIERDA--------//
+if (flechaIzquierda) {
+  flechaIzquierda.addEventListener('click', () => {
+      fila.scrollLeft -= fila.offsetWidth;
 
-          const indicadorActivo = document.querySelector('.indicadores .activo');
-          //le preguntamos si tiene un elemento a la derecha, en caso de que lo tenga accedemos
-          if (indicadorActivo.previousSibling) {
-              indicadorActivo.previousSibling.classList.add('activo');
-              indicadorActivo.classList.remove('activo');
-          }
-      });
+      const indicadorActivo = document.querySelector('.indicadores .activo');
+      //le preguntamos si tiene un elemento a la derecha, en caso de que lo tenga accedemos
+      if (indicadorActivo.previousSibling) {
+          indicadorActivo.previousSibling.classList.add('activo');
+          indicadorActivo.classList.remove('activo');
+      }
+  });
+}
   }
-
   // ---------------PAGINACION--------------------------------//
   //---CALCULAMOS CUANTAS PAGINAS TENEMOS EN EL CARROUSEL 
   const numeroPaginas = Math.ceil(peliculas.length / 3);

@@ -3,9 +3,13 @@ module.exports ={
         conexion.query('SELECT * FROM productos',funcion);
     },
     insertar: function(conexion,datos,archivos,funcion){
-     conexion.query
-     ('INSERT INTO productos (nombre,codigo,imagen,descripcion,proveedor,precio,categoria) VALUES (?,?,?,?,?,?,?)',
-     [datos.nombre,datos.codigo,archivos.filename,datos.descripcion,datos.proveedor,datos.precio,datos.categoria],funcion);
+      if (!archivos || !archivos.filename) {
+        // manejar el error aquí, por ejemplo, puedes llamar a la función de callback con un error
+        return funcion(new Error('No se proporcionó un archivo'));
+      }
+      conexion.query
+      ('INSERT INTO productos (nombre,codigo,imagen,descripcion,proveedor,precio,categoria) VALUES (?,?,?,?,?,?,?)',
+      [datos.nombre,datos.codigo,archivos.filename,datos.descripcion,datos.proveedor,datos.precio,datos.categoria],funcion);
     },
     retornarDatosId: function (conexion,id,funcion){
         conexion.query('SELECT * FROM productos WHERE id = ? ',[id],funcion);
