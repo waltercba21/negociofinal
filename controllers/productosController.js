@@ -287,14 +287,14 @@ getCarrito:function(req, res) {
     const totalPrecio = carrito.reduce((total, producto) => total + producto.precio * producto.cantidad, 0);
     res.json({ productos: carrito, envio: envio, totalCantidad: totalCantidad, totalPrecio: totalPrecio });
 },
-guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
+guardarCarrito :function(usuario_id, carrito, callback) {
     const productos = carrito;
     for (let i = 0; i < productos.length; i++) {
         const producto_id = productos[i].id;
         const cantidad = productos[i].cantidad;
         const precio_total = productos[i].precio * cantidad;
-        const sql = 'INSERT INTO carritos (usuario_id, producto_id, cantidad, precio_total, metodo_envio) VALUES (?, ?, ?, ?, ?)';
-        connection.query(sql, [usuario_id, producto_id, cantidad, precio_total, metodo_envio], function(error, results) {
+        const sql = 'INSERT INTO carritos (usuario_id, producto_id, cantidad, precio_total,) VALUES (?, ?, ?, ?)';
+        connection.query(sql, [usuario_id, producto_id, cantidad, precio_total,], function(error, results) {
             if (error) throw error;
             callback(results);
         });
