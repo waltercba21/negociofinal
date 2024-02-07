@@ -308,7 +308,7 @@ mostrarCompra : function(req, res) {
     mensaje += 'Costo total del pedido: $' + totalPedido + '\n';
     console.log(mensaje); 
     var urlWhatsapp = 'https://wa.me/543513274715?text=' + encodeURIComponent(mensaje);
-    res.render('comprar', { urlWhatsapp: urlWhatsapp });
+    res.redirect(urlWhatsapp);
 },
 seleccionarEnvio: function(req, res) {
     const metodoEnvio = req.body.envio;

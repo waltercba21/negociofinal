@@ -38,10 +38,6 @@ router.get('/api/carrito', productosController.getCarrito);
 // Rutas del carrito de compras
 router.get('/carrito', productosController.carrito);
 router.get('/carrito/agregar/:id', ensureAuthenticated, productosController.agregarAlCarrito);
-router.post('/envios', function(req, res) {
-    req.session.metodoEnvio = req.body.envio;
-    res.redirect('/productos/carrito');
-});
 router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
 router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
 router.post('/carrito/envios', productosController.seleccionarEnvio);
