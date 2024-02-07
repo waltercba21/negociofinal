@@ -280,6 +280,41 @@ vaciarCarrito : function(req, res) {
         }
     });
 },
+mostrarCompra : function(req, res) {
+    var carrito = req.session.carrito || [];
+    var mensaje = 'Estoy interesado en comprar los siguientes productos:\n';
+    var totalPedido = 0;
+    for (var i = 0; i < carrito.length; i++) {
+        var costoProducto = carrito[i].precio * carrito[i].cantidad;
+        totalPedido += costoProducto;
+        mensaje += carrito[i].nombre + ' (Cantidad: ' + carrito[i].cantidad + ', Costo: $' + costoProducto + ')\n';
+    }
+    var metodoEnvio = req.session.metodoEnvio;
+    mensaje += 'Método de envío: ' + metodoEnvio + '\n';
+    var costoEnvio;
+    switch (metodoEnvio) {
+        case 'envio-dia':
+            costoEnvio = 1000;
+            break;
+        case 'retiro-local':
+            costoEnvio = 0;
+            break;
+        case 'envio-correo':
+            costoEnvio = 2500;
+            break;
+    }
+    totalPedido += costoEnvio;
+    mensaje += 'Costo de envío: $' + costoEnvio + '\n';
+    mensaje += 'Costo total del pedido: $' + totalPedido + '\n';
+    console.log(mensaje); 
+    var urlWhatsapp = 'https://wa.me/543513274715?text=' + encodeURIComponent(mensaje);
+    res.render('comprar', { urlWhatsapp: urlWhatsapp });
+},
+seleccionarEnvio: function(req, res) {
+    const metodoEnvio = req.body.envio;
+    req.session.metodoEnvio = metodoEnvio;
+    res.status(200).send({ message: 'Método de envío seleccionado correctamente.' });
+},
 getCarrito:function(req, res) {
     const carrito = req.session.carrito || [];
     const envio = req.session.envio || 'No seleccionado';
@@ -287,14 +322,14 @@ getCarrito:function(req, res) {
     const totalPrecio = carrito.reduce((total, producto) => total + producto.precio * producto.cantidad, 0);
     res.json({ productos: carrito, envio: envio, totalCantidad: totalCantidad, totalPrecio: totalPrecio });
 },
-guardarCarrito :function(usuario_id, carrito, callback) {
+guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     const productos = carrito;
     for (let i = 0; i < productos.length; i++) {
         const producto_id = productos[i].id;
         const cantidad = productos[i].cantidad;
         const precio_total = productos[i].precio * cantidad;
-        const sql = 'INSERT INTO carritos (usuario_id, producto_id, cantidad, precio_total,) VALUES (?, ?, ?, ?)';
-        connection.query(sql, [usuario_id, producto_id, cantidad, precio_total,], function(error, results) {
+        const sql = 'INSERT INTO carritos (usuario_id, producto_id, cantidad, precio_total, metodo_envio) VALUES (?, ?, ?, ?, ?)';
+        connection.query(sql, [usuario_id, producto_id, cantidad, precio_total, metodo_envio], function(error, results) {
             if (error) throw error;
             callback(results);
         });
