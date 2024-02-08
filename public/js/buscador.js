@@ -6,20 +6,15 @@ window.addEventListener('DOMContentLoaded', (e) => {
 })
 
 async function cargarProductos() {
-  const respuesta = await fetch('http://autofaros.com.ar/productos/api/buscar?query')
+  const respuesta = await fetch('http://autofaros.com.ar/productos/api')
   const datos = await respuesta.json()
 
-  
   if (Array.isArray(datos)) {
-    mostrarProductos(datos)  // Pasar el array de productos directamente
-    
+    mostrarProductos(datos)
   } else {
-    
+    console.error('Respuesta inesperada de la API:', datos)
   }
 }
-
-// Llama a cargarProductos inmediatamente después de su definición
-cargarProductos();
 
 function mostrarProductos(productos) {
   contenedorProductos.innerHTML = ''
@@ -55,8 +50,8 @@ entrada.addEventListener('input', e => {
     fetch(`http://autofaros.com.ar/productos/api/buscar?query=${consulta}`)
       .then(respuesta => respuesta.json())
       .then(datos => {
-        if (Array.isArray(datos.productos)) { // Modificación 1
-          mostrarProductos(datos.productos)  // Modificación 2
+        if (Array.isArray(datos)) {
+          mostrarProductos(datos)
         } else {
           console.error('Respuesta inesperada de la API:', datos)
         }
