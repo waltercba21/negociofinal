@@ -6,8 +6,9 @@ window.addEventListener('DOMContentLoaded', (e) => {
 })
 
 async function cargarProductos() {
-  const respuesta = await fetch('http://localhost:3000/productos/api/buscar?query')
+  const respuesta = await fetch('http://autofaros.com.ar/productos/api/buscar?query')
   const datos = await respuesta.json()
+
   
   if (Array.isArray(datos)) {
     mostrarProductos(datos)  // Pasar el array de productos directamente
@@ -51,7 +52,7 @@ function mostrarProductos(productos) {
 entrada.addEventListener('input', e => {
   const consulta = e.target.value
   if (consulta) {
-    fetch(`http://localhost:3000/productos/api/buscar?query=${consulta}`)
+    fetch(`http://autofaros.com.ar/productos/api/buscar?query=${consulta}`)
       .then(respuesta => respuesta.json())
       .then(datos => {
         if (Array.isArray(datos.productos)) { // Modificación 1
