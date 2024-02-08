@@ -72,6 +72,7 @@ module.exports = {
     usuario.obtenerPorEmail(email, function (error, datos) {
       if (error) {
         // Manejar el error
+        console.log(error);
       }
       
       if (datos.length === 0) {
