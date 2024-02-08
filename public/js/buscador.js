@@ -1,22 +1,50 @@
-const entrada = document.querySelector('#entradaBusqueda')
-const contenedorProductos = document.querySelector('#contenedor-productos')
+let entrada;
+let contenedorProductos;
 
 window.addEventListener('DOMContentLoaded', (e) => {
-  cargarProductos()
-})
+  entrada = document.querySelector('#entradaBusqueda');
+  contenedorProductos = document.querySelector('#contenedor-productos');
+
+  cargarProductos();
+
+  entrada.addEventListener('input', e => {
+    const consulta = e.target.value;
+    if (consulta) {
+      fetch(`http://autofaros.com.ar/productos/api/buscar?query=${consulta}`)
+        .then(respuesta => {
+          if (!respuesta.ok) {
+            throw new Error(`HTTP error! status: ${respuesta.status}`);
+          }
+          return respuesta.json();
+        })
+        .then(datos => {
+          if (Array.isArray(datos)) {
+            mostrarProductos(datos);
+          } else {
+            console.error('Respuesta inesperada de la API:', datos);
+          }
+        })
+        .catch(e => {
+          console.error('Hubo un problema con la solicitud fetch: ' + e.message);
+        });
+    } else {
+      cargarProductos();
+    }
+  });
+});
 
 async function cargarProductos() {
   try {
-    const respuesta = await fetch('http://autofaros.com.ar/productos/api')
+    const respuesta = await fetch('http://autofaros.com.ar/productos/api');
     if (!respuesta.ok) {
       throw new Error(`HTTP error! status: ${respuesta.status}`);
     }
-    const datos = await respuesta.json()
+    const datos = await respuesta.json();
 
     if (Array.isArray(datos)) {
-      mostrarProductos(datos)
+      mostrarProductos(datos);
     } else {
-      console.error('Respuesta inesperada de la API:', datos)
+      console.error('Respuesta inesperada de la API:', datos);
     }
   } catch (e) {
     console.error('Hubo un problema con la solicitud fetch: ' + e.message);
@@ -24,7 +52,7 @@ async function cargarProductos() {
 }
 
 function mostrarProductos(productos) {
-  contenedorProductos.innerHTML = ''
+  contenedorProductos.innerHTML = '';
   productos.forEach(producto => {
     const tarjetaProducto = `
     <div class="card"> 
@@ -46,32 +74,7 @@ function mostrarProductos(productos) {
       <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
     </div>
   </div>
-`
-    contenedorProductos.innerHTML += tarjetaProducto
-  })
+`;
+    contenedorProductos.innerHTML += tarjetaProducto;
+  });
 }
-
-entrada.addEventListener('input', e => {
-  const consulta = e.target.value
-  if (consulta) {
-    fetch(`http://autofaros.com.ar/productos/api/buscar?query=${consulta}`)
-      .then(respuesta => {
-        if (!respuesta.ok) {
-          throw new Error(`HTTP error! status: ${respuesta.status}`);
-        }
-        return respuesta.json()
-      })
-      .then(datos => {
-        if (Array.isArray(datos)) {
-          mostrarProductos(datos)
-        } else {
-          console.error('Respuesta inesperada de la API:', datos)
-        }
-      })
-      .catch(e => {
-        console.error('Hubo un problema con la solicitud fetch: ' + e.message);
-      })
-  } else {
-    cargarProductos()
-  }
-})
