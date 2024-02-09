@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 let entrada;
 let contenedorProductos;
 
@@ -10,22 +12,19 @@ window.addEventListener('DOMContentLoaded', (e) => {
   entrada.addEventListener('input', e => {
     const consulta = e.target.value;
     if (consulta) {
-      fetch(`http://autofaros.com.ar/productos/api/buscar?query=${consulta}`)
+      axios.get(`http://autofaros.com.ar/productos/api/buscar?query=${consulta}`)
         .then(respuesta => {
-          if (!respuesta.ok) {
+          if (respuesta.status !== 200) {
             throw new Error(`HTTP error! status: ${respuesta.status}`);
           }
-          return respuesta.json();
-        })
-        .then(datos => {
-          if (Array.isArray(datos)) {
-            mostrarProductos(datos);
+          if (Array.isArray(respuesta.data)) {
+            mostrarProductos(respuesta.data);
           } else {
-            console.error('Respuesta inesperada de la API:', datos);
+            console.error('Respuesta inesperada de la API:', respuesta.data);
           }
         })
         .catch(e => {
-          console.error('Hubo un problema con la solicitud fetch: ' + e.message);
+          console.error('Hubo un problema con la solicitud axios: ' + e.message);
         });
     } else {
       cargarProductos();
@@ -35,19 +34,17 @@ window.addEventListener('DOMContentLoaded', (e) => {
 
 async function cargarProductos() {
   try {
-    const respuesta = await fetch('http://autofaros.com.ar/productos/api');
-    if (!respuesta.ok) {
+    const respuesta = await axios.get('http://autofaros.com.ar/productos/api');
+    if (respuesta.status !== 200) {
       throw new Error(`HTTP error! status: ${respuesta.status}`);
     }
-    const datos = await respuesta.json();
-
-    if (Array.isArray(datos)) {
-      mostrarProductos(datos);
+    if (Array.isArray(respuesta.data)) {
+      mostrarProductos(respuesta.data);
     } else {
-      console.error('Respuesta inesperada de la API:', datos);
+      console.error('Respuesta inesperada de la API:', respuesta.data);
     }
   } catch (e) {
-    console.error('Hubo un problema con la solicitud fetch: ' + e.message);
+    console.error('Hubo un problema con la solicitud axios: ' + e.message);
   }
 }
 
