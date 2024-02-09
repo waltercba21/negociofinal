@@ -32,6 +32,7 @@ router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
 
 // Rutas de la API
+router.get('/api', productosController.lista);
 router.get('/api/buscar', productosController.buscarPorNombre);
 router.get('/api/carrito', productosController.getCarrito);
 
