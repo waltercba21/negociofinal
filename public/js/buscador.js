@@ -7,6 +7,11 @@ window.addEventListener('DOMContentLoaded', (e) => {
   entrada = document.querySelector('#entradaBusqueda');
   contenedorProductos = document.querySelector('#contenedor-productos');
 
+  if (!entrada || !contenedorProductos) {
+    console.error('No se encontraron los elementos entradaBusqueda y/o contenedor-productos en el DOM');
+    return;
+  }
+
   cargarProductos();
 
   entrada.addEventListener('input', e => {
