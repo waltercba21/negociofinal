@@ -23,7 +23,9 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-app.use(cors());
+app.use(cors({
+  origin: '*' // Permite todos los orígenes
+}));
 
 app.use(session({
   secret: 'tu secreto',
