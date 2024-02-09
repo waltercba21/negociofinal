@@ -39,7 +39,7 @@ window.addEventListener('DOMContentLoaded', (e) => {
 
 async function cargarProductos() {
   try {
-    const respuesta = await axios.get('http://www.autofaros.com.ar/productos/api');
+    const respuesta = await axios.get('http://www.autofaros.com.ar/productos/api/carrito');
     if (respuesta.status !== 200) {
       throw new Error(`HTTP error! status: ${respuesta.status}`);
     }
