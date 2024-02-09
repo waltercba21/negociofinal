@@ -8,6 +8,7 @@ const session = require('express-session');
 const adminMiddleware = require('./middleware/adminMiddleware');
 const middlewares = require('./middleware/middlewares');
 const dotenv = require('dotenv');
+var cors = require('cors'); // Añade esta línea
 
 dotenv.config();
 
@@ -21,6 +22,8 @@ var app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
+app.use(cors()); // Añade esta línea
 
 app.use(session({
   secret: 'tu secreto',
