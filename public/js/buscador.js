@@ -17,7 +17,7 @@ window.addEventListener('DOMContentLoaded', (e) => {
   entrada.addEventListener('input', e => {
     const consulta = e.target.value;
     if (consulta) {
-      axios.get(`http://autofaros.com.ar/productos/api/buscar?query=${consulta}`)
+      axios.get(`http://www.autofaros.com.ar/productos/api/buscar?query=${consulta}`)
         .then(respuesta => {
           if (respuesta.status !== 200) {
             throw new Error(`HTTP error! status: ${respuesta.status}`);
@@ -39,7 +39,7 @@ window.addEventListener('DOMContentLoaded', (e) => {
 
 async function cargarProductos() {
   try {
-    const respuesta = await axios.get('http://autofaros.com.ar/productos/api');
+    const respuesta = await axios.get('http://www.autofaros.com.ar/productos/api');
     if (respuesta.status !== 200) {
       throw new Error(`HTTP error! status: ${respuesta.status}`);
     }
