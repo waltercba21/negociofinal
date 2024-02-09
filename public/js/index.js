@@ -75,10 +75,12 @@ if (flechaIzquierda) {
     });
   });
 
-  fila.addEventListener('mouseleave', () => {
-    console.log('mouse salió del carrousel');
-    peliculas.forEach(pelicula => pelicula.classList.remove('hover'));
-  });
+  if (fila) {
+    fila.addEventListener('mouseleave', () => {
+      console.log('mouse salió del carrousel');
+      peliculas.forEach(pelicula => pelicula.classList.remove('hover'));
+    });
+  }
 
   // Suponiendo que tus imágenes tienen una clase 'imagen-carrusel' y el nombre de la categoría está en un atributo 'data-categoria'
   const imagenesCarrusel = document.querySelectorAll('.imagen-carrusel');
