@@ -16,14 +16,18 @@ dotenv.config();
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var productosRouter = require('./routes/productos');
-
 var app = express();
+var corsOptions = {
+  origin: 'http://www.autofaros.com.ar',
+  optionsSuccessStatus: 200 // algunos navegadores antiguos (IE11, varios SmartTVs) se bloquean con 204
+}
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-app.use(cors()); // Añade esta línea
+app.use(cors(corsOptions));
 
 app.use(session({
   secret: 'tu secreto',
