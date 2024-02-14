@@ -24,7 +24,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(cors({
-  origin: '*' // Permite todos los orígenes
+  origin: 'http://www.autofaros.com.ar', // Reemplaza esto con el origen de tu cliente
+  credentials: true
 }));
 
 app.use(session({
