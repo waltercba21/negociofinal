@@ -24,7 +24,7 @@ window.addEventListener('DOMContentLoaded', (e) => {
         if (respuesta.status !== 200) {
           throw new Error(`HTTP error! status: ${respuesta.status}`);
         }
-        if (Array.isArray(respuesta.data.productos)) {
+        if (respuesta.data.hasOwnProperty('productos')) {
           console.log('Datos:', respuesta.data.productos);
           mostrarProductos(respuesta.data.productos);
         } else {
@@ -47,7 +47,7 @@ async function cargarProductos() {
     if (respuesta.status !== 200) {
       throw new Error(`HTTP error! status: ${respuesta.status}`);
     }
-    if (Array.isArray(respuesta.data.productos)) {
+    if (respuesta.data.hasOwnProperty('productos')) {
       console.log('Datos:', respuesta.data.productos);
       mostrarProductos(respuesta.data.productos);
     } else {
@@ -57,6 +57,7 @@ async function cargarProductos() {
     console.error('Hubo un problema con la solicitud axios: ' + e.message);
   }
 }
+
 function mostrarProductos(productos) {
   contenedorProductos.innerHTML = '';
   productos.forEach(producto => {
