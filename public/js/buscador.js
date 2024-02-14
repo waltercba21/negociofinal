@@ -16,13 +16,16 @@ window.addEventListener('DOMContentLoaded', (e) => {
 
   entrada.addEventListener('input', e => {
     const consulta = e.target.value;
+    console.log('Consulta:', consulta);
     if (consulta) {
       axios.get(`http://www.autofaros.com.ar/productos/api/buscar?query=${consulta}`)
         .then(respuesta => {
+          console.log('Respuesta:', respuesta);
           if (respuesta.status !== 200) {
             throw new Error(`HTTP error! status: ${respuesta.status}`);
           }
           if (Array.isArray(respuesta.data)) {
+            console.log('Datos:', respuesta.data);
             mostrarProductos(respuesta.data);
           } else {
             console.error('Respuesta inesperada de la API:', respuesta.data);
@@ -40,10 +43,12 @@ window.addEventListener('DOMContentLoaded', (e) => {
 async function cargarProductos() {
   try {
     const respuesta = await axios.get('http://www.autofaros.com.ar/productos/api/carrito');
+    console.log('Respuesta:', respuesta);
     if (respuesta.status !== 200) {
       throw new Error(`HTTP error! status: ${respuesta.status}`);
     }
     if (Array.isArray(respuesta.data)) {
+      console.log('Datos:', respuesta.data);
       mostrarProductos(respuesta.data);
     } else {
       console.error('Respuesta inesperada de la API:', respuesta.data);
