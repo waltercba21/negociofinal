@@ -165,7 +165,14 @@ buscarProductos : async (req, res) => {
       const consulta = req.query.query;
   
       // Busca productos que coincidan con la consulta
-      const productos = await Producto.find({ nombre: new RegExp(consulta, 'i') });
+      const productos = await producto.findAll({
+        where: {
+          nombre: {
+            [Op.iLike]: '%' + consulta + '%'
+          }
+        }
+      });
+  
   
       // Envía los productos como respuesta
       res.json(productos);
