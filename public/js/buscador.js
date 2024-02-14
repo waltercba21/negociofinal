@@ -18,7 +18,7 @@ window.addEventListener('DOMContentLoaded', (e) => {
     const consulta = e.target.value;
     console.log('Consulta:', consulta);
     if (consulta) {
-      axios.get(`/productos/buscar?query=${consulta}`)
+      axios.get(`/api/buscar?query=${consulta}`)
         .then(respuesta => {
           console.log('Respuesta:', respuesta);
           if (respuesta.status !== 200) {
