@@ -159,6 +159,21 @@ buscarPorNombre: function (req, res) {
         });
     }   
 },
+buscarProductos : async (req, res) => {
+    try {
+      // Obtiene la consulta de búsqueda de la URL
+      const consulta = req.query.query;
+  
+      // Busca productos que coincidan con la consulta
+      const productos = await Producto.find({ nombre: new RegExp(consulta, 'i') });
+  
+      // Envía los productos como respuesta
+      res.json(productos);
+    } catch (error) {
+      console.error('Hubo un problema con la búsqueda de productos:', error);
+      res.status(500).send('Hubo un problema con la búsqueda de productos');
+    }
+  },
 todos: function (req, res) {
     producto.obtener(conexion, function (error, productos) {
         if (error) {
