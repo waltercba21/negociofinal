@@ -19,21 +19,21 @@ window.addEventListener('DOMContentLoaded', (e) => {
     console.log('Consulta:', consulta);
     if (consulta) {
       axios.get(`/api/buscar?query=${consulta}`)
-        .then(respuesta => {
-          console.log('Respuesta:', respuesta);
-          if (respuesta.status !== 200) {
-            throw new Error(`HTTP error! status: ${respuesta.status}`);
-          }
-          if (Array.isArray(respuesta.data)) {
-            console.log('Datos:', respuesta.data);
-            mostrarProductos(respuesta.data);
-          } else {
-            console.error('Respuesta inesperada de la API:', respuesta.data);
-          }
-        })
-        .catch(e => {
-          console.error('Hubo un problema con la solicitud axios: ' + e.message);
-        });
+      .then(respuesta => {
+        console.log('Respuesta:', respuesta);
+        if (respuesta.status !== 200) {
+          throw new Error(`HTTP error! status: ${respuesta.status}`);
+        }
+        if (Array.isArray(respuesta.data.productos)) {
+          console.log('Datos:', respuesta.data.productos);
+          mostrarProductos(respuesta.data.productos);
+        } else {
+          console.error('Respuesta inesperada de la API:', respuesta.data);
+        }
+      })
+      .catch(e => {
+        console.error('Hubo un problema con la solicitud axios: ' + e.message);
+      });
     } else {
       cargarProductos();
     }
@@ -47,9 +47,9 @@ async function cargarProductos() {
     if (respuesta.status !== 200) {
       throw new Error(`HTTP error! status: ${respuesta.status}`);
     }
-    if (Array.isArray(respuesta.data)) {
-      console.log('Datos:', respuesta.data);
-      mostrarProductos(respuesta.data);
+    if (Array.isArray(respuesta.data.productos)) {
+      console.log('Datos:', respuesta.data.productos);
+      mostrarProductos(respuesta.data.productos);
     } else {
       console.error('Respuesta inesperada de la API:', respuesta.data);
     }
@@ -57,7 +57,6 @@ async function cargarProductos() {
     console.error('Hubo un problema con la solicitud axios: ' + e.message);
   }
 }
-
 function mostrarProductos(productos) {
   contenedorProductos.innerHTML = '';
   productos.forEach(producto => {
