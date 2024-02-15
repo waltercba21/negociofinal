@@ -18,7 +18,7 @@ window.addEventListener('DOMContentLoaded', (e) => {
     const consulta = e.target.value;
     console.log('Consulta:', consulta);
     if (consulta) {
-      axios.get(`www.autofaros.com.ar/api/buscar?query=${consulta}`)
+      axios.get(`www.autofaros.com.ar/productos/api/buscar?query=${consulta}`)
       .then(respuesta => {
         console.log('Respuesta:', respuesta);
         if (respuesta.status !== 200) {
