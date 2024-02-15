@@ -1,9 +1,7 @@
-import axios from 'axios';
-
 let entrada;
 let contenedorProductos;
 
-window.addEventListener('DOMContentLoaded', (e) => {
+document.addEventListener('DOMContentLoaded', function() {
   entrada = document.querySelector('#entradaBusqueda');
   contenedorProductos = document.querySelector('#contenedor-productos');
 
@@ -14,25 +12,18 @@ window.addEventListener('DOMContentLoaded', (e) => {
 
   cargarProductos();
 
-  entrada.addEventListener('input', e => {
+  entrada.addEventListener('input', function(e) {
     const consulta = e.target.value;
     console.log('Consulta:', consulta);
     if (consulta) {
-      axios.get(`www.autofaros.com.ar/productos/api/buscar?query=${consulta}`)
-      .then(respuesta => {
-        console.log('Respuesta:', respuesta);
-        if (respuesta.status !== 200) {
-          throw new Error(`HTTP error! status: ${respuesta.status}`);
-        }
-        if (respuesta.data.hasOwnProperty('productos')) {
-          console.log('Datos:', respuesta.data.productos);
-          mostrarProductos(respuesta.data.productos);
-        } else {
-          console.error('Respuesta inesperada de la API:', respuesta.data);
-        }
+      fetch(`http://www.autofaros.com.ar/productos/api/buscar?query=${consulta}`)
+      .then(response => response.json())
+      .then(datos => {
+        console.log('Datos:', datos.productos);
+        mostrarProductos(datos.productos);
       })
-      .catch(e => {
-        console.error('Hubo un problema con la solicitud axios: ' + e.message);
+      .catch(error => {
+        console.error('Hubo un problema con la solicitud: ' + error);
       });
     } else {
       cargarProductos();
@@ -40,22 +31,16 @@ window.addEventListener('DOMContentLoaded', (e) => {
   });
 });
 
-async function cargarProductos() {
-  try {
-    const respuesta = await axios.get('http://www.autofaros.com.ar/productos/api/carrito');
-    console.log('Respuesta:', respuesta);
-    if (respuesta.status !== 200) {
-      throw new Error(`HTTP error! status: ${respuesta.status}`);
-    }
-    if (respuesta.data.hasOwnProperty('productos')) {
-      console.log('Datos:', respuesta.data.productos);
-      mostrarProductos(respuesta.data.productos);
-    } else {
-      console.error('Respuesta inesperada de la API:', respuesta.data);
-    }
-  } catch (e) {
-    console.error('Hubo un problema con la solicitud axios: ' + e.message);
-  }
+function cargarProductos() {
+  fetch('http://www.autofaros.com.ar/productos/api/carrito')
+  .then(response => response.json())
+  .then(datos => {
+    console.log('Datos:', datos.productos);
+    mostrarProductos(datos.productos);
+  })
+  .catch(error => {
+    console.error('Hubo un problema con la solicitud: ' + error);
+  });
 }
 
 function mostrarProductos(productos) {
