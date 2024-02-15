@@ -8,7 +8,6 @@ const session = require('express-session');
 const adminMiddleware = require('./middleware/adminMiddleware');
 const middlewares = require('./middleware/middlewares');
 const dotenv = require('dotenv');
-var cors = require('cors'); 
 
 dotenv.config();
 
@@ -18,15 +17,9 @@ var usersRouter = require('./routes/users');
 var productosRouter = require('./routes/productos');
 var app = express();
 
-
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
-app.use(cors({
-  origin: 'http://www.autofaros.com.ar', // Reemplaza esto con el origen de tu cliente
-  credentials: true
-}));
 
 app.use(session({
   secret: 'tu secreto',
