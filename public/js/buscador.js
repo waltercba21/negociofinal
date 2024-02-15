@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const consulta = e.target.value;
     console.log('Consulta:', consulta);
     if (consulta) {
-      fetch(`http://www.autofaros.com.ar/productos/api/buscar?query=${consulta}`)
+      fetch(`http://www.autofaros.com.ar/productos/api/buscar?query=${consulta}`, {mode:'cors', credentials:'include'})
       .then(response => response.json())
       .then(datos => {
         console.log('Datos:', datos.productos);
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function cargarProductos() {
-  fetch('http://www.autofaros.com.ar/productos/api/carrito')
+  fetch('http://www.autofaros.com.ar/productos/api/carrito', {mode:'cors',credentials:'include'})
   .then(response => response.json())
   .then(datos => {
     console.log('Datos:', datos.productos);
