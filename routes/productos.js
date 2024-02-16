@@ -43,6 +43,6 @@ router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
 router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
 router.post('/carrito/envios', productosController.seleccionarEnvio);
 router.post('/carrito/vaciar', productosController.vaciarCarrito);
-router.get('/comprar', productosController.mostrarCompra);
+router.post('/carrito/comprar', productosController.mostrarCompra);
 
 module.exports = router;
