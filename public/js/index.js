@@ -10,106 +10,101 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
   // Si no estamos en modo responsive, agregar los event listeners
   if (!responsive.matches) {
-// ---------------EVENT LISTENER PARA LA FLECHA DERECHA--------//
-if (flechaDerecha) {
-  flechaDerecha.addEventListener('click', () => {
-      fila.scrollLeft += fila.offsetWidth;
+    // Verificar si los elementos existen antes de agregar event listeners
+    if (flechaDerecha && fila) {
+      flechaDerecha.addEventListener('click', () => {
+        fila.scrollLeft += fila.offsetWidth;
 
-      const indicadorActivo = document.querySelector('.indicadores .activo');
-      //le preguntamos si tiene un elemento a la derecha, en caso de que lo tenga accedemos
-      if (indicadorActivo.nextSibling) {
+        const indicadorActivo = document.querySelector('.indicadores .activo');
+        if (indicadorActivo && indicadorActivo.nextSibling) {
           indicadorActivo.nextSibling.classList.add('activo');
           indicadorActivo.classList.remove('activo');
-      }
-  });
-}
+        }
+      });
+    }
 
-// ---------------EVENT LISTENER PARA LA FLECHA IZQUIERDA--------//
-if (flechaIzquierda) {
-  flechaIzquierda.addEventListener('click', () => {
-      fila.scrollLeft -= fila.offsetWidth;
+    if (flechaIzquierda && fila) {
+      flechaIzquierda.addEventListener('click', () => {
+        fila.scrollLeft -= fila.offsetWidth;
 
-      const indicadorActivo = document.querySelector('.indicadores .activo');
-      //le preguntamos si tiene un elemento a la derecha, en caso de que lo tenga accedemos
-      if (indicadorActivo.previousSibling) {
+        const indicadorActivo = document.querySelector('.indicadores .activo');
+        if (indicadorActivo && indicadorActivo.previousSibling) {
           indicadorActivo.previousSibling.classList.add('activo');
           indicadorActivo.classList.remove('activo');
-      }
-  });
-}
+        }
+      });
+    }
   }
-  // ---------------PAGINACION--------------------------------//
-  //---CALCULAMOS CUANTAS PAGINAS TENEMOS EN EL CARROUSEL 
-  const numeroPaginas = Math.ceil(peliculas.length / 3);
-  for (let i = 0; i < numeroPaginas; i++){
-      //POR CADA PAGINA DEL CARROUSEL QUEREMOS CREAR UN BOTON 
+
+  // Verificar si los elementos existen antes de realizar operaciones con ellos
+  if (peliculas && peliculas.length > 0) {
+    const numeroPaginas = Math.ceil(peliculas.length / 3);
+    for (let i = 0; i < numeroPaginas; i++){
       const indicador = document.createElement('button');
-      //LE DAMOS LA FUNCIONALIDAD DE ACTIVO AL BOTON 
       if(i===0){
-          indicador.classList.add ('activo');
+        indicador.classList.add ('activo');
       }
-      //A ESE BOTON CREADO LO QUEREMOS COLOCAR EN CLASS .INDICADORES
       document.querySelector('.indicadores').appendChild(indicador);
-      
-      //LE DAMOS LA FUNCIONALIDAD AL BOTON
       indicador.addEventListener ('click', (e)=>{
-          fila.scrollLeft = i * fila.offsetWidth;
-      
-      //Hacemos que marque el boton activo y desmarque el inactivo
-      document.querySelector('.indicadores .activo').classList.remove('activo');
-      e.target.classList.add('activo');
+        fila.scrollLeft = i * fila.offsetWidth;
+        document.querySelector('.indicadores .activo').classList.remove('activo');
+        e.target.classList.add('activo');
       })
+    }
   }
 
-  // ------ Trabajamos con el HOVER de las imagenes ------//
-
-  // (peliculas) es un arreglo que vamos a iterar
-
-  peliculas.forEach(pelicula => {
-    pelicula.addEventListener('click', () => {
-      console.log('Película clickeada:');
-      const imagen = pelicula.querySelector('.imagen-carrusel');
-      const categoria = imagen.getAttribute('data-categoria');
-      console.log('Categoría:', categoria); 
-      window.location.href = `/productos?categoria=${categoria}`;
+  // Verificar si los elementos existen antes de agregar event listeners
+  if (peliculas) {
+    peliculas.forEach(pelicula => {
+      pelicula.addEventListener('click', () => {
+        const imagen = pelicula.querySelector('.imagen-carrusel');
+        if (imagen) {
+          const categoria = imagen.getAttribute('data-categoria');
+          window.location.href = `/productos?categoria=${categoria}`;
+        }
+      });
     });
-  });
+  }
 
   if (fila) {
     fila.addEventListener('mouseleave', () => {
-      console.log('mouse salió del carrousel');
       peliculas.forEach(pelicula => pelicula.classList.remove('hover'));
     });
   }
 
-  // Suponiendo que tus imágenes tienen una clase 'imagen-carrusel' y el nombre de la categoría está en un atributo 'data-categoria'
   const imagenesCarrusel = document.querySelectorAll('.imagen-carrusel');
-  console.log('Imágenes del carrusel:', imagenesCarrusel.length);
-
-  imagenesCarrusel.forEach(imagen => {
-    imagen.addEventListener('click', () => {
-      console.log('Imagen del carrusel clickeada:');
-      const categoria = imagen.getAttribute('data-categoria');
-      console.log('Categoría:', categoria); 
-      window.location.href = `/productos?categoria=${categoria}`;
+  if (imagenesCarrusel) {
+    imagenesCarrusel.forEach(imagen => {
+      imagen.addEventListener('click', () => {
+        const categoria = imagen.getAttribute('data-categoria');
+        window.location.href = `/productos?categoria=${categoria}`;
+      });
     });
-  });
+  }
 });
 
 window.onload = function() {
   if (window.innerWidth <= 768) {
     var navbar = document.querySelector('.navbar');
     var icons = document.querySelector('.icons');
-    navbar.style.display = 'none';
-    icons.style.display = 'none';
+    if (navbar) {
+      navbar.style.display = 'none';
+    }
+    if (icons) {
+      icons.style.display = 'none';
+    }
   }
 }
 
 function toggleMenu() {
   var navbar = document.querySelector('.navbar');
   var icons = document.querySelector('.icons');
-  navbar.style.display = navbar.style.display === 'none' ? 'flex' : 'none';
-  icons.style.display = icons.style.display === 'none' ? 'flex' : 'none';
+  if (navbar) {
+    navbar.style.display = navbar.style.display === 'none' ? 'flex' : 'none';
+  }
+  if (icons) {
+    icons.style.display = icons.style.display === 'none' ? 'flex' : 'none';
+  }
 }
 
 function abrirMapa() {
