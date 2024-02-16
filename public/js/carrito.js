@@ -1,64 +1,63 @@
-document.addEventListener('DOMContentLoaded', function() {
-  
-  document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
-    // Eliminar los productos de la vista
-    var filasProducto = document.querySelectorAll('tbody tr');
-    filasProducto.forEach(function(fila) {
-        fila.remove();
-    });    
-  });
+console.log('El script se está cargando');
 
-  document.querySelector('.boton-continuar-compra').addEventListener('click', function(e){
-    e.preventDefault();
+document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
+  // Eliminar los productos de la vista
+  var filasProducto = document.querySelectorAll('tbody tr');
+  filasProducto.forEach(function(fila) {
+      fila.remove();
+  });    
+});
 
-    console.log('Botón Continuar Compra presionado');
+document.querySelector('.boton-continuar-compra').addEventListener('click', function(e){
+  e.preventDefault();
 
-    var filasProducto = document.querySelectorAll('tbody tr');
-    var productos = [];
-    filasProducto.forEach(function(fila) {
-      var id = fila.id.split('-')[1]; // Extraer el número del id de la fila
-      var nombreElemento = document.querySelector('#producto-' + id);
-      var cantidadElemento = document.querySelector('#cantidad-tabla-' + id);
-      var precioElemento = document.querySelector('#precio-' + id);
-      
-      if (nombreElemento && cantidadElemento && precioElemento) {
-          var nombre = nombreElemento.textContent;
-          var cantidad = parseInt(cantidadElemento.textContent, 10);
-          var precio = parseFloat(precioElemento.textContent.replace('$', ''));
-          productos.push({nombre: nombre, cantidad: cantidad, precio: precio});
-      }
-    });
+  console.log('Botón Continuar Compra presionado');
 
-    console.log('Productos recogidos:', productos);
-
-    var totalCantidad = productos.reduce(function(total, producto) {
-      return total + producto.cantidad;
-    }, 0);
-
-    var totalPrecio = productos.reduce(function(total, producto) {
-      return total + (producto.precio * producto.cantidad);
-    }, 0).toFixed(2);
-
-    var mensaje = 'Pedido:\n';
-    for (var i = 0; i < productos.length; i++) {
-        mensaje += productos[i].nombre + ' - Cantidad: ' + productos[i].cantidad + ' - Precio: $' + productos[i].precio.toFixed(2) + '\n';
-    }
+  var filasProducto = document.querySelectorAll('tbody tr');
+  var productos = [];
+  filasProducto.forEach(function(fila) {
+    var id = fila.id.split('-')[1]; // Extraer el número del id de la fila
+    var nombreElemento = document.querySelector('#producto-' + id);
+    var cantidadElemento = document.querySelector('#cantidad-tabla-' + id);
+    var precioElemento = document.querySelector('#precio-' + id);
     
-    mensaje += 'Total de productos: ' + totalCantidad + '\n';
-    mensaje += 'Total: $' + totalPrecio;
-
-    console.log('Mensaje generado:', mensaje);
-
-    // Eliminar espacios en blanco y saltos de línea innecesarios
-    mensaje = eliminarEspacios(mensaje);
-  
-    // Codificar el mensaje antes de añadirlo a la URL
-    var whatsapp_url = 'https://api.whatsapp.com/send?phone=543513820440&text=' + encodeURIComponent(mensaje);
-    console.log('Redirigiendo a WhatsApp:', whatsapp_url);
-    window.location.href = whatsapp_url;
-
-    // Enviar el formulario programáticamente
-    console.log('Enviando formulario');
-    document.querySelector('#form-compra').submit();
+    if (nombreElemento && cantidadElemento && precioElemento) {
+        var nombre = nombreElemento.textContent;
+        var cantidad = parseInt(cantidadElemento.textContent, 10);
+        var precio = parseFloat(precioElemento.textContent.replace('$', ''));
+        productos.push({nombre: nombre, cantidad: cantidad, precio: precio});
+    }
   });
+
+  console.log('Productos recogidos:', productos);
+
+  var totalCantidad = productos.reduce(function(total, producto) {
+    return total + producto.cantidad;
+  }, 0);
+
+  var totalPrecio = productos.reduce(function(total, producto) {
+    return total + (producto.precio * producto.cantidad);
+  }, 0).toFixed(2);
+
+  var mensaje = 'Pedido:\n';
+  for (var i = 0; i < productos.length; i++) {
+      mensaje += productos[i].nombre + ' - Cantidad: ' + productos[i].cantidad + ' - Precio: $' + productos[i].precio.toFixed(2) + '\n';
+  }
+  
+  mensaje += 'Total de productos: ' + totalCantidad + '\n';
+  mensaje += 'Total: $' + totalPrecio;
+
+  console.log('Mensaje generado:', mensaje);
+
+  // Eliminar espacios en blanco y saltos de línea innecesarios
+  mensaje = eliminarEspacios(mensaje);
+
+  // Codificar el mensaje antes de añadirlo a la URL
+  var whatsapp_url = 'https://api.whatsapp.com/send?phone=543513820440&text=' + encodeURIComponent(mensaje);
+  console.log('Redirigiendo a WhatsApp:', whatsapp_url);
+  window.location.href = whatsapp_url;
+
+  // Enviar el formulario programáticamente
+  console.log('Enviando formulario');
+  document.querySelector('#form-compra').submit();
 });
