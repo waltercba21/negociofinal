@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   document.querySelector('.boton-continuar-compra').addEventListener('click', function(e){
-  
+    e.preventDefault();
+
     var filasProducto = document.querySelectorAll('tbody tr');
     var productos = [];
     filasProducto.forEach(function(fila) {
@@ -48,5 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Codificar el mensaje antes de añadirlo a la URL
     var whatsapp_url = 'https://api.whatsapp.com/send?phone=543513820440&text=' + encodeURIComponent(mensaje);
     window.location.href = whatsapp_url;
+
+    // Enviar el formulario programáticamente
+    document.querySelector('#form-compra').submit();
   });
 });

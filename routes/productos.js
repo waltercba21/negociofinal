@@ -44,5 +44,4 @@ router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCar
 router.post('/carrito/envios', productosController.seleccionarEnvio);
 router.post('/carrito/vaciar', productosController.vaciarCarrito);
 router.post('/carrito/comprar', productosController.mostrarCompra);
-
 module.exports = router;
