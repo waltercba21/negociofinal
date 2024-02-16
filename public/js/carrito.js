@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('El DOM está completamente cargado');
-
+  
   document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
     // Eliminar los productos de la vista
     var filasProducto = document.querySelectorAll('tbody tr');
@@ -10,10 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   document.querySelector('.boton-continuar-compra').addEventListener('click', function(e){
-    console.log('El botón fue clickeado');
-    e.preventDefault();
-
-    // Obtener los datos del carrito desde el DOM
+  
     var filasProducto = document.querySelectorAll('tbody tr');
     var productos = [];
     filasProducto.forEach(function(fila) {
