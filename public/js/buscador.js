@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function cargarProductos() {
-  fetch('http://www.autofaros.com.ar/productos/api/carrito', {mode:'cors',credentials:'include'})
+  fetch('http://www.autofaros.com.ar/productos/api', {mode:'cors',credentials:'include'})
   .then(response => response.json())
   .then(datos => {
     console.log('Datos:', datos.productos);
