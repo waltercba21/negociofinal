@@ -332,18 +332,7 @@ mostrarCompra : function(req, res) {
     var urlWhatsapp = 'https://wa.me/543513274715?text=' + encodeURIComponent(mensaje);
     res.redirect(urlWhatsapp);
 },
-seleccionarEnvio: function(req, res) {
-    const metodoEnvio = req.body.envio;
-    req.session.metodoEnvio = metodoEnvio;
-    res.status(200).send({ message: 'Método de envío seleccionado correctamente.' });
-},
-getCarrito:function(req, res) {
-    const carrito = req.session.carrito || [];
-    const envio = req.session.envio || 'No seleccionado';
-    const totalCantidad = carrito.reduce((total, producto) => total + producto.cantidad, 0);
-    const totalPrecio = carrito.reduce((total, producto) => total + producto.precio * producto.cantidad, 0);
-    res.json({ productos: carrito, envio: envio, totalCantidad: totalCantidad, totalPrecio: totalPrecio });
-},
+
 guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     const productos = carrito;
     for (let i = 0; i < productos.length; i++) {

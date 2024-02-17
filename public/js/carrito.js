@@ -50,7 +50,7 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
   console.log('Mensaje generado:', mensaje);
 
   // Eliminar espacios en blanco y saltos de línea innecesarios
-  mensaje = eliminarEspacios(mensaje);
+  mensaje = mensaje.replace(/\s+/g, ' ').trim();
 
   // Codificar el mensaje antes de añadirlo a la URL
   var whatsapp_url = 'https://api.whatsapp.com/send?phone=543513820440&text=' + encodeURIComponent(mensaje);
