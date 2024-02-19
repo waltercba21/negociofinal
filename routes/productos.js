@@ -34,14 +34,13 @@ router.post('/actualizarPorProveedor', productosController.actualizarPorProveedo
 // Rutas de la API
 router.get('/api', productosController.lista);
 router.get('/api/buscar', productosController.buscarPorNombre);
-router.get('/api/carrito', productosController.getCarrito);
+
 
 // Rutas del carrito de compras
 router.get('/carrito', productosController.carrito);
 router.get('/carrito/agregar/:id', ensureAuthenticated, productosController.agregarAlCarrito);
 router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
 router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
-router.post('/carrito/envios', productosController.seleccionarEnvio);
 router.post('/carrito/vaciar', productosController.vaciarCarrito);
 router.post('/carrito/comprar', productosController.mostrarCompra);
 module.exports = router;

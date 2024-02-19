@@ -1,19 +1,23 @@
 const mysql = require('mysql2');
 
-const conexion = mysql.createConnection({
+const pool = mysql.createPool({
     host: '127.0.0.1', 
     port:'3306',
     user: 'walter',
     password: '123456',
-    database: 'autofaros'
+    database: 'autofaros',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-conexion.connect((error) => {
-    if (!error) {
-        console.log('Conexion establecida a la base de datos');
-    } else {
+pool.getConnection((error, connection) => {
+    if (error) {
         console.error('Error de conexion:', error);
+    } else {
+        console.log('Conexion establecida a la base de datos');
+        connection.release();
     }
 });
 
-module.exports = conexion;
+module.exports = pool;
