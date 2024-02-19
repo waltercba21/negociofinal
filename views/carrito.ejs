@@ -31,8 +31,7 @@
                                                                 <i class="fa fa-angle-down" aria-hidden="true"></i>
                                                             </button>
                                                         </div>
-                                                    </div>
-                                                    
+                                                        
                                                 </form>
                                             
                                                 <form action="/productos/carrito/eliminar/<%= productos[i].id %>" method="post">                  
@@ -48,39 +47,42 @@
                         </div>
 </div>
 
-                <div class="tarjeta-total">
-                    <h3>Subtotal</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>Cantidad</th>
-                                <th>Precio</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% var totalCantidad = 0; var totalPrecio = 0; %>
-                            <% for (var i = 0; i < productos.length; i++) { %>
-                                <% totalCantidad += productos[i].cantidad; totalPrecio += productos[i].precio * productos[i].cantidad; %>
-                                <tr id="fila-<%= productos[i].id %>">
-                                    <td><%= productos[i].nombre %></td>
-                                    <td id="cantidad-tabla-<%= productos[i].id %>"><%= productos[i].cantidad %></td>
-                                    <td id="subtotal-<%= productos[i].id %>">$<%= productos[i].precio * productos[i].cantidad %></td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td>Total de productos:</td>
-                                <td><%= totalCantidad %></td>
-                                <td></td>
-                            </tr>
-                            <tr>     
-                                <td colspan="2">Total:</td>
-                                <td id="total">$<%= totalPrecio.toFixed(2) %></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+<div class="tarjeta-total">
+    <h3>Subtotal</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% var totalCantidad = 0; var totalPrecio = 0; %>
+            <% for (var i = 0; i < productos.length; i++) { %>
+                <% var subtotal = productos[i].cantidad * Number(productos[i].precio); %>
+                <% totalCantidad += productos[i].cantidad; totalPrecio += subtotal; %>
+                <tr id="fila-<%= productos[i].id %>">
+                    <td><%= productos[i].nombre %></td>
+                    <td id="cantidad-tabla-<%= productos[i].id %>"><%= productos[i].cantidad %></td>
+                    <td id="subtotal-<%= productos[i].id %>">$<%= subtotal.toFixed(2) %></td>
+                </tr>
+            <% } %>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td>Total de productos:</td>
+                <td id="totalCantidad"><%= totalCantidad %></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Total:</td>
+                <td></td>
+                <td id="totalPrecio">$<%= totalPrecio.toFixed(2) %></td>
+            </tr>
+        </tfoot>
+
+    </table>
                     <div class="botones">
                         <form action="/productos/carrito/comprar" method="POST">
                             <button class="boton-continuar-compra" type="submit">Continuar Compra</button>
