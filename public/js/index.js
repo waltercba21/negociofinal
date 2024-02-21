@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', (event) => {
-  console.log('DOM completamente cargo y analizado');
+  
   const fila = document.querySelector('.contenedor-carrousel');
   const peliculas = document.querySelectorAll('.pelicula');
   const flechaIzquierda = document.getElementById('flecha-izquierda');
