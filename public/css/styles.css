@@ -250,6 +250,10 @@ footer {
   font-weight: 600;
 }
 
+.autor h3 a {
+  text-decoration: none;
+}
+
 /* --------------------------Pagina Inicio Principal----------------------------------------*/
 
 .contenedor-titulos-controles{
