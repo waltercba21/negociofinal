@@ -264,20 +264,7 @@ footer {
   margin-top: 20px;
 }
 
-.contenedor-titulos-controles .indicadores button{
-  background: #000000;
-  height: 4px;
-  width: 10px;
-  cursor: pointer;
-  border: none;
-  margin-right: 2px;
 
-}
-.contenedor-titulos-controles .indicadores button:hover,
-.contenedor-titulos-controles .indicadores button.activo {
-  background: #d90429;
-
-}
 
 /* --------------------------CONTENEDOR PRINCIPAL Y FLECHAS----------------------------------------*/
 .peliculas-recomendadas{
