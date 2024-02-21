@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
   // Verificar si los elementos existen antes de realizar operaciones con ellos
   if (peliculas && peliculas.length > 0) {
-    const numeroPaginas = Math.ceil(peliculas.length / 3);
+    const numeroPaginas = Math.floor((peliculas.length - 1) / 3) + 1;
     for (let i = 0; i < numeroPaginas; i++){
       const indicador = document.createElement('button');
       if(i===0){
