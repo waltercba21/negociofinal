@@ -45,6 +45,10 @@ module.exports = {
         const datos = req.body;
         datos.precio = parseFloat(datos.precio);
     
+        if (!req.file || !req.file.filename) {
+            return res.status(400).send('No se proporcionó un archivo');
+        }
+    
         producto.insertar(conexion, datos, req.file, function(error) {
             if (error) {
                 console.log('Error al guardar producto:', error);
