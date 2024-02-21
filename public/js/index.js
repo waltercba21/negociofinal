@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
   }
 
   if (peliculas && peliculas.length > 0) {
-    const numeroPaginas = Math.ceil(peliculas.length / 3);
+    const numeroPaginas = peliculas.length ;
     for (let i = 0; i < numeroPaginas; i++){
       const indicador = document.createElement('button');
       if(i===0){
