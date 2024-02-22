@@ -14,9 +14,11 @@
 
         <div class="form-group-crear">
             <label for="imagen-input">Imagen</label>
-            <img class="img-thumbnail" src="../../images/<%= producto.imagen %>" width="100" alt="">
-            <input id="imagen-input" class=" form-control" type="file" name="archivo">
-        </div>  
+            <% for(let imagen of producto.imagenes) { %>
+                <img class="img-thumbnail" src="../../images/<%= imagen %>" width="100" alt="">
+            <% } %>
+            <input id="imagen-input" class=" form-control" type="file" name="archivo[]" multiple>
+        </div>
 
         <div class="form-group-crear">
             <label for="nombre-input">Nombre</label>
