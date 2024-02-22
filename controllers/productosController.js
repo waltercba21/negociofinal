@@ -8,51 +8,61 @@ module.exports = {
     },
     lista: function (req, res) {
         const categoria = req.query.categoria;
-        if (categoria) {
-            producto.obtenerPorCategoria(conexion, categoria, function (error, productos) {
-                if (error) {
-                    console.log('Error al obtener productos:', error);
-                } else {
-                    // Formatear el precio de cada producto
-                    productos.forEach(producto => {
-                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                    });
+        const obtenerProductos = categoria ? producto.obtenerPorCategoria : producto.obtener;
+        const parametros = categoria ? [conexion, categoria] : [conexion];
     
-                    console.log('Productos obtenidos:', productos);
-                    res.render('productos', { productos: productos });
-                }
-            });
-        } else {
-            producto.obtener(conexion, function (error, productos) {
-                if (error) {
-                    console.log('Error al obtener productos:', error);
-                } else {
-                    // Formatear el precio de cada producto
-                    productos.forEach(producto => {
+        obtenerProductos(...parametros, function (error, productos) {
+            if (error) {
+                console.log('Error al obtener productos:', error);
+            } else {
+                const productosConImagenes = productos.map(producto => {
+                    return new Promise((resolve, reject) => {
                         producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                        producto.obtenerImagenes(conexion, producto.id, function(error, imagenes) {
+                            if (error) {
+                                reject('Error al obtener imágenes:', error);
+                            } else {
+                                producto.imagenes = imagenes;
+                                resolve(producto);
+                            }
+                        });
                     });
+                });
     
-                    console.log('Productos obtenidos:', productos);
-                    res.render('productos', { productos: productos });
-                }
-            });
-        }
+                Promise.all(productosConImagenes)
+                    .then(productos => res.render('productos', { productos: productos }))
+                    .catch(error => console.log(error));
+            }
+        });
     },
     crear: function(req,res){
         res.render('crear')
     },
     guardar: function(req, res) {
         const datos = req.body;
+        if (!datos.nombre || !datos.precio) {
+            return res.status(400).send('Faltan datos del producto');
+        }
+    
         datos.precio = parseFloat(datos.precio);
     
-        if (!req.file || !req.file.filename) {
+        if (!req.files || !req.files.length ===0) {
             return res.status(400).send('No se proporcionó un archivo');
         }
     
-        producto.insertar(conexion, datos, req.file, function(error) {
+        producto.insertar(conexion, datos, req.file, function(error, result) {
             if (error) {
-                console.log('Error al guardar producto:', error);
+                return res.status(500).send('Error al guardar producto');
             } else {
+                // Insertar las imágenes del producto
+                req.files.forEach(file => {
+                    producto.insertarImagen(conexion, result.insertId, file.filename, function(error) {
+                        if (error) {
+                            console.log('Error al guardar imagen de producto:', error);
+                        }
+                    });
+                });
+    
                 res.redirect('/productos');
             }
         });
@@ -258,16 +268,13 @@ eliminarDelCarrito : function(req, res) {
     console.log('usuarioId:', usuarioId);
     conexion.query('DELETE FROM carritos WHERE id = ? AND usuario_id = ?', [carritoId, usuarioId], function (error, results) {
         if (error) {
-            console.log('Error al eliminar el producto del carrito en la base de datos:', error);
+            
         } else {
-            console.log('Filas afectadas:', results.affectedRows);
             const index = req.session.carrito.findIndex(producto => producto.id === carritoId);
             if (index !== -1) {
                 req.session.carrito.splice(index, 1);
             }
-            console.log('Carrito después de la eliminación:', req.session.carrito);
-            console.log('Sesión:', req.session);  // Agregado
-            console.log('Carrito:', req.session.carrito);  // Agregado
+            
             req.session.save(function(err) {
                 if(err) {
                     console.log('Error al guardar la sesión:', err);
