@@ -25,23 +25,23 @@
     <tbody>
        
 
-      <% for( let producto = 0; producto< productos.length; producto++ ) { %>
+      <% productos.forEach(producto => { %>
         <tr>
-          <td><%= productos[producto].id %></td> 
-          <td><%= productos[producto].nombre %></td>
+          <td><%= producto.id %></td> 
+          <td><%= producto.nombre %></td>
       
           <td>
-            <% for(let imagen of productos[producto].imagenes) { %>
+            <% producto.imagenes.forEach(imagen => { %>
               <img class="img-thumbnail" width= '150' src="/images/<%= imagen %>" alt="">
-            <% } %>
+            <% }); %>
           </td>
-          <td>$<%= productos[producto].precio %></td> 
+          <td>$<%= producto.precio %></td> 
 
         <td>
 
           <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
 
-            <form class="form-inline" method="get" action="/productos/editar/<%= productos[producto].id %>">
+            <form class="form-inline" method="get" action="/productos/editar/<%= producto.id %>">
                 <button class="btn btn-warning" type="submit">Editar</button>
             </form>
 
@@ -49,7 +49,7 @@
            
           <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
 
-            <form class="form-inline" method="post" action="/productos/eliminar/<%= productos[producto].id %>">
+            <form class="form-inline" method="post" action="/productos/eliminar/<%= producto.id %>">
 
                 <button class="btn btn-danger" type="submit">Borrar</button>
                 
@@ -58,7 +58,7 @@
         
         </td>
         </tr>
-        <% } %>
+        <% }); %>
         
      
     </tbody>
@@ -67,5 +67,3 @@
 </main>
 <%- include ./layouts/footer.ejs %>
 </body>
-
-
