@@ -8,24 +8,28 @@ module.exports = {
     },
     lista: function (req, res) {
         const categoria = req.query.categoria;
-        const obtenerProductos = categoria ? producto.obtenerPorCategoria : producto.obtener;
-        const parametros = categoria ? [conexion, categoria] : [conexion];
-    
-        obtenerProductos(...parametros, function (error, productos) {
-            if (error) {
-                console.log('Error al obtener productos:', error);
-            } else {
-                const productosConImagenes = productos.map(producto => {
-                    return new Promise((resolve, reject) => {
+        if (categoria) {
+            producto.obtenerPorCategoria(conexion, categoria, function (error, productos) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
+                } else {
+                    // Formatear el precio de cada producto
+                    productos.forEach(producto => {
                         producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                        producto.obtenerImagenes(conexion, producto.id, function(error, imagenes) {
-                            if (error) {
-                                reject('Error al obtener imágenes:', error);
-                            } else {
-                                producto.imagenes = imagenes;
-                                resolve(producto);
-                            }
-                        });
+                    });
+    
+                    console.log('Productos obtenidos:', productos);
+                    res.render('productos', { productos: productos });
+                }
+            });
+        } else {
+            producto.obtener(conexion, function (error, productos) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
+                } else {
+                    // Formatear el precio de cada producto
+                    productos.forEach(producto => {
+                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                     });
                 });
     
