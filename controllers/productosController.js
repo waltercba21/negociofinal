@@ -48,22 +48,30 @@ module.exports = {
     
         datos.precio = parseFloat(datos.precio);
     
-        if (!req.files || !req.files.length ===0) {
+        if (!req.files || Object.keys(req.files).length === 0) {
             return res.status(400).send('No se proporcionó un archivo');
         }
     
-        producto.insertar(conexion, datos, req.file, function(error, result) {
+        producto.insertar(conexion, datos, req.files.archivo, function(error, result) {
             if (error) {
                 return res.status(500).send('Error al guardar producto');
             } else {
                 // Insertar las imágenes del producto
-                req.files.forEach(file => {
-                    producto.insertarImagen(conexion, result.insertId, file.filename, function(error) {
+                if (Array.isArray(req.files.archivo)) {
+                    req.files.archivo.forEach(file => {
+                        producto.insertarImagen(conexion, result.insertId, file.filename, function(error) {
+                            if (error) {
+                                console.log('Error al guardar imagen de producto:', error);
+                            }
+                        });
+                    });
+                } else {
+                    producto.insertarImagen(conexion, result.insertId, req.files.archivo.filename, function(error) {
                         if (error) {
                             console.log('Error al guardar imagen de producto:', error);
                         }
                     });
-                });
+                }
     
                 res.redirect('/productos');
             }
