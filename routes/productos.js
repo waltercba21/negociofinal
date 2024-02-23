@@ -21,10 +21,10 @@ var cargar = multer({storage: rutaAlmacen});
 
 router.get('/', productosController.lista);
 router.get('/crear', productosController.crear);
-router.post('/', cargar.array('archivo'), productosController.guardar);
+router.post('/', cargar.single('archivo'), productosController.guardar);
 router.get('/panelControl', productosController.panelControl)
 router.get('/editar/:id', productosController.editar)
-router.post('/actualizar', cargar.array('archivo'), productosController.actualizar);
+router.post('/actualizar', cargar.single('archivo'), productosController.actualizar);
 router.post('/eliminar/:id', productosController.eliminar);
 
 // Nuevas rutas
