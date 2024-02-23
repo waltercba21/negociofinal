@@ -48,7 +48,7 @@ module.exports = {
     
         datos.precio = parseFloat(datos.precio);
     
-        if (!req.files || Object.keys(req.files).length === 0) {
+        if (!req.files || !req.files.archivo) {
             return res.status(400).send('No se proporcionó un archivo');
         }
     
