@@ -14,8 +14,8 @@ module.exports = {
                     console.log('Error al obtener productos:', error);
                 } else {
                     // Formatear el precio de cada producto
-                    productos.forEach(producto => {
-                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                    productos.forEach(prod => {
+                        prod.precio = parseFloat(prod.precio).toLocaleString('de-DE');
                     });
     
                     console.log('Productos obtenidos:', productos);
