@@ -32,7 +32,7 @@
       
           <td>
             <% producto.imagenes.forEach(imagen => { %>
-              <img class="img-thumbnail" width= '150' src="/images/<%= imagen %>" alt="">
+              <img class="img-thumbnail" width= '150' src="/images/<%= producto.imagen %>" alt="">
             <% }); %>
           </td>
           <td>$<%= producto.precio %></td> 
