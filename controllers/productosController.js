@@ -52,26 +52,21 @@ module.exports = {
             return res.status(400).send('No se proporcionó un archivo');
         }
     
-        producto.insertar(conexion, datos, req.files.archivo, function(error, result) {
+        // Asegúrate de que 'archivo' es un array
+        let archivos = Array.isArray(req.files.archivo) ? req.files.archivo : [req.files.archivo];
+    
+        producto.insertar(conexion, datos, archivos[0], function(error, result) {
             if (error) {
                 return res.status(500).send('Error al guardar producto');
             } else {
                 // Insertar las imágenes del producto
-                if (Array.isArray(req.files.archivo)) {
-                    req.files.archivo.forEach(file => {
-                        producto.insertarImagen(conexion, result.insertId, file.filename, function(error) {
-                            if (error) {
-                                console.log('Error al guardar imagen de producto:', error);
-                            }
-                        });
-                    });
-                } else {
-                    producto.insertarImagen(conexion, result.insertId, req.files.archivo.filename, function(error) {
+                archivos.forEach(file => {
+                    producto.insertarImagen(conexion, result.insertId, file.filename, function(error) {
                         if (error) {
                             console.log('Error al guardar imagen de producto:', error);
                         }
                     });
-                }
+                });
     
                 res.redirect('/productos');
             }
