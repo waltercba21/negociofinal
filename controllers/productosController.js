@@ -59,13 +59,6 @@ module.exports = {
             if (error) {
                 return res.status(500).send('Error al guardar producto');
             } else {
-                // Insertar la imagen del producto
-                producto.insertarImagen(conexion, result.insertId, archivo.filename, function(error) {
-                    if (error) {
-                        console.log('Error al guardar imagen de producto:', error);
-                    }
-                });
-    
                 res.redirect('/productos');
             }
         });
