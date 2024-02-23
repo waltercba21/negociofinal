@@ -158,33 +158,6 @@ ALTER TABLE `carritos`
   ADD CONSTRAINT `carritos_ibfk_2` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`);
 
 --
--- Estructura de tabla para la tabla `imagenes_producto`
---
-
-CREATE TABLE `imagenes_producto` (
-  `id` int(11) NOT NULL,
-  `producto_id` int(11) NOT NULL,
-  `imagen` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Indices de la tabla `imagenes_producto`
---
-ALTER TABLE `imagenes_producto`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `producto_id` (`producto_id`);
-
---
--- AUTO_INCREMENT de la tabla `imagenes_producto`
---
-ALTER TABLE `imagenes_producto`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- Restricciones para la tabla `imagenes_producto`
---
-ALTER TABLE `imagenes_producto`
-  ADD CONSTRAINT `imagenes_producto_ibfk_1` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`);
 
 COMMIT;
 

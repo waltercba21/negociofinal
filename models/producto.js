@@ -8,14 +8,12 @@ module.exports ={
         return funcion(new Error('No se proporcionó un archivo'));
       }
       conexion.query
-      ('INSERT INTO productos (nombre,codigo,descripcion,proveedor,precio,categoria) VALUES (?,?,?,?,?,?)',
-      [datos.nombre,datos.codigo,datos.descripcion,datos.proveedor,datos.precio,datos.categoria], (error, resultados) => {
+      ('INSERT INTO productos (nombre,codigo,descripcion,proveedor,precio,categoria,imagen) VALUES (?,?,?,?,?,?,?)',
+      [datos.nombre,datos.codigo,datos.descripcion,datos.proveedor,datos.precio,datos.categoria, archivo.filename], (error, resultados) => {
         if (error) {
           return funcion(error);
         }
-        const productoId = resultados.insertId;
-        const imagen = [productoId, archivo.filename];
-        conexion.query('INSERT INTO imagenes_producto (producto_id, imagen) VALUES (?, ?)', imagen, funcion);
+        funcion(null, resultados);
       });
     },
     retornarDatosId: function (conexion,id,funcion){
