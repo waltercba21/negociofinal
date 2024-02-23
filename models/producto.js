@@ -2,8 +2,8 @@ module.exports ={
     obtener : function(conexion,funcion){
         conexion.query('SELECT * FROM productos',funcion);
     },
-    insertar: function(conexion, datos, archivos, funcion){
-      if (!archivos || archivos.length === 0) {
+    insertar: function(conexion, datos, archivo, funcion){
+      if (!archivo) {
         // manejar el error aquí, por ejemplo, puedes llamar a la función de callback con un error
         return funcion(new Error('No se proporcionó un archivo'));
       }
@@ -14,8 +14,8 @@ module.exports ={
           return funcion(error);
         }
         const productoId = resultados.insertId;
-        const imagenes = archivos.map(archivo => [productoId, archivo.filename]);
-        conexion.query('INSERT INTO imagenes_producto (producto_id, imagen) VALUES ?', [imagenes], funcion);
+        const imagen = [productoId, archivo.filename];
+        conexion.query('INSERT INTO imagenes_producto (producto_id, imagen) VALUES (?, ?)', imagen, funcion);
       });
     },
     retornarDatosId: function (conexion,id,funcion){
