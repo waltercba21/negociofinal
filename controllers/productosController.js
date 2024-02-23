@@ -31,13 +31,11 @@ module.exports = {
                     productos.forEach(producto => {
                         producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                     });
-                });
     
-                Promise.all(productosConImagenes)
-                    .then(productos => res.render('productos', { productos: productos }))
-                    .catch(error => console.log(error));
-            }
-        });
+                    res.render('productos', { productos: productos });
+                }
+            });
+        }
     },
     crear: function(req,res){
         res.render('crear')
