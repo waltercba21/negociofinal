@@ -48,12 +48,12 @@ module.exports = {
     
         datos.precio = parseFloat(datos.precio);
     
-        if (!req.files || !req.files.archivo) {
+        if (!req.file) {
             return res.status(400).send('No se proporcionó un archivo');
         }
     
         // Asegúrate de que 'archivo' es un archivo
-        let archivo = req.files.archivo;
+        let archivo = req.file;
     
         producto.insertar(conexion, datos, archivo, function(error, result) {
             if (error) {
