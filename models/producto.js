@@ -88,4 +88,14 @@ module.exports ={
           }
       });
   },
+  obtenerImagenes: function (conexion, productoId, funcion) {
+    const query = 'SELECT * FROM imagenes WHERE producto_id = ?';
+    conexion.query(query, [productoId], function (error, resultados) {
+        if (error) {
+            funcion(error, null);
+        } else {
+            funcion(null, resultados);
+        }
+    });
+}
 }
