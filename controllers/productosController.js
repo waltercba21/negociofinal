@@ -123,6 +123,15 @@ module.exports = {
     }
     res.redirect('/productos');  
 },
+ultimos: function(req, res) {
+    producto.obtenerUltimos(conexion, 3, function(error, productos) {
+        if (error) {
+            return res.status(500).send('Error al obtener los productos');
+        } else {
+            res.json(productos);
+        }
+    });
+},
 panelControl: function (req, res) {
     producto.obtener(conexion, function (error, productos) {
         if (error) {
