@@ -47,7 +47,9 @@ insertarImagen: function(conexion, productoId, imagen, callback) {
   const query = 'INSERT INTO imagenes_producto (producto_id, ruta_imagen) VALUES (?, ?)';
   conexion.query(query, [productoId, imagen], callback);
 },
-
+obtenerUltimos: function (conexion, cantidad, funcion) {
+  conexion.query('SELECT * FROM productos ORDER BY id DESC LIMIT ?', [cantidad], funcion);
+},
 // Obtener todas las imágenes de un producto
 obtenerImagenes: function(conexion, productoId, callback) {
   const query = 'SELECT * FROM imagenes_producto WHERE producto_id = ?';
