@@ -4,7 +4,14 @@ var borrar = require('fs');
 
 module.exports = {
     index : function (req,res){
-                res.render('index');
+        producto.obtenerUltimos(conexion, 3, function(error, productos) {
+            if (error) {
+                console.log('Error al obtener productos:', error);
+                return res.status(500).send('Error al obtener los productos');
+            } else {
+                res.render('index', { productos: productos });
+            }
+        });
     },
     lista: function (req, res) {
         const categoria = req.query.categoria;
