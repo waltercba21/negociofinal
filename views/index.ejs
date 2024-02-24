@@ -52,16 +52,28 @@
       <h2>Últimos productos agregados</h2>
       <div class="contenedor-productos">
           <% productos.forEach(function(producto) { %>
-              <div class="producto">
-                  <img src="<%= producto.imagen %>" alt="<%= producto.nombre %>">
-                  <div class="producto-info">
-                      <h3><%= producto.nombre %></h3>
-                      <p><%= producto.descripcion %></p>
-                  </div>
+              <div class="card">
+                <div class="cover__card">
+                  <img src="../../images/<%= producto.imagen %>" alt="<%= producto.nombre %>">
+                </div>
+                <div class="titulo-producto">
+                  <h3 class="nombre"><%= producto.nombre %></h3>
+                </div>
+                <hr>
+                <div class="categoria-producto">
+                  <h6 class="categoria"><%= producto.categoria %></h6>
+                </div>
+                <hr>
+                <div class="precio-producto">
+                  <p class="precio">$<%= producto.precio %></p>
+                </div>
+                <div class="cantidad-producto">
+                  <a href="/productos/carrito/agregar/<%= producto.id %>" class="agregar-carrito">Agregar al carrito</a>
+                </div>
               </div>
           <% }); %>
       </div>
-  </div>
+    </div>
     </main> 
     
     <%- include ./layouts/footer.ejs %>
