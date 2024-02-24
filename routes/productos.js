@@ -27,7 +27,9 @@ router.get('/editar/:id', productosController.editar)
 router.post('/actualizar', cargar.single('archivo'), productosController.actualizar);
 router.post('/eliminar/:id', productosController.eliminar);
 
+
 // Nuevas rutas
+router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
 

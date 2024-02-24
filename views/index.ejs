@@ -48,6 +48,20 @@
         <button role="button" id="flecha-derecha" class="flecha-derecha"><i class="fa-solid fa-angle-right"></i></button>
       </div>
     </div>   
+    <div class="ultimos-productos contenedor">
+      <h2>Últimos productos agregados</h2>
+      <div class="contenedor-productos">
+          <% productos.forEach(function(producto) { %>
+              <div class="producto">
+                  <img src="<%= producto.imagen %>" alt="<%= producto.nombre %>">
+                  <div class="producto-info">
+                      <h3><%= producto.nombre %></h3>
+                      <p><%= producto.descripcion %></p>
+                  </div>
+              </div>
+          <% }); %>
+      </div>
+  </div>
     </main> 
     
     <%- include ./layouts/footer.ejs %>
