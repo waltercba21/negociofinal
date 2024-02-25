@@ -409,6 +409,7 @@ footer {
   align-items: center; /* Centra el contenido verticalmente */
   justify-content: center;
   flex-direction: column;
+  margin-top: 15px;
 }
 
 .titulo-producto h3 {
@@ -416,7 +417,9 @@ footer {
   overflow: hidden; /* Oculta el texto que excede el ancho del contenedor */
   text-overflow: ellipsis; /* Agrega puntos suspensivos al final del texto si es demasiado largo */
   font-weight: bold;
-  font-size: 16px; 
+  font-size: 16px;
+  max-width: 90%; /* Ajusta este valor según tus necesidades */
+  margin: 0 auto; /* Centra el título horizontalmente */
 }
 
 .precio-producto {
