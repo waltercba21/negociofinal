@@ -66,12 +66,18 @@
                     <select id="marca" name="marca">
                         <option value="RENAULT">RENAULT</option>
                         <option value="FORD">FORD</option>
-                        <option value="VW">VW</option>
+                        <option value="VOLKSWAGEN">VOLKSWAGEN</option>
                         <option value="FIAT">FIAT</option>
                         <option value="CHEVROLET">CHEVROLET</option>
                         <option value="CITROEN">CITROEN</option>
                         <option value="AUDI">AUDI</option>
                       </select>
+                    </div>
+                    <div class="form-group-crear">
+                        <label for="modelo">Modelo:</label>
+                        <select id="modelo" name="modelo">
+                            <!-- Los modelos se llenarán dinámicamente con JavaScript -->
+                        </select>
                     </div>
 
                 <div class="form-group-crear">
@@ -89,6 +95,7 @@
     </div>
     </div>
 </main>
+    <script src="js/crear.js"></script> 
     <%- include ./layouts/footer.ejs %>
     </body>
 
