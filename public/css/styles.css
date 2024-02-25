@@ -356,6 +356,7 @@ footer {
 }
 /* --------------------------PAGINA ULTIMOS PRODUCTOS CARGADOS----------------------------------------*/
 .ultimos-productos {
+  margin-top: 50px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -364,6 +365,9 @@ footer {
 
 .ultimos-productos h2 {
   text-align: center;
+  color: #003f7d;
+  font-weight: bold;
+
 }
 
 .contenedor-productos {
@@ -403,6 +407,12 @@ footer {
   align-items: flex-start;
   justify-content: center;
   flex-direction: column;
+}
+.titulo-producto h3 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px; 
 }
 
 .precio-producto {
