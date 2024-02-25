@@ -61,8 +61,8 @@
                 </div>
                 <hr>
                 <div class="precio-producto">
-                  <p class="precio">$<%= producto.precio %></p>
-                </div>
+                  <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio) %></p>
+              </div>
               </div>
           <% }); %>
       </div>
