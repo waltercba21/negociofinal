@@ -135,6 +135,9 @@ ultimos: function(req, res) {
         if (error) {
             return res.status(500).send('Error al obtener los productos');
         } else {
+            productos.forEach(producto => {
+                producto.precio = parseFloat(producto.precio).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+            });
             res.json(productos);
         }
     });
