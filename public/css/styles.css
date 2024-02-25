@@ -357,6 +357,7 @@ footer {
 /* --------------------------PAGINA ULTIMOS PRODUCTOS CARGADOS----------------------------------------*/
 .ultimos-productos {
   margin-top: 50px;
+  margin-bottom: 30px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -374,11 +375,12 @@ footer {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  
 }
 
 .card-ultimos {
   width: 150px; /* Ajusta este valor según tus necesidades */
-  margin: 10px;
+  margin: 20px;
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   transition: 0.3s;
   display: flex;
@@ -404,15 +406,17 @@ footer {
 .titulo-producto {
   flex-grow: 1;
   display: flex;
-  align-items: flex-start;
+  align-items: center; /* Centra el contenido verticalmente */
   justify-content: center;
   flex-direction: column;
 }
+
 .titulo-producto h3 {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 14px; 
+  white-space: nowrap; /* Asegura que el texto esté en una sola línea */
+  overflow: hidden; /* Oculta el texto que excede el ancho del contenedor */
+  text-overflow: ellipsis; /* Agrega puntos suspensivos al final del texto si es demasiado largo */
+  font-weight: bold;
+  font-size: 16px; 
 }
 
 .precio-producto {
