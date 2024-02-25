@@ -354,6 +354,70 @@ footer {
   transition: 2000ms;
   cursor: pointer;
 }
+/* --------------------------PAGINA ULTIMOS PRODUCTOS CARGADOS----------------------------------------*/
+.ultimos-productos {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ultimos-productos h2 {
+  text-align: center;
+}
+
+.contenedor-productos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card-ultimos {
+  width: 150px; /* Ajusta este valor según tus necesidades */
+  margin: 10px;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;
+}
+
+.card-ultimos:hover {
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+}
+
+.card-ultimos .cover__card {
+  width: 100%;
+  height: 100px; /* Ajusta este valor según tus necesidades */
+  overflow: hidden;
+}
+
+.card-ultimos .cover__card img {
+  width: 100%;
+  height: auto;
+}
+
+.card-ultimos .titulo-producto, 
+.card-ultimos .categoria-producto, 
+.card-ultimos .precio-producto, 
+.card-ultimos .cantidad-producto {
+  padding: 5px;
+}
+
+.card-ultimos .agregar-carrito {
+  background-color: #f1f1f1;
+  color: black;
+  padding: 8px 16px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  margin: 2px 1px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}
+
+.card-ultimos .agregar-carrito:hover {
+  background-color: #4CAF50;
+  color: white;
+}
 
 /*----------------------LOGIN--------------------*/
 
