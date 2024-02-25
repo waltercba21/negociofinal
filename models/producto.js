@@ -23,8 +23,8 @@ module.exports ={
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
     actualizar: function (conexion, datos, archivos, funcion) {
-      conexion.query("UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor=?, categoria=? WHERE id=?",
-      [datos.nombre,datos.codigo,datos.descripcion,datos.precio,datos.proveedor,datos.categoria, datos.id], (error, resultados) => {
+      conexion.query("UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor=?, categoria=?, marca=? WHERE id=?",
+      [datos.nombre,datos.codigo,datos.descripcion,datos.precio,datos.proveedor,datos.categoria,datos.marca, datos.id], (error, resultados) => {
         if (error) {
           return funcion(error);
         }
