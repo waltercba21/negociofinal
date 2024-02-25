@@ -1,6 +1,6 @@
 module.exports ={
     obtener : function(conexion,funcion){
-        conexion.query('SELECT * FROM productos',funcion);
+        conexion.query('SELECT * FROM productos',funcion); 
     },
     insertar: function(conexion, datos, archivo, funcion){
       if (!archivo) {
@@ -8,8 +8,8 @@ module.exports ={
         return funcion(new Error('No se proporcionó un archivo'));
       }
       conexion.query
-      ('INSERT INTO productos (nombre,codigo,descripcion,proveedor,precio,categoria,imagen) VALUES (?,?,?,?,?,?,?)',
-      [datos.nombre,datos.codigo,datos.descripcion,datos.proveedor,datos.precio,datos.categoria, archivo.filename], (error, resultados) => {
+      ('INSERT INTO productos (nombre,codigo,descripcion,proveedor,precio,categoria,marca,imagen) VALUES (?,?,?,?,?,?,?,?)',
+      [datos.nombre,datos.codigo,datos.descripcion,datos.proveedor,datos.precio,datos.categoria,datos.marca, archivo.filename], (error, resultados) => {
         if (error) {
           return funcion(error);
         }

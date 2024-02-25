@@ -127,7 +127,7 @@ module.exports = {
     if(req.body.nombre){producto.actualizar(conexion,req.body,function(error){
 
         });
-    }
+    } 
     res.redirect('/productos');  
 },
 ultimos: function(req, res) {
@@ -201,9 +201,6 @@ buscarProductos : async (req, res) => {
           }
         }
       });
-  
-  
-      // Envía los productos como respuesta
       res.json(productos);
     } catch (error) {
       console.error('Hubo un problema con la búsqueda de productos:', error);
@@ -232,7 +229,6 @@ carrito: function (req, res) {
             console.log('Error al recuperar los productos del carrito:', error);
             return;
         }
-
         req.session.carrito = productosEnCarrito;
         req.session.save(function(err) {
             if (err) {
@@ -254,15 +250,12 @@ agregarAlCarrito: function (req, res) {
             console.log('Error al obtener el producto:', error);
             return res.redirect('/productos');
         }
-
         const precioTotal = productos[0].precio * cantidad;
-
         conexion.query('INSERT INTO carritos (usuario_id, producto_id, cantidad, precio_total) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE cantidad = cantidad + ?', [usuarioId, productoId, cantidad, precioTotal, cantidad], function (error) {
             if (error) {
                 console.log('Error al guardar el carrito en la base de datos:', error);
                 return;
             }
-
             req.session.carrito = req.session.carrito || [];
             req.session.carrito.push(productos[0]);
             req.session.save(function(err) {
@@ -274,7 +267,6 @@ agregarAlCarrito: function (req, res) {
         });
     });
 },
-
 eliminarDelCarrito : function(req, res) {
     console.log('Función eliminarDelCarrito llamada');
     const carritoId = Number(req.params.id);
@@ -283,13 +275,11 @@ eliminarDelCarrito : function(req, res) {
     console.log('usuarioId:', usuarioId);
     conexion.query('DELETE FROM carritos WHERE id = ? AND usuario_id = ?', [carritoId, usuarioId], function (error, results) {
         if (error) {
-            
         } else {
             const index = req.session.carrito.findIndex(producto => producto.id === carritoId);
             if (index !== -1) {
                 req.session.carrito.splice(index, 1);
             }
-            
             req.session.save(function(err) {
                 if(err) {
                     console.log('Error al guardar la sesión:', err);
@@ -358,7 +348,6 @@ mostrarCompra : function(req, res) {
     var urlWhatsapp = 'https://wa.me/543513274715?text=' + encodeURIComponent(mensaje);
     res.redirect(urlWhatsapp);
 },
-
 guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     const productos = carrito;
     for (let i = 0; i < productos.length; i++) {
@@ -372,7 +361,6 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
         });
     }
 },
-
 modificarPorProveedor: function (req, res) {
     const proveedor = req.query.proveedor; // Obtén el proveedor de req.query
     producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
@@ -383,31 +371,23 @@ modificarPorProveedor: function (req, res) {
         }
     });
 },
-
 actualizarPorProveedor: function (req, res) {
     let porcentajeCambio = req.body.porcentaje / 100;
     const tipoCambio = req.body.tipoCambio;
     const proveedor = req.body.proveedor; 
-
-    // Si el tipo de cambio es un descuento, cambia el signo del porcentaje
     if (tipoCambio === 'descuento') {
         porcentajeCambio = -porcentajeCambio;
     }
-
-    // Obtiene todos los productos del proveedor
     producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
         if (error) {
             console.log('Error al obtener productos:', error);
             return;
         }
-
-        // Actualiza el precio de cada producto
         producto.actualizarPreciosPorProveedor(conexion, proveedor, porcentajeCambio, function(error, resultados) {
             if (error) {
                 console.log('Error al actualizar precios:', error);
                 return;
             }
-
             res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedor);
         });
     });
