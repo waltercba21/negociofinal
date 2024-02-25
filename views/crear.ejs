@@ -12,74 +12,60 @@
 
         <div class="card-body">
         
-
             <form method="post" action="/productos" enctype="multipart/form-data">
 
+                <label for="id-input">ID</label>
+                <input id="id-input" type="text" name="id" value="<%= producto.id %>">
+        
                 <div class="form-group-crear">
                     <label for="my-input">Imagen</label>
                     <input id="my-input" class="form-control-file" type="file" name="archivo">
                 </div>
-                
+        
                 <div class="form-group-crear">
-                <label for="my-input">Nombre:</label>
-                <input id="my-input" class="form-control" type="text" name="nombre">
+                    <label for="nombre-input">Nombre</label>
+                    <input id="nombre-input" value="<%= producto.nombre %>" class="form-control" type="text" name="nombre">
                 </div>
-
                 <div class="form-group-crear">
-                    <label for="my-input">Código:</label>
-                    <input id="my-input" class="form-control" type="text" name="codigo">
+                    <label for="descripcion-input">Descripcion</label>
+                    <input id="descripcion-input" class="form-control" value="<%= producto.descripcion %>" type="text" name="descripcion">
                 </div>
-
                 <div class="form-group-crear">
-                <label for="my-input">Descripcion:</label>
-                <input id="my-input" class="form-control" type="text" name="descripcion">
+                    <label for="codigo-input">Código</label>
+                    <input id="codigo-input" value="<%= producto.codigo %>" class="form-control" type="text" name="codigo">
                 </div>
-
                 <div class="form-group-crear">
-                    <label for="categoria">Categoria</label>
-                    <select id="categoria" name="categoria">
-                      <option value="FAROS TRASEROS">FAROS TRASEROS</option>
-                      <option value="FAROS DELANTEROS">FAROS DELANTEROS</option>
-                      <option value="OPTICAS">OPTICAS</option>
-                      <option value="FAROS LED">FAROS LED</option>
-                      <option value="LAMPARAS">LAMPARAS</option>
-                      <option value="FAROS CAMIONES">FAROS CAMIONES</option>
-                      <option value="LINEA UNIVERSAL">LINEA UNIVERSAL</option>
+                    <label for="categoria-input">Categoria</label>
+                    <select id="categoria-input" name="categoria">
+                        <% var opciones = ["FAROS TRASEROS", "FAROS DELANTEROS", "OPTICAS", "FAROS LED", "FAROS CAMIONES","LAMPARAS"]; %>
+                        <% for(var i = 0; i < opciones.length; i++) { %>
+                            <option value='<%= opciones[i] %>' <%= producto.categoria == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
+                        <% } %>
                     </select>
                 </div>
-
                 <div class="form-group-crear">
-                <label for="my-input">Proveedor:</label>
-                <select id="proveedor" name="proveedor">
-                    <option value="LAM">LAM</option>
-                    <option value="DAM">DAM</option>
-                    <option value="LIDERCAR">LIDERCAR</option>
-                    <option value="DM">DM</option>
-                    <option value="MYL">MYL</option>
-                    <option value="JR">JR</option>
-                    <option value="FAL">FAL</option>
-                  </select>
+                    <label for="proveedor-input">Proveedor</label>
+                    <select id="proveedor-input" name="proveedor">
+                        <% var opciones = ["LAM", "LIDERCAR", "MYL", "DM", "DAM"]; %>
+                        <% for(var i = 0; i < opciones.length; i++) { %>
+                            <option value='<%= opciones[i] %>' <%= producto.categoria == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
+                        <% } %>
+                    </select>
                 </div>
-
                 <div class="form-group-crear">
-                    <label for="my-input">Marca:</label>
-                    <select id="marca" name="marca">
-                        <option value="RENAULT">RENAULT</option>
-                        <option value="FORD">FORD</option>
-                        <option value="VW">VW</option>
-                        <option value="FIAT">FIAT</option>
-                        <option value="CHEVROLET">CHEVROLET</option>
-                        <option value="CITROEN">CITROEN</option>
-                        <option value="AUDI">AUDI</option>
-                      </select>
-                    </div>
-
-                <div class="form-group-crear">
-                    <label for="my-input">Precio:</label>
-                    <input id="my-input" class="form-control" type="number" step="0.01" name="precio">
+                    <label for="marca-input">Marca</label>
+                    <select id="marca-input" name="marca">
+                        <% var opciones = ["Fiat", "Renault", "Ford", "Volkswagen","Chevrolet","Mercedes Benz"]; %> 
+                        <% for(var i = 0; i < opciones.length; i++) { %>
+                            <option value='<%= opciones[i] %>' <%= producto.marca == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
+                        <% } %>
+                    </select>
                 </div>
-    
-                <div class="botones-crear">
+                <div class="form-group-crear">
+                    <label for="precio-input">Precio</label>
+                    <input id="precio-input" class="form-control" value="<%= producto.precio %>" type="text" name="precio">
+                </div>
+                <div class="botones-editar">
                 <button class="btn btn-success" type="submit">Guardar</button>
                 <a class='btn btn-primary'href="/productos">Cancelar</a>
                 </div>

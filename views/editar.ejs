@@ -48,6 +48,15 @@
             </select>
         </div>
         <div class="form-group-crear">
+            <label for="marca-input">Marca</label>
+            <select id="marca-input" name="marca">
+                <% var opciones = ["Fiat", "Renault", "Ford", "Volkswagen","Chevrolet","Mercedes Benz"]; %> 
+                <% for(var i = 0; i < opciones.length; i++) { %>
+                    <option value='<%= opciones[i] %>' <%= producto.marca == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
+                <% } %>
+            </select>
+        </div>
+        <div class="form-group-crear">
             <label for="precio-input">Precio</label>
             <input id="precio-input" class="form-control" value="<%= producto.precio %>" type="text" name="precio">
         </div>
