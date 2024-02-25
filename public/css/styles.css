@@ -415,8 +415,8 @@ footer {
 .precio-producto p {
   margin: 0;
   text-align: center;
+  width: 100%;
 }
-
 /*----------------------LOGIN--------------------*/
 
 .body-login{
