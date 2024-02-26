@@ -8,7 +8,7 @@
             Editar Producto
         </div>
 
-    <form method="post" action="../actualizar/" enctype="multipart/form-data">
+        <form method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
         <label for="id-input">ID</label>
         <input id="id-input" type="text" name="id" value="<%= producto.id %>">
 
