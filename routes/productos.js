@@ -24,7 +24,7 @@ router.get('/crear', productosController.crear);
 router.post('/', cargar.single('archivo'), productosController.guardar);
 router.get('/panelControl', productosController.panelControl)
 router.get('/editar/:id', productosController.editar)
-router.post('/actualizar', cargar.single('archivo'), productosController.actualizar);
+router.post('/actualizar/:id', cargar.single('archivo'), productosController.actualizar);
 router.post('/eliminar/:id', productosController.eliminar);
 
 
