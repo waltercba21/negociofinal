@@ -184,7 +184,6 @@ panelControl: function (req, res) {
         if (error) {
             console.log('Error al obtener productos:', error);
         } else {
-            // Formatear el precio de cada producto
             productos.forEach(producto => {
                 producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
             });

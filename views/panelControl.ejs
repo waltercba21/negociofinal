@@ -19,46 +19,31 @@
         <th>Imagen</th>
         <th>Precio</th>
         <th>Acciones</th>
-
       </tr>
     </thead>
     <tbody>
-       
-
       <% productos.forEach(producto => { %>
         <tr>
           <td><%= producto.id %></td> 
-          <td><%= producto.nombre %></td>
-      
+          <td><%= producto.nombre %></td>  
           <td>
             <img class="img-thumbnail" width= '150' src="/images/<%= producto.imagen %>" alt="">
           </td>
           <td>$<%= producto.precio %></td> 
-
         <td>
-
           <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-
             <form class="form-inline" method="get" action="/productos/editar/<%= producto.id %>">
                 <button class="btn btn-warning" type="submit">Editar</button>
             </form>
-
           </div>
-           
           <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-
             <form class="form-inline" method="post" action="/productos/eliminar/<%= producto.id %>">
-
-                <button class="btn btn-danger" type="submit">Borrar</button>
-                
+                <button class="btn btn-danger" type="submit">Borrar</button>  
             </form>
-          </div>
-        
+          </div>  
         </td>
         </tr>
         <% }); %>
-        
-     
     </tbody>
   </table>
 </div>
