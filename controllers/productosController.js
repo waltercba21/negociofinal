@@ -112,24 +112,56 @@ module.exports = {
             res.render('editar', {producto: registros[0]});
         });
     }, 
-    actualizar: function (req, res) {    
-    if(req.file){
-        if(req.file.filename){
+    actualizar: function (req, res) {
+        if(req.file && req.file.filename){
             producto.retornarDatosId(conexion,req.body.id,function (error, registros){
-                var nombreImagen = '/public/images/' + (registros [0].imagen);
+                if (error) {
+                    console.error("Error al obtener los datos del producto:", error);
+                    res.status(500).send("Error al actualizar el producto");
+                    return;
+                }
+    
+                var nombreImagen = '/public/images/' + (registros[0].imagen);
                 if(borrar.existsSync(nombreImagen)){
                     borrar.unlinkSync(nombreImagen);
                 }
-               producto.actualizarArchivo(conexion,req.body, req.file, function (error){})
-               });
+    
+                producto.actualizarArchivo(conexion,req.body, req.file, function (error){
+                    if (error) {
+                        console.error("Error al actualizar el archivo del producto:", error);
+                        res.status(500).send("Error al actualizar el producto");
+                        return;
+                    }
+    
+                    if(req.body.nombre){
+                        producto.actualizar(conexion,req.body,function(error){
+                            if (error) {
+                                console.error("Error al actualizar el producto:", error);
+                                res.status(500).send("Error al actualizar el producto");
+                                return;
+                            }
+    
+                            res.redirect('/productos');
+                        });
+                    } else {
+                        res.redirect('/productos');
+                    }
+                });
+            });
+        } else if(req.body.nombre){
+            producto.actualizar(conexion,req.body,function(error){
+                if (error) {
+                    console.error("Error al actualizar el producto:", error);
+                    res.status(500).send("Error al actualizar el producto");
+                    return;
+                }
+    
+                res.redirect('/productos');
+            });
+        } else {
+            res.redirect('/productos');
         }
-    }
-    if(req.body.nombre){producto.actualizar(conexion,req.body,function(error){
-
-        });
-    } 
-    res.redirect('/productos');  
-},
+    },
 ultimos: function(req, res) {
     producto.obtenerUltimos(conexion, 3, function(error, productos) {
         if (error) {
