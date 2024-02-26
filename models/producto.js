@@ -1,7 +1,10 @@
 module.exports ={
-    obtener : function(conexion,funcion){
-        conexion.query('SELECT * FROM productos',funcion); 
-    },
+  obtener : function(conexion,funcion){
+    if (typeof funcion !== 'function') {
+        throw new Error('funcion debe ser una función');
+    }
+    conexion.query('SELECT * FROM productos',funcion); 
+},
     insertar: function(conexion, datos, archivo, funcion){
       if (!archivo) {
         // manejar el error aquí, por ejemplo, puedes llamar a la función de callback con un error
@@ -42,7 +45,6 @@ module.exports ={
         
         conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
     },
-    // Insertar una nueva imagen de producto
 insertarImagen: function(conexion, productoId, imagen, callback) {
   const query = 'INSERT INTO imagenes_producto (producto_id, ruta_imagen) VALUES (?, ?)';
   conexion.query(query, [productoId, imagen], callback);
