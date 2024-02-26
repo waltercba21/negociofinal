@@ -108,7 +108,12 @@ module.exports = {
     },
     editar : function (req,res){
         producto.retornarDatosId(conexion,req.params.id,function (error, registros){
-            console.log(registros[0])
+            if (error) {
+                console.error("Error al obtener los datos del producto:", error);
+                res.status(500).send("Error al obtener el producto");
+                return;
+            }
+            console.log("Producto seleccionado para editar: ", registros[0]);
             res.render('editar', {producto: registros[0]});
         });
     }, 
