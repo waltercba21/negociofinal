@@ -16,23 +16,23 @@
             <form method="post" action="/productos" enctype="multipart/form-data">
 
                 <div class="form-group-crear">
-                    <label for="my-input">Imagen</label>
-                    <input id="my-input" class="form-control-file" type="file" name="archivo">
+                    <label for="imagen">Imagen</label>
+                    <input id="imagen" class="form-control-file" type="file" name="archivo">
                 </div>
                 
                 <div class="form-group-crear">
-                <label for="my-input">Nombre:</label>
-                <input id="my-input" class="form-control" type="text" name="nombre">
+                <label for="nombre">Nombre:</label>
+                <input id="nombre" class="form-control" type="text" name="nombre">
                 </div>
 
                 <div class="form-group-crear">
-                    <label for="my-input">Código:</label>
-                    <input id="my-input" class="form-control" type="text" name="codigo">
+                    <label for="codigo">Código:</label>
+                    <input id="codigo" class="form-control" type="text" name="codigo">
                 </div>
 
                 <div class="form-group-crear">
-                <label for="my-input">Descripcion:</label>
-                <input id="my-input" class="form-control" type="text" name="descripcion">
+                <label for="descripcion">Descripcion:</label>
+                <input id="descripcion" class="form-control" type="text" name="descripcion">
                 </div>
 
                 <div class="form-group-crear">
@@ -49,7 +49,7 @@
                 </div>
 
                 <div class="form-group-crear">
-                <label for="my-input">Proveedor:</label>
+                <label for="proveedor>Proveedor:</label>
                 <select id="proveedor" name="proveedor">
                     <option value="LAM">LAM</option>
                     <option value="DAM">DAM</option>
@@ -62,7 +62,7 @@
                 </div>
 
                 <div class="form-group-crear">
-                    <label for="my-input">Marca:</label>
+                    <label for="marca">Marca:</label>
                     <select id="marca" name="marca">
                         <option value="RENAULT">RENAULT</option>
                         <option value="FORD">FORD</option>
@@ -81,8 +81,8 @@
                     </div>
 
                 <div class="form-group-crear">
-                    <label for="my-input">Precio:</label>
-                    <input id="my-input" class="form-control" type="number" step="0.01" name="precio">
+                    <label for="precio">Precio:</label>
+                    <input id="precio" class="form-control" type="number" step="0.01" name="precio">
                 </div>
     
                 <div class="botones-crear">
@@ -96,7 +96,7 @@
     </div>
 </main>
     <%- include ./layouts/footer.ejs %>
-    <script src="js/crear.js"></script> 
+    <script src="/js/crear.js"></script> 
 </body>
 
 
