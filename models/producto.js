@@ -27,20 +27,8 @@ module.exports ={
     },
     actualizar: function (conexion, datos, archivos, funcion) {
       conexion.query("UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor=?, categoria=?, marca=? WHERE id=?",
-      [datos.nombre,datos.codigo,datos.descripcion,datos.precio,datos.proveedor,datos.categoria,datos.marca, datos.id], (error, resultados) => {
-        if (error) {
-          return funcion(error);
-        }
-        const productoId = datos.id;
-        conexion.query('DELETE FROM imagenes_producto WHERE producto_id = ?', [productoId], (error, resultados) => {
-          if (error) {
-            return funcion(error);
-          }
-          const imagenes = archivos.map(archivo => [productoId, archivo.filename]);
-          conexion.query('INSERT INTO imagenes_producto (producto_id, imagen) VALUES ?', [imagenes], funcion);
-        });
-      });
-    },  
+      [datos.nombre,datos.codigo,datos.descripcion,datos.precio,datos.proveedor,datos.categoria,datos.marca, datos.id], funcion);
+  },
     actualizarArchivo: function(conexion,datos,archivo,funcion){
         
         conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
