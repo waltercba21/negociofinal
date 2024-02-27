@@ -139,7 +139,7 @@ module.exports = {
                     }
     
                     if(req.body.nombre){
-                        producto.actualizar(conexion,req.body,function(error){
+                        producto.actualizar(conexion,req.body, req.file, function(error){
                             if (error) {
                                 console.error("Error al actualizar el producto:", error);
                                 res.status(500).send("Error al actualizar el producto");
@@ -154,7 +154,7 @@ module.exports = {
                 });
             });
         } else if(req.body.nombre){
-            producto.actualizar(conexion,req.body,function(error){
+            producto.actualizar(conexion,req.body, req.file, function(error){
                 if (error) {
                     console.error("Error al actualizar el producto:", error);
                     res.status(500).send("Error al actualizar el producto");
