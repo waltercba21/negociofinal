@@ -157,6 +157,8 @@ ALTER TABLE `carritos`
   ADD CONSTRAINT `carritos_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`),
   ADD CONSTRAINT `carritos_ibfk_2` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`);
 
+ALTER TABLE `productos`
+ADD `marca` VARCHAR(255);
 --
 
 COMMIT;
