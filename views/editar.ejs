@@ -40,7 +40,7 @@
             <select id="proveedor-input" name="proveedor">
                 <% var opciones = ["LAM", "LIDERCAR", "DISTRILED","FAL", "JR", "MYL", "DM", "DAM"]; %>
                 <% for(var i = 0; i < opciones.length; i++) { %>
-                    <option value='<%= opciones[i] %>' <%= producto.categoria == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
+                    <option value='<%= opciones[i] %>' <%= producto.proveedor == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
                 <% } %>
             </select>
         </div>
