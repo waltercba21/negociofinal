@@ -5,6 +5,12 @@ module.exports ={
     }
     conexion.query('SELECT * FROM productos LIMIT ? OFFSET ?', [productosPorPagina, saltar], funcion);
   },
+  contar: function (conexion, funcion) {
+    if (typeof funcion !== 'function') {
+      throw new Error('funcion debe ser una función');
+    }
+    conexion.query('SELECT COUNT(*) AS total FROM productos', funcion);
+  },
     insertar: function(conexion, datos, archivo, funcion){
       if (!archivo) {
         // manejar el error aquí, por ejemplo, puedes llamar a la función de callback con un error
