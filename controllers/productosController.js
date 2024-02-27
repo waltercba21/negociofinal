@@ -118,7 +118,9 @@ module.exports = {
         });
     }, 
     actualizar: function (req, res) {
+        console.log('Iniciando la actualización del producto...');
         if(req.file && req.file.filename){
+            console.log('Archivo recibido, obteniendo datos del producto...');
             producto.retornarDatosId(conexion,req.body.id,function (error, registros){
                 if (error) {
                     console.error("Error al obtener los datos del producto:", error);
@@ -126,11 +128,13 @@ module.exports = {
                     return;
                 }
     
+                console.log('Datos del producto obtenidos, borrando imagen existente...');
                 var nombreImagen = '/public/images/' + (registros[0].imagen);
                 if(borrar.existsSync(nombreImagen)){
                     borrar.unlinkSync(nombreImagen);
                 }
     
+                console.log('Imagen existente borrada, actualizando archivo...');
                 producto.actualizarArchivo(conexion,req.body, req.file, function (error){
                     if (error) {
                         console.error("Error al actualizar el archivo del producto:", error);
@@ -139,6 +143,7 @@ module.exports = {
                     }
     
                     if(req.body.nombre){
+                        console.log('Nombre recibido, actualizando producto...');
                         producto.actualizar(conexion,req.body, req.file, function(error){
                             if (error) {
                                 console.error("Error al actualizar el producto:", error);
@@ -146,14 +151,17 @@ module.exports = {
                                 return;
                             }
     
+                            console.log('Producto actualizado, redirigiendo...');
                             res.redirect('/productos');
                         });
                     } else {
+                        console.log('No se recibió nombre, redirigiendo...');
                         res.redirect('/productos');
                     }
                 });
             });
         } else if(req.body.nombre){
+            console.log('No se recibió archivo pero se recibió nombre, actualizando producto...');
             producto.actualizar(conexion,req.body, req.file, function(error){
                 if (error) {
                     console.error("Error al actualizar el producto:", error);
@@ -161,9 +169,11 @@ module.exports = {
                     return;
                 }
     
+                console.log('Producto actualizado, redirigiendo...');
                 res.redirect('/productos');
             });
         } else {
+            console.log('No se recibió archivo ni nombre, redirigiendo...');
             res.redirect('/productos');
         }
     },
