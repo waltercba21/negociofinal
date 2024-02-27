@@ -1,9 +1,9 @@
 module.exports ={
-  obtener: function (conexion, saltar, productosPorPagina, funcion) {
+  obtener: function (conexion, saltar, funcion) {
     if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');
     }
-    conexion.query('SELECT * FROM productos LIMIT ? OFFSET ?', [productosPorPagina, saltar], funcion);
+    conexion.query('SELECT * FROM productos LIMIT ?,20', [saltar], funcion);
   },
   contar: function (conexion, funcion) {
     if (typeof funcion !== 'function') {
