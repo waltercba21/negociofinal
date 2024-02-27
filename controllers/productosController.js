@@ -202,13 +202,14 @@ panelControl: function (req, res) {
           producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
         });
   
-        producto.contar(conexion, function(error, totalProductos) {
-          if (error) {
-            console.log('Error al contar productos:', error);
-          } else {
-            res.render('panelControl', { title: 'Productos', productos: productos, totalProductos: totalProductos, productosPorPagina: productosPorPagina });
-          }
-        });
+        producto.contar(conexion, function(error, resultado) {
+            if (error) {
+              console.log('Error al contar productos:', error);
+            } else {
+              var totalProductos = resultado[0].total;
+              res.render('panelControl', { title: 'Productos', productos: productos, totalProductos: totalProductos, productosPorPagina: productosPorPagina });
+            }
+          });
       }
     });
   },
