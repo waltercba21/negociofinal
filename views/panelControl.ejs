@@ -11,6 +11,11 @@
     <a href="/productos/modificarPorProveedor" class="btn btn-primary" type="button">Modificar producto por proveedor</a>
     <br/>
     <br/>
+    <div class="pagination">
+      <% for(var i = 1; i <= Math.ceil(totalProductos / productosPorPagina); i++) { %>
+          <a class="pagina" href="/productos/panelControl?pagina=<%= i %>"><%= i %></a>
+      <% } %>
+    </div>
     <table class="table table-light">
     <thead class="thead-light">
       <tr>
@@ -48,7 +53,7 @@
   </table>
   <div class="pagination">
     <% for(var i = 1; i <= Math.ceil(totalProductos / productosPorPagina); i++) { %>
-        <a href="/productos/panelControl?pagina=<%= i %>"><%= i %></a>
+        <a class="pagina" href="/productos/panelControl?pagina=<%= i %>"><%= i %></a>
     <% } %>
   </div>
 </div>

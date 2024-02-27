@@ -628,6 +628,16 @@ footer {
 }
 
 /* ------------------------------EDITAR----------------------*/
+.pagina {
+  color: red;
+  font-size: 20px;
+  margin: 0 10px;
+  text-align: center;
+}
+
+.pagina:visited {
+  color: blue;
+}
 .container-editar {
   display: flex;
   flex-direction: column;
@@ -869,7 +879,7 @@ footer {
   font-weight:bold;
   text-align: center;
   color: #d90429;
-  margin-top: 25px;
+  margin-top: 25px; 
 }
 
 .cantidad-producto {
