@@ -64,7 +64,7 @@ module.exports = {
     
         producto.insertar(conexion, datos, archivo, function(error, result) {
             if (error) {
-                return res.status(500).send('Error al guardar producto');
+                return res.status(500).send('Error al guardar producto: ' + error.message);
             } else {
                 res.redirect('/productos');
             }
