@@ -193,25 +193,25 @@ panelControl: function (req, res) {
     var pagina = req.query.pagina || 1;
     var productosPorPagina = 20;
     var saltar = (pagina - 1) * productosPorPagina;
-
+  
     producto.obtener(conexion, saltar, productosPorPagina, function (error, productos) {
-        if (error) {
-            console.log('Error al obtener productos:', error);
-        } else {
-            productos.forEach(producto => {
-                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-            });
-
-            producto.contar(conexion, function(error, totalProductos) {
-                if (error) {
-                    console.log('Error al contar productos:', error);
-                } else {
-                    res.render('panelControl', { title: 'Productos', productos: productos, totalProductos: totalProductos, productosPorPagina: productosPorPagina });
-                }
-            });
-        }
+      if (error) {
+        console.log('Error al obtener productos:', error);
+      } else {
+        productos.forEach(producto => {
+          producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+        });
+  
+        producto.contar(conexion, function(error, totalProductos) {
+          if (error) {
+            console.log('Error al contar productos:', error);
+          } else {
+            res.render('panelControl', { title: 'Productos', productos: productos, totalProductos: totalProductos, productosPorPagina: productosPorPagina });
+          }
+        });
+      }
     });
-},
+  },
 buscarPorNombre: function (req, res) {
     const nombre = req.query.query; 
     if (!nombre) {
