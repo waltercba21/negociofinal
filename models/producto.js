@@ -1,10 +1,10 @@
 module.exports ={
-  obtener : function(conexion,funcion){
+  obtener: function (conexion, saltar, productosPorPagina, funcion) {
     if (typeof funcion !== 'function') {
-        throw new Error('funcion debe ser una función');
+      throw new Error('funcion debe ser una función');
     }
-    conexion.query('SELECT * FROM productos',funcion); 
-},
+    conexion.query('SELECT * FROM productos LIMIT ? OFFSET ?', [productosPorPagina, saltar], funcion);
+  },
     insertar: function(conexion, datos, archivo, funcion){
       if (!archivo) {
         // manejar el error aquí, por ejemplo, puedes llamar a la función de callback con un error
