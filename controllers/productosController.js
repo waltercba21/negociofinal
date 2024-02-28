@@ -223,21 +223,31 @@ panelControl: function (req, res) {
                 producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
             });
   
-            contarProductos(conexion, function(error, resultado) {
-                if (error) {
-                    console.log('Error al contar productos:', error);
-                } else {
-                    var totalProductos = resultado[0].total;
-                    res.render('panelControl', { 
-                        title: 'Productos', 
-                        productos: productos, 
-                        totalProductos: totalProductos, 
-                        productosPorPagina: productosPorPagina, 
-                        proveedor: proveedor,
-                        proveedores: proveedores,
-                        proveedorSeleccionado: proveedor, 
-                    });
-                }
+            if (proveedor) {
+                contarProductos(conexion, proveedor, function(error, resultado) {
+                    manejarConteo(error, resultado);
+                });
+            } else {
+                contarProductos(conexion, function(error, resultado) {
+                    manejarConteo(error, resultado);
+                });
+            }
+        }
+    }
+
+    function manejarConteo(error, resultado) {
+        if (error) {
+            console.log('Error al contar productos:', error);
+        } else {
+            var totalProductos = resultado[0].total;
+            res.render('panelControl', { 
+                title: 'Productos', 
+                productos: productos, 
+                totalProductos: totalProductos, 
+                productosPorPagina: productosPorPagina, 
+                proveedor: proveedor,
+                proveedores: proveedores,
+                proveedorSeleccionado: proveedor, 
             });
         }
     }
