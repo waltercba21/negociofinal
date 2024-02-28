@@ -11,6 +11,12 @@ module.exports ={
     }
     conexion.query('SELECT COUNT(*) AS total FROM productos', funcion);
   },
+  contarPorProveedor: function (conexion, proveedor, funcion) {
+    if (typeof funcion !== 'function') {
+        throw new Error('funcion debe ser una función');
+    }
+    conexion.query('SELECT COUNT(*) AS total FROM productos WHERE proveedor = ?', [proveedor], funcion);
+},
     insertar: function(conexion, datos, archivo, funcion){
       if (!archivo) {
         // manejar el error aquí, por ejemplo, puedes llamar a la función de callback con un error
