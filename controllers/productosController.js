@@ -234,7 +234,8 @@ panelControl: function (req, res) {
                         totalProductos: totalProductos, 
                         productosPorPagina: productosPorPagina, 
                         proveedor: proveedor,
-                        proveedores: proveedores // Asegúrate de que esta línea esté presente
+                        proveedores: proveedores,
+                        proveedorSeleccionado: proveedorSeleccionado, 
                     });
                 }
             });
