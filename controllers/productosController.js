@@ -235,7 +235,7 @@ panelControl: function (req, res) {
                         productosPorPagina: productosPorPagina, 
                         proveedor: proveedor,
                         proveedores: proveedores,
-                        proveedorSeleccionado: proveedorSeleccionado, 
+                        proveedorSeleccionado: proveedor, 
                     });
                 }
             });
