@@ -11,7 +11,6 @@ var datos = {
     "NISSAN": ["MARCH", "VERSA", "SENTRA","ALTIMA","KICKS","X-TRAIL","FRONTIER","NP300"],
     "UNIVERSAL": ["VM1", "VM2", "VM3","VM4","VM5","VM6","VM7","VM8"],
     "LED": ["FAROS TRASEROS","FAROS DELANTEROS","BALIZAS","LAMPARAS","OPTICAS","PLAFON INTERIOR","AUXILIARES"]
- 
 };
 // Escucha el evento de cambio en el selector de marca
 document.getElementById('marca').addEventListener('change', function() {
