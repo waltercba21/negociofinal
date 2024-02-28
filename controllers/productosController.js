@@ -192,10 +192,13 @@ ultimos: function(req, res) {
 },
 panelControl: function (req, res) {
     var pagina = req.query.pagina || 1;
+    var proveedor = req.query.proveedor; 
     var productosPorPagina = 20;
     var saltar = (pagina - 1) * productosPorPagina;
   
-    producto.obtener(conexion, saltar, function (error, productos) {
+    var obtenerProductos = proveedor ? producto.obtenerProductosPorProveedor : producto.obtener;
+  
+    obtenerProductos(conexion, saltar, proveedor, function (error, productos) {
       if (error) {
         console.log('Error al obtener productos:', error);
       } else {
@@ -208,12 +211,12 @@ panelControl: function (req, res) {
             console.log('Error al contar productos:', error);
           } else {
             var totalProductos = resultado[0].total;
-            res.render('panelControl', { title: 'Productos', productos: productos, totalProductos: totalProductos, productosPorPagina: productosPorPagina });
+            res.render('panelControl', { title: 'Productos', productos: productos, totalProductos: totalProductos, productosPorPagina: productosPorPagina, proveedor: proveedor });
           }
         });
       }
     });
-  },
+},
 buscarPorNombre: function (req, res) {
     const nombre = req.query.query; 
     if (!nombre) {
@@ -420,7 +423,7 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     }
 },
 modificarPorProveedor: function (req, res) {
-    const proveedor = req.query.proveedor; // Obtén el proveedor de req.query
+    const proveedor = req.query.proveedor; 
     producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
         if (error) {
             console.log('Error al obtener productos:', error);

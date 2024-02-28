@@ -11,6 +11,16 @@
     <a href="/productos/modificarPorProveedor" class="btn btn-primary" type="button">Modificar producto por proveedor</a>
     <br/>
     <br/>
+    <!-- Formulario para seleccionar el proveedor -->
+    <form method="get" action="/productos/panelControl">
+      <select name="proveedor" onchange="this.form.submit()">
+        <option value="">Todos los proveedores</option>
+        <% proveedores.forEach(proveedor => { %>
+          <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
+        <% }); %>
+      </select>
+    </form>
+    <br/>
     <div class="pagination">
       <% for(var i = 1; i <= Math.ceil(totalProductos / productosPorPagina); i++) { %>
           <a class="pagina" href="/productos/panelControl?pagina=<%= i %>"><%= i %></a>
