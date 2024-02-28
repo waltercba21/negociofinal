@@ -198,8 +198,8 @@ panelControl: function (req, res) {
   
     var obtenerProductos = proveedor ? producto.obtenerProductosPorProveedor : producto.obtener;
   
-    // Suponiendo que tienes una función para obtener proveedores
-    proveedor.obtenerTodos(conexion, function(error, proveedores) {
+    // Usamos el nuevo método obtenerProveedores
+    producto.obtenerProveedores(conexion, function(error, proveedores) {
         if (error) {
             console.log('Error al obtener proveedores:', error);
         } else {
