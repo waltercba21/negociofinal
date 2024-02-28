@@ -30,9 +30,9 @@ document.getElementById('marca').addEventListener('change', function() {
     // Llena el selector de modelo con los modelos de la marca seleccionada
     for (var i = 0; i < modelos.length; i++) {
         var option = document.createElement('option');
-        option.value = modelos[i];
-        option.text = modelos[i];
+        option.value = modelos[i].modelo;
+        option.text = modelos[i].modelo;
         selectModelo.appendChild(option);
-        console.log('Agregado modelo al selector:', modelos[i]);
+        console.log('Agregado modelo al selector:', modelos[i].modelo);
     }
 });
