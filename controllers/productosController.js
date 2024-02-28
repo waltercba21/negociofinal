@@ -198,24 +198,34 @@ panelControl: function (req, res) {
   
     var obtenerProductos = proveedor ? producto.obtenerProductosPorProveedor : producto.obtener;
   
-    obtenerProductos(conexion, saltar, proveedor, function (error, productos) {
-      if (error) {
-        console.log('Error al obtener productos:', error);
-      } else {
-        productos.forEach(producto => {
-          producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+    if (proveedor) {
+        obtenerProductos(conexion, proveedor, function (error, productos) {
+            manejarProductos(error, productos);
         });
+    } else {
+        obtenerProductos(conexion, saltar, function (error, productos) {
+            manejarProductos(error, productos);
+        });
+    }
+
+    function manejarProductos(error, productos) {
+        if (error) {
+            console.log('Error al obtener productos:', error);
+        } else {
+            productos.forEach(producto => {
+                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+            });
   
-        producto.contar(conexion, function(error, resultado) {
-          if (error) {
-            console.log('Error al contar productos:', error);
-          } else {
-            var totalProductos = resultado[0].total;
-            res.render('panelControl', { title: 'Productos', productos: productos, totalProductos: totalProductos, productosPorPagina: productosPorPagina, proveedor: proveedor });
-          }
-        });
-      }
-    });
+            producto.contar(conexion, function(error, resultado) {
+                if (error) {
+                    console.log('Error al contar productos:', error);
+                } else {
+                    var totalProductos = resultado[0].total;
+                    res.render('panelControl', { title: 'Productos', productos: productos, totalProductos: totalProductos, productosPorPagina: productosPorPagina, proveedor: proveedor });
+                }
+            });
+        }
+    }
 },
 buscarPorNombre: function (req, res) {
     const nombre = req.query.query; 
