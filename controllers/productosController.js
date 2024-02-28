@@ -198,17 +198,24 @@ panelControl: function (req, res) {
   
     var obtenerProductos = proveedor ? producto.obtenerProductosPorProveedor : producto.obtener;
   
-    if (proveedor) {
-        obtenerProductos(conexion, proveedor, function (error, productos) {
-            manejarProductos(error, productos);
-        });
-    } else {
-        obtenerProductos(conexion, saltar, function (error, productos) {
-            manejarProductos(error, productos);
-        });
-    }
+    // Suponiendo que tienes una función para obtener proveedores
+    proveedor.obtenerTodos(conexion, function(error, proveedores) {
+        if (error) {
+            console.log('Error al obtener proveedores:', error);
+        } else {
+            if (proveedor) {
+                obtenerProductos(conexion, proveedor, function (error, productos) {
+                    manejarProductos(error, productos, proveedores);
+                });
+            } else {
+                obtenerProductos(conexion, saltar, function (error, productos) {
+                    manejarProductos(error, productos, proveedores);
+                });
+            }
+        }
+    });
 
-    function manejarProductos(error, productos) {
+    function manejarProductos(error, productos, proveedores) {
         if (error) {
             console.log('Error al obtener productos:', error);
         } else {
@@ -221,7 +228,14 @@ panelControl: function (req, res) {
                     console.log('Error al contar productos:', error);
                 } else {
                     var totalProductos = resultado[0].total;
-                    res.render('panelControl', { title: 'Productos', productos: productos, totalProductos: totalProductos, productosPorPagina: productosPorPagina, proveedor: proveedor });
+                    res.render('panelControl', { 
+                        title: 'Productos', 
+                        productos: productos, 
+                        totalProductos: totalProductos, 
+                        productosPorPagina: productosPorPagina, 
+                        proveedor: proveedor,
+                        proveedores: proveedores // Asegúrate de que esta línea esté presente
+                    });
                 }
             });
         }
