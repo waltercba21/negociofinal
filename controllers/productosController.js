@@ -197,14 +197,14 @@ panelControl: function (req, res) {
     var saltar = (pagina - 1) * productosPorPagina;
   
     var obtenerProductos = proveedor ? producto.obtenerProductosPorProveedor : producto.obtener;
+    var contarProductos = proveedor ? producto.contarPorProveedor : producto.contar;
   
-    // Usamos el nuevo método obtenerProveedores
     producto.obtenerProveedores(conexion, function(error, proveedores) {
         if (error) {
             console.log('Error al obtener proveedores:', error);
         } else {
             if (proveedor) {
-                obtenerProductos(conexion, proveedor, function (error, productos) {
+                obtenerProductos(conexion, proveedor, saltar, function (error, productos) {
                     manejarProductos(error, productos, proveedores);
                 });
             } else {
@@ -223,7 +223,7 @@ panelControl: function (req, res) {
                 producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
             });
   
-            producto.contar(conexion, function(error, resultado) {
+            contarProductos(conexion, proveedor, function(error, resultado) {
                 if (error) {
                     console.log('Error al contar productos:', error);
                 } else {
