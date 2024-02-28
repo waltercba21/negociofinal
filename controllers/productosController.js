@@ -223,7 +223,7 @@ panelControl: function (req, res) {
                 producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
             });
   
-            contarProductos(conexion, proveedor, function(error, resultado) {
+            contarProductos(conexion, function(error, resultado) {
                 if (error) {
                     console.log('Error al contar productos:', error);
                 } else {
