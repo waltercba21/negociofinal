@@ -17,20 +17,20 @@ module.exports ={
     }
     conexion.query('SELECT COUNT(*) AS total FROM productos WHERE proveedor = ?', [proveedor], funcion);
 },
-    insertar: function(conexion, datos, archivo, funcion){
-      if (!archivo) {
-        // manejar el error aquí, por ejemplo, puedes llamar a la función de callback con un error
-        return funcion(new Error('No se proporcionó un archivo'));
-      }
-      conexion.query
-      ('INSERT INTO productos (nombre,codigo,descripcion,proveedor,precio,categoria,marca,imagen) VALUES (?,?,?,?,?,?,?,?)',
-      [datos.nombre,datos.codigo,datos.descripcion,datos.proveedor,datos.precio,datos.categoria,datos.marca, archivo.filename], (error, resultados) => {
-        if (error) {
-          return funcion(error);
-        }
-        funcion(null, resultados);
-      });
-    },
+insertar: function(conexion, datos, archivo, funcion){
+  if (!archivo) {
+    // manejar el error aquí, por ejemplo, puedes llamar a la función de callback con un error
+    return funcion(new Error('No se proporcionó un archivo'));
+  }
+  conexion.query
+  ('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria,marca,imagen) VALUES (?,?,?,?,?,?,?,?)',
+  [datos.nombre,datos.codigo,datos.descripcion,datos.proveedor,datos.precio,datos.categoria,datos.marca, archivo.filename], (error, resultados) => {
+    if (error) {
+      return funcion(error);
+    }
+    funcion(null, resultados);
+  });
+},
     retornarDatosId: function (conexion,id,funcion){
         conexion.query('SELECT * FROM productos WHERE id = ? ',[id],funcion);
     },
