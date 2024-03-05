@@ -51,7 +51,13 @@ module.exports = {
                 console.log('Error al obtener proveedores:', error);
                 return;
             }
-            res.render('crear', { proveedores: proveedores });
+            producto.obtenerMarcas(conexion, function(error, marcas) {
+                if (error) {
+                    console.log('Error al obtener marcas:', error);
+                    return;
+                }
+                res.render('crear', { proveedores: proveedores, marcas: marcas });
+            });
         });
     },
     guardar: function(req, res) {
