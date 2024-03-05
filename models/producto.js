@@ -52,9 +52,9 @@ insertar: function(conexion, datos, archivo, funcion){
       const marca_id = resultados[0].id;
 
       // Finalmente, obtenemos el ID del proveedor
-      conexion.query('SELECT id FROM proveedores WHERE nombre = ?', [datos.proveedor], (error, resultados) => {
+      conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
         if (error) {
-          return funcion(error);
+            return funcion(error);
         }
 
         // Comprobamos si la consulta devolvió al menos un resultado
