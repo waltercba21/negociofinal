@@ -492,5 +492,14 @@ actualizarPorProveedor: function (req, res) {
             res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedor);
         });
     });
+},
+obtenerProveedores: function(req, res) {
+    producto.obtenerProveedores(conexion, function(error, proveedores) {
+        if (error) {
+            console.log('Error al obtener proveedores:', error);
+            return;
+        }
+        res.render('crear', { proveedores: proveedores });
+    });
 }
 }
