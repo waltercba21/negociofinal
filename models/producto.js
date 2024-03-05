@@ -22,13 +22,43 @@ insertar: function(conexion, datos, archivo, funcion){
     // manejar el error aquí, por ejemplo, puedes llamar a la función de callback con un error
     return funcion(new Error('No se proporcionó un archivo'));
   }
-  conexion.query
-  ('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca_id,imagen) VALUES (?,?,?,?,?,?,?,?)',
-  [datos.nombre,datos.codigo,datos.descripcion,datos.proveedor,datos.precio,datos.categoria,datos.marca, archivo.filename], (error, resultados) => {
+  
+  // Primero, obtenemos el ID de la categoría
+  conexion.query('SELECT id FROM categorias WHERE nombre = ?', [datos.categoria], (error, resultados) => {
     if (error) {
       return funcion(error);
     }
-    funcion(null, resultados);
+
+    // Usamos el ID de la categoría en la consulta de inserción
+    const categoria_id = resultados[0].id;
+
+    // Luego, obtenemos el ID de la marca
+    conexion.query('SELECT id FROM marcas WHERE nombre = ?', [datos.marca], (error, resultados) => {
+      if (error) {
+        return funcion(error);
+      }
+
+      // Usamos el ID de la marca en la consulta de inserción
+      const marca_id = resultados[0].id;
+
+      // Finalmente, obtenemos el ID del proveedor
+      conexion.query('SELECT id FROM proveedores WHERE nombre = ?', [datos.proveedor], (error, resultados) => {
+        if (error) {
+          return funcion(error);
+        }
+
+        // Usamos el ID del proveedor en la consulta de inserción
+        const proveedor_id = resultados[0].id;
+        conexion.query
+        ('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca_id,imagen) VALUES (?,?,?,?,?,?,?,?)',
+        [datos.nombre,datos.codigo,datos.descripcion,proveedor_id,datos.precio,categoria_id,marca_id, archivo.filename], (error, resultados) => {
+          if (error) {
+            return funcion(error);
+          }
+          funcion(null, resultados);
+        });
+      });
+    });
   });
 },
     retornarDatosId: function (conexion,id,funcion){
