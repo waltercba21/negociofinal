@@ -103,12 +103,13 @@
       url: '/modelos/' + marcaSeleccionada, // Asegúrate de tener una ruta en tu servidor que devuelva los modelos para una marca dada
       method: 'GET',
       success: function(data) {
-        $('#modelo').empty();
-        $('#modelo').append('<option value="" selected>Selecciona un modelo...</option>');
-        data.forEach(function(modelo) {
-          $('#modelo').append('<option value="' + modelo.nombre + '">' + modelo.nombre + '</option>');
-        });
-      }
+  console.log('Data:', data);
+  $('#modelo').empty();
+  $('#modelo').append('<option value="" selected>Selecciona un modelo...</option>');
+  data.forEach(function(modelo) {
+    $('#modelo').append('<option value="' + modelo.nombre + '">' + modelo.nombre + '</option>');
+  });
+}
     });
   });
 </script>
