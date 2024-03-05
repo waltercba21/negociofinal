@@ -81,6 +81,34 @@ module.exports = {
             });
         });
     },
+    guardar: function(req, res) {
+        const datos = req.body;
+        if (!datos.nombre || !datos.precio) {
+            return res.status(400).send('Faltan datos del producto');
+        }
+    
+        datos.precio = parseFloat(datos.precio);
+    
+        if (!req.file) {
+            return res.status(400).send('No se proporcionó un archivo');
+        }
+    
+        // Asegúrate de que 'archivo' es un archivo
+        let archivo = req.file;
+    
+        // Asegúrate de que 'datos' no tiene una propiedad 'proveedor'
+        if (datos.proveedor) {
+            delete datos.proveedor;
+        }
+    
+        producto.insertar(conexion, datos, archivo, function(error, result) {
+            if (error) {
+                return res.status(500).send('Error al guardar producto: ' + error.message);
+            } else {
+                res.redirect('/panelControl');
+            }
+        });
+    },
     eliminar: function(req,res){
         producto.retornarDatosId(conexion,req.params.id,function (error, registros){
             if (error) {
