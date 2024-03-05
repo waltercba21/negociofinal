@@ -45,8 +45,14 @@ module.exports = {
             });
         }
     },
-    crear: function(req,res){
-        res.render('crear')
+    crear: function(req, res) {
+        producto.obtenerProveedores(conexion, function(error, proveedores) {
+            if (error) {
+                console.log('Error al obtener proveedores:', error);
+                return;
+            }
+            res.render('crear', { proveedores: proveedores });
+        });
     },
     guardar: function(req, res) {
         const datos = req.body;
