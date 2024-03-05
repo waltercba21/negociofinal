@@ -46,68 +46,39 @@ module.exports = {
         }
     },
     crear: function(req, res) {
-        producto.obtenerProveedores(conexion, function(error, proveedores) {
+        producto.obtenerCategorias(conexion, function(error, categorias) {
             if (error) {
-                console.log('Error al obtener proveedores:', error);
+                console.log('Error al obtener categorías:', error);
                 return;
             }
-            producto.obtenerMarcas(conexion, function(error, marcas) {
+            producto.obtenerProveedores(conexion, function(error, proveedores) {
                 if (error) {
-                    console.log('Error al obtener marcas:', error);
+                    console.log('Error al obtener proveedores:', error);
                     return;
                 }
-                let modelosPorMarca = {};
-                let contadorMarcas = 0;
-                marcas.forEach((marca) => {
-                    producto.obtenerModelosPorMarca(conexion, marca.id, function(error, modelos) {
-                        if (error) {
-                            console.log('Error al obtener modelos:', error);
-                            return;
-                        }
-                        modelosPorMarca[marca.id] = modelos;
-                        contadorMarcas++;
-                        if (contadorMarcas === marcas.length) {
-                            // Aquí es donde podrías llamar al método insertar
-                            producto.insertar(conexion, req.body, req.file, function(error, resultados) {
-                                if (error) {
-                                    console.log('Error al insertar producto:', error);
-                                    return;
-                                }
-                                // Aquí puedes manejar el éxito de la inserción, por ejemplo, redirigiendo al usuario
-                                res.redirect('/productos/panelControl');
-                            });
-                        }
+                producto.obtenerMarcas(conexion, function(error, marcas) {
+                    if (error) {
+                        console.log('Error al obtener marcas:', error);
+                        return;
+                    }
+                    let modelosPorMarca = {};
+                    let contadorMarcas = 0;
+                    marcas.forEach((marca) => {
+                        producto.obtenerModelosPorMarca(conexion, marca.id, function(error, modelos) {
+                            if (error) {
+                                console.log('Error al obtener modelos:', error);
+                                return;
+                            }
+                            modelosPorMarca[marca.id] = modelos;
+                            contadorMarcas++;
+                            if (contadorMarcas === marcas.length) {
+                                // Renderiza tu vista pasando los datos
+                                res.render('crear', { categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca });
+                            }
+                        });
                     });
                 });
             });
-        });
-    },
-    guardar: function(req, res) {
-        const datos = req.body;
-        if (!datos.nombre || !datos.precio) {
-            return res.status(400).send('Faltan datos del producto');
-        }
-    
-        datos.precio = parseFloat(datos.precio);
-    
-        if (!req.file) {
-            return res.status(400).send('No se proporcionó un archivo');
-        }
-    
-        // Asegúrate de que 'archivo' es un archivo
-        let archivo = req.file;
-    
-        // Asegúrate de que 'datos' no tiene una propiedad 'proveedor'
-        if (datos.proveedor) {
-            delete datos.proveedor;
-        }
-    
-        producto.insertar(conexion, datos, archivo, function(error, result) {
-            if (error) {
-                return res.status(500).send('Error al guardar producto: ' + error.message);
-            } else {
-                res.redirect('/panelControl');
-            }
         });
     },
     eliminar: function(req,res){
