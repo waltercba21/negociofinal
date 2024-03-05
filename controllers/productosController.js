@@ -67,7 +67,15 @@ module.exports = {
                         modelosPorMarca[marca.id] = modelos;
                         contadorMarcas++;
                         if (contadorMarcas === marcas.length) {
-                            res.render('crear', { proveedores: proveedores, marcas: marcas, modelosPorMarca: modelosPorMarca });
+                            // Aquí es donde podrías llamar al método insertar
+                            producto.insertar(conexion, req.body, req.file, function(error, resultados) {
+                                if (error) {
+                                    console.log('Error al insertar producto:', error);
+                                    return;
+                                }
+                                // Aquí puedes manejar el éxito de la inserción, por ejemplo, redirigiendo al usuario
+                                res.redirect('/productos/panelControl');
+                            });
                         }
                     });
                 });
