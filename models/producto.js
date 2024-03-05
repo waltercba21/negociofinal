@@ -137,7 +137,7 @@ borrarImagenes: function(conexion, productoId, callback) {
     });
 },
 obtenerProveedores: function (conexion, callback) {
-  const query = 'SELECT DISTINCT proveedor FROM productos';
+  const query = 'SELECT DISTINCT proveedor_id FROM productos';
   conexion.query(query, function (error, resultados) {
     if (error) {
       callback(error, null);
