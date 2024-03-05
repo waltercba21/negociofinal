@@ -32,6 +32,7 @@ router.post('/eliminar/:id', productosController.eliminar);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
+router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
 
 // Rutas de la API
 router.get('/api', productosController.lista);
