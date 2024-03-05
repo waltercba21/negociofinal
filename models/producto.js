@@ -29,6 +29,11 @@ insertar: function(conexion, datos, archivo, funcion){
       return funcion(error);
     }
 
+    // Comprobamos si la consulta devolvió al menos un resultado
+    if (resultados.length === 0) {
+      return funcion(new Error('No se encontró ninguna categoría con el nombre proporcionado'));
+    }
+
     // Usamos el ID de la categoría en la consulta de inserción
     const categoria_id = resultados[0].id;
 
@@ -38,6 +43,11 @@ insertar: function(conexion, datos, archivo, funcion){
         return funcion(error);
       }
 
+      // Comprobamos si la consulta devolvió al menos un resultado
+      if (resultados.length === 0) {
+        return funcion(new Error('No se encontró ninguna marca con el nombre proporcionado'));
+      }
+
       // Usamos el ID de la marca en la consulta de inserción
       const marca_id = resultados[0].id;
 
@@ -45,6 +55,11 @@ insertar: function(conexion, datos, archivo, funcion){
       conexion.query('SELECT id FROM proveedores WHERE nombre = ?', [datos.proveedor], (error, resultados) => {
         if (error) {
           return funcion(error);
+        }
+
+        // Comprobamos si la consulta devolvió al menos un resultado
+        if (resultados.length === 0) {
+          return funcion(new Error('No se encontró ningún proveedor con el nombre proporcionado'));
         }
 
         // Usamos el ID del proveedor en la consulta de inserción
