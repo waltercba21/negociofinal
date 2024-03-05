@@ -23,7 +23,7 @@ insertar: function(conexion, datos, archivo, funcion){
     return funcion(new Error('No se proporcionó un archivo'));
   }
   conexion.query
-  ('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca,imagen) VALUES (?,?,?,?,?,?,?,?)',
+  ('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca_id,imagen) VALUES (?,?,?,?,?,?,?,?)',
   [datos.nombre,datos.codigo,datos.descripcion,datos.proveedor,datos.precio,datos.categoria,datos.marca, archivo.filename], (error, resultados) => {
     if (error) {
       return funcion(error);
