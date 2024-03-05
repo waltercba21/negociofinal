@@ -36,20 +36,15 @@
                     <label for="oferta">Oferta:</label>
                     <input id="oferta" type="checkbox" name="oferta">
                 </div>
-
                 <div class="form-group-crear">
-                    <label for="categoria">Categoria</label>
-                    <select id="categoria" name="categoria">
+                  <label for="categoria">Categoria</label>
+                  <select id="categoria" name="categoria">
                       <option value="" selected>Selecciona una categoría...</option>
-                      <option value="FAROS TRASEROS">FAROS TRASEROS</option>
-                      <option value="FAROS DELANTEROS">FAROS DELANTEROS</option>
-                      <option value="OPTICAS">OPTICAS</option>
-                      <option value="FAROS LED">FAROS LED</option>
-                      <option value="LAMPARAS">LAMPARAS</option>
-                      <option value="FAROS CAMIONES">FAROS CAMIONES</option>
-                      <option value="LINEA UNIVERSAL">LINEA UNIVERSAL</option>
-                    </select>
-                </div>
+                      <% categorias.forEach(function(categoria) { %>
+                          <option value="<%= categoria.nombre %>"><%= categoria.nombre %></option>
+                      <% }); %>
+                  </select>
+              </div>
 
                 <div class="form-group-crear">
                     <label for="proveedor">Proveedor:</label>
