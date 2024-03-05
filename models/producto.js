@@ -210,5 +210,13 @@ obtenerModelosPorMarca: function(conexion, idMarca, callback) {
       }
       callback(null, resultados);
   });
-}
+},
+obtenerCategorias: function(conexion, funcion) {
+  conexion.query('SELECT * FROM categorias', function(error, resultados) {
+      if (error) {
+          return funcion(error);
+      }
+      funcion(null, resultados);
+  });
+},
 }
