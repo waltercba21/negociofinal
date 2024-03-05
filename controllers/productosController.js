@@ -63,6 +63,11 @@ module.exports = {
         // Asegúrate de que 'archivo' es un archivo
         let archivo = req.file;
     
+        // Asegúrate de que 'datos' no tiene una propiedad 'proveedor'
+        if (datos.proveedor) {
+            delete datos.proveedor;
+        }
+    
         producto.insertar(conexion, datos, archivo, function(error, result) {
             if (error) {
                 return res.status(500).send('Error al guardar producto: ' + error.message);
