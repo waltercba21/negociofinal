@@ -56,7 +56,21 @@ module.exports = {
                     console.log('Error al obtener marcas:', error);
                     return;
                 }
-                res.render('crear', { proveedores: proveedores, marcas: marcas });
+                let modelosPorMarca = {};
+                let contadorMarcas = 0;
+                marcas.forEach((marca) => {
+                    producto.obtenerModelosPorMarca(conexion, marca.id, function(error, modelos) {
+                        if (error) {
+                            console.log('Error al obtener modelos:', error);
+                            return;
+                        }
+                        modelosPorMarca[marca.id] = modelos;
+                        contadorMarcas++;
+                        if (contadorMarcas === marcas.length) {
+                            res.render('crear', { proveedores: proveedores, marcas: marcas, modelosPorMarca: modelosPorMarca });
+                        }
+                    });
+                });
             });
         });
     },

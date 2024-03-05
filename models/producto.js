@@ -190,5 +190,25 @@ obtenerProveedores: function (conexion, callback) {
       callback(null, resultados);
     }
   });
+},
+obtenerMarcas: function(conexion, callback) {
+  conexion.query('SELECT * FROM marcas', function(error, resultados) {
+      if (error) {
+          console.log('Error al obtener marcas:', error);
+          callback(error, null);
+          return;
+      }
+      callback(null, resultados);
+  });
+},
+obtenerModelosPorMarca: function(conexion, idMarca, callback) {
+  conexion.query('SELECT * FROM modelos WHERE id_marca = ?', [idMarca], function(error, resultados) {
+      if (error) {
+          console.log('Error al obtener modelos:', error);
+          callback(error, null);
+          return;
+      }
+      callback(null, resultados);
+  });
 }
 }
