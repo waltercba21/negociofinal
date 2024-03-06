@@ -96,6 +96,7 @@ module.exports = {
         // Asegúrate de que 'archivo' es un archivo
         let archivo = req.file;
     
+
         producto.insertar(conexion, datos, archivo, function(error, result) {
             if (error) {
                 return res.status(500).send('Error al guardar producto: ' + error.message);
