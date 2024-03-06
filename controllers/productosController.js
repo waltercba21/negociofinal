@@ -154,6 +154,10 @@ module.exports = {
     }, 
     actualizar: function (req, res) {
         console.log('Iniciando la actualización del producto...');
+        if (!req.body.categoria_id || !req.body.marca_id || !req.body.proveedor_id) {
+            res.status(400).send('Los datos del producto deben incluir un ID de categoría, un ID de marca y un ID de proveedor');
+            return;
+        }
         if(req.file && req.file.filename){
             console.log('Archivo recibido, obteniendo datos del producto...');
             producto.retornarDatosId(conexion,req.body.id,function (error, registros){
