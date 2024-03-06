@@ -125,16 +125,26 @@ conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (er
             // Usamos el ID del proveedor en la consulta de actualización
             const proveedor_id = resultados[0].id;
     
+            // Preparamos la consulta y los parámetros
+            let query = "UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor_id=?, categoria_id=?, marca_id=?";
+            let params = [datos.nombre,datos.codigo,datos.descripcion,datos.precio,proveedor_id,categoria_id,marca_id];
+    
+            if (archivo) {
+              query += ", imagen=?";
+              params.push(archivo.filename);
+            }
+    
+            query += " WHERE id=?";
+            params.push(datos.id);
+    
             // Actualizamos el producto
-            conexion.query("UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor_id=?, categoria_id=?, marca_id=?, imagen=? WHERE id=?",
-              [datos.nombre,datos.codigo,datos.descripcion,datos.precio,proveedor_id,categoria_id,marca_id, archivo.filename, datos.id], funcion);
+            conexion.query(query, params, funcion);
           });
         });
       });
     },
     actualizarArchivo: function(conexion,datos,archivo,funcion){
-        
-        conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
+      conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
     },
 insertarImagen: function(conexion, productoId, imagen, callback) {
   const query = 'INSERT INTO imagenes_producto (producto_id, ruta_imagen) VALUES (?, ?)';
