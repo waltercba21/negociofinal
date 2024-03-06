@@ -105,7 +105,7 @@ module.exports = {
             if (error) {
                 return res.status(500).send('Error al guardar producto: ' + error.message);
             } else {
-                res.redirect('/panelControl');
+                res.redirect('/productos');
             }
         });
     },
