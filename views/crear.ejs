@@ -69,9 +69,11 @@
                     <label for="modelo_id">Modelo:</label>
                     <select id="modelo_id" name="modelo_id">
                         <option value="" <% if (!producto.modelo_id) { %>selected<% } %>>Selecciona un modelo...</option>
-                        <% modelosPorMarca.forEach(function(modelo) { %>
-                            <option value="<%= modelo.id %>" <% if (producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
-                        <% }); %>
+                        <% if (Array.isArray(modelosPorMarca)) { %>
+                            <% modelosPorMarca.forEach(function(modelo) { %>
+                                <option value="<%= modelo.id %>" <% if (producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
+                            <% }); %>
+                        <% } %>
                     </select>
                 </div>
 
