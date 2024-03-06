@@ -142,14 +142,13 @@ module.exports = {
         });
     },
     editar : function (req,res){
-        producto.retornarDatosId(conexion,req.params.id,function (error, producto){
+        producto.retornarDatosId(conexion,req.params.id,function (error, productoResult){
             if (error) {
                 console.error("Error al obtener los datos del producto:", error);
                 res.status(500).send("Error al obtener el producto");
                 return;
             }
-            console.log("Producto seleccionado para editar: ", producto[0]);
-    
+            console.log("Producto seleccionado para editar: ", productoResult[0]);
             producto.obtenerCategorias(conexion, function(error, categorias) {
                 if (error) {
                     console.log('Error al obtener categorías:', error);
@@ -177,7 +176,7 @@ module.exports = {
                                 contadorMarcas++;
                                 if (contadorMarcas === marcas.length) {
                                     // Renderiza tu vista pasando los datos
-                                    res.render('editar', { producto: producto[0], categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca });
+                                    res.render('editar', { producto: productoResult[0], categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca });
                                 }
                             });
                         });
