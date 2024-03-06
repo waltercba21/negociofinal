@@ -92,21 +92,21 @@
     <%- include ./layouts/footer.ejs %>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
-  $('#marca').change(function() {
-    var marcaSeleccionada = $(this).val();
-    $.ajax({
-      url: '/modelos/' + marcaSeleccionada, // Asegúrate de tener una ruta en tu servidor que devuelva los modelos para una marca dada
-      method: 'GET',
-      success: function(data) {
-  console.log('Data:', data);
-  $('#modelo').empty();
-  $('#modelo').append('<option value="" selected>Selecciona un modelo...</option>');
-  data.forEach(function(modelo) {
-    $('#modelo').append('<option value="' + modelo.nombre + '">' + modelo.nombre + '</option>');
+$('#marca').change(function() {
+  var marcaId = $(this).val(); // Asegúrate de que esto es el ID de la marca, no el nombre
+  $.ajax({
+    url: '/modelos/' + marcaId, // Ahora esto usará el ID de la marca
+    method: 'GET',
+    success: function(data) {
+      console.log('Data:', data);
+      $('#modelo').empty();
+      $('#modelo').append('<option value="" selected>Selecciona un modelo...</option>');
+      data.forEach(function(modelo) {
+        $('#modelo').append('<option value="' + modelo.nombre + '">' + modelo.nombre + '</option>');
+      });
+    }
   });
-}
-    });
-  });
+});
 </script>
 </body>
 
