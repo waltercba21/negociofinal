@@ -51,28 +51,28 @@ insertar: function(conexion, datos, archivo, funcion){
       // Usamos el ID de la marca en la consulta de inserción
       const marca_id = resultados[0].id;
 
-      // Finalmente, obtenemos el ID del proveedor
-      conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
-        if (error) {
-            return funcion(error);
-        }
+    // Finalmente, obtenemos el ID del proveedor
+conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
+  if (error) {
+      return funcion(error);
+  }
 
-        // Comprobamos si la consulta devolvió al menos un resultado
-        if (resultados.length === 0) {
-          return funcion(new Error('No se encontró ningún proveedor con el nombre proporcionado'));
-        }
+  // Comprobamos si la consulta devolvió al menos un resultado
+  if (resultados.length === 0) {
+    return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
+  }
 
-        // Usamos el ID del proveedor en la consulta de inserción
-        const proveedor_id = resultados[0].id;
-        conexion.query
-        ('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca_id,imagen) VALUES (?,?,?,?,?,?,?,?)',
-        [datos.nombre,datos.codigo,datos.descripcion,proveedor_id,datos.precio,categoria_id,marca_id, archivo.filename], (error, resultados) => {
-          if (error) {
-            return funcion(error);
-          }
-          funcion(null, resultados);
-        });
-      });
+  // Usamos el ID del proveedor en la consulta de inserción
+  const proveedor_id = resultados[0].id;
+  conexion.query
+  ('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca_id,imagen) VALUES (?,?,?,?,?,?,?,?)',
+  [datos.nombre,datos.codigo,datos.descripcion,proveedor_id,datos.precio,categoria_id,marca_id, archivo.filename], (error, resultados) => {
+    if (error) {
+      return funcion(error);
+    }
+    funcion(null, resultados);
+  });
+});
     });
   });
 },
