@@ -56,12 +56,10 @@
             <label for="modelo_id">Modelo:</label>
             <select id="modelo_id" name="modelo_id">
                 <option value="" <% if (!producto.modelo_id) { %>selected<% } %>>Selecciona un modelo...</option>
-                <% for (let marcaId in modelosPorMarca) { %>
-                    <% if (Array.isArray(modelosPorMarca[marcaId])) { %>
-                        <% modelosPorMarca[marcaId].forEach(function(modelo) { %>
-                            <option value="<%= modelo.id %>" <% if (producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
-                        <% }); %>
-                    <% } %>
+                <% if (Array.isArray(modelosPorMarca[producto.marca_id])) { %>
+                    <% modelosPorMarca[producto.marca_id].forEach(function(modelo) { %>
+                        <option value="<%= modelo.id %>" <% if (producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
+                    <% }); %>
                 <% } %>
             </select>
         </div>
@@ -79,29 +77,29 @@
 </main>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
-    // Función para llenar los modelos basándose en la marca seleccionada
-    function llenarModelos(marcaId, modeloId) {
-      $.ajax({
-        url: '/productos/modelos/' + marcaId, 
-        method: 'GET',
-        success: function(data) {
-            console.log('Data:', data);
-            $('#modelo').empty();
-            $('#modelo').append('<option value="" selected>Selecciona un modelo...</option>');
-            data.forEach(function(modelo) {
-                var option = $('<option></option>').attr('value', modelo.id).text(modelo.nombre);
-                if (modelo.id == modeloId) {
-                    option.attr('selected', 'selected');
-                }
-                $('#modelo').append(option);
-            });
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.error('Error al obtener los modelos:', textStatus, errorThrown);
-            alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
-        }
-      });
+  // Función para llenar los modelos basándose en la marca seleccionada
+function llenarModelos(marcaId, modeloId) {
+  $.ajax({
+    url: '/productos/modelos/' + marcaId, 
+    method: 'GET',
+    success: function(data) {
+        console.log('Data:', data);
+        $('#modelo_id').empty();
+        $('#modelo_id').append('<option value="" selected>Selecciona un modelo...</option>');
+        data.forEach(function(modelo) {
+            var option = $('<option></option>').attr('value', modelo.id).text(modelo.nombre);
+            if (modelo.id == modeloId) {
+                option.attr('selected', 'selected');
+            }
+            $('#modelo_id').append(option);
+        });
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+        console.error('Error al obtener los modelos:', textStatus, errorThrown);
+        alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
     }
+  });
+}
     
     // Cuando la marca cambia, llenar los modelos
     $('#marca_id').change(function() {
