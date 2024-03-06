@@ -180,7 +180,7 @@ borrarImagenes: function(conexion, productoId, callback) {
     });
 },
 obtenerProveedores: function (conexion, callback) {
-  const query = 'SELECT nombre FROM proveedores';
+  const query = 'SELECT id FROM proveedores';
   conexion.query(query, function (error, resultados) {
     if (error) {
       callback(error, null);
