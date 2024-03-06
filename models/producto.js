@@ -211,12 +211,20 @@ obtenerModelosPorMarca: function(conexion, idMarca, callback) {
       callback(null, resultados);
   });
 },
-obtenerCategorias: function(conexion, funcion) {
-  conexion.query('SELECT * FROM categorias', function(error, resultados) {
+obtenerModelosPorMarca: function(conexion, marcaId, callback) {
+  // Consulta SQL para obtener los modelos por marca
+  var consulta = 'SELECT * FROM modelos WHERE id_marca = ?';
+  
+  // Ejecuta la consulta
+  conexion.query(consulta, [marcaId], function(error, resultados) {
       if (error) {
-          return funcion(error);
+          console.log('Error al obtener modelos:', error);
+          callback(error, null);
+          return;
       }
-      funcion(null, resultados);
+      
+      // Devuelve los modelos
+      callback(null, resultados);
   });
-},
+}
 }
