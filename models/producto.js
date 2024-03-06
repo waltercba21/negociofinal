@@ -144,7 +144,14 @@ conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (er
       });
     },
     actualizarArchivo: function(conexion,datos,archivo,funcion){
-      conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
+      if (archivo) {
+        conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
+      } else {
+        // Manejar el caso en que no se proporcionó un archivo
+        // Esto podría ser simplemente llamar a la función de devolución de llamada sin hacer nada,
+        // o podría implicar enviar un error a la función de devolución de llamada.
+        funcion();
+      }
     },
 insertarImagen: function(conexion, productoId, imagen, callback) {
   const query = 'INSERT INTO imagenes_producto (producto_id, ruta_imagen) VALUES (?, ?)';
