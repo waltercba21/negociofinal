@@ -82,10 +82,56 @@ conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (er
     borrar: function (conexion,id,funcion){ 
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
-    actualizar: function (conexion, datos, archivos, funcion) {
-      conexion.query("UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor=?, categoria=?, marca=? WHERE id=?",
-      [datos.nombre,datos.codigo,datos.descripcion,datos.precio,datos.proveedor,datos.categoria,datos.marca, datos.id], funcion);
-  },
+    actualizar: function (conexion, datos, archivo, funcion) {
+      // Primero, obtenemos el ID de la categoría
+      conexion.query('SELECT id FROM categorias WHERE nombre = ?', [datos.categoria], (error, resultados) => {
+        if (error) {
+          return funcion(error);
+        }
+    
+        // Comprobamos si la consulta devolvió al menos un resultado
+        if (resultados.length === 0) {
+          return funcion(new Error('No se encontró ninguna categoría con el nombre proporcionado'));
+        }
+    
+        // Usamos el ID de la categoría en la consulta de actualización
+        const categoria_id = resultados[0].id;
+    
+        // Luego, obtenemos el ID de la marca
+        conexion.query('SELECT id FROM marcas WHERE id = ?', [datos.marca], (error, resultados) => {
+          if (error) {
+            return funcion(error);
+          }
+    
+          // Comprobamos si la consulta devolvió al menos un resultado
+          if (resultados.length === 0) {
+            return funcion(new Error('No se encontró ninguna marca con el ID proporcionado'));
+          }
+    
+          // Usamos el ID de la marca en la consulta de actualización
+          const marca_id = resultados[0].id;
+    
+          // Finalmente, obtenemos el ID del proveedor
+          conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
+            if (error) {
+              return funcion(error);
+            }
+    
+            // Comprobamos si la consulta devolvió al menos un resultado
+            if (resultados.length === 0) {
+              return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
+            }
+    
+            // Usamos el ID del proveedor en la consulta de actualización
+            const proveedor_id = resultados[0].id;
+    
+            // Actualizamos el producto
+            conexion.query("UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor_id=?, categoria_id=?, marca_id=?, imagen=? WHERE id=?",
+              [datos.nombre,datos.codigo,datos.descripcion,datos.precio,proveedor_id,categoria_id,marca_id, archivo.filename, datos.id], funcion);
+          });
+        });
+      });
+    },
     actualizarArchivo: function(conexion,datos,archivo,funcion){
         
         conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
