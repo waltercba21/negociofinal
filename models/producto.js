@@ -108,9 +108,7 @@ borrarImagenes: function(conexion, productoId, callback) {
   const query = 'DELETE FROM imagenes_producto WHERE producto_id = ?';
   conexion.query(query, [productoId], callback);
 },
-    obtenerPorCategoria: function (conexion, categoria, funcion) {
-      conexion.query('SELECT * FROM productos WHERE categoria = ?', [categoria], funcion);
-  },
+    
     obtenerPorNombre: function (conexion, nombre, funcion) {
         conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
       },
@@ -225,4 +223,5 @@ obtenerCategorias: function(conexion, funcion) {
       funcion(null, resultados);
   });
 },
+
 }

@@ -58,7 +58,7 @@
 
                   <div class="form-group-crear">
                     <label for="marca">Marca:</label>
-                    <select id="marca">
+                    <select id="marca" name="marca">
                       <% marcas.forEach(function(marca) { %>
                         <option value="<%= marca.id %>"><%= marca.nombre %></option>
                       <% }); %>
