@@ -26,40 +26,40 @@
             <label for="codigo-input">Código</label>
             <input id="codigo-input" value="<%= producto.codigo %>" class="form-control" type="text" name="codigo">
         </div>
-        <div class="form-group-crear">
-            <label for="categoria-input">Categoria</label>
-            <select id="categoria-input" name="categoria">
-                <% var opciones = ["FAROS TRASEROS", "FAROS DELANTEROS", "OPTICAS", "FAROS LED", "FAROS CAMIONES","LAMPARAS","FAROS CAMIONES","LINEA UNIVERSAL"]; %>
-                <% for(var i = 0; i < opciones.length; i++) { %>
-                    <option value='<%= opciones[i] %>' <%= producto.categoria == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
-                <% } %>
-            </select>
-        </div>
-        <div class="form-group-crear">
-            <label for="proveedor-input">Proveedor</label>
-            <select id="proveedor-input" name="proveedor">
-                <% var opciones = ["LAM", "LIDERCAR", "DISTRILED","FAL", "JR", "MYL", "DM", "DAM"]; %>
-                <% for(var i = 0; i < opciones.length; i++) { %>
-                    <option value='<%= opciones[i] %>' <%= producto.proveedor == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
-                <% } %>
-            </select>
-        </div>
-        <div class="form-group-crear">
-            <label for="marca-input">Marca</label>
-            <select id="marca-input" name="marca">
-                <% var opciones = ["FIAT", "RENAULT", "FORD", "VOLKSWAGEN","CITROEN","CHEVROLET","PEUGEOT","TOYOTA","MERCEDES BENZ","UNIVERSAL"]; %> 
-                <% for(var i = 0; i < opciones.length; i++) { %>
-                    <option value='<%= opciones[i] %>' <%= producto.marca == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
-                <% } %>
-            </select>
-        </div>
-        <div class="form-group-crear">
-            <label for="modelo-input">Modelo</label>
-            <select id="modelo-input" name="modelo" data-modelo="<%= producto.modelo %>">
-                <option value="" selected>Selecciona un modelo...</option>
-                <!-- Los modelos se llenarán dinámicamente con JavaScript -->
-            </select>
-        </div>
+
+       <div class="form-group-crear">
+                  <label for="categoria">Categoria</label>
+                  <select id="categoria" name="categoria">
+                      <option value="" selected>Selecciona una categoría...</option>
+                      <% categorias.forEach(function(categoria) { %>
+                          <option value="<%= categoria.nombre %>"><%= categoria.nombre %></option>
+                      <% }); %>
+                  </select>
+              </div>
+              <div class="form-group-crear">
+                <label for="proveedor">Proveedor:</label>
+                <select id="proveedor" name="proveedor">
+                  <option value="" selected>Selecciona un proveedor...</option>
+                  <% proveedores.forEach(function(proveedor) { %>
+                    <option value="<%= proveedor.id %>"><%= proveedor.nombre %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="form-group-crear">
+                <label for="marca">Marca:</label>
+                <select id="marca" name="marca">
+                  <% marcas.forEach(function(marca) { %>
+                    <option value="<%= marca.id %>"><%= marca.nombre %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="form-group-crear">
+                <label for="modelo">Modelo:</label>
+                <select id="modelo" name="modelo">
+                  <option value="" selected>Selecciona un modelo...</option>
+                  <!-- Los modelos se llenarán dinámicamente con JavaScript -->
+                </select>
+              </div>
         <div class="form-group-crear">
             <label for="precio-input">Precio</label>
             <input id="precio-input" class="form-control" value="<%= producto.precio %>" type="text" name="precio">
@@ -72,9 +72,28 @@
     </div>
 </div>
 </main>
-<script src="/js/index.js"></script> 
-<script src="/js/datos.js"></script> 
-<script src="/js/editar.js"></script> 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$('#marca').change(function() {
+  var marcaId = $(this).val(); 
+  $.ajax({
+    url: '/productos/modelos/' + marcaId, 
+    method: 'GET',
+    success: function(data) {
+        console.log('Data:', data);
+        $('#modelo').empty();
+        $('#modelo').append('<option value="" selected>Selecciona un modelo...</option>');
+        data.forEach(function(modelo) {
+            $('#modelo').append('<option value="' + modelo.nombre + '">' + modelo.nombre + '</option>');
+        });
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+        console.error('Error al obtener los modelos:', textStatus, errorThrown);
+        alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
+    }
+});
+});
+</script>
 <%- include ./layouts/footer.ejs %>
 </body>
 
