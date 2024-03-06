@@ -150,16 +150,39 @@ module.exports = {
             }
             console.log("Producto seleccionado para editar: ", producto[0]);
     
-            // Obtén las categorías de la base de datos
-            obtenerCategoriasDeLaBaseDeDatos(function(error, categorias) {
+            producto.obtenerCategorias(conexion, function(error, categorias) {
                 if (error) {
-                    console.error("Error al obtener las categorías:", error);
-                    res.status(500).send("Error al obtener las categorías");
+                    console.log('Error al obtener categorías:', error);
                     return;
                 }
-    
-                // Renderiza la vista pasando el objeto producto y el objeto categorias
-                res.render('editar', {producto: producto[0], categorias: categorias});
+                producto.obtenerProveedores(conexion, function(error, proveedores) {
+                    if (error) {
+                        console.log('Error al obtener proveedores:', error);
+                        return;
+                    }
+                    producto.obtenerMarcas(conexion, function(error, marcas) {
+                        if (error) {
+                            console.log('Error al obtener marcas:', error);
+                            return;
+                        }
+                        let modelosPorMarca = {};
+                        let contadorMarcas = 0;
+                        marcas.forEach((marca) => {
+                            producto.obtenerModelosPorMarca(conexion, marca.id, function(error, modelos) {
+                                if (error) {
+                                    console.log('Error al obtener modelos:', error);
+                                    return;
+                                }
+                                modelosPorMarca[marca.id] = modelos;
+                                contadorMarcas++;
+                                if (contadorMarcas === marcas.length) {
+                                    // Renderiza tu vista pasando los datos
+                                    res.render('editar', { producto: producto[0], categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca });
+                                }
+                            });
+                        });
+                    });
+                });
             });
         });
     },
