@@ -97,17 +97,18 @@ $('#marca').change(function() {
     url: '/productos/modelos/' + marcaId, 
     method: 'GET',
     success: function(data) {
-      console.log('Data:', data);
-      $('#modelo').empty();
-      $('#modelo').append('<option value="" selected>Selecciona un modelo...</option>');
-      data.forEach(function(modelo) {
-        $('#modelo').append('<option value="' + modelo.nombre + '">' + modelo.nombre + '</option>');
-      });
+        console.log('Data:', data);
+        $('#modelo').empty();
+        $('#modelo').append('<option value="" selected>Selecciona un modelo...</option>');
+        data.forEach(function(modelo) {
+            $('#modelo').append('<option value="' + modelo.nombre + '">' + modelo.nombre + '</option>');
+        });
     },
     error: function(jqXHR, textStatus, errorThrown) {
-        // Tu código para manejar errores
+        console.error('Error al obtener los modelos:', textStatus, errorThrown);
+        alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
     }
-  });
+});
 });
 </script>
 </body>
