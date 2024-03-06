@@ -142,16 +142,27 @@ module.exports = {
         });
     },
     editar : function (req,res){
-        producto.retornarDatosId(conexion,req.params.id,function (error, registros){
+        producto.retornarDatosId(conexion,req.params.id,function (error, producto){
             if (error) {
                 console.error("Error al obtener los datos del producto:", error);
                 res.status(500).send("Error al obtener el producto");
                 return;
             }
-            console.log("Producto seleccionado para editar: ", registros[0]);
-            res.render('editar', {producto: registros[0]});
+            console.log("Producto seleccionado para editar: ", producto[0]);
+    
+            // Obtén las categorías de la base de datos
+            obtenerCategoriasDeLaBaseDeDatos(function(error, categorias) {
+                if (error) {
+                    console.error("Error al obtener las categorías:", error);
+                    res.status(500).send("Error al obtener las categorías");
+                    return;
+                }
+    
+                // Renderiza la vista pasando el objeto producto y el objeto categorias
+                res.render('editar', {producto: producto[0], categorias: categorias});
+            });
         });
-    }, 
+    },
     actualizar: function (req, res) {
         console.log('Iniciando la actualización del producto...');
         if (!req.body.categoria_id || !req.body.marca_id || !req.body.proveedor_id) {
