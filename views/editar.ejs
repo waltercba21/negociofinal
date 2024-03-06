@@ -73,8 +73,8 @@
 </main>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
-$('#marca_id').change(function() {
-  var marcaId = $(this).val(); 
+// Función para llenar los modelos basándose en la marca seleccionada
+function llenarModelos(marcaId) {
   $.ajax({
     url: '/productos/modelos/' + marcaId, 
     method: 'GET',
@@ -90,7 +90,21 @@ $('#marca_id').change(function() {
         console.error('Error al obtener los modelos:', textStatus, errorThrown);
         alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
     }
+  });
+}
+
+// Cuando la marca cambia, llenar los modelos
+$('#marca_id').change(function() {
+  var marcaId = $(this).val(); 
+  llenarModelos(marcaId);
 });
+
+// Al cargar la página, si hay una marca seleccionada, llenar los modelos
+$(document).ready(function() {
+  var marcaId = $('#marca_id').val();
+  if (marcaId) {
+    llenarModelos(marcaId);
+  }
 });
 </script>
 <%- include ./layouts/footer.ejs %>
