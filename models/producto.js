@@ -37,26 +37,26 @@ insertar: function(conexion, datos, archivo, funcion){
         return funcion(new Error('No se encontró ninguna marca con el ID proporcionado'));
       }
       const marca_id = resultados[0].id;
-conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
-  if (error) {
-      return funcion(error);
-  }
-  if (resultados.length === 0) {
-    return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
-  }
-  const proveedor_id = resultados[0].id;
-  conexion.query
-  ('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca_id,imagen) VALUES (?,?,?,?,?,?,?,?)',
-  [datos.nombre,datos.codigo,datos.descripcion,proveedor_id,datos.precio,categoria_id,marca_id, archivo.filename], (error, resultados) => {
-    if (error) {
-      return funcion(error);
-    }
-    funcion(null, resultados);
-  });
-});
+      conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
+        if (error) {
+          return funcion(error);
+        }
+        if (resultados.length === 0) {
+          return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
+        }
+        const proveedor_id = resultados[0].id;
+        conexion.query('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca_id,modelo_id,imagen) VALUES (?,?,?,?,?,?,?,?,?)',
+        [datos.nombre,datos.codigo,datos.descripcion,proveedor_id,datos.precio,categoria_id,marca_id,datos.modelo_id, archivo.filename], (error, resultados) => {
+          if (error) {
+            return funcion(error);
+          }
+          funcion(null, resultados);
+        });
+      });
     });
   });
-},
+},     
+
     retornarDatosId: function (conexion,id,funcion){
         conexion.query('SELECT * FROM productos WHERE id = ? ',[id],funcion);
     },
@@ -64,11 +64,11 @@ conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (er
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
     actualizar: function (conexion, datos, archivo, funcion) {
-      if (!datos.categoria_id || !datos.marca_id || !datos.proveedor_id) {
-        return funcion(new Error('Los datos del producto deben incluir un ID de categoría, un ID de marca y un ID de proveedor'));
+      if (!datos.categoria_id || !datos.marca_id || !datos.proveedor_id || !datos.modelo_id) {
+        return funcion(new Error('Los datos del producto deben incluir un ID de categoría, un ID de marca, un ID de proveedor y un ID de modelo'));
       }
-      let query = "UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor_id=?, categoria_id=?, marca_id=?";
-      let params = [datos.nombre,datos.codigo,datos.descripcion,datos.precio,datos.proveedor_id,datos.categoria_id,datos.marca_id];
+      let query = "UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor_id=?, categoria_id=?, marca_id=?, modelo_id=?";
+      let params = [datos.nombre,datos.codigo,datos.descripcion,datos.precio,datos.proveedor_id,datos.categoria_id,datos.marca_id,datos.modelo_id];
       if (archivo) {
         query += ", imagen=?";
         params.push(archivo.filename);
@@ -77,6 +77,7 @@ conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (er
       params.push(datos.id);
       conexion.query(query, params, funcion);
     },
+    
     actualizarArchivo: function(conexion,datos,archivo,funcion){
       if (archivo) {
         conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
