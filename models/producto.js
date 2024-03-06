@@ -64,45 +64,18 @@ conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (er
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
     actualizar: function (conexion, datos, archivo, funcion) {
-      if (!datos.categoria || !datos.marca || !datos.proveedor) {
-        return funcion(new Error('Los datos del producto deben incluir una categoría, una marca y un proveedor'));
+      if (!datos.categoria_id || !datos.marca_id || !datos.proveedor_id) {
+        return funcion(new Error('Los datos del producto deben incluir un ID de categoría, un ID de marca y un ID de proveedor'));
       }
-      conexion.query('SELECT id FROM categorias WHERE nombre = ?', [datos.categoria], (error, resultados) => {
-        if (error) {
-          return funcion(error);
-        }
-        if (resultados.length === 0) {
-          return funcion(new Error('No se encontró ninguna categoría con el nombre proporcionado'));
-        }
-        const categoria_id = resultados[0].id;
-        conexion.query('SELECT id FROM marcas WHERE id = ?', [datos.marca], (error, resultados) => {
-          if (error) {
-            return funcion(error);
-          }
-          if (resultados.length === 0) {
-            return funcion(new Error('No se encontró ninguna marca con el ID proporcionado'));
-          }
-          const marca_id = resultados[0].id;
-          conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
-            if (error) {
-              return funcion(error);
-            }
-            if (resultados.length === 0) {
-              return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
-            }
-            const proveedor_id = resultados[0].id;
-            let query = "UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor_id=?, categoria_id=?, marca_id=?";
-            let params = [datos.nombre,datos.codigo,datos.descripcion,datos.precio,proveedor_id,categoria_id,marca_id];
-            if (archivo) {
-              query += ", imagen=?";
-              params.push(archivo.filename);
-            }
-            query += " WHERE id=?";
-            params.push(datos.id);
-            conexion.query(query, params, funcion);
-          });
-        });
-      });
+      let query = "UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor_id=?, categoria_id=?, marca_id=?";
+      let params = [datos.nombre,datos.codigo,datos.descripcion,datos.precio,datos.proveedor_id,datos.categoria_id,datos.marca_id];
+      if (archivo) {
+        query += ", imagen=?";
+        params.push(archivo.filename);
+      }
+      query += " WHERE id=?";
+      params.push(datos.id);
+      conexion.query(query, params, funcion);
     },
     actualizarArchivo: function(conexion,datos,archivo,funcion){
       if (archivo) {
