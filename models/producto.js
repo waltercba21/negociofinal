@@ -19,50 +19,31 @@ module.exports ={
 },
 insertar: function(conexion, datos, archivo, funcion){
   if (!archivo) {
-    // manejar el error aquí, por ejemplo, puedes llamar a la función de callback con un error
     return funcion(new Error('No se proporcionó un archivo'));
   }
-  
-  // Primero, obtenemos el ID de la categoría
   conexion.query('SELECT id FROM categorias WHERE nombre = ?', [datos.categoria], (error, resultados) => {
     if (error) {
       return funcion(error);
     }
-
-    // Comprobamos si la consulta devolvió al menos un resultado
     if (resultados.length === 0) {
       return funcion(new Error('No se encontró ninguna categoría con el nombre proporcionado'));
     }
-
-    // Usamos el ID de la categoría en la consulta de inserción
     const categoria_id = resultados[0].id;
-
-    // Luego, obtenemos el ID de la marca
     conexion.query('SELECT id FROM marcas WHERE id = ?', [datos.marca], (error, resultados) => {
       if (error) {
         return funcion(error);
       }
-
-      // Comprobamos si la consulta devolvió al menos un resultado
       if (resultados.length === 0) {
         return funcion(new Error('No se encontró ninguna marca con el ID proporcionado'));
       }
-
-      // Usamos el ID de la marca en la consulta de inserción
       const marca_id = resultados[0].id;
-
-    // Finalmente, obtenemos el ID del proveedor
 conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
   if (error) {
       return funcion(error);
   }
-
-  // Comprobamos si la consulta devolvió al menos un resultado
   if (resultados.length === 0) {
     return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
   }
-
-  // Usamos el ID del proveedor en la consulta de inserción
   const proveedor_id = resultados[0].id;
   conexion.query
   ('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca_id,imagen) VALUES (?,?,?,?,?,?,?,?)',
@@ -83,61 +64,41 @@ conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (er
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
     actualizar: function (conexion, datos, archivo, funcion) {
-      // Primero, obtenemos el ID de la categoría
+      if (!datos.categoria || !datos.marca || !datos.proveedor) {
+        return funcion(new Error('Los datos del producto deben incluir una categoría, una marca y un proveedor'));
+      }
       conexion.query('SELECT id FROM categorias WHERE nombre = ?', [datos.categoria], (error, resultados) => {
         if (error) {
           return funcion(error);
         }
-    
-        // Comprobamos si la consulta devolvió al menos un resultado
         if (resultados.length === 0) {
           return funcion(new Error('No se encontró ninguna categoría con el nombre proporcionado'));
         }
-    
-        // Usamos el ID de la categoría en la consulta de actualización
         const categoria_id = resultados[0].id;
-    
-        // Luego, obtenemos el ID de la marca
         conexion.query('SELECT id FROM marcas WHERE id = ?', [datos.marca], (error, resultados) => {
           if (error) {
             return funcion(error);
           }
-    
-          // Comprobamos si la consulta devolvió al menos un resultado
           if (resultados.length === 0) {
             return funcion(new Error('No se encontró ninguna marca con el ID proporcionado'));
           }
-    
-          // Usamos el ID de la marca en la consulta de actualización
           const marca_id = resultados[0].id;
-    
-          // Finalmente, obtenemos el ID del proveedor
           conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
             if (error) {
               return funcion(error);
             }
-    
-            // Comprobamos si la consulta devolvió al menos un resultado
             if (resultados.length === 0) {
               return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
             }
-    
-            // Usamos el ID del proveedor en la consulta de actualización
             const proveedor_id = resultados[0].id;
-    
-            // Preparamos la consulta y los parámetros
             let query = "UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor_id=?, categoria_id=?, marca_id=?";
             let params = [datos.nombre,datos.codigo,datos.descripcion,datos.precio,proveedor_id,categoria_id,marca_id];
-    
             if (archivo) {
               query += ", imagen=?";
               params.push(archivo.filename);
             }
-    
             query += " WHERE id=?";
             params.push(datos.id);
-    
-            // Actualizamos el producto
             conexion.query(query, params, funcion);
           });
         });
@@ -147,9 +108,6 @@ conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (er
       if (archivo) {
         conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
       } else {
-        // Manejar el caso en que no se proporcionó un archivo
-        // Esto podría ser simplemente llamar a la función de devolución de llamada sin hacer nada,
-        // o podría implicar enviar un error a la función de devolución de llamada.
         funcion();
       }
     },
