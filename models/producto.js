@@ -38,14 +38,14 @@ insertar: function(conexion, datos, archivo, funcion){
     const categoria_id = resultados[0].id;
 
     // Luego, obtenemos el ID de la marca
-    conexion.query('SELECT id FROM marcas WHERE nombre = ?', [datos.marca], (error, resultados) => {
+    conexion.query('SELECT id FROM marcas WHERE id = ?', [datos.marca], (error, resultados) => {
       if (error) {
         return funcion(error);
       }
 
       // Comprobamos si la consulta devolvió al menos un resultado
       if (resultados.length === 0) {
-        return funcion(new Error('No se encontró ninguna marca con el nombre proporcionado'));
+        return funcion(new Error('No se encontró ninguna marca con el ID proporcionado'));
       }
 
       // Usamos el ID de la marca en la consulta de inserción
@@ -198,7 +198,7 @@ obtenerMarcas: function(conexion, callback) {
       }
       callback(null, resultados);
   });
-},
+}, 
 obtenerModelosPorMarca: function(conexion, marcaId, callback) {
   // Consulta SQL para obtener los modelos por marca
   var consulta = 'SELECT * FROM modelos WHERE id_marca = ?';
