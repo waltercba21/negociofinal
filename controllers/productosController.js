@@ -205,10 +205,14 @@ module.exports = {
                                 res.status(500).send("Error al actualizar el producto");
                                 return;
                             }
-                            res.redirect('/productos?pagina=' + req.session.paginaActual);
+                            req.session.save(function(err) {
+                                res.redirect('/productos?pagina=' + req.session.paginaActual);
+                            });
                         });
                     } else {
-                        res.redirect('/productos?pagina=' + req.session.paginaActual);
+                        req.session.save(function(err) {
+                            res.redirect('/productos?pagina=' + req.session.paginaActual);
+                        });
                     }
                 });
             });
@@ -222,11 +226,15 @@ module.exports = {
                 }
     
                 console.log('Producto actualizado, redirigiendo...');
-                res.redirect('/productos');
+                req.session.save(function(err) {
+                    res.redirect('/productos?pagina=' + req.session.paginaActual);
+                });
             });
         } else {
             console.log('No se recibió archivo ni nombre, redirigiendo...');
-            res.redirect('/productos');
+            req.session.save(function(err) {
+                res.redirect('/productos?pagina=' + req.session.paginaActual);
+            });
         }
     },
 ultimos: function(req, res) {
@@ -244,65 +252,73 @@ ultimos: function(req, res) {
 panelControl: function (req, res) {
     var pagina = req.query.pagina || 1;
     req.session.paginaActual = pagina;
-    var proveedor = req.query.proveedor ? Number(req.query.proveedor) : null;
-    var productosPorPagina = 20;
-    var saltar = (pagina - 1) * productosPorPagina;
-  
-    var obtenerProductos = proveedor ? producto.obtenerProductosPorProveedor : producto.obtener;
-    var contarProductos = proveedor ? producto.contarPorProveedor : producto.contar;
-  
-    producto.obtenerProveedores(conexion, function(error, proveedores) {
-        if (error) {
-            console.log('Error al obtener proveedores:', error);
-        } else {
-            if (proveedor) {
-                obtenerProductos(conexion, proveedor, saltar, function (error, productos) {
-                    manejarProductos(error, productos, proveedores);
-                });
-            } else {
-                obtenerProductos(conexion, saltar, function (error, productos) {
-                    manejarProductos(error, productos, proveedores);
-                });
-            }
+    req.session.save(function(err) {
+        if(err) {
+            console.error("Error al guardar la sesión:", err);
+            res.status(500).send("Error al guardar la sesión");
+            return;
         }
-    });
 
-    function manejarProductos(error, productos, proveedores) {
-        if (error) {
-            console.log('Error al obtener productos:', error);
-        } else {
-            productos.forEach(producto => {
-                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-            });
-  
-            function manejarConteo(error, resultado) {
-                if (error) {
-                    console.log('Error al contar productos:', error);
+        var proveedor = req.query.proveedor ? Number(req.query.proveedor) : null;
+        var productosPorPagina = 20;
+        var saltar = (pagina - 1) * productosPorPagina;
+    
+        var obtenerProductos = proveedor ? producto.obtenerProductosPorProveedor : producto.obtener;
+        var contarProductos = proveedor ? producto.contarPorProveedor : producto.contar;
+    
+        producto.obtenerProveedores(conexion, function(error, proveedores) {
+            if (error) {
+                console.log('Error al obtener proveedores:', error);
+            } else {
+                if (proveedor) {
+                    obtenerProductos(conexion, proveedor, saltar, function (error, productos) {
+                        manejarProductos(error, productos, proveedores);
+                    });
                 } else {
-                    var totalProductos = resultado[0].total;
-                    res.render('panelControl', { 
-                        title: 'Productos', 
-                        productos: productos, 
-                        totalProductos: totalProductos, 
-                        productosPorPagina: productosPorPagina, 
-                        proveedor: proveedor,
-                        proveedores: proveedores,
-                        proveedorSeleccionado: proveedor, 
+                    obtenerProductos(conexion, saltar, function (error, productos) {
+                        manejarProductos(error, productos, proveedores);
                     });
                 }
             }
+        });
 
-            if (proveedor) {
-                contarProductos(conexion, proveedor, function(error, resultado) {
-                    manejarConteo(error, resultado);
-                });
+        function manejarProductos(error, productos, proveedores) {
+            if (error) {
+                console.log('Error al obtener productos:', error);
             } else {
-                contarProductos(conexion, function(error, resultado) {
-                    manejarConteo(error, resultado);
+                productos.forEach(producto => {
+                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                 });
+    
+                function manejarConteo(error, resultado) {
+                    if (error) {
+                        console.log('Error al contar productos:', error);
+                    } else {
+                        var totalProductos = resultado[0].total;
+                        res.render('panelControl', { 
+                            title: 'Productos', 
+                            productos: productos, 
+                            totalProductos: totalProductos, 
+                            productosPorPagina: productosPorPagina, 
+                            proveedor: proveedor,
+                            proveedores: proveedores,
+                            proveedorSeleccionado: proveedor, 
+                        });
+                    }
+                }
+
+                if (proveedor) {
+                    contarProductos(conexion, proveedor, function(error, resultado) {
+                        manejarConteo(error, resultado);
+                    });
+                } else {
+                    contarProductos(conexion, function(error, resultado) {
+                        manejarConteo(error, resultado);
+                    });
+                }
             }
         }
-    }
+    });
 },
 buscarPorNombre: function (req, res) {
     const nombre = req.query.query; 
