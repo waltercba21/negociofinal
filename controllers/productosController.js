@@ -285,8 +285,12 @@ panelControl: function (req, res) {
                     if (error) {
                         console.log('Error al obtener categorias:', error);
                     } else {
-                        if (proveedor) {
-                            obtenerProductos(conexion, proveedor, saltar, function (error, productos) {
+                        if (categoria) {
+                            obtenerProductos = producto.obtenerProductosPorCategoria;
+                            contarProductos = producto.contarPorCategoria;
+                        }
+                        if (proveedor || categoria) {
+                            obtenerProductos(conexion, proveedor || categoria, saltar, function (error, productos) {
                                 manejarProductos(error, productos, proveedores, categorias);
                             });
                         } else {
@@ -326,8 +330,8 @@ panelControl: function (req, res) {
                     }
                 }
 
-                if (proveedor) {
-                    contarProductos(conexion, proveedor, function(error, resultado) {
+                if (proveedor || categoria) {
+                    contarProductos(conexion, proveedor || categoria, function(error, resultado) {
                         manejarConteo(error, resultado);
                     });
                 } else {
