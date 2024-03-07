@@ -264,5 +264,18 @@ obtenerPorCategoria: function(conexion, categoria, callback) {
       }
   });
 },
-
+obtenerIdPorCategoria: function(conexion, categoria, callback) {
+  var query = "SELECT id FROM categorias WHERE nombre = ?";
+  conexion.query(query, [categoria], function(error, resultados) {
+    if (error) {
+      callback(error, null);
+    } else {
+      if (resultados.length > 0) {
+        callback(null, resultados[0].id);
+      } else {
+        callback(new Error('No se encontró la categoría'), null);
+      }
+    }
+  });
+}
 }
