@@ -273,20 +273,20 @@ panelControl: function (req, res) {
         var saltar = (pagina - 1) * productosPorPagina;
     
         var obtenerProductos = producto.obtenerTodosLosProductos; 
-var contarProductos = producto.contarTodosLosProductos; 
-var parametroObtenerProductos;
-var parametroContarProductos;
+        var contarProductos = producto.contarTodosLosProductos; 
+        var parametroObtenerProductos = null;
+        var parametroContarProductos = null;
 
-if (categoria) {
-    obtenerProductos = producto.obtenerProductosPorCategoria;
-    contarProductos = producto.contarPorCategoria;
-    parametroObtenerProductos = parametroContarProductos = categoria;
-}
-if (proveedor) {
-    obtenerProductos = producto.obtenerProductosPorProveedor;
-    contarProductos = producto.contarPorProveedor;
-    parametroObtenerProductos = parametroContarProductos = proveedor;
-}
+        if (categoria) {
+            obtenerProductos = producto.obtenerProductosPorCategoria;
+            contarProductos = producto.contarPorCategoria;
+            parametroObtenerProductos = parametroContarProductos = categoria;
+        }
+        if (proveedor) {
+            obtenerProductos = producto.obtenerProductosPorProveedor;
+            contarProductos = producto.contarPorProveedor;
+            parametroObtenerProductos = parametroContarProductos = proveedor;
+        }
         producto.obtenerProveedores(conexion, function(error, proveedores) {
             if (error) {
             } else {
@@ -294,15 +294,12 @@ if (proveedor) {
                     if (error) {
                         
                     } else {
-                        if (proveedor || categoria) {
-                            obtenerProductos(conexion, parametroObtenerProductos, saltar, function (error, productos) {
-                                manejarProductos(error, productos, proveedores, categorias);
-                            });
-                        } else {
-                            obtenerProductos(conexion, saltar, function (error, productos) {
-                                manejarProductos(error, productos, proveedores, categorias);
-                            });
-                        }
+                        obtenerProductos(conexion, parametroObtenerProductos, saltar, function (error, productos) {
+                            manejarProductos(error, productos, proveedores, categorias);
+                        });
+                        contarProductos(conexion, parametroContarProductos, function(error, resultado) {
+                            manejarConteo(error, resultado);
+                        });
                     }
                 });
             }
@@ -331,21 +328,6 @@ if (proveedor) {
                             categoriaSeleccionada: categoria
                         });
                     }
-                }
-                if (proveedor || categoria) {
-                    obtenerProductos(conexion, parametroObtenerProductos, saltar, function (error, productos) {
-                        manejarProductos(error, productos, proveedores, categorias);
-                    });
-                    contarProductos(conexion, parametroContarProductos, function(error, resultado) {
-                        manejarConteo(error, resultado);
-                    });
-                } else {
-                    obtenerProductos(conexion, null, saltar, function (error, productos) {
-                        manejarProductos(error, productos, proveedores, categorias);
-                    });
-                    contarProductos(conexion, null, function(error, resultado) {
-                        manejarConteo(error, resultado);
-                    });
                 }
             }
         }
