@@ -287,23 +287,7 @@ panelControl: function (req, res) {
             contarProductos = producto.contarPorProveedor;
             parametroObtenerProductos = parametroContarProductos = proveedor;
         }
-        producto.obtenerProveedores(conexion, function(error, proveedores) {
-            if (error) {
-            } else {
-                producto.obtenerCategorias(conexion, function(error, categorias) {
-                    if (error) {
-                        
-                    } else {
-                        obtenerProductos(conexion, saltar, function (error, productos) {
-                            manejarProductos(error, productos, proveedores, categorias);
-                        });
-                        contarProductos(conexion, parametroContarProductos, function(error, resultado) {
-                            manejarConteo(error, resultado);
-                        });
-                    }
-                });
-            }
-        });
+
         function manejarProductos(error, productos, proveedores, categorias) {
             if (error) {
                 console.log('Error al obtener productos:', error);
@@ -311,26 +295,44 @@ panelControl: function (req, res) {
                 productos.forEach(producto => {
                     producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                 });
-                function manejarConteo(error, resultado) {
-                    if (error) {
-                        console.log('Error al contar productos:', error);
-                    } else {
-                        var totalProductos = resultado[0].total;
-                        res.render('panelControl', { 
-                            title: 'Productos', 
-                            productos: productos, 
-                            totalProductos: totalProductos, 
-                            productosPorPagina: productosPorPagina, 
-                            proveedor: proveedor,
-                            proveedores: proveedores,
-                            proveedorSeleccionado: proveedor,
-                            categorias: categorias,
-                            categoriaSeleccionada: categoria
-                        });
-                    }
-                }
+                contarProductos(conexion, parametroContarProductos, manejarConteo);
             }
         }
+
+        function manejarConteo(error, resultado) {
+            if (error) {
+                console.log('Error al contar productos:', error);
+            } else {
+                var totalProductos = resultado[0].total;
+                res.render('panelControl', { 
+                    title: 'Productos', 
+                    productos: productos, 
+                    totalProductos: totalProductos, 
+                    productosPorPagina: productosPorPagina, 
+                    proveedor: proveedor,
+                    proveedores: proveedores,
+                    proveedorSeleccionado: proveedor,
+                    categorias: categorias,
+                    categoriaSeleccionada: categoria
+                });
+            }
+        }
+
+        producto.obtenerProveedores(conexion, function(error, proveedores) {
+            if (error) {
+                console.log('Error al obtener proveedores:', error);
+            } else {
+                producto.obtenerCategorias(conexion, function(error, categorias) {
+                    if (error) {
+                        console.log('Error al obtener categorias:', error);
+                    } else {
+                        obtenerProductos(conexion, saltar, function (error, productos) {
+                            manejarProductos(error, productos, proveedores, categorias);
+                        });
+                    }
+                });
+            }
+        });
     });
 },
 buscarPorNombre: function (req, res) {
