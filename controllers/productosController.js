@@ -270,6 +270,7 @@ panelControl: function (req, res) {
         }
 
         var proveedor = req.query.proveedor ? Number(req.query.proveedor) : null;
+        var categoria = req.query.categoria ? Number(req.query.categoria) : null;
         var productosPorPagina = 20;
         var saltar = (pagina - 1) * productosPorPagina;
     
@@ -280,19 +281,25 @@ panelControl: function (req, res) {
             if (error) {
                 console.log('Error al obtener proveedores:', error);
             } else {
-                if (proveedor) {
-                    obtenerProductos(conexion, proveedor, saltar, function (error, productos) {
-                        manejarProductos(error, productos, proveedores);
-                    });
-                } else {
-                    obtenerProductos(conexion, saltar, function (error, productos) {
-                        manejarProductos(error, productos, proveedores);
-                    });
-                }
+                producto.obtenerCategorias(conexion, function(error, categorias) {
+                    if (error) {
+                        console.log('Error al obtener categorias:', error);
+                    } else {
+                        if (proveedor) {
+                            obtenerProductos(conexion, proveedor, saltar, function (error, productos) {
+                                manejarProductos(error, productos, proveedores, categorias);
+                            });
+                        } else {
+                            obtenerProductos(conexion, saltar, function (error, productos) {
+                                manejarProductos(error, productos, proveedores, categorias);
+                            });
+                        }
+                    }
+                });
             }
         });
 
-        function manejarProductos(error, productos, proveedores) {
+        function manejarProductos(error, productos, proveedores, categorias) {
             if (error) {
                 console.log('Error al obtener productos:', error);
             } else {
@@ -312,7 +319,9 @@ panelControl: function (req, res) {
                             productosPorPagina: productosPorPagina, 
                             proveedor: proveedor,
                             proveedores: proveedores,
-                            proveedorSeleccionado: proveedor, 
+                            proveedorSeleccionado: proveedor,
+                            categorias: categorias,
+                            categoriaSeleccionada: categoria
                         });
                     }
                 }
