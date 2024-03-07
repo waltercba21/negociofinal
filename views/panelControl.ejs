@@ -13,7 +13,8 @@
     <br/>
     <!-- Formulario para seleccionar el proveedor -->
     <form method="get" action="/productos/panelControl">
-      <select name="proveedor" onchange="this.form.submit()">
+      <label for="proveedor">Seleccionar Proveedor</label>
+      <select name="proveedor" id="proveedor" onchange="this.form.submit()">
         <option value="">Mostrar Todos</option>
         <% proveedores.forEach(proveedor => { %>
           <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
