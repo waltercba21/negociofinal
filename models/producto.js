@@ -11,6 +11,9 @@ module.exports ={
     }
     conexion.query('SELECT COUNT(*) AS total FROM productos', funcion);
   },
+  contarPorCategoria: function(conexion, categoria, callback) {
+    conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
+},
   contarPorProveedor: function (conexion, proveedor, funcion) {
     if (typeof funcion !== 'function') {
         throw new Error('funcion debe ser una función');
@@ -139,10 +142,7 @@ borrarImagenes: function(conexion, productoId, callback) {
   const query = 'DELETE FROM imagenes_producto WHERE producto_id = ?';
   conexion.query(query, [productoId], callback);
 },
-    
-    obtenerPorNombre: function (conexion, nombre, funcion) {
-        conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
-      },
+  
       obtenerCarrito: function (conexion, usuarioId, funcion) {
         const query = `
             SELECT carritos.*, productos.nombre AS nombre
@@ -152,9 +152,7 @@ borrarImagenes: function(conexion, productoId, callback) {
         `;
         conexion.query(query, [usuarioId], funcion);
     },
-      obtenerTodos: function (conexion, funcion) {
-        conexion.query('SELECT * FROM productos', funcion);
-    },
+     
       agregarAlCarrito: function (usuarioId, productoId, cantidad, imagen, callback) {
         const query = "INSERT INTO carritos (usuario_id, producto_id, cantidad, imagen) VALUES ( ?, ?, ?, ?)";
         const values = [usuarioId, productoId, cantidad, imagen];
@@ -180,16 +178,7 @@ borrarImagenes: function(conexion, productoId, callback) {
           return callback(null, resultados);    
         });
       },
-      obtenerProductosPorProveedor: function (conexion, proveedor, saltar, callback) {
-        const query = 'SELECT * FROM productos WHERE proveedor_id = ? LIMIT ?, 20';
-        conexion.query(query, [proveedor, saltar], function (error, resultados) {
-            if (error) {
-                callback(error, null);
-            } else {
-                callback(null, resultados);
-            }
-        });
-    },
+ 
     actualizarPreciosPorProveedor: function (conexion, proveedor, porcentajeAumento, callback) {
       const query = 'UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?';
       conexion.query(query, [porcentajeAumento, proveedor], function (error, resultados) {
@@ -209,7 +198,23 @@ borrarImagenes: function(conexion, productoId, callback) {
             funcion(null, resultados);
         }
     });
-},
+},   
+    obtenerPorNombre: function (conexion, nombre, funcion) {
+        conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
+      },
+ obtenerTodos: function (conexion, funcion) {
+        conexion.query('SELECT * FROM productos', funcion);
+    },
+ obtenerProductosPorProveedor: function (conexion, proveedor, saltar, callback) {
+        const query = 'SELECT * FROM productos WHERE proveedor_id = ? LIMIT ?, 20';
+        conexion.query(query, [proveedor, saltar], function (error, resultados) {
+            if (error) {
+                callback(error, null);
+            } else {
+                callback(null, resultados);
+            }
+        });
+    },
 obtenerProveedores: function (conexion, callback) {
   const query = 'SELECT id, nombre FROM proveedores';
   conexion.query(query, function (error, resultados) {
