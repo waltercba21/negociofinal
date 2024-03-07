@@ -50,7 +50,7 @@ module.exports = {
             if (error) {
                 console.log('Error al obtener categorías:', error);
                 return;
-            }
+            }  
             producto.obtenerProveedores(conexion, function(error, proveedores) {
                 if (error) {
                     console.log('Error al obtener proveedores:', error);
