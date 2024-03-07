@@ -131,7 +131,6 @@ insertarImagen: function(conexion, productoId, imagen, callback) {
 obtenerUltimos: function (conexion, cantidad, funcion) {
   conexion.query('SELECT * FROM productos ORDER BY id DESC LIMIT ?', [cantidad], funcion);
 },
-// Obtener todas las imágenes de un producto
 obtenerImagenes: function(conexion, productoId, callback) {
   const query = 'SELECT * FROM imagenes_producto WHERE producto_id = ?';
   conexion.query(query, [productoId], callback);
@@ -202,8 +201,11 @@ borrarImagenes: function(conexion, productoId, callback) {
     obtenerPorNombre: function (conexion, nombre, funcion) {
         conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
       },
- obtenerTodos: function (conexion, funcion) {
-        conexion.query('SELECT * FROM productos', funcion);
+      obtenerTodos: function (conexion, saltar, funcion) {
+        if (typeof funcion !== 'function') {
+          throw new Error('funcion debe ser una función');
+        }
+        conexion.query('SELECT * FROM productos LIMIT ?,20', [saltar], funcion);
     },
  obtenerProductosPorProveedor: function (conexion, proveedor, saltar, callback) {
         const query = 'SELECT * FROM productos WHERE proveedor_id = ? LIMIT ?, 20';
@@ -320,7 +322,7 @@ contarTodosLosProductos: function (conexion, callback) {
           callback(error, null);
       } else {
           callback(null, resultados[0].total);
-      }
+      } 
   });
 }
 }

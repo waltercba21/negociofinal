@@ -294,7 +294,7 @@ panelControl: function (req, res) {
                     if (error) {
                         
                     } else {
-                        obtener(conexion, parametroObtenerProductos, saltar, function (error, productos) {
+                        obtenerProductos(conexion, saltar, function (error, productos) {
                             manejarProductos(error, productos, proveedores, categorias);
                         });
                         contarProductos(conexion, parametroContarProductos, function(error, resultado) {
