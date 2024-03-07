@@ -275,7 +275,7 @@ panelControl: function (req, res) {
             console.log('Error al obtener proveedores:', error);
         } else {
             if (proveedor) {
-                obtenerProductos(conexion, proveedor, function (error, productos) {
+                obtenerProductos(conexion, proveedor, saltar, function (error, productos) {
                     manejarProductos(error, productos, proveedores);
                 });
             } else {
