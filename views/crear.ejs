@@ -95,45 +95,41 @@
     <%- include ./layouts/footer.ejs %>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
-        // Función para llenar los modelos basándose en la marca seleccionada
-        function llenarModelos(marcaId, modeloId) {
-          $.ajax({
-            url: '/productos/modelos/' + marcaId, 
-            method: 'GET',
-            success: function(data) {
-                console.log('Data:', data);
-                $('#modelo').empty();
-                $('#modelo').append('<option value="" selected>Selecciona un modelo...</option>');
-                data.forEach(function(modelo) {
-                    var option = $('<option></option>').attr('value', modelo.id).text(modelo.nombre);
-                    if (modelo.id == modeloId) {
-                        option.attr('selected', 'selected');
-                    }
-                    $('#modelo').append(option);
-                });
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error('Error al obtener los modelos:', textStatus, errorThrown);
-                alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
-            }
-          });
-        }
-        
-        // Cuando la marca cambia, llenar los modelos
-        $('#marca_id').change(function() {
-          var marcaId = $(this).val(); 
-          llenarModelos(marcaId);
-        });
-        
-        // Al cargar la página, si hay una marca seleccionada, llenar los modelos
-        $(document).ready(function() {
-          var marcaId = $('#marca_id').val();
-          if (marcaId) {
-            var modeloId = '<%= producto.modelo_id %>'; // Obtén el ID del modelo del producto que estás editando
-            llenarModelos(marcaId, modeloId);
+      // Función para llenar los modelos basándose en la marca seleccionada
+      function llenarModelos(marcaId) {
+        $.ajax({
+          url: '/productos/modelos/' + marcaId, 
+          method: 'GET',
+          success: function(data) {
+              console.log('Data:', data);
+              $('#modelo_id').empty();
+              $('#modelo_id').append('<option value="" selected>Selecciona un modelo...</option>');
+              data.forEach(function(modelo) {
+                  var option = $('<option></option>').attr('value', modelo.id).text(modelo.nombre);
+                  $('#modelo_id').append(option);
+              });
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+              console.error('Error al obtener los modelos:', textStatus, errorThrown);
+              alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
           }
         });
-        </script>
+      }
+      
+      // Cuando la marca cambia, llenar los modelos
+      $('#marca').change(function() {
+        var marcaId = $(this).val(); 
+        llenarModelos(marcaId);
+      });
+      
+      // Al cargar la página, si hay una marca seleccionada, llenar los modelos
+      $(document).ready(function() {
+        var marcaId = $('#marca').val();
+        if (marcaId) {
+          llenarModelos(marcaId);
+        }
+      });
+  </script>
 </body>
 
 

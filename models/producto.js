@@ -141,7 +141,7 @@ borrarImagenes: function(conexion, productoId, callback) {
             return callback(error, null);
           }
     
-          return callback(null, resultados);
+          return callback(null, resultados);    
         });
       },
       obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
