@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', (event) => {
-  
   const fila = document.querySelector('.contenedor-carrousel');
   const peliculas = document.querySelectorAll('.pelicula');
   const flechaIzquierda = document.getElementById('flecha-izquierda');
@@ -35,10 +34,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
       });
     }
   }
-
-
-
-  // Verificar si los elementos existen antes de agregar event listeners
   if (peliculas) {
     peliculas.forEach(pelicula => {
       pelicula.addEventListener('click', () => {
@@ -50,13 +45,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
       });
     });
   }
-
   if (fila) {
     fila.addEventListener('mouseleave', () => {
       peliculas.forEach(pelicula => pelicula.classList.remove('hover'));
     });
   }
-
   const imagenesCarrusel = document.querySelectorAll('.imagen-carrusel');
   if (imagenesCarrusel) {
     imagenesCarrusel.forEach(imagen => {
@@ -67,7 +60,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
   }
 });
-
 window.onload = function() {
   if (window.innerWidth <= 768) {
     var navbar = document.querySelector('.navbar');
@@ -80,7 +72,6 @@ window.onload = function() {
     }
   }
 }
-
 function toggleMenu() {
   var navbar = document.querySelector('.navbar');
   var icons = document.querySelector('.icons');
