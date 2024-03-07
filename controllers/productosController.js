@@ -274,8 +274,17 @@ panelControl: function (req, res) {
         var productosPorPagina = 20;
         var saltar = (pagina - 1) * productosPorPagina;
     
-        var obtenerProductos = proveedor ? producto.obtenerProductosPorProveedor : producto.obtener;
-        var contarProductos = proveedor ? producto.contarPorProveedor : producto.contar;
+        var obtenerProductos = producto.obtener;
+        var contarProductos = producto.contar;
+
+        if (categoria) {
+            obtenerProductos = producto.obtenerProductosPorCategoria;
+            contarProductos = producto.contarPorCategoria;
+        }
+        if (proveedor) {
+            obtenerProductos = producto.obtenerProductosPorProveedor;
+            contarProductos = producto.contarPorProveedor;
+        }
     
         producto.obtenerProveedores(conexion, function(error, proveedores) {
             if (error) {
@@ -285,10 +294,6 @@ panelControl: function (req, res) {
                     if (error) {
                         console.log('Error al obtener categorias:', error);
                     } else {
-                        if (categoria) {
-                            obtenerProductos = producto.obtenerProductosPorCategoria;
-                            contarProductos = producto.contarPorCategoria;
-                        }
                         if (proveedor || categoria) {
                             obtenerProductos(conexion, proveedor || categoria, saltar, function (error, productos) {
                                 manejarProductos(error, productos, proveedores, categorias);
