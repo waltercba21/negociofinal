@@ -274,16 +274,20 @@ panelControl: function (req, res) {
         var productosPorPagina = 20;
         var saltar = (pagina - 1) * productosPorPagina;
     
-        var obtenerProductos = producto.obtener;
-        var contarProductos = producto.contar;
+        var obtenerProductos;
+        var contarProductos;
+        var parametroObtenerProductos;
+        var parametroContarProductos;
 
         if (categoria) {
             obtenerProductos = producto.obtenerProductosPorCategoria;
             contarProductos = producto.contarPorCategoria;
+            parametroObtenerProductos = parametroContarProductos = categoria;
         }
         if (proveedor) {
             obtenerProductos = producto.obtenerProductosPorProveedor;
             contarProductos = producto.contarPorProveedor;
+            parametroObtenerProductos = parametroContarProductos = proveedor;
         }
     
         producto.obtenerProveedores(conexion, function(error, proveedores) {
@@ -295,7 +299,7 @@ panelControl: function (req, res) {
                         console.log('Error al obtener categorias:', error);
                     } else {
                         if (proveedor || categoria) {
-                            obtenerProductos(conexion, proveedor || categoria, saltar, function (error, productos) {
+                            obtenerProductos(conexion, parametroObtenerProductos, saltar, function (error, productos) {
                                 manejarProductos(error, productos, proveedores, categorias);
                             });
                         } else {
@@ -336,7 +340,7 @@ panelControl: function (req, res) {
                 }
 
                 if (proveedor || categoria) {
-                    contarProductos(conexion, proveedor || categoria, function(error, resultado) {
+                    contarProductos(conexion, parametroContarProductos, function(error, resultado) {
                         manejarConteo(error, resultado);
                     });
                 } else {
