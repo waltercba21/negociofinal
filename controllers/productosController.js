@@ -178,49 +178,37 @@ module.exports = {
         });
     },
     actualizar: function (req, res) {
-        console.log('Iniciando la actualización del producto...');
         if (!req.body.categoria_id || !req.body.marca_id || !req.body.proveedor_id) {
             res.status(400).send('Los datos del producto deben incluir un ID de categoría, un ID de marca y un ID de proveedor');
             return;
         }
         if(req.file && req.file.filename){
-            console.log('Archivo recibido, obteniendo datos del producto...');
             producto.retornarDatosId(conexion,req.body.id,function (error, registros){
                 if (error) {
                     console.error("Error al obtener los datos del producto:", error);
                     res.status(500).send("Error al actualizar el producto");
                     return;
                 }
-    
-                console.log('Datos del producto obtenidos, borrando imagen existente...');
                 var nombreImagen = '/public/images/' + (registros[0].imagen);
                 if(borrar.existsSync(nombreImagen)){
                     borrar.unlinkSync(nombreImagen);
                 }
-    
-                console.log('Imagen existente borrada, actualizando archivo...');
                 producto.actualizarArchivo(conexion,req.body, req.file, function (error){
                     if (error) {
-                        console.error("Error al actualizar el archivo del producto:", error);
                         res.status(500).send("Error al actualizar el producto");
                         return;
                     }
-    
                     if(req.body.nombre){
-                        console.log('Nombre recibido, actualizando producto...');
                         producto.actualizar(conexion,req.body, req.file, function(error){
                             if (error) {
                                 console.error("Error al actualizar el producto:", error);
                                 res.status(500).send("Error al actualizar el producto");
                                 return;
                             }
-    
-                            console.log('Producto actualizado, redirigiendo...');
-                            res.redirect('/productos');
+                            res.redirect('/productos?pagina=' + req.session.paginaActual);
                         });
                     } else {
-                        console.log('No se recibió nombre, redirigiendo...');
-                        res.redirect('/productos');
+                        res.redirect('/productos?pagina=' + req.session.paginaActual);
                     }
                 });
             });
@@ -255,6 +243,7 @@ ultimos: function(req, res) {
 },
 panelControl: function (req, res) {
     var pagina = req.query.pagina || 1;
+    req.session.paginaActual = pagina;
     var proveedor = req.query.proveedor ? Number(req.query.proveedor) : null;
     var productosPorPagina = 20;
     var saltar = (pagina - 1) * productosPorPagina;
