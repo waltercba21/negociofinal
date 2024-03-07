@@ -338,13 +338,18 @@ if (proveedor) {
                         });
                     }
                 }
-
                 if (proveedor || categoria) {
+                    obtenerProductos(conexion, parametroObtenerProductos, saltar, function (error, productos) {
+                        manejarProductos(error, productos, proveedores, categorias);
+                    });
                     contarProductos(conexion, parametroContarProductos, function(error, resultado) {
                         manejarConteo(error, resultado);
                     });
                 } else {
-                    contarProductos(conexion, function(error, resultado) {
+                    obtenerProductos(conexion, null, saltar, function (error, productos) {
+                        manejarProductos(error, productos, proveedores, categorias);
+                    });
+                    contarProductos(conexion, null, function(error, resultado) {
                         manejarConteo(error, resultado);
                     });
                 }
@@ -361,21 +366,17 @@ buscarPorNombre: function (req, res) {
                 res.status(500).send('Error interno del servidor');
                 return;
             }
-            // Formatear el precio de cada producto
             productos.forEach(producto => {
                 producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
             });
-
             res.json({ productos });
         });
     } else {
         producto.obtenerPorNombre(conexion, nombre, (error, productos) => {
           if (error) {
-            console.error(error);
             res.status(500).send('Error interno del servidor');
             return;
           }
-          // Formatear el precio de cada producto
           productos.forEach(producto => {
               producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
           });
