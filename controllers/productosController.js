@@ -303,7 +303,7 @@ panelControl: function (req, res) {
             if (error) {
                 console.log('Error al contar productos:', error);
             } else {
-                var totalProductos = resultado[0].total;
+                var totalProductos = resultado.length > 0 ? resultado[0].total : 0;
                 res.render('panelControl', { 
                     title: 'Productos', 
                     productos: productos, 
