@@ -254,5 +254,15 @@ obtenerCategorias: function(conexion, funcion) {
       funcion(null, resultados);
   });
 },
+obtenerPorCategoria: function(conexion, categoria, callback) {
+  var query = "SELECT * FROM productos WHERE categoria_id = ?";
+  conexion.query(query, [categoria], function(error, resultados) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultados);
+      }
+  });
+},
 
 }
