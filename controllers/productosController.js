@@ -223,7 +223,7 @@ module.exports = {
                     return;
                 }
                 req.session.save(function(err) {
-                    res.redirect('/panelControl?pagina=' + req.session.paginaActual);
+                    res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
                 });
             });
         } else {
