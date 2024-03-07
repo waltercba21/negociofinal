@@ -282,5 +282,25 @@ obtenerIdPorCategoria: function(conexion, categoria, callback) {
       }
     }
   });
+},
+contarPorProveedor: function (conexion, proveedor, callback) {
+  const query = 'SELECT COUNT(*) AS total FROM productos WHERE proveedor_id = ?';
+  conexion.query(query, [proveedor], function (error, resultados) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultados[0].total);
+      }
+  });
+},
+contarPorCategoria: function (conexion, categoria, callback) {
+  const query = 'SELECT COUNT(*) AS total FROM productos WHERE categoria_id = ?';
+  conexion.query(query, [categoria], function (error, resultados) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultados[0].total);
+      }
+  });
 }
 }
