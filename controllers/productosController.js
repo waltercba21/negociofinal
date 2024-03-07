@@ -206,34 +206,29 @@ module.exports = {
                                 return;
                             }
                             req.session.save(function(err) {
-                                res.redirect('/panelControl?pagina=' + req.session.paginaActual);
+                                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
                             });
                         });
                     } else {
                         req.session.save(function(err) {
-                            res.redirect('/panelControl?pagina=' + req.session.paginaActual);
+                            res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
                         });
                     }
                 });
             });
         } else if(req.body.nombre){
-            console.log('No se recibió archivo pero se recibió nombre, actualizando producto...');
             producto.actualizar(conexion,req.body, req.file, function(error){
                 if (error) {
-                    console.error("Error al actualizar el producto:", error);
                     res.status(500).send("Error al actualizar el producto");
                     return;
                 }
-    
-                console.log('Producto actualizado, redirigiendo...');
                 req.session.save(function(err) {
                     res.redirect('/panelControl?pagina=' + req.session.paginaActual);
                 });
             });
         } else {
-            console.log('No se recibió archivo ni nombre, redirigiendo...');
             req.session.save(function(err) {
-                res.redirect('/panelControl?pagina=' + req.session.paginaActual);
+                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
             });
         }
     },
