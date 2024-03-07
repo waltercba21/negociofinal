@@ -15,7 +15,7 @@ module.exports ={
     if (typeof funcion !== 'function') {
         throw new Error('funcion debe ser una función');
     }
-    conexion.query('SELECT COUNT(*) AS total FROM productos WHERE proveedor = ?', [proveedor], funcion);
+    conexion.query('SELECT COUNT(*) AS total FROM productos WHERE proveedor_id = ?', [proveedor], funcion);
 },
 insertar: function(conexion, datos, archivo, funcion){
   if (!archivo) {
@@ -145,7 +145,7 @@ borrarImagenes: function(conexion, productoId, callback) {
         });
       },
       obtenerProductosPorProveedor: function (conexion, proveedor, saltar, callback) {
-        const query = 'SELECT * FROM productos WHERE proveedor = ? LIMIT ?, 20';
+        const query = 'SELECT * FROM productos WHERE proveedor_id = ? LIMIT ?, 20';
         conexion.query(query, [proveedor, saltar], function (error, resultados) {
             if (error) {
                 callback(error, null);
