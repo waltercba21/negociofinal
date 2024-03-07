@@ -19,23 +19,29 @@ module.exports = {
     
         // Si se proporciona una categoría, obtener productos por categoría
         if (categoria) {
-            producto.obtenerPorCategoria(conexion, categoria, function (error, productos) {
+            producto.obtenerIdPorCategoria(conexion, categoria, function (error, categoria_id) {
                 if (error) {
-                    console.log('Error al obtener productos:', error);
+                    console.log('Error al obtener id de la categoría:', error);
                 } else {
-                    if (productos.length === 0) {
-                        console.log('No se encontraron productos para esta categoría');
-                        // Aquí puedes manejar el caso en que no se encontraron productos
-                        // Por ejemplo, podrías renderizar una vista diferente o enviar un mensaje al usuario
-                    } else {
-                        // Formatear el precio de cada producto
-                        productos.forEach(producto => {
-                            producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                        });
+                    producto.obtenerPorCategoria(conexion, categoria_id, function (error, productos) {
+                        if (error) {
+                            console.log('Error al obtener productos:', error);
+                        } else {
+                            if (productos.length === 0) {
+                                console.log('No se encontraron productos para esta categoría');
+                                // Aquí puedes manejar el caso en que no se encontraron productos
+                                // Por ejemplo, podrías renderizar una vista diferente o enviar un mensaje al usuario
+                            } else {
+                                // Formatear el precio de cada producto
+                                productos.forEach(producto => {
+                                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                                });
     
-                        console.log('Productos obtenidos:', productos);
-                        res.render('productos', { productos: productos });
-                    }
+                                console.log('Productos obtenidos:', productos);
+                                res.render('productos', { productos: productos });
+                            }
+                        }
+                    });
                 }
             });
         } else {
