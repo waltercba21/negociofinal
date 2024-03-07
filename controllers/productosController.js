@@ -206,12 +206,12 @@ module.exports = {
                                 return;
                             }
                             req.session.save(function(err) {
-                                res.redirect('/productos?pagina=' + req.session.paginaActual);
+                                res.redirect('/panelControl?pagina=' + req.session.paginaActual);
                             });
                         });
                     } else {
                         req.session.save(function(err) {
-                            res.redirect('/productos?pagina=' + req.session.paginaActual);
+                            res.redirect('/panelControl?pagina=' + req.session.paginaActual);
                         });
                     }
                 });
@@ -227,13 +227,13 @@ module.exports = {
     
                 console.log('Producto actualizado, redirigiendo...');
                 req.session.save(function(err) {
-                    res.redirect('/productos?pagina=' + req.session.paginaActual);
+                    res.redirect('/panelControl?pagina=' + req.session.paginaActual);
                 });
             });
         } else {
             console.log('No se recibió archivo ni nombre, redirigiendo...');
             req.session.save(function(err) {
-                res.redirect('/productos?pagina=' + req.session.paginaActual);
+                res.redirect('/panelControl?pagina=' + req.session.paginaActual);
             });
         }
     },
