@@ -164,21 +164,13 @@ module.exports = {
                             console.log('Error al obtener marcas:', error);
                             return;
                         }
-                        let modelosPorMarca = {};
-                        let contadorMarcas = 0;
-                        marcas.forEach((marca) => {
-                            producto.obtenerModelosPorMarca(conexion, marca.id, function(error, modelos) {
-                                if (error) {
-                                    console.log('Error al obtener modelos:', error);
-                                    return;
-                                }
-                                modelosPorMarca[marca.id] = modelos;
-                                contadorMarcas++;
-                                if (contadorMarcas === marcas.length) {
-                                    // Renderiza tu vista pasando los datos
-                                    res.render('editar', { producto: productoResult[0], categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca });
-                                }
-                            });
+                        producto.obtenerModelosPorMarca(conexion, productoResult[0].marca_id, function(error, modelos) {
+                            if (error) {
+                                console.log('Error al obtener modelos:', error);
+                                return;
+                            }
+                            // Renderiza tu vista pasando los datos
+                            res.render('editar', { producto: productoResult[0], categorias: categorias, marcas: marcas, proveedores: proveedores, modelos: modelos });
                         });
                     });
                 });
