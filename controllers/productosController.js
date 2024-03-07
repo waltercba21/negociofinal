@@ -73,7 +73,7 @@ module.exports = {
                             contadorMarcas++;
                             if (contadorMarcas === marcas.length) {
                                 // Renderiza tu vista pasando los datos
-                                res.render('crear', { categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca });
+                                res.render('crear', { categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca, producto: {} });
                             }
                         });
                     });
