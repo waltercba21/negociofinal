@@ -263,7 +263,7 @@ ultimos: function(req, res) {
 },
 panelControl: function (req, res) {
     var pagina = req.query.pagina || 1;
-    var proveedor = req.query.proveedor; 
+    var proveedor = req.query.proveedor ? Number(req.query.proveedor) : null;
     var productosPorPagina = 20;
     var saltar = (pagina - 1) * productosPorPagina;
   
