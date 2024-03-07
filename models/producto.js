@@ -64,19 +64,35 @@ insertar: function(conexion, datos, archivo, funcion){
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
     actualizar: function (conexion, datos, archivo, funcion) {
-      if (!datos.categoria_id || !datos.marca_id || !datos.proveedor_id || !datos.modelo_id) {
-        return funcion(new Error('Los datos del producto deben incluir un ID de categoría, un ID de marca, un ID de proveedor y un ID de modelo'));
+      let query = "UPDATE productos SET ";
+      let params = [];
+      let first = true;
+  
+      if (datos.nombre) {
+          query += first ? "nombre=?" : ", nombre=?";
+          params.push(datos.nombre);
+          first = false;
       }
-      let query = "UPDATE productos SET nombre=?,codigo=?, descripcion=?, precio=?, proveedor_id=?, categoria_id=?, marca_id=?, modelo_id=?";
-      let params = [datos.nombre,datos.codigo,datos.descripcion,datos.precio,datos.proveedor_id,datos.categoria_id,datos.marca_id,datos.modelo_id];
+      if (datos.codigo) {
+          query += first ? "codigo=?" : ", codigo=?";
+          params.push(datos.codigo);
+          first = false;
+      }
+      // Repite este patrón para cada campo
+  
       if (archivo) {
-        query += ", imagen=?";
-        params.push(archivo.filename);
+          query += first ? "imagen=?" : ", imagen=?";
+          params.push(archivo.filename);
+      }
+  
+      if (!datos.id) {
+          return funcion(new Error('Los datos del producto deben incluir un ID'));
       }
       query += " WHERE id=?";
       params.push(datos.id);
+  
       conexion.query(query, params, funcion);
-    },
+  },
     
     actualizarArchivo: function(conexion,datos,archivo,funcion){
       if (archivo) {
