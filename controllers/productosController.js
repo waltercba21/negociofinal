@@ -264,18 +264,16 @@ panelControl: function (req, res) {
     req.session.paginaActual = pagina;
     req.session.save(function(err) {
         if(err) {
-            console.error("Error al guardar la sesión:", err);
             res.status(500).send("Error al guardar la sesión");
             return;
         }
-
         var proveedor = req.query.proveedor ? Number(req.query.proveedor) : null;
         var categoria = req.query.categoria ? Number(req.query.categoria) : null;
         var productosPorPagina = 20;
         var saltar = (pagina - 1) * productosPorPagina;
     
-        var obtenerProductos = producto.obtenerTodosLosProductos; // función predeterminada
-var contarProductos = producto.contarTodosLosProductos; // función predeterminada
+        var obtenerProductos = producto.obtenerTodosLosProductos; 
+var contarProductos = producto.contarTodosLosProductos; 
 var parametroObtenerProductos;
 var parametroContarProductos;
 
@@ -289,14 +287,12 @@ if (proveedor) {
     contarProductos = producto.contarPorProveedor;
     parametroObtenerProductos = parametroContarProductos = proveedor;
 }
-    
         producto.obtenerProveedores(conexion, function(error, proveedores) {
             if (error) {
-                console.log('Error al obtener proveedores:', error);
             } else {
                 producto.obtenerCategorias(conexion, function(error, categorias) {
                     if (error) {
-                        console.log('Error al obtener categorias:', error);
+                        
                     } else {
                         if (proveedor || categoria) {
                             obtenerProductos(conexion, parametroObtenerProductos, saltar, function (error, productos) {
@@ -311,7 +307,6 @@ if (proveedor) {
                 });
             }
         });
-
         function manejarProductos(error, productos, proveedores, categorias) {
             if (error) {
                 console.log('Error al obtener productos:', error);
@@ -319,7 +314,6 @@ if (proveedor) {
                 productos.forEach(producto => {
                     producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                 });
-    
                 function manejarConteo(error, resultado) {
                     if (error) {
                         console.log('Error al contar productos:', error);
