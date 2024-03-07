@@ -15,23 +15,29 @@ module.exports = {
     },
     lista: function (req, res) {
         const categoria = req.query.categoria;
-        var saltar = 0; // Añade esta línea
+        var saltar = 0;
         if (categoria) {
             producto.obtenerPorCategoria(conexion, categoria, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
-                    // Formatear el precio de cada producto
-                    productos.forEach(producto => {
-                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                    });
+                    if (productos.length === 0) {
+                        console.log('No se encontraron productos para esta categoría');
+                        // Aquí puedes manejar el caso en que no se encontraron productos
+                        // Por ejemplo, podrías renderizar una vista diferente o enviar un mensaje al usuario
+                    } else {
+                        // Formatear el precio de cada producto
+                        productos.forEach(producto => {
+                            producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                        });
     
-                    console.log('Productos obtenidos:', productos);
-                    res.render('productos', { productos: productos });
+                        console.log('Productos obtenidos:', productos);
+                        res.render('productos', { productos: productos });
+                    }
                 }
             });
         } else {
-            producto.obtener(conexion, saltar, function (error, productos) { // Modifica esta línea
+            producto.obtener(conexion, saltar, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
