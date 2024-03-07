@@ -144,9 +144,9 @@ borrarImagenes: function(conexion, productoId, callback) {
           return callback(null, resultados);    
         });
       },
-      obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
-        const query = 'SELECT * FROM productos WHERE proveedor = ?';
-        conexion.query(query, [proveedor], function (error, resultados) {
+      obtenerProductosPorProveedor: function (conexion, proveedor, saltar, callback) {
+        const query = 'SELECT * FROM productos WHERE proveedor = ? LIMIT ?, 20';
+        conexion.query(query, [proveedor, saltar], function (error, resultados) {
             if (error) {
                 callback(error, null);
             } else {
