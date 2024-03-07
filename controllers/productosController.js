@@ -16,6 +16,8 @@ module.exports = {
     lista: function (req, res) {
         const categoria = req.query.categoria;
         var saltar = 0;
+    
+        // Si se proporciona una categoría, obtener productos por categoría
         if (categoria) {
             producto.obtenerPorCategoria(conexion, categoria, function (error, productos) {
                 if (error) {
@@ -37,6 +39,7 @@ module.exports = {
                 }
             });
         } else {
+            // Si no se proporciona una categoría, obtener todos los productos
             producto.obtener(conexion, saltar, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
