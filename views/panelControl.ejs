@@ -16,9 +16,9 @@
       <select name="proveedor" onchange="this.form.submit()">
         <option value="">Todos los proveedores</option>
         <% proveedores.forEach(proveedor => { %>
-          <option value="<%= proveedor.proveedor %>" <%= proveedor.proveedor == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.proveedor %></option>
+          <option value="<%= proveedor.nombre %>" <%= proveedor.nombre == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
         <% }); %>
-      </select>
+    </select>
     </form>
     <br/>
     <div class="pagination">
