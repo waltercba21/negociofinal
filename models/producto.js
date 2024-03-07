@@ -78,6 +78,26 @@ insertar: function(conexion, datos, archivo, funcion){
           params.push(datos.codigo);
           first = false;
       }
+      if (datos.categoria_id) {
+          query += first ? "categoria_id=?" : ", categoria_id=?";
+          params.push(datos.categoria_id);
+          first = false;
+      }
+      if (datos.marca_id) {
+          query += first ? "marca_id=?" : ", marca_id=?";
+          params.push(datos.marca_id);
+          first = false;
+      }
+      if (datos.proveedor_id) {
+          query += first ? "proveedor_id=?" : ", proveedor_id=?";
+          params.push(datos.proveedor_id);
+          first = false;
+      }
+      if (datos.modelo_id) {
+          query += first ? "modelo_id=?" : ", modelo_id=?";
+          params.push(datos.modelo_id);
+          first = false;
+      }
       // Repite este patrón para cada campo
   
       if (archivo) {
