@@ -302,5 +302,25 @@ contarPorCategoria: function (conexion, categoria, callback) {
           callback(null, resultados[0].total);
       }
   });
+},
+obtenerTodosLosProductos: function (conexion, saltar, callback) {
+  const query = 'SELECT * FROM productos LIMIT ?, 20';
+  conexion.query(query, [saltar], function (error, resultados) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultados);
+      }
+  });
+},
+contarTodosLosProductos: function (conexion, callback) {
+  const query = 'SELECT COUNT(*) AS total FROM productos';
+  conexion.query(query, function (error, resultados) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultados[0].total);
+      }
+  });
 }
 }
