@@ -11,15 +11,6 @@ module.exports ={
     }
     conexion.query('SELECT COUNT(*) AS total FROM productos', funcion);
   },
-  contarPorCategoria: function(conexion, categoria, callback) {
-    conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
-},
-  contarPorProveedor: function (conexion, proveedor, funcion) {
-    if (typeof funcion !== 'function') {
-        throw new Error('funcion debe ser una función');
-    }
-    conexion.query('SELECT COUNT(*) AS total FROM productos WHERE proveedor_id = ?', [proveedor], funcion);
-},
 insertar: function(conexion, datos, archivo, funcion){
   if (!archivo) {
     return funcion(new Error('No se proporcionó un archivo'));
@@ -291,19 +282,12 @@ contarPorProveedor: function (conexion, proveedor, callback) {
       if (error) {
           callback(error, null);
       } else {
-          callback(null, resultados[0].total);
+          callback(null, resultados);
       }
   });
 },
-contarPorCategoria: function (conexion, categoria, callback) {
-  const query = 'SELECT COUNT(*) AS total FROM productos WHERE categoria_id = ?';
-  conexion.query(query, [categoria], function (error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados[0].total);
-      }
-  });
+contarPorCategoria: function(conexion, categoria, callback) {
+  conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 },
 obtenerTodosLosProductos: function (conexion, saltar, callback) {
   const query = 'SELECT * FROM productos LIMIT ?, 20';
