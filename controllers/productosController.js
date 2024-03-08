@@ -302,12 +302,12 @@ panelControl: function (req, res) {
                     producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                 });
                 contarProductos(conexion, parametroContarProductos, function(error, resultado) {
-                    manejarConteo(error, resultado, categorias);
+                    manejarConteo(error, resultado, categorias); // Pasar categorias como argumento
                 });
             }
         }
 
-        function manejarConteo(error, resultado, categorias) {
+        function manejarConteo(error, resultado, categorias) { // Aceptar categorias como argumento
             if (error) {
                 console.log('Error al contar productos:', error);
             } else {
@@ -320,7 +320,7 @@ panelControl: function (req, res) {
                     proveedor: proveedor,
                     proveedores: proveedores,
                     proveedorSeleccionado: proveedor,
-                    categorias: categorias,
+                    categorias: categorias, // Usar categorias aquí
                     categoriaSeleccionada: categoria
                 });
             }
