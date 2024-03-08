@@ -540,8 +540,14 @@ modificarPorProveedor: function (req, res) {
             console.log('Error al obtener proveedores:', error);
             return;
         }
-        // Pasa proveedor y proveedores a la vista
-        res.render('modificarPorProveedor', { proveedor: proveedorId, proveedores: proveedores });
+        producto.obtenerProductosPorProveedor(conexion, proveedorId, function(error, productos) {
+            if (error) {
+                console.log('Error al obtener productos:', error);
+                return;
+            }
+            // Pasa proveedor, proveedores y productos a la vista
+            res.render('modificarPorProveedor', { proveedor: proveedorId, proveedores: proveedores, productos: productos });
+        });
     });
 },
 actualizarPorProveedor: function (req, res) {
