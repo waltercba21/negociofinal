@@ -562,7 +562,7 @@ modificarPorProveedor: function (req, res) {
     });
 },
 actualizarPorProveedor: function (req, res) {
-    let porcentajeCambio = req.body.porcentaje / 100;
+    let porcentajeCambio = Number(req.body.porcentaje) / 100; // Convertir porcentaje a un número
     const tipoCambio = req.body.tipoCambio;
     let proveedor = req.body.proveedor; 
     proveedor = Number(proveedor); // Convertir proveedor a un número
