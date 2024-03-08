@@ -301,7 +301,7 @@ panelControl: function (req, res) {
                 productos.forEach(producto => {
                     producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                 });
-                contarProductos(conexion, parametroContarProductos, function(error, resultado) {
+                contarProductos(conexion, parametroContarProductos, function(error, resultado) { // Pasar parametroContarProductos
                     manejarConteo(error, resultado, categorias); // Pasar categorias como argumento
                 });
             }
@@ -334,7 +334,7 @@ panelControl: function (req, res) {
                     if (error) {
                         console.log('Error al obtener categorias:', error);
                     } else {
-                        obtenerProductos(conexion, saltar, function (error, productosResult) {
+                        obtenerProductos(conexion, saltar, parametroObtenerProductos, function (error, productosResult) { // Pasar parametroObtenerProductos
                             manejarProductos(error, productosResult, proveedoresResult, categoriasResult);
                         });
                     }
