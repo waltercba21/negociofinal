@@ -564,10 +564,14 @@ modificarPorProveedor: function (req, res) {
 actualizarPorProveedor: function (req, res) {
     let porcentajeCambio = req.body.porcentaje / 100;
     const tipoCambio = req.body.tipoCambio;
-    const proveedor = req.body.proveedor; 
+    let proveedor = req.body.proveedor; 
+    proveedor = Number(proveedor); // Convertir proveedor a un número
     if (tipoCambio === 'descuento') {
         porcentajeCambio = -porcentajeCambio;
     }
+    console.log('Porcentaje de cambio:', porcentajeCambio);
+    console.log('Tipo de cambio:', tipoCambio);
+    console.log('Proveedor:', proveedor);
     producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
         if (error) {
             console.log('Error al obtener productos:', error);
