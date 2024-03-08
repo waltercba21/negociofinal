@@ -306,7 +306,7 @@ panelControl: function (req, res) {
                 });
             }
         }
-
+        
         function manejarConteo(error, resultado, categorias) { // Aceptar categorias como argumento
             if (error) {
                 console.log('Error al contar productos:', error);
