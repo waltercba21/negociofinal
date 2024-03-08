@@ -533,7 +533,8 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
 modificarPorProveedor: function (req, res) {
     let proveedorId = req.query.proveedor; 
     if (!proveedorId) {
-        proveedorId = null; // Establece proveedor en null si no se proporciona un proveedor
+        console.log('No se proporcionó un proveedorId');
+        return;
     }
     producto.obtenerProveedores(conexion, function(error, proveedores) {
         if (error) {
