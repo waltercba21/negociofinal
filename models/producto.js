@@ -192,11 +192,22 @@ borrarImagenes: function(conexion, productoId, callback) {
     obtenerPorNombre: function (conexion, nombre, funcion) {
         conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
       },
-      obtenerTodos: function (conexion, saltar, funcion) {
+      obtenerTodos: function (conexion, saltar, parametro, funcion) {
         if (typeof funcion !== 'function') {
-          throw new Error('funcion debe ser una función');
+            throw new Error('funcion debe ser una función');
         }
-        conexion.query('SELECT * FROM productos LIMIT ?,20', [saltar], funcion);
+        if (parametro === undefined) {
+            // Si no se proporcionó un parámetro, asumir que el parámetro es la función de callback
+            funcion = parametro;
+            parametro = null;
+        }
+        if (parametro !== null) {
+            // Si se proporcionó un parámetro, usarlo en la consulta
+            conexion.query('SELECT * FROM productos WHERE categoria = ? LIMIT ?,20', [parametro, saltar], funcion);
+        } else {
+            // Si no se proporcionó un parámetro, no usarlo en la consulta
+            conexion.query('SELECT * FROM productos LIMIT ?,20', [saltar], funcion);
+        }
     },
  obtenerProductosPorProveedor: function (conexion, proveedor, saltar, callback) {
         const query = 'SELECT * FROM productos WHERE proveedor_id = ? LIMIT ?, 20';
