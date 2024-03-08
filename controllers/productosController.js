@@ -277,6 +277,7 @@ panelControl: function (req, res) {
         var parametroObtenerProductos = null;
         var parametroContarProductos = null;
         var productos = null; // Definir productos aquí
+        var proveedores = null; // Definir proveedores aquí
 
         if (categoria) {
             obtenerProductos = producto.obtenerTodos;
@@ -289,11 +290,12 @@ panelControl: function (req, res) {
             parametroObtenerProductos = parametroContarProductos = proveedor;
         }
 
-        function manejarProductos(error, productosResult, proveedores, categorias) {
+        function manejarProductos(error, productosResult, proveedoresResult, categorias) {
             if (error) {
                 console.log('Error al obtener productos:', error);
             } else {
                 productos = productosResult; // Asignar productos aquí
+                proveedores = proveedoresResult; // Asignar proveedores aquí
                 productos.forEach(producto => {
                     producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                 });
@@ -320,7 +322,7 @@ panelControl: function (req, res) {
             }
         }
 
-        producto.obtenerProveedores(conexion, function(error, proveedores) {
+        producto.obtenerProveedores(conexion, function(error, proveedoresResult) {
             if (error) {
                 console.log('Error al obtener proveedores:', error);
             } else {
@@ -329,7 +331,7 @@ panelControl: function (req, res) {
                         console.log('Error al obtener categorias:', error);
                     } else {
                         obtenerProductos(conexion, saltar, function (error, productosResult) {
-                            manejarProductos(error, productosResult, proveedores, categorias);
+                            manejarProductos(error, productosResult, proveedoresResult, categorias);
                         });
                     }
                 });
