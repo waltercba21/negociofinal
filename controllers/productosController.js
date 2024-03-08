@@ -578,7 +578,8 @@ actualizarPorProveedor: function (req, res) {
                 console.log('Error al actualizar precios:', error);
                 return;
             }
-            res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedor);
+            // Pasar los productos a la vista
+            res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos });
         });
     });
 },
