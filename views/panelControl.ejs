@@ -12,25 +12,30 @@
     <br/>
     <br/>
     <!-- Formulario para seleccionar el proveedor -->
-    <form method="get" action="/productos/panelControl">
-      <label for="proveedor">Seleccionar Proveedor</label>
-      <select name="proveedor" id="proveedor" onchange="this.form.submit()">
-        <option value="">Mostrar Todos</option>
-        <% proveedores.forEach(proveedor => { %>
-          <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
-        <% }); %>
-      </select>
-    </form>
-    <!-- Formulario para seleccionar la categoría -->
-<form method="get" action="/productos/panelControl">
-  <label for="categoria">Seleccionar Categoría</label>
-  <select name="categoria" id="categoria" onchange="this.form.submit()">
-    <option value="">Mostrar Todas</option>
-    <% categorias.forEach(categoria => { %>
-      <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>><%= categoria.nombre %></option>
-    <% }); %>
-  </select>
-</form>
+
+    <div class="form-control">
+      <form method="get" action="/productos/panelControl">
+        <label for="proveedor">Seleccionar Proveedor</label>
+        <select name="proveedor" id="proveedor" onchange="this.form.submit()">
+          <option value="">Mostrar Todos</option>
+          <% proveedores.forEach(proveedor => { %>
+            <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
+          <% }); %>
+        </select>
+      </form>
+    </div>
+    
+    <div class="form-control">
+      <form method="get" action="/productos/panelControl">
+        <label for="categoria">Seleccionar Categoría</label>
+        <select name="categoria" id="categoria" onchange="this.form.submit()">
+          <option value="">Mostrar Todas</option>
+          <% categorias.forEach(categoria => { %>
+            <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>><%= categoria.nombre %></option>
+          <% }); %>
+        </select>
+      </form>
+    </div>
     <br/>
     <div class="pagination">
       <% for(var i = 1; i <= Math.ceil(totalProductos / productosPorPagina); i++) { %>
