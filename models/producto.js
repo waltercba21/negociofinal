@@ -297,7 +297,7 @@ contarPorProveedor: function (conexion, proveedor, callback) {
       }
   });
 },
-contarTodos: function (conexion, callback) {
+contarTodos: function (conexion, parametro, callback) {
   const query = 'SELECT COUNT(*) AS total FROM productos';
   conexion.query(query, function (error, resultados) {
       if (error) {
