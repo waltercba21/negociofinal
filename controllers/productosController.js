@@ -533,8 +533,14 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
 modificarPorProveedor: function (req, res) {
     const proveedorId = req.query.proveedor; 
     if (!proveedorId) {
-        // Redirige al usuario o muestra un error si no se proporciona un proveedor
-        res.redirect('/productos/panelControl');
+        // Si no se proporciona un proveedor, renderiza la vista con una lista de proveedores
+        producto.obtenerProveedores(conexion, function(error, proveedores) {
+            if (error) {
+                console.log('Error al obtener proveedores:', error);
+                return;
+            }
+            res.render('modificarPorProveedor', { proveedores: proveedores });
+        });
         return;
     }
     producto.obtenerProveedorPorId(conexion, proveedorId, function(error, proveedor) {
