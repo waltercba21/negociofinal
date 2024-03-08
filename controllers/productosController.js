@@ -531,18 +531,24 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     }
 },
 modificarPorProveedor: function (req, res) {
-    const proveedor = req.query.proveedor; 
-    if (!proveedor) {
+    const proveedorId = req.query.proveedor; 
+    if (!proveedorId) {
         // Redirige al usuario o muestra un error si no se proporciona un proveedor
         res.redirect('/productos/panelControl');
         return;
     }
-    producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
+    producto.obtenerProveedorPorId(conexion, proveedorId, function(error, proveedor) {
         if (error) {
-            console.log('Error al obtener productos:', error);
-        } else {
-            res.render('modificarPorProveedor', { productos: productos, proveedor: proveedor });
+            console.log('Error al obtener proveedor:', error);
+            return;
         }
+        producto.obtenerProductosPorProveedor(conexion, proveedor.id, function(error, productos) {
+            if (error) {
+                console.log('Error al obtener productos:', error);
+            } else {
+                res.render('modificarPorProveedor', { productos: productos, proveedor: proveedor });
+            }
+        });
     });
 },
 actualizarPorProveedor: function (req, res) {
