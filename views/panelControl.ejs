@@ -16,12 +16,12 @@
     <div class="form-control">
       <form method="get" action="/productos/panelControl">
         <label for="proveedor">Seleccionar Proveedor</label>
-        <select name="proveedor" id="proveedor" onchange="this.form.submit()">
-          <option value="">Mostrar Todos</option>
-          <% proveedores.forEach(proveedor => { %>
-            <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
-          <% }); %>
-        </select>
+        <select name="proveedor" id="proveedor">
+          <option value="">-- Seleccione --</option>
+          <% for(var i = 0; i < proveedores.length; i++) { %>
+              <option value='<%= proveedores[i].id %>' <%= proveedor == proveedores[i].id ? 'selected' : '' %>><%= proveedores[i].nombre %></option>
+          <% } %>
+      </select>
       </form>
     </div>
     
