@@ -16,8 +16,6 @@ module.exports = {
     lista: function (req, res) {
         const categoria = req.query.categoria;
         var saltar = 0;
-    
-        // Si se proporciona una categoría, obtener productos por categoría
         if (categoria) {
             producto.obtenerIdPorCategoria(conexion, categoria, function (error, categoria_id) {
                 if (error) {
@@ -29,14 +27,10 @@ module.exports = {
                         } else {
                             if (productos.length === 0) {
                                 console.log('No se encontraron productos para esta categoría');
-                                // Aquí puedes manejar el caso en que no se encontraron productos
-                                // Por ejemplo, podrías renderizar una vista diferente o enviar un mensaje al usuario
                             } else {
-                                // Formatear el precio de cada producto
                                 productos.forEach(producto => {
                                     producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                                 });
-    
                                 console.log('Productos obtenidos:', productos);
                                 res.render('productos', { productos: productos });
                             }
@@ -45,7 +39,6 @@ module.exports = {
                 }
             });
         } else {
-            // Si no se proporciona una categoría, obtener todos los productos
             producto.obtener(conexion, saltar, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
@@ -101,17 +94,11 @@ module.exports = {
         if (!datos.nombre || !datos.precio) {
             return res.status(400).send('Faltan datos del producto');
         }
-    
         datos.precio = parseFloat(datos.precio);
-    
         if (!req.file) {
             return res.status(400).send('No se proporcionó un archivo');
         }
-    
-        // Asegúrate de que 'archivo' es un archivo
         let archivo = req.file;
-    
-
         producto.insertar(conexion, datos, archivo, function(error, result) {
             if (error) {
                 return res.status(500).send('Error al guardar producto: ' + error.message);
@@ -352,17 +339,13 @@ buscarPorNombre: function (req, res) {
           productos.forEach(producto => {
               producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
           });
-
           res.json({ productos });
         });
     }   
 },
 buscarProductos : async (req, res) => {
     try {
-      // Obtiene la consulta de búsqueda de la URL
       const consulta = req.query.query;
-  
-      // Busca productos que coincidan con la consulta
       const productos = await producto.findAll({
         where: {
           nombre: {
@@ -552,44 +535,39 @@ modificarPorProveedor: function (req, res) {
                     return;
                 }
                 productos = productosResult;
-                // Pasa proveedor, proveedores y productos a la vista
-                // Pasa proveedor, proveedores y productos a la vista
 res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
             });
         } else {
-            // Pasa solo proveedores a la vista
-          // Pasa proveedor, proveedores y productos a la vista
 res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
         }
     });
 },
 actualizarPorProveedor: function (req, res) {
-    let porcentajeCambio = Number(req.body.porcentaje) / 100; // Convertir porcentaje a un número
+    let porcentajeCambio = Number(req.body.porcentaje) / 100; 
     const tipoCambio = req.body.tipoCambio;
     let proveedor = req.body.proveedor; 
-    proveedor = Number(proveedor); // Convertir proveedor a un número
+    proveedor = Number(proveedor); 
     if (tipoCambio === 'descuento') {
         porcentajeCambio = -porcentajeCambio;
     }
     console.log('Porcentaje de cambio:', porcentajeCambio);
     console.log('Tipo de cambio:', tipoCambio);
     console.log('Proveedor:', proveedor);
-    console.log('req.body:', req.body); // Agregar registro de depuración para req.body
-    console.log('Tipo de proveedor:', typeof proveedor); // Nuevo registro para verificar el tipo de proveedor
-    console.log('Tipo de porcentajeCambio:', typeof porcentajeCambio); // Nuevo registro para verificar el tipo de porcentajeCambio
+    console.log('req.body:', req.body); 
+    console.log('Tipo de proveedor:', typeof proveedor); 
+    console.log('Tipo de porcentajeCambio:', typeof porcentajeCambio);
     producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
         if (error) {
             console.log('Error al obtener productos:', error);
             return;
         }
-        console.log('Valor de proveedor:', proveedor); // Nuevo registro para verificar el valor de proveedor
-        console.log('Valor de porcentajeCambio:', porcentajeCambio); // Nuevo registro para verificar el valor de porcentajeCambio
+        console.log('Valor de proveedor:', proveedor); 
+        console.log('Valor de porcentajeCambio:', porcentajeCambio); 
         producto.actualizarPreciosPorProveedor(conexion, proveedor, porcentajeCambio, function(error, resultados) {
             if (error) {
                 console.log('Error al actualizar precios:', error);
                 return;
             }
-            // Pasar los productos a la vista
             res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos });
         });
     });

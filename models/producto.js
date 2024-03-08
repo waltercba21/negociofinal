@@ -168,17 +168,20 @@ borrarImagenes: function(conexion, productoId, callback) {
           return callback(null, resultados);    
         });
       },
- 
-    actualizarPreciosPorProveedor: function (conexion, proveedor, porcentajeAumento, callback) {
-      const query = 'UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?';
-      conexion.query(query, [porcentajeAumento, proveedor], function (error, resultados) {
-          if (error) {
-              callback(error, null);
-          } else {
-              callback(null, resultados);
-          }
-      });
-  },
+      actualizarPreciosPorProveedor: function (conexion, proveedor, porcentajeAumento, callback) {
+        if (proveedor === undefined || proveedor === null || porcentajeAumento === undefined || porcentajeAumento === null) {
+            callback(new Error('Proveedor o porcentajeAumento no definidos'), null);
+            return;
+        }
+        const query = 'UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?';
+        conexion.query(query, [porcentajeAumento, proveedor], function (error, resultados) {
+            if (error) {
+                callback(error, null);
+            } else {
+                callback(null, resultados);
+            }
+        });
+    },
   obtenerImagenes: function (conexion, productoId, funcion) {
     const query = 'SELECT * FROM imagenes WHERE producto_id = ?';
     conexion.query(query, [productoId], function (error, resultados) {
