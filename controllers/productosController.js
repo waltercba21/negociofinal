@@ -572,6 +572,7 @@ actualizarPorProveedor: function (req, res) {
     console.log('Porcentaje de cambio:', porcentajeCambio);
     console.log('Tipo de cambio:', tipoCambio);
     console.log('Proveedor:', proveedor);
+    console.log('req.body:', req.body); // Agregar registro de depuración para req.body
     producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
         if (error) {
             console.log('Error al obtener productos:', error);
