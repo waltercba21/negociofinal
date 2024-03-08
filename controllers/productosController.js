@@ -540,7 +540,7 @@ modificarPorProveedor: function (req, res) {
             console.log('Error al obtener proveedores:', error);
             return;
         }
-        producto.obtenerProductosPorProveedor(conexion, proveedorId, function(error, productos) {
+        producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
             if (error) {
                 console.log('Error al obtener productos:', error);
                 return;
