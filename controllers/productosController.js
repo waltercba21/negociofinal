@@ -281,7 +281,7 @@ panelControl: function (req, res) {
         var categorias = null; // Definir categorias aquí
 
         if (categoria) {
-            obtenerProductos = producto.obtenerTodos;
+            obtenerProductos = producto.obtenerPorCategoria;
             contarProductos = producto.contarPorCategoria;
             parametroObtenerProductos = parametroContarProductos = categoria;
         }
