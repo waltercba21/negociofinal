@@ -540,13 +540,15 @@ modificarPorProveedor: function (req, res) {
             console.log('Error al obtener proveedores:', error);
             return;
         }
+        // Encuentra el proveedor con el proveedorId
+        let proveedor = proveedores.find(proveedor => proveedor.id == proveedorId);
         producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
             if (error) {
                 console.log('Error al obtener productos:', error);
                 return;
             }
             // Pasa proveedor, proveedores y productos a la vista
-            res.render('modificarPorProveedor', { proveedor: proveedorId, proveedores: proveedores, productos: productos });
+            res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos });
         });
     });
 },
