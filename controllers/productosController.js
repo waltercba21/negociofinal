@@ -278,13 +278,13 @@ panelControl: function (req, res) {
         var parametroContarProductos = null;
 
         if (categoria) {
-            obtenerProductos = producto.obtenerPorCategoria;
-            contarProductos = producto.contarPorCategoria;
+            obtenerProductos = (conexion, saltar, parametro, callback) => producto.obtenerPorCategoria(conexion, parametro, callback);
+            contarProductos = (conexion, parametro, callback) => producto.contarPorCategoria(conexion, parametro, callback);
             parametroObtenerProductos = parametroContarProductos = categoria;
         }
         if (proveedor) {
-            obtenerProductos = producto.obtenerProductosPorProveedor;
-            contarProductos = producto.contarPorProveedor;
+            obtenerProductos = (conexion, saltar, parametro, callback) => producto.obtenerProductosPorProveedor(conexion, parametro, saltar, callback);
+            contarProductos = (conexion, parametro, callback) => producto.contarPorProveedor(conexion, parametro, callback);
             parametroObtenerProductos = parametroContarProductos = proveedor;
         }
 
