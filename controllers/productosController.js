@@ -535,7 +535,7 @@ modificarPorProveedor: function (req, res) {
     if (!proveedorId) {
         proveedorId = null; // Establece proveedor en null si no se proporciona un proveedor
     }
-    proveedor.obtenerTodos(conexion, function(error, proveedores) {
+    producto.obtenerProveedores(conexion, function(error, proveedores) {
         if (error) {
             console.log('Error al obtener proveedores:', error);
             return;
