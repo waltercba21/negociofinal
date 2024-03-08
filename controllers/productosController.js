@@ -532,29 +532,33 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
 },
 modificarPorProveedor: function (req, res) {
     let proveedorId = req.query.proveedor; 
-    if (!proveedorId) {
-        console.log('No se proporcionó un proveedorId');
-        return;
-    }
     producto.obtenerProveedores(conexion, function(error, proveedores) {
         if (error) {
             console.log('Error al obtener proveedores:', error);
             return;
         }
-        // Encuentra el proveedor con el proveedorId
-        let proveedor = proveedores.find(proveedor => proveedor.id == proveedorId);
-        if (!proveedor) {
-            console.log('No se encontró el proveedor:', proveedorId);
-            return;
-        }
-        producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
-            if (error) {
-                console.log('Error al obtener productos:', error);
+        let proveedor = null;
+        let productos = [];
+        if (proveedorId) {
+            // Encuentra el proveedor con el proveedorId
+            proveedor = proveedores.find(proveedor => proveedor.id == proveedorId);
+            if (!proveedor) {
+                console.log('No se encontró el proveedor:', proveedorId);
                 return;
             }
-            // Pasa proveedor, proveedores y productos a la vista
+            producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productosResult) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
+                    return;
+                }
+                productos = productosResult;
+                // Pasa proveedor, proveedores y productos a la vista
+                res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos });
+            });
+        } else {
+            // Pasa solo proveedores a la vista
             res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos });
-        });
+        }
     });
 },
 actualizarPorProveedor: function (req, res) {
