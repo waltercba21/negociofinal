@@ -273,12 +273,9 @@ panelControl: function (req, res) {
         var saltar = (pagina - 1) * productosPorPagina;
     
         var obtenerProductos = producto.obtenerTodos; 
-        var contarProductos = producto.contarPorCategoria; 
+        var contarProductos = producto.contarTodos; 
         var parametroObtenerProductos = null;
         var parametroContarProductos = null;
-        var productos = null; // Definir productos aquí
-        var proveedores = null; // Definir proveedores aquí
-        var categorias = null; // Definir categorias aquí
 
         if (categoria) {
             obtenerProductos = producto.obtenerPorCategoria;
@@ -291,55 +288,44 @@ panelControl: function (req, res) {
             parametroObtenerProductos = parametroContarProductos = proveedor;
         }
 
-        function manejarProductos(error, productosResult, proveedoresResult, categoriasResult) {
-            if (error) {
-                console.log('Error al obtener productos:', error);
-            } else {
-                productos = productosResult; // Asignar productos aquí
-                proveedores = proveedoresResult; // Asignar proveedores aquí
-                categorias = categoriasResult; // Asignar categorias aquí
-                productos.forEach(producto => {
-                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                });
-                contarProductos(conexion, parametroContarProductos, function(error, resultado) { // Pasar parametroContarProductos
-                    manejarConteo(error, resultado, categorias); // Pasar categorias como argumento
-                });
-            }
-        }
-        
-        function manejarConteo(error, resultado, categorias) { // Aceptar categorias como argumento
-            if (error) {
-                console.log('Error al contar productos:', error);
-            } else {
-                var totalProductos = resultado.length > 0 ? resultado[0].total : 0;
-                res.render('panelControl', { 
-                    title: 'Productos', 
-                    productos: productos, 
-                    totalProductos: totalProductos, 
-                    productosPorPagina: productosPorPagina, 
-                    proveedor: proveedor,
-                    proveedores: proveedores,
-                    proveedorSeleccionado: proveedor,
-                    categorias: categorias, // Usar categorias aquí
-                    categoriaSeleccionada: categoria
-                });
-            }
-        }
-
         producto.obtenerProveedores(conexion, function(error, proveedoresResult) {
             if (error) {
                 console.log('Error al obtener proveedores:', error);
-            } else {
-                producto.obtenerCategorias(conexion, function(error, categoriasResult) {
-                    if (error) {
-                        console.log('Error al obtener categorias:', error);
-                    } else {
-                        obtenerProductos(conexion, saltar, parametroObtenerProductos, function (error, productosResult) { // Pasar parametroObtenerProductos
-                            manejarProductos(error, productosResult, proveedoresResult, categoriasResult);
-                        });
-                    }
-                });
+                return;
             }
+            producto.obtenerCategorias(conexion, function(error, categoriasResult) {
+                if (error) {
+                    console.log('Error al obtener categorias:', error);
+                    return;
+                }
+                obtenerProductos(conexion, saltar, parametroObtenerProductos, function (error, productosResult) {
+                    if (error) {
+                        console.log('Error al obtener productos:', error);
+                        return;
+                    }
+                    productosResult.forEach(producto => {
+                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                    });
+                    contarProductos(conexion, parametroContarProductos, function(error, resultado) {
+                        if (error) {
+                            console.log('Error al contar productos:', error);
+                            return;
+                        }
+                        var totalProductos = resultado.length > 0 ? resultado[0].total : 0;
+                        res.render('panelControl', { 
+                            title: 'Productos', 
+                            productos: productosResult, 
+                            totalProductos: totalProductos, 
+                            productosPorPagina: productosPorPagina, 
+                            proveedor: proveedor,
+                            proveedores: proveedoresResult,
+                            proveedorSeleccionado: proveedor,
+                            categorias: categoriasResult,
+                            categoriaSeleccionada: categoria
+                        });
+                    });
+                });
+            });
         });
     });
 },
