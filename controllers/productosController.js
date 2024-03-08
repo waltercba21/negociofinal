@@ -531,31 +531,17 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     }
 },
 modificarPorProveedor: function (req, res) {
-    const proveedorId = req.query.proveedor; 
+    let proveedorId = req.query.proveedor; 
     if (!proveedorId) {
-        // Si no se proporciona un proveedor, obtén los proveedores de la base de datos
-        proveedor.obtenerTodos(conexion, function(error, proveedores) {
-            if (error) {
-                console.log('Error al obtener proveedores:', error);
-                return;
-            }
-            // Renderiza la vista con los proveedores obtenidos
-            res.render('modificarPorProveedor', { proveedores: proveedores });
-        });
-        return;
+        proveedorId = null; // Establece proveedor en null si no se proporciona un proveedor
     }
-    producto.obtenerProveedorPorId(conexion, proveedorId, function(error, proveedor) {
+    proveedor.obtenerTodos(conexion, function(error, proveedores) {
         if (error) {
-            console.log('Error al obtener proveedor:', error);
+            console.log('Error al obtener proveedores:', error);
             return;
         }
-        producto.obtenerProductosPorProveedor(conexion, proveedor.id, function(error, productos) {
-            if (error) {
-                console.log('Error al obtener productos:', error);
-            } else {
-                res.render('modificarPorProveedor', { productos: productos, proveedor: proveedor });
-            }
-        });
+        // Pasa proveedor y proveedores a la vista
+        res.render('modificarPorProveedor', { proveedor: proveedorId, proveedores: proveedores });
     });
 },
 actualizarPorProveedor: function (req, res) {
