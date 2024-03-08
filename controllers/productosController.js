@@ -553,11 +553,13 @@ modificarPorProveedor: function (req, res) {
                 }
                 productos = productosResult;
                 // Pasa proveedor, proveedores y productos a la vista
-                res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos });
+                // Pasa proveedor, proveedores y productos a la vista
+res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
             });
         } else {
             // Pasa solo proveedores a la vista
-            res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos });
+          // Pasa proveedor, proveedores y productos a la vista
+res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
         }
     });
 },
