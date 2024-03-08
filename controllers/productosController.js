@@ -278,6 +278,7 @@ panelControl: function (req, res) {
         var parametroContarProductos = null;
         var productos = null; // Definir productos aquí
         var proveedores = null; // Definir proveedores aquí
+        var categorias = null; // Definir categorias aquí
 
         if (categoria) {
             obtenerProductos = producto.obtenerTodos;
@@ -290,20 +291,23 @@ panelControl: function (req, res) {
             parametroObtenerProductos = parametroContarProductos = proveedor;
         }
 
-        function manejarProductos(error, productosResult, proveedoresResult, categorias) {
+        function manejarProductos(error, productosResult, proveedoresResult, categoriasResult) {
             if (error) {
                 console.log('Error al obtener productos:', error);
             } else {
                 productos = productosResult; // Asignar productos aquí
                 proveedores = proveedoresResult; // Asignar proveedores aquí
+                categorias = categoriasResult; // Asignar categorias aquí
                 productos.forEach(producto => {
                     producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                 });
-                contarProductos(conexion, parametroContarProductos, manejarConteo);
+                contarProductos(conexion, parametroContarProductos, function(error, resultado) {
+                    manejarConteo(error, resultado, categorias);
+                });
             }
         }
 
-        function manejarConteo(error, resultado) {
+        function manejarConteo(error, resultado, categorias) {
             if (error) {
                 console.log('Error al contar productos:', error);
             } else {
@@ -326,12 +330,12 @@ panelControl: function (req, res) {
             if (error) {
                 console.log('Error al obtener proveedores:', error);
             } else {
-                producto.obtenerCategorias(conexion, function(error, categorias) {
+                producto.obtenerCategorias(conexion, function(error, categoriasResult) {
                     if (error) {
                         console.log('Error al obtener categorias:', error);
                     } else {
                         obtenerProductos(conexion, saltar, function (error, productosResult) {
-                            manejarProductos(error, productosResult, proveedoresResult, categorias);
+                            manejarProductos(error, productosResult, proveedoresResult, categoriasResult);
                         });
                     }
                 });
