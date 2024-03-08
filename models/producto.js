@@ -173,6 +173,8 @@ borrarImagenes: function(conexion, productoId, callback) {
             callback(new Error('Proveedor o porcentajeAumento no definidos'), null);
             return;
         }
+        // Convertir porcentajeAumento a un número y dividirlo por 100 para obtener un porcentaje
+        porcentajeAumento = Number(porcentajeAumento) / 100;
         const query = 'UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?';
         conexion.query(query, [porcentajeAumento, proveedor], function (error, resultados) {
             if (error) {
