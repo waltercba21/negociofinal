@@ -542,6 +542,10 @@ modificarPorProveedor: function (req, res) {
         }
         // Encuentra el proveedor con el proveedorId
         let proveedor = proveedores.find(proveedor => proveedor.id == proveedorId);
+        if (!proveedor) {
+            console.log('No se encontró el proveedor:', proveedorId);
+            return;
+        }
         producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
             if (error) {
                 console.log('Error al obtener productos:', error);
