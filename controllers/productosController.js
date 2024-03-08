@@ -532,6 +532,11 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
 },
 modificarPorProveedor: function (req, res) {
     const proveedor = req.query.proveedor; 
+    if (!proveedor) {
+        // Redirige al usuario o muestra un error si no se proporciona un proveedor
+        res.redirect('/productos/panelControl');
+        return;
+    }
     producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
         if (error) {
             console.log('Error al obtener productos:', error);
