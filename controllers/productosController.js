@@ -580,6 +580,8 @@ actualizarPorProveedor: function (req, res) {
             console.log('Error al obtener productos:', error);
             return;
         }
+        console.log('Valor de proveedor:', proveedor); // Nuevo registro para verificar el valor de proveedor
+        console.log('Valor de porcentajeCambio:', porcentajeCambio); // Nuevo registro para verificar el valor de porcentajeCambio
         producto.actualizarPreciosPorProveedor(conexion, proveedor, porcentajeCambio, function(error, resultados) {
             if (error) {
                 console.log('Error al actualizar precios:', error);
