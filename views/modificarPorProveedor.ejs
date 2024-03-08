@@ -6,14 +6,13 @@
     <br/>
     <br/>
     <form action="/productos/modificarPorProveedor" method="GET">
-      <label for="proveedor">Seleccione un proveedor:</label>
-      <select name="proveedor" id="proveedor">
-          <option value="">-- Seleccione --</option>
-          <% var opciones = ["LAM", "LIDERCAR", "MYL", "DM", "DAM","FAL","JR"]; %>
-          <% for(var i = 0; i < opciones.length; i++) { %>
-              <option value='<%= opciones[i] %>' <%= proveedor == opciones[i] ? 'selected' : '' %>><%= opciones[i] %></option>
-          <% } %>
-      </select>
+      <label for="proveedor">Seleccionar Proveedor</label>
+    <select name="proveedor" id="proveedor" onchange="this.form.submit()">
+      <option value="">Mostrar Todos</option>
+      <% proveedores.forEach(proveedor => { %>
+        <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
+      <% }); %>
+    </select>
       <input type="submit" value="Ver productos">
   </form>
     <br/>
