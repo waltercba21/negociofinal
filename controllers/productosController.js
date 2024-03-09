@@ -143,7 +143,7 @@ module.exports = {
             }
         });
     },
-    editar : function (req,res){
+    editar : function (req,res){ 
         producto.retornarDatosId(conexion,req.params.id,function (error, productoResult){
             if (error) {
                 console.error("Error al obtener los datos del producto:", error);

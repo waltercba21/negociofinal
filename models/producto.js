@@ -92,6 +92,11 @@ insertar: function(conexion, datos, archivo, funcion){
           params.push(datos.modelo_id);
           first = false;
       }
+      if (datos.precio) {
+        query += first ? "precio=?" : ", precio=?";
+        params.push(datos.precio);
+        first = false;
+    }
       // Repite este patrón para cada campo
   
       if (archivo) {
