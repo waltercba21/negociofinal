@@ -174,9 +174,24 @@ borrarImagenes: function(conexion, productoId, callback) {
         });
       },
       actualizarPreciosPorProveedor: function (conexion, proveedorId, porcentajeCambio, callback) {
-        let query = "UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?";
+        let query = "UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ? LIMIT 100";
         let params = [porcentajeCambio, proveedorId];
-        conexion.query(query, params, callback);
+        function updateRows() {
+            conexion.query(query, params, function (error, results) {
+                if (error) {
+                    callback(error);
+                    return;
+                }
+                if (results.affectedRows > 0) {
+                    // Si se actualizaron filas, repetir la operación
+                    updateRows();
+                } else {
+                    // Si no se actualizaron filas, terminar
+                    callback(null);
+                }
+            });
+        }
+        updateRows();
     },
   obtenerImagenes: function (conexion, productoId, funcion) {
     const query = 'SELECT * FROM imagenes WHERE producto_id = ?';
