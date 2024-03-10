@@ -209,12 +209,12 @@ module.exports = {
                                 return;
                             }
                             req.session.save(function(err) {
-                                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
+                                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
                             });
                         });
                     } else {
                         req.session.save(function(err) {
-                            res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
+                            res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
                         });
                     }
                 });
@@ -226,12 +226,12 @@ module.exports = {
                     return;
                 }
                 req.session.save(function(err) {
-                    res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
+                    res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
                 });
             });
         } else {
             req.session.save(function(err) {
-                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
+                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
             });
         }
     },
@@ -248,6 +248,8 @@ ultimos: function(req, res) {
     });
 },
 panelControl: function (req, res) {
+    var proveedor = req.query.proveedor ? Number(req.query.proveedor) : null;
+    req.session.proveedorActual = proveedor;
     var pagina = req.query.pagina || 1;
     req.session.paginaActual = pagina;
     req.session.save(function(err) {
