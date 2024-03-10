@@ -1,17 +1,20 @@
 module.exports ={
+
   obtener: function (conexion, saltar, funcion) {
     if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');
     }
     conexion.query('SELECT * FROM productos LIMIT ?,20', [saltar], funcion);
   },
+
   contar: function (conexion, funcion) {
     if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');
     }
     conexion.query('SELECT COUNT(*) AS total FROM productos', funcion);
   },
-insertar: function(conexion, datos, archivo, funcion){
+
+  insertar: function(conexion, datos, archivo, funcion){
   if (!archivo) {
     return funcion(new Error('No se proporcionó un archivo'));
   }
@@ -51,13 +54,15 @@ insertar: function(conexion, datos, archivo, funcion){
   });
 },     
 
-    retornarDatosId: function (conexion,id,funcion){
+ retornarDatosId: function (conexion,id,funcion){
         conexion.query('SELECT * FROM productos WHERE id = ? ',[id],funcion);
     },
-    borrar: function (conexion,id,funcion){ 
+
+  borrar: function (conexion,id,funcion){ 
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
-    actualizar: function (conexion, datos, archivo, funcion) {
+
+  actualizar: function (conexion, datos, archivo, funcion) {
       let query = "UPDATE productos SET ";
       let params = [];
       let first = true;
@@ -97,8 +102,6 @@ insertar: function(conexion, datos, archivo, funcion){
         params.push(datos.precio);
         first = false;
     }
-      // Repite este patrón para cada campo
-  
       if (archivo) {
           query += first ? "imagen=?" : ", imagen=?";
           params.push(archivo.filename);
@@ -179,18 +182,22 @@ borrarImagenes: function(conexion, productoId, callback) {
         function updateRows() {
             conexion.query(query, params, function (error, results) {
                 if (error) {
+                    console.error('Error al ejecutar la consulta:', error);
                     callback(error);
                     return;
                 }
                 if (results.affectedRows > 0) {
+                    console.log('Filas actualizadas:', results.affectedRows);
                     // Si se actualizaron filas, repetir la operación
                     updateRows();
                 } else {
                     // Si no se actualizaron filas, terminar
+                    console.log('No se actualizaron más filas');
                     callback(null);
                 }
             });
         }
+        console.log('Iniciando actualización de precios para el proveedor:', proveedorId, 'con cambio de:', porcentajeCambio);
         updateRows();
     },
   obtenerImagenes: function (conexion, productoId, funcion) {
