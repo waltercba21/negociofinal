@@ -15,10 +15,10 @@ module.exports = {
         });
     },
     lista: function (req, res) {
-        const categoria = req.query.categoria;
+        const categoriaQuery = req.query.categoria;
         var saltar = 0;
-        if (categoria) {
-            producto.obtenerIdPorCategoria(conexion, categoria, function (error, categoria_id) {
+        if (categoriaQuery) {
+            producto.obtenerIdPorCategoria(conexion, categoriaQuery, function (error, categoria_id) {
                 if (error) {
                     console.log('Error al obtener id de la categoría:', error);
                 } else {
