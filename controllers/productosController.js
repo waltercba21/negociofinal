@@ -542,34 +542,25 @@ res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveed
         }
     });
 },
-actualizarPorProveedor: function (req, res) {
-    let porcentajeCambio = Number(req.body.porcentaje) / 100; 
-    const tipoCambio = req.body.tipoCambio;
-    let proveedor = req.body.proveedor; 
-    proveedor = Number(proveedor); 
+actualizarPorProveedor : function(req, res) {
+    let proveedorId = req.body.proveedor;
+    let porcentajeCambio = Number(req.body.porcentaje) / 100;
+    let tipoCambio = req.body.tipoCambio;
+
+    // Verificar si el tipo de cambio es un descuento y, de ser así, convertir el porcentaje de cambio en un número negativo
     if (tipoCambio === 'descuento') {
         porcentajeCambio = -porcentajeCambio;
     }
-    console.log('Porcentaje de cambio:', porcentajeCambio);
-    console.log('Tipo de cambio:', tipoCambio);
-    console.log('Proveedor:', proveedor);
-    console.log('req.body:', req.body); 
-    console.log('Tipo de proveedor:', typeof proveedor); 
-    console.log('Tipo de porcentajeCambio:', typeof porcentajeCambio);
-    producto.obtenerProductosPorProveedor(conexion, proveedor, function(error, productos) {
-        if (error) {
-            console.log('Error al obtener productos:', error);
-            return;
+
+    // Llamar al método del modelo para actualizar los precios
+    producto.actualizarPreciosPorProveedor(proveedorId, porcentajeCambio, function(err) {
+        if (err) {
+            // Manejar el error como prefieras
+            console.error(err);
+            res.redirect('/productos/modificarPorProveedor?error=Hubo un error al actualizar los precios');
+        } else {
+            res.redirect('/productos/modificarPorProveedor?success=Los precios se actualizaron correctamente');
         }
-        console.log('Valor de proveedor:', proveedor); 
-        console.log('Valor de porcentajeCambio:', porcentajeCambio); 
-        producto.actualizarPreciosPorProveedor(conexion, proveedor, porcentajeCambio, function(error, resultados) {
-            if (error) {
-                console.log('Error al actualizar precios:', error);
-                return;
-            }
-            res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos });
-        });
     });
 },
 obtenerProveedores: function(req, res) {
