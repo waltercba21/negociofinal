@@ -179,12 +179,12 @@ borrarImagenes: function(conexion, productoId, callback) {
       actualizarPreciosPorProveedor: function (conexion, proveedorId, porcentajeCambio, callback) {
         // Convertir a número y verificar
         proveedorId = Number(proveedorId);
-        porcentajeCambio = Number(porcentajeCambio);
-        if (isNaN(proveedorId) || isNaN(porcentajeCambio)) {
-            console.error('Error: proveedorId y porcentajeCambio deben ser números');
-            callback(new Error('proveedorId y porcentajeCambio deben ser números'));
-            return;
-        }
+porcentajeCambio = Number(porcentajeCambio) / 100 * -1; // Ajustar el cálculo del porcentaje de cambio
+if (isNaN(proveedorId) || isNaN(porcentajeCambio)) {
+    console.error('Error: proveedorId y porcentajeCambio deben ser números');
+    callback(new Error('proveedorId y porcentajeCambio deben ser números'));
+    return;
+}
     
         let query = "UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ? LIMIT 100";
         let params = [porcentajeCambio, proveedorId];
