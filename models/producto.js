@@ -176,7 +176,7 @@ borrarImagenes: function(conexion, productoId, callback) {
           return callback(null, resultados);    
         });
       },
-      actualizarPreciosPorProveedor: function (conexion, proveedorId, porcentajeCambio, callback) {
+      actualizarPreciosPorProveedor: function (pool, proveedorId, porcentajeCambio, callback) {
         // Convertir a número y verificar
         proveedorId = Number(proveedorId);
         porcentajeCambio = Number(porcentajeCambio);
@@ -184,7 +184,7 @@ borrarImagenes: function(conexion, productoId, callback) {
         let query = "UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?";
         let params = [porcentajeCambio, proveedorId];
     
-        conexion.query(query, params, function (error, results) {
+        pool.execute(query, params, function (error, results) {
             if (error) {
                 console.error('Error al ejecutar la consulta:', error);
                 callback(error);
