@@ -1,4 +1,5 @@
 const conexion = require('../config/conexion')
+const pool = require('../config/conexion');
 const producto = require('../models/producto')
 var borrar = require('fs');
 
@@ -553,7 +554,7 @@ actualizarPorProveedor : function(req, res) {
     }
 
     // Llamar al método del modelo para actualizar los precios
-    producto.actualizarPreciosPorProveedor(proveedorId, porcentajeCambio, function(err) {
+    producto.actualizarPreciosPorProveedor(pool,proveedorId, porcentajeCambio, function(err) {
         if (err) {
             // Manejar el error como prefieras
             console.error(err);
