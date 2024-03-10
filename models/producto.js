@@ -179,35 +179,20 @@ borrarImagenes: function(conexion, productoId, callback) {
       actualizarPreciosPorProveedor: function (conexion, proveedorId, porcentajeCambio, callback) {
         // Convertir a número y verificar
         proveedorId = Number(proveedorId);
-        porcentajeCambio = Number(porcentajeCambio); // No necesitas dividir por 100 ni multiplicar por -1 aquí
-        if (isNaN(proveedorId) || isNaN(porcentajeCambio)) {
-            console.error('Error: proveedorId y porcentajeCambio deben ser números');
-            callback(new Error('proveedorId y porcentajeCambio deben ser números'));
-            return;
-        }
-        
-        let query = "UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ? LIMIT 100";
+        porcentajeCambio = Number(porcentajeCambio);
+    
+        let query = "UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?";
         let params = [porcentajeCambio, proveedorId];
-        function updateRows() {
-            conexion.query(query, params, function (error, results) {
-                if (error) {
-                    console.error('Error al ejecutar la consulta:', error);
-                    callback(error);
-                    return;
-                }
-                if (results.affectedRows > 0) {
-                    console.log('Filas actualizadas:', results.affectedRows);
-                    // Si se actualizaron filas, repetir la operación
-                    updateRows();
-                } else {
-                    // Si no se actualizaron filas, terminar
-                    console.log('No se actualizaron más filas');
-                    callback(null);
-                }
-            });
-        }
-        console.log('Iniciando actualización de precios para el proveedor:', proveedorId, 'con cambio de:', porcentajeCambio);
-        updateRows();
+    
+        conexion.query(query, params, function (error, results) {
+            if (error) {
+                console.error('Error al ejecutar la consulta:', error);
+                callback(error);
+            } else {
+                console.log('Filas actualizadas:', results.affectedRows);
+                callback(null);
+            }
+        });
     },
   obtenerImagenes: function (conexion, productoId, funcion) {
     const query = 'SELECT * FROM imagenes WHERE producto_id = ?';
