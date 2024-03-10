@@ -189,7 +189,7 @@ borrarImagenes: function(conexion, productoId, callback) {
                 console.error('Error al obtener la conexión:', err);
                 callback(err);
             } else {
-                conexion.execute(query, params, function (error, results) {
+                conexion.query(query, params, function (error, results) {
                     // No olvides liberar la conexión cuando hayas terminado
                     conexion.release();
     
