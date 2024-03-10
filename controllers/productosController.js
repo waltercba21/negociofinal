@@ -558,9 +558,9 @@ actualizarPorProveedor : function(req, res) {
         if (err) {
             // Manejar el error como prefieras
             console.error(err);
-            res.redirect('/productos/modificarPorProveedor?error=Hubo un error al actualizar los precios');
+            res.redirect('/panelControl?error=Hubo un error al actualizar los precios');
         } else {
-            res.redirect('/productos/modificarPorProveedor?success=Los precios se actualizaron correctamente');
+            res.redirect('/panelControl?success=Los precios se actualizaron correctamente');
         }
     });
 },
