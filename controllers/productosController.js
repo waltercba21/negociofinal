@@ -553,7 +553,7 @@ actualizarPorProveedor : function(req, res) {
     }
 
     // Llamar al método del modelo para actualizar los precios
-    producto.actualizarPreciosPorProveedor(proveedorId, porcentajeCambio, function(err) {
+    Producto.actualizarPreciosPorProveedor(proveedorId, porcentajeCambio, function(err) {
         if (err) {
             // Manejar el error como prefieras
             console.error(err);
