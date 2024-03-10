@@ -184,13 +184,23 @@ borrarImagenes: function(conexion, productoId, callback) {
         let query = "UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?";
         let params = [porcentajeCambio, proveedorId];
     
-        pool.execute(query, params, function (error, results) {
-            if (error) {
-                console.error('Error al ejecutar la consulta:', error);
-                callback(error);
+        pool.getConnection((err, conexion) => {
+            if (err) {
+                console.error('Error al obtener la conexión:', err);
+                callback(err);
             } else {
-                console.log('Filas actualizadas:', results.affectedRows);
-                callback(null);
+                conexion.execute(query, params, function (error, results) {
+                    // No olvides liberar la conexión cuando hayas terminado
+                    conexion.release();
+    
+                    if (error) {
+                        console.error('Error al ejecutar la consulta:', error);
+                        callback(error);
+                    } else {
+                        console.log('Filas actualizadas:', results.affectedRows);
+                        callback(null);
+                    }
+                });
             }
         });
     },
