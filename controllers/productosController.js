@@ -33,7 +33,19 @@ module.exports = {
                                     producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                                 });
                                 console.log('Productos obtenidos:', productos);
-                                res.render('productos', { productos: productos });
+                                // Obtener categorías, marcas y modelos
+                                const categoriasPromise = categoria.obtener(conexion);
+                                const marcasPromise = marca.obtener(conexion);
+                                const modelosPromise = modelo.obtener(conexion);
+    
+                                Promise.all([categoriasPromise, marcasPromise, modelosPromise])
+                                    .then(([categorias, marcas, modelos]) => {
+                                        // Renderizar la vista con los productos, categorías, marcas y modelos
+                                        res.render('productos', { productos, categorias, marcas, modelos });
+                                    })
+                                    .catch(error => {
+                                        console.log('Error al obtener categorías, marcas o modelos:', error);
+                                    });
                             }
                         }
                     });
@@ -49,7 +61,19 @@ module.exports = {
                         producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                     });
     
-                    res.render('productos', { productos: productos });
+                    // Obtener categorías, marcas y modelos
+                    const categoriasPromise = categoria.obtener(conexion);
+                    const marcasPromise = marca.obtener(conexion);
+                    const modelosPromise = modelo.obtener(conexion);
+    
+                    Promise.all([categoriasPromise, marcasPromise, modelosPromise])
+                        .then(([categorias, marcas, modelos]) => {
+                            // Renderizar la vista con los productos, categorías, marcas y modelos
+                            res.render('productos', { productos, categorias, marcas, modelos });
+                        })
+                        .catch(error => {
+                            console.log('Error al obtener categorías, marcas o modelos:', error);
+                        });
                 }
             });
         }
