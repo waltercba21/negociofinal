@@ -34,7 +34,12 @@ module.exports = {
                                 });
                                 console.log('Productos obtenidos:', productos);
                                 // Obtener categorías, marcas y modelos
-                                const categoriasPromise = categoria.obtener(conexion);
+                                const categoriasPromise = new Promise((resolve, reject) => {
+                                    producto.obtenerCategorias(conexion, (error, categorias) => {
+                                        if (error) reject(error);
+                                        else resolve(categorias);
+                                    });
+                                });
                                 const marcasPromise = marca.obtener(conexion);
                                 const modelosPromise = modelo.obtener(conexion);
     
@@ -62,7 +67,12 @@ module.exports = {
                     });
     
                     // Obtener categorías, marcas y modelos
-                    const categoriasPromise = categoria.obtener(conexion);
+                    const categoriasPromise = new Promise((resolve, reject) => {
+                        producto.obtenerCategorias(conexion, (error, categorias) => {
+                            if (error) reject(error);
+                            else resolve(categorias);
+                        });
+                    });
                     const marcasPromise = marca.obtener(conexion);
                     const modelosPromise = modelo.obtener(conexion);
     
