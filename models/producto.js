@@ -354,5 +354,37 @@ contarTodosLosProductos: function (conexion, callback) {
           callback(null, resultados[0].total);
       } 
   });
-}
+},
+obtenerPorFiltros: function(conexion, categoria, marca, modelo, callback) {
+  // Consulta SQL para obtener los productos por filtros
+  var consulta = 'SELECT * FROM productos WHERE 1=1';
+  var parametros = [];
+
+  if (categoria) {
+      consulta += ' AND categoria_id = ?';
+      parametros.push(categoria);
+  }
+
+  if (marca) {
+      consulta += ' AND marca_id = ?';
+      parametros.push(marca);
+  }
+
+  if (modelo) {
+      consulta += ' AND modelo_id = ?';
+      parametros.push(modelo);
+  }
+
+  // Ejecuta la consulta
+  conexion.query(consulta, parametros, function(error, resultados) {
+      if (error) {
+          console.log('Error al obtener productos:', error);
+          callback(error, null);
+          return;
+      }
+
+      // Devuelve los productos
+      callback(null, resultados);
+  });
+},
 }
