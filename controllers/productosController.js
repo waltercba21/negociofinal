@@ -54,11 +54,11 @@ module.exports = {
     
                         Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                             .then(([categorias, marcas, modelos]) => {
-                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos });
+                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
                             })
                             .catch(error => {
                                 console.log('Error al obtener categorías, marcas o modelos:', error);
-                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: [] });
+                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
                             });
                     }
                 }
@@ -96,11 +96,11 @@ module.exports = {
                     Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                         .then(([categorias, marcas, modelos]) => {
                             // Renderizar la vista con los productos, categorías, marcas y modelos
-                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos });
+                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
                         })
                         .catch(error => {
                             console.log('Error al obtener categorías, marcas o modelos:', error);
-                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: [] });
+                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
                         });
                 }
             });
