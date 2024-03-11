@@ -16,8 +16,8 @@ module.exports = {
     },
     lista: function (req, res) {
         const categoriaQuery = Number(req.query.categoria);
-        const marcaQuery = req.query.marca;
-        const modeloQuery = req.query.modelo;
+        const marcaQuery = Number (req.query.marca);
+        const modeloQuery = Number(req.query.modelo);
         var saltar = Number(req.query.saltar) || 0;
     
         if (categoriaQuery || marcaQuery || modeloQuery) {
