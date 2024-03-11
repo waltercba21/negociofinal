@@ -833,6 +833,25 @@ footer {
     box-shadow: 0 0 8px #1F487E, 0 0 8px #1F487E;
   }
 }
+.selectores-productos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* Esto asegura que el contenedor ocupe toda la altura de la vista */
+}
+
+.form-group-crear {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px; /* Esto añade un poco de espacio entre cada grupo de formulario */
+}
+
+.form-group-crear label {
+  margin-bottom: 10px; /* Esto añade un poco de espacio entre la etiqueta y el selector */
+}
+
 .contenedor-productos{
   display: grid;
   grid-template-columns: repeat(3, 1fr);
