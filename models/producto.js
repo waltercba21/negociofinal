@@ -1,5 +1,4 @@
 module.exports ={
-
   obtener: function (conexion, saltar, funcion) {
     if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');
