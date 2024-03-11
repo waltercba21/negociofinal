@@ -17,6 +17,8 @@ module.exports = {
     lista: function (req, res) {
         const categoriaQuery = req.query.categoria;
         var saltar = 0;
+        let modelosPorMarca = []; // Inicializar modelosPorMarca con un array vacío
+
         if (categoriaQuery) {
             producto.obtenerIdPorCategoria(conexion, categoriaQuery, function (error, categoria_id) {
                 if (error) {
@@ -72,7 +74,7 @@ Promise.all([categoriasPromise, marcasPromise, modelosPromise])
             producto.obtener(conexion, saltar, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
-                } else {
+                } else  {
                     // Formatear el precio de cada producto
                     productos.forEach(producto => {
                         producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
@@ -101,10 +103,11 @@ Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                     Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                         .then(([categorias, marcas, modelos]) => {
                             // Renderizar la vista con los productos, categorías, marcas y modelos
-                            res.render('productos', { productos, categorias, marcas, modelos });
+                            res.render('productos', { productos, categorias, marcas, modelosPorMarca, modelos });
                         })
                         .catch(error => {
                             console.log('Error al obtener categorías, marcas o modelos:', error);
+                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: [], modelos: [] });
                         });
                 }
             });
