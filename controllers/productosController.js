@@ -40,7 +40,12 @@ module.exports = {
                                         else resolve(categorias);
                                     });
                                 });
-                                const marcasPromise = marca.obtener(conexion);
+                                const marcasPromise = new Promise((resolve, reject) => {
+                                    producto.obtenerMarcas(conexion, (error, marcas) => {
+                                        if (error) reject(error);
+                                        else resolve(marcas);
+                                    });
+                                });
                                 const modelosPromise = modelo.obtener(conexion);
     
                                 Promise.all([categoriasPromise, marcasPromise, modelosPromise])
@@ -73,7 +78,12 @@ module.exports = {
                             else resolve(categorias);
                         });
                     });
-                    const marcasPromise = marca.obtener(conexion);
+                    const marcasPromise = new Promise((resolve, reject) => {
+                        producto.obtenerMarcas(conexion, (error, marcas) => {
+                            if (error) reject(error);
+                            else resolve(marcas);
+                        });
+                    });
                     const modelosPromise = modelo.obtener(conexion);
     
                     Promise.all([categoriasPromise, marcasPromise, modelosPromise])
