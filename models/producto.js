@@ -364,12 +364,14 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, callback) {
       parametros.push(categoria);
   }
 
-  if (marca) {
+  // Verifica si marca es NaN
+  if (marca && !isNaN(marca)) {
       consulta += ' AND marca_id = ?';
       parametros.push(marca);
   }
 
-  if (modelo) {
+  // Verifica si modelo es NaN
+  if (modelo && !isNaN(modelo)) {
       consulta += ' AND modelo_id = ?';
       parametros.push(modelo);
   }

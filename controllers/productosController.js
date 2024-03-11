@@ -21,10 +21,10 @@ module.exports = {
         var saltar = Number(req.query.saltar) || 0;
         
         // Verifica si marcaQuery o modeloQuery son NaN
-    if (isNaN(marcaQuery) || isNaN(modeloQuery)) {
-        console.log('Error: marca o modelo no son números válidos');
-        return res.redirect('/error');
-    }
+        if (isNaN(marcaQuery) || isNaN(modeloQuery)) {
+            console.log('Error: marca o modelo no son números válidos');
+            return res.redirect('/error');
+        }
         if (categoriaId || marcaQuery || modeloQuery) {
             producto.obtenerPorFiltros(conexion, categoriaId, marcaQuery, modeloQuery,function (error, productos) {
                 if (error) {
