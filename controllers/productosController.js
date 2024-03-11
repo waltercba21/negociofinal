@@ -16,65 +16,58 @@ module.exports = {
     },
     lista: function (req, res) {
         const categoriaQuery = req.query.categoria;
+        const marcaQuery = req.query.marca;
+        const modeloQuery = req.query.modelo;
         var saltar = 0;
-        let modelosPorMarca = []; // Inicializar modelosPorMarca con un array vacío
-
-        if (categoriaQuery) {
-            producto.obtenerIdPorCategoria(conexion, categoriaQuery, function (error, categoria_id) {
-                if (error) {
-                    console.log('Error al obtener id de la categoría:', error);
-                } else {
-                    producto.obtenerPorCategoria(conexion, categoria_id, function (error, productos) {
-                        if (error) {
-                            console.log('Error al obtener productos:', error);
-                        } else {
-                            if (productos.length === 0) {
-                                console.log('No se encontraron productos para esta categoría');
-                            } else {
-                                productos.forEach(producto => {
-                                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                                });
-                                console.log('Productos obtenidos:', productos);
-                                // Obtener categorías, marcas y modelos
-                                const categoriasPromise = new Promise((resolve, reject) => {
-                                    producto.obtenerCategorias(conexion, (error, categorias) => {
-                                        if (error) reject(error);
-                                        else resolve(categorias);
-                                    });
-                                });
-                                const marcasPromise = new Promise((resolve, reject) => {
-                                    producto.obtenerMarcas(conexion, (error, marcas) => {
-                                        if (error) reject(error);
-                                        else resolve(marcas);
-                                    });
-                                });
-                                const modelosPromise = new Promise((resolve, reject) => {
-                                    producto.obtenerModelosPorMarca(conexion, req.params.marcaId, (error, modelos) => {
-                                        if (error) reject(error);
-                                        else resolve(modelos);
-                                    });
-                                });
     
-                                let modelosPorMarca = []; // Inicializar modelosPorMarca con un array vacío
-
-Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-.then(([categorias, marcas, modelos]) => {
-    res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos });
-})
-.catch(error => {
-    console.log('Error al obtener categorías, marcas o modelos:', error);
-    res.render('productos', { productos, categorias, marcas, modelosPorMarca: [] });
-});
-                            }
-                        }
-                    });
+        if (categoriaQuery || marcaQuery || modeloQuery) {
+            producto.obtenerPorFiltros(conexion, categoriaQuery, marcaQuery, modeloQuery, function (error, productos) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
+                } else {
+                    if (productos.length === 0) {
+                        console.log('No se encontraron productos para estos filtros');
+                    } else {
+                        productos.forEach(producto => {
+                            producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                        });
+                        console.log('Productos obtenidos:', productos);
+                        // Obtener categorías, marcas y modelos
+                        const categoriasPromise = new Promise((resolve, reject) => {
+                            producto.obtenerCategorias(conexion, (error, categorias) => {
+                                if (error) reject(error);
+                                else resolve(categorias);
+                            });
+                        });
+                        const marcasPromise = new Promise((resolve, reject) => {
+                            producto.obtenerMarcas(conexion, (error, marcas) => {
+                                if (error) reject(error);
+                                else resolve(marcas);
+                            });
+                        });
+                        const modelosPromise = new Promise((resolve, reject) => {
+                            producto.obtenerModelosPorMarca(conexion, marcaQuery, (error, modelos) => {
+                                if (error) reject(error);
+                                else resolve(modelos);
+                            });
+                        });
+    
+                        Promise.all([categoriasPromise, marcasPromise, modelosPromise])
+                            .then(([categorias, marcas, modelos]) => {
+                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos });
+                            })
+                            .catch(error => {
+                                console.log('Error al obtener categorías, marcas o modelos:', error);
+                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: [] });
+                            });
+                    }
                 }
             });
         } else {
             producto.obtener(conexion, saltar, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
-                } else  {
+                } else {
                     // Formatear el precio de cada producto
                     productos.forEach(producto => {
                         producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
@@ -103,11 +96,11 @@ Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                     Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                         .then(([categorias, marcas, modelos]) => {
                             // Renderizar la vista con los productos, categorías, marcas y modelos
-                            res.render('productos', { productos, categorias, marcas, modelosPorMarca, modelos });
+                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos });
                         })
                         .catch(error => {
                             console.log('Error al obtener categorías, marcas o modelos:', error);
-                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: [], modelos: [] });
+                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: [] });
                         });
                 }
             });
