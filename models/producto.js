@@ -392,6 +392,10 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, callback) {
   });
 },
 obtenerIdCategoriaPorNombre: function(conexion, nombre, callback) {
+  if (typeof callback !== 'function') {
+    console.error('Callback proporcionado a obtenerIdCategoriaPorNombre no es una función');
+    return;
+}
   const consulta = 'SELECT id FROM categorias WHERE nombre = ?';
   conexion.query(consulta, [nombre], function(error, resultados) {
       if (error) {
