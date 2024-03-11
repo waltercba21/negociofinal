@@ -21,7 +21,7 @@ module.exports = {
         var saltar = Number(req.query.saltar) || 0;
     
         if (categoriaId || marcaQuery || modeloQuery) {
-            producto.obtenerPorFiltros(conexion, categoriaId, marcaQuery, modeloQuery, saltar, function (error, productos) {
+            producto.obtenerPorFiltros(conexion, categoriaId, marcaQuery, modeloQuery,function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
