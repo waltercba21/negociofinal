@@ -55,16 +55,14 @@ module.exports = {
     
                                 let modelosPorMarca = []; // Inicializar modelosPorMarca con un array vacío
 
-                                Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-                                .then(([categorias, marcas, modelos]) => {
-                                    // Renderizar la vista con los productos, categorías, marcas y modelos
-                                    res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos });
-                                })
-                                .catch(error => {
-                                    console.log('Error al obtener categorías, marcas o modelos:', error);
-                                    // Renderizar la vista con los productos, categorías, marcas y un array vacío para modelosPorMarca
-                                    res.render('productos', { productos, categorias, marcas, modelosPorMarca: [] });
-                                });
+Promise.all([categoriasPromise, marcasPromise, modelosPromise])
+.then(([categorias, marcas, modelos]) => {
+    res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos });
+})
+.catch(error => {
+    console.log('Error al obtener categorías, marcas o modelos:', error);
+    res.render('productos', { productos, categorias, marcas, modelosPorMarca: [] });
+});
                             }
                         }
                     });
