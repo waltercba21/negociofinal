@@ -835,13 +835,15 @@ footer {
 }
 .selectores-productos {
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* Cambia esto a 'row' */
   align-items: center;
   justify-content: space-around;
 }
+
 .selectores-productos select {
   min-width: 300px; /* Ajusta este valor según tus necesidades */
 }
+
 .form-group-crear {
   display: flex;
   flex-direction: column;
