@@ -16,15 +16,14 @@ module.exports = {
     },
     lista: function (req, res) {
         const categoriaId = req.query.categoria;
-        const marcaQuery = Number(req.query.marca);
-        const modeloQuery = Number(req.query.modelo);
-        var saltar = Number(req.query.saltar) || 0;
+    const marcaQuery = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
+    const modeloQuery = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
+    var saltar = Number(req.query.saltar) || 0;
         
-        // Verifica si marcaQuery o modeloQuery son NaN
-        if (isNaN(marcaQuery) || isNaN(modeloQuery)) {
-            console.log('Error: marca o modelo no son números válidos');
-            return res.redirect('/error');
-        }
+    if ((marcaQuery !== undefined && isNaN(marcaQuery)) || (modeloQuery !== undefined && isNaN(modeloQuery))) {
+        console.log('Error: marca o modelo no son números válidos');
+        return res.redirect('/error');
+    }s
         if (categoriaId || marcaQuery || modeloQuery) {
             producto.obtenerPorFiltros(conexion, categoriaId, marcaQuery, modeloQuery,function (error, productos) {
                 if (error) {
