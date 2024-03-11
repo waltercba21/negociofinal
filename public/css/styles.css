@@ -837,10 +837,10 @@ footer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-around;
 }
 .selectores-productos select {
-  min-width: 200px; /* Ajusta este valor según tus necesidades */
+  min-width: 300px; /* Ajusta este valor según tus necesidades */
 }
 .form-group-crear {
   display: flex;
