@@ -54,8 +54,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
   if (imagenesCarrusel) {
     imagenesCarrusel.forEach(imagen => {
       imagen.addEventListener('click', () => {
-        const categoria = imagen.getAttribute('data-categoria');
-        window.location.href = `/productos?categoria=${categoria}`;
+        const categoriaId = imagen.getAttribute('data-categoria');
+        window.location.href = `/productos?categoria=${categoriaId}`;
       });
     });
   }
