@@ -18,10 +18,10 @@ module.exports = {
         const categoriaQuery = req.query.categoria;
         const marcaQuery = req.query.marca;
         const modeloQuery = req.query.modelo;
-        var saltar = 0;
+        var saltar = Number(req.query.saltar) || 0;
     
         if (categoriaQuery || marcaQuery || modeloQuery) {
-            producto.obtenerPorFiltros(conexion, categoriaQuery, marcaQuery, modeloQuery, function (error, productos) {
+            producto.obtenerPorFiltros(conexion, categoriaQuery, marcaQuery, modeloQuery, saltar, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
