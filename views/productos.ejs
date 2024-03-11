@@ -21,8 +21,9 @@
     </div>
     
     <div class="form-group-crear">
-      <label for="marca_id">Marca:</label>
+      <label for="marca_id">Marca</label>
       <select id="marca_id" name="marca_id">
+        <option value="" selected>Selecciona una marca...</option> <!-- Agrega esta línea -->
         <% marcas.forEach(function(marca) { %>
           <option value="<%= marca.id %>"><%= marca.nombre %></option>
         <% }); %>
@@ -30,7 +31,7 @@
     </div>
     
     <div class="form-group-crear">
-      <label for="modelo_id">Modelo:</label>
+      <label for="modelo_id">Modelo</label>
       <select id="modelo_id" name="modelo_id">
         <% productos.forEach(producto => { %>
           <option value="" <% if (!producto || !producto.modelo_id) { %>selected<% } %>>Selecciona un modelo...</option>
