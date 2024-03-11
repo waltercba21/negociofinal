@@ -15,7 +15,7 @@ module.exports = {
         });
     },
     lista: function (req, res) {
-        const categoriaQuery = req.query.categoria;
+        const categoriaQuery = Number(req.query.categoria);
         const marcaQuery = req.query.marca;
         const modeloQuery = req.query.modelo;
         var saltar = Number(req.query.saltar) || 0;
