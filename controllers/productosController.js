@@ -46,7 +46,12 @@ module.exports = {
                                         else resolve(marcas);
                                     });
                                 });
-                                const modelosPromise = modelo.obtener(conexion);
+                                const modelosPromise = new Promise((resolve, reject) => {
+                                    producto.obtenerModelosPorMarca(conexion, req.params.marcaId, (error, modelos) => {
+                                        if (error) reject(error);
+                                        else resolve(modelos);
+                                    });
+                                });
     
                                 Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                                     .then(([categorias, marcas, modelos]) => {
@@ -84,7 +89,12 @@ module.exports = {
                             else resolve(marcas);
                         });
                     });
-                    const modelosPromise = modelo.obtener(conexion);
+                    const modelosPromise = new Promise((resolve, reject) => {
+                        producto.obtenerModelosPorMarca(conexion, req.params.marcaId, (error, modelos) => {
+                            if (error) reject(error);
+                            else resolve(modelos);
+                        });
+                    });
     
                     Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                         .then(([categorias, marcas, modelos]) => {
