@@ -20,97 +20,91 @@ module.exports = {
         const modeloQuery = Number(req.query.modelo);
         var saltar = Number(req.query.saltar) || 0;
     
-       producto.obtenerIdCategoriaPorNombre(conexion, categoriaId, function(error, categoriaId) {
-            if (error) {
-                console.log('Error al obtener el ID de la categoría:', error);
-            } else {
-                if (categoriaId || marcaQuery || modeloQuery) {
-                    producto.obtenerPorFiltros(conexion, categoriaId, marcaQuery, modeloQuery, saltar, function (error, productos) {
-                        if (error) {
-                            console.log('Error al obtener productos:', error);
-                        } else {
-                            if (productos.length === 0) {
-                                console.log('No se encontraron productos para estos filtros');
-                            } else {
-                                productos.forEach(producto => {
-                                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                                });
-                                console.log('Productos obtenidos:', productos);
-                                // Obtener categorías, marcas y modelos
-                                const categoriasPromise = new Promise((resolve, reject) => {
-                                    producto.obtenerCategorias(conexion, (error, categorias) => {
-                                        if (error) reject(error);
-                                        else resolve(categorias);
-                                    });
-                                });
-                                const marcasPromise = new Promise((resolve, reject) => {
-                                    producto.obtenerMarcas(conexion, (error, marcas) => {
-                                        if (error) reject(error);
-                                        else resolve(marcas);
-                                    });
-                                });
-                                const modelosPromise = new Promise((resolve, reject) => {
-                                    producto.obtenerModelosPorMarca(conexion, marcaQuery, (error, modelos) => {
-                                        if (error) reject(error);
-                                        else resolve(modelos);
-                                    });
-                                });
-    
-                                Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-                                    .then(([categorias, marcas, modelos]) => {
-                                        res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
-                                    })
-                                    .catch(error => {
-                                        console.log('Error al obtener categorías, marcas o modelos:', error);
-                                        res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
-                                    });
-                            }
-                        }
-                    });
+        if (categoriaId || marcaQuery || modeloQuery) {
+            producto.obtenerPorFiltros(conexion, categoriaId, marcaQuery, modeloQuery, saltar, function (error, productos) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
                 } else {
-                    producto.obtener(conexion, saltar, function (error, productos) {
-                        if (error) {
-                            console.log('Error al obtener productos:', error);
-                        } else {
-                            // Formatear el precio de cada producto
-                            productos.forEach(producto => {
-                                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                    if (productos.length === 0) {
+                        console.log('No se encontraron productos para estos filtros');
+                    } else {
+                        productos.forEach(producto => {
+                            producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                        });
+                        console.log('Productos obtenidos:', productos);
+                        // Obtener categorías, marcas y modelos
+                        const categoriasPromise = new Promise((resolve, reject) => {
+                            producto.obtenerCategorias(conexion, (error, categorias) => {
+                                if (error) reject(error);
+                                else resolve(categorias);
                             });
+                        });
+                        const marcasPromise = new Promise((resolve, reject) => {
+                            producto.obtenerMarcas(conexion, (error, marcas) => {
+                                if (error) reject(error);
+                                else resolve(marcas);
+                            });
+                        });
+                        const modelosPromise = new Promise((resolve, reject) => {
+                            producto.obtenerModelosPorMarca(conexion, marcaQuery, (error, modelos) => {
+                                if (error) reject(error);
+                                else resolve(modelos);
+                            });
+                        });
     
-                            // Obtener categorías, marcas y modelos
-                            const categoriasPromise = new Promise((resolve, reject) => {
-                                producto.obtenerCategorias(conexion, (error, categorias) => {
-                                    if (error) reject(error);
-                                    else resolve(categorias);
-                                });
+                        Promise.all([categoriasPromise, marcasPromise, modelosPromise])
+                            .then(([categorias, marcas, modelos]) => {
+                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
+                            })
+                            .catch(error => {
+                                console.log('Error al obtener categorías, marcas o modelos:', error);
+                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
                             });
-                            const marcasPromise = new Promise((resolve, reject) => {
-                                producto.obtenerMarcas(conexion, (error, marcas) => {
-                                    if (error) reject(error);
-                                    else resolve(marcas);
-                                });
-                            });
-                            const modelosPromise = new Promise((resolve, reject) => {
-                                producto.obtenerModelosPorMarca(conexion, req.params.marcaId, (error, modelos) => {
-                                    if (error) reject(error);
-                                    else resolve(modelos);
-                                });
-                            });
-    
-                            Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-                                .then(([categorias, marcas, modelos]) => {
-                                    // Renderizar la vista con los productos, categorías, marcas y modelos
-                                    res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
-                                })
-                                .catch(error => {
-                                    console.log('Error al obtener categorías, marcas o modelos:', error);
-                                    res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
-                                });
-                        }
-                    });
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            producto.obtener(conexion, saltar, function (error, productos) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
+                } else {
+                    // Formatear el precio de cada producto
+                    productos.forEach(producto => {
+                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                    });
+    
+                    // Obtener categorías, marcas y modelos
+                    const categoriasPromise = new Promise((resolve, reject) => {
+                        producto.obtenerCategorias(conexion, (error, categorias) => {
+                            if (error) reject(error);
+                            else resolve(categorias);
+                        });
+                    });
+                    const marcasPromise = new Promise((resolve, reject) => {
+                        producto.obtenerMarcas(conexion, (error, marcas) => {
+                            if (error) reject(error);
+                            else resolve(marcas);
+                        });
+                    });
+                    const modelosPromise = new Promise((resolve, reject) => {
+                        producto.obtenerModelosPorMarca(conexion, req.params.marcaId, (error, modelos) => {
+                            if (error) reject(error);
+                            else resolve(modelos);
+                        });
+                    });
+    
+                    Promise.all([categoriasPromise, marcasPromise, modelosPromise])
+                        .then(([categorias, marcas, modelos]) => {
+                            // Renderizar la vista con los productos, categorías, marcas y modelos
+                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
+                        })
+                        .catch(error => {
+                            console.log('Error al obtener categorías, marcas o modelos:', error);
+                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
+                        });
+                }
+            });
+        }
     },
     crear: function(req, res) {
         producto.obtenerCategorias(conexion, function(error, categorias) {
