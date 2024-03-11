@@ -391,23 +391,9 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, callback) {
   });
 },
 obtenerIdCategoriaPorNombre: function(conexion, nombre, callback) {
-  if (typeof callback !== 'function') {
-    console.error('Callback proporcionado a obtenerIdCategoriaPorNombre no es una función');
-    return;
-}
   const consulta = 'SELECT id FROM categorias WHERE nombre = ?';
   conexion.query(consulta, [nombre], function(error, resultados) {
-      if (error) {
-          console.log('Error al obtener el ID de la categoría:', error);
-          callback(error, null);
-      } else {
-          if (resultados.length > 0) {
-              callback(null, resultados[0].id);
-          } else {
-              console.log('No se encontró ninguna categoría con el nombre:', nombre);
-              callback(null, null);
-          }
-      }
+      /*...*/
   });
 },
 }
