@@ -20,7 +20,7 @@ module.exports = {
         const modeloQuery = Number(req.query.modelo);
         var saltar = Number(req.query.saltar) || 0;
     
-       producto.obtenerIdCategoriaPorNombre(conexion, categoriaQuery, function(error, categoriaId) {
+       producto.obtenerIdCategoriaPorNombre(conexion, categoriaId, function(error, categoriaId) {
             if (error) {
                 console.log('Error al obtener el ID de la categoría:', error);
             } else {
