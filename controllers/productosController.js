@@ -62,6 +62,8 @@ module.exports = {
                                 })
                                 .catch(error => {
                                     console.log('Error al obtener categorías, marcas o modelos:', error);
+                                    // Renderizar la vista con los productos, categorías, marcas y un array vacío para modelosPorMarca
+                                    res.render('productos', { productos, categorias, marcas, modelosPorMarca: [] });
                                 });
                             }
                         }
