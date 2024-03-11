@@ -20,10 +20,11 @@ module.exports = {
     const modeloQuery = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
     var saltar = Number(req.query.saltar) || 0;
         
+
     if ((marcaQuery !== undefined && isNaN(marcaQuery)) || (modeloQuery !== undefined && isNaN(modeloQuery))) {
         console.log('Error: marca o modelo no son números válidos');
         return res.redirect('/error');
-    }s
+    }
         if (categoriaId || marcaQuery || modeloQuery) {
             producto.obtenerPorFiltros(conexion, categoriaId, marcaQuery, modeloQuery,function (error, productos) {
                 if (error) {
