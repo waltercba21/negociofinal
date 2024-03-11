@@ -54,13 +54,14 @@ module.exports = {
                                 });
     
                                 Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-                                    .then(([categorias, marcas, modelos]) => {
-                                        // Renderizar la vista con los productos, categorías, marcas y modelos
-                                        res.render('productos', { productos, categorias, marcas, modelos });
-                                    })
-                                    .catch(error => {
-                                        console.log('Error al obtener categorías, marcas o modelos:', error);
-                                    });
+    .then(([categorias, marcas, modelos]) => {
+        // Renderizar la vista con los productos, categorías, marcas y modelos
+        let modelosPorMarca = modelos; // Cambiar el nombre de la variable aquí
+        res.render('productos', { productos, categorias, marcas, modelosPorMarca });
+    })
+    .catch(error => {
+        console.log('Error al obtener categorías, marcas o modelos:', error);
+    });
                             }
                         }
                     });
