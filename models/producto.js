@@ -375,6 +375,10 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, callback) {
       parametros.push(modelo);
   }
 
+  // Imprime la consulta y los parámetros
+  console.log('Consulta SQL:', consulta);
+  console.log('Parámetros:', parametros);
+
   // Ejecuta la consulta
   conexion.query(consulta, parametros, function(error, resultados) {
       if (error) {
