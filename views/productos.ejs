@@ -10,45 +10,45 @@
       <input type="text" id="entradaBusqueda" placeholder="Buscar productos...">
     </div>
 
-    <form action="/productos" method="GET">
-      <div class="selectores-productos">
-        <div class="form-group-crear">
-          <label for="categoria">Categoria</label>
-          <select id="categoria" name="categoria">
-              <option value="" selected>Selecciona una categoría...</option>
-              <% categorias.forEach(function(categoria) { %>
-                  <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
-              <% }); %>
-          </select>
-        </div>
-        
-        <div class="form-group-crear">
-          <label for="marca">Marca</label>
-          <select id="marca" name="marca">
-            <option value="" selected>Selecciona una marca...</option>
-            <% marcas.forEach(function(marca) { %>
-              <option value="<%= marca.id %>"><%= marca.nombre %></option>
-            <% }); %>
-          </select>
-        </div>
-        
-        <div class="form-group-crear">
-          <label for="modelo">Modelo</label>
-          <select id="modelo" name="modelo">
-            <option value="" <% if (!modeloQuery) { %>selected<% } %>>Selecciona un modelo...</option>
-            <% if (Array.isArray(modelosPorMarca)) { %>
-                <% modelosPorMarca.forEach(function(modelo) { %>
-                  <option value="<%= modelo.id %>" <% if (modeloQuery == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
-                <% }); %>
-            <% } %>
-          </select>
-        </div>
-      </div>
+    <form action="/productos" method="GET"> <!-- Asegúrate de que tu formulario esté enviando una solicitud GET a la ruta correcta -->
+          <div class="selectores-productos">
+    <div class="form-group-crear">
+      <label for="categoria_id">Categoria</label>
+      <select id="categoria_id" name="categoria_id">
+          <option value="" selected>Selecciona una categoría...</option>
+          <% categorias.forEach(function(categoria) { %>
+              <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
+          <% }); %>
+      </select>
+    </div>
     
-      <div class="boton-buscar">
-        <button type="submit">Buscar</button>
-      </div>
-    </form>
+    <div class="form-group-crear">
+      <label for="marca_id">Marca</label>
+      <select id="marca_id" name="marca_id">
+        <option value="" selected>Selecciona una marca...</option> <!-- Agrega esta línea -->
+        <% marcas.forEach(function(marca) { %>
+          <option value="<%= marca.id %>"><%= marca.nombre %></option>
+        <% }); %>
+      </select>
+    </div>
+    
+    <div class="form-group-crear">
+      <label for="modelo_id">Modelo</label>
+      <select id="modelo_id" name="modelo_id">
+        <option value="" <% if (!modeloQuery) { %>selected<% } %>>Selecciona un modelo...</option>
+        <% if (Array.isArray(modelosPorMarca)) { %>
+            <% modelosPorMarca.forEach(function(modelo) { %>
+              <option value="<%= modelo.id %>" <% if (modeloQuery == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
+            <% }); %>
+        <% } %>
+      </select>
+    </div>
+  </div>
+
+  <div class="boton-buscar">
+    <button type="submit">Buscar</button>
+  </div>
+</form>
 
 
 
