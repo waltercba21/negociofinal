@@ -851,6 +851,11 @@ footer {
   box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2); /* Sombra */
   font-weight: bold; /* Letra en negrita */
 }
+.boton-buscar {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px; /* Ajusta este valor según tus necesidades */
+}
 .selectores-productos button {
   border-radius: 50px;
   background-color: #1F487E;
