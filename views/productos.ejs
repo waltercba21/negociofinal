@@ -152,6 +152,15 @@
         });
       });
     });
+    function renderizarProductos(productos) {
+  var $productosDiv = $('#productos'); // Suponiendo que tienes un div con id 'productos' donde quieres mostrar los productos
+  $productosDiv.empty(); // Limpiar el div antes de agregar nuevos productos
+
+  productos.forEach(function(producto) {
+    var $productoDiv = $('<div></div>'); // Crear un nuevo div para cada producto
+    $productoDiv.text(producto.nombre); // Suponiendo que cada producto tiene una propiedad 'nombre'
+    $productosDiv.append($productoDiv); // Agregar el div del producto al div principal
+  });
+}
   </script>
-</script>
 </body>
