@@ -113,6 +113,56 @@ $(document).ready(function() {
   if (marcaId) {
     llenarModelos(marcaId);
   }
+});function renderizarProductos(productos) {
+  // Obtén el contenedor de productos
+  var contenedor = document.getElementById('contenedor-productos');
+
+  // Vacía el contenedor
+  contenedor.innerHTML = '';
+
+  // Añade cada producto al contenedor
+  productos.forEach(function(producto) {
+    var div = document.createElement('div');
+    div.className = 'card';
+
+    // Aquí puedes añadir el código para crear el HTML para cada producto
+    // Por ejemplo:
+    div.innerHTML = `
+      <div class="cover__card">
+        <img src="../../images/${producto.imagen}" alt="Imagen de ${producto.nombre}">
+      </div>
+      <div class="titulo-producto">
+        <h3 class="nombre">${producto.nombre}</h3>
+      </div>
+      <hr>
+      <div class="categoria-producto">
+        <h6 class="categoria">${producto.categoria}</h6>
+      </div>
+      <hr>
+      <div class="precio-producto">
+        <p class="precio">$${producto.precio}</p>
+      </div>
+      <div class="cantidad-producto">
+        <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
+      </div>
+    `;
+
+    contenedor.appendChild(div);
+  });
+}
+document.getElementById('boton-buscar').addEventListener('click', function() {
+  var categoria = document.getElementById('categoria_id').value;
+  var marca = document.getElementById('marca_id').value;
+  var modelo = document.getElementById('modelo_id').value;
+
+  var productosFiltrados = productos.filter(function(producto) {
+    return (!categoria || producto.categoria === categoria) &&
+           (!marca || producto.marca === marca) &&
+           (!modelo || producto.modelo === modelo);
+  });
+
+  // Renderizar los productos filtrados en la página
+  renderizarProductos(productosFiltrados);
 });
 </script>
 </body>
