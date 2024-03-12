@@ -1,6 +1,5 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
-
 <body>
   <main>
     <h2 class="titulo-principal" id="titulo-principal"> 
@@ -9,7 +8,6 @@
     <div class="buscador">
       <input type="text" id="entradaBusqueda" placeholder="Buscar productos...">
     </div>
-
     <form action="/productos" method="GET"> <!-- Asegúrate de que tu formulario esté enviando una solicitud GET a la ruta correcta -->
           <div class="selectores-productos">
     <div class="form-group-crear">
@@ -21,7 +19,6 @@
           <% }); %>
       </select>
     </div>
-    
     <div class="form-group-crear">
       <label for="marca_id">Marca</label>
       <select id="marca_id" name="marca_id">
@@ -31,7 +28,6 @@
         <% }); %>
       </select>
     </div>
-    
     <div class="form-group-crear">
       <label for="modelo_id">Modelo</label>
       <select id="modelo_id" name="modelo_id">
@@ -44,14 +40,10 @@
       </select>
     </div>
   </div>
-
   <div class="boton-buscar">
     <button id="boton-buscar" type="submit">Buscar</button>
   </div>
 </form>
-
-
-
     <div id="contenedor-productos" class="contenedor-productos">
       <% productos.forEach(producto => { %>
         <div class="card">
@@ -78,89 +70,4 @@
   </main>
   <%- include ./layouts/footer.ejs %>
   <script src="/js/buscador.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script>
-    function llenarModelos(marcaId) {
-      console.log('Llenando modelos para la marca:', marcaId);
-  
-      $.ajax({
-        url: '/productos/modelos/' + marcaId,
-        method: 'GET',
-        success: function(modelos) {
-          console.log('Modelos recibidos:', modelos);
-  
-          if (Array.isArray(modelos)) {
-            var $modeloSelect = $('#modelo_id');
-            $modeloSelect.empty();
-  
-            modelos.forEach(function(modelo) {
-              var $option = $('<option></option>');
-              $option.val(modelo.id);
-              $option.text(modelo.nombre);
-              $modeloSelect.append($option);
-            });
-          } else {
-            console.error('Error: la respuesta del servidor no es un array:', modelos);
-          }
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-          console.error('Error al obtener los modelos:', textStatus, errorThrown);
-          alert('Hubo un problema al obtener los modelos. Por favor, inténtalo de nuevo.');
-        }
-      });
-    }
-  
-    $(document).ready(function() {
-      // Cuando la marca cambia, llenar los modelos
-      $('#marca_id').change(function() {
-        var marcaId = $(this).val(); 
-        console.log('Marca seleccionada:', marcaId);
-        llenarModelos(marcaId);
-      });
-  
-      $('#boton-buscar').on('click', function(e) {
-        e.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
-  
-        var categoria = $('#categoria_id').val();
-        var marca = $('#marca_id').val();
-        var modelo = $('#modelo_id').val();
-  
-        console.log('Categoria seleccionada:', categoria);
-        console.log('Marca seleccionada:', marca);
-        console.log('Modelo seleccionado:', modelo);
-  
-        $.ajax({
-          url: '/productos', 
-          method: 'GET',
-          data: {
-            categoria_id: categoria,
-            marca_id: marca,
-            modelo_id: modelo
-          },
-          success: function(productosFiltrados) {
-            console.log('Productos filtrados:', productosFiltrados);
-            if (Array.isArray(productosFiltrados)) {
-              renderizarProductos(productosFiltrados);
-            } else {
-              console.error('Error: la respuesta del servidor no es un array:', productosFiltrados);
-            }
-          },
-          error: function(jqXHR, textStatus, errorThrown) {
-            console.error('Error al obtener los productos:', textStatus, errorThrown);
-            alert('Hubo un problema al obtener los productos. Por favor, inténtalo de nuevo.');
-          }
-        });
-      });
-    });
-    function renderizarProductos(productos) {
-  var $productosDiv = $('#productos'); // Suponiendo que tienes un div con id 'productos' donde quieres mostrar los productos
-  $productosDiv.empty(); // Limpiar el div antes de agregar nuevos productos
-
-  productos.forEach(function(producto) {
-    var $productoDiv = $('<div></div>'); // Crear un nuevo div para cada producto
-    $productoDiv.text(producto.nombre); // Suponiendo que cada producto tiene una propiedad 'nombre'
-    $productosDiv.append($productoDiv); // Agregar el div del producto al div principal
-  });
-}
-  </script>
 </body>
