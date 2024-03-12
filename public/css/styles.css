@@ -844,9 +844,18 @@ footer {
 .selectores-productos label {
   color: #003f7d;
   font-weight: bold;
-}
+}   
 .selectores-productos select {
   min-width: 300px; 
+  border-radius: 10px; /* Borde redondeado */
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); /* Sombra */
+  font-weight: bold; /* Letra en negrita */
+}
+.selectores-productos button {
+  border-radius: 50px; /* Borde redondeado */
+  background-color: blue; /* Fondo azul */
+  color: white; /* Letra blanca */
+  font-weight: bold; /* Letra en negrita */
 }
 
 .form-group-crear {
