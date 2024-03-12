@@ -15,39 +15,38 @@ module.exports = {
         });
     },
     lista: function (req, res) {
-        var categoria = req.query.categoria_id;
-  var marca = req.query.marca_id;
-  var modelo = req.query.modelo_id;
-        const categoriaId = req.query.categoria;
-    const marcaQuery = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
-    const modeloQuery = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
-    var saltar = Number(req.query.saltar) || 0;
+            var categoria = req.query.categoria_id;
+            var marca = req.query.marca_id;
+            var modelo = req.query.modelo_id;
+            const categoriaId = req.query.categoria;
+            const marcaQuery = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
+            const modeloQuery = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
+            var saltar = Number(req.query.saltar) || 0;
         
-
-    if ((marcaQuery !== undefined && isNaN(marcaQuery)) || (modeloQuery !== undefined && isNaN(modeloQuery))) {
-        console.log('Error: marca o modelo no son números válidos');
-        return res.redirect('/error');
-    }
-        if (categoriaId || marcaQuery || modeloQuery) {
-            producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function(error, productos) {
-                if (error) {
-                    console.log('Error al obtener productos:', error);
-                } else {
+            if ((marcaQuery !== undefined && isNaN(marcaQuery)) || (modeloQuery !== undefined && isNaN(modeloQuery))) {
+                console.log('Error: marca o modelo no son números válidos');
+                    return res.redirect('/error');
+            }
+            if (categoriaId || marcaQuery || modeloQuery) {
+                producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function(error, productos) {
+                    if (error) {
+                        console.log('Error al obtener productos:', error);
+                    } else {
                     if (productos.length === 0) {
                         console.log('No se encontraron productos para estos filtros');
                     } else {
                         productos.forEach(producto => {
                             producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                        });
+                    });
                         console.log('Productos obtenidos:', productos);
-                        // Obtener categorías, marcas y modelos
-                        const categoriasPromise = new Promise((resolve, reject) => {
-                            producto.obtenerCategorias(conexion, (error, categorias) => {
+                        
+                    const categoriasPromise = new Promise((resolve, reject) => {
+                    producto.obtenerCategorias(conexion, (error, categorias) => {
                                 if (error) reject(error);
                                 else resolve(categorias);
                             });
                         });
-                        const marcasPromise = new Promise((resolve, reject) => {
+                    const marcasPromise = new Promise((resolve, reject) => {
                             producto.obtenerMarcas(conexion, (error, marcas) => {
                                 if (error) reject(error);
                                 else resolve(marcas);
@@ -59,7 +58,6 @@ module.exports = {
                                 else resolve(modelos);
                             });
                         });
-    
                         Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                             .then(([categorias, marcas, modelos]) => {
                                 res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
@@ -100,7 +98,6 @@ module.exports = {
                             else resolve(modelos);
                         });
                     });
-    
                     Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                         .then(([categorias, marcas, modelos]) => {
                             // Renderizar la vista con los productos, categorías, marcas y modelos
@@ -114,8 +111,8 @@ module.exports = {
             });
         }
     },
-    crear: function(req, res) {
-        producto.obtenerCategorias(conexion, function(error, categorias) {
+        crear: function(req, res) {
+            producto.obtenerCategorias(conexion, function(error, categorias) {
             if (error) {
                 console.log('Error al obtener categorías:', error);
                 return;
@@ -150,9 +147,9 @@ module.exports = {
             });
         });
     },
-    guardar: function(req, res) {
-        const datos = req.body;
-        if (!datos.nombre || !datos.precio) {
+        guardar: function(req, res) {
+            const datos = req.body;
+             if (!datos.nombre || !datos.precio) {
             return res.status(400).send('Faltan datos del producto');
         }
         datos.precio = parseFloat(datos.precio);
@@ -168,8 +165,8 @@ module.exports = {
             }
         });
     },
-    eliminar: function(req,res){
-        producto.retornarDatosId(conexion,req.params.id,function (error, registros){
+         eliminar: function(req,res){
+            producto.retornarDatosId(conexion,req.params.id,function (error, registros){
             if (error) {
                 console.error(error);
                 res.status(500).send('Error al obtener el producto');
@@ -204,8 +201,8 @@ module.exports = {
             }
         });
     },
-    editar : function (req,res){ 
-        producto.retornarDatosId(conexion,req.params.id,function (error, productoResult){
+        editar : function (req,res){ 
+            producto.retornarDatosId(conexion,req.params.id,function (error, productoResult){
             if (error) {
                 console.error("Error al obtener los datos del producto:", error);
                 res.status(500).send("Error al obtener el producto");
@@ -240,8 +237,8 @@ module.exports = {
             });
         });
     },
-    actualizar: function (req, res) {
-        if (!req.body.categoria_id || !req.body.marca_id || !req.body.proveedor_id) {
+        actualizar: function (req, res) {
+            if (!req.body.categoria_id || !req.body.marca_id || !req.body.proveedor_id) {
             res.status(400).send('Los datos del producto deben incluir un ID de categoría, un ID de marca y un ID de proveedor');
             return;
         }
