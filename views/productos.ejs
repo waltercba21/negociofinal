@@ -80,87 +80,90 @@
   <script src="/js/buscador.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script>
-    function llenarModelos(marcaId) {
+    function llenarModelos(marcaId) { // Abre llenarModelos
       console.log('Llenando modelos para la marca:', marcaId);
   
-      $.ajax({
+      $.ajax({ // Abre $.ajax
         url: '/productos/modelos/' + marcaId,
         method: 'GET',
-        success: function(modelos) {
-          console.log('Modelos recibidos:', modelos);
-  
-          if (Array.isArray(modelos)) {
-            var $modeloSelect = $('#modelo_id');
-            $modeloSelect.empty();
-  
-            modelos.forEach(function(modelo) {
-              var $option = $('<option></option>');
-              $option.val(modelo.id);
-              $option.text(modelo.nombre);
-              $modeloSelect.append($option);
-            });
-          } else {
-            console.error('Error: la respuesta del servidor no es un array:', modelos);
-          }
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
+        success: function(modelos) { // Abre success
+          try { // Abre try
+            if (Array.isArray(modelos)) { // Abre if
+              var $modeloSelect = $('#modelo_id');
+              $modeloSelect.empty();
+
+              modelos.forEach(function(modelo) { // Abre forEach
+                var $option = $('<option></option>');
+                $option.val(modelo.id);
+                $option.text(modelo.nombre);
+                $modeloSelect.append($option);
+              }); // Cierra forEach
+            } else { // Cierra if y abre else
+              throw new Error('La respuesta del servidor no es un array');
+            } // Cierra else
+          } catch (error) { // Cierra try y abre catch
+            console.error('Error: ', error);
+          } // Cierra catch
+        }, // Cierra success
+        error: function(jqXHR, textStatus, errorThrown) { // Abre error
           console.error('Error al obtener los modelos:', textStatus, errorThrown);
           alert('Hubo un problema al obtener los modelos. Por favor, inténtalo de nuevo.');
-        }
-      });
-    }
-  
-    $(document).ready(function() {
-      // Cuando la marca cambia, llenar los modelos
-      $('#marca_id').change(function() {
-        var marcaId = $(this).val(); 
-        console.log('Marca seleccionada:', marcaId);
-        llenarModelos(marcaId);
-      });
-  
-      $('#boton-buscar').on('click', function(e) {
-        e.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
-  
-        var categoria = $('#categoria_id').val();
-        var marca = $('#marca_id').val();
-        var modelo = $('#modelo_id').val();
-  
-        console.log('Categoria seleccionada:', categoria);
-        console.log('Marca seleccionada:', marca);
-        console.log('Modelo seleccionado:', modelo);
-  
-        $.ajax({
-          url: '/productos', 
-          method: 'GET',
-          data: {
-            categoria_id: categoria,
-            marca_id: marca,
-            modelo_id: modelo
-          },
-          success: function(productosFiltrados) {
-            console.log('Productos filtrados:', productosFiltrados);
-            if (Array.isArray(productosFiltrados)) {
-              renderizarProductos(productosFiltrados);
-            } else {
-              console.error('Error: la respuesta del servidor no es un array:', productosFiltrados);
-            }
-          },
-          error: function(jqXHR, textStatus, errorThrown) {
-            console.error('Error al obtener los productos:', textStatus, errorThrown);
-            alert('Hubo un problema al obtener los productos. Por favor, inténtalo de nuevo.');
-          }
-        });
-      });
-    });
-    function renderizarProductos(productos) {
-  var $productosDiv = $('#productos'); // Suponiendo que tienes un div con id 'productos' donde quieres mostrar los productos
-  $productosDiv.empty(); // Limpiar el div antes de agregar nuevos productos
+        } // Cierra error
+      }); // Cierra $.ajax
 
-  productos.forEach(function(producto) {
-    var $productoDiv = $('<div></div>'); // Crear un nuevo div para cada producto
-    $productoDiv.text(producto.nombre); // Suponiendo que cada producto tiene una propiedad 'nombre'
-    $productosDiv.append($productoDiv); // Agregar el div del producto al div principal
-  });
-}
-  </script>
+      $(document).ready(function() { // Abre $(document).ready
+        // Cuando la marca cambia, llenar los modelos
+        $('#marca_id').change(function() { // Abre change
+          var marcaId = $(this).val(); 
+          console.log('Marca seleccionada:', marcaId);
+          llenarModelos(marcaId);
+        }); // Cierra change
+
+        $('#boton-buscar').on('click', function(e) { // Abre on
+          e.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
+
+          var categoria = $('#categoria_id').val();
+          var marca = $('#marca_id').val();
+          var modelo = $('#modelo_id').val();
+
+          console.log('Categoria seleccionada:', categoria);
+          console.log('Marca seleccionada:', marca);
+          console.log('Modelo seleccionado:', modelo);
+
+          $.ajax({ // Abre $.ajax
+            url: '/productos', 
+            method: 'GET',
+            data: {
+              categoria_id: categoria,
+              marca_id: marca,
+              modelo_id: modelo
+            },
+            success: function(productosFiltrados) { // Abre success
+              console.log('Productos filtrados:', productosFiltrados);
+              if (Array.isArray(productosFiltrados)) { // Abre if
+                renderizarProductos(productosFiltrados);
+              } else { // Cierra if y abre else
+                console.error('Error: la respuesta del servidor no es un array:', productosFiltrados);
+              } // Cierra else
+            }, // Cierra success
+            error: function(jqXHR, textStatus, errorThrown) { // Abre error
+              console.error('Error al obtener los productos:', textStatus, errorThrown);
+              alert('Hubo un problema al obtener los productos. Por favor, inténtalo de nuevo.');
+            } // Cierra error
+          }); // Cierra $.ajax
+        }); // Cierra on
+      }); // Cierra $(document).ready
+
+      function renderizarProductos(productos) { // Abre renderizarProductos
+        var $productosDiv = $('#productos'); // Suponiendo que tienes un div con id 'productos' donde quieres mostrar los productos
+        $productosDiv.empty(); // Limpiar el div antes de agregar nuevos productos
+
+        productos.forEach(function(producto) { // Abre forEach
+          var $productoDiv = $('<div></div>'); // Crear un nuevo div para cada producto
+          $productoDiv.text(producto.nombre); // Suponiendo que cada producto tiene una propiedad 'nombre'
+          $productosDiv.append($productoDiv); // Agregar el div del producto al div principal
+        }); // Cierra forEach
+      } // Cierra renderizarProductos
+    } // Cierra llenarModelos
+</script>
 </body>
