@@ -857,12 +857,15 @@ footer {
   margin-top: 20px; /* Ajusta este valor según tus necesidades */
 }
 .boton-buscar button {
-  border-radius: 50px;
+  border:none;
+  border-radius: 20px;
   background-color: #1F487E;
   color: white;
   font-weight: bold;
   padding: 10px 20px; 
   font-size: 16px; 
+  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.5);
+  margin-bottom: 10px;
 }
 
 .form-group-crear {
