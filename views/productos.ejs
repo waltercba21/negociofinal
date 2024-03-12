@@ -83,22 +83,26 @@
   // Función para llenar los modelos basándose en la marca seleccionada
   function llenarModelos(marcaId) {
     $.ajax({
-      url: '/productos/modelos/' + marcaId, 
-      method: 'GET',
-      success: function(data) {
-          console.log('Data:', data);
-          $('#modelo_id').empty();
-          $('#modelo_id').append('<option value="" selected>Selecciona un modelo...</option>');
-          data.forEach(function(modelo) {
-              var option = $('<option></option>').attr('value', modelo.id).text(modelo.nombre);
-              $('#modelo_id').append(option);
-          });
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-          console.error('Error al obtener los modelos:', textStatus, errorThrown);
-          alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
-      }
-    });
+  url: '/productos', 
+  method: 'GET',
+  data: {
+    categoria_id: categoria,
+    marca_id: marca,
+    modelo_id: modelo
+  },
+  success: function(productosFiltrados) {
+    if (Array.isArray(productosFiltrados)) {
+      renderizarProductos(productosFiltrados);
+    } else {
+      console.error('Error: la respuesta del servidor no es un array:', productosFiltrados);
+      // Aquí puedes manejar el error como prefieras
+    }
+  },
+  error: function(jqXHR, textStatus, errorThrown) {
+    console.error('Error al obtener los productos:', textStatus, errorThrown);
+    alert('Hubo un problema al obtener los productos. Por favor, inténtalo de nuevo.');
+  }
+});
   }
   
   // Cuando la marca cambia, llenar los modelos
@@ -117,6 +121,10 @@
 
   function renderizarProductos(productos) {
     // Obtén el contenedor de productos
+    if (!Array.isArray(productos)){
+    console.error('Error: productos no es un array:', productos);
+    return;
+  }
     var contenedor = document.getElementById('contenedor-productos');
 
     // Vacía el contenedor
