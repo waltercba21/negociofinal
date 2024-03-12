@@ -15,6 +15,9 @@ module.exports = {
         });
     },
     lista: function (req, res) {
+        var categoria = req.query.categoria_id;
+  var marca = req.query.marca_id;
+  var modelo = req.query.modelo_id;
         const categoriaId = req.query.categoria;
     const marcaQuery = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
     const modeloQuery = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
@@ -26,7 +29,7 @@ module.exports = {
         return res.redirect('/error');
     }
         if (categoriaId || marcaQuery || modeloQuery) {
-            producto.obtenerPorFiltros(conexion, categoriaId, marcaQuery, modeloQuery,function (error, productos) {
+            producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function(error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
