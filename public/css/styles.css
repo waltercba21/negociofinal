@@ -856,7 +856,7 @@ footer {
   justify-content: center;
   margin-top: 20px; /* Ajusta este valor según tus necesidades */
 }
-.selectores-productos button {
+.boton-buscar button {
   border-radius: 50px;
   background-color: #1F487E;
   color: white;
