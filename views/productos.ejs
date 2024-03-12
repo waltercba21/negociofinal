@@ -174,8 +174,14 @@
         modelo_id: modelo
       },
       success: function(productosFiltrados) {
-          renderizarProductos(productosFiltrados);
-      },
+  console.log('productosFiltrados:', productosFiltrados);
+  if (Array.isArray(productosFiltrados)) {
+    renderizarProductos(productosFiltrados);
+  } else {
+    console.error('Error: la respuesta del servidor no es un array:', productosFiltrados);
+    // Aquí puedes manejar el error como prefieras
+  }
+},
       error: function(jqXHR, textStatus, errorThrown) {
           console.error('Error al obtener los productos:', textStatus, errorThrown);
           alert('Hubo un problema al obtener los productos. Por favor, inténtalo de nuevo.');
