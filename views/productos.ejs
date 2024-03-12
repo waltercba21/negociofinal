@@ -154,10 +154,12 @@
   }
 
   $(document).ready(function() {
-  document.getElementById('boton-buscar').addEventListener('click', function() {
-    var categoria = document.getElementById('categoria_id').value;
-    var marca = document.getElementById('marca_id').value;
-    var modelo = document.getElementById('modelo_id').value;
+  $('#boton-buscar').on('click', function(e) {
+    e.preventDefault(); // Prevenir el comportamiento predeterminado del navegador
+
+    var categoria = $('#categoria_id').val();
+    var marca = $('#marca_id').val();
+    var modelo = $('#modelo_id').val();
 
     $.ajax({
       url: '/productos', 
