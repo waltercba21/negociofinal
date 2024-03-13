@@ -53,10 +53,14 @@ module.exports = {
                             });
                         });
                         const modelosPromise = new Promise((resolve, reject) => {
-                            producto.obtenerModelosPorMarca(conexion, marcaQuery, (error, modelos) => {
-                                if (error) reject(error);
-                                else resolve(modelos);
-                            });
+                            if (marcaQuery !== undefined) {
+                                producto.obtenerModelosPorMarca(conexion, marcaQuery, (error, modelos) => {
+                                    if (error) reject(error);
+                                    else resolve(modelos);
+                                });
+                            } else {
+                                resolve([]);
+                            }
                         });
                         Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                             .then(([categorias, marcas, modelos]) => {
@@ -93,10 +97,14 @@ module.exports = {
                         });
                     });
                     const modelosPromise = new Promise((resolve, reject) => {
-                        producto.obtenerModelosPorMarca(conexion, marcaQuery, (error, modelos) => {
-                            if (error) reject(error);
-                            else resolve(modelos);
-                        });
+                        if (marcaQuery !== undefined) {
+                            producto.obtenerModelosPorMarca(conexion, marcaQuery, (error, modelos) => {
+                                if (error) reject(error);
+                                else resolve(modelos);
+                            });
+                        } else {
+                            resolve([]);
+                        }
                     });
                     Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                         .then(([categorias, marcas, modelos]) => {
