@@ -221,11 +221,10 @@ borrarImagenes: function(conexion, productoId, callback) {
             throw new Error('funcion debe ser una función');
         }
         if (parametro === undefined) {
-          // Si no se proporcionó un parámetro, asumir que el parámetro es la función de callback
-          let temp = funcion;
-          funcion = parametro;
-          parametro = temp;
-      }
+            // Si no se proporcionó un parámetro, asumir que el parámetro es la función de callback
+            parametro = saltar;
+            saltar = 0; // o cualquier valor por defecto que quieras para 'saltar'
+        }
         if (parametro !== null) {
             // Si se proporcionó un parámetro, usarlo en la consulta
             conexion.query('SELECT * FROM productos WHERE categoria = ? LIMIT ?,20', [parametro, saltar], funcion);
