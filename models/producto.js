@@ -227,7 +227,7 @@ borrarImagenes: function(conexion, productoId, callback) {
         }
         if (parametro !== null) {
             // Si se proporcionó un parámetro, usarlo en la consulta
-            conexion.query('SELECT * FROM productos WHERE categoria = ? LIMIT ?,20', [parametro, saltar], funcion);
+            conexion.query('SELECT * FROM productos WHERE categoria_id = ? LIMIT ?,20', [parametro, saltar], funcion);
         } else {
             // Si no se proporcionó un parámetro, no usarlo en la consulta
             conexion.query('SELECT * FROM productos LIMIT ?,20', [saltar], funcion);
