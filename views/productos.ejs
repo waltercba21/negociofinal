@@ -2,13 +2,15 @@
 <%- include ./layouts/header.ejs %>
 <body>
   <main>
+
     <h2 class="titulo-principal" id="titulo-principal"> 
       Todos los productos
     </h2>
     <div class="buscador">
       <input type="text" id="entradaBusqueda" placeholder="Buscar productos...">
     </div>
-    <form action="/productos" method="GET"> <!-- Asegúrate de que tu formulario esté enviando una solicitud GET a la ruta correcta -->
+
+    <form action="/productos" method="GET">
           <div class="selectores-productos">
     <div class="form-group-crear">
       <label for="categoria_id">Categoria</label>
@@ -44,6 +46,7 @@
     <button id="boton-buscar" type="submit">Buscar</button>
   </div>
 </form>
+
     <div id="contenedor-productos" class="contenedor-productos">
       <% productos.forEach(producto => { %>
         <div class="card">
@@ -70,4 +73,5 @@
   </main>
   <%- include ./layouts/footer.ejs %>
   <script src="/js/buscador.js"></script>
+  <script src="/js/selectores.js"></script>
 </body>
