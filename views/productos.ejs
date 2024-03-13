@@ -46,7 +46,21 @@
     <button id="boton-buscar" type="submit">Buscar</button>
   </div>
 </form>
-
+<% if (productos.length > 0) { %>
+  <ul>
+      <% productos.forEach(function(producto) { %>
+          <li>
+              <h2><%= producto.nombre %></h2>
+              <p>Categoría: <%= producto.categoria %></p>
+              <p>Marca: <%= producto.marca %></p>
+              <p>Modelo: <%= producto.modelo %></p>
+              <p>Precio: <%= producto.precio %></p>
+          </li>
+      <% }); %>
+  </ul>
+<% } else { %>
+  <p>No se encontraron productos para estos filtros.</p>
+<% } %>
     <div id="contenedor-productos" class="contenedor-productos">
       <% productos.forEach(producto => { %>
         <div class="card">
