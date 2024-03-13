@@ -1,14 +1,14 @@
 let entrada;
-let contenedorProductos;
+let contenedorProductosBuscador;
 let categoriaSelect;
 let marcaSelect;
 let modeloSelect;
 
 document.addEventListener('DOMContentLoaded', function() {
   entrada = document.querySelector('#entradaBusqueda');
-  contenedorProductos = document.querySelector('#contenedor-productos');
+  contenedorProductosBuscador = document.querySelector('#contenedor-productos');
 
-  if (!entrada || !contenedorProductos ) {
+  if (!entrada || !contenedorProductosBuscador ) {
     console.error('No se encontraron los elementos necesarios en el DOM');
     return;
   }
