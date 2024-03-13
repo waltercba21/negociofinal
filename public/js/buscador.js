@@ -10,6 +10,30 @@ document.addEventListener('DOMContentLoaded', function() {
   categoriaSelect = document.querySelector('#categoria_id');
   marcaSelect = document.querySelector('#marca_id');
   modeloSelect = document.querySelector('#modelo_id');
+  marcaSelect.addEventListener('change', function() {
+    const marcaId = this.value;
+  
+    // Limpia el select de modelos
+    modeloSelect.innerHTML = '<option value="">Selecciona un modelo...</option>';
+  
+    if (marcaId) {
+      // Haz una solicitud a tu servidor para obtener los modelos de la marca seleccionada
+      fetch(`http://www.autofaros.com.ar/marcas/${marcaId}/modelos`, {mode:'cors', credentials:'include'})
+        .then(response => response.json())
+        .then(datos => {
+          // Añade los modelos al select
+          datos.modelos.forEach(modelo => {
+            const option = document.createElement('option');
+            option.value = modelo.id;
+            option.textContent = modelo.nombre;
+            modeloSelect.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error('Hubo un problema con la solicitud: ' + error);
+        });
+    }
+  });
 
   if (!entrada || !contenedorProductos || !categoriaSelect || !marcaSelect || !modeloSelect) {
     console.error('No se encontraron los elementos necesarios en el DOM');
