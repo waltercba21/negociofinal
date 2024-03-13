@@ -17,16 +17,23 @@ function handleChange(e) {
 
   console.log('Valores seleccionados:', categoria, marca, modelo);
 
-  // Construye la URL con los parámetros de búsqueda
-  var url = '/productos?';
-  if (categoria) url += 'categoria_id=' + categoria + '&';
-  if (marca) url += 'marca_id=' + marca + '&';
-  if (modelo) url += 'modelo_id=' + modelo;
+  // Si se selecciona una marca, haz una solicitud al servidor para obtener los modelos
+  if (marca) {
+    fetch('/modelos?marca_id=' + marca)
+      .then(response => response.json())
+      .then(data => {
+        // Vacía el selector de modelos
+        selectorModelo.innerHTML = '';
 
-  console.log('URL construida:', url);
-
-  // Redirige a la URL construida
-  window.location.href = url;
+        // Agrega los nuevos modelos al selector
+        data.modelos.forEach(function(modelo) {
+          var option = document.createElement('option');
+          option.value = modelo.id;
+          option.text = modelo.nombre;
+          selectorModelo.appendChild(option);
+        });
+      });
+  }
 }
 
 // Agrega el manejador de eventos a los selectores
