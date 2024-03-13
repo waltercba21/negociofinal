@@ -5,57 +5,23 @@ let marcaSelect;
 let modeloSelect;
 
 document.addEventListener('DOMContentLoaded', function() {
+  entrada = document.querySelector('#entradaBusqueda');
   contenedorProductos = document.querySelector('#contenedor-productos');
+  categoriaSelect = document.querySelector('#categoria_id');
+  marcaSelect = document.querySelector('#marca_id');
+  modeloSelect = document.querySelector('#modelo_id');
 
-  if (!contenedorProductos) {
-    console.error('No se encontró el contenedor de productos en el DOM');
+  if (!entrada || !contenedorProductos || !categoriaSelect || !marcaSelect || !modeloSelect) {
+    console.error('No se encontraron los elementos necesarios en el DOM');
     return;
   }
 
   cargarProductos();
 
-  entrada = document.querySelector('#entradaBusqueda');
-  categoriaSelect = document.querySelector('#categoria_id');
-  marcaSelect = document.querySelector('#marca_id');
-  modeloSelect = document.querySelector('#modelo_id');
-
-  if (entrada && categoriaSelect && marcaSelect && modeloSelect) {
-    entrada.addEventListener('input', buscarProductos);
-    categoriaSelect.addEventListener('change', buscarProductos);
-    marcaSelect.addEventListener('change', buscarProductos);
-    modeloSelect.addEventListener('change', buscarProductos);
-
-    marcaSelect.addEventListener('change', function() {
-      const marcaId = this.value;
-  
-      modeloSelect.innerHTML = '<option value="">Selecciona un modelo...</option>';
-
-      if (marcaId) {
-        fetch(`http://www.autofaros.com.ar/modelos/${marcaId}`, {mode:'cors', credentials:'include'})
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(datos => {
-          if (datos && Array.isArray(datos.modelosPorMarca)) {
-            datos.modelosPorMarca.forEach(modelo => {
-              const option = document.createElement('option');
-              option.value = modelo.id;
-              option.textContent = modelo.nombre;
-              modeloSelect.appendChild(option);
-            });
-          } else {
-            console.error('La respuesta de la API no tiene la estructura esperada');
-          }
-        })
-        .catch(error => {
-          console.error('Hubo un problema con la solicitud: ' + error);
-        });
-      }
-    });
-  }
+  entrada.addEventListener('input', buscarProductos);
+  categoriaSelect.addEventListener('change', buscarProductos);
+  marcaSelect.addEventListener('change', buscarProductos);
+  modeloSelect.addEventListener('change', buscarProductos);
 });
 
 function buscarProductos() {
