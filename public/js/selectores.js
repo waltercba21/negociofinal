@@ -30,31 +30,20 @@ function handleChange(e) {
     botonBuscar.textContent = 'Buscando...';
 
     // Realiza la solicitud GET al servidor
-    fetch(url)
-        .then(response => {
-            console.log('Respuesta del servidor:', response);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Datos recibidos:', data);
-
-            // Actualiza el contenedor de productos con los nuevos productos
-            contenedorProductos.innerHTML = '';
-            data.productos.forEach(producto => {
-                contenedorProductos.innerHTML += `
-                    <div class="card">
-                        <!-- Aquí va el código HTML para mostrar cada producto -->
-                    </div>
-                `;
-            });
-
-            // Habilita el botón de búsqueda y cambia su texto
-            botonBuscar.disabled = false;
-            botonBuscar.textContent = 'Buscar';
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+    fetch(url, {mode:'cors', credentials:'include'})
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(datos => {
+      console.log('Datos:', datos.productos);
+      mostrarProductos(datos.productos);
+    })
+    .catch(error => {
+      console.error('Hubo un problema con la solicitud: ' + error);
+    });
 }
 
 // Agrega el manejador de eventos a los selectores
