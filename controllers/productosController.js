@@ -49,8 +49,8 @@ module.exports = {
                             });
                         });
                         const modelosPromise = new Promise((resolve, reject) => {
-                            if (marca !== undefined) {
-                                producto.obtenerModelosPorMarca(conexion, marca, (error, modelos) => {
+                            if (marca !== undefined) { // Cambia 'marcaQuery' a 'marca'
+                                producto.obtenerModelosPorMarca(conexion, marca, (error, modelos) => { // Cambia 'marcaQuery' a 'marca'
                                     if (error) reject(error);
                                     else resolve(modelos);
                                 });
@@ -59,14 +59,14 @@ module.exports = {
                             }
                         });
                         Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-    .then(([categorias, marcas, modelos]) => {
-        // Renderizar la vista con los productos, categorías, marcas y modelos
-        res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo });
-    })
-    .catch(error => {
-        console.log('Error al obtener categorías, marcas o modelos:', error);
-        res.render('productos', { productos, categorias: [], marcas: [], modelosPorMarca: [], modelo });
-    });
+                            .then(([categorias, marcas, modelos]) => {
+                                // Renderizar la vista con los productos, categorías, marcas y modelos
+                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo });
+                            })
+                            .catch(error => {
+                                console.log('Error al obtener categorías, marcas o modelos:', error);
+                                res.render('productos', { productos, categorias: [], marcas: [], modelosPorMarca: [], modelo });
+                            });
                     }
                 }
             });
