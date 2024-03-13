@@ -23,12 +23,11 @@ module.exports = {
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             console.log('Error: marca o modelo no son números válidos');
             return res.redirect('/error');
-        }
-            if (categoriaId || marcaQuery || modeloQuery) {
-                producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function(error, productos) {
-                    if (error) {
-                        console.log('Error al obtener productos:', error);
-                    } else {
+        }if (categoria || marca || modelo) {
+            producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function(error, productos) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
+                } else {
                     if (productos.length === 0) {
                         console.log('No se encontraron productos para estos filtros');
                     } else {
