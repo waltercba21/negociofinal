@@ -48,25 +48,27 @@ module.exports = {
                                 else resolve(marcas);
                             });
                         });
-                        const modelosPromise = new Promise((resolve, reject) => {
-                            if (marca !== undefined) { // Cambia 'marcaQuery' a 'marca'
-                                producto.obtenerModelosPorMarca(conexion, marca, (error, modelos) => { // Cambia 'marcaQuery' a 'marca'
-                                    if (error) reject(error);
-                                    else resolve(modelos);
-                                });
-                            } else {
-                                resolve([]);
-                            }
-                        });
-                        Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-                            .then(([categorias, marcas, modelos]) => {
-                                // Renderizar la vista con los productos, categorías, marcas y modelos
-                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo });
-                            })
-                            .catch(error => {
-                                console.log('Error al obtener categorías, marcas o modelos:', error);
-                                res.render('productos', { productos, categorias: [], marcas: [], modelosPorMarca: [], modelo });
-                            });
+                // ...
+const modelosPromise = new Promise((resolve, reject) => {
+    if (marca !== undefined) { // Cambia 'marcaQuery' a 'marca'
+        producto.obtenerModelosPorMarca(conexion, marca, (error, modelos) => { // Cambia 'marcaQuery' a 'marca'
+            if (error) reject(error);
+            else resolve(modelos);
+        });
+    } else {
+        resolve([]);
+    }
+});
+Promise.all([categoriasPromise, marcasPromise, modelosPromise])
+    .then(([categorias, marcas, modelos]) => {
+        // Renderizar la vista con los productos, categorías, marcas y modelos
+        res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo });
+    })
+    .catch(error => {
+        console.log('Error al obtener categorías, marcas o modelos:', error);
+        res.render('productos', { productos, categorias: [], marcas: [], modelosPorMarca: [], modelo });
+    });
+// ...
                     }
                 }
             });
@@ -93,25 +95,27 @@ module.exports = {
                             else resolve(marcas);
                         });
                     });
-                    const modelosPromise = new Promise((resolve, reject) => {
-                        if (marcaQuery !== undefined) {
-                            producto.obtenerModelosPorMarca(conexion, marcaQuery, (error, modelos) => {
-                                if (error) reject(error);
-                                else resolve(modelos);
-                            });
-                        } else {
-                            resolve([]);
-                        }
-                    });
-                    Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-                        .then(([categorias, marcas, modelos]) => {
-                            // Renderizar la vista con los productos, categorías, marcas y modelos
-                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
-                        })
-                        .catch(error => {
-                            console.log('Error al obtener categorías, marcas o modelos:', error);
-                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
-                        });
+                    // ...
+const modelosPromise = new Promise((resolve, reject) => {
+    if (marca !== undefined) { // Cambia 'marcaQuery' a 'marca'
+        producto.obtenerModelosPorMarca(conexion, marca, (error, modelos) => { // Cambia 'marcaQuery' a 'marca'
+            if (error) reject(error);
+            else resolve(modelos);
+        });
+    } else {
+        resolve([]);
+    }
+});
+Promise.all([categoriasPromise, marcasPromise, modelosPromise])
+    .then(([categorias, marcas, modelos]) => {
+        // Renderizar la vista con los productos, categorías, marcas y modelos
+        res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo });
+    })
+    .catch(error => {
+        console.log('Error al obtener categorías, marcas o modelos:', error);
+        res.render('productos', { productos, categorias: [], marcas: [], modelosPorMarca: [], modelo });
+    });
+// ...
                 }
             });
         }
