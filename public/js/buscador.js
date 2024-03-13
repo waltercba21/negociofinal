@@ -15,23 +15,32 @@ document.addEventListener('DOMContentLoaded', function() {
   
     // Limpia el select de modelos
     modeloSelect.innerHTML = '<option value="">Selecciona un modelo...</option>';
-  
-    if (marcaId) {
-      // Haz una solicitud a tu servidor para obtener los modelos de la marca seleccionada
-      fetch(`http://www.autofaros.com.ar/marcas/${marcaId}/modelos`, {mode:'cors', credentials:'include'})
-        .then(response => response.json())
-        .then(datos => {
-          // Añade los modelos al select
+
+  if (marcaId) {
+    // Haz una solicitud a tu servidor para obtener los modelos de la marca seleccionada
+    fetch(`http://www.autofaros.com.ar/modelos/${marcaId}`, {mode:'cors', credentials:'include'})
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(datos => {
+        // Añade los modelos al select
+        if (datos && Array.isArray(datos.modelos)) {
           datos.modelos.forEach(modelo => {
             const option = document.createElement('option');
             option.value = modelo.id;
             option.textContent = modelo.nombre;
             modeloSelect.appendChild(option);
           });
-        })
-        .catch(error => {
-          console.error('Hubo un problema con la solicitud: ' + error);
-        });
+        } else {
+          console.error('La respuesta de la API no tiene la estructura esperada');
+        }
+      })
+      .catch(error => {
+        console.error('Hubo un problema con la solicitud: ' + error);
+      });
     }
   });
 
