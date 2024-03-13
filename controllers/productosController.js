@@ -15,18 +15,15 @@ module.exports = {
         });
     },
     lista: function (req, res) {
-            var categoria = req.query.categoria_id;
-            var marca = req.query.marca_id;
-            var modelo = req.query.modelo_id;
-            const categoriaId = req.query.categoria;
-            const marcaQuery = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
-            const modeloQuery = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
-            var saltar = Number(req.query.saltar) || 0;
-        
-            if ((marcaQuery !== undefined && isNaN(marcaQuery)) || (modeloQuery !== undefined && isNaN(modeloQuery))) {
-                console.log('Error: marca o modelo no son números válidos');
-                    return res.redirect('/error');
-            }
+        const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
+        const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
+        const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
+        var saltar = Number(req.query.saltar) || 0;
+    
+        if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
+            console.log('Error: marca o modelo no son números válidos');
+            return res.redirect('/error');
+        }
             if (categoriaId || marcaQuery || modeloQuery) {
                 producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function(error, productos) {
                     if (error) {
