@@ -93,7 +93,7 @@ module.exports = {
                         });
                     });
                     const modelosPromise = new Promise((resolve, reject) => {
-                        producto.obtenerModelosPorMarca(conexion, req.params.marcaId, (error, modelos) => {
+                        producto.obtenerModelosPorMarca(conexion, marcaQuery, (error, modelos) => {
                             if (error) reject(error);
                             else resolve(modelos);
                         });
