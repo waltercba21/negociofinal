@@ -267,15 +267,12 @@ obtenerModelosPorMarca: function(conexion, marcaId, callback) {
   // Consulta SQL para obtener los modelos por marca
   var consulta = 'SELECT * FROM modelos WHERE id_marca = ?';
   
-  // Ejecuta la consulta
   conexion.query(consulta, [marcaId], function(error, resultados) {
       if (error) {
           console.log('Error al obtener modelos:', error);
           callback(error, null);
           return;
       }
-      
-      // Devuelve los modelos
       callback(null, resultados);
   });
 },
