@@ -848,8 +848,9 @@ footer {
 .selectores-productos select {
   min-width: 300px; 
   border-radius: 5px; 
-  box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2); /* Sombra */
-  font-weight: bold; /* Letra en negrita */
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
+  font-weight: bold; 
+  border: none;
 }
 .boton-buscar {
   display: flex;
