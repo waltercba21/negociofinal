@@ -19,14 +19,14 @@ function handleChange(e) {
 
   // Si se selecciona una marca, haz una solicitud al servidor para obtener los modelos
   if (marca) {
-    fetch('/modelos?marca_id=' + marca)
+    fetch('/modelos/' + marca)
       .then(response => response.json())
       .then(data => {
         // Vacía el selector de modelos
         selectorModelo.innerHTML = '';
-
+  
         // Agrega los nuevos modelos al selector
-        data.modelos.forEach(function(modelo) {
+        data.forEach(function(modelo) { 
           var option = document.createElement('option');
           option.value = modelo.id;
           option.text = modelo.nombre;
