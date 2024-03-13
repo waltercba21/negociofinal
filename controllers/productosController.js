@@ -632,16 +632,5 @@ obtenerProveedores: function(req, res) {
         res.render('crear', { proveedores: proveedores });
     });
 },
-obtenerModelosPorMarca: function(req, res) {
-    var marcaId = req.params.marcaId;
-    // Aquí debes llamar a la función que obtiene los modelos de la base de datos
-    producto.obtenerModelosPorMarca(conexion, marcaId, function(error, modelos) {
-        if (error) {
-            console.log('Error al obtener modelos:', error);
-            return;
-        }
-        // Devuelve los modelos como JSON
-        res.json(modelos);
-    });
-}
+
 }

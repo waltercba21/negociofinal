@@ -10,15 +10,19 @@ document.addEventListener('DOMContentLoaded', function() {
   categoriaSelect = document.querySelector('#categoria_id');
   marcaSelect = document.querySelector('#marca_id');
   modeloSelect = document.querySelector('#modelo_id');
+
+  if (!entrada || !contenedorProductos || !categoriaSelect || !marcaSelect || !modeloSelect) {
+    console.error('No se encontraron los elementos necesarios en el DOM');
+    return;
+  }
+
   marcaSelect.addEventListener('change', function() {
     const marcaId = this.value;
   
-    // Limpia el select de modelos
     modeloSelect.innerHTML = '<option value="">Selecciona un modelo...</option>';
 
-  if (marcaId) {
-    // Haz una solicitud a tu servidor para obtener los modelos de la marca seleccionada
-    fetch(`http://www.autofaros.com.ar/modelos/${marcaId}`, {mode:'cors', credentials:'include'})
+    if (marcaId) {
+      fetch(`http://www.autofaros.com.ar/modelos/${marcaId}`, {mode:'cors', credentials:'include'})
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -26,9 +30,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return response.json();
       })
       .then(datos => {
-        // Añade los modelos al select
-        if (datos && Array.isArray(datos.modelos)) {
-          datos.modelos.forEach(modelo => {
+        if (datos && Array.isArray(datos.modelosPorMarca)) { // Cambiado de datos.modelos a datos.modelosPorMarca
+          datos.modelosPorMarca.forEach(modelo => { // Cambiado de datos.modelos a datos.modelosPorMarca
             const option = document.createElement('option');
             option.value = modelo.id;
             option.textContent = modelo.nombre;
@@ -44,13 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  if (!entrada || !contenedorProductos || !categoriaSelect || !marcaSelect || !modeloSelect) {
-    console.error('No se encontraron los elementos necesarios en el DOM');
-    return;
-  }
-
   cargarProductos();
-
   entrada.addEventListener('input', buscarProductos);
   categoriaSelect.addEventListener('change', buscarProductos);
   marcaSelect.addEventListener('change', buscarProductos);
