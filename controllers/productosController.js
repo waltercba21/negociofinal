@@ -68,7 +68,6 @@ Promise.all([categoriasPromise, marcasPromise, modelosPromise])
         console.log('Error al obtener categorías, marcas o modelos:', error);
         res.render('productos', { productos, categorias: [], marcas: [], modelosPorMarca: [], modelo });
     });
-// ...
                     }
                 }
             });
@@ -115,7 +114,6 @@ Promise.all([categoriasPromise, marcasPromise, modelosPromise])
         console.log('Error al obtener categorías, marcas o modelos:', error);
         res.render('productos', { productos, categorias: [], marcas: [], modelosPorMarca: [], modelo });
     });
-// ...
                 }
             });
         }
