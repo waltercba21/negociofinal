@@ -49,8 +49,8 @@ module.exports = {
                             });
                         });
                         const modelosPromise = new Promise((resolve, reject) => {
-                            if (marcaQuery !== undefined) {
-                                producto.obtenerModelosPorMarca(conexion, marcaQuery, (error, modelos) => {
+                            if (marca !== undefined) {
+                                producto.obtenerModelosPorMarca(conexion, marca, (error, modelos) => {
                                     if (error) reject(error);
                                     else resolve(modelos);
                                 });
@@ -60,11 +60,11 @@ module.exports = {
                         });
                         Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                             .then(([categorias, marcas, modelos]) => {
-                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
+                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo });
                             })
                             .catch(error => {
                                 console.log('Error al obtener categorías, marcas o modelos:', error);
-                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modeloQuery });
+                                res.render('productos', { productos, categorias: [], marcas: [], modelosPorMarca: [], modelo });
                             });
                     }
                 }
