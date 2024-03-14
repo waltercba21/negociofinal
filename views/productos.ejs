@@ -81,4 +81,22 @@
   <%- include ./layouts/footer.ejs %>
   <script src="/js/buscador.js"></script>
   <script src="/js/selectores.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+  $('#id_marca').change(function(){
+    var marcaId = $(this).val();
+    $.ajax({
+      url: '/productos/modelos/' + marcaId,
+      type: 'GET',
+      success: function(data) {
+        $('#modelo_id').html('<option value="">Selecciona un modelo...</option>');
+        data.forEach(function(modelo) {
+          $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
+        });
+      }
+    });
+  });
+});
+</script>
 </body>
