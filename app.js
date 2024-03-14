@@ -65,6 +65,7 @@ app.use((req, res, next) => {
   
 //Utilizacion de las Rutas
 app.use('/', indexRouter);
+console.log("Router montado correctamente");
 app.use('/users', usersRouter);
 app.use('/productos', productosRouter);
 
