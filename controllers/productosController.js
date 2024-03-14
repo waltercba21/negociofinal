@@ -682,6 +682,10 @@ buscar: function(req, res) {
     var categoriaId = req.query.categoria_id;
     var marcaId = req.query.marca_id;
     var modeloId = req.query.modelo_id;
+
+    console.log("categoriaId: ", categoriaId);
+    console.log("marcaId: ", marcaId);
+    console.log("modeloId: ", modeloId);
   
     producto.obtenerPorCategoria(categoriaId, function(error, productos) {
       if (error) {
@@ -689,7 +693,8 @@ buscar: function(req, res) {
         res.status(500).send('Hubo un error al buscar los productos');
         return;
       }
+      console.log("Productos encontrados: ", productos);
       res.json(productos);
     });
-  },
+},
 }
