@@ -74,7 +74,6 @@ module.exports = {
                         });
                         Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                             .then(([categoriasResult, marcasResult, modelosResult]) => {
-                                // Renderizar la vista con los productos, categorías, marcas y modelos
                                 res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo });
                             })
                             .catch(error => {
@@ -89,12 +88,9 @@ module.exports = {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
-                    // Formatear el precio de cada producto
                     productos.forEach(producto => {
                         producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                     });
-    
-                    // Obtener categorías, marcas y modelos
                     let categorias = [];
                     let marcas = [];
                     let modelos = [];
@@ -170,7 +166,6 @@ module.exports = {
                             modelosPorMarca[marca.id] = modelos;
                             contadorMarcas++;
                             if (contadorMarcas === marcas.length) {
-                                // Renderiza tu vista pasando los datos
                                 res.render('crear', { categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca, producto: {} });
                             }
                         });
@@ -209,16 +204,12 @@ module.exports = {
                 if(borrar.existsSync(nombreImagen)){
                     borrar.unlinkSync(nombreImagen);
                 }
-    
-                // Primero, elimina las referencias al producto en la tabla carritos
                 conexion.query('DELETE FROM carritos WHERE producto_id=?', [req.params.id], function(error, resultados) {
                     if (error) {
                         console.error(error);
                         res.status(500).send('Error al eliminar las referencias al producto en el carrito');
                         return;
                     }
-    
-                    // Luego, elimina el producto
                     producto.borrar(conexion,req.params.id, function (error){ 
                         if (error) {
                             console.error(error);
@@ -366,7 +357,6 @@ panelControl: function (req, res) {
             contarProductos = (conexion, parametro, callback) => producto.contarPorProveedor(conexion, parametro, callback);
             parametroObtenerProductos = parametroContarProductos = proveedor;
         }
-
         producto.obtenerProveedores(conexion, function(error, proveedoresResult) {
             if (error) {
                 console.log('Error al obtener proveedores:', error);
@@ -482,7 +472,6 @@ carrito: function (req, res) {
         });
     });
 },
-
 agregarAlCarrito: function (req, res) {
     console.log ('Funcion agregarAlCarrito llamada con el id:', req.params.id)
     const productoId = req.params.id;
@@ -615,7 +604,6 @@ modificarPorProveedor: function (req, res) {
         let proveedor = null;
         let productos = [];
         if (proveedorId) {
-            // Encuentra el proveedor con el proveedorId
             proveedor = proveedores.find(proveedor => proveedor.id == proveedorId);
             if (!proveedor) {
                 console.log('No se encontró el proveedor:', proveedorId);
@@ -638,16 +626,11 @@ actualizarPorProveedor : function(req, res) {
     let proveedorId = req.body.proveedor;
     let porcentajeCambio = Number(req.body.porcentaje) / 100;
     let tipoCambio = req.body.tipoCambio;
-
-    // Verificar si el tipo de cambio es un descuento y, de ser así, convertir el porcentaje de cambio en un número negativo
     if (tipoCambio === 'descuento') {
         porcentajeCambio = -porcentajeCambio;
     }
-
-    // Llamar al método del modelo para actualizar los precios
     producto.actualizarPreciosPorProveedor(pool,proveedorId, porcentajeCambio, function(err) {
         if (err) {
-            // Manejar el error como prefieras
             console.error(err);
             res.redirect('/productos/panelControl?error=Hubo un error al actualizar los precios');
         } else {
@@ -666,13 +649,11 @@ obtenerProveedores: function(req, res) {
 },
 obtenerModelosPorMarca: function(req, res) {
     var marcaId = req.params.marcaId;
-    // Aquí debes llamar a la función que obtiene los modelos de la base de datos
     producto.obtenerModelosPorMarca(conexion, marcaId, function(error, modelos) {
         if (error) {
             console.log('Error al obtener modelos:', error);
             return;
         }
-        // Devuelve los modelos como JSON
         res.json(modelos);
     });
 },
@@ -687,7 +668,7 @@ buscar: function(req, res) {
     console.log("marcaId: ", marcaId);
     console.log("modeloId: ", modeloId);
   
-    producto.obtenerPorCategoria(categoriaId, function(error, productos) {
+    producto.obtenerPorCategoriaMarcaModelo(categoriaId, marcaId, modeloId, function(error, productos) {
       if (error) {
         console.error('Error al buscar productos:', error);
         res.status(500).send('Hubo un error al buscar los productos');
