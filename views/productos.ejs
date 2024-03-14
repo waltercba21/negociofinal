@@ -99,17 +99,17 @@ $(document).ready(function(){
   });
 
   $('#boton-buscar').click(function(){
-    var categoriaId = $('#categoria_id').val();
-    var marcaId = $('#id_marca').val();
-    var modeloId = $('#modelo_id').val();
-    $.ajax({
-      url: '/api?categoria_id=' + categoriaId + '&marca_id=' + marcaId + '&modelo_id=' + modeloId,
-  type: 'GET',
-  data: {
-    categoria_id: categoriaId,
-    marca_id: marcaId,
-    modelo_id: modeloId
-  },
+  var categoriaId = $('#categoria_id').val();
+  var marcaId = $('#id_marca').val();
+  var modeloId = $('#modelo_id').val();
+  $.ajax({
+    url: '/api',
+    type: 'GET',
+    data: {
+      categoria_id: categoriaId,
+      marca_id: marcaId,
+      modelo_id: modeloId
+    },
       success: function(data) {
         $('#contenedor-productos').empty();
         data.forEach(function(producto) {
