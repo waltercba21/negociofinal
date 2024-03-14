@@ -93,7 +93,7 @@ $(document).ready(function(){
   var marcaId = $('#id_marca').val();
   var modeloId = $('#modelo_id').val();
   $.ajax({
-    url: '/buscar',
+    url: '/productos/buscar',
     type: 'GET',
     data: {
       categoria_id: categoriaId,
