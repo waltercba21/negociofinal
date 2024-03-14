@@ -675,5 +675,19 @@ obtenerModelosPorMarca: function(req, res) {
         // Devuelve los modelos como JSON
         res.json(modelos);
     });
-}
+},
+buscar: function(req, res) {
+    var categoriaId = req.query.categoria_id;
+    var marcaId = req.query.marca_id;
+    var modeloId = req.query.modelo_id;
+  
+    producto.obtenerPorCategoria(categoriaId, function(error, productos) {
+      if (error) {
+        console.error('Error al buscar productos:', error);
+        res.status(500).send('Hubo un error al buscar los productos');
+        return;
+      }
+      res.json(productos);
+    });
+  },
 }

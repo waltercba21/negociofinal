@@ -29,6 +29,7 @@ router.post('/eliminar/:id', productosController.eliminar);
 
 
 // Nuevas rutas
+router.get('/buscar', productosController.buscar);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor, function(req, res) {

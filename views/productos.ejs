@@ -94,7 +94,7 @@ $(document).ready(function(){
   var marcaId = $('#id_marca').val();
   var modeloId = $('#modelo_id').val();
   $.ajax({
-    url: '/api',
+    url: '/buscar',
     type: 'GET',
     data: {
       categoria_id: categoriaId,
@@ -104,8 +104,6 @@ $(document).ready(function(){
       success: function(data) {
         $('#contenedor-productos').empty();
         data.forEach(function(producto) {
-          // Aquí debes generar el HTML para cada producto y agregarlo al contenedor de productos
-          // Este es solo un ejemplo, debes adaptarlo a tu propio HTML
           var productoHtml = '<div class="card">' +
             '<div class="cover__card">' +
             '<img src="../../images/' + producto.imagen + '" alt="Imagen de ' + producto.nombre + '">' +
@@ -113,7 +111,6 @@ $(document).ready(function(){
             '<div class="titulo-producto">' +
             '<h3 class="nombre">' + producto.nombre + '</h3>' +
             '</div>' +
-            // Agrega aquí el resto del HTML para el producto
             '</div>';
           $('#contenedor-productos').append(productoHtml);
         });
