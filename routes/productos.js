@@ -18,7 +18,7 @@ var rutaAlmacen = multer.diskStorage({
     }
 });
 var cargar = multer({storage: rutaAlmacen});
-
+router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
 router.get('/', productosController.lista);
 router.post('/', cargar.single('archivo'), productosController.guardar);
 router.get('/crear', productosController.crear);
@@ -34,7 +34,7 @@ router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor, function(req, res) {
     console.log (req.body);
 });
-router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
+
 
 // Rutas de la API
 router.get('/api', productosController.lista);
