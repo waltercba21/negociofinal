@@ -678,6 +678,7 @@ obtenerModelosPorMarca: function(req, res) {
 },
 buscar: function(req, res) {
     console.log("Función buscar llamada");
+    console.log("Parámetros de consulta: ", req.query);
     var categoriaId = req.query.categoria_id;
     var marcaId = req.query.marca_id;
     var modeloId = req.query.modelo_id;
