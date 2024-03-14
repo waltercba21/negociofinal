@@ -18,6 +18,7 @@ var rutaAlmacen = multer.diskStorage({
     }
 });
 var cargar = multer({storage: rutaAlmacen});
+
 router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
 router.get('/', productosController.lista);
 router.post('/', cargar.single('archivo'), productosController.guardar);
@@ -27,25 +28,14 @@ router.get('/editar/:id', productosController.editar)
 router.post('/actualizar/:id', cargar.single('archivo'), productosController.actualizar);
 router.post('/eliminar/:id', productosController.eliminar);
 
-
-// Nuevas rutas
-console.log("Definiendo la ruta /buscar");
 router.get('/buscar', productosController.buscar);
-console.log("Ruta /buscar definida correctamente");
-
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor, function(req, res) {
     console.log (req.body);
 });
-
-
-// Rutas de la API
 router.get('/api', productosController.lista);
 router.get('/api/buscar', productosController.buscarPorNombre);
-
-
-// Rutas del carrito de compras
 router.get('/carrito', productosController.carrito);
 router.get('/carrito/agregar/:id', ensureAuthenticated, productosController.agregarAlCarrito);
 router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
