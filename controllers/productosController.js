@@ -668,7 +668,7 @@ buscar: function(req, res) {
     console.log("marcaId: ", marcaId);
     console.log("modeloId: ", modeloId);
   
-    producto.obtenerPorCategoriaMarcaModelo(categoriaId, marcaId, modeloId, function(error, productos) {
+    producto.obtenerPorCategoriaMarcaModelo(conexion,categoriaId, marcaId, modeloId, function(error, productos) {
       if (error) {
         console.error('Error al buscar productos:', error);
         res.status(500).send('Hubo un error al buscar los productos');
