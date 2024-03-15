@@ -1,48 +1,54 @@
-// Obtén los elementos del DOM
-var selectorCategoria = document.getElementById('categoria_id');
-var selectorMarca = document.getElementById('marca_id');
-var selectorModelo = document.getElementById('modelo_id');
-var botonBuscar = document.getElementById('boton-buscar');
-var contenedorProductos = document.getElementById('contenedor-productos');
-
-console.log('Elementos del DOM:', selectorCategoria, selectorMarca, selectorModelo, botonBuscar, contenedorProductos);
-
-function handleCategoriaChange(e) {
-  e.preventDefault();
-
-  var categoria = selectorCategoria.value;
-
-  console.log('Categoría seleccionada:', categoria);
-
-}
-function handleMarcaChange(e) {
-  e.preventDefault();
-
-  var marca = selectorMarca.value;
-
-  console.log('Marca seleccionada:', marca);
-
-  if (marca) {
-    fetch('/modelos/' + marca)
-      .then(response => response.json())
-      .then(data => {
-        selectorModelo.innerHTML = '';
-        data.forEach(function(modelo) { 
-          var option = document.createElement('option');
-          option.value = modelo.id;
-          option.text = modelo.nombre;
-          selectorModelo.appendChild(option);
+$(document).ready(function(){
+  $('#id_marca').change(function(){
+    var marcaId = $(this).val();
+    $.ajax({
+      url: '/productos/modelos/' + marcaId,
+      type: 'GET',
+      success: function(data) {
+        $('#modelo_id').html('<option value="">Selecciona un modelo...</option>');
+        data.forEach(function(modelo) {
+          $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
         });
+      }
+    });
+  });
+
+  $('#boton-buscar').click(function(){
+  var categoriaId = $('#categoria_id').val();
+  var marcaId = $('#id_marca').val();
+  var modeloId = $('#modelo_id').val();
+  $.ajax({
+    url: '/productos/buscar',
+    type: 'GET',
+    data: {
+      categoria_id: categoriaId,
+      marca_id: marcaId,
+      modelo_id: modeloId
+    },
+    success: function(data) {
+      $('#contenedor-productos').empty();
+      data.forEach(function(producto) {
+        var productoHtml = '<div class="card">' +
+          '<div class="cover__card">' +
+          '<img src="../../images/' + producto.imagen + '" alt="Imagen de ' + producto.nombre + '">' +
+          '</div>' +
+          '<div class="titulo-producto">' +
+          '<h3 class="nombre">' + producto.nombre + '</h3>' +
+          '</div>' +
+          '<hr>' +
+          '<div class="categoria-producto">' +
+          '<h6 class="categoria">' + producto.categoria + '</h6>' +
+          '</div>' +
+          '<div class="precio-producto">' +
+          '<p class="precio">$' + producto.precio + '</p>' +
+          '</div>' +
+          '<div class="cantidad-producto">' +
+          '<a href="/productos/carrito/agregar/' + producto.id + '" class="agregar-carrito">Agregar al carrito</a>' +
+          '</div>' +
+          '</div>';
+        $('#contenedor-productos').append(productoHtml);
       });
-  }
-}
-function handleModeloChange(e) {
-  e.preventDefault();
-
-  var modelo = selectorModelo.value;
-
-  console.log('Modelo seleccionado:', modelo);
-}
-selectorCategoria.addEventListener('change', handleCategoriaChange);
-selectorMarca.addEventListener('change', handleMarcaChange);
-selectorModelo.addEventListener('change', handleModeloChange);
+    }
+  });
+});
+});
