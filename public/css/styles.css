@@ -853,6 +853,12 @@ footer {
   font-weight: bold; 
   border: none;
 }
+#categoria_id option {
+  font-weight: bold;
+}
+#categoria_id option:hover {
+  background-color: #f0f0f0;
+}
 .boton-buscar {
   display: flex;
   justify-content: center;
