@@ -835,7 +835,7 @@ footer {
 }
 .selectores-productos {
   display: flex;
-  flex-direction: row; /* Cambia esto a 'row' */
+  flex-direction: row; 
   align-items: center;
   justify-content: space-around;
   margin-bottom: 10px;
@@ -847,7 +847,7 @@ footer {
 }   
 .selectores-productos select {
   min-width: 300px; 
-  min-height: 15px;
+  height: 50px;
   border-radius: 5px; 
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
   font-weight: bold; 
