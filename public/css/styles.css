@@ -1466,6 +1466,13 @@ footer {
   .buscador input:valid {
     animation: input-glow 3s infinite;
   }
+  .selectores-productos {
+    flex-direction: column; 
+  }
+
+  .selectores-productos select {
+    min-width: 100%; 
+  }
 
   /*-------------login y register --------------*/
  
