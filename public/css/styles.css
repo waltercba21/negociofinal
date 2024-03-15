@@ -847,6 +847,7 @@ footer {
 }   
 .selectores-productos select {
   min-width: 300px; 
+  min-height: 15px;
   border-radius: 5px; 
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
   font-weight: bold; 
@@ -855,7 +856,8 @@ footer {
 .boton-buscar {
   display: flex;
   justify-content: center;
-  margin-top: 20px; /* Ajusta este valor según tus necesidades */
+  margin-top: 20px; 
+  margin-bottom: 30px;
 }
 .boton-buscar button {
   border:none;
