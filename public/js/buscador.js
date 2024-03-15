@@ -46,7 +46,7 @@ function cargarProductos() {
 }
 
 function mostrarProductos(productos) {
-  contenedorProductos.innerHTML = '';
+  contenedorProductosBuscador.innerHTML = '';
   productos.forEach(producto => {
     const tarjetaProducto = `
     <div class="card"> 
@@ -69,6 +69,6 @@ function mostrarProductos(productos) {
     </div>
   </div>
 `;
-    contenedorProductos.innerHTML += tarjetaProducto;
+    contenedorProductosBuscador.innerHTML += tarjetaProducto;
   });
 }
