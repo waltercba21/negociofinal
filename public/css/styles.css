@@ -304,7 +304,8 @@ footer {
 .peliculas-recomendadas .contenedor-principal .flecha-derecha{
   position: absolute;
   border: none;
-  background: rgba(51, 51, 51, 0.8);
+  background:#003f7d;
+  border-radius: 10px;
   background-size: 50px 50px;
   animation: pulsar 3s infinite;
   height: 50%;
@@ -329,7 +330,7 @@ footer {
 }
 .peliculas-recomendadas .contenedor-principal .flecha-izquierda:hover,
 .peliculas-recomendadas .contenedor-principal .flecha-derecha:hover{
-  background:#003f7d;
+background: rgba(51, 51, 51, 0.8);
 }
 
 .peliculas-recomendadas .contenedor-principal .flecha-izquierda{
