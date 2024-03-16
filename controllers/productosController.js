@@ -20,6 +20,10 @@ module.exports = {
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
         var saltar = Number(req.query.saltar) || 0;
     
+        let categorias = [];
+        let marcas = [];
+        let modelos = [];
+    
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             console.log('Error: marca o modelo no son números válidos');
             return res.redirect('/error');
@@ -40,10 +44,6 @@ module.exports = {
                             }
                         });
                         console.log('Productos obtenidos:', productos);
-                        
-                        let categorias = [];
-                        let marcas = [];
-                        let modelos = [];
     
                         const categoriasPromise = new Promise((resolve, reject) => {
                             producto.obtenerCategorias(conexion, (error, result) => {
