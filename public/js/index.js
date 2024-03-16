@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', (event) => {
   const fila = document.querySelector('.contenedor-carrousel');
   const peliculas = document.querySelectorAll('.pelicula');
-  const flechaIzquierda = document.getElementById('flecha-izquierda');
-  const flechaDerecha = document.getElementById('flecha-derecha');
+  const flechaIzquierda = document.querySelector('.flecha-izquierda');
+  const flechaDerecha = document.querySelector('.flecha-derecha');
   const responsive = window.matchMedia("(max-width: 768px)");
   
 
