@@ -688,8 +688,16 @@ buscar: function(req, res) {
         }
         console.log("Categorías obtenidas: ", categorias);
         
-        // Agregar las categorías a la respuesta
-        res.json({ productos: productos, categorias: categorias });
+        // Asignar la categoría correcta a cada producto
+        productos.forEach(producto => {
+            const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
+            if (categoriaProducto) {
+                producto.categoria = categoriaProducto.nombre;
+            }
+        });
+        
+        // Enviar la respuesta
+        res.json(productos);
       });
     });
 },
