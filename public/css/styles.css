@@ -441,16 +441,6 @@ background: rgba(0, 63, 125, 0.8);
   z-index: 1000 !important;
 }
 
-.fondo-oscuro {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 500;
-}
-
 .card-ultimos {
   width: 150px;
   margin: 20px;
@@ -1050,13 +1040,6 @@ background: rgba(0, 63, 125, 0.8);
   background-color: #0056b3;
 }
 
-.card-seleccionada {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(1.2);
-  z-index: 1000;
-}
 .fondo-oscuro {
   position: fixed;
   top: 0;
