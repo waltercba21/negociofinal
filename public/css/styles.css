@@ -429,7 +429,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .card-ultimos {
-  width: 150px; /* Ajusta este valor según tus necesidades */
+  width: 150px;
   margin: 20px;
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   transition: 0.3s;
@@ -1033,13 +1033,6 @@ background: rgba(0, 63, 125, 0.8);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(1.2);
-  z-index: 1000;
-}
-.card-centrada {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   z-index: 1000;
 }
 .fondo-oscuro {
