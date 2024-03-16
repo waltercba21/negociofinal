@@ -419,6 +419,8 @@ background: rgba(0, 63, 125, 0.8);
   justify-content: center;
 }
 .card-centrada {
+  width: 80% !important;
+  height: 80% !important;
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
