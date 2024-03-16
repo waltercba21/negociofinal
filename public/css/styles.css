@@ -312,14 +312,14 @@ footer {
   top: calc(50% - 30%); 
   line-height: 60px; 
   width: 40px;
-  color: #d32f2f;
+  color: #ced4da;
   cursor: pointer;
   z-index: 500;
   transition: .2s ease all;
 }
 .peliculas-recomendadas .contenedor-principal .flecha-izquierda i,
 .peliculas-recomendadas .contenedor-principal .flecha-derecha i {
-  font-size: 30px; 
+  font-size: 60px; 
 }
 @keyframes pulsar {
   0% {
