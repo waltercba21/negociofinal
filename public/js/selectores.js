@@ -55,7 +55,8 @@ $(document).ready(function(){
   });
 
   function asignarEventoClickACard() {
-    $('.card').click(function() {
+    $('.card').click(function(event) {
+      event.stopPropagation();
       $(this).addClass('card-seleccionada card-centrada');
       let fondoOscuro = $('<div>').addClass('fondo-oscuro');
       $('body').append(fondoOscuro);
