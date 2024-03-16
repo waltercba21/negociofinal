@@ -308,7 +308,7 @@ footer {
   border-radius: 10px;
   background-size: 50px 50px;
   animation: pulsar 2s infinite;
-  height: 50%;
+  height: 80%;
   top: calc(50% - 25%);
   line-height: 50px;
   width: 50px;
