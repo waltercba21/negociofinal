@@ -14,15 +14,17 @@ module.exports = {
             }
         });
     },
-    lista: function (req, res) {
+    lista: function (req, res) { 
+        let categorias = [];
+        let marcas = [];
+        let modelos = [];
+        
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
         var saltar = Number(req.query.saltar) || 0;
     
-        let categorias = [];
-        let marcas = [];
-        let modelos = [];
+       
     
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             console.log('Error: marca o modelo no son números válidos');
