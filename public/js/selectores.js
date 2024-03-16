@@ -53,3 +53,15 @@ $(document).ready(function(){
     });
   });
 });
+$(document).ready(function() {
+  $('.card').on('click', function() {
+    $(this).addClass('card-seleccionada');
+    let fondoOscuro = $('<div>').addClass('fondo-oscuro');
+    $('body').append(fondoOscuro);
+  });
+
+  $('body').on('click', '.fondo-oscuro', function() {
+    $('.card-seleccionada').removeClass('card-seleccionada');
+    $('.fondo-oscuro').remove();
+  });
+});
