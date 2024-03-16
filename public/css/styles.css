@@ -327,7 +327,7 @@ footer {
 }
 .peliculas-recomendadas .contenedor-principal .flecha-izquierda:hover,
 .peliculas-recomendadas .contenedor-principal .flecha-derecha:hover{
-  background: rgba(0,0,0,0.9);
+  background: linear-gradient(45deg, rgba(0,0,0,0.9) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.9) 50%, rgba(0,0,0,0.9) 75%, transparent 75%, transparent);
   animation: none;
 }
 
