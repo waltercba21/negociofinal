@@ -34,6 +34,10 @@ module.exports = {
                     } else {
                         productos.forEach(producto => {
                             producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                            const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
+                            if (categoriaProducto) {
+                                producto.categoria = categoriaProducto.nombre;
+                            }
                         });
                         console.log('Productos obtenidos:', productos);
                         
@@ -90,6 +94,10 @@ module.exports = {
                 } else {
                     productos.forEach(producto => {
                         producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                        const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
+                        if (categoriaProducto) {
+                            producto.categoria = categoriaProducto.nombre;
+                        }
                     });
                     let categorias = [];
                     let marcas = [];
