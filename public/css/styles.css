@@ -417,7 +417,13 @@ background: rgba(0, 63, 125, 0.8);
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  
+}
+.card-centrada {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1000 !important;
 }
 
 .card-ultimos {
