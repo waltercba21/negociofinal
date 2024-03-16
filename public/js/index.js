@@ -3,13 +3,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
   const peliculas = document.querySelectorAll('.pelicula');
   const flechaIzquierda = document.getElementById('flecha-izquierda');
   const flechaDerecha = document.getElementById('flecha-derecha');
+  let scrollInterval;
 
-  // Verificar si estamos en modo responsive
   const responsive = window.matchMedia("(max-width: 768px)");
 
-  // Si no estamos en modo responsive, agregar los event listeners
+  // Iniciar el desplazamiento automático cuando se carga la página
+  startAutoScroll();
+
   if (!responsive.matches) {
-    // Verificar si los elementos existen antes de agregar event listeners
     if (flechaDerecha && fila) {
       flechaDerecha.addEventListener('click', () => {
         fila.scrollLeft += fila.offsetWidth;
@@ -21,11 +22,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
       });
     }
-
     if (flechaIzquierda && fila) {
       flechaIzquierda.addEventListener('click', () => {
         fila.scrollLeft -= fila.offsetWidth;
-
         const indicadorActivo = document.querySelector('.indicadores .activo');
         if (indicadorActivo && indicadorActivo.previousSibling) {
           indicadorActivo.previousSibling.classList.add('activo');
@@ -60,6 +59,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
   }
 });
+
 window.onload = function() {
   if (window.innerWidth <= 768) {
     var navbar = document.querySelector('.navbar');
@@ -72,6 +72,7 @@ window.onload = function() {
     }
   }
 }
+
 function toggleMenu() {
   var navbar = document.querySelector('.navbar');
   var icons = document.querySelector('.icons');
@@ -85,4 +86,20 @@ function toggleMenu() {
 
 function abrirMapa() {
   window.open("https://maps.app.goo.gl/c6bik6TL7uBQP3KZ8", "_blank");
+}
+
+function startAutoScroll() {
+  const fila = document.querySelector('.contenedor-carrousel');
+  // Detener el desplazamiento automático si ya está en marcha
+  if (scrollInterval) {
+    clearInterval(scrollInterval);
+  }
+
+  // Comenzar a desplazarse automáticamente cada 2000 milisegundos (2 segundos)
+  scrollInterval = setInterval(() => {
+    if (fila) {
+      // Desplazarse a la derecha por 1 pixel
+      fila.scrollLeft += 1;
+    }
+  }, 2000);
 }
