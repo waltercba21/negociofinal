@@ -35,9 +35,11 @@ $(document).ready(function(){
             '<div class="titulo-producto">' +
             '<h3 class="nombre">' + producto.nombre + '</h3>' +
             '</div>' +
+            '<hr>'
             '<div class="categoria-producto">' +
             '<h6 class="categoria">' + producto.categoria + '</h6>' +
-            '</div>' +
+            '</div>'
+            '</hr>' +
             '<div class="precio-producto">' +
             '<p class="precio">$' + producto.precio + '</p>' +
             '</div>' +
