@@ -6,8 +6,20 @@ document.addEventListener('DOMContentLoaded', (event) => {
   let scrollInterval;
 
   const responsive = window.matchMedia("(max-width: 768px)");
+  
+  const startAutoScroll = () => {
+    // Detener el desplazamiento automático si ya está en marcha
+    if (scrollInterval) {
+      clearInterval(scrollInterval);
+    }
 
-  // Iniciar el desplazamiento automático cuando se carga la página
+    scrollInterval = setInterval(() => {
+      if (fila) {
+        // Desplazarse a la derecha por 1 pixel
+        fila.scrollLeft += 1;
+      }
+    }, 2000);
+  }
   startAutoScroll();
 
   if (!responsive.matches) {
