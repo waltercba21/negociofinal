@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
       if (fila) {
         fila.scrollLeft += 10;
       }
-    }, 1000);
+    }, 2000);
   }
   startAutoScroll();
 
