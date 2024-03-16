@@ -304,13 +304,13 @@ footer {
 .peliculas-recomendadas .contenedor-principal .flecha-derecha{
   position: absolute;
   border: none;
-  background:#003f7d;
+  background: rgba(0, 63, 125, 0.5);
   border-radius: 10px;
   background-size: 50px 50px;
-  animation: pulsar 3s infinite;
+  animation: pulsar 2s infinite;
   height: 50%;
   top: calc(50% - 25%);
-  line-height: 40px;
+  line-height: 50px;
   width: 50px;
   color: #fff;
   cursor: pointer;
