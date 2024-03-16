@@ -661,42 +661,28 @@ obtenerModelosPorMarca: function(req, res) {
     });
 },
 buscar: function(req, res) {
-    console.log("Función buscar llamada");
-    console.log("Parámetros de consulta: ", req.query);
     var categoriaId = req.query.categoria_id;
     var marcaId = req.query.marca_id;
     var modeloId = req.query.modelo_id;
 
-    console.log("categoriaId: ", categoriaId);
-    console.log("marcaId: ", marcaId);
-    console.log("modeloId: ", modeloId);
-  
     producto.obtenerPorCategoriaMarcaModelo(conexion,categoriaId, marcaId, modeloId, function(error, productos) {
       if (error) {
         console.error('Error al buscar productos:', error);
         res.status(500).send('Hubo un error al buscar los productos');
         return;
       }
-      console.log("Productos encontrados: ", productos);
-      
-      // Obtener las categorías
       producto.obtenerCategorias(conexion, function(error, categorias) {
         if (error) {
           console.error('Error al obtener las categorías:', error);
           res.status(500).send('Hubo un error al obtener las categorías');
           return;
         }
-        console.log("Categorías obtenidas: ", categorias);
-        
-        // Asignar la categoría correcta a cada producto
         productos.forEach(producto => {
             const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
             if (categoriaProducto) {
                 producto.categoria = categoriaProducto.nombre;
             }
         });
-        
-        // Enviar la respuesta
         res.json(productos);
       });
     });

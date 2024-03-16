@@ -395,7 +395,7 @@ obtenerIdCategoriaPorNombre: function(conexion, nombre, callback) {
   });
 },
 obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
-  var query = "SELECT * FROM productos WHERE categoria_id = ? AND marca_id = ? AND modelo_id = ?";
+  var query = "SELECT id, nombre, codigo, imagen, descripcion, precio, modelo, categoria_id, marca_id, proveedor_id, modelo_id FROM productos WHERE categoria_id = ? AND marca_id = ? AND modelo_id = ?";
   conexion.query(query, [categoria, marca, modelo], function(error, resultados) {
       if (error) {
           callback(error, null);
