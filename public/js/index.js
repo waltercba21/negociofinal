@@ -3,29 +3,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
   const peliculas = document.querySelectorAll('.pelicula');
   const flechaIzquierda = document.getElementById('flecha-izquierda');
   const flechaDerecha = document.getElementById('flecha-derecha');
-  let scrollInterval;
-
   const responsive = window.matchMedia("(max-width: 768px)");
   
-  const startAutoScroll = () => {
-    // Detener el desplazamiento automático si ya está en marcha
-    if (scrollInterval) {
-      clearInterval(scrollInterval);
-    }
-
-    scrollInterval = setInterval(() => {
-      if (fila) {
-        fila.scrollLeft += 20;
-      }
-    }, 2000);
-  }
-  startAutoScroll();
 
   if (!responsive.matches) {
     if (flechaDerecha && fila) {
       flechaDerecha.addEventListener('click', () => {
         fila.scrollLeft += fila.offsetWidth;
-
         const indicadorActivo = document.querySelector('.indicadores .activo');
         if (indicadorActivo && indicadorActivo.nextSibling) {
           indicadorActivo.nextSibling.classList.add('activo');
