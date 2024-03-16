@@ -15,10 +15,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     scrollInterval = setInterval(() => {
       if (fila) {
-        // Desplazarse a la derecha por 1 pixel
-        fila.scrollLeft += 1;
+        fila.scrollLeft += 10;
       }
-    }, 8000);
+    }, 1000);
   }
   startAutoScroll();
 
