@@ -57,16 +57,18 @@ $(document).ready(function(){
   });
 
   function asignarEventoClickACard() {
+    var cardSeleccionada;
     $('.card').click(function() {
-      $(this).addClass('card-seleccionada card-centrada');
-      $(this).find('.descripcion').show();
+      cardSeleccionada = $(this);
+      cardSeleccionada.addClass('card-seleccionada card-centrada');
+      cardSeleccionada.find('.descripcion').show();
       let fondoOscuro = $('<div>').addClass('fondo-oscuro');
       $('body').append(fondoOscuro);
     });
   
     $('body').on('click', '.fondo-oscuro', function() {
-      $('.card-seleccionada').removeClass('card-seleccionada card-centrada');
-      $('.card-seleccionada .descripcion').hide();
+      cardSeleccionada.removeClass('card-seleccionada card-centrada');
+      cardSeleccionada.find('.descripcion').hide();
       $('.fondo-oscuro').remove();
     });
   }
