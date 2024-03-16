@@ -292,6 +292,7 @@ footer {
 
 /* --------------------------CONTENEDOR PRINCIPAL Y FLECHAS----------------------------------------*/
 .peliculas-recomendadas{
+  margin-top: 50px;
   margin-bottom: 70px;
 }
 .peliculas-recomendadas .contenedor-principal{
