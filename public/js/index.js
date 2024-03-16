@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     scrollInterval = setInterval(() => {
       if (fila) {
-        fila.scrollLeft += 10;
+        fila.scrollLeft += 20;
       }
     }, 2000);
   }
