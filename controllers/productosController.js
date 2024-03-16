@@ -24,8 +24,6 @@ module.exports = {
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
         var saltar = Number(req.query.saltar) || 0;
     
-       
-    
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             console.log('Error: marca o modelo no son números válidos');
             return res.redirect('/error');
@@ -38,13 +36,6 @@ module.exports = {
                     if (productos.length === 0) {
                         console.log('No se encontraron productos para estos filtros');
                     } else {
-                        productos.forEach(producto => {
-                            producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                            const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
-                            if (categoriaProducto) {
-                                producto.categoria = categoriaProducto.nombre;
-                            }
-                        });
                         console.log('Productos obtenidos:', productos);
     
                         const categoriasPromise = new Promise((resolve, reject) => {
@@ -80,6 +71,13 @@ module.exports = {
                         });
                         Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                             .then(([categoriasResult, marcasResult, modelosResult]) => {
+                                productos.forEach(producto => {
+                                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                                    const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
+                                    if (categoriaProducto) {
+                                        producto.categoria = categoriaProducto.nombre;
+                                    }
+                                });
                                 res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo });
                             })
                             .catch(error => {
@@ -94,17 +92,6 @@ module.exports = {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
-                    productos.forEach(producto => {
-                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                        const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
-                        if (categoriaProducto) {
-                            producto.categoria = categoriaProducto.nombre;
-                        }
-                    });
-                    let categorias = [];
-                    let marcas = [];
-                    let modelos = [];
-    
                     const categoriasPromise = new Promise((resolve, reject) => {
                         producto.obtenerCategorias(conexion, (error, result) => {
                             if (error) reject(error);
@@ -138,7 +125,13 @@ module.exports = {
                     });
                     Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                         .then(([categoriasResult, marcasResult, modelosResult]) => {
-                            // Renderizar la vista con los productos, categorías, marcas y modelos
+                            productos.forEach(producto => {
+                                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                                const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
+                                if (categoriaProducto) {
+                                    producto.categoria = categoriaProducto.nombre;
+                                }
+                            });
                             res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo });
                         })
                         .catch(error => {
