@@ -364,7 +364,7 @@ footer {
 }
 .tarjeta-texto{
   position: absolute;
-  display: none ;
+  display: block;
   top: 0;
   bottom: 0;
   right: 0;
