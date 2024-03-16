@@ -304,7 +304,7 @@ footer {
 .peliculas-recomendadas .contenedor-principal .flecha-derecha{
   position: absolute;
   border: none;
-  background: rgba(0, 63, 125, 0.7);
+  background: rgba(0, 63, 125, 0.8);
   border-radius: 10px;
   background-size: 50px 50px;
   animation: pulsar 2s infinite;
@@ -322,7 +322,7 @@ footer {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.2);
+    transform: scale(1.1);
   }
   100% {
     transform: scale(1);
