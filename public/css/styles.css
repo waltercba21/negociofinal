@@ -317,6 +317,10 @@ footer {
   z-index: 500;
   transition: .2s ease all;
 }
+.peliculas-recomendadas .contenedor-principal .flecha-izquierda i,
+.peliculas-recomendadas .contenedor-principal .flecha-derecha i {
+  font-size: 30px; 
+}
 @keyframes pulsar {
   0% {
     transform: scale(1);
