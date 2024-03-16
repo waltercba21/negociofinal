@@ -99,19 +99,3 @@ function toggleMenu() {
 function abrirMapa() {
   window.open("https://maps.app.goo.gl/c6bik6TL7uBQP3KZ8", "_blank");
 }
-
-function startAutoScroll() {
-  const fila = document.querySelector('.contenedor-carrousel');
-  // Detener el desplazamiento automático si ya está en marcha
-  if (scrollInterval) {
-    clearInterval(scrollInterval);
-  }
-
-  // Comenzar a desplazarse automáticamente cada 2000 milisegundos (2 segundos)
-  scrollInterval = setInterval(() => {
-    if (fila) {
-      // Desplazarse a la derecha por 1 pixel
-      fila.scrollLeft += 1;
-    }
-  }, 2000);
-}
