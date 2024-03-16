@@ -40,8 +40,6 @@ $(document).ready(function(){
             '<h6 class="categoria">' + producto.categoria + '</h6>' +
             '</div>' +
             '<hr>' +
-            '<div class="descripcion" style="display: none;">' + producto.descripcion + '</div>' +
-            '<hr>' +
             '<div class="precio-producto">' +
             '<p class="precio">$' + producto.precio + '</p>' +
             '</div>' +
@@ -57,18 +55,14 @@ $(document).ready(function(){
   });
 
   function asignarEventoClickACard() {
-    var cardSeleccionada;
     $('.card').click(function() {
-      cardSeleccionada = $(this);
-      cardSeleccionada.addClass('card-seleccionada card-centrada');
-      cardSeleccionada.find('.descripcion').show();
+      $(this).addClass('card-seleccionada');
       let fondoOscuro = $('<div>').addClass('fondo-oscuro');
       $('body').append(fondoOscuro);
     });
-  
+
     $('body').on('click', '.fondo-oscuro', function() {
-      cardSeleccionada.removeClass('card-seleccionada card-centrada');
-      cardSeleccionada.find('.descripcion').hide();
+      $('.card-seleccionada').removeClass('card-seleccionada');
       $('.fondo-oscuro').remove();
     });
   }
