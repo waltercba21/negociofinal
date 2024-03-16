@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         // Desplazarse a la derecha por 1 pixel
         fila.scrollLeft += 1;
       }
-    }, 2000);
+    }, 8000);
   }
   startAutoScroll();
 
