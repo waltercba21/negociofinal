@@ -322,7 +322,7 @@ footer {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.4);
   }
   100% {
     transform: scale(1);
@@ -330,7 +330,7 @@ footer {
 }
 .peliculas-recomendadas .contenedor-principal .flecha-izquierda:hover,
 .peliculas-recomendadas .contenedor-principal .flecha-derecha:hover{
-  background: linear-gradient(45deg, rgba(32, 195, 3, 0.9) 25%, transparent 25%, transparent 50%, rgba(242, 0, 0, 0.9) 50%, rgba(224, 239, 1, 0.9) 75%, transparent 75%, transparent);
+  background: linear-gradient(45deg, rgba(11, 11, 11, 0.9) 25%, transparent 25%, transparent 50%, rgba(11, 11, 11, 0.9) 50%, rgba(109, 109, 109, 0.9) 75%, transparent 75%, transparent);
 }
 
 .peliculas-recomendadas .contenedor-principal .flecha-izquierda{
