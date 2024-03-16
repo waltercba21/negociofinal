@@ -307,7 +307,7 @@ footer {
   background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent);
   font-size: 40px;
   background-size: 50px 50px;
-  animation: gradient 2s linear infinite;
+  animation: pulsar 2s infinite;
   height: 50%;
   top: calc(50% - 25%);
   line-height: 40px;
@@ -317,13 +317,16 @@ footer {
   z-index: 500;
   transition: .2s ease all;
 }
-@keyframes gradient {
+@keyframes pulsar {
   0% {
-    background-position: 0 0;
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
   }
   100% {
-    background-position: 50px 50px;
-  } 
+    transform: scale(1);
+  }
 }
 .peliculas-recomendadas .contenedor-principal .flecha-izquierda:hover,
 .peliculas-recomendadas .contenedor-principal .flecha-derecha:hover{
