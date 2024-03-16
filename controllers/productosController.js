@@ -678,7 +678,19 @@ buscar: function(req, res) {
         return;
       }
       console.log("Productos encontrados: ", productos);
-      res.json(productos);
+      
+      // Obtener las categorías
+      producto.obtenerCategorias(conexion, function(error, categorias) {
+        if (error) {
+          console.error('Error al obtener las categorías:', error);
+          res.status(500).send('Hubo un error al obtener las categorías');
+          return;
+        }
+        console.log("Categorías obtenidas: ", categorias);
+        
+        // Agregar las categorías a la respuesta
+        res.json({ productos: productos, categorias: categorias });
+      });
     });
 },
 }
