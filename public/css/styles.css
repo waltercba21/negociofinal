@@ -311,8 +311,8 @@ footer {
   height: 60%; 
   top: calc(50% - 30%); 
   line-height: 60px; 
-  width: 60px;
-  color: #fff;
+  width: 40px;
+  color: #d32f2f;
   cursor: pointer;
   z-index: 500;
   transition: .2s ease all;
