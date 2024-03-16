@@ -49,19 +49,23 @@ $(document).ready(function(){
             '</div>';
           $('#contenedor-productos').append(productoHtml);
         });
+        asignarEventoClickACard();
       }
     });
   });
-});
-$(document).ready(function() {
-  $('.card').on('click', function() {
-    $(this).addClass('card-seleccionada');
-    let fondoOscuro = $('<div>').addClass('fondo-oscuro');
-    $('body').append(fondoOscuro);
-  });
 
-  $('body').on('click', '.fondo-oscuro', function() {
-    $('.card-seleccionada').removeClass('card-seleccionada');
-    $('.fondo-oscuro').remove();
-  });
+  function asignarEventoClickACard() {
+    $('.card').click(function() {
+      $(this).addClass('card-seleccionada');
+      let fondoOscuro = $('<div>').addClass('fondo-oscuro');
+      $('body').append(fondoOscuro);
+    });
+
+    $('body').on('click', '.fondo-oscuro', function() {
+      $('.card-seleccionada').removeClass('card-seleccionada');
+      $('.fondo-oscuro').remove();
+    });
+  }
+
+  asignarEventoClickACard();
 });
