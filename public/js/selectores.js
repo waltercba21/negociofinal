@@ -53,23 +53,4 @@ $(document).ready(function(){
       }
     });
   });
-
-  function asignarEventoClickACard() {
-    $('.card').off('click').on('click', function() {
-      let cardCopy = $(this).clone(true);
-      cardCopy.addClass('card-seleccionada');
-      let fondoOscuro = $('<div>').addClass('fondo-oscuro');
-      $('body').append(cardCopy); // Agrega la tarjeta clonada antes del fondo oscuro
-      $('body').append(fondoOscuro);
-    });
-  
-    $('body').off('click', '.fondo-oscuro').on('click', '.fondo-oscuro', function() {
-      $('.card-seleccionada').remove();
-      $('.fondo-oscuro').remove();
-    });
-  }
-  // Llama a la función después de que se hayan agregado todas las tarjetas de producto al DOM
-  $(document).ajaxStop(function() {
-    asignarEventoClickACard();
-  });
 });
