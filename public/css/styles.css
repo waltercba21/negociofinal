@@ -413,33 +413,13 @@ background: rgba(0, 63, 125, 0.8);
 
 }
 
-.contenedor-productos {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+
 .card {
   position: relative;
   /* Resto de estilos de .card */
 }
 
-.card-seleccionada {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(1.2);
-  z-index: 1000;
-}
 
-.card-centrada {
-  width: 80% !important;
-  height: 80% !important;
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  z-index: 1000 !important;
-}
 
 .card-ultimos {
   width: 150px;
@@ -931,8 +911,34 @@ background: rgba(0, 63, 125, 0.8);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-gap: 10px;
-
 }
+.card-seleccionada {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1.2);
+  z-index: 1000;
+}
+
+.card-centrada {
+  width: 80% !important;
+  height: 80% !important;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1000 !important;
+}
+.fondo-oscuro {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 500;
+}
+
 .card {
   position: relative;
   width: 350px;
@@ -1040,15 +1046,7 @@ background: rgba(0, 63, 125, 0.8);
   background-color: #0056b3;
 }
 
-.fondo-oscuro {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 500;
-}
+
 /*----------------------- Estilos para la página de carrito------------------------ */
 
 /* Estilos generales */
