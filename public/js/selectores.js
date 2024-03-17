@@ -55,18 +55,18 @@ $(document).ready(function(){
   });
 
   function asignarEventoClickACard() {
-    $('.card').click(function() {
-      let cardCopy = $(this).clone();
+    $('.card').off('click').on('click', function() {
+      let cardCopy = $(this).clone(true);
       cardCopy.addClass('card-seleccionada');
       let fondoOscuro = $('<div>').addClass('fondo-oscuro');
       $('body').append(fondoOscuro);
       $('body').append(cardCopy);
     });
   
-    $('body').on('click', '.fondo-oscuro', function() {
+    $('body').off('click', '.fondo-oscuro').on('click', '.fondo-oscuro', function() {
       $('.card-seleccionada').remove();
       $('.fondo-oscuro').remove();
     });
   }
   asignarEventoClickACard();
-});
+}); 
