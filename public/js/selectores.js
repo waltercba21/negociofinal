@@ -56,13 +56,15 @@ $(document).ready(function(){
 
   function asignarEventoClickACard() {
     $('.card').click(function() {
-      $(this).addClass('card-seleccionada');
+      let cardCopy = $(this).clone();
+      cardCopy.addClass('card-seleccionada');
       let fondoOscuro = $('<div>').addClass('fondo-oscuro');
       $('body').append(fondoOscuro);
+      $('body').append(cardCopy);
     });
-
+  
     $('body').on('click', '.fondo-oscuro', function() {
-      $('.card-seleccionada').removeClass('card-seleccionada');
+      $('.card-seleccionada').remove();
       $('.fondo-oscuro').remove();
     });
   }
