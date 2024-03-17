@@ -59,8 +59,8 @@ $(document).ready(function(){
       let cardCopy = $(this).clone(true);
       cardCopy.addClass('card-seleccionada');
       let fondoOscuro = $('<div>').addClass('fondo-oscuro');
+      $('body').append(cardCopy); // Agrega la tarjeta clonada antes del fondo oscuro
       $('body').append(fondoOscuro);
-      $('body').append(cardCopy);
     });
   
     $('body').off('click', '.fondo-oscuro').on('click', '.fondo-oscuro', function() {
