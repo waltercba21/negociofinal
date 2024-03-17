@@ -68,5 +68,8 @@ $(document).ready(function(){
       $('.fondo-oscuro').remove();
     });
   }
-  asignarEventoClickACard();
-}); 
+  // Llama a la función después de que se hayan agregado todas las tarjetas de producto al DOM
+  $(document).ajaxStop(function() {
+    asignarEventoClickACard();
+  });
+});
