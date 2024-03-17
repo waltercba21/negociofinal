@@ -68,6 +68,4 @@ $(document).ready(function(){
       $('.fondo-oscuro').remove();
     });
   }
-
-  asignarEventoClickACard();
 });

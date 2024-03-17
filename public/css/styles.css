@@ -915,6 +915,14 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
   margin-bottom: 10%;
 }
+.card {
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+.card:hover {
+  transform: scale(1.05); 
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3), 0 18px 18px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
 .card-seleccionada {
   position: fixed;
   top: 50%;
@@ -943,16 +951,6 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 
-
-.card {
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
-
-.card:hover {
-  transform: scale(1.05); /* Agrandar la tarjeta */
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3), 0 18px 18px rgba(0, 0, 0, 0.22);
-  cursor: pointer;
-}
 
 .card a {
   display: block;
