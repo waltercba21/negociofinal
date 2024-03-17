@@ -797,10 +797,7 @@ background: rgba(0, 63, 125, 0.8);
 .botones-crear button{
   margin-right: 80px;
 } 
-
-
 /*---------------------------Todos los Productos -------------------------------*/
-
 .titulo-principal{
   text-align: center;
   color: #1F487E;
@@ -887,18 +884,15 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.5);
   margin-bottom: 10px;
 }
-
 .form-group-crear {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-bottom: 20px; 
 }
-
 .form-group-crear label {
   margin-bottom: 10px; 
 }
-
 .contenedor-productos{
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -930,28 +924,6 @@ background: rgba(0, 63, 125, 0.8);
   transform: translate(-50%, -50%) scale(1.2);
   z-index: 1000;
 }
-
-.card-centrada {
-  width: 80% !important;
-  height: 80% !important;
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  z-index: 1000 !important;
-}
-.fondo-oscuro {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 500;
-}
-
-
-
 .card a {
   display: block;
   width: 100%;
@@ -961,7 +933,6 @@ background: rgba(0, 63, 125, 0.8);
   left: 0;
   z-index: 1;
 }
-
 .cover__card{
   display: flex; 
   justify-content: center;
@@ -970,7 +941,6 @@ background: rgba(0, 63, 125, 0.8);
   border-radius: 14px;
   overflow: hidden;
 }
-
 .cover__card img{
   height: 200px;
   width: auto; 
