@@ -52,7 +52,8 @@ $(document).ready(function(){
       }
     });
   });
-  $('.cover__card img').click(function(){
+
+  $('body').on('click', '.cover__card img', function(){
     var card = $(this).closest('.card');
     card.addClass('card-ampliada');
     card.find('.descripcion').show();
