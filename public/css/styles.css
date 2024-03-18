@@ -897,14 +897,16 @@ background: rgba(0, 63, 125, 0.8);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-gap: 10px;
+  justify-items: center; 
 }
+
 .card {
   position: relative;
   padding: 20px;
   background: #ffffff;
   border-radius: 20px;
   overflow: hidden;
-  margin: 10 auto;
+  margin: 10px auto; 
   box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
   margin-bottom: 10%;
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
