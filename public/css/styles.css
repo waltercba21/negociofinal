@@ -926,6 +926,7 @@ background: rgba(0, 63, 125, 0.8);
   height: auto;
   padding: 20px;
   transform: translate(-50%, -50%) scale(1.5);
+  transform-origin: top left;
   z-index: 1000; 
 }
 
