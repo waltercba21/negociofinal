@@ -911,9 +911,9 @@ background: rgba(0, 63, 125, 0.8);
 }
 .card {
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  transform-origin: center center;
 }
 .card:hover {
-  transform: scale(1.05); 
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3), 0 18px 18px rgba(0, 0, 0, 0.22);
   cursor: pointer;
 }
