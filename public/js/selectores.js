@@ -49,8 +49,18 @@ $(document).ready(function(){
             '</div>';
           $('#contenedor-productos').append(productoHtml);
         });
-        asignarEventoClickACard();
       }
     });
+  });
+  $('.cover__card img').click(function(){
+    var card = $(this).closest('.card');
+    card.addClass('card-ampliada');
+    card.find('.descripcion').show();
+    $('body').append('<div class="fondo-oscuro"></div>');
+  });
+
+  $('body').on('click', '.fondo-oscuro', function(){
+    $('.card-ampliada').removeClass('card-ampliada').find('.descripcion').hide();
+    $(this).remove();
   });
 });
