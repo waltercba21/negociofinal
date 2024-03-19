@@ -711,9 +711,13 @@ generarPDF: function (req, res) {
         }
         // Agregar los productos al PDF
         productos.forEach(producto => {
-            doc.text(producto.nombre);
-            doc.text(producto.descripcion);
-            doc.text(producto.precio);
+            doc.text(`Nombre: ${producto.nombre}`, {
+                underline: true,
+                continued: true
+            });
+            doc.text(`   Precio: ${producto.precio}`, {
+                align: 'right'
+            });
             doc.moveDown();
         });
         // Finalizar el documento PDF
