@@ -711,10 +711,14 @@ generarPDF: function (req, res) {
         }
         // Agregar los productos al PDF
         productos.forEach(producto => {
-          
             var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
-            doc.text(`${producto.nombre}   ${precioFormateado}`, {
+            // Escribir el nombre del producto
+            doc.text(producto.nombre, 50, doc.y, {
                 align: 'left'
+            });
+            // Escribir el precio del producto
+            doc.text(precioFormateado, 50, doc.y, {
+                align: 'right'
             });
             doc.moveDown();
         });
