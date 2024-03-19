@@ -911,6 +911,9 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 10%;
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   transform-origin: center center;
+  /* Asegúrate de que todas las tarjetas tengan el mismo tamaño */
+  width: 300px;
+  height: 400px;
 }
 .card:hover {
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3), 0 18px 18px rgba(0, 0, 0, 0.22);
@@ -924,8 +927,8 @@ background: rgba(0, 63, 125, 0.8);
   max-width: 90vw;
   height: auto;
   padding: 20px;
+  /* Asegúrate de que la tarjeta ampliada se muestre en el centro de la pantalla */
   transform: translate(-50%, -50%) scale(1.5);
-  transform-origin: center center;
   z-index: 1000; 
 }
 .fondo-oscuro {
