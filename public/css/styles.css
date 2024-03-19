@@ -925,9 +925,8 @@ background: rgba(0, 63, 125, 0.8);
   max-width: 90vw;
   height: auto;
   padding: 20px;
-  /* Asegúrate de que la tarjeta ampliada se muestre en el centro de la pantalla */
   transform: translate(-50%, -50%) scale(1.5);
-  transform-origin: top left; /* Cambiado de center center a top left */
+  transform-origin: center center; 
   z-index: 1000; 
 }
 .fondo-oscuro {
