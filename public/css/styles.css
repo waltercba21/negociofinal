@@ -899,7 +899,6 @@ background: rgba(0, 63, 125, 0.8);
   grid-gap: 10px;
   justify-items: center; 
 }
-
 .card {
   padding: 20px;
   background: #ffffff;
@@ -928,6 +927,7 @@ background: rgba(0, 63, 125, 0.8);
   padding: 20px;
   /* Asegúrate de que la tarjeta ampliada se muestre en el centro de la pantalla */
   transform: translate(-50%, -50%) scale(1.5);
+  transform-origin: top left; /* Cambiado de center center a top left */
   z-index: 1000; 
 }
 .fondo-oscuro {
