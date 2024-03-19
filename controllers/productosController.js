@@ -697,7 +697,7 @@ generarPDF: function (req, res) {
     // Obtener el ID del proveedor de los parámetros de consulta
     const proveedorId = req.query.proveedor;
     // Buscar los productos de este proveedor
-    producto.obtenerPorProveedor(conexion, proveedorId, function(error, productos) {
+    producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
         if (error) {
             console.log('Error al obtener productos:', error);
             return res.status(500).send('Error al generar el PDF');
