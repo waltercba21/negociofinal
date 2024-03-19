@@ -719,13 +719,9 @@ generarPDF: function (req, res) {
 
         var nombreProveedor = proveedor.nombre;
 
-        doc.on('pageAdded', () => {
-            // Título
-            doc.text(nombreProveedor, doc.page.width / 2, 50, {
-                align: 'center'
-            });
-            // Pie de página
-            doc.text('Pie de página', 50, doc.page.height - 50);
+        // Título
+        doc.text(nombreProveedor, doc.page.width / 2, 50, {
+            align: 'center'
         });
 
         producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
@@ -736,12 +732,10 @@ generarPDF: function (req, res) {
             // Agregar los productos al PDF
             productos.forEach(producto => {
                 var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
-                // Escribir el nombre del producto
+                // Escribir el nombre del producto y el precio en la misma línea
                 doc.text(producto.nombre, 50, doc.y, {
                     align: 'left'
-                });
-                // Escribir el precio del producto
-                doc.text(precioFormateado, doc.page.width - 50, doc.y, {
+                }).text(precioFormateado, doc.page.width - 50, doc.y, {
                     align: 'right'
                 });
                 doc.moveDown();
