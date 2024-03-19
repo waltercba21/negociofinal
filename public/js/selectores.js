@@ -58,10 +58,13 @@ $(document).ready(function(){
     card.addClass('card-ampliada');
     card.find('.descripcion').show();
     $('body').append('<div class="fondo-oscuro"></div>');
+    $('body').append(card); // Mover la tarjeta al cuerpo del documento
   });
-
+  
   $('body').on('click', '.fondo-oscuro', function(){
-    $('.card-ampliada').removeClass('card-ampliada').find('.descripcion').hide();
+    var card = $('.card-ampliada');
+    card.removeClass('card-ampliada').find('.descripcion').hide();
+    $('#contenedor-productos').append(card); // Mover la tarjeta de vuelta al contenedor
     $(this).remove();
   });
 });
