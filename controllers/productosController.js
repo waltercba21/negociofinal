@@ -736,11 +736,13 @@ generarPDF: function (req, res) {
             // Agregar los productos al PDF
             productos.forEach(producto => {
                 var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
+                // Guardar la posición actual del cursor
+                var currentY = doc.y;
                 // Escribir el nombre del producto
                 doc.fontSize(10)
-                   .text(producto.nombre, 50, doc.y);
-                // Escribir el precio en una nueva línea
-                doc.text(precioFormateado, doc.page.width - 150, doc.y, {
+                   .text(producto.nombre, 50, currentY);
+                // Escribir el precio en la misma línea
+                doc.text(precioFormateado, doc.page.width - 150, currentY, {
                        align: 'right'
                    });
                 doc.moveDown();
