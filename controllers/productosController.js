@@ -690,13 +690,17 @@ buscar: function(req, res) {
     });
 },
 generarPDF: function (req, res) {
+   
+ 
     // Crear un nuevo documento PDF
     var doc = new PDFDocument;
     // Crear un nuevo stream de blob
     var stream = doc.pipe(blobStream());
     // Obtener el ID del proveedor de los parámetros de consulta
-    const proveedorId = req.query.proveedor;
-    // Buscar los productos de este proveedor
+    const proveedorId = req.query.proveedor; 
+    if (!proveedorId) {
+        return res.status(400).send('No se ha proporcionado un ID de proveedor');
+    }
     producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
         if (error) {
             console.log('Error al obtener productos:', error);
