@@ -4,6 +4,7 @@ const producto = require('../models/producto')
 var borrar = require('fs');
 const PDFDocument = require('pdfkit');
 const blobStream  = require('blob-stream');
+var streamBuffers = require('stream-buffers');
 
 module.exports = {
     index : function (req,res){
@@ -690,12 +691,14 @@ buscar: function(req, res) {
     });
 },
 generarPDF: function (req, res) {
-   
- 
     // Crear un nuevo documento PDF
     var doc = new PDFDocument;
-    // Crear un nuevo stream de blob
-    var stream = doc.pipe(blobStream());
+    // Crear un nuevo buffer de stream
+    var buffer = new streamBuffers.WritableStreamBuffer({
+        initialSize: (1024 * 1024),   // empieza con 1 megabyte.
+        incrementAmount: (1024 * 1024) // crece en 1 megabyte cada vez.
+    });
+    doc.pipe(buffer);
     // Obtener el ID del proveedor de los parámetros de consulta
     const proveedorId = req.query.proveedor; 
     if (!proveedorId) {
@@ -716,11 +719,11 @@ generarPDF: function (req, res) {
         // Finalizar el documento PDF
         doc.end();
         // Cuando el PDF se ha generado, enviarlo como respuesta
-        stream.on('finish', function() {
-            const blob = stream.toBlob('application/pdf');
+        buffer.on('finish', function() {
+            const pdfData = buffer.getContents();
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-            res.send(blob);
+            res.send(pdfData);
         });
     });
 }
