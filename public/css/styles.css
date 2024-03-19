@@ -900,6 +900,7 @@ background: rgba(0, 63, 125, 0.8);
   justify-items: center; 
 }
 .card {
+  position: relative !important;
   padding: 20px;
   background: #ffffff;
   border-radius: 20px;
@@ -909,8 +910,7 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 10%;
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   transform-origin: center center;
-  /* Asegúrate de que todas las tarjetas tengan el mismo tamaño */
-  width: 280px; /* Reduce el ancho de las tarjetas */
+  width: 280px; 
   height: 400px;
 }
 
@@ -920,7 +920,6 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .card-ampliada {
-  position: fixed;
   top: 50%;
   left: 50%;
   width: auto;
