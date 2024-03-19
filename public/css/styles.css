@@ -898,7 +898,7 @@ background: rgba(0, 63, 125, 0.8);
   grid-template-columns: repeat(3, 1fr);
   grid-gap: 20px; 
   justify-items: center; 
-  margin:20px;
+  margin:30px;
 }
 .card {
   padding: 20px;
