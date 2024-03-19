@@ -900,7 +900,6 @@ background: rgba(0, 63, 125, 0.8);
   justify-items: center; 
 }
 .card {
-  position: relative !important;
   padding: 20px;
   background: #ffffff;
   border-radius: 20px;
