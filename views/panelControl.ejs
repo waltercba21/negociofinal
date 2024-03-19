@@ -11,25 +11,18 @@
     <a href="/productos/modificarPorProveedor" class="btn btn-primary" type="button">Modificar producto por proveedor</a>
     <br/>
     <br/>
-<!-- Botón para generar PDF -->
-<div class="form-control">
-  <form method="get" action="/productos/generarPDF">
-    <input type="hidden" name="proveedor" value="<%= proveedorSeleccionado %>">
-    <button type="submit" class="btn btn-primary">Generar PDF</button>
-  </form>
-</div>
-
-<div class="form-control">
-  <form method="get" action="/productos/panelControl">
-    <label for="proveedor">Seleccionar Proveedor</label>
-    <select name="proveedor" id="proveedor" onchange="this.form.submit()">
-      <option value="">Mostrar Todos</option>
-      <% proveedores.forEach(proveedor => { %>
-        <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
-      <% }); %>
-    </select>
-  </form>
-</div>
+    <div class="form-control">
+      <form method="get" action="/productos/generarPDF">
+        <label for="proveedor">Seleccionar Proveedor</label>
+        <select name="proveedor" id="proveedor">
+          <option value="">Mostrar Todos</option>
+          <% proveedores.forEach(proveedor => { %>
+            <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
+          <% }); %>
+        </select>
+        <button type="submit" class="btn btn-primary">Generar PDF</button>
+      </form>
+    </div>
 
 
 <div class="form-control">
