@@ -896,7 +896,7 @@ background: rgba(0, 63, 125, 0.8);
 .contenedor-productos{
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-gap: 10px;
+  grid-gap: 20px; 
   justify-items: center; 
 }
 .card {
@@ -910,13 +910,15 @@ background: rgba(0, 63, 125, 0.8);
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   transform-origin: center center;
   /* Asegúrate de que todas las tarjetas tengan el mismo tamaño */
-  width: 300px;
+  width: 280px; /* Reduce el ancho de las tarjetas */
   height: 400px;
 }
+
 .card:hover {
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3), 0 18px 18px rgba(0, 0, 0, 0.22);
   cursor: pointer;
 }
+
 .card-ampliada {
   top: 50%;
   left: 50%;
