@@ -741,7 +741,7 @@ generarPDF: function (req, res) {
                    .text(producto.nombre, 50, doc.y, {
                        continued: true
                    })
-                   .text(precioFormateado, doc.page.width - 50, doc.y, {
+                   .text(precioFormateado, doc.page.width - 100, doc.y, {
                        align: 'right'
                    });
                 doc.moveDown();
