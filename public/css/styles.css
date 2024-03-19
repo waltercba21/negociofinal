@@ -912,7 +912,6 @@ background: rgba(0, 63, 125, 0.8);
   width: 280px; 
   height: 400px;
 }
-
 .card:hover {
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3), 0 18px 18px rgba(0, 0, 0, 0.22);
   cursor: pointer;
@@ -993,7 +992,6 @@ background: rgba(0, 63, 125, 0.8);
 .cantidad-producto input{
   margin-bottom: 10px;
 }
-
 .cantidad-producto .cantidad {
   width: 50px;
   padding: 5px;
