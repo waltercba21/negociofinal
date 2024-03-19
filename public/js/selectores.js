@@ -55,16 +55,18 @@ $(document).ready(function(){
 
   $('body').on('click', '.cover__card img', function(){
     var card = $(this).closest('.card');
-    card.addClass('card-ampliada');
-    card.find('.descripcion').show();
+    var clonedCard = card.clone(true); // Clona la tarjeta, incluyendo los manejadores de eventos
+    clonedCard.addClass('card-ampliada');
+    clonedCard.find('.descripcion').show();
     $('body').append('<div class="fondo-oscuro"></div>');
-    $('body').append(card); // Mover la tarjeta al cuerpo del documento
+    $('body').append(clonedCard); // Mover la tarjeta clonada al cuerpo del documento
+    card.hide(); // Oculta la tarjeta original
   });
   
   $('body').on('click', '.fondo-oscuro', function(){
     var card = $('.card-ampliada');
-    card.removeClass('card-ampliada').find('.descripcion').hide();
-    $('#contenedor-productos').append(card); // Mover la tarjeta de vuelta al contenedor
+    card.remove(); // Elimina la tarjeta clonada
+    $('.card').show(); // Muestra todas las tarjetas originales
     $(this).remove();
   });
 });
