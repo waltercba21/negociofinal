@@ -52,19 +52,21 @@ $(document).ready(function(){
       }
     });
   });
-
-  $('body').on('click', '.cover__card img', function(){
-    var card = $(this).closest('.card');
-    card.addClass('card-ampliada');
-    card.find('.descripcion').show();
-    $('body').append('<div class="fondo-oscuro"></div>');
-
+  function ajustarGrid() {
     // Cambia el layout del grid en función de si hay una tarjeta ampliada o no
     if ($('.card-ampliada').length) {
       $('#contenedor-productos').css('grid-template-columns', '1fr');
     } else {
       $('#contenedor-productos').css('grid-template-columns', 'repeat(3, 1fr)');
     }
+  }
+
+  $('body').on('click', '.cover__card img', function(){
+    var card = $(this).closest('.card');
+    card.addClass('card-ampliada');
+    card.find('.descripcion').show();
+    $('body').append('<div class="fondo-oscuro"></div>');
+    setTimeout(ajustarGrid, 0);  // Llama a ajustarGrid después de que se haya renderizado la tarjeta ampliada
   });
   
   $('body').on('click', '.fondo-oscuro', function(){
@@ -72,12 +74,6 @@ $(document).ready(function(){
     card.removeClass('card-ampliada');
     card.find('.descripcion').hide();
     $(this).remove();
-
-    // Cambia el layout del grid en función de si hay una tarjeta ampliada o no
-    if ($('.card-ampliada').length) {
-      $('#contenedor-productos').css('grid-template-columns', '1fr');
-    } else {
-      $('#contenedor-productos').css('grid-template-columns', 'repeat(3, 1fr)');
-    }
+    setTimeout(ajustarGrid, 0);  // Llama a ajustarGrid después de que se haya renderizado la tarjeta reducida
   });
 });
