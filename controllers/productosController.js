@@ -2,6 +2,8 @@ const conexion = require('../config/conexion')
 const pool = require('../config/conexion');
 const producto = require('../models/producto')
 var borrar = require('fs');
+const PDFDocument = require('pdfkit');
+const blobStream  = require('blob-stream');
 
 module.exports = {
     index : function (req,res){
@@ -687,4 +689,33 @@ buscar: function(req, res) {
       });
     });
 },
+generarPDF: function (req, res) {
+    // Crear un nuevo documento PDF
+    var doc = new PDFDocument;
+    // Crear un nuevo stream de blob
+    var stream = doc.pipe(blobStream());
+    // Obtener el ID del proveedor de los parámetros de consulta
+    const proveedorId = req.query.proveedor;
+    // Buscar los productos de este proveedor
+    producto.obtenerPorProveedor(conexion, proveedorId, function(error, productos) {
+        if (error) {
+            console.log('Error al obtener productos:', error);
+            return res.status(500).send('Error al generar el PDF');
+        }
+        // Agregar los productos al PDF
+        productos.forEach(producto => {
+            doc.text(producto.nombre);
+            doc.text(producto.descripcion);
+            doc.text(producto.precio);
+            doc.moveDown();
+        });
+        // Finalizar el documento PDF
+        doc.end();
+        // Cuando el PDF se ha generado, enviarlo como respuesta
+        stream.on('finish', function() {
+            const url = stream.toBlobURL('application/pdf');
+            res.redirect(url);
+        });
+    });
+}
 }

@@ -11,7 +11,6 @@
     <a href="/productos/modificarPorProveedor" class="btn btn-primary" type="button">Modificar producto por proveedor</a>
     <br/>
     <br/>
-    <!-- Formulario para seleccionar el proveedor -->
 
 <div class="form-control">
   <form method="get" action="/productos/panelControl">
@@ -22,6 +21,14 @@
         <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
       <% }); %>
     </select>
+  </form>
+</div>
+
+<!-- Botón para generar PDF -->
+<div class="form-control">
+  <form method="get" action="/productos/generarPDF">
+    <input type="hidden" name="proveedor" value="<%= proveedorSeleccionado %>">
+    <button type="submit" class="btn btn-primary">Generar PDF</button>
   </form>
 </div>
 

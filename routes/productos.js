@@ -42,4 +42,8 @@ router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
 router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
 router.post('/carrito/vaciar', productosController.vaciarCarrito);
 router.post('/carrito/comprar', productosController.mostrarCompra);
+
+// Nueva ruta para generar PDF
+router.get('/generarPDF', productosController.generarPDF);
+
 module.exports = router;
