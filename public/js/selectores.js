@@ -56,7 +56,9 @@ $(document).ready(function(){
     var card = $(this).closest('.card');
     card.addClass('card-ampliada');
     card.find('.descripcion').show();
-    $('body').append('<div class="fondo-oscuro"></div>');
+    if ($('.fondo-oscuro').length === 0) {  
+      $('body').append('<div class="fondo-oscuro"></div>');
+    }
   });
   
   $('body').on('click', '.fondo-oscuro', function(){
