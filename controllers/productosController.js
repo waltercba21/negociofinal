@@ -704,33 +704,59 @@ generarPDF: function (req, res) {
     if (!proveedorId) {
         return res.status(400).send('No se ha proporcionado un ID de proveedor');
     }
-    producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
+
+    // Obtener el nombre del proveedor
+    producto.obtenerProveedores(conexion, function(error, proveedores) {
         if (error) {
-            console.log('Error al obtener productos:', error);
+            console.log('Error al obtener proveedores:', error);
             return res.status(500).send('Error al generar el PDF');
         }
-        // Agregar los productos al PDF
-        productos.forEach(producto => {
-            var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
-            // Escribir el nombre del producto
-            doc.text(producto.nombre, 50, doc.y, {
-                align: 'left'
+
+        var proveedor = proveedores.find(p => p.id == proveedorId);
+        if (!proveedor) {
+            return res.status(400).send('Proveedor no encontrado');
+        }
+
+        var nombreProveedor = proveedor.nombre;
+
+        doc.on('pageAdded', () => {
+            // Título
+            doc.text(nombreProveedor, doc.page.width / 2, 50, {
+                align: 'center'
             });
-            // Escribir el precio del producto
-            doc.text(precioFormateado, 50, doc.y, {
-                align: 'right'
+            // Pie de página
+            doc.text('Pie de página', 50, doc.page.height - 50);
+        });
+
+        producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
+            if (error) {
+                console.log('Error al obtener productos:', error);
+                return res.status(500).send('Error al generar el PDF');
+            }
+            // Agregar los productos al PDF
+            productos.forEach(producto => {
+                var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
+                // Escribir el nombre del producto
+                doc.text(producto.nombre, 50, doc.y, {
+                    align: 'left'
+                });
+                // Escribir el precio del producto
+                doc.text(precioFormateado, doc.page.width - 50, doc.y, {
+                    align: 'right'
+                });
+                doc.moveDown();
             });
-            doc.moveDown();
+            // Finalizar el documento PDF
+            doc.end();
         });
-        // Finalizar el documento PDF
-        doc.end();
-        // Cuando el PDF se ha generado, enviarlo como respuesta
-        buffer.on('finish', function() {
-            const pdfData = buffer.getContents();
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-            res.send(pdfData);
-        });
+    });
+
+    // Cuando el PDF se ha generado, enviarlo como respuesta
+    buffer.on('finish', function() {
+        const pdfData = buffer.getContents();
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
+        res.send(pdfData);
     });
 }
 }
