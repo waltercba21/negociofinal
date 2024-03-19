@@ -720,9 +720,13 @@ generarPDF: function (req, res) {
         var nombreProveedor = proveedor.nombre;
 
         // Título
-        doc.text(nombreProveedor, doc.page.width / 2, 50, {
-            align: 'center'
-        });
+        doc.fontSize(20)
+           .text(nombreProveedor, 0, 50, {
+               align: 'center',
+               width: doc.page.width
+           });
+
+        doc.moveDown(2); // Agrega espacio debajo del título
 
         producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
             if (error) {
@@ -733,11 +737,13 @@ generarPDF: function (req, res) {
             productos.forEach(producto => {
                 var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
                 // Escribir el nombre del producto y el precio en la misma línea
-                doc.text(producto.nombre, 50, doc.y, {
-                    align: 'left'
-                }).text(precioFormateado, doc.page.width - 50, doc.y, {
-                    align: 'right'
-                });
+                doc.fontSize(10)
+                   .text(producto.nombre, 50, doc.y, {
+                       continued: true
+                   })
+                   .text(precioFormateado, doc.page.width - 50, doc.y, {
+                       align: 'right'
+                   });
                 doc.moveDown();
             });
             // Finalizar el documento PDF
