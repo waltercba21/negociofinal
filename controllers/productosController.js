@@ -713,8 +713,10 @@ generarPDF: function (req, res) {
         doc.end();
         // Cuando el PDF se ha generado, enviarlo como respuesta
         stream.on('finish', function() {
-            const url = stream.toBlobURL('application/pdf');
-            res.redirect(url);
+            const blob = stream.toBlob('application/pdf');
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
+            res.send(blob);
         });
     });
 }
