@@ -861,11 +861,11 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold; 
   border: none;
 }
-#categoria_id option {
+#categoria_id #id_marca #modelo_id option {
   font-weight: bold;
 }
-#categoria_id option:hover {
-  background-color: #f0f0f0;
+#categoria_id #id_marca #modelo_id option:hover {
+  background-color:#007BFF;
 }
 .boton-buscar {
   display: flex;
