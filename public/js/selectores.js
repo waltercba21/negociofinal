@@ -39,6 +39,9 @@ $(document).ready(function(){
             '<div class="categoria-producto">' +
             '<h6 class="categoria">' + producto.categoria + '</h6>' +
             '</div>' +
+            '<div class="descripcion" style="display: none;">' +
+            producto.descripcion +
+            '</div>' +
             '<hr>' +
             '<div class="precio-producto">' +
             '<p class="precio">$' + producto.precio + '</p>' +
