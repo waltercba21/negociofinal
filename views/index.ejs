@@ -88,18 +88,19 @@
       <h2>Últimos productos agregados</h2>
       <div class="contenedor-productos">
           <% productos.forEach(function(producto) { %>
-              <div class="card card-ultimos">
-                <div class="cover__card">
-                  <img src="../../images/<%= producto.imagen %>" alt="<%= producto.nombre %>">
-                </div>
-                <div class="titulo-producto">
-                  <h3 class="nombre"><%= producto.nombre %></h3>
-                </div>
-                <hr>
-                <div class="precio-producto">
-                  <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio) %></p>
+            <div class="card card-ultimos">
+              <div class="cover__card">
+                <img src="../../images/<%= producto.imagen %>" alt="<%= producto.nombre %>">
               </div>
+              <div class="titulo-producto">
+                <h3 class="nombre"><%= producto.nombre %></h3>
+                <p class="categoria"><%= producto.categoria %></p> 
               </div>
+              <hr>
+              <div class="precio-producto">
+                <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio) %></p>
+              </div>
+            </div>
           <% }); %>
       </div>
     </div>
