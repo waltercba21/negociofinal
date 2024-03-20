@@ -1439,6 +1439,10 @@ background: rgba(0, 63, 125, 0.8);
   justify-content: center; 
   font-size: 14px;
 }
+.pelicula{
+  height: 100%;
+  object-fit: cover; 
+}
 .imagen-carrusel {
   height: 100%;
   object-fit: cover; 
