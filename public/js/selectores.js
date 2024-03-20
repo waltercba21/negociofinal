@@ -52,8 +52,8 @@ $(document).ready(function(){
       }
     });
   });
-  $('body').on('click', '.cover__card img', function(){
-    var card = $(this).closest('.card');
+  $('body').on('click', '.card', function(){
+    var card = $(this);
     card.addClass('card-ampliada');
     card.find('.descripcion').show();
     if ($('.fondo-oscuro').length === 0) {  
