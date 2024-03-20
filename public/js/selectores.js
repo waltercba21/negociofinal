@@ -58,7 +58,7 @@ $(document).ready(function(){
   $('body').on('click', '.card', function(){
     var card = $(this);
     card.addClass('card-ampliada');
-    card.find('.descripcion').show();
+    card.find('.descripcion').css('font-weight', 'bold').show();
     if ($('.fondo-oscuro').length === 0) {  
       $('body').append('<div class="fondo-oscuro"></div>');
     }
