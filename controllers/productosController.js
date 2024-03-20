@@ -759,5 +759,16 @@ generarPDF: function (req, res) {
         res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
         res.send(pdfData);
     });
-}
+},
+registrarEstadistica: function(req, res) {
+    const datosEstadistica = req.body; 
+    producto.registrarEstadistica(conexion, datosEstadistica, function(error, resultados) {
+      if (error) {
+        console.log('Error al registrar estadística:', error);
+        return res.status(500).send('Error al registrar la estadística');
+      } else {
+        res.render('estadisticas', { estadisticas: resultados });
+      }
+    });
+  },
 }

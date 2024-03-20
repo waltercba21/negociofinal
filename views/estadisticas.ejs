@@ -1,0 +1,12 @@
+<%- include ./layouts/head.ejs %>
+<%- include ./layouts/header.ejs %>
+<body class="body-login">
+<main>
+  <ul>
+    <% estadisticas.forEach(function(estadistica) { %>
+      <li><%= estadistica.producto_id %>: <%= estadistica.cantidad %></li>
+    <% }); %>
+  </ul>
+</main>
+<%- include ./layouts/footer.ejs %>
+</body>

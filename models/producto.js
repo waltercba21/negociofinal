@@ -5,14 +5,12 @@ module.exports ={
     }
     conexion.query('SELECT * FROM productos LIMIT ?,20', [saltar], funcion);
   },
-
   contar: function (conexion, funcion) {
     if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');
     }
     conexion.query('SELECT COUNT(*) AS total FROM productos', funcion);
   },
-
   insertar: function(conexion, datos, archivo, funcion){
   if (!archivo) {
     return funcion(new Error('No se proporcionó un archivo'));
@@ -52,15 +50,12 @@ module.exports ={
     });
   });
 },     
-
- retornarDatosId: function (conexion,id,funcion){
+  retornarDatosId: function (conexion,id,funcion){
         conexion.query('SELECT * FROM productos WHERE id = ? ',[id],funcion);
     },
-
   borrar: function (conexion,id,funcion){ 
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
-
   actualizar: function (conexion, datos, archivo, funcion) {
       let query = "UPDATE productos SET ";
       let params = [];
@@ -105,42 +100,36 @@ module.exports ={
           query += first ? "imagen=?" : ", imagen=?";
           params.push(archivo.filename);
       }
-  
       if (!datos.id) {
           return funcion(new Error('Los datos del producto deben incluir un ID'));
       }
       query += " WHERE id=?";
       params.push(datos.id);
-  
       conexion.query(query, params, funcion);
   },
-    
-    actualizarArchivo: function(conexion,datos,archivo,funcion){
+  actualizarArchivo: function(conexion,datos,archivo,funcion){
       if (archivo) {
         conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
       } else {
         funcion();
       }
     },
-insertarImagen: function(conexion, productoId, imagen, callback) {
+  insertarImagen: function(conexion, productoId, imagen, callback) {
   const query = 'INSERT INTO imagenes_producto (producto_id, ruta_imagen) VALUES (?, ?)';
   conexion.query(query, [productoId, imagen], callback);
 },
-obtenerUltimos: function (conexion, cantidad, funcion) {
+  obtenerUltimos: function (conexion, cantidad, funcion) {
   conexion.query('SELECT * FROM productos ORDER BY id DESC LIMIT ?', [cantidad], funcion);
 },
-obtenerImagenes: function(conexion, productoId, callback) {
+  obtenerImagenes: function(conexion, productoId, callback) {
   const query = 'SELECT * FROM imagenes_producto WHERE producto_id = ?';
   conexion.query(query, [productoId], callback);
 },
-
-// Borrar todas las imágenes de un producto
-borrarImagenes: function(conexion, productoId, callback) {
+  borrarImagenes: function(conexion, productoId, callback) {
   const query = 'DELETE FROM imagenes_producto WHERE producto_id = ?';
   conexion.query(query, [productoId], callback);
 },
-  
-      obtenerCarrito: function (conexion, usuarioId, funcion) {
+  obtenerCarrito: function (conexion, usuarioId, funcion) {
         const query = `
             SELECT carritos.*, productos.nombre AS nombre
             FROM carritos 
@@ -149,34 +138,27 @@ borrarImagenes: function(conexion, productoId, callback) {
         `;
         conexion.query(query, [usuarioId], funcion);
     },
-     
-      agregarAlCarrito: function (usuarioId, productoId, cantidad, imagen, callback) {
+  agregarAlCarrito: function (usuarioId, productoId, cantidad, imagen, callback) {
         const query = "INSERT INTO carritos (usuario_id, producto_id, cantidad, imagen) VALUES ( ?, ?, ?, ?)";
         const values = [usuarioId, productoId, cantidad, imagen];
-      
         conexion.query(query, values, function (error, resultados) {
           if (error) {
             return callback(error, null);
           }
-      
           return callback(null, resultados);
         });
       },
-    
-      eliminarDelCarrito: function (usuarioId, productoId, callback) {
+  eliminarDelCarrito: function (usuarioId, productoId, callback) {
         const query = "DELETE FROM carritos WHERE usuario_id = ? AND producto_id = ?";
         const values = [usuarioId, productoId];
-    
         conexion.query(query, values, function (error, resultados) {
           if (error) {
             return callback(error, null);
           }
-    
           return callback(null, resultados);    
         });
       },
-      actualizarPreciosPorProveedor: function (pool, proveedorId, porcentajeCambio, callback) {
-        // Convertir a número y verificar
+  actualizarPreciosPorProveedor: function (pool, proveedorId, porcentajeCambio, callback) {
         proveedorId = Number(proveedorId);
         porcentajeCambio = Number(porcentajeCambio);
     
@@ -189,9 +171,7 @@ borrarImagenes: function(conexion, productoId, callback) {
                 callback(err);
             } else {
                 conexion.query(query, params, function (error, results) {
-                    // No olvides liberar la conexión cuando hayas terminado
                     conexion.release();
-    
                     if (error) {
                         console.error('Error al ejecutar la consulta:', error);
                         callback(error);
@@ -213,27 +193,24 @@ borrarImagenes: function(conexion, productoId, callback) {
         }
     });
 },   
-    obtenerPorNombre: function (conexion, nombre, funcion) {
+  obtenerPorNombre: function (conexion, nombre, funcion) {
         conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
       },
-      obtenerTodos: function (conexion, saltar, parametro, funcion) {
+  obtenerTodos: function (conexion, saltar, parametro, funcion) {
         if (typeof funcion !== 'function') {
             throw new Error('funcion debe ser una función');
         }
         if (parametro === undefined) {
-            // Si no se proporcionó un parámetro, asumir que el parámetro es la función de callback
             parametro = saltar;
-            saltar = 0; // o cualquier valor por defecto que quieras para 'saltar'
+            saltar = 0; 
         }
         if (parametro !== null) {
-            // Si se proporcionó un parámetro, usarlo en la consulta
             conexion.query('SELECT * FROM productos WHERE categoria_id = ? LIMIT ?,20', [parametro, saltar], funcion);
         } else {
-            // Si no se proporcionó un parámetro, no usarlo en la consulta
             conexion.query('SELECT * FROM productos LIMIT ?,20', [saltar], funcion);
         }
     },
- obtenerProductosPorProveedor: function (conexion, proveedor, saltar, callback) {
+  obtenerProductosPorProveedor: function (conexion, proveedor, saltar, callback) {
         const query = 'SELECT * FROM productos WHERE proveedor_id = ? LIMIT ?, 20';
         conexion.query(query, [proveedor, saltar], function (error, resultados) {
             if (error) {
@@ -243,18 +220,18 @@ borrarImagenes: function(conexion, productoId, callback) {
             }
         });
     },
-obtenerProveedores: function (conexion, callback) {
-  const query = 'SELECT id, nombre FROM proveedores';
-  conexion.query(query, function (error, resultados) {
-    if (error) {
-      callback(error, null);
+  obtenerProveedores: function (conexion, callback) {
+    const query = 'SELECT id, nombre FROM proveedores';
+    conexion.query(query, function (error, resultados) {
+     if (error) {
+        callback(error, null);
     } else {
       callback(null, resultados);
     }
   });
 },
-obtenerMarcas: function(conexion, callback) {
-  conexion.query('SELECT * FROM marcas', function(error, resultados) {
+  obtenerMarcas: function(conexion, callback) {
+    conexion.query('SELECT * FROM marcas', function(error, resultados) {
       if (error) {
           console.log('Error al obtener marcas:', error);
           callback(error, null);
@@ -263,7 +240,7 @@ obtenerMarcas: function(conexion, callback) {
       callback(null, resultados);
   }); 
 }, 
-obtenerModelosPorMarca: function(conexion, marcaId, callback) {
+  obtenerModelosPorMarca: function(conexion, marcaId, callback) {
   var consulta = 'SELECT * FROM modelos WHERE id_marca = ?';
   
   conexion.query(consulta, [marcaId], function(error, resultados) {
@@ -275,7 +252,7 @@ obtenerModelosPorMarca: function(conexion, marcaId, callback) {
       callback(null, resultados);
   });
 },
-obtenerCategorias: function(conexion, funcion) {
+  obtenerCategorias: function(conexion, funcion) {
   conexion.query('SELECT * FROM categorias', function(error, resultados) {
       if (error) {
           return funcion(error);
@@ -283,7 +260,7 @@ obtenerCategorias: function(conexion, funcion) {
       funcion(null, resultados);
   });
 },
-obtenerPorCategoria: function(conexion, categoria, callback) {
+  obtenerPorCategoria: function(conexion, categoria, callback) {
   var query = "SELECT * FROM productos WHERE categoria_id = ?";
   conexion.query(query, [categoria], function(error, resultados) {
       if (error) {
@@ -293,7 +270,7 @@ obtenerPorCategoria: function(conexion, categoria, callback) {
       }
   });
 },
-obtenerIdPorCategoria: function(conexion, categoria, callback) {
+  obtenerIdPorCategoria: function(conexion, categoria, callback) {
   var query = "SELECT id FROM categorias WHERE nombre = ?";
   conexion.query(query, [categoria], function(error, resultados) {
     if (error) {
@@ -307,7 +284,7 @@ obtenerIdPorCategoria: function(conexion, categoria, callback) {
     }
   });
 },
-contarPorProveedor: function (conexion, proveedor, callback) {
+  contarPorProveedor: function (conexion, proveedor, callback) {
   const query = 'SELECT COUNT(*) AS total FROM productos WHERE proveedor_id = ?';
   conexion.query(query, [proveedor], function (error, resultados) {
       if (error) {
@@ -317,7 +294,7 @@ contarPorProveedor: function (conexion, proveedor, callback) {
       }
   });
 },
-contarTodos: function (conexion, parametro, callback) {
+  contarTodos: function (conexion, parametro, callback) {
   const query = 'SELECT COUNT(*) AS total FROM productos';
   conexion.query(query, function (error, resultados) {
       if (error) {
@@ -327,10 +304,10 @@ contarTodos: function (conexion, parametro, callback) {
       }
   });
 },
-contarPorCategoria: function(conexion, categoria, callback) {
+  contarPorCategoria: function(conexion, categoria, callback) {
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 },
-obtenerTodosLosProductos: function (conexion, saltar, callback) {
+  obtenerTodosLosProductos: function (conexion, saltar, callback) {
   const query = 'SELECT * FROM productos LIMIT ?, 20';
   conexion.query(query, [saltar], function (error, resultados) {
       if (error) {
@@ -340,7 +317,7 @@ obtenerTodosLosProductos: function (conexion, saltar, callback) {
       }
   });
 },
-contarTodosLosProductos: function (conexion, callback) {
+  contarTodosLosProductos: function (conexion, callback) {
   const query = 'SELECT COUNT(*) AS total FROM productos';
   conexion.query(query, function (error, resultados) {
       if (error) {
@@ -350,7 +327,7 @@ contarTodosLosProductos: function (conexion, callback) {
       } 
   });
 },
-obtenerPorFiltros: function(conexion, categoria, marca, modelo, callback) {
+  obtenerPorFiltros: function(conexion, categoria, marca, modelo, callback) {
   // Consulta SQL para obtener los productos por filtros
   var consulta = 'SELECT * FROM productos WHERE 1=1';
   var parametros = [];
@@ -383,18 +360,16 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, callback) {
           callback(error, null);
           return;
       }
-
-      // Devuelve los productos
       callback(null, resultados);
   });
 },
-obtenerIdCategoriaPorNombre: function(conexion, nombre, callback) {
+  obtenerIdCategoriaPorNombre: function(conexion, nombre, callback) {
   const consulta = 'SELECT id FROM categorias WHERE nombre = ?';
   conexion.query(consulta, [nombre], function(error, resultados) {
       
   });
 },
-obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
+  obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
   var query = "SELECT id, nombre, codigo, imagen, descripcion, precio, modelo, categoria_id, marca_id, proveedor_id, modelo_id FROM productos WHERE categoria_id = ? AND marca_id = ? AND modelo_id = ?";
   conexion.query(query, [categoria, marca, modelo], function(error, resultados) {
       if (error) {
@@ -402,6 +377,16 @@ obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, cal
       } else {
           callback(null, resultados);
       }
+  });
+},
+registrarEstadistica: function(conexion, datosEstadistica, callback) {
+  const consulta = 'INSERT INTO estadisticas SET ?';
+  conexion.query(consulta, datosEstadistica, function(error, resultados) {
+    if (error) {
+      callback(error, null);
+    } else {
+      callback(null, resultados);
+    }
   });
 },
 }
