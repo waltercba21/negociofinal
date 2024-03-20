@@ -64,10 +64,12 @@ $(document).ready(function(){
     }
   });
   
-  $('body').on('click', '.fondo-oscuro', function(){
-    var card = $('.card-ampliada');
-    card.removeClass('card-ampliada');
-    card.find('.descripcion').hide();
-    $(this).remove();
+  $('body').on('click', '.fondo-oscuro', function(event){
+    if (!$(event.target).closest('.card').length) {
+      var card = $('.card-ampliada');
+      card.removeClass('card-ampliada');
+      card.find('.descripcion').hide();
+      $(this).remove();
+    }
   });
 });
