@@ -46,7 +46,5 @@ router.post('/carrito/comprar', productosController.mostrarCompra);
 // Nueva ruta para generar PDF
 router.get('/generarPDF', productosController.generarPDF);
 
-//Nueva ruta para generar estadisticas 
-router.get('/estadisiticas', productosController.estadisticas);
 
 module.exports = router;
