@@ -379,14 +379,4 @@ module.exports ={
       }
   });
 },
-registrarEstadistica: function(conexion, datosEstadistica, callback) {
-  const consulta = 'INSERT INTO estadisticas SET ?';
-  conexion.query(consulta, datosEstadistica, function(error, resultados) {
-    if (error) {
-      callback(error, null);
-    } else {
-      callback(null, resultados);
-    }
-  });
-},
 }
