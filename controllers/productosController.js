@@ -727,34 +727,56 @@ generarPDF: function (req, res) {
                width: doc.page.width
            });
 
-        doc.moveDown(2); // Agrega espacio debajo del título
-
-        // Obtener los productos por proveedor y categoría
-        producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorId, categoriaId, function(error, productos) {
+        // Obtener el nombre de la categoría
+        producto.obtenerCategorias(conexion, function(error, categorias) {
             if (error) {
-                console.log('Error al obtener productos:', error);
+                console.log('Error al obtener categorías:', error);
                 return res.status(500).send('Error al generar el PDF');
             }
-            // Agregar los productos al PDF
-            productos.forEach(producto => {
-                var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
-                // Guardar la posición actual del cursor
-                var currentY = doc.y;
-                // Verificar si hay suficiente espacio en la página actual
-                if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
-                    doc.addPage();
+
+            var categoria = categorias.find(c => c.id == categoriaId);
+            if (!categoria) {
+                return res.status(400).send('Categoría no encontrada');
+            }
+
+            var nombreCategoria = categoria.nombre;
+
+            // Subtítulo
+            doc.fontSize(16)
+               .text(nombreCategoria, 0, doc.y, {
+                   align: 'center',
+                   width: doc.page.width
+               });
+
+            doc.moveDown(2); // Agrega espacio debajo del subtítulo
+
+            // Obtener los productos por proveedor y categoría
+            producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorId, categoriaId, function(error, productos) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
+                    return res.status(500).send('Error al generar el PDF');
                 }
-                // Escribir el nombre del producto
-                doc.fontSize(10)
-                   .text(producto.nombre, 50, doc.y);
-                // Escribir el precio en la misma línea
-                doc.text(precioFormateado, doc.page.width - 150, doc.y, {
-                       align: 'right'
-                   });
-                doc.moveDown();
+                // Agregar los productos al PDF
+                productos.forEach(producto => {
+                    var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
+                    // Guardar la posición actual del cursor
+                    var currentY = doc.y;
+                    // Verificar si hay suficiente espacio en la página actual
+                    if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+                        doc.addPage();
+                    }
+                    // Escribir el nombre del producto
+                    doc.fontSize(10)
+                       .text(producto.nombre, 50, doc.y);
+                    // Escribir el precio en la misma línea
+                    doc.text(precioFormateado, doc.page.width - 150, doc.y, {
+                           align: 'right'
+                       });
+                    doc.moveDown();
+                });
+                // Finalizar el documento PDF
+                doc.end();
             });
-            // Finalizar el documento PDF
-            doc.end();
         });
     });
 
