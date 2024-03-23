@@ -1400,13 +1400,11 @@ background: rgba(0, 63, 125, 0.8);
     display: flex; 
     justify-content: center;
   }
-
   .hamburger {
     margin-top: 20px;
     display: block;
     align-self: center; /* Añadido para centrar el menú hamburguesa */
   }
-
  /*------carrusel de imagenes-------*/
  .peliculas-recomendadas .contenedor-carrousel .carrousel{
   display: grid;
@@ -1446,7 +1444,6 @@ background: rgba(0, 63, 125, 0.8);
   justify-content: center; 
   font-size: 18px;
 }
-
 /*---------------footer------------------*/
   .main-footer {
     flex-direction: column;
