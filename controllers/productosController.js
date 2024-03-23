@@ -699,8 +699,9 @@ generarPDF: function (req, res) {
         incrementAmount: (1024 * 1024) // crece en 1 megabyte cada vez.
     });
     doc.pipe(buffer);
-    // Obtener el ID del proveedor de los parámetros de consulta
+    // Obtener el ID del proveedor y la categoría de los parámetros de consulta
     const proveedorId = req.query.proveedor; 
+    const categoriaId = req.query.categoria;
     if (!proveedorId) {
         return res.status(400).send('No se ha proporcionado un ID de proveedor');
     }
@@ -728,7 +729,8 @@ generarPDF: function (req, res) {
 
         doc.moveDown(2); // Agrega espacio debajo del título
 
-        producto.obtenerProductosPorProveedor(conexion, proveedorId, function(error, productos) {
+        // Obtener los productos por proveedor y categoría
+        producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorId, categoriaId, function(error, productos) {
             if (error) {
                 console.log('Error al obtener productos:', error);
                 return res.status(500).send('Error al generar el PDF');
@@ -764,5 +766,4 @@ generarPDF: function (req, res) {
         res.send(pdfData);
     });
 },
-
 }
