@@ -738,11 +738,15 @@ generarPDF: function (req, res) {
                 var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
                 // Guardar la posición actual del cursor
                 var currentY = doc.y;
+                // Verificar si hay suficiente espacio en la página actual
+                if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+                    doc.addPage();
+                }
                 // Escribir el nombre del producto
                 doc.fontSize(10)
-                   .text(producto.nombre, 50, currentY);
+                   .text(producto.nombre, 50, doc.y);
                 // Escribir el precio en la misma línea
-                doc.text(precioFormateado, doc.page.width - 150, currentY, {
+                doc.text(precioFormateado, doc.page.width - 150, doc.y, {
                        align: 'right'
                    });
                 doc.moveDown();
