@@ -728,7 +728,7 @@ generarPDF: function (req, res) {
 
         doc.moveDown(2); // Agrega espacio debajo del título
 
-        producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productos) {
+        producto.obtenerProductosPorProveedor(conexion, proveedorId, function(error, productos) {
             if (error) {
                 console.log('Error al obtener productos:', error);
                 return res.status(500).send('Error al generar el PDF');
