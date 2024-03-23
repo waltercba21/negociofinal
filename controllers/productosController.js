@@ -707,7 +707,7 @@ generarPDF: function (req, res) {
 
     // Obtener el nombre del proveedor
     producto.obtenerProveedores(conexion, function(error, proveedores) {
-        if (error) {
+        if (error) { 
             console.log('Error al obtener proveedores:', error);
             return res.status(500).send('Error al generar el PDF');
         }

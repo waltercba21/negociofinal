@@ -210,16 +210,16 @@ module.exports ={
             conexion.query('SELECT * FROM productos LIMIT ?,20', [saltar], funcion);
         }
     },
-  obtenerProductosPorProveedor: function (conexion, proveedor, saltar, callback) {
-        const query = 'SELECT * FROM productos WHERE proveedor_id = ? LIMIT ?, 20';
-        conexion.query(query, [proveedor, saltar], function (error, resultados) {
-            if (error) {
-                callback(error, null);
-            } else {
-                callback(null, resultados);
-            }
-        });
-    },
+    obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
+      const query = 'SELECT * FROM productos WHERE proveedor_id = ?';
+      conexion.query(query, [proveedor], function (error, resultados) {
+          if (error) {
+              callback(error, null);
+          } else {
+              callback(null, resultados);
+          }
+      });
+  },
   obtenerProveedores: function (conexion, callback) {
     const query = 'SELECT id, nombre FROM proveedores';
     conexion.query(query, function (error, resultados) {
