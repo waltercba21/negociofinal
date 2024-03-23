@@ -23,22 +23,16 @@
             <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
           <% }); %>
         </select>
+        <label for="categoria">Seleccionar Categoría</label>
+        <select name="categoria" id="categoria">
+          <option value="">Mostrar Todas</option>
+          <% categorias.forEach(categoria => { %>
+            <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>><%= categoria.nombre %></option>
+          <% }); %>
+        </select>
         <button type="submit" class="btn btn-primary">Generar PDF</button>
       </form>
     </div>
-
-
-<div class="form-control">
-  <form method="get" action="/productos/panelControl">
-    <label for="categoria">Seleccionar Categoría</label>
-    <select name="categoria" id="categoria" onchange="this.form.submit()">
-      <option value="">Mostrar Todas</option>
-      <% categorias.forEach(categoria => { %>
-        <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>><%= categoria.nombre %></option>
-      <% }); %>
-    </select>
-  </form>
-</div>
     <br/>
     <div class="pagination">
       <% for(var i = 1; i <= Math.ceil(totalProductos / productosPorPagina); i++) { %>

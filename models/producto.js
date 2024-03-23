@@ -284,6 +284,16 @@ module.exports ={
     }
   });
 },
+obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria, callback) {
+  var query = "SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?";
+  conexion.query(query, [proveedor, categoria], function(error, resultados) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultados);
+      }
+  });
+},
   contarPorProveedor: function (conexion, proveedor, callback) {
   const query = 'SELECT COUNT(*) AS total FROM productos WHERE proveedor_id = ?';
   conexion.query(query, [proveedor], function (error, resultados) {
