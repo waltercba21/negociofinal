@@ -5,6 +5,8 @@ var borrar = require('fs');
 const PDFDocument = require('pdfkit');
 const blobStream  = require('blob-stream');
 var streamBuffers = require('stream-buffers');
+const {google} = require('googleapis');
+const analytics = google.analytics('v3');
 
 module.exports = {
     index : function (req,res){
@@ -787,5 +789,38 @@ generarPDF: function (req, res) {
         res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
         res.send(pdfData);
     });
+},
+getAnalyticsData : async function(req, res) {
+    const jwt = new google.auth.JWT(
+        process.env.CLIENT_EMAIL,
+        null,
+        process.env.PRIVATE_KEY,
+        ['https://www.googleapis.com/auth/analytics.readonly'],
+        null
+    );
+
+    const result = await new Promise((resolve, reject) => {
+        jwt.authorize((err, response) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+
+            analytics.data.ga.get({
+                'auth': jwt,
+                'ids': 'ga:' + process.env.VIEW_ID,
+                'start-date': '30daysAgo',
+                'end-date': 'today',
+                'metrics': 'ga:sessions,ga:users,ga:pageviews',
+            }, (err, result) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                resolve(result);
+            });
+        });
+    }); const data = processResult(result);
+    res.render('analytics', { data });
 },
 }
