@@ -96,6 +96,9 @@
                 <h3 class="nombre"><%= producto.nombre %></h3>
               </div>
               <hr>
+              <div class="categoria-producto">
+                <h5 class="categoria"><%= producto.categoria %></h5>
+              </div>
               <div class="precio-producto">
                 <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio) %></p>
               </div>
