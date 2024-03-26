@@ -46,5 +46,7 @@ router.post('/carrito/comprar', productosController.mostrarCompra);
 // Nueva ruta para generar PDF
 router.get('/generarPDF', productosController.generarPDF);
 
+//Google Analytcs
+router.get('/analytics', productosController.getAnalyticsData);
 
 module.exports = router;
