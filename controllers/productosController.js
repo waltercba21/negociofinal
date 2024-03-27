@@ -154,7 +154,7 @@ module.exports = {
             console.log('Error al obtener producto:', error);
             return res.status(500).send('Error al obtener el producto');
           } else {
-            res.render('producto', { producto: producto[0] });
+            res.render('detalle', { producto: producto[0] }); // Cambia 'producto' a 'detalle'
           }
         });
       },
