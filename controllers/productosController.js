@@ -147,6 +147,17 @@ module.exports = {
             });
         }
     },
+    detalle: function (req, res) {
+        const id = req.params.id;
+        producto.obtenerPorId(conexion, id, function(error, producto) {
+          if (error) {
+            console.log('Error al obtener producto:', error);
+            return res.status(500).send('Error al obtener el producto');
+          } else {
+            res.render('producto', { producto: producto[0] });
+          }
+        });
+      },
         crear: function(req, res) {
             producto.obtenerCategorias(conexion, function(error, categorias) {
             if (error) {
