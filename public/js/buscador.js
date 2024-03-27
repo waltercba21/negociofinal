@@ -58,7 +58,7 @@ function mostrarProductos(productos) {
     </div>
     <hr>
     <div class="categoria-producto">
-      <h6 class="categoria">${producto.categoria}</h6>
+      <h6 class="categoria">${producto.categoria_nombre}</h6>
     </div>
     <hr>
     <div class="precio-producto">
