@@ -193,10 +193,10 @@ module.exports ={
         }
     });
 },   
-  obtenerPorNombre: function (conexion, nombre, funcion) {
-        conexion.query('SELECT * FROM productos WHERE nombre LIKE ?', [`%${nombre}%`], funcion);
-      },
-  obtenerTodos: function (conexion, saltar, parametro, funcion) {
+obtenerPorNombre: function (conexion, nombre, funcion) {
+  conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.nombre LIKE ?', [`%${nombre}%`], funcion);
+},
+      obtenerTodos: function (conexion, saltar, parametro, funcion) {
         if (typeof funcion !== 'function') {
             throw new Error('funcion debe ser una función');
         }
@@ -205,9 +205,9 @@ module.exports ={
             saltar = 0; 
         }
         if (parametro !== null) {
-            conexion.query('SELECT * FROM productos WHERE categoria_id = ? LIMIT ?,20', [parametro, saltar], funcion);
+            conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE categoria_id = ? LIMIT ?,20', [parametro, saltar], funcion);
         } else {
-            conexion.query('SELECT * FROM productos LIMIT ?,20', [saltar], funcion);
+            conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id LIMIT ?,20', [saltar], funcion);
         }
     },
     obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
