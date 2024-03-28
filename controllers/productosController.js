@@ -739,39 +739,16 @@ generarPDF: function (req, res) {
                 generarPDFProductos(doc, productos);
                 doc.end();
             });
-        } else{
-        producto.obtenerProductosPorCategoría(conexion, categoriaId, function(error, productos) {
-            if (error) {
-                console.log('Error al obtener productos:', error);
-                return res.status(500).send('Error al generar el PDF');
-            }
-            productos.forEach(producto => {
-                var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
-                var currentY = doc.y;
-                if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
-                    doc.addPage();
+        } else {
+            producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId, function(error, productos) {
+                if (error) {
+                    console.log('Error al obtener productos:', error);
+                    return res.status(500).send('Error al generar el PDF');
                 }
-                doc.fontSize(10)
-                   .text(producto.nombre, 50, doc.y);
-                doc.text(producto.proveedor, doc.page.width - 300, doc.y, {
-                       align: 'right'
-                   });
-                doc.text(precioFormateado, doc.page.width - 150, doc.y, {
-                       align: 'right'
-                   });
-                doc.moveDown();
+                generarPDFProductos(doc, productos);
+                doc.end();
             });
-            doc.end();
-        });
-        producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId, function(error, productos) {
-            if (error) {
-                console.log('Error al obtener productos:', error);
-                return res.status(500).send('Error al generar el PDF');
-            }
-            generarPDFProductos(doc, productos);
-            doc.end();
-        });
-    }
+        }
     });
     buffer.on('finish', function() {
         const pdfData = buffer.getContents();
