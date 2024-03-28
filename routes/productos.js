@@ -23,13 +23,13 @@ router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
 router.get('/', productosController.lista);
 router.post('/', cargar.single('archivo'), productosController.guardar);
 router.get('/buscar', productosController.buscar);
-router.get('/:id', productosController.detalle);
-router.get('/crear', productosController.crear);
 router.get('/panelControl', productosController.panelControl)
+router.get('/crear', productosController.crear);
+
 router.get('/editar/:id', productosController.editar)
 router.post('/actualizar/:id', cargar.single('archivo'), productosController.actualizar);
 router.post('/eliminar/:id', productosController.eliminar);
-
+router.get('/:id', productosController.detalle);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor, function(req, res) {
