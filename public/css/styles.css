@@ -441,20 +441,20 @@ background: rgba(0, 63, 125, 0.8);
 .titulo-producto {
   flex-grow: 1;
   display: flex;
-  align-items: center; /* Centra el contenido verticalmente */
+  align-items: center; 
   justify-content: center;
   flex-direction: column;
   margin-top: 15px;
 }
 
 .titulo-producto h3 {
-  white-space: nowrap; /* Asegura que el texto esté en una sola línea */
-  overflow: hidden; /* Oculta el texto que excede el ancho del contenedor */
-  text-overflow: ellipsis; /* Agrega puntos suspensivos al final del texto si es demasiado largo */
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
   font-weight: bold;
   font-size: 16px;
-  max-width: 90%; /* Ajusta este valor según tus necesidades */
-  margin: 0 auto; /* Centra el título horizontalmente */
+  max-width: 90%; 
+  margin: 0 auto;
 }
 
 .precio-producto {
@@ -1015,7 +1015,54 @@ background: rgba(0, 63, 125, 0.8);
 .cantidad-producto .agregar-carrito:hover {
   background-color: #0056b3;
 }
+/*--------------------------- DETALLE DE PRODUCTOS ----------------------------- */
+body.opticas {
+  background-image: url('/images/1.webp');
+}
 
+body.lamparas {
+  background-image: url('/path/to/lamparas-background.jpg');
+}
+
+body.faros_giros {
+  background-image: url('/path/to/faros_giros-background.jpg');
+}
+
+body.faros_traseros {
+  background-image: url('/path/to/faros_traseros-background.jpg');
+}
+
+body.faros_led {
+  background-image: url('/path/to/faros_led-background.jpg');
+}
+
+body.espejos {
+  background-image: url('/path/to/espejos-background.jpg');
+}
+
+body.vidrios_de_opticas {
+  background-image: url('/path/to/vidrios_de_opticas-background.jpg');
+}
+
+body.universal {
+  background-image: url('/path/to/universal-background.jpg');
+}
+
+body.camiones {
+  background-image: url('/path/to/camiones-background.jpg');
+}
+
+body.vidrios_de_espejos {
+  background-image: url('/path/to/vidrios_de_espejos-background.jpg');
+}
+
+body.faros_auxiliares {
+  background-image: url('/path/to/faros_auxiliares-background.jpg');
+}
+
+body.barras_led {
+  background-image: url('/path/to/barras_led-background.jpg');
+}
 
 /*----------------------- Estilos para la página de carrito------------------------ */
 

@@ -1,6 +1,9 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body>
+    <script>
+      document.body.classList.add('<%= producto.categoria_nombre.toLowerCase() %>');
+    </script>
     <div id="contenedor-producto" class="contenedor-producto">
         <div class="card">
           <div class="cover__card">
