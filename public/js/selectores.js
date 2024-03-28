@@ -73,9 +73,10 @@ $(document).ready(function(){
     }
   });
 });
-document.querySelectorAll('.card').forEach(card => {
-  card.addEventListener('click', function() {
-    const idProducto = this.querySelector('.agregar-carrito').href.split('/').pop();
-    window.location.href = `/productos/${idProducto}`;
-  });
-});
+
+//document.querySelectorAll('.card').forEach(card => {
+  //card.addEventListener('click', function() {
+    //const idProducto = this.querySelector('.agregar-carrito').href.split('/').pop();
+    //window.location.href = `/productos/${idProducto}`;
+  //});
+//});
