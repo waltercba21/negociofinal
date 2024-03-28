@@ -2,8 +2,10 @@
 <%- include ./layouts/header.ejs %>
 <body>
     <script>
-      document.body.classList.add('<%= producto.categoria_nombre.toLowerCase() %>');
-    </script>
+        var categoria = '<%= producto.categoria_nombre.toLowerCase() %>';
+        categoria = categoria.replace(/ /g, '_');
+        document.body.classList.add(categoria);
+      </script>
     <div id="contenedor-producto" class="contenedor-producto">
         <div class="card">
           <div class="cover__card">
