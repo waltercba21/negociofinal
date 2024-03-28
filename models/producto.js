@@ -8,7 +8,7 @@ module.exports ={
   obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  contar: function (conexion, funcion) {
+  contar: function (conexion, funcion) { 
     if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');
     }
