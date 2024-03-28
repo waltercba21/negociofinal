@@ -255,6 +255,15 @@ obtenerPorNombre: function (conexion, nombre, funcion) {
       callback(null, resultados);
   });
 },
+obtenerProductosPorProveedorYCategoria: function(conexion, proveedorId, categoriaId, callback) {
+  var query = 'SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?';
+  conexion.query(query, [proveedorId, categoriaId], function(error, resultados) {
+      if (error) {
+          return callback(error);
+      }
+      callback(null, resultados);
+  });
+},
   obtenerCategorias: function(conexion, funcion) {
   conexion.query('SELECT * FROM categorias', function(error, resultados) {
       if (error) {
