@@ -1016,52 +1016,124 @@ background: rgba(0, 63, 125, 0.8);
   background-color: #0056b3;
 }
 /*--------------------------- DETALLE DE PRODUCTOS ----------------------------- */
-body.opticas {
-  background-image: url('/images/1.webp');
+body.opticas { 
+  background: url('/images/1.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.lamparas {
-  background-image: url('/path/to/lamparas-background.jpg');
+  background: url('/images/2.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.faros_giros {
-  background-image: url('/path/to/faros_giros-background.jpg');
+  background: url('/images/3.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.faros_traseros {
-  background-image: url('/path/to/faros_traseros-background.jpg');
+  background: url('/images/4.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.faros_led {
-  background-image: url('/path/to/faros_led-background.jpg');
+  background: url('/images/5.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.espejos {
-  background-image: url('/path/to/espejos-background.jpg');
+  background: url('/images/6.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.vidrios_de_opticas {
-  background-image: url('/path/to/vidrios_de_opticas-background.jpg');
+  background: url('/images/7.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.universal {
-  background-image: url('/path/to/universal-background.jpg');
+  background: url('/images/8.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.camiones {
-  background-image: url('/path/to/camiones-background.jpg');
+  background: url('/images/9.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.vidrios_de_espejos {
-  background-image: url('/path/to/vidrios_de_espejos-background.jpg');
+  background: url('/images/10.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.faros_auxiliares {
-  background-image: url('/path/to/faros_auxiliares-background.jpg');
+  background: url('/images/11.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 body.barras_led {
-  background-image: url('/path/to/barras_led-background.jpg');
+  background: url('/images/12.webp') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-blend-mode: darken;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 /*----------------------- Estilos para la página de carrito------------------------ */
