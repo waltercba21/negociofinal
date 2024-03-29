@@ -5,11 +5,17 @@
 <div class="container"> 
     <br/>
     <br/>
-    <a href="/envios/crear" class="btn btn-primary" type="button">Crear un nuevo envío</a>
+    <a href="/productos/crear" class="btn btn-primary" type="button">Crear un nuevo producto</a>
+    <br/>
+    <br/>
+    <a href="/productos/modificarPorProveedor" class="btn btn-primary" type="button">Modificar producto por proveedor</a>
+    <br/>
+    <br/>
+    <a href="/productos/analytics" class="btn btn-primary" type="button">Google Analytics</a>
     <br/>
     <br/>
     <div class="form-control">
-      <form method="get" action="/envios/generarPDF">
+      <form method="get" action="/productos/generarPDF">
         <label for="proveedor">Seleccionar Proveedor</label>
         <select name="proveedor" id="proveedor">
           <option value="TODOS">Mostrar Todos</option>
@@ -17,35 +23,49 @@
             <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
           <% }); %>
         </select>
+        <label for="categoria">Seleccionar Categoría</label>
+        <select name="categoria" id="categoria">
+          <option value="">Mostrar Todas</option>
+          <% categorias.forEach(categoria => { %>
+            <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>><%= categoria.nombre %></option>
+          <% }); %>
+        </select>
         <button type="submit" class="btn btn-primary">Generar PDF</button>
       </form>
     </div>
     <br/>
+    <div class="pagination">
+      <% for(var i = 1; i <= Math.ceil(totalProductos / productosPorPagina); i++) { %>
+        <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>"><%= i %></a>
+      <% } %>
+    </div>
     <table class="table table-light">
     <thead class="thead-light">
       <tr>
         <th>#</th>
         <th>Nombre</th>
-        <th>Fecha de envío</th>
-        <th>Estado</th>
+        <th>Imagen</th>
+        <th>Precio</th>
         <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
-      <% envios.forEach(envio => { %>
+      <% productos.forEach(producto => { %>
         <tr>
-          <td><%= envio.id %></td> 
-          <td><%= envio.nombre %></td>  
-          <td><%= envio.fechaEnvio %></td>
-          <td><%= envio.estado %></td> 
+          <td><%= producto.id %></td> 
+          <td><%= producto.nombre %></td>  
+          <td>
+            <img class="img-thumbnail" width= '150' src="/images/<%= producto.imagen %>" alt="">
+          </td>
+          <td>$<%= producto.precio %></td> 
         <td>
           <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-            <form class="form-inline" method="get" action="/envios/editar/<%= envio.id %>">
+            <form class="form-inline" method="get" action="/productos/editar/<%= producto.id %>">
                 <button class="btn btn-warning" type="submit">Editar</button>
             </form>
           </div>
           <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-            <form class="form-inline" method="post" action="/envios/eliminar/<%= envio.id %>">
+            <form class="form-inline" method="post" action="/productos/eliminar/<%= producto.id %>">
                 <button class="btn btn-danger" type="submit">Borrar</button>  
             </form>
           </div>  
@@ -54,6 +74,11 @@
         <% }); %>
     </tbody>
   </table>
+  <div class="pagination">
+    <% for(var i = 1; i <= Math.ceil(totalProductos / productosPorPagina); i++) { %>
+      <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>"><%= i %></a>
+    <% } %>
+  </div>
 </div>
 </main>
 <%- include ./layouts/footer.ejs %>
