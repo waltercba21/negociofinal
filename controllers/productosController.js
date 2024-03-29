@@ -19,7 +19,7 @@ module.exports = {
             }
         });
     },
-    lista: function (req, res) { 
+    lista: function (req, res) {
         let categorias = [];
         let marcas = [];
         let modelos = [];
@@ -34,7 +34,7 @@ module.exports = {
             return res.redirect('/error');
         }
         if (categoria || marca || modelo) {
-            producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function(error, productos) {
+            producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
@@ -93,7 +93,7 @@ module.exports = {
                 }
             });
         } else {
-            producto.obtener(conexion, saltar, function (error, productos)  {
+            producto.obtener(conexion, saltar, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
@@ -106,18 +106,16 @@ module.exports = {
                             }
                         });
                     });
-                    producto.obtenerCantidadTotal(conexion, function(error, cantidadTotalDeProductos) {
+                    producto.obtenerCantidadTotal(conexion, function (error, cantidadTotalDeProductos) {
                         if (error) {
                             console.log('Error al obtener la cantidad total de productos:', error);
                         } else {
                             // Decide cuántos productos quieres mostrar por página
                             let productosPorPagina = 30;
-                
+    
                             // Calcula el número de páginas
                             let numeroDePaginas = Math.ceil(cantidadTotalDeProductos / productosPorPagina);
-                
-                            // ...
-                            // Pasa el número de páginas a tu vista
+    
                             res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas });
                         }
                     });
