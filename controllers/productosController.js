@@ -23,11 +23,11 @@ module.exports = {
         let categorias = [];
         let marcas = [];
         let modelos = [];
-        
+        const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
-        var saltar = Number(req.query.saltar) || 0;
+        var saltar = (pagina - 1) * 30;
     
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             console.log('Error: marca o modelo no son números válidos');
@@ -93,7 +93,7 @@ module.exports = {
                 }
             });
         } else {
-            producto.obtener(conexion, saltar, function (error, productos) {
+            producto.obtener(conexion, saltar, function (error, productos)  {
                 if (error) {
                     console.log('Error al obtener productos:', error);
                 } else {
