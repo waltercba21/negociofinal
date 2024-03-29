@@ -394,6 +394,7 @@ panelControl: function (req, res) {
                             return;
                         }
                         var totalProductos = resultado.length > 0 ? resultado[0].total : 0;
+                        var numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
                         res.render('panelControl', { 
                             title: 'Productos', 
                             productos: productosResult, 
@@ -403,7 +404,9 @@ panelControl: function (req, res) {
                             proveedores: proveedoresResult,
                             proveedorSeleccionado: proveedor,
                             categorias: categoriasResult,
-                            categoriaSeleccionada: categoria
+                            categoriaSeleccionada: categoria,
+                            pagina: pagina, // Añade esta línea
+                            numeroDePaginas: numeroDePaginas // Añade esta línea
                         });
                     });
                 });
