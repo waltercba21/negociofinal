@@ -25,12 +25,11 @@ router.post('/', cargar.single('archivo'), productosController.guardar);
 router.get('/buscar', productosController.buscar);
 router.get('/panelControl', productosController.panelControl)
 router.get('/crear', productosController.crear);
-// Nueva ruta para generar PDF
 router.get('/generarPDF', productosController.generarPDF);
 router.get('/editar/:id', productosController.editar)
 router.post('/actualizar/:id', cargar.single('archivo'), productosController.actualizar);
 router.post('/eliminar/:id', productosController.eliminar);
-router.get('/:id', productosController.detalle);
+
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor, function(req, res) {
@@ -44,7 +43,7 @@ router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
 router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
 router.post('/carrito/vaciar', productosController.vaciarCarrito);
 router.post('/carrito/comprar', productosController.mostrarCompra);
-
+router.get('/:id', productosController.detalle);
 
 
 //Google Analytcs
