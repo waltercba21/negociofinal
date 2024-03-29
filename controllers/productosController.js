@@ -24,6 +24,7 @@ module.exports = {
         let marcas = [];
         let modelos = [];
         let marcasPromise = Promise.resolve([]);
+        let modelosPromise = Promise.resolve([]);
         const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
