@@ -25,7 +25,8 @@ router.post('/', cargar.single('archivo'), productosController.guardar);
 router.get('/buscar', productosController.buscar);
 router.get('/panelControl', productosController.panelControl)
 router.get('/crear', productosController.crear);
-
+// Nueva ruta para generar PDF
+router.get('/generarPDF', productosController.generarPDF);
 router.get('/editar/:id', productosController.editar)
 router.post('/actualizar/:id', cargar.single('archivo'), productosController.actualizar);
 router.post('/eliminar/:id', productosController.eliminar);
@@ -44,8 +45,7 @@ router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCar
 router.post('/carrito/vaciar', productosController.vaciarCarrito);
 router.post('/carrito/comprar', productosController.mostrarCompra);
 
-// Nueva ruta para generar PDF
-router.get('/generarPDF', productosController.generarPDF);
+
 
 //Google Analytcs
 router.get('/analytics', productosController.getAnalyticsData);
