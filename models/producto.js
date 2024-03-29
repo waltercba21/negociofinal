@@ -5,6 +5,18 @@ module.exports ={
     }
     conexion.query('SELECT * FROM productos LIMIT ?,30', [saltar], funcion);
   },
+  obtenerCantidadTotal: function(conexion, callback) {
+    // Aquí debes escribir la consulta SQL para obtener la cantidad total de productos
+    const consulta = 'SELECT COUNT(*) AS cantidad FROM productos';
+
+    conexion.query(consulta, function(error, resultados) {
+        if (error) {
+            callback(error, null);
+        } else {
+            callback(null, resultados[0].cantidad);
+        }
+    });
+},
   obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },

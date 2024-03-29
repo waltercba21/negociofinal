@@ -106,6 +106,21 @@ module.exports = {
                             }
                         });
                     });
+                    producto.obtenerCantidadTotal(conexion, function(error, cantidadTotalDeProductos) {
+                        if (error) {
+                            console.log('Error al obtener la cantidad total de productos:', error);
+                        } else {
+                            // Decide cuántos productos quieres mostrar por página
+                            let productosPorPagina = 30;
+                
+                            // Calcula el número de páginas
+                            let numeroDePaginas = Math.ceil(cantidadTotalDeProductos / productosPorPagina);
+                
+                            // ...
+                            // Pasa el número de páginas a tu vista
+                            res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas });
+                        }
+                    });
                     const marcasPromise = new Promise((resolve, reject) => {
                         producto.obtenerMarcas(conexion, (error, result) => {
                             if (error) reject(error);
