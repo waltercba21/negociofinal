@@ -34,9 +34,9 @@
       </form>
     </div>
     <br/>
-    <div class="pagination">
-      <% for(var i = 1; i <= Math.ceil(totalProductos / productosPorPagina); i++) { %>
-        <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>"><%= i %></a>
+    <div class="paginacion">
+      <% for(var i = 1; i <= numeroDePaginas; i++) { %>
+        <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>&categoria=<%= categoriaSeleccionada %>"><%= i %></a>
       <% } %>
     </div>
     <table class="table table-light">
@@ -75,8 +75,8 @@
     </tbody>
   </table>
   <div class="pagination">
-    <% for(var i = 1; i <= Math.ceil(totalProductos / productosPorPagina); i++) { %>
-      <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>"><%= i %></a>
+    <% for(var i = 1; i <= numeroDePaginas; i++) { %>
+      <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>&categoria=<%= categoriaSeleccionada %>"><%= i %></a>
     <% } %>
   </div>
 </div>
