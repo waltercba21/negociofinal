@@ -128,7 +128,7 @@ module.exports = {
                                             producto.categoria = categoriaProducto.nombre;
                                         }
                                     });
-                                    res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas });
+                                    res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas,pagina });
                                 })
                                 .catch(error => {
                                     console.log('Error al obtener categorías, marcas o modelos:', error);
