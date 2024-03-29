@@ -112,53 +112,31 @@ module.exports = {
                         } else {
                             // Decide cuántos productos quieres mostrar por página
                             let productosPorPagina = 30;
-    
+                    
                             // Calcula el número de páginas
                             let numeroDePaginas = Math.ceil(cantidadTotalDeProductos / productosPorPagina);
-    
-                            res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas });
+                    
+                            Promise.all([categoriasPromise, marcasPromise, modelosPromise])
+                                .then(([categoriasResult, marcasResult, modelosResult]) => {
+                                    productos.forEach(producto => {
+                                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                                        const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
+                                        if (categoriaProducto) {
+                                            producto.categoria = categoriaProducto.nombre;
+                                        }
+                                    });
+                                    res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas });
+                                })
+                                .catch(error => {
+                                    console.log('Error al obtener categorías, marcas o modelos:', error);
+                                    res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo });
+                                });
                         }
-                    });
-                    const marcasPromise = new Promise((resolve, reject) => {
-                        producto.obtenerMarcas(conexion, (error, result) => {
-                            if (error) reject(error);
-                            else {
-                                marcas = result;
-                                resolve(result);
-                            }
-                        });
-                    });
-                    const modelosPromise = new Promise((resolve, reject) => {
-                        if (marca !== undefined) {
-                            producto.obtenerModelosPorMarca(conexion, marca, (error, result) => {
-                                if (error) reject(error);
-                                else {
-                                    modelos = result;
-                                    resolve(result);
-                                }
-                            });
-                        } else {
-                            resolve([]);
-                        }
-                    });
-                    Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-                        .then(([categoriasResult, marcasResult, modelosResult]) => {
-                            productos.forEach(producto => {
-                                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                                const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
-                                if (categoriaProducto) {
-                                    producto.categoria = categoriaProducto.nombre;
-                                }
-                            });
-                            res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo });
-                        })
-                        .catch(error => {
-                            console.log('Error al obtener categorías, marcas o modelos:', error);
-                            res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo });
-                        });
+                    }); 
                 }
             });
         }
+        
     },
     detalle: function (req, res) {
         const id = req.params.id;
