@@ -797,7 +797,24 @@ background: rgba(0, 63, 125, 0.8);
 .botones-crear button{
   margin-right: 80px;
 } 
+
+/*-------------------------PAGINACIÓN---------------*/
+.paginacion {
+  display: flex;
+  justify-content: center;
+  gap: 10px; 
+  padding: 20px 0; 
+}
+
+.paginacion a {
+  text-decoration: none; 
+  color: #333; 
+  padding: 5px 10px;
+  border: 1px solid #333; 
+  border-radius: 5px; 
+}
 /*---------------------------Todos los Productos -------------------------------*/
+
 .titulo-principal{
   text-align: center;
   color: #1F487E;
