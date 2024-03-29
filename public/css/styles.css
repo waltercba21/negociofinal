@@ -813,6 +813,11 @@ background: rgba(0, 63, 125, 0.8);
   border: 1px solid #333; 
   border-radius: 5px; 
 }
+.paginacion a.pagina-actual {
+  background-color: #333; /* Color de fondo de la página actual */
+  color: #fff; /* Color del texto de la página actual */
+  border-color: #333; /* Color del borde de la página actual */
+}
 /*---------------------------Todos los Productos -------------------------------*/
 
 .titulo-principal{

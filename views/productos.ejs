@@ -10,11 +10,7 @@
       <input type="text" id="entradaBusqueda" placeholder="Buscar productos...">
     </div>
     <form>
-      <div class="paginacion">
-        <% for(let i = 1; i <= numeroDePaginas; i++) { %>
-          <a href="/productos?pagina=<%= i %>"><%= i %></a>
-        <% } %>
-      </div>
+      
   <div class="selectores-productos">
     <div class="form-group-crear">
       <label for="categoria_id">Categoria</label>
@@ -50,6 +46,11 @@
     <button id="boton-buscar" type="button">Buscar</button>
   </div>
 </form>
+<div class="paginacion">
+  <% for(let i = 1; i <= numeroDePaginas; i++) { %>
+    <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
+  <% } %>
+</div>
 <div id="contenedor-productos" class="contenedor-productos">
   <% productos.forEach(producto => { %>
     <div class="card">
@@ -77,7 +78,7 @@
 </div>
 <div class="paginacion">
   <% for(let i = 1; i <= numeroDePaginas; i++) { %>
-    <a href="/productos?pagina=<%= i %>"><%= i %></a>
+    <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
   <% } %>
 </div>
     </div>
