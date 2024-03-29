@@ -23,6 +23,7 @@ module.exports = {
         let categorias = [];
         let marcas = [];
         let modelos = [];
+        let marcasPromise = Promise.resolve([]);
         const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
@@ -34,6 +35,7 @@ module.exports = {
             return res.redirect('/error');
         }
         if (categoria || marca || modelo) {
+            
             producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
@@ -52,7 +54,7 @@ module.exports = {
                                 }
                             });
                         });
-                        const marcasPromise = new Promise((resolve, reject) => {
+                        marcasPromise = new Promise((resolve, reject) => {
                             producto.obtenerMarcas(conexion, (error, result) => {
                                 if (error) reject(error);
                                 else {
