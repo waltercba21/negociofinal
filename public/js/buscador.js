@@ -22,16 +22,15 @@ function buscarProductos() {
   if (consulta) {
     url += `query=${consulta}&`;
   }
-
-  // Realizar la búsqueda general
   fetch(url, {mode:'cors', credentials:'include'})
-    .then(response => response.json())
-    .then(datos => {
-      mostrarProductos(datos.productos);
-    })
-    .catch(error => {
-      console.error('Hubo un problema con la solicitud: ' + error);
-    });
+  .then(response => response.json())
+  .then(datos => {
+    console.log('Datos:', datos.productos);
+    mostrarProductos(datos.productos);
+  })
+  .catch(error => {
+    console.error('Hubo un problema con la solicitud: ' + error);
+  });
 }
 
 function cargarProductos() {
