@@ -20,12 +20,33 @@ function buscarProductos() {
 
   let url = 'http://www.autofaros.com.ar/productos/api/buscar?';
   if (consulta) {
-    url += `query=${consulta}&categoria=${consulta}&`;
+    url += `query=${consulta}&`;
   }
+
+  // Realizar la búsqueda general
   fetch(url, {mode:'cors', credentials:'include'})
   .then(response => response.json())
   .then(datos => {
-    console.log('Datos:', datos.productos);
+    mostrarProductos(datos.productos);
+  })
+  .catch(error => {
+    console.error('Hubo un problema con la solicitud: ' + error);
+  });
+
+  // Realizar la búsqueda por categoría
+  fetch(url + `categoria=${consulta}`, {mode:'cors', credentials:'include'})
+  .then(response => response.json())
+  .then(datos => {
+    mostrarProductos(datos.productos);
+  })
+  .catch(error => {
+    console.error('Hubo un problema con la solicitud: ' + error);
+  });
+
+  // Realizar la búsqueda por marca
+  fetch(url + `marca=${consulta}`, {mode:'cors', credentials:'include'})
+  .then(response => response.json())
+  .then(datos => {
     mostrarProductos(datos.productos);
   })
   .catch(error => {

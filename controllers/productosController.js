@@ -415,32 +415,43 @@ panelControl: function (req, res) {
     });
 },
 buscarPorNombre: function (req, res) {
-    const nombre = req.query.query; 
-    if (!nombre) {
-        producto.obtenerTodos(conexion, (error, productos) => {
-            if (error) {
-                console.error(error);
-                res.status(500).send('Error interno del servidor');
-                return;
-            }
-            productos.forEach(producto => {
-                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-            });
-            res.json({ productos });
+    const consulta = req.query.query; 
+    if (!consulta) {
+      producto.obtenerTodos(conexion, (error, productos) => {
+        if (error) {
+          console.error(error);
+          res.status(500).send('Error interno del servidor');
+          return;
+        }
+        productos.forEach(producto => {
+          producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
         });
+        res.json({ productos });
+      });
     } else {
-        producto.obtenerPorNombre(conexion, nombre, (error, productos) => {
-          if (error) {
-            res.status(500).send('Error interno del servidor');
-            return;
-          }
-          productos.forEach(producto => {
-              producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-          });
-          res.json({ productos });
+      producto.obtenerPorNombre(conexion, consulta, (error, productos) => {
+        if (error) {
+          res.status(500).send('Error interno del servidor');
+          return;
+        }
+        productos.forEach(producto => {
+          producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
         });
+        res.json({ productos });
+      });
+  
+      producto.obtenerPorCategoria(conexion, consulta, (error, productos) => {
+        if (error) {
+          res.status(500).send('Error interno del servidor');
+          return;
+        }
+        productos.forEach(producto => {
+          producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+        });
+        res.json({ productos });
+      });
     }   
-},
+  },
 buscarProductos : async (req, res) => {
     try {
       const consulta = req.query.query;

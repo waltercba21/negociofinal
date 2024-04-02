@@ -211,7 +211,7 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
 obtenerPorNombre: function (conexion, nombre, funcion) {
   conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.nombre LIKE ?', [`%${nombre}%`], funcion);
 },
-      obtenerTodos: function (conexion, saltar, parametro, funcion) {
+obtenerTodos: function (conexion, saltar, parametro, funcion) {
         if (typeof funcion !== 'function') {
             throw new Error('funcion debe ser una función');
         }
@@ -284,9 +284,9 @@ obtenerProductosPorProveedorYCategoria: function(conexion, proveedorId, categori
       funcion(null, resultados);
   });
 },
-  obtenerPorCategoria: function(conexion, categoria, callback) {
-  var query = "SELECT * FROM productos WHERE categoria_id = ?";
-  conexion.query(query, [categoria], function(error, resultados) {
+obtenerPorNombreCategoria: function(conexion, nombreCategoria, callback) {
+  var query = "SELECT productos.* FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE categorias.nombre LIKE ?";
+  conexion.query(query, [`%${nombreCategoria}%`], function(error, resultados) {
       if (error) {
           callback(error, null);
       } else {
