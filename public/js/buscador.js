@@ -24,34 +24,35 @@ function buscarProductos() {
   }
 
   // Realizar la búsqueda general
-  fetch(url, {mode:'cors', credentials:'include'})
-  .then(response => response.json())
-  .then(datos => {
-    mostrarProductos(datos.productos);
-  })
-  .catch(error => {
-    console.error('Hubo un problema con la solicitud: ' + error);
-  });
+  const busquedaGeneral = fetch(url, {mode:'cors', credentials:'include'})
+    .then(response => response.json())
+    .then(datos => datos.productos)
+    .catch(error => {
+      console.error('Hubo un problema con la solicitud: ' + error);
+    });
 
   // Realizar la búsqueda por categoría
-  fetch(url + `categoria=${consulta}`, {mode:'cors', credentials:'include'})
-  .then(response => response.json())
-  .then(datos => {
-    mostrarProductos(datos.productos);
-  })
-  .catch(error => {
-    console.error('Hubo un problema con la solicitud: ' + error);
-  });
+  const busquedaCategoria = fetch(url + `categoria=${consulta}`, {mode:'cors', credentials:'include'})
+    .then(response => response.json())
+    .then(datos => datos.productos)
+    .catch(error => {
+      console.error('Hubo un problema con la solicitud: ' + error);
+    });
 
   // Realizar la búsqueda por marca
-  fetch(url + `marca=${consulta}`, {mode:'cors', credentials:'include'})
-  .then(response => response.json())
-  .then(datos => {
-    mostrarProductos(datos.productos);
-  })
-  .catch(error => {
-    console.error('Hubo un problema con la solicitud: ' + error);
-  });
+  const busquedaMarca = fetch(url + `marca=${consulta}`, {mode:'cors', credentials:'include'})
+    .then(response => response.json())
+    .then(datos => datos.productos)
+    .catch(error => {
+      console.error('Hubo un problema con la solicitud: ' + error);
+    });
+
+  // Combinar los resultados de todas las búsquedas
+  Promise.all([busquedaGeneral, busquedaCategoria, busquedaMarca])
+    .then(resultados => {
+      const productos = [].concat(...resultados);
+      mostrarProductos(productos);
+    });
 }
 
 function cargarProductos() {
