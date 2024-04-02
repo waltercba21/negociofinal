@@ -439,8 +439,7 @@ buscarPorNombre: function (req, res) {
         });
         res.json({ productos });
       });
-  
-      producto.obtenerPorCategoria(conexion, consulta, (error, productos) => {
+      producto.obtenerPorNombreCategoria(conexion, consulta, (error, productos) => {
         if (error) {
           res.status(500).send('Error interno del servidor');
           return;
