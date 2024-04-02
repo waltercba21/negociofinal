@@ -20,7 +20,7 @@ function buscarProductos() {
 
   let url = 'http://www.autofaros.com.ar/productos/api/buscar?';
   if (consulta) {
-    url += `query=${consulta}&`;
+    url += `query=${consulta}&categoria=${consulta}&`;
   }
   fetch(url, {mode:'cors', credentials:'include'})
   .then(response => response.json())
