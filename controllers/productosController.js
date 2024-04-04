@@ -675,18 +675,16 @@ buscar: function(req, res) {
     var categoriaId = req.query.categoria_id;
     var marcaId = req.query.marca_id;
     var modeloId = req.query.modelo_id;
-
+  
     producto.obtenerPorCategoriaMarcaModelo(conexion,categoriaId, marcaId, modeloId, function(error, productos) {
       if (error) {
         console.error('Error al buscar productos:', error);
-        res.status(500).send('Hubo un error al buscar los productos');
-        return;
+        return res.status(500).send('Hubo un error al buscar los productos');
       }
       producto.obtenerCategorias(conexion, function(error, categorias) {
         if (error) {
           console.error('Error al obtener las categorías:', error);
-          res.status(500).send('Hubo un error al obtener las categorías');
-          return;
+          return res.status(500).send('Hubo un error al obtener las categorías');
         }
         productos.forEach(producto => {
             const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
@@ -697,7 +695,7 @@ buscar: function(req, res) {
         res.json(productos);
       });
     });
-},
+  },
 generarPDF: function (req, res) {
     // Crear un nuevo documento PDF
     var doc = new PDFDocument;
