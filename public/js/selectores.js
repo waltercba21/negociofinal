@@ -7,10 +7,14 @@ $(document).ready(function(){
       type: 'GET',
       success: function(data) {
         console.log('Data de Modelos:', data); // Agrega esta línea
-        $('#modelo_id').html('<option value="">Selecciona un modelo...</option>');
-        data.forEach(function(modelo) {
-          $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
-        });
+        if (data.length > 0) {
+          $('#modelo_id').html('<option value="">Selecciona un modelo...</option>');
+          data.forEach(function(modelo) {
+            $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
+          });
+        } else {
+          $('#modelo_id').html('<option value="">No hay modelos disponibles para esta marca</option>');
+        }
       }
     });
   });
