@@ -439,16 +439,6 @@ buscarPorNombre: function (req, res) {
         });
         res.json({ productos });
       });
-      producto.obtenerPorNombreCategoria(conexion, consulta, (error, productos) => {
-        if (error) {
-          res.status(500).send('Error interno del servidor');
-          return;
-        }
-        productos.forEach(producto => {
-          producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-        });
-        res.json({ productos });
-      });
     }   
   },
 buscarProductos : async (req, res) => {
