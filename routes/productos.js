@@ -22,8 +22,8 @@ var cargar = multer({storage: rutaAlmacen});
 
 router.get('/', productosController.lista);
 router.post('/', cargar.single('archivo'), productosController.guardar);
-router.get('/buscar', productosController.buscar);
 router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
+router.get('/buscar', productosController.buscar);
 router.get('/panelControl', productosController.panelControl)
 router.get('/crear', productosController.crear);
 router.get('/generarPDF', productosController.generarPDF);
