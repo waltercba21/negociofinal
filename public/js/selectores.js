@@ -1,10 +1,12 @@
 $(document).ready(function(){
   $('#id_marca').change(function(){
     var marcaId = $(this).val();
+    console.log('Marca ID:', marcaId); // Agrega esta línea
     $.ajax({
       url: '/productos/modelos/' + marcaId,
       type: 'GET',
       success: function(data) {
+        console.log('Data de Modelos:', data); // Agrega esta línea
         $('#modelo_id').html('<option value="">Selecciona un modelo...</option>');
         data.forEach(function(modelo) {
           $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
@@ -12,12 +14,15 @@ $(document).ready(function(){
       }
     });
   });
-  $('#categoria_id').change(function(){
+
+  $('#categoria_id').change(function(){ 
     var categoriaId = $(this).val();
+    console.log('Categoria ID:', categoriaId); // Agrega esta línea
     $.ajax({
       url: '/productos/marcas/' + categoriaId,
       type: 'GET',
       success: function(data) {
+        console.log('Data de Marcas:', data); // Agrega esta línea
         $('#id_marca').html('<option value="">Selecciona una marca...</option>');
         data.forEach(function(marca) {
           $('#id_marca').append('<option value="' + marca.id + '">' + marca.nombre + '</option>');
