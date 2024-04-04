@@ -30,13 +30,13 @@ module.exports = {
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
         var saltar = (pagina - 1) * 30;
+        let numeroDePaginas = 1; // Inicializa numeroDePaginas
     
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             console.log('Error: marca o modelo no son números válidos');
             return res.redirect('/error');
         }
-        if (categoria || marca || modelo) {
-            
+        if (categoria || marca || modelo) {  
             producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function (error, productos) {
                 if (error) {
                     console.log('Error al obtener productos:', error);
@@ -45,7 +45,6 @@ module.exports = {
                         console.log('No se encontraron productos para estos filtros');
                     } else {
                         console.log('Productos obtenidos:', productos);
-    
                         const categoriasPromise = new Promise((resolve, reject) => {
                             producto.obtenerCategorias(conexion, (error, result) => {
                                 if (error) reject(error);
@@ -86,11 +85,11 @@ module.exports = {
                                         producto.categoria = categoriaProducto.nombre;
                                     }
                                 });
-                                res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo });
+                                res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas, pagina }); // Pasa numeroDePaginas a la vista
                             })
                             .catch(error => {
                                 console.log('Error al obtener categorías, marcas o modelos:', error);
-                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo });
+                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo, numeroDePaginas, pagina }); // Pasa numeroDePaginas a la vista
                             });
                     }
                 }
@@ -117,7 +116,7 @@ module.exports = {
                             let productosPorPagina = 30;
                     
                             // Calcula el número de páginas
-                            let numeroDePaginas = Math.ceil(cantidadTotalDeProductos / productosPorPagina);
+                            numeroDePaginas = Math.ceil(cantidadTotalDeProductos / productosPorPagina);
                     
                             Promise.all([categoriasPromise, marcasPromise, modelosPromise])
                                 .then(([categoriasResult, marcasResult, modelosResult]) => {
@@ -128,18 +127,17 @@ module.exports = {
                                             producto.categoria = categoriaProducto.nombre;
                                         }
                                     });
-                                    res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas,pagina });
+                                    res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas, pagina });
                                 })
                                 .catch(error => {
                                     console.log('Error al obtener categorías, marcas o modelos:', error);
-                                    res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo });
+                                    res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo, numeroDePaginas, pagina });
                                 });
                         }
                     }); 
                 }
             });
         }
-        
     },
     detalle: function (req, res) {
         const id = req.params.id;

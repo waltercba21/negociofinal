@@ -251,7 +251,7 @@ obtenerTodos: function (conexion, saltar, parametro, funcion) {
           console.log('Error al obtener marcas:', error);
           callback(error, null);
           return;
-      }
+      } 
       callback(null, resultados);
   }); 
 }, 
