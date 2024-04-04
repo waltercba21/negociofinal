@@ -12,6 +12,19 @@ $(document).ready(function(){
       }
     });
   });
+  $('#categoria_id').change(function(){
+    var categoriaId = $(this).val();
+    $.ajax({
+      url: '/productos/marcas/' + categoriaId,
+      type: 'GET',
+      success: function(data) {
+        $('#id_marca').html('<option value="">Selecciona una marca...</option>');
+        data.forEach(function(marca) {
+          $('#id_marca').append('<option value="' + marca.id + '">' + marca.nombre + '</option>');
+        });
+      }
+    });
+  });
 
   $('#boton-buscar').click(function(){
     var categoriaId = $('#categoria_id').val();
