@@ -33,5 +33,21 @@ fetch('https://apis.datos.gob.ar/georef/api/provincias')
       });
 
       fetch(`https://apis.datos.gob.ar/georef/api/municipios?provincia=${provinciaSeleccionada}&campos=id,nombre&max=5000`)
+        .then(response => response.json())
+        .then(data => {
+          const localidades = data.municipios;
+          const selectLocalidad = document.getElementById('localidad');
+          selectLocalidad.innerHTML = ''; // Limpiar las opciones existentes
+          localidades.forEach(localidad => {
+            const option = document.createElement('option');
+            option.value = localidad.id;
+            option.text = localidad.nombre;
+            selectLocalidad.appendChild(option);
+          });
+          selectLocalidad.value = "<%= usuario.localidad %>";
+          if (selectLocalidad.selectedIndex !== -1) {
+            document.getElementById('nombreLocalidad').value = selectLocalidad.options[selectLocalidad.selectedIndex].text;
+          }
+        });
     });
   });
