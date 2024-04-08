@@ -2,6 +2,8 @@ const usuario = require('../models/usuario');
 const bcryptjs = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const conexion = require('../config/conexion')
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 module.exports = {
   register: (req, res) => {
@@ -141,4 +143,46 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
       });
     });
   },
+forgotPassword: (req, res, next) => {
+  const email = req.body.email;
+  usuario.buscarPorEmail(email, (err, usuario) => {
+    if (err) {
+      return next(err);
+    }
+    if (!usuario) {
+      // Enviar un mensaje de error
+      return res.render('forgot-password', { error: 'No existe una cuenta con ese correo electrónico.' });
+    }
+    // Generar un token de restablecimiento de contraseña
+    const token = crypto.randomBytes(20).toString('hex');
+    // Almacenar el token en la base de datos
+    usuario.guardarTokenDeRestablecimiento(email, token, (err) => {
+      if (err) {
+        return next(err);
+      }
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'autofarosventas@gmail.com',
+          pass: 'Cuatroveces4wac'
+        }
+      });
+      // Configurar el correo electrónico
+      const mailOptions = {
+        from: 'autofarosventas@gmail.com',
+        to: usuario.email,
+        subject: 'Restablecimiento de contraseña',
+        text: 'Para restablecer tu contraseña, haz clic en el siguiente enlace: \n\n' +
+              'http://' + req.headers.host + '/reset-password?token=' + token
+      };
+      // Enviar el correo electrónico
+      transporter.sendMail(mailOptions, (err) => {
+        if (err) {
+          return next(err);
+        }
+        res.render('forgot-password', { message: 'Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña.' });
+      });
+    });
+  });
+},
 }

@@ -31,6 +31,7 @@ router.post('/login', loginValidations, usuariosController.processLogin);
 // Perfil de Usuario
 router.get('/profile', usuariosController.profile);
 router.post('/profile', usuariosController.updateProfile);
+router.get('/forgot-password', usuariosController.forgotPassword);
 
 //Cerrar Sesión
 router.get('/logout', usuariosController.logout);

@@ -57,6 +57,31 @@ obtenerPorEmailYContraseña: function (email, contraseña, callback) {
     });
   });
 },
+forgotPassword : (req, res) => {
+  res.render('forgot-password');
+},
+buscarPorEmail: function (email, callback) {
+  const query = 'SELECT * FROM usuarios WHERE email = ?';
+  conexion.query(query, [email], function (error, resultados) {
+    if (error) {
+      return callback(error, null);
+    }
 
+    if (resultados.length === 0) {
+      return callback(null, null);
+    }
+
+    return callback(null, resultados[0]);
+  });
+},
+guardarTokenDeRestablecimiento: function (email, token, callback) {
+  const query = 'UPDATE usuarios SET resetPasswordToken = ? WHERE email = ?';
+  conexion.query(query, [token, email], function (error, resultados) {
+    if (error) {
+      return callback(error);
+    }
+    return callback(null);
+  });
+},
   
 };
