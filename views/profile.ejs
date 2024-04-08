@@ -2,16 +2,12 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body>
-
    <main>
       <div class="saludo">
          <h1>Hola <%= usuario.nombre %>!</h1>
       </div>
-      
-    
       <div class="user-card">
         <h2>Mis Datos</h2>
-    
         <form action="/users/profile" method="POST">
           <label for="nombre">Nombre:</label>
           <input type="text" id="nombre" name="nombre" value="<%= usuario.nombre %>" required>
@@ -44,69 +40,7 @@
         </form>
       </div>
     </main>
-    <script>
-      fetch('https://apis.datos.gob.ar/georef/api/provincias')
-      .then(response => response.json())
-      .then(data => {
-        console.log('Datos de provincias:', data);
-        const provincias = data.provincias;
-        const selectProvincia = document.getElementById('provincia');
-      
-        provincias.forEach(provincia => {
-          const option = document.createElement('option');
-          option.value = provincia.id;
-          option.text = provincia.nombre;
-          selectProvincia.appendChild(option);
-        });
-      
-        // Seleccionar la provincia del usuario
-        console.log('Valor de usuario.provincia:', "<%= usuario.provincia %>"); // Agregado
-        selectProvincia.value = "<%= usuario.provincia %>";
-        // Establecer el campo oculto del nombre de la provincia
-        if (selectProvincia.selectedIndex !== -1) { // Verificación agregada
-          document.getElementById('nombreProvincia').value = selectProvincia.options[selectProvincia.selectedIndex].text;
-        }
-      
-        selectProvincia.addEventListener('change', function() {
-          const provinciaSeleccionada = this.value;
-          const nombreProvincia = this.options[this.selectedIndex].text;
-          document.getElementById('nombreProvincia').value = nombreProvincia;
-      
-          fetch(`https://apis.datos.gob.ar/georef/api/municipios?provincia=${provinciaSeleccionada}&campos=id,nombre&max=5000`)
-          .then(response => response.json())
-          .then(data => {
-            console.log('Datos de localidades:', data);
-            const localidades = data.municipios;
-            const selectLocalidad = document.getElementById('localidad');
-      
-            // Limpiar las localidades existentes
-            selectLocalidad.innerHTML = '';
-      
-            localidades.forEach(localidad => {
-              const option = document.createElement('option');
-              option.value = localidad.id;
-              option.text = localidad.nombre;
-              selectLocalidad.appendChild(option);
-            });
-      
-            // Seleccionar la localidad del usuario
-            if ("<%= usuario.localidad %>" !== "") {
-              selectLocalidad.value = "<%= usuario.localidad %>";
-              // Establecer el campo oculto del nombre de la localidad
-              document.getElementById('nombreLocalidad').value = selectLocalidad.options[selectLocalidad.selectedIndex].text;
-            }
-      
-            selectLocalidad.addEventListener('change', function() {
-              const nombreLocalidad = this.options[this.selectedIndex].text;
-              document.getElementById('nombreLocalidad').value = nombreLocalidad;
-            });
-          });
-        });
-      
-        // Disparar el evento change
-        selectProvincia.dispatchEvent(new Event('change'));
-      });
-    </script>
+    <script src="/js/profile.js"></script>
       <%- include ./layouts/footer.ejs %>
   </body>
  
