@@ -13,12 +13,19 @@ module.exports = {
   actualizar: function (id, datos, callback) {
     const query = 'UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, celular = ?, direccion = ?, localidad = ?, provincia = ? WHERE id = ?';
     const values = [datos.nombre, datos.apellido, datos.email, datos.celular, datos.direccion, datos.localidad, datos.provincia, id];
-  
     conexion.query(query, values, function (error, resultados) {
       if (error) {
         return callback(error);
       }
-  
+      return callback(null);
+    });
+  },
+  eliminar: function (id, callback) {
+    const query = 'DELETE FROM usuarios WHERE id = ?';
+    conexion.query(query, [id], function (error, resultados) {
+      if (error) {
+        return callback(error);
+      }
       return callback(null);
     });
   },

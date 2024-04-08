@@ -127,5 +127,12 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
       });
     });
   },
-
+  deleteAccount : (req, res, next) => {
+    usuario.eliminar(req.session.userId)
+      .then(() => {
+        req.session.destroy(); // Destruye la sesión después de eliminar la cuenta
+        res.redirect('/'); // Redirige al usuario a la página de inicio
+      })
+      .catch(err => next(err)); // Maneja cualquier error que pueda ocurrir
+  },
 }

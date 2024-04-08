@@ -20,8 +20,6 @@
           <label for="celular">Celular:</label>
           <input type="text" id="celular" name="celular" value="<%= usuario.celular %>" required>
     
-          
-     
           <label for="provincia">Provincia:</label>
           <input type="hidden" id="nombreProvincia" name="nombreProvincia" value="<%= usuario.nombreProvincia %>">
           <select id="provincia" name="provincia" data-provincia="<%= usuario.provincia %>" required>
@@ -37,6 +35,9 @@
           <input type="text" id="direccion" name="direccion" value="<%= usuario.direccion %>" required>
   
           <input type="submit" value="Guardar cambios">
+        </form>
+        <form action="/users/delete" method="POST">
+          <button type="submit" class="delete-account">Eliminar cuenta</button>
         </form>
       </div>
     </main>
