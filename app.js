@@ -8,7 +8,7 @@ const adminMiddleware = require('./middleware/adminMiddleware');
 const middlewares = require('./middleware/middlewares');
 const dotenv = require('dotenv');
 
-dotenv.config();
+dotenv.config();  
 
 //Rutas
 var indexRouter = require('./routes/index');
@@ -30,7 +30,6 @@ app.use(session({
 }));
 
 app.use((req, res, next) => {
-  // Inicializa el carrito si no existe
   req.session.carrito = req.session.carrito || [];
   next();
 });
