@@ -9,6 +9,7 @@ module.exports = {
   },
   processRegister: (req, res) => {
     const resultValidation = validationResult(req);
+
     if (!resultValidation.isEmpty()) {
       return res.render('register', {
         errors: resultValidation.mapped(),
@@ -112,9 +113,12 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
     const updatedData = req.body;
     usuario.actualizar(userId, updatedData, function (error) {
       if (error) {
-        // manejar el error
       }
       req.session.usuario = { ...req.session.usuario, ...updatedData };
+      req.session.usuario.provincia = updatedData.provincia;
+      req.session.usuario.nombreProvincia = updatedData.nombreProvincia;
+      req.session.usuario.localidad = updatedData.localidad;
+      req.session.usuario.nombreLocalidad = updatedData.nombreLocalidad;
       req.session.save(function(err) {
         if(err) {
           console.log(err);
@@ -123,4 +127,5 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
       });
     });
   },
+
 }
