@@ -34,6 +34,7 @@ router.post('/profile', usuariosController.updateProfile);
 
 //Cerrar Sesión
 router.get('/logout', usuariosController.logout);
+router.post('/delete', usuariosController.deleteAccount)
 
 
 
