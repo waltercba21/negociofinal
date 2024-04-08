@@ -1439,6 +1439,20 @@ body.barras_led {
 .user-card input[type="submit"]:hover {
   background-color: #0056b3;
 }
+.user-card .delete-account {
+  background-color: #FF0000;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  padding: 10px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.user-card .delete-account:hover {
+  background-color: #b30000;
+}
 
 /*--------------envios-----------------*/
 .tarjeta-envio {
