@@ -128,6 +128,7 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
     });
   },
   deleteAccount : (req, res, next) => {
+    console.log("ID del usuario a eliminar: ", req.session.userId);
     usuario.eliminar(req.session.userId, (err) => {
       if (err) {
         return next(err);
