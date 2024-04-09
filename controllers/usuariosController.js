@@ -167,7 +167,7 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
         const transporter = nodemailer.createTransport({
           service: 'SendGrid',
           auth: {
-            user: 'apikey', // Este es el usuario que proporciona SendGrid
+            user: 'tQM1vAj-TleeZLTQjivIoA', // Este es el usuario que proporciona SendGrid
             pass: process.env.SENDGRID_API_KEY // Reemplaza esto con tu API Key de SendGrid
           }
         });
