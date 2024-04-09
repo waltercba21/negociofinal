@@ -151,11 +151,11 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
   },
   forgotPasswordPost: (req, res, next) => {
     const email = req.body.email;
-    usuario.buscarPorEmail(email, (err, usuario) => {
+    usuario.buscarPorEmail(email, (err, usuarioEncontrado) => {
       if (err) {
         return next(err);
       }
-      if (!usuario) {
+      if (!usuarioEncontrado) {
         return res.render('forgot-password', { error: 'No existe una cuenta con ese correo electrónico.', message: '' });
       }
       const token = generarToken();
@@ -172,7 +172,7 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
         });
         mailOptions = {
           from: 'autofarosventas@gmail.com',
-          to: usuario.email,
+          to: usuarioEncontrado.email,
           subject: 'Restablecimiento de contraseña',
           text: 'Para restablecer tu contraseña, haz clic en el siguiente enlace: \n\n' +
                 'http://' + req.headers.host + '/reset-password?token=' + token
