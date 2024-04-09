@@ -146,7 +146,10 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
       });
     });
   },
-  forgotPassword: (req, res, next) => {
+  forgotPasswordGet: (req, res) => {
+    res.render('forgot-password', { message: '', error: '' });
+  },
+  forgotPasswordPost: (req, res, next) => {
     const email = req.body.email;
     usuario.buscarPorEmail(email, (err, usuario) => {
       if (err) {
