@@ -159,7 +159,7 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
         return res.render('forgot-password', { error: 'No existe una cuenta con ese correo electrónico.', message: '' });
       }
       const token = generarToken();
-      usuario.guardarTokenDeRestablecimiento(email, token, (err) => {
+      usuario.guardarTokenDeRestablecimiento(email, token, (err) => { // Aquí se ha corregido el error
         if (err) {
           return next(err);
         }
