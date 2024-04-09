@@ -147,44 +147,5 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
       });
     });
   },
-  forgotPasswordGet: (req, res) => {
-    res.render('forgot-password', { message: '', error: '' });
-  },
-  forgotPasswordPost: (req, res, next) => {
-    const email = req.body.email;
-    usuario.buscarPorEmail(email, (err, usuarioEncontrado) => {
-      if (err) {
-        return next(err);
-      }
-      if (!usuarioEncontrado) {
-        return res.render('forgot-password', { error: 'No existe una cuenta con ese correo electrónico.', message: '' });
-      }
-      const token = generarToken();
-      usuario.guardarTokenDeRestablecimiento(email, token, (err) => { // Aquí se ha corregido el error
-        if (err) {
-          return next(err);
-        }
-        const transporter = nodemailer.createTransport({
-          service: 'SendGrid',
-          auth: {
-            user: process.env.SENDGRID_USERNAME, // Este es el usuario que proporciona SendGrid
-            pass: process.env.SENDGRID_API_KEY // Reemplaza esto con tu API Key de SendGrid
-          }
-        });
-        mailOptions = {
-          from: 'autofarosventas@gmail.com',
-          to: usuarioEncontrado.email,
-          subject: 'Restablecimiento de contraseña',
-          text: 'Para restablecer tu contraseña, haz clic en el siguiente enlace: \n\n' +
-                'http://' + req.headers.host + '/reset-password?token=' + token
-        };
-        transporter.sendMail(mailOptions, (err) => {
-          if (err) {
-            return next(err);
-          }
-          res.render('forgot-password', { message: 'Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña.', error: '' });
-        });
-      });
-    });
-  },
+ 
 }
