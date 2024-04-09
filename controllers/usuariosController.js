@@ -1,4 +1,5 @@
 const usuario = require('../models/usuario');
+require('dotenv').config()
 const bcryptjs = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const conexion = require('../config/conexion')
@@ -164,10 +165,10 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
           return next(err);
         }
         const transporter = nodemailer.createTransport({
-          service: 'gmail',
+          service: 'SendGrid',
           auth: {
-            user: 'autofarosventas@gmail.com',
-            pass: 'Cuatroveces4wac'
+            user: 'apikey', // Este es el usuario que proporciona SendGrid
+            pass: process.env.SENDGRID_API_KEY // Reemplaza esto con tu API Key de SendGrid
           }
         });
         mailOptions = {
