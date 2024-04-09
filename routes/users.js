@@ -33,6 +33,7 @@ router.get('/profile', usuariosController.profile);
 router.post('/profile', usuariosController.updateProfile);
 router.get('/forgot-password', usuariosController.forgotPasswordGet);
 router.post('/forgot-password', usuariosController.forgotPasswordPost);
+
 //Cerrar Sesión
 router.get('/logout', usuariosController.logout);
 router.post('/delete', usuariosController.deleteAccount)

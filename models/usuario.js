@@ -57,9 +57,6 @@ obtenerPorEmailYContraseña: function (email, contraseña, callback) {
     });
   });
 },
-forgotPassword : (req, res) => {
-  res.render('forgot-password');
-},
 buscarPorEmail: function (email, callback) {
   const query = 'SELECT * FROM usuarios WHERE email = ?';
   conexion.query(query, [email], function (error, resultados) {
