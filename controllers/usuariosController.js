@@ -170,7 +170,7 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
             pass: 'Cuatroveces4wac'
           }
         });
-        const mailOptions = {
+        mailOptions = {
           from: 'autofarosventas@gmail.com',
           to: usuario.email,
           subject: 'Restablecimiento de contraseña',
