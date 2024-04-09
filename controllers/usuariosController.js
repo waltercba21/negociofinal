@@ -153,7 +153,7 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
         return next(err);
       }
       if (!usuario) {
-        return res.render('forgot-password', { error: 'No existe una cuenta con ese correo electrónico.' });
+        return res.render('forgot-password', { error: 'No existe una cuenta con ese correo electrónico.', message: '' });
       }
       const token = generarToken();
       usuario.guardarTokenDeRestablecimiento(email, token, (err) => {
@@ -178,7 +178,7 @@ conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carri
           if (err) {
             return next(err);
           }
-          res.render('forgot-password', { message: 'Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña.' });
+          res.render('forgot-password', { message: 'Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña.', error: '' });
         });
       });
     });
