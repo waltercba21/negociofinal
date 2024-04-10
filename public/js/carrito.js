@@ -123,7 +123,7 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
   // Incluir el nombre del usuario en el mensaje
   var mensaje = '*Pedido de Mercaderia de:* ' + nombreUsuario + '\n\n*Pedido:*\n';
   for (var i = 0; i < productos.length; i++) {
-      mensaje += '- ' + productos[i].nombre + ' - Cantidad: ' + productos[i].cantidad + ' - Precio: $' + productos[i].precio.toFixed(2) + '\n';
+      mensaje += '- ' + productos[i].nombre + ' - *Cantidad: *' + productos[i].cantidad + ' - *Precio:* $' + productos[i].precio.toFixed(2) + '\n';
   }
   
   mensaje += '\n*Total de productos:* ' + totalCantidad + '\n';
