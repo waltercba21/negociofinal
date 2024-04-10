@@ -1,13 +1,9 @@
 const usuario = require('../models/usuario');
-require('dotenv').config()
 const bcryptjs = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const conexion = require('../config/conexion')
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-const generarToken = () => {
-  return crypto.randomBytes(20).toString('hex');
-}
+const adminEmails = ['walter@autofaros.com.ar', 'chacho@autofaros.com.ar', 'gera@autofaros.com.ar'];
 
 module.exports = {
   register: (req, res) => {
@@ -55,51 +51,51 @@ module.exports = {
   login: (req, res) => {
     return res.render('login');
   },  
-  processLogin: (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+processLogin: (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.render('login', {
+      errors: errors.array(),
+      oldData: req.body,
+    });
+  }
+  const email = req.body.email;
+  const password = req.body.password;
+  usuario.obtenerPorEmail(email, function (error, datos) {
+    if (error) {
+      // Manejar el error
+      console.log(error);
+    }
+    if (datos.length === 0) {
       return res.render('login', {
-        errors: errors.array(),
+        error: 'Credenciales inválidas',
         oldData: req.body,
       });
     }
-    const email = req.body.email;
-    const password = req.body.password;
-    usuario.obtenerPorEmail(email, function (error, datos) {
-      if (error) {
-        // Manejar el error
-        console.log(error);
-      }
-      if (datos.length === 0) {
+    const storedPasswordHash = datos[0].password; 
+    bcryptjs.compare(password, storedPasswordHash, function (err, result) {
+      if (err) {
+      }    
+      if (!result) {
         return res.render('login', {
           error: 'Credenciales inválidas',
           oldData: req.body,
         });
       }
-      const storedPasswordHash = datos[0].password; 
-      bcryptjs.compare(password, storedPasswordHash, function (err, result) {
-        if (err) {
-        }    
-        if (!result) {
-          return res.render('login', {
-            error: 'Credenciales inválidas',
-            oldData: req.body,
-          });
+      req.session.usuario = datos[0];
+      const isLogged = true;
+      const isAdminUser = adminEmails.includes(email);
+      conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carritos JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [req.session.usuario.id], function (error, carritos) {
+        if (error) {
+          console.log('Error al cargar el carrito:', error);
+        } else {
+          req.session.carrito = carritos;
+          res.redirect('/users/profile');
         }
-        req.session.usuario = datos[0];
-        const isLogged = true;
-        const isAdminUser = (email === 'waltercordobadev@gmail.com');
-conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carritos JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [req.session.usuario.id], function (error, carritos) {
-  if (error) {
-    console.log('Error al cargar el carrito:', error);
-  } else {
-    req.session.carrito = carritos;
-    res.redirect('/users/profile');
-  }
-});
       });
     });
-  },
+  });
+},
   profile: async (req, res) => {
     if (req.session && req.session.usuario) {
       return res.render('profile', { usuario: req.session.usuario });
