@@ -94,7 +94,7 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
   e.preventDefault();
 
     // Obtén el nombre del usuario
-    var nombreUsuario = document.querySelector('#nombre-usuario').textContent.split(' ')[2];
+    var nombreUsuario = document.querySelector('#nombre-usuario').textContent.replace('Tu Carrito ', '');
 
   var filasProducto = document.querySelectorAll('tbody tr');
   var productos = [];
