@@ -85,6 +85,7 @@ module.exports = {
         req.session.usuario = datos[0];
         req.session.usuario.isAdmin = adminEmails.includes(email);
         req.session.usuario.isAccountingAdmin = email === 'gera@autofaros.com.ar';
+        req.session.usuario.firstLogin = true;
         conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carritos JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [req.session.usuario.id], function (error, carritos) {
           if (error) {
             console.log('Error al cargar el carrito:', error);
@@ -98,6 +99,12 @@ module.exports = {
   },
   profile: async (req, res) => {
     if (req.session && req.session.usuario) {
+      // Si el usuario ya ha iniciado sesión antes, redirígelo a la página de inicio
+      if (!req.session.usuario.firstLogin) {
+        return res.redirect('/');
+      }
+      // Si es el primer inicio de sesión del usuario, muestra la página de perfil y establece firstLogin en false
+      req.session.usuario.firstLogin = false;
       return res.render('profile', { usuario: req.session.usuario });
     } else {
       return res.redirect('/users/login');
