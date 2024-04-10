@@ -54,8 +54,6 @@ function menos(id) {
     document.querySelector('#totalPrecio').textContent = '$' + totalPrecio.toFixed(2);
   }
   
- 
-
   function actualizarCantidad(id) {
     var inputCantidad = document.querySelector('#cantidad-' + id);
     var cantidad = parseInt(inputCantidad.value, 10);
@@ -63,8 +61,8 @@ function menos(id) {
     var precio = parseFloat(precioElemento.textContent.replace('$', ''));
     var subtotalElemento = document.querySelector('#subtotal-' + id);
     var subtotal = precio * cantidad;
-    subtotalElemento.textContent = '$' + subtotal.toFixed(2);
-
+    subtotalElemento.textContent = '$' + subtotal.toLocaleString('es-ES', {minimumFractionDigits: 2});
+  
     var totalCantidadElemento = document.querySelector('#totalCantidad');
     var totalPrecioElemento = document.querySelector('#totalPrecio'); // Cambiado de '#total' a '#totalPrecio'
     var filasProducto = document.querySelectorAll('tbody tr');
@@ -80,8 +78,8 @@ function menos(id) {
         totalPrecio += subtotal;
     });
     totalCantidadElemento.textContent = totalCantidad;
-    totalPrecioElemento.textContent = '$' + totalPrecio.toFixed(2);
-}
+    totalPrecioElemento.textContent = '$' + totalPrecio.toLocaleString('es-ES', {minimumFractionDigits: 2});
+  }
 document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
   // Eliminar los productos de la vista
   var filasProducto = document.querySelectorAll('tbody tr');
