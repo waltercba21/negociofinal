@@ -80,6 +80,7 @@ function menos(id) {
     totalCantidadElemento.textContent = totalCantidad;
     totalPrecioElemento.textContent = '$' + totalPrecio.toLocaleString('es-ES', {minimumFractionDigits: 2});
   }
+  
 document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
   // Eliminar los productos de la vista
   var filasProducto = document.querySelectorAll('tbody tr');
