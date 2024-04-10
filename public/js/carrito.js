@@ -93,6 +93,9 @@ document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
 document.querySelector('.boton-continuar-compra').addEventListener('click', function(e){
   e.preventDefault();
 
+    // Obtén el nombre del usuario
+    var nombreUsuario = document.querySelector('#nombre-usuario').textContent.split(' ')[2];
+
   var filasProducto = document.querySelectorAll('tbody tr');
   var productos = [];
   filasProducto.forEach(function(fila) {
