@@ -121,13 +121,13 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
   }, 0).toFixed(2);
 
   // Incluir el nombre del usuario en el mensaje
-  var mensaje = 'Pedido de Mercaderia: Nombre Usuario : ' + nombreUsuario + '\nPedido:\n';
+  var mensaje = '*Pedido de Mercaderia de:* ' + nombreUsuario + '\n\n*Pedido:*\n';
   for (var i = 0; i < productos.length; i++) {
-      mensaje += productos[i].nombre + ' - Cantidad: ' + productos[i].cantidad + ' - Precio: $' + productos[i].precio.toFixed(2) + '\n';
+      mensaje += '- ' + productos[i].nombre + ' - Cantidad: ' + productos[i].cantidad + ' - Precio: $' + productos[i].precio.toFixed(2) + '\n';
   }
   
-  mensaje += 'Total de productos: ' + totalCantidad + '\n';
-  mensaje += 'Total: $' + totalPrecio;
+  mensaje += '\n*Total de productos:* ' + totalCantidad + '\n';
+  mensaje += '*Total:* $' + totalPrecio;
 
   // Eliminar espacios en blanco y saltos de línea innecesarios
   mensaje = mensaje.replace(/\s+/g, ' ').trim();
@@ -139,6 +139,3 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
 
   document.querySelector('#form-compra').submit();
 });
-
-
-
