@@ -1,9 +1,10 @@
-// middlewares/adminMiddleware.js
+// Array de correos electrónicos de administradores
+const adminEmails = ['walter@autofaros.com.ar', 'chacho@autofaros.com.ar', 'gera@autofaros.com.ar'];
 
 module.exports = (req, res, next) => {
-  // Verificar si el usuario es el administrador (puedes usar el criterio que prefieras)
+  // Verificar si el usuario es el administrador
   const isAdminUser = (
-    (req.session.usuario && req.session.usuario.email === 'waltercordobadev@gmail.com') ||
+    req.session.usuario && adminEmails.includes(req.session.usuario.email) ||
     req.session.isAdminUser // Nueva condición para manejar al admin incluso si no ha iniciado sesión
   );
 
