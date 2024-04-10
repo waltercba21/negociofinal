@@ -93,8 +93,8 @@ document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
 document.querySelector('.boton-continuar-compra').addEventListener('click', function(e){
   e.preventDefault();
 
-    // Obtén el nombre del usuario
-    var nombreUsuario = document.querySelector('#nombre-usuario').textContent.replace('Tu Carrito ', '');
+  // Obtén el nombre del usuario
+  var nombreUsuario = document.querySelector('#nombre-usuario').textContent.replace('Tu Carrito ', '');
 
   var filasProducto = document.querySelectorAll('tbody tr');
   var productos = [];
@@ -112,7 +112,6 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
     }
   });
 
-
   var totalCantidad = productos.reduce(function(total, producto) {
     return total + producto.cantidad;
   }, 0);
@@ -121,7 +120,8 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
     return total + (producto.precio * producto.cantidad);
   }, 0).toFixed(2);
 
-  var mensaje = 'Pedido:\n';
+  // Incluir el nombre del usuario en el mensaje
+  var mensaje = 'Pedido de Mercaderia: Nombre Usuario : ' + nombreUsuario + '\nPedido:\n';
   for (var i = 0; i < productos.length; i++) {
       mensaje += productos[i].nombre + ' - Cantidad: ' + productos[i].cantidad + ' - Precio: $' + productos[i].precio.toFixed(2) + '\n';
   }
