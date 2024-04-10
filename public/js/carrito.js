@@ -118,7 +118,10 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
 
   var totalPrecio = productos.reduce(function(total, producto) {
     return total + (producto.precio * producto.cantidad);
-  }, 0).toFixed(2);
+  }, 0);
+
+  // Convertir el total a formato de número español
+  totalPrecio = totalPrecio.toLocaleString('es-ES', {minimumFractionDigits: 2});
 
   // Incluir el nombre del usuario en el mensaje
   var mensaje = '*Pedido de Mercaderia de:* ' + nombreUsuario + '\n\n*Pedido:*\n';
