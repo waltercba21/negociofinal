@@ -103,14 +103,16 @@ module.exports = {
       if (!req.session.usuario.firstLogin) {
         return res.redirect('/');
       }
-      // Si es el primer inicio de sesión del usuario, muestra la página de perfil y establece firstLogin en false
+      // Si es el primer inicio de sesión del usuario, establece firstLogin en false y guarda la sesión
       req.session.usuario.firstLogin = false;
       req.session.save(err => {
         if (err) {
           // Manejar el error
           console.log(err);
+        } else {
+          // Renderiza la página de perfil solo después de que la sesión se haya guardado correctamente
+          return res.render('profile', { usuario: req.session.usuario });
         }
-        return res.render('profile', { usuario: req.session.usuario });
       });
     } else {
       return res.redirect('/users/login');
