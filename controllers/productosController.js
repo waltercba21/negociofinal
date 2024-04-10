@@ -482,7 +482,21 @@ carrito: function (req, res) {
             if (err) {
                 console.log('Error al guardar la sesión:', err);
             }
-            res.render('carrito', { productos: productosEnCarrito });
+            // Obtener los datos del usuario
+            conexion.query('SELECT * FROM usuarios WHERE id = ?', [usuarioId], function (error, usuarios) {
+                if (error) {
+                    console.log('Error al recuperar los datos del usuario:', error);
+                    return;
+                }
+                // Asegúrate de que se encontró al usuario
+                if (usuarios.length > 0) {
+                    var usuario = usuarios[0];
+                    // Renderizar la vista con los productos y los datos del usuario
+                    res.render('carrito', { productos: productosEnCarrito, usuario: usuario });
+                } else {
+                    console.log('No se encontró al usuario con id:', usuarioId);
+                }
+            });
         });
     });
 },
