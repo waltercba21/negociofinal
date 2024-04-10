@@ -123,7 +123,10 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
   // Codificar el mensaje antes de añadirlo a la URL
   var whatsapp_url = 'https://api.whatsapp.com/send?phone=543513820440&text=' + encodeURIComponent(mensaje);
   console.log('Redirigiendo a WhatsApp:', whatsapp_url);
-  window.location.href = whatsapp_url;
 
-  document.querySelector('#form-compra').submit(); 
+  // Envía el formulario antes de redirigir a WhatsApp
+  document.querySelector('#form-compra').submit();
+
+  // Redirige a WhatsApp
+  window.location.href = whatsapp_url;
 });
