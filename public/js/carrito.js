@@ -54,8 +54,6 @@ function menos(id) {
     document.querySelector('#totalPrecio').textContent = '$' + totalPrecio.toFixed(2);
   }
   
- 
-
   function actualizarCantidad(id) {
     var inputCantidad = document.querySelector('#cantidad-' + id);
     var cantidad = parseInt(inputCantidad.value, 10);
@@ -66,7 +64,7 @@ function menos(id) {
     subtotalElemento.textContent = '$' + subtotal.toFixed(2);
 
     var totalCantidadElemento = document.querySelector('#totalCantidad');
-    var totalPrecioElemento = document.querySelector('#totalPrecio'); // Cambiado de '#total' a '#totalPrecio'
+    var totalPrecioElemento = document.querySelector('#totalPrecio');
     var filasProducto = document.querySelectorAll('tbody tr');
     var totalCantidad = 0;
     var totalPrecio = 0;
@@ -134,7 +132,7 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
   console.log('Redirigiendo a WhatsApp:', whatsapp_url);
   window.location.href = whatsapp_url;
 
-  document.querySelector('#form-compra').submit();
+  document.querySelector('#form-compra').submit(); 
 });
 
 

@@ -43,7 +43,6 @@ router.get('/carrito/agregar/:id', ensureAuthenticated, productosController.agre
 router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
 router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
 router.post('/carrito/vaciar', productosController.vaciarCarrito);
-router.post('/carrito/comprar', productosController.mostrarCompra);
 router.get('/:id', productosController.detalle);
 
 

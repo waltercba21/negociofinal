@@ -565,36 +565,6 @@ vaciarCarrito : function(req, res) {
         }
     });
 },
-mostrarCompra : function(req, res) {
-    var carrito = req.session.carrito || [];
-    var mensaje = 'Estoy interesado en comprar los siguientes productos:\n';
-    var totalPedido = 0;
-    for (var i = 0; i < carrito.length; i++) {
-        var costoProducto = carrito[i].precio * carrito[i].cantidad;
-        totalPedido += costoProducto;
-        mensaje += carrito[i].nombre + ' (Cantidad: ' + carrito[i].cantidad + ', Costo: $' + costoProducto + ')\n';
-    }
-    var metodoEnvio = req.session.metodoEnvio;
-    mensaje += 'Método de envío: ' + metodoEnvio + '\n';
-    var costoEnvio;
-    switch (metodoEnvio) {
-        case 'envio-dia':
-            costoEnvio = 1000;
-            break;
-        case 'retiro-local':
-            costoEnvio = 0;
-            break;
-        case 'envio-correo':
-            costoEnvio = 2500;
-            break;
-    }
-    totalPedido += costoEnvio;
-    mensaje += 'Costo de envío: $' + costoEnvio + '\n';
-    mensaje += 'Costo total del pedido: $' + totalPedido + '\n';
-    console.log(mensaje); 
-    var urlWhatsapp = 'https://wa.me/543513274715?text=' + encodeURIComponent(mensaje);
-    res.redirect(urlWhatsapp);
-},
 guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     const productos = carrito;
     for (let i = 0; i < productos.length; i++) {
