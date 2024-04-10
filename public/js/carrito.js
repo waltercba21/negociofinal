@@ -83,8 +83,6 @@ document.querySelector('.boton-vaciar').addEventListener('click', function(e) {
 });
 
 document.querySelector('.boton-continuar-compra').addEventListener('click', function(e){
-  e.preventDefault();
-
   var filasProducto = document.querySelectorAll('tbody tr');
   var productos = [];
   filasProducto.forEach(function(fila) {
@@ -125,7 +123,9 @@ document.querySelector('.boton-continuar-compra').addEventListener('click', func
   console.log('Redirigiendo a WhatsApp:', whatsapp_url);
 
   // Envía el formulario antes de redirigir a WhatsApp
-  document.querySelector('#form-compra').submit();
+  var form = document.querySelector('#form-compra');
+  form.submit();
+  form.dispatchEvent(new Event('submit')); // Desencadena el evento de envío
 
   // Redirige a WhatsApp
   window.location.href = whatsapp_url;
