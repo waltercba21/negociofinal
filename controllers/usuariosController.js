@@ -84,6 +84,7 @@ module.exports = {
         }
         req.session.usuario = datos[0];
         req.session.usuario.isAdmin = adminEmails.includes(email);
+        req.session.usuario.isAccountingAdmin = email === 'gera@autofaros.com.ar';
         conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carritos JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [req.session.usuario.id], function (error, carritos) {
           if (error) {
             console.log('Error al cargar el carrito:', error);

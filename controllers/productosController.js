@@ -811,4 +811,11 @@ getAnalyticsData : async function(req, res) {
     }); const data = processResult(result);
     res.render('analytics', { data });
 },
+administracion: (req, res) => {
+    // Aquí puedes agregar cualquier lógica adicional que necesites para preparar los datos para tu vista
+    // Por ejemplo, podrías cargar datos de la base de datos para mostrar en la vista
+  
+    // Renderiza la vista 'administracion'
+    res.render('administracion');
+  },
 }
