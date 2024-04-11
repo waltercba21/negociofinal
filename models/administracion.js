@@ -1,3 +1,6 @@
+const pool = require('../config/conexion');
+const conexion = require('../config/conexion')
+
 module.exports ={
     getProveedores : function(callback) {
         pool.query('SELECT id, nombre FROM proveedores', function(error, results) {

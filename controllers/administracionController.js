@@ -15,5 +15,4 @@ module.exports = {
     presupuestos: (req, res) => {
         res.render('presupuestos');
     }
-    
 }
