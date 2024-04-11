@@ -10,7 +10,7 @@ router.use(methodOverride('_method'))
 
 var rutaAlmacen = multer.diskStorage({
     destination : function (req,file,callback){
-        callback(null, './public/images/')
+        callback(null, './uploads/productos/')
     },
     filename : function (req,file,callback){
         console.log(file);
