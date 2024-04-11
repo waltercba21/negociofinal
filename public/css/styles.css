@@ -1505,7 +1505,8 @@ body.barras_led {
   padding: 20px;
   margin: auto; /* Centra el contenedor en su contenedor padre */
   width: 50%; /* Especifica un ancho para el contenedor */
-  margin-bottom: 100px;
+  margin-bottom: 500px;
+  justify-items: center; /* Centra los elementos hijos en cada celda de la cuadrícula */
 }
 
 .button {
