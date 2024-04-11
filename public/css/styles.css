@@ -1500,12 +1500,13 @@ body.barras_led {
 /*------------------ADMINISTRACION----------------------------*/
 .button-container {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Esto crea dos columnas de igual tamaño */
+  grid-template-columns: 1fr 1fr; 
   gap: 20px;
   padding: 20px;
   margin-bottom: 100px;
+  justify-content: center; 
+  align-items: center; 
 }
-
 .button {
   font-size: 25px;
   padding: 20px 40px; 
