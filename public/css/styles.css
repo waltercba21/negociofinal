@@ -1510,6 +1510,9 @@ body.barras_led {
   border-radius: 25px;
   box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease 0s;
+  color: white;
+  background-color: transparent;
+  border: none;
 }
 
 .button:hover {
@@ -1517,14 +1520,12 @@ body.barras_led {
   transform: translateY(-3px);
 }
 
-.santander-button button {
+.santander-button {
   background-color: red;
-  color: white;
 }
 
-.mercadopago-button button {
+.mercadopago-button {
   background-color: blue;
-  color: white;
 }
 /*------------------RESPONSIVE------------------*/
 
