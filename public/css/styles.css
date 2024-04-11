@@ -1501,11 +1501,11 @@ body.barras_led {
 .button-container {
   display: grid;
   grid-template-columns: 1fr 1fr; 
-  gap: 20px;
+  gap: 100px;
   padding: 20px;
   margin: auto; /* Centra el contenedor en su contenedor padre */
   width: 50%; /* Especifica un ancho para el contenedor */
-  margin-bottom: 500px;
+  margin-bottom: 400px;
   justify-items: center; /* Centra los elementos hijos en cada celda de la cuadrícula */
 }
 
