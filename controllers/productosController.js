@@ -812,10 +812,13 @@ getAnalyticsData : async function(req, res) {
     res.render('analytics', { data });
 },
 administracion: (req, res) => {
-    // Aquí puedes agregar cualquier lógica adicional que necesites para preparar los datos para tu vista
-    // Por ejemplo, podrías cargar datos de la base de datos para mostrar en la vista
-  
-    // Renderiza la vista 'administracion'
     res.render('administracion');
-  },
+},
+facturas: (req, res) => {
+    res.render('facturas');
+},
+presupuestos: (req, res) => {
+    res.render('presupuestos');
+}
+
 }

@@ -1499,15 +1499,16 @@ body.barras_led {
 }
 /*------------------ADMINISTRACION----------------------------*/
 .button-container {
-  display: flex;
-  justify-content: space-around;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
   padding: 20px;
   margin-bottom: 100px;
 }
 
 .button {
-  font-size: 20px;
-  padding: 10px 20px;
+  font-size: 25px;
+  padding: 20px 40px; 
   border-radius: 25px;
   box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease 0s;
@@ -1528,8 +1529,24 @@ body.barras_led {
 .mercadopago-button {
   background-color: #007BFF;
 }
+.facturas-button,
+.presupuesto-button {
+  background-color: grey;
+  border: 1px solid #999;
+  box-shadow: 0 0 20px rgba(0,0,0,0.4), inset 0 0 20px rgba(0,0,0,0.4);
+}
+.facturas-button,
+.presupuesto-button {
+  background-color: grey;
+  border: 1px solid #999;
+  box-shadow: 0 0 20px rgba(0,0,0,0.4), inset 0 0 20px rgba(0,0,0,0.4);
+  transition: background-color 0.3s ease;
+}
 
-
+.facturas-button:hover,
+.presupuesto-button:hover {
+  background-color: #555;
+}
 /*------------------RESPONSIVE------------------*/
 
 @media screen and (max-width: 768px) {
