@@ -1497,7 +1497,35 @@ body.barras_led {
 .boton-envio:hover {
   background-color: #0069d9;
 }
+/*------------------ADMINISTRACION----------------------------*/
+.button-container {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+}
 
+.button {
+  font-size: 20px;
+  padding: 10px 20px;
+  border-radius: 25px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease 0s;
+}
+
+.button:hover {
+  box-shadow: 0px 15px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+}
+
+.santander-button button {
+  background-color: red;
+  color: white;
+}
+
+.mercadopago-button button {
+  background-color: blue;
+  color: white;
+}
 /*------------------RESPONSIVE------------------*/
 
 @media screen and (max-width: 768px) {
