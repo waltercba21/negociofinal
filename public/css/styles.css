@@ -1502,6 +1502,7 @@ body.barras_led {
   display: flex;
   justify-content: space-around;
   padding: 20px;
+  margin-bottom: 100px;
 }
 
 .button {
@@ -1512,6 +1513,7 @@ body.barras_led {
   transition: all 0.3s ease 0s;
   color: white;
   border: none;
+  font-weight: bold;
 }
 
 .button:hover {
@@ -1524,7 +1526,7 @@ body.barras_led {
 }
 
 .mercadopago-button {
-  background-color: blue;
+  background-color: #007BFF;
 }
 
 
