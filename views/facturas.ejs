@@ -2,9 +2,33 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body>
-   <main>
-
-    </main>
+  <main>
+    <form action="/ruta-a-tu-endpoint" method="POST">
+      <label for="id_proveedor">ID Proveedor:</label>
+      <input type="number" id="id_proveedor" name="id_proveedor">
+  
+      <label for="fecha">Fecha:</label>
+      <input type="date" id="fecha" name="fecha">
+  
+      <label for="numero_factura">Número de Factura:</label>
+      <input type="text" id="numero_factura" name="numero_factura">
+  
+      <label for="fecha_pago">Fecha de Pago:</label>
+      <input type="date" id="fecha_pago" name="fecha_pago">
+  
+      <label for="importe">Importe:</label>
+      <input type="number" id="importe" name="importe" step="0.01">
+  
+      <label for="condicion">Condición:</label>
+      <select id="condicion" name="condicion">
+        <option value="pagado">Pagado</option>
+        <option value="pendiente">Pendiente</option>
+      </select>
+  
+      <button type="submit">Guardar</button>
+      <button type="reset">Cancelar</button>
+    </form>
+  </main>
       <%- include ./layouts/footer.ejs %>
   </body>
  
