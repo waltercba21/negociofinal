@@ -1503,10 +1503,11 @@ body.barras_led {
   grid-template-columns: 1fr 1fr; 
   gap: 20px;
   padding: 20px;
+  margin: auto; /* Centra el contenedor en su contenedor padre */
+  width: 50%; /* Especifica un ancho para el contenedor */
   margin-bottom: 100px;
-  justify-content: center; 
-  align-items: center; 
 }
+
 .button {
   font-size: 25px;
   padding: 20px 40px; 
