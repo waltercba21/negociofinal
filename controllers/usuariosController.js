@@ -94,7 +94,7 @@ module.exports = {
             console.log('Error al cargar el carrito:', error);
           } else {
             req.session.carrito = carritos;
-            res.redirect('/users/profile');
+            res.redirect('/');
           }
         });
       });
