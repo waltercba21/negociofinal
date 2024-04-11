@@ -31,7 +31,6 @@ router.get('/generarPDF', productosController.generarPDF);
 router.get('/editar/:id', productosController.editar)
 router.post('/actualizar/:id', cargar.single('archivo'), productosController.actualizar);
 router.post('/eliminar/:id', productosController.eliminar);
-
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor, function(req, res) {
@@ -45,11 +44,6 @@ router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
 router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
 router.post('/carrito/vaciar', productosController.vaciarCarrito);
 router.get('/:id', productosController.detalle);
-
-//Administración
-router.get('/facturas', productosController.facturas);
-router.get('/presupuestos', productosController.presupuestos);
-
 
 //Google Analytcs
 router.get('/analytics', productosController.getAnalyticsData);

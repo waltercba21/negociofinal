@@ -14,6 +14,7 @@ dotenv.config();
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var productosRouter = require('./routes/productos');
+var administracionRouter = require('./routes/administracion');
 var app = express();
 
 // view engine setup
@@ -67,6 +68,7 @@ app.use('/', indexRouter);
 console.log("Router montado correctamente");
 app.use('/users', usersRouter);
 app.use('/productos', productosRouter);
+app.use ('/administracion',administracionRouter);
 
 
 

@@ -811,14 +811,5 @@ getAnalyticsData : async function(req, res) {
     }); const data = processResult(result);
     res.render('analytics', { data });
 },
-administracion: (req, res) => {
-    res.render('administracion');
-},
-facturas: (req, res) => {
-    res.render('facturas');
-},
-presupuestos: (req, res) => {
-    res.render('presupuestos');
-}
 
 }
