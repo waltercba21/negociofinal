@@ -1,6 +1,18 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body>
- <h1>HOLA GERA</h1>
+    <%- include ./layouts/head.ejs %>
+    <%- include ./layouts/header.ejs %>
+    <body>
+      <div style="display: flex; justify-content: space-around; padding: 20px;">
+        <a href="https://www.santander.com.ar/" target="_blank">
+          <button style="background-color: red; color: white; font-size: 20px; padding: 10px 20px;">Banco Santander</button>
+        </a>
+        <a href="https://www.mercadopago.com.ar/" target="_blank">
+          <button style="background-color: blue; color: white; font-size: 20px; padding: 10px 20px;">MercadoPago</button>
+        </a>
+      </div>
+      <%- include ./layouts/footer.ejs %>
+    </body>
 <%- include ./layouts/footer.ejs %>
 </body>
