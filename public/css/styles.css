@@ -1511,7 +1511,6 @@ body.barras_led {
   box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease 0s;
   color: white;
-  background-color: transparent;
   border: none;
 }
 
@@ -1527,6 +1526,8 @@ body.barras_led {
 .mercadopago-button {
   background-color: blue;
 }
+
+
 /*------------------RESPONSIVE------------------*/
 
 @media screen and (max-width: 768px) {
