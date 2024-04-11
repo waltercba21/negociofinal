@@ -1500,7 +1500,7 @@ body.barras_led {
 /*------------------ADMINISTRACION----------------------------*/
 .button-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr 1fr; /* Esto crea dos columnas de igual tamaño */
   gap: 20px;
   padding: 20px;
   margin-bottom: 100px;
@@ -1546,6 +1546,7 @@ body.barras_led {
 .facturas-button:hover,
 .presupuesto-button:hover {
   background-color: #555;
+  transform: translateY(-3px);
 }
 /*------------------RESPONSIVE------------------*/
 
