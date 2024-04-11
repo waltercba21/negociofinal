@@ -8,7 +8,9 @@ module.exports = {
         res.render('administracion');
     },
     facturas: (req, res) => {
-        res.render('facturas');
+        administracion.getProveedores(function(proveedores) {
+            res.render('facturas', { proveedores: proveedores });
+        });
     },
     presupuestos: (req, res) => {
         res.render('presupuestos');

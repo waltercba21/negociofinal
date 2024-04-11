@@ -4,8 +4,12 @@
 <body>
   <main>
     <form action="/administracion/facturas" method="POST">
-      <label for="id_proveedor">ID Proveedor:</label>
-      <input type="number" id="id_proveedor" name="id_proveedor">
+      <label for="id_proveedor">Proveedor:</label>
+      <select id="id_proveedor" name="id_proveedor">
+        <% proveedores.forEach(function(proveedor) { %>
+          <option value="<%= proveedor.id %>"><%= proveedor.nombre %></option>
+        <% }); %>
+      </select>
   
       <label for="fecha">Fecha:</label>
       <input type="date" id="fecha" name="fecha">
