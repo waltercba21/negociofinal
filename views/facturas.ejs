@@ -4,7 +4,8 @@
 <body>
   <main>
     <form action="/administracion/facturas" method="POST">
-      <label for="id_proveedor">Proveedor:</label>
+      <div class="facturas-contenedor">
+    <label for="id_proveedor">Proveedor:</label>
       <select id="id_proveedor" name="id_proveedor">
         <% proveedores.forEach(function(proveedor) { %>
           <option value="<%= proveedor.id %>"><%= proveedor.nombre %></option>
@@ -31,6 +32,8 @@
   
       <button type="submit">Guardar</button>
       <button type="reset">Cancelar</button>
+      </div>
+      
     </form>
   </main>
       <%- include ./layouts/footer.ejs %>

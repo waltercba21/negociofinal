@@ -1552,6 +1552,66 @@ body.barras_led {
   background-color: #555;
   transform: translateY(-3px);
 }
+/*------------------FACTURAS------------------*/
+
+.facturas-contenedor {
+  width: 80%;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f8f8;
+  border-radius: 5px;
+}
+
+.facturas-contenedor label {
+  font-weight: bold;
+  display: block;
+  margin-top: 20px;
+}
+
+.facturas-contenedor select,
+.facturas-contenedor input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.facturas-contenedor select:hover,
+.facturas-contenedor input:hover {
+  border-color: #888;
+}
+
+.facturas-contenedor select option:hover {
+  background-color: #f0f0f0;
+}
+
+.facturas-contenedor button[type="submit"] {
+  background-color: blue;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.facturas-contenedor button[type="reset"] {
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.facturas-contenedor button:hover {
+  opacity: 0.8;
+}
+
 /*------------------RESPONSIVE------------------*/
 
 @media screen and (max-width: 768px) {
