@@ -12,6 +12,19 @@ module.exports = {
             res.render('facturas', { proveedores: proveedores });
         });
     },
+    postFactura: function(req, res) {
+        let nuevaFactura = {
+            id_proveedor: req.body.id_proveedor,
+            fecha: req.body.fecha,
+            numero_factura: req.body.numero_factura,
+            fecha_pago: req.body.fecha_pago,
+            importe: req.body.importe,
+            condicion: req.body.condicion
+        };
+        administracion.insertFactura(nuevaFactura, function() {
+            res.redirect('/administracion/facturas');
+        });
+    },
     presupuestos: (req, res) => {
         res.render('presupuestos');
     }
