@@ -8,6 +8,5 @@ var methodOverride = require('method-override')
 
 //Administración
 router.get('/facturas', administracionController.facturas);
-router.post('/facturas', administracionController.facturas);
 router.get('/presupuestos', administracionController.presupuestos);
 
