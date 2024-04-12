@@ -6,8 +6,8 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     var fechaPago = document.getElementById('fechaPago').value;
     var condicion = document.getElementById('condicion').value;
 
-var fechaFacturaFormateada = fechaFactura ? fechaFactura.split('/').reverse().join('-') : null;
-var fechaPagoFormateada = fechaPago ? fechaPago.split('/').reverse().join('-') : null;
+    var fechaFacturaFormateada = fechaFactura ? fechaFactura.split('/').reverse().join('-') : null;
+    var fechaPagoFormateada = fechaPago ? fechaPago.split('/').reverse().join('-') : null;
     
     fetch('/administracion/api/facturas', {
         method: 'POST',
@@ -38,9 +38,9 @@ var fechaPagoFormateada = fechaPago ? fechaPago.split('/').reverse().join('-') :
         tr.innerHTML = `
             <td>${factura.id}</td>
             <td>${factura.nombre_proveedor}</td>
-            <td>${new Date(factura.fecha).toLocaleDateString('es-AR')}</td>
+            <td>${factura.fecha}</td>
             <td>${factura.numero_factura}</td>
-            <td>${new Date(factura.fecha_pago).toLocaleDateString('es-AR')}</td>
+            <td>${factura.fecha_pago}</td>
             <td>${factura.importe}</td>
             <td>${factura.condicion}</td>
             <td><img id="myImg" src="/uploads/comprobantes/${factura.comprobante_pago}" alt="Comprobante de pago" onclick="openModal(this)"></td>
