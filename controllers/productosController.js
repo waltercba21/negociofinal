@@ -769,8 +769,6 @@ generarPDF: function (req, res) {
             });
         });
     });
-
-    // Cuando el PDF se ha generado, enviarlo como respuesta
     buffer.on('finish', function() {
         const pdfData = buffer.getContents();
         res.setHeader('Content-Type', 'application/pdf');
