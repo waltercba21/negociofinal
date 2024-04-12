@@ -44,9 +44,9 @@
                     <tr>
                         <td><%= factura.id %></td>
                         <td><%= factura.nombre_proveedor %></td>
-                        <td><%= factura.fecha && typeof factura.fecha === 'string' ? new Date(factura.fecha.split('T')[0]).toLocaleDateString('es-AR') : '' %></td>
+                        <td><%= factura.fecha ? new Date(factura.fecha).toLocaleDateString('es-AR') : '' %></td>
                         <td><%= factura.numero_factura %></td>
-                        <td><%= factura.fecha_pago && typeof factura.fecha_pago === 'string' ? new Date(factura.fecha_pago.split('T')[0]).toLocaleDateString('es-AR') : '' %></td>
+                        <td><%= factura.fecha_pago ? new Date(factura.fecha_pago).toLocaleDateString('es-AR') : '' %></td>
                         <td><%= factura.importe %></td>
                         <td><%= factura.condicion %></td>
                         <td><img id="myImg" src="/uploads/comprobantes/<%= factura.comprobante_pago %>" alt="Comprobante de pago" onclick="openModal(this)"></td>
