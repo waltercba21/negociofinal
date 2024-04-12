@@ -26,10 +26,14 @@ module.exports ={
             query += ' AND facturas.id_proveedor = ' + pool.escape(filtro.id_proveedor);
         }
         if (filtro.fecha && filtro.fecha !== 'null') {
-            query += ' AND DATE(facturas.fecha) = ' + pool.escape(filtro.fecha);
+            let fecha = new Date(filtro.fecha);
+            let fechaFormateada = fecha.toISOString().split('T')[0];
+            query += ' AND DATE(facturas.fecha) = ' + pool.escape(fechaFormateada);
         }
         if (filtro.fecha_pago && filtro.fecha_pago !== 'null') {
-            query += ' AND DATE(facturas.fecha_pago) = ' + pool.escape(filtro.fecha_pago);
+            let fechaPago = new Date(filtro.fecha_pago);
+            let fechaPagoFormateada = fechaPago.toISOString().split('T')[0];
+            query += ' AND DATE(facturas.fecha_pago) = ' + pool.escape(fechaPagoFormateada);
         }
         if (filtro.condicion && filtro.condicion !== 'null') {
             query += ' AND facturas.condicion = ' + pool.escape(filtro.condicion);
