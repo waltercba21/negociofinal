@@ -83,14 +83,11 @@ function openModal(img) {
         modal.style.display = "none";
     }
 }
-
 function parseDate(dateString) {
-    // Intenta parsear la fecha con el formato 'YYYY-MM-DD'
     var parts = dateString.split('-');
     if (parts.length === 3) {
-        return new Date(parts[0], parts[1] - 1, parts[2]);
+        var date = new Date(parts[0], parts[1] - 1, parts[2]);
+        return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getFullYear()}`;
     }
-
-    // Si eso falla, devuelve null
-    return null;
+    return '';
 }
