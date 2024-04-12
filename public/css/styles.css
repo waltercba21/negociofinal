@@ -1638,6 +1638,8 @@ body.barras_led {
 }
 /*------------------Listado de Facturas------------------*/
 #filterForm {
+  display: flex;
+  flex-direction: column;
   margin-top: 50px; /* Ajusta este valor según tus necesidades */
 }
 
@@ -1653,7 +1655,8 @@ body.barras_led {
   width: 30%;
   padding: 10px;
   margin-top: 5px;
-
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 /* Estilos para la tabla */
 table {
