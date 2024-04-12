@@ -5,10 +5,8 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     var fechaFactura = document.getElementById('fechaFactura').value;
     var fechaPago = document.getElementById('fechaPago').value;
     var condicion = document.getElementById('condicion').value;
-
-    var fechaFacturaFormateada = fechaFactura ? new Date(fechaFactura).toISOString().split('T')[0] : null;
-    var fechaPagoFormateada = fechaPago ? new Date(fechaPago).toISOString().split('T')[0] : null;
-    
+    var fechaFacturaFormateada = fechaFactura ? new Date(fechaFactura.split('/').reverse().join('-') + 'T00:00:00Z').toISOString().split('T')[0] : null;
+    var fechaPagoFormateada = fechaPago ? new Date(fechaPago.split('/').reverse().join('-') + 'T00:00:00Z').toISOString().split('T')[0] : null;
     fetch('/administracion/api/facturas', {
         method: 'POST',
         headers: {
