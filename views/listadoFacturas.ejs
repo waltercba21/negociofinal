@@ -6,7 +6,7 @@
             <label for="proveedor">Proveedor:</label>
             <select id="proveedor" name="proveedor">
                 <% proveedores.forEach(function(proveedor) { %>
-                    <option value="<%= proveedor %>"><%= proveedor %></option>
+                    <option value="<%= proveedor.id %>"><%= proveedor.nombre %></option>
                 <% }); %>
             </select>
 

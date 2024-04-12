@@ -20,7 +20,31 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     })
     .then(response => response.json())
     .then(data => {
-        // Aquí puedes actualizar la tabla con los datos recibidos
+           // Selecciona el cuerpo de la tabla
+    var tbody = document.querySelector('tbody');
+
+    // Limpia el cuerpo de la tabla
+    while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+    }
+
+    // Agrega las nuevas filas a la tabla
+    data.forEach(function(factura) {
+        var tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td>${factura.id}</td>
+            <td>${factura.nombre_proveedor}</td>
+            <td>${new Date(factura.fecha).toLocaleDateString('es-AR')}</td>
+            <td>${factura.numero_factura}</td>
+            <td>${new Date(factura.fecha_pago).toLocaleDateString('es-AR')}</td>
+            <td>${factura.importe}</td>
+            <td>${factura.condicion}</td>
+            <td><img id="myImg" src="/uploads/comprobantes/${factura.comprobante_pago}" alt="Comprobante de pago" onclick="openModal(this)"></td>
+        `;
+
+        tbody.appendChild(tr);
+    }); 
     })
     .catch(error => console.error('Error:', error));
 });
