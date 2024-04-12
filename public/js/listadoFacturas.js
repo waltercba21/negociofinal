@@ -32,17 +32,15 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
             var fechaFacturaFormateada = '';
             if (factura.fecha) {
                 var fechaFactura = new Date(factura.fecha);
-                if (fechaFactura) {
-                    fechaFacturaFormateada = `${fechaFactura.getDate().toString().padStart(2, '0')}/${(fechaFactura.getMonth()+1).toString().padStart(2, '0')}/${fechaFactura.getFullYear()}`;
-                }
+                fechaFactura = new Date(fechaFactura.getTime() + 24 * 60 * 60 * 1000); // Agregar 24 horas
+                fechaFacturaFormateada = `${fechaFactura.getDate().toString().padStart(2, '0')}/${(fechaFactura.getMonth()+1).toString().padStart(2, '0')}/${fechaFactura.getFullYear()}`;
             }
         
             var fechaPagoFormateada = '';
             if (factura.fecha_pago) {
                 var fechaPago = new Date(factura.fecha_pago);
-                if (fechaPago) {
-                    fechaPagoFormateada = `${fechaPago.getDate().toString().padStart(2, '0')}/${(fechaPago.getMonth()+1).toString().padStart(2, '0')}/${fechaPago.getFullYear()}`;
-                }
+                fechaPago = new Date(fechaPago.getTime() + 24 * 60 * 60 * 1000); // Agregar 24 horas
+                fechaPagoFormateada = `${fechaPago.getDate().toString().padStart(2, '0')}/${(fechaPago.getMonth()+1).toString().padStart(2, '0')}/${fechaPago.getFullYear()}`;
             }
         
             tr.innerHTML = `

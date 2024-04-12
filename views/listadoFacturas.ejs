@@ -44,8 +44,7 @@
                     var date = new Date(dateString);
                     var userTimezoneOffset = date.getTimezoneOffset() * 60000;
                     var utcDate = new Date(date.getTime() + userTimezoneOffset);
-                    var adjustedDate = new Date(utcDate.getTime() + 24 * 60 * 60 * 1000); // Agregar 24 horas
-                    return `${adjustedDate.getUTCDate().toString().padStart(2, '0')}/${(adjustedDate.getUTCMonth()+1).toString().padStart(2, '0')}/${adjustedDate.getUTCFullYear()}`;
+                    return `${utcDate.getUTCDate().toString().padStart(2, '0')}/${(utcDate.getUTCMonth()+1).toString().padStart(2, '0')}/${utcDate.getUTCFullYear()}`;
                 } %>
                 
                 <% facturas.forEach(function(factura) { %>
