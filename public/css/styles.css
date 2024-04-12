@@ -1637,6 +1637,22 @@ body.barras_led {
   opacity: 0.8;
 }
 /*------------------Listado de Facturas------------------*/
+#filterForm {
+  margin-top: 20px; /* Ajusta este valor según tus necesidades */
+}
+
+#filterForm label {
+  display: block;
+  margin-top: 10px;
+}
+
+#filterForm select, 
+#filterForm input[type="date"], 
+#filterForm input[type="submit"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+}
 /* Estilos para la tabla */
 table {
   width: 100%;
