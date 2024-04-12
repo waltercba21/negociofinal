@@ -25,7 +25,7 @@
                         <td><%= new Date(factura.fecha_pago).toLocaleDateString('es-AR') %></td>
                         <td><%= factura.importe %></td>
                         <td><%= factura.condicion %></td>
-                        <td><img src="/uploads/comprobantes/<%= factura.comprobante_pago %>" alt="Comprobante de pago"></td>
+                        <td><img src="../../uploads/comprobantes/<%= factura.comprobante_pago %>" alt="Comprobante de pago"></td>
                     </tr>
                 <% }); %>
             </tbody>
