@@ -34,18 +34,24 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     // Agrega las nuevas filas a la tabla
     data.forEach(function(factura) {
         var tr = document.createElement('tr');
-
+    
+        var fechaFactura = new Date(factura.fecha);
+        var fechaFacturaFormateada = fechaFactura ? `${fechaFactura.getDate().toString().padStart(2, '0')}/${(fechaFactura.getMonth()+1).toString().padStart(2, '0')}/${fechaFactura.getFullYear()}` : '';
+    
+        var fechaPago = new Date(factura.fecha_pago);
+        var fechaPagoFormateada = fechaPago ? `${fechaPago.getDate().toString().padStart(2, '0')}/${(fechaPago.getMonth()+1).toString().padStart(2, '0')}/${fechaPago.getFullYear()}` : '';
+    
         tr.innerHTML = `
             <td>${factura.id}</td>
             <td>${factura.nombre_proveedor}</td>
-            <td>${factura.fecha}</td>
+            <td>${fechaFacturaFormateada}</td>
             <td>${factura.numero_factura}</td>
-            <td>${factura.fecha_pago}</td>
+            <td>${fechaPagoFormateada}</td>
             <td>${factura.importe}</td>
             <td>${factura.condicion}</td>
             <td><img id="myImg" src="/uploads/comprobantes/${factura.comprobante_pago}" alt="Comprobante de pago" onclick="openModal(this)"></td>
         `;
-
+    
         tbody.appendChild(tr);
     }); 
     })
