@@ -9,7 +9,7 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     var fechaFacturaFormateada = fechaFactura ? new Date(fechaFactura).toISOString().split('T')[0] : null;
     var fechaPagoFormateada = fechaPago ? new Date(fechaPago).toISOString().split('T')[0] : null;
     
-    fetch('/api/facturas', {
+    fetch('/administracion/api/facturas', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
