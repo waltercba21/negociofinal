@@ -6,6 +6,16 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     var fechaPago = document.getElementById('fechaPago').value;
     var condicion = document.getElementById('condicion').value;
 
+    if (fechaFactura) {
+        var partesFechaFactura = fechaFactura.split('/');
+        fechaFactura = `${partesFechaFactura[2]}-${partesFechaFactura[1]}-${partesFechaFactura[0]}`;
+    }
+
+    if (fechaPago) {
+        var partesFechaPago = fechaPago.split('/');
+        fechaPago = `${partesFechaPago[2]}-${partesFechaPago[1]}-${partesFechaPago[0]}`;
+    }
+
     fetch('/administracion/api/facturas', {
         method: 'POST',
         headers: {
@@ -75,18 +85,12 @@ function openModal(img) {
 }
 
 function parseDate(dateString) {
-    // Intenta parsear la fecha con el formato 'DD/MM/YYYY'
-    var parts = dateString.split('/');
-    if (parts.length === 3) {
-        return new Date(parts[2], parts[1] - 1, parts[0]);
-    }
-
-    // Si eso falla, intenta parsear la fecha con el formato 'YYYY-MM-DD'
-    parts = dateString.split('-');
+    // Intenta parsear la fecha con el formato 'YYYY-MM-DD'
+    var parts = dateString.split('-');
     if (parts.length === 3) {
         return new Date(parts[0], parts[1] - 1, parts[2]);
     }
 
-    // Si eso también falla, devuelve null
+    // Si eso falla, devuelve null
     return null;
 }
