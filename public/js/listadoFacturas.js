@@ -29,11 +29,17 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
         data.forEach(function(factura) {
             var tr = document.createElement('tr');
         
-            var fechaFactura = new Date(factura.fecha + 'T00:00:00');
-            var fechaFacturaFormateada = fechaFactura ? `${fechaFactura.getDate().toString().padStart(2, '0')}/${(fechaFactura.getMonth()+1).toString().padStart(2, '0')}/${fechaFactura.getFullYear()}` : '';
+            var fechaFacturaFormateada = '';
+            if (factura.fecha) {
+                var fechaFactura = new Date(factura.fecha + 'T00:00:00');
+                fechaFacturaFormateada = `${fechaFactura.getDate().toString().padStart(2, '0')}/${(fechaFactura.getMonth()+1).toString().padStart(2, '0')}/${fechaFactura.getFullYear()}`;
+            }
         
-            var fechaPago = new Date(factura.fecha_pago + 'T00:00:00');
-            var fechaPagoFormateada = fechaPago ? `${fechaPago.getDate().toString().padStart(2, '0')}/${(fechaPago.getMonth()+1).toString().padStart(2, '0')}/${fechaPago.getFullYear()}` : '';
+            var fechaPagoFormateada = '';
+            if (factura.fecha_pago) {
+                var fechaPago = new Date(factura.fecha_pago + 'T00:00:00');
+                fechaPagoFormateada = `${fechaPago.getDate().toString().padStart(2, '0')}/${(fechaPago.getMonth()+1).toString().padStart(2, '0')}/${fechaPago.getFullYear()}`;
+            }
         
             tr.innerHTML = `
                 <td>${factura.id}</td>
