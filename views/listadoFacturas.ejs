@@ -4,11 +4,12 @@
     <main>
         <form id="filterForm">
             <label for="proveedor">Proveedor:</label>
-            <select id="proveedor" name="proveedor">
-                <% proveedores.forEach(function(proveedor) { %>
-                    <option value="<%= proveedor.id %>"><%= proveedor.nombre %></option>
-                <% }); %>
-            </select>
+<select id="proveedor" name="proveedor">
+    <option value="">Selecciona un proveedor</option>
+    <% proveedores.forEach(function(proveedor) { %>
+        <option value="<%= proveedor.id %>"><%= proveedor.nombre %></option>
+    <% }); %>
+</select>
 
             <label for="fechaFactura">Fecha de Factura:</label>
             <input type="date" id="fechaFactura" name="fechaFactura">
@@ -18,6 +19,7 @@
 
             <label for="condicion">Condición:</label>
             <select id="condicion" name="condicion">
+                <option value="">Selecciona una condición</option>
                 <option value="pagado">Pagado</option>
                 <option value="pendiente">Pendiente</option>
             </select>
