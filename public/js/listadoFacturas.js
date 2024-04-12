@@ -31,14 +31,18 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
         
             var fechaFacturaFormateada = '';
             if (factura.fecha) {
-                var fechaFactura = new Date(factura.fecha + 'T00:00:00');
-                fechaFacturaFormateada = `${fechaFactura.getDate().toString().padStart(2, '0')}/${(fechaFactura.getMonth()+1).toString().padStart(2, '0')}/${fechaFactura.getFullYear()}`;
+                var fechaFactura = parseDate(factura.fecha);
+                if (fechaFactura) {
+                    fechaFacturaFormateada = `${fechaFactura.getDate().toString().padStart(2, '0')}/${(fechaFactura.getMonth()+1).toString().padStart(2, '0')}/${fechaFactura.getFullYear()}`;
+                }
             }
         
             var fechaPagoFormateada = '';
             if (factura.fecha_pago) {
-                var fechaPago = new Date(factura.fecha_pago + 'T00:00:00');
-                fechaPagoFormateada = `${fechaPago.getDate().toString().padStart(2, '0')}/${(fechaPago.getMonth()+1).toString().padStart(2, '0')}/${fechaPago.getFullYear()}`;
+                var fechaPago = parseDate(factura.fecha_pago);
+                if (fechaPago) {
+                    fechaPagoFormateada = `${fechaPago.getDate().toString().padStart(2, '0')}/${(fechaPago.getMonth()+1).toString().padStart(2, '0')}/${fechaPago.getFullYear()}`;
+                }
             }
         
             tr.innerHTML = `
@@ -68,4 +72,21 @@ function openModal(img) {
     span.onclick = function() { 
         modal.style.display = "none";
     }
+}
+
+function parseDate(dateString) {
+    // Intenta parsear la fecha con el formato 'YYYY-MM-DD'
+    var parts = dateString.split('-');
+    if (parts.length === 3) {
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    // Si eso falla, intenta parsear la fecha con el formato 'MM/DD/YYYY'
+    parts = dateString.split('/');
+    if (parts.length === 3) {
+        return new Date(parts[2], parts[0] - 1, parts[1]);
+    }
+
+    // Si eso también falla, devuelve null
+    return null;
 }
