@@ -75,16 +75,16 @@ function openModal(img) {
 }
 
 function parseDate(dateString) {
-    // Intenta parsear la fecha con el formato 'YYYY-MM-DD'
-    var parts = dateString.split('-');
+    // Intenta parsear la fecha con el formato 'DD/MM/YYYY'
+    var parts = dateString.split('/');
     if (parts.length === 3) {
-        return new Date(parts[0], parts[1] - 1, parts[2]);
+        return new Date(parts[2], parts[1] - 1, parts[0]);
     }
 
-    // Si eso falla, intenta parsear la fecha con el formato 'MM/DD/YYYY'
-    parts = dateString.split('/');
+    // Si eso falla, intenta parsear la fecha con el formato 'YYYY-MM-DD'
+    parts = dateString.split('-');
     if (parts.length === 3) {
-        return new Date(parts[2], parts[0] - 1, parts[1]);
+        return new Date(parts[0], parts[1] - 1, parts[2]);
     }
 
     // Si eso también falla, devuelve null
