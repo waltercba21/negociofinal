@@ -28,7 +28,9 @@ module.exports = {
     },
     listadoFacturas : function(req, res) {
         administracion.getFacturas(function(facturas) {
-            res.render('listadoFacturas', { facturas: facturas });
+            administracion.getProveedores(function(proveedores) {
+                res.render('listadoFacturas', { facturas: facturas, proveedores: proveedores });
+            });
         });
     },
     apiFacturas: function(req, res) {
