@@ -26,6 +26,11 @@ module.exports = {
             res.redirect('/administracion/facturas');
         });
     },
+    listadoFacturas : function(req, res) {
+        administracion.getFacturas(function(facturas) {
+            res.render('listadoFacturas', { facturas: facturas });
+        });
+    },
     presupuestos: (req, res) => {
         res.render('presupuestos');
     }

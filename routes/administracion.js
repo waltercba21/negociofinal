@@ -20,4 +20,7 @@ router.get('/facturas', administracionController.facturas);
 router.post('/facturas', upload.single('comprobante_pago'), administracionController.postFactura);
 router.get('/presupuestos', administracionController.presupuestos);
 
+// Nueva ruta para listadoFacturas
+router.get('/listadoFacturas', administracionController.listadoFacturas);
+
 module.exports = router;

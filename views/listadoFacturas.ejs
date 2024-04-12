@@ -1,0 +1,35 @@
+<%- include ./layouts/head.ejs %>
+<%- include ./layouts/header.ejs %>
+<body>
+    <main>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Proveedor</th>
+                    <th>Fecha</th>
+                    <th>Número de Factura</th>
+                    <th>Fecha de Pago</th>
+                    <th>Importe</th>
+                    <th>Condición</th>
+                    <th>Comprobante de Pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% facturas.forEach(function(factura) { %>
+                    <tr>
+                        <td><%= factura.id %></td>
+                        <td><%= factura.nombre_proveedor %></td>
+                        <td><%= factura.fecha %></td>
+                        <td><%= factura.numero_factura %></td>
+                        <td><%= factura.fecha_pago %></td>
+                        <td><%= factura.importe %></td>
+                        <td><%= factura.condicion %></td>
+                        <td><%= factura.comprobante_pago %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </main>
+    <%- include ./layouts/footer.ejs %>
+</body>
