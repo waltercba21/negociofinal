@@ -20,7 +20,7 @@ module.exports = {
             fecha_pago: req.body.fecha_pago,
             importe: req.body.importe,
             condicion: req.body.condicion,
-            comprobante_pago: req.file.path
+            comprobante_pago: req.file.filename
         };
         administracion.insertFactura(nuevaFactura, function() {
             res.redirect('/administracion/facturas');
