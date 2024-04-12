@@ -22,5 +22,7 @@ router.get('/presupuestos', administracionController.presupuestos);
 
 // Nueva ruta para listadoFacturas
 router.get('/listadoFacturas', administracionController.listadoFacturas);
+// Rutas
+router.post('/api/facturas', administracionController.apiFacturas);
 
 module.exports = router;

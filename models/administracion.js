@@ -20,4 +20,23 @@ module.exports ={
             callback(results);
         });
     },
+    getFacturasFiltradas : function(filtro, callback) {
+        let query = 'SELECT facturas.*, proveedores.nombre AS nombre_proveedor FROM facturas LEFT JOIN proveedores ON facturas.id_proveedor = proveedores.id WHERE 1=1';
+        if (filtro.id_proveedor) {
+            query += ' AND facturas.id_proveedor = ' + pool.escape(filtro.id_proveedor);
+        }
+        if (filtro.fecha) {
+            query += ' AND facturas.fecha = ' + pool.escape(filtro.fecha);
+        }
+        if (filtro.fecha_pago) {
+            query += ' AND facturas.fecha_pago = ' + pool.escape(filtro.fecha_pago);
+        }
+        if (filtro.condicion) {
+            query += ' AND facturas.condicion = ' + pool.escape(filtro.condicion);
+        }
+        pool.query(query, function(error, results) {
+            if (error) throw error;
+            callback(results);
+        });
+    }
 }

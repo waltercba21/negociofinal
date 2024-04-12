@@ -2,6 +2,28 @@
 <%- include ./layouts/header.ejs %>
 <body>
     <main>
+        <form id="filterForm">
+            <label for="proveedor">Proveedor:</label>
+            <select id="proveedor" name="proveedor">
+                <% proveedores.forEach(function(proveedor) { %>
+                    <option value="<%= proveedor %>"><%= proveedor %></option>
+                <% }); %>
+            </select>
+
+            <label for="fechaFactura">Fecha de Factura:</label>
+            <input type="date" id="fechaFactura" name="fechaFactura">
+
+            <label for="fechaPago">Fecha de Pago:</label>
+            <input type="date" id="fechaPago" name="fechaPago">
+
+            <label for="condicion">Condición:</label>
+            <select id="condicion" name="condicion">
+                <option value="pagado">Pagado</option>
+                <option value="pendiente">Pendiente</option>
+            </select>
+
+            <input type="submit" value="Filtrar">
+        </form>
         <table>
             <thead>
                 <tr>
@@ -36,6 +58,7 @@
         </div>
     </main>
     <%- include ./layouts/footer.ejs %>
+    <script src="/js/listadoFacturas.js"></script> 
     <script>
         function openModal(img) {
             var modal = document.getElementById("myModal");
@@ -48,5 +71,6 @@
                 modal.style.display = "none";
             }
         }
+
     </script>
 </body>
