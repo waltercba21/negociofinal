@@ -33,10 +33,12 @@ module.exports = {
                     facturas: facturas, 
                     proveedores: proveedores,
                     parseDate: function(dateString) {
-                        var parts = dateString.split('-');
-                        if (parts.length === 3) {
-                            var date = new Date(parts[0], parts[1] - 1, parts[2]);
-                            return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                        if (typeof dateString === 'string') {
+                            var parts = dateString.split('-');
+                            if (parts.length === 3) {
+                                var date = new Date(parts[0], parts[1] - 1, parts[2]);
+                                return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                            }
                         }
                         return '';
                     }
