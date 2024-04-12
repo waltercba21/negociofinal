@@ -13,8 +13,8 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
         },
         body: JSON.stringify({
             proveedor: proveedor,
-            fechaFactura: fechaFactura,
-            fechaPago: fechaPago,
+            fechaFactura: new Date(fechaFactura).toISOString().split('T')[0],
+            fechaPago: new Date(fechaPago).toISOString().split('T')[0],
             condicion: condicion
         })
     })

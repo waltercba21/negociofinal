@@ -26,10 +26,10 @@ module.exports ={
             query += ' AND facturas.id_proveedor = ' + pool.escape(filtro.id_proveedor);
         }
         if (filtro.fecha) {
-            query += ' AND facturas.fecha = ' + pool.escape(filtro.fecha);
+            query += ' AND DATE(facturas.fecha) = ' + pool.escape(filtro.fecha);
         }
         if (filtro.fecha_pago) {
-            query += ' AND facturas.fecha_pago = ' + pool.escape(filtro.fecha_pago);
+            query += ' AND DATE(facturas.fecha_pago) = ' + pool.escape(filtro.fecha_pago);
         }
         if (filtro.condicion) {
             query += ' AND facturas.condicion = ' + pool.escape(filtro.condicion);
