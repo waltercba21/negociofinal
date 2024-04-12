@@ -6,16 +6,6 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     var fechaPago = document.getElementById('fechaPago').value;
     var condicion = document.getElementById('condicion').value;
 
-    if (fechaFactura) {
-        var partesFechaFactura = fechaFactura.split('/');
-        fechaFactura = `${partesFechaFactura[2]}-${partesFechaFactura[1]}-${partesFechaFactura[0]}`;
-    }
-
-    if (fechaPago) {
-        var partesFechaPago = fechaPago.split('/');
-        fechaPago = `${partesFechaPago[2]}-${partesFechaPago[1]}-${partesFechaPago[0]}`;
-    }
-
     fetch('/administracion/api/facturas', {
         method: 'POST',
         headers: {
@@ -41,7 +31,7 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
         
             var fechaFacturaFormateada = '';
             if (factura.fecha) {
-                var fechaFactura = parseDate(factura.fecha);
+                var fechaFactura = new Date(factura.fecha);
                 if (fechaFactura) {
                     fechaFacturaFormateada = `${fechaFactura.getDate().toString().padStart(2, '0')}/${(fechaFactura.getMonth()+1).toString().padStart(2, '0')}/${fechaFactura.getFullYear()}`;
                 }
@@ -49,7 +39,7 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
         
             var fechaPagoFormateada = '';
             if (factura.fecha_pago) {
-                var fechaPago = parseDate(factura.fecha_pago);
+                var fechaPago = new Date(factura.fecha_pago);
                 if (fechaPago) {
                     fechaPagoFormateada = `${fechaPago.getDate().toString().padStart(2, '0')}/${(fechaPago.getMonth()+1).toString().padStart(2, '0')}/${fechaPago.getFullYear()}`;
                 }
@@ -83,4 +73,3 @@ function openModal(img) {
         modal.style.display = "none";
     }
 }
-    
