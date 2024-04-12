@@ -22,16 +22,16 @@ module.exports ={
     },
     getFacturasFiltradas : function(filtro, callback) {
         let query = 'SELECT facturas.*, proveedores.nombre AS nombre_proveedor FROM facturas LEFT JOIN proveedores ON facturas.id_proveedor = proveedores.id WHERE 1=1';
-        if (filtro.id_proveedor) {
+        if (filtro.id_proveedor && filtro.id_proveedor !== 'null') {
             query += ' AND facturas.id_proveedor = ' + pool.escape(filtro.id_proveedor);
         }
-        if (filtro.fecha) {
+        if (filtro.fecha && filtro.fecha !== 'null') {
             query += ' AND DATE(facturas.fecha) = ' + pool.escape(filtro.fecha);
         }
-        if (filtro.fecha_pago) {
+        if (filtro.fecha_pago && filtro.fecha_pago !== 'null') {
             query += ' AND DATE(facturas.fecha_pago) = ' + pool.escape(filtro.fecha_pago);
         }
-        if (filtro.condicion) {
+        if (filtro.condicion && filtro.condicion !== 'null') {
             query += ' AND facturas.condicion = ' + pool.escape(filtro.condicion);
         }
         pool.query(query, function(error, results) {
