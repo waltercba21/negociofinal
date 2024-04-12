@@ -1553,7 +1553,33 @@ body.barras_led {
   transform: translateY(-3px);
 }
 /*------------------FACTURAS------------------*/
+/* Estilo para el contenedor de botones */
+.botones-administrador {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Esto hará que el contenedor ocupe toda la altura de la pantalla */
+}
 
+/* Estilo para el botón */
+.botones-administrador .btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 50px; /* Esto hará que el botón sea redondeado */
+  background-color: #007BFF; /* Cambia este color al que prefieras */
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1); /* Esto añadirá una sombra al botón */
+  transition: all 0.3s ease 0s; /* Esto añadirá una transición suave al pasar el mouse sobre el botón */
+}
+
+.botones-administrador .btn:hover {
+  background-color: #0069d9; 
+  box-shadow: 0px 15px 20px rgba(0, 0, 0, 0.2); /* Esto hará que la sombra sea más grande al pasar el mouse sobre el botón */
+  color: white;
+  transform: translateY(-7px); /* Esto hará que el botón se mueva un poco hacia arriba al pasar el mouse sobre él */
+}
 .facturas-contenedor {
   width: 80%;
   margin: 0 auto;
@@ -1610,6 +1636,41 @@ body.barras_led {
 
 .facturas-contenedor button:hover {
   opacity: 0.8;
+}
+/*------------------Listado de Facturas------------------*/
+/* Estilos para la tabla */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+/* Estilos para las celdas de la tabla */
+table th, table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+/* Estilos para las celdas de la cabecera de la tabla */
+table th {
+  background-color: #4CAF50;
+  color: white;
+}
+
+/* Estilos para las filas de la tabla al pasar el mouse */
+table tr:hover {background-color: #f5f5f5;}
+
+/* Estilos para las imágenes de los comprobantes de pago */
+table td img {
+  width: 50px; /* Cambia este valor al tamaño de la miniatura que prefieras */
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+/* Estilos para las imágenes de los comprobantes de pago al pasar el mouse */
+table td img:hover {
+  transform: scale(1.2); /* Esto hará que la imagen se amplíe al pasar el mouse */
 }
 
 /*------------------RESPONSIVE------------------*/
