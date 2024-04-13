@@ -61,6 +61,7 @@ module.exports = {
         res.render('presupuestos');
     },
     getModificarFactura : function(req, res) {
+        console.log("getModificarFactura called with id:", req.params.id); // Agrega esta línea
         let id = req.params.id;
         administracion.getFacturaById(id, function(factura) {
             if (factura) {
