@@ -22,6 +22,10 @@ router.get('/presupuestos', administracionController.presupuestos);
 
 // Nueva ruta para listadoFacturas
 router.get('/listadoFacturas', administracionController.listadoFacturas);
+router.get('/modificar/:id', administracionController.getModificarFactura);
+router.post('/modificar/:id', upload.single('comprobante_pago'), administracionController.postModificarFactura);
+router.get('/eliminar/:id', administracionController.getEliminarFactura);
+router.post('/eliminar/:id', administracionController.postEliminarFactura);
 // Rutas
 router.post('/api/facturas', administracionController.apiFacturas);
 

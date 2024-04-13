@@ -42,5 +42,23 @@ module.exports ={
             if (error) throw error;
             callback(results);
         });
-    }
+    },
+    getFacturaById : function(id, callback) {
+        pool.query('SELECT * FROM facturas WHERE id = ?', [id], function(error, results) {
+            if (error) throw error;
+            callback(results[0]);
+        });
+    },
+    deleteFacturaById : function(id, callback) {
+        pool.query('DELETE FROM facturas WHERE id = ?', [id], function(error, results) {
+            if (error) throw error;
+            callback(results);
+        });
+    },
+    updateFacturaById : function(id, factura, callback) {
+        pool.query('UPDATE facturas SET ? WHERE id = ?', [factura, id], function(error, results) {
+            if (error) throw error;
+            callback(results);
+        });
+    },
 }

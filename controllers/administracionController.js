@@ -59,5 +59,44 @@ module.exports = {
     },
     presupuestos: (req, res) => {
         res.render('presupuestos');
-    }
+    },
+    getModificarFactura : function(req, res) {
+        let id = req.params.id;
+        administracion.getFacturaById(id, function(factura) {
+            if (factura) {
+                administracion.getProveedores(function(proveedores) {
+                    res.render('modificarFactura', { factura: factura, proveedores: proveedores });
+                });
+            } else {
+                res.redirect('/administracion/listadoFacturas');
+            }
+        });
+    },
+    getEliminarFactura : function(req, res) {
+        let id = req.params.id;
+        administracion.deleteFacturaById(id, function() {
+            res.redirect('/administracion/listadoFacturas');
+        });
+    },
+    postModificarFactura: function(req, res) {
+        let id = req.params.id;
+        let facturaModificada = {
+            id_proveedor: req.body.id_proveedor,
+            fecha: req.body.fecha,
+            numero_factura: req.body.numero_factura,
+            fecha_pago: req.body.fecha_pago,
+            importe: req.body.importe,
+            condicion: req.body.condicion,
+            comprobante_pago: req.file.filename
+        };
+        administracion.updateFacturaById(id, facturaModificada, function() {
+            res.redirect('/administracion/listadoFacturas');
+        });
+    },
+    postEliminarFactura: function(req, res) {
+        let id = req.params.id;
+        administracion.deleteFacturaById(id, function() {
+            res.redirect('/administracion/listadoFacturas');
+        });
+    },
 }
