@@ -2,6 +2,19 @@ const conexion = require('../config/conexion')
 const pool = require('../config/conexion');
 const administracion = require('../models/administracion')
 var borrar = require('fs');
+function formatDate(date) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+
+    if (month.length < 2) 
+        month = '0' + month;
+    if (day.length < 2) 
+        day = '0' + day;
+
+    return [year, month, day].join('-');
+}
 
 module.exports = {
     administracion: (req, res) => {
@@ -61,10 +74,14 @@ module.exports = {
         res.render('presupuestos');
     },
     getModificarFactura : function(req, res) {
-        console.log("getModificarFactura called with id:", req.params.id); // Agrega esta línea
+        console.log("getModificarFactura called with id:", req.params.id);
         let id = req.params.id;
         administracion.getFacturaById(id, function(factura) {
             if (factura) {
+                // Formatea las fechas
+                factura.fecha = formatDate(factura.fecha);
+                factura.fecha_pago = formatDate(factura.fecha_pago);
+    
                 administracion.getProveedores(function(proveedores) {
                     res.render('modificarFactura', { factura: factura, proveedores: proveedores });
                 });
