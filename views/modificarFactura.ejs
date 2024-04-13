@@ -9,38 +9,37 @@
     
     <form action="/administracion/facturas/modificar/<%= factura.id %>" method="POST" enctype="multipart/form-data">
       <div class="facturas-contenedor">
-    <label for="id_proveedor">Proveedor:</label>
-      <select id="id_proveedor" name="id_proveedor">
-        <% proveedores.forEach(function(proveedor) { %>
-          <option value="<%= proveedor.id %>"><%= proveedor.nombre %></option>
-        <% }); %>
-      </select>
-  
-      <label for="fecha">Fecha De Factura:</label>
-      <input type="date" id="fecha" name="fecha">
-  
-      <label for="numero_factura">Número de Factura:</label>
-      <input type="text" id="numero_factura" name="numero_factura">
-  
-      <label for="fecha_pago">Fecha de Pago:</label>
-      <input type="date" id="fecha_pago" name="fecha_pago">
-  
-      <label for="importe">Importe:</label>
-      <input type="number" id="importe" name="importe" step="0.01">
-
-      <label for="comprobante_pago">Comprobante de Pago:</label>
-      <input type="file" id="comprobante_pago" name="comprobante_pago">
-  
-      <label for="condicion">Condición:</label>
-      <select id="condicion" name="condicion">
-        <option value="pagado">Pagado</option>
-        <option value="pendiente">Pendiente</option>
-      </select>
-  
-      <button type="submit">Guardar</button>
-      <button type="reset">Cancelar</button>
+        <label for="id_proveedor">Proveedor:</label>
+        <select id="id_proveedor" name="id_proveedor">
+          <% proveedores.forEach(function(proveedor) { %>
+            <option value="<%= proveedor.id %>" <%= proveedor.id == factura.id_proveedor ? 'selected' : '' %>><%= proveedor.nombre %></option>
+          <% }); %>
+        </select>
+    
+        <label for="fecha">Fecha De Factura:</label>
+        <input type="date" id="fecha" name="fecha" value="<%= factura.fecha %>">
+    
+        <label for="numero_factura">Número de Factura:</label>
+        <input type="text" id="numero_factura" name="numero_factura" value="<%= factura.numero_factura %>">
+    
+        <label for="fecha_pago">Fecha de Pago:</label>
+        <input type="date" id="fecha_pago" name="fecha_pago" value="<%= factura.fecha_pago %>">
+    
+        <label for="importe">Importe:</label>
+        <input type="number" id="importe" name="importe" step="0.01" value="<%= factura.importe %>">
+    
+        <label for="comprobante_pago">Comprobante de Pago:</label>
+        <input type="file" id="comprobante_pago" name="comprobante_pago">
+    
+        <label for="condicion">Condición:</label>
+        <select id="condicion" name="condicion">
+          <option value="pagado" <%= factura.condicion == 'pagado' ? 'selected' : '' %>>Pagado</option>
+          <option value="pendiente" <%= factura.condicion == 'pendiente' ? 'selected' : '' %>>Pendiente</option>
+        </select>
+    
+        <button type="submit">Guardar</button>
+        <button type="reset">Cancelar</button>
       </div>
-      
     </form>
   </main>
       <%- include ./layouts/footer.ejs %>
