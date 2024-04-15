@@ -135,79 +135,79 @@ module.exports = {
             }
         });
     },
-generarPDF: function (req, res) {
-    var doc = new PDFDocument;
-    var buffer = new streamBuffers.WritableStreamBuffer({
-        initialSize: (1024 * 1024),   
-        incrementAmount: (1024 * 1024) 
-    });
-    doc.pipe(buffer);
-
-    const proveedorId = req.query.proveedorListado;
-    if (!proveedorId) {
-        return res.status(400).send('No se ha proporcionado un ID de proveedor');
-    }
-
-    factura.obtenerProveedores(conexion, function(error, proveedores) {
-        if (error) { 
-            console.log('Error al obtener proveedores:', error);
-            return res.status(500).send('Error al generar el PDF');
+    generarPDF: function (req, res) {
+        var doc = new PDFDocument;
+        var buffer = new streamBuffers.WritableStreamBuffer({
+            initialSize: (1024 * 1024),   
+            incrementAmount: (1024 * 1024) 
+        });
+        doc.pipe(buffer);
+    
+        const proveedorId = req.query.proveedorListado;
+        if (!proveedorId) {
+            return res.status(400).send('No se ha proporcionado un ID de proveedor');
         }
-
-        var proveedor = proveedores.find(p => p.id == proveedorId);
-        if (!proveedor) {
-            return res.status(400).send('Proveedor no encontrado');
-        }
-
-        var nombreProveedor = proveedor.nombre;
-
-        doc.fontSize(20)
-           .text(nombreProveedor, 0, 50, {
-               align: 'center',
-               width: doc.page.width
-           });
-
-        factura.obtenerFacturasPorProveedor(conexion, proveedorId, function(error, facturas) {
-            if (error) {
-                console.log('Error al obtener facturas:', error);
+    
+        administracion.getProveedores(function(error, proveedores) {
+            if (error) { 
+                console.log('Error al obtener proveedores:', error);
                 return res.status(500).send('Error al generar el PDF');
             }
-
-            facturas.forEach(factura => {
-                var importeFormateado = '$' + parseFloat(factura.importe).toFixed(2);
-                var currentY = doc.y;
-                if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
-                    doc.addPage();
+    
+            var proveedor = proveedores.find(p => p.id == proveedorId);
+            if (!proveedor) {
+                return res.status(400).send('Proveedor no encontrado');
+            }
+    
+            var nombreProveedor = proveedor.nombre;
+    
+            doc.fontSize(20)
+               .text(nombreProveedor, 0, 50, {
+                   align: 'center',
+                   width: doc.page.width
+               });
+    
+            administracion.getFacturasPorProveedor(proveedorId, function(error, facturas) {
+                if (error) {
+                    console.log('Error al obtener facturas:', error);
+                    return res.status(500).send('Error al generar el PDF');
                 }
-                doc.fontSize(10)
-                   .text(factura.id, 50, doc.y);
-                doc.text(factura.fecha, doc.page.width - 150, doc.y, {
-                       align: 'right'
-                   });
-                doc.text(factura.numero_factura, doc.page.width - 150, doc.y, {
-                       align: 'right'
-                   });
-                doc.text(factura.fecha_pago, doc.page.width - 150, doc.y, {
-                       align: 'right'
-                   });
-                doc.text(importeFormateado, doc.page.width - 150, doc.y, {
-                       align: 'right'
-                   });
-                doc.text(factura.condicion, doc.page.width - 150, doc.y, {
-                       align: 'right'
-                   });
-                doc.moveDown();
+    
+                facturas.forEach(factura => {
+                    var importeFormateado = '$' + parseFloat(factura.importe).toFixed(2);
+                    var currentY = doc.y;
+                    if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+                        doc.addPage();
+                    }
+                    doc.fontSize(10)
+                       .text(factura.id, 50, doc.y);
+                    doc.text(factura.fecha, doc.page.width - 150, doc.y, {
+                           align: 'right'
+                       });
+                    doc.text(factura.numero_factura, doc.page.width - 150, doc.y, {
+                           align: 'right'
+                       });
+                    doc.text(factura.fecha_pago, doc.page.width - 150, doc.y, {
+                           align: 'right'
+                       });
+                    doc.text(importeFormateado, doc.page.width - 150, doc.y, {
+                           align: 'right'
+                       });
+                    doc.text(factura.condicion, doc.page.width - 150, doc.y, {
+                           align: 'right'
+                       });
+                    doc.moveDown();
+                });
+    
+                doc.end();
             });
-
-            doc.end();
         });
-    });
-
-    buffer.on('finish', function() {
-        const pdfData = buffer.getContents();
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=facturas.pdf');
-        res.send(pdfData);
-    });
-}
+    
+        buffer.on('finish', function() {
+            const pdfData = buffer.getContents();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'attachment; filename=facturas.pdf');
+            res.send(pdfData);
+        });
+    }
 }
