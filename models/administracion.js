@@ -56,7 +56,7 @@ module.exports ={
     deleteFacturaById : function(id, callback) {
         pool.query('DELETE FROM facturas WHERE id = ?', [id], function(error, results) {
             if (error) throw error;
-            callback(results);
+            callback(null, results);
         });
     },
     updateFacturaById : function(id, factura, callback) {
