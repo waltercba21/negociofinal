@@ -37,8 +37,10 @@
           <option value="pendiente" <%= factura.condicion == 'pendiente' ? 'selected' : '' %>>Pendiente</option>
         </select>
     
-        <button type="submit">Guardar</button>
+        <div class="btn-facturas-guardar">
+          <button type="submit">Guardar</button>
         <button type="reset">Cancelar</button>
+        </div>
       </div>
     </form>
   </main>

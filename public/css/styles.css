@@ -1748,7 +1748,7 @@ table td img:hover {
 
     .close:hover,
     .close:focus {
-        color: #bbb;
+        color: #a3a2a2;
         text-decoration: none;
         cursor: pointer;
     }
