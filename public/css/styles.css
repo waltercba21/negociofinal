@@ -1562,6 +1562,7 @@ body.barras_led {
 
 /* Estilo para el botón */
 .botones-administrador .btn {
+  margin-top: 20px;;
   margin-bottom: 15px;
   padding: 10px 20px;
   border: none;
