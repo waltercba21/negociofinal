@@ -98,17 +98,23 @@ module.exports = {
     },
     postModificarFactura: function(req, res) {
         let id = req.params.id;
-        let facturaModificada = {
-            id_proveedor: req.body.id_proveedor,
-            fecha: req.body.fecha,
-            numero_factura: req.body.numero_factura,
-            fecha_pago: req.body.fecha_pago,
-            importe: req.body.importe,
-            condicion: req.body.condicion,
-            comprobante_pago: req.file ? req.file.filename : undefined
-        };
-        administracion.updateFacturaById(id, facturaModificada, function() {
-            res.redirect('/administracion/listadoFacturas');
+        administracion.getFacturaById(id, function(err, facturaActual) {
+            if (err) {
+                // manejar error
+            } else {
+                let facturaModificada = {
+                    id_proveedor: req.body.id_proveedor,
+                    fecha: req.body.fecha,
+                    numero_factura: req.body.numero_factura,
+                    fecha_pago: req.body.fecha_pago,
+                    importe: req.body.importe,
+                    condicion: req.body.condicion,
+                    comprobante_pago: req.file ? req.file.filename : facturaActual.comprobante_pago
+                };
+                administracion.updateFacturaById(id, facturaModificada, function() {
+                    res.redirect('/administracion/listadoFacturas');
+                });
+            }
         });
     },
     postEliminarFactura: function(req, res) {
