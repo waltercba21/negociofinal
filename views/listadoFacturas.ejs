@@ -2,6 +2,17 @@
 <%- include ./layouts/header.ejs %>
 <body>
     <main>
+        <form id="proveedorForm" action="/facturas/proveedor" method="GET">s
+            <label for="proveedorListado">Proveedor:</label>
+            <select id="proveedorListado" name="proveedorListado">
+                <option value="">Selecciona un proveedor</option>
+                <% proveedores.forEach(function(proveedor) { %>
+                    <option value="<%= proveedor.id %>"><%= proveedor.nombre %></option>
+                <% }); %>
+            </select>
+            <button type="submit">Listado Por Proveedor</button>
+        </form>
+        
         <form id="filterForm">
             <label for="proveedor">Proveedor:</label>
 <select id="proveedor" name="proveedor">

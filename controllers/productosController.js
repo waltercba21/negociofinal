@@ -681,12 +681,12 @@ buscar: function(req, res) {
     });
   },
 generarPDF: function (req, res) {
-    // Crear un nuevo documento PDF
+    
     var doc = new PDFDocument;
-    // Crear un nuevo buffer de stream
+    
     var buffer = new streamBuffers.WritableStreamBuffer({
-        initialSize: (1024 * 1024),   // empieza con 1 megabyte.
-        incrementAmount: (1024 * 1024) // crece en 1 megabyte cada vez.
+        initialSize: (1024 * 1024),   
+        incrementAmount: (1024 * 1024) 
     });
     doc.pipe(buffer);
     // Obtener el ID del proveedor y la categoría de los parámetros de consulta
