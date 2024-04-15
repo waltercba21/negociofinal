@@ -1675,6 +1675,10 @@ body.barras_led {
   margin-top: 5px;
   border-radius: 5px;
   border: 1px solid #bbb;
+ 
+}
+#filterForm input[type="submit"]{ 
+  border: 1px solid #bbb;
   background-color: #0056b3;
   color: white;
   font-weight: bold;
