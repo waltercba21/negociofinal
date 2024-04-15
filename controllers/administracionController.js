@@ -125,7 +125,7 @@ module.exports = {
         let id = req.params.id;
         administracion.deleteFacturaById(id, function(err) {
             if (err) {
-                console.error(err);
+                console.error('Error al eliminar la factura:', err);
                 res.status(500).send('Error al eliminar la factura');
             } else {
                 res.redirect('/administracion/listadoFacturas');
