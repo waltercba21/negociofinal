@@ -1614,8 +1614,9 @@ body.barras_led {
 }
 
 .facturas-contenedor button[type="submit"] {
-  background-color: blue;
+  background-color: #1F487E;
   color: white;
+  font-weight: bold;
   border: none;
   border-radius: 5px;
   padding: 10px 20px;
@@ -1625,8 +1626,9 @@ body.barras_led {
 }
 
 .facturas-contenedor button[type="reset"] {
-  background-color: red;
+  background-color: #d90429;
   color: white;
+  font-weight: bold;
   border: none;
   border-radius: 5px;
   padding: 10px 20px;
