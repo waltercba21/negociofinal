@@ -1675,6 +1675,9 @@ body.barras_led {
   margin-top: 5px;
   border-radius: 5px;
   border: 1px solid #bbb;
+  background-color: #0056b3;
+  color: white;
+  font-weight: bold;
 }
 
 table {
@@ -1683,32 +1686,29 @@ table {
   margin: 20px 0;
 }
 
-/* Estilos para las celdas de la tabla */
 table th, table td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: center;
 }
 
-/* Estilos para las celdas de la cabecera de la tabla */
 table th {
   background-color: #4CAF50;
   color: white;
 }
 
-/* Estilos para las filas de la tabla al pasar el mouse */
 table tr:hover {background-color: #f5f5f5;}
 
-/* Estilos para las imágenes de los comprobantes de pago */
+
 table td img {
-  width: 50px; /* Cambia este valor al tamaño de la miniatura que prefieras */
+  width: 50px; 
   cursor: pointer;
   transition: transform 0.3s ease;
 }
 
-/* Estilos para las imágenes de los comprobantes de pago al pasar el mouse */
+
 table td img:hover {
-  transform: scale(1.2); /* Esto hará que la imagen se amplíe al pasar el mouse */
+  transform: scale(1.2); 
 }
 
     .modal {
