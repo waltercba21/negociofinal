@@ -143,7 +143,7 @@ generarPDF: function (req, res) {
     });
     doc.pipe(buffer);
 
-    const proveedorId = req.query.proveedor; 
+    const proveedorId = req.query.proveedorListado;
     if (!proveedorId) {
         return res.status(400).send('No se ha proporcionado un ID de proveedor');
     }
