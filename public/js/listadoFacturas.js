@@ -52,6 +52,10 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
                 <td>${factura.importe}</td>
                 <td>${factura.condicion}</td>
                 <td><img id="myImg" src="/uploads/comprobantes/${factura.comprobante_pago}" alt="Comprobante de pago" onclick="openModal(this)"></td>
+                <td>
+                <button onclick="location.href='/administracion/facturas/modificar/${factura.id}'">Modificar</button>
+                <button onclick="location.href='/facturas/eliminar/${factura.id}'">Eliminar</button>
+            </td>
             `;
         
             tbody.appendChild(tr);
