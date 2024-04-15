@@ -1754,6 +1754,7 @@ table td img:hover {
     }
     .btn-modificar, .btn-eliminar {
       border-radius: 20px;
+      border:none;
       font-weight: bold;
       color: white;
       padding: 10px 20px;
@@ -1762,19 +1763,19 @@ table td img:hover {
   }
   
   .btn-modificar {
-      background-color: green;
+      background-color: #4CAF50;
   }
   
   .btn-modificar:hover {
-      background-color: darkgreen;
+      background-color: #429b45;
   }
   
   .btn-eliminar {
-      background-color: red;
+      background-color: #d90429;
   }
   
   .btn-eliminar:hover {
-      background-color: darkred;
+      background-color: #b80220;
   }
 
 /*------------------RESPONSIVE------------------*/
