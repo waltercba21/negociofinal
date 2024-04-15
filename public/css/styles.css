@@ -1653,6 +1653,7 @@ body.barras_led {
 #filterForm {
   display: flex;
   flex-direction: column;
+  align-items: center;
   margin: 50px auto; 
   width: 50%; 
   margin: 20px auto;
