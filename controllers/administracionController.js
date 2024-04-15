@@ -76,8 +76,11 @@ module.exports = {
     getModificarFactura : function(req, res) {
         console.log("getModificarFactura called with id:", req.params.id);
         let id = req.params.id;
-        administracion.getFacturaById(id, function(factura) {
-            if (factura) {
+        administracion.getFacturaById(id, function(err, factura) {
+            if (err) {
+                console.error(err);
+                res.status(500).send('Error al obtener la factura');
+            } else if (factura) {
                 // Formatea las fechas
                 factura.fecha = formatDate(factura.fecha);
                 factura.fecha_pago = formatDate(factura.fecha_pago);
