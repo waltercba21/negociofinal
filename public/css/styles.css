@@ -1752,7 +1752,30 @@ table td img:hover {
         text-decoration: none;
         cursor: pointer;
     }
-
+    .btn-modificar, .btn-eliminar {
+      border-radius: 20px;
+      font-weight: bold;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+  }
+  
+  .btn-modificar {
+      background-color: green;
+  }
+  
+  .btn-modificar:hover {
+      background-color: darkgreen;
+  }
+  
+  .btn-eliminar {
+      background-color: red;
+  }
+  
+  .btn-eliminar:hover {
+      background-color: darkred;
+  }
 
 /*------------------RESPONSIVE------------------*/
 
