@@ -1582,10 +1582,10 @@ body.barras_led {
   transform: translateY(-7px); /* Esto hará que el botón se mueva un poco hacia arriba al pasar el mouse sobre él */
 }
 .facturas-contenedor {
-  width: 80%;
+  width: 40%;
   margin: 0 auto;
   padding: 20px;
-  background-color: #bab9b9;
+  background-color: #cdcaca;
   border-radius: 5px;
 }
 
