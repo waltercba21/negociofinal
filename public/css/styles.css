@@ -1612,7 +1612,14 @@ body.barras_led {
 .facturas-contenedor select option:hover {
   background-color: #f0f0f0;
 }
-
+.btn-facturas-guardar{
+  display: flex;
+  flex-direction: row;
+  padding: 20px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
 .facturas-contenedor button[type="submit"] {
   background-color: #1F487E;
   color: white;
