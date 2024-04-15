@@ -1562,15 +1562,16 @@ body.barras_led {
 
 /* Estilo para el botón */
 .botones-administrador .btn {
+  margin-bottom: 15px;
   padding: 10px 20px;
   border: none;
-  border-radius: 50px; /* Esto hará que el botón sea redondeado */
-  background-color: #007BFF; /* Cambia este color al que prefieras */
+  border-radius: 50px; 
+  background-color: #007BFF; 
   color: white;
   text-decoration: none;
   font-size: 16px;
-  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1); /* Esto añadirá una sombra al botón */
-  transition: all 0.3s ease 0s; /* Esto añadirá una transición suave al pasar el mouse sobre el botón */
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1); 
+  transition: all 0.3s ease 0s; 
 }
 
 .botones-administrador .btn:hover {
@@ -1659,7 +1660,7 @@ body.barras_led {
   border-radius: 5px;
   border: 1px solid #ccc;
 }
-/* Estilos para la tabla */
+
 table {
   width: 100%;
   border-collapse: collapse;
