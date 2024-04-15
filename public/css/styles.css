@@ -1653,8 +1653,9 @@ body.barras_led {
 #filterForm {
   display: flex;
   flex-direction: column;
-  margin: 50px auto; /* Esto centrará el formulario horizontalmente */
-  width: 50%; /* Ajusta este valor según tus necesidades */
+  margin: 50px auto; 
+  width: 50%; 
+  background-color: #cdcaca;
 }
 
 #filterForm label {
@@ -1670,7 +1671,9 @@ body.barras_led {
   padding: 10px;
   margin-top: 5px;
   border-radius: 5px;
-  border: 1px solid #ccc;
+  border: 1px solid #003f7d;
+  color: #ddd;
+  font-weight: bold;
 }
 
 table {
