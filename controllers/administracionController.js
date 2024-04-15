@@ -109,7 +109,7 @@ module.exports = {
                     fecha_pago: req.body.fecha_pago,
                     importe: req.body.importe,
                     condicion: req.body.condicion,
-                    comprobante_pago: req.file ? req.file.filename : factura.comprobante_pago
+                    comprobante_pago: (req.file && req.file.filename) ? req.file.filename : factura.comprobante_pago
                 };
                 administracion.updateFacturaById(id, facturaModificada, function() {
                     res.redirect('/administracion/listadoFacturas');
