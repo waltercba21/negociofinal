@@ -1581,7 +1581,7 @@ body.barras_led {
   transform: translateY(-7px); 
 }
 .facturas-contenedor {
-  width: 25%;
+  width: 30%;
   margin: 0 auto;
   padding: 20px;
   background-color: #cdcaca;
