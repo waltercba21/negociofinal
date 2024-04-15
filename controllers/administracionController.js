@@ -100,7 +100,8 @@ module.exports = {
         let id = req.params.id;
         administracion.getFacturaById(id, function(err, facturaActual) {
             if (err) {
-                // manejar error
+                console.error(err);
+                res.status(500).send('Error al obtener la factura');
             } else {
                 let facturaModificada = {
                     id_proveedor: req.body.id_proveedor,

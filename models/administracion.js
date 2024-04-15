@@ -46,7 +46,11 @@ module.exports ={
     getFacturaById : function(id, callback) {
         pool.query('SELECT * FROM facturas WHERE id = ?', [id], function(error, results) {
             if (error) throw error;
-            callback(results[0]);
+            if (results.length > 0) {
+                callback(null, results[0]);
+            } else {
+                callback(new Error('No se encontró ninguna factura con el id ' + id));
+            }
         });
     },
     deleteFacturaById : function(id, callback) {
