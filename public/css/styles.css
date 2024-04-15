@@ -1658,6 +1658,7 @@ body.barras_led {
   margin: 50px auto; 
   width: 30%; 
   background-color: #cdcaca;
+  border-radius: 20px;
 }
 
 #filterForm label {
