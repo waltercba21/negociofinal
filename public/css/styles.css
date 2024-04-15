@@ -1619,6 +1619,7 @@ body.barras_led {
   justify-content: center;
   align-items: center;
   margin-top: 20px;
+
 }
 .facturas-contenedor button[type="submit"] {
   background-color: #1F487E;
@@ -1627,6 +1628,7 @@ body.barras_led {
   border: none;
   border-radius: 5px;
   padding: 10px 20px;
+  margin-right: 20px;
   font-size: 16px;
   margin-top: 20px;
   cursor: pointer;
