@@ -29,6 +29,6 @@ router.post('/facturas/eliminar/:id', administracionController.postEliminarFactu
 // Rutas
 router.post('/api/facturas', administracionController.apiFacturas);
 // Ruta para generar PDF
-router.get('/administracion/facturas/proveedor', administracionController.generarPDF);
+router.get('/facturas/proveedor', administracionController.generarPDF);
 
 module.exports = router;
