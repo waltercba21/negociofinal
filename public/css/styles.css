@@ -1650,6 +1650,31 @@ body.barras_led {
   opacity: 0.8;
 }
 /*------------------Listado de Facturas------------------*/
+#proveedorForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  height: 100vh;
+}
+
+#proveedorForm label,
+#proveedorForm select {
+  margin-bottom: 10px;
+}
+
+#proveedorForm button {
+  background-color: blue;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+
 #filterForm {
   display: flex;
   flex-direction: column;
