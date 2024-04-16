@@ -23,8 +23,13 @@ module.exports = {
         res.render('administracion');
     },
     facturas: (req, res) => {
-        administracion.getProveedores(function(proveedores) {
-            res.render('facturas', { proveedores: proveedores });
+        administracion.getProveedores(function(error, proveedores) {
+            if (error) {
+                console.error(error);
+                res.status(500).send('Error al obtener los proveedores');
+            } else {
+                res.render('facturas', { proveedores: proveedores });
+            }
         });
     },
     postFactura: function(req, res) {
@@ -42,25 +47,35 @@ module.exports = {
         });
     },
     listadoFacturas : function(req, res) {
-        administracion.getFacturas(function(facturas) {
-            administracion.getProveedores(function(proveedores) {
-                res.render('listadoFacturas', { 
-                    facturas: facturas, 
-                    proveedores: proveedores,
-                    parseDate: function(dateString) {
-                        if (typeof dateString === 'string') {
-                            var parts = dateString.split('-');
-                            if (parts.length === 3) {
-                                var date = new Date(parts[0], parts[1] - 1, parts[2]);
-                                return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+        administracion.getFacturas(function(error, facturas) {
+            if (error) {
+                console.error(error);
+                res.status(500).send('Error al obtener las facturas');
+            } else {
+                administracion.getProveedores(function(error, proveedores) {
+                    if (error) {
+                        console.error(error);
+                        res.status(500).send('Error al obtener los proveedores');
+                    } else {
+                        res.render('listadoFacturas', { 
+                            facturas: facturas, 
+                            proveedores: proveedores,
+                            parseDate: function(dateString) {
+                                if (typeof dateString === 'string') {
+                                    var parts = dateString.split('-');
+                                    if (parts.length === 3) {
+                                        var date = new Date(parts[0], parts[1] - 1, parts[2]);
+                                        return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                                    }
+                                }
+                                return '';
                             }
-                        }
-                        return '';
+                        });
                     }
                 });
+            }
             });
-        });
-    },
+        },
     apiFacturas: function(req, res) {
         let filtro = {
             id_proveedor: req.body.proveedor,
@@ -87,14 +102,19 @@ module.exports = {
                 factura.fecha = formatDate(factura.fecha);
                 factura.fecha_pago = formatDate(factura.fecha_pago);
     
-                administracion.getProveedores(function(proveedores) {
-                    res.render('modificarFactura', { factura: factura, proveedores: proveedores });
+                administracion.getProveedores(function(error, proveedores) {
+                    if (error) {
+                        console.error(error);
+                        res.status(500).send('Error al obtener los proveedores');
+                    } else {
+                        res.render('modificarFactura', { factura: factura, proveedores: proveedores });
+                    }
                 });
             } else {
                 res.redirect('/administracion/listadoFacturas');
             }
         });
-    }, 
+    },
     getEliminarFactura : function(req, res) {
         let id = req.params.id;
         administracion.deleteFacturaById(id, function() {
