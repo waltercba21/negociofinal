@@ -5,6 +5,7 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     var fechaFactura = new Date(document.getElementById('fechaFactura').value);
     var fechaPago = new Date(document.getElementById('fechaPago').value);
     var condicion = document.getElementById('condicion').value;
+    var alertBox = document.getElementById('alertBox'); // Asegúrate de tener un elemento con id 'alertBox' en tu HTML
 
     fetch('/administracion/api/facturas', {
         method: 'POST',
@@ -37,7 +38,7 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
             var hoy = new Date();
             var diferenciaDias = Math.ceil((fechaPago - hoy) / (1000 * 60 * 60 * 24));
             if (diferenciaDias === 7) {
-                alert('Faltan 7 días para la fecha de pago de la factura ' + factura.id);
+                alertBox.textContent = 'Faltan 7 días para la fecha de pago de la factura ' + factura.id;
             }
         
             tr.innerHTML = `
