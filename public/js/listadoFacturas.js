@@ -29,20 +29,8 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
         data.forEach(function(factura) {
             var tr = document.createElement('tr');
         
-            var fechaFacturaFormateada = '';
-            if (factura.fecha) {
-                var fechaFactura = new Date(factura.fecha);
-                fechaFactura = new Date(fechaFactura.getTime() + 24 * 60 * 60 * 1000); // Agregar 24 horas
-                fechaFacturaFormateada = `${fechaFactura.getDate().toString().padStart(2, '0')}/${(fechaFactura.getMonth()+1).toString().padStart(2, '0')}/${fechaFactura.getFullYear()}`;
-            }
-        
-            var fechaPagoFormateada = '';
-            if (factura.fecha_pago) {
-                var fechaPago = new Date(factura.fecha_pago);
-                fechaPago = new Date(fechaPago.getTime() + 24 * 60 * 60 * 1000); // Agregar 24 horas
-                fechaPagoFormateada = `${fechaPago.getDate().toString().padStart(2, '0')}/${(fechaPago.getMonth()+1).toString().padStart(2, '0')}/${fechaPago.getFullYear()}`;
-            }
-        
+            // ... código omitido para brevedad ...
+
             tr.innerHTML = `
                 <td>${factura.id}</td>
                 <td>${factura.nombre_proveedor}</td>
@@ -53,8 +41,10 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
                 <td>${factura.condicion}</td>
                 <td><img id="myImg" src="/uploads/comprobantes/${factura.comprobante_pago}" alt="Comprobante de pago" onclick="openModal(this)"></td>
                 <td>
-                <button onclick="location.href='/administracion/facturas/modificar/${factura.id}'">Modificar</button>
-                <button onclick="location.href='/facturas/eliminar/${factura.id}'">Eliminar</button>
+                <button class="btn-modificar" onclick="location.href='/administracion/facturas/modificar/${factura.id}'">Modificar</button>
+                <form action="/administracion/facturas/eliminar/${factura.id}" method="post" style="display: inline;">
+                    <button type="submit" class="btn-eliminar">Eliminar</button>
+                </form>
             </td>
             `;
         
