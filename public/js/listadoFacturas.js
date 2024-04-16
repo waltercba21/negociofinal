@@ -29,8 +29,8 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
         data.forEach(function(factura) {
             var tr = document.createElement('tr');
         
-            var fechaFacturaFormateada = new Date(factura.fechaFactura).toLocaleDateString();
-            var fechaPagoFormateada = new Date(factura.fechaPago).toLocaleDateString();
+            var fechaFacturaFormateada = new Date(factura.fecha).toLocaleDateString();
+            var fechaPagoFormateada = new Date(factura.fecha_pago).toLocaleDateString();
 
             tr.innerHTML = `
                 <td>${factura.id}</td>
