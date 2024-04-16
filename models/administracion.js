@@ -4,8 +4,11 @@ const conexion = require('../config/conexion')
 module.exports ={
     getProveedores : function(callback) {
         pool.query('SELECT id, nombre FROM proveedores', function(error, results) {
-            if (error) throw error;
-            callback(results);
+            if (error) {
+                callback(error, null);
+            } else {
+                callback(null, results);
+            }
         });
     },
     insertFactura : function(factura, callback) {
