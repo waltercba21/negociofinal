@@ -69,9 +69,12 @@ module.exports ={
         });
     },
     getFacturasPorProveedor : function(proveedorId, callback) {
-        pool.query('SELECT facturas.*, proveedores.nombre AS nombre_proveedor FROM facturas LEFT JOIN proveedores ON facturas.id_proveedor = proveedores.id WHERE facturas.id_proveedor = ?', [proveedorId], function(error, results) {
-            if (error) throw error;
-            callback(results);
+        pool.query('SELECT * FROM facturas WHERE id_proveedor = ?', [proveedorId], function(error, results) {
+            if (error) {
+                callback(error, null);
+            } else {
+                callback(null, results);
+            }
         });
     },
 }
