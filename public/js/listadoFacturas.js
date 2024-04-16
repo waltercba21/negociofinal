@@ -39,8 +39,11 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
             var hoy = new Date();
             hoy.setHours(0,0,0,0); // Asegurarse de que la hora es 00:00:00
             var diferenciaDias = Math.ceil((fechaPago - hoy) / (1000 * 60 * 60 * 24));
+            console.log('Diferencia de días: ', diferenciaDias, ' Condición: ', factura.condicion); // Agregado para depuración
             if (diferenciaDias <= 7 && factura.condicion === 'pendiente') {
-                alertBox.textContent = 'Faltan ' + diferenciaDias + ' días para la fecha de pago de la factura ' + factura.id;
+                var mensaje = 'Faltan ' + diferenciaDias + ' días para la fecha de pago de la factura ' + factura.id;
+                alertBox.textContent = mensaje;
+                alert(mensaje); // Agregado para probar la notificación
             }
 
             tr.innerHTML = `
