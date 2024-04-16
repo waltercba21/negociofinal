@@ -1,6 +1,13 @@
+document.addEventListener('DOMContentLoaded', (event) => {
+    filtrarFacturas();
+});
+
 document.getElementById('filterForm').addEventListener('submit', function(event) {
     event.preventDefault();
+    filtrarFacturas();
+});
 
+function filtrarFacturas() {
     var proveedor = document.getElementById('proveedor').value;
     var fechaFactura = document.getElementById('fechaFactura').value;
     var fechaPago = document.getElementById('fechaPago').value;
@@ -67,7 +74,7 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
         }); 
     })
     .catch(error => console.error('Error:', error));
-});
+}
 
 function openModal(img) {
     var modal = document.getElementById("myModal");
