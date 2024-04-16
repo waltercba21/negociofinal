@@ -136,6 +136,8 @@ module.exports = {
         });
     },
     generarPDF: function (req, res) {
+        console.log('Iniciando la generación del PDF...'); // Agregado
+    
         var doc = new PDFDocument;
         var buffer = new streamBuffers.WritableStreamBuffer({
             initialSize: (1024 * 1024),   
@@ -144,6 +146,8 @@ module.exports = {
         doc.pipe(buffer);
     
         const proveedorId = req.query.proveedorListado;
+        console.log('ID del proveedor:', proveedorId); // Agregado
+    
         if (!proveedorId) {
             return res.status(400).send('No se ha proporcionado un ID de proveedor');
         }
@@ -155,6 +159,8 @@ module.exports = {
             }
     
             var proveedor = proveedores.find(p => p.id == proveedorId);
+            console.log('Proveedor encontrado:', proveedor); // Agregado
+    
             if (!proveedor) {
                 return res.status(400).send('Proveedor no encontrado');
             }
@@ -172,6 +178,8 @@ module.exports = {
                     console.log('Error al obtener facturas:', error);
                     return res.status(500).send('Error al generar el PDF');
                 }
+    
+                console.log('Facturas obtenidas:', facturas); // Agregado
     
                 facturas.forEach(factura => {
                     var importeFormateado = '$' + parseFloat(factura.importe).toFixed(2);
@@ -204,6 +212,7 @@ module.exports = {
         });
     
         buffer.on('finish', function() {
+            console.log('PDF generado con éxito.'); // Agregado
             const pdfData = buffer.getContents();
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'attachment; filename=facturas.pdf');
