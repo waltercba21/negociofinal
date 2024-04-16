@@ -2,8 +2,8 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     event.preventDefault();
 
     var proveedor = document.getElementById('proveedor').value;
-    var fechaFactura = document.getElementById('fechaFactura').value;
-    var fechaPago = document.getElementById('fechaPago').value;
+    var fechaFactura = new Date(document.getElementById('fechaFactura').value);
+    var fechaPago = new Date(document.getElementById('fechaPago').value);
     var condicion = document.getElementById('condicion').value;
 
     fetch('/administracion/api/facturas', {
@@ -29,7 +29,8 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
         data.forEach(function(factura) {
             var tr = document.createElement('tr');
         
-            // ... código omitido para brevedad ...
+            var fechaFacturaFormateada = new Date(factura.fechaFactura).toLocaleDateString();
+            var fechaPagoFormateada = new Date(factura.fechaPago).toLocaleDateString();
 
             tr.innerHTML = `
                 <td>${factura.id}</td>
