@@ -156,7 +156,7 @@ module.exports = {
         });
     },
     generarPDF: function (req, res) {
-        console.log('Iniciando la generación del PDF...'); // Agregado
+        console.log('Iniciando la generación del PDF...');
     
         var doc = new PDFDocument;
         var buffer = new streamBuffers.WritableStreamBuffer({
@@ -166,9 +166,10 @@ module.exports = {
         doc.pipe(buffer);
     
         const proveedorId = req.query.proveedorListado;
-        console.log('ID del proveedor:', proveedorId); // Agregado
+        console.log('ID del proveedor:', proveedorId);
     
         if (!proveedorId) {
+            console.log('No se proporcionó un ID de proveedor'); // Agregado
             return res.status(400).send('No se ha proporcionado un ID de proveedor');
         }
     
@@ -179,9 +180,10 @@ module.exports = {
             }
     
             var proveedor = proveedores.find(p => p.id == proveedorId);
-            console.log('Proveedor encontrado:', proveedor); // Agregado
+            console.log('Proveedor encontrado:', proveedor);
     
             if (!proveedor) {
+                console.log('Proveedor no encontrado para el ID proporcionado'); // Agregado
                 return res.status(400).send('Proveedor no encontrado');
             }
     
@@ -199,12 +201,14 @@ module.exports = {
                     return res.status(500).send('Error al generar el PDF');
                 }
     
-                console.log('Facturas obtenidas:', facturas); // Agregado
+                console.log('Facturas obtenidas:', facturas);
     
                 facturas.forEach(factura => {
+                    console.log('Procesando factura:', factura); // Agregado
                     var importeFormateado = '$' + parseFloat(factura.importe).toFixed(2);
                     var currentY = doc.y;
                     if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+                        console.log('Agregando nueva página al PDF'); // Agregado
                         doc.addPage();
                     }
                     doc.fontSize(10)
@@ -232,7 +236,7 @@ module.exports = {
         });
     
         buffer.on('finish', function() {
-            console.log('PDF generado con éxito.'); // Agregado
+            console.log('PDF generado con éxito.');
             const pdfData = buffer.getContents();
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'attachment; filename=facturas.pdf');
