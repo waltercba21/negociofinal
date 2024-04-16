@@ -2,10 +2,10 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     event.preventDefault();
 
     var proveedor = document.getElementById('proveedor').value;
-    var fechaFactura = new Date(Date.UTC(document.getElementById('fechaFactura').value));
-    var fechaPago = new Date(Date.UTC(document.getElementById('fechaPago').value));
+    var fechaFactura = document.getElementById('fechaFactura').value;
+    var fechaPago = document.getElementById('fechaPago').value;
     var condicion = document.getElementById('condicion').value;
-    var alertBox = document.getElementById('alertBox'); // Asegúrate de tener un elemento con id 'alertBox' en tu HTML
+    var alertBox = document.getElementById('alertBox');
 
     fetch('/administracion/api/facturas', {
         method: 'POST',
@@ -27,41 +27,39 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
             tbody.removeChild(tbody.firstChild);
         }
 
-     // ...
-data.forEach(function(factura) {
-    var tr = document.createElement('tr');
+        data.forEach(function(factura) {
+            var tr = document.createElement('tr');
 
-    var fechaFacturaFormateada = new Date(factura.fecha).toLocaleDateString();
-    var fechaPago = new Date(Date.UTC(factura.fecha_pago));
-    var fechaPagoFormateada = fechaPago.toLocaleDateString();
+            var fechaFacturaFormateada = new Date(factura.fecha).toLocaleDateString();
+            var fechaPago = new Date(factura.fecha_pago);
+            var fechaPagoFormateada = fechaPago.toLocaleDateString();
 
-    // Comprobar si faltan 7 días o menos para la fecha de pago y la factura está pendiente
-    var hoy = new Date(Date.UTC());
-    var diferenciaDias = Math.ceil((fechaPago - hoy) / (1000 * 60 * 60 * 24));
-    if (diferenciaDias <= 7 && factura.condicion === 'pendiente') {
-        alertBox.textContent = 'Faltan ' + diferenciaDias + ' días para la fecha de pago de la factura ' + factura.id;
-    }
+            // Comprobar si faltan 7 días o menos para la fecha de pago y la factura está pendiente
+            var hoy = new Date();
+            var diferenciaDias = Math.ceil((fechaPago - hoy) / (1000 * 60 * 60 * 24));
+            if (diferenciaDias <= 7 && factura.condicion === 'pendiente') {
+                alertBox.textContent = 'Faltan ' + diferenciaDias + ' días para la fecha de pago de la factura ' + factura.id;
+            }
 
-    tr.innerHTML = `
-        <td>${factura.id}</td>
-        <td>${factura.nombre_proveedor}</td>
-        <td>${fechaFacturaFormateada}</td>
-        <td>${factura.numero_factura}</td>
-        <td>${fechaPagoFormateada}</td>
-        <td>${factura.importe}</td>
-        <td>${factura.condicion}</td>
-        <td><img id="myImg" src="/uploads/comprobantes/${factura.comprobante_pago}" alt="Comprobante de pago" onclick="openModal(this)"></td>
-        <td>
-        <button class="btn-modificar" onclick="location.href='/administracion/facturas/modificar/${factura.id}'">Modificar</button>
-        <form action="/administracion/facturas/eliminar/${factura.id}" method="post" style="display: inline;">
-            <button type="submit" class="btn-eliminar">Eliminar</button>
-        </form>
-    </td>
-    `;
+            tr.innerHTML = `
+                <td>${factura.id}</td>
+                <td>${factura.nombre_proveedor}</td>
+                <td>${fechaFacturaFormateada}</td>
+                <td>${factura.numero_factura}</td>
+                <td>${fechaPagoFormateada}</td>
+                <td>${factura.importe}</td>
+                <td>${factura.condicion}</td>
+                <td><img id="myImg" src="/uploads/comprobantes/${factura.comprobante_pago}" alt="Comprobante de pago" onclick="openModal(this)"></td>
+                <td>
+                <button class="btn-modificar" onclick="location.href='/administracion/facturas/modificar/${factura.id}'">Modificar</button>
+                <form action="/administracion/facturas/eliminar/${factura.id}" method="post" style="display: inline;">
+                    <button type="submit" class="btn-eliminar">Eliminar</button>
+                </form>
+            </td>
+            `;
 
-    tbody.appendChild(tr);
-}); 
-// ...
+            tbody.appendChild(tr);
+        }); 
     })
     .catch(error => console.error('Error:', error));
 });
