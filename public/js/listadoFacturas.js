@@ -32,10 +32,12 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
 
             var fechaFacturaFormateada = new Date(factura.fecha).toLocaleDateString();
             var fechaPago = new Date(factura.fecha_pago);
+            fechaPago.setHours(0,0,0,0); // Asegurarse de que la hora es 00:00:00
             var fechaPagoFormateada = fechaPago.toLocaleDateString();
 
             // Comprobar si faltan 7 días o menos para la fecha de pago y la factura está pendiente
             var hoy = new Date();
+            hoy.setHours(0,0,0,0); // Asegurarse de que la hora es 00:00:00
             var diferenciaDias = Math.ceil((fechaPago - hoy) / (1000 * 60 * 60 * 24));
             if (diferenciaDias <= 7 && factura.condicion === 'pendiente') {
                 alertBox.textContent = 'Faltan ' + diferenciaDias + ' días para la fecha de pago de la factura ' + factura.id;
