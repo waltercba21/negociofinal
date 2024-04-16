@@ -50,7 +50,8 @@ function filtrarFacturas() {
             if (diferenciaDias <= 7 && factura.condicion === 'pendiente') {
                 var mensaje = 'Faltan ' + diferenciaDias + ' días para la fecha de pago de la factura ' + factura.id;
                 alertBox.textContent = mensaje;
-                alert(mensaje); // Agregado para probar la notificación
+                alertBox.style.color = 'red';
+                alertBox.style.fontWeight = 'bold';
             }
 
             tr.innerHTML = `
