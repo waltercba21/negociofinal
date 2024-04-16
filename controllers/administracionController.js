@@ -161,30 +161,41 @@ module.exports = {
     },
     generarPDFProveedor : function(req, res) {
         var printer = new pdfmake(fonts);
-        // Cambia esta línea
         var idProveedor = req.query.proveedorListado;
     
-        // Obtén las facturas del proveedor
-        administracion.getFacturasByProveedorId(idProveedor, function(error, facturas) {
+        // Obtén los detalles del proveedor
+        administracion.getProveedorById(idProveedor, function(error, proveedor) {
             if (error) throw error;
     
-            var docDefinition = {
-                content: [
-                    'Listado de facturas del proveedor ' + idProveedor,
-                    {
-                        table: {
-                            body: [
-                                ['ID', 'Fecha', 'Número de Factura', 'Fecha de Pago', 'Importe', 'Condición'],
-                                ...facturas.map(factura => [factura.id, factura.fecha, factura.numero_factura, factura.fecha_pago, factura.importe, factura.condicion])
-                            ]
-                        }
-                    }
-                ]
-            };
+            // Obtén las facturas del proveedor
+            administracion.getFacturasByProveedorId(idProveedor, function(error, facturas) {
+                if (error) throw error;
     
-            var pdfDoc = printer.createPdfKitDocument(docDefinition);
-            pdfDoc.pipe(res);
-            pdfDoc.end();
-        })
+                var docDefinition = {
+                    content: [
+                        'Listado de facturas del proveedor ' + proveedor.nombre, // usa el nombre del proveedor
+                        {
+                            table: {
+                                body: [
+                                    ['ID', 'Fecha', 'Número de Factura', 'Fecha de Pago', 'Importe', 'Condición'],
+                                    ...facturas.map(factura => [
+                                        factura.id, 
+                                        new Date(factura.fecha).toLocaleDateString(), // formatea la fecha
+                                        factura.numero_factura, 
+                                        new Date(factura.fecha_pago).toLocaleDateString(), // formatea la fecha de pago
+                                        factura.importe, 
+                                        factura.condicion
+                                    ])
+                                ]
+                            }
+                        }
+                    ]
+                };
+    
+                var pdfDoc = printer.createPdfKitDocument(docDefinition);
+                pdfDoc.pipe(res);
+                pdfDoc.end();
+            })
+        });
     },
 }
