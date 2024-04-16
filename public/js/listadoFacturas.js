@@ -12,6 +12,8 @@ function filtrarFacturas() {
     var fechaFactura = document.getElementById('fechaFactura').value;
     var fechaPago = document.getElementById('fechaPago').value;
     var condicion = document.getElementById('condicion').value;
+    var fechaDesde = document.getElementById('fechaDesde').value;
+    var fechaHasta = document.getElementById('fechaHasta').value;
     var alertBox = document.getElementById('alertBox');
 
     while (alertBox.firstChild) {
@@ -26,7 +28,9 @@ function filtrarFacturas() {
             proveedor: proveedor,
             fechaFactura: fechaFactura,
             fechaPago: fechaPago,
-            condicion: condicion
+            condicion: condicion,
+            fechaDesde: fechaDesde,
+            fechaHasta: fechaHasta
         })
     })
     .then(response => response.json())
