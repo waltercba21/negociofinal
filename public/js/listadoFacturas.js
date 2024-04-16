@@ -14,6 +14,9 @@ function filtrarFacturas() {
     var condicion = document.getElementById('condicion').value;
     var alertBox = document.getElementById('alertBox');
 
+    while (alertBox.firstChild) {
+        alertBox.removeChild(alertBox.firstChild);
+    }
     fetch('/administracion/api/facturas', {
         method: 'POST',
         headers: {
