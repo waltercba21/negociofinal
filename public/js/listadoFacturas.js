@@ -1,18 +1,9 @@
-document.addEventListener('DOMContentLoaded', (event) => {
-    filtrarFacturas();
-});
-
-document.getElementById('filterForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    filtrarFacturas();
-});
-
 function filtrarFacturas() {
     var proveedor = document.getElementById('proveedor').value;
     var fechaFactura = document.getElementById('fechaFactura').value;
     var fechaPago = document.getElementById('fechaPago').value;
     var condicion = document.getElementById('condicion').value;
-    var alertBox = document.getElementById('alertBox');
+    var alertContainer = document.getElementById('alertContainer');
 
     fetch('/administracion/api/facturas', {
         method: 'POST',
@@ -49,9 +40,12 @@ function filtrarFacturas() {
             console.log('Diferencia de días: ', diferenciaDias, ' Condición: ', factura.condicion); // Agregado para depuración
             if (diferenciaDias <= 7 && factura.condicion === 'pendiente') {
                 var mensaje = 'Faltan ' + diferenciaDias + ' días para la fecha de pago de la factura ' + factura.id;
+                var alertBox = document.createElement('div');
                 alertBox.textContent = mensaje;
                 alertBox.style.color = 'red';
                 alertBox.style.fontWeight = 'bold';
+                alertBox.style.textAlign = 'center'; // Centrar el texto
+                alertContainer.appendChild(alertBox);
             }
 
             tr.innerHTML = `
@@ -76,7 +70,6 @@ function filtrarFacturas() {
     })
     .catch(error => console.error('Error:', error));
 }
-
 function openModal(img) {
     var modal = document.getElementById("myModal");
     var modalImg = document.getElementById("img01");
