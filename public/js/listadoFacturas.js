@@ -2,8 +2,8 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     event.preventDefault();
 
     var proveedor = document.getElementById('proveedor').value;
-    var fechaFactura = new Date(document.getElementById('fechaFactura').value);
-    var fechaPago = new Date(document.getElementById('fechaPago').value);
+    var fechaFactura = new Date(Date.UTC(document.getElementById('fechaFactura').value));
+    var fechaPago = new Date(Date.UTC(document.getElementById('fechaPago').value));
     var condicion = document.getElementById('condicion').value;
     var alertBox = document.getElementById('alertBox'); // Asegúrate de tener un elemento con id 'alertBox' en tu HTML
 
@@ -32,11 +32,11 @@ data.forEach(function(factura) {
     var tr = document.createElement('tr');
 
     var fechaFacturaFormateada = new Date(factura.fecha).toLocaleDateString();
-    var fechaPago = new Date(factura.fecha_pago);
+    var fechaPago = new Date(Date.UTC(factura.fecha_pago));
     var fechaPagoFormateada = fechaPago.toLocaleDateString();
 
     // Comprobar si faltan 7 días o menos para la fecha de pago y la factura está pendiente
-    var hoy = new Date();
+    var hoy = new Date(Date.UTC());
     var diferenciaDias = Math.ceil((fechaPago - hoy) / (1000 * 60 * 60 * 24));
     if (diferenciaDias <= 7 && factura.condicion === 'pendiente') {
         alertBox.textContent = 'Faltan ' + diferenciaDias + ' días para la fecha de pago de la factura ' + factura.id;
