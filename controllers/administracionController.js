@@ -161,7 +161,8 @@ module.exports = {
     },
     generarPDFProveedor : function(req, res) {
         var printer = new pdfmake(fonts);
-        var idProveedor = req.params.id;
+        // Cambia esta línea
+        var idProveedor = req.query.proveedorListado;
     
         // Obtén las facturas del proveedor
         administracion.getFacturasByProveedorId(idProveedor, function(error, facturas) {
@@ -185,5 +186,5 @@ module.exports = {
             pdfDoc.pipe(res);
             pdfDoc.end();
         })
-},
+    },
 }
