@@ -80,17 +80,19 @@ module.exports = {
             }
             });
         },
-    apiFacturas: function(req, res) {
-        let filtro = {
-            id_proveedor: req.body.proveedor,
-            fecha: req.body.fechaFactura,
-            fecha_pago: req.body.fechaPago,
-            condicion: req.body.condicion
-        };
-        administracion.getFacturasFiltradas(filtro, function(facturas) {
-            res.json(facturas);
-        });
-    },
+        apiFacturas: function(req, res) {
+            let filtro = {
+                id_proveedor: req.body.proveedor,
+                fecha: req.body.fechaFactura,
+                fecha_pago: req.body.fechaPago,
+                condicion: req.body.condicion,
+                fechaDesde: req.body.fechaDesde,
+                fechaHasta: req.body.fechaHasta
+            };
+            administracion.getFacturasFiltradas(filtro, function(facturas) {
+                res.json(facturas);
+            });
+        },
     presupuestos: (req, res) => {
         res.render('presupuestos');
     },

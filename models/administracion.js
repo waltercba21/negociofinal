@@ -43,6 +43,16 @@ module.exports ={
         if (filtro.condicion && filtro.condicion !== 'null') {
             query += ' AND facturas.condicion = ' + pool.escape(filtro.condicion);
         }
+        if (filtro.fechaDesde && filtro.fechaDesde !== 'null') {
+            let fechaDesde = new Date(filtro.fechaDesde);
+            let fechaDesdeFormateada = fechaDesde.toISOString().split('T')[0];
+            query += ' AND DATE(facturas.fecha) >= ' + pool.escape(fechaDesdeFormateada);
+        }
+        if (filtro.fechaHasta && filtro.fechaHasta !== 'null') {
+            let fechaHasta = new Date(filtro.fechaHasta);
+            let fechaHastaFormateada = fechaHasta.toISOString().split('T')[0];
+            query += ' AND DATE(facturas.fecha) <= ' + pool.escape(fechaHastaFormateada);
+        }
         pool.query(query, function(error, results) {
             if (error) throw error;
             callback(results);
