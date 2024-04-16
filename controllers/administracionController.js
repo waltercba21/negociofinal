@@ -204,33 +204,37 @@ module.exports = {
                 console.log('Facturas obtenidas:', facturas);
     
                 facturas.forEach(factura => {
-                    console.log('Procesando factura:', factura); // Agregado
+                    console.log('Procesando factura:', factura);
                     var importeFormateado = '$' + parseFloat(factura.importe).toFixed(2);
                     var currentY = doc.y;
                     if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
-                        console.log('Agregando nueva página al PDF'); // Agregado
+                        console.log('Agregando nueva página al PDF');
                         doc.addPage();
                     }
-                    doc.fontSize(10)
-                       .text(factura.id, 50, doc.y);
-                    doc.text(factura.fecha, doc.page.width - 150, doc.y, {
-                           align: 'right'
-                       });
-                    doc.text(factura.numero_factura, doc.page.width - 150, doc.y, {
-                           align: 'right'
-                       });
-                    doc.text(factura.fecha_pago, doc.page.width - 150, doc.y, {
-                           align: 'right'
-                       });
-                    doc.text(importeFormateado, doc.page.width - 150, doc.y, {
-                           align: 'right'
-                       });
-                    doc.text(factura.condicion, doc.page.width - 150, doc.y, {
-                           align: 'right'
-                       });
-                    doc.moveDown();
+                    try {
+                        doc.fontSize(10)
+                           .text(factura.id, 50, doc.y);
+                        doc.text(factura.fecha, doc.page.width - 150, doc.y, {
+                               align: 'right'
+                           });
+                        doc.text(factura.numero_factura, doc.page.width - 150, doc.y, {
+                               align: 'right'
+                           });
+                        doc.text(factura.fecha_pago, doc.page.width - 150, doc.y, {
+                               align: 'right'
+                           });
+                        doc.text(importeFormateado, doc.page.width - 150, doc.y, {
+                               align: 'right'
+                           });
+                        doc.text(factura.condicion, doc.page.width - 150, doc.y, {
+                               align: 'right'
+                           });
+                        doc.moveDown();
+                    } catch (error) {
+                        console.log('Error al procesar la factura:', error);
+                    }
                 });
-    
+                
                 doc.end();
             });
         });
