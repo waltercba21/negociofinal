@@ -36,12 +36,12 @@ function filtrarFacturas() {
 
         data.forEach(function(factura) {
             var tr = document.createElement('tr');
-
+        
             var fechaFacturaFormateada = new Date(factura.fecha).toLocaleDateString();
             var fechaPago = new Date(factura.fecha_pago);
             fechaPago.setHours(0,0,0,0); // Asegurarse de que la hora es 00:00:00
             var fechaPagoFormateada = fechaPago.toLocaleDateString();
-
+        
             // Comprobar si faltan 7 días o menos para la fecha de pago y la factura está pendiente
             var hoy = new Date();
             hoy.setHours(0,0,0,0); // Asegurarse de que la hora es 00:00:00
@@ -49,11 +49,12 @@ function filtrarFacturas() {
             console.log('Diferencia de días: ', diferenciaDias, ' Condición: ', factura.condicion); // Agregado para depuración
             if (diferenciaDias <= 7 && factura.condicion === 'pendiente') {
                 var mensaje = 'Faltan ' + diferenciaDias + ' días para la fecha de pago de la factura ' + factura.id;
-                alertBox.textContent = mensaje;
-                alertBox.style.color = 'red';
-                alertBox.style.fontWeight = 'bold';
+                var alerta = document.createElement('div');
+                alerta.textContent = mensaje;
+                alerta.style.color = 'red';
+                alerta.style.fontWeight = 'bold';
+                alertBox.appendChild(alerta);
             }
-
             tr.innerHTML = `
                 <td>${factura.id}</td>
                 <td>${factura.nombre_proveedor}</td>
