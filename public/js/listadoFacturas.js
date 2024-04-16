@@ -30,8 +30,16 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
             var tr = document.createElement('tr');
         
             var fechaFacturaFormateada = new Date(factura.fecha).toLocaleDateString();
-            var fechaPagoFormateada = new Date(factura.fecha_pago).toLocaleDateString();
-
+            var fechaPago = new Date(factura.fecha_pago);
+            var fechaPagoFormateada = fechaPago.toLocaleDateString();
+        
+            // Comprobar si faltan 7 días para la fecha de pago
+            var hoy = new Date();
+            var diferenciaDias = Math.ceil((fechaPago - hoy) / (1000 * 60 * 60 * 24));
+            if (diferenciaDias === 7) {
+                alert('Faltan 7 días para la fecha de pago de la factura ' + factura.id);
+            }
+        
             tr.innerHTML = `
                 <td>${factura.id}</td>
                 <td>${factura.nombre_proveedor}</td>
