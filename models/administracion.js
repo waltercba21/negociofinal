@@ -70,4 +70,10 @@ module.exports ={
             callback(results);
         });
     },
+    getFacturasByProveedorId : function(idProveedor, callback) {
+        pool.query('SELECT * FROM facturas WHERE id_proveedor = ?', [idProveedor], function(error, results) {
+            if (error) throw error;
+            callback(null, results);
+        });
+    },
 }

@@ -1,9 +1,13 @@
-const conexion = require('../config/conexion')
-const pool = require('../config/conexion');
-const PDFDocument = require('pdfkit');
-const streamBuffers = require('stream-buffers');
 const administracion = require('../models/administracion')
-var borrar = require('fs');
+var pdfmake = require('pdfmake');
+var fonts = {
+    Roboto: {
+        normal: 'node_modules/roboto-font/fonts/Roboto/roboto-regular-webfont.ttf',
+        bold: 'node_modules/roboto-font/fonts/Roboto/roboto-bold-webfont.ttf',
+        italics: 'node_modules/roboto-font/fonts/Roboto/roboto-italic-webfont.ttf',
+        bolditalics: 'node_modules/roboto-font/fonts/Roboto/roboto-bolditalic-webfont.ttf'
+    }
+};
 function formatDate(date) {
     var d = new Date(date),
         month = '' + (d.getMonth() + 1),
@@ -155,4 +159,31 @@ module.exports = {
             }
         });
     },
+    generarPDFProveedor : function(req, res) {
+        var printer = new pdfmake(fonts);
+        var idProveedor = req.params.id;
+    
+        // Obtén las facturas del proveedor
+        administracion.getFacturasByProveedorId(idProveedor, function(error, facturas) {
+            if (error) throw error;
+    
+            var docDefinition = {
+                content: [
+                    'Listado de facturas del proveedor ' + idProveedor,
+                    {
+                        table: {
+                            body: [
+                                ['ID', 'Fecha', 'Número de Factura', 'Fecha de Pago', 'Importe', 'Condición'],
+                                ...facturas.map(factura => [factura.id, factura.fecha, factura.numero_factura, factura.fecha_pago, factura.importe, factura.condicion])
+                            ]
+                        }
+                    }
+                ]
+            };
+    
+            var pdfDoc = printer.createPdfKitDocument(docDefinition);
+            pdfDoc.pipe(res);
+            pdfDoc.end();
+        })
+},
 }
