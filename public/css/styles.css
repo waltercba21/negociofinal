@@ -1599,7 +1599,7 @@ body.barras_led {
   z-index: 20;
   display: grid; 
   grid-template-columns: repeat(2, 1fr); 
-  gap: 20px; 
+  gap: 10px; 
   width: 70%; 
   max-width: none; 
   height: auto;
@@ -1611,7 +1611,7 @@ body.barras_led {
 .facturas-contenedor {
   display: grid; 
   grid-template-columns: repeat(2, 1fr); 
-  gap: 10px;
+  gap: 5px;
 }
 
 .facturas-contenedor label {
