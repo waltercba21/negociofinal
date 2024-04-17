@@ -10,15 +10,16 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
 function filtrarFacturas() {
     var proveedor = document.getElementById('proveedor').value;
     var fechaFacturaInput = document.getElementById('fechaFactura').value;
-    var fechaFactura = fechaFacturaInput ? new Date(fechaFacturaInput).toISOString() : '';
+    var fechaFactura = fechaFacturaInput ? new Date(fechaFacturaInput).toISOString().split('T')[0] : '';
     var fechaPagoInput = document.getElementById('fechaPago').value;
-    var fechaPago = fechaPagoInput ? new Date(fechaPagoInput).toISOString() : '';
+    var fechaPago = fechaPagoInput ? new Date(fechaPagoInput).toISOString().split('T')[0] : '';
     var condicion = document.getElementById('condicion').value;
     var fechaDesdeInput = document.getElementById('fechaDesde').value;
-    var fechaDesde = fechaDesdeInput ? new Date(fechaDesdeInput).toISOString() : '';
+    var fechaDesde = fechaDesdeInput ? new Date(fechaDesdeInput).toISOString().split('T')[0] : '';
     var fechaHastaInput = document.getElementById('fechaHasta').value;
-    var fechaHasta = fechaHastaInput ? new Date(fechaHastaInput).toISOString() : '';
+    var fechaHasta = fechaHastaInput ? new Date(fechaHastaInput).toISOString().split('T')[0] : '';
     var alertBox = document.getElementById('alertBox');
+
        // Imprimir las fechas para depuración
        console.log('Fecha factura: ', fechaFactura);
        console.log('Fecha pago: ', fechaPago);
