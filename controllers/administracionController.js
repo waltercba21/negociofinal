@@ -56,6 +56,7 @@ module.exports = {
                 console.error(error);
                 res.status(500).send('Error al obtener las facturas');
             } else {
+                console.log('Facturas:', facturas); // Agrega esta línea
                 administracion.getProveedores(function(error, proveedores) {
                     if (error) {
                         console.error(error);
@@ -78,8 +79,8 @@ module.exports = {
                     }
                 });
             }
-            });
-        },
+        });
+    },
         apiFacturas: function(req, res) {
             let filtro = {
                 id_proveedor: req.body.proveedor,

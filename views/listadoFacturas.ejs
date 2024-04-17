@@ -65,6 +65,7 @@
                 } %>
                 
                 <% facturas.forEach(function(factura) { %>
+                    <% console.log('Comprobante de pago:', factura.comprobante_pago); %> <!-- Agrega esta línea -->
                     <tr>
                         <td><%= factura.id %></td>
                         <td><%= factura.nombre_proveedor %></td>
