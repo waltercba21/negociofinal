@@ -31,12 +31,14 @@ module.exports ={
             query += ' AND facturas.id_proveedor = ' + pool.escape(filtro.id_proveedor);
         }
         if (filtro.fecha && filtro.fecha !== 'null') {
-            let fecha = new Date(filtro.fecha);
+            let parts = filtro.fecha.split('-');
+            let fecha = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
             let fechaFormateada = fecha.toISOString().split('T')[0];
             query += ' AND DATE(facturas.fecha) = ' + pool.escape(fechaFormateada);
         }
         if (filtro.fecha_pago && filtro.fecha_pago !== 'null') {
-            let fechaPago = new Date(filtro.fecha_pago);
+            let parts = filtro.fecha_pago.split('-');
+            let fechaPago = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
             let fechaPagoFormateada = fechaPago.toISOString().split('T')[0];
             query += ' AND DATE(facturas.fecha_pago) = ' + pool.escape(fechaPagoFormateada);
         }
@@ -44,12 +46,14 @@ module.exports ={
             query += ' AND facturas.condicion = ' + pool.escape(filtro.condicion);
         }
         if (filtro.fechaDesde && filtro.fechaDesde !== 'null') {
-            let fechaDesde = new Date(filtro.fechaDesde);
+            let parts = filtro.fechaDesde.split('-');
+            let fechaDesde = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
             let fechaDesdeFormateada = fechaDesde.toISOString().split('T')[0];
             query += ' AND DATE(facturas.fecha) >= ' + pool.escape(fechaDesdeFormateada);
         }
         if (filtro.fechaHasta && filtro.fechaHasta !== 'null') {
-            let fechaHasta = new Date(filtro.fechaHasta);
+            let parts = filtro.fechaHasta.split('-');
+            let fechaHasta = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
             let fechaHastaFormateada = fechaHasta.toISOString().split('T')[0];
             query += ' AND DATE(facturas.fecha) <= ' + pool.escape(fechaHastaFormateada);
         }
