@@ -1734,7 +1734,6 @@ body.barras_led {
 }
 
 
-/* Estilos para el formulario */
 #filterForm {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1750,7 +1749,6 @@ body.barras_led {
 
 /* Estilos para los labels */
 #filterForm label {
-  grid-column: span 2;
   color: #495057;
 }
 
