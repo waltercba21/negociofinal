@@ -1599,7 +1599,10 @@ body.barras_led {
   z-index: 20;
   display: none;
   width: 100%; 
-  max-width: 800px; 
+  max-width: 800px;
+  height: 80%; /* Ajusta este valor según tus necesidades */
+  max-height: 600px; /* Ajusta este valor según tus necesidades */
+  overflow: auto; /* Añade scroll si el contenido es más grande que el contenedor */
 }
 .facturas-contenedor {
   width: 30%;
