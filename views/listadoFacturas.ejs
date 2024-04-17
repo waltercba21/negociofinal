@@ -74,7 +74,7 @@
                         <td><%= factura.importe %></td>
                         <td><%= factura.condicion %></td>
                         <td>
-                            <% if (factura.comprobante_pago) { %>
+                            <% if (factura.comprobante_pago && factura.comprobante_pago.trim() !== '') { %>
                                 <img id="myImg" src="/uploads/comprobantes/<%= factura.comprobante_pago %>" alt="Comprobante de pago" onclick="openModal(this)">
                             <% } else { %>
                                 <span>Sin Comprobante</span>
