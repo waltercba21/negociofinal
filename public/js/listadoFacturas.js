@@ -9,11 +9,11 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
 
 function filtrarFacturas() {
     var proveedor = document.getElementById('proveedor').value;
-    var fechaFactura = document.getElementById('fechaFactura').value;
-    var fechaPago = document.getElementById('fechaPago').value;
+    var fechaFactura = new Date(document.getElementById('fechaFactura').value).toISOString();
+    var fechaPago = new Date(document.getElementById('fechaPago').value).toISOString();
     var condicion = document.getElementById('condicion').value;
-    var fechaDesde = document.getElementById('fechaDesde').value;
-    var fechaHasta = document.getElementById('fechaHasta').value;
+    var fechaDesde = new Date(document.getElementById('fechaDesde').value).toISOString();
+    var fechaHasta = new Date(document.getElementById('fechaHasta').value).toISOString();
     var alertBox = document.getElementById('alertBox');
        // Imprimir las fechas para depuración
        console.log('Fecha factura: ', fechaFactura);
