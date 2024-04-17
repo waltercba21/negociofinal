@@ -1598,10 +1598,10 @@ body.barras_led {
   transform: translate(-50%, -50%);
   z-index: 20;
   display: none;
-  width: 100%; 
-  max-width: 1200px;
-  height: 90%;
-  max-height: 700px; 
+  width: 90%; /* Ajusta este valor según tus necesidades */
+  max-width: none; /* Elimina el límite de ancho máximo */
+  height: auto; /* Ajusta la altura automáticamente según el contenido */
+  max-height: none; /* Elimina el límite de altura máxima */
 }
 .facturas-contenedor {
   width: 30%;
