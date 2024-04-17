@@ -1790,6 +1790,12 @@ body.barras_led {
 #filterForm input[type="submit"]:hover {
   background-color: #0056b3;
 }
+#alertBox {
+  color: red;
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
 
 table {
   width: 100%;
