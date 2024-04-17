@@ -15,6 +15,11 @@ function filtrarFacturas() {
     var fechaDesde = document.getElementById('fechaDesde').value;
     var fechaHasta = document.getElementById('fechaHasta').value;
     var alertBox = document.getElementById('alertBox');
+       // Imprimir las fechas para depuración
+       console.log('Fecha factura: ', fechaFactura);
+       console.log('Fecha pago: ', fechaPago);
+       console.log('Fecha desde: ', fechaDesde);
+       console.log('Fecha hasta: ', fechaHasta);
 
     while (alertBox.firstChild) {
         alertBox.removeChild(alertBox.firstChild);
@@ -29,7 +34,7 @@ function filtrarFacturas() {
             fechaFactura: fechaFactura,
             fechaPago: fechaPago,
             condicion: condicion,
-            fechaDesde: fechaDesde,
+            fechaDesde: fechaDesde, 
             fechaHasta: fechaHasta
         })
     })
