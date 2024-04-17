@@ -48,8 +48,9 @@
         </form>
         </div>
  
+
+
         <div id="alertBox"></div>
-        
         <table>
             <thead>
                 <tr>
@@ -66,7 +67,9 @@
             <tbody>
                 <% function parseDate(dateString) {
                     var date = new Date(dateString);
-                    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                    var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+                    var utcDate = new Date(date.getTime() + userTimezoneOffset);
+                    return `${utcDate.getUTCDate().toString().padStart(2, '0')}/${(utcDate.getUTCMonth()+1).toString().padStart(2, '0')}/${utcDate.getUTCFullYear()}`;
                 } %>
               <% facturas.forEach(function(factura) { %>
                 <% console.log('Comprobante de pago:', factura.comprobante_pago); %> 
