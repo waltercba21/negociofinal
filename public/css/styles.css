@@ -1734,38 +1734,49 @@ body.barras_led {
 }
 
 
+/* Estilos para el formulario */
 #filterForm {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
   padding: 20px;
-  margin: 50px auto; 
-  width: 30%; 
-  background-color: #cdcaca;
-  border-radius: 20px;
-}
-
-#filterForm label {
-  display: block;
-  margin-top: 10px;
-  font-weight: bold;
-}
-
-#filterForm select, 
-#filterForm input[type="date"], 
-#filterForm input[type="submit"] {
-  width: 60%; 
-  padding: 10px;
-  margin-top: 5px;
+  background-color: #f8f9fa;
   border-radius: 5px;
-  border: 1px solid #bbb;
- 
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
 }
-#filterForm input[type="submit"]{ 
-  border: 1px solid #bbb;
+
+/* Estilos para los labels */
+#filterForm label {
+  grid-column: span 2;
+  color: #495057;
+}
+
+/* Estilos para los select e inputs */
+#filterForm select, #filterForm input[type="date"] {
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  color: #495057;
+  background-color: #fff;
+}
+
+/* Estilos para el botón de envío */
+#filterForm input[type="submit"] {
+  grid-column: span 2;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#filterForm input[type="submit"]:hover {
   background-color: #0056b3;
-  color: white;
-  font-weight: bold;
 }
 
 table {
