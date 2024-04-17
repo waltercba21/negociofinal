@@ -1597,20 +1597,20 @@ body.barras_led {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 20;
-  display: grid; /* Cambia a grid */
-  grid-template-columns: repeat(2, 1fr); /* Crea dos columnas de igual tamaño */
-  gap: 20px; /* Espacio entre los elementos de la grid */
-  width: 90%; /* Ajusta este valor según tus necesidades */
-  max-width: none; /* Elimina el límite de ancho máximo */
-  height: auto; /* Ajusta la altura automáticamente según el contenido */
-  max-height: none; /* Elimina el límite de altura máxima */
-  padding: 20px; /* Añade un poco de espacio alrededor del contenido */
-  background-color: white; /* Agrega un fondo blanco al formulario */
+  display: grid; 
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 20px; 
+  width: 70%; 
+  max-width: none; 
+  height: auto;
+  max-height: none; 
+  padding: 20px; 
+  background-color: #a3a2a2;
 }
 .facturas-contenedor {
-  display: grid; /* Cambia a grid */
-  grid-template-columns: repeat(2, 1fr); /* Crea dos columnas de igual tamaño */
-  gap: 20px; /* Espacio entre los elementos de la grid */
+  display: grid; 
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 10px;
 }
 
 .facturas-contenedor label {
