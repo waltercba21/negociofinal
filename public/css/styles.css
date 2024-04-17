@@ -1682,6 +1682,8 @@ body.barras_led {
 /*------------------Listado de Facturas------------------*/
 /* Estilos para el formulario */
 #proveedorForm {
+  display: flex;
+  align-items: center;
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
@@ -1705,7 +1707,6 @@ body.barras_led {
   color: #495057;
 }
 
-/* Estilos para el select */
 #proveedorForm select {
   width: 100%;
   padding: 10px;
