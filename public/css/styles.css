@@ -1691,16 +1691,16 @@ body.barras_led {
   box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
 }
 
-/* Estilos para el título del formulario */
-#proveedorForm h3 {
+#proveedorForm h4 {
   margin-bottom: 20px;
-  color: #343a40;
+  font-weight: bold;
+  color: #003f7d;
   text-align: center;
 }
 
-/* Estilos para el label */
 #proveedorForm label {
   display: block;
+  font-weight: bold;
   margin-bottom: 10px;
   color: #495057;
 }
@@ -1711,12 +1711,12 @@ body.barras_led {
   padding: 10px;
   border: 1px solid #ced4da;
   border-radius: 5px;
+  font-weight: bold;
   color: #495057;
   background-color: #fff;
   margin-bottom: 20px;
 }
 
-/* Estilos para el botón de envío */
 #proveedorForm button {
   padding: 10px 20px;
   border: none;
