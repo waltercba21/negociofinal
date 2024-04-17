@@ -1680,6 +1680,11 @@ body.barras_led {
 }
 
 /*------------------Listado de Facturas------------------*/
+.form-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px; /* Espacio entre los formularios */
+}
 
 #proveedorForm {
   display: flex;

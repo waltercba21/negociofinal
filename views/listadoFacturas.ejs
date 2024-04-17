@@ -2,7 +2,8 @@
 <%- include ./layouts/header.ejs %>
 <body>
     <main>
-        <form id="proveedorForm" action="/administracion/facturas/proveedor" method="GET"> 
+        <div class="form-container">
+                   <form id="proveedorForm" action="/administracion/facturas/proveedor" method="GET"> 
             <div class="contenedor-listado"></div>
             <h4>Crear Listado de Facturas</h4>
             <label for="proveedorListado">Proveedor:</label>
@@ -44,6 +45,8 @@
 
             <input type="submit" value="Filtrar">
         </form>
+        </div>
+ 
 
 
         <div id="alertBox"></div>
