@@ -1606,6 +1606,7 @@ body.barras_led {
   max-height: none; 
   padding: 20px; 
   background-color: #d1cfcf;
+  border-radius: 20px;
 }
 .facturas-contenedor {
   display: grid; 
@@ -1624,7 +1625,7 @@ body.barras_led {
   width: 100%;
   padding: 10px;
   border-radius: 5px;
-  border: 1px solid #ccc;
+  border: 1px solid #8d8c8c;
   font-size: 16px;
   font-weight: bold;
 }
