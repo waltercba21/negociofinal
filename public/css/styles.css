@@ -1605,6 +1605,7 @@ body.barras_led {
   height: auto; /* Ajusta la altura automáticamente según el contenido */
   max-height: none; /* Elimina el límite de altura máxima */
   padding: 20px; /* Añade un poco de espacio alrededor del contenido */
+  background-color: white; /* Agrega un fondo blanco al formulario */
 }
 .facturas-contenedor {
   display: grid; /* Cambia a grid */
