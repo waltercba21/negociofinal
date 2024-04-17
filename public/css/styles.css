@@ -1598,7 +1598,7 @@ body.barras_led {
   transform: translate(-50%, -50%);
   z-index: 20;
   display: grid; /* Cambia a grid */
-  grid-template-columns: repeat(3, 1fr); /* Crea tres columnas de igual tamaño */
+  grid-template-columns: repeat(2, 1fr); /* Crea dos columnas de igual tamaño */
   gap: 20px; /* Espacio entre los elementos de la grid */
   width: 90%; /* Ajusta este valor según tus necesidades */
   max-width: none; /* Elimina el límite de ancho máximo */
@@ -1607,11 +1607,9 @@ body.barras_led {
   padding: 20px; /* Añade un poco de espacio alrededor del contenido */
 }
 .facturas-contenedor {
-  width: 30%;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #cdcaca;
-  border-radius: 5px;
+  display: grid; /* Cambia a grid */
+  grid-template-columns: repeat(2, 1fr); /* Crea dos columnas de igual tamaño */
+  gap: 20px; /* Espacio entre los elementos de la grid */
 }
 
 .facturas-contenedor label {
@@ -1639,6 +1637,7 @@ body.barras_led {
   background-color: #f0f0f0;
 }
 .btn-facturas-guardar{
+  grid-column: span 2;
   display: flex;
   flex-direction: row;
   padding: 20px;
