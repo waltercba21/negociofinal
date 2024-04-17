@@ -63,7 +63,6 @@
                     var utcDate = new Date(date.getTime() + userTimezoneOffset);
                     return `${utcDate.getUTCDate().toString().padStart(2, '0')}/${(utcDate.getUTCMonth()+1).toString().padStart(2, '0')}/${utcDate.getUTCFullYear()}`;
                 } %>
-                
                 <% facturas.forEach(function(factura) { %>
                     <% console.log('Comprobante de pago:', factura.comprobante_pago); %> <!-- Agrega esta línea -->
                     <tr>
@@ -75,12 +74,13 @@
                         <td><%= factura.importe %></td>
                         <td><%= factura.condicion %></td>
                         <td>
-                            <% if (factura.comprobante_pago && factura.comprobante_pago.trim() !== '') { %>
+                            <% if (factura.comprobante_pago !== undefined && factura.comprobante_pago && factura.comprobante_pago.trim() !== '') { %>
                                 <img id="myImg" src="/uploads/comprobantes/<%= factura.comprobante_pago %>" alt="Comprobante de pago" onclick="openModal(this)">
                             <% } else { %>
                                 <span>Sin Comprobante</span>
                             <% } %>
                         </td>
+                <% }); %>
                         <td>
                             <button class="btn-modificar" onclick="location.href='/administracion/facturas/modificar/<%= factura.id %>'">Modificar</button>
                             <form action="/administracion/facturas/eliminar/<%= factura.id %>" method="post" style="display: inline;">
