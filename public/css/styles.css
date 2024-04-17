@@ -1745,14 +1745,19 @@ body.barras_led {
   gap: 20px;
   width: 100%;
   max-width: 800px;
-  margin: 0 auto;
+  margin-top:20px;
   padding: 20px;
   background-color: #f8f9fa;
   border-radius: 5px;
   box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
 }
+#filterForm h4{
+  margin-bottom: 20px;
+  font-weight: bold;
+  color: #003f7d;
+  text-align: center;
+}
 
-/* Estilos para los labels */
 #filterForm label {
   color: #495057;
 }
