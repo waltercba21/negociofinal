@@ -1598,6 +1598,10 @@ body.barras_led {
   transform: translate(-50%, -50%);
   z-index: 20;
   display: none;
+  width: 100%; 
+  max-width: 1200px;
+  height: 90%;
+  max-height: 700px; 
 }
 .facturas-contenedor {
   width: 30%;
