@@ -276,12 +276,14 @@ obtenerProductosPorProveedorYCategoria: function(conexion, proveedorId, categori
       callback(null, resultados);
   });
 },
-  obtenerCategorias: function(conexion, funcion) {
-  conexion.query('SELECT * FROM categorias', function(error, resultados) {
-      if (error) {
-          return funcion(error);
-      }
-      funcion(null, resultados);
+obtenerCategorias: function(conexion) {
+  return new Promise((resolve, reject) => {
+      conexion.query('SELECT * FROM categorias', function(error, resultados) {
+          if (error) {
+              reject(error);
+          }
+          resolve(resultados);
+      });
   });
 },
 obtenerPorNombreCategoria: function(conexion, nombreCategoria, callback) {

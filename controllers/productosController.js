@@ -17,12 +17,18 @@ module.exports = {
             }
         });
     },
-    lista: function (req, res) {
-        let categorias = [];
-        let marcas = [];
-        let modelos = [];
-        let marcasPromise = Promise.resolve([]);
-        let modelosPromise = Promise.resolve([]);
+    obtenerCategorias: function(conexion) {
+        return new Promise((resolve, reject) => {
+            conexion.query('SELECT * FROM categorias', function(error, resultados) {
+                if (error) {
+                    reject(error);
+                }
+                resolve(resultados);
+            });
+        });
+    },
+    
+    lista: async function (req, res) {
         const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
@@ -34,107 +40,32 @@ module.exports = {
             console.log('Error: marca o modelo no son números válidos');
             return res.redirect('/error');
         }
-        if (categoria || marca || modelo) {  
-            producto.obtenerPorFiltros(conexion, categoria, marca, modelo, function (error, productos) {
-                if (error) {
-                    console.log('Error al obtener productos:', error);
-                } else {
-                    if (productos.length === 0) {
-                        console.log('No se encontraron productos para estos filtros');
-                    } else {
-                        console.log('Productos obtenidos:', productos);
-                        const categoriasPromise = new Promise((resolve, reject) => {
-                            producto.obtenerCategorias(conexion, (error, result) => {
-                                if (error) reject(error);
-                                else {
-                                    categorias = result;
-                                    resolve(result);
-                                }
-                            });
-                        });
-                        marcasPromise = new Promise((resolve, reject) => {
-                            producto.obtenerMarcas(conexion, (error, result) => {
-                                if (error) reject(error);
-                                else {
-                                    marcas = result;
-                                    resolve(result);
-                                }
-                            });
-                        });
-                        const modelosPromise = new Promise((resolve, reject) => {
-                            if (marca !== undefined) {
-                                producto.obtenerModelosPorMarca(conexion, marca, (error, result) => {
-                                    if (error) reject(error);
-                                    else {
-                                        modelos = result;
-                                        resolve(result);
-                                    }
-                                });
-                            } else {
-                                resolve([]);
-                            }
-                        });
-                        Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-                            .then(([categoriasResult, marcasResult, modelosResult]) => {
-                                productos.forEach(producto => {
-                                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                                    const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
-                                    if (categoriaProducto) {
-                                        producto.categoria = categoriaProducto.nombre;
-                                    }
-                                });
-                                res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas, pagina }); // Pasa numeroDePaginas a la vista
-                            })
-                            .catch(error => {
-                                console.log('Error al obtener categorías, marcas o modelos:', error);
-                                res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo, numeroDePaginas, pagina }); // Pasa numeroDePaginas a la vista
-                            });
+    
+        try {
+            let productos;
+            if (categoria || marca || modelo) {  
+                productos = await producto.obtenerPorFiltros(conexion, categoria, marca, modelo);
+            } else {
+                productos = await producto.obtener(conexion, saltar);
+            }
+    
+            if (productos.length === 0) {
+                console.log('No se encontraron productos para estos filtros');
+            } else {
+                console.log('Productos obtenidos:', productos);
+                const categorias = await producto.obtenerCategorias(conexion);
+                productos.forEach(producto => {
+                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                    const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
+                    if (categoriaProducto) {
+                        producto.categoria = categoriaProducto.nombre;
                     }
-                }
-            });
-        } else {
-            producto.obtener(conexion, saltar, function (error, productos) {
-                if (error) {
-                    console.log('Error al obtener productos:', error);
-                } else {
-                    const categoriasPromise = new Promise((resolve, reject) => {
-                        producto.obtenerCategorias(conexion, (error, result) => {
-                            if (error) reject(error);
-                            else {
-                                categorias = result;
-                                resolve(result);
-                            }
-                        });
-                    });
-                    producto.obtenerCantidadTotal(conexion, function (error, cantidadTotalDeProductos) {
-                        if (error) {
-                            console.log('Error al obtener la cantidad total de productos:', error);
-                        } else {
-                            // Decide cuántos productos quieres mostrar por página
-                            let productosPorPagina = 30;
-                    
-                            // Calcula el número de páginas
-                            numeroDePaginas = Math.ceil(cantidadTotalDeProductos / productosPorPagina);
-                    
-                            Promise.all([categoriasPromise, marcasPromise, modelosPromise])
-                                .then(([categoriasResult, marcasResult, modelosResult]) => {
-                                    productos.forEach(producto => {
-                                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                                        const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
-                                        if (categoriaProducto) {
-                                            producto.categoria = categoriaProducto.nombre;
-                                        }
-                                    });
-                                    res.render('productos', { productos, categorias: categoriasResult, marcas: marcasResult, modelosPorMarca: modelosResult, modelo, numeroDePaginas, pagina });
-                                })
-                                .catch(error => {
-                                    console.log('Error al obtener categorías, marcas o modelos:', error);
-                                    res.render('productos', { productos, categorias, marcas, modelosPorMarca: modelos, modelo, numeroDePaginas, pagina });
-                                });
-                        }
-                    }); 
-                }
-            });
+                });
+                res.render('productos', { productos, categorias, numeroDePaginas, pagina });
+            }
+        } catch (error) {
+            console.log('Error al obtener productos o categorías:', error);
+            res.render('productos', { numeroDePaginas, pagina });
         }
     },
     detalle: function (req, res) {
