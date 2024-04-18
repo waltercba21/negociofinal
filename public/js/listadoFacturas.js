@@ -6,19 +6,25 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     event.preventDefault();
     filtrarFacturas();
 });
+function convertirFechaInput(fechaInput) {
+    if (!fechaInput) {
+        return '';
+    }
+    var partes = fechaInput.split('-');
+    var fecha = new Date(Date.UTC(partes[0], partes[1] - 1, partes[2]));
+    return fecha.toISOString().split('T')[0];
+}
 
 function filtrarFacturas() {
     var proveedor = document.getElementById('proveedor').value;
-    var fechaFacturaInput = document.getElementById('fechaFactura').value;
-    var fechaFactura = fechaFacturaInput ? new Date(fechaFacturaInput).toISOString().split('T')[0] : '';
-    var fechaPagoInput = document.getElementById('fechaPago').value;
-    var fechaPago = fechaPagoInput ? new Date(fechaPagoInput).toISOString().split('T')[0] : '';
+    var proveedor = document.getElementById('proveedor').value;
+    var fechaFactura = convertirFechaInput(document.getElementById('fechaFactura').value);
+    var fechaPago = convertirFechaInput(document.getElementById('fechaPago').value);
     var condicion = document.getElementById('condicion').value;
-    var fechaDesdeInput = document.getElementById('fechaDesde').value;
-    var fechaDesde = fechaDesdeInput ? new Date(fechaDesdeInput).toISOString().split('T')[0] : '';
-    var fechaHastaInput = document.getElementById('fechaHasta').value;
-    var fechaHasta = fechaHastaInput ? new Date(fechaHastaInput).toISOString().split('T')[0] : '';
+    var fechaDesde = convertirFechaInput(document.getElementById('fechaDesde').value);
+    var fechaHasta = convertirFechaInput(document.getElementById('fechaHasta').value);
     var alertBox = document.getElementById('alertBox');
+
 
     
 
