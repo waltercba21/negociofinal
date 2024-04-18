@@ -44,7 +44,4 @@ router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCar
 router.post('/carrito/vaciar', productosController.vaciarCarrito);
 router.get('/:id', productosController.detalle);
 
-//Google Analytcs
-router.get('/analytics', productosController.getAnalyticsData);
-
 module.exports = router;
