@@ -1,10 +1,10 @@
-document.addEventListener('DOMContentLoaded', (event) => {
+window.onload = function() {
     document.getElementById('filterForm').addEventListener('submit', function(event) {
         event.preventDefault();
         filtrarFacturas();
     });
     filtrarFacturas();
-});
+};
 
 
 function convertirFechaInput(fechaInput) {
