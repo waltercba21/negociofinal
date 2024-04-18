@@ -17,23 +17,8 @@ $(document).ready(function(){
         }
       }
     });
-  });
+  });   
 
-  $('#categoria_id').change(function(){ 
-    var categoriaId = $(this).val();
-    console.log('Categoria ID:', categoriaId); // Agrega esta línea
-    $.ajax({
-      url: '/productos/marcas/' + categoriaId,
-      type: 'GET',
-      success: function(data) {
-        console.log('Data de Marcas:', data); // Agrega esta línea
-        $('#id_marca').html('<option value="">Selecciona una marca...</option>');
-        data.forEach(function(marca) {
-          $('#id_marca').append('<option value="' + marca.id + '">' + marca.nombre + '</option>');
-        });
-      }
-    });
-  });
 
   $('#boton-buscar').click(function(){
     var categoriaId = $('#categoria_id').val();

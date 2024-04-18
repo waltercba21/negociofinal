@@ -3,7 +3,7 @@ module.exports ={
     if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');
     }
-    conexion.query('SELECT * FROM productos LIMIT ?,30', [saltar], funcion);
+    conexion.query('SELECT * FROM productos LIMIT ?,30', [saltar], funcion);  
   },
   obtenerCantidadTotal: function(conexion, callback) {
     // Aquí debes escribir la consulta SQL para obtener la cantidad total de productos
