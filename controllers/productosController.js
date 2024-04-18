@@ -17,17 +17,6 @@ module.exports = {
             }
         });
     },
-    obtenerCategorias: function(conexion) {
-        return new Promise((resolve, reject) => {
-            conexion.query('SELECT * FROM categorias', function(error, resultados) {
-                if (error) {
-                    reject(error);
-                }
-                resolve(resultados);
-            });
-        });
-    },
-    
     lista: async function (req, res) {
         const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
@@ -49,11 +38,12 @@ module.exports = {
                 productos = await producto.obtener(conexion, saltar);
             }
     
+            const categorias = await producto.obtenerCategorias(conexion);
+    
             if (productos.length === 0) {
                 console.log('No se encontraron productos para estos filtros');
             } else {
                 console.log('Productos obtenidos:', productos);
-                const categorias = await producto.obtenerCategorias(conexion);
                 productos.forEach(producto => {
                     producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                     const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
@@ -61,8 +51,8 @@ module.exports = {
                         producto.categoria = categoriaProducto.nombre;
                     }
                 });
-                res.render('productos', { productos, categorias, numeroDePaginas, pagina });
             }
+            res.render('productos', { productos, categorias, numeroDePaginas, pagina });
         } catch (error) {
             console.log('Error al obtener productos o categorías:', error);
             res.render('productos', { numeroDePaginas, pagina });
