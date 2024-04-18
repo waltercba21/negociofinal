@@ -12,6 +12,7 @@ function convertirFechaInput(fechaInput) {
     }
     var partes = fechaInput.split('-');
     var fecha = new Date(Date.UTC(partes[0], partes[1] - 1, partes[2]));
+    fecha.setMinutes(fecha.getMinutes() - fecha.getTimezoneOffset()); // Ajustar la fecha para la zona horaria local
     return fecha.toISOString().split('T')[0];
 }
 
