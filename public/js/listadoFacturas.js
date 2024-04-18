@@ -29,10 +29,6 @@ function filtrarFacturas() {
     var fechaHasta = convertirFechaInput(document.getElementById('fechaHasta').value);
     var alertBox = document.getElementById('alertBox');
 
-
-
-    
-
     while (alertBox.firstChild) {
         alertBox.removeChild(alertBox.firstChild);
     }
@@ -53,13 +49,17 @@ function filtrarFacturas() {
     .then(response => response.json())
     .then(data => {
         var tbody = document.querySelector('tbody');
+        var trs = Array.from(tbody.getElementsByTagName('tr'));
+        trs.forEach(tr => tr.style.display = 'none'); // Oculta todas las filas existentes
 
-        while (tbody.firstChild) {
-            tbody.removeChild(tbody.firstChild);
-        }
-
-        data.forEach(function(factura) {
-            var tr = document.createElement('tr');
+        data.forEach(function(factura, index) {
+            var tr = trs[index];
+            if (!tr) {
+                tr = document.createElement('tr'); // Crea una nueva fila si es necesario
+                tbody.appendChild(tr);
+            } else {
+                tr.style.display = ''; // Muestra la fila si estaba oculta
+            }
         
             var fechaFacturaFormateada = parseDate(factura.fecha);
             var fechaPagoFormateada = parseDate(factura.fecha_pago);
@@ -94,8 +94,6 @@ function filtrarFacturas() {
                 </form>
             </td>
             `;
-
-            tbody.appendChild(tr);
         }); 
     })
     .catch(error => console.error('Error:', error));
