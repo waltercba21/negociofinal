@@ -64,19 +64,19 @@
                     <th>Comprobante de Pago</th>
                 </tr>
             </thead>
-            <tbody>
-                <% function parseDate(dateString) {
-                    var date = new Date(dateString + 'T00:00:00Z');
-                    return `${date.getUTCDate().toString().padStart(2, '0')}/${(date.getUTCMonth()+1).toString().padStart(2, '0')}/${date.getUTCFullYear()}`;
-                } %>
-              <% facturas.forEach(function(factura) { %>
+            <% function parseDate(dateString) {
+                var date = new Date(dateString + 'T00:00:00Z');
+                return `${date.getUTCDate().toString().padStart(2, '0')}/${(date.getUTCMonth()+1).toString().padStart(2, '0')}/${date.getUTCFullYear()}`;
+            } %>
+            
+            <% facturas.forEach(function(factura) { %>
                 <% console.log('Comprobante de pago:', factura.comprobante_pago); %> 
                 <tr>
                     <td><%= factura.id %></td>
                     <td><%= factura.nombre_proveedor %></td>
-                    <td><%= factura.fecha ? parseDate(factura.fecha.toString()) : '' %></td>
+                    <td><%= factura.fecha ? parseDate(new Date(factura.fecha).toISOString().split('T')[0]) : '' %></td>
                     <td><%= factura.numero_factura %></td>
-                    <td><%= factura.fecha_pago ? parseDate(factura.fecha_pago.toString()) : '' %></td>
+                    <td><%= factura.fecha_pago ? parseDate(new Date(factura.fecha_pago).toISOString().split('T')[0]) : '' %></td>
                     <td><%= factura.importe %></td>
                     <td><%= factura.condicion %></td>
                     <td>
@@ -94,8 +94,6 @@
                     </td>
                 </tr>
             <% }); %>
-            </tbody>
-        </table>
         <div id="myModal" class="modal">
             <span class="close">&times;</span>
             <img class="modal-content" id="img01">
