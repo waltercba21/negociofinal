@@ -1,8 +1,4 @@
 document.addEventListener('DOMContentLoaded', (event) => {
-    filtrarFacturas();
-});
-
-document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('filterForm').addEventListener('submit', function(event) {
         event.preventDefault();
         filtrarFacturas();
