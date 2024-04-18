@@ -2,8 +2,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
     filtrarFacturas();
 });
 
-document.getElementById('filterForm').addEventListener('submit', function(event) {
-    event.preventDefault();
+document.addEventListener('DOMContentLoaded', (event) => {
+    document.getElementById('filterForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        filtrarFacturas();
+    });
     filtrarFacturas();
 });
 function convertirFechaInput(fechaInput) {
