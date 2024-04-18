@@ -15,10 +15,9 @@ function convertirFechaInput(fechaInput) {
     return fecha.toISOString().split('T')[0];
 }
 function parseDate(dateString) {
-    var date = new Date(dateString + 'T00:00:00Z');
-    return `${date.getUTCDate().toString().padStart(2, '0')}/${(date.getUTCMonth()+1).toString().padStart(2, '0')}/${date.getUTCFullYear()}`;
+    var date = new Date(dateString);
+    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getFullYear()}`;
 }
-
 function filtrarFacturas() {
     var proveedor = document.getElementById('proveedor').value;
     var proveedor = document.getElementById('proveedor').value;
