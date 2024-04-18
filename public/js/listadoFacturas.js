@@ -12,8 +12,11 @@ function convertirFechaInput(fechaInput) {
     }
     var partes = fechaInput.split('-');
     var fecha = new Date(Date.UTC(partes[0], partes[1] - 1, partes[2]));
-    fecha.setMinutes(fecha.getMinutes() - fecha.getTimezoneOffset()); // Ajustar la fecha para la zona horaria local
     return fecha.toISOString().split('T')[0];
+}
+function parseDate(dateString) {
+    var date = new Date(dateString + 'T00:00:00Z');
+    return `${date.getUTCDate().toString().padStart(2, '0')}/${(date.getUTCMonth()+1).toString().padStart(2, '0')}/${date.getUTCFullYear()}`;
 }
 
 function filtrarFacturas() {
@@ -57,10 +60,8 @@ function filtrarFacturas() {
         data.forEach(function(factura) {
             var tr = document.createElement('tr');
         
-            var fechaFacturaFormateada = new Date(factura.fecha).toLocaleDateString();
-            var fechaPago = new Date(factura.fecha_pago);
-            fechaPago.setHours(0,0,0,0); // Asegurarse de que la hora es 00:00:00
-            var fechaPagoFormateada = fechaPago.toLocaleDateString();
+            var fechaFacturaFormateada = parseDate(factura.fecha);
+            var fechaPagoFormateada = parseDate(factura.fecha_pago);
         
             // Comprobar si faltan 7 días o menos para la fecha de pago y la factura está pendiente
             var hoy = new Date();
