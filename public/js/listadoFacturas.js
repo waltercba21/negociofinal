@@ -11,7 +11,8 @@ function convertirFechaInput(fechaInput) {
         return '';
     }
     var partes = fechaInput.split('-');
-    var fecha = new Date(Date.UTC(partes[0], partes[1] - 1, partes[2]));
+    var fecha = new Date(partes[0], partes[1] - 1, partes[2]);
+    fecha.setDate(fecha.getDate() + 1); // Agrega un día
     return fecha.toISOString().split('T')[0];
 }
 function parseDate(dateString) {
