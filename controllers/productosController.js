@@ -55,7 +55,7 @@ module.exports = {
             res.render('productos', { productos, categorias, numeroDePaginas, pagina });
         }  catch (error) {
             console.log('Error al obtener productos o categorías:', error);
-            res.render('productos', { categorias: [], numeroDePaginas, pagina });
+            res.render('productos', { productos: [], categorias: [], numeroDePaginas, pagina });
         }
     },
     detalle: function (req, res) {
