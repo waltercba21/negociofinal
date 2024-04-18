@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
     filtrarFacturas();
 });
+
+
 function convertirFechaInput(fechaInput) {
     if (!fechaInput) {
         return '';
