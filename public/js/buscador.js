@@ -33,25 +33,13 @@ function buscarProductos() {
   });
 }
 
-function cargarProductos() {
-  fetch('http://www.autofaros.com.ar/productos/api', {mode:'cors',credentials:'include'})
-  .then(response => response.json())
-  .then(datos => {
-    console.log('Datos:', datos.productos);
-    mostrarProductos(datos.productos);
-  })
-  .catch(error => {
-    console.error('Hubo un problema con la solicitud: ' + error);
-  });
-}
-
 function mostrarProductos(productos) {
   contenedorProductosBuscador.innerHTML = '';
   productos.forEach(producto => {
     const tarjetaProducto = `
     <div class="card"> 
     <div class="cover__card">
-      <img src="../../images/${producto.imagen}" alt="Imagen de ${producto.nombre}">
+      <img src="../../uploads/productos/${producto.imagen}" alt="Imagen de ${producto.nombre}">
     </div>
     <div class="titulo-producto">
       <h3 class="nombre">${producto.nombre}</h3>
