@@ -53,9 +53,9 @@ module.exports = {
                 });
             }
             res.render('productos', { productos, categorias, numeroDePaginas, pagina });
-        } catch (error) {
+        }  catch (error) {
             console.log('Error al obtener productos o categorías:', error);
-            res.render('productos', { numeroDePaginas, pagina });
+            res.render('productos', { categorias: [], numeroDePaginas, pagina });
         }
     },
     detalle: function (req, res) {
