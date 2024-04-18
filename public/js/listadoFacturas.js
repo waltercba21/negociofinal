@@ -24,13 +24,13 @@ function parseDate(dateString) {
 }
 function filtrarFacturas() {
     var proveedor = document.getElementById('proveedor').value;
-    var proveedor = document.getElementById('proveedor').value;
     var fechaFactura = convertirFechaInput(document.getElementById('fechaFactura').value);
     var fechaPago = convertirFechaInput(document.getElementById('fechaPago').value);
     var condicion = document.getElementById('condicion').value;
     var fechaDesde = convertirFechaInput(document.getElementById('fechaDesde').value);
     var fechaHasta = convertirFechaInput(document.getElementById('fechaHasta').value);
     var alertBox = document.getElementById('alertBox');
+
 
 
     
@@ -69,7 +69,8 @@ function filtrarFacturas() {
             // Comprobar si faltan 7 días o menos para la fecha de pago y la factura está pendiente
             var hoy = new Date();
             hoy.setHours(0,0,0,0); // Asegurarse de que la hora es 00:00:00
-            var diferenciaDias = Math.ceil((fechaPago - hoy) / (1000 * 60 * 60 * 24));
+            var fechaPagoDate = new Date(factura.fecha_pago); // Convertir fechaPago a un objeto de fecha
+            var diferenciaDias = Math.ceil((fechaPagoDate - hoy) / (1000 * 60 * 60 * 24));
             console.log('Diferencia de días: ', diferenciaDias, ' Condición: ', factura.condicion); // Agregado para depuración
             if (diferenciaDias <= 7 && factura.condicion === 'pendiente') {
                 var mensaje = 'Faltan ' + diferenciaDias + ' días para la fecha de pago de la factura ' + factura.id;
