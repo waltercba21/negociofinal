@@ -20,11 +20,7 @@ function filtrarFacturas() {
     var fechaHasta = fechaHastaInput ? new Date(fechaHastaInput).toISOString().split('T')[0] : '';
     var alertBox = document.getElementById('alertBox');
 
-       // Imprimir las fechas para depuración
-       console.log('Fecha factura: ', fechaFactura);
-       console.log('Fecha pago: ', fechaPago);
-       console.log('Fecha desde: ', fechaDesde);
-       console.log('Fecha hasta: ', fechaHasta);
+    
 
     while (alertBox.firstChild) {
         alertBox.removeChild(alertBox.firstChild);
