@@ -1,3 +1,6 @@
+// Variables globales para los selectores
+var categoriaSelect, marcaSelect, modeloSelect, contenedorProductos;
+
 // Función para buscar modelos basados en la marca seleccionada
 function buscarModelos() {
     var marcaId = this.value;
@@ -8,7 +11,6 @@ function buscarModelos() {
         })
         .then(function(modelos) {
             console.log(modelos); // Log de los modelos obtenidos
-            var modeloSelect = document.getElementById('modelo_id');
             modeloSelect.innerHTML = '';
             modelos.forEach(function(modelo) {
                 var option = document.createElement('option');
@@ -26,16 +28,15 @@ function buscarModelos() {
 
 // Función para realizar la búsqueda y actualizar la vista de productos
 function buscarProductos() {
-    var categoriaId = document.getElementById('categoria_id').value;
-    var marcaId = document.getElementById('id_marca').value;
-    var modeloId = document.getElementById('modelo_id').value;
+    var categoriaId = categoriaSelect.value;
+    var marcaId = marcaSelect.value;
+    var modeloId = modeloSelect.value;
 
-    fetch('/productos/buscar?categoria_id=' + categoriaId + '&marca_id=' + marcaId + '&modelo_id=' + modeloId)
+    fetch('/productos/lista?categoria=' + categoriaId + '&marca=' + marcaId + '&modelo=' + modeloId)
         .then(function(response) {
             return response.json();
         })
         .then(function(productos) {
-            var contenedorProductos = document.getElementById('contenedor-productos');
             contenedorProductos.innerHTML = '';
             productos.forEach(function(producto) {
                 var tarjetaProducto = document.createElement('div');
@@ -69,11 +70,19 @@ function buscarProductos() {
         });
 }
 
-// Evento de cambio para el selector de marca
-document.getElementById('id_marca').addEventListener('change', function() {
-    buscarModelos.call(this);
-});
+// Inicialización de los selectores y el contenedor de productos
+document.addEventListener('DOMContentLoaded', function() {
+    categoriaSelect = document.getElementById('categoria_id');
+    marcaSelect = document.getElementById('id_marca');
+    modeloSelect = document.getElementById('modelo_id');
+    contenedorProductos = document.getElementById('contenedor-productos');
 
-// Evento de cambio para los otros selectores
-document.getElementById('categoria_id').addEventListener('change', buscarProductos);
-document.getElementById('modelo_id').addEventListener('change', buscarProductos);
+    // Evento de cambio para el selector de marca
+    marcaSelect.addEventListener('change', function() {
+        buscarModelos.call(this);
+    });
+
+    // Evento de cambio para los otros selectores
+    categoriaSelect.addEventListener('change', buscarProductos);
+    modeloSelect.addEventListener('change', buscarProductos);
+});
