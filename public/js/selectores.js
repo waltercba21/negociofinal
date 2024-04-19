@@ -38,7 +38,9 @@ function buscarProductos() {
             var contenedorProductos = document.getElementById('contenedor-productos');
             contenedorProductos.innerHTML = '';
             productos.forEach(function(producto) {
-                // Aquí deberías crear y agregar las tarjetas de productos al contenedor
+                var tarjetaProducto = document.createElement('div');
+                tarjetaProducto.textContent = producto.nombre; // Asegúrate de cambiar esto para que coincida con las propiedades de tus productos
+                contenedorProductos.appendChild(tarjetaProducto);
             });
         })
         .catch(function(error) {
