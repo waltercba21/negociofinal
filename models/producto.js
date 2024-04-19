@@ -200,7 +200,8 @@ obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
       callback(null, resultados);
   }); 
 }, 
-  obtenerModelosPorMarca: function(conexion, marcaId, callback) {
+obtenerModelosPorMarca: function(conexion, marcaId, callback) {
+  console.log('marcaId:', marcaId); // Verificar el valor de marcaId
   var consulta = 'SELECT * FROM modelos WHERE id_marca = ?';
   
   conexion.query(consulta, [marcaId], function(error, resultados) {
@@ -209,14 +210,17 @@ obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
           callback(error, null);
           return;
       }
+      console.log('resultados:', resultados); // Verificar los resultados de la consulta
       callback(null, resultados);
   });
 },
 obtenerModeloPorId: function (conexion, id, callback) {
+  console.log('id:', id); // Verificar el valor de id
   conexion.query('SELECT * FROM modelos WHERE id = ?', [id], function (error, resultados) {
       if (error) {
           callback(error, null);
       } else {
+          console.log('resultados:', resultados); // Verificar los resultados de la consulta
           callback(null, resultados);
       }
   });
