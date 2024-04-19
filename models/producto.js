@@ -212,6 +212,15 @@ obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
       callback(null, resultados);
   });
 },
+obtenerModeloPorId: function (conexion, id, callback) {
+  conexion.query('SELECT * FROM modelos WHERE id = ?', [id], function (error, resultados) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultados);
+      }
+  });
+},
 obtenerCategorias: function(conexion) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT * FROM categorias', function(error, resultados) {
