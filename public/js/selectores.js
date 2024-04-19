@@ -30,7 +30,7 @@ function buscarProductos() {
     var marcaId = document.getElementById('id_marca').value;
     var modeloId = document.getElementById('modelo_id').value;
 
-    fetch('/productos/buscar?categoria=' + categoriaId + '&marca=' + marcaId + '&modelo=' + modeloId)
+    fetch('/productos/buscar?categoria_id=' + categoriaId + '&marca_id=' + marcaId + '&modelo_id=' + modeloId)
         .then(function(response) {
             return response.json();
         })
