@@ -49,6 +49,19 @@ module.exports = {
                 });
             });
     
+            let modelosPorMarca;
+            if (marca) {
+                modelosPorMarca = await new Promise((resolve, reject) => {
+                    producto.obtenerModelosPorMarca(conexion, marca, (error, resultados) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(resultados);
+                        }
+                    });
+                });
+            }
+    
             if (productos.length === 0) {
                 console.log('No se encontraron productos para estos filtros');
             } else {
@@ -61,10 +74,10 @@ module.exports = {
                     }
                 });
             }
-            res.render('productos', { productos, categorias, marcas, numeroDePaginas, pagina });
+            res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo });
         }  catch (error) {
-            console.log('Error al obtener productos, categorías o marcas:', error);
-            res.render('productos', { productos: [], categorias: [], marcas: [], numeroDePaginas, pagina });
+            console.log('Error al obtener productos, categorías, marcas o modelos:', error);
+            res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas, pagina, modelo });
         }
     },
     detalle: function (req, res) {
