@@ -20,3 +20,18 @@ document.getElementById('id_marca').addEventListener('change', function() {
             console.error('Error:', error);
         });
 });
+document.getElementById('boton-buscar').addEventListener('click', function() {
+    var categoriaId = document.getElementById('categoria_id').value;
+    var marcaId = document.getElementById('id_marca').value;
+    var modeloId = document.getElementById('modelo_id').value;
+    fetch('/productos/buscar?categoria_id=' + categoriaId + '&marca_id=' + marcaId + '&modelo_id=' + modeloId)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(productos) {
+            console.log(productos); 
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+        });
+});
