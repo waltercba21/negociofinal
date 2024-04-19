@@ -1,10 +1,12 @@
 document.getElementById('id_marca').addEventListener('change', function() {
     var marcaId = this.value;
+    console.log(marcaId); // Log del ID de la marca
     fetch('/modelos/' + marcaId)
         .then(function(response) {
             return response.json();
         })
         .then(function(modelos) {
+            console.log(modelos); // Log de los modelos obtenidos
             var modeloSelect = document.getElementById('modelo_id');
             modeloSelect.innerHTML = '';
             modelos.forEach(function(modelo) {
