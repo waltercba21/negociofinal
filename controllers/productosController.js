@@ -22,7 +22,6 @@ module.exports = {
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
-        var saltar = (pagina - 1) * 30;
         let numeroDePaginas = 1; // Inicializa numeroDePaginas
     
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
@@ -35,7 +34,15 @@ module.exports = {
             if (categoria || marca || modelo) {  
                 productos = await producto.obtenerPorFiltros(conexion, categoria, marca, modelo);
             } else {
-                productos = await producto.obtener(conexion, saltar);
+                productos = await new Promise((resolve, reject) => {
+                    producto.obtener(conexion, (error, resultados) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(resultados);
+                        }
+                    });
+                });
             }
     
             const categorias = await producto.obtenerCategorias(conexion);
