@@ -1,7 +1,7 @@
 document.getElementById('id_marca').addEventListener('change', function() {
     var marcaId = this.value;
     console.log(marcaId); // Log del ID de la marca
-    fetch('/modelos/' + marcaId)
+    fetch('/productos/modelos/' + marcaId)
         .then(function(response) {
             return response.json();
         })
