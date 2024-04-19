@@ -26,6 +26,9 @@ document.getElementById('boton-buscar').addEventListener('click', function() {
     var modeloId = document.getElementById('modelo_id').value;
     fetch('/productos/buscar?categoria_id=' + categoriaId + '&marca_id=' + marcaId + '&modelo_id=' + modeloId)
         .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
             return response.json();
         })
         .then(function(productos) {
