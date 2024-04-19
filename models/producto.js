@@ -1,10 +1,17 @@
 module.exports ={
-  obtener: function (conexion, saltar, funcion) {
-    if (typeof funcion !== 'function') {
+obtener: function (conexion, pagina, funcion) {
+  if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');
-    }
-    conexion.query('SELECT * FROM productos LIMIT ?,30', [saltar], funcion);  
-  },
+  }
+  const saltar = (pagina - 1) * 30;
+  conexion.query('SELECT * FROM productos LIMIT ?,30', [saltar], funcion);  
+},
+obtenerTotal: function (conexion, funcion) {
+  if (typeof funcion !== 'function') {
+      throw new Error('funcion debe ser una función');
+  }
+  conexion.query('SELECT COUNT(*) as total FROM productos', funcion);
+},
   obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },

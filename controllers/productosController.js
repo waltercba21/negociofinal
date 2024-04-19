@@ -22,7 +22,6 @@ module.exports = {
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
-        let numeroDePaginas = 1; // Inicializa numeroDePaginas
     
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             console.log('Error: marca o modelo no son números válidos');
@@ -31,11 +30,22 @@ module.exports = {
     
         try {
             let productos;
+            const totalProductos = await new Promise((resolve, reject) => {
+                producto.obtenerTotal(conexion, (error, resultados) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(resultados[0].total);
+                    }
+                });
+            });
+            let numeroDePaginas = Math.ceil(totalProductos / 30);
+    
             if (categoria || marca || modelo) {  
                 productos = await producto.obtenerPorFiltros(conexion, categoria, marca, modelo);
             } else {
                 productos = await new Promise((resolve, reject) => {
-                    producto.obtener(conexion, (error, resultados) => {
+                    producto.obtener(conexion, pagina, (error, resultados) => {
                         if (error) {
                             reject(error);
                         } else {
@@ -84,7 +94,7 @@ module.exports = {
             res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo });
         }  catch (error) {
             console.log('Error al obtener productos, categorías, marcas o modelos:', error);
-            res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas, pagina, modelo });
+            res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
     detalle: function (req, res) {
