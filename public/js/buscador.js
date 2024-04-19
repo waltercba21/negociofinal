@@ -18,9 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function buscarProductos() {
   const consulta = entrada.value;
 
-  let url = 'http://www.autofaros.com.ar/productos/api/buscar';
+  let url = 'http://www.autofaros.com.ar/api/';
   if (consulta) {
-    url += `?categoria_id=${categoriaSelect.value}&marca_id=${marcaSelect.value}&modelo_id=${modeloSelect.value}`;
+    url += `buscar?query=${consulta}`;
   }
   fetch(url, {mode:'cors', credentials:'include'})
   .then(response => response.json())
