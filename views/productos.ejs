@@ -33,10 +33,14 @@
     <div class="form-group-crear">
       <label for="modelo_id">Modelo</label>
       <select id="modelo_id" name="modelo_id">
-        <option value="<%= modelo.id %>" <% if (modelo && modelo.id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
+        <% if (modelo) { %>
+          <option value="<%= modelo.id %>" selected><%= modelo.nombre %></option>
+        <% } else { %>
+          <option value="" selected>Selecciona un modelo...</option>
+        <% } %>
         <% if (Array.isArray(modelosPorMarca)) { %>
             <% modelosPorMarca.forEach(function(modelo) { %>
-              <option value="<%= modelo.id %>" <% if (modelo == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
+              <option value="<%= modelo.id %>"><%= modelo.nombre %></option>
             <% }); %>
         <% } %>
       </select>
