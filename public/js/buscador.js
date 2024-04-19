@@ -18,49 +18,74 @@ document.addEventListener('DOMContentLoaded', function() {
   cargarProductos();
   entrada.addEventListener('input', buscarProductos);
   categoriaSelect.addEventListener('change', buscarProductos);
-  marcaSelect.addEventListener('change', buscarProductos);
+  marcaSelect.addEventListener('change', function() {
+    // Limpia el select de modelos
+    modeloSelect.innerHTML = '';
+    
+    // Obtiene los modelos para la marca seleccionada
+    fetch(`http://www.autofaros.com.ar/marcas/${marcaSelect.value}/modelos`, {mode:'cors', credentials:'include'})
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Error HTTP: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(datos => {
+        // Añade los modelos al select
+        datos.modelos.forEach(modelo => {
+          let option = document.createElement('option');
+          option.value = modelo.id;
+          option.text = modelo.nombre;
+          modeloSelect.appendChild(option);
+        });
+      })
+      .catch(error => {
+        console.error('Hubo un problema con la solicitud: ' + error);
+      });
+
+    // Realiza la búsqueda
+    buscarProductos();
+  });
   modeloSelect.addEventListener('change', buscarProductos);
 });
 
 function buscarProductos() {
-  function buscarProductos() {
-    const consulta = entrada.value;
-    const categoria = categoriaSelect.value;
-    const marca = marcaSelect.value;
-    const modelo = modeloSelect.value;
-  
-    let url = 'http://www.autofaros.com.ar/productos/api/buscar';
-    let params = new URLSearchParams();
-    if (consulta) {
-      params.append('query', consulta);
-    }
-    if (categoria) {
-      params.append('categoria', categoria);
-    }
-    if (marca) {
-      params.append('marca', marca);
-    }
-    if (modelo) {
-      params.append('modelo', modelo);
-    }
-    if (params.toString()) {
-      url += `?${params.toString()}`;
-    }
-    fetch(url, {mode:'cors', credentials:'include'})
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Error HTTP: ' + response.status);
-      }
-      return response.json();
-    })
-    .then(datos => {
-      console.log('Datos:', datos.productos);
-      mostrarProductos(datos.productos);
-    })
-    .catch(error => {
-      console.error('Hubo un problema con la solicitud: ' + error);
-    });
+  const consulta = entrada.value;
+  const categoria = categoriaSelect.value;
+  const marca = marcaSelect.value;
+  const modelo = modeloSelect.value;
+
+  let url = 'http://www.autofaros.com.ar/productos/api/buscar';
+  let params = new URLSearchParams();
+  if (consulta) {
+    params.append('query', consulta);
   }
+  if (categoria) {
+    params.append('categoria', categoria);
+  }
+  if (marca) {
+    params.append('marca', marca);
+  }
+  if (modelo) {
+    params.append('modelo', modelo);
+  }
+  if (params.toString()) {
+    url += `?${params.toString()}`;
+  }
+  fetch(url, {mode:'cors', credentials:'include'})
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Error HTTP: ' + response.status);
+    }
+    return response.json();
+  })
+  .then(datos => {
+    console.log('Datos:', datos.productos);
+    mostrarProductos(datos.productos);
+  })
+  .catch(error => {
+    console.error('Hubo un problema con la solicitud: ' + error);
+  });
 }
 
 function cargarProductos() {
@@ -74,6 +99,7 @@ function cargarProductos() {
     console.error('Hubo un problema con la solicitud: ' + error);
   });
 }
+
 function mostrarProductos(productos) {
   contenedorProductosBuscador.innerHTML = '';
   productos.forEach(producto => {
