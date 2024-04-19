@@ -7,35 +7,60 @@ let modeloSelect;
 document.addEventListener('DOMContentLoaded', function() {
   entrada = document.querySelector('#entradaBusqueda');
   contenedorProductosBuscador = document.querySelector('#contenedor-productos');
+  categoriaSelect = document.querySelector('#categoria_id');
+  marcaSelect = document.querySelector('#id_marca');
+  modeloSelect = document.querySelector('#modelo_id');
 
-  if (!entrada || !contenedorProductosBuscador ) {
+  if (!entrada || !contenedorProductosBuscador || !categoriaSelect || !marcaSelect || !modeloSelect) {
     console.error('No se encontraron los elementos necesarios en el DOM');
     return;
   }
   cargarProductos();
   entrada.addEventListener('input', buscarProductos);
+  categoriaSelect.addEventListener('change', buscarProductos);
+  marcaSelect.addEventListener('change', buscarProductos);
+  modeloSelect.addEventListener('change', buscarProductos);
 });
-function buscarProductos() {
-  const consulta = entrada.value;
 
-  let url = 'http://www.autofaros.com.ar/productos/api/buscar';
-  if (consulta) {
-    url += `?query=${consulta}`;
-  }
-  fetch(url, {mode:'cors', credentials:'include'})
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Error HTTP: ' + response.status);
+function buscarProductos() {
+  function buscarProductos() {
+    const consulta = entrada.value;
+    const categoria = categoriaSelect.value;
+    const marca = marcaSelect.value;
+    const modelo = modeloSelect.value;
+  
+    let url = 'http://www.autofaros.com.ar/productos/api/buscar';
+    let params = new URLSearchParams();
+    if (consulta) {
+      params.append('query', consulta);
     }
-    return response.json();
-  })
-  .then(datos => {
-    console.log('Datos:', datos.productos);
-    mostrarProductos(datos.productos);
-  })
-  .catch(error => {
-    console.error('Hubo un problema con la solicitud: ' + error);
-  });
+    if (categoria) {
+      params.append('categoria', categoria);
+    }
+    if (marca) {
+      params.append('marca', marca);
+    }
+    if (modelo) {
+      params.append('modelo', modelo);
+    }
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    fetch(url, {mode:'cors', credentials:'include'})
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error HTTP: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(datos => {
+      console.log('Datos:', datos.productos);
+      mostrarProductos(datos.productos);
+    })
+    .catch(error => {
+      console.error('Hubo un problema con la solicitud: ' + error);
+    });
+  }
 }
 
 function cargarProductos() {
@@ -43,7 +68,7 @@ function cargarProductos() {
   .then(response => response.json())
   .then(datos => {
     console.log('Datos:', datos.productos);
-    mostrarProductos(datos.productos);
+    mostrarProductos(datos.productos);  
   })
   .catch(error => {
     console.error('Hubo un problema con la solicitud: ' + error);

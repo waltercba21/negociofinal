@@ -9,8 +9,7 @@
     <div class="buscador">
       <input type="text" id="entradaBusqueda" placeholder="Buscar productos...">
     </div>
-  <form>
-      
+  
   <div class="selectores-productos">
     <div class="form-group-crear">
       <label for="categoria_id">Categoria</label>
@@ -46,7 +45,7 @@
       </select>
     </div>
   </div>
-</form>
+
 <div class="paginacion">
   <% for(let i = 1; i <= numeroDePaginas; i++) { %>
     <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
