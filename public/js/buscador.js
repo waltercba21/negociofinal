@@ -18,12 +18,17 @@ document.addEventListener('DOMContentLoaded', function() {
 function buscarProductos() {
   const consulta = entrada.value;
 
-  let url = 'http://www.autofaros.com.ar/api/';
+  let url = 'http://www.autofaros.com.ar/api/buscar';
   if (consulta) {
-    url += `buscar?query=${consulta}`;
+    url += `?query=${consulta}`;
   }
   fetch(url, {mode:'cors', credentials:'include'})
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Error HTTP: ' + response.status);
+    }
+    return response.json();
+  })
   .then(datos => {
     console.log('Datos:', datos.productos);
     mostrarProductos(datos.productos);
