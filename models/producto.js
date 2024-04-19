@@ -5,26 +5,8 @@ module.exports ={
     }
     conexion.query('SELECT * FROM productos LIMIT ?,30', [saltar], funcion);  
   },
-  obtenerCantidadTotal: function(conexion, callback) {
-    // Aquí debes escribir la consulta SQL para obtener la cantidad total de productos
-    const consulta = 'SELECT COUNT(*) AS cantidad FROM productos';
-
-    conexion.query(consulta, function(error, resultados) {
-        if (error) {
-            callback(error, null);
-        } else {
-            callback(null, resultados[0].cantidad);
-        }
-    });
-},
   obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
-  },
-  contar: function (conexion, funcion) { 
-    if (typeof funcion !== 'function') {
-      throw new Error('funcion debe ser una función');
-    }
-    conexion.query('SELECT COUNT(*) AS total FROM productos', funcion);
   },
   insertar: function(conexion, datos, archivo, funcion){
   if (!archivo) {
@@ -64,10 +46,7 @@ module.exports ={
       });
     });
   });
-},     
-  retornarDatosId: function (conexion,id,funcion){
-        conexion.query('SELECT * FROM productos WHERE id = ? ',[id],funcion);
-    },
+},   
   borrar: function (conexion,id,funcion){ 
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
@@ -129,30 +108,9 @@ module.exports ={
         funcion();
       }
     },
-  insertarImagen: function(conexion, productoId, imagen, callback) {
-  const query = 'INSERT INTO imagenes_producto (producto_id, ruta_imagen) VALUES (?, ?)';
-  conexion.query(query, [productoId, imagen], callback);
-},
 obtenerUltimos: function (conexion, cantidad, funcion) {
   conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id ORDER BY productos.id DESC LIMIT ?', [cantidad], funcion);
 },
-  obtenerImagenes: function(conexion, productoId, callback) {
-  const query = 'SELECT * FROM imagenes_producto WHERE producto_id = ?';
-  conexion.query(query, [productoId], callback);
-},
-  borrarImagenes: function(conexion, productoId, callback) {
-  const query = 'DELETE FROM imagenes_producto WHERE producto_id = ?';
-  conexion.query(query, [productoId], callback);
-},
-  obtenerCarrito: function (conexion, usuarioId, funcion) {
-        const query = `
-            SELECT carritos.*, productos.nombre AS nombre
-            FROM carritos 
-            JOIN productos ON carritos.producto_id = producto.id 
-            WHERE carritos.usuario_id = ?
-        `;
-        conexion.query(query, [usuarioId], funcion);
-    },
   agregarAlCarrito: function (usuarioId, productoId, cantidad, imagen, callback) {
         const query = "INSERT INTO carritos (usuario_id, producto_id, cantidad, imagen) VALUES ( ?, ?, ?, ?)";
         const values = [usuarioId, productoId, cantidad, imagen];
@@ -161,16 +119,6 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
             return callback(error, null);
           }
           return callback(null, resultados);
-        });
-      },
-  eliminarDelCarrito: function (usuarioId, productoId, callback) {
-        const query = "DELETE FROM carritos WHERE usuario_id = ? AND producto_id = ?";
-        const values = [usuarioId, productoId];
-        conexion.query(query, values, function (error, resultados) {
-          if (error) {
-            return callback(error, null);
-          }
-          return callback(null, resultados);    
         });
       },
   actualizarPreciosPorProveedor: function (pool, proveedorId, porcentajeCambio, callback) {
@@ -198,16 +146,6 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
             }
         });
     },
-  obtenerImagenes: function (conexion, productoId, funcion) {
-    const query = 'SELECT * FROM imagenes WHERE producto_id = ?';
-    conexion.query(query, [productoId], function (error, resultados) {
-        if (error) {
-            funcion(error, null);
-        } else {
-            funcion(null, resultados);
-        }
-    });
-},   
 obtenerPorNombre: function (conexion, nombre, funcion) {
   conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.nombre LIKE ?', [`%${nombre}%`], funcion);
 },
@@ -225,7 +163,7 @@ obtenerTodos: function (conexion, saltar, parametro, funcion) {
             conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id LIMIT ?,20', [saltar], funcion);
         }
     },
-    obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
+obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
       const query = 'SELECT * FROM productos WHERE proveedor_id = ?';
       conexion.query(query, [proveedor], function (error, resultados) {
           if (error) {
@@ -267,15 +205,6 @@ obtenerTodos: function (conexion, saltar, parametro, funcion) {
       callback(null, resultados);
   });
 },
-obtenerProductosPorProveedorYCategoria: function(conexion, proveedorId, categoriaId, callback) {
-  var query = 'SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?';
-  conexion.query(query, [proveedorId, categoriaId], function(error, resultados) {
-      if (error) {
-          return callback(error);
-      }
-      callback(null, resultados);
-  });
-},
 obtenerCategorias: function(conexion) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT * FROM categorias', function(error, resultados) {
@@ -284,16 +213,6 @@ obtenerCategorias: function(conexion) {
           }
           resolve(resultados);
       });
-  });
-},
-obtenerPorNombreCategoria: function(conexion, nombreCategoria, callback) {
-  var query = "SELECT productos.* FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE categorias.nombre LIKE ?";
-  conexion.query(query, [`%${nombreCategoria}%`], function(error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados);
-      }
   });
 },
   obtenerPorCategoria: function(conexion, categoria, callback) {
@@ -306,20 +225,7 @@ obtenerPorNombreCategoria: function(conexion, nombreCategoria, callback) {
       }
   });
 },
-  obtenerIdPorCategoria: function(conexion, categoria, callback) {
-  var query = "SELECT id FROM categorias WHERE nombre = ?";
-  conexion.query(query, [categoria], function(error, resultados) {
-    if (error) {
-      callback(error, null);
-    } else {
-      if (resultados.length > 0) {
-        callback(null, resultados[0].id);
-      } else {
-        callback(new Error('No se encontró la categoría'), null);
-      }
-    }
-  });
-},
+ 
 obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria, callback) {
   var query = "SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?";
   conexion.query(query, [proveedor, categoria], function(error, resultados) {
@@ -330,16 +236,7 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
       }
   });
 },
-  contarPorProveedor: function (conexion, proveedor, callback) {
-  const query = 'SELECT COUNT(*) AS total FROM productos WHERE proveedor_id = ?';
-  conexion.query(query, [proveedor], function (error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados);
-      }
-  });
-},
+ 
   contarTodos: function (conexion, parametro, callback) {
   const query = 'SELECT COUNT(*) AS total FROM productos';
   conexion.query(query, function (error, resultados) {
@@ -353,26 +250,7 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
   contarPorCategoria: function(conexion, categoria, callback) {
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 },
-  obtenerTodosLosProductos: function (conexion, saltar, callback) {
-  const query = 'SELECT * FROM productos LIMIT ?, 20';
-  conexion.query(query, [saltar], function (error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados);
-      }
-  });
-},
-  contarTodosLosProductos: function (conexion, callback) {
-  const query = 'SELECT COUNT(*) AS total FROM productos';
-  conexion.query(query, function (error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados[0].total);
-      } 
-  });
-},
+ 
   obtenerPorFiltros: function(conexion, categoria, marca, modelo, callback) {
   // Consulta SQL para obtener los productos por filtros
   var consulta = 'SELECT * FROM productos WHERE 1=1';
@@ -394,11 +272,6 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
       consulta += ' AND modelo_id = ?';
       parametros.push(modelo);
   }
-
-  // Imprime la consulta y los parámetros
-  console.log('Consulta SQL:', consulta);
-  console.log('Parámetros:', parametros);
-
   // Ejecuta la consulta
   conexion.query(consulta, parametros, function(error, resultados) {
       if (error) {
@@ -407,12 +280,6 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
           return;
       }
       callback(null, resultados);
-  });
-},
-  obtenerIdCategoriaPorNombre: function(conexion, nombre, callback) {
-  const consulta = 'SELECT id FROM categorias WHERE nombre = ?';
-  conexion.query(consulta, [nombre], function(error, resultados) {
-      
   });
 },
   obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
