@@ -23,16 +23,16 @@ document.addEventListener('DOMContentLoaded', function() {
     modeloSelect.innerHTML = '';
     
     // Obtiene los modelos para la marca seleccionada
-    fetch(`http://www.autofaros.com.ar/marcas/${marcaSelect.value}/modelos`, {mode:'cors', credentials:'include'})
+    fetch(`/productos/modelos/${marcaSelect.value}`)
       .then(response => {
         if (!response.ok) {
           throw new Error('Error HTTP: ' + response.status);
         }
         return response.json();
       })
-      .then(datos => {
+      .then(modelos => {
         // Añade los modelos al select
-        datos.modelos.forEach(modelo => {
+        modelos.forEach(modelo => {
           let option = document.createElement('option');
           option.value = modelo.id;
           option.text = modelo.nombre;
