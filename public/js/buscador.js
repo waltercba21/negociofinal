@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function buscarProductos() {
   const consulta = entrada.value;
 
-  let url = 'http://www.autofaros.com.ar/api/buscar';
+  let url = 'http://www.autofaros.com.ar/productos/api/buscar';
   if (consulta) {
     url += `?query=${consulta}`;
   }
