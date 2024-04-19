@@ -39,6 +39,15 @@ module.exports = {
             }
     
             const categorias = await producto.obtenerCategorias(conexion);
+            const marcas = await new Promise((resolve, reject) => {
+                producto.obtenerMarcas(conexion, (error, resultados) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(resultados);
+                    }
+                });
+            });
     
             if (productos.length === 0) {
                 console.log('No se encontraron productos para estos filtros');
@@ -52,10 +61,10 @@ module.exports = {
                     }
                 });
             }
-            res.render('productos', { productos, categorias, numeroDePaginas, pagina });
+            res.render('productos', { productos, categorias, marcas, numeroDePaginas, pagina });
         }  catch (error) {
-            console.log('Error al obtener productos o categorías:', error);
-            res.render('productos', { productos: [], categorias: [], numeroDePaginas, pagina });
+            console.log('Error al obtener productos, categorías o marcas:', error);
+            res.render('productos', { productos: [], categorias: [], marcas: [], numeroDePaginas, pagina });
         }
     },
     detalle: function (req, res) {
