@@ -200,16 +200,13 @@ obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
       callback(null, resultados);
   }); 
 }, 
-obtenerModelosPorMarca: function(req, res) {
-  var marcaId = req.params.marcaId;
-  producto.obtenerModelosPorMarca(conexion, marcaId, function(error, modelos) {
+obtenerModelosPorMarca: function (conexion, marcaId, callback) {
+  conexion.query('SELECT * FROM modelos WHERE id_marca = ?', [marcaId], function (error, resultados) {
       if (error) {
-          console.log('Error al obtener modelos:', error);
-          // Enviar una respuesta con un objeto JSON que contenga detalles del error
-          res.status(500).json({ error: 'Error al obtener modelos' });
-          return;
+          callback(error, null);
+      } else {
+          callback(null, resultados);
       }
-      res.json(modelos);
   });
 },
 obtenerModeloPorId: function (conexion, id, callback) {
