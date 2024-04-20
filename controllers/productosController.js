@@ -346,7 +346,8 @@ panelControl: function (req, res) {
         if (error) {
             return res.status(500).send('Error al obtener proveedores: ' + error.message);
         }
-        res.render('panelControl', { proveedores: proveedores });
+        const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
+        res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado });
     });
 },
 buscarPorNombre: function (req, res) {
