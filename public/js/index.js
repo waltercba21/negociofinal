@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
       });
     });
-  }
+  }  
   if (fila) {
     fila.addEventListener('mouseleave', () => {
       peliculas.forEach(pelicula => pelicula.classList.remove('hover'));

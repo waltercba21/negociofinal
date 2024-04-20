@@ -17,7 +17,7 @@ var rutaAlmacen = multer.diskStorage({
         callback(null, fecha + '_' + file.originalname);
     }
 });
-var cargar = multer({storage: rutaAlmacen});
+var cargar = multer({storage: rutaAlmacen});  
 
 router.get('/', productosController.lista);
 router.post('/', cargar.single('archivo'), productosController.guardar);
