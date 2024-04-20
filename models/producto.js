@@ -231,15 +231,17 @@ contarPorProveedor: function(conexion, proveedor, callback) {
       }
   });
 },
-obtenerCategorias: function(conexion, callback) {
-  conexion.query('SELECT * FROM categorias', function(error, resultados) {
-    if (error) {
-        console.log('Error al obtener categorías:', error);
-        callback(error, null);
-        return;
-    } 
-    callback(null, resultados);
-  }); 
+obtenerCategorias: function(conexion) {
+  return new Promise((resolve, reject) => {
+    conexion.query('SELECT * FROM categorias', function(error, resultados) {
+      if (error) {
+          console.log('Error al obtener categorías:', error);
+          reject(error);
+          return;
+      } 
+      resolve(resultados);
+    }); 
+  });
 },
 
 obtenerProductos: function(conexion, saltar, productosPorPagina, callback) {
