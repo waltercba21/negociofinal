@@ -220,21 +220,7 @@ obtenerModeloPorId: function (conexion, id, callback) {
       }
   });
 },
-panelControl: function (req, res) {
-  producto.obtenerProveedores(conexion, function(error, proveedores) {
-      if (error) {
-          return res.status(500).send('Error al obtener proveedores: ' + error.message);
-      }
-      producto.obtenerCategorias(conexion)
-          .then(categorias => {
-              const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
-              res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias });
-          })
-          .catch(error => {
-              return res.status(500).send('Error al obtener categorías: ' + error.message);
-          });
-  });
-},
+
 contarPorProveedor: function(conexion, proveedor, callback) {
   var query = "SELECT COUNT(*) as total FROM productos WHERE proveedor_id = ?";
   conexion.query(query, [proveedor], function(error, resultado) {

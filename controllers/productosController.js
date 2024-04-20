@@ -346,10 +346,16 @@ panelControl: function (req, res) {
         if (error) {
             return res.status(500).send('Error al obtener proveedores: ' + error.message);
         }
-        const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
-        res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado });
+        producto.obtenerCategorias(conexion)
+            .then(categorias => {
+                const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
+                res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias });
+            })
+            .catch(error => {
+                return res.status(500).send('Error al obtener categorías: ' + error.message);
+            });
     });
-},
+  },
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {
