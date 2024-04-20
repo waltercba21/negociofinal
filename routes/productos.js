@@ -23,7 +23,7 @@ router.get('/', productosController.lista);
 router.post('/', cargar.single('archivo'), productosController.guardar);
 router.get('/', productosController.getProductosPorCategoria);
 router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
-router.get('/panelControl', productosController.panelControl)
+router.get('/panelControl', productosController.panelControl) 
 
 router.get('/crear', productosController.crear);
 router.get('/generarPDF', productosController.generarPDF);

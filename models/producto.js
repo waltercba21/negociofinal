@@ -240,6 +240,38 @@ obtenerCategorias: function(conexion) {
       }
   });
 },
+contarPorProveedor: function(conexion, proveedor, callback) {
+  var query = "SELECT COUNT(*) as total FROM productos WHERE proveedor_id = ?";
+  conexion.query(query, [proveedor], function(error, resultado) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultado);
+      }
+  });
+},
+
+obtenerProductos: function(conexion, saltar, productosPorPagina, callback) {
+  var query = "SELECT * FROM productos LIMIT ?, ?";
+  conexion.query(query, [saltar, productosPorPagina], function(error, resultados) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultados);
+      }
+  });
+},
+
+contarProductos: function(conexion, callback) {
+  var query = "SELECT COUNT(*) as total FROM productos";
+  conexion.query(query, function(error, resultado) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultado);
+      }
+  });
+},
  
 obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria, callback) {
   var query = "SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?";

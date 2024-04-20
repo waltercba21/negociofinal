@@ -409,7 +409,7 @@ panelControl: function (req, res) {
                     });
                 });
             });
-        });
+        }); 
     });
 },
 buscarPorNombre: function (req, res) {
