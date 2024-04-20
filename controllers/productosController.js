@@ -97,6 +97,48 @@ module.exports = {
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
+    buscar: function (req, res) {
+        const consulta = req.query.query;
+        const categoria = req.query.categoria;
+        const marca = req.query.marca;
+        const modelo = req.query.modelo;
+    
+        if (consulta) {
+            producto.obtenerPorNombre(conexion, consulta, (error, productos) => {
+                if (error) {
+                    res.status(500).send('Error interno del servidor');
+                    return;
+                }
+                productos.forEach(producto => {
+                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                });
+                res.json({ productos });
+            });
+        } else if (categoria || marca || modelo) {
+            producto.obtenerPorFiltros(conexion, categoria, marca, modelo, (error, productos) => {
+                if (error) {
+                    res.status(500).send('Error interno del servidor');
+                    return;
+                }
+                productos.forEach(producto => {
+                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                });
+                res.json({ productos });
+            });
+        } else {
+            producto.obtenerTodos(conexion, (error, productos) => {
+                if (error) {
+                    console.error(error);
+                    res.status(500).send('Error interno del servidor');
+                    return;
+                }
+                productos.forEach(producto => {
+                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                });
+                res.json({ productos });
+            });
+        }
+    },
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
@@ -370,33 +412,7 @@ panelControl: function (req, res) {
         });
     });
 },
-buscarPorNombre: function (req, res) {
-    const consulta = req.query.query; 
-    if (!consulta) {
-      producto.obtenerTodos(conexion, (error, productos) => {
-        if (error) {
-          console.error(error);
-          res.status(500).send('Error interno del servidor');
-          return;
-        }
-        productos.forEach(producto => {
-          producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-        });
-        res.json({ productos });
-      });
-    } else {
-      producto.obtenerPorNombre(conexion, consulta, (error, productos) => {
-        if (error) {
-          res.status(500).send('Error interno del servidor');
-          return;
-        }
-        productos.forEach(producto => {
-          producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-        });
-        res.json({ productos });
-      });
-    }   
-  },
+
 buscarProductos : async (req, res) => {
     try {
       const consulta = req.query.query;

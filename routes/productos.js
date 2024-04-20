@@ -35,7 +35,7 @@ router.post('/actualizarPorProveedor', productosController.actualizarPorProveedo
     console.log (req.body);
 });
 router.get('/api', productosController.lista);
-router.get('/api/buscar', productosController.buscarPorNombre);
+router.get('/api/buscar', productosController.buscar);
 router.get('/carrito', productosController.carrito);
 router.get('/carrito/agregar/:id', ensureAuthenticated, productosController.agregarAlCarrito);
 router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
