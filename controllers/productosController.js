@@ -363,6 +363,18 @@ module.exports = {
                 });
         });
     },
+    calcularNumeroDePaginas: function(conexion) {
+        return new Promise((resolve, reject) => {
+            producto.contarProductos(conexion, (error, resultado) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    const numeroDePaginas = Math.ceil(resultado[0].total / 10);
+                    resolve(numeroDePaginas);
+                }
+            });
+        });
+      },
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {

@@ -265,18 +265,7 @@ contarProductos: function(conexion, callback) {
       }
   });
 },
-calcularNumeroDePaginas: function(conexion) {
-  return new Promise((resolve, reject) => {
-      producto.contarProductos(conexion, (error, resultado) => {
-          if (error) {
-              reject(error);
-          } else {
-              const numeroDePaginas = Math.ceil(resultado[0].total / 10);
-              resolve(numeroDePaginas);
-          }
-      });
-  });
-},
+
  
 obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria, callback) {
   var query = "SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?";
