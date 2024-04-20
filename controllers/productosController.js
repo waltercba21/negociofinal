@@ -355,7 +355,8 @@ module.exports = {
             });
         });
     },
-    panelControl: (req, res) => { // Cambia "function" a "=>"
+    panelControl: function(req, res) { // Cambia "=>" a "function"
+        const self = this; // Guarda una referencia al objeto que contiene "calcularNumeroDePaginas"
         producto.obtenerProveedores(conexion, function(error, proveedores) {
             if (error) {
                 return res.status(500).send('Error al obtener proveedores: ' + error.message);
@@ -364,7 +365,7 @@ module.exports = {
                 .then(categorias => {
                     const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
                     const categoriaSeleccionada = req.body.categoria; // o req.query.categoria
-                    this.calcularNumeroDePaginas() // "this" se refiere al objeto que contiene "panelControl"
+                    self.calcularNumeroDePaginas() // Usa "self" en lugar de "this"
                         .then(numeroDePaginas => {
                             res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas });
                         })
