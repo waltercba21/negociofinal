@@ -412,7 +412,6 @@ panelControl: function (req, res) {
         });
     });
 },
-
 buscarProductos : async (req, res) => {
     try {
       const consulta = req.query.query;
