@@ -349,7 +349,8 @@ panelControl: function (req, res) {
         producto.obtenerCategorias(conexion)
             .then(categorias => {
                 const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
-                res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias });
+                const categoriaSeleccionada = req.body.categoria; // o req.query.categoria
+                res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada });
             })
             .catch(error => {
                 return res.status(500).send('Error al obtener categorías: ' + error.message);
