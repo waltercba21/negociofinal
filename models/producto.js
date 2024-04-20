@@ -220,24 +220,19 @@ obtenerModeloPorId: function (conexion, id, callback) {
       }
   });
 },
-obtenerCategorias: function(conexion) {
-  return new Promise((resolve, reject) => {
-      conexion.query('SELECT * FROM categorias', function(error, resultados) {
-          if (error) {
-              reject(error);
-          }
-          resolve(resultados);
-      });
-  });
-},
-  obtenerPorCategoria: function(conexion, categoria, callback) {
-  var query = "SELECT * FROM productos WHERE categoria_id = ?";
-  conexion.query(query, [categoria], function(error, resultados) {
+panelControl: function (req, res) {
+  producto.obtenerProveedores(conexion, function(error, proveedores) {
       if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados);
+          return res.status(500).send('Error al obtener proveedores: ' + error.message);
       }
+      producto.obtenerCategorias(conexion)
+          .then(categorias => {
+              const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
+              res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias });
+          })
+          .catch(error => {
+              return res.status(500).send('Error al obtener categorías: ' + error.message);
+          });
   });
 },
 contarPorProveedor: function(conexion, proveedor, callback) {
