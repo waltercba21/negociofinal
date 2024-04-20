@@ -355,7 +355,7 @@ panelControl: function (req, res) {
                 return res.status(500).send('Error al obtener categorías: ' + error.message);
             });
     });
-  },
+},
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {
