@@ -342,7 +342,12 @@ ultimos: function(req, res) {
     });
 },
 panelControl: function (req, res) {
-    res.render('panelControl');
+    producto.obtenerProveedores(conexion, function(error, proveedores) {
+        if (error) {
+            return res.status(500).send('Error al obtener proveedores: ' + error.message);
+        }
+        res.render('panelControl', { proveedores: proveedores });
+    });
 },
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
