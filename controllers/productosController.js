@@ -145,8 +145,11 @@ module.exports = {
           if (error) {
             console.log('Error al obtener producto:', error);
             return res.status(500).send('Error al obtener el producto');
+          } else if (producto.length === 0) {
+            // No se encontró ningún producto con el id proporcionado
+            return res.status(404).send('Producto no encontrado');
           } else {
-            res.render('detalle', { producto: producto[0] }); // Cambia 'producto' a 'detalle'
+            res.render('detalle', { producto: producto[0] });
           }
         });
       },
