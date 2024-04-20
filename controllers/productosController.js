@@ -329,35 +329,54 @@ module.exports = {
             });
         }
     },
-ultimos: function(req, res) {
-    producto.obtenerUltimos(conexion, 3, function(error, productos) {
-        if (error) {
-            return res.status(500).send('Error al obtener los productos');
-        } else {
-            productos.forEach(producto => {
-                producto.precio = parseFloat(producto.precio).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    ultimos: function(req, res) {
+        producto.obtenerUltimos(conexion, 3, function(error, productos) {
+            if (error) {
+                return res.status(500).send('Error al obtener los productos');
+            } else {
+                productos.forEach(producto => {
+                    producto.precio = parseFloat(producto.precio).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+                });
+                res.json(productos);
+            }
+        });
+    },
+    calcularNumeroDePaginas: function() {
+        return new Promise((resolve, reject) => {
+            producto.contarProductos(conexion, function(error, resultado) {
+                if (error) {
+                    reject(error);
+                } else {
+                    const totalProductos = resultado[0].total; // obtiene el total de productos
+                    const productosPorPagina = 10; // establece la cantidad de productos que quieres mostrar por página
+                    const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
+                    resolve(numeroDePaginas);
+                }
             });
-            res.json(productos);
-        }
-    });
-},
-panelControl: function (req, res) {
-    producto.obtenerProveedores(conexion, function(error, proveedores) {
-        if (error) {
-            return res.status(500).send('Error al obtener proveedores: ' + error.message);
-        }
-        producto.obtenerCategorias(conexion)
-            .then(categorias => {
-                const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
-                const categoriaSeleccionada = req.body.categoria; // o req.query.categoria
-                const numeroDePaginas = calcularNumeroDePaginas(); // necesitas implementar esta función
-                res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas });
-            })
-            .catch(error => {
-                return res.status(500).send('Error al obtener categorías: ' + error.message);
-            });
-    });
-},
+        });
+    },
+    panelControl: function (req, res) {
+        producto.obtenerProveedores(conexion, function(error, proveedores) {
+            if (error) {
+                return res.status(500).send('Error al obtener proveedores: ' + error.message);
+            }
+            producto.obtenerCategorias(conexion)
+                .then(categorias => {
+                    const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
+                    const categoriaSeleccionada = req.body.categoria; // o req.query.categoria
+                    this.calcularNumeroDePaginas()
+                        .then(numeroDePaginas => {
+                            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas });
+                        })
+                        .catch(error => {
+                            return res.status(500).send('Error al calcular el número de páginas: ' + error.message);
+                        });
+                })
+                .catch(error => {
+                    return res.status(500).send('Error al obtener categorías: ' + error.message);
+                });
+        });
+    },
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {
