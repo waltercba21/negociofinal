@@ -348,8 +348,7 @@ panelControl: function (req, res) {
     req.session.paginaActual = pagina;
     req.session.save(function(err) {
         if(err) {
-            res.status(500).send("Error al guardar la sesión");
-            return;
+            return res.status(500).send("Error al guardar la sesión: " + err.message);
         }
         var proveedor = req.query.proveedor ? Number(req.query.proveedor) : null;
         var categoria = req.query.categoria ? Number(req.query.categoria) : null;
@@ -373,26 +372,26 @@ panelControl: function (req, res) {
         }
         producto.obtenerProveedores(conexion, function(error, proveedoresResult) {
             if (error) {
-                console.log('Error al obtener proveedores:', error);
-                return;
+                console.error('Error al obtener proveedores:', error);
+                return res.status(500).send('Error al obtener proveedores: ' + error.message);
             }
             producto.obtenerCategorias(conexion, function(error, categoriasResult) {
                 if (error) {
-                    console.log('Error al obtener categorias:', error);
-                    return;
+                    console.error('Error al obtener categorias:', error);
+                    return res.status(500).send('Error al obtener categorias: ' + error.message);
                 }
                 obtenerProductos(conexion, saltar, parametroObtenerProductos, function (error, productosResult) {
                     if (error) {
-                        console.log('Error al obtener productos:', error);
-                        return;
+                        console.error('Error al obtener productos:', error);
+                        return res.status(500).send('Error al obtener productos: ' + error.message);
                     }
                     productosResult.forEach(producto => {
                         producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                     });
                     contarProductos(conexion, parametroContarProductos, function(error, resultado) {
                         if (error) {
-                            console.log('Error al contar productos:', error);
-                            return;
+                            console.error('Error al contar productos:', error);
+                            return res.status(500).send('Error al contar productos: ' + error.message);
                         }
                         var totalProductos = resultado.length > 0 ? resultado[0].total : 0;
                         var numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
@@ -406,8 +405,8 @@ panelControl: function (req, res) {
                             proveedorSeleccionado: proveedor,
                             categorias: categoriasResult,
                             categoriaSeleccionada: categoria,
-                            pagina: pagina, // Añade esta línea
-                            numeroDePaginas: numeroDePaginas // Añade esta línea
+                            pagina: pagina,
+                            numeroDePaginas: numeroDePaginas
                         });
                     });
                 });
