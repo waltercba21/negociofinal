@@ -342,77 +342,7 @@ ultimos: function(req, res) {
     });
 },
 panelControl: function (req, res) {
-    var proveedor = req.query.proveedor ? Number(req.query.proveedor) : null;
-    req.session.proveedorActual = proveedor;
-    var pagina = req.query.pagina || 1;
-    req.session.paginaActual = pagina;
-    req.session.save(function(err) {
-        if(err) {
-            return res.status(500).send("Error al guardar la sesión: " + err.message);
-        }
-        var proveedor = req.query.proveedor ? Number(req.query.proveedor) : null;
-        var categoria = req.query.categoria ? Number(req.query.categoria) : null;
-        var productosPorPagina = 20;
-        var saltar = (pagina - 1) * productosPorPagina;
-    
-        var obtenerProductos = producto.obtenerTodos; 
-        var contarProductos = producto.contarTodos; 
-        var parametroObtenerProductos = null;
-        var parametroContarProductos = null;
-
-        if (categoria) {
-            obtenerProductos = (conexion, saltar, parametro, callback) => producto.obtenerPorCategoria(conexion, parametro, callback);
-            contarProductos = (conexion, parametro, callback) => producto.contarPorCategoria(conexion, parametro, callback);
-            parametroObtenerProductos = parametroContarProductos = categoria;
-        }
-        if (proveedor) {
-            obtenerProductos = (conexion, saltar, parametro, callback) => producto.obtenerProductosPorProveedor(conexion, parametro, saltar, callback);
-            contarProductos = (conexion, parametro, callback) => producto.contarPorProveedor(conexion, parametro, callback);
-            parametroObtenerProductos = parametroContarProductos = proveedor;
-        }
-        producto.obtenerProveedores(conexion, function(error, proveedoresResult) {
-            if (error) {
-                console.error('Error al obtener proveedores:', error);
-                return res.status(500).send('Error al obtener proveedores: ' + error.message);
-            }
-            producto.obtenerCategorias(conexion, function(error, categoriasResult) {
-                if (error) {
-                    console.error('Error al obtener categorias:', error);
-                    return res.status(500).send('Error al obtener categorias: ' + error.message);
-                }
-                obtenerProductos(conexion, saltar, parametroObtenerProductos, function (error, productosResult) {
-                    if (error) {
-                        console.error('Error al obtener productos:', error);
-                        return res.status(500).send('Error al obtener productos: ' + error.message);
-                    }
-                    productosResult.forEach(producto => {
-                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                    });
-                    contarProductos(conexion, parametroContarProductos, function(error, resultado) {
-                        if (error) {
-                            console.error('Error al contar productos:', error);
-                            return res.status(500).send('Error al contar productos: ' + error.message);
-                        }
-                        var totalProductos = resultado.length > 0 ? resultado[0].total : 0;
-                        var numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
-                        res.render('panelControl', { 
-                            title: 'Productos', 
-                            productos: productosResult, 
-                            totalProductos: totalProductos, 
-                            productosPorPagina: productosPorPagina, 
-                            proveedor: proveedor,
-                            proveedores: proveedoresResult,
-                            proveedorSeleccionado: proveedor,
-                            categorias: categoriasResult,
-                            categoriaSeleccionada: categoria,
-                            pagina: pagina,
-                            numeroDePaginas: numeroDePaginas
-                        });
-                    });
-                });
-            });
-        }); 
-    });
+    res.render('panelControl');
 },
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
