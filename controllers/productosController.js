@@ -341,7 +341,7 @@ module.exports = {
             }
         });
     },
-    calcularNumeroDePaginas: function() {
+    calcularNumeroDePaginas: function(conexion) {
         return new Promise((resolve, reject) => {
             producto.contarProductos(conexion, (error, resultado) => {
                 if (error) {
@@ -353,17 +353,17 @@ module.exports = {
             });
         });
     },
-    panelControl: function(req, res) { // Cambia "=>" a "function"
-        const self = this; // Guarda una referencia al objeto que contiene "calcularNumeroDePaginas"
+    panelControl: function(req, res, conexion) { // Asegúrate de que "conexion" se pasa como un argumento
+        const self = this;
         producto.obtenerProveedores(conexion, function(error, proveedores) {
             if (error) {
                 return res.status(500).send('Error al obtener proveedores: ' + error.message);
             }
             producto.obtenerCategorias(conexion)
                 .then(categorias => {
-                    const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
-                    const categoriaSeleccionada = req.body.categoria; // o req.query.categoria
-                    self.calcularNumeroDePaginas() // Usa "self" en lugar de "this"
+                    const proveedorSeleccionado = req.body.proveedor;
+                    const categoriaSeleccionada = req.body.categoria;
+                    self.calcularNumeroDePaginas(conexion) // Pasa "conexion" como un argumento
                         .then(numeroDePaginas => {
                             res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas });
                         })
