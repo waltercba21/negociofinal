@@ -751,5 +751,15 @@ generarPDF: function (req, res) {
         res.send(pdfData);
     });
 },
+getProductosPorCategoria : async (req, res) => {
+    const categoriaId = req.query.categoria;
+    producto.obtenerPorCategoria(categoriaId, (error, productos) => {
+      if (error) {
+        res.status(500).send(error);
+      } else {
+        res.render('productos', { productos });
+      }
+    });
+  },
 
 }

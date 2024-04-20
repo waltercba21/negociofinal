@@ -15,12 +15,6 @@ obtenerTotal: function (conexion, funcion) {
   obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  retornarDatosId: function (conexion, id, funcion) {
-    if (typeof funcion !== 'function') {
-      throw new Error('funcion debe ser una función');
-    }
-    conexion.query('SELECT * FROM productos WHERE id = ?', [id], funcion);
-  },
   insertar: function(conexion, datos, archivo, funcion){
   if (!archivo) {
     return funcion(new Error('No se proporcionó un archivo'));
@@ -48,7 +42,7 @@ obtenerTotal: function (conexion, funcion) {
         if (resultados.length === 0) {
           return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
         }
-        const proveedor_id = resultados[0].id; 
+        const proveedor_id = resultados[0].id;
         conexion.query('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca_id,modelo_id,imagen) VALUES (?,?,?,?,?,?,?,?,?)',
         [datos.nombre,datos.codigo,datos.descripcion,proveedor_id,datos.precio,categoria_id,marca_id,datos.modelo_id, archivo.filename], (error, resultados) => {
           if (error) {
