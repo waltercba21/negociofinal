@@ -266,35 +266,34 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 },
  
-  obtenerPorFiltros: function(conexion, categoria, marca, modelo, callback) {
-  // Consulta SQL para obtener los productos por filtros
-  var consulta = 'SELECT * FROM productos WHERE 1=1';
-  var parametros = [];
+obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
+  return new Promise((resolve, reject) => {
+    var consulta = 'SELECT * FROM productos WHERE 1=1';
+    var parametros = [];
 
-  if (categoria) {
-      consulta += ' AND categoria_id = ?';
-      parametros.push(categoria);
-  }
+    if (categoria) {
+        consulta += ' AND categoria_id = ?';
+        parametros.push(categoria);
+    }
 
-  // Verifica si marca es NaN
-  if (marca && !isNaN(marca)) {
-      consulta += ' AND marca_id = ?';
-      parametros.push(marca);
-  }
+    if (marca && !isNaN(marca)) {
+        consulta += ' AND marca_id = ?';
+        parametros.push(marca);
+    }
 
-  // Verifica si modelo es NaN
-  if (modelo && !isNaN(modelo)) {
-      consulta += ' AND modelo_id = ?';
-      parametros.push(modelo);
-  }
-  // Ejecuta la consulta
-  conexion.query(consulta, parametros, function(error, resultados) {
-      if (error) {
-          console.log('Error al obtener productos:', error);
-          callback(error, null);
-          return;
-      }
-      callback(null, resultados);
+    if (modelo && !isNaN(modelo)) {
+        consulta += ' AND modelo_id = ?';
+        parametros.push(modelo);
+    }
+
+    conexion.query(consulta, parametros, function(error, resultados) {
+        if (error) {
+            console.log('Error al obtener productos:', error);
+            reject(error);
+        } else {
+            resolve(resultados);
+        }
+    });
   });
 },
   obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
