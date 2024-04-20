@@ -341,6 +341,18 @@ module.exports = {
             }
         });
     },
+    calcularNumeroDePaginas: function() {
+        return new Promise((resolve, reject) => {
+            producto.contarProductos(conexion, (error, resultado) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    const numeroDePaginas = Math.ceil(resultado[0].total / 10);
+                    resolve(numeroDePaginas);
+                }
+            });
+        });
+    },
     panelControl: function(req, res) { // Cambia "=>" a "function"
         const self = this; // Guarda una referencia al objeto que contiene "calcularNumeroDePaginas"
         producto.obtenerProveedores(conexion, function(error, proveedores) {
