@@ -341,20 +341,6 @@ module.exports = {
             }
         });
     },
-    calcularNumeroDePaginas: function() {
-        return new Promise((resolve, reject) => {
-            producto.contarProductos(conexion, function(error, resultado) {
-                if (error) {
-                    reject(error);
-                } else {
-                    const totalProductos = resultado[0].total; // obtiene el total de productos
-                    const productosPorPagina = 10; // establece la cantidad de productos que quieres mostrar por página
-                    const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
-                    resolve(numeroDePaginas);
-                }
-            });
-        });
-    },
     panelControl: function(req, res) { // Cambia "=>" a "function"
         const self = this; // Guarda una referencia al objeto que contiene "calcularNumeroDePaginas"
         producto.obtenerProveedores(conexion, function(error, proveedores) {
