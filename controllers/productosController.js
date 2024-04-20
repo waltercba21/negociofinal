@@ -341,16 +341,16 @@ module.exports = {
             }
         });
     },
-    panelControl: function(req, res, conexion) { // Asegúrate de que "conexion" se pasa como un argumento
+    panelControl: function(req, res, conexion) {
         producto.obtenerProveedores(conexion, function(error, proveedores) {
             if (error) {
                 return res.status(500).send('Error al obtener proveedores: ' + error.message);
             }
-            producto.obtenerCategorias(conexion) // Pasa "conexion" como un argumento
+            producto.obtenerCategorias(conexion)
                 .then(categorias => {
                     const proveedorSeleccionado = req.body.proveedor;
                     const categoriaSeleccionada = req.body.categoria;
-                    producto.calcularNumeroDePaginas(conexion) // Llama a "calcularNumeroDePaginas" desde el modelo y pasa "conexion" como un argumento
+                    producto.calcularNumeroDePaginas(conexion)
                         .then(numeroDePaginas => {
                             res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas });
                         })
@@ -374,7 +374,7 @@ module.exports = {
                 }
             });
         });
-      },
+    },
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {
