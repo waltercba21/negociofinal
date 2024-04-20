@@ -355,8 +355,7 @@ module.exports = {
             });
         });
     },
-    panelControl: function (req, res) {
-        const self = this; // Guarda una referencia a this
+    panelControl: (req, res) => { // Cambia "function" a "=>"
         producto.obtenerProveedores(conexion, function(error, proveedores) {
             if (error) {
                 return res.status(500).send('Error al obtener proveedores: ' + error.message);
@@ -365,7 +364,7 @@ module.exports = {
                 .then(categorias => {
                     const proveedorSeleccionado = req.body.proveedor; // o req.query.proveedor
                     const categoriaSeleccionada = req.body.categoria; // o req.query.categoria
-                    self.calcularNumeroDePaginas() // Usa la referencia a this
+                    this.calcularNumeroDePaginas() // "this" se refiere al objeto que contiene "panelControl"
                         .then(numeroDePaginas => {
                             res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas });
                         })
