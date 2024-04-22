@@ -161,11 +161,13 @@ obtenerPorNombre: function (conexion, nombre, funcion) {
 obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
   return new Promise((resolve, reject) => {
       let consulta = 'SELECT * FROM productos';
+      let parametros = [saltar];
       if (categoriaSeleccionada) {
           consulta += ' WHERE categoria_id = ?';
+          parametros.unshift(categoriaSeleccionada);
       }
       consulta += ' ORDER BY id DESC LIMIT 20 OFFSET ?';
-      conexion.query(consulta, [categoriaSeleccionada, saltar], function(error, resultados) {
+      conexion.query(consulta, parametros, function(error, resultados) {
           if (error) {
               reject(error);
           } else {
