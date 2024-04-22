@@ -334,45 +334,26 @@ module.exports = {
             }
         });
     },
-    panelControl: function(req, res) {
-        producto.obtenerProveedores(conexion, function(error, proveedores) {
-            if (error) {
-                console.log('Error al obtener proveedores:', error);
-                return res.status(500).send('Error al obtener proveedores: ' + error.message);
-            }
-            producto.obtenerCategorias(conexion)
-                .then(categorias => {
-                    const proveedorSeleccionado = req.query.proveedor;
-                    const categoriaSeleccionada = req.query.categoria;
-                    const paginaActual = req.query.pagina ? Number(req.query.pagina) : 1;
-                    const productosPorPagina = 10;
-                    const saltar = (paginaActual - 1) * productosPorPagina;
-                    console.log('Proveedor seleccionado:', proveedorSeleccionado);
-                    console.log('Categoría seleccionada:', categoriaSeleccionada);
-                    calcularNumeroDePaginas(conexion)
-                        .then(numeroDePaginas => {
-                            console.log('Número de páginas:', numeroDePaginas);
-                            // Aquí es donde debes obtener los productos
-                            producto.obtenerTodos(conexion, saltar, categoriaSeleccionada)
-                                .then(productos => {
-                                    console.log('Productos:', productos);
-                                    res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual });
-                                })
-                                .catch(error => {
-                                    console.log('Error al obtener productos:', error);
-                                    return res.status(500).send('Error al obtener productos: ' + error.message);
-                                });
-                        })
-                        .catch(error => {
-                            console.log('Error al calcular el número de páginas:', error);
-                            return res.status(500).send('Error al calcular el número de páginas: ' + error.message);
-                        });
-                })
-                .catch(error => {
-                    console.log('Error al obtener categorías:', error);
-                    return res.status(500).send('Error al obtener categorías: ' + error.message);
-                });
-        });
+    panelControl: async function(req, res) {
+        try {
+            let proveedores = await producto.obtenerProveedores(conexion);
+            let categorias = await producto.obtenerCategorias(conexion);
+            const proveedorSeleccionado = req.query.proveedor;
+            const categoriaSeleccionada = req.query.categoria;
+            const paginaActual = req.query.pagina ? Number(req.query.pagina) : 1;
+            const productosPorPagina = 10;
+            const saltar = (paginaActual - 1) * productosPorPagina;
+            console.log('Proveedor seleccionado:', proveedorSeleccionado);
+            console.log('Categoría seleccionada:', categoriaSeleccionada);
+            let numeroDePaginas = await calcularNumeroDePaginas(conexion);
+            console.log('Número de páginas:', numeroDePaginas);
+            let productos = await producto.obtenerTodos(conexion, saltar, categoriaSeleccionada);
+            console.log('Productos:', productos);
+            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual });
+        } catch (error) {
+            console.log('Error:', error);
+            return res.status(500).send('Error: ' + error.message);
+        }
     },
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
