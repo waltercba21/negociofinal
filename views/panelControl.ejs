@@ -16,13 +16,13 @@
     <br/>
     <div class="form-control">
       <form method="get" action="/productos/generarPDF">
-        <label for="proveedor">Seleccionar Proveedor</label>
+      <!--  <label for="proveedor">Seleccionar Proveedor</label>
         <select name="proveedor" id="proveedor">
           <option value="TODOS">Mostrar Todos</option>
           <% proveedores.forEach(proveedor => { %>
             <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
           <% }); %>
-        </select>
+        </select>-->
         <label for="categoria">Seleccionar Categoría</label>
         <select name="categoria" id="categoria">
           <option value="">Mostrar Todas</option>
