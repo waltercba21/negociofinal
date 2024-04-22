@@ -118,9 +118,17 @@
       
       // Cuando la marca cambia, llenar los modelos
       $('#marca').change(function() {
-        var marcaId = $(this).val(); 
-        llenarModelos(marcaId);
-      });
+    var marcaId = $(this).val();
+    var modelos = modelosPorMarca[marcaId];
+    var modeloSelect = $('#modelo_id');
+    modeloSelect.empty();
+    modeloSelect.append('<option value="">Selecciona un modelo...</option>');
+    if (modelos) {
+        modelos.forEach(function(modelo) {
+            modeloSelect.append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
+        });
+    }
+});
       
       // Al cargar la página, si hay una marca seleccionada, llenar los modelos
       $(document).ready(function() {
