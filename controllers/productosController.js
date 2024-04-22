@@ -365,7 +365,14 @@ module.exports = {
                     const categoriaSeleccionada = req.body.categoria;
                     calcularNumeroDePaginas(conexion)
                         .then(numeroDePaginas => {
-                            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas });
+                            // Aquí es donde debes obtener los productos
+                            producto.obtenerProductosPorProveedor(conexion)
+                                .then(productos => {
+                                    res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos });
+                                })
+                                .catch(error => {
+                                    return res.status(500).send('Error al obtener productos: ' + error.message);
+                                });
                         })
                         .catch(error => {
                             return res.status(500).send('Error al calcular el número de páginas: ' + error.message);
