@@ -341,7 +341,7 @@ module.exports = {
             }
         });
     },
-    panelControl: function(req, res, conexion) {
+    panelControl: function(req, res) {
         producto.obtenerProveedores(conexion, function(error, proveedores) {
             if (error) {
                 return res.status(500).send('Error al obtener proveedores: ' + error.message);

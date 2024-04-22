@@ -3,7 +3,7 @@
 <body>
  <main>
 <div class="container"> 
-   <!--  <br/>
+ <br/>
     <br/>
     <a href="/productos/crear" class="btn btn-primary" type="button">Crear un nuevo producto</a>
     <br/>
@@ -13,8 +13,8 @@
     <br/>
     <a href="/productos/analytics" class="btn btn-primary" type="button">Google Analytics</a>
     <br/>
-    <br/>-->
-  <!--  <div class="form-control">
+    <br/>
+   <div class="form-control">
       <form method="get" action="/productos/generarPDF">
         <label for="proveedor">Seleccionar Proveedor</label>
         <select name="proveedor" id="proveedor">
@@ -22,27 +22,26 @@
           <% proveedores.forEach(proveedor => { %>
             <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
           <% }); %>
-        </select>-->
+        </select>
         <label for="categoria">Seleccionar Categoría</label>
-        <!-- 
+       
         <select name="categoria" id="categoria">
           <option value="">Mostrar Todas</option>
           <% categorias.forEach(categoria => { %>
             <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>><%= categoria.nombre %></option>
           <% }); %>
-        </select>-->
+        </select>
         <button type="submit" class="btn btn-primary">Generar PDF</button>
       </form>
     </div>
-    <br/>
-    <!--<div class="paginacion">
+    <br/><div class="paginacion">
       <% for(var i = 1; i <= numeroDePaginas; i++) { %>
         <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>&categoria=<%= categoriaSeleccionada %>"><%= i %></a>
       <% } %>
-    </div>-->
+    </div>
     <table class="table table-light">
     <thead class="thead-light">
-     <!--<tr>
+     <tr>
         <th>#</th>
         <th>Nombre</th>
         <th>Imagen</th>
@@ -74,13 +73,13 @@
         </tr>
         <% }); %>
     </tbody>
-  </table>--> 
-  <!-- <div class="pagination">
+  </table>
+  <div class="pagination">
     <% for(var i = 1; i <= numeroDePaginas; i++) { %>
       <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>&categoria=<%= categoriaSeleccionada %>"><%= i %></a>
     <% } %>
   </div>
-</div>-->
+</div>
 </main>
 <%- include ./layouts/footer.ejs %>
 </body>
