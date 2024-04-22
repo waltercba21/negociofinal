@@ -181,15 +181,17 @@ obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
       const queryPromise = util.promisify(conexion.query).bind(conexion);
       return queryPromise(query, [proveedor]);
   },
-  obtenerProveedores: function (conexion, callback) {
-    const query = 'SELECT id, nombre FROM proveedores';
-    conexion.query(query, function (error, resultados) {
-     if (error) {
-        callback(error, null);
-    } else {
-      callback(null, resultados);
-    }
-  });
+  obtenerProveedores: function(conexion) {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id, nombre FROM proveedores';
+        conexion.query(query, function(error, resultados) {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(resultados);
+            }
+        });
+    });
 },
   obtenerMarcas: function(conexion, callback) {
     conexion.query('SELECT * FROM marcas', function(error, resultados) {
@@ -201,13 +203,15 @@ obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
       callback(null, resultados);
   }); 
 }, 
-obtenerModelosPorMarca: function (conexion, marcaId, callback) {
-  conexion.query('SELECT * FROM modelos WHERE id_marca = ?', [marcaId], function (error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados);
-      }
+obtenerModelosPorMarca: function(conexion, marcaId) {
+  return new Promise((resolve, reject) => {
+      conexion.query('SELECT * FROM modelos WHERE id_marca = ?', [marcaId], function(error, resultados) {
+          if (error) {
+              reject(error);
+          } else {
+              resolve(resultados);
+          }
+      });
   });
 },
 obtenerModeloPorId: function (conexion, id, callback) {
@@ -234,14 +238,13 @@ contarPorProveedor: function(conexion, proveedor, callback) {
 },
 obtenerCategorias: function(conexion) {
   return new Promise((resolve, reject) => {
-    conexion.query('SELECT * FROM categorias', function(error, resultados) {
-      if (error) {
-          console.log('Error al obtener categorías:', error);
-          reject(error);
-          return;
-      } 
-      resolve(resultados);
-    }); 
+      conexion.query('SELECT * FROM categorias', function(error, resultados) {
+          if (error) {
+              reject(error);
+          } else {
+              resolve(resultados);
+          }
+      });
   });
 },
 

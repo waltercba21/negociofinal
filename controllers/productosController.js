@@ -165,40 +165,20 @@ module.exports = {
           }
         });
       },
-        crear: function(req, res) {
-            producto.obtenerCategorias(conexion, function(error, categorias) {
-            if (error) {
-                console.log('Error al obtener categorías:', error);
-                return;
-            }  
-            producto.obtenerProveedores(conexion, function(error, proveedores) {
-                if (error) {
-                    console.log('Error al obtener proveedores:', error);
-                    return;
-                }
-                producto.obtenerMarcas(conexion, function(error, marcas) {
-                    if (error) {
-                        console.log('Error al obtener marcas:', error);
-                        return;
-                    }
-                    let modelosPorMarca = {};
-                    let contadorMarcas = 0;
-                    marcas.forEach((marca) => {
-                        producto.obtenerModelosPorMarca(conexion, marca.id, function(error, modelos) {
-                            if (error) {
-                                console.log('Error al obtener modelos:', error);
-                                return;
-                            }
-                            modelosPorMarca[marca.id] = modelos;
-                            contadorMarcas++;
-                            if (contadorMarcas === marcas.length) {
-                                res.render('crear', { categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca, producto: {} });
-                            }
-                        });
-                    });
-                });
-            });
-        });
+      crear: async function(req, res) {
+        try {
+            let categorias = await producto.obtenerCategorias(conexion);
+            let proveedores = await producto.obtenerProveedores(conexion);
+            let marcas = await producto.obtenerMarcas(conexion);
+            let modelosPorMarca = {};
+            for (let marca of marcas) {
+                let modelos = await producto.obtenerModelosPorMarca(conexion, marca.id);
+                modelosPorMarca[marca.id] = modelos;
+            }
+            res.render('crear', { categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca, producto: {} });
+        } catch (error) {
+            console.log('Error:', error);
+        }
     },
         guardar: function(req, res) {
             const datos = req.body;
