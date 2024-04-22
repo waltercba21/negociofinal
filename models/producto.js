@@ -264,9 +264,7 @@ contarProductos: function(conexion, callback) {
           callback(null, resultado);
       }
   });
-},
-
- 
+},  
 obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria, callback) {
   var query = "SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?";
   conexion.query(query, [proveedor, categoria], function(error, resultados) {

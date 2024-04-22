@@ -1,4 +1,3 @@
-const conexion = require('../config/conexion')
 const pool = require('../config/conexion');
 const producto = require('../models/producto')
 var borrar = require('fs');
