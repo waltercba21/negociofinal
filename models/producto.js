@@ -158,24 +158,20 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
 obtenerPorNombre: function (conexion, nombre, funcion) {
   conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.nombre LIKE ?', [`%${nombre}%`], funcion);
 },
-obtenerTodos: function (conexion, saltar, parametro) {
+obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
   return new Promise((resolve, reject) => {
-      if (parametro === undefined) {
-          parametro = saltar;
-          saltar = 0; 
+      let consulta = 'SELECT * FROM productos';
+      if (categoriaSeleccionada) {
+          consulta += ' WHERE categoria_id = ?';
       }
-      const queryCallback = (error, result) => {
+      consulta += ' ORDER BY id DESC LIMIT 20 OFFSET ?';
+      conexion.query(consulta, [categoriaSeleccionada, saltar], function(error, resultados) {
           if (error) {
               reject(error);
           } else {
-              resolve(result);
+              resolve(resultados);
           }
-      };
-      if (parametro !== null) {
-          conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE categoria_id = ? LIMIT ?,20', [parametro, saltar], queryCallback);
-      } else {
-          conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id LIMIT ?,20', [saltar], queryCallback);
-      }
+      });
   });
 },
     obtenerProductosPorProveedor: function (conexion, proveedor) {
