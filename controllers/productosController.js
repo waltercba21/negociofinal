@@ -1,4 +1,4 @@
-const pool = require('../config/conexion');
+const conexion = require('../config/conexion')
 const producto = require('../models/producto')
 var borrar = require('fs');
 const PDFDocument = require('pdfkit');
