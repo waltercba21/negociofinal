@@ -365,7 +365,7 @@ module.exports = {
                     calcularNumeroDePaginas(conexion)
                         .then(numeroDePaginas => {
                             // Aquí es donde debes obtener los productos
-                            producto.obtenerProductosPorProveedor(conexion)
+                            producto.obtenerProductosPorProveedor(conexion, proveedorSeleccionado)
                                 .then(productos => {
                                     res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos });
                                 })
@@ -380,18 +380,6 @@ module.exports = {
                 .catch(error => {
                     return res.status(500).send('Error al obtener categorías: ' + error.message);
                 });
-        });
-    },
-    calcularNumeroDePaginas: function(conexion) {
-        return new Promise((resolve, reject) => {
-            producto.contarProductos(conexion, (error, resultado) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    const numeroDePaginas = Math.ceil(resultado[0].total / 10);
-                    resolve(numeroDePaginas);
-                }
-            });
         });
     },
 buscarPorNombre: function (req, res) {

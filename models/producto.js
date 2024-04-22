@@ -1,3 +1,5 @@
+const util = require('util');
+
 module.exports ={
 obtener: function (conexion, pagina, funcion) {
   if (typeof funcion !== 'function') {
@@ -170,15 +172,10 @@ obtenerTodos: function (conexion, saltar, parametro, funcion) {
             conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id LIMIT ?,20', [saltar], funcion);
         }
     },
-obtenerProductosPorProveedor: function (conexion, proveedor, callback) {
+    obtenerProductosPorProveedor: function (conexion, proveedor) {
       const query = 'SELECT * FROM productos WHERE proveedor_id = ?';
-      conexion.query(query, [proveedor], function (error, resultados) {
-          if (error) {
-              callback(error, null);
-          } else {
-              callback(null, resultados);
-          }
-      });
+      const queryPromise = util.promisify(conexion.query).bind(conexion);
+      return queryPromise(query, [proveedor]);
   },
   obtenerProveedores: function (conexion, callback) {
     const query = 'SELECT id, nombre FROM proveedores';
