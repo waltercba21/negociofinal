@@ -68,15 +68,7 @@ module.exports = {
           }
     
             const categorias = await producto.obtenerCategorias(conexion);
-            const marcas = await new Promise((resolve, reject) => {
-                producto.obtenerMarcas(conexion, (error, resultados) => {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        resolve(resultados);
-                    }
-                });
-            });
+            const marcas = await producto.obtenerMarcas(conexion);
     
             let modelosPorMarca;
             if (marca) {

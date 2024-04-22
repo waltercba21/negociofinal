@@ -193,16 +193,18 @@ obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
         });
     });
 },
-  obtenerMarcas: function(conexion, callback) {
-    conexion.query('SELECT * FROM marcas', function(error, resultados) {
-      if (error) {
-          console.log('Error al obtener marcas:', error);
-          callback(error, null);
-          return;
-      } 
-      callback(null, resultados);
-  }); 
-}, 
+obtenerMarcas: function(conexion) {
+  return new Promise((resolve, reject) => {
+      conexion.query('SELECT * FROM marcas', function(error, resultados) {
+          if (error) {
+              console.log('Error al obtener marcas:', error);
+              reject(error);
+          } else {
+              resolve(resultados);
+          }
+      });
+  });
+},
 obtenerModelosPorMarca: function(conexion, marcaId) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT * FROM modelos WHERE id_marca = ?', [marcaId], function(error, resultados) {
