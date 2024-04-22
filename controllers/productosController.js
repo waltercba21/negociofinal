@@ -342,6 +342,7 @@ module.exports = {
         });
     },
     panelControl: function(req, res) {
+        const self = this;
         producto.obtenerProveedores(conexion, function(error, proveedores) {
             if (error) {
                 return res.status(500).send('Error al obtener proveedores: ' + error.message);
@@ -350,7 +351,7 @@ module.exports = {
                 .then(categorias => {
                     const proveedorSeleccionado = req.body.proveedor;
                     const categoriaSeleccionada = req.body.categoria;
-                    this.calcularNumeroDePaginas(conexion)
+                    self.calcularNumeroDePaginas(conexion)
                         .then(numeroDePaginas => {
                             res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas });
                         })
