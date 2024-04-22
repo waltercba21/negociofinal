@@ -170,6 +170,7 @@ module.exports = {
             let categorias = await producto.obtenerCategorias(conexion);
             let proveedores = await producto.obtenerProveedores(conexion);
             let marcas = await producto.obtenerMarcas(conexion);
+            marcas = Array.isArray(marcas) ? marcas : []; // Asegurarse de que marcas es un array
             let modelosPorMarca = {};
             for (let marca of marcas) {
                 let modelos = await producto.obtenerModelosPorMarca(conexion, marca.id);
