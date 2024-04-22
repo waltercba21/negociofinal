@@ -40,6 +40,9 @@
         <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>&categoria=<%= categoriaSeleccionada %>"><%= i %></a>
       <% } %>
     </div>
+    <pre>
+      <%= JSON.stringify(productos, null, 2) %>
+      </pre>
     <table class="table table-light">
     <thead class="thead-light">
      <tr>
