@@ -34,7 +34,8 @@
         <button type="submit" class="btn btn-primary">Generar PDF</button>
       </form>
     </div>
-    <br/><div class="paginacion">
+    <br/>
+    <div class="paginacion">
       <% for(var i = 1; i <= numeroDePaginas; i++) { %>
         <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>&categoria=<%= categoriaSeleccionada %>"><%= i %></a>
       <% } %>
@@ -74,7 +75,7 @@
         <% }); %>
     </tbody>
   </table>
-  <div class="pagination">
+  <div class="paginacion">
     <% for(var i = 1; i <= numeroDePaginas; i++) { %>
       <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>&categoria=<%= categoriaSeleccionada %>"><%= i %></a>
     <% } %>
