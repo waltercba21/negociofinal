@@ -158,20 +158,26 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
 obtenerPorNombre: function (conexion, nombre, funcion) {
   conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.nombre LIKE ?', [`%${nombre}%`], funcion);
 },
-obtenerTodos: function (conexion, saltar, parametro, funcion) {
-        if (typeof funcion !== 'function') {
-            throw new Error('funcion debe ser una función');
-        }
-        if (parametro === undefined) {
-            parametro = saltar;
-            saltar = 0; 
-        }
-        if (parametro !== null) {
-            conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE categoria_id = ? LIMIT ?,20', [parametro, saltar], funcion);
-        } else {
-            conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id LIMIT ?,20', [saltar], funcion);
-        }
-    },
+obtenerTodos: function (conexion, saltar, parametro) {
+  return new Promise((resolve, reject) => {
+      if (parametro === undefined) {
+          parametro = saltar;
+          saltar = 0; 
+      }
+      const queryCallback = (error, result) => {
+          if (error) {
+              reject(error);
+          } else {
+              resolve(result);
+          }
+      };
+      if (parametro !== null) {
+          conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE categoria_id = ? LIMIT ?,20', [parametro, saltar], queryCallback);
+      } else {
+          conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id LIMIT ?,20', [saltar], queryCallback);
+      }
+  });
+},
     obtenerProductosPorProveedor: function (conexion, proveedor) {
       const query = 'SELECT * FROM productos WHERE proveedor_id = ?';
       const queryPromise = util.promisify(conexion.query).bind(conexion);
