@@ -365,7 +365,7 @@ module.exports = {
                     calcularNumeroDePaginas(conexion)
                         .then(numeroDePaginas => {
                             // Aquí es donde debes obtener los productos
-                            producto.obtenerProductosPorProveedor(conexion, proveedorSeleccionado)
+                            producto.obtenerTodos(conexion, proveedorSeleccionado)
                                 .then(productos => {
                                     res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos });
                                 })
