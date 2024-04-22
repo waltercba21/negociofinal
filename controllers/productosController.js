@@ -360,8 +360,8 @@ module.exports = {
             }
             producto.obtenerCategorias(conexion)
                 .then(categorias => {
-                    const proveedorSeleccionado = req.body.proveedor;
-                    const categoriaSeleccionada = req.body.categoria;
+                    const proveedorSeleccionado = req.query.proveedor;
+                    const categoriaSeleccionada = req.query.categoria;
                     calcularNumeroDePaginas(conexion)
                         .then(numeroDePaginas => {
                             // Aquí es donde debes obtener los productos
