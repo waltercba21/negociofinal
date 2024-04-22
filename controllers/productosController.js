@@ -363,16 +363,19 @@ module.exports = {
                 .then(categorias => {
                     const proveedorSeleccionado = req.query.proveedor;
                     const categoriaSeleccionada = req.query.categoria;
+                    const paginaActual = req.query.pagina ? Number(req.query.pagina) : 1;
+                    const productosPorPagina = 10;
+                    const saltar = (paginaActual - 1) * productosPorPagina;
                     console.log('Proveedor seleccionado:', proveedorSeleccionado);
                     console.log('Categoría seleccionada:', categoriaSeleccionada);
                     calcularNumeroDePaginas(conexion)
                         .then(numeroDePaginas => {
                             console.log('Número de páginas:', numeroDePaginas);
                             // Aquí es donde debes obtener los productos
-                            producto.obtenerTodos(conexion, 0, categoriaSeleccionada)
+                            producto.obtenerTodos(conexion, saltar, categoriaSeleccionada)
                                 .then(productos => {
                                     console.log('Productos:', productos);
-                                    res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos });
+                                    res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual });
                                 })
                                 .catch(error => {
                                     console.log('Error al obtener productos:', error);
