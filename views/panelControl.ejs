@@ -36,10 +36,32 @@
     </div>
     <br/>
     <div class="paginacion">
-      <% for(var i = 1; i <= numeroDePaginas; i++) { %>
-        <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>&categoria=<%= categoriaSeleccionada %>"><%= i %></a>
+      <% if (paginaActual > 1) { %>
+          <a href="?pagina=<%= paginaActual - 1 %>">&laquo;</a>
       <% } %>
-    </div>
+  
+      <% if (paginaActual > 3) { %>
+          <a href="?pagina=1">1</a>
+          <span>...</span>
+      <% } %>
+  
+      <% for(let i = Math.max(1, paginaActual - 2); i <= Math.min(paginaActual + 2, numeroDePaginas); i++) { %>
+          <% if (paginaActual === i) { %>
+              <span class="active"><%= i %></span>
+          <% } else { %>
+              <a href="?pagina=<%= i %>"><%= i %></a>
+          <% } %>
+      <% } %>
+  
+      <% if (paginaActual < numeroDePaginas - 2) { %>
+          <span>...</span>
+          <a href="?pagina=<%= numeroDePaginas %>"><%= numeroDePaginas %></a>
+      <% } %>
+  
+      <% if (paginaActual < numeroDePaginas) { %>
+          <a href="?pagina=<%= paginaActual + 1 %>">&raquo;</a>
+      <% } %>
+  </div>
     
     <table class="table table-light">
     <thead class="thead-light">
@@ -76,11 +98,6 @@
         <% }); %>
     </tbody>
   </table>
-  <div class="paginacion">
-    <% for(var i = 1; i <= numeroDePaginas; i++) { %>
-      <a class="pagina" href="/productos/panelControl?pagina=<%= i %>&proveedor=<%= proveedorSeleccionado %>&categoria=<%= categoriaSeleccionada %>"><%= i %></a>
-    <% } %>
-  </div>
 </div>
 </main>
 <%- include ./layouts/footer.ejs %>
