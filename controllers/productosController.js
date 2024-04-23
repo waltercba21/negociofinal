@@ -72,23 +72,15 @@ module.exports = {
     
             let modelosPorMarca;
             if (marca) {
-                modelosPorMarca = await new Promise((resolve, reject) => {
-                    producto.obtenerModelosPorMarca(conexion, marca, (error, resultados) => {
-                        if (error) {
-                            reject(error);
-                        } else {
-                            resolve(resultados);
-                        }
-                    });
-                });
+                modelosPorMarca = await producto.obtenerModelosPorMarca(conexion, marca);
                 console.log('Modelos por marca:', modelosPorMarca); // Añadido
             }
     
             let modeloSeleccionado;
-if (modelo && modelosPorMarca) {
-    modeloSeleccionado = modelosPorMarca.find(m => m.id === modelo);
-    console.log('Modelo seleccionado:', modeloSeleccionado); // Añadido
-}
+            if (modelo && modelosPorMarca) {
+                modeloSeleccionado = modelosPorMarca.find(m => m.id === modelo);
+                console.log('Modelo seleccionado:', modeloSeleccionado); // Añadido
+            }
     
             if (productos.length === 0) {
                 console.log('No se encontraron productos para estos filtros');
