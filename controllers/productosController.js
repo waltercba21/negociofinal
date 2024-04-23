@@ -39,7 +39,6 @@ module.exports = {
             console.log('Error: marca o modelo no son números válidos');
             return res.redirect('/error');
         }
-    
         try {
             let productos;
             const totalProductos = await new Promise((resolve, reject) => {
@@ -66,26 +65,22 @@ module.exports = {
                     });
                 });
             }
-    
             const categorias = await producto.obtenerCategorias(conexion);
             const marcas = await producto.obtenerMarcas(conexion);
     
             let modelosPorMarca;
             if (marca) {
                 modelosPorMarca = await producto.obtenerModelosPorMarca(conexion, marca);
-                console.log('Modelos por marca:', modelosPorMarca); // Añadido
             }
     
             let modeloSeleccionado;
             if (modelo && modelosPorMarca) {
                 modeloSeleccionado = modelosPorMarca.find(m => m.id === modelo);
-                console.log('Modelo seleccionado:', modeloSeleccionado); // Añadido
             }
     
             if (productos.length === 0) {
                 console.log('No se encontraron productos para estos filtros');
             } else {
-                console.log('Productos obtenidos:', productos);
                 productos.forEach(producto => {
                     producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                     const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
@@ -95,7 +90,6 @@ module.exports = {
                 });
             }
             res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
-            console.log('Datos enviados a la vista:', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado }); 
         }  catch (error) {
             console.log('Error al obtener productos, categorías, marcas o modelos:', error);
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
