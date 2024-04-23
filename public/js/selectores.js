@@ -43,7 +43,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function buscarProductos() {
     console.log('buscarProductos function called');
-    fetch(`/productos/api/buscar?marca=${marcaSelect.value}&modelo=${modeloSelect.value}`)
+    const url = `/productos/api/buscar?marca=${marcaSelect.value}&modelo=${modeloSelect.value}`;
+    console.log('fetch url:', url);
+    fetch(url)
       .then(response => {
         console.log('fetch response:', response);
         if (!response.ok) {
