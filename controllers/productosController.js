@@ -582,14 +582,14 @@ obtenerProveedores: function(req, res) {
 },
 obtenerModelosPorMarca: function(req, res) {
     var marcaId = req.params.marcaId;
-    producto.obtenerModelosPorMarca(conexion, marcaId, function(error, modelos) {
-        if (error) {
-            console.log('Error al obtener modelos:', error);
-            return;
-        }
+    producto.obtenerModelosPorMarca(conexion, marcaId)
+      .then(modelos => {
         res.json(modelos);
-    });
-},
+      })
+      .catch(error => {
+        console.log('Error al obtener modelos:', error);
+      });
+  },
 generarPDF: function (req, res) {
     
     var doc = new PDFDocument;
