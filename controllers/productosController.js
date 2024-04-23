@@ -142,7 +142,7 @@ module.exports = {
                 res.json({ productos });
             });
         }
-    },
+    }, 
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
