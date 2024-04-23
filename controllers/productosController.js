@@ -81,12 +81,14 @@ module.exports = {
                         }
                     });
                 });
+                console.log('Modelos por marca:', modelosPorMarca); // Añadido
             }
     
             let modeloSeleccionado;
-            if (modelo && modelosPorMarca) {
-                modeloSeleccionado = modelosPorMarca.find(m => m.id === modelo);
-            }
+if (modelo && modelosPorMarca) {
+    modeloSeleccionado = modelosPorMarca.find(m => m.id === modelo);
+    console.log('Modelo seleccionado:', modeloSeleccionado); // Añadido
+}
     
             if (productos.length === 0) {
                 console.log('No se encontraron productos para estos filtros');
@@ -101,6 +103,7 @@ module.exports = {
                 });
             }
             res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
+            console.log('Datos enviados a la vista:', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado }); 
         }  catch (error) {
             console.log('Error al obtener productos, categorías, marcas o modelos:', error);
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
