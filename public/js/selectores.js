@@ -45,15 +45,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             return response.json();
           })
-          .then(productos => {
+          .then(data => {
             // Imprime los productos para depuración
-            console.log(productos);
+            console.log(data.productos);
     
             // Limpia el contenedor de productos
             contenedorProductos.innerHTML = '';
     
             // Añade los productos al contenedor
-            productos.forEach(producto => {
+            data.productos.forEach(producto => {
               let div = document.createElement('div');
               div.className = 'card';
               div.innerHTML = `
