@@ -211,6 +211,7 @@ obtenerModelosPorMarca: function(conexion, marcaId) {
           if (error) {
               reject(error);
           } else {
+              console.log('Resultados de la consulta:', resultados); // Añadido
               resolve(resultados);
           }
       });
