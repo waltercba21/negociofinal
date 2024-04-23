@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     let marcaSelect = document.querySelector('#id_marca');
     let modeloSelect = document.querySelector('#modelo_id');
+    let contenedorProductos = document.querySelector('#contenedor-productos');
   
-    if (!marcaSelect || !modeloSelect) {
+    if (!marcaSelect || !modeloSelect || !contenedorProductos) {
       console.error('No se encontraron los elementos necesarios en el DOM');
       return;
     }
@@ -35,4 +36,52 @@ document.addEventListener('DOMContentLoaded', function() {
           console.error('Hubo un problema con la solicitud: ' + error);
         });
     });
-});
+  
+    function buscarProductos() {
+      // Aquí debes hacer una solicitud a tu servidor con los criterios de búsqueda
+      // y luego actualizar el DOM con los productos devueltos.
+      // Este es solo un ejemplo y puede que necesites ajustarlo a tus necesidades.
+      fetch(`/productos/buscar?marca=${marcaSelect.value}&modelo=${modeloSelect.value}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Error HTTP: ' + response.status);
+          }
+          return response.json();
+        })
+        .then(productos => {
+          // Limpia el contenedor de productos
+          contenedorProductos.innerHTML = '';
+  
+          // Añade los productos al contenedor
+          productos.forEach(producto => {
+            let div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+              <div class="cover__card">
+                <img src="../../uploads/productos/${producto.imagen}" alt="Imagen de ${producto.nombre}">
+              </div>
+              <div class="titulo-producto">
+                <h3 class="nombre">${producto.nombre}</h3>
+              </div>
+              <hr>
+              <div class="categoria-producto">
+                <h6 class="categoria">${producto.categoria}</h6>
+              </div>
+              <div class="descripcion" style="display: none;">
+                ${producto.descripcion}
+              </div>
+              <div class="precio-producto">
+                <p class="precio">$${producto.precio}</p>
+              </div>
+              <div class="cantidad-producto">
+                <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
+              </div>
+            `;
+            contenedorProductos.appendChild(div);
+          });
+        })
+        .catch(error => {
+          console.error('Hubo un problema con la solicitud: ' + error);
+        });
+    }
+  });
