@@ -35,4 +35,4 @@ document.addEventListener('DOMContentLoaded', function() {
           console.error('Hubo un problema con la solicitud: ' + error);
         });
     });
-  });
+});
