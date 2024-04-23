@@ -103,9 +103,9 @@ module.exports = {
     },
     buscar: function (req, res) {
         const consulta = req.query.query;
-        const categoria = req.query.categoria;
-        const marca = req.query.marca;
-        const modelo = req.query.modelo;
+        const categoria = req.query.categoria ? Number(req.query.categoria) : null;
+        const marca = req.query.marca ? Number(req.query.marca) : null;
+        const modelo = req.query.modelo ? Number(req.query.modelo) : null;
     
         if (consulta) {
             producto.obtenerPorNombre(conexion, consulta, (error, productos) => {
