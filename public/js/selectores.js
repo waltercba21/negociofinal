@@ -1,5 +1,10 @@
+window.onload = function() {
+    var marcaSelect = document.getElementById('id_marca'); // Reemplaza 'id_marca' con el id real de tu select de marcas
+    modeloSelect = document.getElementById('modelo_id'); // Reemplaza 'modelo_id' con el id real de tu select de modelos
+    marcaSelect.addEventListener('change', buscarModelos);
+}
 
-var  modeloSelect;
+var modeloSelect;
 
 function buscarModelos() {
     var marcaId = this.value;
@@ -24,4 +29,3 @@ function buscarModelos() {
             console.error('Error:', error);
         });
 }
-
