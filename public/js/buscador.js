@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modelos.forEach(modelo => {
           let option = document.createElement('option');
           option.value = modelo.id;
-          option.text = modelo.nombre;
+          option.text = modelo.nombre; 
           modeloSelect.appendChild(option);
         });
       })
@@ -80,7 +80,6 @@ function buscarProductos() {
     return response.json();
   })
   .then(datos => {
-    console.log('Datos:', datos.productos);
     mostrarProductos(datos.productos);
   })
   .catch(error => {
@@ -92,7 +91,6 @@ function cargarProductos() {
   fetch('http://www.autofaros.com.ar/productos/api', {mode:'cors',credentials:'include'})
   .then(response => response.json())
   .then(datos => {
-    console.log('Datos:', datos.productos);
     mostrarProductos(datos.productos);  
   })
   .catch(error => {
