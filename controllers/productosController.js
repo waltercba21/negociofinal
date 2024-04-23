@@ -65,7 +65,7 @@ module.exports = {
                         }
                     });
                 });
-          }
+            }
     
             const categorias = await producto.obtenerCategorias(conexion);
             const marcas = await producto.obtenerMarcas(conexion);
