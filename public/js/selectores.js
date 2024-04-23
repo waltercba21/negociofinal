@@ -1,6 +1,6 @@
 window.onload = function() {
-    var marcaSelect = document.getElementById('id_marca'); // Reemplaza 'id_marca' con el id real de tu select de marcas
-    modeloSelect = document.getElementById('modelo_id'); // Reemplaza 'modelo_id' con el id real de tu select de modelos
+    var marcaSelect = document.getElementById('id_marca'); 
+    modeloSelect = document.getElementById('modelo_id'); 
     marcaSelect.addEventListener('change', buscarModelos);
 }
 
@@ -11,6 +11,9 @@ function buscarModelos() {
     console.log(marcaId); // Log del ID de la marca
     fetch('/productos/modelos/' + marcaId)
         .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Error de red al obtener los modelos');
+            }
             return response.json();
         })
         .then(function(modelos) {
