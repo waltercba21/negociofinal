@@ -57,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('data:', data);
         if (!data || !Array.isArray(data.productos)) {
           console.error('La respuesta del servidor no tiene la forma esperada');
-          return;
         }
 
         console.log('productos:', data.productos);
