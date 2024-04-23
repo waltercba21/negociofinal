@@ -28,14 +28,14 @@ document.addEventListener('DOMContentLoaded', function() {
             option.text = modelo.nombre;
             modeloSelect.appendChild(option);
           });
-  
-          // Realiza la búsqueda
-          buscarProductos();
         })
         .catch(error => {
           console.error('Hubo un problema con la solicitud: ' + error);
         });
     });
+
+    // Agrega un evento de cambio al selector de modelo
+    modeloSelect.addEventListener('change', buscarProductos);
   
     function buscarProductos() {
         fetch(`/productos/api/buscar?marca=${marcaSelect.value}&modelo=${modeloSelect.value}`)
