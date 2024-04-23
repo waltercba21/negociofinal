@@ -38,9 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   
     function buscarProductos() {
-        // Aquí debes hacer una solicitud a tu servidor con los criterios de búsqueda
-        // y luego actualizar el DOM con los productos devueltos.
-        // Este es solo un ejemplo y puede que necesites ajustarlo a tus necesidades.
         fetch(`/productos/api/buscar?marca=${marcaSelect.value}&modelo=${modeloSelect.value}`)
           .then(response => {
             if (!response.ok) {
@@ -49,9 +46,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
           })
           .then(productos => {
+            // Imprime los productos para depuración
+            console.log(productos);
+    
             // Limpia el contenedor de productos
             contenedorProductos.innerHTML = '';
-      
+    
             // Añade los productos al contenedor
             productos.forEach(producto => {
               let div = document.createElement('div');
