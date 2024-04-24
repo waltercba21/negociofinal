@@ -244,11 +244,16 @@ module.exports = {
             }
         });
     },
-        editar : function (req,res){ 
-            producto.retornarDatosId(conexion,req.params.id,function (error, productoResult){
+    editar : function (req,res){ 
+        producto.retornarDatosId(conexion,req.params.id,function (error, productoResult){
             if (error) {
                 console.error("Error al obtener los datos del producto:", error);
                 res.status(500).send("Error al obtener el producto");
+                return; 
+            }
+            if (!productoResult[0]) {
+                console.error("No se encontró el producto con el id:", req.params.id);
+                res.status(404).send("No se encontró el producto");
                 return;
             }
             console.log("Producto seleccionado para editar: ", productoResult[0]);
