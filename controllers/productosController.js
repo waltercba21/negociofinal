@@ -244,32 +244,27 @@ module.exports = {
             }
         });
     },
-    editar : function (req, res) { 
-        producto.retornarDatosId(conexion, req.params.id, function (error, productoResult) {
-            if (error) {
-                console.error("Error al obtener los datos del producto:", error);
-                res.status(500).send("Error al obtener el producto");
-                return; 
-            }
+    editar : async function (req, res) { 
+        try {
+            let productoResult = await producto.retornarDatosId(conexion, req.params.id);
             if (!productoResult[0]) {
                 console.error("No se encontró el producto con el id:", req.params.id);
                 res.status(404).send("No se encontró el producto");
                 return;
             }
-            // Asumiendo que tienes funciones para buscar categorias, proveedores, marcas y modelos
-            let categorias = buscarCategorias();
-            let proveedores = buscarProveedores();
-            let marcas = buscarMarcas();
-            let modelos = buscarModelos();
-    
+            let categorias = await producto.obtenerCategorias(conexion);
+            // Haz lo mismo para proveedores, marcas y modelos
             res.render('editar', { 
                 producto: productoResult[0],
                 categorias: categorias,
-                proveedores: proveedores,
-                marcas: marcas,
-                modelos: modelos
+                // proveedores: proveedores,
+                // marcas: marcas,
+                // modelos: modelos
             });
-        });
+        } catch (error) {
+            console.error("Error al obtener los datos:", error);
+            res.status(500).send("Error al obtener los datos");
+        }
     },
         actualizar: function (req, res) {
             if (!req.body.categoria_id || !req.body.marca_id || !req.body.proveedor_id) {
