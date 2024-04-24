@@ -855,12 +855,13 @@ background: rgba(0, 63, 125, 0.8);
   border-radius: 10px;
   border:none;
   border-color: #1F487E;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
   padding: 8%;
   outline: none;
   height: 50px;
   transition: box-shadow 0.3s ease-in-out;
   cursor: pointer;
+  font-weight: bold;
 }
 .buscador input:focus{
   box-shadow: 0 0 2px #719ECE;
@@ -882,7 +883,6 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: column; 
   align-items: center;
   justify-content: space-around;
-  margin-bottom: 10px;
 }
 
 .selectores-productos label {
@@ -891,7 +891,7 @@ background: rgba(0, 63, 125, 0.8);
 }   
 .selectores-productos select {
   min-width: 300px; 
-  height: 50px;
+  height: 30px;
   border-radius: 5px; 
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
   font-weight: bold; 
@@ -904,23 +904,7 @@ background: rgba(0, 63, 125, 0.8);
   background-color:#007BFF;
 }
 
-.boton-buscar {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px; 
-  margin-bottom: 30px;
-}
-.boton-buscar button {
-  border:none;
-  border-radius: 20px;
-  background-color: #1F487E;
-  color: white;
-  font-weight: bold;
-  padding: 10px 20px; 
-  font-size: 16px; 
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.5);
-  margin-bottom: 10px;
-}
+/*------ CREAR --------*/
 .form-group-crear {
   display: flex;
   flex-direction: column;
@@ -930,6 +914,7 @@ background: rgba(0, 63, 125, 0.8);
 .form-group-crear label {
   margin-bottom: 10px; 
 }
+
 .contenedor-productos{
   display: grid;
   grid-template-columns: repeat(3, 1fr);
