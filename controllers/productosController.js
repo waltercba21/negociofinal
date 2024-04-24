@@ -245,7 +245,19 @@ module.exports = {
         });
     },
     editar : function (req, res) { 
-        res.render('editar');
+        producto.retornarDatosId(conexion, req.params.id, function (error, productoResult) {
+            if (error) {
+                console.error("Error al obtener los datos del producto:", error);
+                res.status(500).send("Error al obtener el producto");
+                return; 
+            }
+            if (!productoResult[0]) {
+                console.error("No se encontró el producto con el id:", req.params.id);
+                res.status(404).send("No se encontró el producto");
+                return;
+            }
+            res.render('editar', { producto: productoResult[0] });
+        });
     },
         actualizar: function (req, res) {
             if (!req.body.categoria_id || !req.body.marca_id || !req.body.proveedor_id) {
