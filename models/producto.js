@@ -155,27 +155,27 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
             }
         });
     },
-obtenerPorNombre: function (conexion, nombre, funcion) {
-  conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.nombre LIKE ?', [`%${nombre}%`], funcion);
-},
-obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
-  return new Promise((resolve, reject) => {
-      let consulta = 'SELECT * FROM productos';
-      let parametros = [saltar];
-      if (categoriaSeleccionada) {
-          consulta += ' WHERE categoria_id = ?';
-          parametros.unshift(categoriaSeleccionada);
-      }
-      consulta += ' ORDER BY id DESC LIMIT 20 OFFSET ?';
-      conexion.query(consulta, parametros, function(error, resultados) {
-          if (error) {
-              reject(error);
-          } else {
-              resolve(resultados);
+    obtenerPorNombre: function (conexion, nombre, funcion) {
+      conexion.query('SELECT productos.*, categorias.nombre AS categoria FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.nombre LIKE ?', [`%${nombre}%`], funcion);
+    },
+    obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
+      return new Promise((resolve, reject) => {
+          let consulta = 'SELECT productos.*, categorias.nombre AS categoria FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id';
+          let parametros = [saltar];
+          if (categoriaSeleccionada) {
+              consulta += ' WHERE categoria_id = ?';
+              parametros.unshift(categoriaSeleccionada);
           }
+          consulta += ' ORDER BY id DESC LIMIT 20 OFFSET ?';
+          conexion.query(consulta, parametros, function(error, resultados) {
+              if (error) {
+                  reject(error);
+              } else {
+                  resolve(resultados);
+              }
+          });
       });
-  });
-},
+    },
     obtenerProductosPorProveedor: function (conexion, proveedor) {
       const query = 'SELECT * FROM productos WHERE proveedor_id = ?';
       const queryPromise = util.promisify(conexion.query).bind(conexion);
