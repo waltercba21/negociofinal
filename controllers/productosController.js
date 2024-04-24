@@ -53,7 +53,15 @@ module.exports = {
             let numeroDePaginas = Math.ceil(totalProductos / 30);
     
             if (categoria || marca || modelo) {  
-                productos = await producto.obtenerPorFiltros(conexion, categoria, marca, modelo);
+                productos = await new Promise((resolve, reject) => {
+                    producto.obtenerPorFiltros(conexion, categoria, marca, modelo, (error, resultados) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(resultados);
+                        }
+                    });
+                });
             } else {
                 productos = await new Promise((resolve, reject) => {
                     producto.obtener(conexion, pagina, (error, resultados) => {
