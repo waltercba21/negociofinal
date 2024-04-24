@@ -44,6 +44,7 @@ module.exports = {
             const totalProductos = await new Promise((resolve, reject) => {
                 producto.obtenerTotal(conexion, (error, resultados) => {
                     if (error) {
+                        console.error('Error al obtener el total de productos:', error);
                         reject(error);
                     } else {
                         resolve(resultados[0].total);
@@ -56,6 +57,7 @@ module.exports = {
                 productos = await new Promise((resolve, reject) => {
                     producto.obtenerPorFiltros(conexion, categoria, marca, modelo, (error, resultados) => {
                         if (error) {
+                            console.error('Error al obtener productos por filtros:', error);
                             reject(error);
                         } else {
                             resolve(resultados);
@@ -66,6 +68,7 @@ module.exports = {
                 productos = await new Promise((resolve, reject) => {
                     producto.obtener(conexion, pagina, (error, resultados) => {
                         if (error) {
+                            console.error('Error al obtener productos:', error);
                             reject(error);
                         } else {
                             resolve(resultados);
@@ -74,7 +77,10 @@ module.exports = {
                 });
             }
             const categorias = await producto.obtenerCategorias(conexion);
+            console.log('Categorías obtenidas:', categorias);
+    
             const marcas = await producto.obtenerMarcas(conexion);
+            console.log('Marcas obtenidas:', marcas);
     
             let modelosPorMarca;
             if (marca) {
@@ -99,7 +105,7 @@ module.exports = {
             }
             res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
         }  catch (error) {
-            console.log('Error al obtener productos, categorías, marcas o modelos:', error);
+            console.error('Error al obtener productos, categorías, marcas o modelos:', error);
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
