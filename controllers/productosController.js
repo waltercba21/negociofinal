@@ -253,11 +253,12 @@ module.exports = {
                 return;
             }
             let categorias = await producto.obtenerCategorias(conexion);
-            // Haz lo mismo para proveedores, marcas y modelos
+            let proveedores = await producto.obtenerProveedores(conexion); // Asegúrate de tener una función obtenerProveedores en tu modelo
+            // Haz lo mismo para marcas y modelos
             res.render('editar', { 
                 producto: productoResult[0],
                 categorias: categorias,
-                // proveedores: proveedores,
+                proveedores: proveedores, // Pasa los proveedores a la vista
                 // marcas: marcas,
                 // modelos: modelos
             });
