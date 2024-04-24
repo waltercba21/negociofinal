@@ -299,7 +299,7 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
 },
 obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
   return new Promise((resolve, reject) => {
-    var consulta = 'SELECT * FROM productos WHERE 1=1';
+    var consulta = 'SELECT productos.*, categorias.nombre AS categoria FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id WHERE 1=1';
     var parametros = [];
 
     if (categoria) {
