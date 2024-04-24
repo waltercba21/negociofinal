@@ -20,7 +20,7 @@ obtenerTotal: function (conexion, funcion) {
   insertar: function(conexion, datos, archivo, funcion){
   if (!archivo) {
     return funcion(new Error('No se proporcionó un archivo'));
-  }
+  } 
   conexion.query('SELECT id FROM categorias WHERE nombre = ?', [datos.categoria], (error, resultados) => {
     if (error) {
       return funcion(error);
@@ -346,4 +346,12 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
       }
   });
 },
+retornarDatosId: function(conexion, id, callback) {
+  conexion.query('SELECT * FROM productos WHERE id = ?', [id], function(error, resultados) {
+      if (error) {
+          return callback(error, null);
+      }
+      return callback(null, resultados);
+  });
+}
 }
