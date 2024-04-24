@@ -850,7 +850,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 .buscador input{
   width: 100%;
-  margin: auto;
+  margin-left: 50px;
   margin-bottom: 200px;
   border-radius: 10px;
   border:none;
