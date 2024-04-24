@@ -95,43 +95,43 @@
     <%- include ./layouts/footer.ejs %>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
-     // Escucha el evento de cambio en el selector de marca
-document.getElementById('marca').addEventListener('change', function() {
-    console.log('Cambio detectado en el selector de marca.');
-
-    // Obtiene el ID de la marca seleccionada
-    var marcaId = this.value;
-
-    // Hace una solicitud AJAX para obtener los modelos para la marca seleccionada
-    $.ajax({
-        url: '/productos/modelos/' + marcaId, 
-        method: 'GET',
-        success: function(data) {
-            console.log('Modelos para la marca seleccionada:', data);
-
-            // Obtiene el selector de modelo
-            var selectModelo = document.getElementById('modelo');
-
-            // Limpia el selector de modelo
-            selectModelo.innerHTML = "";
-            console.log('Selector de modelo limpiado.');
-
-            // Llena el selector de modelo con los modelos de la marca seleccionada
-            for (var i = 0; i < data.length; i++) {
-                var option = document.createElement('option');
-                option.value = data[i].id;
-                option.text = data[i].nombre;
-                selectModelo.appendChild(option);
-                console.log('Agregado modelo al selector:', data[i].nombre);
-            }
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.error('Error al obtener los modelos:', textStatus, errorThrown);
-            alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
-        }
-    });
-});
-  </script>
+      // Escucha el evento de cambio en el selector de marca
+      document.getElementById('marca').addEventListener('change', function() {
+          console.log('Cambio detectado en el selector de marca.');
+      
+          // Obtiene el ID de la marca seleccionada
+          var marcaId = this.value;
+      
+          // Hace una solicitud AJAX para obtener los modelos para la marca seleccionada
+          $.ajax({
+              url: '/productos/modelos/' + marcaId, 
+              method: 'GET',
+              success: function(data) {
+                  console.log('Modelos para la marca seleccionada:', data);
+      
+                  // Obtiene el selector de modelo
+                  var selectModelo = document.getElementById('modelo_id'); // Cambiado aquí
+      
+                  // Limpia el selector de modelo
+                  selectModelo.innerHTML = "";
+                  console.log('Selector de modelo limpiado.');
+      
+                  // Llena el selector de modelo con los modelos de la marca seleccionada
+                  for (var i = 0; i < data.length; i++) {
+                      var option = document.createElement('option');
+                      option.value = data[i].id;
+                      option.text = data[i].nombre;
+                      selectModelo.appendChild(option);
+                      console.log('Agregado modelo al selector:', data[i].nombre);
+                  }
+              },
+              error: function(jqXHR, textStatus, errorThrown) {
+                  console.error('Error al obtener los modelos:', textStatus, errorThrown);
+                  alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
+              }
+          });
+      });
+      </script>
 </body>
 
 
