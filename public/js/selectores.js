@@ -23,7 +23,7 @@ $(document).ready(function() {
         // Limpia el contenedor de productos
         contenedorProductos.empty();
   
-        if (productos.length === 0) {
+        if (!productos || productos.length === 0) {
             contenedorProductos.append('<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>');
             return;
         }
@@ -67,7 +67,10 @@ $(document).ready(function() {
   
       // Obtiene los modelos para la marca seleccionada
       $.get(`/productos/modelos/${marcaSelector.val()}`, function(data) {
-          // Añade los modelos al select
+        if (!data.modelos) {
+            console.error('No se recibieron modelos de la solicitud AJAX');
+            return;
+        }
           data.modelos.forEach(modelo => {
               modeloSelector.append(new Option(modelo.nombre, modelo.id));
           });
