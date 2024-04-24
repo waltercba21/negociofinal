@@ -65,7 +65,8 @@ module.exports = {
                             }
                         });
                     } else {
-                        producto.obtenerPorFiltros(conexion, categoria, marca, modelo, (error, resultados) => {
+                        // Solo pasa categoria si no es undefined
+                        producto.obtenerPorFiltros(conexion, categoria !== undefined ? categoria : null, marca, modelo, (error, resultados) => {
                             if (error) {
                                 console.error('Error al obtener productos por filtros:', error);
                                 reject(error);
