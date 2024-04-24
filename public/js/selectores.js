@@ -27,7 +27,6 @@ $(document).ready(function() {
             contenedorProductos.append('<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>');
             return;
         }
-  
         // Genera el HTML para cada producto
         productos.forEach(producto => {
             const productoHTML = `

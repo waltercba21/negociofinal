@@ -244,6 +244,7 @@ obtenerCategorias: function(conexion) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT * FROM categorias', function(error, resultados) {
           if (error) {
+              console.error('Error al obtener categorías:', error);
               reject(error);
           } else {
               resolve(resultados);
