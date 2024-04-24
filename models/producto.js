@@ -297,7 +297,6 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
   contarPorCategoria: function(conexion, categoria, callback) {
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 },
- 
 obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
   return new Promise((resolve, reject) => {
     var consulta = 'SELECT * FROM productos WHERE 1=1';

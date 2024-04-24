@@ -121,16 +121,17 @@ module.exports = {
                 res.json({ productos });
             });
         } else if (categoria || marca || modelo) {
-            producto.obtenerPorFiltros(conexion, categoria, marca, modelo, (error, productos) => {
-                if (error) {
+            producto.obtenerPorFiltros(conexion, categoria, marca, modelo)
+                .then(productos => {
+                    productos.forEach(producto => {
+                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                    });
+                    res.json({ productos });
+                })
+                .catch(error => {
+                    console.error(error);
                     res.status(500).send('Error interno del servidor');
-                    return;
-                }
-                productos.forEach(producto => {
-                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                 });
-                res.json({ productos });
-            });
         } else {
             producto.obtenerTodos(conexion, (error, productos) => {
                 if (error) {
@@ -144,7 +145,7 @@ module.exports = {
                 res.json({ productos });
             });
         }
-    }, 
+    },
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
