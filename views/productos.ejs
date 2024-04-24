@@ -6,44 +6,46 @@
     <h2 class="titulo-principal" id="titulo-principal"> 
       Todos los productos
     </h2>
-    <div class="buscador">
-      <input type="text" id="entradaBusqueda" placeholder="Buscar productos...">
-    </div>
-  
-  <div class="selectores-productos">
-    <div class="form-group-crear">
-      <label for="categoria_id">Categoria</label>
-      <select id="categoria_id" name="categoria_id">
-          <option value="" selected>Selecciona una categoría...</option>
-          <% categorias.forEach(function(categoria) { %>
+    <div class="contenedor-busqueda">
+      <div class="buscador">
+        <input type="text" id="entradaBusqueda" placeholder="Buscar productos...">
+      </div>
+    
+      <div class="selectores-productos">
+        <div class="form-group-crear">
+          <label for="categoria_id">Categoria</label>
+          <select id="categoria_id" name="categoria_id">
+            <option value="" selected>Selecciona una categoría...</option>
+            <% categorias.forEach(function(categoria) { %>
               <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
-          <% }); %>
-      </select>   
-    </div>
-    <div class="form-group-crear">
-      <label for="id_marca">Marca</label>
-      <select id="id_marca" name="id_marca">
-        <option value="" selected>Selecciona una marca...</option> 
-        <% marcas.forEach(function(marca) { %>
-          <option value="<%= marca.id %>"><%= marca.nombre %></option>
-        <% }); %>
-      </select> 
-    </div>
-    <div class="form-group-crear">
-      <label for="modelo_id">Modelo</label>
-      <select id="modelo_id" name="modelo_id">
-        <% if (modelo) { %>
-          <option value="<%= modelo.id %>" selected><%= modelo.nombre %></option>
-        <% } else { %>
-          <option value="" selected>Selecciona un modelo...</option>
-        <% } %>
-        <% if (modelosPorMarca && Array.isArray(modelosPorMarca)) { %>
-            <% modelosPorMarca.forEach(function(modelo) { %>
-              <option value="<%= modelo.id %>"><%= modelo.nombre %></option>
             <% }); %>
-        <% } %>
-      </select>
-    </div>
+          </select>   
+        </div>
+        <div class="form-group-crear">
+          <label for="id_marca">Marca</label>
+          <select id="id_marca" name="id_marca">
+            <option value="" selected>Selecciona una marca...</option> 
+            <% marcas.forEach(function(marca) { %>
+              <option value="<%= marca.id %>"><%= marca.nombre %></option>
+            <% }); %>
+          </select> 
+        </div>
+        <div class="form-group-crear">
+          <label for="modelo_id">Modelo</label>
+          <select id="modelo_id" name="modelo_id">
+            <% if (modelo) { %>
+              <option value="<%= modelo.id %>" selected><%= modelo.nombre %></option>
+            <% } else { %>
+              <option value="" selected>Selecciona un modelo...</option>
+            <% } %>
+            <% if (modelosPorMarca && Array.isArray(modelosPorMarca)) { %>
+              <% modelosPorMarca.forEach(function(modelo) { %>
+                <option value="<%= modelo.id %>"><%= modelo.nombre %></option>
+              <% }); %>
+            <% } %>
+          </select>
+        </div>
+      </div>
     </div>
 
 <div class="paginacion">

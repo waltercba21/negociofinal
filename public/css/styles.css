@@ -828,6 +828,20 @@ background: rgba(0, 63, 125, 0.8);
   padding: 70px 0 10 0;
   margin-bottom: 50px;
 }
+.contenedor-busqueda {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.buscador {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.selectores-productos {
+  flex: 2;
+}
 .buscador{
   display: flex;
   flex-direction: column;
