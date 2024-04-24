@@ -188,6 +188,7 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
             if (error) {
                 reject(error);
             } else {
+                console.log('Resultados de la consulta:', resultados);
                 resolve(resultados);
             }
         });
@@ -247,6 +248,7 @@ obtenerCategorias: function(conexion) {
               console.error('Error al obtener categorías:', error);
               reject(error);
           } else {
+              console.log('Resultados de la consulta:', resultados);
               resolve(resultados);
           }
       });
@@ -347,10 +349,13 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
   });
 },
 retornarDatosId: function(conexion, id, callback) {
+  console.log('ID pasado a retornarDatosId:', id);
   conexion.query('SELECT * FROM productos WHERE id = ?', [id], function(error, resultados) {
       if (error) {
+          console.error('Error en la consulta:', error);
           return callback(error, null);
       }
+      console.log('Resultados de la consulta:', resultados);
       return callback(null, resultados);
   });
 }
