@@ -814,9 +814,9 @@ background: rgba(0, 63, 125, 0.8);
   border-radius: 5px; 
 }
 .paginacion a.pagina-actual {
-  background-color: #333; /* Color de fondo de la página actual */
-  color: #fff; /* Color del texto de la página actual */
-  border-color: #333; /* Color del borde de la página actual */
+  background-color: #333; 
+  color: #fff;
+  border-color: #333; 
 }
 /*---------------------------Todos los Productos -------------------------------*/
 
@@ -826,18 +826,15 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 28px;
   font-weight: bold;
   padding: 70px 0 10 0;
-  margin-bottom: 50px;
 }
 .contenedor-busqueda {
   display: flex;
   flex-direction: row;
 }
-
 .buscador {
   flex: 1;
   margin-right: 20px;
 }
-
 .selectores-productos {
   flex: 2;
 }
