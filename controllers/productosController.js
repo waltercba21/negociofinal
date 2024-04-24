@@ -254,14 +254,14 @@ module.exports = {
             }
             let categorias = await producto.obtenerCategorias(conexion);
             let proveedores = await producto.obtenerProveedores(conexion);
-            let marcas = await producto.obtenerMarcas(conexion); // Asegúrate de tener una función obtenerMarcas en tu modelo
-            // Haz lo mismo para modelos
+            let marcas = await producto.obtenerMarcas(conexion);
+            let modelos = await producto.obtenerModelosPorMarca(conexion); // Asegúrate de tener una función obtenerModelos en tu modelo
             res.render('editar', { 
                 producto: productoResult[0],
                 categorias: categorias,
                 proveedores: proveedores,
-                marcas: marcas, // Pasa las marcas a la vista
-                // modelos: modelos
+                marcas: marcas,
+                modelos: modelos // Pasa los modelos a la vista
             });
         } catch (error) {
             console.error("Error al obtener los datos:", error);
