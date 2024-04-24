@@ -55,14 +55,25 @@ module.exports = {
     
             if (categoria || marca || modelo) {  
                 productos = await new Promise((resolve, reject) => {
-                    producto.obtenerPorFiltros(conexion, categoria, marca, modelo, (error, resultados) => {
-                        if (error) {
-                            console.error('Error al obtener productos por filtros:', error);
-                            reject(error);
-                        } else {
-                            resolve(resultados);
-                        }
-                    });
+                    if (categoria) {
+                        producto.obtenerProductosPorCategoria(conexion, categoria, (error, resultados) => {
+                            if (error) {
+                                console.error('Error al obtener productos por categoría:', error);
+                                reject(error);
+                            } else {
+                                resolve(resultados);
+                            }
+                        });
+                    } else {
+                        producto.obtenerPorFiltros(conexion, categoria, marca, modelo, (error, resultados) => {
+                            if (error) {
+                                console.error('Error al obtener productos por filtros:', error);
+                                reject(error);
+                            } else {
+                                resolve(resultados);
+                            }
+                        });
+                    }
                 });
             } else {
                 productos = await new Promise((resolve, reject) => {
