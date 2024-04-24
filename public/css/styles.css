@@ -845,6 +845,7 @@ background: rgba(0, 63, 125, 0.8);
   display: flex;
   flex-direction: column;
   justify-content: center;
+  margin-left: 20px;
   width: auto;
 }
 .buscador input{
