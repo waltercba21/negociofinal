@@ -22,4 +22,4 @@ document.getElementById('marca').addEventListener('change', function() {
         selectModelo.appendChild(option);
         console.log('Agregado modelo al selector:', modelos[i].modelo);
     }
-});
+});   
