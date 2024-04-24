@@ -244,46 +244,8 @@ module.exports = {
             }
         });
     },
-    editar : function (req,res){ 
-        producto.retornarDatosId(conexion,req.params.id,function (error, productoResult){
-            if (error) {
-                console.error("Error al obtener los datos del producto:", error);
-                res.status(500).send("Error al obtener el producto");
-                return; 
-            }
-            if (!productoResult[0]) {
-                console.error("No se encontró el producto con el id:", req.params.id);
-                res.status(404).send("No se encontró el producto");
-                return;
-            }
-            console.log("Producto seleccionado para editar: ", productoResult[0]);
-            producto.obtenerCategorias(conexion, function(error, categorias) {
-                if (error) {
-                    console.log('Error al obtener categorías:', error);
-                    return;
-                }
-                producto.obtenerProveedores(conexion, function(error, proveedores) {
-                    if (error) {
-                        console.log('Error al obtener proveedores:', error);
-                        return;
-                    }
-                    producto.obtenerMarcas(conexion, function(error, marcas) {
-                        if (error) {
-                            console.log('Error al obtener marcas:', error);
-                            return;
-                        }
-                        producto.obtenerModelosPorMarca(conexion, productoResult[0].marca_id, function(error, modelos) {
-                            if (error) {
-                                console.log('Error al obtener modelos:', error);
-                                return;
-                            }
-                            // Renderiza tu vista pasando los datos
-                            res.render('editar', { producto: productoResult[0], categorias: categorias, marcas: marcas, proveedores: proveedores, modelos: modelos });
-                        });
-                    });
-                });
-            });
-        });
+    editar : function (req, res) { 
+        res.render('editar');
     },
         actualizar: function (req, res) {
             if (!req.body.categoria_id || !req.body.marca_id || !req.body.proveedor_id) {
