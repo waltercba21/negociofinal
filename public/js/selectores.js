@@ -12,7 +12,7 @@ $(document).ready(function() {
       const marca = marcaSelector.val();
       const modelo = modeloSelector.val();
 
-      $.get('/api/buscar', { categoria, marca, modelo }, function(data) {
+      $.get('/productos/api/buscar', { categoria, marca, modelo }, function(data) {
           renderizarProductos(data.productos);
       });
   }
