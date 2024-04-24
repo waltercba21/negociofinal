@@ -850,8 +850,8 @@ background: rgba(0, 63, 125, 0.8);
 }
 .buscador input{
   width: 100%;
-  margin-left: 50px;
-  margin-bottom: 200px;
+  margin-left: 100px;
+  margin-bottom: 150px;
   border-radius: 10px;
   border:none;
   border-color: #1F487E;
