@@ -256,7 +256,19 @@ module.exports = {
                 res.status(404).send("No se encontró el producto");
                 return;
             }
-            res.render('editar', { producto: productoResult[0] });
+            // Asumiendo que tienes funciones para buscar categorias, proveedores, marcas y modelos
+            let categorias = buscarCategorias();
+            let proveedores = buscarProveedores();
+            let marcas = buscarMarcas();
+            let modelos = buscarModelos();
+    
+            res.render('editar', { 
+                producto: productoResult[0],
+                categorias: categorias,
+                proveedores: proveedores,
+                marcas: marcas,
+                modelos: modelos
+            });
         });
     },
         actualizar: function (req, res) {
