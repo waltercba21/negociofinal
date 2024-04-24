@@ -697,7 +697,7 @@ generarPDF: function (req, res) {
 },
 getProductosPorCategoria : async (req, res) => {
     const categoriaId = req.query.categoria;
-    producto.obtenerPorCategoria(categoriaId, (error, productos) => {
+    producto.obtenerProductosPorCategoria(categoriaId, (error, productos) => {
       if (error) {
         res.status(500).send(error);
       } else {

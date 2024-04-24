@@ -239,7 +239,7 @@ contarPorProveedor: function(conexion, proveedor, callback) {
           callback(null, resultado);
       }
   });
-},
+}, 
 obtenerCategorias: function(conexion) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT * FROM categorias', function(error, resultados) {
@@ -252,7 +252,6 @@ obtenerCategorias: function(conexion) {
       });
   });
 },
-
 obtenerProductos: function(conexion, saltar, productosPorPagina, callback) {
   var query = "SELECT * FROM productos LIMIT ?, ?";
   conexion.query(query, [saltar, productosPorPagina], function(error, resultados) {
@@ -263,7 +262,16 @@ obtenerProductos: function(conexion, saltar, productosPorPagina, callback) {
       }
   });
 },
-
+obtenerProductosPorCategoria: function(conexion, categoriaId, callback) {
+  var query = "SELECT * FROM productos WHERE categoria_id = ?";
+  conexion.query(query, [categoriaId], function(error, resultados) {
+      if (error) {
+          callback(error, null);
+      } else {
+          callback(null, resultados);
+      }
+  });
+},
 contarProductos: function(conexion, callback) {
   var query = "SELECT COUNT(*) as total FROM productos";
   conexion.query(query, function(error, resultado) {
