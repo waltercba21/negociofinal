@@ -333,7 +333,7 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
         } else {
             resolve(resultados);
         }
-    });
+    });   
   });
 },
   obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {

@@ -8,15 +8,16 @@ $(document).ready(function() {
   
     // Función para realizar la solicitud AJAX
     function obtenerProductosFiltrados() {
-        const categoria = categoriaSelector.val();
-        const marca = marcaSelector.val();
-        const modelo = modeloSelector.val();
-        const consulta = entrada.val();
+        const categoria = $('#categoria_id').val();
+        const marca = $('#id_marca').val();
+        const modelo = $('#modelo_id').val();
+        const consulta = $('#entradaBusqueda').val();
   
         $.get('/productos/api/buscar', { categoria, marca, modelo, query: consulta }, function(data) {
             renderizarProductos(data.productos);
         });
     }
+  
   
     // Función para renderizar los productos
     function renderizarProductos(productos) {
@@ -58,18 +59,18 @@ $(document).ready(function() {
         });
     }
   
-    // Manejadores de eventos para los selectores
-    categoriaSelector.change(obtenerProductosFiltrados);
-    marcaSelector.change(function() {
-      // Limpia el select de modelos
-      modeloSelector.empty();
+        // Manejadores de eventos para los selectores
+        $(document).on('change', '#categoria_id', obtenerProductosFiltrados);
+        $(document).on('change', '#id_marca', function() {
+          // Limpia el select de modelos
+          $('#modelo_id').empty();
   
-      // Obtiene los modelos para la marca seleccionada
-      $.get(`/productos/modelos/${marcaSelector.val()}`, function(data) {
-          // Añade los modelos al select
-          data.modelos.forEach(modelo => {
-              modeloSelector.append(new Option(modelo.nombre, modelo.id));
-          });
+        // Obtiene los modelos para la marca seleccionada
+        $.get(`/productos/modelos/${$(this).val()}`, function(data) {
+            // Añade los modelos al select
+            data.modelos.forEach(modelo => {
+                $('#modelo_id').append(new Option(modelo.nombre, modelo.id));
+            });
   
           // Realiza la búsqueda
           obtenerProductosFiltrados();
