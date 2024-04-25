@@ -1,3 +1,4 @@
+const conexion = require('../config/conexion')
 const util = require('util');
 
 module.exports ={
