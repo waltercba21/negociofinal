@@ -537,7 +537,7 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
 },
 modificarPorProveedor: function (req, res) {
     try {
-        res.render('modificarPorProveedor', { proveedores: [], productos: [] });
+        res.render('modificarPorProveedor', { proveedores: [], productos: [], proveedor: {} });
     } catch (error) {
         console.error(error);
         res.status(500).send('Hubo un error al obtener los datos');
