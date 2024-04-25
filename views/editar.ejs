@@ -1,84 +1,135 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
+
 <body>
     <main>
- <div class="container-editar">
-    <div class="contenido-editar">
-        <div class="editar-titulo">
-            Editar Producto
+<div class="container-crear"> 
+    <div class="contenido-crear">
+
+        <div class="titulo-crear">
+        Editar Producto
         </div>
-        <form method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
-        <label for="id-input">ID</label>
-        <input id="id-input" type="text" name="id" value="<%= producto.id %>">
-        <div class="form-group-crear">
-            <label for="my-input">Imagen</label>
-            <input id="my-input" class="form-control-file" type="file" name="archivo">
-        </div>
-        <div class="form-group-crear">
-            <label for="nombre-input">Nombre</label>
-            <input id="nombre-input" value="<%= producto.nombre %>" class="form-control" type="text" name="nombre">
-        </div>
-        <div class="form-group-crear">
-            <label for="descripcion-input">Descripcion</label>
-            <input id="descripcion-input" class="form-control" value="<%= producto.descripcion %>" type="text" name="descripcion">
-        </div>
-        <div class="form-group-crear">
-            <label for="codigo-input">Código</label>
-            <input id="codigo-input" value="<%= producto.codigo %>" class="form-control" type="text" name="codigo">
-        </div>
-        <div class="form-group-crear">
-            <label for="categoria_id">Categoria</label>
-            <select id="categoria_id" name="categoria_id">
-                <option value="" <% if (!producto.categoria_id) { %>selected<% } %>>Selecciona una categoría...</option>
-                <% categorias.forEach(function(categoria) { %>
-                    <option value="<%= categoria.id %>" <% if (producto.categoria_id == categoria.id) { %>selected<% } %>><%= categoria.nombre %></option>
-                <% }); %>
-            </select>
-        </div>
-        <div class="form-group-crear">
-            <label for="proveedor_id">Proveedor:</label>
-            <select id="proveedor_id" name="proveedor_id">
-                <option value="" <% if (!producto.proveedor_id) { %>selected<% } %>>Selecciona un proveedor...</option>
-                <% proveedores.forEach(function(proveedor) { %>
+
+        <div class="card-body">
+            <form method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
+
+                <div class="form-group-crear">
+                    <label for="imagen">Imagen</label>
+                    <input id="imagen" class="form-control-file" type="file" name="archivo">
+                </div>
+                
+                <div class="form-group-crear">
+                <label for="nombre">Nombre:</label>   
+                <input id="nombre" class="form-control" type="text" name="nombre" value="<%= producto.nombre %>">
+                </div>
+
+                <div class="form-group-crear">
+                    <label for="codigo">Código:</label>
+                    <input id="codigo" class="form-control" type="text" name="codigo" value="<%= producto.codigo %>">
+                </div>
+
+                <div class="form-group-crear">
+                <label for="descripcion">Descripcion:</label>
+                <input id="descripcion" class="form-control" type="text" name="descripcion" value="<%= producto.descripcion %>">
+                </div>
+                <div class="form-group-crear">
+                    <label for="oferta">Oferta:</label>
+                    <input id="oferta" type="checkbox" name="oferta" <% if (producto.oferta) { %>checked<% } %>>
+                </div>
+                <div class="form-group-crear">
+                  <label for="categoria">Categoria</label>
+                  <select id="categoria" name="categoria">
+                      <option value="" <% if (!producto.categoria) { %>selected<% } %>>Selecciona una categoría...</option>
+                      <% categorias.forEach(function(categoria) { %>
+                          <option value="<%= categoria.nombre %>" <% if (producto.categoria == categoria.nombre) { %>selected<% } %>><%= categoria.nombre %></option>
+                      <% }); %>
+                  </select>
+              </div>
+
+              <div class="form-group-crear">
+                <label for="proveedor">Proveedor:</label>
+                <select id="proveedor" name="proveedor">
+                  <option value="" <% if (!producto.proveedor_id) { %>selected<% } %>>Selecciona un proveedor...</option>
+                  <% proveedores.forEach(function(proveedor) { %>
                     <option value="<%= proveedor.id %>" <% if (producto.proveedor_id == proveedor.id) { %>selected<% } %>><%= proveedor.nombre %></option>
-                <% }); %>
-            </select>
-        </div>
-        <div class="form-group-crear">
-            <label for="marca_id">Marca:</label>
-            <select id="marca_id" name="marca_id">
-                <% marcas.forEach(function(marca) { %>
-                    <option value="<%= marca.id %>" <% if (producto.marca_id == marca.id) { %>selected<% } %>><%= marca.nombre %></option>
-                <% }); %>
-            </select>
-        </div>
-        <div class="form-group-crear">
-            <label for="modelo_id">Modelo:</label>
-            <select id="modelo_id" name="modelo_id">
-                <option value="" <% if (!producto.modelo_id) { %>selected<% } %>>Selecciona un modelo...</option>
-                <% if (Array.isArray(modelos)) { %>
-                    <% modelos.forEach(function(modelo) { %>
-                        <option value="<%= modelo.id %>" <% if (producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
-                    <% }); %>
-                <% } %>
-            </select>
-        </div>
-        <div class="form-group-crear">
-            <label for="precio-input">Precio</label>
-            <input id="precio-input" class="form-control" value="<%= producto.precio %>" type="text" name="precio">
-        </div>
-        <div class="botones-editar">
-        <button class="btn btn-success" type="submit">Guardar</button>
-        <a class='btn btn-primary'href="/productos">Cancelar</a>
-        </div>
-    </form>
+                  <% }); %>
+                </select>
+              </div>
+
+                  <div class="form-group-crear">
+                    <label for="marca">Marca:</label>
+                    <select id="marca" name="marca">
+                      <% marcas.forEach(function(marca) { %>
+                        <option value="<%= marca.id %>" <% if (producto.marca_id == marca.id) { %>selected<% } %>><%= marca.nombre %></option>
+                      <% }); %>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group-crear">
+                    <label for="modelo_id">Modelo:</label>
+                    <select id="modelo_id" name="modelo_id">
+                      <option value="" <% if (!producto.modelo_id) { %>selected<% } %>>Selecciona un modelo...</option>
+                        <% if (Array.isArray(modelosPorMarca)) { %>
+                            <% modelosPorMarca.forEach(function(modelo) { %>
+                                <option value="<%= modelo.id %>" <% if (producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+
+                <div class="form-group-crear">
+                    <label for="precio">Precio:</label>
+                    <input id="precio" class="form-control" type="number" step="0.01" name="precio" value="<%= producto.precio %>">
+                </div>
+    
+                <div class="botones-crear">
+                <button class="btn btn-success" type="submit">Guardar</button>
+                <a class='btn btn-primary'href="/productos">Cancelar</a>
+                </div>
+            </form>
+
     </div>
-</div>
+    </div>
+    </div>
 </main>
-
-<%- include ./layouts/footer.ejs %>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script src="/js/editar.js"></script> 
-</body>   
-
-
+    <%- include ./layouts/footer.ejs %>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+      // Escucha el evento de cambio en el selector de marca
+      document.getElementById('marca').addEventListener('change', function() {
+          console.log('Cambio detectado en el selector de marca.');
+      
+          // Obtiene el ID de la marca seleccionada
+          var marcaId = this.value;
+      
+          // Hace una solicitud AJAX para obtener los modelos para la marca seleccionada
+          $.ajax({
+              url: '/productos/modelos/' + marcaId, 
+              method: 'GET',
+              success: function(data) {
+                  console.log('Modelos para la marca seleccionada:', data);
+      
+                  // Obtiene el selector de modelo
+                  var selectModelo = document.getElementById('modelo_id'); // Cambiado aquí
+      
+                  // Limpia el selector de modelo
+                  selectModelo.innerHTML = "";
+                  console.log('Selector de modelo limpiado.');
+      
+                  // Llena el selector de modelo con los modelos de la marca seleccionada
+                  for (var i = 0; i < data.length; i++) {
+                      var option = document.createElement('option');
+                      option.value = data[i].id;
+                      option.text = data[i].nombre;
+                      selectModelo.appendChild(option);
+                      console.log('Agregado modelo al selector:', data[i].nombre);
+                  }
+              },
+              error: function(jqXHR, textStatus, errorThrown) {
+                  console.error('Error al obtener los modelos:', textStatus, errorThrown);
+                  alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
+              }
+          });
+      });
+      </script>
+</body>
