@@ -535,9 +535,10 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
         });
     }
 },
-modificarPorProveedor: function (req, res) {
+modificarPorProveedor: async function (req, res) {
     try {
-        res.render('modificarPorProveedor', { proveedores: [], productos: [], proveedor: {} });
+        let proveedores = await producto.obtenerProveedores(); // Asegúrate de que la conexión a la base de datos esté disponible
+        res.render('modificarPorProveedor', { proveedores: proveedores, productos: [], proveedor: {} });
     } catch (error) {
         console.error(error);
         res.status(500).send('Hubo un error al obtener los datos');

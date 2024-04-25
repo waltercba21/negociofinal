@@ -10,7 +10,7 @@
       <select name="proveedor" id="proveedor">
           <option value="">-- Seleccione --</option>
           <% proveedores.forEach(function(proveedor) { %>
-            <option value='<%= proveedor.id %>' <%= proveedorSeleccionado == proveedor.id ? 'selected' : '' %>><%= proveedor.nombre %></option>
+              <option value='<%= proveedor.id %>'><%= proveedor.nombre %></option>
           <% }); %>
       </select>  
       <input type="submit" value="Ver productos">
