@@ -54,7 +54,7 @@
             <td><%= productos[producto].codigo %></td>
             <td>
               <form action="/productos/actualizarPrecio" method="post">
-                <input type="hidden" name="id" value="<%= productos[producto].id %>">
+                <input type="hidden" name="proveedor" value="<%= proveedorId %>">
                 <input type="number" name="precio" value="<%= productos[producto].precio %>">
                 <button type="submit">Guardar</button>
               </form>
