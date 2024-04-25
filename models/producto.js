@@ -135,7 +135,8 @@ agregarAlCarrito: function (usuarioId, productoId, cantidad, imagen, callback) {
         proveedorId = Number(proveedorId);
         porcentajeCambio = Number(porcentajeCambio);
     
-        let query = "UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?";
+        // Agrega ROUND() a tu consulta para redondear el precio
+        let query = "UPDATE productos SET precio = ROUND((precio + precio * ?) / 100) * 100 WHERE proveedor_id = ?";
         let params = [porcentajeCambio, proveedorId];
     
         conexion.getConnection((err, conexion) => {
