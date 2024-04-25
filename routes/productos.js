@@ -33,6 +33,7 @@ router.post('/eliminar/:id', productosController.eliminar);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
+router.post('/actualizarPrecio', productosController.actualizarPrecio);
 router.get('/api', productosController.lista);
 router.get('/api/buscar', productosController.buscar);
 router.get('/carrito', productosController.carrito);
