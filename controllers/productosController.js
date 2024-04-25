@@ -537,7 +537,7 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
 },
 modificarPorProveedor: async function (req, res) {
     try {
-        let proveedores = await producto.obtenerProveedores(); // Asegúrate de que la conexión a la base de datos esté disponible
+        let proveedores = await producto.obtenerProveedores(conexion); // Pasamos la conexión a la función
         res.render('modificarPorProveedor', { proveedores: proveedores, productos: [], proveedor: {} });
     } catch (error) {
         console.error(error);
