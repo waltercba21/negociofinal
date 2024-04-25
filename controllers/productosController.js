@@ -271,25 +271,17 @@ module.exports = {
     actualizar: function (req, res) {
         console.log('Iniciando la actualización del producto');
     
-        if (!req.body.categoria_id || !req.body.marca_id || !req.body.proveedor_id) {
-            console.log('Faltan IDs de categoría, marca o proveedor');
-            res.status(400).send('Los datos del producto deben incluir un ID de categoría, un ID de marca y un ID de proveedor');
-            return;
-        }
+        producto.retornarDatosId(conexion,req.body.id,function (error, registros){
+            if (error) {
+                console.error("Error al obtener los datos del producto:", error);
+                res.status(500).send("Error al actualizar el producto");
+                return;
+            }
     
-        console.log('IDs de categoría, marca y proveedor presentes');
+            console.log('Datos del producto obtenidos correctamente');
     
-        if(req.file && req.file.filename){
-            console.log('Archivo presente');
-            producto.retornarDatosId(conexion,req.body.id,function (error, registros){
-                if (error) {
-                    console.error("Error al obtener los datos del producto:", error);
-                    res.status(500).send("Error al actualizar el producto");
-                    return;
-                }
-    
-                console.log('Datos del producto obtenidos correctamente');
-    
+            if(req.file && req.file.filename){
+                console.log('Archivo presente');
                 var nombreImagen = '/public/images/' + (registros[0].imagen);
                 if(borrar.existsSync(nombreImagen)){
                     console.log('Borrando imagen existente');
@@ -304,33 +296,9 @@ module.exports = {
                     }
     
                     console.log('Archivo del producto actualizado correctamente');
-    
-                    if(req.body.nombre){
-                        console.log('Nombre presente, actualizando producto');
-                        producto.actualizar(conexion,req.body, req.file, function(error){
-                            if (error) {
-                                console.error("Error al actualizar el producto:", error);
-                                res.status(500).send("Error al actualizar el producto");
-                                return;
-                            }
-    
-                            console.log('Producto actualizado correctamente');
-    
-                            req.session.save(function(err) {
-                                console.log('Redirigiendo a panel de control');
-                                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
-                            });
-                        });
-                    } else {
-                        console.log('Nombre no presente, redirigiendo a panel de control');
-                        req.session.save(function(err) {
-                            res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
-                        });
-                    }
                 });
-            });
-        } else if(req.body.nombre){
-            console.log('Archivo no presente pero nombre presente, actualizando producto');
+            }
+    
             producto.actualizar(conexion,req.body, req.file, function(error){
                 if (error) {
                     console.error("Error al actualizar el producto:", error);
@@ -345,12 +313,7 @@ module.exports = {
                     res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
                 });
             });
-        } else {
-            console.log('Archivo y nombre no presentes, redirigiendo a panel de control');
-            req.session.save(function(err) {
-                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
-            });
-        }
+        });
     },
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
