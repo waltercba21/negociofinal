@@ -536,16 +536,20 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     }
 },
 modificarPorProveedor: function (req, res) {
+    console.log('Iniciando modificarPorProveedor');
     let proveedorId = req.query.proveedor; 
+    console.log('Proveedor ID:', proveedorId);
     producto.obtenerProveedores(conexion, function(error, proveedores) {
         if (error) {
             console.log('Error al obtener proveedores:', error);
-            return;
+            return;  
         }
+        console.log('Proveedores obtenidos:', proveedores);
         let proveedor = null;
         let productos = [];
         if (proveedorId) {
             proveedor = proveedores.find(proveedor => proveedor.id == proveedorId);
+            console.log('Proveedor seleccionado:', proveedor);
             if (!proveedor) {
                 console.log('No se encontró el proveedor:', proveedorId);
                 return;
@@ -555,11 +559,14 @@ modificarPorProveedor: function (req, res) {
                     console.log('Error al obtener productos:', error);
                     return;
                 }
+                console.log('Productos obtenidos:', productosResult);
                 productos = productosResult;
-res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
+                console.log('Renderizando vista con:', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
+                res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
             });
         } else {
-res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
+            console.log('No se proporcionó proveedorId, renderizando vista con:', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
+            res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
         }
     });
 },
