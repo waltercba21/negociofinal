@@ -569,6 +569,19 @@ actualizarPorProveedor : function(req, res) {
         }
     });
 },
+
+actualizarPrecio: function(req, res) {
+    let idProducto = req.body.id;
+    let nuevoPrecio = req.body.precio;
+    producto.actualizarPrecio(idProducto, nuevoPrecio, function(err) {
+        if (err) {
+            console.error(err);
+            res.redirect('/productos/modificarPorProveedor?error=Hubo un error al actualizar el precio');
+        } else {
+            res.redirect('/productos/modificarPorProveedor?success=El precio se actualizó correctamente');
+        }
+    });
+},
 obtenerProveedores: function(req, res) {
     producto.obtenerProveedores(conexion, function(error, proveedores) {
         if (error) {

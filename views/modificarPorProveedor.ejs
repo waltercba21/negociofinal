@@ -39,7 +39,8 @@
         <th>Nombre</th>
         <th>Imagen</th>
         <th>Código</th>
-        <th>Precio</th> <!-- Nueva columna para el precio -->
+        <th>Precio</th> 
+        
       </tr>
     </thead>
     <tbody>
@@ -51,7 +52,13 @@
               <img class="img-thumbnail" width= '150' src="/uploads/productos/<%= productos[producto].imagen %>" alt="">
             </td>
             <td><%= productos[producto].codigo %></td>
-            <td>$<%= productos[producto].precio.toLocaleString('es-AR') %></td> 
+            <td>
+              <form action="/productos/actualizarPrecio" method="post">
+                <input type="hidden" name="id" value="<%= productos[producto].id %>">
+                <input type="number" name="precio" value="<%= productos[producto].precio %>">
+                <button type="submit">Guardar</button>
+              </form>
+            </td> 
           </tr>
         <% } %>
     </tbody>

@@ -131,13 +131,36 @@ agregarAlCarrito: function (usuarioId, productoId, cantidad, imagen, callback) {
           return callback(null, resultados);
         });
       },
-      actualizarPreciosPorProveedor: function ( proveedorId, porcentajeCambio, callback) {
+      actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
         proveedorId = Number(proveedorId);
         porcentajeCambio = Number(porcentajeCambio);
     
         // Agrega ROUND() a tu consulta para redondear el precio
         let query = "UPDATE productos SET precio = ROUND((precio + precio * ?) / 100) * 100 WHERE proveedor_id = ?";
         let params = [porcentajeCambio, proveedorId];
+    
+        conexion.getConnection((err, conexion) => {
+            if (err) {
+                console.error('Error al obtener la conexión:', err);
+                callback(err);
+            } else {
+                conexion.query(query, params, function (error, results) {
+                    conexion.release();
+                    if (error) {
+                        console.error('Error al ejecutar la consulta:', error);
+                        callback(error);
+                    } else {
+                        console.log('Filas actualizadas:', results.affectedRows);
+                        callback(null);
+                    }
+                });
+            }
+        });
+    },
+    
+    actualizarPrecio: function (idProducto, nuevoPrecio, callback) {
+        let query = "UPDATE productos SET precio = ? WHERE id = ?";
+        let params = [nuevoPrecio, idProducto];
     
         conexion.getConnection((err, conexion) => {
             if (err) {
