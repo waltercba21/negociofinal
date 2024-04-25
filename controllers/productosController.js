@@ -268,61 +268,57 @@ module.exports = {
             res.status(500).send("Error al obtener los datos");
         }
     },
-   actualizar: function (req, res) {
-    console.log('Iniciando la actualización del producto');
-
-    // Cambia req.body.id a req.params.id
-    producto.retornarDatosId(conexion,req.params.id)
-        .then(registros => {
-            if (registros.length === 0) {
-                console.error("No se encontró ningún producto con el ID proporcionado");
-                res.status(404).send("No se encontró ningún producto con el ID proporcionado");
-                return;
-            }
-
-        if (registros.length === 0) {
-            console.error("No se encontró ningún producto con el ID proporcionado");
-            res.status(404).send("No se encontró ningún producto con el ID proporcionado");
-            return;
-        }
-
-        console.log('Datos del producto obtenidos correctamente');
-
-        if(req.file && req.file.filename){
-            console.log('Archivo presente');
-            var nombreImagen = '/public/images/' + (registros[0].imagen);
-            if(borrar.existsSync(nombreImagen)){
-                console.log('Borrando imagen existente');
-                borrar.unlinkSync(nombreImagen);
-            }
-
-            producto.actualizarArchivo(conexion,req.body, req.file, function (error){
-                if (error) {
-                    console.error("Error al actualizar el archivo del producto:", error);
-                    res.status(500).send("Error al actualizar el producto");
+    actualizar: function (req, res) {
+        console.log('Iniciando la actualización del producto');
+    
+        producto.retornarDatosId(conexion,req.params.id)
+            .then(registros => {
+                if (registros.length === 0) {
+                    console.error("No se encontró ningún producto con el ID proporcionado");
+                    res.status(404).send("No se encontró ningún producto con el ID proporcionado");
                     return;
                 }
-
-                console.log('Archivo del producto actualizado correctamente');
+    
+                console.log('Datos del producto obtenidos correctamente');
+    
+                // Agrega el ID del producto a req.body
+                req.body.id = req.params.id;
+    
+                if(req.file && req.file.filename){
+                    console.log('Archivo presente');
+                    var nombreImagen = '/public/images/' + (registros[0].imagen);
+                    if(borrar.existsSync(nombreImagen)){
+                        console.log('Borrando imagen existente');
+                        borrar.unlinkSync(nombreImagen);
+                    }
+    
+                    producto.actualizarArchivo(conexion,req.body, req.file, function (error){
+                        if (error) {
+                            console.error("Error al actualizar el archivo del producto:", error);
+                            res.status(500).send("Error al actualizar el producto");
+                            return;
+                        }
+    
+                        console.log('Archivo del producto actualizado correctamente');
+                    });
+                }
+    
+                producto.actualizar(conexion,req.body, req.file, function(error){
+                    if (error) {
+                        console.error("Error al actualizar el producto:", error);
+                        res.status(500).send("Error al actualizar el producto");
+                        return;
+                    }
+    
+                    console.log('Producto actualizado correctamente');
+    
+                    req.session.save(function(err) {
+                        console.log('Redirigiendo a panel de control');
+                        res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
+                    });
+                });
             });
-        }
-
-        producto.actualizar(conexion,req.body, req.file, function(error){
-            if (error) {
-                console.error("Error al actualizar el producto:", error);
-                res.status(500).send("Error al actualizar el producto");
-                return;
-            }
-
-            console.log('Producto actualizado correctamente');
-
-            req.session.save(function(err) {
-                console.log('Redirigiendo a panel de control');
-                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
-            });
-        });
-    });
-},
+    },
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
