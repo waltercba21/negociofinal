@@ -537,10 +537,10 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
 },
 modificarPorProveedor: async function (req, res) {
     try {
-        let proveedores = await obtenerProveedores();
-       // let productos = await obtenerProductosPorProveedor(); // Asegúrate de que esta función exista y sea asincrónica
+        //let proveedores = await obtenerProveedores();
+        let productos = await obtenerProductosPorProveedor(); // Asegúrate de que esta función exista y sea asincrónica
 
-        res.render('modificarPorProveedor', { proveedores: proveedores, productos:[] });
+        res.render('modificarPorProveedor', { proveedores: [], productos: productos });
     } catch (error) {
         console.error(error);
         res.status(500).send('Hubo un error al obtener los datos');
