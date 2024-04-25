@@ -337,7 +337,10 @@ module.exports = {
             let categorias = await producto.obtenerCategorias(conexion);
             const proveedorSeleccionado = req.query.proveedor;
             const categoriaSeleccionada = req.query.categoria;
-            const paginaActual = req.query.pagina ? Number(req.query.pagina) : 1;
+            let paginaActual = req.query.pagina ? Number(req.query.pagina) : 1;
+            if (isNaN(paginaActual) || paginaActual < 1) {
+                paginaActual = 1;
+            }
             const productosPorPagina = 10;
             const saltar = (paginaActual - 1) * productosPorPagina;
             console.log('Proveedor seleccionado:', proveedorSeleccionado);
