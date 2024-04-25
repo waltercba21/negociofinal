@@ -559,7 +559,7 @@ modificarPorProveedor: function (req, res) {
                 res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
             });
         } else {
-            // Si no hay proveedorId, renderizamos la vista con una lista de proveedores pero sin productos
+            console.log('Rendering view');
             res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
         }
     });
