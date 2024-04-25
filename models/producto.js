@@ -121,7 +121,7 @@ obtenerTotal: function (conexion, funcion) {
 obtenerUltimos: function (conexion, cantidad, funcion) {
   conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id ORDER BY productos.id DESC LIMIT ?', [cantidad], funcion);
 },
-  agregarAlCarrito: function (usuarioId, productoId, cantidad, imagen, callback) {
+agregarAlCarrito: function (usuarioId, productoId, cantidad, imagen, callback) {
         const query = "INSERT INTO carritos (usuario_id, producto_id, cantidad, imagen) VALUES ( ?, ?, ?, ?)";
         const values = [usuarioId, productoId, cantidad, imagen];
         conexion.query(query, values, function (error, resultados) {
