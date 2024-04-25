@@ -542,26 +542,19 @@ modificarPorProveedor: function (req, res) {
             // manejar error
             return;  
         }
-        let proveedor = null;
-        let productos = [];
-        if (proveedorId) {
-            proveedor = proveedores.find(proveedor => proveedor.id == proveedorId);
-            if (!proveedor) {
+        let proveedor = proveedores.find(proveedor => proveedor.id == proveedorId);
+        if (proveedorId && !proveedor) {
+            // manejar error
+            return;
+        }
+        producto.obtenerProductosPorProveedor(conexion, proveedorId || 0, 0, function(error, productos) {
+            if (error) {
                 // manejar error
                 return;
             }
-            producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productosResult) {
-                if (error) {
-                    // manejar error
-                    return;
-                }
-                productos = productosResult;
-                res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
-            });
-        } else {
             console.log('Rendering view');
             res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
-        }
+        });
     });
 },
 actualizarPorProveedor : function(req, res) {
