@@ -270,8 +270,9 @@ module.exports = {
     },
     actualizar: function (req, res) {
         console.log('Iniciando la actualización del producto');
-
-        producto.retornarDatosId(conexion,req.body.id)
+    
+        // Cambia req.body.id a req.params.id
+        producto.retornarDatosId(conexion,req.params.id)
             .then(registros => {
                 if (registros.length === 0) {
                     console.error("No se encontró ningún producto con el ID proporcionado");
