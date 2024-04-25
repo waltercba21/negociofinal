@@ -565,7 +565,7 @@ actualizarPorProveedor : function(req, res) {
             res.redirect('/productos/panelControl?error=Hubo un error al actualizar los precios');
         } else {
             // Redirige a la vista de los productos del proveedor que se acaba de actualizar
-            res.redirect('/productos/proveedor/' + proveedorId);
+            res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedorId);
         }
     });
 },
