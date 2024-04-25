@@ -137,7 +137,7 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
         let query = "UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?";
         let params = [porcentajeCambio, proveedorId];
     
-        pool.getConnection((err, conexion) => {
+        conexion.getConnection((err, conexion) => {
             if (err) {
                 console.error('Error al obtener la conexión:', err);
                 callback(err);

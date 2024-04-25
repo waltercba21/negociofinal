@@ -32,9 +32,7 @@ router.post('/actualizar/:id', cargar.single('archivo'), productosController.act
 router.post('/eliminar/:id', productosController.eliminar);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
-router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor, function(req, res) {
-    console.log (req.body);
-});
+router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
 router.get('/api', productosController.lista);
 router.get('/api/buscar', productosController.buscar);
 router.get('/carrito', productosController.carrito);
