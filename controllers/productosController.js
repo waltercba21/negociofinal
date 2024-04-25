@@ -535,27 +535,16 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
         });
     }
 },
-modificarPorProveedor: function (req, res) {
-    let proveedorId = req.query.proveedor; 
-    producto.obtenerProveedores(conexion, function(error, proveedores) {
-        if (error) {
-            // manejar error
-            return;  
-        }
-        let proveedor = proveedores.find(proveedor => proveedor.id == proveedorId);
-        if (proveedorId && !proveedor) {
-            // manejar error
-            return;
-        }
-        producto.obtenerProductosPorProveedor(conexion, proveedorId || 0, 0, function(error, productos) {
-            if (error) {
-                // manejar error
-                return;
-            }
-            console.log('Rendering view');
-            res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
-        });
-    });
+modificarPorProveedor: async function (req, res) {
+    try {
+        let proveedores = await obtenerProveedores();
+        let productos = await obtenerProductosPorProveedor(); // Asegúrate de que esta función exista y sea asincrónica
+
+        res.render('modificarPorProveedor', { proveedores: proveedores, productos: productos });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Hubo un error al obtener los datos');
+    }
 },
 actualizarPorProveedor : function(req, res) {
     let proveedorId = req.body.proveedor;
