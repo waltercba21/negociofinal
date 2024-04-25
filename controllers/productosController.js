@@ -569,16 +569,17 @@ actualizarPorProveedor : function(req, res) {
         }
     });
 },
-
 actualizarPrecio: function(req, res) {
     let idProducto = req.body.id;
     let nuevoPrecio = req.body.precio;
+    let proveedorId = req.body.proveedor; // Asegúrate de que este valor se envía en el formulario
     producto.actualizarPrecio(idProducto, nuevoPrecio, function(err) {
         if (err) {
             console.error(err);
             res.redirect('/productos/modificarPorProveedor?error=Hubo un error al actualizar el precio');
         } else {
-            res.redirect('/productos/modificarPorProveedor?success=El precio se actualizó correctamente');
+            // Redirige a la vista de los productos del proveedor que se acaba de actualizar
+            res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedorId);
         }
     });
 },
