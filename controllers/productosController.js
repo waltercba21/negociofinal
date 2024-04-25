@@ -559,7 +559,7 @@ actualizarPorProveedor : function(req, res) {
     if (tipoCambio === 'descuento') {
         porcentajeCambio = -porcentajeCambio;
     }
-    producto.actualizarPreciosPorProveedor(conexion,proveedorId, porcentajeCambio, function(err) {
+    producto.actualizarPreciosPorProveedor(pool, proveedorId, porcentajeCambio, function(err) {
         if (err) {
             console.error(err);
             res.redirect('/productos/panelControl?error=Hubo un error al actualizar los precios');

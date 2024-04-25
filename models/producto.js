@@ -130,14 +130,14 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
           return callback(null, resultados);
         });
       },
-  actualizarPreciosPorProveedor: function (pool, proveedorId, porcentajeCambio, callback) {
+      actualizarPreciosPorProveedor: function (pool, proveedorId, porcentajeCambio, callback) {
         proveedorId = Number(proveedorId);
         porcentajeCambio = Number(porcentajeCambio);
     
         let query = "UPDATE productos SET precio = precio + precio * ? WHERE proveedor_id = ?";
         let params = [porcentajeCambio, proveedorId];
     
-        conexion.getConnection((err, conexion) => {
+        pool.getConnection((err, conexion) => {
             if (err) {
                 console.error('Error al obtener la conexión:', err);
                 callback(err);
