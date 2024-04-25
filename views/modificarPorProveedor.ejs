@@ -1,5 +1,33 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
+<style>
+  .container-modificar {
+    width: 80%;
+    margin: auto;
+  }
+  .container-modificar form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .container-modificar label, input, select {
+    margin: 10px 0;
+    font-weight: bold;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.75);
+  }
+  .container-modificar .btn {
+    background-color: #007BFF;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.75);
+  }
+  .container-modificar .btn:hover {
+    background-color: #0056b3;
+  }
+  </style>
 <body>
  <main>
 <div class="container-modificar"> 
