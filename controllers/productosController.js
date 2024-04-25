@@ -270,13 +270,14 @@ module.exports = {
     },
     actualizar: function (req, res) {
         console.log('Iniciando la actualización del producto');
-    
-        producto.retornarDatosId(conexion,req.body.id,function (error, registros){
-            if (error) {
-                console.error("Error al obtener los datos del producto:", error);
-                res.status(500).send("Error al actualizar el producto");
-                return;
-            }
+
+        producto.retornarDatosId(conexion,req.body.id)
+            .then(registros => {
+                if (registros.length === 0) {
+                    console.error("No se encontró ningún producto con el ID proporcionado");
+                    res.status(404).send("No se encontró ningún producto con el ID proporcionado");
+                    return;
+                }
     
             if (registros.length === 0) {
                 console.error("No se encontró ningún producto con el ID proporcionado");
