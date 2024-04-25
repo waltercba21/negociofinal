@@ -278,6 +278,12 @@ module.exports = {
                 return;
             }
     
+            if (registros.length === 0) {
+                console.error("No se encontró ningún producto con el ID proporcionado");
+                res.status(404).send("No se encontró ningún producto con el ID proporcionado");
+                return;
+            }
+    
             console.log('Datos del producto obtenidos correctamente');
     
             if(req.file && req.file.filename){
