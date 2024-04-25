@@ -537,8 +537,16 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
 },
 modificarPorProveedor: async function (req, res) {
     try {
-        let proveedores = await producto.obtenerProveedores(conexion); // Pasamos la conexión a la función
-        res.render('modificarPorProveedor', { proveedores: proveedores, productos: [], proveedor: {} });
+        let proveedores = await producto.obtenerProveedores(conexion);
+        let productos = [];
+        let proveedor = {};
+
+        if (req.query.proveedor) {
+            proveedor = proveedores.find(p => p.id == req.query.proveedor);
+            productos = await producto.obtenerProductosPorProveedor(conexion, req.query.proveedor);
+        }
+
+        res.render('modificarPorProveedor', { proveedores: proveedores, productos: productos, proveedor: proveedor });
     } catch (error) {
         console.error(error);
         res.status(500).send('Hubo un error al obtener los datos');
