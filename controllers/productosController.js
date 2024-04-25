@@ -536,36 +536,30 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     }
 },
 modificarPorProveedor: function (req, res) {
-    console.log('Iniciando modificarPorProveedor');
     let proveedorId = req.query.proveedor; 
-    console.log('Proveedor ID:', proveedorId);
     producto.obtenerProveedores(conexion, function(error, proveedores) {
         if (error) {
-            console.log('Error al obtener proveedores:', error);
+            // manejar error
             return;  
         }
-        console.log('Proveedores obtenidos:', proveedores);
         let proveedor = null;
         let productos = [];
         if (proveedorId) {
             proveedor = proveedores.find(proveedor => proveedor.id == proveedorId);
-            console.log('Proveedor seleccionado:', proveedor);
             if (!proveedor) {
-                console.log('No se encontró el proveedor:', proveedorId);
+                // manejar error
                 return;
             }
             producto.obtenerProductosPorProveedor(conexion, proveedorId, 0, function(error, productosResult) {
                 if (error) {
-                    console.log('Error al obtener productos:', error);
+                    // manejar error
                     return;
                 }
-                console.log('Productos obtenidos:', productosResult);
                 productos = productosResult;
-                console.log('Renderizando vista con:', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
                 res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
             });
         } else {
-            console.log('No se proporcionó proveedorId, renderizando vista con:', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
+            // Si no hay proveedorId, renderizamos la vista con una lista de proveedores pero sin productos
             res.render('modificarPorProveedor', { proveedor: proveedor, proveedores: proveedores, productos: productos, proveedorSeleccionado: proveedorId });
         }
     });
