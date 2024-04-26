@@ -1910,7 +1910,19 @@ table td img:hover {
   padding: 10px;
   margin-bottom: 20px;
 }
+.modificar-input[type="submit"] {
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.1);
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
 
+.modificar-input[type="submit"]:hover {
+  background-color: #0056b3;
+}
 .modificar-btn {
   background-color: #007BFF;
   color: white;
