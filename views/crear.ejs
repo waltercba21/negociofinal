@@ -130,40 +130,49 @@
               }
           });
       });
-        // Escucha el evento de cambio en el selector de proveedores
-  document.getElementById('proveedores').addEventListener('change', function() {
-    // Obtiene los proveedores seleccionados
-    var proveedoresSeleccionados = Array.from(this.selectedOptions).map(function(option) {
-      return { id: option.value, nombre: option.text };
-    });
-
-    // Obtiene el contenedor de precios
-    var contenedorPrecios = document.getElementById('precios');
-
-    // Limpia el contenedor de precios
-    contenedorPrecios.innerHTML = "";
-
-    // Para cada proveedor seleccionado, genera un campo de entrada para el precio
-    proveedoresSeleccionados.forEach(function(proveedor) {
-      var div = document.createElement('div');
-      div.className = "form-group-crear";
-
-      var label = document.createElement('label');
-      label.for = "precio_" + proveedor.id;
-      label.textContent = "Precio para " + proveedor.nombre + ":";
-      var input = document.createElement('input');
-      input.id = "precio_" + proveedor.id;
-      input.className = "form-control";
-      input.type = "number";
-      input.step = "0.01";
-      input.name = "precio_" + proveedor.id;
-
-      div.appendChild(label);
-      div.appendChild(input);
-
-      contenedorPrecios.appendChild(div);
-    });
+ // Escucha el evento de cambio en el selector de proveedores
+document.getElementById('proveedores').addEventListener('change', function() {
+  // Obtiene los proveedores seleccionados
+  var proveedoresSeleccionados = Array.from(this.selectedOptions).map(function(option) {
+    return { id: option.value, nombre: option.text };
   });
+
+  // Obtiene el contenedor de precios
+  var contenedorPrecios = document.getElementById('precios');
+
+  // Limpia el contenedor de precios
+  contenedorPrecios.innerHTML = "";
+
+  // Para cada proveedor seleccionado, genera un desplegable para el precio
+  proveedoresSeleccionados.forEach(function(proveedor) {
+    var div = document.createElement('div');
+    div.className = "form-group-crear";
+
+    var label = document.createElement('label');
+    label.for = "precio_" + proveedor.id;
+    label.textContent = "Precio para " + proveedor.nombre + ":";
+
+    var select = document.createElement('select');
+    select.id = "precio_" + proveedor.id;
+    select.className = "form-control";
+    select.name = "precio_" + proveedor.id;
+
+    // Aquí puedes agregar las opciones para los precios. 
+    // Por ejemplo, podrías tener un array con los precios que quieres mostrar.
+    var precios = [10, 20, 30, 40, 50];
+    precios.forEach(function(precio) {
+      var option = document.createElement('option');
+      option.value = precio;
+      option.text = precio;
+      select.appendChild(option);
+    });
+
+    div.appendChild(label);
+    div.appendChild(select);
+
+    contenedorPrecios.appendChild(div);
+  });
+});
       </script>
 </body>
 
