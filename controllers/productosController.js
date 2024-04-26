@@ -194,24 +194,31 @@ module.exports = {
             console.log('Error:', error);
         }
     },
-        guardar: function(req, res) {
-            const datos = req.body;
-             if (!datos.nombre || !datos.precio) {
-            return res.status(400).send('Faltan datos del producto');
+    guardar: function(req, res) {
+        const datos = req.body;
+        if (!datos.nombre || !datos.precio) {
+          return res.status(400).send('Faltan datos del producto');
         }
         datos.precio = parseFloat(datos.precio);
         if (!req.file) {
-            return res.status(400).send('No se proporcionó un archivo');
+          return res.status(400).send('No se proporcionó un archivo');
         }
         let archivo = req.file;
         producto.insertar(conexion, datos, archivo, function(error, result) {
-            if (error) {
-                return res.status(500).send('Error al guardar producto: ' + error.message);
-            } else {
+          if (error) {
+            return res.status(500).send('Error al guardar producto: ' + error.message);
+          } else {
+            // Aquí insertamos en la tabla producto_proveedor
+            producto.insertarProductoProveedor(conexion, result.insertId, datos.proveedor, datos.precio, datos.codigo, function(error, result) {
+              if (error) {
+                return res.status(500).send('Error al guardar en producto_proveedor: ' + error.message);
+              } else {
                 res.redirect('/productos');
-            }
+              }
+            });
+          }
         });
-    },
+      },
          eliminar: function(req,res){
             producto.retornarDatosId(conexion,req.params.id,function (error, registros){
             if (error) {

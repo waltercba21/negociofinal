@@ -56,7 +56,16 @@ obtenerTotal: function (conexion, funcion) {
       });
     });
   });
-},   
+},
+ insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio, codigo, funcion) {
+  conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio, codigo) VALUES (?, ?, ?, ?)',
+  [producto_id, proveedor_id, precio, codigo], (error, resultados) => {
+    if (error) {
+      return funcion(error);
+    }
+    funcion(null, resultados);
+  });
+},
   borrar: function (conexion,id,funcion){ 
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
