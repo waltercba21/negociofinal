@@ -1887,7 +1887,6 @@ table td img:hover {
       background-color: #b80220;
   }
 
-  /*------------------Modificar por Proveedor ------------------*/
 /*------------------Modificar por Proveedor ------------------*/
 .modificar-container {
   width: 80%;
@@ -1899,7 +1898,7 @@ table td img:hover {
 
 .modificar-form {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
 }
 
@@ -1931,7 +1930,9 @@ table td img:hover {
   box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
   border-radius: 5px;
 }
-
+.modificar-th {
+  color: black;
+}
 .modificar-th, .modificar-td {
   font-weight: bold;
 }
