@@ -1888,33 +1888,57 @@ table td img:hover {
   }
 
   /*------------------Modificar por Proveedor ------------------*/
-.container-modificar{
+/*------------------Modificar por Proveedor ------------------*/
+.modificar-container {
   width: 80%;
   margin: auto;
+  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  padding: 20px;
 }
-.container-modificar form {
+
+.modificar-form {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-.container-modificar  label, input, select {
+
+.modificar-label, .modificar-input, .modificar-select {
   margin: 10px 0;
   font-weight: bold;
-  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.75);
+  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+  border-radius: 5px;
+  padding: 10px;
 }
-.container-modificar  .btn {
+
+.modificar-btn {
   background-color: #007BFF;
   color: white;
   padding: 10px 20px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.75);
+  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+  font-weight: bold;
 }
-.container-modificar  .btn:hover {
+
+.modificar-btn:hover {
   background-color: #0056b3;
 }
 
+.modificar-table {
+  width: 100%;
+  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+  border-radius: 5px;
+}
+
+.modificar-th, .modificar-td {
+  font-weight: bold;
+}
+
+.modificar-img {
+  border-radius: 5px;
+}
 
 
 

@@ -2,62 +2,62 @@
 <%- include ./layouts/header.ejs %>
 <body>
  <main>
-<div class="container-modificar"> 
+<div class="modificar-container"> 
     <br/>
     <br/>
-    <form action="/productos/modificarPorProveedor" method="GET">
-      <label for="proveedor">Seleccione un proveedor:</label>
-      <select name="proveedor" id="proveedor">
+    <form action="/productos/modificarPorProveedor" method="GET" class="modificar-form">
+      <label for="proveedor" class="modificar-label">Seleccione un proveedor:</label>
+      <select name="proveedor" id="proveedor" class="modificar-select">
           <option value="">-- Seleccione --</option>
           <% proveedores.forEach(function(proveedor) { %>
               <option value='<%= proveedor.id %>'><%= proveedor.nombre %></option>
           <% }); %>
       </select>  
-      <input type="submit" value="Ver productos">
+      <input type="submit" value="Ver productos" class="modificar-input">
   </form>
     <br/>
-    <form method="post" action="/productos/actualizarPorProveedor">
+    <form method="post" action="/productos/actualizarPorProveedor" class="modificar-form">
       <% if (proveedor) { %>
-        <input type="hidden" name="proveedor" value="<%= proveedor.id %>">
-        <label for="porcentaje">Porcentaje de cambio:</label>
-        <input type="number" id="porcentaje" name="porcentaje" min="0" max="100" step="0.01" required style="text-align: right;">
-        <span>%</span>
-        <label for="tipoCambio">Tipo de cambio:</label>
-        <select name="tipoCambio" id="tipoCambio">
+        <input type="hidden" name="proveedor" value="<%= proveedor.id %>" class="modificar-input">
+        <label for="porcentaje" class="modificar-label">Porcentaje de cambio:</label>
+        <input type="number" id="porcentaje" name="porcentaje" min="0" max="100" step="0.01" required style="text-align: right;" class="modificar-input">
+        <span class="modificar-span">%</span>
+        <label for="tipoCambio" class="modificar-label">Tipo de cambio:</label>
+        <select name="tipoCambio" id="tipoCambio" class="modificar-select">
             <option value="aumento">Aumento</option>
             <option value="descuento">Descuento</option>
         </select>
-        <button type="submit" class="btn btn-primary">OK</button>
+        <button type="submit" class="btn btn-primary modificar-btn">OK</button>
       <% } %>
     </form>
     <br/>
     <br/>
-    <table class="table table-light">
-    <thead class="thead-light">
-      <tr>
-        <th>#</th>
-        <th>Nombre</th>
-        <th>Imagen</th>
-        <th>Código</th>
-        <th>Precio</th> 
+    <table class="table table-light modificar-table">
+    <thead class="thead-light modificar-thead">
+      <tr class="modificar-tr">
+        <th class="modificar-th">#</th>
+        <th class="modificar-th">Nombre</th>
+        <th class="modificar-th">Imagen</th>
+        <th class="modificar-th">Código</th>
+        <th class="modificar-th">Precio</th> 
         
       </tr>
     </thead>
-    <tbody>
+    <tbody class="modificar-tbody">
         <% for( let producto = 0; producto< productos.length; producto++ ) { %>
-          <tr>
-            <td><%= productos[producto].id %></td> 
-            <td><%= productos[producto].nombre %></td>
-            <td>
-              <img class="img-thumbnail" width= '150' src="/uploads/productos/<%= productos[producto].imagen %>" alt="">
+          <tr class="modificar-tr">
+            <td class="modificar-td"><%= productos[producto].id %></td> 
+            <td class="modificar-td"><%= productos[producto].nombre %></td>
+            <td class="modificar-td">
+              <img class="img-thumbnail modificar-img" width= '150' src="/uploads/productos/<%= productos[producto].imagen %>" alt="">
             </td>
-            <td><%= productos[producto].codigo %></td>
-            <td>
-              <form action="/productos/actualizarPrecio" method="post">
-                <input type="hidden" name="id" value="<%= productos[producto].id %>">
-                <input type="hidden" name="proveedor" value="<%= proveedor.id %>">
-                <input type="number" name="precio" value="<%= productos[producto].precio %>">
-                <button type="submit">Guardar</button>
+            <td class="modificar-td"><%= productos[producto].codigo %></td>
+            <td class="modificar-td">
+              <form action="/productos/actualizarPrecio" method="post" class="modificar-form">
+                <input type="hidden" name="id" value="<%= productos[producto].id %>" class="modificar-input">
+                <input type="hidden" name="proveedor" value="<%= proveedor.id %>" class="modificar-input">
+                <input type="number" name="precio" value="<%= productos[producto].precio %>" class="modificar-input">
+                <button type="submit" class="modificar-btn">Guardar</button>
             </form>
             </td> 
           </tr>
