@@ -46,15 +46,13 @@
                   </select>
               </div>
 
-              <div id="proveedores">
-                <% proveedores.forEach(function(proveedor) { %>
-                  <div class="form-group-crear">
-                    <label for="proveedor_<%= proveedor.id %>">Proveedor: <%= proveedor.nombre %></label>
-                    <input id="proveedor_<%= proveedor.id %>" type="checkbox" name="proveedor_<%= proveedor.id %>">
-                    <label for="precio_<%= proveedor.id %>">Precio:</label>
-                    <input id="precio_<%= proveedor.id %>" class="form-control" type="number" step="0.01" name="precio_<%= proveedor.id %>">
-                  </div>
-                <% }); %>
+              <div class="form-group-crear">
+                <label for="proveedores">Proveedores:</label>
+                <select id="proveedores" name="proveedores" multiple>
+                  <% proveedores.forEach(function(proveedor) { %>
+                    <option value="<%= proveedor.id %>"><%= proveedor.nombre %></option>
+                  <% }); %>
+                </select>
               </div>
 
               <div class="form-group-crear">
@@ -79,10 +77,9 @@
                     </select>
                 </div>
 
-                <div class="form-group-crear">
-                    <label for="precio">Precio:</label>
-                    <input id="precio" class="form-control" type="number" step="0.01" name="precio">
-                </div>
+                <div id="precios">
+                    <!-- Los campos de entrada para los precios se generarán dinámicamente aquí -->
+                  </div>
     
                 <div class="botones-crear">
                 <button class="btn btn-success" type="submit">Guardar</button>
@@ -133,6 +130,40 @@
               }
           });
       });
+        // Escucha el evento de cambio en el selector de proveedores
+  document.getElementById('proveedores').addEventListener('change', function() {
+    // Obtiene los proveedores seleccionados
+    var proveedoresSeleccionados = Array.from(this.selectedOptions).map(function(option) {
+      return { id: option.value, nombre: option.text };
+    });
+
+    // Obtiene el contenedor de precios
+    var contenedorPrecios = document.getElementById('precios');
+
+    // Limpia el contenedor de precios
+    contenedorPrecios.innerHTML = "";
+
+    // Para cada proveedor seleccionado, genera un campo de entrada para el precio
+    proveedoresSeleccionados.forEach(function(proveedor) {
+      var div = document.createElement('div');
+      div.className = "form-group-crear";
+
+      var label = document.createElement('label');
+      label.for = "precio_" + proveedor.id;
+      label.textContent = "Precio para " + proveedor.nombre + ":";
+      var input = document.createElement('input');
+      input.id = "precio_" + proveedor.id;
+      input.className = "form-control";
+      input.type = "number";
+      input.step = "0.01";
+      input.name = "precio_" + proveedor.id;
+
+      div.appendChild(label);
+      div.appendChild(input);
+
+      contenedorPrecios.appendChild(div);
+    });
+  });
       </script>
 </body>
 
