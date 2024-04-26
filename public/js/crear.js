@@ -36,7 +36,7 @@
     });
        
        
-    // Escucha el evento de cambio en el selector de proveedores
+// Escucha el evento de cambio en el selector de proveedores
 document.getElementById('proveedores').addEventListener('change', function() {
     // Obtiene los proveedores seleccionados
     var proveedoresSeleccionados = Array.from(this.selectedOptions).map(function(option) {
@@ -46,28 +46,48 @@ document.getElementById('proveedores').addEventListener('change', function() {
     // Obtiene el contenedor de precios
     var contenedorPrecios = document.getElementById('precios');
 
-    // Para cada proveedor seleccionado, verifica si ya existe un campo de entrada para el precio
+    // Para cada proveedor seleccionado, verifica si ya existe un campo de entrada para el precio y el código
     proveedoresSeleccionados.forEach(function(proveedor) {
         // Si no existe un campo de entrada para este proveedor, crea uno
         if (!document.getElementById("precio_" + proveedor.id)) {
-            var div = document.createElement('div');
-            div.className = "form-group-crear";
+            var divPrecio = document.createElement('div');
+            divPrecio.className = "form-group-crear";
 
-            var label = document.createElement('label');
-            label.for = "precio_" + proveedor.id;
-            label.textContent = "Precio para " + proveedor.nombre + ":";
+            var labelPrecio = document.createElement('label');
+            labelPrecio.for = "precio_" + proveedor.id;
+            labelPrecio.textContent = "Precio para " + proveedor.nombre + ":";
 
-            var input = document.createElement('input');
-            input.id = "precio_" + proveedor.id;
-            input.className = "form-control";
-            input.type = "number";
-            input.step = "0.01";
-            input.name = "precio_" + proveedor.id;
+            var inputPrecio = document.createElement('input');
+            inputPrecio.id = "precio_" + proveedor.id;
+            inputPrecio.className = "form-control";
+            inputPrecio.type = "number";
+            inputPrecio.step = "0.01";
+            inputPrecio.name = "precio_" + proveedor.id;
 
-            div.appendChild(label);
-            div.appendChild(input);
+            divPrecio.appendChild(labelPrecio);
+            divPrecio.appendChild(inputPrecio);
 
-            contenedorPrecios.appendChild(div);
+            contenedorPrecios.appendChild(divPrecio);
+        }
+
+        if (!document.getElementById("codigo_" + proveedor.id)) {
+            var divCodigo = document.createElement('div');
+            divCodigo.className = "form-group-crear";
+
+            var labelCodigo = document.createElement('label');
+            labelCodigo.for = "codigo_" + proveedor.id;
+            labelCodigo.textContent = "Código para " + proveedor.nombre + ":";
+
+            var inputCodigo = document.createElement('input');
+            inputCodigo.id = "codigo_" + proveedor.id;
+            inputCodigo.className = "form-control";
+            inputCodigo.type = "text";
+            inputCodigo.name = "codigo_" + proveedor.id;
+
+            divCodigo.appendChild(labelCodigo);
+            divCodigo.appendChild(inputCodigo);
+
+            contenedorPrecios.appendChild(divCodigo);
         }
     });
 });
