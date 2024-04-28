@@ -64,6 +64,17 @@ document.getElementById('proveedores').addEventListener('change', function() {
             inputPrecio.step = "0.01";
             inputPrecio.name = "precio_" + proveedor.id;
 
+            // Escucha el evento de cambio en el campo de entrada de precio
+            inputPrecio.addEventListener('change', function() {
+                // Calcula el precio con descuento
+                var precioLista = parseFloat(this.value);
+                var descuentoProveedor = parseFloat(proveedor.descuento); // Aquí necesitas obtener el descuento del proveedor
+                var precioConDescuento = precioLista * (1 - descuentoProveedor / 100);
+
+                // Muestra el precio con descuento en el campo de entrada de costo
+                document.getElementById('costo').value = precioConDescuento.toFixed(2);
+            });
+
             divPrecio.appendChild(labelPrecio);
             divPrecio.appendChild(inputPrecio);
 
@@ -90,14 +101,4 @@ document.getElementById('proveedores').addEventListener('change', function() {
             contenedorPrecios.appendChild(divCodigo);
         }
     });
-
-    // Si se seleccionó un proveedor, calcula el precio con descuento
-    if (proveedoresSeleccionados.length > 0) {
-        var precioLista = parseFloat(document.getElementById('precio_' + proveedoresSeleccionados[0].id).value);
-        var descuentoProveedor = parseFloat(proveedoresSeleccionados[0].descuento);
-        var precioConDescuento = precioLista * (1 - descuentoProveedor / 100);
-
-        // Muestra el precio con descuento en el campo de entrada de costo
-        document.getElementById('costo').value = precioConDescuento.toFixed(2);
-    }
 });
