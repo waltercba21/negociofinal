@@ -195,18 +195,22 @@ module.exports = {
         }).then(result => {
             modelos = result;
     
-            // Obtén los proveedores
-            return producto.obtenerProveedores(conexion);
-        }).then(result => {
-            proveedores = result;
-    
-            // Obtén el descuento del proveedor seleccionado
-            return producto.obtenerDescuentoProveedor(conexion, req.body.proveedor_id);
-        }).then(result => {
-            descuentoProveedor = result;
+            // Obtén los proveedores y sus descuentos
+            return Promise.all([
+                producto.obtenerProveedores(conexion),
+                producto.obtenerDescuentosProveedor(conexion)
+            ]);
+        }).then(results => {
+            proveedores = results[0].map(proveedor => {
+                const descuento = results[1].find(desc => desc.proveedor_id === proveedor.id);
+                return {
+                    ...proveedor,
+                    descuento: descuento ? descuento.descuento : 0
+                };
+            });
     
             // Calcula el precio con descuento
-            precioConDescuento = req.body.precio * (1 - descuentoProveedor / 100);
+            precioConDescuento = req.body.precio * (1 - proveedores[0].descuento / 100);
     
             // Renderiza la vista con los datos obtenidos
             res.render('crear', {
