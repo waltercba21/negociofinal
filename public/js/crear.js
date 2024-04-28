@@ -108,4 +108,17 @@
                 }
             });
         });
+    
+        // Escucha el evento de cambio en el campo de entrada de utilidad
+        document.getElementById('utilidad').addEventListener('change', function() {
+            // Obtiene el precio de costo y la utilidad
+            var precioCosto = parseFloat(document.getElementById('costo').value);
+            var utilidad = parseFloat(this.value);
+    
+            // Calcula el precio final
+            var precioFinal = precioCosto * (1 + utilidad / 100);
+    
+            // Muestra el precio final en el campo de entrada de precio final
+            document.getElementById('precioFinal').value = precioFinal.toFixed(2);
+        });
     });
