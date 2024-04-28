@@ -177,56 +177,38 @@ module.exports = {
             res.render('detalle', { producto: producto[0] });
           }
         });
-      },crear: function(req, res) {
-        // Obtén los datos necesarios para llenar los campos de selección
-        // Esto dependerá de cómo estén organizados tus modelos y datos
-        // Aquí asumo que tienes modelos separados para categorias, marcas, modelos y proveedores
-        // y que cada uno tiene un método 'obtenerTodos' que devuelve todos los registros
-    
+      },
+      crear: function(req, res) {
         let categorias, marcas, modelos, proveedores;
     
         // Obtén las categorías
-        categoria.obtenerTodos(conexion, function(error, result) {
-            if (error) {
-                return res.status(500).send('Error al obtener categorías: ' + error.message);
-            } else {
-                categorias = result;
+        producto.obtenerCategorias(conexion).then(result => {
+            categorias = result;
     
-                // Obtén las marcas
-                marca.obtenerTodos(conexion, function(error, result) {
-                    if (error) {
-                        return res.status(500).send('Error al obtener marcas: ' + error.message);
-                    } else {
-                        marcas = result;
+            // Obtén las marcas
+            return producto.obtenerMarcas(conexion);
+        }).then(result => {
+            marcas = result;
     
-                        // Obtén los modelos
-                        modelo.obtenerTodos(conexion, function(error, result) {
-                            if (error) {
-                                return res.status(500).send('Error al obtener modelos: ' + error.message);
-                            } else {
-                                modelos = result;
+            // Obtén los modelos
+            return producto.obtenerModelosPorMarca(conexion);
+        }).then(result => {
+            modelos = result;
     
-                                // Obtén los proveedores
-                                proveedor.obtenerTodos(conexion, function(error, result) {
-                                    if (error) {
-                                        return res.status(500).send('Error al obtener proveedores: ' + error.message);
-                                    } else {
-                                        proveedores = result;
+            // Obtén los proveedores
+            return producto.obtenerProveedores(conexion);
+        }).then(result => {
+            proveedores = result;
     
-                                        // Renderiza la vista con los datos obtenidos
-                                        res.render('crear', {
-                                            categorias: categorias,
-                                            marcas: marcas,
-                                            modelos: modelos,
-                                            proveedores: proveedores
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            }
+            // Renderiza la vista con los datos obtenidos
+            res.render('crear', {
+                categorias: categorias,
+                marcas: marcas,
+                modelos: modelos,
+                proveedores: proveedores
+            });
+        }).catch(error => {
+            return res.status(500).send('Error: ' + error.message);
         });
     },
       guardar: function(req, res) {
