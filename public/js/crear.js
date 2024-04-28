@@ -35,7 +35,6 @@
         });
     });
        
-       
     document.addEventListener('DOMContentLoaded', function() {
         // Escucha el evento de cambio en el selector de proveedores
         document.getElementById('proveedores').addEventListener('change', function() {
@@ -77,6 +76,9 @@
     
                         // Muestra el precio con descuento en el campo de entrada de costo
                         document.getElementById('costo').value = precioConDescuento.toFixed(2);
+    
+                        // Muestra el descuento aplicado en el campo de entrada de descuento
+                        document.getElementById('descuento').value = descuentoProveedor.toFixed(2);
                     });
     
                     divPrecio.appendChild(labelPrecio);
