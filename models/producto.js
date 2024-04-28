@@ -406,7 +406,11 @@ obtenerDescuentoProveedor: function(conexion, proveedorId) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT descuento FROM descuentos_proveedor WHERE proveedor_id = ?', [proveedorId], function(error, results, fields) {
           if (error) reject(error);
-          resolve(results[0].descuento);
+          if (results[0]) {
+              resolve(results[0].descuento);
+          } else {
+              resolve(null);
+          }
       });
   });
 },
