@@ -179,7 +179,7 @@ module.exports = {
         });
       },
       crear: function(req, res) {
-        let categorias, marcas, modelos, proveedores;
+        let categorias, marcas, modelos, proveedores, descuentoProveedor, precioConDescuento;
     
         // Obtén las categorías
         producto.obtenerCategorias(conexion).then(result => {
@@ -200,6 +200,14 @@ module.exports = {
         }).then(result => {
             proveedores = result;
     
+            // Obtén el descuento del proveedor seleccionado
+            return producto.obtenerDescuentoProveedor(conexion, req.body.proveedor_id);
+        }).then(result => {
+            descuentoProveedor = result;
+    
+            // Calcula el precio con descuento
+            precioConDescuento = req.body.precio * (1 - descuentoProveedor / 100);
+    
             // Renderiza la vista con los datos obtenidos
             res.render('crear', {
                 categorias: categorias,
@@ -207,7 +215,8 @@ module.exports = {
                 modelos: modelos,
                 proveedores: proveedores,
                 producto: {}, // Añade un objeto producto vacío aquí
-                modelosPorMarca: [] // Añade un array modelosPorMarca vacío aquí
+                modelosPorMarca: [], // Añade un array modelosPorMarca vacío aquí
+                precioConDescuento: precioConDescuento
             });
         }).catch(error => {
             return res.status(500).send('Error: ' + error.message);
