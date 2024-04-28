@@ -205,7 +205,8 @@ module.exports = {
                 categorias: categorias,
                 marcas: marcas,
                 modelos: modelos,
-                proveedores: proveedores
+                proveedores: proveedores,
+                producto: {} // Añade un objeto producto vacío aquí
             });
         }).catch(error => {
             return res.status(500).send('Error: ' + error.message);
