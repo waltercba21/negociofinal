@@ -44,7 +44,7 @@ document.getElementById('proveedores').addEventListener('change', function() {
     });
 
     // Obtiene el contenedor de precios
-    var contenedorPrecios = document.getElementById('precios');
+    var contenedorPrecios = document.getElementById('precio-lista');
 
     // Para cada proveedor seleccionado, verifica si ya existe un campo de entrada para el precio y el código
     proveedoresSeleccionados.forEach(function(proveedor) {
@@ -90,4 +90,14 @@ document.getElementById('proveedores').addEventListener('change', function() {
             contenedorPrecios.appendChild(divCodigo);
         }
     });
+
+    // Si se seleccionó un proveedor, calcula el precio con descuento
+    if (proveedoresSeleccionados.length > 0) {
+        var precioLista = parseFloat(document.getElementById('precio-lista').value);
+        var descuentoProveedor = parseFloat(proveedoresSeleccionados[0].descuento);
+        var precioConDescuento = precioLista * (1 - descuentoProveedor / 100);
+
+        // Muestra el precio con descuento en el campo de entrada de costo
+        document.getElementById('costo').value = precioConDescuento.toFixed(2);
+    }
 });
