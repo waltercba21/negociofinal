@@ -178,28 +178,21 @@ module.exports = {
           }
         });
       },
-      crear: async function(req, res) {
-        try {
-            let categorias = await producto.obtenerCategorias(conexion);
-            let proveedores = await producto.obtenerProveedores(conexion);
-            let marcas = await producto.obtenerMarcas(conexion);
-            marcas = Array.isArray(marcas) ? marcas : []; // Asegurarse de que marcas es un array
-            let modelosPorMarca = {};
-            for (let marca of marcas) {
-                let modelos = await producto.obtenerModelosPorMarca(conexion, marca.id);
-                modelosPorMarca[marca.id] = modelos;
-            }
-            res.render('crear', { categorias: categorias, marcas: marcas, proveedores: proveedores, modelosPorMarca: modelosPorMarca, producto: {} });
-        } catch (error) {
-            console.log('Error:', error);
-        }
-    },
-    guardar: function(req, res) {
+      guardar: function(req, res) {
         const datos = req.body;
-        if (!datos.nombre || !datos.precio) {
+        if (!datos.nombre || !datos.precio || !datos.utilidad) {
           return res.status(400).send('Faltan datos del producto');
         }
-        datos.precio = parseFloat(datos.precio);
+        let precioProveedorMasBarato = Math.min(...datos.precio); 
+        datos.precioFinal = precioProveedorMasBarato + (precioProveedorMasBarato * (datos.utilidad / 100));
+        datos.precioFinal = parseFloat(datos.precioFinal.toFixed(2)); 
+    
+        // Agregar cálculo del precio de costo
+        if (datos.descuento) {
+          datos.precioCosto = precioProveedorMasBarato - (precioProveedorMasBarato * (datos.descuento / 100));
+          datos.precioCosto = parseFloat(datos.precioCosto.toFixed(2));
+        }
+    
         if (!req.file) {
           return res.status(400).send('No se proporcionó un archivo');
         }
