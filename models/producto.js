@@ -402,15 +402,11 @@ retornarDatosId: function(conexion, id) {
       });
   });
 },
-obtenerDescuentosProveedor: function(conexion, proveedorId) {
+obtenerDescuentosProveedor: function(conexion) {
   return new Promise((resolve, reject) => {
-      conexion.query('SELECT descuento FROM descuentos_proveedor WHERE proveedor_id = ?', [proveedorId], function(error, results, fields) {
+      conexion.query('SELECT proveedor_id, descuento FROM descuentos_proveedor', function(error, results, fields) {
           if (error) reject(error);
-          if (results[0]) {
-              resolve(results[0].descuento);
-          } else {
-              resolve(null);
-          }
+          resolve(results);
       });
   });
 },
