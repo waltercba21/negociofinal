@@ -191,7 +191,7 @@ module.exports = {
             marcas = result;
     
             // Obtén los modelos
-            return producto.obtenerModelos(conexion);
+            return producto.obtenerModelosPorMarca(conexion);
         }).then(result => {
             modelos = result;
     
