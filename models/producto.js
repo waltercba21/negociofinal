@@ -241,9 +241,16 @@ obtenerMarcas: function(conexion) {
   });
 },
 obtenerModelosPorMarca: function(conexion, marcaId) {
-  console.log('Marca ID:', marcaId); // Añadido
   return new Promise((resolve, reject) => {
-      conexion.query('SELECT * FROM modelos WHERE id_marca = ?', [marcaId], function(error, resultados) {
+      let query = 'SELECT * FROM modelos';
+      let params = [];
+
+      if (marcaId) {
+          query += ' WHERE id_marca = ?';
+          params.push(marcaId);
+      }
+
+      conexion.query(query, params, function(error, resultados) {
           if (error) {
               reject(error);
           } else {
