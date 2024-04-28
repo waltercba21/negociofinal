@@ -93,7 +93,7 @@ document.getElementById('proveedores').addEventListener('change', function() {
 
     // Si se seleccionó un proveedor, calcula el precio con descuento
     if (proveedoresSeleccionados.length > 0) {
-        var precioLista = parseFloat(document.getElementById('precio-lista').value);
+        var precioLista = parseFloat(document.getElementById('precio_' + proveedoresSeleccionados[0].id).value);
         var descuentoProveedor = parseFloat(proveedoresSeleccionados[0].descuento);
         var precioConDescuento = precioLista * (1 - descuentoProveedor / 100);
 
