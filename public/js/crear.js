@@ -41,9 +41,12 @@
         document.getElementById('proveedores').addEventListener('change', function() {
             // Obtiene los proveedores seleccionados
             var proveedoresSeleccionados = Array.from(this.selectedOptions).map(function(option) {
-                return { id: option.value, nombre: option.text };
+                return { 
+                    id: option.value, 
+                    nombre: option.text, 
+                    descuento: option.getAttribute('data-descuento') 
+                };
             });
-    
             // Obtiene el contenedor de precios
             var contenedorPrecios = document.getElementById('precio-lista');
     
