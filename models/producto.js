@@ -402,7 +402,7 @@ retornarDatosId: function(conexion, id) {
       });
   });
 },
-obtenerDescuentoProveedor: function(conexion, proveedorId) {
+obtenerDescuentosProveedor: function(conexion, proveedorId) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT descuento FROM descuentos_proveedor WHERE proveedor_id = ?', [proveedorId], function(error, results, fields) {
           if (error) reject(error);
