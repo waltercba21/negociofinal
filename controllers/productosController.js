@@ -146,14 +146,6 @@ module.exports = {
                                 });
                                 return productos;
                             });
-                    } else if (categoria) {
-                        return producto.obtenerMarcasPorCategoria(conexion, categoria)
-                            .then(marcas => {
-                                productos.forEach(producto => {
-                                    producto.marca = marcas.find(marca => marca.id === producto.marca_id);
-                                });
-                                return productos;
-                            });
                     } else {
                         return Promise.resolve(productos);
                     }
