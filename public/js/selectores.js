@@ -13,7 +13,10 @@ $(document).ready(function() {
         const modelo = $('#modelo_id').val();
         const consulta = $('#entradaBusqueda').val();
   
+        console.log(`Realizando solicitud con categoria: ${categoria}, marca: ${marca}, modelo: ${modelo}, consulta: ${consulta}`);
+  
         $.get('/productos/api/buscar', { categoria, marca, modelo, query: consulta }, function(data) {
+            console.log('Datos recibidos:', data);
             renderizarProductos(data.productos);
         });
     }
@@ -29,6 +32,7 @@ $(document).ready(function() {
         }
         // Genera el HTML para cada producto
         productos.forEach(producto => {
+            console.log('Renderizando producto:', producto);
             const imagenUrl = producto.imagen ? `/uploads/productos/${producto.imagen}` : '/ruta/valida/a/imagen/por/defecto.jpg';
             const productoHTML = `
                 <div class="card">
@@ -67,6 +71,7 @@ $(document).ready(function() {
   
         // Obtiene los modelos para la marca seleccionada
         $.get(`/productos/modelos/${$(this).val()}`, function(data) {
+            console.log('Modelos recibidos:', data);
             // Añade los modelos al select
             data.modelos.forEach(modelo => {
                 $('#modelo_id').append(new Option(modelo.nombre, modelo.id));
