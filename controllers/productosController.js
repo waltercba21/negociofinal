@@ -144,6 +144,13 @@ module.exports = {
                     productos.forEach(producto => {
                         producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
                     });
+                    if (marca) {
+                        return producto.obtenerModelosPorMarca(conexion, marca);
+                    } else {
+                        return Promise.resolve(productos);
+                    }
+                })
+                .then(productos => {
                     res.json({ productos });
                 })
                 .catch(error => {
