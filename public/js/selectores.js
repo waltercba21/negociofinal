@@ -29,7 +29,7 @@ $(document).ready(function() {
         }
         // Genera el HTML para cada producto
         productos.forEach(producto => {
-            const imagenUrl = producto.imagen ? `../../uploads/productos/${producto.imagen}` : 'ruta/a/imagen/por/defecto.jpg';
+            const imagenUrl = producto.imagen ? `/uploads/productos/${producto.imagen}` : '/ruta/valida/a/imagen/por/defecto.jpg';
             const productoHTML = `
                 <div class="card">
                     <div class="cover__card">
