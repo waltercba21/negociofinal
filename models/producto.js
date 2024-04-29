@@ -351,32 +351,31 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
 },
 obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
   return new Promise((resolve, reject) => {
-    var consulta = 'SELECT productos.id, productos.nombre, productos.descripcion, productos.precio, productos.imagen, categorias.nombre AS categoria FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id WHERE 1=1';
-    var parametros = [];
+      let sql = 'SELECT * FROM productos WHERE 1=1';
+      const parametros = [];
 
-    if (categoria) {
-        consulta += ' AND categoria_id = ?';
-        parametros.push(categoria);
-    }
+      if (categoria) {
+          sql += ' AND categoria_id = ?';
+          parametros.push(categoria);
+      }
 
-    if (marca && !isNaN(marca)) {
-        consulta += ' AND marca_id = ?';
-        parametros.push(marca);
-    }
+      if (marca) {
+          sql += ' AND marca_id = ?';
+          parametros.push(marca);
+      }
 
-    if (modelo && !isNaN(modelo)) {
-        consulta += ' AND modelo_id = ?';
-        parametros.push(modelo);
-    }
+      if (modelo) {
+          sql += ' AND modelo_id = ?';
+          parametros.push(modelo);
+      }
 
-    conexion.query(consulta, parametros, function(error, resultados) {
-        if (error) {
-            console.log('Error al obtener productos:', error);
-            reject(error);
-        } else {
-            resolve(resultados);
-        }
-    });   
+      conexion.query(sql, parametros, (error, productos) => {
+          if (error) {
+              reject(error);
+          } else {
+              resolve(productos);
+          }
+      });
   });
 },
   obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
