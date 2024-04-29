@@ -49,42 +49,48 @@ document.addEventListener('DOMContentLoaded', function() {
   modeloSelect.addEventListener('change', buscarProductos);
 });
 
-function buscarProductos() {
-  const consulta = entrada.value;
-  const categoria = categoriaSelect.value;
-  const marca = marcaSelect.value;
-  const modelo = modeloSelect.value;
+let timeout = null;
 
-  let url = 'http://www.autofaros.com.ar/productos/api/buscar';
-  let params = new URLSearchParams();
-  if (consulta) {
-    params.append('query', consulta);
-  }
-  if (categoria) {
-    params.append('categoria', categoria);
-  }
-  if (marca) {
-    params.append('marca', marca);
-  }
-  if (modelo) {
-    params.append('modelo', modelo);
-  }
-  if (params.toString()) {
-    url += `?${params.toString()}`;
-  }
-  fetch(url, {mode:'cors', credentials:'include'})
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Error HTTP: ' + response.status);
+function buscarProductos() {
+  clearTimeout(timeout);
+
+  timeout = setTimeout(function () {
+    const consulta = entrada.value;
+    const categoria = categoriaSelect.value;
+    const marca = marcaSelect.value;
+    const modelo = modeloSelect.value;
+
+    let url = 'http://www.autofaros.com.ar/productos/api/buscar';
+    let params = new URLSearchParams();
+    if (consulta) {
+      params.append('query', consulta);
     }
-    return response.json();
-  })
-  .then(datos => {
-    mostrarProductos(datos.productos);
-  })
-  .catch(error => {
-    console.error('Hubo un problema con la solicitud: ' + error);
-  });
+    if (categoria) {
+      params.append('categoria', categoria);
+    }
+    if (marca) {
+      params.append('marca', marca);
+    }
+    if (modelo) {
+      params.append('modelo', modelo);
+    }
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    fetch(url, {mode:'cors', credentials:'include'})
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error HTTP: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(datos => {
+      mostrarProductos(datos.productos);
+    })
+    .catch(error => {
+      console.error('Hubo un problema con la solicitud: ' + error);
+    });
+  }, 500); // 500ms de retraso
 }
 
 function cargarProductos() {
