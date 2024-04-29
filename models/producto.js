@@ -351,7 +351,10 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
 },
 obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
   return new Promise((resolve, reject) => {
-      let sql = 'SELECT * FROM productos WHERE 1=1';
+      let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes.url as imagen FROM productos';
+      sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
+      sql += ' LEFT JOIN imagenes ON productos.imagen_id = imagenes.id';
+      sql += ' WHERE 1=1';
       const parametros = [];
 
       if (categoria) {
