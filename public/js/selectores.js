@@ -1,91 +1,103 @@
-$(document).ready(function() {
-    // Obtén los elementos del DOM
-    const categoriaSelector = $('#categoria_id');
-    const marcaSelector = $('#id_marca');
-    const modeloSelector = $('#modelo_id');
-    const contenedorProductos = $('#contenedor-productos');
-    const entrada = $('#entradaBusqueda');
+document.addEventListener('DOMContentLoaded', function() {
+    const entrada = document.querySelector('#entradaBusqueda');
+    const contenedorProductos = document.querySelector('#contenedor-productos');
+    const categoriaSelector = document.querySelector('#categoria_id');
+    const marcaSelector = document.querySelector('#id_marca');
+    const modeloSelector = document.querySelector('#modelo_id');
   
-    // Función para realizar la solicitud AJAX
     function obtenerProductosFiltrados() {
-        const categoria = $('#categoria_id').val();
-        const marca = $('#id_marca').val();
-        const modelo = $('#modelo_id').val();
-        const consulta = $('#entradaBusqueda').val();
+      const categoria = categoriaSelector.value;
+      const marca = marcaSelector.value;
+      const modelo = modeloSelector.value;
+      const consulta = entrada.value;
   
-        console.log(`Realizando solicitud con categoria: ${categoria}, marca: ${marca}, modelo: ${modelo}, consulta: ${consulta}`);
-  
-        $.get('/productos/api/buscar', { categoria, marca, modelo, query: consulta }, function(data) {
-            console.log('Datos recibidos:', data);
-            renderizarProductos(data.productos);
-        });
+      let url = 'http://www.autofaros.com.ar/productos/api/buscar';
+      let params = new URLSearchParams();
+      if (consulta) {
+        params.append('query', consulta);
+      }
+      if (categoria) {
+        params.append('categoria', categoria);
+      }
+      if (marca) {
+        params.append('marca', marca);
+      }
+      if (modelo) {
+        params.append('modelo', modelo);
+      }
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      fetch(url, {mode:'cors', credentials:'include'})
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Error HTTP: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(datos => {
+        mostrarProductos(datos.productos);
+      })
+      .catch(error => {
+        console.error('Hubo un problema con la solicitud: ' + error);
+      });
     }
   
-    // Función para renderizar los productos
-function renderizarProductos(productos) {
-    // Limpia el contenedor de productos
-    contenedorProductos.empty();
-
-    if (productos.length === 0) {
-        contenedorProductos.append('<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>');
-        return;
-    }
-    // Genera el HTML para cada producto
-    productos.forEach(producto => {
-        console.log('Renderizando producto:', producto);
-        const imagenUrl = producto.imagen ? `/uploads/productos/${producto.imagen}` : '/ruta/valida/a/imagen/por/defecto.jpg';
-        const categoria = producto.categoria ? producto.categoria : 'Categoría no disponible';
-        const precio = producto.precio ? `$${producto.precio}` : 'Precio no disponible';
-        const productoHTML = `
-            <div class="card">
-                <div class="cover__card">
-                    <img src="${imagenUrl}" alt="Imagen de ${producto.nombre}">
-                </div>
-                <div class="titulo-producto">
-                    <h3 class="nombre">${producto.nombre}</h3>
-                </div>
-                <hr>
-                <div class="categoria-producto">
-                    <h6 class="categoria">${categoria}</h6>
-                </div>
-                <div class="descripcion" style="display: none;">
-                    ${producto.descripcion}
-                </div>
-                <div class="precio-producto">
-                    <p class="precio">${precio}</p>
-                </div>
-                <div class="cantidad-producto">
-                    <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
-                </div>
-            </div>
-        `;
-
-        // Agrega el producto al contenedor
-        contenedorProductos.append(productoHTML);
-    });
-}
-
-    // Manejadores de eventos para los selectores
-    $(document).on('change', '#categoria_id', obtenerProductosFiltrados);
-    $(document).on('change', '#id_marca', function() {
-        // Limpia el select de modelos
-        $('#modelo_id').empty();
-  
-        // Obtiene los modelos para la marca seleccionada
-        $.get(`/productos/modelos/${$(this).val()}`, function(data) {
-            console.log('Modelos recibidos:', data);
-            // Añade los modelos al select
-            data.modelos.forEach(modelo => {
-                $('#modelo_id').append(new Option(modelo.nombre, modelo.id));
-            });
-  
-            // Realiza la búsqueda
-            obtenerProductosFiltrados();
+    function mostrarProductos(productos) {
+      contenedorProductos.innerHTML = '';
+      if (productos.length === 0) {
+        contenedorProductos.innerHTML = '<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>';
+      } else {
+        productos.forEach(producto => {
+          const tarjetaProducto = `
+          <div class="card"> 
+          <div class="cover__card">
+            <img src="../../uploads/productos/${producto.imagen}" alt="Imagen de ${producto.nombre}">
+          </div>
+          <div class="titulo-producto">
+            <h3 class="nombre">${producto.nombre}</h3>
+          </div>
+          <hr>
+          <div class="categoria-producto">
+            <h6 class="categoria">${producto.categoria_nombre}</h6>
+          </div>
+          <hr>
+          <div class="precio-producto">
+            <p class="precio">$${producto.precio}</p>
+          </div>
+          <div class="cantidad-producto">
+            <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
+          </div>
+        </div>
+      `;
+          contenedorProductos.innerHTML += tarjetaProducto;
         });
-
-        // Realiza la búsqueda basada en la marca seleccionada
-        obtenerProductosFiltrados();
+      }
+    }
+  
+    categoriaSelector.addEventListener('change', obtenerProductosFiltrados);
+    marcaSelector.addEventListener('change', function() {
+      modeloSelector.innerHTML = '';
+      fetch(`/productos/modelos/${marcaSelector.value}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Error HTTP: ' + response.status);
+          }
+          return response.json();
+        })
+        .then(modelos => {
+          modelos.forEach(modelo => {
+            let option = document.createElement('option');
+            option.value = modelo.id;
+            option.text = modelo.nombre; 
+            modeloSelector.appendChild(option);
+          });
+          obtenerProductosFiltrados();
+        })
+        .catch(error => {
+          console.error('Hubo un problema con la solicitud: ' + error);
+        });
     });
-    modeloSelector.change(obtenerProductosFiltrados);
-    entrada.on('input', obtenerProductosFiltrados);
-});
+    modeloSelector.addEventListener('change', obtenerProductosFiltrados);
+    entrada.addEventListener('input', obtenerProductosFiltrados);
+  });
