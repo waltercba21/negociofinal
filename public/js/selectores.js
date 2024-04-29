@@ -22,46 +22,48 @@ $(document).ready(function() {
     }
   
     // Función para renderizar los productos
-    function renderizarProductos(productos) {
-        // Limpia el contenedor de productos
-        contenedorProductos.empty();
+function renderizarProductos(productos) {
+    // Limpia el contenedor de productos
+    contenedorProductos.empty();
 
-        if (productos.length === 0) {
-            contenedorProductos.append('<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>');
-            return;
-        }
-        // Genera el HTML para cada producto
-        productos.forEach(producto => {
-            console.log('Renderizando producto:', producto);
-            const imagenUrl = producto.imagen ? `/uploads/productos/${producto.imagen}` : '/ruta/valida/a/imagen/por/defecto.jpg';
-            const productoHTML = `
-                <div class="card">
-                    <div class="cover__card">
-                        <img src="${imagenUrl}" alt="Imagen de ${producto.nombre}">
-                    </div>
-                    <div class="titulo-producto">
-                        <h3 class="nombre">${producto.nombre}</h3>
-                    </div>
-                    <hr>
-                    <div class="categoria-producto">
-                        <h6 class="categoria">${producto.categoria}</h6>
-                    </div>
-                    <div class="descripcion" style="display: none;">
-                        ${producto.descripcion}
-                    </div>
-                    <div class="precio-producto">
-                        <p class="precio">$${producto.precio}</p>
-                    </div>
-                    <div class="cantidad-producto">
-                        <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
-                    </div>
-                </div>
-            `;
-
-            // Agrega el producto al contenedor
-            contenedorProductos.append(productoHTML);
-        });
+    if (productos.length === 0) {
+        contenedorProductos.append('<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>');
+        return;
     }
+    // Genera el HTML para cada producto
+    productos.forEach(producto => {
+        console.log('Renderizando producto:', producto);
+        const imagenUrl = producto.imagen ? `/uploads/productos/${producto.imagen}` : '/ruta/valida/a/imagen/por/defecto.jpg';
+        const categoria = producto.categoria ? producto.categoria : 'Categoría no disponible';
+        const precio = producto.precio ? `$${producto.precio}` : 'Precio no disponible';
+        const productoHTML = `
+            <div class="card">
+                <div class="cover__card">
+                    <img src="${imagenUrl}" alt="Imagen de ${producto.nombre}">
+                </div>
+                <div class="titulo-producto">
+                    <h3 class="nombre">${producto.nombre}</h3>
+                </div>
+                <hr>
+                <div class="categoria-producto">
+                    <h6 class="categoria">${categoria}</h6>
+                </div>
+                <div class="descripcion" style="display: none;">
+                    ${producto.descripcion}
+                </div>
+                <div class="precio-producto">
+                    <p class="precio">${precio}</p>
+                </div>
+                <div class="cantidad-producto">
+                    <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
+                </div>
+            </div>
+        `;
+
+        // Agrega el producto al contenedor
+        contenedorProductos.append(productoHTML);
+    });
+}
 
     // Manejadores de eventos para los selectores
     $(document).on('change', '#categoria_id', obtenerProductosFiltrados);
