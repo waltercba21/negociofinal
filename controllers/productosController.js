@@ -127,32 +127,25 @@ module.exports = {
         const marca = req.query.marca ? Number(req.query.marca) : null;
         const modelo = req.query.modelo ? Number(req.query.modelo) : null;
     
-        console.log('Consulta:', consulta);
-        console.log('Categoria:', categoria);
-        console.log('Marca:', marca);
-        console.log('Modelo:', modelo);
-    
         if (consulta) {
             producto.obtenerPorNombre(conexion, consulta, (error, productos) => {
                 if (error) {
                     res.status(500).send('Error interno del servidor');
                     return;
                 }
-                console.log('Productos obtenidos por nombre:', productos);
-                productos.forEach(producto => {
-                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                });
                 res.json({ productos });
             });
         } else if (categoria || marca || modelo) {
             producto.obtenerPorFiltros(conexion, categoria, marca, modelo)
                 .then(productos => {
-                    console.log('Productos obtenidos por filtros:', productos);
-                    productos.forEach(producto => {
-                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                    });
                     if (marca) {
-                        return producto.obtenerModelosPorMarca(conexion, marca);
+                        return producto.obtenerModelosPorMarca(conexion, marca)
+                            .then(modelos => {
+                                productos.forEach(producto => {
+                                    producto.modelo = modelos.find(modelo => modelo.id === producto.modelo_id);
+                                });
+                                return productos;
+                            });
                     } else {
                         return Promise.resolve(productos);
                     }
@@ -171,9 +164,6 @@ module.exports = {
                     res.status(500).send('Error interno del servidor');
                     return;
                 }
-                productos.forEach(producto => {
-                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
-                });
                 res.json({ productos });
             });
         }
