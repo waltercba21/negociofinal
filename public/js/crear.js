@@ -43,10 +43,9 @@
                 return { 
                     id: option.value, 
                     nombre: option.text, 
-                    descuento: option.dataset.descuento // Cambiado aquí
+                    descuento: option.getAttribute('data-descuento') 
                 };
             });
-    
             // Obtiene el contenedor de precios
             var contenedorPrecios = document.getElementById('precio-lista');
     
@@ -68,19 +67,26 @@
                     inputPrecio.step = "0.01";
                     inputPrecio.name = "precio_" + proveedor.id;
     
-                    // Agrega un campo de entrada oculto para el ID del proveedor
-                    var inputProveedorId = document.createElement('input');
-                    inputProveedorId.type = "hidden";
-                    inputProveedorId.name = "proveedor_id";
-                    inputProveedorId.value = proveedor.id;
+                    // Escucha el evento de cambio en el campo de entrada de precio
+                    inputPrecio.addEventListener('change', function() {
+                        // Calcula el precio con descuento
+                        var precioLista = parseFloat(this.value);
+                        var descuentoProveedor = parseFloat(proveedor.descuento); // Aquí necesitas obtener el descuento del proveedor
+                        var precioConDescuento = precioLista * (1 - descuentoProveedor / 100);
+    
+                        // Muestra el precio con descuento en el campo de entrada de costo
+                        document.getElementById('costo').value = precioConDescuento.toFixed(2);
+    
+                        // Muestra el descuento aplicado en el campo de entrada de descuento
+                        document.getElementById('descuento').value = descuentoProveedor.toFixed(2);
+                    });
     
                     divPrecio.appendChild(labelPrecio);
                     divPrecio.appendChild(inputPrecio);
-                    divPrecio.appendChild(inputProveedorId); // Agrega el campo de entrada oculto al div
     
                     contenedorPrecios.appendChild(divPrecio);
                 }
-            
+    
                 if (!document.getElementById("codigo_" + proveedor.id)) {
                     var divCodigo = document.createElement('div');
                     divCodigo.className = "form-group-crear";
@@ -103,16 +109,16 @@
             });
         });
     
-      // Escucha el evento de cambio en el campo de entrada de utilidad
-document.getElementById('utilidad').addEventListener('change', function() {
-    // Obtiene el precio de costo y la utilidad
-    var precioCosto = parseFloat(document.getElementById('costo').value);
-    var utilidad = parseFloat(this.value);
-
-    // Calcula el precio final
-    var precio = precioCosto * (1 + utilidad / 100);
-
-    // Muestra el precio final en el campo de entrada de precio
-    document.getElementById('precio').value = precio.toFixed(2);
-});
+        // Escucha el evento de cambio en el campo de entrada de utilidad
+        document.getElementById('utilidad').addEventListener('change', function() {
+            // Obtiene el precio de costo y la utilidad
+            var precioCosto = parseFloat(document.getElementById('costo').value);
+            var utilidad = parseFloat(this.value);
+    
+            // Calcula el precio final
+            var precio = precioCosto * (1 + utilidad / 100);
+    
+            // Muestra el precio final en el campo de entrada de precio final
+            document.getElementById('precio').value = precio.toFixed(2);
+        });
     });
