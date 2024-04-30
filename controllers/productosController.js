@@ -251,20 +251,32 @@ datos.precioFinal = parseFloat(datos.precioFinal.toFixed(2));
         }
         let archivo = req.file;
         producto.insertar(conexion, datos, archivo, function(error, result) {
-          if (error) {
-            return res.status(500).send('Error al guardar producto: ' + error.message);
-          } else {
-            // Aquí insertamos en la tabla producto_proveedor
-            producto.insertarProductoProveedor(conexion, result.insertId, datos.proveedor, datos.precio, datos.codigo, function(error, result) {
-              if (error) {
-                return res.status(500).send('Error al guardar en producto_proveedor: ' + error.message);
-              } else {
-                res.redirect('/productos');
-              }
-            });
-          }
+            if (error) {
+                return res.status(500).send('Error al guardar producto: ' + error.message);
+            } else {
+                // Aquí insertamos en la tabla producto_proveedor
+                let productoId = result.insertId;
+                let errores = [];
+    
+                datos.proveedor.forEach(function(proveedorId, index) {
+                    producto.insertarProductoProveedor(conexion, productoId, proveedorId, datos.precio[index], datos.codigo[index], function(error, result) {
+                        if (error) {
+                            errores.push('Error al guardar en producto_proveedor: ' + error.message);
+                        }
+    
+                        // Si hemos terminado de procesar todos los proveedores, envía la respuesta
+                        if (index === datos.proveedor.length - 1) {
+                            if (errores.length > 0) {
+                                return res.status(500).send(errores.join('\n'));
+                            } else {
+                                res.redirect('/productos');
+                            }
+                        }
+                    });
+                });
+            }
         });
-      },
+    },
          eliminar: function(req,res){
             producto.retornarDatosId(conexion,req.params.id,function (error, registros){
             if (error) {

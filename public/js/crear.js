@@ -115,7 +115,7 @@
                     contenedorPrecios.appendChild(divCodigo);
                 }
             });
-        });
+        }); 
     
         // Escucha el evento de cambio en el campo de entrada de utilidad
         document.getElementById('utilidad').addEventListener('change', function() {
