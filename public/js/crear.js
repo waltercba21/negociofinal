@@ -79,6 +79,20 @@
                     divPrecio.appendChild(inputProveedorId); // Agrega el campo de entrada oculto al div
     
                     contenedorPrecios.appendChild(divPrecio);
+    
+                    // Escucha el evento de cambio en el campo de entrada de precio
+                    inputPrecio.addEventListener('change', function() {
+                        // Calcula el precio con descuento
+                        var precioLista = parseFloat(this.value);
+                        var descuentoProveedor = parseFloat(proveedor.descuento); // Aquí necesitas obtener el descuento del proveedor
+                        var precioConDescuento = precioLista * (1 - descuentoProveedor / 100);
+    
+                        // Muestra el precio con descuento en el campo de entrada de costo
+                        document.getElementById('costo').value = precioConDescuento.toFixed(2);
+    
+                        // Muestra el descuento aplicado en el campo de entrada de descuento
+                        document.getElementById('descuento').value = descuentoProveedor.toFixed(2);
+                    });
                 }
     
                 if (!document.getElementById("codigo_" + proveedor.id)) {
