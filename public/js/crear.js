@@ -52,40 +52,34 @@
             // Para cada proveedor seleccionado, verifica si ya existe un campo de entrada para el precio y el código
             proveedoresSeleccionados.forEach(function(proveedor) {
                 // Si no existe un campo de entrada para este proveedor, crea uno
-                if (!document.getElementById("precio_" + proveedor.id)) {
-                    var divPrecio = document.createElement('div');
-                    divPrecio.className = "form-group-crear";
-    
-                    var labelPrecio = document.createElement('label');
-                    labelPrecio.for = "precio_" + proveedor.id;
-                    labelPrecio.textContent = "Precio para " + proveedor.nombre + ":";
-    
-                    var inputPrecio = document.createElement('input');
-                    inputPrecio.id = "precio_" + proveedor.id;
-                    inputPrecio.className = "form-control";
-                    inputPrecio.type = "number";
-                    inputPrecio.step = "0.01";
-                    inputPrecio.name = "precio_" + proveedor.id;
-    
-                    // Escucha el evento de cambio en el campo de entrada de precio
-                    inputPrecio.addEventListener('change', function() {
-                        // Calcula el precio con descuento
-                        var precioLista = parseFloat(this.value);
-                        var descuentoProveedor = parseFloat(proveedor.descuento); // Aquí necesitas obtener el descuento del proveedor
-                        var precioConDescuento = precioLista * (1 - descuentoProveedor / 100);
-    
-                        // Muestra el precio con descuento en el campo de entrada de costo
-                        document.getElementById('costo').value = precioConDescuento.toFixed(2);
-    
-                        // Muestra el descuento aplicado en el campo de entrada de descuento
-                        document.getElementById('descuento').value = descuentoProveedor.toFixed(2);
-                    });
-    
-                    divPrecio.appendChild(labelPrecio);
-                    divPrecio.appendChild(inputPrecio);
-    
-                    contenedorPrecios.appendChild(divPrecio);
-                }
+               // Si no existe un campo de entrada para este proveedor, crea uno
+if (!document.getElementById("precio_" + proveedor.id)) {
+    var divPrecio = document.createElement('div');
+    divPrecio.className = "form-group-crear";
+
+    var labelPrecio = document.createElement('label');
+    labelPrecio.for = "precio_" + proveedor.id;
+    labelPrecio.textContent = "Precio para " + proveedor.nombre + ":";
+
+    var inputPrecio = document.createElement('input');
+    inputPrecio.id = "precio_" + proveedor.id;
+    inputPrecio.className = "form-control";
+    inputPrecio.type = "number";
+    inputPrecio.step = "0.01";
+    inputPrecio.name = "precio_" + proveedor.id;
+
+    // Agrega un campo de entrada oculto para el ID del proveedor
+    var inputProveedorId = document.createElement('input');
+    inputProveedorId.type = "hidden";
+    inputProveedorId.name = "proveedor_id";
+    inputProveedorId.value = proveedor.id;
+
+    divPrecio.appendChild(labelPrecio);
+    divPrecio.appendChild(inputPrecio);
+    divPrecio.appendChild(inputProveedorId); // Agrega el campo de entrada oculto al div
+
+    contenedorPrecios.appendChild(divPrecio);
+}
     
                 if (!document.getElementById("codigo_" + proveedor.id)) {
                     var divCodigo = document.createElement('div');
