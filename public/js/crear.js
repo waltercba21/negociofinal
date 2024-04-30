@@ -53,32 +53,34 @@
             // Para cada proveedor seleccionado, verifica si ya existe un campo de entrada para el precio y el código
             proveedoresSeleccionados.forEach(function(proveedor) {
                 // Si no existe un campo de entrada para este proveedor, crea uno
-                if (!document.getElementById("precio_" + proveedor.id)) {
-                    var divPrecio = document.createElement('div');
-                    divPrecio.className = "form-group-crear";
-    
-                    var labelPrecio = document.createElement('label');
-                    labelPrecio.for = "precio_" + proveedor.id;
-                    labelPrecio.textContent = "Precio para " + proveedor.nombre + ":";
-    
-                    var inputPrecio = document.createElement('input');
-                    inputPrecio.id = "precio_" + proveedor.id;
-                    inputPrecio.className = "form-control";
-                    inputPrecio.type = "number";
-                    inputPrecio.step = "0.01";
-                    inputPrecio.name = "precio_" + proveedor.id;
-    
-                    // Agrega un campo de entrada oculto para el ID del proveedor
-                    var inputProveedorId = document.createElement('input');
-                    inputProveedorId.type = "hidden";
-                    inputProveedorId.name = "proveedor_id";
-                    inputProveedorId.value = proveedor.id;
-    
-                    divPrecio.appendChild(labelPrecio);
-                    divPrecio.appendChild(inputPrecio);
-                    divPrecio.appendChild(inputProveedorId); // Agrega el campo de entrada oculto al div
-    
-                    contenedorPrecios.appendChild(divPrecio);
+               // Si no existe un campo de entrada para este proveedor, crea uno
+if (!document.getElementById("precio_" + proveedor.id)) {
+    var divPrecio = document.createElement('div');
+    divPrecio.className = "form-group-crear";
+
+    var labelPrecio = document.createElement('label');
+    labelPrecio.for = "precio_" + proveedor.id;
+    labelPrecio.textContent = "Precio para " + proveedor.nombre + ":";
+
+    var inputPrecio = document.createElement('input');
+    inputPrecio.id = "precio_" + proveedor.id;
+    inputPrecio.className = "form-control";
+    inputPrecio.type = "number";
+    inputPrecio.step = "0.01";
+    inputPrecio.name = "precio[]"; // Modificado aquí
+
+    // Agrega un campo de entrada oculto para el ID del proveedor
+    var inputProveedorId = document.createElement('input');
+    inputProveedorId.type = "hidden";
+    inputProveedorId.name = "proveedor[]"; // Modificado aquí
+    inputProveedorId.value = proveedor.id;
+
+    divPrecio.appendChild(labelPrecio);
+    divPrecio.appendChild(inputPrecio);
+    divPrecio.appendChild(inputProveedorId); // Agrega el campo de entrada oculto al div
+
+    contenedorPrecios.appendChild(divPrecio);
+
     
                     // Escucha el evento de cambio en el campo de entrada de precio
                     inputPrecio.addEventListener('change', function() {
