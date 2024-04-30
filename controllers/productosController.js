@@ -222,9 +222,10 @@ module.exports = {
                 marcas: marcas,
                 modelos: modelos,
                 proveedores: proveedores,
-                producto: {}, // Añade un objeto producto vacío aquí
-                modelosPorMarca: [], // Añade un array modelosPorMarca vacío aquí
-                precioConDescuento: precioConDescuento
+                producto: {}, 
+                modelosPorMarca: [], 
+                precioConDescuento: precioConDescuento,
+                utilidad: req.body.utilidad 
             });
         }).catch(error => {
             return res.status(500).send('Error: ' + error.message);
@@ -232,12 +233,12 @@ module.exports = {
     },
       guardar: function(req, res) {
         const datos = req.body;
-        if (!datos.nombre || !datos.precio || !datos.utilidad) {
-          return res.status(400).send('Faltan datos del producto');
-        }
-        let precioProveedorMasBarato = Math.min(...datos.precio); 
-        datos.precioFinal = precioProveedorMasBarato + (precioProveedorMasBarato * (datos.utilidad / 100));
-        datos.precioFinal = parseFloat(datos.precioFinal.toFixed(2)); 
+if (!datos.nombre || !datos.precio || !datos.utilidad) {
+    return res.status(400).send('Faltan datos del producto');
+}
+let precioProveedorMasBarato = Math.min(...datos.precio); 
+datos.precioFinal = precioProveedorMasBarato + (precioProveedorMasBarato * (datos.utilidad / 100));
+datos.precioFinal = parseFloat(datos.precioFinal.toFixed(2)); 
     
         // Agregar cálculo del precio de costo
         if (datos.descuento) {
