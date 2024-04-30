@@ -46,8 +46,8 @@ obtenerTotal: function (conexion, funcion) {
             return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
           }
           const proveedor_id = resultados[0].id;
-          conexion.query('INSERT INTO productos (nombre,codigo,descripcion,proveedor_id,precio,categoria_id,marca_id,modelo_id,imagen,costo,utilidad) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-          [datos.nombre,datos.codigo,datos.descripcion,proveedor_id,datos.precio,categoria_id,marca_id,datos.modelo_id, archivo.filename, datos.costo, datos.utilidad], (error, resultados) => {
+          conexion.query('INSERT INTO productos (nombre,codigo,proveedor_id,precio,categoria_id,marca_id,modelo_id,imagen,costo,utilidad) VALUES (?,?,?,?,?,?,?,?,?,?)',
+          [datos.nombre,datos.codigo,proveedor_id,datos.precio,categoria_id,marca_id,datos.modelo_id, archivo.filename, datos.costo, datos.utilidad], (error, resultados) => {
             if (error) {
               return funcion(error);
             }
