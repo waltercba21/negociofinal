@@ -100,20 +100,27 @@ if (!document.getElementById("precio_" + proveedor.id)) {
                 if (!document.getElementById("codigo_" + proveedor.id)) {
                     var divCodigo = document.createElement('div');
                     divCodigo.className = "form-group-crear";
-    
+                
                     var labelCodigo = document.createElement('label');
                     labelCodigo.for = "codigo_" + proveedor.id;
                     labelCodigo.textContent = "Código para " + proveedor.nombre + ":";
-    
+                
                     var inputCodigo = document.createElement('input');
                     inputCodigo.id = "codigo_" + proveedor.id;
                     inputCodigo.className = "form-control";
                     inputCodigo.type = "text";
-                    inputCodigo.name = "codigo_" + proveedor.id;
-    
+                    inputCodigo.name = "codigo[]"; // Modificado aquí
+                
+                    // Agrega un campo de entrada oculto para el ID del proveedor
+                    var inputProveedorId = document.createElement('input');
+                    inputProveedorId.type = "hidden";
+                    inputProveedorId.name = "proveedor[]"; // Modificado aquí
+                    inputProveedorId.value = proveedor.id;
+                
                     divCodigo.appendChild(labelCodigo);
                     divCodigo.appendChild(inputCodigo);
-    
+                    divCodigo.appendChild(inputProveedorId); // Agrega el campo de entrada oculto al div
+                
                     contenedorPrecios.appendChild(divCodigo);
                 }
             });
