@@ -24,49 +24,59 @@ obtenerTotal: function (conexion, funcion) {
     } 
     conexion.query('SELECT id FROM categorias WHERE nombre = ?', [datos.categoria], (error, resultados) => {
       if (error) {
+        console.log('Error en la consulta de categorías:', error);
         return funcion(error);
       }
       if (resultados.length === 0) {
+        console.log('No se encontró ninguna categoría con el nombre proporcionado');
         return funcion(new Error('No se encontró ninguna categoría con el nombre proporcionado'));
       }
       const categoria_id = resultados[0].id;
+      console.log('categoria_id:', categoria_id);
       conexion.query('SELECT id FROM marcas WHERE id = ?', [datos.marca], (error, resultados) => {
         if (error) {
+          console.log('Error en la consulta de marcas:', error);
           return funcion(error);
         }
         if (resultados.length === 0) {
+          console.log('No se encontró ninguna marca con el ID proporcionado');
           return funcion(new Error('No se encontró ninguna marca con el ID proporcionado'));
         }
         const marca_id = resultados[0].id;
+        console.log('marca_id:', marca_id);
         conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
           if (error) {
+            console.log('Error en la consulta de proveedores:', error);
             return funcion(error);
           }
           if (resultados.length === 0) {
+            console.log('No se encontró ningún proveedor con el ID proporcionado');
             return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
           }
           const proveedor_id = resultados[0].id;
+          console.log('proveedor_id:', proveedor_id);
           conexion.query('INSERT INTO productos (nombre,codigo,proveedor_id,precio,categoria_id,marca_id,modelo_id,imagen,costo,utilidad) VALUES (?,?,?,?,?,?,?,?,?,?)',
-[datos.nombre,datos.codigo,proveedor_id,datos.precio,categoria_id,marca_id,datos.modelo_id, archivo.filename, datos.costo, datos.utilidad], (error, resultados) => {
-  if (error) {
-    console.log('Valores:', datos.nombre,datos.codigo,proveedor_id,datos.precio,categoria_id,marca_id,datos.modelo_id, archivo.filename, datos.costo, datos.utilidad);
-    return funcion(error);
-  }
-  funcion(null, resultados);
-});
-        });
-      });
-    });
-  },
- insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio, codigo, funcion) {
-  conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio, codigo) VALUES (?, ?, ?, ?)',
-  [producto_id, proveedor_id, precio, codigo], (error, resultados) => {
+  [datos.nombre,datos.codigo,proveedor_id,datos.precio,categoria_id,marca_id,datos.modelo_id, archivo.filename, datos.costo, datos.utilidad], (error, resultados) => {
     if (error) {
+      console.log('Error en la inserción de productos:', error);
+      console.log('Valores:', datos.nombre,datos.codigo,proveedor_id,datos.precio,categoria_id,marca_id,datos.modelo_id, archivo.filename, datos.costo, datos.utilidad);
       return funcion(error);
     }
     funcion(null, resultados);
   });
-},
+        });
+      });
+    });
+  },
+  insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio, codigo, funcion) {
+    conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio, codigo) VALUES (?, ?, ?, ?)',
+    [producto_id, proveedor_id, precio, codigo], (error, resultados) => {
+      if (error) {
+        return funcion(error);
+      }
+      funcion(null, resultados);
+    });
+  },
   borrar: function (conexion,id,funcion){ 
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
     },
