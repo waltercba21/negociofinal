@@ -37,7 +37,7 @@
                 };
             });
             // Obtiene el contenedor de precios
-            var contenedorPrecios = document.getElementById('precio-lista');
+            var contenedorPrecios = document.getElementById('precio_lista');
             // Para cada proveedor seleccionado, verifica si ya existe un campo de entrada para el precio y el código
             proveedoresSeleccionados.forEach(function(proveedor) {
 if (!document.getElementById("precio_" + proveedor.id)) {
