@@ -259,10 +259,7 @@ datos.precioFinal = parseFloat(datos.precioFinal.toFixed(2));
                 let errores = [];
     
                 datos.proveedor.forEach(function(proveedorId, index) {
-                    console.log('Proveedor ID:', proveedorId);
-                    console.log('Precio:', datos.precio[index]);
-                    console.log('Código:', datos.codigo[index]);
-                
+                   
                     producto.insertarProductoProveedor(conexion, productoId, proveedorId, datos.precio[index], datos.codigo[index], function(error, result) {
                         if (error) {
                             errores.push('Error al guardar en producto_proveedor: ' + error.message);
