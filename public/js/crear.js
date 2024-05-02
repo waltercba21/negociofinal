@@ -112,10 +112,20 @@ if (!document.getElementById("precio_" + proveedor.id)) {
             document.getElementById('precio').value = precio.toFixed(2);
         });
     });
-    document.getElementById('form-id').addEventListener('submit', function() {
-    var selectModelo = document.getElementById('modelo_id');
-    if (selectModelo.value === "") {
-        alert('Por favor, selecciona un modelo antes de enviar el formulario.');
-        event.preventDefault(); // Esto evita que el formulario se envíe
-    }
-});
+    document.getElementById('form-id').addEventListener('submit', function(event) {
+        var selectModelo = document.getElementById('modelo_id');
+        if (selectModelo.value === "") {
+            alert('Por favor, selecciona un modelo antes de enviar el formulario.');
+            event.preventDefault(); 
+        } else {
+            // Obtiene el precio_lista del primer proveedor seleccionado
+            var precioLista = document.getElementById('precio_' + document.getElementById('proveedores').value).value;
+            // Crea un campo de entrada oculto para el precio_lista
+            var inputPrecioLista = document.createElement('input');
+            inputPrecioLista.type = "hidden";
+            inputPrecioLista.name = "precio_lista";
+            inputPrecioLista.value = precioLista;
+            // Agrega el campo de entrada oculto al formulario
+            this.appendChild(inputPrecioLista);
+        }
+    });

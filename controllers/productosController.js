@@ -233,10 +233,10 @@ module.exports = {
     },
     guardar : function(req, res) {
         let imagen = req.file.filename;
-        let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio } = req.body;
+        let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, precio_lista } = req.body;
       
         // Insertar en la tabla de productos
-        producto.insertar(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, function(error, resultados) {
+        producto.insertar(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, precio_lista, function(error, resultados) {
           if (error) {
             console.log(error); // Imprimir el error en la consola
             return res.status(500).send('Hubo un error al insertar el producto');
