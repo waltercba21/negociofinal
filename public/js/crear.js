@@ -65,20 +65,16 @@ if (!document.getElementById("precio_" + proveedor.id)) {
     contenedorPrecios.appendChild(divPrecio);
 
                     // Escucha el evento de cambio en el campo de entrada de precio
-inputPrecio.addEventListener('change', function() {
-    // Obtiene el proveedor seleccionado actualmente
-    var proveedorActual = Array.from(document.getElementById('proveedores').selectedOptions).find(function(option) {
-        return option.value === proveedor.id;
-    });
-    // Calcula el precio con descuento
-    var precioLista = parseFloat(this.value);
-    var descuentoProveedor = parseFloat(proveedorActual.getAttribute('data-descuento')); // Aquí necesitas obtener el descuento del proveedor
-    var precioConDescuento = precioLista * (1 - descuentoProveedor / 100);
-    // Muestra el precio con descuento en el campo de entrada de costo
-    document.getElementById('costo').value = precioConDescuento.toFixed(2);
-    // Muestra el descuento aplicado en el campo de entrada de descuento
-    document.getElementById('descuento').value = descuentoProveedor.toFixed(2);
-});
+                    inputPrecio.addEventListener('change', function() {
+                        // Calcula el precio con descuento
+                        var precioLista = parseFloat(this.value);
+                        var descuentoProveedor = parseFloat(proveedor.descuento); // Aquí necesitas obtener el descuento del proveedor
+                        var precioConDescuento = precioLista * (1 - descuentoProveedor / 100);
+                        // Muestra el precio con descuento en el campo de entrada de costo
+                        document.getElementById('costo').value = precioConDescuento.toFixed(2);
+                        // Muestra el descuento aplicado en el campo de entrada de descuento
+                        document.getElementById('descuento').value = descuentoProveedor.toFixed(2);
+                    });
                 }
                 if (!document.getElementById("codigo_" + proveedor.id)) {
                     var divCodigo = document.createElement('div');
@@ -117,29 +113,19 @@ inputPrecio.addEventListener('change', function() {
         });
     });
     document.getElementById('form-id').addEventListener('submit', function(event) {
-        var selectModelo = document.getElementById('modelo_id');
-        if (selectModelo.value === "") {
-            alert('Por favor, selecciona un modelo antes de enviar el formulario.');
-            event.preventDefault(); 
-        } else {
-            // Obtiene el precio_lista del primer proveedor seleccionado
-            var precioLista = document.getElementById('precio_' + document.getElementById('proveedores').value).value;
-            // Crea un campo de entrada oculto para el precio_lista
-            var inputPrecioLista = document.createElement('input');
-            inputPrecioLista.type = "hidden";
-            inputPrecioLista.name = "precio_final"; // Cambiado a "precio_final"
-            inputPrecioLista.value = precioLista;
-            // Agrega el campo de entrada oculto al formulario
-            this.appendChild(inputPrecioLista);
-    
-            // Obtiene el precio final
-            var precioFinal = document.getElementById('precio').value;
-            // Crea un campo de entrada oculto para el precio final
-            var inputPrecioFinal = document.createElement('input');
-            inputPrecioFinal.type = "hidden";
-            inputPrecioFinal.name = "precio_lista"; // Cambiado a "precio_lista"
-            inputPrecioFinal.value = precioFinal;
-            // Agrega el campo de entrada oculto al formulario
-            this.appendChild(inputPrecioFinal);
-        }
-    });
+    var selectModelo = document.getElementById('modelo_id');
+    if (selectModelo.value === "") {
+        alert('Por favor, selecciona un modelo antes de enviar el formulario.');
+        event.preventDefault(); 
+    } else {
+        // Obtiene el precio_lista del primer proveedor seleccionado
+        var precioLista = document.getElementById('precio_' + document.getElementById('proveedores').value).value;
+        // Crea un campo de entrada oculto para el precio_lista
+        var inputPrecioLista = document.createElement('input');
+        inputPrecioLista.type = "hidden";
+        inputPrecioLista.name = "precio_lista";
+        inputPrecioLista.value = precioLista;
+        // Agrega el campo de entrada oculto al formulario
+        this.appendChild(inputPrecioLista);
+    }
+});
