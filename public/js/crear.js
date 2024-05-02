@@ -43,11 +43,9 @@
 if (!document.getElementById("precio_" + proveedor.id)) {
     var divPrecio = document.createElement('div');
     divPrecio.className = "form-group-crear";
-
     var labelPrecio = document.createElement('label');
     labelPrecio.for = "precio_" + proveedor.id;
     labelPrecio.textContent = "Precio para " + proveedor.nombre + ":";
-
     var inputPrecio = document.createElement('input');
     inputPrecio.id = "precio_" + proveedor.id;
     inputPrecio.className = "form-control";
@@ -57,14 +55,12 @@ if (!document.getElementById("precio_" + proveedor.id)) {
     // Agrega un campo de entrada oculto para el ID del proveedor
     var inputProveedorId = document.createElement('input');
     inputProveedorId.type = "hidden";
-    inputProveedorId.name = "proveedor[]"; // Modificado aquí
+    inputProveedorId.name = "proveedor[]"; 
     inputProveedorId.value = proveedor.id;
-
     divPrecio.appendChild(labelPrecio);
     divPrecio.appendChild(inputPrecio);
     divPrecio.appendChild(inputProveedorId); 
     contenedorPrecios.appendChild(divPrecio);
-
                     // Escucha el evento de cambio en el campo de entrada de precio
                     inputPrecio.addEventListener('change', function() {
                         // Calcula el precio con descuento
@@ -83,22 +79,18 @@ if (!document.getElementById("precio_" + proveedor.id)) {
                     var labelCodigo = document.createElement('label');
                     labelCodigo.for = "codigo_" + proveedor.id;
                     labelCodigo.textContent = "Código para " + proveedor.nombre + ":";
-
                     var inputCodigo = document.createElement('input');
                     inputCodigo.id = "codigo_" + proveedor.id;
                     inputCodigo.className = "form-control";
                     inputCodigo.type = "text";
                     inputCodigo.name = "codigo[]"; 
-
                     var inputProveedorId = document.createElement('input');
                     inputProveedorId.type = "hidden";
                     inputProveedorId.name = "proveedor[]"; 
                     inputProveedorId.value = proveedor.id;
-                
                     divCodigo.appendChild(labelCodigo);
                     divCodigo.appendChild(inputCodigo);
                     divCodigo.appendChild(inputProveedorId); 
-                
                     contenedorPrecios.appendChild(divCodigo);
                 }
             });
