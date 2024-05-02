@@ -238,6 +238,7 @@ module.exports = {
         // Insertar en la tabla de productos
         producto.insertar(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, function(error, resultados) {
           if (error) {
+            console.log(error); // Imprimir el error en la consola
             return res.status(500).send('Hubo un error al insertar el producto');
           }
       
@@ -249,6 +250,7 @@ module.exports = {
             let { precio, codigo } = proveedor;
             producto.insertarProductoProveedor(conexion, producto_id, proveedor.id, precio, codigo, function(error, resultados) {
               if (error) {
+                console.log(error); // Imprimir el error en la consola
                 return res.status(500).send('Hubo un error al insertar el producto_proveedor');
               }
       
@@ -256,6 +258,7 @@ module.exports = {
               let { descuento } = proveedor;
               producto.insertarDescuentos(conexion, proveedor.id, descuento, function(error, resultados) {
                 if (error) {
+                  console.log(error); // Imprimir el error en la consola
                   return res.status(500).send('Hubo un error al insertar el descuento del proveedor');
                 }
               });
