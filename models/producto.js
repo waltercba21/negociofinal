@@ -19,10 +19,10 @@ obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
   insertar:function(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, precio_lista, funcion) {
-    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio, precio_lista) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio, precio_lista) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, precio_lista], funcion);
 },
-  insertarProductoProveedor : function(conexion, producto_id, proveedor_id, precio, codigo, funcion) {
+  insertarProductoProveedor : function(conexion, producto_id, proveedor_id, codigo, funcion) {
     conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id,codigo) VALUES (?, ?, ?)',
     [producto_id, proveedor_id, codigo], funcion);
   },
