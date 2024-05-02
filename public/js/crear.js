@@ -7,7 +7,6 @@
             url: '/productos/modelos/' + marcaId, 
             method: 'GET',
             success: function(data) {
-                console.log('Modelos para la marca seleccionada:', data);
                 // Obtiene el selector de modelo
                 var selectModelo = document.getElementById('modelo_id'); 
                 // Limpia el selector de modelo
