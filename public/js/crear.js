@@ -123,9 +123,19 @@ if (!document.getElementById("precio_" + proveedor.id)) {
             // Crea un campo de entrada oculto para el precio_lista
             var inputPrecioLista = document.createElement('input');
             inputPrecioLista.type = "hidden";
-            inputPrecioLista.name = "precio_lista";
+            inputPrecioLista.name = "precio_final"; // Cambiado a "precio_final"
             inputPrecioLista.value = precioLista;
             // Agrega el campo de entrada oculto al formulario
             this.appendChild(inputPrecioLista);
+    
+            // Obtiene el precio final
+            var precioFinal = document.getElementById('precio').value;
+            // Crea un campo de entrada oculto para el precio final
+            var inputPrecioFinal = document.createElement('input');
+            inputPrecioFinal.type = "hidden";
+            inputPrecioFinal.name = "precio_lista"; // Cambiado a "precio_lista"
+            inputPrecioFinal.value = precioFinal;
+            // Agrega el campo de entrada oculto al formulario
+            this.appendChild(inputPrecioFinal);
         }
     });
