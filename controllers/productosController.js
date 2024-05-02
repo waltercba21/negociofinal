@@ -231,51 +231,37 @@ module.exports = {
             return res.status(500).send('Error: ' + error.message);
         });
     },
-      guardar: function(req, res) {
-        const datos = req.body;
-if (!datos.nombre || !datos.precio || !datos.utilidad) {
-    return res.status(400).send('Faltan datos del producto');
-}
-let precioProveedorMasBarato = Math.min(...datos.precio); 
-datos.precioFinal = precioProveedorMasBarato + (precioProveedorMasBarato * (datos.utilidad / 100));
-datos.precioFinal = parseFloat(datos.precioFinal.toFixed(2)); 
-    
-        // Agregar cálculo del precio de costo
-        if (datos.descuento) {
-          datos.precioCosto = precioProveedorMasBarato - (precioProveedorMasBarato * (datos.descuento / 100));
-          datos.precioCosto = parseFloat(datos.precioCosto.toFixed(2));
-        }
-    
-        if (!req.file) {
-          return res.status(400).send('No se proporcionó un archivo');
-        }
-        let archivo = req.file;
-        producto.insertar(conexion, datos, archivo, function(error, result) {
-            if (error) {
-                return res.status(500).send('Error al guardar producto: ' + error.message);
-            } else {
-                // Aquí insertamos en la tabla producto_proveedor
-                let productoId = result.insertId;
-                let errores = [];
-    
-                datos.proveedor.forEach(function(proveedorId, index) {
-                   
-                    producto.insertarProductoProveedor(conexion, productoId, proveedorId, datos.precio[index], datos.codigo[index], function(error, result) {
-                        if (error) {
-                            errores.push('Error al guardar en producto_proveedor: ' + error.message);
-                        }
-    
-                        // Si hemos terminado de procesar todos los proveedores, envía la respuesta
-                        if (index === datos.proveedor.length - 1) {
-                            if (errores.length > 0) {
-                                return res.status(500).send(errores.join('\n'));
-                            } else {
-                                res.redirect('/productos');
-                            }
-                        }
-                    });
-                });
-            }
+    guardar : function(req, res) {
+        let imagen = req.file.filename;
+        let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio } = req.body;
+      
+        // Insertar en la tabla de productos
+        modeloProductos.insertar(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, function(error, resultados) {
+          if (error) {
+            return res.status(500).send('Hubo un error al insertar el producto');
+          }
+      
+          let producto_id = resultados.insertId;
+          let { proveedores } = req.body;
+      
+          // Insertar en la tabla de producto_proveedor
+          proveedores.forEach(function(proveedor) {
+            let { precio, codigo } = proveedor;
+            modeloProductos.insertarProductoProveedor(conexion, producto_id, proveedor.id, precio, codigo, function(error, resultados) {
+              if (error) {
+                return res.status(500).send('Hubo un error al insertar el producto_proveedor');
+              }
+      
+              // Insertar en la tabla de descuentos_proveedor
+              let { descuento } = proveedor;
+              modeloProductos.insertarDescuentos(conexion, proveedor.id, descuento, function(error, resultados) {
+                if (error) {
+                  return res.status(500).send('Hubo un error al insertar el descuento del proveedor');
+                }
+              });
+            });
+          });
+          res.redirect('/productos');
         });
     },
          eliminar: function(req,res){

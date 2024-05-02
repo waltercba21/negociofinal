@@ -18,53 +18,17 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-insertar: function(conexion, datos, archivo, funcion){
-    if (!archivo) {
-      return funcion(new Error('No se proporcionó un archivo'));
-    } 
-    conexion.query('SELECT id FROM categorias WHERE nombre = ?', [datos.categoria], (error, resultados) => {
-      if (error) {
-        return funcion(error);
-      }
-      if (resultados.length === 0) {
-        return funcion(new Error('No se encontró ninguna categoría con el nombre proporcionado'));
-      }
-      const categoria_id = resultados[0].id;
-      conexion.query('SELECT id FROM marcas WHERE id = ?', [datos.marca], (error, resultados) => {
-        if (error) {
-          return funcion(error);
-        }
-        if (resultados.length === 0) {
-          return funcion(new Error('No se encontró ninguna marca con el ID proporcionado'));
-        }
-        const marca_id = resultados[0].id;
-        conexion.query('SELECT id FROM proveedores WHERE id = ?', [datos.proveedor], (error, resultados) => {
-          if (error) {
-            return funcion(error);
-          }
-          if (resultados.length === 0) {
-            return funcion(new Error('No se encontró ningún proveedor con el ID proporcionado'));
-          }
-          const proveedor_id = resultados[0].id;
-          conexion.query('INSERT INTO productos (nombre,proveedor_id,precio,descripcion,categoria_id,marca_id,modelo_id,imagen,costo,utilidad) VALUES (?,?,?,?,?,?,?,?,?,?)',
-  [datos.nombre,datos.descripcion,proveedor_id,datos.precio,categoria_id,marca_id,datos.modelo_id, archivo.filename, datos.costo, datos.utilidad], (error, resultados) => {
-    if (error) {
-       return funcion(error);
-    }
-    funcion(null, resultados);
-  });
-        });
-      });
-    });
+  insertar:function(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, funcion) {
+    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio], funcion);
   },
-  insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio, codigo, funcion) {
+  insertarProductoProveedor : function(conexion, producto_id, proveedor_id, precio, codigo, funcion) {
     conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio, codigo) VALUES (?, ?, ?, ?)',
-    [producto_id, proveedor_id, precio, codigo], (error, resultados) => {
-      if (error) {
-        return funcion(error);
-      }
-      funcion(null, resultados);
-    });
+    [producto_id, proveedor_id, precio, codigo], funcion);
+  },
+  insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
+    conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
+    [proveedor_id, descuento], funcion);
   },
   borrar: function (conexion,id,funcion){ 
         conexion.query('DELETE FROM productos WHERE id=?', [id],funcion)
