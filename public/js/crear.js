@@ -112,3 +112,10 @@ if (!document.getElementById("precio_" + proveedor.id)) {
             document.getElementById('precio').value = precio.toFixed(2);
         });
     });
+    document.getElementById('form-id').addEventListener('submit', function() {
+    var selectModelo = document.getElementById('modelo_id');
+    if (selectModelo.value === "") {
+        alert('Por favor, selecciona un modelo antes de enviar el formulario.');
+        event.preventDefault(); // Esto evita que el formulario se envíe
+    }
+});
