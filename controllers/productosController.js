@@ -236,7 +236,7 @@ module.exports = {
         let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio } = req.body;
       
         // Insertar en la tabla de productos
-        modeloProductos.insertar(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, function(error, resultados) {
+        producto.insertar(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, function(error, resultados) {
           if (error) {
             return res.status(500).send('Hubo un error al insertar el producto');
           }
@@ -247,14 +247,14 @@ module.exports = {
           // Insertar en la tabla de producto_proveedor
           proveedores.forEach(function(proveedor) {
             let { precio, codigo } = proveedor;
-            modeloProductos.insertarProductoProveedor(conexion, producto_id, proveedor.id, precio, codigo, function(error, resultados) {
+            producto.insertarProductoProveedor(conexion, producto_id, proveedor.id, precio, codigo, function(error, resultados) {
               if (error) {
                 return res.status(500).send('Hubo un error al insertar el producto_proveedor');
               }
       
               // Insertar en la tabla de descuentos_proveedor
               let { descuento } = proveedor;
-              modeloProductos.insertarDescuentos(conexion, proveedor.id, descuento, function(error, resultados) {
+              producto.insertarDescuentos(conexion, proveedor.id, descuento, function(error, resultados) {
                 if (error) {
                   return res.status(500).send('Hubo un error al insertar el descuento del proveedor');
                 }
