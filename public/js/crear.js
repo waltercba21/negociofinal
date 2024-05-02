@@ -66,6 +66,10 @@ if (!document.getElementById("precio_" + proveedor.id)) {
                         // Calcula el precio con descuento
                         var precioLista = parseFloat(this.value);
                         var descuentoProveedor = parseFloat(proveedor.descuento); // Aquí necesitas obtener el descuento del proveedor
+                        if (isNaN(descuentoProveedor)) {
+                            alert('El descuento del proveedor no es un número válido.');
+                            return;
+                        }
                         var precioConDescuento = precioLista * (1 - descuentoProveedor / 100);
                         // Muestra el precio con descuento en el campo de entrada de costo
                         document.getElementById('costo').value = precioConDescuento.toFixed(2);
