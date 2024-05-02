@@ -241,10 +241,8 @@ module.exports = {
             console.log(error); // Imprimir el error en la consola
             return res.status(500).send('Hubo un error al insertar el producto');
           }
-      
           let producto_id = resultados.insertId;
           let { proveedores } = req.body;
-      
           // Insertar en la tabla de producto_proveedor
           proveedores.forEach(function(proveedor) {
             let { precio, codigo } = proveedor;
@@ -253,15 +251,6 @@ module.exports = {
                 console.log(error); // Imprimir el error en la consola
                 return res.status(500).send('Hubo un error al insertar el producto_proveedor');
               }
-      
-              // Insertar en la tabla de descuentos_proveedor
-              let { descuento } = proveedor;
-              producto.insertarDescuentos(conexion, proveedor.id, descuento, function(error, resultados) {
-                if (error) {
-                  console.log(error); // Imprimir el error en la consola
-                  return res.status(500).send('Hubo un error al insertar el descuento del proveedor');
-                }
-              });
             });
           });
           res.redirect('/productos');
