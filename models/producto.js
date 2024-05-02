@@ -20,7 +20,7 @@ obtenerPorId: function (conexion, id, funcion) {
   },
   insertar:function(conexion, imagen, nombre, descripcion, categoria, marca, modelo, precio_lista,costo, utilidad, precio,  funcion) {
     console.log(imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, precio_lista);
-    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id,precio_lista, costo, utilidad, precio, ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id,precio_lista, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [imagen, nombre, descripcion, categoria, marca, modelo, precio_lista,costo, utilidad, precio ], funcion);
 },
   insertarProductoProveedor : function(conexion, producto_id, proveedor_id, codigo, funcion) {
