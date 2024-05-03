@@ -18,19 +18,19 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  insertarProductoYProveedor : function(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, producto_id, proveedor_id, codigo, precio_lista, funcion) {
-    // Primero, inserta el nuevo producto en la tabla 'producto_proveedor'
-    conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo, precio_lista) VALUES (?, ?, ?, ?)',
-    [producto_id, proveedor_id, codigo, precio_lista], function(error, results) {
+  insertarProductoYProveedor : function(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedor_id, codigo, precio_lista, funcion) {
+    // Primero, inserta el nuevo producto en la tabla 'productos'
+    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio], function(error, results) {
         if (error) return funcion(error);
 
-        // Luego, usa el 'codigo' que se generó para insertar el nuevo producto en la tabla 'productos'
-        conexion.query('INSERT INTO productos (codigo, imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [codigo, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio], function(error, results) {
+        // Luego, usa el 'id' que se generó para insertar el nuevo producto en la tabla 'producto_proveedor'
+        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo, precio_lista) VALUES (?, ?, ?, ?)',
+        [results.insertId, proveedor_id, codigo, precio_lista], function(error, results) {
             if (error) return funcion(error);
 
-            // Llama a la función de callback con los resultados de la segunda inserción y el insertId de la primera
-            funcion(null, results, results.insertId);
+            // Llama a la función de callback con los resultados de la segunda inserción
+            funcion(null, results);
         });
     });
 },
