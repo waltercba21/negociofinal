@@ -22,13 +22,13 @@ var proveedorTemplate = `
         <input class="codigo" type="text" name="codigo[]">
     </div>
     <div class="form-group-crear">
-        <label for="precio_lista">Precio de Lista:</label>
-        <input class="precio_lista" class="form-control" type="number" name="precio_lista[]">
-    </div>
-    <div class="form-group-crear">
-        <label for="descuento">Descuento:</label>
-        <input class="descuento" class="form-control" type="number" name="descuento[]" readonly>
-    </div>
+    <label for="descuento">Descuento:</label>
+    <input class="descuento" class="form-control" type="number" name="descuento[]" readonly>
+</div>
+<div class="form-group-crear">
+    <label for="costo">Costo Proveedor:</label>
+    <input class="costo" class="form-control" type="number" name="costo[]" readonly>
+</div>
 `;
 
 $('#addProveedor').click(function(event) {
@@ -40,6 +40,12 @@ $('#addProveedor').click(function(event) {
 
     // Aquí se agregan las opciones de proveedores al nuevo select
     $('.proveedores:first option').clone().appendTo(newProveedor.find('.proveedores'));
+});
+$(document).on('change', '.precio_lista', function() {
+    var precioLista = $(this).val();
+    var descuento = $(this).closest('.form-group-crear').nextAll().find('.descuento').val();
+    var costo = precioLista - (precioLista * descuento / 100);
+    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo);
 });
 $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
