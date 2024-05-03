@@ -228,17 +228,27 @@ module.exports = {
         let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedores } = req.body;
     
         // Insertar en la tabla de productos y producto_proveedor
-        proveedores.forEach(function(proveedor) {
+        let promesas = proveedores.map(function(proveedor) {
             let { codigo, precio_lista } = proveedor;
-            producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedor.id, codigo, precio_lista, function(error, resultados) {
-                if (error) {
-                    console.log(error); // Imprimir el error en la consola
-                    return res.status(500).send('Hubo un error al insertar el producto y el producto_proveedor');
-                }
+            return new Promise((resolve, reject) => {
+                producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedor.id, codigo, precio_lista, function(error, resultados) {
+                    if (error) {
+                        console.log(error); // Imprimir el error en la consola
+                        reject(error);
+                    } else {
+                        resolve(resultados);
+                    }
+                });
             });
         });
     
-        res.redirect('/productos');
+        Promise.all(promesas)
+            .then(() => {
+                res.redirect('/productos');
+            })
+            .catch((error) => {
+                return res.status(500).send('Hubo un error al insertar el producto y el producto_proveedor');
+            });
     },
          eliminar: function(req,res){
             producto.retornarDatosId(conexion,req.params.id,function (error, registros){

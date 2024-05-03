@@ -20,13 +20,13 @@ obtenerPorId: function (conexion, id, funcion) {
   },
   insertarProductoYProveedor : function(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedor_id, codigo, precio_lista, funcion) {
     // Primero, inserta el nuevo producto en la tabla 'productos'
-    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio], function(error, results) {
+    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio, modelo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, modelo], function(error, results) {
         if (error) return funcion(error);
 
         // Luego, usa el 'id' que se generó para insertar el nuevo producto en la tabla 'producto_proveedor'
-        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo, precio_lista) VALUES (?, ?, ?, ?)',
-        [results.insertId, proveedor_id, codigo, precio_lista], function(error, results) {
+        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo, precio_lista, modelo) VALUES (?, ?, ?, ?, ?)',
+        [results.insertId, proveedor_id, codigo, precio_lista, modelo], function(error, results) {
             if (error) return funcion(error);
 
             // Llama a la función de callback con los resultados de la segunda inserción
