@@ -229,9 +229,9 @@ module.exports = {
     
         // Insertar en la tabla de productos y producto_proveedor
         let promesas = proveedores.map(function(proveedor) {
-            let { codigo, precio_lista } = proveedor;
+            let { id, codigo } = proveedor;
             return new Promise((resolve, reject) => {
-                producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedor.id, codigo, precio_lista, function(error, resultados) {
+                producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, id, codigo, function(error, resultados) {
                     if (error) {
                         console.log(error); // Imprimir el error en la consola
                         reject(error);
