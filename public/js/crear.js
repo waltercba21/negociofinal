@@ -14,9 +14,7 @@ var proveedorTemplate = `
     <div class="form-group-crear">
         <label for="proveedores">Proveedores:</label>
         <select class="proveedores" name="proveedores[]" multiple>
-            <% proveedores.forEach(function(proveedor) { %>
-                <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>"><%= proveedor.nombre %></option>
-            <% }); %>
+            <!-- Aquí se agregarán las opciones de proveedores con JavaScript -->
         </select>
     </div>
     <div class="form-group-crear">
@@ -34,9 +32,12 @@ var proveedorTemplate = `
 `;
 
 $('#addProveedor').click(function() {
-    $('#proveedoresContainer').append(proveedorTemplate);
-});
+    var newProveedor = $(proveedorTemplate);
+    $('#proveedoresContainer').append(newProveedor);
 
+    // Aquí se agregan las opciones de proveedores al nuevo select
+    $('.proveedores:first option').clone().appendTo(newProveedor.find('.proveedores'));
+});
 $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
     var descuento = selectedOption.data('descuento');
