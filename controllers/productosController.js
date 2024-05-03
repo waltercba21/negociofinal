@@ -225,25 +225,29 @@ module.exports = {
     },
     guardar : function(req, res) {
         let imagen = req.file.filename;
-        let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, precio_lista } = req.body;
+        let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio } = req.body;
+    
         // Insertar en la tabla de productos
-        producto.insertar(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, precio_lista, function(error, resultados) {
+        producto.insertarProducto(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, function(error, resultados) {
             if (error) {
                 console.log(error); // Imprimir el error en la consola
                 return res.status(500).send('Hubo un error al insertar el producto');
             }
+    
             let producto_id = resultados.insertId;
             let { proveedores } = req.body;
+    
             // Insertar en la tabla de producto_proveedor
             proveedores.forEach(function(proveedor) {
-                let { codigo } = proveedor;
-                producto.insertarProductoProveedor(conexion, producto_id, proveedor.id, codigo, function(error, resultados) {
+                let { codigo, precio_lista } = proveedor;
+                producto.insertarProductoProveedor(conexion, producto_id, proveedor.id, codigo, precio_lista, function(error, resultados) {
                     if (error) {
                         console.log(error); // Imprimir el error en la consola
                         return res.status(500).send('Hubo un error al insertar el producto_proveedor');
                     }
                 });
             });
+    
             res.redirect('/productos');
         });
     },

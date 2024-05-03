@@ -18,15 +18,15 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-insertarProductoProveedor : function(conexion, producto_id, proveedor_id, codigo, funcion) {
-    conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo) VALUES (?, ?, ?)',
-    [producto_id, proveedor_id, codigo], funcion);
-},
-insertarProductoProveedor : function(conexion, producto_id, proveedor_id, precio, codigo, funcion) {
-    conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio, codigo) VALUES (?, ?, ?, ?)',
-    [producto_id, proveedor_id, precio, codigo], funcion);
+  insertarProducto : function(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, funcion) {
+    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio], funcion);
 },
 
+insertarProductoProveedor : function(conexion, producto_id, proveedor_id, codigo, precio_lista, funcion) {
+    conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo, precio_lista) VALUES (?, ?, ?, ?)',
+    [producto_id, proveedor_id, codigo, precio_lista], funcion);
+},
   insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
     conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
     [proveedor_id, descuento], funcion);
