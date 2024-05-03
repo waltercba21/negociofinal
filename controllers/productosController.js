@@ -225,16 +225,11 @@ module.exports = {
     },
     guardar : function(req, res) {
         let imagen = req.file.filename;
-        let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedores } = req.body;
-    
-        // Imprimir el valor de 'codigo' para cada proveedor
-        proveedores.forEach(proveedor => {
-            console.log(proveedor.codigo);
-        });
+        let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedores, codigo } = req.body;
     
         // Insertar en la tabla de productos y producto_proveedor
         let promesas = proveedores.map(function(proveedor) {
-            let { id, codigo } = proveedor;
+            let { id } = proveedor;
             return new Promise((resolve, reject) => {
                 producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, id, codigo, function(error, resultados) {
                     if (error) {
