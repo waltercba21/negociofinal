@@ -30,7 +30,6 @@ var proveedorTemplate = `
     <input class="costo" class="form-control" type="number" name="costo[]" readonly>
 </div>
 `;
-
 $('#addProveedor').click(function(event) {
     // Prevenir el comportamiento predeterminado del evento de clic
     event.preventDefault();
@@ -40,7 +39,15 @@ $('#addProveedor').click(function(event) {
 
     // Aquí se agregan las opciones de proveedores al nuevo select
     $('.proveedores:first option').clone().appendTo(newProveedor.find('.proveedores'));
+
+    // Adjuntar el controlador de eventos change a los elementos .proveedores
+    newProveedor.find('.proveedores').change(function() {
+        var selectedOption = $(this).find('option:selected');
+        var descuento = selectedOption.data('descuento');
+        $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
+    });
 });
+
 $(document).on('change', '.precio_lista', function() {
     var precioLista = $(this).val();
     var descuento = $(this).closest('.form-group-crear').nextAll().find('.descuento').val();
