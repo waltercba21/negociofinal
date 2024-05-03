@@ -9,10 +9,8 @@ $('#marca').change(function() {
         });
     });
 });
-
-// AGREGAR PROVEEDOR AL PRODUCTO 
-$(document).ready(function() {
-    var proveedorTemplate = `
+//AGREGAR PROVEEDORES
+var proveedorTemplate = `
     <div class="form-group-crear">
         <label for="proveedores">Proveedores:</label>
         <select class="proveedores" name="proveedores[]" multiple>
@@ -31,17 +29,16 @@ $(document).ready(function() {
     </div>
     <div class="form-group-crear">
         <label for="descuento">Descuento:</label>
-        <input class="descuento" class="form-control" type="number" name="descuento[]">
+        <input class="descuento" class="form-control" type="number" name="descuento[]" readonly>
     </div>
 `;
+
 $('#addProveedor').click(function() {
     $('#proveedoresContainer').append(proveedorTemplate);
 });
 
-    // ACTUALIZAR DINÁMICAMENTE EL DESCUENTO
-    $(document).on('change', '.proveedores', function() {
-        var selectedOption = $(this).find('option:selected');
-        var descuento = selectedOption.data('descuento');
-        $(this).closest('.form-group-crear').find('.descuento').val(descuento);
-    });
+$(document).on('change', '.proveedores', function() {
+    var selectedOption = $(this).find('option:selected');
+    var descuento = selectedOption.data('descuento');
+    $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
 });
