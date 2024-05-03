@@ -29,8 +29,8 @@ obtenerPorId: function (conexion, id, funcion) {
         [codigo, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio], function(error, results) {
             if (error) return funcion(error);
 
-            // Llama a la función de callback con los resultados de la segunda inserción
-            funcion(null, results);
+            // Llama a la función de callback con los resultados de la segunda inserción y el insertId de la primera
+            funcion(null, results, results.insertId);
         });
     });
 },

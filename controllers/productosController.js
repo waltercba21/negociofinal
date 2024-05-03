@@ -230,7 +230,7 @@ module.exports = {
         // Insertar en la tabla de productos y producto_proveedor
         proveedores.forEach(function(proveedor) {
             let { codigo, precio_lista } = proveedor;
-            producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, resultados.insertId, proveedor.id, codigo, precio_lista, function(error, resultados) {
+            producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, producto_id, proveedor.id, codigo, precio_lista, function(error, resultados, insertId) {
                 if (error) {
                     console.log(error); // Imprimir el error en la consola
                     return res.status(500).send('Hubo un error al insertar el producto y el producto_proveedor');
