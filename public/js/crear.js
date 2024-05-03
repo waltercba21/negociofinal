@@ -31,7 +31,10 @@ var proveedorTemplate = `
     </div>
 `;
 
-$('#addProveedor').click(function() {
+$('#addProveedor').click(function(event) {
+    // Prevenir el comportamiento predeterminado del evento de clic
+    event.preventDefault();
+
     var newProveedor = $(proveedorTemplate);
     $('#proveedoresContainer').append(newProveedor);
 
