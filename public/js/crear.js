@@ -19,7 +19,7 @@ var proveedorTemplate = `
     </div>
     <div class="form-group-crear">
         <label for="codigo">Código:</label>
-        <input class="codigo" type="text" name="codigo[]">
+        <input class="codigo" type="text" name="codigo">
     </div>
     <div class="form-group-crear">
     <label for="descuento">Descuento:</label>

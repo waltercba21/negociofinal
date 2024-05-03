@@ -227,6 +227,11 @@ module.exports = {
         let imagen = req.file.filename;
         let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedores } = req.body;
     
+        // Imprimir el valor de 'codigo' para cada proveedor
+        proveedores.forEach(proveedor => {
+            console.log(proveedor.codigo);
+        });
+    
         // Insertar en la tabla de productos y producto_proveedor
         let promesas = proveedores.map(function(proveedor) {
             let { id, codigo } = proveedor;
