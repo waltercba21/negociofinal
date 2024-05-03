@@ -18,7 +18,7 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  insertarProductoProveedor : function(conexion, producto_id, proveedor_id, codigo, funcion) {
+insertarProductoProveedor : function(conexion, producto_id, proveedor_id, codigo, funcion) {
     conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo) VALUES (?, ?, ?)',
     [producto_id, proveedor_id, codigo], funcion);
 },
