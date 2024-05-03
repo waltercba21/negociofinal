@@ -59,3 +59,24 @@ $(document).on('change', '.proveedores', function() {
     var descuento = selectedOption.data('descuento');
     $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
 });
+$('#utilidad').change(function() {
+    var utilidad = parseFloat($(this).val());
+    var costo = parseFloat($('#costo').val());
+    var precioFinal = costo + (costo * utilidad / 100);
+    $('#precio').val(precioFinal.toFixed(2));
+});
+$(document).on('change', '.precio_lista', function() {
+    var precioLista = parseFloat($(this).val());
+    var costoMinimo = null;
+
+    $('.costo').each(function() {
+        var descuento = parseFloat($(this).closest('.form-group-crear').prevAll().find('.descuento').val());
+        var costo = precioLista - (precioLista * descuento / 100);
+
+        if (costoMinimo === null || costo < costoMinimo) {
+            costoMinimo = costo;
+        }
+    });
+
+    $('#costo').val(costoMinimo.toFixed(2));
+});
