@@ -225,31 +225,20 @@ module.exports = {
     },
     guardar : function(req, res) {
         let imagen = req.file.filename;
-        let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio } = req.body;
+        let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedores } = req.body;
     
-        // Insertar en la tabla de productos
-        producto.insertarProducto(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, function(error, resultados) {
-            if (error) {
-                console.log(error); // Imprimir el error en la consola
-                return res.status(500).send('Hubo un error al insertar el producto');
-            }
-    
-            let producto_id = resultados.insertId;
-            let { proveedores } = req.body;
-    
-            // Insertar en la tabla de producto_proveedor
-            proveedores.forEach(function(proveedor) {
-                let { codigo, precio_lista } = proveedor;
-                producto.insertarProductoProveedor(conexion, producto_id, proveedor.id, codigo, precio_lista, function(error, resultados) {
-                    if (error) {
-                        console.log(error); // Imprimir el error en la consola
-                        return res.status(500).send('Hubo un error al insertar el producto_proveedor');
-                    }
-                });
+        // Insertar en la tabla de productos y producto_proveedor
+        proveedores.forEach(function(proveedor) {
+            let { codigo, precio_lista } = proveedor;
+            producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, resultados.insertId, proveedor.id, codigo, precio_lista, function(error, resultados) {
+                if (error) {
+                    console.log(error); // Imprimir el error en la consola
+                    return res.status(500).send('Hubo un error al insertar el producto y el producto_proveedor');
+                }
             });
-    
-            res.redirect('/productos');
         });
+    
+        res.redirect('/productos');
     },
          eliminar: function(req,res){
             producto.retornarDatosId(conexion,req.params.id,function (error, registros){

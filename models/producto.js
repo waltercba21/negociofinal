@@ -18,14 +18,21 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  insertarProducto : function(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, funcion) {
-    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio], funcion);
-},
-
-insertarProductoProveedor : function(conexion, producto_id, proveedor_id, codigo, precio_lista, funcion) {
+  insertarProductoYProveedor : function(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, producto_id, proveedor_id, codigo, precio_lista, funcion) {
+    // Primero, inserta el nuevo producto en la tabla 'producto_proveedor'
     conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo, precio_lista) VALUES (?, ?, ?, ?)',
-    [producto_id, proveedor_id, codigo, precio_lista], funcion);
+    [producto_id, proveedor_id, codigo, precio_lista], function(error, results) {
+        if (error) return funcion(error);
+
+        // Luego, usa el 'codigo' que se generó para insertar el nuevo producto en la tabla 'productos'
+        conexion.query('INSERT INTO productos (codigo, imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [codigo, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio], function(error, results) {
+            if (error) return funcion(error);
+
+            // Llama a la función de callback con los resultados de la segunda inserción
+            funcion(null, results);
+        });
+    });
 },
   insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
     conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
