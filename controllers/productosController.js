@@ -187,17 +187,14 @@ module.exports = {
         // Obtén las categorías
         producto.obtenerCategorias(conexion).then(result => {
             categorias = result;
-    
             // Obtén las marcas
             return producto.obtenerMarcas(conexion);
         }).then(result => {
             marcas = result;
-    
             // Obtén los modelos
             return producto.obtenerModelosPorMarca(conexion);
         }).then(result => {
             modelos = result;
-    
             // Obtén los proveedores y sus descuentos
             return Promise.all([
                 producto.obtenerProveedores(conexion),
@@ -211,11 +208,8 @@ module.exports = {
                     descuento: descuento ? descuento.descuento : 0
                 };
             });
-    
             // Calcula el precio con descuento
             precioConDescuento = req.body.precio * (1 - proveedores[0].descuento / 100);
-    
-            // Renderiza la vista con los datos obtenidos
             res.render('crear', {
                 categorias: categorias,
                 marcas: marcas,
