@@ -213,10 +213,9 @@ module.exports = {
             res.render('crear', {
                 categorias: categorias,
                 marcas: marcas,
-                modelos: modelos,
+                modelos: modelos, 
                 proveedores: proveedores,
                 producto: {}, 
-                modelosPorMarca: [], 
                 precioConDescuento: precioConDescuento,
                 utilidad: req.body.utilidad 
             });
