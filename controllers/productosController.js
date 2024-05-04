@@ -231,22 +231,8 @@ module.exports = {
         let promesas = proveedores.map(function(proveedor) {
             let { id } = proveedor;
             return new Promise((resolve, reject) => {
-                // Verificaciones
-                console.log(`imagen: ${imagen}, tipo: ${typeof imagen}`);
-                console.log(`nombre: ${nombre}, tipo: ${typeof nombre}`);
-                console.log(`descripcion: ${descripcion}, tipo: ${typeof descripcion}`);
-                console.log(`categoria: ${categoria}, tipo: ${typeof categoria}`);
-                console.log(`marca: ${marca}, tipo: ${typeof marca}`);
-                console.log(`modelo: ${modelo}, tipo: ${typeof modelo}`);
-                console.log(`costo: ${costo}, tipo: ${typeof costo}`);
-                console.log(`utilidad: ${utilidad}, tipo: ${typeof utilidad}`);
-                console.log(`precio: ${precio}, tipo: ${typeof precio}`);
-                console.log(`id: ${id}, tipo: ${typeof id}`);
-                console.log(`codigo: ${codigo}, tipo: ${typeof codigo}`);
-        
                 producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, id, codigo, function(error, resultados) {
                     if (error) {
-                        console.log(error); // Imprimir el error en la consola
                         reject(error);
                     } else {
                         resolve(resultados);
