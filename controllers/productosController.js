@@ -225,13 +225,13 @@ module.exports = {
     },
     guardar : function(req, res) {
         const {imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo } = req.body;
-        producto.insertarProducto(conexion,imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, function(error, resultados) {
+        console.log('Datos del producto a insertar:', req.body); // Log de los datos del producto
+        producto.insertarProducto(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, function(error, resultados) {
             if (error) {
-                // Maneja el error (puedes renderizar una vista de error o devolver una respuesta con el error)
-                console.error(error);
+                console.error('Error al insertar el producto:', error); // Log del error
                 res.status(500).send('Hubo un error al insertar el producto');
             } else {
-                // Redirige a donde quieras que vaya el usuario después de insertar el producto (puede ser la página de detalles del producto, la lista de productos, etc.)
+                console.log('Producto insertado con éxito:', resultados); // Log de los resultados
                 res.redirect('/productos');
             }
         });
