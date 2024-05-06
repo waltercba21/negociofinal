@@ -56,6 +56,9 @@ $(document).on('change', '.precio_lista', function() {
     var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
     var costo = precioLista - (precioLista * descuento / 100);
     $('#costo').val(costo.toFixed(2));
+
+    // Disparar el evento 'change' para '.proveedores'
+    $(this).closest('.form-group-crear').find('.proveedores').trigger('change');
 });
 $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
