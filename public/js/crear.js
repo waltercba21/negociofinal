@@ -11,11 +11,13 @@ $('#marca').change(function() {
 });
 //AGREGAR PROVEEDORES
 var proveedorTemplate = `
-    <div class="form-group-crear">
-        <label for="proveedores">Proveedores:</label>
-        <select class="proveedores" name="proveedores[]" multiple>
-            <!-- Aquí se agregarán las opciones de proveedores con JavaScript -->
-        </select>
+<div class="form-group-crear">
+<label for="proveedores">Proveedores:</label>
+<select class="proveedores" name="proveedores[]" multiple>
+    <!-- Aquí se agregarán las opciones de proveedores con JavaScript -->
+</select>
+<input class="nombre_proveedor" type="text" readonly>
+</div>
     </div>
     <div class="form-group-crear">
         <label for="codigo">Código:</label>
@@ -44,6 +46,8 @@ $('#addProveedor').click(function(event) {
     newProveedor.find('.proveedores').change(function() {
         var selectedOption = $(this).find('option:selected');
         var descuento = selectedOption.data('descuento');
+        var nombreProveedor = selectedOption.text();
+        $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
         $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
     });
 });
