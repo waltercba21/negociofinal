@@ -19,14 +19,20 @@ obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
   insertarProductoYProveedor : function(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, precio_lista) {
+    // Convertir todos los valores a string antes de pasarlos a la consulta SQL
+    let valoresProducto = [imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, codigo].map(String);
+
     // Primero, inserta el nuevo producto en la tabla 'productos'
     conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio, codigo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, codigo], function(error, results) {
+    valoresProducto, function(error, results) {
         if (error) throw error;
+
+        // Convertir los valores a string antes de pasarlos a la consulta SQL
+        let valoresProveedor = [results.insertId, proveedor_id, precio_lista].map(String);
 
         // Luego, usa el 'id' que se generó para insertar el nuevo producto en la tabla 'producto_proveedor'
         conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista) VALUES (?, ?, ?)',
-        [results.insertId, proveedor_id, precio_lista], function(error, results) {
+        valoresProveedor, function(error, results) {
             if (error) throw error;
         });
     });
