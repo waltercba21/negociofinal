@@ -74,16 +74,14 @@ $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
     var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
     var costo = precioLista - (precioLista * descuento / 100);
-    $('#costo').val(costo.toFixed(2));
-
-    // Disparar el evento 'change' para '.proveedores'
-    $(this).closest('.form-group-crear').find('.proveedores').trigger('change');
+    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
 });
+
 $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
     var nombreProveedor = selectedOption.text();
     var descuento = selectedOption.data('descuento');
-    var precioLista = parseFloat($('.precio_lista').val());
+    var precioLista = parseFloat($(this).closest('.form-group-crear').nextAll().find('.precio_lista').val());
     var costo = precioLista - (precioLista * descuento / 100);
 
     // Actualiza las etiquetas con el nombre del proveedor
@@ -96,6 +94,7 @@ $(document).on('change', '.proveedores', function() {
     $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
     $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
 });
+
 $('#utilidad').change(function() {
     var utilidad = parseFloat($(this).val());
     var costo = parseFloat($('#costo').val());
