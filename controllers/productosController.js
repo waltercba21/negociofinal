@@ -248,7 +248,7 @@ module.exports = {
             console.log('Producto obtenido:', registros);
             if (registros.length > 0) {
                 if (registros[0].imagen) {
-                    var nombreImagen = '/public/images/' + (registros[0].imagen);
+                    var nombreImagen = '/uploads/productos/' + (registros[0].imagen); // Corregido aquí
                     console.log('Nombre de la imagen:', nombreImagen);
                     if (borrar.existsSync(nombreImagen)) {
                         console.log('Borrando imagen:', nombreImagen);
