@@ -81,20 +81,18 @@ $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
     var nombreProveedor = selectedOption.text();
     var descuento = selectedOption.data('descuento');
-    var precioLista = parseFloat($(this).closest('.form-group-crear').nextAll().find('.precio_lista').val());
+    var precioLista = parseFloat($(this).closest('.form-group-crear').find('.precio_lista').val());
     var costo = precioLista - (precioLista * descuento / 100);
 
     // Actualiza las etiquetas con el nombre del proveedor
-    $(this).closest('.form-group-crear').nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + '):');
-    $(this).closest('.form-group-crear').nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + '):');
-    $(this).closest('.form-group-crear').nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + '):');
-    $(this).closest('.form-group-crear').nextAll().find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + '):');
-    $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + '):');
+    $(this).closest('.form-group-crear').find('label[for="codigo"]').text('Código (' + nombreProveedor + '):');
+    $(this).closest('.form-group-crear').find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + '):');
+    $(this).closest('.form-group-crear').find('label[for="descuento"]').text('Descuento (' + nombreProveedor + '):');
+    $(this).closest('.form-group-crear').find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + '):');
 
-    $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
-    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
+    $(this).closest('.form-group-crear').find('.descuento').val(descuento);
+    $(this).closest('.form-group-crear').find('.costo').val(costo.toFixed(2));
 });
-
 $('#utilidad').change(function() {
     var utilidad = parseFloat($(this).val());
     var costo = parseFloat($('#costo').val());
