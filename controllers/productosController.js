@@ -259,7 +259,7 @@ module.exports = {
                         return;
                     }
                     console.log('Referencias al producto en el carrito eliminadas:', resultados);
-                    producto.borrar(conexion,req.params.id, function (error){ 
+                    producto.borrar(conexion, req.params.id, function (error) { 
                         if (error) {
                             console.error('Error al eliminar el producto:', error);
                             res.status(500).send('Error al eliminar el producto');

@@ -36,15 +36,16 @@ obtenerPorId: function (conexion, id, funcion) {
     conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
     [proveedor_id, descuento], funcion);
   },
-  borrar: function (conexion,id,funcion){ 
+  borrar: function (conexion, id, funcion) { 
     console.log('Iniciando la eliminación del producto en la base de datos con id:', id);
     conexion.query('DELETE FROM productos WHERE id=?', [id], function(error, resultados) {
         if (error) {
             console.error('Error al eliminar el producto de la base de datos:', error);
+            funcion(error);
         } else {
             console.log('Producto eliminado de la base de datos:', resultados);
+            funcion(null, resultados);
         }
-        funcion(error, resultados);
     });
 },
   actualizar: function (conexion, datos, archivo, funcion) {
