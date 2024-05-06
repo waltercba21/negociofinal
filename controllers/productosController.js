@@ -225,7 +225,7 @@ module.exports = {
     },
     guardar : function(req, res) {
         const { imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo } = req.body;
-        producto.insertarProducto(req.conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, function(error, resultados) {
+        producto.insertarProducto(imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, function(error, resultados) {
             if (error) {
                 // Maneja el error (puedes renderizar una vista de error o devolver una respuesta con el error)
                 console.error(error);
