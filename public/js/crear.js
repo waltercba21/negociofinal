@@ -16,7 +16,6 @@ var proveedorTemplate = `
 <select class="proveedores" name="proveedores[]" multiple>
     <!-- Aquí se agregarán las opciones de proveedores con JavaScript -->
 </select>
-<input class="nombre_proveedor" type="text" readonly>
 </div>
     </div>
     <div class="form-group-crear">
@@ -60,10 +59,17 @@ $(document).on('change', '.precio_lista', function() {
 });
 $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
+    var nombreProveedor = selectedOption.text();
     var descuento = selectedOption.data('descuento');
-    $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
     var precioLista = parseFloat($('.precio_lista').val());
     var costo = precioLista - (precioLista * descuento / 100);
+
+    // Actualiza las etiquetas con el nombre del proveedor
+    $(this).closest('.form-group-crear').nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + '):');
+    $(this).closest('.form-group-crear').nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + '):');
+    $(this).closest('.form-group-crear').nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + '):');
+
+    $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
     $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
 });
 $('#utilidad').change(function() {
