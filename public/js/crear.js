@@ -1,3 +1,8 @@
+$(document).ready(function() {
+    // Disparar el evento 'change' para '.proveedores' después de que el DOM esté completamente cargado
+    $('.proveedores').trigger('change');
+});
+
 //OBTENER LOS MODELOS POR MARCA 
 $('#marca').change(function() {
     var marcaId = $(this).val();
