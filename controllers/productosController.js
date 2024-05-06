@@ -247,12 +247,14 @@ module.exports = {
             }
             console.log('Producto obtenido:', registros);
             if (registros.length > 0) {
-                var nombreImagen = '/public/images/' + (registros[0].imagen);
-                console.log('Nombre de la imagen:', nombreImagen);
-                if (borrar.existsSync(nombreImagen)) {
-                    console.log('Borrando imagen:', nombreImagen);
-                    borrar.unlinkSync(nombreImagen);
-                }
+                if (registros[0].imagen) {
+                    var nombreImagen = '/public/images/' + (registros[0].imagen);
+                    console.log('Nombre de la imagen:', nombreImagen);
+                    if (borrar.existsSync(nombreImagen)) {
+                        console.log('Borrando imagen:', nombreImagen);
+                        borrar.unlinkSync(nombreImagen);
+                    }
+                } 
                 console.log('Iniciando eliminación de referencias al producto en el carrito');
                 conexion.query('DELETE FROM carritos WHERE producto_id=?', [req.params.id], function (error, resultados) {
                     if (error) {
