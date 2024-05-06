@@ -18,17 +18,18 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  insertarProductoYProveedor : function(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, precio_lista) {
-    // Primero, inserta el nuevo producto en la tabla 'productos'
-    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio, codigo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, codigo], function(error, results) {
-        if (error) throw error;
-
-        // Luego, usa el 'id' que se generó para insertar el nuevo producto en la tabla 'producto_proveedor'
-        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista) VALUES (?, ?, ?)',
-        [results.insertId, proveedor_id, precio_lista], function(error, results) {
-            if (error) throw error;
-        });
+  insertarProductoYProveedor: function(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, funcion) {
+    if (typeof funcion !== 'function') {
+        throw new Error('funcion debe ser una función');
+    }
+    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+    [imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio], function(error, resultados) {
+        if (error) {
+            return funcion(error);
+        }
+        const producto_id = resultados.insertId;
+        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo) VALUES (?, ?, ?)', 
+        [producto_id, proveedor_id, codigo], funcion);
     });
 },
   insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
