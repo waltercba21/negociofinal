@@ -237,34 +237,40 @@ module.exports = {
             }
         });
     },
-         eliminar: function(req,res){
-            producto.retornarDatosId(conexion,req.params.id,function (error, registros){
+    eliminar: function(req,res){
+        console.log('Iniciando el proceso de eliminación para el producto con id:', req.params.id);
+        producto.retornarDatosId(conexion,req.params.id,function (error, registros){
             if (error) {
-                console.error(error);
+                console.error('Error al obtener el producto:', error);
                 res.status(500).send('Error al obtener el producto');
                 return;
             }
+            console.log('Producto obtenido:', registros);
             if (registros.length > 0) {
                 var nombreImagen = '/public/images/' + (registros [0].imagen);
                 if(borrar.existsSync(nombreImagen)){
+                    console.log('Borrando imagen:', nombreImagen);
                     borrar.unlinkSync(nombreImagen);
                 }
                 conexion.query('DELETE FROM carritos WHERE producto_id=?', [req.params.id], function(error, resultados) {
                     if (error) {
-                        console.error(error);
+                        console.error('Error al eliminar las referencias al producto en el carrito:', error);
                         res.status(500).send('Error al eliminar las referencias al producto en el carrito');
                         return;
                     }
+                    console.log('Referencias al producto en el carrito eliminadas:', resultados);
                     producto.borrar(conexion,req.params.id, function (error){ 
                         if (error) {
-                            console.error(error);
+                            console.error('Error al eliminar el producto:', error);
                             res.status(500).send('Error al eliminar el producto');
                             return;
                         }
+                        console.log('Producto eliminado con éxito');
                         res.redirect('/productos/panelControl');
                     })
                 });
             } else {
+                console.log('Producto no encontrado');
                 res.status(404).send('Producto no encontrado');
             }
         });
