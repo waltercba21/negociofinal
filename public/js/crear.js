@@ -44,7 +44,8 @@ $('#addProveedor').click(function(event) {
     $('#proveedoresContainer').append(newProveedor);
 
     // Aquí se agregan las opciones de proveedores al nuevo select
-    $('.proveedores:first option').clone().appendTo(newProveedor.find('.proveedores'));
+    // Cambia '.proveedores:first' a '.proveedores:last'
+    $('.proveedores:last option').clone().appendTo(newProveedor.find('.proveedores'));
 
     // Adjuntar el controlador de eventos change a los elementos .proveedores
     newProveedor.find('.proveedores').change(function() {
