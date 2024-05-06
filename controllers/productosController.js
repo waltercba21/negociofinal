@@ -224,44 +224,17 @@ module.exports = {
         });
     },
     guardar : function(req, res) {
-        let imagen = req.file.filename;
-        let { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedores, codigo } = req.body;
-    
-        // Si modelo_id es undefined, establecerlo en una cadena vacía
-        modelo_id = modelo_id || '';
-    
-        console.log(`imagen: ${typeof imagen}`);
-        console.log(`nombre: ${typeof nombre}`);
-        console.log(`descripcion: ${typeof descripcion}`);
-        console.log(`categoria: ${typeof categoria}`);
-        console.log(`marca: ${typeof marca}`);
-        console.log(`modelo_id: ${typeof modelo_id}`);
-        console.log(`costo: ${typeof costo}`);
-        console.log(`utilidad: ${typeof utilidad}`);
-        console.log(`precio: ${typeof precio}`);
-        console.log(`codigo: ${typeof codigo}`);
-    
-        // Insertar en la tabla de productos y producto_proveedor
-        let promesas = proveedores.map(function(proveedor) {
-            let { id } = proveedor;
-            return new Promise((resolve, reject) => {
-                producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, id, codigo, function(error, resultados) {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        resolve(resultados);
-                    }
-                });
-            });
-        });
-    
-        Promise.all(promesas)
-            .then(() => {
+        const { imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo } = req.body;
+        modeloProducto.insertarProducto(req.conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, function(error, resultados) {
+            if (error) {
+                // Maneja el error (puedes renderizar una vista de error o devolver una respuesta con el error)
+                console.error(error);
+                res.status(500).send('Hubo un error al insertar el producto');
+            } else {
+                // Redirige a donde quieras que vaya el usuario después de insertar el producto (puede ser la página de detalles del producto, la lista de productos, etc.)
                 res.redirect('/productos');
-            })
-            .catch((error) => {
-                return res.status(500).send('Hubo un error al insertar el producto y el producto_proveedor');
-            });
+            }
+        });
     },
          eliminar: function(req,res){
             producto.retornarDatosId(conexion,req.params.id,function (error, registros){

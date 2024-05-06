@@ -18,7 +18,7 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  insertarProductoYProveedor: function(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, funcion) {
+  insertarProducto : function(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, funcion) {
     if (typeof funcion !== 'function') {
         throw new Error('funcion debe ser una función');
     }
@@ -30,7 +30,7 @@ obtenerPorId: function (conexion, id, funcion) {
         const producto_id = resultados.insertId;
         conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo) VALUES (?, ?, ?)', 
         [producto_id, proveedor_id, codigo], funcion);
-    });
+    })
 },
   insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
     conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
