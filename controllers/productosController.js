@@ -225,28 +225,27 @@ module.exports = {
     },
     guardar : function(req, res) {
         let imagen = req.file.filename;
-        let { nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, proveedores, codigo } = req.body;
+        let { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedores, codigo } = req.body;
     
-        // Si modelo es undefined, establecerlo en una cadena vacía
-        modelo = modelo || '';
+        // Si modelo_id es undefined, establecerlo en una cadena vacía
+        modelo_id = modelo_id || '';
     
         console.log(`imagen: ${typeof imagen}`);
         console.log(`nombre: ${typeof nombre}`);
         console.log(`descripcion: ${typeof descripcion}`);
         console.log(`categoria: ${typeof categoria}`);
         console.log(`marca: ${typeof marca}`);
-        console.log(`modelo: ${typeof modelo}`);
+        console.log(`modelo_id: ${typeof modelo_id}`);
         console.log(`costo: ${typeof costo}`);
         console.log(`utilidad: ${typeof utilidad}`);
         console.log(`precio: ${typeof precio}`);
-        console.log(`id: ${typeof id}`);
         console.log(`codigo: ${typeof codigo}`);
     
         // Insertar en la tabla de productos y producto_proveedor
         let promesas = proveedores.map(function(proveedor) {
             let { id } = proveedor;
             return new Promise((resolve, reject) => {
-                producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo, costo, utilidad, precio, id, codigo, function(error, resultados) {
+                producto.insertarProductoYProveedor(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, id, codigo, function(error, resultados) {
                     if (error) {
                         reject(error);
                     } else {
