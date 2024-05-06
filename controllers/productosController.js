@@ -237,48 +237,15 @@ module.exports = {
             }
         });
     },
-    eliminar: function(req,res){
-        console.log('Iniciando el proceso de eliminación para el producto con id:', req.params.id);
-        producto.retornarDatosId(conexion, req.params.id, function (error, registros) {
-            if (error) {
-                console.error('Error al obtener el producto:', error);
-                res.status(500).send('Error al obtener el producto');
-                return;
-            }
-            console.log('Producto obtenido:', registros);
-            if (registros.length > 0) {
-                if (registros[0].imagen) {
-                    var nombreImagen = '/uploads/productos/' + (registros[0].imagen); // Corregido aquí
-                    console.log('Nombre de la imagen:', nombreImagen);
-                    if (borrar.existsSync(nombreImagen)) {
-                        console.log('Borrando imagen:', nombreImagen);
-                        borrar.unlinkSync(nombreImagen);
-                    }
-                } 
-                console.log('Iniciando eliminación de referencias al producto en el carrito');
-                conexion.query('DELETE FROM carritos WHERE producto_id=?', [req.params.id], function (error, resultados) {
-                    if (error) {
-                        console.error('Error al eliminar las referencias al producto en el carrito:', error);
-                        res.status(500).send('Error al eliminar las referencias al producto en el carrito');
-                        return;
-                    }
-                    console.log('Referencias al producto en el carrito eliminadas:', resultados);
-                    console.log('Iniciando eliminación del producto');
-                    producto.borrar(conexion, req.params.id, function (error) { 
-                        if (error) {
-                            console.error('Error al eliminar el producto:', error);
-                            res.status(500).send('Error al eliminar el producto');
-                            return;
-                        }
-                        console.log('Producto eliminado con éxito');
-                        res.redirect('/productos/panelControl');
-                    })
-                });
-            } else {
-                console.log('Producto no encontrado');
-                res.status(404).send('Producto no encontrado');
-            }
-        });
+    eliminar : async (req, res) => {
+        const { id } = req.params;
+        try {
+            await producto.eliminar(id);
+            res.redirect('/productos/panelControl');
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Hubo un error al intentar eliminar el producto');
+        }
     },
     editar : async function (req, res) { 
         try {
@@ -291,13 +258,13 @@ module.exports = {
             let categorias = await producto.obtenerCategorias(conexion);
             let proveedores = await producto.obtenerProveedores(conexion);
             let marcas = await producto.obtenerMarcas(conexion);
-            let modelos = await producto.obtenerModelosPorMarca(conexion, productoResult[0].marcaId); // Asegúrate de tener una función obtenerModelos en tu modelo
+            let modelos = await producto.obtenerModelosPorMarca(conexion, productoResult[0].marcaId); 
             res.render('editar', { 
                 producto: productoResult[0],
                 categorias: categorias,
                 proveedores: proveedores,
                 marcas: marcas,
-                modelos: modelos // Pasa los modelos a la vista
+                modelos: modelos,
             });
         } catch (error) {
             console.error("Error al obtener los datos:", error);
