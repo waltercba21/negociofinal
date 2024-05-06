@@ -22,18 +22,21 @@ var proveedorTemplate = `
     <!-- Aquí se agregarán las opciones de proveedores con JavaScript -->
 </select>
 </div>
-    </div>
-    <div class="form-group-crear">
-        <label for="codigo">Código:</label>
-        <input class="codigo" type="text" name="codigo">
-    </div>
-    <div class="form-group-crear">
-    <label for="descuento">Descuento:</label>
-    <input class="descuento" class="form-control" type="number" name="descuento[]" readonly>
+<div class="form-group-crear">
+    <label for="precio_lista">Precio de Lista:</label>
+    <input class="precio_lista" type="number" name="precio_lista">
 </div>
 <div class="form-group-crear">
-    <label for="costo">Costo Proveedor:</label>
-    <input class="costo" class="form-control" type="number" name="costo[]" readonly>
+    <label for="codigo">Código:</label>
+    <input class="codigo" type="text" name="codigo">
+</div>
+<div class="form-group-crear">
+<label for="descuento">Descuento:</label>
+<input class="descuento" class="form-control" type="number" name="descuento[]" readonly>
+</div>
+<div class="form-group-crear">
+<label for="costo">Costo Proveedor:</label>
+<input class="costo" class="form-control" type="number" name="costo[]" readonly>
 </div>
 `;
 $('#addProveedor').click(function(event) {
