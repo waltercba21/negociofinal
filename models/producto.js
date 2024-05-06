@@ -23,14 +23,14 @@ obtenerPorId: function (conexion, id, funcion) {
         throw new Error('funcion debe ser una función');
     }
     conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-    [imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio], function(error, resultados) {
+    [imagen, nombre, descripcion, Number(categoria), Number(marca), Number(modelo_id), costo, utilidad, precio], function(error, resultados) {
         if (error) {
             console.error('Error al insertar en la tabla productos:', error); // Log del error
             return funcion(error);
         }
         const producto_id = resultados.insertId;
         conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo) VALUES (?, ?, ?)', 
-        [producto_id, proveedor_id, codigo], function(error, resultados) {
+        [producto_id, Number(proveedor_id), codigo], function(error, resultados) {
             if (error) {
                 console.error('Error al insertar en la tabla producto_proveedor:', error); // Log del error
             } else {
