@@ -68,6 +68,7 @@ $(document).on('change', '.proveedores', function() {
     $(this).closest('.form-group-crear').nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + '):');
     $(this).closest('.form-group-crear').nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + '):');
     $(this).closest('.form-group-crear').nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + '):');
+    $(this).closest('.form-group-crear').nextAll().find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + '):');
 
     $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
     $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
