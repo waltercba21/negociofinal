@@ -239,7 +239,7 @@ module.exports = {
     },
     eliminar: function(req,res){
         console.log('Iniciando el proceso de eliminación para el producto con id:', req.params.id);
-        producto.retornarDatosId(conexion,req.params.id,function (error, registros){
+        producto.retornarDatosId(conexion, req.params.id, function (error, registros) {
             if (error) {
                 console.error('Error al obtener el producto:', error);
                 res.status(500).send('Error al obtener el producto');
@@ -247,18 +247,21 @@ module.exports = {
             }
             console.log('Producto obtenido:', registros);
             if (registros.length > 0) {
-                var nombreImagen = '/public/images/' + (registros [0].imagen);
-                if(borrar.existsSync(nombreImagen)){
+                var nombreImagen = '/public/images/' + (registros[0].imagen);
+                console.log('Nombre de la imagen:', nombreImagen);
+                if (borrar.existsSync(nombreImagen)) {
                     console.log('Borrando imagen:', nombreImagen);
                     borrar.unlinkSync(nombreImagen);
                 }
-                conexion.query('DELETE FROM carritos WHERE producto_id=?', [req.params.id], function(error, resultados) {
+                console.log('Iniciando eliminación de referencias al producto en el carrito');
+                conexion.query('DELETE FROM carritos WHERE producto_id=?', [req.params.id], function (error, resultados) {
                     if (error) {
                         console.error('Error al eliminar las referencias al producto en el carrito:', error);
                         res.status(500).send('Error al eliminar las referencias al producto en el carrito');
                         return;
                     }
                     console.log('Referencias al producto en el carrito eliminadas:', resultados);
+                    console.log('Iniciando eliminación del producto');
                     producto.borrar(conexion, req.params.id, function (error) { 
                         if (error) {
                             console.error('Error al eliminar el producto:', error);
