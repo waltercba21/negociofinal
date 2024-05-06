@@ -183,7 +183,7 @@ module.exports = {
         });
       },
       crear: function(req, res) {
-        let categorias, marcas, modelos, proveedores, descuentoProveedor, precioConDescuento;
+        let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento;
         // Obtén las categorías
         producto.obtenerCategorias(conexion).then(result => {
             categorias = result;
@@ -208,15 +208,15 @@ module.exports = {
                     descuento: descuento ? descuento.descuento : 0
                 };
             });
-            // Calcula el precio con descuento
-            precioConDescuento = req.body.precio * (1 - proveedores[0].descuento / 100);
+            // Calcula los precios con descuento para cada proveedor
+            preciosConDescuento = proveedores.map(proveedor => req.body.precio * (1 - proveedor.descuento / 100));
             res.render('crear', {
                 categorias: categorias,
                 marcas: marcas,
                 modelos: modelos, 
                 proveedores: proveedores,
                 producto: {}, 
-                precioConDescuento: precioConDescuento,
+                preciosConDescuento: preciosConDescuento,
                 utilidad: req.body.utilidad 
             });
         }).catch(error => {
@@ -224,16 +224,28 @@ module.exports = {
         });
     },
     guardar : function(req, res) {
-        const { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo } = req.body;
+        const { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precios, proveedores_id, codigo } = req.body;
         const imagen = req.file ? req.file.filename : null; // Accede al archivo cargado con req.file
         console.log('Datos del producto a insertar:', req.body, 'Imagen:', imagen); // Log de los datos del producto y la imagen
-        producto.insertarProducto(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, function(error, resultados) {
+        producto.insertarProducto(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precios[0], proveedores_id[0], codigo, function(error, resultados) {
             if (error) {
                 console.error('Error al insertar el producto:', error); // Log del error
                 res.status(500).send('Hubo un error al insertar el producto');
             } else {
                 console.log('Producto insertado con éxito:', resultados); // Log de los resultados
-                res.redirect('/productos');
+                const producto_id = resultados.insertId;
+                // Inserta las relaciones entre el producto y sus proveedores
+                const promesas = proveedores_id.map((proveedor_id, i) => {
+                    return producto.insertarProductoProveedor(conexion, producto_id, proveedor_id, precios[i]);
+                });
+                Promise.all(promesas)
+                    .then(() => {
+                        res.redirect('/productos');
+                    })
+                    .catch(error => {
+                        console.error('Error al insertar las relaciones producto-proveedor:', error);
+                        res.status(500).send('Hubo un error al insertar las relaciones producto-proveedor');
+                    });
             }
         });
     },

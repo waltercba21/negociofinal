@@ -18,19 +18,31 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  insertarProducto : function(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, funcion) {
+  insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio_lista, funcion) {
     if (typeof funcion !== 'function') {
         throw new Error('funcion debe ser una función');
     }
-    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio, codigo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-    [imagen, nombre, descripcion, Number(categoria), Number(marca), Number(modelo_id), costo, utilidad, precio, codigo], function(error, resultados) {
+    conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista) VALUES (?, ?, ?)', 
+    [producto_id, proveedor_id, precio_lista], function(error, resultados) {
         if (error) {
-            console.error('Error al insertar en la tabla productos:', error); // Log del error
+            console.error('Error al insertar en producto_proveedor:', error);
             return funcion(error);
         }
-        console.log('Producto insertado con éxito:', resultados); // Log de los resultados
-        funcion(error, resultados);
-    })
+        console.log('Insertado en producto_proveedor con éxito:', resultados);
+        funcion(null, resultados);
+    });
+},
+insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio_lista, callback) {
+    const sql = 'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista) VALUES (?, ?, ?)';
+    conexion.query(sql, [producto_id, proveedor_id, precio_lista], function(error, resultados) {
+        if (error) {
+            console.error('Error al insertar en producto_proveedor:', error);
+            callback(error);
+        } else {
+            console.log('Insertado en producto_proveedor con éxito:', resultados);
+            callback(null, resultados);
+        }
+    });
 },
   insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
     conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
