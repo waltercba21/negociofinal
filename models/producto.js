@@ -22,8 +22,8 @@ obtenerPorId: function (conexion, id, funcion) {
     if (typeof funcion !== 'function') {
         throw new Error('funcion debe ser una función');
     }
-    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-    [imagen, nombre, descripcion, Number(categoria), Number(marca), Number(modelo_id), costo, utilidad, precio], function(error, resultados) {
+    conexion.query('INSERT INTO productos (imagen, nombre, descripcion, categoria_id, marca_id, modelo_id, costo, utilidad, precio, codigo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+    [imagen, nombre, descripcion, Number(categoria), Number(marca), Number(modelo_id), costo, utilidad, precio, codigo], function(error, resultados) {
         if (error) {
             console.error('Error al insertar en la tabla productos:', error); // Log del error
             return funcion(error);
