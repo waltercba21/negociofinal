@@ -40,17 +40,17 @@ $('#addProveedor').click(function(event) {
     // Prevenir el comportamiento predeterminado del evento de clic
     event.preventDefault();
 
-    var newProveedor = $(proveedorTemplate);
-    $('#proveedoresContainer').append(newProveedor);
-
     // Obtener la lista de proveedores del DOM
-    var proveedores = $('#proveedoresContainer .proveedores option').map(function() {
+    var proveedores = $('.proveedores option').map(function() {
         return {
             id: $(this).val(),
             nombre: $(this).text(),
             descuento: $(this).data('descuento')
         };
     }).get();
+
+    var newProveedor = $(proveedorTemplate);
+    $('#proveedoresContainer').append(newProveedor);
 
     // Agregar las opciones al nuevo select de proveedores
     proveedores.forEach(function(proveedor) {
