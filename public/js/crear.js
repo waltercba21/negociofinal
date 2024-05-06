@@ -43,21 +43,27 @@ $('#addProveedor').click(function(event) {
     var newProveedor = $(proveedorTemplate);
     $('#proveedoresContainer').append(newProveedor);
 
-    // Hacer una solicitud AJAX para obtener la lista de proveedores
-    $.get('/ruta/a/los/proveedores', function(proveedores) {
-        // Agregar las opciones al nuevo select de proveedores
-        proveedores.forEach(function(proveedor) {
-            newProveedor.find('.proveedores').append('<option value="' + proveedor.id + '" data-descuento="' + proveedor.descuento + '">' + proveedor.nombre + '</option>');
-        });
+    // Obtener la lista de proveedores del DOM
+    var proveedores = $('#proveedoresContainer .proveedores option').map(function() {
+        return {
+            id: $(this).val(),
+            nombre: $(this).text(),
+            descuento: $(this).data('descuento')
+        };
+    }).get();
 
-        // Adjuntar el controlador de eventos change a los elementos .proveedores
-        newProveedor.find('.proveedores').change(function() {
-            var selectedOption = $(this).find('option:selected');
-            var descuento = selectedOption.data('descuento');
-            var nombreProveedor = selectedOption.text();
-            $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
-            $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
-        });
+    // Agregar las opciones al nuevo select de proveedores
+    proveedores.forEach(function(proveedor) {
+        newProveedor.find('.proveedores').append('<option value="' + proveedor.id + '" data-descuento="' + proveedor.descuento + '">' + proveedor.nombre + '</option>');
+    });
+
+    // Adjuntar el controlador de eventos change a los elementos .proveedores
+    newProveedor.find('.proveedores').change(function() {
+        var selectedOption = $(this).find('option:selected');
+        var descuento = selectedOption.data('descuento');
+        var nombreProveedor = selectedOption.text();
+        $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
+        $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
     });
 });
 
