@@ -18,15 +18,15 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  insertarProducto: function(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo, callback) {
-    console.log(`Insertando producto con nombre: ${nombre}, descripcion: ${descripcion}, categoria: ${categoria}, marca: ${marca}, modelo_id: ${modelo_id}, costo: ${costo}, utilidad: ${utilidad}, precio: ${precio}, proveedor_id: ${proveedor_id}, codigo: ${codigo}`);
-    const sql = 'INSERT INTO producto (imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    conexion.query(sql, [imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio, proveedor_id, codigo], function(error, resultados) {
+  insertarProducto: function(conexion, imagen, nombre, codigo, descripcion, precio,categoria_id, marca_id, proveedor_id, modelo_id, costo, utilidad, precio_lista, callback) {
+    console.log(`Insertando producto con nombre: ${nombre}, descripcion: ${descripcion}, categoria_id: ${categoria_id}, marca_id: ${marca_id},modelo_id: ${modelo_id}, costo: ${costo}, utilidad: ${utilidad}, precio: ${precio}, proveedor_id: ${proveedor_id}, codigo: ${codigo}`);
+    const sql = 'INSERT INTO productos (imagen, nombre, codigo, descripcion, precio, categoria_id, marca_id, proveedor_id, modelo_id, costo, utilidad, precio_lista) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    conexion.query(sql, [imagen, nombre, codigo, descripcion, precio,categoria_id, marca_id, proveedor_id, modelo_id, costo, utilidad, precio_lista], function(error, resultados) {
         if (error) {
-            console.error('Error al insertar en producto:', error);
+            console.error('Error al insertar en productos:', error);
             callback(error);
         } else {
-            console.log('Insertado en producto con éxito:', resultados);
+            console.log('Insertado en productos con éxito:', resultados);
             callback(null, resultados);
         }
     });
