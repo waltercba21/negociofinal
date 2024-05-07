@@ -234,27 +234,32 @@ module.exports = {
             } else {
                 console.log('Producto insertado con éxito:', resultados);
                 const producto_id = resultados.insertId;
-                const promesas = proveedores_id.map((proveedor_id, i) => {
-                    return new Promise((resolve, reject) => {
-                        producto.insertarProductoProveedor(conexion, producto_id, proveedor_id, precios[i], codigos[i], function(error, resultados) {
-                            if (error) {
-                                console.error('Error al insertar en producto_proveedor:', error);
-                                reject(error);
-                            } else {
-                                console.log('Insertado en producto_proveedor con éxito:', resultados);
-                                resolve(resultados);
-                            }
+                if (Array.isArray(proveedores_id)) {
+                    const promesas = proveedores_id.map((proveedor_id, i) => {
+                        return new Promise((resolve, reject) => {
+                            producto.insertarProductoProveedor(conexion, producto_id, proveedor_id, precios[i], codigos[i], function(error, resultados) {
+                                if (error) {
+                                    console.error('Error al insertar en producto_proveedor:', error);
+                                    reject(error);
+                                } else {
+                                    console.log('Insertado en producto_proveedor con éxito:', resultados);
+                                    resolve(resultados);
+                                }
+                            });
                         });
                     });
-                });
-                Promise.all(promesas)
-                    .then(() => {
-                        res.redirect('/productos');
-                    })
-                    .catch(error => {
-                        console.error('Error al insertar las relaciones producto-proveedor:', error);
-                        res.status(500).send('Hubo un error al insertar las relaciones producto-proveedor');
-                    });
+                    Promise.all(promesas)
+                        .then(() => {
+                            res.redirect('/productos');
+                        })
+                        .catch(error => {
+                            console.error('Error al insertar las relaciones producto-proveedor:', error);
+                            res.status(500).send('Hubo un error al insertar las relaciones producto-proveedor');
+                        });
+                } else {
+                    console.error('proveedores_id no es un array:', proveedores_id);
+                    res.status(500).send('Hubo un error al insertar las relaciones producto-proveedor');
+                }
             }
         });
     },
