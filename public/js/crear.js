@@ -6,6 +6,7 @@ $(document).ready(function() {
         var nombreProveedor = selectedOption.text();
         $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
         $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
+        $(this).prev('label').find('.nombre_proveedor').text(nombreProveedor);
     });
 
     // Disparar el evento 'change' para el primer proveedor después de que el DOM esté completamente cargado
@@ -26,7 +27,7 @@ $('#marca').change(function() {
 //AGREGAR PROVEEDORES
 var proveedorTemplate = `
 <div class="form-group-crear">
-<label for="proveedores">Proveedores:</label>
+<label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
 <select class="proveedores" name="proveedores[]" multiple>
     <!-- Aquí se agregarán las opciones de proveedores con JavaScript -->
 </select>
@@ -76,6 +77,7 @@ $('#addProveedor').click(function(event) {
         var nombreProveedor = selectedOption.text();
         $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
         $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
+        $(this).prev('label').find('.nombre_proveedor').text(nombreProveedor);
     });
 });
 
