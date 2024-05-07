@@ -18,10 +18,10 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  insertarProducto: function(conexion, imagen, nombre, codigo, descripcion, precio,categoria_id, marca_id, proveedor_id, modelo_id, costo, utilidad, precio_lista, callback) {
-    console.log(`Insertando producto con nombre: ${nombre}, descripcion: ${descripcion}, categoria_id: ${categoria_id}, marca_id: ${marca_id},modelo_id: ${modelo_id}, costo: ${costo}, utilidad: ${utilidad}, precio: ${precio}, proveedor_id: ${proveedor_id}, codigo: ${codigo}`);
-    const sql = 'INSERT INTO productos (imagen, nombre, codigo, descripcion, precio, categoria_id, marca_id, proveedor_id, modelo_id, costo, utilidad, precio_lista) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    conexion.query(sql, [imagen, nombre, codigo, descripcion, precio,categoria_id, marca_id, proveedor_id, modelo_id, costo, utilidad, precio_lista], function(error, resultados) {
+  insertarProducto: function(conexion, imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad, callback) {
+    console.log(`Insertando producto con nombre: ${nombre}, descripcion: ${descripcion}, categoria_id: ${categoria_id}, marca_id: ${marca_id}, modelo_id: ${modelo_id}, utilidad: ${utilidad}, precio: ${precio}`);
+    const sql = 'INSERT INTO productos (imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    conexion.query(sql, [imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad], function(error, resultados) {
         if (error) {
             console.error('Error al insertar en productos:', error);
             callback(error);
@@ -31,17 +31,19 @@ obtenerPorId: function (conexion, id, funcion) {
         }
     });
 },
-insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio_lista, codigo, callback) {
-    console.log(`Insertando producto-proveedor con producto_id: ${producto_id}, proveedor_id: ${proveedor_id}, precio_lista: ${precio_lista}, codigo: ${codigo}`);
-    const sql = 'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?)';
-    conexion.query(sql, [producto_id, proveedor_id, precio_lista, codigo], function(error, resultados) {
-        if (error) {
-            console.error('Error al insertar en producto_proveedor:', error);
-            callback(error);
-        } else {
-            console.log('Insertado en producto_proveedor con éxito:', resultados);
-            callback(null, resultados);
-        }
+insertarProductoProveedor: function(conexion, producto_id, proveedores, precios_lista, codigos, costos, callback) {
+    console.log(`Insertando producto-proveedor con producto_id: ${producto_id}`);
+    const sql = 'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo, costo) VALUES (?, ?, ?, ?, ?)';
+    proveedores.forEach((proveedor_id, index) => {
+        conexion.query(sql, [producto_id, proveedor_id, precios_lista[index], codigos[index], costos[index]], function(error, resultados) {
+            if (error) {
+                console.error('Error al insertar en producto_proveedor:', error);
+                callback(error);
+            } else {
+                console.log('Insertado en producto_proveedor con éxito:', resultados);
+                callback(null, resultados);
+            }
+        });
     });
 },
   insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
