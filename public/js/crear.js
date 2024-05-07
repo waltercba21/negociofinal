@@ -55,6 +55,7 @@ var proveedorTemplate = `
 <input class="costo" class="form-control" type="number" name="costo[]" readonly>
 </div>
 `;
+
 $('#addProveedor').click(function(event) {
     // Prevenir el comportamiento predeterminado del evento de clic
     event.preventDefault();
@@ -89,19 +90,9 @@ $('#addProveedor').click(function(event) {
 
 $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
-    var costoMinimo = null;
-
-    $(this).closest('.form-group-crear').nextAll().find('.costo').each(function() {
-        var descuento = parseFloat($(this).closest('.form-group-crear').prevAll().find('.descuento').val());
-        var costo = precioLista - (precioLista * descuento / 100);
-        $(this).val(costo.toFixed(2));
-
-        if (costoMinimo === null || costo < costoMinimo) {
-            costoMinimo = costo;
-        }
-    });
-
-    $('#costo').val(costoMinimo.toFixed(2));
+    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
+    var costo = precioLista - (precioLista * descuento / 100);
+    $('#costo').val(costo.toFixed(2));
 });
 
 $('#utilidad').change(function() {
