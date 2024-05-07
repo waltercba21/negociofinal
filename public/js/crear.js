@@ -60,14 +60,14 @@ $('#addProveedor').click(function(event) {
         newProveedor.find('.proveedores').append('<option value="' + proveedor.id + '" data-descuento="' + proveedor.descuento + '">' + proveedor.nombre + '</option>');
     });
 
-    // Adjuntar el controlador de eventos change a los elementos .proveedores
-    newProveedor.find('.proveedores').change(function() {
-        var selectedOption = $(this).find('option:selected');
-        var descuento = selectedOption.data('descuento');
-        var nombreProveedor = selectedOption.text();
-        $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
-        $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
-    });
+  // Adjuntar el controlador de eventos change a los elementos .proveedores
+newProveedor.find('.proveedores').change(function() {
+    var selectedOption = $(this).find('option:selected');
+    var descuento = selectedOption.attr('data-descuento'); // Cambio aquí
+    var nombreProveedor = selectedOption.text();
+    $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
+    $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
+});
 });
 
 $(document).on('change', '.precio_lista', function() {
@@ -80,7 +80,7 @@ $(document).on('change', '.precio_lista', function() {
 $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
     var nombreProveedor = selectedOption.text();
-    var descuento = selectedOption.data('descuento');
+    var descuento = selectedOption.attr('data-descuento'); // Cambio aquí
     var precioLista = parseFloat($(this).closest('.form-group-crear').find('.precio_lista').val());
     var costo = precioLista - (precioLista * descuento / 100);
 
