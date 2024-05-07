@@ -84,6 +84,7 @@ $('#addProveedor').click(function(event) {
         $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
         $(this).closest('.form-group-crear').nextAll().find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); // Línea agregada
     });
+    newProveedor.find('.proveedores').first().trigger('change');
 });
 
 $(document).on('change', '.precio_lista', function() {
