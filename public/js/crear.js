@@ -18,7 +18,12 @@ $(document).ready(function() {
         $('.proveedores').first().trigger('change');
     });
 });
-
+$(document).on('change', '.precio_lista', function() {
+    var precioLista = parseFloat($(this).val());
+    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
+    var costo = precioLista - (precioLista * descuento / 100);
+    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
+});
 //OBTENER LOS MODELOS POR MARCA 
 $('#marca').change(function() {
     var marcaId = $(this).val();
@@ -102,12 +107,8 @@ newProveedor.find('.proveedores').change(function() {
 
     proveedorCount++; // Incrementar el contador de proveedores
 });
-$(document).on('change', '.precio_lista', function() {
-    var precioLista = parseFloat($(this).val());
-    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
-    var costo = precioLista - (precioLista * descuento / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
-});
+
+
 
 $('#utilidad').change(function() {
     var utilidad = parseFloat($(this).val());
