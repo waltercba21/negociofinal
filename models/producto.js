@@ -18,10 +18,9 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-  insertarProducto: function(conexion, imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad, callback) {
-    console.log(`Insertando producto con nombre: ${nombre}, descripcion: ${descripcion}, categoria_id: ${categoria_id}, marca_id: ${marca_id}, modelo_id: ${modelo_id}, utilidad: ${utilidad}, precio: ${precio}`);
-    const sql = 'INSERT INTO productos (imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-    conexion.query(sql, [imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad], function(error, resultados) {
+  insertarProducto: function(conexion, query, params, callback) {
+    console.log(`Insertando producto con los siguientes parámetros: ${params}`);
+    conexion.query(query, params, function(error, resultados) {
         if (error) {
             console.error('Error al insertar en productos:', error);
             callback(error);
