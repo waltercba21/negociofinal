@@ -62,9 +62,9 @@ $('#addProveedor').click(function(event) {
     });
 
   // Adjuntar el controlador de eventos change a los elementos .proveedores
-newProveedor.find('.proveedores').change(function() {
+  newProveedor.find('.proveedores').change(function() {
     var selectedOption = $(this).find('option:selected');
-    var descuento = selectedOption.data().descuento; // Cambio aquí
+    var descuento = selectedOption.data('descuento'); // Cambio aquí
     $(this).closest('.form-group-crear').find('.descuento').val(descuento);
 });
 });
