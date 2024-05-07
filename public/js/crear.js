@@ -95,7 +95,7 @@ $('#addProveedor').click(function(event) {
     $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
     $(this).closest('.form-group-crear').nextAll().find('label').each(function() {
         var forAttr = $(this).attr('for');
-        $(this).text($(this).text().split(':')[0] + ' (' + nombreProveedor + '):');
+        $(this).text($(this).text().replace(/\(.*\)/, '') + ' (' + nombreProveedor + ')');
     });
 });
 
