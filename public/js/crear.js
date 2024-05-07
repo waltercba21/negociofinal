@@ -4,9 +4,8 @@ $(document).ready(function() {
         var selectedOption = $(this).find('option:selected');
         var descuento = selectedOption.data('descuento');
         var nombreProveedor = selectedOption.text();
-        $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
+        $(this).closest('.form-group-crear').find('.nombre_proveedor').text(nombreProveedor);
         $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
-        $(this).prev('label').find('.nombre_proveedor').text(nombreProveedor);
     });
 
     // Disparar el evento 'change' para el primer proveedor después de que el DOM esté completamente cargado
@@ -75,9 +74,8 @@ $('#addProveedor').click(function(event) {
         var selectedOption = $(this).find('option:selected');
         var descuento = selectedOption.data('descuento');
         var nombreProveedor = selectedOption.text();
-        $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
+        $(this).closest('.form-group-crear').find('.nombre_proveedor').text(nombreProveedor);
         $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
-        $(this).prev('label').find('.nombre_proveedor').text(nombreProveedor);
     });
 });
 
