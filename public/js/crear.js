@@ -14,6 +14,7 @@ $('#marca').change(function() {
         });
     });
 });
+
 //AGREGAR PROVEEDORES
 var proveedorTemplate = `
 <div class="form-group-crear">
@@ -48,7 +49,7 @@ $('#addProveedor').click(function(event) {
         return {
             id: $(this).val(),
             nombre: $(this).text(),
-            descuento: $(this).data('descuento')
+            descuento: $(this).data().descuento
         };
     }).get();
 
@@ -63,7 +64,7 @@ $('#addProveedor').click(function(event) {
   // Adjuntar el controlador de eventos change a los elementos .proveedores
 newProveedor.find('.proveedores').change(function() {
     var selectedOption = $(this).find('option:selected');
-    var descuento = selectedOption.data('descuento'); // Cambio aquí
+    var descuento = selectedOption.data().descuento; // Cambio aquí
     $(this).closest('.form-group-crear').find('.descuento').val(descuento);
 });
 });
@@ -78,7 +79,7 @@ $(document).on('change', '.precio_lista', function() {
 $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
     var nombreProveedor = selectedOption.text();
-    var descuento = selectedOption.attr('data-descuento'); // Cambio aquí
+    var descuento = selectedOption.data().descuento; // Cambio aquí
     var precioLista = parseFloat($(this).closest('.form-group-crear').find('.precio_lista').val());
     var costo = precioLista - (precioLista * descuento / 100);
 
