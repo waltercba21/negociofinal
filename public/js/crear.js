@@ -78,12 +78,16 @@ $(document).on('change', '.precio_lista', function() {
 
 $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
-    var descuento = selectedOption.data().descuento;
-    $(this).closest('.form-group-crear').find('.descuento').val(descuento);
+    var descuentos = selectedOption.map(function() {
+        return $(this).data().descuento;
+    }).get();
+    // Aquí puedes decidir qué hacer con los descuentos. Por ejemplo, podrías calcular el promedio.
+    var descuentoPromedio = descuentos.reduce(function(a, b) { return a + b; }) / descuentos.length;
 
+    $(this).closest('.form-group-crear').find('.descuento').val(descuentoPromedio);
     var nombreProveedor = selectedOption.text();
     var precioLista = parseFloat($(this).closest('.form-group-crear').find('.precio_lista').val());
-    var costo = precioLista - (precioLista * descuento / 100);
+    var costo = precioLista - (precioLista * descuentoPromedio / 100); // Aquí usamos descuentoPromedio en lugar de descuento
 
     // Actualiza las etiquetas con el nombre del proveedor
     $(this).closest('.form-group-crear').find('label[for="codigo"]').text('Código (' + nombreProveedor + '):');
