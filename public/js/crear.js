@@ -96,12 +96,12 @@ newProveedor.find('.proveedores').change(function() {
     $(this).closest('.form-group-crear').nextAll().find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); // Línea corregida
 });
 
-    // Adjuntar el controlador de eventos change al elemento .precio_lista
+// Adjuntar el controlador de eventos change al elemento .precio_lista
 newProveedor.find('.precio_lista').change(function() {
     var precioLista = parseFloat($(this).val());
     var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
     var costo = precioLista - (precioLista * descuento / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); // Línea corregida
+    $(this).closest('.form-group-crear').next('.form-group-crear').find('.costo').val(costo.toFixed(2)); // Línea corregida
 });
 
     newProveedor.find('.proveedores').first().trigger('change');
