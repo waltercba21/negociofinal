@@ -1,3 +1,16 @@
+//OBTENER LOS MODELOS POR MARCA 
+$('#marca').change(function() {
+    var marcaId = $(this).val();
+    $('#modelo_id').empty();
+    $('#modelo_id').append('<option value="">Selecciona un modelo...</option>');
+    $.get('/productos/modelos/' + marcaId, function(modelosPorMarca) {
+        modelosPorMarca.forEach(function(modelo) {
+            $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
+        });
+    });
+});
+
+//OBTENER PROVEEDORES 
 $(document).ready(function() {
     // Adjuntar el controlador de eventos change a los elementos .proveedores
     $('.proveedores').change(function() {
@@ -25,17 +38,7 @@ $(document).on('change', '.precio_lista', function() {
     $(this).closest('.form-group-crear').nextAll().find('#costo').val(costo.toFixed(2)); 
 });
 
-//OBTENER LOS MODELOS POR MARCA 
-$('#marca').change(function() {
-    var marcaId = $(this).val();
-    $('#modelo_id').empty();
-    $('#modelo_id').append('<option value="">Selecciona un modelo...</option>');
-    $.get('/productos/modelos/' + marcaId, function(modelosPorMarca) {
-        modelosPorMarca.forEach(function(modelo) {
-            $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
-        });
-    });
-});
+
 //AGREGAR PROVEEDORES
 var proveedorCount = 0; // Añadir un contador para los proveedores
 var proveedorTemplate = function(id) {
@@ -112,11 +115,11 @@ $('#addProveedor').click(function(event) {
     proveedorCount++; // Incrementar el contador de proveedores
 });
 
-
-
 $('#utilidad').change(function() {
     var utilidad = parseFloat($(this).val());
-    var costo = parseFloat($('#costo').val());
+    var costo = Math.min.apply(null, $('.costo').map(function() {
+        return parseFloat($(this).val());
+    }).get());
     var precioFinal = costo + (costo * utilidad / 100);
     $('#precio').val(precioFinal.toFixed(2));
 });
