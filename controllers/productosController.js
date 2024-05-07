@@ -224,7 +224,7 @@ module.exports = {
         });
     },
     guardar : function(req, res) {
-        const { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precios, proveedores_id, codigos } = req.body;
+        const { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio_lista: precios, proveedores: proveedores_id, codigo: codigos } = req.body;
         const imagen = req.file ? req.file.filename : null; // Accede al archivo cargado con req.file
         console.log('Datos del producto a insertar:', req.body, 'Imagen:', imagen); // Log de los datos del producto y la imagen
         producto.insertarProducto(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precios[0], proveedores_id[0], codigos[0], function(error, resultados) {
