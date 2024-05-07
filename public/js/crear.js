@@ -78,15 +78,19 @@ $('#addProveedor').click(function(event) {
 
 
     // Adjuntar el controlador de eventos change a los elementos .proveedores
-    newProveedor.find('.proveedores').change(function() {
-        var selectedOption = $(this).find('option:selected');
-        var descuento = selectedOption.data('descuento');
-        var nombreProveedor = selectedOption.text();
-        $(this).closest('.form-group-crear').find('.nombre_proveedor').text(nombreProveedor);
-        $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
-        $(this).closest('.form-group-crear').nextAll().find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); // Línea agregada
-    });
-    newProveedor.find('.proveedores').first().trigger('change');
+   // Adjuntar el controlador de eventos change a los elementos .proveedores
+newProveedor.find('.proveedores').change(function() {
+    var selectedOption = $(this).find('option:selected');
+    var descuento = selectedOption.data('descuento');
+    var nombreProveedor = selectedOption.text();
+    $(this).closest('.form-group-crear').find('.nombre_proveedor').text(nombreProveedor);
+    $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
+    $(this).closest('.form-group-crear').nextAll().find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')');
+    $(this).closest('.form-group-crear').nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')'); // Línea agregada
+    $(this).closest('.form-group-crear').nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + ')'); // Línea agregada
+    $(this).closest('.form-group-crear').nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')'); // Línea agregada
+});
+newProveedor.find('.proveedores').first().trigger('change');
 });
 
 $(document).on('change', '.precio_lista', function() {
