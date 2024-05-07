@@ -31,19 +31,17 @@ obtenerPorId: function (conexion, id, funcion) {
         }
     });
 },
-insertarProductoProveedor: function(conexion, producto_id, proveedores, precios_lista, codigos, callback) {
+insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio_lista, codigo, callback) {
     console.log(`Insertando producto-proveedor con producto_id: ${producto_id}`);
     const sql = 'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?)';
-    proveedores.forEach((proveedor_id, index) => {
-        conexion.query(sql, [producto_id, proveedor_id, precios_lista[index], codigos[index]], function(error, resultados) {
-            if (error) {
-                console.error('Error al insertar en producto_proveedor:', error);
-                callback(error);
-            } else {
-                console.log('Insertado en producto_proveedor con éxito:', resultados);
-                callback(null, resultados);
-            }
-        });
+    conexion.query(sql, [producto_id, proveedor_id, precio_lista, codigo], function(error, resultados) {
+        if (error) {
+            console.error('Error al insertar en producto_proveedor:', error);
+            callback(error);
+        } else {
+            console.log('Insertado en producto_proveedor con éxito:', resultados);
+            callback(null, resultados);
+        }
     });
 },
   insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
