@@ -79,7 +79,7 @@ $(document).on('change', '.precio_lista', function() {
 $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
     var nombreProveedor = selectedOption.text();
-    var descuento = selectedOption.data().descuento; // Cambio aquí
+    var descuento = selectedOption.data().descuento;
     var precioLista = parseFloat($(this).closest('.form-group-crear').find('.precio_lista').val());
     var costo = precioLista - (precioLista * descuento / 100);
 
