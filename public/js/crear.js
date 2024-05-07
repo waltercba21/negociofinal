@@ -91,7 +91,7 @@ $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
     var costoMinimo = null;
 
-    $('.costo').each(function() {
+    $(this).closest('.form-group-crear').nextAll().find('.costo').each(function() {
         var descuento = parseFloat($(this).closest('.form-group-crear').prevAll().find('.descuento').val());
         var costo = precioLista - (precioLista * descuento / 100);
         $(this).val(costo.toFixed(2));
