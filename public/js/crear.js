@@ -98,10 +98,14 @@ newProveedor.find('.proveedores').change(function() {
 // Adjuntar el controlador de eventos change al elemento .precio_lista
 newProveedor.find('.precio_lista').change(function() {
     var precioLista = parseFloat($(this).val());
-    var descuento = parseFloat(newProveedor.find('.descuento').val()); // Modificado aquí
+    var descuento = parseFloat($(this).siblings('.descuento').val()); // Modificado aquí
     var costo = precioLista - (precioLista * descuento / 100);
-    newProveedor.find('.costo').val(costo.toFixed(2)); // Modificado aquí
+    $(this).siblings('.costo').val(costo.toFixed(2)); // Modificado aquí
 });
+
+newProveedor.find('.proveedores').first().trigger('change');
+
+proveedorCount++; // Incrementar el contador de proveedores
 });
 
 
