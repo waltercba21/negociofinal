@@ -106,7 +106,7 @@ $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
     var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
     var costo = precioLista - (precioLista * descuento / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); // Modificado aquí
+    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
 });
 
 $('#utilidad').change(function() {
