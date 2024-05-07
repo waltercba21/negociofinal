@@ -74,6 +74,7 @@ $('#addProveedor').click(function(event) {
         newProveedor.find('.proveedores').append('<option value="' + proveedor.id + '" data-descuento="' + proveedor.descuento + '">' + proveedor.nombre + '</option>');
     });
 
+
     // Adjuntar el controlador de eventos change a los elementos .proveedores
     newProveedor.find('.proveedores').change(function() {
         var selectedOption = $(this).find('option:selected');
@@ -81,6 +82,7 @@ $('#addProveedor').click(function(event) {
         var nombreProveedor = selectedOption.text();
         $(this).closest('.form-group-crear').find('.nombre_proveedor').text(nombreProveedor);
         $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
+        $(this).closest('.form-group-crear').nextAll().find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); // Línea agregada
     });
 });
 
