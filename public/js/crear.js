@@ -31,30 +31,34 @@ $('#marca').change(function() {
     });
 });
 //AGREGAR PROVEEDORES
-var proveedorTemplate = `
-<div class="form-group-crear">
-<label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
-<select class="proveedores" name="proveedores[]" multiple>
-    <!-- Aquí se agregarán las opciones de proveedores con JavaScript -->
-</select>
-</div>
-<div class="form-group-crear">
-    <label for="precio_lista">Precio de Lista:</label>
-    <input class="precio_lista" type="number" name="precio_lista">
-</div>
-<div class="form-group-crear">
-    <label for="codigo">Código:</label>
-    <input class="codigo" type="text" name="codigo">
-</div>
-<div class="form-group-crear">
-<label for="descuento">Descuento:</label>
-<input class="descuento" class="form-control" type="number" name="descuento[]" readonly>
-</div>
-<div class="form-group-crear">
-<label for="costo">Costo Proveedor:</label>
-<input class="costo" class="form-control" type="number" name="costo[]" readonly>
-</div>
-`;
+var proveedorCount = 0; // Añadir un contador para los proveedores
+var proveedorTemplate = function(id) {
+    return `
+    <div class="form-group-crear">
+    <label for="proveedores${id}">Proveedores: <span class="nombre_proveedor"></span></label>
+    <select class="proveedores" id="proveedores${id}" name="proveedores[]" multiple>
+        <!-- Aquí se agregarán las opciones de proveedores con JavaScript -->
+    </select>
+    </div>
+    <div class="form-group-crear">
+        <label for="precio_lista${id}">Precio de Lista:</label>
+        <input class="precio_lista" id="precio_lista${id}" type="number" name="precio_lista">
+    </div>
+    <div class="form-group-crear">
+        <label for="codigo${id}">Código:</label>
+        <input class="codigo" id="codigo${id}" type="text" name="codigo">
+    </div>
+    <div class="form-group-crear">
+    <label for="descuento${id}">Descuento:</label>
+    <input class="descuento" id="descuento${id}" class="form-control" type="number" name="descuento[]" readonly>
+    </div>
+    <div class="form-group-crear">
+    <label for="costo${id}">Costo Proveedor:</label>
+    <input class="costo" id="costo${id}" class="form-control" type="number" name="costo[]" readonly>
+    </div>
+    `;
+};
+
 $('#addProveedor').click(function(event) {
     // Prevenir el comportamiento predeterminado del evento de clic
     event.preventDefault();
@@ -68,7 +72,7 @@ $('#addProveedor').click(function(event) {
         };
     }).get();
 
-    var newProveedor = $(proveedorTemplate);
+    var newProveedor = $(proveedorTemplate(proveedorCount));
     $('#proveedoresContainer').append(newProveedor);
 
     // Agregar las opciones al nuevo select de proveedores
@@ -95,6 +99,8 @@ $('#addProveedor').click(function(event) {
     });
 
     newProveedor.find('.proveedores').first().trigger('change');
+
+    proveedorCount++; // Incrementar el contador de proveedores
 });
 $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
