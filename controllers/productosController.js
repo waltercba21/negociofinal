@@ -223,20 +223,29 @@ module.exports = {
             return res.status(500).send('Error: ' + error.message);
         });
     },
-    guardar : function(req, res) {
+    guardar: function(req, res) {
         const { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio_lista: precios, proveedores: proveedores_id, codigo: codigos } = req.body;
-        const imagen = req.file ? req.file.filename : null; // Accede al archivo cargado con req.file
-        console.log('Datos del producto a insertar:', req.body, 'Imagen:', imagen); // Log de los datos del producto y la imagen
+        const imagen = req.file ? req.file.filename : null;
+        console.log('Datos del producto a insertar:', req.body, 'Imagen:', imagen);
         producto.insertarProducto(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precios[0], proveedores_id[0], codigos[0], function(error, resultados) {
             if (error) {
-                console.error('Error al insertar el producto:', error); // Log del error
+                console.error('Error al insertar el producto:', error);
                 res.status(500).send('Hubo un error al insertar el producto');
             } else {
-                console.log('Producto insertado con éxito:', resultados); // Log de los resultados
+                console.log('Producto insertado con éxito:', resultados);
                 const producto_id = resultados.insertId;
-                // Inserta las relaciones entre el producto y sus proveedores
                 const promesas = proveedores_id.map((proveedor_id, i) => {
-                    return producto.insertarProductoProveedor(conexion, producto_id, proveedor_id, precios[i], codigos[i]);
+                    return new Promise((resolve, reject) => {
+                        producto.insertarProductoProveedor(conexion, producto_id, proveedor_id, precios[i], codigos[i], function(error, resultados) {
+                            if (error) {
+                                console.error('Error al insertar en producto_proveedor:', error);
+                                reject(error);
+                            } else {
+                                console.log('Insertado en producto_proveedor con éxito:', resultados);
+                                resolve(resultados);
+                            }
+                        });
+                    });
                 });
                 Promise.all(promesas)
                     .then(() => {
