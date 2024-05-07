@@ -224,10 +224,10 @@ module.exports = {
         });
     },
     guardar : function(req, res) {
-        const { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precios, proveedores_id, codigo } = req.body;
+        const { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precios, proveedores_id, codigos } = req.body;
         const imagen = req.file ? req.file.filename : null; // Accede al archivo cargado con req.file
         console.log('Datos del producto a insertar:', req.body, 'Imagen:', imagen); // Log de los datos del producto y la imagen
-        producto.insertarProducto(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precios[0], proveedores_id[0], codigo, function(error, resultados) {
+        producto.insertarProducto(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precios[0], proveedores_id[0], codigos[0], function(error, resultados) {
             if (error) {
                 console.error('Error al insertar el producto:', error); // Log del error
                 res.status(500).send('Hubo un error al insertar el producto');
@@ -236,7 +236,7 @@ module.exports = {
                 const producto_id = resultados.insertId;
                 // Inserta las relaciones entre el producto y sus proveedores
                 const promesas = proveedores_id.map((proveedor_id, i) => {
-                    return producto.insertarProductoProveedor(conexion, producto_id, proveedor_id, precios[i]);
+                    return producto.insertarProductoProveedor(conexion, producto_id, proveedor_id, precios[i], codigos[i]);
                 });
                 Promise.all(promesas)
                     .then(() => {
