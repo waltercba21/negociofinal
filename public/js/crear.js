@@ -55,6 +55,7 @@ var proveedorTemplate = `
 <input class="costo" class="form-control" type="number" name="costo[]" readonly>
 </div>
 `;
+
 $('#addProveedor').click(function(event) {
     // Prevenir el comportamiento predeterminado del evento de clic
     event.preventDefault();
@@ -97,7 +98,7 @@ $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
     var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
     var costo = precioLista - (precioLista * descuento / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
+    $('#costo').val(costo.toFixed(2));
 });
 
 
