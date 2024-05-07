@@ -14,7 +14,9 @@ $(document).ready(function() {
     });
 
     // Disparar el evento 'change' para el primer proveedor después de que el DOM esté completamente cargado
-    $('.proveedores').first().trigger('change');
+    $(window).on('load', function() {
+        $('.proveedores').first().trigger('change');
+    });
 });
 
 //OBTENER LOS MODELOS POR MARCA 
