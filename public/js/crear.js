@@ -89,25 +89,12 @@ $('#addProveedor').click(function(event) {
 
 $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
-    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
-    var costo = precioLista - (precioLista * descuento / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
-});
-
-
-$('#utilidad').change(function() {
-    var utilidad = parseFloat($(this).val());
-    var costo = parseFloat($('#costo').val());
-    var precioFinal = costo + (costo * utilidad / 100);
-    $('#precio').val(precioFinal.toFixed(2));
-});
-$(document).on('change', '.precio_lista', function() {
-    var precioLista = parseFloat($(this).val());
     var costoMinimo = null;
 
     $('.costo').each(function() {
         var descuento = parseFloat($(this).closest('.form-group-crear').prevAll().find('.descuento').val());
         var costo = precioLista - (precioLista * descuento / 100);
+        $(this).val(costo.toFixed(2));
 
         if (costoMinimo === null || costo < costoMinimo) {
             costoMinimo = costo;
@@ -115,4 +102,11 @@ $(document).on('change', '.precio_lista', function() {
     });
 
     $('#costo').val(costoMinimo.toFixed(2));
+});
+
+$('#utilidad').change(function() {
+    var utilidad = parseFloat($(this).val());
+    var costo = parseFloat($('#costo').val());
+    var precioFinal = costo + (costo * utilidad / 100);
+    $('#precio').val(precioFinal.toFixed(2));
 });
