@@ -7,8 +7,8 @@ $(document).ready(function() {
         var closestFormGroup = $(this).closest('.form-group-crear');
         closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
         closestFormGroup.nextAll().find('.descuento').val(descuento);
-        closestFormGroup.nextAll().find('.codigo').val(nombreProveedor);
-        closestFormGroup.nextAll().find('.precio_lista').val(nombreProveedor);
+        closestFormGroup.nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
+        closestFormGroup.nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
     });
 
     // Disparar el evento 'change' para el primer proveedor después de que el DOM esté completamente cargado
