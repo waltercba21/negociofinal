@@ -227,6 +227,11 @@ module.exports = {
         const { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio_lista: precios, proveedores: proveedores_id, codigo: codigos } = req.body;
         const imagen = req.file ? req.file.filename : null;
         console.log('Datos del producto a insertar:', req.body, 'Imagen:', imagen);
+    
+        // Si proveedores_id es una cadena, conviértela en un array
+        if (typeof proveedores_id === 'string') {
+            proveedores_id = proveedores_id.split(',').map(id => id.trim());
+        }
         producto.insertarProducto(conexion, imagen, nombre, descripcion, precios[0], categoria, marca, modelo_id, utilidad, function(error, resultados) {
             if (error) {
                 console.error('Error al insertar el producto:', error);
