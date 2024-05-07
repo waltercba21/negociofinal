@@ -18,6 +18,12 @@ $(document).ready(function() {
         $('.proveedores').first().trigger('change');
     });
 });
+$(document).on('change', '.precio_lista', function() {
+    var precioLista = parseFloat($(this).val());
+    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
+    var costo = precioLista - (precioLista * descuento / 100);
+    $('#costo').val(costo.toFixed(2));
+});
 
 //OBTENER LOS MODELOS POR MARCA 
 $('#marca').change(function() {
@@ -91,22 +97,16 @@ newProveedor.find('.proveedores').change(function() {
 });
 
     // Adjuntar el controlador de eventos change al elemento .precio_lista
-    newProveedor.find('.precio_lista').change(function() {
-        var precioLista = parseFloat($(this).val());
-        var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
-        var costo = precioLista - (precioLista * descuento / 100);
-        $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
-    });
+newProveedor.find('.precio_lista').change(function() {
+    var precioLista = parseFloat($(this).val());
+    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
+    var costo = precioLista - (precioLista * descuento / 100);
+    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); // Línea corregida
+});
 
     newProveedor.find('.proveedores').first().trigger('change');
 
     proveedorCount++; // Incrementar el contador de proveedores
-});
-$(document).on('change', '.precio_lista', function() {
-    var precioLista = parseFloat($(this).val());
-    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
-    var costo = precioLista - (precioLista * descuento / 100);
-    $('#costo').val(costo.toFixed(2));
 });
 
 $('#utilidad').change(function() {
