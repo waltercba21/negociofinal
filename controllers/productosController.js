@@ -227,7 +227,7 @@ module.exports = {
         const { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio_lista: precios, proveedores: proveedores_id, codigo: codigos } = req.body;
         const imagen = req.file ? req.file.filename : null;
         console.log('Datos del producto a insertar:', req.body, 'Imagen:', imagen);
-        producto.insertarProducto(conexion, imagen, nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precios[0], proveedores_id[0], codigos[0], function(error, resultados) {
+        producto.insertarProducto(conexion, imagen, nombre, descripcion, precios[0], categoria, marca, modelo_id, utilidad, function(error, resultados) {
             if (error) {
                 console.error('Error al insertar el producto:', error);
                 res.status(500).send('Hubo un error al insertar el producto');
