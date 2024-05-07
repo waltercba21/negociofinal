@@ -4,8 +4,11 @@ $(document).ready(function() {
         var selectedOption = $(this).find('option:selected');
         var descuento = selectedOption.data('descuento');
         var nombreProveedor = selectedOption.text();
-        $(this).closest('.form-group-crear').find('.nombre_proveedor').text(nombreProveedor);
-        $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
+        var closestFormGroup = $(this).closest('.form-group-crear');
+        closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
+        closestFormGroup.nextAll().find('.descuento').val(descuento);
+        closestFormGroup.nextAll().find('.codigo').val(nombreProveedor);
+        closestFormGroup.nextAll().find('.precio_lista').val(nombreProveedor);
     });
 
     // Disparar el evento 'change' para el primer proveedor después de que el DOM esté completamente cargado
