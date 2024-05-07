@@ -1,6 +1,15 @@
 $(document).ready(function() {
-    // Disparar el evento 'change' para '.proveedores' después de que el DOM esté completamente cargado
-    $('.proveedores').trigger('change');
+    // Adjuntar el controlador de eventos change a los elementos .proveedores
+    $('.proveedores').change(function() {
+        var selectedOption = $(this).find('option:selected');
+        var descuento = selectedOption.data('descuento');
+        var nombreProveedor = selectedOption.text();
+        $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
+        $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
+    });
+
+    // Disparar el evento 'change' para el primer proveedor después de que el DOM esté completamente cargado
+    $('.proveedores').first().trigger('change');
 });
 
 //OBTENER LOS MODELOS POR MARCA 
@@ -77,22 +86,7 @@ $(document).on('change', '.precio_lista', function() {
     $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
 });
 
-$(document).on('change', '.proveedores', function() {
-    var selectedOption = $(this).find('option:selected');
-    var nombreProveedor = selectedOption.text();
-    var descuento = selectedOption.data('descuento');
-    var precioLista = parseFloat($(this).closest('.form-group-crear').find('.precio_lista').val());
-    var costo = precioLista - (precioLista * descuento / 100);
 
-    // Actualiza las etiquetas con el nombre del proveedor
-    $(this).closest('.form-group-crear').find('label[for="codigo"]').text('Código (' + nombreProveedor + '):');
-    $(this).closest('.form-group-crear').find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + '):');
-    $(this).closest('.form-group-crear').find('label[for="descuento"]').text('Descuento (' + nombreProveedor + '):');
-    $(this).closest('.form-group-crear').find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + '):');
-
-    $(this).closest('.form-group-crear').find('.descuento').val(descuento);
-    $(this).closest('.form-group-crear').find('.costo').val(costo.toFixed(2));
-});
 $('#utilidad').change(function() {
     var utilidad = parseFloat($(this).val());
     var costo = parseFloat($('#costo').val());
