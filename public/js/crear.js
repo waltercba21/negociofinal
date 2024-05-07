@@ -33,13 +33,13 @@ $('#addProveedor').click(function(event) {
   // Adjuntar el controlador de eventos change a los elementos .proveedores
   newProveedor.find('.proveedores').change(function() {
     var selectedOption = $(this).find('option:selected');
-    var descuento = selectedOption.data('descuento'); // Cambio aquí
+    var descuento = selectedOption.attr('data-descuento'); 
     $(this).closest('.form-group-crear').find('.descuento').val(descuento);
 });
 
 $(document).on('change', '.proveedores', function() {
     var selectedOption = $(this).find('option:selected');
-    var descuento = selectedOption.data('descuento'); // Aquí se accede a los datos de descuento de la opción seleccionada
+    var descuento = selectedOption.attr('data-descuento'); // Aquí se accede a los datos de descuento de la opción seleccionada
 
     $(this).closest('.form-group-crear').find('.descuento').val(descuento);
     var nombreProveedor = selectedOption.text();
