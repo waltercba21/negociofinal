@@ -1,3 +1,8 @@
+$(document).ready(function() {
+    // Disparar el evento 'change' para '.proveedores' después de que el DOM esté completamente cargado
+    $('.proveedores').trigger('change');
+});
+
 //OBTENER LOS MODELOS POR MARCA 
 $('#marca').change(function() {
     var marcaId = $(this).val();
@@ -8,52 +13,6 @@ $('#marca').change(function() {
             $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
         });
     });
-});
-$('#addProveedor').click(function(event) {
-    // Prevenir el comportamiento predeterminado del evento de clic
-    event.preventDefault();
-
-    // Obtener la lista de proveedores del DOM
-    var proveedores = $('.proveedores option').map(function() {
-        return {
-            id: $(this).val(),
-            nombre: $(this).text(),
-            descuento: $(this).data().descuento
-        };
-    }).get();
-
-    var newProveedor = $(proveedorTemplate);
-    $('#proveedoresContainer').append(newProveedor);
-
-    // Agregar las opciones al nuevo select de proveedores
-    proveedores.forEach(function(proveedor) {
-        newProveedor.find('.proveedores').append('<option value="' + proveedor.id + '" data-descuento="' + proveedor.descuento + '">' + proveedor.nombre + '</option>');
-    });
-
-  // Adjuntar el controlador de eventos change a los elementos .proveedores
-  newProveedor.find('.proveedores').change(function() {
-    var selectedOption = $(this).find('option:selected');
-    var descuento = selectedOption.attr('data-descuento'); 
-    $(this).closest('.form-group-crear').find('.descuento').val(descuento);
-});
-
-$(document).on('change', '.proveedores', function() {
-    var selectedOption = $(this).find('option:selected');
-    var descuento = selectedOption.attr('data-descuento'); // Aquí se accede a los datos de descuento de la opción seleccionada
-
-    $(this).closest('.form-group-crear').find('.descuento').val(descuento);
-    var nombreProveedor = selectedOption.text();
-    var precioLista = parseFloat($(this).closest('.form-group-crear').find('.precio_lista').val());
-    var costo = precioLista - (precioLista * descuento / 100); // Aquí usamos descuento en lugar de descuentoPromedio
-
-    // Actualiza las etiquetas con el nombre del proveedor
-    $(this).closest('.form-group-crear').find('label[for="codigo"]').text('Código (' + nombreProveedor + '):');
-    $(this).closest('.form-group-crear').find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + '):');
-    $(this).closest('.form-group-crear').find('label[for="descuento"]').text('Descuento (' + nombreProveedor + '):');
-    $(this).closest('.form-group-crear').find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + '):');
-
-    $(this).closest('.form-group-crear').find('.costo').val(costo.toFixed(2));
-});
 });
 //AGREGAR PROVEEDORES
 var proveedorTemplate = `
@@ -80,7 +39,36 @@ var proveedorTemplate = `
 <input class="costo" class="form-control" type="number" name="costo[]" readonly>
 </div>
 `;
+$('#addProveedor').click(function(event) {
+    // Prevenir el comportamiento predeterminado del evento de clic
+    event.preventDefault();
 
+    // Obtener la lista de proveedores del DOM
+    var proveedores = $('.proveedores option').map(function() {
+        return {
+            id: $(this).val(),
+            nombre: $(this).text(),
+            descuento: $(this).data('descuento')
+        };
+    }).get();
+
+    var newProveedor = $(proveedorTemplate);
+    $('#proveedoresContainer').append(newProveedor);
+
+    // Agregar las opciones al nuevo select de proveedores
+    proveedores.forEach(function(proveedor) {
+        newProveedor.find('.proveedores').append('<option value="' + proveedor.id + '" data-descuento="' + proveedor.descuento + '">' + proveedor.nombre + '</option>');
+    });
+
+    // Adjuntar el controlador de eventos change a los elementos .proveedores
+    newProveedor.find('.proveedores').change(function() {
+        var selectedOption = $(this).find('option:selected');
+        var descuento = selectedOption.data('descuento');
+        var nombreProveedor = selectedOption.text();
+        $(this).closest('.form-group-crear').find('.nombre_proveedor').val(nombreProveedor);
+        $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
+    });
+});
 
 $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
@@ -88,13 +76,29 @@ $(document).on('change', '.precio_lista', function() {
     var costo = precioLista - (precioLista * descuento / 100);
     $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
 });
+
+$(document).on('change', '.proveedores', function() {
+    var selectedOption = $(this).find('option:selected');
+    var nombreProveedor = selectedOption.text();
+    var descuento = selectedOption.data('descuento');
+    var precioLista = parseFloat($(this).closest('.form-group-crear').find('.precio_lista').val());
+    var costo = precioLista - (precioLista * descuento / 100);
+
+    // Actualiza las etiquetas con el nombre del proveedor
+    $(this).closest('.form-group-crear').find('label[for="codigo"]').text('Código (' + nombreProveedor + '):');
+    $(this).closest('.form-group-crear').find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + '):');
+    $(this).closest('.form-group-crear').find('label[for="descuento"]').text('Descuento (' + nombreProveedor + '):');
+    $(this).closest('.form-group-crear').find('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + '):');
+
+    $(this).closest('.form-group-crear').find('.descuento').val(descuento);
+    $(this).closest('.form-group-crear').find('.costo').val(costo.toFixed(2));
+});
 $('#utilidad').change(function() {
     var utilidad = parseFloat($(this).val());
     var costo = parseFloat($('#costo').val());
     var precioFinal = costo + (costo * utilidad / 100);
     $('#precio').val(precioFinal.toFixed(2));
 });
-
 $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
     var costoMinimo = null;
