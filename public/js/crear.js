@@ -88,6 +88,7 @@ $('#addProveedor').click(function(event) {
         $(this).closest('.form-group-crear').nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
         $(this).closest('.form-group-crear').nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
         $(this).closest('.form-group-crear').nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
+        $(this).closest('.form-group-crear').nextAll().find('.precio_lista').trigger('change');
     });
     newProveedor.find('.proveedores').first().trigger('change');
 });
@@ -96,9 +97,8 @@ $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
     var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
     var costo = precioLista - (precioLista * descuento / 100);
-    $('#costo').val(costo.toFixed(2));
+    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
 });
-
 
 $('#utilidad').change(function() {
     var utilidad = parseFloat($(this).val());
