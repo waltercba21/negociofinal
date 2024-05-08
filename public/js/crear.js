@@ -74,15 +74,6 @@ var proveedorTemplate = function(id) {
 $('#addProveedor').click(function(event) {
     // Prevenir el comportamiento predeterminado del evento de clic
     event.preventDefault();
-    newProveedor.find('.precio_lista').change(function() {
-        var precioLista = parseFloat($(this).val());
-        var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
-        var costo = precioLista - (precioLista * descuento / 100);
-        $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
-    
-        // Disparar el evento de cambio para #utilidad
-        $('#utilidad').trigger('change');
-    });
     // Obtener la lista de proveedores del DOM
     var proveedores = $('.proveedores option').map(function() {
         return {
@@ -98,7 +89,6 @@ $('#addProveedor').click(function(event) {
     // Agregar las opciones al nuevo select de proveedores
     proveedores.forEach(function(proveedor) {
     newProveedor.find('.proveedores').append('<option value="' + proveedor.id + '" data-descuento="' + proveedor.descuento + '">' + proveedor.nombre + '</option>');
-    proveedorCount++;
 });
 
  // Adjuntar el controlador de eventos change a los elementos .proveedores
