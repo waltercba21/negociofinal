@@ -17,32 +17,32 @@
                     <input id="imagen" class="form-control-file" type="file" name="archivo">
                 </div>
                 <div class="form-group-crear">
-                <label for="nombre">Nombre:</label>   
-                <input id="nombre" class="form-control" type="text" name="nombre">
+                    <label for="nombre">Nombre:</label>   
+                    <input id="nombre" class="form-control" type="text" name="nombre" value="<%= producto.nombre %>">
                 </div>
                 <div class="form-group-crear">
-                <label for="descripcion">Descripcion:</label>
-                <input id="descripcion" class="form-control" type="text" name="descripcion">
+                    <label for="descripcion">Descripcion:</label>
+                    <input id="descripcion" class="form-control" type="text" name="descripcion" value="<%= producto.descripcion %>">
                 </div>
                 <div class="form-group-crear">
                     <label for="oferta">Oferta:</label>
-                    <input id="oferta" type="checkbox" name="oferta">
+                    <input id="oferta" type="checkbox" name="oferta" <%= producto.oferta ? 'checked' : '' %>>
                 </div>
                 <div class="form-group-crear">
                     <label for="categoria">Categoria</label>
                     <select id="categoria" name="categoria">
-                        <option value="" selected>Selecciona una categoría...</option>
+                        <option value="" <%= !producto.categoria ? 'selected' : '' %>>Selecciona una categoría...</option>
                         <% categorias.forEach(function(categoria) { %>
-                            <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
+                            <option value="<%= categoria.id %>" <%= producto.categoria == categoria.id ? 'selected' : '' %>><%= categoria.nombre %></option>
                         <% }); %>
                     </select>
                 </div>
                 <div class="form-group-crear">
                     <label for="marca">Marca:</label>
                     <select id="marca" name="marca">
-                        <option value="" selected>Selecciona una marca...</option> 
+                        <option value="" <%= !producto.marca ? 'selected' : '' %>>Selecciona una marca...</option> 
                         <% marcas.forEach(function(marca) { %>
-                            <option value="<%= marca.id %>"><%= marca.nombre %></option>
+                            <option value="<%= marca.id %>" <%= producto.marca == marca.id ? 'selected' : '' %>><%= marca.nombre %></option>
                         <% }); %>
                     </select>
                 </div>
@@ -50,53 +50,53 @@
                 <div class="form-group-crear">
                     <label for="modelo_id">Modelo:</label>
                     <select id="modelo_id" name="modelo_id">
-                        <option value="" <% if (!producto || !producto.modelo_id) { %>selected<% } %>>Selecciona un modelo...</option>
+                        <option value="" <%= !producto.modelo_id ? 'selected' : '' %>>Selecciona un modelo...</option>
                         <% modelos.forEach(function(modelo) { %>
-                            <option value="<%= modelo.id %>" <% if (producto && producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
+                            <option value="<%= modelo.id %>" <%= producto.modelo_id == modelo.id ? 'selected' : '' %>><%= modelo.nombre %></option>
                         <% }); %>
                     </select>
                 </div>
-            <div id="proveedoresContainer">
+                <div id="proveedoresContainer">
+                    <div class="form-group-crear">
+                        <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
+                        <select class="proveedores" name="proveedores[]" multiple>
+                            <% proveedores.forEach(function(proveedor) { %>
+                                <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>" <% if (producto && producto.proveedor_id == proveedor.id) { %>selected<% } %>><%= proveedor.nombre %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group-crear">
+                        <label for="codigo">Código:</label>
+                        <input class="codigo" type="text" name="codigo" value="<%= producto ? producto.codigo : '' %>">
+                    </div>
+                    <div class="form-group-crear">
+                        <label for="precio_lista">Precio de Lista:</label>
+                        <input class="precio_lista" class="form-control" type="number" name="precio_lista[]" value="<%= producto ? producto.precio_lista : '' %>">
+                    </div>
+                    <div class="form-group-crear">
+                        <label for="descuento">Descuento:</label>
+                        <input class="descuento" class="form-control" type="number" name="descuento[]" readonly value="<%= producto ? producto.descuento : '' %>">
+                    </div>
+                    <div class="form-group-crear">
+                        <label for="costo">Costo Proveedor:</label>
+                        <input class="costo" class="form-control" type="number" name="costo" readonly value="<%= producto ? producto.costo : '' %>">
+                    </div>
+                <button id="addProveedor">+</button>
+                </div> 
+                
                 <div class="form-group-crear">
-                    <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
-                    <select class="proveedores" name="proveedores[]" multiple>
-                        <% proveedores.forEach(function(proveedor) { %>
-                            <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>"><%= proveedor.nombre %></option>
-                        <% }); %>
-                    </select>
-                </div>
-                <div class="form-group-crear">
-                    <label for="codigo">Código:</label>
-                    <input class="codigo" type="text" name="codigo">
-                </div>
-                <div class="form-group-crear">
-                    <label for="precio_lista">Precio de Lista:</label>
-                    <input class="precio_lista" class="form-control" type="number" name="precio_lista[]">
-                </div>
-                <div class="form-group-crear">
-                    <label for="descuento">Descuento:</label>
-                    <input class="descuento" class="form-control" type="number" name="descuento[]" readonly>
-                </div>
-                <div class="form-group-crear">
-                    <label for="costo">Costo Proveedor:</label>
-                    <input class="costo" class="form-control" type="number" name="costo" readonly>
-                </div>
-            <button id="addProveedor">+</button>
-            </div> 
-            
-                  <div class="form-group-crear">
                     <label for="utilidad">Utilidad:</label>
-                    <input id="utilidad" class="form-control" type="number" name="utilidad">
-                  </div>
-                  <div class="form-group-crear">
+                    <input id="utilidad" class="form-control" type="number" name="utilidad" value="<%= producto ? producto.utilidad : '' %>">
+                </div>
+                <div class="form-group-crear">
                     <label for="precio">Precio Final:</label>
-                    <input id="precio" class="form-control" type="number" name="precio" readonly>
+                    <input id="precio" class="form-control" type="number" name="precio" readonly value="<%= producto ? producto.precio : '' %>">
                 </div>
                 <div class="botones-crear">
                 <button class="btn btn-success" type="submit">Guardar</button>
                 <a class='btn btn-primary'href="/productos">Cancelar</a>
                 </div>
-            </form>
+                </form>
 
     </div>
     </div>
