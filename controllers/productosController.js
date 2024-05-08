@@ -108,6 +108,7 @@ module.exports = {
                 console.log('No se encontraron productos para estos filtros');
             } else {
                 productos.forEach(producto => {
+                    console.log('Precio antes de la conversión:', producto.precio);
                     if (!isNaN(parseFloat(producto.precio))) {
                         producto.precio = Number(producto.precio).toLocaleString('de-DE', { minimumFractionDigits: 2 });
                     }
