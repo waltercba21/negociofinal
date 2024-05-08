@@ -49,11 +49,17 @@ insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio_
   },
   eliminar : async (id) => {
     return new Promise((resolve, reject) => {
-        conexion.query('DELETE FROM productos WHERE id = ?', [id], (error, results) => {
+        conexion.query('DELETE FROM producto_proveedor WHERE producto_id = ?', [id], (error, results) => {
             if (error) {
                 reject(error);
             } else {
-                resolve(results);
+                conexion.query('DELETE FROM productos WHERE id = ?', [id], (error, results) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(results);
+                    }
+                });
             }
         });
     });
