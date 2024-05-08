@@ -109,7 +109,7 @@ module.exports = {
             } else {
                 productos.forEach(producto => {
                     if (!isNaN(parseFloat(producto.precio))) {
-                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                        producto.precio = Number(producto.precio).toLocaleString('de-DE', { minimumFractionDigits: 2 });
                     }
                     const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
                     if (categoriaProducto) {
