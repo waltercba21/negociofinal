@@ -233,7 +233,7 @@ module.exports = {
             proveedores_id = proveedores_id.split(',').map(id => id.trim());
         }
     
-        let query = 'INSERT INTO productos (imagen, nombre, descripcion, precio_final, categoria_id, marca_id, modelo_id, utilidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        let query = 'INSERT INTO productos (imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         let params = [imagen, nombre, descripcion, precios[0], categoria, marca, modelo_id || null, utilidad];
     
         producto.insertarProducto(conexion, query, params, function(error, resultados) {
