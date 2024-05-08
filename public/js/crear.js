@@ -79,7 +79,7 @@ $('#addProveedor').click(function(event) {
         var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
         var costo = precioLista - (precioLista * descuento / 100);
         $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
-
+    
         // Disparar el evento de cambio para #utilidad
         $('#utilidad').trigger('change');
     });
