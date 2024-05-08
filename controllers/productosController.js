@@ -108,7 +108,9 @@ module.exports = {
                 console.log('No se encontraron productos para estos filtros');
             } else {
                 productos.forEach(producto => {
-                    producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                    if (!isNaN(parseFloat(producto.precio))) {
+                        producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                    }
                     const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
                     if (categoriaProducto) {
                         producto.categoria = categoriaProducto.nombre;
