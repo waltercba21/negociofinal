@@ -228,26 +228,15 @@ module.exports = {
         const imagen = req.file ? req.file.filename : null;
         console.log('Datos del producto a insertar:', req.body, 'Imagen:', imagen);
     
-           // Si proveedores_id es una cadena, conviértela en un array
-    if (typeof proveedores_id === 'string') {
-        proveedores_id = proveedores_id.split(',').map(id => id.trim());
-    }
-
-    // Aquí es donde colocarías el código que proporcionaste
-    let query = 'INSERT INTO productos (imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-    let params = [imagen, nombre, descripcion, precios[0], categoria, marca, modelo_id || null, utilidad];
-    let first = true;
-
-    if (modelo_id) {
-        query += first ? "modelo_id=?" : ", modelo_id=?";
-        params.push(modelo_id);
-        first = false;
-    } else {
-        query += first ? "modelo_id=?" : ", modelo_id=?";
-        params.push(null);
-        first = false;
-    }
-    producto.insertarProducto(conexion, query, params, function(error, resultados) {
+        // Si proveedores_id es una cadena, conviértela en un array
+        if (typeof proveedores_id === 'string') {
+            proveedores_id = proveedores_id.split(',').map(id => id.trim());
+        }
+    
+        let query = 'INSERT INTO productos (imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        let params = [imagen, nombre, descripcion, precios[0], categoria, marca, modelo_id || null, utilidad];
+    
+        producto.insertarProducto(conexion, query, params, function(error, resultados) {
             if (error) {
                 console.error('Error al insertar el producto:', error);
                 res.status(500).send('Hubo un error al insertar el producto');
