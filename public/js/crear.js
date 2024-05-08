@@ -121,5 +121,5 @@ $('#utilidad').change(function() {
         return parseFloat($(this).val());
     }).get());
     var precioFinal = costo + (costo * utilidad / 100);
-    $('#precio').val(precioFinal.toFixed(2));
+    $('#precio_final').val(precioFinal.toFixed(2)); // Cambiado aquí
 });
