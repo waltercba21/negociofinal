@@ -296,15 +296,31 @@ module.exports = {
                 return;
             }
             let categorias = await producto.obtenerCategorias(conexion);
-            let proveedores = await producto.obtenerProveedores(conexion);
             let marcas = await producto.obtenerMarcas(conexion);
             let modelos = await producto.obtenerModelosPorMarca(conexion, productoResult[0].marcaId); 
+    
+            // Obtén los proveedores y sus descuentos
+            let proveedoresResult = await producto.obtenerProveedores(conexion);
+            let descuentosProveedor = await producto.obtenerDescuentosProveedor(conexion);
+            let proveedores = proveedoresResult.map(proveedor => {
+                const descuento = descuentosProveedor.find(desc => desc.proveedor_id === proveedor.id);
+                return {
+                    ...proveedor,
+                    descuento: descuento ? descuento.descuento : 0
+                };
+            });
+    
+            // Calcula los precios con descuento para cada proveedor
+            let preciosConDescuento = proveedores.map(proveedor => productoResult[0].precio * (1 - proveedor.descuento / 100));
+    
             res.render('editar', { 
                 producto: productoResult[0],
                 categorias: categorias,
                 proveedores: proveedores,
                 marcas: marcas,
                 modelos: modelos,
+                preciosConDescuento: preciosConDescuento,
+                utilidad: productoResult[0].utilidad
             });
         } catch (error) {
             console.error("Error al obtener los datos:", error);
