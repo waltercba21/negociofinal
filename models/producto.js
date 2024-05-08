@@ -129,7 +129,7 @@ agregarAlCarrito: function (usuarioId, productoId, cantidad, imagen, callback) {
           return callback(null, resultados);
         });
       },
-      actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
+actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
         proveedorId = Number(proveedorId);
         porcentajeCambio = Number(porcentajeCambio);
     

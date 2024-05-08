@@ -449,7 +449,7 @@ todos: function (req, res) {
 },
 carrito: function (req, res) {
     var usuarioId = req.session.usuario.id;
-    conexion.query('SELECT carritos.*, productos.nombre, productos.imagen, productos.precio FROM carritos INNER JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [usuarioId], function (error, productosEnCarrito) {
+    conexion.query('SELECT carritos.*, productos.nombre, productos.imagen, productos.precio_final FROM carritos INNER JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [usuarioId], function (error, productosEnCarrito) {
         if (error) {
             console.log('Error al recuperar los productos del carrito:', error);
             return;
