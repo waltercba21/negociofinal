@@ -235,7 +235,7 @@ module.exports = {
 
     // Aquí es donde colocarías el código que proporcionaste
     let query = 'INSERT INTO productos (imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-    let params = [imagen, nombre, descripcion, precios[0], categoria, marca, modelo_id, utilidad];
+    let params = [imagen, nombre, descripcion, precios[0], categoria, marca, modelo_id || null, utilidad];
     let first = true;
 
     if (modelo_id) {
