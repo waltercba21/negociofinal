@@ -385,15 +385,17 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
       }
   });
 },
-obtenerProveedores: function(conexion) {
+retornarDatosId: function(conexion, id) {
     return new Promise((resolve, reject) => {
         conexion.query(`
-          SELECT pr.*, dp.descuento
-          FROM proveedores pr
-          LEFT JOIN descuentos_proveedor dp ON pr.id = dp.proveedor_id
-        `, function(error, resultados) {
+          SELECT p.*, pp.precio_lista, pp.codigo, pp.costo, dp.descuento
+          FROM productos p
+          LEFT JOIN producto_proveedor pp ON p.id = pp.producto_id
+          LEFT JOIN descuentos_proveedor dp ON p.proveedor_id = dp.proveedor_id
+          WHERE p.id = ?
+        `, [id], function(error, resultados) {
             if (error) {
-                console.error('Error al obtener los proveedores:', error);
+                console.error('Error al obtener el producto:', error);
                 reject(error);
             } else {
                 console.log('Resultados de la consulta:', resultados);
@@ -401,7 +403,7 @@ obtenerProveedores: function(conexion) {
             }
         });
     });
-},
+  },
 obtenerDescuentosProveedor: function(conexion) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT proveedor_id, descuento FROM descuentos_proveedor', function(error, results, fields) {
