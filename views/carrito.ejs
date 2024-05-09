@@ -17,7 +17,7 @@
                                         </div>
                                         <div class="mini-tarjeta-detalles">
                                             <h4 class="mini-tarjeta-nombre"><%= productos[i].nombre %></h4>
-                                            <p class="mini-tarjeta-precio" id="precio-<%= productos[i].id %>">$<%= productos[i].precio %></p>
+                                            <p class="mini-tarjeta-precio" id="precio-<%= productos[i].id %>">$<%= productos[i].precio_venta %></p>
                                             <div class="mini-tarjeta-cantidad">
                                                 <form action="/productos/carrito/actualizar/<%= productos[i].id %>" method="post">
                                                     <label for="cantidad-<%= productos[i].id %>">Cantidad:</label>
@@ -60,7 +60,7 @@
         <tbody>
             <% var totalCantidad = 0; var totalPrecio = 0; %>
             <% for (var i = 0; i < productos.length; i++) { %>
-                <% var subtotal = productos[i].cantidad * Number(productos[i].precio); %>
+                <% var subtotal = productos[i].cantidad * Number(productos[i].precio_venta); %>
                 <% totalCantidad += productos[i].cantidad; totalPrecio += subtotal; %>
                 <tr id="fila-<%= productos[i].id %>">
                     <td><%= productos[i].nombre %></td>
