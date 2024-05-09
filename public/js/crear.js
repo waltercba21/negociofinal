@@ -23,7 +23,8 @@ $(document).ready(function() {
         closestFormGroup.nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
         closestFormGroup.nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
         closestFormGroup.nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
-        $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); // Línea modificada
+        $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); 
+        $('#descuentos_proveedor_id').val(descuento); 
     });
 
     // Disparar el evento 'change' para el primer proveedor después de que el DOM esté completamente cargado
