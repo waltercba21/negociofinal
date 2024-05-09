@@ -11,12 +11,11 @@ $('#marca').change(function() {
 });
 
 $(document).ready(function() {
-    // Adjuntar el controlador de eventos change a los elementos .proveedores
+
     $('.proveedores').change(function() {
         actualizarProveedor($(this));
     });
 
-    // Disparar el evento 'change' para el primer proveedor después de que el DOM esté completamente cargado
     $(window).on('load', function() {
         $('.proveedores').first().trigger('change');
     });
@@ -29,6 +28,10 @@ $(document).on('change', '.precio_lista', function() {
 $('#costo_neto').change(function() {
     actualizarCostoNeto($(this));
 });
+$('#utilidad').change(function() {
+    actualizarPrecioFinal();
+});
+
 
 function actualizarProveedor(proveedor) {
     var selectedOption = proveedor.find('option:selected');
@@ -71,6 +74,14 @@ function actualizarCostoNeto(costoNetoElement) {
     console.log('Costo con IVA: ', costoConIVA); // Agregado console.log para verificar el valor de costoConIVA
 
     $('#costo_iva').val(costoConIVA.toFixed(2));
+}
+function actualizarPrecioFinal() {
+    var costoConIVA = parseFloat($('#costo_iva').val());
+    var utilidad = parseFloat($('#utilidad').val());
+
+    var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
+
+    $('#precio_venta').val(precioFinal.toFixed(2));
 }
 
 //AGREGAR PROVEEDORES
