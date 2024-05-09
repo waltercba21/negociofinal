@@ -36,11 +36,11 @@ router.post('/actualizarPorProveedor', productosController.actualizarPorProveedo
 router.post('/actualizarPrecio', productosController.actualizarPrecio);
 router.get('/api', productosController.lista);
 router.get('/api/buscar', productosController.buscar);
-router.get('/carrito', productosController.carrito);
+/*router.get('/carrito', productosController.carrito);
 router.get('/carrito/agregar/:id', ensureAuthenticated, productosController.agregarAlCarrito);
 router.post('/carrito/eliminar/:id', productosController.eliminarDelCarrito);
 router.post('/carrito/actualizar/:id', productosController.actualizarCantidadCarrito);
-router.post('/carrito/vaciar', productosController.vaciarCarrito);
+router.post('/carrito/vaciar', productosController.vaciarCarrito);*/
 router.get('/:id', productosController.detalle);
 
 module.exports = router;
