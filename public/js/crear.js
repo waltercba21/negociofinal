@@ -10,21 +10,10 @@ $('#marca').change(function() {
     });
 });
 
-//OBTENER PROVEEDORES 
 $(document).ready(function() {
     // Adjuntar el controlador de eventos change a los elementos .proveedores
     $('.proveedores').change(function() {
-        var selectedOption = $(this).find('option:selected');
-        var descuento = selectedOption.data('descuento');
-        var nombreProveedor = selectedOption.text();
-        var closestFormGroup = $(this).closest('.form-group-crear');
-        closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
-        closestFormGroup.nextAll().find('.descuento').val(descuento);
-        closestFormGroup.nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
-        closestFormGroup.nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
-        closestFormGroup.nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
-        $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); 
-        $('#descuentos_proveedor_id').val(descuento); 
+        actualizarProveedor($(this));
     });
 
     // Disparar el evento 'change' para el primer proveedor después de que el DOM esté completamente cargado
@@ -32,11 +21,34 @@ $(document).ready(function() {
         $('.proveedores').first().trigger('change');
     });
 });
+
 $(document).on('change', '.precio_lista', function() {
-    var precioLista = parseFloat($(this).val());
+    actualizarPrecio($(this));
+});
+
+$('#costo_neto').change(function() {
+    actualizarCostoNeto($(this));
+});
+
+function actualizarProveedor(proveedor) {
+    var selectedOption = proveedor.find('option:selected');
+    var descuento = selectedOption.data('descuento');
+    var nombreProveedor = selectedOption.text();
+    var closestFormGroup = proveedor.closest('.form-group-crear');
+    closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
+    closestFormGroup.nextAll().find('.descuento').val(descuento);
+    closestFormGroup.nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
+    closestFormGroup.nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
+    closestFormGroup.nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
+    $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); 
+    $('#descuentos_proveedor_id').val(descuento); 
+}
+
+function actualizarPrecio(precioListaElement) {
+    var precioLista = parseFloat(precioListaElement.val());
     var descuento = parseFloat($('#descuentos_proveedor_id').val()); // Modificado para obtener el descuento del proveedor
     var costo = precioLista - (precioLista * descuento / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
+    precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
 
     // Calcular el costo neto y renderizarlo en el campo 'costo_neto'
     var costoNeto = precioLista - (precioLista * descuento / 100); // Calcula el costo neto como un porcentaje del precio de lista
@@ -44,13 +56,14 @@ $(document).on('change', '.precio_lista', function() {
 
     // Disparar el evento de cambio para #utilidad
     $('#utilidad').trigger('change');
-});
-$('#costo_neto').change(function() {
-    var costoNeto = parseFloat($(this).val());
+}
+
+function actualizarCostoNeto(costoNetoElement) {
+    var costoNeto = parseFloat(costoNetoElement.val());
     var IVA = parseFloat($('#IVA').val());
     var costoConIVA = costoNeto + (costoNeto * IVA / 100);
     $('#costo_iva').val(costoConIVA.toFixed(2));
-});
+}
 
 
 //AGREGAR PROVEEDORES
