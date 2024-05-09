@@ -99,9 +99,9 @@ insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio_
           params.push(datos.modelo_id);
           first = false;
       }
-      if (datos.precio) {
-        query += first ? "precio=?" : ", precio=?";
-        params.push(datos.precio);
+      if (datos.precio_venta) {
+        query += first ? "precio_venta=?" : ", precio_venta=?";
+        params.push(datos.precio_venta);
         first = false;
     }
       if (archivo) {
@@ -140,7 +140,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         porcentajeCambio = Number(porcentajeCambio);
     
         // Agrega ROUND() a tu consulta para redondear el precio
-        let query = "UPDATE productos SET precio = ROUND((precio + precio * ?) / 100) * 100 WHERE proveedor_id = ?";
+        let query = "UPDATE productos SET precio_venta = ROUND((precio_venta + precio_venta * ?) / 100) * 100 WHERE proveedor_id = ?";
         let params = [porcentajeCambio, proveedorId];
     
         conexion.getConnection((err, conexion) => {
@@ -163,7 +163,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     },
     
     actualizarPrecio: function (idProducto, nuevoPrecio, callback) {
-        let query = "UPDATE productos SET precio = ? WHERE id = ?";
+        let query = "UPDATE productos SET precio_venta = ? WHERE id = ?";
         let params = [nuevoPrecio, idProducto];
     
         conexion.getConnection((err, conexion) => {
@@ -376,7 +376,7 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
   });
 },
   obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
-  var query = "SELECT id, nombre, codigo, imagen, descripcion, precio, modelo, categoria_id, marca_id, proveedor_id, modelo_id FROM productos WHERE categoria_id = ? AND marca_id = ? AND modelo_id = ?";
+  var query = "SELECT id, nombre, codigo, imagen, descripcion, precio_venta, modelo, categoria_id, marca_id, proveedor_id, modelo_id FROM productos WHERE categoria_id = ? AND marca_id = ? AND modelo_id = ?";
   conexion.query(query, [categoria, marca, modelo], function(error, resultados) {
       if (error) {
           callback(error, null); 
