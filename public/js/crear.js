@@ -17,7 +17,8 @@ $(document).ready(function() {
     $(window).on('load', function() {
         $('.proveedores').first().trigger('change');
     });
-    $('#addProveedor').click(function() {
+    $('#addProveedor').click(function(e) {
+        e.preventDefault();
         var newProveedor = $('.form-group-crear').first().clone(true);
         $('#proveedoresContainer').append(newProveedor);
     });
