@@ -215,6 +215,8 @@ module.exports = {
             });
             // Calcula los precios con descuento para cada proveedor
             preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
+            // Agrega los descuentos de los proveedores
+            descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
             res.render('crear', {
                 categorias: categorias,
                 marcas: marcas,
@@ -222,7 +224,8 @@ module.exports = {
                 proveedores: proveedores,
                 producto: {}, 
                 preciosConDescuento: preciosConDescuento,
-                utilidad: req.body.utilidad 
+                utilidad: req.body.utilidad,
+                descuentosProveedor: descuentoProveedor 
             });
         }).catch(error => {
             return res.status(500).send('Error: ' + error.message);
