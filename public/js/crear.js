@@ -34,9 +34,13 @@ $(document).ready(function() {
 });
 $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
-    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
+    var descuento = parseFloat($('#descuentos_proveedor_id').val()); // Modificado para obtener el descuento del proveedor
     var costo = precioLista - (precioLista * descuento / 100);
     $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
+
+    // Calcular el costo neto y renderizarlo en el campo 'costo_neto'
+    var costoNeto = precioLista - descuento; // Calcula el costo neto
+    $('#costo_neto').val(costoNeto.toFixed(2)); // Renderiza el costo neto en el campo 'costo_neto'
 
     // Disparar el evento de cambio para #utilidad
     $('#utilidad').trigger('change');
