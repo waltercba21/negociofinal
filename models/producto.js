@@ -404,6 +404,24 @@ retornarDatosId: function(conexion, id) {
         });
     });
   },
+  obtenerProveedoresProducto: function(conexion, id) {
+    return new Promise((resolve, reject) => {
+        conexion.query(`
+            SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento
+            FROM producto_proveedor pp
+            LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+            WHERE pp.producto_id = ?
+        `, [id], function(error, resultados) {
+            if (error) {
+                console.error('Error al obtener los proveedores del producto:', error);
+                reject(error);
+            } else {
+                console.log('Resultados de la consulta:', resultados);
+                resolve(resultados);
+            }
+        });
+    });
+},
 obtenerDescuentosProveedor: function(conexion) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT proveedor_id, descuento FROM descuentos_proveedor', function(error, results, fields) {
