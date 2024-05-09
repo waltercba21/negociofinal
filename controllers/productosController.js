@@ -480,10 +480,9 @@ todos: function (req, res) {
         }
     });
 },
-/*carrito: function (req, res) {
+carrito: function (req, res) {
     res.render('carrito');
-},*/
-/*agregarAlCarrito: function (req, res) {
+},agregarAlCarrito: function (req, res) {
     console.log ('Funcion agregarAlCarrito llamada con el id:', req.params.id)
     const productoId = req.params.id;
     const usuarioId = req.session.usuario.id; 
@@ -510,8 +509,8 @@ todos: function (req, res) {
             });
         });
     });
-},*/
-/*eliminarDelCarrito : function(req, res) {
+},
+eliminarDelCarrito : function(req, res) {
     console.log('Función eliminarDelCarrito llamada');
     const carritoId = Number(req.params.id);
     console.log('carritoId:', carritoId);
@@ -532,8 +531,8 @@ todos: function (req, res) {
             });
         }
     });
-},*/
- /*  actualizarCantidadCarrito: function(req, res) {
+},  
+actualizarCantidadCarrito: function(req, res) {
     const productoId = Number(req.params.id);
     const nuevaCantidad = Number(req.body.cantidad);
     const carrito = req.session.carrito || [];
@@ -545,8 +544,8 @@ todos: function (req, res) {
     }
     req.session.carrito = carrito;
     res.redirect('/productos/carrito');
-},*/
-/*vaciarCarrito : function(req, res) {
+},
+vaciarCarrito : function(req, res) {
     const usuarioId = req.session.usuario.id;
     conexion.query('DELETE FROM carritos WHERE usuario_id = ?', [usuarioId], function (error, results) {
         if (error) {
@@ -561,8 +560,8 @@ todos: function (req, res) {
             });
         }
     });
-},*/
-/*guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
+},
+guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     const productos = carrito;
     for (let i = 0; i < productos.length; i++) {
         const producto_id = productos[i].id;
@@ -574,7 +573,7 @@ todos: function (req, res) {
             callback(results);
         });
     }
-},*/
+},
 modificarPorProveedor: async function (req, res) {
     try {
         let proveedores = await producto.obtenerProveedores(conexion);
