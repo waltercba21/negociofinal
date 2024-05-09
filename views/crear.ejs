@@ -72,12 +72,24 @@
                     <input class="precio_lista" class="form-control" type="number" name="precio_lista[]">
                 </div>
                 <div class="form-group-crear">
-                    <label for="descuento">Descuento:</label>
-                    <input class="descuento" class="form-control" type="number" name="descuento[]" readonly>
+                    <label for="descuentos_proveedor_id">Descuentos Proveedor:</label>
+                    <input id="descuentos_proveedor_id" class="form-control" type="number" name="descuentos_proveedor_id">
                 </div>
                 <div class="form-group-crear">
-                    <label for="costo">Costo Proveedor:</label>
-                    <input class="costo" class="form-control" type="number" name="costo" readonly>
+                    <label for="costo_neto">Costo Neto:</label>
+                    <input id="costo_neto" class="form-control" type="number" name="costo_neto">
+                </div>
+                <div class="form-group-crear">
+                    <label for="IVA">IVA:</label>
+                    <input id="IVA" class="form-control" type="number" name="IVA">
+                </div>
+                <div class="form-group-crear">
+                    <label for="estado">Estado:</label>
+                    <select id="estado" class="form-control" name="estado">
+                        <option value="">Selecciona un estado...</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
                 </div>
             <button id="addProveedor">+</button>
             </div> 
