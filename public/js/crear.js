@@ -56,8 +56,10 @@ function actualizarPrecio(precioListaElement) {
 
     // Disparar el evento de cambio para #utilidad
     $('#utilidad').trigger('change');
-}
 
+    // Disparar el evento de cambio para #costo_neto
+    $('#costo_neto').trigger('change');
+}
 function actualizarCostoNeto(costoNetoElement) {
     var costoNeto = parseFloat(costoNetoElement.val());
     console.log('Costo Neto: ', costoNeto); // Agregado console.log para verificar el valor de costoNeto
@@ -146,11 +148,3 @@ $('#addProveedor').click(function(event) {
     proveedorCount++; // Incrementar el contador de proveedores
 });
 
-$('#utilidad').change(function() {
-    var utilidad = parseFloat($(this).val());
-    var costo = Math.min.apply(null, $('.costo').map(function() {
-        return parseFloat($(this).val());
-    }).get());
-    var precioFinal = costo + (costo * utilidad / 100);
-    $('#precio').val(precioFinal.toFixed(2));
-});
