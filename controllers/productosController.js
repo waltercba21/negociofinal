@@ -481,34 +481,7 @@ todos: function (req, res) {
     });
 },
 carrito: function (req, res) {
-    var usuarioId = req.session.usuario.id;
-    conexion.query('SELECT carritos.*, productos.nombre, productos.imagen, productos.precio_venta FROM carritos INNER JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [usuarioId], function (error, productosEnCarrito) {
-        if (error) {
-            console.log('Error al recuperar los productos del carrito:', error);
-            return;
-        }
-        req.session.carrito = productosEnCarrito;
-        req.session.save(function(err) {
-            if (err) {
-                console.log('Error al guardar la sesión:', err);
-            }
-            // Obtener los datos del usuario
-            conexion.query('SELECT * FROM usuarios WHERE id = ?', [usuarioId], function (error, usuarios) {
-                if (error) {
-                    console.log('Error al recuperar los datos del usuario:', error);
-                    return;
-                }
-                // Asegúrate de que se encontró al usuario
-                if (usuarios.length > 0) {
-                    var usuario = usuarios[0];
-                    // Renderizar la vista con los productos y los datos del usuario
-                    res.render('carrito', { productos: productosEnCarrito, usuario: usuario });
-                } else {
-                    console.log('No se encontró al usuario con id:', usuarioId);
-                }
-            });
-        });
-    });
+    res.render('carrito');
 },
 agregarAlCarrito: function (req, res) {
     console.log ('Funcion agregarAlCarrito llamada con el id:', req.params.id)
