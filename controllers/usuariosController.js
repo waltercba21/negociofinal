@@ -89,7 +89,7 @@ module.exports = {
         if (req.session.usuario.firstLogin === undefined) {
           req.session.usuario.firstLogin = true;
         }
-        conexion.query('SELECT carritos.*, productos.precio, productos.imagen FROM carritos JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [req.session.usuario.id], function (error, carritos) {
+        conexion.query('SELECT carritos.*, productos.precio_venta, productos.imagen FROM carritos JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [req.session.usuario.id], function (error, carritos) {
           if (error) {
             console.log('Error al cargar el carrito:', error);
           } else {
