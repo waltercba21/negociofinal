@@ -39,7 +39,7 @@ $(document).on('change', '.precio_lista', function() {
     $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
 
     // Calcular el costo neto y renderizarlo en el campo 'costo_neto'
-    var costoNeto = precioLista - descuento; // Calcula el costo neto
+    var costoNeto = precioLista - (precioLista * descuento / 100); // Calcula el costo neto como un porcentaje del precio de lista
     $('#costo_neto').val(costoNeto.toFixed(2)); // Renderiza el costo neto en el campo 'costo_neto'
 
     // Disparar el evento de cambio para #utilidad
