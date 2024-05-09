@@ -108,7 +108,7 @@ module.exports = {
                 console.log('No se encontraron productos para estos filtros');
             } else {
                 productos.forEach(producto => {
-                    console.log('Precio antes de la conversión:', producto.precio);
+                    console.log('Precio antes de la conversión:', producto.precio_venta);
                     if (producto.precio_venta !== null && !isNaN(parseFloat(producto.precio))) {
                         producto.precio_venta = Number(producto.precio_venta).toLocaleString('de-DE', { minimumFractionDigits: 2 });
                     } else {
@@ -238,7 +238,7 @@ module.exports = {
             proveedores_id = proveedores_id.split(',').map(id => id.trim());
         }
     
-        let query = 'INSERT INTO productos (imagen, nombre, descripcion, precio, categoria_id, marca_id, modelo_id, utilidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        let query = 'INSERT INTO productos (imagen, nombre, descripcion, precio_venta, categoria_id, marca_id, modelo_id, utilidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         let params = [imagen, nombre, descripcion, precios[0], categoria, marca, modelo_id || null, utilidad];
     
         producto.insertarProducto(conexion, query, params, function(error, resultados) {
@@ -311,7 +311,7 @@ module.exports = {
             });
     
             // Calcula los precios con descuento para cada proveedor
-            let preciosConDescuento = proveedores.map(proveedor => productoResult[0].precio * (1 - proveedor.descuento / 100));
+            let preciosConDescuento = proveedores.map(proveedor => productoResult[0].precio_venta * (1 - proveedor.descuento / 100));
     
             // Aquí agregamos el console.log para ver los datos
             console.log('Producto:', productoResult[0]);
@@ -392,7 +392,7 @@ module.exports = {
                 return res.status(500).send('Error al obtener los productos');
             } else {
                 productos.forEach(producto => {
-                    producto.precio = parseFloat(producto.precio).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+                    producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
                 });
                 res.json(productos);
             }
