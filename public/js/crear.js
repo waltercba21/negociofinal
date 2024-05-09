@@ -45,6 +45,12 @@ $(document).on('change', '.precio_lista', function() {
     // Disparar el evento de cambio para #utilidad
     $('#utilidad').trigger('change');
 });
+$('#costo_neto').change(function() {
+    var costoNeto = parseFloat($(this).val());
+    var IVA = parseFloat($('#IVA').val());
+    var costoConIVA = costoNeto + (costoNeto * IVA / 100);
+    $('#costo_iva').val(costoConIVA.toFixed(2));
+});
 
 
 //AGREGAR PROVEEDORES
