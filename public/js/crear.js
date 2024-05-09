@@ -60,11 +60,16 @@ function actualizarPrecio(precioListaElement) {
 
 function actualizarCostoNeto(costoNetoElement) {
     var costoNeto = parseFloat(costoNetoElement.val());
+    console.log('Costo Neto: ', costoNeto); // Agregado console.log para verificar el valor de costoNeto
+
     var IVA = parseFloat($('#IVA').val());
+    console.log('IVA: ', IVA); // Agregado console.log para verificar el valor de IVA
+
     var costoConIVA = costoNeto + (costoNeto * IVA / 100);
+    console.log('Costo con IVA: ', costoConIVA); // Agregado console.log para verificar el valor de costoConIVA
+
     $('#costo_iva').val(costoConIVA.toFixed(2));
 }
-
 
 //AGREGAR PROVEEDORES
 var proveedorCount = 0; // Añadir un contador para los proveedores
