@@ -109,10 +109,10 @@ module.exports = {
             } else {
                 productos.forEach(producto => {
                     console.log('Precio antes de la conversión:', producto.precio);
-                    if (producto.precio !== null && !isNaN(parseFloat(producto.precio))) {
-                        producto.precio = Number(producto.precio).toLocaleString('de-DE', { minimumFractionDigits: 2 });
+                    if (producto.precio_venta !== null && !isNaN(parseFloat(producto.precio))) {
+                        producto.precio_venta = Number(producto.precio_venta).toLocaleString('de-DE', { minimumFractionDigits: 2 });
                     } else {
-                        producto.precio = 'No disponible';
+                        producto.precio_venta = 'No disponible';
                     }
                     const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
                     if (categoriaProducto) {
@@ -214,7 +214,7 @@ module.exports = {
                 };
             });
             // Calcula los precios con descuento para cada proveedor
-            preciosConDescuento = proveedores.map(proveedor => req.body.precio * (1 - proveedor.descuento / 100));
+            preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
             res.render('crear', {
                 categorias: categorias,
                 marcas: marcas,
@@ -432,7 +432,7 @@ buscarPorNombre: function (req, res) {
           return;
         }
         productos.forEach(producto => {
-          producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+          producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('de-DE');
         });
         res.json({ productos });
       });
@@ -443,7 +443,7 @@ buscarPorNombre: function (req, res) {
           return;
         }
         productos.forEach(producto => {
-          producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+          producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('de-DE');
         });
         res.json({ productos });
       }); 
@@ -472,7 +472,7 @@ todos: function (req, res) {
         } else {
             // Formatear el precio de cada producto
             productos.forEach(producto => {
-                producto.precio = parseFloat(producto.precio).toLocaleString('de-DE');
+                producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('de-DE');
             });
 
             console.log('Productos obtenidos:', productos);
@@ -482,7 +482,7 @@ todos: function (req, res) {
 },
 carrito: function (req, res) {
     var usuarioId = req.session.usuario.id;
-    conexion.query('SELECT carritos.*, productos.nombre, productos.imagen, productos.precio FROM carritos INNER JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [usuarioId], function (error, productosEnCarrito) {
+    conexion.query('SELECT carritos.*, productos.nombre, productos.imagen, productos.precio_venta FROM carritos INNER JOIN productos ON carritos.producto_id = productos.id WHERE carritos.usuario_id = ?', [usuarioId], function (error, productosEnCarrito) {
         if (error) {
             console.log('Error al recuperar los productos del carrito:', error);
             return;
@@ -521,7 +521,7 @@ agregarAlCarrito: function (req, res) {
             console.log('Error al obtener el producto:', error);
             return res.redirect('/productos');
         }
-        const precioTotal = productos[0].precio * cantidad;
+        const precioTotal = productos[0].precio_venta * cantidad;
         conexion.query('INSERT INTO carritos (usuario_id, producto_id, cantidad, precio_total) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE cantidad = cantidad + ?', [usuarioId, productoId, cantidad, precioTotal, cantidad], function (error) {
             if (error) {
                 console.log('Error al guardar el carrito en la base de datos:', error);
@@ -594,7 +594,7 @@ guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
     for (let i = 0; i < productos.length; i++) {
         const producto_id = productos[i].id;
         const cantidad = productos[i].cantidad;
-        const precio_total = productos[i].precio * cantidad;
+        const precio_total = productos[i].precio_venta * cantidad;
         const sql = 'INSERT INTO carritos (usuario_id, producto_id, cantidad, precio_total, metodo_envio) VALUES (?, ?, ?, ?, ?)';
         connection.query(sql, [usuario_id, producto_id, cantidad, precio_total, metodo_envio], function(error, results) {
             if (error) throw error;
@@ -638,7 +638,7 @@ actualizarPorProveedor : function(req, res) {
 },
 actualizarPrecio: function(req, res) {
     let idProducto = req.body.id;
-    let nuevoPrecio = req.body.precio;
+    let nuevoPrecio = req.body.precio_venta;
     let proveedorId = req.body.proveedor; // Asegúrate de que este valor se envía en el formulario
     producto.actualizarPrecio(idProducto, nuevoPrecio, function(err) {
         if (err) {
@@ -737,7 +737,7 @@ generarPDF: function (req, res) {
                 }
                 // Agregar los productos al PDF
                 productos.forEach(producto => {
-                    var precioFormateado = '$' + parseFloat(producto.precio).toFixed(0);
+                    var precioFormateado = '$' + parseFloat(producto.precio_venta).toFixed(0);
                     // Guardar la posición actual del cursor
                     var currentY = doc.y;
                     // Verificar si hay suficiente espacio en la página actual
