@@ -10,7 +10,6 @@ $('#marca-input').change(function() {
     });
 });
 
-//OBTENER PROVEEDORES 
 $(document).ready(function() {
     // Adjuntar el controlador de eventos change a los elementos .proveedores
     $('.proveedores').change(function() {
