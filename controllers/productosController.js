@@ -313,6 +313,14 @@ module.exports = {
             // Calcula los precios con descuento para cada proveedor
             let preciosConDescuento = proveedores.map(proveedor => productoResult[0].precio * (1 - proveedor.descuento / 100));
     
+            // Aquí agregamos el console.log para ver los datos
+            console.log('Producto:', productoResult[0]);
+            console.log('Categorias:', categorias);
+            console.log('Marcas:', marcas);
+            console.log('Modelos:', modelos);
+            console.log('Proveedores:', proveedores);
+            console.log('Precios con descuento:', preciosConDescuento);
+    
             res.render('editar', { 
                 producto: productoResult[0],
                 categorias: categorias,
