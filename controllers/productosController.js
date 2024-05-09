@@ -398,6 +398,10 @@ module.exports = {
             }
         });
     },
+    proveedores : async (req, res) => {
+        let proveedores = await producto.obtenerProveedores();
+        res.render('proveedores', { proveedores: proveedores });
+    },
     panelControl: async function(req, res) {
         try {
             let proveedores = await producto.obtenerProveedores(conexion);

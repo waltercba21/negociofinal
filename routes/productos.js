@@ -24,6 +24,7 @@ router.post('/', cargar.single('archivo'), productosController.guardar);
 router.get('/', productosController.getProductosPorCategoria);
 router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
 router.get('/panelControl', productosController.panelControl) 
+app.get('/proveedores', productosController.proveedores);
 router.get('/crear', productosController.crear);
 router.get('/generarPDF', productosController.generarPDF);
 router.get('/editar/:id', productosController.editar)
