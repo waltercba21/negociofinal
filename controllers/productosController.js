@@ -240,13 +240,13 @@ module.exports = {
         }
     
         const proveedores = req.body.proveedores;
-        console.log('proveedores:', proveedores); // Imprime los proveedores
+        console.log('proveedores:', proveedores); 
     
         const datosProducto = {
             nombre: req.body.nombre,
             descripcion: req.body.descripcion,
             categoria: req.body.categoria,
-            marca: req.body.marca,
+            marca_id: req.body.marca,
             modelo_id: req.body.modelo_id,
             descuentos_proveedor_id: req.body.descuentos_proveedor_id,
             costo_neto: req.body.costo_neto,
@@ -257,7 +257,7 @@ module.exports = {
             estado: req.body.estado
         };
     
-        console.log('datosProducto:', datosProducto); // Imprime los datos del producto
+        console.log('datosProducto:', datosProducto); 
     
         // Pasar los datos del producto al modelo
         producto.insertarProducto(conexion, datosProducto)
