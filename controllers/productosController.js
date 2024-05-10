@@ -232,7 +232,7 @@ module.exports = {
         });
     },
     guardar: function(req, res) {
-        const producto = {
+        const datosProducto = {
             imagen: req.file ? req.file.filename : null, 
             nombre: req.body.nombre, 
             descripcion: req.body.descripcion, 
@@ -252,16 +252,16 @@ module.exports = {
         };
         // Pasar los datos del producto al modelo
         producto.insertarProducto(conexion, datosProducto)
-        .then(result => {
-            const productoId = result.insertId;
-            return producto.insertarProductoProveedor(conexion, productoId, datosProducto.proveedores);
-        })
-        .then(() => {
-            res.redirect('/productos/panelControl');
-        })
-        .catch(error => {
-            res.status(500).send('Error: ' + error.message);
-        });
+            .then(result => {
+                const productoId = result.insertId;
+                return producto.insertarProductoProveedor(conexion, productoId, datosProducto.proveedores);
+            })
+            .then(() => {
+                res.redirect('/productos/panelControl');
+            })
+            .catch(error => {
+                res.status(500).send('Error: ' + error.message);
+            });
     },
     eliminar : async (req, res) => {
         const { id } = req.params;
