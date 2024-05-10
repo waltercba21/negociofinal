@@ -240,7 +240,7 @@ module.exports = {
         console.log('proveedores:', proveedores); 
         const datosProducto = {
             nombre: req.body.nombre,
-            imagen: req.body.imagen,
+            imagen: req.body.archivo,
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
