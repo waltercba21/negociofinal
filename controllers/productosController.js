@@ -232,18 +232,15 @@ module.exports = {
         });
     },
     guardar: function(req, res) {
-        console.log('req.body:', req.body); // Imprime todo el cuerpo de la solicitud
-    
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
-    
         const proveedores = req.body.proveedores;
         console.log('proveedores:', proveedores); 
-    
         const datosProducto = {
             nombre: req.body.nombre,
+            imagen: req.body.imagen,
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
@@ -256,16 +253,9 @@ module.exports = {
             precio_venta: req.body.precio_venta,
             estado: req.body.estado
         };
-    
-        console.log('datosProducto:', datosProducto); 
-    
-        // Pasar los datos del producto al modelo
         producto.insertarProducto(conexion, datosProducto)
         .then(result => {
             const productoId = result.insertId;
-            console.log('productoId:', productoId); // Imprime el ID del producto
-    
-            // Asumiendo que req.body.proveedores, req.body.codigo y req.body.precio_lista son arrays del mismo tamaño
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
                 return {
                     id: proveedorId,
@@ -273,8 +263,6 @@ module.exports = {
                     precio_lista: req.body.precio_lista[index]
                 };
             });
-    
-            // Crear una promesa para cada proveedor
             const promesasProveedor = proveedores.map(proveedor => {
                 const datosProductoProveedor = {
                     producto_id: productoId,
@@ -285,15 +273,13 @@ module.exports = {
                 console.log('datosProductoProveedor:', datosProductoProveedor); // Imprime los datos del producto del proveedor
                 return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
             });
-    
-            // Devolver una promesa que se resuelve cuando todas las promesas de proveedor se resuelven
             return Promise.all(promesasProveedor);
         })
         .then(() => {
             res.redirect('/productos/panelControl');
         })
         .catch(error => {
-            console.error('Error:', error); // Imprime el error
+            console.error('Error:', error); 
             res.status(500).send('Error: ' + error.message);
         });
     },
