@@ -44,14 +44,16 @@ function actualizarProveedor(proveedor) {
     var selectedOption = proveedor.find('option:selected');
     var descuento = selectedOption.data('descuento');
     var nombreProveedor = selectedOption.text();
-    var closestFormGroup = proveedor.closest('.form-group-crear');
+    var closestFormGroup = proveedor.closest('.proveedor'); // Cambiado aquí
     closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
     closestFormGroup.find('.descuentos_proveedor_id').val(descuento); // Cambiado aquí
-    closestFormGroup.nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
-    closestFormGroup.nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
-    closestFormGroup.nextAll().find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')'); // Cambiado aquí
-    $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); 
+    closestFormGroup.find('label[for="codigo"]').text('Código (' + nombreProveedor + ')'); // Cambiado aquí
+    closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')'); // Cambiado aquí
+    closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')'); // Cambiado aquí
 }
+$('.proveedores').on('change', function() {
+    actualizarProveedor($(this));
+});
 
 function actualizarPrecio(precioListaElement) {
     var precioLista = parseFloat(precioListaElement.val());
