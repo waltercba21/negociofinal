@@ -237,7 +237,7 @@ module.exports = {
             nombre: req.body.nombre, 
             descripcion: req.body.descripcion, 
             categoria_id: req.body.categoria_id, 
-            marca: req.body.marca_id, 
+            marca_id: req.body.marca, 
             modelo_id: req.body.modelo_id, 
             proveedores: req.body.proveedores, 
             codigo: req.body.codigo, 
