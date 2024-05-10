@@ -254,7 +254,7 @@ module.exports = {
         producto.insertarProducto(conexion, datosProducto)
             .then(result => {
                 const productoId = result.insertId;
-                return producto.insertarProductoProveedor(conexion, productoId, datosProducto.proveedores);
+                return producto.insertarProductoProveedor(conexion, productoId, req.body.proveedores);
             })
             .then(() => {
                 res.redirect('/productos/panelControl');
