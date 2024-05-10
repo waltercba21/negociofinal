@@ -261,32 +261,41 @@ module.exports = {
     
         // Pasar los datos del producto al modelo
         producto.insertarProducto(conexion, datosProducto)
-            .then(result => {
-                const productoId = result.insertId;
-                console.log('productoId:', productoId); // Imprime el ID del producto
+        .then(result => {
+            const productoId = result.insertId;
+            console.log('productoId:', productoId); // Imprime el ID del producto
     
-                // Crear una promesa para cada proveedor
-                const promesasProveedor = proveedores.map(proveedor => {
-                    const datosProductoProveedor = {
-                        producto_id: productoId,
-                        proveedor_id: proveedor.id,
-                        precio_lista: proveedor.precio_lista, 
-                        codigo: proveedor.codigo
-                    };
-                    console.log('datosProductoProveedor:', datosProductoProveedor); // Imprime los datos del producto del proveedor
-                    return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
-                });
-    
-                // Devolver una promesa que se resuelve cuando todas las promesas de proveedor se resuelven
-                return Promise.all(promesasProveedor);
-            })
-            .then(() => {
-                res.redirect('/productos/panelControl');
-            })
-            .catch(error => {
-                console.error('Error:', error); // Imprime el error
-                res.status(500).send('Error: ' + error.message);
+            // Asumiendo que req.body.proveedores, req.body.codigo y req.body.precio_lista son arrays del mismo tamaño
+            const proveedores = req.body.proveedores.map((proveedorId, index) => {
+                return {
+                    id: proveedorId,
+                    codigo: req.body.codigo[index],
+                    precio_lista: req.body.precio_lista[index]
+                };
             });
+    
+            // Crear una promesa para cada proveedor
+            const promesasProveedor = proveedores.map(proveedor => {
+                const datosProductoProveedor = {
+                    producto_id: productoId,
+                    proveedor_id: proveedor.id,
+                    precio_lista: proveedor.precio_lista, 
+                    codigo: proveedor.codigo
+                };
+                console.log('datosProductoProveedor:', datosProductoProveedor); // Imprime los datos del producto del proveedor
+                return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
+            });
+    
+            // Devolver una promesa que se resuelve cuando todas las promesas de proveedor se resuelven
+            return Promise.all(promesasProveedor);
+        })
+        .then(() => {
+            res.redirect('/productos/panelControl');
+        })
+        .catch(error => {
+            console.error('Error:', error); // Imprime el error
+            res.status(500).send('Error: ' + error.message);
+        });
     },
     eliminar : async (req, res) => {
         const { id } = req.params;
