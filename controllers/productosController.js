@@ -239,7 +239,7 @@ module.exports = {
             categoria_id: req.body.categoria_id, 
             marca_id: req.body.marca, 
             modelo_id: req.body.modelo_id, 
-            proveedores: req.body.proveedores, 
+            proveedor_id: req.body.proveedor,
             codigo: req.body.codigo, 
             precio_lista: req.body.precio_lista, 
             descuentos_proveedor_id: req.body.descuentos_proveedor_id, 
