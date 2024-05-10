@@ -49,7 +49,7 @@ function actualizarProveedor(proveedor) {
     closestFormGroup.find('.descuentos_proveedor_id').val(descuento); // Cambiado aquí
     closestFormGroup.nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
     closestFormGroup.nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
-    closestFormGroup.nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
+    closestFormGroup.nextAll().find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')'); // Cambiado aquí
     $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); 
 }
 
