@@ -21,7 +21,11 @@ $(document).ready(function() {
         e.preventDefault();
         var newProveedor = $('.proveedor').first().clone(true);
         $(newProveedor).insertBefore('#addProveedor');
-    });
+       // Limpiar los campos del nuevo contenedor
+       $(newProveedor).find('input').val('');
+       $(newProveedor).find('select').prop('selectedIndex', 0);
+       $(newProveedor).find('.nombre_proveedor').text('');
+   });
 });
 
 $(document).on('change', '.precio_lista', function() {
