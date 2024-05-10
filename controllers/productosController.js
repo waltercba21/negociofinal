@@ -232,53 +232,41 @@ module.exports = {
         });
     },
     guardar: function(req, res) {
-        const { nombre, descripcion, categoria, marca, modelo_id, costo, utilidad, precio_lista: precios, proveedores: proveedores_id, codigo: codigos } = req.body;
-        const imagen = req.file ? req.file.filename : null;
-        console.log('Datos del producto a insertar:', req.body, 'Imagen:', imagen);
+        const producto = {
+            imagen: req.file ? req.file.filename : null, 
+            nombre: req.body.nombre, 
+            descripcion: req.body.descripcion, 
+            categoria: req.body.categoria, 
+            marca: req.body.marca, 
+            modelo_id: req.body.modelo_id, 
+            proveedores: req.body.proveedores, 
+            codigo: req.body.codigo, 
+            precio_lista: req.body.precio_lista, 
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id, 
+            costo_neto: req.body.costo_neto,
+            IVA: req.body.IVA, 
+            costo_iva: req.body.costo_iva, 
+            utilidad: req.body.utilidad,
+            precio_venta: req.body.precio_venta, 
+            estado: req.body.estado 
+        };
+        // Pasar los datos del producto al modelo
+        producto.insertarProducto(conexion, req.body)
+            .then(result => {
+                // Si el producto se insertó correctamente, result.insertId contendrá el ID del producto insertado
+                const productoId = result.insertId;
     
-        // Si proveedores_id es una cadena, conviértela en un array
-        if (typeof proveedores_id === 'string') {
-            proveedores_id = proveedores_id.split(',').map(id => id.trim());
-        }
-    
-        let query = 'INSERT INTO productos (imagen, nombre, descripcion, precio_venta, categoria_id, marca_id, modelo_id, utilidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-        let params = [imagen, nombre, descripcion, precios[0], categoria, marca, modelo_id || null, utilidad];
-    
-        producto.insertarProducto(conexion, query, params, function(error, resultados) {
-            if (error) {
-                console.error('Error al insertar el producto:', error);
-                res.status(500).send('Hubo un error al insertar el producto');
-            } else {
-                console.log('Producto insertado con éxito:', resultados);
-                const producto_id = resultados.insertId;
-                if (Array.isArray(proveedores_id)) {
-                    const promesas = proveedores_id.map((proveedor_id, i) => {
-                        return new Promise((resolve, reject) => {
-                            producto.insertarProductoProveedor(conexion, producto_id, proveedor_id, precios[i], codigos[i], function(error, resultados) {
-                                if (error) {
-                                    console.error('Error al insertar en producto_proveedor:', error);
-                                    reject(error);
-                                } else {
-                                    console.log('Insertado en producto_proveedor con éxito:', resultados);
-                                    resolve(resultados);
-                                }
-                            });
-                        });
-                    });
-                    Promise.all(promesas)
-                        .then(() => {
-                            res.redirect('/productos');
-                        })
-                        .catch(error => {
-                            console.error('Error al insertar las relaciones producto-proveedor:', error);
-                            res.status(500).send('Hubo un error al insertar las relaciones producto-proveedor');
-                        });
-                } else {
-                    console.error('proveedores_id no es un array:', proveedores_id);
-                    res.status(500).send('Hubo un error al insertar las relaciones producto-proveedor');
-                }
-            }
-        });
+                // Insertar los datos en la tabla producto_proveedor
+                return producto.insertarProductoProveedor(conexion, productoId, req.body.proveedores);
+            })
+            .then(() => {
+                // Redirigir al usuario a la página de éxito
+                res.redirect('/productos/panelControl');
+            })
+            .catch(error => {
+                // Manejar el error
+                res.status(500).send('Error: ' + error.message);
+            });
     },
     eliminar : async (req, res) => {
         const { id } = req.params;

@@ -18,29 +18,30 @@ obtenerTotal: function (conexion, funcion) {
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
   },
-insertarProducto: function(conexion, query, params, callback) {
-    console.log(`Insertando producto con los siguientes parámetros: ${params}`);
-    conexion.query(query, params, function(error, resultados) {
-        if (error) {
-            console.error('Error al insertar en productos:', error);
-            callback(error);
-        } else {
-            console.log('Insertado en productos con éxito:', resultados);
-            callback(null, resultados);
-        }
+  insertarProducto: function(conexion, producto) {
+    return new Promise((resolve, reject) => {
+        conexion.query('INSERT INTO productos SET ?', producto, function(error, result) {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(result);
+            }
+        });
     });
 },
-insertarProductoProveedor: function(conexion, producto_id, proveedor_id, precio_lista, codigo, callback) {
-    console.log(`Insertando producto-proveedor con producto_id: ${producto_id}`);
-    const sql = 'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?)';
-    conexion.query(sql, [producto_id, proveedor_id, precio_lista, codigo], function(error, resultados) {
-        if (error) {
-            console.error('Error al insertar en producto_proveedor:', error);
-            callback(error);
-        } else {
-            console.log('Insertado en producto_proveedor con éxito:', resultados);
-            callback(null, resultados);
-        }
+
+insertarProductoProveedor: function(conexion, productoId, proveedores) {
+    return new Promise((resolve, reject) => {
+        // Crear un array de arrays, cada uno de los cuales contiene los valores para una fila
+        const filas = proveedores.map(proveedor => [productoId, proveedor.id, proveedor.precio_lista, proveedor.codigo]);
+
+        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES ?', [filas], function(error, result) {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(result);
+            }
+        });
     });
 },
   insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
