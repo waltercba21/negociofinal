@@ -19,8 +19,8 @@ $(document).ready(function() {
     });
     $('#addProveedor').click(function(e) {
         e.preventDefault();
-        var newProveedor = $('.form-group-crear').first().clone(true);
-        $('#proveedoresContainer').append(newProveedor);
+        var newProveedor = $('.proveedor').first().clone(true);
+        $(newProveedor).insertBefore('#addProveedor');
     });
 });
 
