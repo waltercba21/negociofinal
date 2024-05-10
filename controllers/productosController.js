@@ -237,10 +237,9 @@ module.exports = {
             return;
         }
         const proveedores = req.body.proveedores;
-        console.log('proveedores:', proveedores); 
         const datosProducto = {
             nombre: req.body.nombre,
-            imagen: req.body.archivo,
+            imagen: req.file.path,
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
