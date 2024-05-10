@@ -51,7 +51,6 @@ function actualizarProveedor(proveedor) {
     closestFormGroup.nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
     $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); 
 }
-
 function actualizarPrecio(precioListaElement) {
     var precioLista = parseFloat(precioListaElement.val());
     var proveedorElement = precioListaElement.closest('.proveedor');
