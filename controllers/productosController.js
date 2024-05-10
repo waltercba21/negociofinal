@@ -232,6 +232,11 @@ module.exports = {
         });
     },
     guardar: function(req, res) {
+        if (!req.body.proveedores || req.body.proveedores.length === 0) {
+            res.status(400).send('Error: proveedor_id no puede ser nulo');
+            return;
+        }
+    
         const datosProducto = {
             imagen: req.file ? req.file.filename : null, 
             nombre: req.body.nombre, 
@@ -249,20 +254,22 @@ module.exports = {
             estado: req.body.estado 
         };
     
-        const datosProductoProveedor = {
-            producto_id: null, // Este valor se actualizará después de insertar el producto
-            proveedor_id: req.body.proveedor,
-            precio_lista: req.body.precio_lista, 
-            codigo: req.body.codigo
-        };
-    
         // Pasar los datos del producto al modelo
         producto.insertarProducto(conexion, datosProducto)
             .then(result => {
                 const productoId = result.insertId;
-                // Actualizar el producto_id en datosProductoProveedor
-                datosProductoProveedor.producto_id = productoId;
-                return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
+                // Crear una promesa para cada proveedor
+                const promesasProveedor = req.body.proveedores.map(proveedor => {
+                    const datosProductoProveedor = {
+                        producto_id: productoId,
+                        proveedor_id: proveedor.id,
+                        precio_lista: proveedor.precio_lista, 
+                        codigo: proveedor.codigo
+                    };
+                    return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
+                });
+                // Devolver una promesa que se resuelve cuando todas las promesas de proveedor se resuelven
+                return Promise.all(promesasProveedor);
             })
             .then(() => {
                 res.redirect('/productos/panelControl');
