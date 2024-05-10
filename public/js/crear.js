@@ -48,12 +48,12 @@ function actualizarProveedor(proveedor) {
     closestFormGroup.nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
     closestFormGroup.nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
     $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); 
-    closestFormGroup.find('.descuentos_proveedor_id').val(descuento); 
 }
 
 function actualizarPrecio(precioListaElement) {
     var precioLista = parseFloat(precioListaElement.val());
-    var descuento = parseFloat(precioListaElement.closest('.proveedor').find('.descuentos_proveedor_id').val()); 
+    var proveedorElement = precioListaElement.closest('.proveedor');
+    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || proveedorElement.find('.proveedores option:selected').data('descuento')); 
     var costo = precioLista - (precioLista * descuento / 100);
     precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
 
