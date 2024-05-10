@@ -33,7 +33,7 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
     return new Promise((resolve, reject) => {
         const fila = [productoProveedor.producto_id, productoProveedor.proveedor_id, productoProveedor.precio_lista, productoProveedor.codigo];
 
-        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES ?', [fila], function(error, result) {
+        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?)', fila, function(error, result) {
             if (error) {
                 reject(error);
             } else {
