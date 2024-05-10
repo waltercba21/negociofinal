@@ -251,22 +251,17 @@ module.exports = {
             estado: req.body.estado 
         };
         // Pasar los datos del producto al modelo
-        producto.insertarProducto(conexion, req.body)
-            .then(result => {
-                // Si el producto se insertó correctamente, result.insertId contendrá el ID del producto insertado
-                const productoId = result.insertId;
-    
-                // Insertar los datos en la tabla producto_proveedor
-                return producto.insertarProductoProveedor(conexion, productoId, req.body.proveedores);
-            })
-            .then(() => {
-                // Redirigir al usuario a la página de éxito
-                res.redirect('/productos/panelControl');
-            })
-            .catch(error => {
-                // Manejar el error
-                res.status(500).send('Error: ' + error.message);
-            });
+        producto.insertarProducto(conexion, datosProducto)
+        .then(result => {
+            const productoId = result.insertId;
+            return producto.insertarProductoProveedor(conexion, productoId, datosProducto.proveedores);
+        })
+        .then(() => {
+            res.redirect('/productos/panelControl');
+        })
+        .catch(error => {
+            res.status(500).send('Error: ' + error.message);
+        });
     },
     eliminar : async (req, res) => {
         const { id } = req.params;
