@@ -46,7 +46,7 @@ function actualizarProveedor(proveedor) {
     var nombreProveedor = selectedOption.text();
     var closestFormGroup = proveedor.closest('.form-group-crear');
     closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
-    closestFormGroup.find('.descuentos_proveedor_id').val(descuento);
+    closestFormGroup.find('.descuentos_proveedor_id[data-proveedor="' + proveedor.val() + '"]').val(descuento);
     closestFormGroup.nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
     closestFormGroup.nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
     closestFormGroup.nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
@@ -56,7 +56,8 @@ function actualizarProveedor(proveedor) {
 function actualizarPrecio(precioListaElement) {
     var precioLista = parseFloat(precioListaElement.val());
     var proveedorElement = precioListaElement.closest('.proveedor');
-    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val()); 
+    // Utilizar el atributo de datos para seleccionar el campo de descuento correcto
+    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id[data-proveedor="' + proveedorElement.val() + '"]').val());
     // Si descuento es NaN, intentar obtenerlo del atributo de datos de la opción seleccionada
     if (isNaN(descuento)) {
         descuento = parseFloat(proveedorElement.find('.proveedores option:selected').data('descuento'));
