@@ -236,10 +236,14 @@ module.exports = {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
+        if (!req.file || !req.file.path) {
+            res.status(400).send('Error: no se cargó ningún archivo o no se pudo acceder al path del archivo');
+            return;
+        }
         const proveedores = req.body.proveedores;
         const datosProducto = {
             nombre: req.body.nombre,
-            imagen: req.file.imagen,
+            imagen: req.file.path,
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
