@@ -22,8 +22,7 @@ $(document).ready(function() {
         e.preventDefault();
         var newProveedor = $('.proveedor').first().clone(true);
         $(newProveedor).insertBefore('#addProveedor');
-        // Limpiar los campos del nuevo contenedor
-        $(newProveedor).find('input').val('');
+        $(newProveedor).find('input:not(.IVA)').val('');
         $(newProveedor).find('select').prop('selectedIndex', 0);
         $(newProveedor).find('.nombre_proveedor').text('');
         // Disparar el evento change en el selector de proveedores
