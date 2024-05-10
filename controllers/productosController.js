@@ -245,7 +245,7 @@ module.exports = {
         const datosProducto = {
             nombre: req.body.nombre,
             descripcion: req.body.descripcion,
-            categoria: req.body.categoria,
+            categoria_id: req.body.categoria,
             marca_id: req.body.marca,
             modelo_id: req.body.modelo_id,
             descuentos_proveedor_id: req.body.descuentos_proveedor_id,
