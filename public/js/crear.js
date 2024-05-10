@@ -37,7 +37,6 @@ $('#costo_neto').change(function() {
 $('#utilidad').change(function() {
     actualizarPrecioFinal();
 });
-
 function actualizarProveedor(proveedor) {
     var selectedOption = proveedor.find('option:selected');
     var descuento = selectedOption.data('descuento');
@@ -49,25 +48,28 @@ function actualizarProveedor(proveedor) {
     closestFormGroup.nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
     closestFormGroup.nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
     $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); 
-    $('#descuentos_proveedor_id').val(descuento); 
+    closestFormGroup.find('.descuentos_proveedor_id').val(descuento); 
 }
+
 function actualizarPrecio(precioListaElement) {
     var precioLista = parseFloat(precioListaElement.val());
-    var descuento = parseFloat($('#descuentos_proveedor_id').val()); 
+    var descuento = parseFloat(precioListaElement.closest('.proveedor').find('.descuentos_proveedor_id').val()); 
     var costo = precioLista - (precioLista * descuento / 100);
     precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
 
     var costoNeto = precioLista - (precioLista * descuento / 100); 
-    $('#costo_neto').val(costoNeto.toFixed(2)); 
-    $('#utilidad').trigger('change');
-    $('#costo_neto').trigger('change');
+    precioListaElement.closest('.proveedor').find('.costo_neto').val(costoNeto.toFixed(2)); 
+    precioListaElement.closest('.proveedor').find('.utilidad').trigger('change');
+    precioListaElement.closest('.proveedor').find('.costo_neto').trigger('change');
 }
+
 function actualizarCostoNeto(costoNetoElement) {
     var costoNeto = parseFloat(costoNetoElement.val());
-    var IVA = parseFloat($('#IVA').val());
+    var IVA = parseFloat(costoNetoElement.closest('.proveedor').find('.IVA').val());
     var costoConIVA = costoNeto + (costoNeto * IVA / 100);
-    $('#costo_iva').val(costoConIVA.toFixed(2));
+    costoNetoElement.closest('.proveedor').find('.costo_iva').val(costoConIVA.toFixed(2));
 }
+
 function actualizarPrecioFinal() {
     var costoConIVA = parseFloat($('#costo_iva').val());
     var utilidad = parseFloat($('#utilidad').val());
