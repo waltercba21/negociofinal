@@ -236,7 +236,7 @@ module.exports = {
             imagen: req.file ? req.file.filename : null, 
             nombre: req.body.nombre, 
             descripcion: req.body.descripcion, 
-            categoria: req.body.categoria, 
+            categoria_id: req.body.categoria_id, 
             marca: req.body.marca, 
             modelo_id: req.body.modelo_id, 
             proveedores: req.body.proveedores, 
