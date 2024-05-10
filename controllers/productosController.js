@@ -243,7 +243,18 @@ module.exports = {
         console.log('proveedores:', proveedores); // Imprime los proveedores
     
         const datosProducto = {
-            // Tus datos de producto aquí...
+            nombre: req.body.nombre,
+            descripcion: req.body.descripcion,
+            categoria: req.body.categoria,
+            marca: req.body.marca,
+            modelo_id: req.body.modelo_id,
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
+            costo_neto: req.body.costo_neto,
+            IVA: req.body.IVA,
+            costo_iva: req.body.costo_iva,
+            utilidad: req.body.utilidad,
+            precio_venta: req.body.precio_venta,
+            estado: req.body.estado
         };
     
         console.log('datosProducto:', datosProducto); // Imprime los datos del producto
