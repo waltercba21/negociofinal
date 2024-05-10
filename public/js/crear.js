@@ -77,12 +77,27 @@ function actualizarCostoNeto(costoNetoElement) {
     var costoConIVA = costoNeto + (costoNeto * IVA / 100);
     costoNetoElement.closest('.proveedor').find('.costo_iva').val(costoConIVA.toFixed(2));
 }
+function getProveedorConCostoIvaMasBajo() {
+    var proveedorConCostoIvaMasBajo = null;
+    var costoIvaMasBajo = Infinity;
+
+    $('.proveedor').each(function() {
+        var costoIva = parseFloat($(this).find('.costo_iva').val());
+        if (costoIva < costoIvaMasBajo) {
+            costoIvaMasBajo = costoIva;
+            proveedorConCostoIvaMasBajo = $(this);
+        }
+    });
+
+    return proveedorConCostoIvaMasBajo;
+}
 
 function actualizarPrecioFinal() {
-    var costoConIVA = parseFloat($('#costo_iva').val());
+    var proveedor = getProveedorConCostoIvaMasBajo();
+    var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
     var utilidad = parseFloat($('#utilidad').val());
     var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
     $('#precio_venta').val(precioFinal.toFixed(2));
 }
-
+$('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
 
