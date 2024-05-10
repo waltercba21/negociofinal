@@ -240,8 +240,6 @@ module.exports = {
             marca_id: req.body.marca, 
             modelo_id: req.body.modelo_id, 
             proveedor_id: req.body.proveedor,
-            codigo: req.body.codigo, 
-            precio_lista: req.body.precio_lista, 
             descuentos_proveedor_id: req.body.descuentos_proveedor_id, 
             costo_neto: req.body.costo_neto,
             IVA: req.body.IVA, 
@@ -250,11 +248,21 @@ module.exports = {
             precio_venta: req.body.precio_venta, 
             estado: req.body.estado 
         };
+    
+        const datosProductoProveedor = {
+            producto_id: null, // Este valor se actualizará después de insertar el producto
+            proveedor_id: req.body.proveedor,
+            precio_lista: req.body.precio_lista, 
+            codigo: req.body.codigo
+        };
+    
         // Pasar los datos del producto al modelo
         producto.insertarProducto(conexion, datosProducto)
             .then(result => {
                 const productoId = result.insertId;
-                return producto.insertarProductoProveedor(conexion, productoId, req.body.proveedores);
+                // Actualizar el producto_id en datosProductoProveedor
+                datosProductoProveedor.producto_id = productoId;
+                return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
             })
             .then(() => {
                 res.redirect('/productos/panelControl');
