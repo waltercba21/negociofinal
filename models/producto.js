@@ -29,13 +29,11 @@ obtenerPorId: function (conexion, id, funcion) {
         });
     });
 },
-
-insertarProductoProveedor: function(conexion, productoId, proveedores) {
+insertarProductoProveedor: function(conexion, productoProveedor) {
     return new Promise((resolve, reject) => {
-        // Crear un array de arrays, cada uno de los cuales contiene los valores para una fila
-        const filas = proveedores.map(proveedor => [productoId, proveedor.id, proveedor.precio_lista, proveedor.codigo]);
+        const fila = [productoProveedor.producto_id, productoProveedor.proveedor_id, productoProveedor.precio_lista, productoProveedor.codigo];
 
-        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES ?', [filas], function(error, result) {
+        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES ?', [fila], function(error, result) {
             if (error) {
                 reject(error);
             } else {
