@@ -63,12 +63,12 @@ function actualizarPrecio(precioListaElement) {
     precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
 
     var costoNeto = precioLista - (precioLista * descuento / 100); 
-    var costoNetoElement = precioListaElement.closest('.proveedor').find('#costo_neto');
+    var costoNetoElement = proveedorElement.find('.costo_neto');
     costoNetoElement.val(costoNeto.toFixed(2)); 
     actualizarCostoNeto(costoNetoElement); // Llamar a actualizarCostoNeto aquí
 
-    precioListaElement.closest('.proveedor').find('.utilidad').trigger('change');
-    precioListaElement.closest('.proveedor').find('#costo_neto').trigger('change');
+    proveedorElement.find('.utilidad').trigger('change');
+    proveedorElement.find('.costo_neto').trigger('change');
 }
 
 function actualizarCostoNeto(costoNetoElement) {
