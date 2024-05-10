@@ -11,6 +11,7 @@ $('#marca').change(function() {
 });
 
 $(document).ready(function() {
+    $('#descuentos_proveedor_id').val('');
     $('.proveedores').change(function() {
         actualizarProveedor($(this));
     });
@@ -43,7 +44,8 @@ function actualizarProveedor(proveedor) {
     var nombreProveedor = selectedOption.text();
     var closestFormGroup = proveedor.closest('.form-group-crear');
     closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
-    closestFormGroup.nextAll().find('.descuento').val(descuento);
+    // Establecer el valor del descuento solo cuando se selecciona un proveedor
+    $('#descuentos_proveedor_id').val(descuento);
     closestFormGroup.nextAll().find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
     closestFormGroup.nextAll().find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
     closestFormGroup.nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
