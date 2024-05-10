@@ -55,7 +55,7 @@ function actualizarProveedor(proveedor) {
 function actualizarPrecio(precioListaElement) {
     var precioLista = parseFloat(precioListaElement.val());
     var proveedorElement = precioListaElement.closest('.proveedor');
-    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val());
+    var descuento = parseFloat($('#descuentos_proveedor_id').val());
     // Si descuento es NaN, intentar obtenerlo del atributo de datos de la opción seleccionada
     if (isNaN(descuento)) {
         descuento = parseFloat(proveedorElement.find('.proveedores option:selected').data('descuento'));
@@ -64,9 +64,9 @@ function actualizarPrecio(precioListaElement) {
     precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
 
     var costoNeto = precioLista - (precioLista * descuento / 100); 
-    precioListaElement.closest('.proveedor').find('.costo_neto').val(costoNeto.toFixed(2)); 
+    precioListaElement.closest('.proveedor').find('#costo_neto').val(costoNeto.toFixed(2)); 
     precioListaElement.closest('.proveedor').find('.utilidad').trigger('change');
-    precioListaElement.closest('.proveedor').find('.costo_neto').trigger('change');
+    precioListaElement.closest('.proveedor').find('#costo_neto').trigger('change');
 }
 
 function actualizarCostoNeto(costoNetoElement) {
