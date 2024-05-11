@@ -309,11 +309,11 @@ module.exports = {
             producto.retornarDatosId(conexion, req.params.id).then(productoProveedorResult => {
                 // Obtener las categorías, marcas, proveedores, modelos y descuentos de proveedores
                 Promise.all([
-                    categorias.retornarTodos(conexion),
-                    marcas.retornarTodos(conexion),
-                    proveedores.retornarTodos(conexion),
-                    modelos.retornarTodos(conexion),
-                    descuentosProveedores.retornarTodos(conexion)
+                    this.obtenerCategorias(conexion),
+                    this.obtenerMarcas(conexion),
+                    this.obtenerProveedores(conexion),
+                    this.obtenerModelosPorMarca(conexion),
+                    this.obtenerDescuentosProveedor(conexion)
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
                     // Renderizar la vista 'editar' con todos los datos
                     res.render('editar', {
