@@ -390,7 +390,7 @@ retornarDatosId: function(conexion, id) {
             if (error) {
                 reject(error);
             } else {
-                resolve(results);
+                resolve(results[0]);
             }
         });
     });
