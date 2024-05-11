@@ -385,18 +385,12 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
 },
 retornarDatosId: function(conexion, id) {
     return new Promise((resolve, reject) => {
-        conexion.query(`
-          SELECT p.*, pp.precio_lista, pp.codigo
-          FROM productos p
-          LEFT JOIN producto_proveedor pp ON p.id = pp.producto_id
-          WHERE p.id = ?
-        `, [id], function(error, resultados) {
+        const query = 'SELECT * FROM productos WHERE id = ?';
+        conexion.query(query, [id], (error, results) => {
             if (error) {
-                console.error('Error al obtener el producto:', error);
                 reject(error);
             } else {
-                console.log('Resultados de la consulta:', resultados);
-                resolve(resultados);
+                resolve(results);
             }
         });
     });
