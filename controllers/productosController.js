@@ -304,7 +304,7 @@ module.exports = {
                 responseSent = true;
                 return;
             }
-            productoResult = result[0];
+            productoResult = result;
             return producto.obtenerCategorias(conexion);
         }).then(result => {
             if (responseSent) return;
