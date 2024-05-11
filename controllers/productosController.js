@@ -298,7 +298,7 @@ module.exports = {
         let responseSent = false;
         producto.retornarDatosId(conexion, req.params.id).then(result => {
             console.log('Resultado de retornarDatosId:', result);
-            if (!result[0]) {
+            if (!result) {
                 console.error("No se encontró el producto con el id:", req.params.id);
                 res.status(404).send("No se encontró el producto");
                 responseSent = true;
