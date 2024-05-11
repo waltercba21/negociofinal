@@ -294,13 +294,14 @@ module.exports = {
         }
     },
     editar: function(req, res) {
-        let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento;
-        producto.retornarDatosId(conexion, req.params.id).then(productoResult => {
-            if (!productoResult[0]) {
+        let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento, productoResult;
+        producto.retornarDatosId(conexion, req.params.id).then(result => {
+            if (!result[0]) {
                 console.error("No se encontró el producto con el id:", req.params.id);
                 res.status(404).send("No se encontró el producto");
                 return;
             }
+            productoResult = result[0];
             return producto.obtenerCategorias(conexion);
         }).then(result => {
             categorias = result;
@@ -329,9 +330,9 @@ module.exports = {
                 marcas: marcas,
                 modelos: modelos, 
                 proveedores: proveedores,
-                producto: productoResult[0], 
+                producto: productoResult, 
                 preciosConDescuento: preciosConDescuento,
-                utilidad: productoResult[0].utilidad,
+                utilidad: productoResult.utilidad,
                 descuentosProveedor: descuentoProveedor 
             });
         }).catch(error => {
