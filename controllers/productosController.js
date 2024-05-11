@@ -294,7 +294,7 @@ module.exports = {
         }
     },
     editar: function(req, res) {
-        let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento, productoResult;
+        let productoResult;
         let responseSent = false;
         producto.retornarDatosId(conexion, req.params.id).then(result => {
             console.log('Resultado de retornarDatosId:', result);
@@ -305,8 +305,8 @@ module.exports = {
                 return;
             }
             productoResult = result;
-            // Enviar el resultado como una cadena de texto
-            res.send(JSON.stringify(productoResult));
+            // Renderizar la vista 'editar' con los datos del producto
+            res.render('editar', { producto: productoResult });
         }).catch(error => {
             console.error("Error al obtener los datos:", error);
             if (!responseSent) {
