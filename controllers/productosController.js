@@ -302,15 +302,19 @@ module.exports = {
                 return;
             }
             productoResult = result[0];
+            console.log('productoResult:', productoResult);
             return producto.obtenerCategorias(conexion);
         }).then(result => {
             categorias = result;
+            console.log('categorias:', categorias);
             return producto.obtenerMarcas(conexion);
         }).then(result => {
             marcas = result;
+            console.log('marcas:', marcas);
             return producto.obtenerModelosPorMarca(conexion);
         }).then(result => {
             modelos = result;
+            console.log('modelos:', modelos);
             return Promise.all([
                 producto.obtenerProveedores(conexion),
                 producto.obtenerDescuentosProveedor(conexion)
@@ -323,8 +327,11 @@ module.exports = {
                     descuento: descuento ? descuento.descuento : 0
                 };
             });
+            console.log('proveedores:', proveedores);
             preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
             descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
+            console.log('preciosConDescuento:', preciosConDescuento);
+            console.log('descuentoProveedor:', descuentoProveedor);
             res.render('editar', {
                 categorias: categorias,
                 marcas: marcas,
