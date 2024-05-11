@@ -317,7 +317,7 @@ module.exports = {
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
                     // Renderizar la vista 'editar' con todos los datos
                     res.render('editar', {
-                        producto: productoResult,
+                        ...productoResult,
                         productoProveedor: productoProveedorResult,
                         categorias: categoriasResult,
                         marcas: marcasResult,
