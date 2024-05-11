@@ -305,50 +305,8 @@ module.exports = {
                 return;
             }
             productoResult = result;
-            return producto.obtenerCategorias(conexion);
-        }).then(result => {
-            if (responseSent) return;
-            categorias = result;
-            return producto.obtenerMarcas(conexion);
-        }).then(result => {
-            if (responseSent) return;
-            marcas = result;
-            return producto.obtenerModelosPorMarca(conexion);
-        }).then(result => {
-            if (responseSent) return;
-            modelos = result;
-            return Promise.all([
-                producto.obtenerProveedores(conexion),
-                producto.obtenerDescuentosProveedor(conexion)
-            ]);
-        }).then(results => {
-            if (responseSent) return;
-            proveedores = results[0].map(proveedor => {
-                const descuento = results[1].find(desc => desc.proveedor_id === proveedor.id);
-                return {
-                    ...proveedor,
-                    descuento: descuento ? descuento.descuento : 0
-                };
-            });
-            preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
-            descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
-            if (productoResult) {
-                res.render('editar', {
-                    categorias: categorias,
-                    marcas: marcas,
-                    modelos: modelos, 
-                    proveedores: proveedores,
-                    producto: productoResult, 
-                    preciosConDescuento: preciosConDescuento,
-                    utilidad: productoResult.utilidad,
-                    descuentosProveedor: descuentoProveedor 
-                });
-            } else {
-                console.error("No se encontró el producto con el id:", req.params.id);
-                if (!responseSent) {
-                    res.status(404).send("No se encontró el producto");
-                }
-            }
+            // Enviar el resultado como una cadena de texto
+            res.send(JSON.stringify(productoResult));
         }).catch(error => {
             console.error("Error al obtener los datos:", error);
             if (!responseSent) {
