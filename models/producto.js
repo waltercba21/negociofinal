@@ -386,10 +386,9 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
 retornarDatosId: function(conexion, id) {
     return new Promise((resolve, reject) => {
         conexion.query(`
-          SELECT p.*, pp.precio_lista, pp.codigo, pp.costo, dp.descuento
+          SELECT p.*, pp.precio_lista, pp.codigo
           FROM productos p
           LEFT JOIN producto_proveedor pp ON p.id = pp.producto_id
-          LEFT JOIN descuentos_proveedor dp ON p.proveedor_id = dp.proveedor_id
           WHERE p.id = ?
         `, [id], function(error, resultados) {
             if (error) {
@@ -401,7 +400,7 @@ retornarDatosId: function(conexion, id) {
             }
         });
     });
-  },
+},
   obtenerProveedoresProducto: function(conexion, id) {
     return new Promise((resolve, reject) => {
         conexion.query(`

@@ -26,7 +26,7 @@ module.exports = {
                 return res.status(500).send('Error al obtener los productos');
             } else {
                 res.render('index', { productos: productos });
-            }
+            } 
         });
     },
     lista: async function (req, res) {
@@ -189,7 +189,6 @@ module.exports = {
       },
       crear: function(req, res) {
         let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento;
-        // Obtén las categorías
         producto.obtenerCategorias(conexion).then(result => {
             categorias = result;
             // Obtén las marcas
@@ -213,9 +212,7 @@ module.exports = {
                     descuento: descuento ? descuento.descuento : 0
                 };
             });
-            // Calcula los precios con descuento para cada proveedor
             preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
-            // Agrega los descuentos de los proveedores
             descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
             res.render('crear', {
                 categorias: categorias,
@@ -296,53 +293,51 @@ module.exports = {
             res.status(500).send('Hubo un error al intentar eliminar el producto');
         }
     },
-    editar : async function (req, res) { 
-        try {
-            let productoResult = await producto.retornarDatosId(conexion, req.params.id);
+    editar: function(req, res) {
+        let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento;
+        producto.retornarDatosId(conexion, req.params.id).then(productoResult => {
             if (!productoResult[0]) {
                 console.error("No se encontró el producto con el id:", req.params.id);
                 res.status(404).send("No se encontró el producto");
                 return;
             }
-            let categorias = await producto.obtenerCategorias(conexion);
-            let marcas = await producto.obtenerMarcas(conexion);
-            let modelos = await producto.obtenerModelosPorMarca(conexion, productoResult[0].marcaId); 
-    
-            // Obtén los proveedores y sus descuentos
-            let proveedoresResult = await producto.obtenerProveedores(conexion);
-            let descuentosProveedor = await producto.obtenerDescuentosProveedor(conexion);
-            let proveedores = proveedoresResult.map(proveedor => {
-                const descuento = descuentosProveedor.find(desc => desc.proveedor_id === proveedor.id);
+            return producto.obtenerCategorias(conexion);
+        }).then(result => {
+            categorias = result;
+            return producto.obtenerMarcas(conexion);
+        }).then(result => {
+            marcas = result;
+            return producto.obtenerModelosPorMarca(conexion);
+        }).then(result => {
+            modelos = result;
+            return Promise.all([
+                producto.obtenerProveedores(conexion),
+                producto.obtenerDescuentosProveedor(conexion)
+            ]);
+        }).then(results => {
+            proveedores = results[0].map(proveedor => {
+                const descuento = results[1].find(desc => desc.proveedor_id === proveedor.id);
                 return {
                     ...proveedor,
                     descuento: descuento ? descuento.descuento : 0
                 };
             });
-    
-            // Calcula los precios con descuento para cada proveedor
-            let preciosConDescuento = proveedores.map(proveedor => productoResult[0].precio_venta * (1 - proveedor.descuento / 100));
-    
-            // Aquí agregamos el console.log para ver los datos
-            console.log('Producto:', productoResult[0]);
-            console.log('Categorias:', categorias);
-            console.log('Marcas:', marcas);
-            console.log('Modelos:', modelos);
-            console.log('Proveedores:', proveedores);
-            console.log('Precios con descuento:', preciosConDescuento);
-    
-            res.render('editar', { 
-                producto: productoResult[0],
+            preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
+            descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
+            res.render('editar', {
                 categorias: categorias,
-                proveedores: proveedores,
                 marcas: marcas,
-                modelos: modelos,
+                modelos: modelos, 
+                proveedores: proveedores,
+                producto: productoResult[0], 
                 preciosConDescuento: preciosConDescuento,
-                utilidad: productoResult[0].utilidad
+                utilidad: productoResult[0].utilidad,
+                descuentosProveedor: descuentoProveedor 
             });
-        } catch (error) {
+        }).catch(error => {
             console.error("Error al obtener los datos:", error);
             res.status(500).send("Error al obtener los datos");
-        }
+        });
     },
     actualizar: function (req, res) {
         console.log('Iniciando la actualización del producto');
