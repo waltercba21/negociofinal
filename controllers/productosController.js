@@ -295,24 +295,29 @@ module.exports = {
     },
     editar: function(req, res) {
         let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento, productoResult;
+        let responseSent = false;
         producto.retornarDatosId(conexion, req.params.id).then(result => {
             if (!result[0]) {
                 console.error("No se encontró el producto con el id:", req.params.id);
                 res.status(404).send("No se encontró el producto");
+                responseSent = true;
                 return;
             }
             productoResult = result[0];
             console.log('productoResult:', productoResult);
             return producto.obtenerCategorias(conexion);
         }).then(result => {
+            if (responseSent) return;
             categorias = result;
             console.log('categorias:', categorias);
             return producto.obtenerMarcas(conexion);
         }).then(result => {
+            if (responseSent) return;
             marcas = result;
             console.log('marcas:', marcas);
             return producto.obtenerModelosPorMarca(conexion);
         }).then(result => {
+            if (responseSent) return;
             modelos = result;
             console.log('modelos:', modelos);
             return Promise.all([
@@ -320,6 +325,7 @@ module.exports = {
                 producto.obtenerDescuentosProveedor(conexion)
             ]);
         }).then(results => {
+            if (responseSent) return;
             proveedores = results[0].map(proveedor => {
                 const descuento = results[1].find(desc => desc.proveedor_id === proveedor.id);
                 return {
@@ -332,19 +338,28 @@ module.exports = {
             descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
             console.log('preciosConDescuento:', preciosConDescuento);
             console.log('descuentoProveedor:', descuentoProveedor);
-            res.render('editar', {
-                categorias: categorias,
-                marcas: marcas,
-                modelos: modelos, 
-                proveedores: proveedores,
-                producto: productoResult, 
-                preciosConDescuento: preciosConDescuento,
-                utilidad: productoResult.utilidad,
-                descuentosProveedor: descuentoProveedor 
-            });
+            if (productoResult) {
+                res.render('editar', {
+                    categorias: categorias,
+                    marcas: marcas,
+                    modelos: modelos, 
+                    proveedores: proveedores,
+                    producto: productoResult, 
+                    preciosConDescuento: preciosConDescuento,
+                    utilidad: productoResult.utilidad,
+                    descuentosProveedor: descuentoProveedor 
+                });
+            } else {
+                console.error("No se encontró el producto con el id:", req.params.id);
+                if (!responseSent) {
+                    res.status(404).send("No se encontró el producto");
+                }
+            }
         }).catch(error => {
             console.error("Error al obtener los datos:", error);
-            res.status(500).send("Error al obtener los datos");
+            if (!responseSent) {
+                res.status(500).send("Error al obtener los datos");
+            }
         });
     },
     actualizar: function (req, res) {
