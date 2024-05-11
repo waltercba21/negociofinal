@@ -305,8 +305,38 @@ module.exports = {
                 return;
             }
             productoResult = result;
-            // Renderizar la vista 'editar' con los datos del producto
-            res.render('editar', { producto: productoResult });
+            // Obtener los datos de producto_proveedor
+            productoProveedor.retornarDatosId(conexion, req.params.id).then(productoProveedorResult => {
+                // Obtener las categorías, marcas, proveedores, modelos y descuentos de proveedores
+                Promise.all([
+                    categorias.retornarTodos(conexion),
+                    marcas.retornarTodos(conexion),
+                    proveedores.retornarTodos(conexion),
+                    modelos.retornarTodos(conexion),
+                    descuentosProveedores.retornarTodos(conexion)
+                ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
+                    // Renderizar la vista 'editar' con todos los datos
+                    res.render('editar', {
+                        producto: productoResult,
+                        productoProveedor: productoProveedorResult,
+                        categorias: categoriasResult,
+                        marcas: marcasResult,
+                        proveedores: proveedoresResult,
+                        modelos: modelosResult,
+                        descuentosProveedores: descuentosProveedoresResult
+                    });
+                }).catch(error => {
+                    console.error("Error al obtener los datos:", error);
+                    if (!responseSent) {
+                        res.status(500).send("Error al obtener los datos");
+                    }
+                });
+            }).catch(error => {
+                console.error("Error al obtener los datos de producto_proveedor:", error);
+                if (!responseSent) {
+                    res.status(500).send("Error al obtener los datos de producto_proveedor");
+                }
+            });
         }).catch(error => {
             console.error("Error al obtener los datos:", error);
             if (!responseSent) {
