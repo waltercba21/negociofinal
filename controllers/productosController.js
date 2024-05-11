@@ -323,7 +323,7 @@ module.exports = {
                         marcas: marcasResult,
                         proveedores: proveedoresResult,
                         modelos: modelosResult,
-                        descuentosProveedores: descuentosProveedoresResult
+                        descuentosProveedor: descuentosProveedoresResult
                     });
                 }).catch(error => {
                     console.error("Error al obtener los datos:", error);
