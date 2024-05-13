@@ -31,11 +31,16 @@ $(document).ready(function() {
     });
 });
 
-$(document).on('change', '.precio_lista', function() {
+$(document).on('change', '.precio_lista, .descuentos_proveedor_id', function() {
     var precioLista = parseFloat($(this).val());
     var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val());
     var costoNeto = precioLista - (precioLista * descuento / 100);
     $(this).closest('.form-group-crear').nextAll().find('.costo_neto').val(costoNeto.toFixed(2)); 
+
+    // Calcular el 'Costo Neto Con IVA'
+    var IVA = parseFloat($(this).closest('.form-group-crear').nextAll().find('.IVA').val());
+    var costoIVA = costoNeto + (costoNeto * IVA / 100);
+    $(this).closest('.form-group-crear').nextAll().find('.costo_iva').val(costoIVA.toFixed(2));
 
     // Disparar el evento de cambio para #utilidad
     $('#utilidad').trigger('change');
