@@ -360,10 +360,13 @@ module.exports = {
             return;
         }
         const proveedores = req.body.proveedores;
+        const imagen = req.file && req.file.filename ? req.file.filename : req.body.imagenActual || 'imagenPredeterminada.jpg';
+        console.log('req.file:', req.file); // Imprime la información del archivo cargado
+        console.log('imagen:', imagen); // Imprime el nombre del archivo de imagen seleccionado
         const datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
-            imagen: req.file && req.file.filename ? req.file.filename : req.body.imagenActual || 'imagenPredeterminada.jpg',
+            imagen: imagen,
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
