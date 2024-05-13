@@ -65,8 +65,8 @@ var proveedorTemplate = function(id) {
         <input class="codigo" id="codigo${id}" type="text" name="codigo">
     </div>
     <div class="form-group-crear">
-    <label for="descuento${id}">Descuento:</label>
-    <input class="descuento" id="descuento${id}" class="form-control" type="number" name="descuento[]" readonly>
+    <label for="descuentos_proveedor_id${id}">Descuento:</label>
+    <input class="descuentos_proveedor_id" id="descuentos_proveedor_id${id}" class="form-control" type="number" name="descuentos_proveedor_id[]" readonly>
     </div>
     <div class="form-group-crear">
     <label for="costo${id}">Costo Proveedor:</label>
@@ -101,7 +101,7 @@ $('#addProveedor').click(function(event) {
     var descuento = selectedOption.data('descuento');
     var nombreProveedor = selectedOption.text();
     $(this).closest('.form-group-crear').find('.nombre_proveedor').text(nombreProveedor);
-    $(this).closest('.form-group-crear').nextAll().find('.descuento').val(descuento);
+    $(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val(descuento); // Línea modificada
     $(this).closest('.form-group-crear').nextAll().find('label').each(function() {
         var forAttr = $(this).attr('for');
         $(this).text($(this).text().replace(/\(.*\)/, '') + ' (' + nombreProveedor + ')');
