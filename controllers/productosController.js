@@ -361,8 +361,6 @@ module.exports = {
         }
         const proveedores = req.body.proveedores;
         const imagen = req.file && req.file.filename ? req.file.filename : req.body.imagenActual || 'imagenPredeterminada.jpg';
-        console.log('req.file:', req.file); // Imprime la información del archivo cargado
-        console.log('imagen:', imagen); // Imprime el nombre del archivo de imagen seleccionado
         const datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
@@ -380,6 +378,18 @@ module.exports = {
             estado: req.body.estado
         };
         producto.actualizar(conexion, datosProducto)
+        .then(() => {
+            // Actualizar la imagen del producto
+            return new Promise((resolve, reject) => {
+                producto.actualizarArchivo(conexion, datosProducto, req.file, (error) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        })
         .then(() => {
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
                 return {
