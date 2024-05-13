@@ -131,6 +131,32 @@ newProveedor.find('.precio_lista').change(function() {
     proveedorCount++; // Incrementar el contador de proveedores
 });
 
+
+function getProveedorConCostoIvaMasBajo() {
+    var proveedorConCostoIvaMasBajo = null;
+    var costoIvaMasBajo = Infinity;
+
+    $('.proveedor').each(function() {
+        var costoIva = parseFloat($(this).find('.costo_iva').val());
+        if (costoIva < costoIvaMasBajo) {
+            costoIvaMasBajo = costoIva;
+            proveedorConCostoIvaMasBajo = $(this);
+        }
+    });
+
+    return proveedorConCostoIvaMasBajo;
+}
+
+function actualizarPrecioFinal() {
+    var proveedor = getProveedorConCostoIvaMasBajo();
+    var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
+    var utilidad = parseFloat($('#utilidad').val());
+    var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
+    $('#precio_venta').val(precioFinal.toFixed(2));
+}
+$('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
+
+
 $('#utilidad').change(function() {
     var utilidad = parseFloat($(this).val());
     var costo = Math.min.apply(null, $('.costo').map(function() {
