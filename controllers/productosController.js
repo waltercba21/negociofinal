@@ -305,8 +305,18 @@ module.exports = {
                 return;
             }
             productoResult = result;
+            // Convertir los valores numéricos a enteros
+            productoResult.precio_lista = Math.floor(productoResult.precio_lista);
+            productoResult.costo_neto = Math.floor(productoResult.costo_neto);
+            productoResult.costo_iva = Math.floor(productoResult.costo_iva);
+            productoResult.utilidad = Math.floor(productoResult.utilidad);
+            productoResult.precio_venta = Math.floor(productoResult.precio_venta);
             // Obtener los datos de producto_proveedor
             producto.retornarDatosProveedor(conexion, req.params.id).then(productoProveedorResult => {
+                // Convertir los valores numéricos a enteros
+                productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
+                productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
+                productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
                 // Obtener las categorías, marcas, proveedores, modelos y descuentos de proveedores
                 Promise.all([
                     producto.obtenerCategorias(conexion),
