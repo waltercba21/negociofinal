@@ -293,57 +293,6 @@ module.exports = {
             res.status(500).send('Hubo un error al intentar eliminar el producto');
         }
     },
-    editar: function(req, res) {
-        let productoResult;
-        let responseSent = false;
-        producto.retornarDatosId(conexion, req.params.id).then(result => {
-            console.log('Resultado de retornarDatosId:', result);
-            if (!result) {
-                console.error("No se encontró el producto con el id:", req.params.id);
-                res.status(404).send("No se encontró el producto");
-                responseSent = true;
-                return;
-            }
-            productoResult = result;
-            // Obtener los datos de producto_proveedor
-            producto.retornarDatosProveedor(conexion, req.params.id).then(productoProveedorResult => {
-                // Obtener las categorías, marcas, proveedores, modelos y descuentos de proveedores
-                Promise.all([
-                    producto.obtenerCategorias(conexion),
-                    producto.obtenerMarcas(conexion),
-                    producto.obtenerProveedores(conexion),
-                    producto.obtenerModelosPorMarca(conexion, productoResult.marca), // Asegúrate de que estás obteniendo los modelos para la marca correcta
-                    producto.obtenerDescuentosProveedor(conexion)
-                ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
-                    // Renderizar la vista 'editar' con todos los datos
-                    res.render('editar', {
-                        producto: productoResult,
-                        productoProveedor: productoProveedorResult,
-                        categorias: categoriasResult,
-                        marcas: marcasResult,
-                        proveedores: proveedoresResult,
-                        modelos: modelosResult,
-                        descuentosProveedor: descuentosProveedoresResult
-                    });
-                }).catch(error => {
-                    console.error("Error al obtener los datos:", error);
-                    if (!responseSent) {
-                        res.status(500).send("Error al obtener los datos");
-                    }
-                });
-            }).catch(error => {
-                console.error("Error al obtener los datos de producto_proveedor:", error);
-                if (!responseSent) {
-                    res.status(500).send("Error al obtener los datos de producto_proveedor");
-                }
-            });
-        }).catch(error => {
-            console.error("Error al obtener los datos:", error);
-            if (!responseSent) {
-                res.status(500).send("Error al obtener los datos");
-            }
-        });
-    },
     actualizar: function (req, res) {
         console.log('Iniciando la actualización del producto');
     
@@ -379,6 +328,7 @@ module.exports = {
                     });
                 }
     
+                // Actualizar los datos del producto
                 producto.actualizar(conexion,req.body, req.file, function(error){
                     if (error) {
                         console.error("Error al actualizar el producto:", error);
@@ -388,9 +338,20 @@ module.exports = {
     
                     console.log('Producto actualizado correctamente');
     
-                    req.session.save(function(err) {
-                        console.log('Redirigiendo a panel de control');
-                        res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
+                    // Actualizar los proveedores del producto
+                    producto.actualizarProveedores(conexion, req.body.id, req.body.proveedores, function(error) {
+                        if (error) {
+                            console.error("Error al actualizar los proveedores del producto:", error);
+                            res.status(500).send("Error al actualizar los proveedores del producto");
+                            return;
+                        }
+    
+                        console.log('Proveedores del producto actualizados correctamente');
+    
+                        req.session.save(function(err) {
+                            console.log('Redirigiendo a panel de control');
+                            res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
+                        });
                     });
                 });
             });
