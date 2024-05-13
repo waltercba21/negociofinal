@@ -355,6 +355,8 @@ module.exports = {
         });
     },
     actualizar: function(req, res) {
+        console.log('req.body:', req.body); // Imprime los datos del cuerpo de la solicitud
+        console.log('req.file:', req.file); // Imprime los datos del archivo de la solicitud
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
@@ -377,6 +379,7 @@ module.exports = {
             precio_venta: req.body.precio_venta,
             estado: req.body.estado
         };
+        console.log('datosProducto:', datosProducto); // Imprime los datos del producto
         producto.actualizar(conexion, datosProducto)
         .then(() => {
             // Actualizar la imagen del producto
@@ -398,6 +401,7 @@ module.exports = {
                     precio_lista: req.body.precio_lista[index]
                 };
             });
+            console.log('proveedores:', proveedores); // Imprime los datos de los proveedores
             const promesasProveedor = proveedores.map(proveedor => {
                 const datosProductoProveedor = {
                     producto_id: datosProducto.id,
