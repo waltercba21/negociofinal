@@ -363,7 +363,7 @@ module.exports = {
         const datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
-            imagen: req.file ? req.file.filename : req.body.imagenActual || 'imagenPredeterminada.jpg',
+            imagen: req.file && req.file.filename ? req.file.filename : req.body.imagenActual || 'imagenPredeterminada.jpg',
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
