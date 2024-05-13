@@ -33,9 +33,9 @@ $(document).ready(function() {
 
 $(document).on('change', '.precio_lista', function() {
     var precioLista = parseFloat($(this).val());
-    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuento').val());
-    var costo = precioLista - (precioLista * descuento / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2)); 
+    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val());
+    var costoNeto = precioLista - (precioLista * descuento / 100);
+    $(this).closest('.form-group-crear').nextAll().find('.costo_neto').val(costoNeto.toFixed(2)); 
 
     // Disparar el evento de cambio para #utilidad
     $('#utilidad').trigger('change');
