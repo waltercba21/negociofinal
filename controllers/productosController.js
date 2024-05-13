@@ -312,7 +312,7 @@ module.exports = {
                     producto.obtenerCategorias(conexion),
                     producto.obtenerMarcas(conexion),
                     producto.obtenerProveedores(conexion),
-                    producto.obtenerModelosPorMarca(conexion),
+                    producto.obtenerModelosPorMarca(conexion, productoResult.marca), // Asegúrate de que estás obteniendo los modelos para la marca correcta
                     producto.obtenerDescuentosProveedor(conexion)
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
                     // Renderizar la vista 'editar' con todos los datos
