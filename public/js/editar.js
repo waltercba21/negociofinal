@@ -9,12 +9,11 @@ $('#marca-input').change(function() {
         });
     });
 });
-
 $(document).ready(function() {
     // Adjuntar el controlador de eventos change a los elementos .proveedores
     $('.proveedores').change(function() {
         var selectedOption = $(this).find('option:selected');
-        var descuento = selectedOption.data('descuento');
+        var descuento = Math.ceil(selectedOption.data('descuento'));
         var nombreProveedor = selectedOption.text();
         var closestFormGroup = $(this).closest('.form-group-crear');
         closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
@@ -24,21 +23,20 @@ $(document).ready(function() {
         closestFormGroup.nextAll().find('label[for="descuento"]').text('Descuento (' + nombreProveedor + ')');
         $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); // Línea modificada
     });
-
-    // Disparar el evento 'change' para el primer proveedor después de que el DOM esté completamente cargado
+    
     $(window).on('load', function() {
         $('.proveedores').first().trigger('change');
     });
 });
 
 $(document).on('change', '.precio_lista, .descuentos_proveedor_id', function() {
-    var precioLista = parseFloat($(this).val());
-    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val());
+    var precioLista = Math.ceil(parseFloat($(this).val()));
+    var descuento = Math.ceil(parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val()));
     var costoNeto = precioLista - (precioLista * descuento / 100);
     $(this).closest('.form-group-crear').nextAll().find('.costo_neto').val(Math.ceil(costoNeto)); 
 
     // Calcular el 'Costo Neto Con IVA'
-    var IVA = parseFloat($(this).closest('.form-group-crear').nextAll().find('.IVA').val());
+    var IVA = Math.ceil(parseFloat($(this).closest('.form-group-crear').nextAll().find('.IVA').val()));
     var costoIVA = costoNeto + (costoNeto * IVA / 100);
     $(this).closest('.form-group-crear').nextAll().find('.costo_iva').val(Math.ceil(costoIVA));
 
