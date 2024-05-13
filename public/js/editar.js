@@ -35,12 +35,12 @@ $(document).on('change', '.precio_lista, .descuentos_proveedor_id', function() {
     var precioLista = parseFloat($(this).val());
     var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val());
     var costoNeto = precioLista - (precioLista * descuento / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo_neto').val(costoNeto.toFixed(2)); 
+    $(this).closest('.form-group-crear').nextAll().find('.costo_neto').val(Math.ceil(costoNeto)); 
 
     // Calcular el 'Costo Neto Con IVA'
     var IVA = parseFloat($(this).closest('.form-group-crear').nextAll().find('.IVA').val());
     var costoIVA = costoNeto + (costoNeto * IVA / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo_iva').val(costoIVA.toFixed(2));
+    $(this).closest('.form-group-crear').nextAll().find('.costo_iva').val(Math.ceil(costoIVA));
 
     // Disparar el evento de cambio para #utilidad
     $('#utilidad').trigger('change');
@@ -146,16 +146,13 @@ function getProveedorConCostoIvaMasBajo() {
 
     return proveedorConCostoIvaMasBajo;
 }
-
 function actualizarPrecioFinal() {
     var proveedor = getProveedorConCostoIvaMasBajo();
     var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
     var utilidad = parseFloat($('#utilidad').val());
     var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
-    $('#precio_venta').val(precioFinal.toFixed(2));
+    $('#precio_venta').val(Math.ceil(precioFinal));
 }
-$('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
-
 
 $('#utilidad').change(function() {
     var utilidad = parseFloat($(this).val());
@@ -163,5 +160,5 @@ $('#utilidad').change(function() {
         return parseFloat($(this).val());
     }).get());
     var precioFinal = costo + (costo * utilidad / 100);
-    $('#precio').val(precioFinal.toFixed(2));
+    $('#precio').val(Math.ceil(precioFinal));
 });
