@@ -145,25 +145,16 @@ actualizar: function (conexion, datos, archivo, funcion) {
     conexion.query(query, params, funcion);
 },
 actualizarProductoProveedor: function(conexion, datos, funcion) {
-    let query = "UPDATE producto_proveedor SET ";
-    let params = [];
-    let first = true;
-
-    if (datos.precio_lista) {
-        query += first ? "precio_lista=?" : ", precio_lista=?";
-        params.push(datos.precio_lista);
-        first = false;
-    }
-    if (datos.codigo) {
-        query += first ? "codigo=?" : ", codigo=?";
-        params.push(datos.codigo);
-        first = false;
-    }
+    // Comprueba si se proporcionan los IDs del producto y del proveedor
     if (!datos.producto_id || !datos.proveedor_id) {
         return funcion(new Error('Los datos del producto_proveedor deben incluir un producto_id y un proveedor_id'));
     }
-    query += " WHERE producto_id=? AND proveedor_id=?";
-    params.push(datos.producto_id, datos.proveedor_id);
+
+    // Prepara la consulta y los parámetros
+    let query = "INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE precio_lista = VALUES(precio_lista), codigo = VALUES(codigo)";
+    let params = [datos.producto_id, datos.proveedor_id, datos.precio_lista, datos.codigo];
+
+    // Ejecuta la consulta
     conexion.query(query, params, funcion);
 },
 actualizarArchivo: function(conexion,datos,archivo,funcion){
