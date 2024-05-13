@@ -162,7 +162,7 @@ actualizarProductoProveedor: function(conexion, datos, funcion) {
     if (!datos.producto_id || !datos.proveedor_id) {
         return funcion(new Error('Los datos del producto_proveedor deben incluir un producto_id y un proveedor_id'));
     }
-    query += first ? " WHERE producto_id=? AND proveedor_id=?" : ", WHERE producto_id=? AND proveedor_id=?";
+    query += " WHERE producto_id=? AND proveedor_id=?";
     params.push(datos.producto_id, datos.proveedor_id);
     conexion.query(query, params, funcion);
 },
