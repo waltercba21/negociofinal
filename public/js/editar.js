@@ -31,20 +31,22 @@ $(document).ready(function() {
     });
 });
 
-$(document).on('change', '.precio_lista, .descuentos_proveedor_id', function() {
-    var precioLista = parseFloat($(this).val());
-    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val());
-    var costoNeto = precioLista - (precioLista * descuento / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo_neto').val(costoNeto.toFixed(2)); 
+function attachChangeEventHandlers() {
+    $('.precio_lista, .descuentos_proveedor_id').off('change').on('change', function() {
+        var precioLista = parseFloat($(this).val());
+        var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val());
+        var costoNeto = precioLista - (precioLista * descuento / 100);
+        $(this).closest('.form-group-crear').nextAll().find('.costo_neto').val(costoNeto.toFixed(2)); 
 
-    // Calcular el 'Costo Neto Con IVA'
-    var IVA = parseFloat($(this).closest('.form-group-crear').nextAll().find('.IVA').val());
-    var costoIVA = costoNeto + (costoNeto * IVA / 100);
-    $(this).closest('.form-group-crear').nextAll().find('.costo_iva').val(costoIVA.toFixed(2));
+        // Calcular el 'Costo Neto Con IVA'
+        var IVA = parseFloat($(this).closest('.form-group-crear').nextAll().find('.IVA').val());
+        var costoIVA = costoNeto + (costoNeto * IVA / 100);
+        $(this).closest('.form-group-crear').nextAll().find('.costo_iva').val(costoIVA.toFixed(2));
 
-    // Disparar el evento de cambio para #utilidad
-    $('#utilidad').trigger('change');
-});
+        // Disparar el evento de cambio para #utilidad
+        $('#utilidad').trigger('change');
+    });
+}
 
 //AGREGAR PROVEEDORES
 var proveedorCount = 0; // Añadir un contador para los proveedores
@@ -119,6 +121,7 @@ $('#addProveedor').click(function(event) {
     newProveedor.find('.proveedores').first().trigger('change');
 
     proveedorCount++; // Incrementar el contador de proveedores
+    attachChangeEventHandlers();
 });
 
 $('#utilidad').change(function() {
