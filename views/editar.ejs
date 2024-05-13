@@ -17,101 +17,100 @@
                     <input id="imagen" class="form-control-file" type="file" name="archivo">
                 </div>
                 <div class="form-group-crear">
-                <label for="nombre">Nombre:</label>   
-                <input id="nombre" class="form-control" type="text" name="nombre">
+                    <label for="nombre">Nombre:</label>   
+                    <input id="nombre" class="form-control" type="text" name="nombre" value="<%= producto ? producto.nombre : '' %>">
                 </div>
                 <div class="form-group-crear">
-                <label for="descripcion">Descripcion:</label>
-                <input id="descripcion" class="form-control" type="text" name="descripcion">
+                    <label for="descripcion">Descripcion:</label>
+                    <input id="descripcion" class="form-control" type="text" name="descripcion" value="<%= producto ? producto.descripcion : '' %>">
                 </div>
                 <div class="form-group-crear">
                     <label for="oferta">Oferta:</label>
-                    <input id="oferta" type="checkbox" name="oferta">
+                    <input id="oferta" type="checkbox" name="oferta" <%= producto && producto.oferta ? 'checked' : '' %>>
                 </div>
                 <div class="form-group-crear">
                     <label for="categoria">Categoria</label>
                     <select id="categoria" name="categoria">
-                        <option value="" selected>Selecciona una categoría...</option>
+                        <option value="" <%= !producto || !producto.categoria ? 'selected' : '' %>>Selecciona una categoría...</option>
                         <% categorias.forEach(function(categoria) { %>
-                            <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
+                            <option value="<%= categoria.id %>" <%= producto && producto.categoria == categoria.id ? 'selected' : '' %>><%= categoria.nombre %></option>
                         <% }); %>
                     </select>
                 </div>
                 <div class="form-group-crear">
                     <label for="marca">Marca:</label>
                     <select id="marca" name="marca">
-                        <option value="" selected>Selecciona una marca...</option> 
+                        <option value="" <%= !producto || !producto.marca ? 'selected' : '' %>>Selecciona una marca...</option> 
                         <% marcas.forEach(function(marca) { %>
-                            <option value="<%= marca.id %>"><%= marca.nombre %></option>
+                            <option value="<%= marca.id %>" <%= producto && producto.marca == marca.id ? 'selected' : '' %>><%= marca.nombre %></option>
                         <% }); %>
                     </select>
                 </div>
-                
                 <div class="form-group-crear">
                     <label for="modelo_id">Modelo:</label>
                     <select id="modelo_id" name="modelo_id">
-                        <option value="" <% if (!producto || !producto.modelo_id) { %>selected<% } %>>Selecciona un modelo...</option>
+                        <option value="" <%= !producto || !producto.modelo_id ? 'selected' : '' %>>Selecciona un modelo...</option>
                         <% modelos.forEach(function(modelo) { %>
-                            <option value="<%= modelo.id %>" <% if (producto && producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
+                            <option value="<%= modelo.id %>" <%= producto && producto.modelo_id == modelo.id ? 'selected' : '' %>><%= modelo.nombre %></option>
                         <% }); %>
                     </select>
                 </div>
-            <div id="proveedoresContainer">
-                <div class="proveedor">
+                <div id="proveedoresContainer">
+                    <div class="proveedor">
+                        <div class="form-group-crear">
+                            <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
+                            <select class="proveedores" name="proveedores[]" multiple>
+                                <% proveedores.forEach(function(proveedor) { %>
+                                    <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>" <%= producto && producto.proveedores && producto.proveedores.includes(proveedor.id) ? 'selected' : '' %>><%= proveedor.nombre %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="form-group-crear">
+                            <label for="codigo">Código:</label>
+                            <input class="codigo" type="text" name="codigo" value="<%= producto ? producto.codigo : '' %>">
+                        </div>
+                        <div class="form-group-crear">
+                            <label for="precio_lista">Precio de Lista:</label>
+                            <input class="precio_lista" class="form-control" type="number" name="precio_lista[]" value="<%= producto ? producto.precio_lista : '' %>">
+                        </div>
+                        <div class="form-group-crear">
+                            <label for="descuentos_proveedor_id">Descuentos Proveedor:</label>
+                            <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id" value="<%= descuentosProveedor %>" readonly>
+                        </div>
+                        <div class="form-group-crear">
+                            <label for="costo_neto">Costo Neto:</label>
+                            <input class="costo_neto form-control" type="number" name="costo_neto" value="<%= producto ? producto.costo_neto : '' %>">
+                        </div>
+                        <div class="form-group-crear">
+                            <label for="IVA">IVA:</label>
+                            <input class="IVA form-control" type="number" name="IVA" value="21" readonly>
+                        </div>
+                        <div class="form-group-crear">
+                            <label for="costo_iva">Costo Neto Con IVA :</label>
+                            <input class="costo_iva form-control" type="number" name="costo_iva" value="<%= producto ? producto.costo_iva : '' %>">
+                        </div>
+                    </div>  
+                    <button id="addProveedor">+</button>
+                </div> 
                 <div class="form-group-crear">
-                    <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
-                    <select class="proveedores" name="proveedores[]" multiple>
-                        <% proveedores.forEach(function(proveedor) { %>
-                            <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>"><%= proveedor.nombre %></option>
-                        <% }); %>
-                    </select>
-                </div>
-                <div class="form-group-crear">
-                    <label for="codigo">Código:</label>
-                    <input class="codigo" type="text" name="codigo">
-                </div>
-                <div class="form-group-crear">
-                    <label for="precio_lista">Precio de Lista:</label>
-                    <input class="precio_lista" class="form-control" type="number" name="precio_lista[]">
-                </div>
-                <div class="form-group-crear">
-                    <label for="descuentos_proveedor_id">Descuentos Proveedor:</label>
-                    <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id" value="<%= descuentosProveedor %>" readonly>
-                </div>
-                <div class="form-group-crear">
-                    <label for="costo_neto">Costo Neto:</label>
-                    <input class="costo_neto form-control" type="number" name="costo_neto">
-                </div>
-                <div class="form-group-crear">
-                    <label for="IVA">IVA:</label>
-                    <input class="IVA form-control" type="number" name="IVA" value="21" readonly>
-                </div>
-                <div class="form-group-crear">
-                    <label for="costo_iva">Costo Neto Con IVA :</label>
-                    <input class="costo_iva form-control" type="number" name="costo_iva">
-                </div>
-                </div>  
-                <button id="addProveedor">+</button>
-            </div> 
-                  <div class="form-group-crear">
                     <label for="utilidad">Utilidad:</label>
-                    <input id="utilidad" class="form-control" type="number" name="utilidad">
-                  </div>
-                  <div class="form-group-crear">
+                    <input id="utilidad" class="form-control" type="number" name="utilidad" value="<%= producto ? producto.utilidad : '' %>">
+                </div>
+                <div class="form-group-crear">
                     <label for="precio_venta">Precio Final:</label>
-                    <input id="precio_venta" class="form-control" type="number" name="precio_venta" readonly>
+                    <input id="precio_venta" class="form-control" type="number" name="precio_venta" value="<%= producto ? producto.precio_venta : '' %>" readonly>
                 </div>
                 <div class="form-group-crear">
                     <label for="estado">Estado:</label>
                     <select id="estado" class="form-control" name="estado">
-                        <option value="">Selecciona un estado...</option>
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
+                        <option value="" <%= !producto || !producto.estado ? 'selected' : '' %>>Selecciona un estado...</option>
+                        <option value="activo" <%= producto && producto.estado == 'activo' ? 'selected' : '' %>>Activo</option>
+                        <option value="inactivo" <%= producto && producto.estado == 'inactivo' ? 'selected' : '' %>>Inactivo</option>
                     </select>
                 </div>
                 <div class="botones-crear">
-                <button class="btn btn-success" type="submit">Guardar</button>
-                <a class='btn btn-primary'href="/productos">Cancelar</a>
+                    <button class="btn btn-success" type="submit">Guardar</button>
+                    <a class='btn btn-primary'href="/productos">Cancelar</a>
                 </div>
             </form>
     </div>
@@ -120,42 +119,5 @@
 </main>
     <%- include ./layouts/footer.ejs %>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script>
-      // Escucha el evento de cambio en el selector de marca
-      document.getElementById('marca').addEventListener('change', function() {
-          console.log('Cambio detectado en el selector de marca.');
-      
-          // Obtiene el ID de la marca seleccionada
-          var marcaId = this.value;
-      
-          // Hace una solicitud AJAX para obtener los modelos para la marca seleccionada
-          $.ajax({
-              url: '/productos/modelos/' + marcaId, 
-              method: 'GET',
-              success: function(data) {
-                  console.log('Modelos para la marca seleccionada:', data);
-      
-                  // Obtiene el selector de modelo
-                  var selectModelo = document.getElementById('modelo_id'); // Cambiado aquí
-      
-                  // Limpia el selector de modelo
-                  selectModelo.innerHTML = "";
-                  console.log('Selector de modelo limpiado.');
-      
-                  // Llena el selector de modelo con los modelos de la marca seleccionada
-                  for (var i = 0; i < data.length; i++) {
-                      var option = document.createElement('option');
-                      option.value = data[i].id;
-                      option.text = data[i].nombre;
-                      selectModelo.appendChild(option);
-                      console.log('Agregado modelo al selector:', data[i].nombre);
-                  }
-              },
-              error: function(jqXHR, textStatus, errorThrown) {
-                  console.error('Error al obtener los modelos:', textStatus, errorThrown);
-                  alert('Hubo un problema al obtener los modelos para la marca seleccionada. Por favor, inténtalo de nuevo.');
-              }
-          });
-      });
-      </script>
+    <script src="/js/editar.js"></script> 
 </body>
