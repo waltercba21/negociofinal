@@ -128,35 +128,39 @@ newProveedor.find('.precio_lista').change(function() {
     proveedorCount++; // Incrementar el contador de proveedores
 });
 
+$(document).ready(function() {
+    function getProveedorConCostoIvaMasBajo() {
+        var proveedorConCostoIvaMasBajo = null;
+        var costoIvaMasBajo = Infinity;
 
-function getProveedorConCostoIvaMasBajo() {
-    var proveedorConCostoIvaMasBajo = null;
-    var costoIvaMasBajo = Infinity;
+        $('.proveedor').each(function() {
+            var costoIva = parseFloat($(this).find('.costo_iva').val());
+            if (costoIva < costoIvaMasBajo) {
+                costoIvaMasBajo = costoIva;
+                proveedorConCostoIvaMasBajo = $(this);
+            }
+        });
 
-    $('.proveedor').each(function() {
-        var costoIva = parseFloat($(this).find('.costo_iva').val());
-        if (costoIva < costoIvaMasBajo) {
-            costoIvaMasBajo = costoIva;
-            proveedorConCostoIvaMasBajo = $(this);
-        }
+        return proveedorConCostoIvaMasBajo;
+    }
+
+    function actualizarPrecioFinal() {
+        var proveedor = getProveedorConCostoIvaMasBajo();
+        var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
+        var utilidad = parseFloat($('#utilidad').val());
+        var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
+        $('#precio_venta').val(Math.round(precioFinal));
+    }
+
+    $('#utilidad').change(function() {
+        var utilidad = parseFloat($(this).val());
+        var costo = Math.min.apply(null, $('.costo_iva').map(function() {
+            return parseFloat($(this).val());
+        }).get());
+        var precioFinal = costo + (costo * utilidad / 100);
+        $('#precio_venta').val(Math.round(precioFinal));
     });
 
-    return proveedorConCostoIvaMasBajo;
-}
-
-function actualizarPrecioFinal() {
-    var proveedor = getProveedorConCostoIvaMasBajo();
-    var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
-    var utilidad = parseFloat($('#utilidad').val());
-    var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
-    $('#precio_venta').val(Math.round(precioFinal));
-}
-
-$('#utilidad').change(function() {
-    var utilidad = parseFloat($(this).val());
-    var costo = Math.min.apply(null, $('.costo').map(function() {
-        return parseFloat($(this).val());
-    }).get());
-    var precioFinal = costo + (costo * utilidad / 100);
-    $('#precio').val(Math.round(precioFinal));
+    // Llama a actualizarPrecioFinal cuando se carga la página
+    actualizarPrecioFinal();
 });
