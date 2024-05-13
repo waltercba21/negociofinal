@@ -63,64 +63,116 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
         });
     });
 },
-  actualizar: function (conexion, datos, archivo, funcion) {
-      let query = "UPDATE productos SET ";
-      let params = [];
-      let first = true;
-  
-      if (datos.nombre) {
-          query += first ? "nombre=?" : ", nombre=?";
-          params.push(datos.nombre);
-          first = false;
-      }
-      if (datos.codigo) {
-          query += first ? "codigo=?" : ", codigo=?";
-          params.push(datos.codigo);
-          first = false;
-      }
-      if (datos.categoria_id) {
-          query += first ? "categoria_id=?" : ", categoria_id=?";
-          params.push(datos.categoria_id);
-          first = false;
-      }
-      if (datos.marca_id) {
-          query += first ? "marca_id=?" : ", marca_id=?";
-          params.push(datos.marca_id);
-          first = false;
-      }
-      if (datos.proveedor_id) {
-          query += first ? "proveedor_id=?" : ", proveedor_id=?";
-          params.push(datos.proveedor_id);
-          first = false;
-      }
-      if (datos.modelo_id) {
-          query += first ? "modelo_id=?" : ", modelo_id=?";
-          params.push(datos.modelo_id);
-          first = false;
-      }
-      if (datos.precio_venta) {
+actualizar: function (conexion, datos, archivo, funcion) {
+    let query = "UPDATE productos SET ";
+    let params = [];
+    let first = true;
+
+    if (datos.nombre) {
+        query += first ? "nombre=?" : ", nombre=?";
+        params.push(datos.nombre);
+        first = false;
+    }
+    if (datos.codigo) {
+        query += first ? "codigo=?" : ", codigo=?";
+        params.push(datos.codigo);
+        first = false;
+    }
+    if (datos.categoria_id) {
+        query += first ? "categoria_id=?" : ", categoria_id=?";
+        params.push(datos.categoria_id);
+        first = false;
+    }
+    if (datos.marca_id) {
+        query += first ? "marca_id=?" : ", marca_id=?";
+        params.push(datos.marca_id);
+        first = false;
+    }
+    if (datos.proveedor_id) {
+        query += first ? "proveedor_id=?" : ", proveedor_id=?";
+        params.push(datos.proveedor_id);
+        first = false;
+    }
+    if (datos.modelo_id) {
+        query += first ? "modelo_id=?" : ", modelo_id=?";
+        params.push(datos.modelo_id);
+        first = false;
+    }
+    if (datos.precio_venta) {
         query += first ? "precio_venta=?" : ", precio_venta=?";
         params.push(datos.precio_venta);
         first = false;
     }
-      if (archivo) {
-          query += first ? "imagen=?" : ", imagen=?";
-          params.push(archivo.filename);
-      }
-      if (!datos.id) {
-          return funcion(new Error('Los datos del producto deben incluir un ID'));
-      }
-      query += " WHERE id=?";
-      params.push(datos.id);
-      conexion.query(query, params, funcion);
-  },
-  actualizarArchivo: function(conexion,datos,archivo,funcion){
-      if (archivo) {
-        conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
-      } else {
-        funcion();
-      }
-    },
+    if (datos.utilidad) {
+        query += first ? "utilidad=?" : ", utilidad=?";
+        params.push(datos.utilidad);
+        first = false;
+    }
+    if (datos.descuentos_proveedor_id) {
+        query += first ? "descuentos_proveedor_id=?" : ", descuentos_proveedor_id=?";
+        params.push(datos.descuentos_proveedor_id);
+        first = false;
+    }
+    if (datos.costo_neto) {
+        query += first ? "costo_neto=?" : ", costo_neto=?";
+        params.push(datos.costo_neto);
+        first = false;
+    }
+    if (datos.IVA) {
+        query += first ? "IVA=?" : ", IVA=?";
+        params.push(datos.IVA);
+        first = false;
+    }
+    if (datos.costo_iva) {
+        query += first ? "costo_iva=?" : ", costo_iva=?";
+        params.push(datos.costo_iva);
+        first = false;
+    }
+    if (datos.estado) {
+        query += first ? "estado=?" : ", estado=?";
+        params.push(datos.estado);
+        first = false;
+    }
+    if (archivo) {
+        query += first ? "imagen=?" : ", imagen=?";
+        params.push(archivo.filename);
+    }
+    if (!datos.id) {
+        return funcion(new Error('Los datos del producto deben incluir un ID'));
+    }
+    query += " WHERE id=?";
+    params.push(datos.id);
+    conexion.query(query, params, funcion);
+},
+actualizarProductoProveedor: function(conexion, datos, funcion) {
+    let query = "UPDATE producto_proveedor SET ";
+    let params = [];
+    let first = true;
+
+    if (datos.precio_lista) {
+        query += first ? "precio_lista=?" : ", precio_lista=?";
+        params.push(datos.precio_lista);
+        first = false;
+    }
+    if (datos.codigo) {
+        query += first ? "codigo=?" : ", codigo=?";
+        params.push(datos.codigo);
+        first = false;
+    }
+    if (!datos.producto_id || !datos.proveedor_id) {
+        return funcion(new Error('Los datos del producto_proveedor deben incluir un producto_id y un proveedor_id'));
+    }
+    query += first ? " WHERE producto_id=? AND proveedor_id=?" : ", WHERE producto_id=? AND proveedor_id=?";
+    params.push(datos.producto_id, datos.proveedor_id);
+    conexion.query(query, params, funcion);
+},
+actualizarArchivo: function(conexion,datos,archivo,funcion){
+    if (archivo) {
+      conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
+    } else {
+      funcion();
+    }
+},
 obtenerUltimos: function (conexion, cantidad, funcion) {
   conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id ORDER BY productos.id DESC LIMIT ?', [cantidad], funcion);
 },

@@ -363,7 +363,7 @@ module.exports = {
         const datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
-            imagen: req.file ? req.file.filename : null,
+            imagen: req.file ? req.file.filename : req.body.imagenActual,
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
@@ -376,7 +376,7 @@ module.exports = {
             precio_venta: req.body.precio_venta,
             estado: req.body.estado
         };
-        producto.actualizarProducto(conexion, datosProducto)
+        producto.actualizar(conexion, datosProducto)
         .then(() => {
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
                 return {
