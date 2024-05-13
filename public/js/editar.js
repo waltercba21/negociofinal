@@ -30,19 +30,19 @@ $(document).ready(function() {
 });
 
 $(document).on('change', '.precio_lista, .descuentos_proveedor_id', function() {
-    var precioLista = Math.ceil(parseFloat($(this).val()));
-    var descuento = Math.ceil(parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val()));
+    var precioLista = parseFloat($(this).val());
+    var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val());
     var costoNeto = precioLista - (precioLista * descuento / 100);
     $(this).closest('.form-group-crear').nextAll().find('.costo_neto').val(Math.ceil(costoNeto)); 
 
     // Calcular el 'Costo Neto Con IVA'
-    var IVA = Math.ceil(parseFloat($(this).closest('.form-group-crear').nextAll().find('.IVA').val()));
+    var IVA = parseFloat($(this).closest('.form-group-crear').nextAll().find('.IVA').val());
     var costoIVA = costoNeto + (costoNeto * IVA / 100);
     $(this).closest('.form-group-crear').nextAll().find('.costo_iva').val(Math.ceil(costoIVA));
 
     // Disparar el evento de cambio para #utilidad
     $('#utilidad').trigger('change');
-});
+}); 
 
 //AGREGAR PROVEEDORES
 var proveedorCount = 0; // Añadir un contador para los proveedores
@@ -144,6 +144,7 @@ function getProveedorConCostoIvaMasBajo() {
 
     return proveedorConCostoIvaMasBajo;
 }
+
 function actualizarPrecioFinal() {
     var proveedor = getProveedorConCostoIvaMasBajo();
     var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
@@ -151,6 +152,7 @@ function actualizarPrecioFinal() {
     var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
     $('#precio_venta').val(Math.ceil(precioFinal));
 }
+
 
 $('#utilidad').change(function() {
     var utilidad = parseFloat($(this).val());
