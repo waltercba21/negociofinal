@@ -421,4 +421,21 @@ obtenerDescuentosProveedor: function(conexion) {
       });
   });
 },
+retornarDatosProveedor: function(conexion, productoId) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento
+            FROM producto_proveedor AS pp
+            LEFT JOIN descuentos_proveedor AS dp ON pp.proveedor_id = dp.proveedor_id
+            WHERE pp.producto_id = ?
+        `;
+        conexion.query(query, [productoId], (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results[0]);
+            }
+        });
+    });
+}
 }

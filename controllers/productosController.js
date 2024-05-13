@@ -306,7 +306,7 @@ module.exports = {
             }
             productoResult = result;
             // Obtener los datos de producto_proveedor
-            producto.retornarDatosId(conexion, req.params.id).then(productoProveedorResult => {
+            producto.retornarDatosProveedor(conexion, req.params.id).then(productoProveedorResult => {
                 // Obtener las categorías, marcas, proveedores, modelos y descuentos de proveedores
                 Promise.all([
                     producto.obtenerCategorias(conexion),
