@@ -133,7 +133,7 @@ actualizar: function (conexion, datos, archivo, funcion) {
         params.push(datos.estado);
         first = false;
     }
-    if (archivo && archivo.filename) {
+    if (archivo) {
         query += first ? "imagen=?" : ", imagen=?";
         params.push(archivo.filename);
     }
