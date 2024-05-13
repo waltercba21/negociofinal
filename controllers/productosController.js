@@ -354,68 +354,56 @@ module.exports = {
             }
         });
     },
-    actualizar: function (req, res) {
-        console.log('Iniciando la actualización del producto');
-    
-        producto.retornarDatosId(conexion,req.params.id)
-            .then(registros => {
-                if (registros.length === 0) {
-                    console.error("No se encontró ningún producto con el ID proporcionado");
-                    res.status(404).send("No se encontró ningún producto con el ID proporcionado");
-                    return;
-                }
-    
-                console.log('Datos del producto obtenidos correctamente');
-    
-                // Agrega el ID del producto a req.body
-                req.body.id = req.params.id;
-    
-                if(req.file && req.file.filename){
-                    console.log('Archivo presente');
-                    var nombreImagen = '/public/images/' + (registros[0].imagen);
-                    if(borrar.existsSync(nombreImagen)){
-                        console.log('Borrando imagen existente');
-                        borrar.unlinkSync(nombreImagen);
-                    }
-    
-                    producto.actualizarArchivo(conexion,req.body, req.file, function (error){
-                        if (error) {
-                            console.error("Error al actualizar el archivo del producto:", error);
-                            res.status(500).send("Error al actualizar el producto");
-                            return;
-                        }
-    
-                        console.log('Archivo del producto actualizado correctamente');
-                    });
-                }
-    
-                // Actualizar los datos del producto
-                producto.actualizar(conexion,req.body, req.file, function(error){
-                    if (error) {
-                        console.error("Error al actualizar el producto:", error);
-                        res.status(500).send("Error al actualizar el producto");
-                        return;
-                    }
-    
-                    console.log('Producto actualizado correctamente');
-    
-                    // Actualizar los proveedores del producto
-                    producto.actualizarProveedores(conexion, req.body.id, req.body.proveedores, function(error) {
-                        if (error) {
-                            console.error("Error al actualizar los proveedores del producto:", error);
-                            res.status(500).send("Error al actualizar los proveedores del producto");
-                            return;
-                        }
-    
-                        console.log('Proveedores del producto actualizados correctamente');
-    
-                        req.session.save(function(err) {
-                            console.log('Redirigiendo a panel de control');
-                            res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual + '&proveedor=' + req.session.proveedorActual);
-                        });
-                    });
-                });
+    actualizar: function(req, res) {
+        if (!req.body.proveedores || req.body.proveedores.length === 0) {
+            res.status(400).send('Error: proveedor_id no puede ser nulo');
+            return;
+        }
+        const proveedores = req.body.proveedores;
+        const datosProducto = {
+            id: req.body.id,
+            nombre: req.body.nombre,
+            imagen: req.file ? req.file.filename : null,
+            descripcion: req.body.descripcion,
+            categoria_id: req.body.categoria,
+            marca_id: req.body.marca,
+            modelo_id: req.body.modelo_id,
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
+            costo_neto: req.body.costo_neto,
+            IVA: req.body.IVA,
+            costo_iva: req.body.costo_iva,
+            utilidad: req.body.utilidad,
+            precio_venta: req.body.precio_venta,
+            estado: req.body.estado
+        };
+        producto.actualizarProducto(conexion, datosProducto)
+        .then(() => {
+            const proveedores = req.body.proveedores.map((proveedorId, index) => {
+                return {
+                    id: proveedorId,
+                    codigo: req.body.codigo[index],
+                    precio_lista: req.body.precio_lista[index]
+                };
             });
+            const promesasProveedor = proveedores.map(proveedor => {
+                const datosProductoProveedor = {
+                    producto_id: datosProducto.id,
+                    proveedor_id: proveedor.id,
+                    precio_lista: proveedor.precio_lista, 
+                    codigo: proveedor.codigo
+                };
+                console.log('datosProductoProveedor:', datosProductoProveedor); // Imprime los datos del producto del proveedor
+                return producto.actualizarProductoProveedor(conexion, datosProductoProveedor);
+            });
+            return Promise.all(promesasProveedor);
+        })
+        .then(() => {
+            res.redirect('/productos/panelControl');
+        })
+        .catch(error => {
+            console.error('Error:', error); 
+            res.status(500).send('Error: ' + error.message);
+        });
     },
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
