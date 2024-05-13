@@ -13,6 +13,7 @@ var rutaAlmacen = multer.diskStorage({
         callback(null, './uploads/productos/')
     },
     filename : function (req,file,callback){
+        var fecha = Date.now();
         console.log(file);
         callback(null, fecha + '_' + file.originalname);
     }
