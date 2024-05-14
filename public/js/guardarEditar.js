@@ -2,7 +2,9 @@ $('#guardar').click(function() {
     var proveedores = [];
     $('.proveedor').each(function() {
         var proveedor = {
-            id: $(this).find('.proveedores').val(),
+            id: $(this).find('.proveedores option:selected').map(function() {
+                return $(this).val();
+            }).get(),
             codigo: $(this).find('.codigo').val(),
             precio_lista: $(this).find('.precio_lista').val(),
             descuentos_proveedor_id: $(this).find('.descuentos_proveedor_id').val(),
