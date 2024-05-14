@@ -139,40 +139,56 @@ actualizar: function (conexion, datos, archivo, funcion) {
         params.push(archivo.filename);
     }
     if (!datos.id) {
-        return funcion(new Error('Los datos del producto deben incluir un ID'));
+        return Promise.reject(new Error('Los datos del producto deben incluir un ID'));
     }
     query += " WHERE id=?";
     params.push(datos.id);
     conexion.query(query, params, funcion);
 },
-actualizarProductoProveedor: function(conexion, datos, funcion) {
-    let query = "UPDATE producto_proveedor SET ";
-    let params = [];
-    let first = true;
+actualizarProductoProveedor: function(conexion, datos) {
+    return new Promise((resolve, reject) => {
+        let query = "UPDATE producto_proveedor SET ";
+        let params = [];
+        let first = true;
 
-    if (datos.precio_lista) {
-        query += first ? "precio_lista=?" : ", precio_lista=?";
-        params.push(datos.precio_lista);
-        first = false;
-    }
-    if (datos.codigo) {
-        query += first ? "codigo=?" : ", codigo=?";
-        params.push(datos.codigo);
-        first = false;
-    }
-    if (!datos.producto_id || !datos.proveedor_id) {
-        return funcion(new Error('Los datos del producto_proveedor deben incluir un producto_id y un proveedor_id'));
-    }
-    query += " WHERE producto_id=? AND proveedor_id=?";
-    params.push(datos.producto_id, datos.proveedor_id);
-    conexion.query(query, params, funcion);
+        if (datos.precio_lista) {
+            query += first ? "precio_lista=?" : ", precio_lista=?";
+            params.push(datos.precio_lista);
+            first = false;
+        }
+        if (datos.codigo) {
+            query += first ? "codigo=?" : ", codigo=?";
+            params.push(datos.codigo);
+            first = false;
+        }
+        if (!datos.producto_id || !datos.proveedor_id) {
+            return reject(new Error('Los datos del producto_proveedor deben incluir un producto_id y un proveedor_id'));
+        }
+        query += " WHERE producto_id=? AND proveedor_id=?";
+        params.push(datos.producto_id, datos.proveedor_id);
+        conexion.query(query, params, (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
 },
-actualizarArchivo: function(conexion,datos,archivo,funcion){
-    if (archivo) {
-      conexion.query('UPDATE productos SET imagen=? WHERE id =?',[archivo.filename, datos.id ],funcion);
-    } else {
-      funcion();
-    }
+actualizarArchivo: function(conexion, datos, archivo) {
+    return new Promise((resolve, reject) => {
+        if (archivo) {
+            conexion.query('UPDATE productos SET imagen=? WHERE id =?', [archivo.filename, datos.id], (error, results) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            });
+        } else {
+            resolve();
+        }
+    });
 },
 obtenerUltimos: function (conexion, cantidad, funcion) {
   conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id ORDER BY productos.id DESC LIMIT ?', [cantidad], funcion);

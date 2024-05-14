@@ -381,15 +381,7 @@ module.exports = {
             console.log('Producto actualizado'); // Imprime un mensaje después de actualizar el producto
             // Actualizar la imagen del producto solo si se proporciona un archivo
             if (req.file) {
-                return new Promise((resolve, reject) => {
-                    producto.actualizarArchivo(conexion, datosProducto, req.file, (error) => {
-                        if (error) {
-                            reject(error);
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
+                return producto.actualizarArchivo(conexion, datosProducto, req.file);
             } else {
                 // Si no se proporciona un archivo, resuelve la promesa inmediatamente
                 return Promise.resolve();
