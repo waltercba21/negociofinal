@@ -379,7 +379,7 @@ module.exports = {
             precio_venta: req.body.precio_venta,
             estado: req.body.estado
         };
-        console.log('datosProducto:', datosProducto); // Imprime los datos del producto
+        console.log('datosProducto:', datosProducto);
         producto.actualizar(conexion, datosProducto)
         .then(() => {
             // Actualizar la imagen del producto
