@@ -358,7 +358,7 @@ module.exports = {
             return;
         }
         const proveedores = req.body.proveedores;
-        const imagen = req.file && req.file.filename ? req.file.filename : (req.body.imagenActual ? req.body.imagenActual : 'imagenPredeterminada.jpg');
+        const imagen = req.file && req.file.filename ? req.file.filename : req.body.imagen;
         const datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
