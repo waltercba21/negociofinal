@@ -357,7 +357,6 @@ module.exports = {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
-        const proveedores = req.body.proveedores;
         const imagen = req.file && req.file.filename ? req.file.filename : req.body.imagen;
         let datosProducto = {
             id: req.body.id,
@@ -394,20 +393,24 @@ module.exports = {
                 return {
                     id: proveedorId,
                     codigo: req.body.codigo[index],
-                    precio_lista: req.body.precio_lista[index]
+                    precio_lista: req.body.precio_lista[index],
+                    costo_iva: req.body.costo_iva[index], // Agrega esto
+                    precio_venta: req.body.precio_venta[index] // Agrega esto
                 };
             });
             console.log('proveedores:', proveedores); // Imprime los datos de los proveedores
-const promesasProveedor = proveedores.map((proveedor, index) => {
-    const datosProductoProveedor = {
-        producto_id: datosProducto.id,
-        proveedor_id: proveedor.id,
-        precio_lista: proveedor.precio_lista, // Utiliza proveedor.precio_lista en lugar de req.body.precio_lista[index]
-        codigo: proveedor.codigo
-    };
-    console.log('datosProductoProveedor:', datosProductoProveedor); // Imprime los datos del producto del proveedor
-    return producto.actualizarProductoProveedor(conexion, datosProductoProveedor);
-});
+            const promesasProveedor = proveedores.map((proveedor, index) => {
+                const datosProductoProveedor = {
+                    producto_id: datosProducto.id,
+                    proveedor_id: proveedor.id,
+                    precio_lista: proveedor.precio_lista,
+                    codigo: proveedor.codigo,
+                    costo_iva: proveedor.costo_iva, // Usa esto
+                    precio_venta: proveedor.precio_venta // Usa esto
+                };
+                console.log('datosProductoProveedor:', datosProductoProveedor); // Imprime los datos del producto del proveedor
+                return producto.actualizarProductoProveedor(conexion, datosProductoProveedor);
+            });
             return Promise.all(promesasProveedor);
         })
         .then(() => {
