@@ -368,7 +368,7 @@ module.exports = {
             modelo_id: req.body.modelo_id,
             descuentos_proveedor_id: req.body.descuentos_proveedor_id [0],
             costo_neto: req.body.costo_neto[0],
-            IVA: req.body.IVA,
+            IVA: req.body.IVA[0],
             costo_iva: Math.min(...req.body.costo_iva),
             utilidad: req.body.utilidad,
             precio_venta: Math.min(...req.body.precio_venta),
