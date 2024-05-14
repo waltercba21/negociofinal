@@ -1,5 +1,6 @@
 const conexion = require('../config/conexion')
 const util = require('util');
+const path = require('path');
 
 module.exports ={
 obtener: function (conexion, pagina, funcion) {
@@ -437,12 +438,17 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
 },
 retornarDatosId: function(conexion, id) {
     return new Promise((resolve, reject) => {
-        const query = 'SELECT * FROM productos WHERE id = ?';
-        conexion.query(query, [id], (error, results) => {
+        conexion.query('SELECT * FROM productos WHERE id = ?', [id], function(error, results, fields) {
             if (error) {
                 reject(error);
             } else {
-                resolve(results[0]);
+                if (results.length > 0) {
+                    let producto = results[0];
+                    producto.imagen = path.join('/uploads', producto.imagen);
+                    resolve(producto);
+                } else {
+                    resolve(null);
+                }
             }
         });
     });
