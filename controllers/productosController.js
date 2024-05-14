@@ -409,7 +409,7 @@ module.exports = {
             return Promise.all(promesasProveedor);
         })
         .then(() => {
-            console.log('Todos los proveedores actualizados'); // Imprime un mensaje después de actualizar todos los proveedores
+            console.log('Todos los proveedores actualizados'); 
             res.redirect('/productos/panelControl');
         })
         .catch(error => {

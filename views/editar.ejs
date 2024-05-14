@@ -12,6 +12,7 @@
 
         <div class="card-body">
             <form method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
+                <input type="hidden" name="id" value="<%= producto.id %>">
                 <div class="form-group-crear">
                     <label for="imagen">Imagen</label>
                     <input id="imagen" class="form-control-file" type="file" name="archivo">
