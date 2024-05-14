@@ -399,16 +399,16 @@ module.exports = {
                 };
             });
             console.log('proveedores:', proveedores); // Imprime los datos de los proveedores
-            const promesasProveedor = proveedores.map((proveedor, index) => {
-                const datosProductoProveedor = {
-                    producto_id: datosProducto.id,
-                    proveedor_id: proveedor.id,
-                    precio_lista: req.body.precio_lista[index], // Asegúrate de que estás obteniendo el precio correcto para cada proveedor
-                    codigo: proveedor.codigo
-                };
-                console.log('datosProductoProveedor:', datosProductoProveedor); // Imprime los datos del producto del proveedor
-                return producto.actualizarProductoProveedor(conexion, datosProductoProveedor);
-            });
+const promesasProveedor = proveedores.map((proveedor, index) => {
+    const datosProductoProveedor = {
+        producto_id: datosProducto.id,
+        proveedor_id: proveedor.id,
+        precio_lista: proveedor.precio_lista, // Utiliza proveedor.precio_lista en lugar de req.body.precio_lista[index]
+        codigo: proveedor.codigo
+    };
+    console.log('datosProductoProveedor:', datosProductoProveedor); // Imprime los datos del producto del proveedor
+    return producto.actualizarProductoProveedor(conexion, datosProductoProveedor);
+});
             return Promise.all(promesasProveedor);
         })
         .then(() => {
