@@ -89,7 +89,7 @@ actualizar: function (conexion, datos, archivo) {
         query += first ? "marca_id=?" : ", marca_id=?";
         params.push(datos.marca_id);
         first = false;
-    }
+    } 
     if (datos.proveedor_id) {
         query += first ? "proveedor_id=?" : ", proveedor_id=?";
         params.push(datos.proveedor_id);
@@ -510,7 +510,7 @@ obtenerDescuentosProveedor: function(conexion) {
       });
   });
 },
-retornarDatosProveedor: function(conexion, productoId) {
+retornarDatosProveedores: function(conexion, productoId) {
     return new Promise((resolve, reject) => {
         const query = `
             SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento
@@ -522,7 +522,7 @@ retornarDatosProveedor: function(conexion, productoId) {
             if (error) {
                 reject(error);
             } else {
-                resolve(results[0]);
+                resolve(results);
             }
         });
     });

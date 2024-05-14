@@ -309,11 +309,13 @@ module.exports = {
             productoResult.utilidad = Math.floor(productoResult.utilidad);
             productoResult.precio_venta = Math.floor(productoResult.precio_venta);
             // Obtener los datos de producto_proveedor
-            producto.retornarDatosProveedor(conexion, req.params.id).then(productoProveedorResult => {
+            producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 // Convertir los valores numéricos a enteros
-                productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
-                productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
-                productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
+                productoProveedoresResult.forEach(productoProveedorResult => {
+                    productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
+                    productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
+                    productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
+                });
                 // Obtener las categorías, marcas, proveedores, modelos y descuentos de proveedores
                 Promise.all([
                     producto.obtenerCategorias(conexion),
@@ -325,7 +327,7 @@ module.exports = {
                     // Renderizar la vista 'editar' con todos los datos
                     res.render('editar', {
                         producto: productoResult,
-                        productoProveedor: productoProveedorResult,
+                        productoProveedores: productoProveedoresResult,
                         categorias: categoriasResult,
                         marcas: marcasResult,
                         proveedores: proveedoresResult,
