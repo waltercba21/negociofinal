@@ -154,32 +154,35 @@ actualizar: function (conexion, datos, archivo) {
     });
 });
 },
-actualizarProductoProveedor: function(conexion, datos) {
+actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
     return new Promise((resolve, reject) => {
-        let query = "UPDATE producto_proveedor SET ";
-        let params = [];
-        let first = true;
-
-        if (datos.precio_lista) {
-            query += first ? "precio_lista=?" : ", precio_lista=?";
-            params.push(datos.precio_lista);
-            first = false;
-        }
-        if (datos.codigo) {
-            query += first ? "codigo=?" : ", codigo=?";
-            params.push(datos.codigo);
-            first = false;
-        }
-        if (!datos.producto_id || !datos.proveedor_id) {
-            return reject(new Error('Los datos del producto_proveedor deben incluir un producto_id y un proveedor_id'));
-        }
-        query += " WHERE producto_id=? AND proveedor_id=?";
-        params.push(datos.producto_id, datos.proveedor_id);
-        conexion.query(query, params, (error, results) => {
+        // Primero, verifica si ya existe una entrada para este producto y proveedor
+        const query = 'SELECT * FROM producto_proveedor WHERE producto_id = ? AND proveedor_id = ?';
+        conexion.query(query, [datosProductoProveedor.producto_id, datosProductoProveedor.proveedor_id], (error, results) => {
             if (error) {
                 reject(error);
+                return;
+            }
+            if (results.length > 0) {
+                // Si ya existe una entrada, actualízala
+                const query = 'UPDATE producto_proveedor SET precio_lista = ?, codigo = ? WHERE producto_id = ? AND proveedor_id = ?';
+                conexion.query(query, [datosProductoProveedor.precio_lista, datosProductoProveedor.codigo, datosProductoProveedor.producto_id, datosProductoProveedor.proveedor_id], (error, results) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve();
+                });
             } else {
-                resolve(results);
+                // Si no existe una entrada, crea una nueva
+                const query = 'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?)';
+                conexion.query(query, [datosProductoProveedor.producto_id, datosProductoProveedor.proveedor_id, datosProductoProveedor.precio_lista, datosProductoProveedor.codigo], (error, results) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve();
+                });
             }
         });
     });
