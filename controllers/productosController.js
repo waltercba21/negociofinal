@@ -298,11 +298,13 @@ module.exports = {
         let responseSent = false;
         producto.retornarDatosId(conexion, req.params.id).then(result => {
             if (!result) {
+                console.log("No se encontró el producto con id:", req.params.id);
                 res.status(404).send("No se encontró el producto");
                 responseSent = true;
                 return;
             }
             productoResult = result;
+        console.log("Producto obtenido en editar:", productoResult);
             // Convertir los valores numéricos a enteros
             productoResult.precio_lista = Math.floor(productoResult.precio_lista);
             productoResult.costo_neto = Math.floor(productoResult.costo_neto);

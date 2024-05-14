@@ -440,13 +440,16 @@ retornarDatosId: function(conexion, id) {
     return new Promise((resolve, reject) => {
         conexion.query('SELECT * FROM productos WHERE id = ?', [id], function(error, results, fields) {
             if (error) {
+                console.log("Error en la consulta:", error);
                 reject(error);
             } else {
                 if (results.length > 0) {
                     let producto = results[0];
                     producto.imagen = path.join('/uploads', producto.imagen);
+                    console.log("Producto obtenido:", producto);
                     resolve(producto);
                 } else {
+                    console.log("No se encontró el producto con id:", id);
                     resolve(null);
                 }
             }
