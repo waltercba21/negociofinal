@@ -293,63 +293,21 @@ module.exports = {
             res.status(500).send('Hubo un error al intentar eliminar el producto');
         }
     },
-    editar: function(req, res) {
-        let productoResult;
-        let responseSent = false;
-        producto.retornarDatosId(conexion, req.params.id).then(result => {
-            if (!result) {
-                res.status(404).send("No se encontró el producto");
-                responseSent = true;
-                return;
-            }
-            productoResult = result;
-            // Convertir los valores numéricos a enteros
-            productoResult.precio_lista = Math.floor(productoResult.precio_lista);
-            productoResult.costo_neto = Math.floor(productoResult.costo_neto);
-            productoResult.costo_iva = Math.floor(productoResult.costo_iva);
-            productoResult.utilidad = Math.floor(productoResult.utilidad);
-            productoResult.precio_venta = Math.floor(productoResult.precio_venta);
-            // Obtener los datos de producto_proveedor
-            producto.retornarDatosProveedor(conexion, req.params.id).then(productoProveedorResult => {
-                // Convertir los valores numéricos a enteros
-                productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
-                productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
-                productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
-                // Obtener las categorías, marcas, proveedores, modelos y descuentos de proveedores
-                Promise.all([
-                    producto.obtenerCategorias(conexion),
-                    producto.obtenerMarcas(conexion),
-                    producto.obtenerProveedores(conexion),
-                    producto.obtenerModelosPorMarca(conexion, productoResult.marca), // Asegúrate de que estás obteniendo los modelos para la marca correcta
-                    producto.obtenerDescuentosProveedor(conexion)
-                ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
-                    // Renderizar la vista 'editar' con todos los datos
-                    res.render('editar', {
-                        producto: productoResult,
-                        productoProveedor: productoProveedorResult,
-                        categorias: categoriasResult,
-                        marcas: marcasResult,
-                        proveedores: proveedoresResult,
-                        modelos: modelosResult,
-                        descuentosProveedor: descuentosProveedoresResult
-                    });
-                }).catch(error => {
-                    console.error("Error al obtener los datos:", error);
-                    if (!responseSent) {
-                        res.status(500).send("Error al obtener los datos");
+    retornarDatosId: function(conexion, id) {
+        return new Promise((resolve, reject) => {
+            conexion.query('SELECT * FROM productos WHERE id = ?', [id], function(error, results, fields) {
+                if (error) {
+                    reject(error);
+                } else {
+                    if (results.length > 0) {
+                        let producto = results[0];
+                        producto.imagen = '/uploads/' + producto.imagen;
+                        resolve(producto);
+                    } else {
+                        resolve(null);
                     }
-                });
-            }).catch(error => {
-                console.error("Error al obtener los datos de producto_proveedor:", error);
-                if (!responseSent) {
-                    res.status(500).send("Error al obtener los datos de producto_proveedor");
                 }
             });
-        }).catch(error => {
-            console.error("Error al obtener los datos:", error);
-            if (!responseSent) {
-                res.status(500).send("Error al obtener los datos");
-            }
         });
     },
     actualizar: function(req, res) {
