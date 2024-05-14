@@ -387,6 +387,9 @@ module.exports = {
                 return Promise.resolve();
             }
         })
+        .catch(error => {
+            console.error('Error al actualizar el producto:', error);
+        })
         .then(() => {
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
                 return {
