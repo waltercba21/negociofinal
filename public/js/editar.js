@@ -180,21 +180,31 @@ $('#guardar').click(function() {
         };
         proveedores.push(proveedor);
     });
-
+});
+$(document).ready(function() {
+    // Carga los datos del proveedor cuando se carga la página
     var productoId = $('input[name="id"]').val();
-
     $.ajax({
-        url: '/productos/actualizar/' + productoId,
-        method: 'POST',
-        data: {
-            proveedores: proveedores,
-            precio_venta: $('#precio_venta').val()
-        },
+        url: '/productos/' + productoId,
+        method: 'GET',
         success: function(response) {
-            alert('Cambios guardados con éxito');
+            // Aquí debes llenar los campos del formulario con los datos del proveedor
+            // Esto dependerá de cómo estés estructurando tus datos en el backend
+            var proveedores = response.proveedores;
+            proveedores.forEach(function(proveedor, index) {
+                var proveedorElement = $(proveedorTemplate(index));
+                proveedorElement.find('.proveedores').val(proveedor.id);
+                proveedorElement.find('.codigo').val(proveedor.codigo);
+                proveedorElement.find('.precio_lista').val(proveedor.precio_lista);
+                proveedorElement.find('.descuentos_proveedor_id').val(proveedor.descuentos_proveedor_id);
+                proveedorElement.find('.costo_neto').val(proveedor.costo_neto);
+                proveedorElement.find('.IVA').val(proveedor.IVA);
+                proveedorElement.find('.costo_iva').val(proveedor.costo_iva);
+                $('#proveedoresContainer').append(proveedorElement);
+            });
         },
         error: function(jqXHR, textStatus, errorThrown) {
-            alert('Hubo un error al guardar los cambios: ' + errorThrown);
+            alert('Hubo un error al cargar los datos del proveedor: ' + errorThrown);
         }
     });
 });
