@@ -389,7 +389,7 @@ module.exports = {
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
                 return {
                     id: proveedorId,
-                    codigo: req.body.codigo[index],
+                    codigo: req.body['codigo '][index], // Aquí está la corrección
                     precio_lista: req.body.precio_lista[index],
                     costo_iva: req.body.costo_iva[index],
                     precio_venta: req.body.precio_venta[index] 
