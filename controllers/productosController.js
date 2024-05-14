@@ -297,9 +297,7 @@ module.exports = {
         let productoResult;
         let responseSent = false;
         producto.retornarDatosId(conexion, req.params.id).then(result => {
-            console.log('Resultado de retornarDatosId:', result);
             if (!result) {
-                console.error("No se encontró el producto con el id:", req.params.id);
                 res.status(404).send("No se encontró el producto");
                 responseSent = true;
                 return;
@@ -355,14 +353,12 @@ module.exports = {
         });
     },
     actualizar: function(req, res) {
-        console.log('req.body:', req.body); // Imprime los datos del cuerpo de la solicitud
-        console.log('req.file:', req.file); // Imprime los datos del archivo de la solicitud
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
         const proveedores = req.body.proveedores;
-        const imagen = req.file && req.file.filename ? req.file.filename : req.body.imagenActual || 'imagenPredeterminada.jpg';
+        const imagen = req.file && req.file.filename ? req.file.filename : (req.body.imagenActual ? req.body.imagenActual : 'imagenPredeterminada.jpg');
         const datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
