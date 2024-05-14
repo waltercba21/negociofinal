@@ -302,7 +302,6 @@ module.exports = {
                 return;
             }
             productoResult = result;
-            // Convertir los valores numéricos a enteros
             productoResult.precio_lista = Math.floor(productoResult.precio_lista);
             productoResult.costo_neto = Math.floor(productoResult.costo_neto);
             productoResult.costo_iva = Math.floor(productoResult.costo_iva);
@@ -310,13 +309,11 @@ module.exports = {
             productoResult.precio_venta = Math.floor(productoResult.precio_venta);
             // Obtener los datos de producto_proveedor
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
-                // Convertir los valores numéricos a enteros
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
                     productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
                     productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
                 });
-                // Obtener las categorías, marcas, proveedores, modelos y descuentos de proveedores
                 Promise.all([
                     producto.obtenerCategorias(conexion),
                     producto.obtenerMarcas(conexion),
@@ -324,7 +321,6 @@ module.exports = {
                     producto.obtenerModelosPorMarca(conexion, productoResult.marca), // Asegúrate de que estás obteniendo los modelos para la marca correcta
                     producto.obtenerDescuentosProveedor(conexion)
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
-                    // Renderizar la vista 'editar' con todos los datos
                     res.render('editar', {
                         producto: productoResult,
                         productoProveedores: productoProveedoresResult,
