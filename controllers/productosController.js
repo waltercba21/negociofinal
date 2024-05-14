@@ -380,16 +380,21 @@ module.exports = {
         console.log('datosProducto:', datosProducto);
         producto.actualizar(conexion, datosProducto)
         .then(() => {
-            // Actualizar la imagen del producto
-            return new Promise((resolve, reject) => {
-                producto.actualizarArchivo(conexion, datosProducto, req.file, (error) => {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        resolve();
-                    }
+            // Actualizar la imagen del producto solo si se proporciona un archivo
+            if (req.file) {
+                return new Promise((resolve, reject) => {
+                    producto.actualizarArchivo(conexion, datosProducto, req.file, (error) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve();
+                        }
+                    });
                 });
-            });
+            } else {
+                // Si no se proporciona un archivo, resuelve la promesa inmediatamente
+                return Promise.resolve();
+            }
         })
         .then(() => {
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
