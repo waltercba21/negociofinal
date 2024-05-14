@@ -270,7 +270,6 @@ module.exports = {
                     precio_lista: proveedor.precio_lista, 
                     codigo: proveedor.codigo
                 };
-                console.log('datosProductoProveedor:', datosProductoProveedor); // Imprime los datos del producto del proveedor
                 return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
             });
             return Promise.all(promesasProveedor);
@@ -298,13 +297,11 @@ module.exports = {
         let responseSent = false;
         producto.retornarDatosId(conexion, req.params.id).then(result => {
             if (!result) {
-                console.log("No se encontró el producto con id:", req.params.id);
                 res.status(404).send("No se encontró el producto");
                 responseSent = true;
                 return;
             }
             productoResult = result;
-        console.log("Producto obtenido en editar:", productoResult);
             // Convertir los valores numéricos a enteros
             productoResult.precio_lista = Math.floor(productoResult.precio_lista);
             productoResult.costo_neto = Math.floor(productoResult.costo_neto);
@@ -355,6 +352,7 @@ module.exports = {
         });
     },
     actualizar: function(req, res) {
+        console.log('req.body:', req.body); // Imprime todo el cuerpo de la solicitud
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
@@ -380,6 +378,7 @@ module.exports = {
         console.log('datosProducto:', datosProducto);
         producto.actualizar(conexion, datosProducto)
         .then(() => {
+            console.log('Producto actualizado'); // Imprime un mensaje después de actualizar el producto
             // Actualizar la imagen del producto solo si se proporciona un archivo
             if (req.file) {
                 return new Promise((resolve, reject) => {
@@ -418,6 +417,7 @@ module.exports = {
             return Promise.all(promesasProveedor);
         })
         .then(() => {
+            console.log('Todos los proveedores actualizados'); // Imprime un mensaje después de actualizar todos los proveedores
             res.redirect('/productos/panelControl');
         })
         .catch(error => {
