@@ -359,20 +359,19 @@ module.exports = {
         }
         const proveedores = req.body.proveedores;
         const imagen = req.file && req.file.filename ? req.file.filename : req.body.imagen;
-        const datosProducto = {
+        let datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
-            imagen: imagen,
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
             modelo_id: req.body.modelo_id,
-            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
-            costo_neto: req.body.costo_neto,
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id [0],
+            costo_neto: req.body.costo_neto[0],
             IVA: req.body.IVA,
-            costo_iva: req.body.costo_iva,
+            costo_iva: Math.min(...req.body.costo_iva),
             utilidad: req.body.utilidad,
-            precio_venta: req.body.precio_venta,
+            precio_venta: Math.min(...req.body.precio_venta),
             estado: req.body.estado
         };
         console.log('datosProducto:', datosProducto);
