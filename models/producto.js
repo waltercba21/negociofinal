@@ -174,7 +174,6 @@ actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
                     resolve();
                 });
             } else {
-                // Si no existe una entrada, crea una nueva
                 const query = 'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?)';
                 conexion.query(query, [datosProductoProveedor.producto_id, datosProductoProveedor.proveedor_id, datosProductoProveedor.precio_lista, datosProductoProveedor.codigo], (error, results) => {
                     if (error) {
