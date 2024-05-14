@@ -368,25 +368,20 @@ module.exports = {
             descuentos_proveedor_id: req.body.descuentos_proveedor_id [0],
             costo_neto: req.body.costo_neto[0],
             IVA: req.body.IVA[0],
-            costo_iva: Math.min(...req.body.costo_iva),
+            costo_iva: req.body.costo_iva[0],
             utilidad: req.body.utilidad,
             precio_venta: req.body.precio_venta[0],
             estado: req.body.estado
         };
-        console.log('datosProducto:', datosProducto);
         producto.actualizar(conexion, datosProducto)
         .then(() => {
-            console.log('Producto actualizado'); // Imprime un mensaje después de actualizar el producto
-            // Actualizar la imagen del producto solo si se proporciona un archivo
             if (req.file) {
                 return producto.actualizarArchivo(conexion, datosProducto, req.file);
             } else {
-                // Si no se proporciona un archivo, resuelve la promesa inmediatamente
                 return Promise.resolve();
             }
         })
         .catch(error => {
-            console.error('Error al actualizar el producto:', error);
         })
         .then(() => {
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
@@ -394,21 +389,20 @@ module.exports = {
                     id: proveedorId,
                     codigo: req.body.codigo[index],
                     precio_lista: req.body.precio_lista[index],
-                    costo_iva: req.body.costo_iva[index], // Agrega esto
-                    precio_venta: req.body.precio_venta[index] // Agrega esto
+                    costo_iva: req.body.costo_iva[index],
+                    precio_venta: req.body.precio_venta[index] 
                 };
             });
-            console.log('proveedores:', proveedores); // Imprime los datos de los proveedores
             const promesasProveedor = proveedores.map((proveedor, index) => {
                 const datosProductoProveedor = {
                     producto_id: datosProducto.id,
                     proveedor_id: proveedor.id,
                     precio_lista: proveedor.precio_lista,
                     codigo: proveedor.codigo,
-                    costo_iva: proveedor.costo_iva, // Usa esto
-                    precio_venta: proveedor.precio_venta // Usa esto
+                    costo_iva: proveedor.costo_iva, 
+                    precio_venta: proveedor.precio_venta
                 };
-                console.log('datosProductoProveedor:', datosProductoProveedor); // Imprime los datos del producto del proveedor
+                console.log('datosProductoProveedor:', datosProductoProveedor);
                 return producto.actualizarProductoProveedor(conexion, datosProductoProveedor);
             });
             return Promise.all(promesasProveedor);
