@@ -370,7 +370,7 @@ module.exports = {
             IVA: req.body.IVA[0],
             costo_iva: Math.min(...req.body.costo_iva),
             utilidad: req.body.utilidad,
-            precio_venta: Math.min(...req.body.precio_venta),
+            precio_venta: req.body.precio_venta[0],
             estado: req.body.estado
         };
         console.log('datosProducto:', datosProducto);
