@@ -445,7 +445,7 @@ retornarDatosId: function(conexion, id) {
             } else {
                 if (results.length > 0) {
                     let producto = results[0];
-                    producto.imagen = path.join('/uploads', producto.imagen);
+                    producto.imagen = path.join('/uploads/productos', producto.imagen);
                     console.log("Producto obtenido:", producto);
                     resolve(producto);
                 } else {
