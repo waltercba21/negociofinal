@@ -181,8 +181,8 @@ document.querySelectorAll('.eliminar-proveedor').forEach(function(button) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Elimina el elemento de la vista
-                this.parentElement.parentElement.remove();
+                // Elimina solo el contenedor del proveedor específico
+                document.querySelector('.proveedor-' + proveedorId).remove();
             } else {
                 console.error('Error al eliminar el proveedor:', data.error);
             }
