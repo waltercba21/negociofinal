@@ -162,9 +162,9 @@ $(document).ready(function() {
             return parseFloat($(this).val());
         }).get());
         var precioFinal = costo + (costo * utilidad / 100);
-        $('#precio_venta').val(Math.round(precioFinal));
+        $('#precio_venta').val(precioFinal.toFixed(2)); // Redondea a dos decimales
     });
-
+    
     // Llama a actualizarPrecioFinal cuando se carga la página
     actualizarPrecioFinal();
 });
