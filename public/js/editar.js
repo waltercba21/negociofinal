@@ -9,6 +9,7 @@ $('#marca-input').change(function() {
         });
     });
 });
+
 $(document).ready(function() {
     $('.proveedores').change(function() {
         var selectedOption = $(this).find('option:selected');
@@ -24,7 +25,9 @@ $(document).ready(function() {
     });
     
     $(window).on('load', function() {
-        $('.proveedores').first().trigger('change');
+        $('.proveedores').each(function() {
+            $(this).trigger('change');
+        });
     });
 });
 
