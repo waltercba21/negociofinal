@@ -124,7 +124,7 @@ function actualizarProveedorAsignado() {
 
     // Renderiza el nombre del proveedor con el costo más bajo en el div deseado
     var divProveedorAsignado = document.querySelector('#proveedorAsignado');
-    divProveedorAsignado.textContent = 'Proveedor asignado: ' + proveedorMasBarato;
+    divProveedorAsignado.textContent =  proveedorMasBarato;
 }
 
 // Llama a actualizarProveedorAsignado después de cada cambio que pueda afectar el costo con IVA
