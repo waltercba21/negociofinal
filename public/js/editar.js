@@ -28,6 +28,9 @@ $(document).ready(function() {
         $('.proveedores').each(function() {
             $(this).trigger('change');
         });
+        $('.precio_lista, .descuentos_proveedor_id').each(function() {
+            $(this).trigger('change');
+        });
     });
 });
 
