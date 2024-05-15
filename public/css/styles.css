@@ -797,6 +797,45 @@ background: rgba(0, 63, 125, 0.8);
 .botones-crear button{
   margin-right: 80px;
 } 
+#addProveedor {
+  border: none;
+  border-radius: 50%;
+  padding: 10px 15px;
+  background-color: #007BFF;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+  outline: none;
+}
+
+#addProveedor:hover {
+  background-color: #0069d9;
+  box-shadow: 0px 15px 20px rgba(46, 229, 157, 0.4);
+  color: white;
+  transform: translateY(-7px);
+}
+.eliminar-proveedor {
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  background-color: #dc3545;
+  color: white;
+  font-size: 14px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+  outline: none;
+}
+
+.eliminar-proveedor:hover {
+  background-color: #c82333;
+  box-shadow: 0px 15px 20px rgba(220, 53, 69, 0.4);
+  color: white;
+  transform: translateY(-7px);
+}
+
 
 /*-------------------------PAGINACIÓN---------------*/
 .paginacion {

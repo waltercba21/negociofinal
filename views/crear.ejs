@@ -100,6 +100,10 @@
                     <input id="precio_venta" class="form-control" type="number" name="precio_venta" readonly>
                 </div>
                 <div class="form-group-crear">
+                    <label for="proveedorAsignado">Proveedor Asignado:</label>
+                    <div id="proveedorAsignado" class="form-control" readonly></div>
+                </div>
+                <div class="form-group-crear">
                     <label for="estado">Estado:</label>
                     <select id="estado" class="form-control" name="estado">
                         <option value="">Selecciona un estado...</option>
@@ -114,7 +118,7 @@
             </form>
     </div>
     </div>
-    </div>
+    </div>   
 </main>
     <%- include ./layouts/footer.ejs %>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
