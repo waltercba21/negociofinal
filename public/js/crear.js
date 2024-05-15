@@ -112,7 +112,7 @@ function actualizarProveedorAsignado() {
     // Itera sobre los elementos del costo con IVA
     costosConIva.forEach(function(costoConIva) {
         // Obtén el costo actual y el proveedor correspondiente
-        var costoActual = parseFloat(costoConIva.value);
+        var costoActual = parseInt(costoConIva.value); // Convierte el costo actual a un entero
         var proveedorActual = costoConIva.parentElement.parentElement.querySelector('.nombre_proveedor').textContent;
 
         // Si el costo actual es más bajo, actualiza el costo más bajo y el proveedor correspondiente
