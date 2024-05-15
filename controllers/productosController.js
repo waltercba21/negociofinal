@@ -307,8 +307,17 @@ module.exports = {
             productoResult.costo_iva = Math.floor(productoResult.costo_iva);
             productoResult.utilidad = Math.floor(productoResult.utilidad);
             productoResult.precio_venta = Math.floor(productoResult.precio_venta);
-            // Obtener los datos de producto_proveedor
-            producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
+    
+            let obtenerProveedoresPromise;
+            if (productoResult.proveedor_id) {
+                // Si el producto tiene un proveedor_id, obtener los proveedores usando la función obtenerProveedores
+                obtenerProveedoresPromise = producto.obtenerProveedores(conexion);
+            } else {
+                // Si no, obtener los proveedores desde la tabla producto_proveedor
+                obtenerProveedoresPromise = producto.retornarDatosProveedores(conexion, req.params.id);
+            }
+    
+            obtenerProveedoresPromise.then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
                     productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
@@ -318,7 +327,7 @@ module.exports = {
                     producto.obtenerCategorias(conexion),
                     producto.obtenerMarcas(conexion),
                     producto.obtenerProveedores(conexion),
-                    producto.obtenerModelosPorMarca(conexion, productoResult.marca), // Asegúrate de que estás obteniendo los modelos para la marca correcta
+                    producto.obtenerModelosPorMarca(conexion, productoResult.marca),
                     producto.obtenerDescuentosProveedor(conexion)
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
                     res.render('editar', {
