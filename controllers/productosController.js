@@ -313,8 +313,12 @@ module.exports = {
                 // Si el producto tiene un proveedor_id, obtener los proveedores usando la función obtenerProveedores
                 obtenerProveedoresPromise = producto.obtenerProveedores(conexion);
             } else {
-                // Si no, obtener los proveedores desde la tabla producto_proveedor
-                obtenerProveedoresPromise = producto.retornarDatosProveedores(conexion, req.params.id);
+                // Si no, crear un objeto de proveedor vacío para mostrar el formulario de asignación de proveedor
+                obtenerProveedoresPromise = Promise.resolve([{
+                    precio_lista: 0,
+                    descuento: 0,
+                    costo_neto: 0
+                }]);
             }
     
             obtenerProveedoresPromise.then(productoProveedoresResult => {
