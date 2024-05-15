@@ -212,7 +212,7 @@ module.exports = {
                     descuento: descuento ? descuento.descuento : 0
                 };
             });
-            preciosConDescuento = proveedores.map(proveedor => Math.round(req.body.precio_venta * (1 - proveedor.descuento / 100) / 10) * 10);
+            preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
             descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
             res.render('crear', {
                 categorias: categorias,
@@ -256,14 +256,14 @@ module.exports = {
         producto.insertarProducto(conexion, datosProducto)
         .then(result => {
             const productoId = result.insertId;
-            const codigos = req.body.codigo.split(',');
-            const proveedores = req.body.proveedores.map((proveedorId, index) => {
-                return {
-                    id: proveedorId,
-                    codigo: codigos[index],
-                    precio_lista: req.body.precio_lista[index]
-                };
-            });
+          const codigos = req.body.codigo.split(',');
+const proveedores = req.body.proveedores.map((proveedorId, index) => {
+    return {
+        id: proveedorId,
+        codigo: codigos[index],
+        precio_lista: req.body.precio_lista[index]
+    };
+});
             const promesasProveedor = proveedores.map(proveedor => {
                 const datosProductoProveedor = {
                     producto_id: productoId,
@@ -307,7 +307,7 @@ module.exports = {
             productoResult.costo_neto = Math.floor(productoResult.costo_neto);
             productoResult.costo_iva = Math.floor(productoResult.costo_iva);
             productoResult.utilidad = Math.floor(productoResult.utilidad);
-            productoResult.precio_venta = Math.round(productoResult.precio_venta / 10) * 10;
+            productoResult.precio_venta = Math.floor(productoResult.precio_venta);
             // Obtener los datos de producto_proveedor
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
