@@ -350,7 +350,6 @@ module.exports = {
         });
     },
     actualizar: function(req, res) {
-        console.log('req.body:', req.body); // Imprime todo el cuerpo de la solicitud
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
@@ -368,7 +367,7 @@ module.exports = {
             IVA: req.body.IVA[0],
             costo_iva: req.body.costo_iva[0],
             utilidad: req.body.utilidad,
-            precio_venta: req.body.precio_venta[0],
+            precio_venta: req.body.precio_venta,
             estado: req.body.estado
         };
         producto.actualizar(conexion, datosProducto)
@@ -388,7 +387,7 @@ module.exports = {
                     codigo: req.body['codigo'][index],
                     precio_lista: req.body.precio_lista[index],
                     costo_iva: req.body.costo_iva[index],
-                    precio_venta: req.body.precio_venta[index] 
+                    precio_venta: req.body.precio_venta
                 };
             });
             const promesasProveedor = proveedores.map((proveedor, index) => {
