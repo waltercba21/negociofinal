@@ -282,14 +282,14 @@ module.exports = {
             res.status(500).send('Error: ' + error.message);
         });
     },
-    eliminar : async (req, res) => {
-        const { id } = req.params;
+    eliminarSeleccionados : async (req, res) => {
+        const { ids } = req.body;
         try {
-            await producto.eliminar(id);
-            res.redirect('/productos/panelControl');
+            await producto.eliminar(ids);
+            res.json({ success: true });
         } catch (error) {
             console.error(error);
-            res.status(500).send('Hubo un error al intentar eliminar el producto');
+            res.status(500).json({ success: false, error: error.message });
         }
     },
     editar: function(req, res) {
@@ -447,7 +447,7 @@ module.exports = {
         } catch (error) {
             console.log('Error:', error);
             return res.status(500).send('Error: ' + error.message);
-        }
+        } 
     },
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 

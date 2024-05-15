@@ -47,13 +47,17 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
     conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
     [proveedor_id, descuento], funcion);
   },
-  eliminar : async (id) => {
+  eliminar : async (idOrIds) => {
     return new Promise((resolve, reject) => {
-        conexion.query('DELETE FROM producto_proveedor WHERE producto_id = ?', [id], (error, results) => {
+        // Si se pasó un solo ID, convertirlo en una lista de un solo elemento
+        const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
+        // Convertir la lista de IDs en una cadena de texto separada por comas
+        const idList = ids.join(',');
+        conexion.query(`DELETE FROM producto_proveedor WHERE producto_id IN (${idList})`, (error, results) => {
             if (error) {
                 reject(error);
             } else {
-                conexion.query('DELETE FROM productos WHERE id = ?', [id], (error, results) => {
+                conexion.query(`DELETE FROM productos WHERE id IN (${idList})`, (error, results) => {
                     if (error) {
                         reject(error);
                     } else {

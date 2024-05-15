@@ -66,20 +66,22 @@
   </div>
     
     <table class="table table-light">
-    <thead class="thead-light">
-     <tr>
-        <th>#</th>
-        <th>Nombre</th>
-        <th>Imagen</th>
-        <th>Precio</th>
-        <th>Acciones</th>   
-      </tr>
-    </thead>
-    <tbody>
-      <% productos.forEach(producto => { %>
-        <tr>
-          <td><%= producto.id %></td> 
-          <td><%= producto.nombre %></td>  
+
+   <thead class="thead-light">
+  <tr>
+    <th><input type="checkbox" id="check-all"></th>
+    <button id="delete-selected" class="btn btn-danger">Eliminar seleccionados</button>
+    <th>Nombre</th>
+    <th>Imagen</th>
+    <th>Precio</th>
+    <th>Acciones</th>   
+  </tr>
+</thead>
+<tbody>
+  <% productos.forEach(producto => { %>
+    <tr>
+      <td><input type="checkbox" class="product-check" value="<%= producto.id %>"></td>
+      <td><%= producto.nombre %></td> 
           <td>
             <img class="img-thumbnail" width= '150' src="/uploads/productos/<%= producto.imagen %>" alt="">
           </td>
@@ -103,4 +105,5 @@
 </div>
 </main>
 <%- include ./layouts/footer.ejs %>
+<script src="/js/panelControl.js"></script> 
 </body>

@@ -30,7 +30,7 @@ router.get('/crear', productosController.crear);
 router.get('/generarPDF', productosController.generarPDF);
 router.get('/editar/:id', productosController.editar)
 router.post('/actualizar/:id', cargar.single('archivo'), productosController.actualizar);  
-router.post('/eliminar/:id', productosController.eliminar);
+router.post('/eliminarSeleccionados', productosController.eliminarSeleccionados);
 router.delete('/eliminarProveedor/:id', productosController.eliminarProveedor);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
