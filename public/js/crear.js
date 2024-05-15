@@ -101,7 +101,7 @@ function actualizarPrecioFinal() {
 }
 $('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
 
-window.onload = function() {
+function actualizarProveedorAsignado() {
     // Obtén todos los elementos del DOM que contienen los costos con IVA
     var costosConIva = document.querySelectorAll('.costo_iva');
 
@@ -126,3 +126,6 @@ window.onload = function() {
     var divProveedorAsignado = document.querySelector('#proveedorAsignado');
     divProveedorAsignado.textContent = 'Proveedor asignado: ' + proveedorMasBarato;
 }
+
+// Llama a actualizarProveedorAsignado después de cada cambio que pueda afectar el costo con IVA
+$('.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad').on('change', actualizarProveedorAsignado);
