@@ -256,10 +256,11 @@ module.exports = {
         producto.insertarProducto(conexion, datosProducto)
         .then(result => {
             const productoId = result.insertId;
+            const codigos = req.body.codigo.split(',');
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
                 return {
                     id: proveedorId,
-                    codigo: req.body.codigo[index],
+                    codigo: codigos[index],
                     precio_lista: req.body.precio_lista[index]
                 };
             });
