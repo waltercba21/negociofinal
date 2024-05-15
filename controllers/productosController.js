@@ -537,6 +537,15 @@ carrito: function (req, res) {
         });
     });
 },
+eliminarProveedor: function(req, res) {
+    let proveedorId = req.params.id;
+    producto.eliminarProveedor(conexion, proveedorId).then(() => {
+        res.json({ success: true });
+    }).catch(error => {
+        console.error("Error al eliminar el proveedor:", error);
+        res.status(500).json({ success: false, error: error });
+    });
+},
 eliminarDelCarrito : function(req, res) {
     console.log('Función eliminarDelCarrito llamada');
     const carritoId = Number(req.params.id);

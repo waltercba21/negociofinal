@@ -95,6 +95,9 @@
                                 <input class="costo_iva form-control" type="number" name="costo_iva" value="<%= productoProveedor.costo_iva %>">
                             </div>
                         </div>
+                        <div class="form-group-crear">
+                            <button class="eliminar-proveedor" type="button" data-proveedor-id="<%= productoProveedor.proveedor_id %>">Eliminar proveedor</button>
+                        </div>
                     <% }); %>
                 </div>
                     <button id="addProveedor">+</button>

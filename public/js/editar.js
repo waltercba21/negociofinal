@@ -168,3 +168,27 @@ $(document).ready(function() {
     // Llama a actualizarPrecioFinal cuando se carga la página
     actualizarPrecioFinal();
 });
+document.querySelectorAll('.eliminar-proveedor').forEach(function(button) {
+    button.addEventListener('click', function() {
+        var proveedorId = this.dataset.proveedorId;
+        fetch('/productos/eliminarProveedor', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ proveedorId: proveedorId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Elimina el elemento de la vista
+                this.parentElement.parentElement.remove();
+            } else {
+                console.error('Error al eliminar el proveedor:', data.error);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    });
+});

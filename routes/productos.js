@@ -29,8 +29,9 @@ router.get('/proveedores', productosController.proveedores);
 router.get('/crear', productosController.crear);
 router.get('/generarPDF', productosController.generarPDF);
 router.get('/editar/:id', productosController.editar)
-router.post('/actualizar/:id', cargar.single('archivo'), productosController.actualizar);
+router.post('/actualizar/:id', cargar.single('archivo'), productosController.actualizar);  
 router.post('/eliminar/:id', productosController.eliminar);
+router.get('/eliminarProveedor/:id', productosController.eliminarProveedor);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);

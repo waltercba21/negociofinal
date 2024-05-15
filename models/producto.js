@@ -526,5 +526,16 @@ retornarDatosProveedores: function(conexion, productoId) {
             }
         });
     });
-}
+},
+eliminarProveedor: function(conexion, proveedorId) {
+    return new Promise((resolve, reject) => {
+        conexion.query('DELETE FROM producto_proveedor WHERE proveedor_id = ?', [proveedorId], function(error, results, fields) {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+},
 }
