@@ -212,7 +212,7 @@ module.exports = {
                     descuento: descuento ? descuento.descuento : 0
                 };
             });
-            preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
+            preciosConDescuento = proveedores.map(proveedor => Math.round(req.body.precio_venta * (1 - proveedor.descuento / 100) / 10) * 10);
             descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
             res.render('crear', {
                 categorias: categorias,
@@ -307,7 +307,7 @@ module.exports = {
             productoResult.costo_neto = Math.floor(productoResult.costo_neto);
             productoResult.costo_iva = Math.floor(productoResult.costo_iva);
             productoResult.utilidad = Math.floor(productoResult.utilidad);
-            productoResult.precio_venta = Math.floor(productoResult.precio_venta);
+            productoResult.precio_venta = Math.round(productoResult.precio_venta / 10) * 10;
             // Obtener los datos de producto_proveedor
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
