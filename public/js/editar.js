@@ -171,8 +171,8 @@ $(document).ready(function() {
 document.querySelectorAll('.eliminar-proveedor').forEach(function(button) {
     button.addEventListener('click', function() {
         var proveedorId = this.dataset.proveedorId;
-        fetch('/productos/eliminarProveedor', {
-            method: 'POST',
+        fetch('/productos/eliminarProveedor/' + proveedorId, {
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
             },
