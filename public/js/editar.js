@@ -131,7 +131,7 @@ $(document).ready(function() {
         var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
         var utilidad = parseFloat($('#utilidad').val());
         var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
-        $('#precio_venta').val(Math.round(precioFinal));
+        $('#precio_venta').val(Math.ceil(precioFinal));
     }
     $('#utilidad').change(function() {
         var utilidad = parseFloat($(this).val());
@@ -139,7 +139,7 @@ $(document).ready(function() {
             return parseFloat($(this).val());
         }).get());
         var precioFinal = costo + (costo * utilidad / 100);
-        precioFinal = Math.round(precioFinal); 
+        precioFinal = Math.ceil(precioFinal); 
         $('#precio_venta').val(precioFinal); 
     });
     actualizarPrecioFinal();
