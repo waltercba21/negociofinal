@@ -162,9 +162,18 @@ function actualizarPrecioFinal() {
     precioVentaElement.val(precioFinal);
 }
 $('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
+
 $('#precio_venta').on('change', function() {
     $(this).data('manual', 'true');
+    localStorage.setItem('precioVentaManual', 'true');
 });
+$(document).ready(function() {
+    var precioVentaManual = localStorage.getItem('precioVentaManual');
+    if (precioVentaManual) {
+        $('#precio_venta').data('manual', precioVentaManual);
+    }
+});
+
 document.querySelectorAll('.eliminar-proveedor').forEach(function(button) {
     button.addEventListener('click', function() {
         var proveedorId = this.dataset.proveedorId;
