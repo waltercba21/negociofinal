@@ -110,6 +110,7 @@ function mostrarProductos(productos) {
     contenedorProductosBuscador.innerHTML = '<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>';
   } else {
     productos.forEach(producto => {
+      const precio_venta = typeof producto.precio_venta === 'number' ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'No disponible';
       const tarjetaProducto = `
       <div class="card"> 
       <div class="cover__card">
@@ -124,7 +125,7 @@ function mostrarProductos(productos) {
       </div>
       <hr>
       <div class="precio-producto">
-        <p class="precio">$${producto.precio_venta}</p>
+        <p class="precio">${precio_venta}</p>
       </div>
       <div class="cantidad-producto">
         <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
