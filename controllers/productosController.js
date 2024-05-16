@@ -109,8 +109,8 @@ module.exports = {
             } else {
                 productos.forEach(producto => {
                     console.log('Precio antes de la conversión:', producto.precio_venta);
-                    if (producto.precio_venta !== null && !isNaN(parseFloat(producto.precio))) {
-                        producto.precio_venta = Number(producto.precio_venta).toLocaleString('de-DE', { minimumFractionDigits: 2 });
+                    if (producto.precio_venta !== null && !isNaN(parseFloat(producto.precio_venta))) {
+                        producto.precio_venta = Number(producto.precio_venta);
                     } else {
                         producto.precio_venta = 'No disponible';
                     }
