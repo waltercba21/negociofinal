@@ -150,14 +150,21 @@ function getProveedorConCostoIvaMasBajo() {
     return proveedorConCostoIvaMasBajo;
 }
 function actualizarPrecioFinal() {
+    var precioVentaElement = $('#precio_venta');
+    if (precioVentaElement.data('manual') === 'true') {
+        return;
+    }
     var proveedor = getProveedorConCostoIvaMasBajo();
     var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
     var utilidad = parseFloat($('#utilidad').val());
     var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
     precioFinal = Math.ceil(precioFinal / 10) * 10; 
-    $('#precio_venta').val(precioFinal);
+    precioVentaElement.val(precioFinal);
 }
 $('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
+$('#precio_venta').on('change', function() {
+    $(this).data('manual', 'true');
+});
 document.querySelectorAll('.eliminar-proveedor').forEach(function(button) {
     button.addEventListener('click', function() {
         var proveedorId = this.dataset.proveedorId;
