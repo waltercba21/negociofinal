@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
             categoria.className = 'categoria-producto';
             let h6 = document.createElement('h6');
             h6.className = 'categoria';
-            h6.textContent = producto.categoria_nombre;
+            h6.textContent = producto.categoria;
             categoria.appendChild(h6);
       
             let precio = document.createElement('div');
