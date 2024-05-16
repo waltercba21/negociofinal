@@ -139,7 +139,8 @@ $(document).ready(function() {
             return parseFloat($(this).val());
         }).get());
         var precioFinal = costo + (costo * utilidad / 100);
-        $('#precio_venta').val(Math.ceil(precioFinal)); 
+        precioFinal = Math.round(precioFinal / 10) * 10; 
+        $('#precio_venta').val(precioFinal); 
     });
     actualizarPrecioFinal();
 });
