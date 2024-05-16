@@ -113,37 +113,51 @@ newProveedor.find('.precio_lista').change(function() {
     newProveedor.find('.proveedores').first().trigger('change');
     proveedorCount++; 
 });
-$(document).ready(function() {
-    function getProveedorConCostoIvaMasBajo() {
-        var proveedorConCostoIvaMasBajo = null;
-        var costoIvaMasBajo = Infinity;
-        $('.proveedor').each(function() {
-            var costoIva = parseFloat($(this).find('.costo_iva').val());
-            if (costoIva < costoIvaMasBajo) {
-                costoIvaMasBajo = costoIva;
-                proveedorConCostoIvaMasBajo = $(this);
-            }
-        });
-        return proveedorConCostoIvaMasBajo;
+function actualizarPrecio(precioListaElement) {
+    var precioLista = parseFloat(precioListaElement.val());
+    var proveedorElement = precioListaElement.closest('.proveedor');
+    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id[data-proveedor="' + proveedorElement.val() + '"]').val());
+    if (isNaN(descuento)) {
+        descuento = parseFloat(proveedorElement.find('.proveedores option:selected').data('descuento'));
     }
-    function actualizarPrecioFinal() {
-        var proveedor = getProveedorConCostoIvaMasBajo();
-        var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
-        var utilidad = parseFloat($('#utilidad').val());
-        var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
-        $('#precio_venta').val(Math.ceil(precioFinal));
-    }
-    $('#utilidad').change(function() {
-        var utilidad = parseFloat($(this).val());
-        var costo = Math.min.apply(null, $('.costo_iva').map(function() {
-            return parseFloat($(this).val());
-        }).get());
-        var precioFinal = costo + (costo * utilidad / 100);
-        precioFinal = Math.ceil(precioFinal); 
-        $('#precio_venta').val(precioFinal); 
+    var costo = precioLista - (precioLista * descuento / 100);
+    precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(Math.ceil(costo)); 
+    var costoNeto = precioLista - (precioLista * descuento / 100); 
+    var costoNetoElement = proveedorElement.find('.costo_neto');
+    costoNetoElement.val(Math.ceil(costoNeto)); 
+    actualizarCostoNeto(costoNetoElement); 
+    proveedorElement.find('.utilidad').trigger('change');
+    proveedorElement.find('.costo_neto').trigger('change');
+}
+function actualizarCostoNeto(costoNetoElement) {
+    var costoNeto = parseFloat(costoNetoElement.val());
+    var IVA = parseFloat(costoNetoElement.closest('.proveedor').find('.IVA').val());
+    var costoConIVA = costoNeto + (costoNeto * IVA / 100);
+    costoNetoElement.closest('.proveedor').find('.costo_iva').val(Math.ceil(costoConIVA));
+}
+function getProveedorConCostoIvaMasBajo() {
+    var proveedorConCostoIvaMasBajo = null;
+    var costoIvaMasBajo = Infinity;
+
+    $('.proveedor').each(function() {
+        var costoIva = parseFloat($(this).find('.costo_iva').val());
+        if (costoIva < costoIvaMasBajo) {
+            costoIvaMasBajo = costoIva;
+            proveedorConCostoIvaMasBajo = $(this);
+        }
     });
-    actualizarPrecioFinal();
-});
+
+    return proveedorConCostoIvaMasBajo;
+}
+function actualizarPrecioFinal() {
+    var proveedor = getProveedorConCostoIvaMasBajo();
+    var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
+    var utilidad = parseFloat($('#utilidad').val());
+    var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
+    precioFinal = Math.ceil(precioFinal / 10) * 10; 
+    $('#precio_venta').val(precioFinal);
+}
+$('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
 document.querySelectorAll('.eliminar-proveedor').forEach(function(button) {
     button.addEventListener('click', function() {
         var proveedorId = this.dataset.proveedorId;
