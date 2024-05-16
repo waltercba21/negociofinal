@@ -113,6 +113,7 @@ newProveedor.find('.precio_lista').change(function() {
     newProveedor.find('.proveedores').first().trigger('change');
     proveedorCount++; 
 });
+
 function actualizarPrecio(precioListaElement) {
     var precioLista = parseFloat(precioListaElement.val());
     var proveedorElement = precioListaElement.closest('.proveedor');
@@ -151,9 +152,6 @@ function getProveedorConCostoIvaMasBajo() {
 }
 function actualizarPrecioFinal() {
     var precioVentaElement = $('#precio_venta');
-    if (precioVentaElement.data('manual') === 'true') {
-        return;
-    }
     var proveedor = getProveedorConCostoIvaMasBajo();
     var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
     var utilidad = parseFloat($('#utilidad').val());
