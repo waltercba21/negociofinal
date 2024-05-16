@@ -124,7 +124,7 @@ function mostrarProductos(productos) {
       </div>
       <hr>
       <div class="precio-producto">
-        <p class="precio">$${producto.precio}</p>
+        <p class="precio">$${producto.precio_venta}</p>
       </div>
       <div class="cantidad-producto">
         <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
