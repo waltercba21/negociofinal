@@ -9,7 +9,6 @@ $('#marca-input').change(function() {
         });
     });
 });
-
 $(document).ready(function() {
     $('.proveedores').change(function() {
         var selectedOption = $(this).find('option:selected');
@@ -23,7 +22,6 @@ $(document).ready(function() {
         closestProveedor.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')');
         $('label[for="costo"]').text('Costo Proveedor (' + nombreProveedor + ')'); 
     });
-    
     $(window).on('load', function() {
         $('.proveedores').each(function() {
             $(this).trigger('change');
@@ -33,22 +31,18 @@ $(document).ready(function() {
         });
     });
 });
-
 $(document).on('change', '.precio_lista, .descuentos_proveedor_id', function() {
     var closestProveedor = $(this).closest('.proveedor');
     var precioLista = parseFloat(closestProveedor.find('.precio_lista').val()) || 0;
     var descuento = parseFloat(closestProveedor.find('.descuentos_proveedor_id').val()) || 0;
     var costoNeto = precioLista - (precioLista * descuento / 100);
-    closestProveedor.find('.costo_neto').val(Math.round(costoNeto)); 
-
+    closestProveedor.find('.costo_neto').val(Math.floor(costoNeto)); 
     var IVA = parseFloat(closestProveedor.find('.IVA').val()) || 0;
     var costoIVA = costoNeto + (costoNeto * IVA / 100);
-    closestProveedor.find('.costo_iva').val(Math.round(costoIVA));
-
+    closestProveedor.find('.costo_iva').val(Math.floor(costoIVA));
     $('#utilidad').trigger('change');
 });
-//AGREGAR PROVEEDORES
-var proveedorCount = 0; // Añadir un contador para los proveedores
+var proveedorCount = 0; 
 var proveedorTemplate = function(id) {
     return `
     <div class="proveedor">
@@ -85,11 +79,8 @@ var proveedorTemplate = function(id) {
     </div>
     `;
 };
-
 $('#addProveedor').click(function(event) {
-    // Prevenir el comportamiento predeterminado del evento de clic
     event.preventDefault();
-    // Obtener la lista de proveedores del DOM
     var proveedores = $('.proveedores option').map(function() {
         return {
             id: $(this).val(),
@@ -97,46 +88,35 @@ $('#addProveedor').click(function(event) {
             descuento: $(this).data('descuento')
         };
     }).get();
-
     var newProveedor = $(proveedorTemplate(proveedorCount));
     $('#proveedoresContainer').append(newProveedor);
-
-    // Agregar las opciones al nuevo select de proveedores
     proveedores.forEach(function(proveedor) {
     newProveedor.find('.proveedores').append('<option value="' + proveedor.id + '" data-descuento="' + proveedor.descuento + '">' + proveedor.nombre + '</option>');
 });
-
- // Adjuntar el controlador de eventos change a los elementos .proveedores
  newProveedor.find('.proveedores').change(function() {
     var selectedOption = $(this).find('option:selected');
     var descuento = selectedOption.data('descuento');
     var nombreProveedor = selectedOption.text();
     $(this).closest('.form-group-crear').find('.nombre_proveedor').text(nombreProveedor);
-    $(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val(descuento); // Línea modificada
+    $(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val(descuento); 
     $(this).closest('.form-group-crear').nextAll().find('label').each(function() {
         var forAttr = $(this).attr('for');
         $(this).text($(this).text().replace(/\(.*\)/, '') + ' (' + nombreProveedor + ')');
     });
 });
-
 newProveedor.find('.precio_lista').change(function() {
     var precioLista = parseFloat($(this).val());
-    // Buscar el valor del descuento en un elemento con la clase .descuentos_proveedor_id
     var descuento = parseFloat($(this).closest('.form-group-crear').nextAll().find('.descuentos_proveedor_id').val());
     var costo = precioLista - (precioLista * descuento / 100);
     $(this).closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2));
 });
-
     newProveedor.find('.proveedores').first().trigger('change');
-
-    proveedorCount++; // Incrementar el contador de proveedores
+    proveedorCount++; 
 });
-
 $(document).ready(function() {
     function getProveedorConCostoIvaMasBajo() {
         var proveedorConCostoIvaMasBajo = null;
         var costoIvaMasBajo = Infinity;
-
         $('.proveedor').each(function() {
             var costoIva = parseFloat($(this).find('.costo_iva').val());
             if (costoIva < costoIvaMasBajo) {
@@ -144,10 +124,8 @@ $(document).ready(function() {
                 proveedorConCostoIvaMasBajo = $(this);
             }
         });
-
         return proveedorConCostoIvaMasBajo;
     }
-
     function actualizarPrecioFinal() {
         var proveedor = getProveedorConCostoIvaMasBajo();
         var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
@@ -155,17 +133,14 @@ $(document).ready(function() {
         var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
         $('#precio_venta').val(Math.round(precioFinal));
     }
-
     $('#utilidad').change(function() {
         var utilidad = parseFloat($(this).val());
         var costo = Math.min.apply(null, $('.costo_iva').map(function() {
             return parseFloat($(this).val());
         }).get());
         var precioFinal = costo + (costo * utilidad / 100);
-        $('#precio_venta').val(Math.round(precioFinal)); // Redondea al entero más cercano
+        $('#precio_venta').val(Math.ceil(precioFinal)); 
     });
-    
-    // Llama a actualizarPrecioFinal cuando se carga la página
     actualizarPrecioFinal();
 });
 document.querySelectorAll('.eliminar-proveedor').forEach(function(button) {
@@ -181,7 +156,6 @@ document.querySelectorAll('.eliminar-proveedor').forEach(function(button) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Elimina solo el contenedor del proveedor específico
                 document.querySelector('.proveedor-' + proveedorId).remove();
             } else {
                 console.error('Error al eliminar el proveedor:', data.error);
@@ -193,55 +167,33 @@ document.querySelectorAll('.eliminar-proveedor').forEach(function(button) {
     });
 });
 window.onload = function() {
-    // Obtén todos los elementos del DOM que contienen los costos con IVA
     var costosConIva = document.querySelectorAll('.costo_iva');
-
-    // Inicializa una variable para almacenar el costo más bajo y el proveedor correspondiente
     var costoMasBajo = Infinity;
     var proveedorMasBarato = null;
-
-    // Itera sobre los elementos del costo con IVA
     costosConIva.forEach(function(costoConIva) {
-        // Obtén el costo actual y el proveedor correspondiente
         var costoActual = parseFloat(costoConIva.value);
         var proveedorActual = costoConIva.parentElement.parentElement.querySelector('.nombre_proveedor').textContent;
-
-        // Si el costo actual es más bajo, actualiza el costo más bajo y el proveedor correspondiente
         if (costoActual < costoMasBajo) {
             costoMasBajo = costoActual;
             proveedorMasBarato = proveedorActual;
         }
     });
-
-    // Renderiza el nombre del proveedor con el costo más bajo en el div deseado
     var divProveedorAsignado = document.querySelector('#proveedorAsignado');
     divProveedorAsignado.textContent = 'Proveedor asignado: ' + proveedorMasBarato;
 }
 function actualizarProveedorAsignado() {
-    // Obtén todos los elementos del DOM que contienen los costos con IVA
     var costosConIva = document.querySelectorAll('.costo_iva');
-
-    // Inicializa una variable para almacenar el costo más bajo y el proveedor correspondiente
     var costoMasBajo = Infinity;
     var proveedorMasBarato = null;
-
-    // Itera sobre los elementos del costo con IVA
     costosConIva.forEach(function(costoConIva) {
-        // Obtén el costo actual y el proveedor correspondiente
         var costoActual = parseFloat(costoConIva.value);
         var proveedorActual = costoConIva.parentElement.parentElement.querySelector('.nombre_proveedor').textContent;
-
-        // Si el costo actual es más bajo, actualiza el costo más bajo y el proveedor correspondiente
         if (costoActual < costoMasBajo) {
             costoMasBajo = costoActual;
             proveedorMasBarato = proveedorActual;
         }
     });
-
-    // Renderiza el nombre del proveedor con el costo más bajo en el div deseado
     var divProveedorAsignado = document.querySelector('#proveedorAsignado');
     divProveedorAsignado.textContent =  proveedorMasBarato;
 }
-
-// Llama a actualizarProveedorAsignado después de cada cambio que pueda afectar el costo con IVA
 $('.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad').on('change', actualizarProveedorAsignado);
