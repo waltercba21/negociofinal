@@ -127,10 +127,10 @@ module.exports = {
         }
     },
     buscar : async (req, res) => {
-        const { query } = req;
+        const { query } = req.query; // Obtenemos el valor de búsqueda directamente
         try {
           const productos = await producto.buscarPorNombre(query);
-          res.render('productos', { productos });
+          res.json({ productos }); // Devolvemos los productos como JSON
         } catch (error) {
           console.error(error);
           res.status(500).json({ message: 'Error al buscar productos' });
