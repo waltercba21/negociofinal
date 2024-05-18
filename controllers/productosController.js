@@ -126,53 +126,16 @@ module.exports = {
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
-    buscar: function (req, res) {
-        const consulta = req.query.query;
-        const categoria = req.query.categoria ? Number(req.query.categoria) : null;
-        const marca = req.query.marca ? Number(req.query.marca) : null;
-        const modelo = req.query.modelo ? Number(req.query.modelo) : null;
-    
-        if (consulta) {
-            producto.obtenerPorNombre(conexion, consulta, (error, productos) => {
-                if (error) {
-                    res.status(500).send('Error interno del servidor');
-                    return;
-                }
-                res.json({ productos });
-            });
-        } else if (categoria || marca || modelo) {
-            producto.obtenerPorFiltros(conexion, categoria, marca, modelo)
-                .then(productos => {
-                    if (marca) {
-                        return producto.obtenerModelosPorMarca(conexion, marca)
-                            .then(modelos => {
-                                productos.forEach(producto => {
-                                    producto.modelo = modelos.find(modelo => modelo.id === producto.modelo_id);
-                                });
-                                return productos;
-                            });
-                    } else {
-                        return Promise.resolve(productos);
-                    }
-                })
-                .then(productos => {
-                    res.json({ productos });
-                })
-                .catch(error => {
-                    console.error(error);
-                    res.status(500).send('Error interno del servidor');
-                });
-        } else {
-            producto.obtenerTodos(conexion, (error, productos) => {
-                if (error) {
-                    console.error(error);
-                    res.status(500).send('Error interno del servidor');
-                    return;
-                }
-                res.json({ productos });
-            });
+    buscar : async (req, res) => {
+        const { query } = req;
+        try {
+          const productos = await producto.buscarPorNombre(query);
+          res.render('productos', { productos });
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: 'Error al buscar productos' });
         }
-    },
+      },
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {

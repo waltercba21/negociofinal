@@ -268,6 +268,18 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     },
+    buscarPorNombre: function(conexion, nombre) {
+        return new Promise((resolve, reject) => {
+          const consulta = 'SELECT productos.*, categorias.nombre AS categoria FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.nombre LIKE ?';
+          conexion.query(consulta, [`%${nombre}%`], function(error, resultados) {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(resultados);
+            }
+          });
+        });
+      },
     obtenerPorNombre: function (conexion, nombre, funcion) {
       conexion.query('SELECT productos.*, categorias.nombre AS categoria FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.nombre LIKE ?', [`%${nombre}%`], funcion);
     },
