@@ -96,7 +96,7 @@ function buscarProductos() {
 }
 
 function cargarProductos() {
-  fetch('http://www.autofaros.com.ar/productos/api', {mode:'cors',credentials:'include'})
+  fetch('http://www.autofaros.com.ar/productos/api?limit=20', {mode:'cors',credentials:'include'})
   .then(response => response.json())
   .then(datos => {
     mostrarProductos(datos.productos);  
