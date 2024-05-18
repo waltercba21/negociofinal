@@ -76,9 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
             let precio = document.createElement('div');
             precio.className = 'precio-producto';
             let p = document.createElement('p');
-p.className = 'precio_venta';
-p.textContent = `$${Math.floor(producto.precio_venta).toLocaleString('es-AR')}`;
-precio.appendChild(p);
+            p.className = 'precio_venta';
+            p.textContent = `$${Math.floor(producto.precio_venta).toLocaleString('es-AR')}`;
+            precio.appendChild(p);
       
             let cantidad = document.createElement('div');
             cantidad.className = 'cantidad-producto';
@@ -102,28 +102,32 @@ precio.appendChild(p);
       }
   
     categoriaSelector.addEventListener('change', obtenerProductosFiltrados);
-    marcaSelector.addEventListener('change', function() {
-      modeloSelector.innerHTML = '';
-      fetch(`/productos/modelos/${marcaSelector.value}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Error HTTP: ' + response.status);
-          }
-          return response.json();
-        })
-        .then(modelos => {
-          modelos.forEach(modelo => {
-            let option = document.createElement('option');
-            option.value = modelo.id;
-            option.text = modelo.nombre; 
-            modeloSelector.appendChild(option);
-          });
-          obtenerProductosFiltrados();
-        })
-        .catch(error => {
-          console.error('Hubo un problema con la solicitud: ' + error);
-        });
+
+marcaSelector.addEventListener('change', function() {
+  modeloSelector.innerHTML = '';
+  let defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.text = 'Seleccione un modelo'; 
+  modeloSelector.appendChild(defaultOption);
+  fetch(`/productos/modelos/${marcaSelector.value}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error HTTP: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(modelos => {
+      modelos.forEach(modelo => {
+        let option = document.createElement('option');
+        option.value = modelo.id;
+        option.text = modelo.nombre; 
+        modeloSelector.appendChild(option);
+      });
+    })
+    .catch(error => {
+      console.error('Hubo un problema con la solicitud: ' + error);
     });
+});
     modeloSelector.addEventListener('change', obtenerProductosFiltrados);
     entrada.addEventListener('input', obtenerProductosFiltrados);
   });
