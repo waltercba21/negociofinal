@@ -51,21 +51,20 @@ function cargarModelosYBuscarProductos() {
 
   buscarProductos();
 }
-
 function buscarProductos() {
   clearTimeout(timeout);
 
+  const consulta = entrada.value;
+  const categoria = categoriaSelect.value;
+  const marca = marcaSelect.value;
+  const modelo = modeloSelect.value;
+
+  if (!consulta) {
+    cargarProductos();
+    return; 
+  }
+
   timeout = setTimeout(function () {
-    const consulta = entrada.value;
-    const categoria = categoriaSelect.value;
-    const marca = marcaSelect.value;
-    const modelo = modeloSelect.value;
-
-    if (!consulta) {
-      cargarProductos();
-      return; 
-    }
-
     let url = 'http://www.autofaros.com.ar/productos/api/buscar';
     let params = new URLSearchParams(); 
     params.append('query', consulta);
