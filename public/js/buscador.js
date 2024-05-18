@@ -5,6 +5,7 @@ let marcaSelect;
 let modeloSelect;
 let ultimaSolicitud = 0;
 let timeout = null;
+let controller = new AbortController();
 
 document.addEventListener('DOMContentLoaded', function() {
   entrada = document.querySelector('#entradaBusqueda');
@@ -24,38 +25,11 @@ document.addEventListener('DOMContentLoaded', function() {
   modeloSelect.addEventListener('change', buscarProductos);
 });
 
-function cargarModelosYBuscarProductos() {
-  // Limpia el select de modelos
-  modeloSelect.innerHTML = '';
-  
-  // Obtiene los modelos para la marca seleccionada
-  fetch(`/productos/modelos/${marcaSelect.value}`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Error HTTP: ' + response.status);
-      }
-      return response.json();
-    })
-    .then(modelos => {
-      // Añade los modelos al select
-      modelos.forEach(modelo => {
-        let option = document.createElement('option');
-        option.value = modelo.id;
-        option.text = modelo.nombre; 
-        modeloSelect.appendChild(option);
-      });
-    })
-    .catch(error => {
-      console.error('Hubo un problema con la solicitud: ' + error);
-    });
-
-  buscarProductos();
-}
-
 function buscarProductos() {
   clearTimeout(timeout);
-
   timeout = setTimeout(function () {
+    controller.abort();
+    controller = new AbortController();
     const consulta = entrada.value;
     const categoria = categoriaSelect.value;
     const marca = marcaSelect.value;
@@ -65,9 +39,8 @@ function buscarProductos() {
       cargarProductos();
       return; 
     }
-
     let url = 'http://www.autofaros.com.ar/productos/api/buscar';
-    let params = new URLSearchParams(); // Crea una nueva instancia de URLSearchParams
+    let params = new URLSearchParams(); 
     params.append('query', consulta);
     if (categoria) {
       params.append('categoria', categoria);
@@ -83,7 +56,7 @@ function buscarProductos() {
     }
     ultimaSolicitud++;
     const solicitudActual = ultimaSolicitud;
-    fetch(url, {mode:'cors', credentials:'include'})
+    fetch(url, {mode:'cors', credentials:'include', signal: controller.signal}) 
     .then(response => {
       if (!response.ok) {
         throw new Error('Error HTTP: ' + response.status);
@@ -96,11 +69,14 @@ function buscarProductos() {
       }
     })
     .catch(error => {
-      console.error('Hubo un problema con la solicitud: ' + error);
+      if (error.name === 'AbortError') {
+        console.log('Solicitud abortada');
+      } else {
+        console.error('Hubo un problema con la solicitud: ' + error);
+      }
     });
   }, 500);
 }
-
 function cargarProductos() {
   fetch('http://www.autofaros.com.ar/productos/api', {mode:'cors',credentials:'include'})
   .then(response => response.json())
