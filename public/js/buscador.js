@@ -60,11 +60,10 @@ function buscarProductos() {
     const categoria = categoriaSelect.value;
     const marca = marcaSelect.value;
     const modelo = modeloSelect.value;
-
-    // Si la consulta está vacía, carga todos los productos
+    
     if (!consulta) {
       cargarProductos();
-      return;
+      return; 
     }
 
     let url = 'http://www.autofaros.com.ar/productos/api/buscar';
