@@ -44,13 +44,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   
     function mostrarProductos(productos) {
-        contenedorProductos.innerHTML = '';
-        if (productos.length === 0) {
-          contenedorProductos.innerHTML = '<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>';
-        } else {
-          productos.forEach(producto => {
-            let card = document.createElement('div');
-            card.className = 'card';
+      contenedorProductos.innerHTML = '';
+      if (productos.length === 0) {
+        contenedorProductos.innerHTML = '<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>';
+      } else {
+        productos.forEach(producto => {
+          let card = document.createElement('div');
+          card.className = 'card';
       
             let cover = document.createElement('div');
             cover.className = 'cover__card';
@@ -80,23 +80,31 @@ document.addEventListener('DOMContentLoaded', function() {
             p.textContent = `$${Math.floor(producto.precio_venta).toLocaleString('es-AR')}`;
             precio.appendChild(p);
       
-            let cantidad = document.createElement('div');
-            cantidad.className = 'cantidad-producto';
-            let a = document.createElement('a');
-            a.href = `/productos/carrito/agregar/${producto.id}`;
-            a.className = 'agregar-carrito';
-            a.textContent = 'Agregar al carrito';
-            cantidad.appendChild(a);
+            
+        let cantidad = document.createElement('div');
+        cantidad.className = 'cantidad-producto';
+
+        let a = document.createElement('a');
+        a.href = `/productos/carrito/agregar/${producto.id}`;
+        a.className = 'agregar-carrito';
+        a.textContent = 'Agregar al carrito';
+        cantidad.appendChild(a);
+
+        let detalles = document.createElement('a');
+        detalles.href = `/productos/${producto.id}`;
+        detalles.className = 'card-link';
+        detalles.textContent = 'Ver detalles';
+        cantidad.appendChild(detalles);
       
-            card.appendChild(cover);
-            card.appendChild(titulo);
-            card.appendChild(document.createElement('hr'));
-            card.appendChild(categoria);
-            card.appendChild(document.createElement('hr'));
-            card.appendChild(precio);
-            card.appendChild(cantidad);
-      
-            contenedorProductos.appendChild(card);
+           card.appendChild(cover);
+        card.appendChild(titulo);
+        card.appendChild(document.createElement('hr'));
+        card.appendChild(categoria);
+        card.appendChild(document.createElement('hr'));
+        card.appendChild(precio);
+        card.appendChild(cantidad);
+  
+        contenedorProductos.appendChild(card);
           });
         }
       }
