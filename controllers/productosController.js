@@ -478,16 +478,21 @@ buscarPorNombre: function (req, res) {
       }); 
     }   
   },
-buscarProductos : async (req, res) => {
+  buscarProductos : async (req, res) => {
     try {
       const consulta = req.query.query;
-      const productos = await producto.findAll({
-        where: {
-          nombre: {
-            [Op.iLike]: '%' + consulta + '%'
+      let productos;
+      if (!consulta) {
+        productos = await producto.findAll();
+      } else {
+        productos = await producto.findAll({
+          where: {
+            nombre: {
+              [Op.iLike]: '%' + consulta + '%'
+            }
           }
-        }
-      });
+        });
+      }
       res.json(productos);
     } catch (error) {
       console.error('Hubo un problema con la búsqueda de productos:', error);
