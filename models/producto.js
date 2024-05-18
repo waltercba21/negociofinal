@@ -3,13 +3,13 @@ const util = require('util');
 const path = require('path');
 
 module.exports ={
-obtener: function (conexion, pagina, funcion) {
-  if (typeof funcion !== 'function') {
-      throw new Error('funcion debe ser una función');
-  }
-  const saltar = (pagina - 1) * 30;
-  conexion.query('SELECT * FROM productos LIMIT ?,30', [saltar], funcion);  
-},
+    obtener: function(conexion, pagina, callback) {
+        const limite = 20; 
+        const offset = (pagina - 1) * limite; 
+        const consulta = 'SELECT * FROM productos LIMIT ? OFFSET ?';
+      
+        conexion.query(consulta, [limite, offset], callback);
+      },
 obtenerTotal: function (conexion, funcion) {
   if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');

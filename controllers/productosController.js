@@ -51,7 +51,7 @@ module.exports = {
                     }
                 });
             });
-            let numeroDePaginas = Math.ceil(totalProductos / 30);
+            let numeroDePaginas = Math.ceil(totalProductos / 20);
     
             if (categoria || marca || modelo) {  
                 productos = await new Promise((resolve, reject) => {
@@ -79,14 +79,14 @@ module.exports = {
             } else {
                 productos = await new Promise((resolve, reject) => {
                     producto.obtener(conexion, pagina, (error, resultados) => {
-                        if (error) {
-                            console.error('Error al obtener productos:', error);
-                            reject(error);
-                        } else {
-                            resolve(resultados);
-                        }
+                      if (error) {
+                        console.error('Error al obtener productos:', error);
+                        reject(error);
+                      } else {
+                        resolve(resultados);
+                      }
                     });
-                });
+                  });
             }
             const categorias = await producto.obtenerCategorias(conexion);
             console.log('Categorías obtenidas:', categorias);
