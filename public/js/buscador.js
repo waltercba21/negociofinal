@@ -142,7 +142,7 @@ function mostrarProductos(productos) {
     contenedorProductosBuscador.innerHTML = '<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>';
   } else {
     productos.forEach(producto => {
-      const precio_venta = `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`;
+      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = `
       <div class="card"> 
       <div class="cover__card">
