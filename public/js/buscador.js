@@ -49,13 +49,12 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Hubo un problema con la solicitud: ' + error);
       });
 
-    // Realiza la búsqueda
     buscarProductos();
   });
   modeloSelect.addEventListener('change', buscarProductos);
 });
-
 let timeout = null;
+
 function buscarProductos() {
   clearTimeout(timeout);
 
@@ -66,7 +65,7 @@ function buscarProductos() {
     const modelo = modeloSelect.value;
 
     let url = 'http://www.autofaros.com.ar/productos/api/buscar';
-    let params = new URLSearchParams();
+    let params = new URLSearchParams(); // Crea una nueva instancia de URLSearchParams
     if (consulta) {
       params.append('query', consulta);
     }
@@ -96,40 +95,6 @@ function buscarProductos() {
       console.error('Hubo un problema con la solicitud: ' + error);
     });
   }, 500);
-}
-
-function mostrarProductos(productos) {
-  contenedorProductosBuscador.innerHTML = '';
-  if (productos.length === 0) {
-    contenedorProductosBuscador.innerHTML = '<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>';
-  } else {
-    productos.forEach(producto => {
-      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
-      const imagen = producto.imagen ? `../../uploads/productos/${producto.imagen}` : 'ruta/imagen_por_defecto.jpg';
-      const tarjetaProducto = `
-      <div class="card"> 
-      <div class="cover__card">
-        <img src="${imagen}" alt="Imagen de ${producto.nombre}">
-      </div>
-      <div class="titulo-producto">
-        <h3 class="nombre">${producto.nombre}</h3>
-      </div>
-      <hr>
-      <div class="categoria-producto">
-        <h6 class="categoria">${producto.categoria}</h6>
-      </div>
-      <hr>
-      <div class="precio-producto">
-        <p class="precio">${precio_venta}</p>
-      </div>
-      <div class="cantidad-producto">
-        <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
-      </div>
-    </div>
-  `;
-      contenedorProductosBuscador.innerHTML += tarjetaProducto;
-    });
-  }
 }
 function cargarProductos() {
   fetch('http://www.autofaros.com.ar/productos/api', {mode:'cors',credentials:'include'})
