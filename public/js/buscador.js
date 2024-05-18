@@ -62,9 +62,7 @@ function buscarProductos() {
 
     let url = 'http://www.autofaros.com.ar/productos/api/buscar';
     let params = new URLSearchParams();
-    if (consulta) {
-      params.append('query', consulta);
-    }
+    params.append('query', consulta); // Siempre añade la consulta, incluso si está vacía
     if (categoria) {
       params.append('categoria', categoria);
     }
@@ -90,7 +88,7 @@ function buscarProductos() {
     .catch(error => {
       console.error('Hubo un problema con la solicitud: ' + error);
     });
-  }, 500); // 500ms de retraso
+  }, 500);
 }
 
 function cargarProductos() {
