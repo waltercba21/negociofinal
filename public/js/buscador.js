@@ -115,11 +115,12 @@ function mostrarProductos(productos) {
     contenedorProductosBuscador.innerHTML = '<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>';
   } else {
     productos.forEach(producto => {
+      const imagen = producto.imagen ? `../../uploads/productos/${producto.imagen}` : 'ruta/a/imagen/por/defecto.jpg'; // Asegúrate de reemplazar 'ruta/a/imagen/por/defecto.jpg' con la ruta a una imagen por defecto
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = `
       <div class="card"> 
       <div class="cover__card">
-        <img src="../../uploads/productos/${producto.imagen}" alt="Imagen de ${producto.nombre}">
+        <img src="${imagen}" alt="Imagen de ${producto.nombre}">
       </div>
       <div class="titulo-producto">
         <h3 class="nombre">${producto.nombre}</h3>
