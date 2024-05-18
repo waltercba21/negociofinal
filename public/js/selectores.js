@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
             precio.className = 'precio-producto';
             let p = document.createElement('p');
             p.className = 'precio_venta';
-            p.textContent = `$${producto.precio_venta}`;
+            p.textContent = `$${Math.floor(producto.precio_venta)}`;
             precio.appendChild(p);
       
             let cantidad = document.createElement('div');
