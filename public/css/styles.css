@@ -1027,8 +1027,6 @@ background: rgba(0, 63, 125, 0.8);
   text-align: center;
   margin-top: 15px;
   margin-bottom: 50px;
-  overflow: hidden;
-  text-overflow: ellipsis; 
   display: -webkit-box;
   -webkit-box-orient: vertical; 
   min-height: 50px; 
