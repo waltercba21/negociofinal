@@ -1027,10 +1027,7 @@ background: rgba(0, 63, 125, 0.8);
   text-align: center;
   margin-top: 15px;
   margin-bottom: 50px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical; 
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  display: block;
   min-height: 50px; 
 }
 
