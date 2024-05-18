@@ -1027,7 +1027,12 @@ background: rgba(0, 63, 125, 0.8);
   text-align: center;
   margin-top: 15px;
   margin-bottom: 50px;
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
   min-height: 50px; 
 }
 
