@@ -16,7 +16,13 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
   cargarProductos();
-  entrada.addEventListener('input', buscarProductos);
+  entrada.addEventListener('input', function() {
+    if (entrada.value === '') {
+      cargarProductos();
+    } else {
+      buscarProductos();
+    }
+  });
   categoriaSelect.addEventListener('change', buscarProductos);
   marcaSelect.addEventListener('change', function() {
     // Limpia el select de modelos
