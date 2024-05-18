@@ -1017,7 +1017,7 @@ background: rgba(0, 63, 125, 0.8);
   width: auto; 
   border-radius: 14px;
   overflow: hidden;
-  object-fit: cover; 
+  object-fit: contain; 
 }
 
 .titulo-producto h3.nombre {
