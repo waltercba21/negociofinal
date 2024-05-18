@@ -955,6 +955,8 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 10px; 
 }
 
+
+/*--------------PRODUCTOS--------------*/
 .contenedor-productos{
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -979,7 +981,6 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3), 0 18px 18px rgba(0, 0, 0, 0.22);
   cursor: pointer;
 }
-
 .card-ampliada {
   position: absolute;
   z-index: 1000;
@@ -1019,7 +1020,6 @@ background: rgba(0, 63, 125, 0.8);
   overflow: hidden;
   object-fit: contain; 
 }
-
 .titulo-producto h3.nombre {
   font-size: 18px;
   font-weight: bold;
@@ -1035,7 +1035,10 @@ background: rgba(0, 63, 125, 0.8);
   white-space: normal;
   min-height: 50px; 
 }
-
+.categoria-producto h6.categoria {
+  font-weight: bold;
+  text-align: center;
+}
 .precio-producto p{
   font-size: 20px; 
   font-weight:bold;
@@ -1043,7 +1046,6 @@ background: rgba(0, 63, 125, 0.8);
   color: #d90429;
   margin-top: 25px; 
 }
-
 .cantidad-producto {
   display: flex;
   flex-direction: column;
@@ -1065,7 +1067,6 @@ background: rgba(0, 63, 125, 0.8);
   text-align: center;
   font-size: 16px;
 }
-
 .cantidad-producto .agregar-carrito {
   padding: 10px 20px;
   height: auto;
@@ -1079,7 +1080,6 @@ background: rgba(0, 63, 125, 0.8);
   text-align: center;
   text-decoration: none;
 }
-
 .cantidad-producto .agregar-carrito:hover {
   background-color: #0056b3;
 }
