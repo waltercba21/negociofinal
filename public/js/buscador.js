@@ -132,6 +132,7 @@ function mostrarProductos(productos) {
       </div>
       <div class="cantidad-producto">
         <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
+        <a href="/productos/${producto.id}" class="ver-detalles">Ver detalles</a>
       </div>
     </div>
   `;
