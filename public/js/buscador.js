@@ -60,14 +60,14 @@ function buscarProductos() {
     const categoria = categoriaSelect.value;
     const marca = marcaSelect.value;
     const modelo = modeloSelect.value;
-    
+
     if (!consulta) {
       cargarProductos();
       return; 
     }
 
     let url = 'http://www.autofaros.com.ar/productos/api/buscar';
-    let params = new URLSearchParams(); // Crea una nueva instancia de URLSearchParams
+    let params = new URLSearchParams(); 
     params.append('query', consulta);
     if (categoria) {
       params.append('categoria', categoria);
@@ -119,7 +119,7 @@ function mostrarProductos(productos) {
   } else {
     productos.forEach(producto => {
       const imagen = producto.imagen ? `../../uploads/productos/${producto.imagen}` : 'ruta/a/imagen/por/defecto.jpg'; // Asegúrate de reemplazar 'ruta/a/imagen/por/defecto.jpg' con la ruta a una imagen por defecto
-      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+      const precio_venta = typeof producto.precio_venta === 'number' ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = `
       <div class="card"> 
       <div class="cover__card">
