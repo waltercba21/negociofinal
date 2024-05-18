@@ -964,6 +964,15 @@ background: rgba(0, 63, 125, 0.8);
   justify-items: center; 
   margin:30px;
 }
+.card-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
 .card {
   padding: 20px;
   background: #ffffff;

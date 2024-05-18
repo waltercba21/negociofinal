@@ -55,7 +55,7 @@
 </div>
 <div id="contenedor-productos" class="contenedor-productos">
   <% productos.forEach(producto => { %>
-    <a href="/productos/<%= producto.id %>">
+    <a href="/productos/<%= producto.id %>" class="card-link">
       <div class="card">
         <div class="cover__card">
           <img src="<%= producto.imagen ? '../../uploads/productos/' + producto.imagen : '/ruta/valida/a/imagen/por/defecto.jpg' %>" alt="Imagen de <%= producto.nombre %>">
