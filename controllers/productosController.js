@@ -484,7 +484,7 @@ buscarPorNombre: function (req, res) {
       let productos;
       if (!consulta) {
         productos = await producto.findAll({
-          attributes: ['id', 'nombre', 'imagen', 'precio'], // Asegúrate de que estos son los nombres correctos de los campos
+          attributes: ['id', 'nombre', 'imagen', 'precio_venta'], 
         });
       } else {
         productos = await producto.findAll({
@@ -493,7 +493,7 @@ buscarPorNombre: function (req, res) {
               [Op.iLike]: '%' + consulta + '%'
             }
           },
-          attributes: ['id', 'nombre', 'imagen', 'precio'], // Asegúrate de que estos son los nombres correctos de los campos
+          attributes: ['id', 'nombre', 'imagen', 'precio_venta'], 
         });
       }
       res.json(productos);
