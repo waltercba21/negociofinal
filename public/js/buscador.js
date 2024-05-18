@@ -4,7 +4,7 @@ let categoriaSelect;
 let marcaSelect;
 let modeloSelect;
 let ultimaSolicitud = 0;
-
+let timeout = null;
 
 document.addEventListener('DOMContentLoaded', function() {
   entrada = document.querySelector('#entradaBusqueda');
@@ -18,44 +18,39 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
   cargarProductos();
-  entrada.addEventListener('input', function() {
-    if (entrada.value === '') {
-      cargarProductos();
-    } else {
-      buscarProductos();
-    }
-  });
+  entrada.addEventListener('input', buscarProductos);
   categoriaSelect.addEventListener('change', buscarProductos);
-  marcaSelect.addEventListener('change', function() {
-    // Limpia el select de modelos
-    modeloSelect.innerHTML = '';
-    
-    // Obtiene los modelos para la marca seleccionada
-    fetch(`/productos/modelos/${marcaSelect.value}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Error HTTP: ' + response.status);
-        }
-        return response.json();
-      })
-      .then(modelos => {
-        // Añade los modelos al select
-        modelos.forEach(modelo => {
-          let option = document.createElement('option');
-          option.value = modelo.id;
-          option.text = modelo.nombre; 
-          modeloSelect.appendChild(option);
-        });
-      })
-      .catch(error => {
-        console.error('Hubo un problema con la solicitud: ' + error);
-      });
-
-    buscarProductos();
-  });
+  marcaSelect.addEventListener('change', cargarModelosYBuscarProductos);
   modeloSelect.addEventListener('change', buscarProductos);
 });
-let timeout = null;
+
+function cargarModelosYBuscarProductos() {
+  // Limpia el select de modelos
+  modeloSelect.innerHTML = '';
+  
+  // Obtiene los modelos para la marca seleccionada
+  fetch(`/productos/modelos/${marcaSelect.value}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error HTTP: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(modelos => {
+      // Añade los modelos al select
+      modelos.forEach(modelo => {
+        let option = document.createElement('option');
+        option.value = modelo.id;
+        option.text = modelo.nombre; 
+        modeloSelect.appendChild(option);
+      });
+    })
+    .catch(error => {
+      console.error('Hubo un problema con la solicitud: ' + error);
+    });
+
+  buscarProductos();
+}
 
 function buscarProductos() {
   clearTimeout(timeout);
@@ -102,6 +97,7 @@ function buscarProductos() {
     });
   }, 500);
 }
+
 function cargarProductos() {
   fetch('http://www.autofaros.com.ar/productos/api', {mode:'cors',credentials:'include'})
   .then(response => response.json())
