@@ -105,7 +105,9 @@ function cargarProductos() {
     console.error('Hubo un problema con la solicitud: ' + error);
   });
 }
-
+window.onload = function() {
+  mostrarProductos(productos);
+}
 function mostrarProductos(productos) {
   contenedorProductosBuscador.innerHTML = '';
   if (productos.length === 0) {
