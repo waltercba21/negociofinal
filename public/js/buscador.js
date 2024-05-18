@@ -92,7 +92,7 @@ function buscarProductos() {
     .catch(error => {
       console.error('Hubo un problema con la solicitud: ' + error);
     });
-  }, 500);
+  }, 1500);
 }
 
 function cargarProductos() {
