@@ -1020,7 +1020,7 @@ background: rgba(0, 63, 125, 0.8);
   object-fit: cover; 
 }
 
-.titulo-producto h6 {
+.titulo-producto h3.nombre {
   font-size: 18px;
   font-weight: bold;
   color: #1F487E;
@@ -1034,6 +1034,7 @@ background: rgba(0, 63, 125, 0.8);
   -webkit-box-orient: vertical; 
   min-height: 50px; 
 }
+
 .precio-producto p{
   font-size: 20px; 
   font-weight:bold;
