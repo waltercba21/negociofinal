@@ -483,14 +483,17 @@ buscarPorNombre: function (req, res) {
       const consulta = req.query.query;
       let productos;
       if (!consulta) {
-        productos = await producto.findAll();
+        productos = await producto.findAll({
+          attributes: ['id', 'nombre', 'imagen', 'precio'], // Asegúrate de que estos son los nombres correctos de los campos
+        });
       } else {
         productos = await producto.findAll({
           where: {
             nombre: {
               [Op.iLike]: '%' + consulta + '%'
             }
-          }
+          },
+          attributes: ['id', 'nombre', 'imagen', 'precio'], // Asegúrate de que estos son los nombres correctos de los campos
         });
       }
       res.json(productos);
