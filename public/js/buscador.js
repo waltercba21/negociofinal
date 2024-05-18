@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 let timeout = null;
-
 function buscarProductos() {
   clearTimeout(timeout);
 
@@ -60,34 +59,39 @@ function buscarProductos() {
     const marca = marcaSelect.value;
     const modelo = modeloSelect.value;
 
-    let url = 'http://www.autofaros.com.ar/productos/api/buscar';
-    let params = new URLSearchParams();
-    params.append('query', consulta); // Siempre añade la consulta, incluso si está vacía
-    if (categoria) {
-      params.append('categoria', categoria);
-    }
-    if (marca) {
-      params.append('marca', marca);
-    }
-    if (modelo) {
-      params.append('modelo', modelo);
-    }
-    if (params.toString()) {
-      url += `?${params.toString()}`;
-    }
-    fetch(url, {mode:'cors', credentials:'include'})
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Error HTTP: ' + response.status);
+    if (consulta === '') {
+      // Si la consulta está vacía, carga todos los productos
+      cargarProductos();
+    } else {
+      let url = 'http://www.autofaros.com.ar/productos/api/buscar';
+      let params = new URLSearchParams();
+      params.append('query', consulta);
+      if (categoria) {
+        params.append('categoria', categoria);
       }
-      return response.json();
-    })
-    .then(datos => {
-      mostrarProductos(datos.productos);
-    })
-    .catch(error => {
-      console.error('Hubo un problema con la solicitud: ' + error);
-    });
+      if (marca) {
+        params.append('marca', marca);
+      }
+      if (modelo) {
+        params.append('modelo', modelo);
+      }
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      fetch(url, {mode:'cors', credentials:'include'})
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Error HTTP: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(datos => {
+        mostrarProductos(datos.productos);
+      })
+      .catch(error => {
+        console.error('Hubo un problema con la solicitud: ' + error);
+      });
+    }
   }, 500);
 }
 
