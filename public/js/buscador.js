@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
   marcaSelect.addEventListener('change', cargarModelosYBuscarProductos);
   modeloSelect.addEventListener('change', buscarProductos);
 });
-
 function buscarProductos() {
   clearTimeout(timeout);
   timeout = setTimeout(function () {
@@ -35,13 +34,11 @@ function buscarProductos() {
     const marca = marcaSelect.value;
     const modelo = modeloSelect.value;
     
-    if (!consulta) {
-      cargarProductos();
-      return; 
-    }
     let url = 'http://www.autofaros.com.ar/productos/api/buscar';
     let params = new URLSearchParams(); 
-    params.append('query', consulta);
+    if (consulta) {
+      params.append('query', consulta);
+    }
     if (categoria) {
       params.append('categoria', categoria);
     }
@@ -77,15 +74,9 @@ function buscarProductos() {
     });
   }, 500);
 }
+
 function cargarProductos() {
-  fetch('http://www.autofaros.com.ar/productos/api', {mode:'cors',credentials:'include'})
-  .then(response => response.json())
-  .then(datos => {
-    mostrarProductos(datos.productos);  
-  })
-  .catch(error => {
-    console.error('Hubo un problema con la solicitud: ' + error);
-  });
+  buscarProductos();
 }
 
 function mostrarProductos(productos) {
@@ -94,8 +85,8 @@ function mostrarProductos(productos) {
     contenedorProductosBuscador.innerHTML = '<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>';
   } else {
     productos.forEach(producto => {
-      const imagen = producto.imagen ? `../../uploads/productos/${producto.imagen}` : 'ruta/a/imagen/por/defecto.jpg'; // Asegúrate de reemplazar 'ruta/a/imagen/por/defecto.jpg' con la ruta a una imagen por defecto
-      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+      const imagen = producto.imagen ? `../../uploads/productos/${producto.imagen}` : 'ruta/a/imagen/por/defecto.jpg'; 
+      const precio_venta = (producto.precio_venta || producto.precio_venta === 0) ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = `
       <div class="card"> 
       <div class="cover__card">
