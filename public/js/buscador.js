@@ -3,6 +3,8 @@ let contenedorProductosBuscador;
 let categoriaSelect;
 let marcaSelect;
 let modeloSelect;
+let ultimaSolicitud = 0;
+
 
 document.addEventListener('DOMContentLoaded', function() {
   entrada = document.querySelector('#entradaBusqueda');
@@ -81,6 +83,8 @@ function buscarProductos() {
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
+    ultimaSolicitud++;
+    const solicitudActual = ultimaSolicitud;
     fetch(url, {mode:'cors', credentials:'include'})
     .then(response => {
       if (!response.ok) {
@@ -89,7 +93,9 @@ function buscarProductos() {
       return response.json();
     })
     .then(datos => {
-      mostrarProductos(datos.productos);
+      if (solicitudActual === ultimaSolicitud) {
+        mostrarProductos(datos.productos);
+      }
     })
     .catch(error => {
       console.error('Hubo un problema con la solicitud: ' + error);
