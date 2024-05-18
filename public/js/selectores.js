@@ -73,10 +73,12 @@ document.addEventListener('DOMContentLoaded', function() {
             h6.textContent = producto.categoria;
             categoria.appendChild(h6);
       
+            let precio = document.createElement('div');
+            precio.className = 'precio-producto';
             let p = document.createElement('p');
-            p.className = 'precio_venta';
-            p.textContent = `$${Math.floor(producto.precio_venta).toLocaleString('es-AR')}`;
-            precio.appendChild(p);
+p.className = 'precio_venta';
+p.textContent = `$${Math.floor(producto.precio_venta).toLocaleString('es-AR')}`;
+precio.appendChild(p);
       
             let cantidad = document.createElement('div');
             cantidad.className = 'cantidad-producto';
