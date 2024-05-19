@@ -1016,7 +1016,7 @@ background: rgba(0, 63, 125, 0.8);
 .carousel__button {
   border: none;
   border-radius: 20px;
-  padding: 10px 20px;
+  padding: 5px 10px; /* padding reducido para hacer los botones más pequeños */
   background-color: #1F487E;
   color: #fff;
   cursor: pointer;
@@ -1033,6 +1033,12 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+.carousel__buttons {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 .titulo-producto h3.nombre {
   font-size: 18px;
