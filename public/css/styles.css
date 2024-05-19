@@ -1092,7 +1092,9 @@ background: rgba(0, 63, 125, 0.8);
   left: 0;
   background-color: rgba(0, 0, 0, 0.1);
 }
-
+#contenedor-producto .card {
+  margin-top: 20px;
+}
 /*----------------------- Estilos para la página de carrito------------------------ */
 
 /* Estilos generales */
