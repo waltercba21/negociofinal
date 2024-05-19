@@ -57,19 +57,14 @@
   <% productos.forEach(producto => { %>
     <div class="card">
       <div class="cover__card">
-        <% if (imagenes.length > 0) { %>
-          <% productos.forEach(producto => { %>
-            <div class="card">
-              <div class="cover__card">
-                <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-                  <% producto.imagenes.forEach(function(imagen) { %>
-                    <img src="../../uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
-                  <% }); %>
-                <% } else { %>
-                  <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
-                <% } %>
-              </div>
-            </div>
+        <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+          <% producto.imagenes.forEach(function(imagen) { %>
+            <img src="../../uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
+          <% }); %>
+        <% } else { %>
+          <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
+        <% } %>
+      </div>
       <div class="titulo-producto">
         <h3 class="nombre"><%= producto.nombre %></h3>
       </div>
@@ -94,7 +89,6 @@
     <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
   <% } %>
 </div>
-    </div>
   </main>
   <%- include ./layouts/footer.ejs %>
   <script src="/js/buscador.js"></script> 
