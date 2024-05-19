@@ -57,6 +57,7 @@ function buscarProductos() {
     const modelo = modeloSelect.value;
     
     if (!consulta) {
+      ultimaSolicitud++; // Incrementa ultimaSolicitud para cancelar cualquier solicitud pendiente
       cargarProductos();
       return; 
     }
