@@ -111,7 +111,8 @@ module.exports = {
                 const productoIds = productos.map(producto => producto.id);
     
                 // Obtén todas las imágenes de los productos de una vez
-                const todasLasImagenes = await ImagenesProducto.find({ producto_id: { $in: productoIds } });
+                const todasLasImagenesPromesas = productoIds.map(id => producto.obtenerImagenesProducto(conexion, id));
+                const todasLasImagenes = (await Promise.all(todasLasImagenesPromesas)).flat();
     
                 for (let producto of productos) {
                     console.log('Precio antes de la conversión:', producto.precio_venta);
