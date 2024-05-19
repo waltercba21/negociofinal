@@ -322,26 +322,26 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }, []);
             funcion(null, productosAgrupados);
           }
+        });    
+      },
+      obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
+        return new Promise((resolve, reject) => {
+            let consulta = 'SELECT productos.*, categorias.nombre AS categoria, imagenes_producto.imagen FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
+            let parametros = [saltar];
+            if (categoriaSeleccionada) {
+                consulta += ' WHERE categoria_id = ?';
+                parametros.unshift(categoriaSeleccionada);
+            }
+            consulta += ' ORDER BY id DESC LIMIT 20 OFFSET ?';
+            conexion.query(consulta, parametros, function(error, resultados) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(resultados);
+                }
+            });
         });
       },
-    obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
-      return new Promise((resolve, reject) => {
-          let consulta = 'SELECT productos.*, categorias.nombre AS categoria FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id';
-          let parametros = [saltar];
-          if (categoriaSeleccionada) {
-              consulta += ' WHERE categoria_id = ?';
-              parametros.unshift(categoriaSeleccionada);
-          }
-          consulta += ' ORDER BY id DESC LIMIT 20 OFFSET ?';
-          conexion.query(consulta, parametros, function(error, resultados) {
-              if (error) {
-                  reject(error);
-              } else {
-                  resolve(resultados);
-              }
-          });
-      });
-    },
     obtenerProductosPorProveedor: function (conexion, proveedor) {
       const query = 'SELECT * FROM productos WHERE proveedor_id = ?';
       const queryPromise = util.promisify(conexion.query).bind(conexion);
