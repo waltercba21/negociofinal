@@ -525,36 +525,6 @@ todos: function (req, res) {
         }
     });
 },
-carrito: function (req, res) {
-    res.render('carrito');
-},agregarAlCarrito: function (req, res) {
-    console.log ('Funcion agregarAlCarrito llamada con el id:', req.params.id)
-    const productoId = req.params.id;
-    const usuarioId = req.session.usuario.id; 
-    const cantidad = 1; 
-
-    producto.retornarDatosId(conexion, productoId, function (error, productos) {
-        if (error) {
-            console.log('Error al obtener el producto:', error);
-            return res.redirect('/productos');
-        }
-        const precioTotal = productos[0].precio_venta * cantidad;
-        conexion.query('INSERT INTO carritos (usuario_id, producto_id, cantidad, precio_total) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE cantidad = cantidad + ?', [usuarioId, productoId, cantidad, precioTotal, cantidad], function (error) {
-            if (error) {
-                console.log('Error al guardar el carrito en la base de datos:', error);
-                return;
-            }
-            req.session.carrito = req.session.carrito || [];
-            req.session.carrito.push(productos[0]);
-            req.session.save(function(err) {
-                if (err) {
-                    console.log('Error al guardar la sesión:', err);
-                }
-                res.redirect('/productos/carrito');
-            });
-        });
-    });
-},
 eliminarProveedor: function(req, res) {
     let proveedorId = req.params.id;
     producto.eliminarProveedor(conexion, proveedorId).then(() => {
@@ -563,70 +533,6 @@ eliminarProveedor: function(req, res) {
         console.error("Error al eliminar el proveedor:", error);
         res.status(500).json({ success: false, error: error });
     });
-},
-eliminarDelCarrito : function(req, res) {
-    console.log('Función eliminarDelCarrito llamada');
-    const carritoId = Number(req.params.id);
-    console.log('carritoId:', carritoId);
-    const usuarioId = req.session.usuario.id; 
-    console.log('usuarioId:', usuarioId);
-    conexion.query('DELETE FROM carritos WHERE id = ? AND usuario_id = ?', [carritoId, usuarioId], function (error, results) {
-        if (error) {
-        } else {
-            const index = req.session.carrito.findIndex(producto => producto.id === carritoId);
-            if (index !== -1) {
-                req.session.carrito.splice(index, 1);
-            }
-            req.session.save(function(err) {
-                if(err) {
-                    console.log('Error al guardar la sesión:', err);
-                }
-                res.redirect('/productos/carrito');
-            });
-        }
-    });
-},  
-actualizarCantidadCarrito: function(req, res) {
-    const productoId = Number(req.params.id);
-    const nuevaCantidad = Number(req.body.cantidad);
-    const carrito = req.session.carrito || [];
-    for (var i = 0; i < carrito.length; i++) {
-      if (Number(carrito[i].id) === productoId) {
-        carrito[i].cantidad = nuevaCantidad;
-        break;
-      }
-    }
-    req.session.carrito = carrito;
-    res.redirect('/productos/carrito');
-},
-vaciarCarrito : function(req, res) {
-    const usuarioId = req.session.usuario.id;
-    conexion.query('DELETE FROM carritos WHERE usuario_id = ?', [usuarioId], function (error, results) {
-        if (error) {
-            console.log('Error al vaciar el carrito en la base de datos:', error);
-        } else {
-            req.session.carrito = [];
-            req.session.save(function(err) {
-                if(err) {
-                    console.log('Error al guardar la sesión:', err);
-                }
-                res.redirect('/productos/carrito');
-            });
-        }
-    });
-},
-guardarCarrito :function(usuario_id, carrito, metodo_envio, callback) {
-    const productos = carrito;
-    for (let i = 0; i < productos.length; i++) {
-        const producto_id = productos[i].id;
-        const cantidad = productos[i].cantidad;
-        const precio_total = productos[i].precio_venta * cantidad;
-        const sql = 'INSERT INTO carritos (usuario_id, producto_id, cantidad, precio_total, metodo_envio) VALUES (?, ?, ?, ?, ?)';
-        connection.query(sql, [usuario_id, producto_id, cantidad, precio_total, metodo_envio], function(error, results) {
-            if (error) throw error;
-            callback(results);
-        });
-    }
 },
 modificarPorProveedor: async function (req, res) {
     try {

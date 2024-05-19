@@ -31,11 +31,6 @@ app.use(session({
 }));
 
 app.use((req, res, next) => {
-  req.session.carrito = req.session.carrito || [];
-  next();
-});
-
-app.use((req, res, next) => {
   // Si el usuario ha iniciado sesión y la sesión ha expirado, redirige al index
   if (req.session.usuario && Date.now() > req.session.cookie.expires) {
     res.redirect('/');
@@ -60,7 +55,7 @@ app.use(adminMiddleware)
 app.use(middlewares.setGlobalVariables);
 app.use((req, res, next) => {
   res.locals.isLogged = req.session.usuario !== undefined;
-  res.locals.userLogged = req.session.usuario || {}; // Inicializar como objeto vacío si no hay usuario en sesión
+  res.locals.userLogged = req.session.usuario || {};
   next();
 })
   
