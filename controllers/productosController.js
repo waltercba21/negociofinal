@@ -373,7 +373,7 @@ productoResult.precio_venta = Math.round(productoResult.precio_venta);
         }
         let datosProducto = {
             id: req.body.id,
-            nombre: req.body.nombre,
+            nombre: req.body.nombre, 
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,

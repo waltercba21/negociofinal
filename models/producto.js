@@ -533,20 +533,23 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
       }
   });
 },
-retornarDatosId: function(conexion, id) {
+retornarDatosId: function(conexion, productoId) {
     return new Promise((resolve, reject) => {
-        conexion.query('SELECT productos.*, imagenes_producto.imagen FROM productos LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE productos.id = ?', [id], function(error, results, fields) {
+        const query = `
+            SELECT p.*, ip.imagen
+            FROM producto AS p
+            LEFT JOIN imagenes_producto AS ip ON p.id = ip.producto_id
+            WHERE p.id = ?
+        `;
+        conexion.query(query, [productoId], (error, results) => {
             if (error) {
-                console.log("Error en la consulta:", error);
                 reject(error);
             } else {
                 if (results.length > 0) {
-                    let producto = results[0];
-                    producto.imagenes = results.map(result => path.join('/uploads/productos', result.imagen));
-                    console.log("Producto obtenido:", producto);
+                    const producto = results[0];
+                    producto.imagenes = results.map(result => result.imagen);
                     resolve(producto);
                 } else {
-                    console.log("No se encontró el producto con id:", id);
                     resolve(null);
                 }
             }
