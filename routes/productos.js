@@ -18,10 +18,11 @@ var rutaAlmacen = multer.diskStorage({
         callback(null, fecha + '_' + file.originalname);
     }
 });
-var cargar = multer({storage: rutaAlmacen});  
 
+var maxImagenes = 10; 
+var cargar = multer({storage: rutaAlmacen});
 router.get('/', productosController.lista);  
-router.post('/', cargar.single('archivo'), productosController.guardar);
+router.post('/', cargar.array('archivo', maxImagenes), productosController.guardar);
 router.get('/', productosController.getProductosPorCategoria);
 router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
 router.get('/panelControl', productosController.panelControl) 
@@ -29,7 +30,7 @@ router.get('/proveedores', productosController.proveedores);
 router.get('/crear', productosController.crear);
 router.get('/generarPDF', productosController.generarPDF);
 router.get('/editar/:id', productosController.editar)
-router.post('/actualizar/:id', cargar.single('archivo'), productosController.actualizar);  
+router.post('/actualizar/:id', cargar.array('archivo', maxImagenes), productosController.actualizar);
 router.post('/eliminarSeleccionados', productosController.eliminarSeleccionados);
 router.delete('/eliminarProveedor/:id', productosController.eliminarProveedor);
 router.get('/ultimos', productosController.ultimos);

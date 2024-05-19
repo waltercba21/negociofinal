@@ -188,19 +188,18 @@ actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
         });
     });
 },
-actualizarArchivo: function(conexion, datos, archivo) {
+actualizarArchivo: function(conexion, datosProducto, archivo) {
     return new Promise((resolve, reject) => {
-        if (archivo) {
-            conexion.query('UPDATE productos SET imagen=? WHERE id =?', [archivo.filename, datos.id], (error, results) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(results);
-                }
-            });
-        } else {
-            resolve();
-        }
+        const query = 'INSERT INTO imagenes_producto (imagen, producto_id) VALUES (?, ?)';
+        const params = [archivo.filename, datosProducto.id]; // Asume que 'archivo' es un objeto con una propiedad 'filename'
+
+        conexion.query(query, params, (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
     });
 },
 obtenerUltimos: function (conexion, cantidad, funcion) {
@@ -539,4 +538,16 @@ eliminarProveedor: function(conexion, proveedorId) {
         });
     });
 },
+insertarImagenProducto: function(conexion, datosImagen) {
+    return new Promise((resolve, reject) => {
+        const sql = 'INSERT INTO imagenes_producto (producto_id, imagen) VALUES (?, ?)';
+        conexion.query(sql, [datosImagen.producto_id, datosImagen.imagen], (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
 }

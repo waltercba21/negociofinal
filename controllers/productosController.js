@@ -236,14 +236,13 @@ module.exports = {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
-        if (!req.file || !req.file.path) {
-            res.status(400).send('Error: no se cargó ningún archivo o no se pudo acceder al path del archivo');
+        if (!req.files || req.files.length === 0) {
+            res.status(400).send('Error: no se cargaron archivos');
             return;
         }
         const proveedores = req.body.proveedores;
         const datosProducto = {
             nombre: req.body.nombre,
-            imagen: req.file.filename,
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
@@ -259,14 +258,14 @@ module.exports = {
         producto.insertarProducto(conexion, datosProducto)
         .then(result => {
             const productoId = result.insertId;
-          const codigos = req.body.codigo.split(',');
-const proveedores = req.body.proveedores.map((proveedorId, index) => {
-    return {
-        id: proveedorId,
-        codigo: codigos[index],
-        precio_lista: req.body.precio_lista[index]
-    };
-});
+            const codigos = req.body.codigo.split(',');
+            const proveedores = req.body.proveedores.map((proveedorId, index) => {
+                return {
+                    id: proveedorId,
+                    codigo: codigos[index],
+                    precio_lista: req.body.precio_lista[index]
+                };
+            });
             const promesasProveedor = proveedores.map(proveedor => {
                 const datosProductoProveedor = {
                     producto_id: productoId,
@@ -276,7 +275,10 @@ const proveedores = req.body.proveedores.map((proveedorId, index) => {
                 };
                 return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
             });
-            return Promise.all(promesasProveedor);
+            const promesasImagenes = req.files.map(file => {
+                return producto.insertarImagenProducto(conexion, { producto_id: productoId, imagen: file.filename });
+            });
+            return Promise.all([...promesasProveedor, ...promesasImagenes]);
         })
         .then(() => {
             res.redirect('/productos/panelControl');
@@ -359,7 +361,6 @@ productoResult.precio_venta = Math.round(productoResult.precio_venta);
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
-        const imagen = req.file && req.file.filename ? req.file.filename : req.body.imagen;
         let datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
@@ -377,8 +378,12 @@ productoResult.precio_venta = Math.round(productoResult.precio_venta);
         };
         producto.actualizar(conexion, datosProducto)
         .then(() => {
-            if (req.file) {
-                return producto.actualizarArchivo(conexion, datosProducto, req.file);
+            // Si hay archivos, actualiza cada uno
+            if (req.files) {
+                const promesasArchivos = req.files.map(file => {
+                    return producto.actualizarArchivo(conexion, datosProducto, file);
+                });
+                return Promise.all(promesasArchivos);
             } else {
                 return Promise.resolve();
             }
