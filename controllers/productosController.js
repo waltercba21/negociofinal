@@ -107,6 +107,12 @@ module.exports = {
             if (productos.length === 0) {
                 console.log('No se encontraron productos para estos filtros');
             } else {
+                // Obtén todos los IDs de los productos
+                const productoIds = productos.map(producto => producto.id);
+    
+                // Obtén todas las imágenes de los productos de una vez
+                const todasLasImagenes = await ImagenesProducto.find({ producto_id: { $in: productoIds } });
+    
                 for (let producto of productos) {
                     console.log('Precio antes de la conversión:', producto.precio_venta);
                     if (producto.precio_venta !== null && !isNaN(parseFloat(producto.precio_venta))) {
@@ -119,16 +125,8 @@ module.exports = {
                         producto.categoria = categoriaProducto.nombre;
                     }
     
-                    producto.imagenes = await new Promise((resolve, reject) => {
-                        ImagenesProducto.find({producto_id: producto.id}, function(err, imagenes) {
-                            if (err) {
-                                console.error('Error al obtener imágenes para el producto:', err);
-                                reject(err);
-                            } else {
-                                resolve(imagenes);
-                            }
-                        });
-                    });
+                    // Asigna las imágenes a los productos correspondientes
+                    producto.imagenes = todasLasImagenes.filter(imagen => imagen.producto_id.toString() === producto.id.toString());
                 }
             }
             res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
