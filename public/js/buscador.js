@@ -129,15 +129,19 @@ function mostrarProductos(productos) {
     contenedorProductosBuscador.innerHTML = '<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>';
   } else {
     productos.forEach(producto => {
-      let imagen = 'ruta/a/imagen/por/defecto.jpg'; // Asegúrate de reemplazar 'ruta/a/imagen/por/defecto.jpg' con la ruta a una imagen por defecto
+      let imagenes = '';
       if (producto.imagenes && producto.imagenes.length > 0) {
-        imagen = `../../uploads/productos/${producto.imagenes[0].imagen}`;
+        producto.imagenes.forEach(imagen => {
+          imagenes += `<img src="../../uploads/productos/${imagen.imagen}" alt="Imagen de ${producto.nombre}">`;
+        });
+      } else {
+        imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
       }
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = `
       <div class="card"> 
       <div class="cover__card">
-        <img src="${imagen}" alt="Imagen de ${producto.nombre}">
+        ${imagenes}
       </div>
       <div class="titulo-producto">
         <h3 class="nombre">${producto.nombre}</h3>
