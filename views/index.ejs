@@ -87,23 +87,29 @@
     <div class="ultimos-productos contenedor">
       <h2>Últimos productos agregados</h2>
       <div class="contenedor-productos">
-          <% productos.forEach(function(producto) { %>
-            <div class="card card-ultimos">
-              <div class="cover__card">
-                <img src="../../uploads/productos/<%= producto.imagen %>" alt="<%= producto.nombre %>">
-              </div>
-              <div class="titulo-producto">
-                <h3 class="nombre"><%= producto.nombre %></h3>
-              </div>
-              <hr>
-              <div class="categoria-producto">
-                <h5 class="categoria"><%= producto.categoria_nombre %></h5>
-              </div>
-              <div class="precio-producto">
-                <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %></p>
-              </div>
+        <% productos.forEach(function(producto) { %>
+          <div class="card card-ultimos">
+            <div class="cover__card">
+              <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+                <% producto.imagenes.forEach(function(imagen) { %>
+                  <img src="../../uploads/productos/<%= imagen.imagen %>" alt="<%= producto.nombre %>">
+                <% }); %>
+              <% } else { %>
+                <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
+              <% } %>
             </div>
-          <% }); %>
+            <div class="titulo-producto">
+              <h3 class="nombre"><%= producto.nombre %></h3>
+            </div>
+            <hr>
+            <div class="categoria-producto">
+              <h5 class="categoria"><%= producto.categoria_nombre %></h5>
+            </div>
+            <div class="precio-producto">
+              <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %></p>
+            </div>
+          </div>
+        <% }); %>
       </div>
     </div>
     </main> 
