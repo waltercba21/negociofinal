@@ -1013,6 +1013,26 @@ background: rgba(0, 63, 125, 0.8);
   overflow: hidden;
   object-fit: contain; 
 }
+.carousel__button {
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  background-color: #1F487E;
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.carousel__button:hover {
+  background-color: #0056b3;
+}
+
+.carousel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .titulo-producto h3.nombre {
   font-size: 18px;
   font-weight: bold;
