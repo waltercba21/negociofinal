@@ -1033,8 +1033,8 @@ background: rgba(0, 63, 125, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Agrega transición para el efecto de hover */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Agrega sombra */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; 
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
 }
 
 .carousel__button:hover {
