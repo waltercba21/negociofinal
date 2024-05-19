@@ -996,7 +996,7 @@ background: rgba(0, 63, 125, 0.8);
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   transform-origin: center center;
   width: 280px; 
-  height: 500px;
+  height: 1000px;
 }
 .cover__card, .carousel {
   display: flex; 
