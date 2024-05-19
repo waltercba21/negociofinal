@@ -943,7 +943,9 @@ background: rgba(0, 63, 125, 0.8);
 #categoria_id option:hover, #id_marca option:hover, #modelo_id option:hover {
   background-color:#007BFF;
 }
-
+.hidden {
+  display: none;
+}
 /*------ CREAR --------*/
 .form-group-crear {
   display: flex;
