@@ -966,7 +966,10 @@ background: rgba(0, 63, 125, 0.8);
   justify-items: center; 
   margin:30px;
 }
-
+.cantidad-producto {
+  display: flex;
+  justify-content: center;
+}
 .card-link {
   display: inline-block;
   margin-top: 10px;
