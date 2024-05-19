@@ -108,11 +108,14 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-8s5eKHeCQih5SR1tr8T9F6YPbPslzBylgKFFC3U6B4CJ2HqDK+h56Mb2WBKBC5zW" crossorigin="anonymous"></script>
   <script>
-    productos.forEach((producto, index) => {
-    let carousel = document.createElement('div');
-    carousel.id = `carousel${index}`;
-    carousel.className = 'carousel slide';
-    carousel.setAttribute('data-ride', 'carousel');
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  productos.forEach((producto, index) => {
+  let carousel = document.createElement('div');
+  carousel.id = `carousel${index}`;
+  carousel.className = 'carousel slide';
+  carousel.setAttribute('data-ride', 'carousel');
+  carousel.setAttribute('data-interval', '2000');
   
     let carouselInner = document.createElement('div');
     carouselInner.className = 'carousel-inner';
@@ -171,6 +174,8 @@
   
     document.getElementById('contenedor-productos').appendChild(carousel);
   });
+});
+   
   </script> 
   <script src="/js/buscador.js"></script> 
   <script src="/js/selectores.js"></script>
