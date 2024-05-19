@@ -340,7 +340,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                     resolve(resultados);
                 }
             });
-        });
+        }); 
       },
     obtenerProductosPorProveedor: function (conexion, proveedor) {
       const query = 'SELECT * FROM productos WHERE proveedor_id = ?';
@@ -599,9 +599,10 @@ obtenerDescuentosProveedor: function(conexion) {
 retornarDatosProveedores: function(conexion, productoId) {
     return new Promise((resolve, reject) => {
         const query = `
-            SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento
+            SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento, ip.imagen
             FROM producto_proveedor AS pp
             LEFT JOIN descuentos_proveedor AS dp ON pp.proveedor_id = dp.proveedor_id
+            LEFT JOIN imagenes_producto AS ip ON pp.producto_id = ip.producto_id
             WHERE pp.producto_id = ?
         `;
         conexion.query(query, [productoId], (error, results) => {
