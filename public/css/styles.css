@@ -1025,14 +1025,21 @@ background: rgba(0, 63, 125, 0.8);
   background: #003f7d;
   border: none;
   border-radius: 50%; 
-  font-size: 2.5em; /* Aumenta el tamaño de las flechas */
+  font-size: 2.5em;
   cursor: pointer;
-  width: 40px; /* Aumenta el tamaño del contenedor de las flechas */
-  height: 40px; /* Aumenta el tamaño del contenedor de las flechas */
+  width: 40px;
+  height: 40px;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Agrega transición para el efecto de hover */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Agrega sombra */
+}
+
+.carousel__button:hover {
+  transform: scale(1.1); /* Aumenta el tamaño del botón al hacer hover */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* Aumenta la sombra al hacer hover */
 }
 .cover__card img, .carousel__image {
   width: 100%; 
