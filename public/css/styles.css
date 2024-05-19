@@ -1013,7 +1013,7 @@ background: rgba(0, 63, 125, 0.8);
 
 .carousel__buttons {
   position: absolute;
-  bottom: -15px; 
+  bottom: 0; /* Ajusta este valor para mover los botones hacia arriba */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
