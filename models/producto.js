@@ -456,20 +456,19 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
 },
 retornarDatosId: function(conexion, id) {
     return new Promise((resolve, reject) => {
-        conexion.query('SELECT * FROM productos WHERE id = ?', [id], function(error, results, fields) {
+        conexion.query('SELECT productos.*, imagenes_producto.imagen FROM productos LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE productos.id = ?', [id], function(error, results, fields) {
             if (error) {
                 console.log("Error en la consulta:", error);
                 reject(error);
             } else {
                 if (results.length > 0) {
                     let producto = results[0];
-                    if (Array.isArray(producto.imagen)) {
-                        producto.imagen = producto.imagen.map(imagen => path.join('/uploads/productos', imagen));
-                    } else {
-                        producto.imagen = path.join('/uploads/productos', producto.imagen);
-                    }
+                    producto.imagenes = results.map(result => path.join('/uploads/productos', result.imagen));
                     console.log("Producto obtenido:", producto);
                     resolve(producto);
+                } else {
+                    console.log("No se encontró el producto con id:", id);
+                    resolve(null);
                 }
             }
         });
