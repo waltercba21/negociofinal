@@ -1012,14 +1012,12 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .carousel__buttons {
-  position: absolute;
-  bottom: 0; /* Ajusta este valor para mover los botones hacia arriba */
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
   display: flex;
   justify-content: space-between;
   width: 100%;
   padding: 10px;
+  margin-top: -50px; 
 }
 .carousel__button {
   background: #003f7d;
@@ -1038,8 +1036,8 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .carousel__button:hover {
-  transform: scale(1.1); /* Aumenta el tamaño del botón al hacer hover */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* Aumenta la sombra al hacer hover */
+  transform: scale(1.1); 
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); 
 }
 .cover__card img, .carousel__image {
   width: 100%; 

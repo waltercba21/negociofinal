@@ -62,6 +62,8 @@
             <% producto.imagenes.forEach(function(imagen, index) { %>
               <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
             <% }); %>
+          </div>
+          <div class="carousel__buttons">
             <button class="carousel__button">
               <i class="fas fa-chevron-left"></i>
             </button>
@@ -73,6 +75,9 @@
           <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
         <% } %>
       </div>
+    </div>
+  <% }); %>
+</div>
       <div class="titulo-producto">
         <h3 class="nombre"><%= producto.nombre %></h3>
       </div>
