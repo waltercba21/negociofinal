@@ -20,7 +20,7 @@ var rutaAlmacen = multer.diskStorage({
 });
 
 var maxImagenes = 10; 
-var cargar = multer({storage: rutaAlmacen});
+var cargar = multer({storage: rutaAlmacen}).array('archivos[]', maxImagenes);
 router.get('/', productosController.lista);  
 router.post('/', cargar.array('archivo', maxImagenes), productosController.guardar);
 router.get('/', productosController.getProductosPorCategoria);
