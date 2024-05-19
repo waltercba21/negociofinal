@@ -184,9 +184,11 @@ module.exports = {
             // No se encontró ningún producto con el id proporcionado
             return res.status(404).send('Producto no encontrado');
           } else {
+            // Formatear el precio_venta para que no tenga decimales y tenga separadores de miles
+            producto[0].precio_venta = Number(producto[0].precio_venta).toLocaleString('es-ES');
             res.render('detalle', { producto: producto[0] });
           }
-        });
+        }); 
       },
       crear: function(req, res) {
         let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento;
