@@ -994,7 +994,7 @@ background: rgba(0, 63, 125, 0.8);
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   transform-origin: center center;
   width: 300px; 
-  height: 500px;
+  height: 600px;
 }
 .cover__card, .carousel {
   display: flex; 
@@ -1007,7 +1007,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 .carousel {
   position: relative;
-  height: 150px;
+  height: 250px;
   margin-bottom: 30px; 
 }
 
@@ -1066,43 +1066,7 @@ background: rgba(0, 63, 125, 0.8);
   color: #d90429;
   margin-top: 25px; 
 }
-.cantidad-producto {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background-color: #f5f5f5;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-}
-.cantidad-producto input{
-  margin-bottom: 10px;
-}
-.cantidad-producto .cantidad {
-  width: 50px;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  text-align: center;
-  font-size: 16px;
-}
-.cantidad-producto .agregar-carrito {
-  padding: 10px 20px;
-  height: auto;
-  background-color: #1F487E;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  position: relative;
-  text-align: center;
-  text-decoration: none;
-}
-.cantidad-producto .agregar-carrito:hover {
-  background-color: #0056b3;
-}
+
 
 /*--------------------DETALLE ---------------*/
 #detalle {
