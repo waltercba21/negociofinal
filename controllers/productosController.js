@@ -131,6 +131,7 @@ module.exports = {
         const categoria = req.query.categoria ? Number(req.query.categoria) : null;
         const marca = req.query.marca ? Number(req.query.marca) : null;
         const modelo = req.query.modelo ? Number(req.query.modelo) : null;
+        const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
     
         if (consulta) {
             producto.obtenerPorNombre(conexion, consulta, (error, productos) => {
@@ -163,7 +164,7 @@ module.exports = {
                     res.status(500).send('Error interno del servidor');
                 });
         } else {
-            producto.obtenerTodos(conexion, (error, productos) => {
+            producto.obtener(conexion, pagina, (error, productos) => {
                 if (error) {
                     console.error(error);
                     res.status(500).send('Error interno del servidor');
