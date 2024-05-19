@@ -132,7 +132,7 @@ function mostrarProductos(productos) {
       let imagenes = '';
       if (producto.imagenes && producto.imagenes.length > 0) {
         producto.imagenes.forEach(imagen => {
-          imagenes += `<img src="../../uploads/productos/${imagen.imagen}" alt="Imagen de ${producto.nombre}">`;
+          imagenes += `<img src="../../uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
         });
       } else {
         imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
