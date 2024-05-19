@@ -5,8 +5,33 @@ const path = require('path');
 module.exports ={
     obtener : function(conexion, pagina, callback) {
         const offset = (pagina - 1) * 20;
-        conexion.query('SELECT * FROM productos LIMIT 20 OFFSET ?', [offset], callback);
-      },
+        const consulta = `
+            SELECT productos.*, imagenes_producto.imagen 
+            FROM productos 
+            LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
+            LIMIT 20 OFFSET ?`;
+        conexion.query(consulta, [offset], (error, resultados) => {
+            if (error) {
+                callback(error);
+                return;
+            }
+            // Agrupar las imágenes por producto
+            const productos = [];
+            const mapaProductos = {};
+            resultados.forEach(resultado => {
+                if (!mapaProductos[resultado.id]) {
+                    mapaProductos[resultado.id] = {
+                        ...resultado,
+                        imagenes: resultado.imagen ? [resultado.imagen] : []
+                    };
+                    productos.push(mapaProductos[resultado.id]);
+                } else if (resultado.imagen) {
+                    mapaProductos[resultado.id].imagenes.push(resultado.imagen);
+                }
+            });
+            callback(null, productos);
+        });
+    },
 obtenerTotal: function (conexion, funcion) {
   if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');
