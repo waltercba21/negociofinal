@@ -57,8 +57,8 @@ function buscarProductos() {
     const modelo = modeloSelect.value;
     
     if (!consulta) {
-      ultimaSolicitud++; // Incrementa ultimaSolicitud para cancelar cualquier solicitud pendiente
-      cargarProductos();
+      ultimaSolicitud++;
+      cargarProductos(categoria, marca, modelo);
       return; 
     }
     let url = 'http://www.autofaros.com.ar/productos/api/buscar';
@@ -96,8 +96,22 @@ function buscarProductos() {
   }, 2000);
 }
 
-function cargarProductos() {
-  fetch('http://www.autofaros.com.ar/productos/api?limit=20', {mode:'cors',credentials:'include'})
+function cargarProductos(categoria, marca, modelo) {
+  let url = 'http://www.autofaros.com.ar/productos/api?limit=20';
+  let params = new URLSearchParams(); 
+  if (categoria) {
+    params.append('categoria', categoria);
+  }
+  if (marca) {
+    params.append('marca', marca);
+  }
+  if (modelo) {
+    params.append('modelo', modelo);
+  }
+  if (params.toString()) {
+    url += `&${params.toString()}`;
+  }
+  fetch(url, {mode:'cors',credentials:'include'})
   .then(response => response.json())
   .then(datos => {
     mostrarProductos(datos.productos);  
