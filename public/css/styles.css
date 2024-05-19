@@ -1025,10 +1025,10 @@ background: rgba(0, 63, 125, 0.8);
   background: #003f7d;
   border: none;
   border-radius: 50%; 
-  font-size: 2em;
+  font-size: 2.5em; /* Aumenta el tamaño de las flechas */
   cursor: pointer;
-  width: 30px; 
-  height: 30px;
+  width: 40px; /* Aumenta el tamaño del contenedor de las flechas */
+  height: 40px; /* Aumenta el tamaño del contenedor de las flechas */
   color: #fff;
   display: flex;
   align-items: center;
