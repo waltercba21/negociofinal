@@ -997,24 +997,23 @@ background: rgba(0, 63, 125, 0.8);
   width: 280px; 
   height: 400px;
 }
-
-.cover__card{
+.cover__card, .carousel {
   display: flex; 
   justify-content: center;
   align-items: center; 
   width: 100%;
-  min-width: 200px;  /* Ajusta este valor a lo que necesites */
-  min-height: 200px; /* Ajusta este valor a lo que necesites */
+  height: 200px; /* Ajusta este valor a lo que necesites */
   border-radius: 14px;
   overflow: hidden;
 }
-.cover__card img{
-  height: 100%;
+
+.cover__card img, .carousel__image {
   width: 100%; 
+  height: 100%;
   border-radius: 14px;
-  overflow: hidden;
-  object-fit: contain; 
+  object-fit: cover; 
 }
+
 .carousel__button {
   border: none;
   border-radius: 20px;
@@ -1028,13 +1027,6 @@ background: rgba(0, 63, 125, 0.8);
 
 .carousel__button:hover {
   background-color: #0056b3;
-}
-
-.carousel {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
 }
 
 .carousel__buttons {
