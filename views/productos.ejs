@@ -54,13 +54,27 @@
   <% } %>
 </div>
 <div id="contenedor-productos" class="contenedor-productos">
-  <% productos.forEach(producto => { %>
+  <% productos.forEach((producto, index) => { %>
     <div class="card">
-      <div class="cover__card">
+      <div id="carousel<%= index %>" class="carousel slide" data-ride="carousel">
         <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-          <% producto.imagenes.forEach(function(imagen) { %>
-            <img src="../../uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
-          <% }); %>
+          <div class="carousel-inner">
+            <% producto.imagenes.forEach((imagen, imagenIndex) => { %>
+              <div class="carousel-item <%= imagenIndex === 0 ? 'active' : '' %>">
+                <img src="../../uploads/productos/<%= imagen.imagen %>" class="d-block w-100" alt="Imagen de <%= producto.nombre %>">
+              </div>
+            <% }); %>
+          </div>
+          <% if (producto.imagenes.length > 1) { %>
+            <a class="carousel-control-prev" href="#carousel<%= index %>" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">Anterior</span>
+            </a>
+            <a class="carousel-control-next" href="#carousel<%= index %>" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">Siguiente</span>
+            </a>
+          <% } %>
         <% } else { %>
           <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
         <% } %>

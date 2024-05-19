@@ -155,7 +155,6 @@ function mostrarProductos(productos) {
         <p class="precio">${precio_venta}</p>
       </div>
       <div class="cantidad-producto">
-        <a href="/productos/carrito/agregar/${producto.id}" class="agregar-carrito">Agregar al carrito</a>
         <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
       </div>
     </div>
