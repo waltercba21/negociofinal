@@ -107,7 +107,7 @@ module.exports = {
             if (productos.length === 0) {
                 console.log('No se encontraron productos para estos filtros');
             } else {
-                productos.forEach(producto => {
+                for (let producto of productos) {
                     console.log('Precio antes de la conversión:', producto.precio_venta);
                     if (producto.precio_venta !== null && !isNaN(parseFloat(producto.precio_venta))) {
                         producto.precio_venta = Number(producto.precio_venta);
@@ -118,7 +118,18 @@ module.exports = {
                     if (categoriaProducto) {
                         producto.categoria = categoriaProducto.nombre;
                     }
-                });
+    
+                    producto.imagenes = await new Promise((resolve, reject) => {
+                        ImagenesProducto.find({producto_id: producto.id}, function(err, imagenes) {
+                            if (err) {
+                                console.error('Error al obtener imágenes para el producto:', err);
+                                reject(err);
+                            } else {
+                                resolve(imagenes);
+                            }
+                        });
+                    });
+                }
             }
             res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
         }  catch (error) {

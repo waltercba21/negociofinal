@@ -474,6 +474,23 @@ retornarDatosId: function(conexion, id) {
         });
     });
 },
+obtenerImagenesProducto: function(conexion, id) {
+    return new Promise((resolve, reject) => {
+        conexion.query(`
+            SELECT imagen
+            FROM imagenes_producto
+            WHERE producto_id = ?
+        `, [id], function(error, resultados) {
+            if (error) {
+                console.error('Error al obtener las imágenes del producto:', error);
+                reject(error);
+            } else {
+                console.log('Imágenes del producto obtenidas:', resultados);
+                resolve(resultados);
+            }
+        });
+    });
+},
   obtenerProveedoresProducto: function(conexion, id) {
     return new Promise((resolve, reject) => {
         conexion.query(`

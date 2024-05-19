@@ -57,8 +57,15 @@
   <% productos.forEach(producto => { %>
     <div class="card">
       <div class="cover__card">
-        <img src="<%= producto.imagen ? '../../uploads/productos/' + producto.imagen : '/ruta/valida/a/imagen/por/defecto.jpg' %>" alt="Imagen de <%= producto.nombre %>">
+        <% if (imagenes.length > 0) { %>
+          <% imagenes.forEach(function(imagen) { %>
+            <img src="../../uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
+          <% }); %>
+        <% } else { %>
+          <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
+        <% } %>
       </div>
+    </div>
       <div class="titulo-producto">
         <h3 class="nombre"><%= producto.nombre %></h3>
       </div>
