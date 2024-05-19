@@ -1075,6 +1075,13 @@ background: rgba(0, 63, 125, 0.8);
   background-color: #0056b3;
 }
 
+/*--------------------DETALLE ---------------*/
+#detalle {
+  background-image: url('/uploads/productos/fondo-detalle.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 /*----------------------- Estilos para la página de carrito------------------------ */
 
 /* Estilos generales */
