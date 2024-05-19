@@ -1007,18 +1007,32 @@ background: rgba(0, 63, 125, 0.8);
   border-radius: 14px;
   overflow: hidden;
 }
+.carousel {
+  position: relative;
+}
+
 .carousel__buttons {
+  position: absolute;
+  bottom: -30px; /* Ajusta este valor según necesites */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 0;
+  padding: 10px;
 }
 
 .carousel__button {
-  background: none;
+  background: white;
   border: none;
+  border-radius: 50%; /* Esto hará que los botones sean redondos */
   font-size: 2em;
   cursor: pointer;
+  width: 30px; /* Ajusta este valor según necesites */
+  height: 30px; /* Ajusta este valor según necesites */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .cover__card img, .carousel__image {
   width: 100%; 
