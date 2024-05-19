@@ -1011,7 +1011,7 @@ background: rgba(0, 63, 125, 0.8);
   width: 100%; 
   border-radius: 14px;
   overflow: hidden;
-  object-fit: cover; 
+  object-fit: contain; 
 }
 .carousel__button {
   border: none;
