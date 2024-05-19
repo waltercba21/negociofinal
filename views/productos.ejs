@@ -71,9 +71,6 @@
           <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
         <% } %>
       </div>
-    </div>
-  <% }); %>
-</div>
       <div class="titulo-producto">
         <h3 class="nombre"><%= producto.nombre %></h3>
       </div>
@@ -98,7 +95,7 @@
     <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
   <% } %>
 </div>
-  </main>
+</main>
   <%- include ./layouts/footer.ejs %>
   <script src="/js/productos.js"></script> 
   <script src="/js/buscador.js"></script> 
