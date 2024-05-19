@@ -301,8 +301,29 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         });
     },
     obtenerPorNombre: function (conexion, nombre, funcion) {
-      conexion.query('SELECT productos.*, categorias.nombre AS categoria FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.nombre LIKE ?', [`%${nombre}%`], funcion);
-    },
+        const sql = 'SELECT productos.*, categorias.nombre AS categoria, imagenes_producto.imagen as imagen FROM productos' +
+                    ' INNER JOIN categorias ON productos.categoria_id = categorias.id' +
+                    ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id' +
+                    ' WHERE productos.nombre LIKE ?';
+        conexion.query(sql, [`%${nombre}%`], (error, productos) => {
+          if (error) {
+            funcion(error, null);
+          } else {
+            // Agrupar las imágenes por producto
+            const productosAgrupados = productos.reduce((acc, producto) => {
+              const productoExistente = acc.find(p => p.id === producto.id);
+              if (productoExistente) {
+                productoExistente.imagenes.push({ imagen: producto.imagen });
+              } else {
+                producto.imagenes = [{ imagen: producto.imagen }];
+                acc.push(producto);
+              }
+              return acc;
+            }, []);
+            funcion(null, productosAgrupados);
+          }
+        });
+      },
     obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
       return new Promise((resolve, reject) => {
           let consulta = 'SELECT productos.*, categorias.nombre AS categoria FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id';
