@@ -463,12 +463,13 @@ retornarDatosId: function(conexion, id) {
             } else {
                 if (results.length > 0) {
                     let producto = results[0];
-                    producto.imagen = path.join('/uploads/productos', producto.imagen);
+                    if (Array.isArray(producto.imagen)) {
+                        producto.imagen = producto.imagen.map(imagen => path.join('/uploads/productos', imagen));
+                    } else {
+                        producto.imagen = path.join('/uploads/productos', producto.imagen);
+                    }
                     console.log("Producto obtenido:", producto);
                     resolve(producto);
-                } else {
-                    console.log("No se encontró el producto con id:", id);
-                    resolve(null);
                 }
             }
         });
