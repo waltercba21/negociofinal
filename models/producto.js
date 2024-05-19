@@ -203,8 +203,29 @@ actualizarArchivo: function(conexion, datosProducto, archivo) {
     });
 },
 obtenerUltimos: function (conexion, cantidad, funcion) {
-  conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id ORDER BY productos.id DESC LIMIT ?', [cantidad], funcion);
-},
+    conexion.query(`
+      SELECT productos.*, categorias.nombre AS categoria_nombre, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes 
+      FROM productos 
+      INNER JOIN categorias ON productos.categoria_id = categorias.id 
+      LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
+      GROUP BY productos.id 
+      ORDER BY productos.id DESC LIMIT ?`, 
+      [cantidad], 
+      function(err, rows) {
+        if (err) {
+          return funcion(err);
+        }
+  
+        // Convertir las imágenes en un array
+        const productos = rows.map(row => ({
+          ...row,
+          imagenes: row.imagenes ? row.imagenes.split(',') : [],
+        }));
+  
+        funcion(null, productos);
+      }
+    );
+  },
 actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
         proveedorId = Number(proveedorId);
         porcentajeCambio = Number(porcentajeCambio);
