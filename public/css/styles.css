@@ -996,7 +996,7 @@ background: rgba(0, 63, 125, 0.8);
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   transform-origin: center center;
   width: 280px; 
-  height: 400px;
+  height: 500px;
 }
 .cover__card, .carousel {
   display: flex; 
@@ -1009,11 +1009,13 @@ background: rgba(0, 63, 125, 0.8);
 }
 .carousel {
   position: relative;
+  height: 150px;
+  margin-bottom: 30px; 
 }
 
 .carousel__buttons {
   position: absolute;
-  bottom: -30px; /* Ajusta este valor según necesites */
+  bottom: -15px; 
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1021,15 +1023,15 @@ background: rgba(0, 63, 125, 0.8);
   width: 100%;
   padding: 10px;
 }
-
 .carousel__button {
-  background: white;
+  background: #003f7d;
   border: none;
-  border-radius: 50%; /* Esto hará que los botones sean redondos */
+  border-radius: 50%; 
   font-size: 2em;
   cursor: pointer;
-  width: 30px; /* Ajusta este valor según necesites */
-  height: 30px; /* Ajusta este valor según necesites */
+  width: 30px; 
+  height: 30px;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
