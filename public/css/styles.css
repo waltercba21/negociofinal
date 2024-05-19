@@ -1007,16 +1007,16 @@ background: rgba(0, 63, 125, 0.8);
   overflow: hidden;
 }
 .cover__card img{
-  height: 200px;
-  width: auto; 
+  height: 100%;
+  width: 100%; 
   border-radius: 14px;
   overflow: hidden;
-  object-fit: contain; 
+  object-fit: cover; 
 }
 .carousel__button {
   border: none;
   border-radius: 20px;
-  padding: 5px 10px; /* padding reducido para hacer los botones más pequeños */
+  padding: 5px 10px; 
   background-color: #1F487E;
   color: #fff;
   cursor: pointer;
