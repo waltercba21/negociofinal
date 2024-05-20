@@ -663,6 +663,12 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 /* ------------------------------EDITAR----------------------*/
+.form-group-crear {
+  display: flex;
+  flex-direction: row; 
+  justify-content: space-between; 
+  align-items: center;
+}
 .imagen-miniatura-contenedor {
   display: flex;
   flex-direction: row;
