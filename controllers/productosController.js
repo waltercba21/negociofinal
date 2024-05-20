@@ -368,7 +368,8 @@ productoResult.precio_venta = Math.round(productoResult.precio_venta);
                         marcas: marcasResult,
                         proveedores: proveedoresResult,
                         modelos: modelosResult,
-                        descuentosProveedor: descuentosProveedoresResult
+                        descuentosProveedor: descuentosProveedoresResult,
+                        imagenes: imagenes // Asegúrate de que estás pasando la variable 'imagenes'
                     });
                 }).catch(error => {
                     console.error("Error al obtener los datos:", error);
