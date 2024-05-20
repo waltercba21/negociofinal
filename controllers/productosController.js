@@ -558,7 +558,7 @@ eliminarProveedor: function(req, res) {
 },
 eliminarImagen: function(req, res) {
     let imagenId = req.params.id;
-    producto.eliminarImagen(conexion, imagenId).then(() => {
+    producto.eliminarImagen(imagenId).then(() => {
         res.json({ success: true });
     }).catch(error => {
         console.error("Error al eliminar la imagen:", error);
