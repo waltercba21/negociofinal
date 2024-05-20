@@ -323,7 +323,7 @@ module.exports = {
             productoResult.costo_iva = Math.round(productoResult.costo_iva);
             productoResult.utilidad = Math.round(productoResult.utilidad);
             productoResult.precio_venta = Math.round(productoResult.precio_venta);
-            
+
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
@@ -462,8 +462,22 @@ module.exports = {
             const saltar = (paginaActual - 1) * productosPorPagina;
             let numeroDePaginas = await calcularNumeroDePaginas(conexion);
             let productos = await producto.obtenerTodos(conexion, saltar, categoriaSeleccionada);
-            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual });
-        } catch (error) {
+
+            // Agrupar productos por id
+            let productosAgrupados = {};
+            productos.forEach(producto => {
+                if (!productosAgrupados[producto.id]) {
+                    productosAgrupados[producto.id] = producto;
+                    productosAgrupados[producto.id].imagenes = [producto.imagen];
+                } else {
+                    productosAgrupados[producto.id].imagenes.push(producto.imagen);
+                }
+            });
+            
+            // Convertir el objeto de productos agrupados en un array
+            productos = Object.values(productosAgrupados);
+            
+            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual }); } catch (error) {
             console.log('Error:', error);
             return res.status(500).send('Error: ' + error.message);
         } 
