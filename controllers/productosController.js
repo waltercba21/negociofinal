@@ -463,7 +463,22 @@ productoResult.precio_venta = Math.round(productoResult.precio_venta);
             const saltar = (paginaActual - 1) * productosPorPagina;
             let numeroDePaginas = await calcularNumeroDePaginas(conexion);
             let productos = await producto.obtenerTodos(conexion, saltar, categoriaSeleccionada);
-            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual });
+    
+            // Agrupar las imágenes por producto
+            let productosAgrupados = {};
+    
+            productos.forEach(producto => {
+                if (!productosAgrupados[producto.id]) {
+                    productosAgrupados[producto.id] = producto;
+                    productosAgrupados[producto.id].imagenes = [producto.imagen];
+                } else {
+                    productosAgrupados[producto.id].imagenes.push(producto.imagen);
+                }
+            });
+    
+            let productosArray = Object.values(productosAgrupados);
+    
+            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productosArray, paginaActual: paginaActual });
         } catch (error) {
             console.log('Error:', error);
             return res.status(500).send('Error: ' + error.message);
