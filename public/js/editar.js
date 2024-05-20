@@ -1,9 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Manejar la eliminación de imágenes
     document.querySelectorAll('.eliminar-imagen').forEach(function(button) {
         button.addEventListener('click', function() {
-            // Aquí necesitarías hacer una solicitud al servidor para eliminar la imagen
-            // Esto es solo un ejemplo y necesitarías ajustarlo para que funcione en tu entorno
             var imagenId = this.parentNode.dataset.imagenId;
             fetch('/api/imagenes/' + imagenId, { method: 'DELETE' })
                 .then(function(response) {
@@ -18,8 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     });
-
-    // Manejar el reordenamiento de las imágenes
     var imagenes = document.querySelectorAll('.imagen-miniatura-contenedor');
     imagenes.forEach(function(imagen) {
         imagen.draggable = true;
