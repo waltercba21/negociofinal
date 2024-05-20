@@ -21,6 +21,7 @@
                             <% producto.imagenes.forEach((imagen) => { %>
                                 <div data-imagen-id="<%= imagen.id %>">
                                     <img class="imagen-miniatura" src="<%= imagen.imagen %>" alt="Imagen del producto">
+                                    <button class="eliminar-imagen">X</button>
                                 </div>
                             <% }); %>
                         </div>
