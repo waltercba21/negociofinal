@@ -642,7 +642,7 @@ eliminarImagen: function(conexion, imagenId) {
                 reject(error);
             } else {
                 resolve(results);
-            }
+            } 
         });
     });
 },

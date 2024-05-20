@@ -342,11 +342,11 @@ module.exports = {
             }
             productoResult = result;
             // Cambia Math.floor() por Math.round()
-productoResult.precio_lista = Math.round(productoResult.precio_lista);
-productoResult.costo_neto = Math.round(productoResult.costo_neto);
-productoResult.costo_iva = Math.round(productoResult.costo_iva);
-productoResult.utilidad = Math.round(productoResult.utilidad);
-productoResult.precio_venta = Math.round(productoResult.precio_venta);
+            productoResult.precio_lista = Math.round(productoResult.precio_lista);
+            productoResult.costo_neto = Math.round(productoResult.costo_neto);
+            productoResult.costo_iva = Math.round(productoResult.costo_iva);
+            productoResult.utilidad = Math.round(productoResult.utilidad);
+            productoResult.precio_venta = Math.round(productoResult.precio_venta);
             // Obtener los datos de producto_proveedor
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
@@ -354,27 +354,41 @@ productoResult.precio_venta = Math.round(productoResult.precio_venta);
                     productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
                     productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
                 });
-                Promise.all([
-                    producto.obtenerCategorias(conexion),
-                    producto.obtenerMarcas(conexion),
-                    producto.obtenerProveedores(conexion),
-                    producto.obtenerModelosPorMarca(conexion, productoResult.marca), // Asegúrate de que estás obteniendo los modelos para la marca correcta
-                    producto.obtenerDescuentosProveedor(conexion)
-                ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
-                    res.render('editar', {
-                        producto: productoResult,
-                        productoProveedores: productoProveedoresResult,
-                        categorias: categoriasResult,
-                        marcas: marcasResult,
-                        proveedores: proveedoresResult,
-                        modelos: modelosResult,
-                        descuentosProveedor: descuentosProveedoresResult,
-                        imagenes: imagenes // Asegúrate de que estás pasando la variable 'imagenes'
+                // Obtener las imágenes del producto
+                producto.obtenerImagenesProducto(conexion, req.params.id).then(imagenesResult => {
+                    const imagenes = imagenesResult.map(imagen => {
+                        return {
+                            id: imagen.id,
+                            imagen: imagen.imagen
+                        };
+                    });
+                    Promise.all([
+                        producto.obtenerCategorias(conexion),
+                        producto.obtenerMarcas(conexion),
+                        producto.obtenerProveedores(conexion),
+                        producto.obtenerModelosPorMarca(conexion, productoResult.marca), // Asegúrate de que estás obteniendo los modelos para la marca correcta
+                        producto.obtenerDescuentosProveedor(conexion)
+                    ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
+                        res.render('editar', {
+                            producto: productoResult,
+                            productoProveedores: productoProveedoresResult,
+                            categorias: categoriasResult,
+                            marcas: marcasResult,
+                            proveedores: proveedoresResult,
+                            modelos: modelosResult,
+                            descuentosProveedor: descuentosProveedoresResult,
+                            imagenes: imagenes // Ahora 'imagenes' está definida
+                        });
+                    }).catch(error => {
+                        console.error("Error al obtener los datos:", error);
+                        if (!responseSent) {
+                            res.status(500).send("Error al obtener los datos");
+                        }
                     });
                 }).catch(error => {
-                    console.error("Error al obtener los datos:", error);
+                    console.error("Error al obtener las imágenes del producto:", error);
                     if (!responseSent) {
-                        res.status(500).send("Error al obtener los datos");
+                        res.status(500).send("Error al obtener las imágenes del producto");
                     }
                 });
             }).catch(error => {
