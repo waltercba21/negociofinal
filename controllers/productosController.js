@@ -318,13 +318,12 @@ module.exports = {
                 return;
             }
             productoResult = result;
-            // Cambia Math.floor() por Math.round()
-productoResult.precio_lista = Math.round(productoResult.precio_lista);
-productoResult.costo_neto = Math.round(productoResult.costo_neto);
-productoResult.costo_iva = Math.round(productoResult.costo_iva);
-productoResult.utilidad = Math.round(productoResult.utilidad);
-productoResult.precio_venta = Math.round(productoResult.precio_venta);
-            // Obtener los datos de producto_proveedor
+            productoResult.precio_lista = Math.round(productoResult.precio_lista);
+            productoResult.costo_neto = Math.round(productoResult.costo_neto);
+            productoResult.costo_iva = Math.round(productoResult.costo_iva);
+            productoResult.utilidad = Math.round(productoResult.utilidad);
+            productoResult.precio_venta = Math.round(productoResult.precio_venta);
+            
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
