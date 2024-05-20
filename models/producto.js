@@ -543,9 +543,10 @@ retornarDatosId: function(conexion, id) {
                 if (results.length > 0) {
                     let producto = results[0];
                     producto.imagenes = results.map(result => {
+                        let imagenRuta = result.imagen ? path.join('/uploads/productos', result.imagen) : '/ruta/a/imagen/por/defecto';
                         return {
                             id: result.imagen_id,
-                            imagen: path.join('/uploads/productos', result.imagen)
+                            imagen: imagenRuta
                         };
                     });
                     console.log("Producto obtenido:", producto);
