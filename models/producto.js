@@ -556,7 +556,7 @@ retornarDatosId: function(conexion, id) {
 obtenerImagenesProducto: function(conexion, id) {
     return new Promise((resolve, reject) => {
         conexion.query(`
-            SELECT imagen, producto_id
+            SELECT id, imagen, producto_id
             FROM imagenes_producto
             WHERE producto_id = ?
         `, [id], function(error, resultados) {
