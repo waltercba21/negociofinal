@@ -16,8 +16,8 @@
                 <div class="form-group-crear">
                     <label for="imagen">Imagen</label>
                     <input id="imagen" class="form-control-file" type="file" name="archivos[]" multiple>
-                    <% if (producto && producto.imagenes && producto.imagenes.length > 0) { %>
-                        <% producto.imagenes.forEach((imagen) => { %>
+                    <% if (producto && imagenes && imagenes.length > 0) { %>
+                        <% imagenes.forEach((imagen) => { %>
                             <div class="imagen-miniatura-contenedor" data-imagen-id="<%= imagen.id %>">
                                 <img class="imagen-miniatura" src="<%= imagen.imagen %>" alt="Imagen del producto">
                                 <button type="button" class="eliminar-imagen">x</button>
