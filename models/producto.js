@@ -642,14 +642,12 @@ insertarImagenProducto: function(conexion, datosImagen) {
     });
 },
 eliminarImagen : function(id, callback) {
-    console.log('Eliminar imagen llamado con id:', id); // Imprime el id con el que se llamó la función
+    console.log('Eliminar imagen llamado con id:', id); 
     const sql = 'DELETE FROM imagenes_producto WHERE id = ?';
     conexion.query(sql, [id], function(err, results) {
         if (err) {
-            console.log('Error al ejecutar la consulta SQL:', err); // Imprime el error si hay uno
             return callback(err);
         }
-        console.log('Resultados de la consulta SQL:', results); // Imprime los resultados de la consulta SQL
         callback(null, results);
     });
 }
