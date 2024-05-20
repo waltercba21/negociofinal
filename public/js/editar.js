@@ -16,7 +16,14 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch('/eliminarImagen/' + imagenId, {
                 method: 'DELETE'
             })
-            .then(response => response.json())
+            .then(response => {
+                // Comprueba si la respuesta es JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new TypeError("Oops, no obtuvimos JSON!");
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // Si la eliminación fue exitosa, elimina el div que contiene la imagen del DOM
