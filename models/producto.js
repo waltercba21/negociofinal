@@ -542,7 +542,7 @@ retornarDatosId: function(conexion, id) {
             } else {
                 if (results.length > 0) {
                     let producto = results[0];
-                    producto.imagenes = results.map(result => path.join('/uploads/productos', result.imagen));
+                    producto.imagenes = results.map(result => result.imagen ? path.join('/uploads/productos', result.imagen) : null);
                     console.log("Producto obtenido:", producto);
                     resolve(producto);
                 } else {
