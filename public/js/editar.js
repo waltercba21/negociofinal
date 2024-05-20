@@ -1,23 +1,13 @@
-// Asegúrate de que este código se ejecuta después de que el DOM esté completamente cargado
 document.addEventListener('DOMContentLoaded', function() {
-    // Obtén todos los botones de eliminar imagen
     const botonesEliminar = document.querySelectorAll('.eliminar-imagen');
-
-    // Añade un evento de clic a cada botón
     botonesEliminar.forEach(function(boton) {
         boton.addEventListener('click', function(event) {
-            // Evita la acción por defecto del botón
             event.preventDefault();
-
-            // Obtén el id de la imagen del atributo data-imagen-id del div que contiene la imagen
             const imagenId = this.parentNode.getAttribute('data-imagen-id');
-
-            // Haz una solicitud DELETE a la ruta de eliminar imagen
-            fetch('/eliminarImagen/' + imagenId, {
+            fetch('/productos/eliminarImagen/' + imagenId, {
                 method: 'DELETE'
             })
             .then(response => {
-                // Comprueba si la respuesta es JSON
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
                     throw new TypeError("Oops, no obtuvimos JSON!");
