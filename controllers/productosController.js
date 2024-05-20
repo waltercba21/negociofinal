@@ -474,7 +474,6 @@ module.exports = {
                 }
             });
             
-            // Convertir el objeto de productos agrupados en un array
             productos = Object.values(productosAgrupados);
             
             res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual }); } catch (error) {
@@ -554,6 +553,15 @@ eliminarProveedor: function(req, res) {
         res.json({ success: true });
     }).catch(error => {
         console.error("Error al eliminar el proveedor:", error);
+        res.status(500).json({ success: false, error: error });
+    });
+},
+eliminarImagen: function(req, res) {
+    let imagenId = req.params.id;
+    producto.eliminarImagen(conexion, imagenId).then(() => {
+        res.json({ success: true });
+    }).catch(error => {
+        console.error("Error al eliminar la imagen:", error);
         res.status(500).json({ success: false, error: error });
     });
 },

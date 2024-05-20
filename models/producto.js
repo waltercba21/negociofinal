@@ -640,5 +640,14 @@ insertarImagenProducto: function(conexion, datosImagen) {
             }
         });
     });
+},
+eliminarImagen : function(id, callback) {
+    const sql = 'DELETE FROM imagenes_producto WHERE id = ?';
+    conexion.query(sql, [id], function(err, results) {
+        if (err) {
+            return callback(err);
+        }
+        callback(null, results);
+    });
 }
 }
