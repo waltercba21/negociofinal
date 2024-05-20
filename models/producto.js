@@ -542,7 +542,7 @@ retornarDatosId: function(conexion, id) {
             } else {
                 if (results.length > 0) {
                     let producto = results[0];
-                    producto.imagenes = results.map(result => result.imagen ? path.join('/uploads/productos', result.imagen) : null);
+                    producto.imagenes = results.map(result => path.join('/uploads/productos', result.imagen));
                     console.log("Producto obtenido:", producto);
                     resolve(producto);
                 } else {
@@ -556,7 +556,7 @@ retornarDatosId: function(conexion, id) {
 obtenerImagenesProducto: function(conexion, id) {
     return new Promise((resolve, reject) => {
         conexion.query(`
-            SELECT id, imagen, producto_id
+            SELECT imagen, producto_id
             FROM imagenes_producto
             WHERE producto_id = ?
         `, [id], function(error, resultados) {
@@ -621,28 +621,6 @@ eliminarProveedor: function(conexion, proveedorId) {
             } else {
                 resolve(results);
             }
-        });
-    });
-},
-actualizarPosicionImagen: function(conexion, imagenId, posicion) {
-    return new Promise((resolve, reject) => {
-        conexion.query('UPDATE imagenes_producto SET posicion = ? WHERE id = ?', [posicion, imagenId], function(error, results, fields) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(results);
-            }
-        });
-    });
-},
-eliminarImagen: function(conexion, imagenId) {
-    return new Promise((resolve, reject) => {
-        conexion.query('DELETE FROM imagenes_producto WHERE id = ?', [imagenId], function(error, results, fields) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(results);
-            } 
         });
     });
 },

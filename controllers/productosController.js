@@ -298,29 +298,6 @@ module.exports = {
             res.status(500).send('Error: ' + error.message);
         });
     },
-    actualizarPosicionImagen: function(req, res) {
-        var imagenId = req.params.id;
-        var posicion = req.body.posicion;
-        producto.actualizarPosicionImagen(conexion, imagenId, posicion)
-            .then(function(results) {
-                res.status(200).json({ message: 'Posición de imagen actualizada con éxito' });
-            })
-            .catch(function(error) {
-                console.error(error);
-                res.status(500).json({ message: 'Error al actualizar la posición de la imagen' });
-            });
-    },
-    eliminarImagen: function(req, res) {
-        var imagenId = req.params.id;
-        producto.eliminarImagen(conexion, imagenId)
-            .then(function(results) {
-                res.status(200).json({ message: 'Imagen eliminada con éxito' });
-            })
-            .catch(function(error) {
-                console.error(error);
-                res.status(500).json({ message: 'Error al eliminar la imagen' });
-            });
-    },
     eliminarSeleccionados : async (req, res) => {
         const { ids } = req.body;
         try {
@@ -342,11 +319,11 @@ module.exports = {
             }
             productoResult = result;
             // Cambia Math.floor() por Math.round()
-            productoResult.precio_lista = Math.round(productoResult.precio_lista);
-            productoResult.costo_neto = Math.round(productoResult.costo_neto);
-            productoResult.costo_iva = Math.round(productoResult.costo_iva);
-            productoResult.utilidad = Math.round(productoResult.utilidad);
-            productoResult.precio_venta = Math.round(productoResult.precio_venta);
+productoResult.precio_lista = Math.round(productoResult.precio_lista);
+productoResult.costo_neto = Math.round(productoResult.costo_neto);
+productoResult.costo_iva = Math.round(productoResult.costo_iva);
+productoResult.utilidad = Math.round(productoResult.utilidad);
+productoResult.precio_venta = Math.round(productoResult.precio_venta);
             // Obtener los datos de producto_proveedor
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
@@ -354,42 +331,26 @@ module.exports = {
                     productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
                     productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
                 });
-                // Obtener las imágenes del producto
-                producto.obtenerImagenesProducto(conexion, req.params.id).then(imagenesResult => {
-                    const imagenes = imagenesResult.map(imagen => {
-                        return {
-                            id: imagen.id,
-                            imagen: imagen.imagen
-                        };
-                    });
-                    console.log(imagenes);
-                    Promise.all([
-                        producto.obtenerCategorias(conexion),
-                        producto.obtenerMarcas(conexion),
-                        producto.obtenerProveedores(conexion),
-                        producto.obtenerModelosPorMarca(conexion, productoResult.marca), // Asegúrate de que estás obteniendo los modelos para la marca correcta
-                        producto.obtenerDescuentosProveedor(conexion)
-                    ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
-                        res.render('editar', {
-                            producto: productoResult,
-                            productoProveedores: productoProveedoresResult,
-                            categorias: categoriasResult,
-                            marcas: marcasResult,
-                            proveedores: proveedoresResult,
-                            modelos: modelosResult,
-                            descuentosProveedor: descuentosProveedoresResult,
-                            imagenes: imagenes // Ahora 'imagenes' está definida
-                        });
-                    }).catch(error => {
-                        console.error("Error al obtener los datos:", error);
-                        if (!responseSent) {
-                            res.status(500).send("Error al obtener los datos");
-                        }
+                Promise.all([
+                    producto.obtenerCategorias(conexion),
+                    producto.obtenerMarcas(conexion),
+                    producto.obtenerProveedores(conexion),
+                    producto.obtenerModelosPorMarca(conexion, productoResult.marca), // Asegúrate de que estás obteniendo los modelos para la marca correcta
+                    producto.obtenerDescuentosProveedor(conexion)
+                ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
+                    res.render('editar', {
+                        producto: productoResult,
+                        productoProveedores: productoProveedoresResult,
+                        categorias: categoriasResult,
+                        marcas: marcasResult,
+                        proveedores: proveedoresResult,
+                        modelos: modelosResult,
+                        descuentosProveedor: descuentosProveedoresResult
                     });
                 }).catch(error => {
-                    console.error("Error al obtener las imágenes del producto:", error);
+                    console.error("Error al obtener los datos:", error);
                     if (!responseSent) {
-                        res.status(500).send("Error al obtener las imágenes del producto");
+                        res.status(500).send("Error al obtener los datos");
                     }
                 });
             }).catch(error => {
@@ -502,22 +463,7 @@ module.exports = {
             const saltar = (paginaActual - 1) * productosPorPagina;
             let numeroDePaginas = await calcularNumeroDePaginas(conexion);
             let productos = await producto.obtenerTodos(conexion, saltar, categoriaSeleccionada);
-    
-            // Agrupar las imágenes por producto
-            let productosAgrupados = {};
-    
-            productos.forEach(producto => {
-                if (!productosAgrupados[producto.id]) {
-                    productosAgrupados[producto.id] = producto;
-                    productosAgrupados[producto.id].imagenes = [producto.imagen];
-                } else {
-                    productosAgrupados[producto.id].imagenes.push(producto.imagen);
-                }
-            });
-    
-            let productosArray = Object.values(productosAgrupados);
-    
-            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productosArray, paginaActual: paginaActual });
+            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual });
         } catch (error) {
             console.log('Error:', error);
             return res.status(500).send('Error: ' + error.message);
