@@ -624,6 +624,17 @@ eliminarProveedor: function(conexion, proveedorId) {
         });
     });
 },
+eliminarImagen: function(conexion, imagenId) {
+    return new Promise((resolve, reject) => {
+        conexion.query('DELETE FROM imagenes_producto WHERE id = ?', [imagenId], function(error, results, fields) {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+},
 insertarImagenProducto: function(conexion, datosImagen) {
     return new Promise((resolve, reject) => {
         const sql = 'INSERT INTO imagenes_producto (producto_id, imagen) VALUES (?, ?)';
