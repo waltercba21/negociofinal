@@ -362,6 +362,7 @@ module.exports = {
                             imagen: imagen.imagen
                         };
                     });
+                    console.log(imagenes);
                     Promise.all([
                         producto.obtenerCategorias(conexion),
                         producto.obtenerMarcas(conexion),

@@ -2,7 +2,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.eliminar-imagen').forEach(function(button) {
         button.addEventListener('click', function() {
             var imagenId = this.parentNode.dataset.imagenId;
-            fetch('/api/imagenes/' + imagenId, { method: 'DELETE' })
+            console.log('ImagenId:', imagenId); // Imprimir imagenId
+            var apiUrl = '/api/imagenes/' + imagenId;
+            console.log('API URL:', apiUrl); // Imprimir URL de la API
+            fetch(apiUrl, { method: 'DELETE' })
                 .then(function(response) {
                     if (response.ok) {
                         this.parentNode.remove();
