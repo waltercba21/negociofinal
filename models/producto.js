@@ -535,14 +535,19 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
 },
 retornarDatosId: function(conexion, id) {
     return new Promise((resolve, reject) => {
-        conexion.query('SELECT productos.*, imagenes_producto.imagen FROM productos LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE productos.id = ?', [id], function(error, results, fields) {
+        conexion.query('SELECT productos.*, imagenes_producto.id AS imagen_id, imagenes_producto.imagen FROM productos LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE productos.id = ?', [id], function(error, results, fields) {
             if (error) {
                 console.log("Error en la consulta:", error);
                 reject(error);
             } else {
                 if (results.length > 0) {
                     let producto = results[0];
-                    producto.imagenes = results.map(result => path.join('/uploads/productos', result.imagen));
+                    producto.imagenes = results.map(result => {
+                        return {
+                            id: result.imagen_id,
+                            imagen: path.join('/uploads/productos', result.imagen)
+                        };
+                    });
                     console.log("Producto obtenido:", producto);
                     resolve(producto);
                 } else {
