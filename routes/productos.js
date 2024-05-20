@@ -35,8 +35,6 @@ router.get('/editar/:id', productosController.editar)
 router.post('/actualizar/:id', cargar, productosController.actualizar);
 router.post('/eliminarSeleccionados', productosController.eliminarSeleccionados);
 router.delete('/eliminarProveedor/:id', productosController.eliminarProveedor);
-router.put('/api/imagenes/:id', productosController.actualizarPosicionImagen);
-router.delete('/api/imagenes/:id', productosController.eliminarImagen);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
