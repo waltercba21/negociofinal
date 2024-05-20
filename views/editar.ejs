@@ -19,7 +19,7 @@
                     <% if (producto && imagenes && imagenes.length > 0) { %>
                         <% imagenes.forEach((imagen) => { %>
                             <div class="imagen-miniatura-contenedor" data-imagen-id="<%= imagen.id %>">
-                                <img class="imagen-miniatura" src="<%= imagen.imagen %>" alt="Imagen del producto">
+                                <img class="imagen-miniatura" src="<%= producto.imagen %>" alt="Imagen del producto">
                                 <button type="button" class="eliminar-imagen">x</button>
                             </div>
                         <% }); %>
