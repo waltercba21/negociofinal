@@ -624,6 +624,17 @@ eliminarProveedor: function(conexion, proveedorId) {
         });
     });
 },
+actualizarPosicionImagen: function(conexion, imagenId, posicion) {
+    return new Promise((resolve, reject) => {
+        conexion.query('UPDATE imagenes_producto SET posicion = ? WHERE id = ?', [posicion, imagenId], function(error, results, fields) {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+},
 eliminarImagen: function(conexion, imagenId) {
     return new Promise((resolve, reject) => {
         conexion.query('DELETE FROM imagenes_producto WHERE id = ?', [imagenId], function(error, results, fields) {

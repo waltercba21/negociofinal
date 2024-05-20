@@ -298,6 +298,18 @@ module.exports = {
             res.status(500).send('Error: ' + error.message);
         });
     },
+    actualizarPosicionImagen: function(req, res) {
+        var imagenId = req.params.id;
+        var posicion = req.body.posicion;
+        producto.actualizarPosicionImagen(conexion, imagenId, posicion)
+            .then(function(results) {
+                res.status(200).json({ message: 'Posición de imagen actualizada con éxito' });
+            })
+            .catch(function(error) {
+                console.error(error);
+                res.status(500).json({ message: 'Error al actualizar la posición de la imagen' });
+            });
+    },
     eliminarImagen: function(req, res) {
         var imagenId = req.params.id;
         producto.eliminarImagen(conexion, imagenId)

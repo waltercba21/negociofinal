@@ -29,6 +29,27 @@ document.addEventListener('DOMContentLoaded', function() {
             var imagenId = e.dataTransfer.getData('text/plain');
             var imagenArrastrada = document.querySelector('.imagen-miniatura-contenedor[data-imagen-id="' + imagenId + '"]');
             this.parentNode.insertBefore(imagenArrastrada, this);
+
+            // Actualizar la posición de las imágenes en la base de datos
+            var imagenes = document.querySelectorAll('.imagen-miniatura-contenedor');
+            imagenes.forEach(function(imagen, index) {
+                var imagenId = imagen.dataset.imagenId;
+                fetch('/api/imagenes/' + imagenId, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ posicion: index + 1 }),
+                })
+                .then(function(response) {
+                    if (!response.ok) {
+                        console.error('No se pudo actualizar la posición de la imagen');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                });
+            });
         });
     });
 });
