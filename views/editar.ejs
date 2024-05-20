@@ -19,7 +19,7 @@
                     <% if (producto && producto.imagenes && producto.imagenes.length > 0) { %>
                         <% producto.imagenes.forEach((imagen, index) => { %>
                             <div class="imagen-miniatura-contenedor" data-imagen-id="<%= imagen.id %>">
-                                <img class="imagen-miniatura" src="<%= imagen.url %>" alt="Imagen del producto">
+                                <img class="imagen-miniatura" src="<%= imagen %>" alt="Imagen del producto">
                                 <input type="number" name="posicionImagen" value="<%= index + 1 %>" min="1" max="<%= producto.imagenes.length %>">
                                 <button type="button" class="eliminar-imagen">x</button>
                             </div>
