@@ -124,13 +124,14 @@ function getProveedorConCostoIvaMasBajo() {
 }
 function actualizarPrecioFinal() {
     var proveedor = getProveedorConCostoIvaMasBajo();
-    var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
-    var utilidad = parseFloat($('#utilidad').val());
-    var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
-    precioFinal = Math.ceil(precioFinal / 10) * 10; 
-    $('#precio_venta').val(precioFinal);
+    if (proveedor) {
+        var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
+        var utilidad = parseFloat($('#utilidad').val());
+        var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
+        precioFinal = Math.ceil(precioFinal / 10) * 10; 
+        $('#precio_venta').val(precioFinal);
+    }
 }
-$('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
 
 function actualizarProveedorAsignado() {
     // Obtén todos los elementos del DOM que contienen los costos con IVA
