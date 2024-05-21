@@ -324,15 +324,15 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
           }
         });    
       },
-      obtenerTodos: function(conexion, categoriaSeleccionada) {
+      obtenerTodos: function(conexion, saltar, categoriaSeleccionada) {
         return new Promise((resolve, reject) => {
             let consulta = 'SELECT productos.*, categorias.nombre AS categoria, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
-            let parametros = [];
+            let parametros = [saltar, productosPorPagina];
             if (categoriaSeleccionada) {
                 consulta += ' WHERE categoria_id = ?';
                 parametros.unshift(categoriaSeleccionada);
             }
-            consulta += ' GROUP BY productos.id ORDER BY id DESC';
+            consulta += ' GROUP BY productos.id ORDER BY id DESC LIMIT ?, ?';
             conexion.query(consulta, parametros, function(error, resultados) {
                 if (error) {
                     reject(error);
