@@ -16,8 +16,6 @@ $('.eliminar-imagen').click(function(event) {
 $('#imagen').on('change', function() {
     // Obtén los archivos seleccionados
     var archivos = Array.from(this.files);
-    // Ordena los archivos por su última fecha de modificación, de más antiguo a más reciente
-    archivos.sort((a, b) => a.lastModified - b.lastModified);
     // Obtén el contenedor de las imágenes miniatura
     var contenedor = $('.imagen-miniatura-contenedor');
     // Por cada archivo seleccionado
@@ -32,5 +30,5 @@ $('#imagen').on('change', function() {
         div.append(img);
         // Añade el div al contenedor
         contenedor.append(div);
-    }
+    }   
 });
