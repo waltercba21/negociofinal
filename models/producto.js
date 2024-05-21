@@ -339,7 +339,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 } else {
                     // Divide las imágenes en un array
                     resultados.forEach(producto => {
-                        producto.imagenes = producto.imagenes.split(',');
+                        producto.imagenes = producto.imagenes ? producto.imagenes.split(',') : [];
                     });
                     resolve(resultados);
                 }
