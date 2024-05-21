@@ -462,21 +462,9 @@ module.exports = {
             const saltar = (paginaActual - 1) * productosPorPagina;
             let numeroDePaginas = await calcularNumeroDePaginas(conexion);
             let productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
-
-            // Agrupar productos por id
-            let productosAgrupados = {};
-            productos.forEach(producto => {
-                if (!productosAgrupados[producto.id]) {
-                    productosAgrupados[producto.id] = producto;
-                    productosAgrupados[producto.id].imagenes = [producto.imagen];
-                } else {
-                    productosAgrupados[producto.id].imagenes.push(producto.imagen);
-                }
-            });
             
-            productos = Object.values(productosAgrupados);
-            
-            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual }); } catch (error) {
+            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual }); 
+        } catch (error) {
             console.log('Error:', error);
             return res.status(500).send('Error: ' + error.message);
         } 
