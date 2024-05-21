@@ -461,7 +461,7 @@ module.exports = {
             const productosPorPagina = 10;
             const saltar = (paginaActual - 1) * productosPorPagina;
             let numeroDePaginas = await calcularNumeroDePaginas(conexion);
-            let productos = await producto.obtenerTodos(conexion, saltar, categoriaSeleccionada);
+            let productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
 
             // Agrupar productos por id
             let productosAgrupados = {};
