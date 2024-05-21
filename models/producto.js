@@ -617,13 +617,12 @@ obtenerDescuentosProveedor: function(conexion) {
           resolve(results);
       });
   });
-},
-retornarDatosProveedores: function(conexion, productoId) {
+},retornarDatosProveedores: function(conexion, productoId) {
     return new Promise((resolve, reject) => {
         const query = `
-            SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento, pp.costo_neto, pp.costo_iva, pp.utilidad, pp.precio_venta
+            SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, p.costo_neto, p.costo_iva, p.utilidad, p.precio_venta
             FROM producto_proveedor AS pp
-            LEFT JOIN descuentos_proveedor AS dp ON pp.proveedor_id = dp.proveedor_id
+            INNER JOIN productos AS p ON pp.producto_id = p.id
             WHERE pp.producto_id = ?
         `;
         conexion.query(query, [productoId], (error, results) => {
