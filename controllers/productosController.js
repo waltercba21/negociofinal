@@ -312,6 +312,7 @@ module.exports = {
         let productoResult;
         let responseSent = false;
         producto.retornarDatosId(conexion, req.params.id).then(result => {
+            console.log('Resultado de retornarDatosId:', result); // Agregado
             if (!result) {
                 res.status(404).send("No se encontró el producto");
                 responseSent = true;
@@ -323,8 +324,9 @@ module.exports = {
             productoResult.costo_iva = Math.round(productoResult.costo_iva);
             productoResult.utilidad = Math.round(productoResult.utilidad);
             productoResult.precio_venta = Math.round(productoResult.precio_venta);
-
+    
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
+                console.log('Resultado de retornarDatosProveedores:', productoProveedoresResult); // Agregado
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
                     productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
@@ -334,7 +336,7 @@ module.exports = {
                     producto.obtenerCategorias(conexion),
                     producto.obtenerMarcas(conexion),
                     producto.obtenerProveedores(conexion),
-                    producto.obtenerModelosPorMarca(conexion, productoResult.marca), // Asegúrate de que estás obteniendo los modelos para la marca correcta
+                    producto.obtenerModelosPorMarca(conexion, productoResult.marca),
                     producto.obtenerDescuentosProveedor(conexion)
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
                     res.render('editar', {
