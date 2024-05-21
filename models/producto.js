@@ -324,6 +324,18 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
           }
         });    
       },
+      obtenerPosicion: function(conexion, idProducto) {
+        return new Promise((resolve, reject) => {
+            const consulta = 'SELECT COUNT(*) AS posicion FROM productos WHERE id <= ? ORDER BY id';
+            conexion.query(consulta, [idProducto], (error, resultados) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(resultados[0].posicion);
+                }
+            });
+        });
+    },
       obtenerTodos: function(conexion, saltar, productosPorPagina, categoriaSeleccionada) {
         return new Promise((resolve, reject) => {
             let consulta = 'SELECT productos.*, categorias.nombre AS categoria, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';

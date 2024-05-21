@@ -424,8 +424,12 @@ module.exports = {
             return Promise.all(promesasProveedor);
         })
         .then(() => {
-            console.log('Todos los proveedores actualizados'); 
-            res.redirect('/productos/panelControl');
+            return producto.obtenerPosicion(conexion, datosProducto.id);
+        })
+        .then(posicion => {
+            const productosPorPagina = 10;
+            const pagina = Math.ceil(posicion / productosPorPagina);
+            res.redirect('/productos/panelControl?pagina=' + pagina);
         })
         .catch(error => {
             console.error('Error:', error); 
