@@ -621,7 +621,7 @@ obtenerDescuentosProveedor: function(conexion) {
 retornarDatosProveedores: function(conexion, productoId) {
     return new Promise((resolve, reject) => {
         const query = `
-            SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento
+            SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento, pp.costo_neto, pp.costo_iva, pp.utilidad, pp.precio_venta
             FROM producto_proveedor AS pp
             LEFT JOIN descuentos_proveedor AS dp ON pp.proveedor_id = dp.proveedor_id
             WHERE pp.producto_id = ?
