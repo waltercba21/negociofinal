@@ -89,7 +89,7 @@ $('.proveedores').on('change', function() {
 function actualizarPrecio(precioListaElement) {
     var precioLista = parseFloat(precioListaElement.val());
     var proveedorElement = precioListaElement.closest('.proveedor');
-    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id[data-proveedor="' + proveedorElement.val() + '"]').val());
+    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val());
     if (isNaN(descuento)) {
         descuento = parseFloat(proveedorElement.find('.proveedores option:selected').data('descuento'));
     }
