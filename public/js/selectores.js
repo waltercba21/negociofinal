@@ -49,66 +49,78 @@ document.addEventListener('DOMContentLoaded', function() {
         contenedorProductos.innerHTML = '<p>No se encontraron productos que coincidan con los criterios seleccionados.</p>';
       } else {
         productos.forEach(producto => {
-          let card = document.createElement('div');
-          card.className = 'card';
-      
-            let cover = document.createElement('div');
-            cover.className = 'cover__card';
-            let img = document.createElement('img');
-            img.src = `../../uploads/productos/${producto.imagen}`;
-            img.alt = `Imagen de ${producto.nombre}`;
-            cover.appendChild(img);
-      
-            let titulo = document.createElement('div');
-            titulo.className = 'titulo-producto';
-            let h3 = document.createElement('h3');
-            h3.className = 'nombre';
-            h3.textContent = producto.nombre;
-            titulo.appendChild(h3);
-      
-            let categoria = document.createElement('div');
-            categoria.className = 'categoria-producto';
-            let h6 = document.createElement('h6');
-            h6.className = 'categoria';
-            h6.textContent = producto.categoria;
-            categoria.appendChild(h6);
-      
-            let precio = document.createElement('div');
-            precio.className = 'precio-producto';
-            let p = document.createElement('p');
-            p.className = 'precio_venta';
-            p.textContent = `$${Math.floor(producto.precio_venta).toLocaleString('es-AR')}`;
-            precio.appendChild(p);
-      
-            
-        let cantidad = document.createElement('div');
-        cantidad.className = 'cantidad-producto';
-
-        let a = document.createElement('a');
-        a.href = `/productos/carrito/agregar/${producto.id}`;
-        a.className = 'agregar-carrito';
-        a.textContent = 'Agregar al carrito';
-        cantidad.appendChild(a);
-
-        let detalles = document.createElement('a');
-        detalles.href = `/productos/${producto.id}`;
-        detalles.className = 'card-link';
-        detalles.textContent = 'Ver detalles';
-        cantidad.appendChild(detalles);
-      
-           card.appendChild(cover);
-        card.appendChild(titulo);
-        card.appendChild(document.createElement('hr'));
-        card.appendChild(categoria);
-        card.appendChild(document.createElement('hr'));
-        card.appendChild(precio);
-        card.appendChild(cantidad);
-  
-        contenedorProductos.appendChild(card);
-          });
-        }
+          let imagenes = '';
+          if (producto.imagenes && producto.imagenes.length > 0) {
+            producto.imagenes.forEach((imagen, i) => {
+              imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="../../uploads/productos/${imagen.imagen}" alt="Imagen de ${producto.nombre}">`;
+            });
+            imagenes = `
+              <div class="cover__card">
+                <div class="carousel">
+                  ${imagenes}
+                </div>
+              </div>
+              <div class="carousel__buttons">
+                <button class="carousel__button">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carousel__button">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            `;
+          } else {
+            imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
+          }
+          const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('es-AR')}` : 'Precio no disponible';
+          const tarjetaProducto = `
+            <div class="card"> 
+              ${imagenes}
+              <div class="titulo-producto">
+                <h3 class="nombre">${producto.nombre}</h3>
+              </div>
+              <hr>
+              <div class="categoria-producto">
+                <h6 class="categoria">${producto.categoria}</h6>
+              </div>
+              <hr>
+              <div class="precio-producto">
+                <p class="precio">${precio_venta}</p>
+              </div>
+              <div class="cantidad-producto">
+                <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+              </div>
+            </div>
+          `;
+          contenedorProductos.innerHTML += tarjetaProducto;
+        });
       }
-  
+      $('.carousel').each(function() {
+        var $carousel = $(this);
+        var $images = $carousel.find('.carousel__image');
+        var $prevButton = $carousel.closest('.card').find('.carousel__button:has(.fa-chevron-left)');
+        var $nextButton = $carousel.closest('.card').find('.carousel__button:has(.fa-chevron-right)');
+        var index = 0;
+    
+        $prevButton.click(function() {
+          $images.eq(index).hide();
+          index--;
+          if (index < 0) {
+            index = $images.length - 1;
+          }
+          $images.eq(index).show();
+        });
+    
+        $nextButton.click(function() {
+          $images.eq(index).hide();
+          index++;
+          if (index >= $images.length) {
+            index = 0;
+          }
+          $images.eq(index).show();
+        });
+      });
+    }
     categoriaSelector.addEventListener('change', obtenerProductosFiltrados);
 
 marcaSelector.addEventListener('change', function() {
