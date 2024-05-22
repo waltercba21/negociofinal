@@ -476,7 +476,7 @@ contarPorProveedor: function(conexion, proveedor, callback) {
     });
 },
 obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId) {
-    let query = 'SELECT productos.*, imagenes_producto.url_imagen FROM productos LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE 1=1';
+    let query = 'SELECT productos.*, imagenes_producto.url AS url_imagen FROM productos LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE 1=1';
     let params = [];
 
     console.log(`categoriaId: ${categoriaId}`);
