@@ -44,7 +44,18 @@ selectores.forEach(selector => {
     marca_id = marca_id !== '' ? marca_id : null;
     modelo_id = modelo_id !== '' ? modelo_id : null;
 
-    const respuesta = await fetch(`/productos/api/${categoria_id}/${marca_id}/${modelo_id}`);
+    let url = '/productos/api/';
+    if (categoria_id !== null) {
+      url += `${categoria_id}/`;
+    }
+    if (marca_id !== null) {
+      url += `${marca_id}/`;
+    }
+    if (modelo_id !== null) {
+      url += `${modelo_id}/`;
+    }
+
+    const respuesta = await fetch(url);
     const productos = await respuesta.json();
 
     const contenedorProductos = document.getElementById('contenedor-productos');
