@@ -461,7 +461,20 @@ contarPorProveedor: function(conexion, proveedor, callback) {
           callback(null, resultado);
       }
   });
-}, 
+}, obtenerCategorias: function(conexion) {
+    return new Promise((resolve, reject) => {
+        let query = 'SELECT * FROM categorias';
+
+        conexion.query(query, function(error, resultados) {
+            if (error) {
+                console.error('Error al obtener categorías:', error);
+                reject(error);
+            } else {
+                resolve(resultados);
+            }
+        });
+    });
+},
 obtenerProductosPorIds: function(conexion, categoriaId, marcaId, modeloId) {
     return new Promise((resolve, reject) => {
         let query = 'SELECT * FROM productos WHERE 1=1';
