@@ -1,6 +1,6 @@
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
-  const respuesta = await fetch(`/api/buscar?q=${busqueda}`);
+  const respuesta = await fetch(`/productos/api/buscar?q=${busqueda}`);
   const productos = await respuesta.json();
 
   const contenedorProductos = document.getElementById('contenedor-productos');

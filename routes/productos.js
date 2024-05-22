@@ -10,7 +10,7 @@ router.use(methodOverride('_method'))
 
 var rutaAlmacen = multer.diskStorage({
     destination : function (req,file,callback){
-        callback(null, './uploads/productos/')
+        callback(null, './uploads/productos/') 
     },
     filename : function (req,file,callback){
         var fecha = Date.now();
