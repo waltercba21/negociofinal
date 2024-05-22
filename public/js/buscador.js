@@ -53,19 +53,30 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   contenedorProductos.innerHTML += tarjetaProducto;
 });
 
-});
-document.querySelectorAll('.carousel__button').forEach(button => {
-  button.addEventListener('click', (e) => {
-    const carousel = e.target.closest('.carousel');
-    const images = Array.from(carousel.querySelectorAll('.carousel__image'));
-    const currentImageIndex = images.findIndex(image => !image.classList.contains('hidden'));
-    images[currentImageIndex].classList.add('hidden');
-    if (e.target.classList.contains('fa-chevron-left')) {
-      const previousImageIndex = currentImageIndex === 0 ? images.length - 1 : currentImageIndex - 1;
-      images[previousImageIndex].classList.remove('hidden');
-    } else {
-      const nextImageIndex = currentImageIndex === images.length - 1 ? 0 : currentImageIndex + 1;
-      images[nextImageIndex].classList.remove('hidden');
-    }
+});$(document).ready(function() {
+  $('.carousel').each(function() {
+    var $carousel = $(this);
+    var $images = $carousel.find('.carousel__image');
+    var $prevButton = $carousel.closest('.card').find('.carousel__button:has(.fa-chevron-left)');
+    var $nextButton = $carousel.closest('.card').find('.carousel__button:has(.fa-chevron-right)');
+    var index = 0;
+
+    $prevButton.click(function() {
+      $images.eq(index).hide();
+      index--;
+      if (index < 0) {
+        index = $images.length - 1;
+      }
+      $images.eq(index).show();
+    });
+
+    $nextButton.click(function() {
+      $images.eq(index).hide();
+      index++;
+      if (index >= $images.length) {
+        index = 0;
+      }
+      $images.eq(index).show();
+    });
   });
 });
