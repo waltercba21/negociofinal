@@ -462,18 +462,32 @@ contarPorProveedor: function(conexion, proveedor, callback) {
       }
   });
 }, 
-obtenerProductoPorIds: function(conexion, categoriaId, marcaId, modeloId) {
+obtenerProductosPorIds: function(conexion, categoriaId, marcaId, modeloId) {
     return new Promise((resolve, reject) => {
-        let query = 'SELECT * FROM productos WHERE categoria_id = ? AND marca_id = ? AND modelo_id = ?';
-        let params = [categoriaId, marcaId, modeloId];
+        let query = 'SELECT * FROM productos WHERE 1=1';
+        let params = [];
+
+        if (categoriaId) {
+            query += ' AND categoria_id = ?';
+            params.push(categoriaId);
+        }
+
+        if (marcaId) {
+            query += ' AND marca_id = ?';
+            params.push(marcaId);
+        }
+
+        if (modeloId) {
+            query += ' AND modelo_id = ?';
+            params.push(modeloId);
+        }
 
         conexion.query(query, params, function(error, resultados) {
             if (error) {
-                console.error('Error al obtener producto:', error);
+                console.error('Error al obtener productos:', error);
                 reject(error);
             } else {
-                // Si la consulta fue exitosa, resuelve la promesa con el primer producto encontrado
-                resolve(resultados[0]);
+                resolve(resultados);
             }
         });
     });
