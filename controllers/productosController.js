@@ -142,6 +142,12 @@ module.exports = {
         console.log(productos);
         res.json(productos);
       },
+      // En el controlador de productos
+    filtrado:async function (req, res) {
+    const { categoria_id, marca_id, modelo_id } = req.params;
+    const productos = await producto.obtenerProductosFiltrados(categoria_id, marca_id, modelo_id);
+    res.json(productos);
+  },
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {

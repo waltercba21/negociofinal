@@ -324,6 +324,19 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     
         return Object.values(productos);
     },
+ obtenerProductosFiltrados:async function(categoria_id, marca_id, modelo_id) {
+    const query = `
+      SELECT p.*, i.imagen 
+      FROM productos p 
+      LEFT JOIN imagenes_producto i ON p.id = i.producto_id 
+      WHERE (p.categoria_id = ? OR ? IS NULL) 
+      AND (p.marca_id = ? OR ? IS NULL) 
+      AND (p.modelo_id = ? OR ? IS NULL)
+      ORDER BY i.posicion ASC
+    `;
+    const [productos] = await db.query(query, [categoria_id, categoria_id, marca_id, marca_id, modelo_id, modelo_id]);
+    return productos;
+  },
       obtenerPosicion: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
             const consulta = 'SELECT COUNT(*) AS posicion FROM productos WHERE id <= ? ORDER BY id';
