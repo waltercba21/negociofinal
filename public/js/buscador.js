@@ -10,8 +10,8 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
       producto.imagenes.forEach((imagen, i) => {
-  imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
-});
+        imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
+      });
       imagenes = `
         <div class="cover__card">
           <div class="carousel">
@@ -51,32 +51,28 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     </div>
   `;
   contenedorProductos.innerHTML += tarjetaProducto;
-});
+  });
 
-});$(document).ready(function() {
-  $('.carousel').each(function() {
-    var $carousel = $(this);
+  // Ahora que las tarjetas de productos se han agregado al DOM, puedes agregar los controladores de eventos a los botones del carrusel
+  $(document).on('click', '.carousel__button', function() {
+    var $carousel = $(this).closest('.card').find('.carousel');
     var $images = $carousel.find('.carousel__image');
-    var $prevButton = $carousel.closest('.card').find('.carousel__button:has(.fa-chevron-left)');
-    var $nextButton = $carousel.closest('.card').find('.carousel__button:has(.fa-chevron-right)');
-    var index = 0;
+    var index = $images.index($carousel.find('.carousel__image:visible'));
 
-    $prevButton.click(function() {
+    if ($(this).find('.fa-chevron-left').length > 0) {
       $images.eq(index).hide();
       index--;
       if (index < 0) {
         index = $images.length - 1;
       }
-      $images.eq(index).show();
-    });
-
-    $nextButton.click(function() {
+    } else {
       $images.eq(index).hide();
       index++;
       if (index >= $images.length) {
         index = 0;
       }
-      $images.eq(index).show();
-    });
+    }
+
+    $images.eq(index).show();
   });
 });
