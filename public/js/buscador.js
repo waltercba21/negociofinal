@@ -200,7 +200,10 @@ function mostrarProductos(productos) {
     });
   });
 }
-
+document.addEventListener('DOMContentLoaded', function () {
+  var myCarousel = document.querySelector('#carousel<%= index %>')
+  var carousel = new bootstrap.Carousel(myCarousel)
+});
 $(document).ready(function() {
   $('.carousel').carousel();
 });
