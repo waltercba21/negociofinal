@@ -138,7 +138,8 @@ module.exports = {
     },
     buscar : async (req, res) => {
         const busqueda = req.query.q;
-        const productos = await productoModel.buscar(busqueda);
+        const productos = await producto.buscar(busqueda);
+        console.log(productos);
         res.json(productos);
       },
     detalle: function (req, res) {
