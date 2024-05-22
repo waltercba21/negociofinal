@@ -136,31 +136,14 @@ module.exports = {
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
-    buscar : async (req, res, conexion) => {
+    buscar : async (req, res) => {
         const busqueda = req.query.q;
         const categoria_id = req.query.categoria_id;
         const marca_id = req.query.marca_id; 
         const modelo_id = req.query.modelo_id;
-    
-        const categorias = await obtenerCategorias(conexion);
-        const marcas = await obtenerMarcas(conexion);
-        const modelos = await obtenerModelosPorMarca(conexion, marca_id);
-    
         const productos = await producto.buscar(busqueda, categoria_id, marca_id, modelo_id); 
-    
-        // Asegúrate de que 'producto' esté definido aquí
-        const producto = productos.length > 0 ? productos[0] : {};
-    
-        // Renderiza la vista 'productos' y pasa las variables necesarias
-        res.render('productos', { 
-            productos, 
-            categorias, 
-            marcas, 
-            modelos, 
-            producto // Pasando 'producto' a la vista
-        });
+        res.json(productos);
     },
-
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
