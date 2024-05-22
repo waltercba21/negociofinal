@@ -470,16 +470,22 @@ obtenerProductosPorIds: function(conexion, categoriaId, marcaId, modeloId) {
         if (categoriaId) {
             query += ' AND categoria_id = ?';
             params.push(categoriaId);
+        } else {
+            query += ' AND categoria_id IS NULL';
         }
 
         if (marcaId) {
             query += ' AND marca_id = ?';
             params.push(marcaId);
+        } else {
+            query += ' AND marca_id IS NULL';
         }
 
         if (modeloId) {
             query += ' AND modelo_id = ?';
             params.push(modeloId);
+        } else {
+            query += ' AND modelo_id IS NULL';
         }
 
         conexion.query(query, params, function(error, resultados) {
@@ -491,19 +497,6 @@ obtenerProductosPorIds: function(conexion, categoriaId, marcaId, modeloId) {
             }
         });
     });
-},
-obtenerCategorias: function(conexion) {
-  return new Promise((resolve, reject) => {
-      conexion.query('SELECT * FROM categorias', function(error, resultados) {
-          if (error) {
-              console.error('Error al obtener categorías:', error);
-              reject(error);
-          } else {
-              console.log('Resultados de la consulta:', resultados);
-              resolve(resultados);
-          }
-      });
-  });
 },
 obtenerProductos: function(conexion, saltar, productosPorPagina, callback) {
   var query = "SELECT * FROM productos LIMIT ?, ?";
