@@ -2,9 +2,14 @@ const selectores = ['categoria_id', 'id_marca', 'modelo_id'];
 
 selectores.forEach(selector => {
   document.getElementById(selector).addEventListener('change', async () => {
-    const categoria_id = document.getElementById('categoria_id').value;
-    const marca_id = document.getElementById('id_marca').value;
-    const modelo_id = document.getElementById('modelo_id').value;
+    let categoria_id = document.getElementById('categoria_id').value;
+    let marca_id = document.getElementById('id_marca').value;
+    let modelo_id = document.getElementById('modelo_id').value;
+
+    // Convertir cadenas vacías a NULL
+    categoria_id = categoria_id !== '' ? categoria_id : null;
+    marca_id = marca_id !== '' ? marca_id : null;
+    modelo_id = modelo_id !== '' ? modelo_id : null;
 
     const respuesta = await fetch(`/productos/api/${categoria_id}/${marca_id}/${modelo_id}`);
     const productos = await respuesta.json();
