@@ -301,7 +301,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         });
     },
     buscar : async (busqueda) => {
-        return await conexion.query(`
+        return await conexion.promise().query(`
           SELECT * FROM productos 
           LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
           WHERE nombre LIKE ? OR categoria_id LIKE ? OR marca_id LIKE ? OR modelo_id LIKE ?`,
