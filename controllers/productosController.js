@@ -138,45 +138,12 @@ module.exports = {
     },
     buscar : async (req, res) => {
         const busqueda = req.query.q;
-        const productos = await producto.buscar(busqueda);
+        const categoria_id = req.query.categoria_id;
+        const id_marca = req.query.id_marca;
+        const modelo_id = req.query.modelo_id;
+        const productos = await producto.buscar(busqueda, categoria_id, id_marca, modelo_id);
         console.log(productos);
         res.json(productos);
-      },
-      filtrado: async function(req, res) {
-        let categoriaId = req.params.categoria_id;
-        let marcaId = req.params.marca_id;
-        let modeloId = req.params.modelo_id;
-        let modelo = null;
-        if (modeloId !== null) {
-            modelo = await producto.obtenerModeloPorId(conexion, modeloId);
-        }           
-        // Convertir cadenas vacías a NULL
-        categoriaId = categoriaId !== '' ? categoriaId : null;
-        marcaId = marcaId !== '' ? marcaId : null;
-        modeloId = modeloId !== '' ? modeloId : null;
-    
-        try {
-            // Realiza la consulta a la base de datos para obtener los productos
-            let productos = await producto.obtenerProductosPorIds(conexion, categoriaId, marcaId, modeloId);
-        
-            // Realiza una consulta adicional para obtener los modelos por marca
-            let modelosPorMarca = null;
-            if (marcaId !== null) {
-                modelosPorMarca = await producto.obtenerModelosPorMarca(conexion, marcaId);
-            }
-        
-            // Realiza una consulta adicional para obtener las categorias
-            let categorias = await producto.obtenerCategorias(conexion);
-        
-            // Realiza una consulta adicional para obtener las marcas
-            let marcas = await producto.obtenerMarcas(conexion);
-        
-            // Si las consultas fueron exitosas, renderiza la vista con los resultados
-            res.render('productos', { productos: productos, modelosPorMarca: modelosPorMarca, categorias: categorias, marcas: marcas, modelo: modelo });
-        } catch (error) {
-            console.error('Error al obtener productos, modelos, categorias o marcas:', error);
-            res.status(500).send('Error al obtener productos, modelos, categorias o marcas');
-        }
     },
     detalle: function (req, res) {
         const id = req.params.id;

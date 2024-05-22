@@ -300,16 +300,29 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     },
-    buscar : async (busqueda) => {
-        const [filas] = await conexion.promise().query(`
-          SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
-          FROM productos 
-          LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
-          LEFT JOIN categorias ON productos.categoria_id = categorias.id
-          WHERE productos.nombre LIKE ?`,
-          [`%${busqueda}%`]
-        );
+    buscar : async (busqueda, categoria_id, id_marca, modelo_id) => {
+        let query = `
+            SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
+            FROM productos 
+            LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
+            LEFT JOIN categorias ON productos.categoria_id = categorias.id
+            WHERE productos.nombre LIKE ?`;
+        let params = [`%${busqueda}%`];
     
+        if (categoria_id) {
+            query += ' AND productos.categoria_id = ?';
+            params.push(categoria_id);
+        }
+        if (id_marca) {
+            query += ' AND productos.id_marca = ?';
+            params.push(id_marca);
+        }
+        if (modelo_id) {
+            query += ' AND productos.modelo_id = ?';
+            params.push(modelo_id);
+        }
+    
+        const [filas] = await conexion.promise().query(query, params);
         const productos = {};
         filas.forEach(fila => {
             if (!productos[fila.id]) {
@@ -324,38 +337,6 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     
         return Object.values(productos);
     },
-    obtenerProductosFiltrados: function(categoria_id, marca_id, modelo_id) {
-        return new Promise((resolve, reject) => {
-          let query = 'SELECT * FROM productos';
-          let params = [];
-          let whereAdded = false;
-      
-          if (categoria_id) {
-            query += ' WHERE categoria_id = ?';
-            params.push(categoria_id);
-            whereAdded = true;
-          }
-      
-          if (marca_id) {
-            query += whereAdded ? ' AND marca_id = ?' : ' WHERE marca_id = ?';
-            params.push(marca_id);
-            whereAdded = true;
-          }
-      
-          if (modelo_id) {
-            query += whereAdded ? ' AND modelo_id = ?' : ' WHERE modelo_id = ?';
-            params.push(modelo_id);
-          }
-      
-          conexion.query(query, params, function(error, resultados) {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(resultados);
-            }
-          });
-        });
-      },
       obtenerPosicion: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
             const consulta = 'SELECT COUNT(*) AS posicion FROM productos WHERE id <= ? ORDER BY id';
@@ -407,18 +388,6 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     });
-},obtenerModeloPorId: async function(conexion, modeloId) {
-    try {
-        const [rows] = await conexion.execute('SELECT * FROM modelos WHERE id = ?', [modeloId]);
-        if (rows.length > 0) {
-            return rows[0];
-        } else {
-            return null;
-        }
-    } catch (error) {
-        console.error('Error al obtener el modelo:', error);
-        throw error;
-    }
 },
 obtenerMarcas: function(conexion) {
   return new Promise((resolve, reject) => {
