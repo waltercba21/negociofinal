@@ -159,14 +159,14 @@ module.exports = {
             // Realiza una consulta adicional para obtener los modelos por marca
             let modelosPorMarca = null;
             if (marcaId !== null) {
-                modelosPorMarca = await modelo.obtenerModelosPorMarca(conexion, marcaId);
+                modelosPorMarca = await producto.obtenerModelosPorMarca(conexion, marcaId);
             }
         
             // Realiza una consulta adicional para obtener las categorias
             let categorias = await producto.obtenerCategorias(conexion);
         
             // Realiza una consulta adicional para obtener las marcas
-            let marcas = await marca.obtenerMarcas(conexion);
+            let marcas = await producto.obtenerMarcas(conexion);
         
             // Si las consultas fueron exitosas, renderiza la vista con los resultados
             res.render('productos', { productos: productos, modelosPorMarca: modelosPorMarca, categorias: categorias, marcas: marcas });
