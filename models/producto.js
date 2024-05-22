@@ -300,29 +300,13 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     },
-    obtenerPorNombre: function (conexion, nombre, funcion) {
-        const sql = 'SELECT productos.*, categorias.nombre AS categoria, imagenes_producto.imagen as imagen FROM productos' +
-                    ' INNER JOIN categorias ON productos.categoria_id = categorias.id' +
-                    ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id' +
-                    ' WHERE productos.nombre LIKE ?';
-        conexion.query(sql, [`%${nombre}%`], (error, productos) => {
-          if (error) {
-            funcion(error, null);
-          } else {
-            // Agrupar las imágenes por producto
-            const productosAgrupados = productos.reduce((acc, producto) => {
-              const productoExistente = acc.find(p => p.id === producto.id);
-              if (productoExistente) {
-                productoExistente.imagenes.push({ imagen: producto.imagen });
-              } else {
-                producto.imagenes = [{ imagen: producto.imagen }];
-                acc.push(producto);
-              }
-              return acc;
-            }, []);
-            funcion(null, productosAgrupados);
-          }
-        });    
+    buscar : async (busqueda) => {
+        return await conexion.query(`
+          SELECT * FROM productos 
+          LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
+          WHERE nombre LIKE ? OR categoria_id LIKE ? OR marca_id LIKE ? OR modelo_id LIKE ?`,
+          [`%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`]
+        );
       },
       obtenerPosicion: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
