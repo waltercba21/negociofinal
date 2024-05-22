@@ -1,20 +1,34 @@
 // Obtén los selectores
 const categoriaSelector = document.getElementById('categoria_id');
-const marcaSelector = document.getElementById('marca_id'); // Cambiado de id_marca a marca_id
+const marcaSelector = document.getElementById('marca_id');
 const modeloSelector = document.getElementById('modelo_id');
+
+async function renderProductos(busqueda) {
+  const respuesta = await fetch(`/productos/api/buscar?q=${busqueda}`);
+  const productos = await respuesta.json();
+
+  const contenedorProductos = document.getElementById('contenedor-productos');
+  contenedorProductos.innerHTML = '';
+
+  productos.forEach((producto, index) => {
+    // ... el código para renderizar cada producto ...
+  });
+
+  // Ahora que las tarjetas de productos se han agregado al DOM, puedes agregar los controladores de eventos a los botones del carrusel
+  $(document).on('click', '.carousel__button', function() {
+    // ... el código para manejar los eventos de los botones del carrusel ...
+  });
+}
 
 // Agrega un evento de cambio al selector de marca
 marcaSelector.addEventListener('change', function() {
   // Obtén el id de la marca seleccionada
   const marcaId = this.value;
-  console.log(`Marca seleccionada: ${marcaId}`); // Agrega un console.log aquí
 
   // Haz una solicitud AJAX para obtener los modelos de esta marca
   fetch(`/modelos/${marcaId}`)
     .then(response => response.json())
     .then(data => {
-      console.log('Modelos recibidos:', data); // Agrega un console.log aquí
-
       // Limpia el selector de modelos
       modeloSelector.innerHTML = '<option value="" selected>Selecciona un modelo...</option>';
 
@@ -36,16 +50,8 @@ marcaSelector.addEventListener('change', function() {
     const marcaId = marcaSelector.value;
     const modeloId = modeloSelector.value;
 
-    console.log(`Categoría seleccionada: ${categoriaId}, Marca seleccionada: ${marcaId}, Modelo seleccionado: ${modeloId}`); // Agrega un console.log aquí
-
     // Haz una solicitud AJAX para obtener los productos que coinciden con los criterios seleccionados
-    fetch(`/productos/api/buscar?q=&categoria_id=${categoriaId}&marca_id=${marcaId}&modelo_id=${modeloId}`)
-      .then(response => response.json())
-      .then(data => {
-        console.log('Productos recibidos:', data); // Agrega un console.log aquí
-
-        // Aquí puedes actualizar la interfaz de usuario con los productos obtenidos
-        console.log(data);
-      });
+    const busqueda = `categoria_id=${categoriaId}&marca_id=${marcaId}&modelo_id=${modeloId}`;
+    renderProductos(busqueda);
   });
 });
