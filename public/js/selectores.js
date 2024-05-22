@@ -4,7 +4,7 @@ document.getElementById('id_marca').addEventListener('change', async () => {
   // Convertir cadenas vacías a NULL
   marca_id = marca_id !== '' ? marca_id : null;
 
-  const respuesta = await fetch(`/modelos/api/${marca_id}`);
+  const respuesta = await fetch(`/modelos/${marca_id}`);
   const modelos = await respuesta.json();
 
   const selectorModelos = document.getElementById('modelo_id');
