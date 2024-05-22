@@ -302,10 +302,12 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     },
     buscar : async (busqueda) => {
         const [resultados] = await conexion.promise().query(`
-          SELECT * FROM productos 
+          SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
+          FROM productos 
           LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
-          WHERE nombre LIKE ? OR categoria_id LIKE ? OR marca_id LIKE ? OR modelo_id LIKE ?`,
-          [`%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`]
+          LEFT JOIN categorias ON productos.categoria_id = categorias.id
+          WHERE productos.nombre LIKE ?`,
+          [`%${busqueda}%`]
         );
         return resultados;
     },
