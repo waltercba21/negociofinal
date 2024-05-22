@@ -478,7 +478,7 @@ contarPorProveedor: function(conexion, proveedor, callback) {
 obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId) {
     let query = `
         SELECT productos.*, 
-        JSON_ARRAYAGG(imagenes_producto.imagen) AS imagenes 
+        GROUP_CONCAT(imagenes_producto.imagen) AS imagenes 
         FROM productos 
         LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
         WHERE 1=1
@@ -510,7 +510,7 @@ obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId)
             } else {
                 // Convertir la cadena de imágenes en un array
                 results = results.map(producto => {
-                    producto.imagenes = JSON.parse(producto.imagenes);
+                    producto.imagenes = producto.imagenes ? producto.imagenes.split(',') : [];
                     return producto;
                 });
                 resolve(results);
