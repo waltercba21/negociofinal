@@ -157,7 +157,7 @@ module.exports = {
             categorias, 
             marcas, 
             modelos, 
-            producto 
+            producto // Pasando 'producto' a la vista
         });
     },
 
