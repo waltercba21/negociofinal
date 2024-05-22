@@ -486,24 +486,15 @@ obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId)
     if (categoriaId !== null) {
         query += ' AND categoria_id = ?';
         params.push(categoriaId);
-    } else {
-        query += ' AND categoria_id IS ?';
-        params.push(categoriaId);
     }
-    
+
     if (marcaId !== null) {
         query += ' AND marca_id = ?';
         params.push(marcaId);
-    } else {
-        query += ' AND marca_id IS ?';
-        params.push(marcaId);
     }
-    
+
     if (modeloId !== null) {
-        query += ' AND modelo_id = ?';
-        params.push(modeloId);
-    } else {
-        query += ' AND modelo_id IS ?';
+        query += ' AND modelo_id IN (SELECT id FROM modelos WHERE id_marca = ?)';
         params.push(modeloId);
     }
 
