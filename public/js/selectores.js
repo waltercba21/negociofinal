@@ -1,134 +1,45 @@
-document.getElementById('id_marca').addEventListener('change', async () => {
-  let marca_id = document.getElementById('id_marca').value;
 
-  // Convertir cadenas vacías a NULL
-  marca_id = marca_id !== '' ? marca_id : null;
+  // Obtén los selectores
+  const categoriaSelector = document.getElementById('categoria_id');
+  const marcaSelector = document.getElementById('id_marca');
+  const modeloSelector = document.getElementById('modelo_id');
 
-  const selectorModelos = document.getElementById('modelo_id');
-  selectorModelos.innerHTML = '';
+  // Agrega un evento de cambio al selector de marca
+  marcaSelector.addEventListener('change', function() {
+    // Obtén el id de la marca seleccionada
+    const marcaId = this.value;
 
-  if (marca_id !== null) {
-    const respuesta = await fetch(`/modelos/${marca_id}`);
-    
-    if (!respuesta.ok) {
-        console.error('Error al obtener modelos:', respuesta.statusText);
-        return;
-    }
+    // Haz una solicitud AJAX para obtener los modelos de esta marca
+    fetch(`/modelos/${marcaId}`)
+      .then(response => response.json())
+      .then(data => {
+        // Limpia el selector de modelos
+        modeloSelector.innerHTML = '<option value="" selected>Selecciona un modelo...</option>';
 
-    const data = await respuesta.json();
-
-    if (!Array.isArray(data.modelos)) {
-        console.error('La respuesta no contiene un array de modelos:', data);
-        return;
-    }
-
-    data.modelos.forEach((modelo) => {
-        const opcion = document.createElement('option');
-        opcion.value = modelo.id;
-        opcion.text = modelo.nombre;
-        selectorModelos.add(opcion);
-    });
-}
-});
-
-const selectores = ['categoria_id', 'id_marca', 'modelo_id'];
-
-selectores.forEach(selector => {
-  document.getElementById(selector).addEventListener('change', async () => {
-    let categoria_id = document.getElementById('categoria_id').value;
-    let marca_id = document.getElementById('id_marca').value;
-    let modelo_id = document.getElementById('modelo_id').value;
-
-    // Convertir cadenas vacías a NULL
-    categoria_id = categoria_id !== '' ? categoria_id : null;
-    marca_id = marca_id !== '' ? marca_id : null;
-    modelo_id = modelo_id !== '' ? modelo_id : null;
-
-    let url = '/productos/api/';
-    if (categoria_id !== null) {
-      url += `${categoria_id}/`;
-    }
-    if (marca_id !== null) {
-      url += `${marca_id}/`;
-    }
-    if (modelo_id !== null) {
-      url += `${modelo_id}/`;
-    }
-
-    const respuesta = await fetch(url);
-    const productos = await respuesta.json();
-
-    const contenedorProductos = document.getElementById('contenedor-productos');
-    contenedorProductos.innerHTML = '';
-
-    productos.forEach((producto, index) => {
-      let imagenes = '';
-      if (producto.imagenes && producto.imagenes.length > 0) {
-        producto.imagenes.forEach((imagen, i) => {
-          imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
+        // Llena el selector de modelos con los nuevos modelos
+        data.forEach(modelo => {
+          const option = document.createElement('option');
+          option.value = modelo.id;
+          option.text = modelo.nombre;
+          modeloSelector.appendChild(option);
         });
-        imagenes = `
-          <div class="cover__card">
-            <div class="carousel">
-              ${imagenes}
-            </div>
-          </div>
-          <div class="carousel__buttons">
-            <button class="carousel__button">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="carousel__button">
-              <i class="fas fa-chevron-right"></i>
-            </button>
-          </div>
-        `;
-      } else {
-        imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
-      }
-      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
-      const tarjetaProducto = `
-      <div class="card"> 
-        ${imagenes}
-        <div class="titulo-producto">
-          <h3 class="nombre">${producto.nombre}</h3>
-        </div>
-        <hr>
-        <div class="categoria-producto">
-          <h6 class="categoria">${producto.categoria}</h6>
-        </div>
-        <hr>
-        <div class="precio-producto">
-          <p class="precio">${precio_venta}</p>
-        </div>
-        <div class="cantidad-producto">
-          <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-        </div>
-      </div>
-    `;
-    contenedorProductos.innerHTML += tarjetaProducto;
-    });
+      });
+  });
 
-    // Ahora que las tarjetas de productos se han agregado al DOM, puedes agregar los controladores de eventos a los botones del carrusel
-    $(document).on('click', '.carousel__button', function() {
-      var $carousel = $(this).closest('.card').find('.carousel');
-      var $images = $carousel.find('.carousel__image');
-      var index = $images.index($carousel.find('.carousel__image:visible'));
+  // Agrega un evento de cambio a los selectores de categoría, marca y modelo
+  [categoriaSelector, marcaSelector, modeloSelector].forEach(selector => {
+    selector.addEventListener('change', function() {
+      // Obtén los valores seleccionados
+      const categoriaId = categoriaSelector.value;
+      const marcaId = marcaSelector.value;
+      const modeloId = modeloSelector.value;
 
-      if ($(this).find('.fa-chevron-left').length > 0) {
-        $images.eq(index).hide();
-        index--;
-        if (index < 0) {
-          index = $images.length - 1;
-        }
-      } else {
-        $images.eq(index).hide();
-        index++;
-        if (index >= $images.length) {
-          index = 0;
-        }
-      }
-
-      $images.eq(index).show();
+      // Haz una solicitud AJAX para obtener los productos que coinciden con los criterios seleccionados
+      fetch(`/api/buscar?categoria_id=${categoriaId}&id_marca=${marcaId}&modelo_id=${modeloId}`)
+        .then(response => response.json())
+        .then(data => {
+          // Aquí puedes actualizar la interfaz de usuario con los productos obtenidos
+          console.log(data);
+        });
     });
   });
-});
