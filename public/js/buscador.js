@@ -200,6 +200,7 @@ function mostrarProductos(productos) {
     });
   });
 }
+
 $(document).ready(function() {
   $('.carousel').carousel();
 });
