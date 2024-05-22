@@ -154,7 +154,7 @@ module.exports = {
     
         try {
             // Luego, realiza la consulta a la base de datos
-            let productos = await producto.obtenerProductosPorIds(categoriaId, marcaId, modeloId);
+            let productos = await producto.obtenerProductosPorIds(conexion, categoriaId, marcaId, modeloId);
     
             // Si la consulta fue exitosa, renderiza la vista con los resultados
             res.json(productos);
