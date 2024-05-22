@@ -147,9 +147,20 @@ module.exports = {
         const modelos = await obtenerModelosPorMarca(conexion, marca_id);
     
         const productos = await producto.buscar(busqueda, categoria_id, marca_id, modelo_id); 
-        res.json({productos, categorias, marcas, modelos});
-    },
     
+        // Asegúrate de que 'producto' esté definido aquí
+        const producto = productos.length > 0 ? productos[0] : {};
+    
+        // Renderiza la vista 'productos' y pasa las variables necesarias
+        res.render('productos', { 
+            productos, 
+            categorias, 
+            marcas, 
+            modelos, 
+            producto 
+        });
+    },
+
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
