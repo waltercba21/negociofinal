@@ -479,6 +479,10 @@ obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId)
     let query = 'SELECT * FROM productos WHERE 1=1';
     let params = [];
 
+    console.log(`categoriaId: ${categoriaId}`);
+    console.log(`marcaId: ${marcaId}`);
+    console.log(`modeloId: ${modeloId}`);
+
     if (categoriaId !== null) {
         query += ' AND categoria_id = ?';
         params.push(categoriaId);
@@ -494,11 +498,16 @@ obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId)
         params.push(modeloId);
     }
 
+    console.log(`query: ${query}`);
+    console.log(`params: ${params}`);
+
     return new Promise((resolve, reject) => {
         conexion.query(query, params, (error, results) => {
             if (error) {
+                console.error('Error al ejecutar la consulta:', error);
                 reject(error);
             } else {
+                console.log('Resultados de la consulta:', results);
                 resolve(results);
             }
         });
