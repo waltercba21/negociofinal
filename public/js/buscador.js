@@ -10,8 +10,8 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
       producto.imagenes.forEach((imagen, i) => {
-        imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
-      });
+  imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
+});
       imagenes = `
         <div class="cover__card">
           <div class="carousel">
@@ -50,8 +50,9 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       </div>
     </div>
   `;
-    contenedorProductos.innerHTML += tarjetaProducto;
-  });
+  contenedorProductos.innerHTML += tarjetaProducto;
+});
+
 });
 document.querySelectorAll('.carousel__button').forEach(button => {
   button.addEventListener('click', (e) => {
