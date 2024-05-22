@@ -143,8 +143,16 @@ module.exports = {
         const modelo = req.query.modelo ? Number(req.query.modelo) : null;
         const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
     
-        if (consulta || categoria || marca || modelo) {
-            producto.obtenerPorFiltros(conexion, consulta, categoria, marca, modelo)
+        if (consulta) {
+            producto.obtenerPorNombre(conexion, consulta, (error, productos) => {
+                if (error) {
+                    res.status(500).send('Error interno del servidor');
+                    return;
+                }
+                res.json({ productos });
+            });
+        } else if (categoria || marca || modelo) {
+            producto.obtenerPorFiltros(conexion, categoria, marca, modelo)
                 .then(productos => {
                     if (marca) {
                         return producto.obtenerModelosPorMarca(conexion, marca)
