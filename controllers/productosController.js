@@ -136,15 +136,20 @@ module.exports = {
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
-    buscar : async (req, res) => {
+    buscar : async (req, res, conexion) => {
         const busqueda = req.query.q;
         const categoria_id = req.query.categoria_id;
         const marca_id = req.query.marca_id; 
         const modelo_id = req.query.modelo_id;
-        const productos = await producto.buscar(busqueda, categoria_id, marca_id, modelo_id); // Cambiado id_marca a marca_id en los argumentos
-        console.log(productos);
-        res.json(productos);
+    
+        const categorias = await obtenerCategorias(conexion);
+        const marcas = await obtenerMarcas(conexion);
+        const modelos = await obtenerModelosPorMarca(conexion, marca_id);
+    
+        const productos = await producto.buscar(busqueda, categoria_id, marca_id, modelo_id); 
+        res.json({productos, categorias, marcas, modelos});
     },
+    
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {

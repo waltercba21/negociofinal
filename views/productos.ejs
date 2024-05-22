@@ -22,28 +22,22 @@
           </select>   
         </div>
         <div class="form-group-crear">
-          <label for="marca_id">Marca</label> <!-- Cambiado de id_marca a marca_id -->
-          <select id="marca_id" name="marca_id"> <!-- Cambiado de id_marca a marca_id -->
+          <label for="marca_id">Marca</label> 
+          <select id="marca" name="marca">
             <option value="" selected>Selecciona una marca...</option> 
             <% marcas.forEach(function(marca) { %>
-              <option value="<%= marca.id %>"><%= marca.nombre %></option>
+                <option value="<%= marca.id %>"><%= marca.nombre %></option>
             <% }); %>
-          </select>   
+        </select>
         </div>
         <div class="form-group-crear">
           <label for="modelo_id">Modelo</label>
           <select id="modelo_id" name="modelo_id">
-            <% if (modelo) { %>
-              <option value="<%= modelo.id %>" selected><%= modelo.nombre %></option>
-            <% } else { %>
-              <option value="" selected>Selecciona un modelo...</option>
-            <% } %>
-            <% if (modelosPorMarca && Array.isArray(modelosPorMarca)) { %>
-              <% modelosPorMarca.forEach(function(modelo) { %>
-                <option value="<%= modelo.id %>"><%= modelo.nombre %></option>
-              <% }); %>
-            <% } %>
-          </select>
+            <option value="" <% if (!producto || !producto.modelo_id) { %>selected<% } %>>Selecciona un modelo...</option>
+            <% modelos.forEach(function(modelo) { %>
+                <option value="<%= modelo.id %>" <% if (producto && producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
+            <% }); %>
+        </select>
         </div>
       </div>
       </div>

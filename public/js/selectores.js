@@ -1,8 +1,18 @@
+$('#marca').change(function() {
+  var marcaId = $(this).val();
+  $('#modelo_id').empty();
+  $('#modelo_id').append('<option value="">Selecciona un modelo...</option>');
+  $.get('/productos/modelos/' + marcaId, function(modelosPorMarca) {
+      modelosPorMarca.forEach(function(modelo) {
+          $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
+      });
+  });
+});
+
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
   const respuesta = await fetch(`/productos/api/buscar?q=${busqueda}`);
   const productos = await respuesta.json();
-
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = '';
 
@@ -52,9 +62,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   `;
   contenedorProductos.innerHTML += tarjetaProducto;
   });
-
-  // Ahora que las tarjetas de productos se han agregado al DOM, puedes agregar los controladores de eventos a los botones del carrusel
-  $(document).on('click', '.carousel__button', function() {
+ $(document).on('click', '.carousel__button', function() {
     var $carousel = $(this).closest('.card').find('.carousel');
     var $images = $carousel.find('.carousel__image');
     var index = $images.index($carousel.find('.carousel__image:visible'));
