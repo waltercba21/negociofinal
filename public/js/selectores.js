@@ -10,21 +10,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const marca = marcaSelector.value;
       const modelo = modeloSelector.value;
       const consulta = entrada.value;
-  
+    
       let url = 'http://www.autofaros.com.ar/productos/api/buscar';
-      let params = new URLSearchParams();
-      if (consulta) {
-        params.append('query', consulta);
-      }
-      if (categoria) {
-        params.append('categoria', categoria);
-      }
-      if (marca) {
-        params.append('marca', marca);
-      }
-      if (modelo) {
-        params.append('modelo', modelo);
-      }
+      let params = new URLSearchParams({
+        query: consulta,
+        categoria: categoria,
+        marca: marca,
+        modelo: modelo
+      });
       if (params.toString()) {
         url += `?${params.toString()}`;
       }
@@ -42,7 +35,34 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Hubo un problema con la solicitud: ' + error);
       });
     }
-  
+  marcaSelector.addEventListener('change', function() {
+  modeloSelector.innerHTML = '';
+  let defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.text = 'Seleccione un modelo'; 
+  modeloSelector.appendChild(defaultOption);
+  fetch(`/productos/modelos/${marcaSelector.value}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error HTTP: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(modelos => {
+      modelos.forEach(modelo => {
+        let option = document.createElement('option');
+        option.value = modelo.id;
+        option.text = modelo.nombre; 
+        modeloSelector.appendChild(option);
+      });
+    })
+    .catch(error => {
+      console.error('Hubo un problema con la solicitud: ' + error);
+    });
+});
+    modeloSelector.addEventListener('change', obtenerProductosFiltrados);
+    entrada.addEventListener('input', obtenerProductosFiltrados);
+  });
     function mostrarProductos(productos) {
       contenedorProductos.innerHTML = '';
       if (productos.length === 0) {
@@ -123,31 +143,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     categoriaSelector.addEventListener('change', obtenerProductosFiltrados);
 
-marcaSelector.addEventListener('change', function() {
-  modeloSelector.innerHTML = '';
-  let defaultOption = document.createElement('option');
-  defaultOption.value = '';
-  defaultOption.text = 'Seleccione un modelo'; 
-  modeloSelector.appendChild(defaultOption);
-  fetch(`/productos/modelos/${marcaSelector.value}`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Error HTTP: ' + response.status);
-      }
-      return response.json();
-    })
-    .then(modelos => {
-      modelos.forEach(modelo => {
-        let option = document.createElement('option');
-        option.value = modelo.id;
-        option.text = modelo.nombre; 
-        modeloSelector.appendChild(option);
-      });
-    })
-    .catch(error => {
-      console.error('Hubo un problema con la solicitud: ' + error);
-    });
-});
-    modeloSelector.addEventListener('change', obtenerProductosFiltrados);
-    entrada.addEventListener('input', obtenerProductosFiltrados);
-  });
