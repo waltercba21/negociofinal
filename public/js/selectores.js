@@ -35,7 +35,7 @@
     const modeloId = modeloSelector.value;
 
     // Haz una solicitud AJAX para obtener los productos que coinciden con los criterios seleccionados
-    fetch(`/api/buscar?q=&categoria_id=${categoriaId}&id_marca=${marcaId}&modelo_id=${modeloId}`)
+    fetch(`/productos/api/buscar?q=&categoria_id=${categoriaId}&id_marca=${marcaId}&modelo_id=${modeloId}`)
       .then(response => response.json())
       .then(data => {
         // Aquí puedes actualizar la interfaz de usuario con los productos obtenidos
