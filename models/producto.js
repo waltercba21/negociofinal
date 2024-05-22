@@ -324,19 +324,38 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     
         return Object.values(productos);
     },
- obtenerProductosFiltrados:async function(categoria_id, marca_id, modelo_id) {
-    const query = `
-      SELECT p.*, i.imagen 
-      FROM productos p 
-      LEFT JOIN imagenes_producto i ON p.id = i.producto_id 
-      WHERE (p.categoria_id = ? OR ? IS NULL) 
-      AND (p.marca_id = ? OR ? IS NULL) 
-      AND (p.modelo_id = ? OR ? IS NULL)
-      ORDER BY i.posicion ASC
-    `;
-    const [productos] = await db.query(query, [categoria_id, categoria_id, marca_id, marca_id, modelo_id, modelo_id]);
-    return productos;
-  },
+    obtenerProductosFiltrados: function(categoria_id, marca_id, modelo_id) {
+        return new Promise((resolve, reject) => {
+          let query = 'SELECT * FROM productos';
+          let params = [];
+          let whereAdded = false;
+      
+          if (categoria_id) {
+            query += ' WHERE categoria_id = ?';
+            params.push(categoria_id);
+            whereAdded = true;
+          }
+      
+          if (marca_id) {
+            query += whereAdded ? ' AND marca_id = ?' : ' WHERE marca_id = ?';
+            params.push(marca_id);
+            whereAdded = true;
+          }
+      
+          if (modelo_id) {
+            query += whereAdded ? ' AND modelo_id = ?' : ' WHERE modelo_id = ?';
+            params.push(modelo_id);
+          }
+      
+          conexion.query(query, params, function(error, resultados) {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(resultados);
+            }
+          });
+        });
+      },
       obtenerPosicion: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
             const consulta = 'SELECT COUNT(*) AS posicion FROM productos WHERE id <= ? ORDER BY id';
