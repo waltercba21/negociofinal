@@ -4,18 +4,20 @@ document.getElementById('id_marca').addEventListener('change', async () => {
   // Convertir cadenas vacías a NULL
   marca_id = marca_id !== '' ? marca_id : null;
 
-  const respuesta = await fetch(`/modelos/${marca_id}`);
-  const modelos = await respuesta.json();
-
   const selectorModelos = document.getElementById('modelo_id');
   selectorModelos.innerHTML = '';
 
-  modelos.forEach((modelo) => {
-    const opcion = document.createElement('option');
-    opcion.value = modelo.id;
-    opcion.text = modelo.nombre;
-    selectorModelos.add(opcion);
-  });
+  if (marca_id !== null) {
+    const respuesta = await fetch(`/modelos/${marca_id}`);
+    const modelos = await respuesta.json();
+
+    modelos.forEach((modelo) => {
+      const opcion = document.createElement('option');
+      opcion.value = modelo.id;
+      opcion.text = modelo.nombre;
+      selectorModelos.add(opcion);
+    });
+  }
 });
 
 const selectores = ['categoria_id', 'id_marca', 'modelo_id'];
