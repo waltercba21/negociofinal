@@ -476,12 +476,14 @@ contarPorProveedor: function(conexion, proveedor, callback) {
     });
 },
 obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId) {
-    let query = 'SELECT productos.*, imagenes_producto.imagen AS imagen FROM productos LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE 1=1';
+    let query = `
+        SELECT productos.*, 
+        JSON_ARRAYAGG(imagenes_producto.imagen) AS imagenes 
+        FROM productos 
+        LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
+        WHERE 1=1
+    `;
     let params = [];
-
-    console.log(`categoriaId: ${categoriaId}`);
-    console.log(`marcaId: ${marcaId}`);
-    console.log(`modeloId: ${modeloId}`);
 
     if (categoriaId !== undefined && categoriaId !== null) {
         query += ' AND categoria_id = ?';
@@ -498,8 +500,7 @@ obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId)
         params.push(modeloId);
     }
 
-    console.log(`query: ${query}`);
-    console.log(`params: ${params}`);
+    query += ' GROUP BY productos.id';
 
     return new Promise((resolve, reject) => {
         conexion.query(query, params, (error, results) => {
@@ -507,7 +508,11 @@ obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId)
                 console.error('Error al ejecutar la consulta:', error);
                 reject(error);
             } else {
-                console.log('Resultados de la consulta:', results);
+                // Convertir la cadena de imágenes en un array
+                results = results.map(producto => {
+                    producto.imagenes = JSON.parse(producto.imagenes);
+                    return producto;
+                });
                 resolve(results);
             }
         });
