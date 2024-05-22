@@ -407,6 +407,18 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     });
+},obtenerModeloPorId: async function(conexion, modeloId) {
+    try {
+        const [rows] = await conexion.execute('SELECT * FROM modelos WHERE id = ?', [modeloId]);
+        if (rows.length > 0) {
+            return rows[0];
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error('Error al obtener el modelo:', error);
+        throw error;
+    }
 },
 obtenerMarcas: function(conexion) {
   return new Promise((resolve, reject) => {

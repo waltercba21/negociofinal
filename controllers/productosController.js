@@ -146,7 +146,10 @@ module.exports = {
         let categoriaId = req.params.categoria_id;
         let marcaId = req.params.marca_id;
         let modeloId = req.params.modelo_id;
-    
+        let modelo = null;
+        if (modeloId !== null) {
+            modelo = await producto.obtenerModeloPorId(conexion, modeloId);
+        }           
         // Convertir cadenas vacías a NULL
         categoriaId = categoriaId !== '' ? categoriaId : null;
         marcaId = marcaId !== '' ? marcaId : null;
@@ -169,7 +172,7 @@ module.exports = {
             let marcas = await producto.obtenerMarcas(conexion);
         
             // Si las consultas fueron exitosas, renderiza la vista con los resultados
-            res.render('productos', { productos: productos, modelosPorMarca: modelosPorMarca, categorias: categorias, marcas: marcas });
+            res.render('productos', { productos: productos, modelosPorMarca: modelosPorMarca, categorias: categorias, marcas: marcas, modelo: modelo });
         } catch (error) {
             console.error('Error al obtener productos, modelos, categorias o marcas:', error);
             res.status(500).send('Error al obtener productos, modelos, categorias o marcas');
