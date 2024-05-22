@@ -159,17 +159,20 @@ module.exports = {
             // Realiza una consulta adicional para obtener los modelos por marca
             let modelosPorMarca = null;
             if (marcaId !== null) {
-                modelosPorMarca = await producto.obtenerModelosPorMarca(conexion, marcaId);
+                modelosPorMarca = await modelo.obtenerModelosPorMarca(conexion, marcaId);
             }
         
             // Realiza una consulta adicional para obtener las categorias
             let categorias = await producto.obtenerCategorias(conexion);
         
+            // Realiza una consulta adicional para obtener las marcas
+            let marcas = await marca.obtenerMarcas(conexion);
+        
             // Si las consultas fueron exitosas, renderiza la vista con los resultados
-            res.render('productos', { productos: productos, modelosPorMarca: modelosPorMarca, categorias: categorias });
+            res.render('productos', { productos: productos, modelosPorMarca: modelosPorMarca, categorias: categorias, marcas: marcas });
         } catch (error) {
-            console.error('Error al obtener productos, modelos o categorias:', error);
-            res.status(500).send('Error al obtener productos, modelos o categorias');
+            console.error('Error al obtener productos, modelos, categorias o marcas:', error);
+            res.status(500).send('Error al obtener productos, modelos, categorias o marcas');
         }
     },
     detalle: function (req, res) {
