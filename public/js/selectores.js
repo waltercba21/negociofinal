@@ -1,30 +1,29 @@
+// Obtén los selectores
+const categoriaSelector = document.getElementById('categoria_id');
+const marcaSelector = document.getElementById('marca_id'); // Cambiado de id_marca a marca_id
+const modeloSelector = document.getElementById('modelo_id');
 
-  // Obtén los selectores
-  const categoriaSelector = document.getElementById('categoria_id');
-  const marcaSelector = document.getElementById('id_marca');
-  const modeloSelector = document.getElementById('modelo_id');
+// Agrega un evento de cambio al selector de marca
+marcaSelector.addEventListener('change', function() {
+  // Obtén el id de la marca seleccionada
+  const marcaId = this.value;
 
-  // Agrega un evento de cambio al selector de marca
-  marcaSelector.addEventListener('change', function() {
-    // Obtén el id de la marca seleccionada
-    const marcaId = this.value;
+  // Haz una solicitud AJAX para obtener los modelos de esta marca
+  fetch(`/modelos/${marcaId}`)
+    .then(response => response.json())
+    .then(data => {
+      // Limpia el selector de modelos
+      modeloSelector.innerHTML = '<option value="" selected>Selecciona un modelo...</option>';
 
-    // Haz una solicitud AJAX para obtener los modelos de esta marca
-    fetch(`/modelos/${marcaId}`)
-      .then(response => response.json())
-      .then(data => {
-        // Limpia el selector de modelos
-        modeloSelector.innerHTML = '<option value="" selected>Selecciona un modelo...</option>';
-
-        // Llena el selector de modelos con los nuevos modelos
-        data.forEach(modelo => {
-          const option = document.createElement('option');
-          option.value = modelo.id;
-          option.text = modelo.nombre;
-          modeloSelector.appendChild(option);
-        });
+      // Llena el selector de modelos con los nuevos modelos
+      data.forEach(modelo => {
+        const option = document.createElement('option');
+        option.value = modelo.id;
+        option.text = modelo.nombre;
+        modeloSelector.appendChild(option);
       });
-  });
+    });
+});
 
 // Agrega un evento de cambio a los selectores de categoría, marca y modelo
 [categoriaSelector, marcaSelector, modeloSelector].forEach(selector => {
@@ -35,7 +34,7 @@
     const modeloId = modeloSelector.value;
 
     // Haz una solicitud AJAX para obtener los productos que coinciden con los criterios seleccionados
-    fetch(`/productos/api/buscar?q=&categoria_id=${categoriaId}&id_marca=${marcaId}&modelo_id=${modeloId}`)
+    fetch(`/productos/api/buscar?q=&categoria_id=${categoriaId}&marca_id=${marcaId}&modelo_id=${modeloId}`) // Cambiado id_marca a marca_id en la URL
       .then(response => response.json())
       .then(data => {
         // Aquí puedes actualizar la interfaz de usuario con los productos obtenidos

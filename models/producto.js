@@ -300,7 +300,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     },
-    buscar : async (busqueda, categoria_id, id_marca, modelo_id) => {
+    buscar : async (busqueda, categoria_id, marca_id, modelo_id) => {
         let query = `
             SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
             FROM productos 
@@ -313,9 +313,9 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             query += ' AND productos.categoria_id = ?';
             params.push(categoria_id);
         }
-        if (id_marca) {
-            query += ' AND productos.id_marca = ?';
-            params.push(id_marca);
+        if (marca_id) {
+            query += ' AND productos.marca_id = ?';
+            params.push(marca_id);
         }
         if (modelo_id) {
             query += ' AND productos.modelo_id = ?';

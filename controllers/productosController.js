@@ -139,9 +139,9 @@ module.exports = {
     buscar : async (req, res) => {
         const busqueda = req.query.q;
         const categoria_id = req.query.categoria_id;
-        const id_marca = req.query.id_marca;
+        const marca_id = req.query.marca_id; 
         const modelo_id = req.query.modelo_id;
-        const productos = await producto.buscar(busqueda, categoria_id, id_marca, modelo_id);
+        const productos = await producto.buscar(busqueda, categoria_id, marca_id, modelo_id); // Cambiado id_marca a marca_id en los argumentos
         console.log(productos);
         res.json(productos);
     },
