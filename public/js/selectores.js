@@ -9,15 +9,26 @@ document.getElementById('id_marca').addEventListener('change', async () => {
 
   if (marca_id !== null) {
     const respuesta = await fetch(`/modelos/${marca_id}`);
-    const modelos = await respuesta.json();
+    
+    if (!respuesta.ok) {
+        console.error('Error al obtener modelos:', respuesta.statusText);
+        return;
+    }
 
-    modelos.forEach((modelo) => {
-      const opcion = document.createElement('option');
-      opcion.value = modelo.id;
-      opcion.text = modelo.nombre;
-      selectorModelos.add(opcion);
+    const data = await respuesta.json();
+
+    if (!Array.isArray(data.modelos)) {
+        console.error('La respuesta no contiene un array de modelos:', data);
+        return;
+    }
+
+    data.modelos.forEach((modelo) => {
+        const opcion = document.createElement('option');
+        opcion.value = modelo.id;
+        opcion.text = modelo.nombre;
+        selectorModelos.add(opcion);
     });
-  }
+}
 });
 
 const selectores = ['categoria_id', 'id_marca', 'modelo_id'];
