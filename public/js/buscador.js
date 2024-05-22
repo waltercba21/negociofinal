@@ -174,17 +174,7 @@ function mostrarProductos(productos) {
     `;
       contenedorProductosBuscador.innerHTML += tarjetaProducto;
     });
-  }
-}
-document.addEventListener('DOMContentLoaded', function () {
-  var myCarousel = document.querySelector('#carousel<%= index %>')
-  var carousel = new bootstrap.Carousel(myCarousel)
-});
-$(document).ready(function() {
-  $('.carousel').carousel();
-});
-$(document).ready(function() {
-  $('.carousel').each(function() {
+  } $('.carousel').each(function() {
     var $carousel = $(this);
     var $images = $carousel.find('.carousel__image');
     var $prevButton = $carousel.closest('.card').find('.carousel__button:has(.fa-chevron-left)');
@@ -209,4 +199,10 @@ $(document).ready(function() {
       $images.eq(index).show();
     });
   });
+}
+$(document).ready(function() {
+  $('.carousel').carousel();
+});
+$(document).ready(function() {
+ 
 });
