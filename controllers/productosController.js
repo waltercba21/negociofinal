@@ -141,21 +141,23 @@ module.exports = {
         const productos = await producto.buscar(busqueda);
         console.log(productos);
         res.json(productos);
-      },filtrado: async function(req, res) {
+      },
+      filtrado: async function(req, res) {
         let categoriaId = req.params.categoria_id;
         let marcaId = req.params.marca_id;
         let modeloId = req.params.modelo_id;
-        if (!categoriaId || !marcaId || !modeloId) {
-            res.status(400).send('Parámetros inválidos');
-            return;
-        }
+    
+        // Convertir cadenas vacías a NULL
+        categoriaId = categoriaId !== '' ? categoriaId : null;
+        marcaId = marcaId !== '' ? marcaId : null;
+        modeloId = modeloId !== '' ? modeloId : null;
     
         try {
             // Luego, realiza la consulta a la base de datos
-            let producto = await producto.obtenerProductoPorIds(categoriaId, marcaId, modeloId);
+            let productos = await producto.obtenerProductosPorIds(categoriaId, marcaId, modeloId);
     
             // Si la consulta fue exitosa, renderiza la vista con los resultados
-            res.render('productos', { producto: producto });
+            res.json(productos);
         } catch (error) {
             console.error('Error al obtener productos:', error);
             res.status(500).send('Error al obtener productos');
