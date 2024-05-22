@@ -475,38 +475,31 @@ contarPorProveedor: function(conexion, proveedor, callback) {
         });
     });
 },
-obtenerProductosPorIds: function(conexion, categoriaId, marcaId, modeloId) {
+obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId) {
+    let query = 'SELECT * FROM productos WHERE 1=1';
+    let params = [];
+
+    if (categoriaId !== null) {
+        query += ' AND categoria_id = ?';
+        params.push(categoriaId);
+    }
+
+    if (marcaId !== null) {
+        query += ' AND marca_id = ?';
+        params.push(marcaId);
+    }
+
+    if (modeloId !== null) {
+        query += ' AND modelo_id = ?';
+        params.push(modeloId);
+    }
+
     return new Promise((resolve, reject) => {
-        let query = 'SELECT * FROM productos WHERE 1=1';
-        let params = [];
-
-        if (categoriaId) {
-            query += ' AND categoria_id = ?';
-            params.push(categoriaId);
-        } else {
-            query += ' AND categoria_id IS NULL';
-        }
-
-        if (marcaId) {
-            query += ' AND marca_id = ?';
-            params.push(marcaId);
-        } else {
-            query += ' AND marca_id IS NULL';
-        }
-
-        if (modeloId) {
-            query += ' AND modelo_id = ?';
-            params.push(modeloId);
-        } else {
-            query += ' AND modelo_id IS NULL';
-        }
-
-        conexion.query(query, params, function(error, resultados) {
+        conexion.query(query, params, (error, results) => {
             if (error) {
-                console.error('Error al obtener productos:', error);
                 reject(error);
             } else {
-                resolve(resultados);
+                resolve(results);
             }
         });
     });
