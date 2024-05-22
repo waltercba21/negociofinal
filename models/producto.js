@@ -483,17 +483,17 @@ obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId)
     console.log(`marcaId: ${marcaId}`);
     console.log(`modeloId: ${modeloId}`);
 
-    if (categoriaId !== null) {
+    if (categoriaId !== undefined && categoriaId !== null) {
         query += ' AND categoria_id = ?';
         params.push(categoriaId);
     }
 
-    if (marcaId !== null) {
+    if (marcaId !== undefined && marcaId !== null) {
         query += ' AND marca_id = ?';
         params.push(marcaId);
     }
 
-    if (modeloId !== null) {
+    if (modeloId !== undefined && modeloId !== null) {
         query += ' AND modelo_id IN (SELECT id FROM modelos WHERE id_marca = ?)';
         params.push(modeloId);
     }
