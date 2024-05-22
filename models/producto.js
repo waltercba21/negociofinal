@@ -301,7 +301,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         });
     },
     buscar : async (busqueda) => {
-        const [resultados] = await conexion.promise().query(`
+        const [filas] = await conexion.promise().query(`
           SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
           FROM productos 
           LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
@@ -309,7 +309,20 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
           WHERE productos.nombre LIKE ?`,
           [`%${busqueda}%`]
         );
-        return resultados;
+    
+        const productos = {};
+        filas.forEach(fila => {
+            if (!productos[fila.id]) {
+                productos[fila.id] = {
+                    ...fila,
+                    imagenes: fila.imagen ? [fila.imagen] : []
+                };
+            } else if (fila.imagen) {
+                productos[fila.id].imagenes.push(fila.imagen);
+            }
+        });
+    
+        return Object.values(productos);
     },
       obtenerPosicion: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
