@@ -141,13 +141,26 @@ module.exports = {
         const productos = await producto.buscar(busqueda);
         console.log(productos);
         res.json(productos);
-      },
-      // En el controlador de productos
-    filtrado:async function (req, res) {
-    const { categoria_id, marca_id, modelo_id } = req.params;
-    const productos = await producto.obtenerProductosFiltrados(categoria_id, marca_id, modelo_id);
-    res.json(productos);
-  },
+      },filtrado: async function(req, res) {
+        let categoriaId = req.params.categoria_id;
+        let marcaId = req.params.marca_id;
+        let modeloId = req.params.modelo_id;
+        if (!categoriaId || !marcaId || !modeloId) {
+            res.status(400).send('Parámetros inválidos');
+            return;
+        }
+    
+        try {
+            // Luego, realiza la consulta a la base de datos
+            let producto = await producto.obtenerProductoPorIds(categoriaId, marcaId, modeloId);
+    
+            // Si la consulta fue exitosa, renderiza la vista con los resultados
+            res.render('productos', { producto: producto });
+        } catch (error) {
+            console.error('Error al obtener productos:', error);
+            res.status(500).send('Error al obtener productos');
+        }
+    },
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
