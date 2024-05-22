@@ -26,20 +26,20 @@
       });
   });
 
-  // Agrega un evento de cambio a los selectores de categoría, marca y modelo
-  [categoriaSelector, marcaSelector, modeloSelector].forEach(selector => {
-    selector.addEventListener('change', function() {
-      // Obtén los valores seleccionados
-      const categoriaId = categoriaSelector.value;
-      const marcaId = marcaSelector.value;
-      const modeloId = modeloSelector.value;
+// Agrega un evento de cambio a los selectores de categoría, marca y modelo
+[categoriaSelector, marcaSelector, modeloSelector].forEach(selector => {
+  selector.addEventListener('change', function() {
+    // Obtén los valores seleccionados
+    const categoriaId = categoriaSelector.value;
+    const marcaId = marcaSelector.value;
+    const modeloId = modeloSelector.value;
 
-      // Haz una solicitud AJAX para obtener los productos que coinciden con los criterios seleccionados
-      fetch(`/api/buscar?categoria_id=${categoriaId}&id_marca=${marcaId}&modelo_id=${modeloId}`)
-        .then(response => response.json())
-        .then(data => {
-          // Aquí puedes actualizar la interfaz de usuario con los productos obtenidos
-          console.log(data);
-        });
-    });
+    // Haz una solicitud AJAX para obtener los productos que coinciden con los criterios seleccionados
+    fetch(`/api/buscar?q=&categoria_id=${categoriaId}&id_marca=${marcaId}&modelo_id=${modeloId}`)
+      .then(response => response.json())
+      .then(data => {
+        // Aquí puedes actualizar la interfaz de usuario con los productos obtenidos
+        console.log(data);
+      });
   });
+});
