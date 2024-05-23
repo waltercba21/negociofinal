@@ -1,8 +1,10 @@
 document.getElementById('marca_id').addEventListener('change', function() {
   const marcaId = this.value;
+  console.log('Marca ID:', marcaId); // Agregado
   fetch('/productos/modelos/' + marcaId)
       .then(response => response.json())
       .then(modelos => {
+          console.log('Modelos:', modelos); // Agregado
           const modeloSelect = document.getElementById('modelo_id');
           modeloSelect.innerHTML = '';
 
@@ -53,13 +55,17 @@ function actualizarProductos() {
   const categoria = categoriaSelect.value;
   const marca = marcaSelect.value;
   const modelo = modeloSelect.value;
-
+  console.log('Categoria:', categoria); // Agregado
+  console.log('Marca:', marca); // Agregado
+  console.log('Modelo:', modelo); // Agregado
   // Construye la URL con los parámetros de consulta
   let url = '/?';
   if (categoria) url += 'categoria=' + categoria + '&';
   if (marca) url += 'marca=' + marca + '&';
   if (modelo) url += 'modelo=' + modelo;
 
+  console.log('URL:', url); // Agregado 
+  
   fetch(url)
     .then(response => response.json())
     .then(productos => {
