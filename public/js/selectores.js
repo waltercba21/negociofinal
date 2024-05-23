@@ -1,6 +1,6 @@
 document.getElementById('marca_id').addEventListener('change', function() {
   const marcaId = this.value;
-  fetch('/modelos/' + marcaId) // Cambia '/modelosPorMarca/' a '/modelos/'
+  fetch('/productos/modelos/' + marcaId) // Cambia '/modelosPorMarca/' a '/modelos/'
       .then(response => response.json())
       .then(modelos => {
           const modeloSelect = document.getElementById('modelo_id');
