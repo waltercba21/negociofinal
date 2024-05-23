@@ -137,8 +137,9 @@ module.exports = {
         }
     },
     buscar : function(req, res) {
+        const categoriaId = req.body.categoria_id;
         const pagina = req.body.pagina || 1; 
-        producto.obtener(conexion, pagina, (error, productos) => {
+        producto.obtenerPorCategoria(conexion, categoriaId, pagina, (error, productos) => {
             if (error) {
                 console.error('Error al buscar productos:', error);
                 res.status(500).send({ error: 'Ocurrió un error al buscar los productos.' });
