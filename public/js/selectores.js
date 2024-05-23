@@ -25,10 +25,12 @@ document.getElementById('marca_id').addEventListener('change', function() {
 const selectorCategoria = document.getElementById('categoria_id');
 const selectorMarca = document.getElementById('marca_id');
 const selectorModelo = document.getElementById('modelo_id');
+console.log(selectorCategoria.value, selectorMarca.value, selectorModelo.value);
 
 // Función para realizar la búsqueda
 const buscarProductos = async () => {
   let url = '/productos/api/filtrar';
+  console.log(url);
   const params = new URLSearchParams();
 
   if (selectorCategoria.value) {
@@ -55,7 +57,9 @@ const buscarProductos = async () => {
   if (productos.length === 0) {
     return;
   }
+  console.log(productos);
   productos.forEach((producto, index) => {
+    console.log(producto);
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
       producto.imagenes.forEach((imagen, i) => {
@@ -99,7 +103,9 @@ const buscarProductos = async () => {
       </div>
     </div>
   `;
-  contenedorProductos.innerHTML += tarjetaProducto; // Asegúrate de agregar la tarjetaProducto al contenedorProductos
+  console.log(tarjetaProducto);
+  contenedorProductos.innerHTML += tarjetaProducto;
+  console.log(contenedorProductos.innerHTML);
   });
 };
 
