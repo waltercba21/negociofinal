@@ -3,28 +3,23 @@ let productosOriginales = [];
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
-  mostrarProductos(productosOriginales);
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
-  let productos = [];
-  
+  let url = '/productos/api/buscar';
   if (busqueda.trim()) {
-    const url = `/productos/api/buscar?q=${busqueda}`;
-    const respuesta = await fetch(url);
-    productos = await respuesta.json();
-  } else {
-    productos = [...productosOriginales];
+    url += `?q=${busqueda}`;
   }
-
-  mostrarProductos(productos);
-});
-
-function mostrarProductos(productos) {
+  const respuesta = await fetch(url);
+  const productos = await respuesta.json();
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = '';
   
+  if (!busqueda.trim() && productos.length === 0) {
+    return;
+  }
+
   productos.forEach((producto, index) => {
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
@@ -94,4 +89,4 @@ function mostrarProductos(productos) {
 
     $images.eq(index).show();
   });
-};
+});
