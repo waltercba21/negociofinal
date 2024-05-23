@@ -8,7 +8,10 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   if (busqueda.trim()) {
     url += `?q=${busqueda}`;
   }
-  
+  if (!busqueda.trim() && productos.length === 0) {
+    return;
+  }
+
   productos.forEach((producto, index) => {
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
