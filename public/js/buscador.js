@@ -1,3 +1,10 @@
+let productosOriginales = [];
+
+window.onload = async () => {
+  const respuesta = await fetch('/productos/api/buscar');
+  productosOriginales = await respuesta.json();
+};
+
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
   let url = '/productos/api/buscar';
@@ -10,7 +17,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   contenedorProductos.innerHTML = '';
   
   if (!busqueda.trim() && productos.length === 0) {
-    return;
+    productos = productosOriginales;
   }
 
   productos.forEach((producto, index) => {
