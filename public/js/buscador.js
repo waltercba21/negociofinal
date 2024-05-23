@@ -12,7 +12,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     url += `?q=${busqueda}`;
   }
   const respuesta = await fetch(url);
-  const productos = await respuesta.json();
+  let productos = await respuesta.json();
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = '';
   
