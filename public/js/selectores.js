@@ -28,7 +28,7 @@ const selectorModelo = document.getElementById('modelo_id');
 
 // Función para realizar la búsqueda
 const buscarProductos = async () => {
-  let url = '/productos/api/buscar';
+  let url = '/productos/api/filtrar';
   const params = new URLSearchParams();
 
   if (selectorCategoria.value) {
