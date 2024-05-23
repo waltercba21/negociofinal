@@ -127,7 +127,7 @@ module.exports = {
         const marca_id = req.query.marca_id; 
         const modelo_id = req.query.modelo_id;
         const limite = !busqueda ? 10 : undefined;
-        const productos = await producto.buscar(busqueda, categoria_id, marca_id, modelo_id, limite); 
+        const productos = await producto.obtenerPorFiltros(categoria_id, marca_id, modelo_id, limite); 
         res.json(productos); 
     },
     detalle: function (req, res) {

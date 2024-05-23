@@ -299,7 +299,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 });
             }
         });
-    },
+    }, 
     buscar : async (busqueda, categoria_id, marca_id, modelo_id) => {
         let query = `
             SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
