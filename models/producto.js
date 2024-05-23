@@ -444,6 +444,11 @@ contarPorProveedor: function(conexion, proveedor, callback) {
   });
 }, 
 obtenerCategorias : function(conexion, categoriaId, pagina, callback) {
+    // Comprobar que callback es una función
+    if (typeof callback !== 'function') {
+        throw new Error('Callback debe ser una función');
+    }
+
     const offset = (pagina - 1) * 20;
     const consulta = `
         SELECT productos.*, imagenes_producto.imagen 
