@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
           const marca_id = document.getElementById('marca_id').value;
           const modelo_id = document.getElementById('modelo_id').value;
 
-          fetch(`/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
+          fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
           .then(response => {
               if (response.status === 502) {
                   console.error('Error 502: Bad Gateway');
