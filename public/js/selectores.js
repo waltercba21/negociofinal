@@ -29,6 +29,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
           fetch(`/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
           .then(response => {
+              if (response.status === 502) {
+                  console.error('Error 502: Bad Gateway');
+                  throw new Error('Bad Gateway');
+              }
               if (!response.ok) {
                   console.error('Response status:', response.status);
                   return response.text().then(text => {
