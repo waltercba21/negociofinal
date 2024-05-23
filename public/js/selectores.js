@@ -30,7 +30,11 @@ document.addEventListener('DOMContentLoaded', function() {
           fetch(`/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
           .then(response => {
               if (!response.ok) {
-                  throw new Error('Network response was not ok');
+                  console.error('Response status:', response.status);
+                  return response.text().then(text => {
+                      console.error('Response text:', text);
+                      throw new Error('Network response was not ok');
+                  });
               }
               return response.json();
           })
