@@ -84,10 +84,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <h3 class="nombre">${producto.nombre}</h3>
           </div>
           <hr>
-          <div class="categoria-producto">
-            <h6 class="categoria">${producto.categoria}</h6>
-          </div>
-          <hr>
           <div class="precio-producto">
             <p class="precio">${precio_venta}</p>
           </div>
@@ -99,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
       contenedorProductos.innerHTML += tarjetaProducto;
       });
   }
-  
+
   $(document).on('click', '.carousel__button', function() {
     var $carousel = $(this).closest('.card').find('.carousel');
     var $images = $carousel.find('.carousel__image');
