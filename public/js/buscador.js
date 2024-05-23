@@ -12,7 +12,8 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     url += `?q=${busqueda}`;
   }
   const respuesta = await fetch(url);
-  const productos = await respuesta.json();
+  const data = await respuesta.json();
+  const productos = data.productos;
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = '';
   
