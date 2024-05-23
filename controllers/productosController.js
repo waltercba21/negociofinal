@@ -141,7 +141,7 @@ module.exports = {
             const categoriaId = req.body.categoria_id;
             const marcaId = req.body.marca_id;
             const pagina = req.body.pagina || 1; 
-    
+        
             const [productosPorCategoria, marcas, modelosPorMarca] = await Promise.all([
                 new Promise((resolve, reject) => {
                     producto.obtenerPorCategoria(conexion, categoriaId, pagina, (error, productos) => {
@@ -155,8 +155,8 @@ module.exports = {
                 producto.obtenerMarcas(conexion),
                 producto.obtenerModelosPorMarca(conexion, marcaId)
             ]);
-    
-            res.json({ productosPorCategoria, marcas, modelosPorMarca });
+        
+            res.render('productos', { productosPorCategoria, marcas, modelos: modelosPorMarca });
         } catch (error) {
             console.error('Error al buscar productos:', error);
             res.status(500).send({ error: 'Ocurrió un error al buscar los productos.' });
