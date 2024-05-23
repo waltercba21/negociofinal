@@ -41,7 +41,7 @@ router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
 router.post('/actualizarPrecio', productosController.actualizarPrecio);
 router.get('/api', productosController.lista);
-router.get('/api/buscar', productosController.buscar);
+router.post('/api/buscar', productosController.buscar);
 router.get('/:id', productosController.detalle); 
 
 module.exports = router;

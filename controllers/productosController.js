@@ -143,7 +143,7 @@ module.exports = {
                 return res.status(400).send({ error: 'No se proporcionó un id de categoría.' });
             }
             const productos = await producto.findAll({ where: { categoria_id: categoriaId } });
-            res.render('productos', { productos });
+            res.json({ productos }); // Cambiar esto
         } catch (error) {
             console.error('Error al buscar productos:', error);
             res.status(500).send({ error: 'Ocurrió un error al buscar los productos.' });
