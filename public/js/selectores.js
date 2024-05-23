@@ -28,15 +28,19 @@ document.addEventListener('DOMContentLoaded', function() {
           const modelo_id = document.getElementById('modelo_id').value;
 
           fetch(`/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
-              .then(response => response.json())
-              .then(productos => {
-                  console.log(productos); 
-                  renderizarProductos(productos);
-              })
-              .catch(error => console.error('Error:', error));
+          .then(response => {
+              if (!response.ok) {
+                  throw new Error('Network response was not ok');
+              }
+              return response.json();
+          })
+          .then(productos => {
+              console.log(productos); 
+              renderizarProductos(productos);
+          })
+          .catch(error => console.error('Error:', error));
       });
   });
-
   function renderizarProductos(productos) {
       contenedorProductos.innerHTML = '';
       productos.forEach((producto, index) => {
