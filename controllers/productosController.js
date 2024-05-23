@@ -88,28 +88,10 @@ module.exports = {
                     });
                   });
             }
-            const categorias = await new Promise((resolve, reject) => {
-                producto.obtenerCategorias(conexion, (error, resultados) => {
-                    if (error) {
-                        console.error('Error al obtener categorías:', error);
-                        reject(error);
-                    } else {
-                        resolve(resultados);
-                    }
-                });
-            });
+            const categorias = await producto.obtenerCategorias(conexion);
             console.log('Categorías obtenidas:', categorias);
-            
-            const marcas = await new Promise((resolve, reject) => {
-                producto.obtenerMarcas(conexion, (error, resultados) => {
-                    if (error) {
-                        console.error('Error al obtener marcas:', error);
-                        reject(error);
-                    } else {
-                        resolve(resultados);
-                    }
-                });
-            });
+    
+            const marcas = await producto.obtenerMarcas(conexion);
             console.log('Marcas obtenidas:', marcas);
     
             let modelosPorMarca;
@@ -154,31 +136,13 @@ module.exports = {
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
-    buscar : async function(req, res) {
-        try {
-            const categoriaId = req.body.categoria_id;
-            const marcaId = req.body.marca_id;
-            const pagina = req.body.pagina || 1; 
-        
-            const [productosPorCategoria, marcas, modelosPorMarca] = await Promise.all([
-                new Promise((resolve, reject) => {
-                    producto.obtenerPorCategoria(conexion, categoriaId, pagina, (error, productos) => {
-                        if (error) {
-                            reject(error);
-                        } else {
-                            resolve(productos);
-                        }
-                    });
-                }),
-                producto.obtenerMarcas(conexion),
-                producto.obtenerModelosPorMarca(conexion, marcaId)
-            ]);
-        
-            res.render('productos', { productosPorCategoria, marcas, modelos: modelosPorMarca });
-        } catch (error) {
-            console.error('Error al buscar productos:', error);
-            res.status(500).send({ error: 'Ocurrió un error al buscar los productos.' });
-        }
+    buscar : async (req, res) => {
+        const busqueda = req.query.q;
+        const categoria_id = req.query.categoria_id;
+        const marca_id = req.query.marca_id; 
+        const modelo_id = req.query.modelo_id;
+        const productos = await producto.buscar(busqueda, categoria_id, marca_id, modelo_id); 
+        res.json(productos);
     },
     detalle: function (req, res) {
         const id = req.params.id;
