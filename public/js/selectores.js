@@ -99,4 +99,26 @@ document.addEventListener('DOMContentLoaded', function() {
       contenedorProductos.innerHTML += tarjetaProducto;
       });
   }
+    // Ahora que las tarjetas de productos se han agregado al DOM, puedes agregar los controladores de eventos a los botones del carrusel
+    $(document).on('click', '.carousel__button', function() {
+      var $carousel = $(this).closest('.card').find('.carousel');
+      var $images = $carousel.find('.carousel__image');
+      var index = $images.index($carousel.find('.carousel__image:visible'));
+  
+      if ($(this).find('.fa-chevron-left').length > 0) {
+        $images.eq(index).hide();
+        index--;
+        if (index < 0) {
+          index = $images.length - 1;
+        }
+      } else {
+        $images.eq(index).hide();
+        index++;
+        if (index >= $images.length) {
+          index = 0;
+        }
+      }
+  
+      $images.eq(index).show();
+    });
 });
