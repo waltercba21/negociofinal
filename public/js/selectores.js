@@ -78,24 +78,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
         const tarjetaProducto = `
-        <div class="card"> 
-          ${imagenes}
-          <div class="titulo-producto">
-            <h3 class="nombre">${producto.nombre}</h3>
-          </div>
-          <hr>
-          <div class="categoria-producto">
-            <h6 class="categoria">${producto.categoria}</h6>
-          </div>
-          <hr>
-          <div class="precio-producto">
-            <p class="precio">${precio_venta}</p>
-          </div>
-          <div class="cantidad-producto">
-            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-          </div>
-        </div>
-      `;
+  <div class="card"> 
+    ${imagenes}
+    <div class="titulo-producto">
+      <h3 class="nombre">${producto.nombre}</h3>
+    </div>
+    <hr>
+    <div class="categoria-producto">
+      <h6 class="categoria">${producto.categoria.nombre}</h6>
+    </div>
+    <hr>
+    <div class="precio-producto">
+      <p class="precio">${precio_venta}</p>
+    </div>
+    <div class="cantidad-producto">
+      <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+    </div>
+  </div>
+`;
       contenedorProductos.innerHTML += tarjetaProducto;
       });
   }
