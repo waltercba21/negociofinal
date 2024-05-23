@@ -2,9 +2,12 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   const busqueda = e.target.value;
   const respuesta = await fetch(`/productos/api/buscar?q=${busqueda}`);
   const productos = await respuesta.json();
-
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = '';
+  // Si la búsqueda está vacía, no hagas nada
+  if (!busqueda.trim()) {
+    return;
+  }
 
   productos.forEach((producto, index) => {
     let imagenes = '';
