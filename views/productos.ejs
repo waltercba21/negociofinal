@@ -39,7 +39,7 @@
               <option value="" selected>Selecciona un modelo...</option>
             <% } %>
             <% if (modelosPorMarca && Array.isArray(modelosPorMarca)) { %>
-              <% modelos.forEach(function(modelo) { %>
+              <% modelosPorMarca.forEach(function(modelo) { %>
                 <option value="<%= modelo.id %>"><%= modelo.nombre %></option>
               <% }); %>
             <% } %>
