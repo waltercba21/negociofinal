@@ -54,9 +54,10 @@ document.addEventListener('DOMContentLoaded', function() {
       productos.forEach((producto, index) => {
         let imagenes = '';
         if (producto.imagenes && producto.imagenes.length > 0) {
-          producto.imagenes.forEach((imagen, i) => {
+          producto.imagenes.forEach((imagenObj, i) => {
+            const imagen = imagenObj.imagen;
             imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
-          });
+        });
           imagenes = `
             <div class="cover__card">
               <div class="carousel">
