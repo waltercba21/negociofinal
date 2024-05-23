@@ -88,10 +88,28 @@ module.exports = {
                     });
                   });
             }
-            const categorias = await producto.obtenerCategorias(conexion);
+            const categorias = await new Promise((resolve, reject) => {
+                producto.obtenerCategorias(conexion, (error, resultados) => {
+                    if (error) {
+                        console.error('Error al obtener categorías:', error);
+                        reject(error);
+                    } else {
+                        resolve(resultados);
+                    }
+                });
+            });
             console.log('Categorías obtenidas:', categorias);
-    
-            const marcas = await producto.obtenerMarcas(conexion);
+            
+            const marcas = await new Promise((resolve, reject) => {
+                producto.obtenerMarcas(conexion, (error, resultados) => {
+                    if (error) {
+                        console.error('Error al obtener marcas:', error);
+                        reject(error);
+                    } else {
+                        resolve(resultados);
+                    }
+                });
+            });
             console.log('Marcas obtenidas:', marcas);
     
             let modelosPorMarca;
