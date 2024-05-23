@@ -16,7 +16,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = '';
   
-  if (!busqueda.trim() && productos.length === 0) {
+  if (!busqueda.trim()) {
     productos = productosOriginales;
   }
 
