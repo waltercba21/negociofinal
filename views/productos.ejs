@@ -39,9 +39,9 @@
               <option value="" selected>Selecciona un modelo...</option>
             <% } %>
             <% if (modelosPorMarca && Array.isArray(modelosPorMarca)) { %>
-              <% modelosPorMarca.forEach(function(modelo) { %>
-                <% if (!modelo || modelo.id !== modelo.id) { %>
-                  <option value="<%= modelo.id %>"><%= modelo.nombre %></option>
+              <% modelosPorMarca.forEach(function(modeloPorMarca) { %>
+                <% if (!modelo || modelo.id !== modeloPorMarca.id) { %>
+                  <option value="<%= modeloPorMarca.id %>"><%= modeloPorMarca.nombre %></option>
                 <% } %>
               <% }); %>
             <% } %>
