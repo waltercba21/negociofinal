@@ -443,38 +443,14 @@ contarPorProveedor: function(conexion, proveedor, callback) {
       }
   });
 }, 
-obtenerCategorias : function(conexion, categoriaId, pagina, callback) {
-    // Comprobar que callback es una función
-    if (typeof callback !== 'function') {
-        throw new Error('Callback debe ser una función');
-    }
-
-    const offset = (pagina - 1) * 20;
-    const consulta = `
-        SELECT productos.*, imagenes_producto.imagen 
-        FROM productos 
-        LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
-        WHERE productos.categoria_id = ?
-        LIMIT 20 OFFSET ?`;
-    conexion.query(consulta, [categoriaId, offset], (error, resultados) => {
+obtenerTodasLasCategorias: function(conexion, callback) {
+    const consulta = 'SELECT * FROM categorias';
+    conexion.query(consulta, (error, resultados) => {
         if (error) {
             callback(error);
             return;
         }
-        const productos = [];
-        const mapaProductos = {};
-        resultados.forEach(resultado => {
-            if (!mapaProductos[resultado.id]) {
-                mapaProductos[resultado.id] = {
-                    ...resultado,
-                    imagenes: resultado.imagen ? [resultado.imagen] : []
-                };
-                productos.push(mapaProductos[resultado.id]);
-            } else if (resultado.imagen) {
-                mapaProductos[resultado.id].imagenes.push(resultado.imagen);
-            }
-        });
-        callback(null, productos);
+        callback(null, resultados);
     });
 },
 obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId) {
