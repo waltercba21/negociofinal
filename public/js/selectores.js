@@ -20,7 +20,7 @@ document.getElementById('marca_id').addEventListener('change', function() {
 });
 
 window.onload = async () => {
-  const respuesta = await fetch('/productos/api/filtrar');
+  const respuesta = await fetch('/productos/api/filtrar-json');
   if (respuesta.headers.get('Content-Type').includes('application/json')) {
     productosOriginales = await respuesta.json();
   } else {

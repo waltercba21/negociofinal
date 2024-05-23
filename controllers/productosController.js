@@ -422,7 +422,7 @@ module.exports = {
             return res.status(500).send('Error: ' + error.message);
         } 
     },    
-    filtrar: async function (req, res) {
+    filtrarJson: async function (req, res) {
         const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
@@ -508,7 +508,7 @@ module.exports = {
                     producto.imagenes = todasLasImagenes.filter(imagen => imagen.producto_id.toString() === producto.id.toString());
                 }
             }
-            res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
+            res.json({ productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
         }  catch (error) {
             console.error('Error al obtener productos, categorías, marcas o modelos:', error);
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
