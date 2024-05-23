@@ -1,14 +1,14 @@
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
-  const respuesta = await fetch(`/productos/api/buscar?q=${busqueda}`);
+  const respuesta = await fetch(url);
   const productos = await respuesta.json();
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = '';
-  // Si la búsqueda está vacía, no hagas nada
-  if (!busqueda.trim()) {
-    return;
+  let url = '/productos/api/buscar';
+  if (busqueda.trim()) {
+    url += `?q=${busqueda}`;
   }
-
+  
   productos.forEach((producto, index) => {
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
