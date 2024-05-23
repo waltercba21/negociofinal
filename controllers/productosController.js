@@ -136,17 +136,31 @@ module.exports = {
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
-    buscar : function(req, res) {
-        const categoriaId = req.body.categoria_id;
-        const pagina = req.body.pagina || 1; 
-        producto.obtenerPorCategoria(conexion, categoriaId, pagina, (error, productos) => {
-            if (error) {
-                console.error('Error al buscar productos:', error);
-                res.status(500).send({ error: 'Ocurrió un error al buscar los productos.' });
-                return;
-            }
-            res.json({ productos });
-        });
+    buscar : async function(req, res) {
+        try {
+            const categoriaId = req.body.categoria_id;
+            const marcaId = req.body.marca_id;
+            const pagina = req.body.pagina || 1; 
+    
+            const [productosPorCategoria, marcas, modelosPorMarca] = await Promise.all([
+                new Promise((resolve, reject) => {
+                    producto.obtenerPorCategoria(conexion, categoriaId, pagina, (error, productos) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(productos);
+                        }
+                    });
+                }),
+                producto.obtenerMarcas(conexion),
+                producto.obtenerModelosPorMarca(conexion, marcaId)
+            ]);
+    
+            res.json({ productosPorCategoria, marcas, modelosPorMarca });
+        } catch (error) {
+            console.error('Error al buscar productos:', error);
+            res.status(500).send({ error: 'Ocurrió un error al buscar los productos.' });
+        }
     },
     detalle: function (req, res) {
         const id = req.params.id;

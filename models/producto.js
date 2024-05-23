@@ -442,7 +442,8 @@ contarPorProveedor: function(conexion, proveedor, callback) {
           callback(null, resultado);
       }
   });
-}, obtenerPorCategoria : function(conexion, categoriaId, pagina, callback) {
+}, 
+obtenerPorCategoria : function(conexion, categoriaId, pagina, callback) {
     const offset = (pagina - 1) * 20;
     const consulta = `
         SELECT productos.*, imagenes_producto.imagen 
