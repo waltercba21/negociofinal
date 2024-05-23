@@ -12,8 +12,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     url += `?q=${busqueda}`;
   }
   const respuesta = await fetch(url);
-  const data = await respuesta.json();
-  const productos = data.productos;
+  const productos = await respuesta.json();
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = '';
   
@@ -24,9 +23,10 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   productos.forEach((producto, index) => {
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
-      producto.imagenes.forEach((imagen, i) => {
+      producto.imagenes.forEach((imagenObj, i) => {
+        const imagen = imagenObj.imagen;
         imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
-      });
+    });
       imagenes = `
         <div class="cover__card">
           <div class="carousel">
@@ -53,10 +53,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
         <h3 class="nombre">${producto.nombre}</h3>
       </div>
       <hr>
-      <div class="categoria-producto">
-        <h6 class="categoria">${producto.categoria}</h6>
-      </div>
-      <hr>
       <div class="precio-producto">
         <p class="precio">${precio_venta}</p>
       </div>
@@ -67,6 +63,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   `;
   contenedorProductos.innerHTML += tarjetaProducto;
   });
+
 
   // Ahora que las tarjetas de productos se han agregado al DOM, puedes agregar los controladores de eventos a los botones del carrusel
   $(document).on('click', '.carousel__button', function() {
