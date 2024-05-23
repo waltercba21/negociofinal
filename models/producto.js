@@ -404,7 +404,7 @@ obtenerMarcas: function(conexion) {
 obtenerModelosPorMarca: function(conexion, marcaId) {
   return new Promise((resolve, reject) => {
       let query = 'SELECT * FROM modelos';
-      let params = [];
+      let params = [];  
 
       if (marcaId) {
           query += ' WHERE id_marca = ?';

@@ -40,9 +40,7 @@ router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
 router.post('/actualizarPrecio', productosController.actualizarPrecio);
-router.get('/api', productosController.lista);
 router.get('/api/buscar', productosController.buscar);
-router.get('/api/filtrar-json', productosController.filtrarJson); 
 router.get('/:id', productosController.detalle); 
 
 module.exports = router;
