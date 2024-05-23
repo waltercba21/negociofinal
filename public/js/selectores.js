@@ -19,7 +19,6 @@ document.getElementById('marca_id').addEventListener('change', function() {
       .catch(error => console.error('Error:', error));
 });
 
-let productosOriginales = [];
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/filtrar');
   productosOriginales = await respuesta.json();
