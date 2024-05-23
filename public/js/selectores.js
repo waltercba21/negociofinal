@@ -1,27 +1,28 @@
 document.getElementById('marca_id').addEventListener('change', function() {
   const marcaId = this.value;
-  console.log('Marca ID:', marcaId); // Agregado
-  fetch('/productos/modelos/' + marcaId)
-      .then(response => response.json())
-      .then(modelos => {
-          console.log('Modelos:', modelos); // Agregado
-          const modeloSelect = document.getElementById('modelo_id');
-          modeloSelect.innerHTML = '';
+  console.log('Marca ID:', marcaId);
+  fetch(`/productos/modelos/${marcaId}`, {
+    method: 'POST',
+  })
+  .then(response => response.json())
+  .then(modelos => {
+    console.log('Modelos:', modelos);
+    const modeloSelect = document.getElementById('modelo_id');
+    modeloSelect.innerHTML = '';
 
-          // Agrega la opción "Selecciona un modelo"
-          const defaultOption = document.createElement('option');
-          defaultOption.value = '';
-          defaultOption.text = 'Selecciona un modelo';
-          modeloSelect.appendChild(defaultOption);
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.text = 'Selecciona un modelo';
+    modeloSelect.appendChild(defaultOption);
 
-          modelos.forEach(modelo => {
-              const option = document.createElement('option');
-              option.value = modelo.id;
-              option.text = modelo.nombre;
-              modeloSelect.appendChild(option);
-          });
-      })
-      .catch(error => console.error('Error:', error));
+    modelos.forEach(modelo => {
+        const option = document.createElement('option');
+        option.value = modelo.id;
+        option.text = modelo.nombre;
+        modeloSelect.appendChild(option);
+    });
+  })
+  .catch(error => console.error('Error:', error));
 });
 
 const categoriaSelect = document.getElementById('categoria_id');
@@ -30,45 +31,48 @@ const modeloSelect = document.getElementById('modelo_id');
 
 marcaSelect.addEventListener('change', function() {
   const marcaId = this.value;
-  fetch('/productos/modelos/' + marcaId)
-      .then(response => response.json())
-      .then(modelos => {
-          const modeloSelect = document.getElementById('modelo_id');
-          modeloSelect.innerHTML = '';
+  fetch(`/productos/modelos/${marcaId}`, {
+    method: 'POST',
+  })
+  .then(response => response.json())
+  .then(modelos => {
+    const modeloSelect = document.getElementById('modelo_id');
+    modeloSelect.innerHTML = '';
 
-          // Agrega la opción "Selecciona un modelo"
-          const defaultOption = document.createElement('option');
-          defaultOption.value = '';
-          defaultOption.text = 'Selecciona un modelo';
-          modeloSelect.appendChild(defaultOption);
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.text = 'Selecciona un modelo';
+    modeloSelect.appendChild(defaultOption);
 
-          modelos.forEach(modelo => {
-              const option = document.createElement('option');
-              option.value = modelo.id;
-              option.text = modelo.nombre;
-              modeloSelect.appendChild(option);
-          });
-      })
-      .catch(error => console.error('Error:', error));
+    modelos.forEach(modelo => {
+        const option = document.createElement('option');
+        option.value = modelo.id;
+        option.text = modelo.nombre;
+        modeloSelect.appendChild(option);
+    });
+  })
+  .catch(error => console.error('Error:', error));
 });
+
 function actualizarProductos() {
   const categoria = categoriaSelect.value;
   const marca = marcaSelect.value;
   const modelo = modeloSelect.value;
-  console.log('Categoria:', categoria); // Agregado
-  console.log('Marca:', marca); // Agregado
-  console.log('Modelo:', modelo); // Agregado
-  // Construye la URL con los parámetros de consulta
+  console.log('Categoria:', categoria);
+  console.log('Marca:', marca);
+  console.log('Modelo:', modelo);
   let url = '/?';
-  if (categoria) url += 'categoria=' + categoria + '&';
-  if (marca) url += 'marca=' + marca + '&';
-  if (modelo) url += 'modelo=' + modelo;
+  if (categoria) url += `categoria=${categoria}&`;
+  if (marca) url += `marca=${marca}&`;
+  if (modelo) url += `modelo=${modelo}`;
 
   console.log('URL:', url); // Agregado 
-  
-  fetch(url)
-    .then(response => response.json())
-    .then(productos => {
+
+  fetch(url, {
+    method: 'POST',
+  })
+  .then(response => response.json())
+  .then(productos => {
       const contenedorProductos = document.getElementById('contenedor-productos');
       contenedorProductos.innerHTML = '';
 
