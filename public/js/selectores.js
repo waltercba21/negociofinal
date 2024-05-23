@@ -21,7 +21,11 @@ document.getElementById('marca_id').addEventListener('change', function() {
 
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/filtrar');
-  productosOriginales = await respuesta.json();
+  if (respuesta.headers.get('Content-Type').includes('application/json')) {
+    productosOriginales = await respuesta.json();
+  } else {
+    console.error('La respuesta no es un JSON válido');
+  }
 };
 document.getElementById('categoria_id').addEventListener('change', async (e) => {
   const categoria = e.target.value;
