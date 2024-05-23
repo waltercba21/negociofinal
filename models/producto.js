@@ -443,7 +443,7 @@ contarPorProveedor: function(conexion, proveedor, callback) {
       }
   });
 }, 
-obtenerTodasLasCategorias: function(conexion, callback) {
+obtenerCategorias: function(conexion, callback) {
     const consulta = 'SELECT * FROM categorias';
     conexion.query(consulta, (error, resultados) => {
         if (error) {
