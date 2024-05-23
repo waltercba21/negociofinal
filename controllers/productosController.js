@@ -137,12 +137,17 @@ module.exports = {
         }
     },
     buscar : async (req, res) => {
-        const busqueda = req.query.q;
-        const categoria_id = req.query.categoria_id;
-        const marca_id = req.query.marca_id; 
-        const modelo_id = req.query.modelo_id;
-        const productos = await producto.buscar(busqueda, categoria_id, marca_id, modelo_id); 
-        res.json(productos);
+        try {
+            const categoriaId = req.body.categoria_id;
+            if (!categoriaId) {
+                return res.status(400).send({ error: 'No se proporcionó un id de categoría.' });
+            }
+            const productos = await producto.findAll({ where: { categoria_id: categoriaId } });
+            res.render('productos', { productos });
+        } catch (error) {
+            console.error('Error al buscar productos:', error);
+            res.status(500).send({ error: 'Ocurrió un error al buscar los productos.' });
+        }
     },
     detalle: function (req, res) {
         const id = req.params.id;
