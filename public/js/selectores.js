@@ -55,7 +55,7 @@ function actualizarProductos() {
   const modelo = modeloSelect.value;
 
   // Construye la URL con los parámetros de consulta
-  let url = '/productos/?';
+  let url = '/productos';
   if (categoria) url += 'categoria=' + categoria + '&';
   if (marca) url += 'marca=' + marca + '&';
   if (modelo) url += 'modelo=' + modelo;
