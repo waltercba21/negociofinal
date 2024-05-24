@@ -469,6 +469,19 @@ background: rgba(0, 63, 125, 0.8);
   text-align: center;
   width: 100%;
 }
+.categoria-producto {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.categoria-producto h5 {
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+}
 /*----------------------LOGIN--------------------*/
 
 .body-login{
