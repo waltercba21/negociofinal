@@ -323,6 +323,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         }
     
         const [filas] = await conexion.promise().query(query, params);
+        console.log('Filas obtenidas de la base de datos:', filas);
         const productos = {};
         filas.forEach(fila => {
             if (!productos[fila.id]) {

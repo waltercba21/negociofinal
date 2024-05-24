@@ -130,7 +130,9 @@ module.exports = {
         let productos;
     
         if (busqueda) {
+            console.log('Realizando búsqueda con:', busqueda, categoria_id, marca_id, modelo_id);
             productos = await producto.buscar(conexion, busqueda, categoria_id, marca_id, modelo_id);
+            console.log('Resultados de la búsqueda:', productos);
         } else {
             productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, limite); 
         }
