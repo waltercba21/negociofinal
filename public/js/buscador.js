@@ -3,6 +3,7 @@ let productosOriginales = [];
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
+  console.log('Productos originales:', productosOriginales); // Agregar console.log aquí
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
@@ -18,11 +19,10 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   let url = '/productos/api/buscar?q=' + busqueda;
   const respuesta = await fetch(url);
   const productos = await respuesta.json();
-  console.log(productos);
-
-
+  console.log('Productos de la búsqueda:', productos); // Agregar console.log aquí
 
   productos.forEach((producto, index) => {
+    console.log('Procesando producto:', producto)
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
       producto.imagenes.forEach((imagenObj, i) => {
