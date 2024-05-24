@@ -309,7 +309,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             WHERE productos.nombre LIKE ?`;
         let params = [`%${busqueda}%`];
     
-        if (busqueda) {
+        if (busqueda && typeof busqueda.toString === 'function') {
             query += ' OR productos.id = ?';
             params.push(busqueda);
         }
