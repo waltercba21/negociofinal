@@ -308,7 +308,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             LEFT JOIN categorias ON productos.categoria_id = categorias.id`;
         let params = [];
     
-        if (busqueda) {
+        if (busqueda && typeof busqueda === 'string') {
             query += ' WHERE LOWER(productos.nombre) LIKE ?';
             params.push(`%${busqueda.toLowerCase()}%`);
         }
