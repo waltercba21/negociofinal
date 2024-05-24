@@ -122,21 +122,12 @@ module.exports = {
         }
     },
     buscar : async (req, res) => {
-        const busqueda = req.query.q;
+        const busqueda_nombre = req.query.q;
         const categoria_id = req.query.categoria_id;
         const marca_id = req.query.marca_id; 
         const modelo_id = req.query.modelo_id;
-        const limite = !busqueda ? 10 : undefined;
-        let productos;
-    
-        if (busqueda) {
-            console.log('Realizando búsqueda con:', busqueda, categoria_id, marca_id, modelo_id);
-            productos = await producto.buscar(conexion, busqueda, categoria_id, marca_id, modelo_id);
-            console.log('Resultados de la búsqueda:', productos);
-        } else {
-            productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, limite); 
-        }
-    
+        const limite = !busqueda_nombre ? 10 : undefined;
+        const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite); 
         res.json(productos); 
     },
     detalle: function (req, res) {

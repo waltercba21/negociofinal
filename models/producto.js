@@ -556,7 +556,7 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
   contarPorCategoria: function(conexion, categoria, callback) {
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 },
-obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
+obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre) {
     return new Promise((resolve, reject) => {
         let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen FROM productos';
         sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
@@ -578,6 +578,11 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
             sql += ' AND modelo_id = ?';
             parametros.push(modelo);
         }
+
+        if (busqueda_nombre) {
+            sql += ' AND productos.nombre LIKE ?';
+            parametros.push('%' + busqueda_nombre + '%');
+        }
   
         conexion.query(sql, parametros, (error, productos) => {
             if (error) {
@@ -598,7 +603,7 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo) {
             }
         });
     });
-  },
+},
   obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
   var query = "SELECT id, nombre, codigo, imagen, descripcion, precio_venta, modelo, categoria_id, marca_id, proveedor_id, modelo_id FROM productos WHERE categoria_id = ? AND marca_id = ? AND modelo_id = ?";
   conexion.query(query, [categoria, marca, modelo], function(error, resultados) {
