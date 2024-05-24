@@ -3,7 +3,7 @@ let productosOriginales = [];
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
-  console.log('Productos originales:', productosOriginales); // Agregar console.log aquí
+  console.log('Productos originales:', productosOriginales);
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {

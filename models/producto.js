@@ -309,13 +309,8 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         let params = [];
     
         if (busqueda) {
-            if (isNaN(busqueda) || busqueda.includes(".")) {
-                query += ' WHERE productos.nombre LIKE ?';
-                params.push(`%${busqueda}%`);
-            } else {
-                query += ' WHERE productos.id = ?';
-                params.push(busqueda);
-            }
+            query += ' WHERE productos.nombre LIKE ?';
+            params.push(`%${busqueda}%`);
         }
         if (categoria_id) {
             query += (params.length ? ' AND' : ' WHERE') + ' productos.categoria_id = ?';
