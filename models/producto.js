@@ -306,8 +306,8 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             FROM productos 
             LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
             LEFT JOIN categorias ON productos.categoria_id = categorias.id
-            WHERE productos.nombre LIKE ?`;
-        let params = [`%${busqueda}%`];
+            WHERE productos.nombre LIKE ? OR productos.id = ?`;
+        let params = [`%${busqueda}%`, busqueda];
     
         if (categoria_id) {
             query += ' AND productos.categoria_id = ?';
