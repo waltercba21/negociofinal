@@ -229,10 +229,10 @@ actualizarArchivo: function(conexion, datosProducto, archivo) {
 },
 obtenerUltimos: function (conexion, cantidad, funcion) {
     conexion.query(`
-      SELECT productos.*, categorias.nombre AS categoria_nombre, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes 
+      SELECT productos.*, categorias.nombre AS categoria_nombre, 
+      (SELECT imagen FROM imagenes_producto WHERE producto_id = productos.id LIMIT 1) AS imagen
       FROM productos 
       INNER JOIN categorias ON productos.categoria_id = categorias.id 
-      LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
       GROUP BY productos.id 
       ORDER BY productos.id DESC LIMIT ?`, 
       [cantidad], 
@@ -244,7 +244,7 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
         // Convertir las imágenes en un array
         const productos = rows.map(row => ({
           ...row,
-          imagenes: row.imagenes ? row.imagenes.split(',') : [],
+          imagen: row.imagen ? [row.imagen] : [],
         }));
   
         funcion(null, productos);
