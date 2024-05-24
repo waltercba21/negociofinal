@@ -394,37 +394,39 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     });
 },
 obtenerMarcas: function(conexion) {
-  return new Promise((resolve, reject) => {
-      conexion.query('SELECT * FROM marcas', function(error, resultados) {
-          if (error) {
-              console.log('Error al obtener marcas:', error);
-              reject(error);
-          } else {
-              resolve(resultados);
-          }
-      });
-  });
-},
-obtenerModelosPorMarca: function(conexion, marcaId) {
-  return new Promise((resolve, reject) => {
-      let query = 'SELECT * FROM modelos';
-      let params = [];  
-
-      if (marcaId) {
-          query += ' WHERE id_marca = ?';
-          params.push(marcaId);
-      }
-
-      conexion.query(query, params, function(error, resultados) {
-          if (error) {
-              reject(error);
-          } else {
-              console.log('Resultados de la consulta:', resultados);
-              resolve(resultados);
-          }
-      });
-  });
-},
+    return new Promise((resolve, reject) => {
+        conexion.query('SELECT * FROM marcas ORDER BY nombre ASC', function(error, resultados) {
+            if (error) {
+                console.log('Error al obtener marcas:', error);
+                reject(error);
+            } else {
+                resolve(resultados);
+            }
+        });
+    });
+  },
+  obtenerModelosPorMarca: function(conexion, marcaId) {
+    return new Promise((resolve, reject) => {
+        let query = 'SELECT * FROM modelos';
+        let params = [];  
+  
+        if (marcaId) {
+            query += ' WHERE id_marca = ?';
+            params.push(marcaId);
+        }
+  
+        query += ' ORDER BY nombre ASC';
+  
+        conexion.query(query, params, function(error, resultados) {
+            if (error) {
+                reject(error);
+            } else {
+                console.log('Resultados de la consulta:', resultados);
+                resolve(resultados);
+            }
+        });
+    });
+  },
 obtenerModeloPorId: function (conexion, id, callback) {
   console.log('id:', id); // Verificar el valor de id
   conexion.query('SELECT * FROM modelos WHERE id = ?', [id], function (error, resultados) {
@@ -446,9 +448,9 @@ contarPorProveedor: function(conexion, proveedor, callback) {
           callback(null, resultado);
       }
   });
-}, obtenerCategorias: function(conexion) {
+},obtenerCategorias: function(conexion) {
     return new Promise((resolve, reject) => {
-        let query = 'SELECT * FROM categorias';
+        let query = 'SELECT * FROM categorias ORDER BY nombre ASC';
 
         conexion.query(query, function(error, resultados) {
             if (error) {
@@ -563,7 +565,6 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre)
         sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
         sql += ' WHERE 1=1';
         const parametros = [];
-  
         if (categoria) {
             sql += ' AND categoria_id = ?';
             parametros.push(categoria);
