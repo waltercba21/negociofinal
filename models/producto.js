@@ -584,6 +584,9 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre)
             sql += ' AND productos.nombre LIKE ?';
             parametros.push('%' + busqueda_nombre + '%');
         }
+
+        // Ordenar por categoría, marca y modelo
+        sql += ' ORDER BY categorias.nombre ASC, marca_id ASC, modelo_id ASC';
   
         conexion.query(sql, parametros, (error, productos) => {
             if (error) {
