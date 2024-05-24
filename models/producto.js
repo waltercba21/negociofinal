@@ -305,24 +305,28 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
             FROM productos 
             LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
-            LEFT JOIN categorias ON productos.categoria_id = categorias.id
-            WHERE productos.nombre LIKE ?`;
-        let params = [`%${busqueda}%`];
+            LEFT JOIN categorias ON productos.categoria_id = categorias.id`;
+        let params = [];
     
         if (busqueda) {
-            query += ' OR productos.id = ?';
-            params.push(String(busqueda));
+            if (isNaN(busqueda) || busqueda.includes(".")) {
+                query += ' WHERE productos.nombre LIKE ?';
+                params.push(`%${busqueda}%`);
+            } else {
+                query += ' WHERE productos.id = ?';
+                params.push(busqueda);
+            }
         }
         if (categoria_id) {
-            query += ' AND productos.categoria_id = ?';
+            query += (params.length ? ' AND' : ' WHERE') + ' productos.categoria_id = ?';
             params.push(categoria_id);
         }
         if (marca_id) {
-            query += ' AND productos.marca_id = ?';
+            query += (params.length ? ' AND' : ' WHERE') + ' productos.marca_id = ?';
             params.push(marca_id);
         }
         if (modelo_id) {
-            query += ' AND productos.modelo_id = ?';
+            query += (params.length ? ' AND' : ' WHERE') + ' productos.modelo_id = ?';
             params.push(modelo_id);
         }
     
