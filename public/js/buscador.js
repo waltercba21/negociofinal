@@ -7,12 +7,14 @@ window.onload = async () => {
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
+  console.log(`Buscando: ${busqueda}`);
   let url = '/productos/api/buscar';
   if (busqueda.trim()) {
     url += `?q=${busqueda}`;
   }
   const respuesta = await fetch(url);
   const productos = await respuesta.json();
+  console.log(productos);
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = '';
   
