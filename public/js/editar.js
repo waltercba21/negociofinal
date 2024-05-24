@@ -5,7 +5,6 @@ $('.eliminar-imagen').click(function(event) {
         url: '/productos/eliminarImagen/' + imagenId,
         type: 'DELETE',
         success: function(result) {
-            // Actualiza la interfaz de usuario para reflejar la eliminación de la imagen
             $('div[data-imagen-id="' + imagenId + '"]').remove();
         },
         error: function(xhr, status, error) {
@@ -14,21 +13,13 @@ $('.eliminar-imagen').click(function(event) {
     });
 });
 $('#imagen').on('change', function() {
-    // Obtén los archivos seleccionados
     var archivos = Array.from(this.files);
-    // Obtén el contenedor de las imágenes miniatura
     var contenedor = $('.imagen-miniatura-contenedor');
-    // Por cada archivo seleccionado
     for (var i = 0; i < archivos.length; i++) {
-        // Crea una URL de objeto para el archivo
         var urlImagen = URL.createObjectURL(archivos[i]);
-        // Crea un nuevo div para la imagen miniatura
         var div = $('<div>');
-        // Crea la imagen miniatura
         var img = $('<img>').attr('src', urlImagen).addClass('imagen-miniatura');
-        // Añade la imagen al div
         div.append(img);
-        // Añade el div al contenedor
         contenedor.append(div);
     }   
 });
@@ -42,7 +33,6 @@ $('#marca').change(function() {
         });
     });
 });
-
 $(document).ready(function() {
     $('#descuentos_proveedor_id').val('');
     $('.proveedores').change(function() {
@@ -61,7 +51,6 @@ $(document).ready(function() {
         $(newProveedor).find('.proveedores').trigger('change');
     });
 });
-
 $(document).on('change', '.precio_lista', function() {
     console.log("Cambio en .precio_lista");
     actualizarPrecio($(this));
@@ -74,7 +63,6 @@ $('#utilidad').change(function() {
     console.log("Cambio en #utilidad");
     actualizarPrecioFinal();
 });
-
 function actualizarProveedor(proveedor) {
     var selectedOption = proveedor.find('option:selected');
     var descuento = selectedOption.data('descuento');
@@ -88,12 +76,10 @@ function actualizarProveedor(proveedor) {
     closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
     closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')'); 
 }
-
 $('.proveedores').on('change', function() {
     console.log("Cambio en .proveedores");
     actualizarProveedor($(this));
 });
-
 function actualizarPrecio(precioListaElement) {
     var precioLista = parseFloat(precioListaElement.val());
     console.log("Precio de lista: " + precioLista);
@@ -115,7 +101,6 @@ function actualizarPrecio(precioListaElement) {
     proveedorElement.find('.utilidad').trigger('change');
     proveedorElement.find('.costo_neto').trigger('change');
 }
-
 function actualizarCostoNeto(costoNetoElement) {
     var costoNeto = parseFloat(costoNetoElement.val());
     console.log("Costo neto: " + costoNeto);
@@ -125,11 +110,9 @@ function actualizarCostoNeto(costoNetoElement) {
     console.log("Costo con IVA: " + costoConIVA);
     costoNetoElement.closest('.proveedor').find('.costo_iva').val(Math.ceil(costoConIVA));
 }
-
 function getProveedorConCostoIvaMasBajo() {
     var proveedorConCostoIvaMasBajo = null;
     var costoIvaMasBajo = Infinity;
-
     $('.proveedor').each(function() {
         var costoIva = parseFloat($(this).find('.costo_iva').val());
         console.log("Costo IVA: " + costoIva);
@@ -138,7 +121,6 @@ function getProveedorConCostoIvaMasBajo() {
             proveedorConCostoIvaMasBajo = $(this);
         }
     });
-
     console.log("Proveedor con costo IVA más bajo: " + proveedorConCostoIvaMasBajo);
     return proveedorConCostoIvaMasBajo;
 }

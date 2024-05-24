@@ -323,10 +323,10 @@ module.exports = {
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
             modelo_id: req.body.modelo_id,
-            descuentos_proveedor_id: req.body.descuentos_proveedor_id [0],
-            costo_neto: req.body.costo_neto[0],
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id ,
+            costo_neto: req.body.costo_neto,
             IVA: req.body.IVA[0],
-            costo_iva: req.body.costo_iva[0],
+            costo_iva: req.body.costo_iva,
             utilidad: req.body.utilidad,
             precio_venta: req.body.precio_venta,
             estado: req.body.estado
