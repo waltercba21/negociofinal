@@ -240,8 +240,6 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
         if (err) {
           return funcion(err);
         }
-  
-        // Convertir las imágenes en un array
         const productos = rows.map(row => ({
           ...row,
           imagen: row.imagen ? [row.imagen] : [],
