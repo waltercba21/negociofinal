@@ -300,42 +300,21 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     }, 
-    buscar : async (busqueda, categoria_id, marca_id, modelo_id) => {
-        let query = `
-            SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
-            FROM productos 
-            LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
-            LEFT JOIN categorias ON productos.categoria_id = categorias.id
-            WHERE productos.nombre LIKE ?`;
-        let params = [`%${busqueda}%`];
+    buscar : async (req, res) => {
+        const busqueda = req.query.q;
+        const categoria_id = req.query.categoria_id;
+        const marca_id = req.query.marca_id; 
+        const modelo_id = req.query.modelo_id;
+        const limite = !busqueda ? 10 : undefined;
+        let productos;
     
-        if (categoria_id) {
-            query += ' AND productos.categoria_id = ?';
-            params.push(categoria_id);
-        }
-        if (marca_id) {
-            query += ' AND productos.marca_id = ?';
-            params.push(marca_id);
-        }
-        if (modelo_id) {
-            query += ' AND productos.modelo_id = ?';
-            params.push(modelo_id);
+        if (busqueda) {
+            productos = await producto.buscar(conexion, busqueda, categoria_id, marca_id, modelo_id);
+        } else {
+            productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, limite); 
         }
     
-        const [filas] = await conexion.promise().query(query, params);
-        const productos = {};
-        filas.forEach(fila => {
-            if (!productos[fila.id]) {
-                productos[fila.id] = {
-                    ...fila,
-                    imagenes: fila.imagen ? [fila.imagen] : []
-                };
-            } else if (fila.imagen) {
-                productos[fila.id].imagenes.push(fila.imagen);
-            }
-        });
-    
-        return Object.values(productos);
+        res.json(productos); 
     },
       obtenerPosicion: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
