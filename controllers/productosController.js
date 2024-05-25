@@ -619,24 +619,26 @@ obtenerModelosPorMarca: function(req, res) {
             console.log('Productos obtenidos:', productos);
 
             // Agregar encabezado de la grilla
+            var currentY = doc.y;
             doc.fontSize(12)
-                .text('Código', 50, doc.y)
-                .text('Descripción', doc.page.width / 3, doc.y)
-                .text('Precio', doc.page.width - 150, doc.y, {
+                .text('Código', 50, currentY)
+                .text('Descripción', doc.page.width / 3, currentY)
+                .text('Precio', doc.page.width - 150, currentY, {
                     align: 'right'
                 });
             doc.moveDown();
 
             productos.forEach(producto => {
                 var precioFormateado = '$' + parseFloat(producto.precio_venta).toFixed(0);
-                var currentY = doc.y;
+                currentY = doc.y;
                 if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
                     doc.addPage();
+                    currentY = doc.y;
                 }
                 doc.fontSize(10)
-                    .text(producto.codigo_proveedor, 50, doc.y) 
-                    .text(producto.nombre, doc.page.width / 3, doc.y) 
-                    .text(precioFormateado, doc.page.width - 150, doc.y, {
+                    .text(producto.codigo_proveedor, 50, currentY) 
+                    .text(producto.nombre, doc.page.width / 3, currentY) 
+                    .text(precioFormateado, doc.page.width - 150, currentY, {
                         align: 'right'
                     });
                 doc.moveDown();
