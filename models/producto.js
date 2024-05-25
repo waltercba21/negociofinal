@@ -376,7 +376,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     obtenerProductosPorProveedor: function (conexion, proveedor) {
         console.log('Proveedor:', proveedor);
         const query = `
-            SELECT productos.* 
+            SELECT productos.*, producto_proveedor.codigo AS codigo_proveedor
             FROM productos 
             INNER JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id
             WHERE producto_proveedor.proveedor_id = ?
@@ -546,7 +546,7 @@ contarProductos: function(conexion, callback) {
 obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria) {
     console.log('Proveedor:', proveedor, 'Categoría:', categoria);
     const query = `
-        SELECT productos.* 
+        SELECT productos.*, producto_proveedor.codigo AS codigo_proveedor
         FROM productos 
         INNER JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id
         WHERE producto_proveedor.proveedor_id = ? AND productos.categoria_id = ?
