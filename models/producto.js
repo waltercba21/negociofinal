@@ -533,15 +533,10 @@ contarProductos: function(conexion, callback) {
       }
   });
 },  
-obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria, callback) {
-  var query = "SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?";
-  conexion.query(query, [proveedor, categoria], function(error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados);
-      }
-  });
+obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria) {
+    const query = "SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?";
+    const queryPromise = util.promisify(conexion.query).bind(conexion);
+    return queryPromise(query, [proveedor, categoria]);
 },
   contarTodos: function (conexion, parametro, callback) {
   const query = 'SELECT COUNT(*) AS total FROM productos';
