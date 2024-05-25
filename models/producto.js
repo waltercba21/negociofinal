@@ -374,12 +374,17 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         });
     },
     obtenerProductosPorProveedor: function (conexion, proveedor) {
-        console.log('Proveedor:', proveedor); // Agregado
-        const query = 'SELECT * FROM productos WHERE proveedor_id = ?';
+        console.log('Proveedor:', proveedor);
+        const query = `
+            SELECT productos.* 
+            FROM productos 
+            INNER JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id
+            WHERE producto_proveedor.proveedor_id = ?
+        `;
         const queryPromise = util.promisify(conexion.query).bind(conexion);
         return queryPromise(query, [proveedor])
             .then(result => {
-                console.log('Resultados de obtenerProductosPorProveedor:', result); // Agregado
+                console.log('Resultados de obtenerProductosPorProveedor:', result);
                 return result;
             });
     },
@@ -539,12 +544,17 @@ contarProductos: function(conexion, callback) {
   });
 },  
 obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria) {
-    console.log('Proveedor:', proveedor, 'Categoría:', categoria); // Agregado
-    const query = "SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?";
+    console.log('Proveedor:', proveedor, 'Categoría:', categoria);
+    const query = `
+        SELECT productos.* 
+        FROM productos 
+        INNER JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id
+        WHERE producto_proveedor.proveedor_id = ? AND productos.categoria_id = ?
+    `;
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, [proveedor, categoria])
         .then(result => {
-            console.log('Resultados de obtenerProductosPorProveedorYCategoría:', result); // Agregado
+            console.log('Resultados de obtenerProductosPorProveedorYCategoría:', result);
             return result;
         });
 },
