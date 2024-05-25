@@ -595,23 +595,27 @@ obtenerModelosPorMarca: function(req, res) {
                align: 'center',
                width: doc.page.width
            });
-        const categorias = await producto.obtenerCategorias(conexion);
-        var categoria = categorias.find(c => c.id == categoriaId);
-        if (!categoria) {
-            return res.status(400).send('Categoría no encontrada');
-        }
-        var nombreCategoria = categoria.nombre;
-        doc.fontSize(16)
-           .text(nombreCategoria, 0, doc.y, {
-               align: 'center',
-               width: doc.page.width
-           });
-        doc.moveDown(2);
-        producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorId, categoriaId, function(error, productos) {
-            if (error) {
-                console.log('Error al obtener productos:', error);
-                return res.status(500).send('Error al generar el PDF');
+        if (categoriaId) {
+            const categorias = await producto.obtenerCategorias(conexion);
+            var categoria = categorias.find(c => c.id == categoriaId);
+            if (!categoria) {
+                return res.status(400).send('Categoría no encontrada');
             }
+            var nombreCategoria = categoria.nombre;
+            doc.fontSize(16)
+               .text(nombreCategoria, 0, doc.y, {
+                   align: 'center',
+                   width: doc.page.width
+               });
+            doc.moveDown(2);
+        }
+        var obtenerProductos;
+        if (categoriaId) {
+            obtenerProductos = producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorId, categoriaId);
+        } else {
+            obtenerProductos = producto.obtenerProductosPorProveedor(conexion, proveedorId);
+        }
+        obtenerProductos.then(productos => {
             productos.forEach(producto => {
                 var precioFormateado = '$' + parseFloat(producto.precio_venta).toFixed(0);
                 var currentY = doc.y;
@@ -626,6 +630,9 @@ obtenerModelosPorMarca: function(req, res) {
                 doc.moveDown();
             });
             doc.end();
+        }).catch(error => {
+            console.log('Error al obtener productos:', error);
+            return res.status(500).send('Error al generar el PDF');
         });
     } catch (error) {
         console.log('Error al obtener proveedores o categorías:', error);
