@@ -616,7 +616,8 @@ obtenerModelosPorMarca: function(req, res) {
             obtenerProductos = producto.obtenerProductosPorProveedor(conexion, proveedorId);
         }
         obtenerProductos.then(productos => {
-            productos.forEach(producto => {
+            console.log('Productos obtenidos:', productos); // Agregado
+           productos.forEach(producto => {
                 var precioFormateado = '$' + parseFloat(producto.precio_venta).toFixed(0);
                 var currentY = doc.y;
                 if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {

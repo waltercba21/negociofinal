@@ -374,10 +374,15 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         });
     },
     obtenerProductosPorProveedor: function (conexion, proveedor) {
-      const query = 'SELECT * FROM productos WHERE proveedor_id = ?';
-      const queryPromise = util.promisify(conexion.query).bind(conexion);
-      return queryPromise(query, [proveedor]);
-  },
+        console.log('Proveedor:', proveedor); // Agregado
+        const query = 'SELECT * FROM productos WHERE proveedor_id = ?';
+        const queryPromise = util.promisify(conexion.query).bind(conexion);
+        return queryPromise(query, [proveedor])
+            .then(result => {
+                console.log('Resultados de obtenerProductosPorProveedor:', result); // Agregado
+                return result;
+            });
+    },
   obtenerProveedores: function(conexion) {
     return new Promise((resolve, reject) => {
         const query = 'SELECT proveedores.id, proveedores.nombre, descuentos_proveedor.descuento FROM proveedores LEFT JOIN descuentos_proveedor ON proveedores.id = descuentos_proveedor.proveedor_id';
@@ -534,9 +539,14 @@ contarProductos: function(conexion, callback) {
   });
 },  
 obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria) {
+    console.log('Proveedor:', proveedor, 'Categoría:', categoria); // Agregado
     const query = "SELECT * FROM productos WHERE proveedor_id = ? AND categoria_id = ?";
     const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return queryPromise(query, [proveedor, categoria]);
+    return queryPromise(query, [proveedor, categoria])
+        .then(result => {
+            console.log('Resultados de obtenerProductosPorProveedorYCategoría:', result); // Agregado
+            return result;
+        });
 },
   contarTodos: function (conexion, parametro, callback) {
   const query = 'SELECT COUNT(*) AS total FROM productos';
