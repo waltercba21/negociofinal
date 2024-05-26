@@ -772,6 +772,7 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   text-align: center;
   margin-bottom: 20px;
+  font-size: 30px;
   color: #003f7d;
 }
 .contenido-crear {
@@ -798,9 +799,11 @@ background: rgba(0, 63, 125, 0.8);
   justify-content: space-between;
 }
 .form-crear > div {
-  border-right: 1px solid #000; 
+  border-right: 1px solid #d3d3d3; 
   margin-right: 10px;
   padding-right: 10px;
+  padding-top: 10px; 
+  padding-bottom: 10px; 
 }
 
 .form-crear > div:last-child {
