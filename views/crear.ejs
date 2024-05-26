@@ -31,7 +31,7 @@
                 <div class="form-group-crear">
                     <label for="categoria">Categoria</label>
                     <select id="categoria" name="categoria">
-                        <option value="" selected>Selecciona una categoría...</option>
+                        <option value="" selected>Selecciona una categoría</option>
                         <% categorias.forEach(function(categoria) { %>
                             <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
                         <% }); %>
@@ -40,7 +40,7 @@
                 <div class="form-group-crear">
                     <label for="marca">Marca:</label>
                     <select id="marca" name="marca">
-                        <option value="" selected>Selecciona una marca...</option> 
+                        <option value="" selected>Selecciona una marca</option> 
                         <% marcas.forEach(function(marca) { %>
                             <option value="<%= marca.id %>"><%= marca.nombre %></option>
                         <% }); %>
@@ -50,7 +50,7 @@
                 <div class="form-group-crear">
                     <label for="modelo_id">Modelo:</label>
                     <select id="modelo_id" name="modelo_id">
-                        <option value="" <% if (!producto || !producto.modelo_id) { %>selected<% } %>>Selecciona un modelo...</option>
+                        <option value="" <% if (!producto || !producto.modelo_id) { %>selected<% } %>>Selecciona un modelo</option>
                         <% modelos.forEach(function(modelo) { %>
                             <option value="<%= modelo.id %>" <% if (producto && producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
                         <% }); %>
