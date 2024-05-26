@@ -1,20 +1,28 @@
 document.getElementById('imagen').addEventListener('change', function(e) {
     var preview = document.getElementById('preview');
-    preview.innerHTML = '';
-    Array.from(e.target.files).forEach(function(file, index) {
-        var img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        img.height = 100;
-        img.width = 100;
-        img.classList.add('preview-img');
-        img.dataset.id = index;
-        preview.appendChild(img);
-    });
-});
+    if (preview) {
+        preview.innerHTML = '';
+        Array.from(e.target.files).forEach(function(file, index) {
+            var img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.height = 100;
+            img.width = 100;
+            img.classList.add('preview-img');
+            img.dataset.id = index;
+            preview.appendChild(img);
+        });
 
-new Sortable(preview, {
-    animation: 150,
-    draggable: '.preview-img'
+        if (Sortable) {
+            new Sortable(preview, {
+                animation: 150,
+                draggable: '.preview-img'
+            });
+        } else {
+            console.error('Sortable no está definido. Por favor, asegúrate de que la biblioteca Sortable está correctamente importada.');
+        }
+    } else {
+        console.error('El elemento con id "preview" no existe.');
+    }
 });
 $('#marca').change(function() {
     var marcaId = $(this).val();
@@ -26,7 +34,6 @@ $('#marca').change(function() {
         });
     });
 });
-
 $(document).ready(function() {
     $('#descuentos_proveedor_id').val('');
     $('.proveedores').change(function() {
