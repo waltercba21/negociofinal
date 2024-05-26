@@ -792,6 +792,15 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: row;
   justify-content: space-between;
 }
+.form-crear > div {
+  border-right: 1px solid #000; 
+  margin-right: 10px;
+  padding-right: 10px;
+}
+
+.form-crear > div:last-child {
+  border-right: none; 
+}
 
 .caracteristicas, .proveedores, .utilidades {
   display: flex;
