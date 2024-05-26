@@ -796,10 +796,10 @@ background: rgba(0, 63, 125, 0.8);
 .form-crear {
   display: flex;
   flex-direction: row;
-  justify-content: center; /* Centra los componentes horizontalmente */
-  align-items: center; /* Centra los componentes verticalmente */
-  margin: 20px; /* Agrega márgenes en todos los bordes */
-  gap: 20px; /* Agrega espacio entre los componentes */
+  justify-content: center; 
+  align-items: center;
+  margin: 30px; 
+  gap: 30px; 
 }
 .form-crear > div {
   border-right: 2px solid #d3d3d3; 
