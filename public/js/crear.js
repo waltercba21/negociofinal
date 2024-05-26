@@ -30,7 +30,7 @@ $(document).ready(function() {
     $('.proveedores').change(function() {
         var selectedOption = $(this).find('option:selected');
         var descuento = selectedOption.data('descuento');
-        $(this).closest('.proveedor').find('.descuentos_proveedor_id').val(descuento);
+        $(this).siblings('.descuentos_proveedor_id').val(descuento); 
         actualizarProveedor($(this));
     });
     $(window).on('load', function() {
