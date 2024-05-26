@@ -1,4 +1,21 @@
-//OBTENER LOS MODELOS POR MARCA 
+document.getElementById('imagen').addEventListener('change', function(e) {
+    var preview = document.getElementById('preview');
+    preview.innerHTML = '';
+    Array.from(e.target.files).forEach(function(file, index) {
+        var img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.height = 100;
+        img.width = 100;
+        img.classList.add('preview-img');
+        img.dataset.id = index;
+        preview.appendChild(img);
+    });
+});
+
+new Sortable(preview, {
+    animation: 150,
+    draggable: '.preview-img'
+});
 $('#marca').change(function() {
     var marcaId = $(this).val();
     $('#modelo_id').empty();
