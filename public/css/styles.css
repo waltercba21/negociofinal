@@ -776,6 +776,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 .contenido-crear {
   display: flex;
+  flex-direction: row;
   align-items: center;
   width: 50%
 }
