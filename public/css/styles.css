@@ -803,8 +803,6 @@ background: rgba(0, 63, 125, 0.8);
 }
 .form-crear > div {
   border-right: 2px solid #d3d3d3; 
-  margin-right: 10px;
-  padding-right: 10px;
   padding-top: 10px; 
   padding-bottom: 10px; 
 }
@@ -815,13 +813,13 @@ background: rgba(0, 63, 125, 0.8);
 
 .caracteristicas, .proveedores, .utilidades {
   display: flex;
-  flex: 1;
+  flex: 1 1 0; /* Esto asegura que todos los contenedores tengan el mismo ancho, independientemente de su contenido */
   flex-direction: column;
 }
-.proveedores {
-  margin-right: 20px;
-}
 
+.proveedores {
+  margin: 0 20px; /* Esto agrega un margen a ambos lados del contenedor de proveedores */
+}
 .form-group-crear {
   display: flex;
   flex-direction: column;
