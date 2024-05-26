@@ -11,7 +11,6 @@ document.getElementById('imagen').addEventListener('change', function(e) {
         preview.appendChild(img);
     });
 });
-
 new Sortable(preview, {
     animation: 150,
     draggable: '.preview-img'
@@ -29,6 +28,9 @@ $('#marca').change(function() {
 $(document).ready(function() {
     $('#descuentos_proveedor_id').val('');
     $('.proveedores').change(function() {
+        var selectedOption = $(this).find('option:selected');
+        var descuento = selectedOption.data('descuento');
+        $(this).closest('.proveedor').find('.descuentos_proveedor_id').val(descuento);
         actualizarProveedor($(this));
     });
     $(window).on('load', function() {
