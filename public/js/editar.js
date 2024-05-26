@@ -11,7 +11,7 @@ $('.eliminar-imagen').click(function(event) {
             console.error('Error al eliminar la imagen:', error);
         }
     });
-});
+});   
 $('#imagen').on('change', function() {
     var archivos = Array.from(this.files);
     var contenedor = $('.imagen-miniatura-contenedor');

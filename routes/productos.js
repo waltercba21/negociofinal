@@ -43,4 +43,4 @@ router.post('/actualizarPrecio', productosController.actualizarPrecio);
 router.get('/api/buscar', productosController.buscar);
 router.get('/:id', productosController.detalle); 
 
-module.exports = router;
+module.exports = router;   

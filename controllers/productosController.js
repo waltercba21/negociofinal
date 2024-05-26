@@ -533,7 +533,6 @@ actualizarPorProveedor : function(req, res) {
             console.error(err);
             res.redirect('/productos/panelControl?error=Hubo un error al actualizar los precios');
         } else {
-            // Redirige a la vista de los productos del proveedor que se acaba de actualizar
             res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedorId);
         }
     });
@@ -541,13 +540,12 @@ actualizarPorProveedor : function(req, res) {
 actualizarPrecio: function(req, res) {
     let idProducto = req.body.id;
     let nuevoPrecio = req.body.precio_venta;
-    let proveedorId = req.body.proveedor; // Asegúrate de que este valor se envía en el formulario
+    let proveedorId = req.body.proveedor; 
     producto.actualizarPrecio(idProducto, nuevoPrecio, function(err) {
         if (err) {
             console.error(err);
             res.redirect('/productos/modificarPorProveedor?error=Hubo un error al actualizar el precio');
         } else {
-            // Redirige a la vista de los productos del proveedor que se acaba de actualizar
             res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedorId);
         }
     });
@@ -637,7 +635,7 @@ productos.forEach(producto => {
     }
     doc.fontSize(10)
         .text(producto.codigo_proveedor, 50, currentY) 
-        .text(producto.nombre, doc.page.width / 4, currentY) // Cambiado a doc.page.width / 4
+        .text(producto.nombre, doc.page.width / 4, currentY) 
         .text(precioFormateado, doc.page.width - 150, currentY, {
             align: 'right'
         });
