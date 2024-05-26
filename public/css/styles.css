@@ -813,8 +813,9 @@ background: rgba(0, 63, 125, 0.8);
 
 .caracteristicas, .proveedores, .utilidades {
   display: flex;
-  flex: 1 1 0; /* Esto asegura que todos los contenedores tengan el mismo ancho, independientemente de su contenido */
+  flex: 1;
   flex-direction: column;
+  min-width: 0; /* Esto asegura que los contenedores no se hagan más angostos que su contenido */
 }
 
 .proveedores {
