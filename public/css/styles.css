@@ -793,13 +793,16 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   margin: auto; 
 }
-.form-crear{
+.form-crear {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: center; /* Centra los componentes horizontalmente */
+  align-items: center; /* Centra los componentes verticalmente */
+  margin: 20px; /* Agrega márgenes en todos los bordes */
+  gap: 20px; /* Agrega espacio entre los componentes */
 }
 .form-crear > div {
-  border-right: 1px solid #d3d3d3; 
+  border-right: 2px solid #d3d3d3; 
   margin-right: 10px;
   padding-right: 10px;
   padding-top: 10px; 
