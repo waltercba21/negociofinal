@@ -820,6 +820,8 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .form-group-crear {
+  display: flex;
+  flex-direction: column;
   margin-bottom: 10px;
 }
 
@@ -831,7 +833,7 @@ background: rgba(0, 63, 125, 0.8);
   border: none;
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   padding: 10px;
-  width: 40%; 
+  width: 100%; /* Cambiado a 100% para llenar el espacio disponible en la dirección de la columna */
 }
 .botones-crear {
   display: flex;
