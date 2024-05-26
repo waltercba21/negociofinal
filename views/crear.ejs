@@ -13,9 +13,7 @@
                 <div class="form-group-crear">
                     <label for="imagen">Imagen</label>
                     <input id="imagen" class="form-control-file" type="file" name="archivos[]" multiple>
-                    <div id="preview"></div>
                 </div>
-            </form>
                 <div class="form-group-crear">
                 <label for="nombre">Nombre:</label>   
                 <input id="nombre" class="form-control" type="text" name="nombre">
@@ -76,7 +74,7 @@
                 </div>
                 <div class="form-group-crear">
                     <label for="descuentos_proveedor_id">Descuentos Proveedor:</label>
-                    <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id" readonly>
+                    <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id" value="<%= descuentosProveedor %>" readonly>
                 </div>
                 <div class="form-group-crear">
                     <label for="costo_neto">Costo Neto:</label>

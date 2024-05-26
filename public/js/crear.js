@@ -11,7 +11,6 @@ document.getElementById('imagen').addEventListener('change', function(e) {
             img.dataset.id = index;
             preview.appendChild(img);
         });
-
         if (Sortable) {
             new Sortable(preview, {
                 animation: 150,
