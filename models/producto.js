@@ -73,15 +73,21 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
     return new Promise((resolve, reject) => {
         const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
         const idList = ids.join(',');
-        conexion.query(`DELETE FROM producto_proveedor WHERE producto_id IN (${idList})`, (error, results) => {
+        conexion.query(`DELETE FROM imagenes_producto WHERE producto_id IN (${idList})`, (error, results) => {
             if (error) {
                 reject(error);
             } else {
-                conexion.query(`DELETE FROM productos WHERE id IN (${idList})`, (error, results) => {
+                conexion.query(`DELETE FROM producto_proveedor WHERE producto_id IN (${idList})`, (error, results) => {
                     if (error) {
                         reject(error);
                     } else {
-                        resolve(results);
+                        conexion.query(`DELETE FROM productos WHERE id IN (${idList})`, (error, results) => {
+                            if (error) {
+                                reject(error);
+                            } else {
+                                resolve(results);
+                            }
+                        });
                     }
                 });
             }
