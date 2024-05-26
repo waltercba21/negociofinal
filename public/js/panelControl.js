@@ -22,7 +22,6 @@ document.getElementById('delete-selected').addEventListener('click', function() 
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Recargar la página para reflejar la eliminación de los productos
             location.reload();
         } else {
             console.error('Error al eliminar los productos:', data.error);

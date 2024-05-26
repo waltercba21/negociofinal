@@ -71,9 +71,7 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
   },
   eliminar : async (idOrIds) => {
     return new Promise((resolve, reject) => {
-        // Si se pasó un solo ID, convertirlo en una lista de un solo elemento
         const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
-        // Convertir la lista de IDs en una cadena de texto separada por comas
         const idList = ids.join(',');
         conexion.query(`DELETE FROM producto_proveedor WHERE producto_id IN (${idList})`, (error, results) => {
             if (error) {
