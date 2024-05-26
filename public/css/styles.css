@@ -760,116 +760,60 @@ background: rgba(0, 63, 125, 0.8);
 
 /*-----------------------------CREAR--------------------------*/
 
-.container-crear{
+.container-crear {
   display: flex;
   flex-direction: column;
-  margin-top: 20px;
-  margin-bottom: 30px;
-  margin-left: 25%;
-  width: 50%;
-}
-.contenido-crear{
   align-items: center;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  width: 600px;
-  margin-top: 15px;
-  margin-bottom: 50px;
-  text-align: left !important;
-  box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
-  border-radius: 10px;  
-}
-.titulo-crear{
-  text-align: center;
-  color: #1F487E;
-  font-size: 28px;
-  font-weight: bold;
-  padding: 70px 0 10 0;
-}
-.form-group-crear{
-  display: flex;
-  flex-direction: column;
-}
-.form-group-crear select {
-  margin:auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  width: 50%;
-  margin-bottom: 15px;
-  font-size: medium;
-  font-weight: bold;
-  color: #d90429;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  padding: 20px;
 }
 
-.card-body input{
-  width: 100%;
-  padding: 15px;
-  border: 1px solid #ced4da;
-  margin-bottom: 15px;
-  box-sizing: border-box;
+.titulo-crear {
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-.card-body label{
-  text-align: center;
-  color: #1F487E;
-  font-size: 16px;
+.card-body {
+  display: flex;
+  justify-content: space-between;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  padding: 20px;
+}
+
+.caracteristicas, .proveedores, .utilidades {
+  display: flex;
+  flex-direction: column;
+  width: 33%;
+}
+
+.form-group-crear {
+  margin-bottom: 10px;
+}
+
+.form-group-crear label {
   font-weight: bold;
+}
+
+.form-group-crear input, .form-group-crear select {
+  border: none;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  padding: 10px;
 }
 
 .botones-crear {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  text-align: center;
-  margin-left: 60px;
-  padding: 20px;
+  justify-content: space-between;
+  margin-top: 20px;
 }
-.botones-crear button{
-  margin-right: 80px;
-} 
-#addProveedor {
+
+.botones-crear button, .botones-crear a {
   border: none;
-  border-radius: 50%;
-  padding: 10px 15px;
-  background-color: #007BFF;
-  color: white;
-  font-size: 20px;
-  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease 0s;
-  cursor: pointer;
-  outline: none;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  padding: 10px 20px;
+  font-weight: bold;
+  text-decoration: none;
 }
-
-#addProveedor:hover {
-  background-color: #0069d9;
-  box-shadow: 0px 15px 20px rgba(46, 229, 157, 0.4);
-  color: white;
-  transform: translateY(-7px);
-}
-.eliminar-proveedor {
-  border: none;
-  border-radius: 5px;
-  padding: 10px 15px;
-  background-color: #dc3545;
-  color: white;
-  font-size: 14px;
-  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease 0s;
-  cursor: pointer;
-  outline: none;
-}
-
-.eliminar-proveedor:hover {
-  background-color: #c82333;
-  box-shadow: 0px 15px 20px rgba(220, 53, 69, 0.4);
-  color: white;
-  transform: translateY(-7px);
-}
-
-
 /*-------------------------PAGINACIÓN---------------*/
 .paginacion {
   display: flex;
@@ -975,17 +919,6 @@ background: rgba(0, 63, 125, 0.8);
 .hidden {
   display: none;
 }
-/*------ CREAR --------*/
-.form-group-crear {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 20px; 
-}
-.form-group-crear label {
-  margin-bottom: 10px; 
-}
-
 
 /*--------------PRODUCTOS--------------*/
 .contenedor-productos{
