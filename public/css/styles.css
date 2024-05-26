@@ -772,8 +772,13 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   text-align: center;
   margin-bottom: 20px;
+  color: #003f7d;
 }
-
+.contenido-crear {
+  display: flex;
+  align-items: center;
+  width: 50%
+}
 .card-body {
   display: flex;
   justify-content: space-between;
