@@ -817,7 +817,6 @@ background: rgba(0, 63, 125, 0.8);
   display: flex;
   flex: 1;
   flex-direction: column;
-  width: 33%;
 }
 .proveedores {
   margin-right: 20px;
