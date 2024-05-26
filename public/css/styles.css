@@ -795,12 +795,16 @@ background: rgba(0, 63, 125, 0.8);
 }
 .form-crear {
   display: flex;
-  flex-direction: row;
-  justify-content: center; 
-  align-items: stretch;
-  margin: 30px; 
-  gap: 30px; 
+  justify-content: space-between;
 }
+
+.caracteristicas, #proveedoresContainer, .utilidades {
+  flex: 1 1 0;
+  margin: 10px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
 .form-crear > div {
   border-right: 2px solid #d3d3d3; 
   padding-top: 10px; 
