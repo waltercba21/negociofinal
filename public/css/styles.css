@@ -777,8 +777,11 @@ background: rgba(0, 63, 125, 0.8);
 .contenido-crear {
   display: flex;
   flex-direction: row;
+  justify-content: center;
   align-items: center;
-  width: 50%
+  flex-wrap: wrap; 
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  margin: auto; 
 }
 .card-body {
   display: flex;
