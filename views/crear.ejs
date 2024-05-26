@@ -61,7 +61,7 @@
                 <div class="proveedor">
                     <div class="form-group-crear">
                         <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
-                        <select class="proveedores" name="proveedores[]" multiple>
+                        <select class="proveedores" name="proveedores[]">
                             <option selected disabled>Selecciona un proveedor</option>
                             <% proveedores.forEach(function(proveedor) { %>
                                 <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>"><%= proveedor.nombre %></option>
