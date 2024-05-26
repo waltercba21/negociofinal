@@ -264,18 +264,22 @@ module.exports = {
                 return;
             }
             productoResult = result;
+            console.log('productoResult antes de redondear:', productoResult); // Agregado
             productoResult.precio_lista = Math.round(productoResult.precio_lista);
             productoResult.costo_neto = Math.round(productoResult.costo_neto);
             productoResult.costo_iva = Math.round(productoResult.costo_iva);
             productoResult.utilidad = Math.round(productoResult.utilidad);
             productoResult.precio_venta = Math.round(productoResult.precio_venta);
+            console.log('productoResult después de redondear:', productoResult); // Agregado
     
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
+                console.log('productoProveedoresResult antes de redondear:', productoProveedoresResult); // Agregado
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
                     productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
                     productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
                 });
+                console.log('productoProveedoresResult después de redondear:', productoProveedoresResult); // Agregado
                 Promise.all([
                     producto.obtenerCategorias(conexion),
                     producto.obtenerMarcas(conexion),
@@ -283,6 +287,7 @@ module.exports = {
                     producto.obtenerModelosPorMarca(conexion, productoResult.marca),
                     producto.obtenerDescuentosProveedor(conexion)
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
+                    console.log('Datos obtenidos:', {categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult}); // Agregado
                     res.render('editar', {
                         producto: productoResult,
                         productoProveedores: productoProveedoresResult,
