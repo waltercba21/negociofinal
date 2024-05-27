@@ -819,11 +819,11 @@ background: rgba(0, 63, 125, 0.8);
   display: flex;
   flex: 1;
   flex-direction: column;
-  min-width: 0; /* Esto asegura que los contenedores no se hagan más angostos que su contenido */
+  min-width: 0; 
 }
 
 .proveedores {
-  margin: 0 20px; /* Esto agrega un margen a ambos lados del contenedor de proveedores */
+  margin: 0 20px; 
 }
 .form-group-crear {
   display: flex;
@@ -839,7 +839,8 @@ background: rgba(0, 63, 125, 0.8);
   border: none;
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   padding: 10px;
-  width: 100%; 
+  width: 100%;
+  text-align: center; 
 }
 .botones-crear {
   display: flex;
