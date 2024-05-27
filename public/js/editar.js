@@ -1,68 +1,70 @@
-document.getElementById('imagen').addEventListener('change', function(e) {
-    var preview = document.getElementById('preview');
-    if (preview) {
-        Array.from(e.target.files).forEach(function(file, index) {
-            var img = document.createElement('img');
-            img.src = URL.createObjectURL(file);
-            img.height = 100;
-            img.width = 100;
-            img.classList.add('imagen-miniatura');
-            img.dataset.id = index;
-            var div = document.createElement('div');
-            div.classList.add('preview-img');
-            div.dataset.imagenId = index;
-            div.appendChild(img);
-            div.addEventListener('dblclick', function() {
-                var imagenId = div.dataset.imagenId;
-                fetch('/eliminarImagen/' + imagenId, {
-                    method: 'DELETE'
-                }).then(function(response) {
-                    return response.json();
-                }).then(function(data) {
-                    if (data.success) {
-                        preview.removeChild(div);
-                    } else {
-                        console.error('Error al eliminar la imagen:', data.error);
-                    }
-                }).catch(function(error) {
-                    console.error('Error al hacer la solicitud:', error);
-                });
-            });
-            preview.appendChild(div);
-        });
-        if (Sortable) {
-            new Sortable(preview, {
-                animation: 150,
-                draggable: '.preview-img',
-                onEnd: function() {
-                    Array.from(preview.children).forEach(function(div, index) {
-                        div.dataset.imagenId = index;
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('imagen').addEventListener('change', function(e) {
+        var preview = document.getElementById('preview');
+        if (preview) {
+            Array.from(e.target.files).forEach(function(file, index) {
+                var img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.height = 100;
+                img.width = 100;
+                img.classList.add('imagen-miniatura');
+                img.dataset.id = index;
+                var div = document.createElement('div');
+                div.classList.add('preview-img');
+                div.dataset.imagenId = index;
+                div.appendChild(img);
+                div.addEventListener('dblclick', function() {
+                    var imagenId = div.dataset.imagenId;
+                    fetch('/eliminarImagen/' + imagenId, {
+                        method: 'DELETE'
+                    }).then(function(response) {
+                        return response.json();
+                    }).then(function(data) {
+                        if (data.success) {
+                            preview.removeChild(div);
+                        } else {
+                            console.error('Error al eliminar la imagen:', data.error);
+                        }
+                    }).catch(function(error) {
+                        console.error('Error al hacer la solicitud:', error);
                     });
-                }
+                });
+                preview.appendChild(div);
             });
-        } else {
-            console.error('Sortable no está definido. Por favor, asegúrate de que la biblioteca Sortable está correctamente importada.');
-        }
-    } else {
-        console.error('El elemento con id "preview" no existe.');
-    }
-});
-
-Array.from(document.querySelectorAll('.preview-img')).forEach(function(div) {
-    div.addEventListener('dblclick', function() {
-        var imagenId = div.dataset.imagenId;
-        fetch('/eliminarImagen/' + imagenId, {
-            method: 'DELETE'
-        }).then(function(response) {
-            return response.json();
-        }).then(function(data) {
-            if (data.success) {
-                div.parentNode.removeChild(div);
+            if (Sortable) {
+                new Sortable(preview, {
+                    animation: 150,
+                    draggable: '.preview-img',
+                    onEnd: function() {
+                        Array.from(preview.children).forEach(function(div, index) {
+                            div.dataset.imagenId = index;
+                        });
+                    }
+                });
             } else {
-                console.error('Error al eliminar la imagen:', data.error);
+                console.error('Sortable no está definido. Por favor, asegúrate de que la biblioteca Sortable está correctamente importada.');
             }
-        }).catch(function(error) {
-            console.error('Error al hacer la solicitud:', error);
+        } else {
+            console.error('El elemento con id "preview" no existe.');
+        }
+    });
+
+    Array.from(document.querySelectorAll('.preview-img')).forEach(function(div) {
+        div.addEventListener('dblclick', function() {
+            var imagenId = div.dataset.imagenId;
+            fetch('/eliminarImagen/' + imagenId, {
+                method: 'DELETE'
+            }).then(function(response) {
+                return response.json();
+            }).then(function(data) {
+                if (data.success) {
+                    div.parentNode.removeChild(div);
+                } else {
+                    console.error('Error al eliminar la imagen:', data.error);
+                }
+            }).catch(function(error) {
+                console.error('Error al hacer la solicitud:', error);
+            });
         });
     });
 });
