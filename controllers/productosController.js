@@ -188,14 +188,17 @@ module.exports = {
         });
     },
     guardar: function(req, res) {
+        console.log('Inicio de la función guardar');
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
         if (!req.files || req.files.length === 0) {
+            console.log('Error: no se cargaron archivos');
             res.status(400).send('Error: no se cargaron archivos');
             return;
         }
+        console.log('Archivos recibidos:', req.files);
         const proveedores = req.body.proveedores;
         const datosProducto = {
             nombre: req.body.nombre,
@@ -211,8 +214,10 @@ module.exports = {
             precio_venta: req.body.precio_venta,
             estado: req.body.estado
         };
+        console.log('Datos del producto:', datosProducto);
         producto.insertarProducto(conexion, datosProducto)
-        .then(result => {
+        .then(result => { 
+            console.log('Producto insertado:', result);
             const productoId = result.insertId;
             const codigos = req.body.codigo.split(',');
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
@@ -237,6 +242,7 @@ module.exports = {
             return Promise.all([...promesasProveedor, ...promesasImagenes]);
         })
         .then(() => {
+            console.log('Redireccionando a /productos/panelControl');
             res.redirect('/productos/panelControl');
         })
         .catch(error => {
