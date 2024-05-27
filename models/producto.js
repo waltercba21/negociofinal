@@ -3,12 +3,13 @@ const util = require('util');
 const path = require('path');
 
 module.exports ={
-    obtener : function(conexion, pagina, callback) {
+    obtener: function(conexion, pagina, callback) {
         const offset = (pagina - 1) * 20;
         const consulta = `
             SELECT productos.*, imagenes_producto.imagen 
             FROM productos 
             LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
+            ORDER BY productos.id DESC
             LIMIT 20 OFFSET ?`;
         conexion.query(consulta, [offset], (error, resultados) => {
             if (error) {
@@ -528,15 +529,16 @@ obtenerProductos: function(conexion, saltar, productosPorPagina, callback) {
   });
 },
 obtenerProductosPorCategoria: function(conexion, categoriaId, callback) {
-  var query = "SELECT * FROM productos WHERE categoria_id = ?";
-  conexion.query(query, [categoriaId], function(error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados);
-      }
-  });
+    var query = "SELECT * FROM productos WHERE categoria_id = ? ORDER BY id DESC";
+    conexion.query(query, [categoriaId], function(error, resultados) {
+        if (error) {
+            callback(error, null);
+        } else {
+            callback(null, resultados);
+        }
+    });
 },
+
 contarProductos: function(conexion, callback) {
   var query = "SELECT COUNT(*) as total FROM productos";
   conexion.query(query, function(error, resultado) {
@@ -586,25 +588,24 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre)
             sql += ' AND categoria_id = ?';
             parametros.push(categoria);
         }
-  
+
         if (marca) {
             sql += ' AND marca_id = ?';
             parametros.push(marca);
         }
-  
+
         if (modelo) {
             sql += ' AND modelo_id = ?';
             parametros.push(modelo);
         }
-
         if (busqueda_nombre) {
             sql += ' AND productos.nombre LIKE ?';
             parametros.push('%' + busqueda_nombre + '%');
         }
 
-        // Ordenar por categoría, marca y modelo
-        sql += ' ORDER BY categorias.nombre ASC, marca_id ASC, modelo_id ASC';
-  
+        // Ordenar por id en orden descendente
+        sql += ' ORDER BY productos.id DESC';
+
         conexion.query(sql, parametros, (error, productos) => {
             if (error) {
                 reject(error);
