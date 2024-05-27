@@ -20,7 +20,6 @@
                             <% producto.imagenes.forEach((imagen, index) => { %>
                                 <div data-imagen-id="<%= imagen.id %>" class="preview-img">
                                     <img class="imagen-miniatura" src="<%= imagen.imagen %>" alt="Imagen del producto">
-                                    <button class="eliminar-imagen" onclick="this.parentNode.remove()">X</button>
                                 </div>
                             <% }); %>
                         </div>
