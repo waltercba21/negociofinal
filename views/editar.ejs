@@ -4,14 +4,13 @@
 <body>
     <main>
 <div class="container-crear"> 
-    <div class="contenido-crear">
-
-        <div class="titulo-crear">
+    <div class="titulo-crear">
         Editar Producto
         </div>
-
+    <div class="contenido-crear">
         <div class="card-body">
-            <form method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
+            <form class="form-crear" method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
+               <div class="caracteristicas">
                 <input type="hidden" name="id" value="<%= producto.id %>">
                 <div class="form-group-crear">
                     <label for="imagen">Imagen</label>
@@ -66,6 +65,7 @@
                         <% }); %>
                     </select>
                 </div>
+            </div>
                 <div id="proveedoresContainer">
                     <% productoProveedores.forEach(function(productoProveedor) { %>
                         <div class="proveedor">
@@ -109,6 +109,7 @@
                 </div>
                     <button id="addProveedor">+</button>
                 </div> 
+                <div class="utilidades">
                 <div class="form-group-crear">
                     <label for="utilidad">Utilidad:</label>
                     <input id="utilidad" class="form-control" type="number" name="utilidad" value="<%= producto ? producto.utilidad : '' %>">
@@ -133,6 +134,7 @@
                     <button class="btn btn-success" type="submit">Guardar</button>
                     <a class='btn btn-primary'href="/productos">Cancelar</a>
                 </div>
+            </div>
             </form>
     </div>
     </div>
