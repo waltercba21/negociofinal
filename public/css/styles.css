@@ -855,6 +855,31 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   text-decoration: none;
 }
+#proveedoresContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#addProveedor {
+  background-color: green;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+  transition-duration: 0.4s;
+}
+
+#addProveedor:hover {
+  background-color: lightgreen;
+  color: black;
+}
 /*-------------------------PAGINACIÓN---------------*/
 .paginacion {
   display: flex;
