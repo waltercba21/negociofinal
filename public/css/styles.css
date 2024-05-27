@@ -833,6 +833,7 @@ background: rgba(0, 63, 125, 0.8);
 
 .form-group-crear label {
   font-weight: bold;
+  color: #1F487E;
 }
 
 .form-group-crear input, .form-group-crear select {
@@ -840,6 +841,7 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   padding: 10px;
   width: 100%;
+  height: auto;
   text-align: center; 
 }
 .botones-crear {
@@ -1147,7 +1149,7 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 20px;
   text-align: center;
   color: #0056b3;
-  font-size: 24px; /* Adjust this value to make the font larger */
+  font-size: 24px; 
 }.saludo {
   margin-top: 20px;
   color: #0056b3;
@@ -1155,7 +1157,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .saludo h1 {
-  font-size: 2em; /* Adjust this value to make the font larger */
+  font-size: 2em; 
 }
 
 .user-card form {
@@ -1468,8 +1470,6 @@ background: rgba(0, 63, 125, 0.8);
   color: #495057;
   font-weight: bold;
 }
-
-/* Estilos para los select e inputs */
 #filterForm select, #filterForm input[type="date"] {
   grid-column: 2;
   padding: 10px;
