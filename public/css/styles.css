@@ -367,6 +367,7 @@ background: rgba(0, 63, 125, 0.8);
 
 } 
 .pelicula {
+  position: relative;
   width: 100%;
   height: 30vh;
   background-color: #000; 
