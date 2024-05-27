@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function agregarEventoDblclick(div) {
         div.addEventListener('dblclick', function() {
             var imagenId = div.dataset.imagenId;
-            fetch('/eliminarImagen/' + imagenId, {
+            fetch('/productos/eliminarImagen/' + imagenId, {
                 method: 'DELETE'
             }).then(function(response) {
                 return response.json();
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 img.classList.add('imagen-miniatura');
                 var div = document.createElement('div');
                 div.classList.add('preview-img');
-                div.dataset.imagenId = img.src; // Use the image URL as the unique identifier
+                div.dataset.imagenId = img.src; 
                 div.appendChild(img);
                 agregarEventoDblclick(div);
                 preview.appendChild(div);
