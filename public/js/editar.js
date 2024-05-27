@@ -1,4 +1,23 @@
 document.addEventListener('DOMContentLoaded', function() {
+    function agregarEventoDblclick(div) {
+        div.addEventListener('dblclick', function() {
+            var imagenId = div.dataset.imagenId;
+            fetch('/eliminarImagen/' + imagenId, {
+                method: 'DELETE'
+            }).then(function(response) {
+                return response.json();
+            }).then(function(data) {
+                if (data.success) {
+                    div.parentNode.removeChild(div);
+                } else {
+                    console.error('Error al eliminar la imagen:', data.error);
+                }
+            }).catch(function(error) {
+                console.error('Error al hacer la solicitud:', error);
+            });
+        });
+    }
+
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
         if (preview) {
@@ -13,22 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 div.classList.add('preview-img');
                 div.dataset.imagenId = index;
                 div.appendChild(img);
-                div.addEventListener('dblclick', function() {
-                    var imagenId = div.dataset.imagenId;
-                    fetch('/eliminarImagen/' + imagenId, {
-                        method: 'DELETE'
-                    }).then(function(response) {
-                        return response.json();
-                    }).then(function(data) {
-                        if (data.success) {
-                            preview.removeChild(div);
-                        } else {
-                            console.error('Error al eliminar la imagen:', data.error);
-                        }
-                    }).catch(function(error) {
-                        console.error('Error al hacer la solicitud:', error);
-                    });
-                });
+                agregarEventoDblclick(div);
                 preview.appendChild(div);
             });
             if (Sortable) {
@@ -49,24 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    Array.from(document.querySelectorAll('.preview-img')).forEach(function(div) {
-        div.addEventListener('dblclick', function() {
-            var imagenId = div.dataset.imagenId;
-            fetch('/eliminarImagen/' + imagenId, {
-                method: 'DELETE'
-            }).then(function(response) {
-                return response.json();
-            }).then(function(data) {
-                if (data.success) {
-                    div.parentNode.removeChild(div);
-                } else {
-                    console.error('Error al eliminar la imagen:', data.error);
-                }
-            }).catch(function(error) {
-                console.error('Error al hacer la solicitud:', error);
-            });
-        });
-    });
+    Array.from(document.querySelectorAll('.preview-img')).forEach(agregarEventoDblclick);
 });
 $('#marca').change(function() {
     var marcaId = $(this).val();
