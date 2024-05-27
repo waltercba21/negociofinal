@@ -8,18 +8,10 @@ document.getElementById('imagen').addEventListener('change', function(e) {
             img.width = 100;
             img.classList.add('preview-img');
             img.dataset.id = index;
-            var div = document.createElement('div');
-            div.classList.add('preview-img');
-            div.dataset.id = index;
-            div.appendChild(img);
-            var button = document.createElement('button');
-            button.textContent = 'X';
-            button.classList.add('eliminar-imagen');
-            button.addEventListener('click', function() {
-                div.remove();
+            img.addEventListener('dblclick', function() {
+                preview.removeChild(img);
             });
-            div.appendChild(button);
-            preview.appendChild(div);
+            preview.appendChild(img);
         });
         if (Sortable) {
             new Sortable(preview, {
