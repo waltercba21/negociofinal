@@ -21,16 +21,15 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
         if (preview) {
-            Array.from(e.target.files).forEach(function(file, index) {
+            Array.from(e.target.files).forEach(function(file) {
                 var img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
                 img.height = 100;
                 img.width = 100;
                 img.classList.add('imagen-miniatura');
-                img.dataset.id = index;
                 var div = document.createElement('div');
                 div.classList.add('preview-img');
-                div.dataset.imagenId = index;
+                div.dataset.imagenId = img.src; // Use the image URL as the unique identifier
                 div.appendChild(img);
                 agregarEventoDblclick(div);
                 preview.appendChild(div);
