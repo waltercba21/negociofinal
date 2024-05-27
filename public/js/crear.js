@@ -9,6 +9,9 @@ document.getElementById('imagen').addEventListener('change', function(e) {
             img.width = 100;
             img.classList.add('preview-img');
             img.dataset.id = index;
+            img.addEventListener('click', function() {
+                preview.removeChild(img);
+            });
             preview.appendChild(img);
         });
         if (Sortable) {
