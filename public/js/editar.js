@@ -1,27 +1,37 @@
-$('.eliminar-imagen').click(function(event) {
-    event.preventDefault();
-    var imagenId = $(this).parent().data('imagen-id');
-    $.ajax({
-        url: '/productos/eliminarImagen/' + imagenId,
-        type: 'DELETE',
-        success: function(result) {
-            $('div[data-imagen-id="' + imagenId + '"]').remove();
-        },
-        error: function(xhr, status, error) {
-            console.error('Error al eliminar la imagen:', error);
+document.getElementById('imagen').addEventListener('change', function(e) {
+    var preview = document.getElementById('preview');
+    if (preview) {
+        Array.from(e.target.files).forEach(function(file, index) {
+            var img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.height = 100;
+            img.width = 100;
+            img.classList.add('preview-img');
+            img.dataset.id = index;
+            var div = document.createElement('div');
+            div.classList.add('preview-img');
+            div.dataset.id = index;
+            div.appendChild(img);
+            var button = document.createElement('button');
+            button.textContent = 'X';
+            button.classList.add('eliminar-imagen');
+            button.addEventListener('click', function() {
+                div.remove();
+            });
+            div.appendChild(button);
+            preview.appendChild(div);
+        });
+        if (Sortable) {
+            new Sortable(preview, {
+                animation: 150,
+                draggable: '.preview-img'
+            });
+        } else {
+            console.error('Sortable no está definido. Por favor, asegúrate de que la biblioteca Sortable está correctamente importada.');
         }
-    });
-});   
-$('#imagen').on('change', function() {
-    var archivos = Array.from(this.files);
-    var contenedor = $('.imagen-miniatura-contenedor');
-    for (var i = 0; i < archivos.length; i++) {
-        var urlImagen = URL.createObjectURL(archivos[i]);
-        var div = $('<div>');
-        var img = $('<img>').attr('src', urlImagen).addClass('imagen-miniatura');
-        div.append(img);
-        contenedor.append(div);
-    }   
+    } else {
+        console.error('El elemento con id "preview" no existe.');
+    }
 });
 $('#marca').change(function() {
     var marcaId = $(this).val();
