@@ -10,17 +10,35 @@ document.getElementById('imagen').addEventListener('change', function(e) {
             img.dataset.id = index;
             var div = document.createElement('div');
             div.classList.add('preview-img');
-            div.dataset.id = index;
+            div.dataset.imagenId = index;
             div.appendChild(img);
             div.addEventListener('dblclick', function() {
-                preview.removeChild(div);
+                var imagenId = div.dataset.imagenId;
+                fetch('/eliminarImagen/' + imagenId, {
+                    method: 'DELETE'
+                }).then(function(response) {
+                    return response.json();
+                }).then(function(data) {
+                    if (data.success) {
+                        preview.removeChild(div);
+                    } else {
+                        console.error('Error al eliminar la imagen:', data.error);
+                    }
+                }).catch(function(error) {
+                    console.error('Error al hacer la solicitud:', error);
+                });
             });
             preview.appendChild(div);
         });
         if (Sortable) {
             new Sortable(preview, {
                 animation: 150,
-                draggable: '.preview-img'
+                draggable: '.preview-img',
+                onEnd: function() {
+                    Array.from(preview.children).forEach(function(div, index) {
+                        div.dataset.imagenId = index;
+                    });
+                }
             });
         } else {
             console.error('Sortable no está definido. Por favor, asegúrate de que la biblioteca Sortable está correctamente importada.');
@@ -30,10 +48,22 @@ document.getElementById('imagen').addEventListener('change', function(e) {
     }
 });
 
-// Agregar evento de doble clic a las imágenes existentes
 Array.from(document.querySelectorAll('.preview-img')).forEach(function(div) {
     div.addEventListener('dblclick', function() {
-        div.parentNode.removeChild(div);
+        var imagenId = div.dataset.imagenId;
+        fetch('/eliminarImagen/' + imagenId, {
+            method: 'DELETE'
+        }).then(function(response) {
+            return response.json();
+        }).then(function(data) {
+            if (data.success) {
+                div.parentNode.removeChild(div);
+            } else {
+                console.error('Error al eliminar la imagen:', data.error);
+            }
+        }).catch(function(error) {
+            console.error('Error al hacer la solicitud:', error);
+        });
     });
 });
 $('#marca').change(function() {

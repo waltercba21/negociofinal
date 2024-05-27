@@ -747,14 +747,14 @@ insertarImagenProducto: function(conexion, datosImagen) {
 },
 eliminarImagen : function(id) {
     return new Promise((resolve, reject) => {
-        console.log('Eliminar imagen llamado con id:', id); // Imprime el id con el que se llamó la función
+        console.log('Eliminar imagen llamado con id:', id); 
         const sql = 'DELETE FROM imagenes_producto WHERE id = ?';
         conexion.query(sql, [id], function(err, results) {
             if (err) {
-                console.log('Error al ejecutar la consulta SQL:', err); // Imprime el error si hay uno
+                console.log('Error al ejecutar la consulta SQL:', err); 
                 return reject(err);
             }
-            console.log('Resultados de la consulta SQL:', results); // Imprime los resultados de la consulta SQL
+            console.log('Resultados de la consulta SQL:', results); 
             resolve(results);
         });
     });

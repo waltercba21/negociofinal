@@ -17,7 +17,12 @@ document.getElementById('imagen').addEventListener('change', function(e) {
         if (Sortable) {
             new Sortable(preview, {
                 animation: 150,
-                draggable: '.preview-img'
+                draggable: '.preview-img',
+                onEnd: function() {
+                    Array.from(preview.children).forEach(function(img, index) {
+                        img.dataset.id = index;
+                    });
+                }
             });
         } else {
             console.error('Sortable no está definido. Por favor, asegúrate de que la biblioteca Sortable está correctamente importada.');
