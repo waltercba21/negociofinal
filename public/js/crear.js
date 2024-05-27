@@ -48,7 +48,6 @@ $(document).ready(function() {
         $(newProveedor).find('input:not(.IVA)').val('');
         $(newProveedor).find('select').prop('selectedIndex', 0);
         $(newProveedor).find('.nombre_proveedor').text('');
-        // Disparar el evento change en el selector de proveedores
         $(newProveedor).find('.proveedores').trigger('change');
     });
 });
@@ -102,7 +101,6 @@ function actualizarCostoNeto(costoNetoElement) {
 function getProveedorConCostoIvaMasBajo() {
     var proveedorConCostoIvaMasBajo = null;
     var costoIvaMasBajo = Infinity;
-
     $('.proveedor').each(function() {
         var costoIva = parseFloat($(this).find('.costo_iva').val());
         if (costoIva < costoIvaMasBajo) {
@@ -110,7 +108,6 @@ function getProveedorConCostoIvaMasBajo() {
             proveedorConCostoIvaMasBajo = $(this);
         }
     });
-
     return proveedorConCostoIvaMasBajo;
 }
 function actualizarPrecioFinal() {
@@ -124,30 +121,18 @@ function actualizarPrecioFinal() {
 $('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
 
 function actualizarProveedorAsignado() {
-    // Obtén todos los elementos del DOM que contienen los costos con IVA
     var costosConIva = document.querySelectorAll('.costo_iva');
-
-    // Inicializa una variable para almacenar el costo más bajo y el proveedor correspondiente
     var costoMasBajo = Infinity;
     var proveedorMasBarato = null;
-
-    // Itera sobre los elementos del costo con IVA
     costosConIva.forEach(function(costoConIva) {
-        // Obtén el costo actual y el proveedor correspondiente
         var costoActual = parseFloat(costoConIva.value);
         var proveedorActual = costoConIva.parentElement.parentElement.querySelector('.nombre_proveedor').textContent;
-
-        // Si el costo actual es más bajo, actualiza el costo más bajo y el proveedor correspondiente
         if (costoActual < costoMasBajo) {
             costoMasBajo = costoActual;
             proveedorMasBarato = proveedorActual;
         }
     });
-
-    // Renderiza el nombre del proveedor con el costo más bajo en el div deseado
     var divProveedorAsignado = document.querySelector('#proveedorAsignado');
     divProveedorAsignado.textContent =  proveedorMasBarato;
 }
-
-// Llama a actualizarProveedorAsignado después de cada cambio que pueda afectar el costo con IVA
 $('.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad').on('change', actualizarProveedorAsignado);

@@ -10,10 +10,12 @@
     <div class="contenido-crear">
         <div class="card-body">
             <form class="form-crear"  method="POST" action="/productos" enctype="multipart/form-data">
-            <div class="caracteristicas">
-                <div class="form-group-crear">
-                    <label for="imagen">Imagen</label>
-                    <input id="imagen" class="form-control-file" type="file" name="archivos[]" multiple>
+                <div class="caracteristicas">
+                    <div class="form-group-crear">
+                        <label for="imagen">Imagen</label>
+                        <input id="imagen" class="form-control-file" type="file" name="archivos[]" multiple>
+                    </div>
+                    <div id="preview"></div>
                 </div>
                 <div class="form-group-crear">
                 <label for="nombre">Nombre:</label>   
