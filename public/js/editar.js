@@ -6,12 +6,16 @@ document.getElementById('imagen').addEventListener('change', function(e) {
             img.src = URL.createObjectURL(file);
             img.height = 100;
             img.width = 100;
-            img.classList.add('preview-img');
+            img.classList.add('imagen-miniatura');
             img.dataset.id = index;
-            img.addEventListener('dblclick', function() {
-                preview.removeChild(img);
+            var div = document.createElement('div');
+            div.classList.add('preview-img');
+            div.dataset.id = index;
+            div.appendChild(img);
+            div.addEventListener('dblclick', function() {
+                preview.removeChild(div);
             });
-            preview.appendChild(img);
+            preview.appendChild(div);
         });
         if (Sortable) {
             new Sortable(preview, {
@@ -24,6 +28,13 @@ document.getElementById('imagen').addEventListener('change', function(e) {
     } else {
         console.error('El elemento con id "preview" no existe.');
     }
+});
+
+// Agregar evento de doble clic a las imágenes existentes
+Array.from(document.querySelectorAll('.preview-img')).forEach(function(div) {
+    div.addEventListener('dblclick', function() {
+        div.parentNode.removeChild(div);
+    });
 });
 $('#marca').change(function() {
     var marcaId = $(this).val();
