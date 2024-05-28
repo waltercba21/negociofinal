@@ -1122,10 +1122,31 @@ background: rgba(0, 63, 125, 0.8);
 /*---------------PANEL DE CONTROL ---------------*/
 .table-light thead th {
   color: #1F487E;
-}.paginacion .active {
-  background-color: #1F487E;
-  color: #fff; 
+}
+.paginacion {
+  border: none;
+  background-color: #003f7d;
   font-weight: bold;
+  border-radius: 10px; /* Agrega bordes redondeados al contenedor */
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.2); /* Agrega sombreado para un efecto 3D */
+  color: #fff; /* Cambia el color de la letra a blanco */
+}
+
+.paginacion a {
+  color: #fff; /* Cambia el color de la letra de los enlaces a blanco */
+  text-decoration: none; /* Elimina el subrayado de los enlaces */
+}
+
+.paginacion .active {
+  background-color: #1F487E;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 10px; /* Agrega bordes redondeados al número de página activo */
+}
+
+.paginacion a:hover {
+  background-color: #1F487E; /* Cambia el color de fondo al pasar el mouse */
+  border-radius: 10px; /* Agrega bordes redondeados al pasar el mouse */
 }
 /*---------------PROFILE---------------*/
 .user-card {
