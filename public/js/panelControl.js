@@ -31,3 +31,5 @@ document.getElementById('delete-selected').addEventListener('click', function() 
         console.error('Error:', error);
     });
 });
+let editUrl = `editar.ejs?paginaActual=${paginaActual}`;
+window.location.href = editUrl;

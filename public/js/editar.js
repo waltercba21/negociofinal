@@ -166,3 +166,7 @@ function actualizarProveedorAsignado() {
     divProveedorAsignado.textContent =  proveedorMasBarato;
 }
 $('.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad').on('change', actualizarProveedorAsignado);
+
+let urlParams = new URLSearchParams(window.location.search);
+let paginaActual = urlParams.get('paginaActual');
+window.location.href = `panelControl.ejs?pagina=${paginaActual}`;
