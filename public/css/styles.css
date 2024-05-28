@@ -1126,27 +1126,28 @@ background: rgba(0, 63, 125, 0.8);
 .paginacion {
   border: none;
   font-weight: bold;
-  color: #fff; /* Cambia el color de la letra a blanco */
+  color: #fff; 
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.5); 
 }
 
 .paginacion a, .paginacion .active {
   background-color: #003f7d;
-  border-radius: 10px; /* Agrega bordes redondeados a los botones */
-  box-shadow: 0px 5px 15px rgba(0,0,0,0.2); /* Agrega sombreado para un efecto 3D */
-  color: #fff; /* Cambia el color de la letra de los enlaces a blanco */
-  text-decoration: none; /* Elimina el subrayado de los enlaces */
-  padding: 5px 10px; /* Agrega un poco de espacio alrededor del texto */
-  margin: 5px; /* Agrega un poco de espacio entre los botones */
-  display: inline-block; /* Permite agregar padding y margin */
+  border-radius: 10px; 
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.5); 
+  color: #fff; 
+  text-decoration: none; 
+  padding: 5px 10px; 
+  margin: 5px; 
+  display: inline-block; 
 }
 
 .paginacion .active {
-  background-color: #1F487E;
+  background-color: #b80220;
   font-weight: bold;
 }
 
 .paginacion a:hover {
-  background-color: #1F487E; /* Cambia el color de fondo al pasar el mouse */
+  background-color: #b80220;
 }
 /*---------------PROFILE---------------*/
 .user-card {
