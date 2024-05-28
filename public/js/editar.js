@@ -85,11 +85,14 @@ $(document).ready(function() {
 $(document).on('change', '.precio_lista', function() {
     actualizarPrecio($(this));
 });
-$('#costo_neto').change(function() {
+$(document).on('change', '#costo_neto', function() {
     actualizarCostoNeto($(this));
 });
-$('#utilidad').change(function() {
+$(document).on('change', '#utilidad', function() {
     actualizarPrecioFinal();
+});
+$(document).on('change', '.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad', function() {
+    actualizarProveedorAsignado();
 });
 function actualizarProveedor(proveedor) {
     var selectedOption = proveedor.find('option:selected');
@@ -105,7 +108,6 @@ function actualizarProveedor(proveedor) {
     closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')'); 
 }
 $('.proveedores').on('change', function() {
-    console.log("Cambio en .proveedores");
     actualizarProveedor($(this));
 });
 function actualizarPrecio(precioListaElement) {
