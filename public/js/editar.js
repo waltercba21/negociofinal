@@ -83,15 +83,12 @@ $(document).ready(function() {
     });
 });
 $(document).on('change', '.precio_lista', function() {
-    console.log("Cambio en .precio_lista");
     actualizarPrecio($(this));
 });
 $('#costo_neto').change(function() {
-    console.log("Cambio en #costo_neto");
     actualizarCostoNeto($(this));
 });
 $('#utilidad').change(function() {
-    console.log("Cambio en #utilidad");
     actualizarPrecioFinal();
 });
 function actualizarProveedor(proveedor) {
@@ -124,8 +121,6 @@ function actualizarPrecio(precioListaElement) {
     var costoNeto = precioLista - (precioLista * descuento / 100); 
     var costoNetoElement = proveedorElement.find('.costo_neto');
     actualizarCostoNeto(costoNetoElement); 
-    proveedorElement.find('.utilidad').trigger('change');
-    proveedorElement.find('.costo_neto').trigger('change');
     actualizarPrecioFinal();
 }
 function actualizarCostoNeto(costoNetoElement) {
