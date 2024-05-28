@@ -41,29 +41,24 @@
       <% if (paginaActual > 1) { %>
           <a href="?pagina=<%= paginaActual - 1 %>">&laquo;</a>
       <% } %>
-  
-      <% if (paginaActual > 3) { %>
-          <a href="?pagina=1">1</a>
-          <span>...</span>
-      <% } %>
-  
-      <% for(let i = Math.max(1, paginaActual - 2); i <= Math.min(paginaActual + 2, numeroDePaginas); i++) { %>
+    
+      <% for(let i = 1; i <= Math.min(10, numeroDePaginas); i++) { %>
           <% if (paginaActual === i) { %>
               <span class="active"><%= i %></span>
           <% } else { %>
               <a href="?pagina=<%= i %>"><%= i %></a>
           <% } %>
       <% } %>
-  
+    
       <% if (paginaActual < numeroDePaginas - 2) { %>
           <span>...</span>
           <a href="?pagina=<%= numeroDePaginas %>"><%= numeroDePaginas %></a>
       <% } %>
-  
+    
       <% if (paginaActual < numeroDePaginas) { %>
           <a href="?pagina=<%= paginaActual + 1 %>">&raquo;</a>
       <% } %>
-  </div>
+    </div>
     
 <table class="table table-light">
 <thead class="thead-light">
