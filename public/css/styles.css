@@ -1126,8 +1126,6 @@ background: rgba(0, 63, 125, 0.8);
 .paginacion {
   border: none;
   font-weight: bold;
-  color: #fff; 
-  box-shadow: 0px 5px 15px rgba(0,0,0,0.5); 
 }
 
 .paginacion a, .paginacion .active {
@@ -1144,10 +1142,14 @@ background: rgba(0, 63, 125, 0.8);
 .paginacion .active {
   background-color: #b80220;
   font-weight: bold;
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
 }
 
 .paginacion a:hover {
   background-color: #b80220;
+  border: none;
+  color: #fff;
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
 }
 /*---------------PROFILE---------------*/
 .user-card {
