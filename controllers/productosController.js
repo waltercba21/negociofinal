@@ -378,7 +378,7 @@ module.exports = {
         .then(posicion => {
             const productosPorPagina = 10;
             const pagina = Math.ceil(posicion / productosPorPagina);
-            res.redirect('/productos/panelControl?pagina=' + pagina); 
+            res.redirect('/productos/panelControl?pagina=' + datosProducto.paginaActual);
         })
         .catch(error => {
             console.error('Error:', error); 
