@@ -332,7 +332,8 @@ module.exports = {
             costo_iva: req.body.costo_iva,
             utilidad: req.body.utilidad,
             precio_venta: req.body.precio_venta,
-            estado: req.body.estado
+            estado: req.body.estado,
+            paginaActual: req.body.paginaActual
         };
         producto.actualizar(conexion, datosProducto)
         .then(() => {
