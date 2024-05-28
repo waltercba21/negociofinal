@@ -112,15 +112,15 @@ $('.proveedores').on('change', function() {
     actualizarProveedor($(this));
 });
 function actualizarPrecio(precioListaElement) {
-    var precioLista = parseFloat(precioListaElement.val());
+    var precioLista = parseFloat(precioListaElement.val().replace(',', '.'));
     var proveedorElement = precioListaElement.closest('.proveedor');
-    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val());
+    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val().replace(',', '.'));
     if (isNaN(descuento)) {
-        descuento = parseFloat(proveedorElement.find('.proveedores option:selected').data('descuento'));
+        descuento = parseFloat(proveedorElement.find('.proveedores option:selected').data('descuento').replace(',', '.'));
         console.log("Descuento (después de verificar si es NaN): " + descuento);
     }
     var costo = precioLista - (precioLista * descuento / 100);
-    precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(costo); 
+    precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2).replace('.', ',')); 
     var costoNeto = precioLista - (precioLista * descuento / 100); 
     var costoNetoElement = proveedorElement.find('.costo_neto');
     actualizarCostoNeto(costoNetoElement); 
