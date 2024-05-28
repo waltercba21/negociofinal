@@ -1123,7 +1123,9 @@ background: rgba(0, 63, 125, 0.8);
 .table-light thead th {
   color: #1F487E;
 }.paginacion .active {
-  color: #ff0000; 
+  background-color: #1F487E;
+  color: #fff; 
+  font-weight: bold;
 }
 /*---------------PROFILE---------------*/
 .user-card {
