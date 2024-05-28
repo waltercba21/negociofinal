@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
         if (preview) {
@@ -82,61 +81,58 @@ $(document).ready(function() {
         $(newProveedor).find('.proveedores').trigger('change');
     });
 });
+
 $(document).on('change', '.precio_lista', function() {
     actualizarPrecio($(this));
 });
-$(document).on('change', '#costo_neto', function() {
+$('#costo_neto').change(function() {
     actualizarCostoNeto($(this));
 });
-$(document).on('change', '#utilidad', function() {
+$('#utilidad').change(function() {
     actualizarPrecioFinal();
-});
-$(document).on('change', '.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad', function() {
-    actualizarProveedorAsignado();
 });
 function actualizarProveedor(proveedor) {
     var selectedOption = proveedor.find('option:selected');
     var descuento = selectedOption.data('descuento');
-    console.log("Descuento: " + descuento);
     var nombreProveedor = selectedOption.text();
-    console.log("Nombre del proveedor: " + nombreProveedor);
-    var closestFormGroup = proveedor.closest('.proveedor'); 
+    var closestFormGroup = proveedor.closest('.proveedor'); // Cambiado aquí
     closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
-    closestFormGroup.find('.descuentos_proveedor_id').val(descuento); 
-    closestFormGroup.find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
-    closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
-    closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')'); 
+    closestFormGroup.find('.descuentos_proveedor_id').val(descuento); // Cambiado aquí
+    closestFormGroup.find('label[for="codigo"]').text('Código (' + nombreProveedor + ')'); // Cambiado aquí
+    closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')'); // Cambiado aquí
+    closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')'); // Cambiado aquí
 }
 $('.proveedores').on('change', function() {
     actualizarProveedor($(this));
 });
+
 function actualizarPrecio(precioListaElement) {
-    var precioLista = parseFloat(precioListaElement.val().replace(/,/g, '.'));
+    var precioLista = parseFloat(precioListaElement.val());
     var proveedorElement = precioListaElement.closest('.proveedor');
-    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val().replace(/,/g, '.'));
+    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id[data-proveedor="' + proveedorElement.val() + '"]').val());
     if (isNaN(descuento)) {
-        descuento = parseFloat(proveedorElement.find('.proveedores option:selected').data('descuento').replace(/,/g, '.'));
-        console.log("Descuento (después de verificar si es NaN): " + descuento);
+        descuento = parseFloat(proveedorElement.find('.proveedores option:selected').data('descuento'));
     }
     var costo = precioLista - (precioLista * descuento / 100);
-    precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(costo.toFixed(2).replace('.', ',')); 
+    precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(Math.ceil(costo)); 
     var costoNeto = precioLista - (precioLista * descuento / 100); 
     var costoNetoElement = proveedorElement.find('.costo_neto');
+    costoNetoElement.val(Math.ceil(costoNeto)); 
     actualizarCostoNeto(costoNetoElement); 
-    actualizarPrecioFinal();
+    proveedorElement.find('.utilidad').trigger('change');
+    proveedorElement.find('.costo_neto').trigger('change');
 }
 function actualizarCostoNeto(costoNetoElement) {
-    var costoNeto = parseFloat(costoNetoElement.val().replace(/,/g, '.'));
+    var costoNeto = parseFloat(costoNetoElement.val());
     var IVA = parseFloat(costoNetoElement.closest('.proveedor').find('.IVA').val());
     var costoConIVA = costoNeto + (costoNeto * IVA / 100);
     costoNetoElement.closest('.proveedor').find('.costo_iva').val(Math.ceil(costoConIVA));
-    actualizarPrecioFinal();
 }
 function getProveedorConCostoIvaMasBajo() {
     var proveedorConCostoIvaMasBajo = null;
     var costoIvaMasBajo = Infinity;
     $('.proveedor').each(function() {
-        var costoIva = parseFloat($(this).find('.costo_iva').val().replace(/,/g, '.'));
+        var costoIva = parseFloat($(this).find('.costo_iva').val());
         if (costoIva < costoIvaMasBajo) {
             costoIvaMasBajo = costoIva;
             proveedorConCostoIvaMasBajo = $(this);
@@ -146,20 +142,20 @@ function getProveedorConCostoIvaMasBajo() {
 }
 function actualizarPrecioFinal() {
     var proveedor = getProveedorConCostoIvaMasBajo();
-    if (proveedor) {
-        var costoConIVA = parseFloat(proveedor.find('.costo_iva').val().replace(/,/g, '.'));
-        var utilidad = parseFloat($('#utilidad').val().replace(/,/g, '.'));
-        var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
-        precioFinal = Math.ceil(precioFinal / 10) * 10; 
-        $('#precio_venta').val(precioFinal);
-    }
+    var costoConIVA = parseFloat(proveedor.find('.costo_iva').val());
+    var utilidad = parseFloat($('#utilidad').val());
+    var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
+    precioFinal = Math.ceil(precioFinal / 10) * 10; 
+    $('#precio_venta').val(precioFinal);
 }
+$('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
+
 function actualizarProveedorAsignado() {
     var costosConIva = document.querySelectorAll('.costo_iva');
     var costoMasBajo = Infinity;
     var proveedorMasBarato = null;
     costosConIva.forEach(function(costoConIva) {
-        var costoActual = parseFloat(costoConIva.value.replace(',', '.'));
+        var costoActual = parseFloat(costoConIva.value);
         var proveedorActual = costoConIva.parentElement.parentElement.querySelector('.nombre_proveedor').textContent;
         if (costoActual < costoMasBajo) {
             costoMasBajo = costoActual;
