@@ -270,22 +270,22 @@ module.exports = {
                 return;
             }
             productoResult = result;
-            console.log('productoResult antes de redondear:', productoResult); // Agregado
+            console.log('productoResult antes de redondear:', productoResult); 
             productoResult.precio_lista = Math.round(productoResult.precio_lista);
             productoResult.costo_neto = Math.round(productoResult.costo_neto);
             productoResult.costo_iva = Math.round(productoResult.costo_iva);
             productoResult.utilidad = Math.round(productoResult.utilidad);
             productoResult.precio_venta = Math.round(productoResult.precio_venta);
-            console.log('productoResult después de redondear:', productoResult); // Agregado
+            console.log('productoResult después de redondear:', productoResult); 
     
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
-                console.log('productoProveedoresResult antes de redondear:', productoProveedoresResult); // Agregado
+                console.log('productoProveedoresResult antes de redondear:', productoProveedoresResult); 
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
                     productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
                     productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
                 });
-                console.log('productoProveedoresResult después de redondear:', productoProveedoresResult); // Agregado
+                console.log('productoProveedoresResult después de redondear:', productoProveedoresResult); 
                 Promise.all([
                     producto.obtenerCategorias(conexion),
                     producto.obtenerMarcas(conexion),

@@ -120,7 +120,7 @@ function actualizarPrecio(precioListaElement) {
         console.log("Descuento (después de verificar si es NaN): " + descuento);
     }
     var costo = precioLista - (precioLista * descuento / 100);
-    precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(Math.ceil(costo)); 
+    precioListaElement.closest('.form-group-crear').nextAll().find('.costo').val(costo); 
     var costoNeto = precioLista - (precioLista * descuento / 100); 
     var costoNetoElement = proveedorElement.find('.costo_neto');
     actualizarCostoNeto(costoNetoElement); 
