@@ -275,6 +275,7 @@ module.exports = {
             productoResult.costo_iva = Math.round(productoResult.costo_iva);
             productoResult.utilidad = Math.round(productoResult.utilidad);
             productoResult.precio_venta = Math.round(productoResult.precio_venta);
+            productoResult.paginaActual = req.query.pagina; // Aquí es donde debes añadir la página actual
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
@@ -366,7 +367,6 @@ module.exports = {
                     costo_iva: proveedor.costo_iva, 
                     precio_venta: proveedor.precio_venta
                 };
-                console.log('datosProductoProveedor:', datosProductoProveedor);
                 return producto.actualizarProductoProveedor(conexion, datosProductoProveedor);
             });
             return Promise.all(promesasProveedor);
@@ -377,7 +377,7 @@ module.exports = {
         .then(posicion => {
             const productosPorPagina = 10;
             const pagina = Math.ceil(posicion / productosPorPagina);
-            res.redirect('/productos/panelControl?pagina=' + pagina);
+            res.redirect('/productos/panelControl?pagina=' + datosProducto.paginaActual);
         })
         .catch(error => {
             console.error('Error:', error); 

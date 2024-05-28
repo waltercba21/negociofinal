@@ -167,6 +167,3 @@ function actualizarProveedorAsignado() {
 }
 $('.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad').on('change', actualizarProveedorAsignado);
 
-
-let paginaActual = req.query.paginaActual;
-res.redirect(`panelControl?pagina=${paginaActual}`);

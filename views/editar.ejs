@@ -8,6 +8,7 @@
         Editar Producto
         </div>
     <div class="contenido-crear">
+        <input type="hidden" name="paginaActual" value="<%= producto.paginaActual %>">
         <div class="card-body">
             <form class="form-crear" method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
                <div class="caracteristicas">
