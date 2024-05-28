@@ -109,11 +109,11 @@ $('.proveedores').on('change', function() {
     actualizarProveedor($(this));
 });
 function actualizarPrecio(precioListaElement) {
-    var precioLista = parseFloat(precioListaElement.val().replace(',', '.'));
+    var precioLista = parseFloat(precioListaElement.val().replace(/,/g, '.'));
     var proveedorElement = precioListaElement.closest('.proveedor');
-    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val().replace(',', '.'));
+    var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val().replace(/,/g, '.'));
     if (isNaN(descuento)) {
-        descuento = parseFloat(proveedorElement.find('.proveedores option:selected').data('descuento').replace(',', '.'));
+        descuento = parseFloat(proveedorElement.find('.proveedores option:selected').data('descuento').replace(/,/g, '.'));
         console.log("Descuento (después de verificar si es NaN): " + descuento);
     }
     var costo = precioLista - (precioLista * descuento / 100);
@@ -124,7 +124,7 @@ function actualizarPrecio(precioListaElement) {
     actualizarPrecioFinal();
 }
 function actualizarCostoNeto(costoNetoElement) {
-    var costoNeto = parseFloat(costoNetoElement.val().replace(',', '.'));
+    var costoNeto = parseFloat(costoNetoElement.val().replace(/,/g, '.'));
     var IVA = parseFloat(costoNetoElement.closest('.proveedor').find('.IVA').val());
     var costoConIVA = costoNeto + (costoNeto * IVA / 100);
     costoNetoElement.closest('.proveedor').find('.costo_iva').val(Math.ceil(costoConIVA));
@@ -134,7 +134,7 @@ function getProveedorConCostoIvaMasBajo() {
     var proveedorConCostoIvaMasBajo = null;
     var costoIvaMasBajo = Infinity;
     $('.proveedor').each(function() {
-        var costoIva = parseFloat($(this).find('.costo_iva').val().replace(',', '.'));
+        var costoIva = parseFloat($(this).find('.costo_iva').val().replace(/,/g, '.'));
         if (costoIva < costoIvaMasBajo) {
             costoIvaMasBajo = costoIva;
             proveedorConCostoIvaMasBajo = $(this);
@@ -145,8 +145,8 @@ function getProveedorConCostoIvaMasBajo() {
 function actualizarPrecioFinal() {
     var proveedor = getProveedorConCostoIvaMasBajo();
     if (proveedor) {
-        var costoConIVA = parseFloat(proveedor.find('.costo_iva').val().replace(',', '.'));
-        var utilidad = parseFloat($('#utilidad').val().replace(',', '.'));
+        var costoConIVA = parseFloat(proveedor.find('.costo_iva').val().replace(/,/g, '.'));
+        var utilidad = parseFloat($('#utilidad').val().replace(/,/g, '.'));
         var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
         precioFinal = Math.ceil(precioFinal / 10) * 10; 
         $('#precio_venta').val(precioFinal);
