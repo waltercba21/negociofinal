@@ -46,9 +46,6 @@ $(document).ready(function() {
     $('.proveedores').change(function() {
         actualizarProveedor($(this));
     });
-    $(window).on('load', function() {
-        $('.proveedores').first().trigger('change');
-    });
     $('#addProveedor').click(function(e) {
         e.preventDefault();
         var newProveedor = $('.proveedor').first().clone(true);
