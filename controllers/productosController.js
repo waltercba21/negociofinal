@@ -173,6 +173,9 @@ module.exports = {
             });
             preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
             descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
+            // Aquí es donde actualizamos el stock
+            return producto.actualizarStock(conexion, req.body.id, req.body.stock_minimo, req.body.stock_actual);
+        }).then(() => {
             res.render('crear', {
                 categorias: categorias,
                 marcas: marcas,
@@ -212,7 +215,9 @@ module.exports = {
             costo_iva: req.body.costo_iva,
             utilidad: req.body.utilidad,
             precio_venta: req.body.precio_venta,
-            estado: req.body.estado
+            estado: req.body.estado,
+            stock_minimo: req.body.stock_minimo, // Agregado
+            stock_actual: req.body.stock_actual  // Agregado
         };
         console.log('Datos del producto:', datosProducto);
         producto.insertarProducto(conexion, datosProducto)
@@ -275,7 +280,7 @@ module.exports = {
             productoResult.costo_iva = Math.round(productoResult.costo_iva);
             productoResult.utilidad = Math.round(productoResult.utilidad);
             productoResult.precio_venta = Math.round(productoResult.precio_venta);
-            productoResult.paginaActual = req.query.pagina; // Aquí es donde debes añadir la página actual
+            productoResult.paginaActual = req.query.pagina;
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
@@ -287,8 +292,9 @@ module.exports = {
                     producto.obtenerMarcas(conexion),
                     producto.obtenerProveedores(conexion),
                     producto.obtenerModelosPorMarca(conexion, productoResult.marca),
-                    producto.obtenerDescuentosProveedor(conexion)
-                ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult]) => {
+                    producto.obtenerDescuentosProveedor(conexion),
+                    producto.obtenerStock(conexion, req.params.id) // Añadir la obtención de datos de stock
+                ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult, stockResult]) => {
                     res.render('editar', {
                         producto: productoResult,
                         productoProveedores: productoProveedoresResult,
@@ -296,7 +302,8 @@ module.exports = {
                         marcas: marcasResult,
                         proveedores: proveedoresResult,
                         modelos: modelosResult,
-                        descuentosProveedor: descuentosProveedoresResult
+                        descuentosProveedor: descuentosProveedoresResult,
+                        stock: stockResult // Añadir stock a la vista
                     });
                 }).catch(error => {
                     if (!responseSent) {
@@ -333,7 +340,8 @@ module.exports = {
             utilidad: req.body.utilidad,
             precio_venta: req.body.precio_venta,
             estado: req.body.estado,
-            paginaActual: req.body.paginaActual
+            paginaActual: req.body.paginaActual,
+            stock: req.body.stock // Añadir stock a los datos del producto
         };
         producto.actualizar(conexion, datosProducto)
         .then(() => {
@@ -371,6 +379,9 @@ module.exports = {
                 return producto.actualizarProductoProveedor(conexion, datosProductoProveedor);
             });
             return Promise.all(promesasProveedor);
+        })
+        .then(() => {
+            return producto.actualizarStock(conexion, datosProducto); // Actualizar el stock
         })
         .then(() => {
             return producto.obtenerPosicion(conexion, datosProducto.id);

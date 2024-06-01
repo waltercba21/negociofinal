@@ -117,6 +117,14 @@
                         <option value="inactivo">Inactivo</option>
                     </select>
                 </div>
+                <div class="form-group-crear">  
+                    <label for="stock_minimo">Stock Mínimo:</label>
+                    <input type="number" id="stock_minimo" class="form-control" name="stock_minimo" min="0" required>
+                </div>
+                <div class="form-group-crear">  
+                    <label for="stock_actual">Stock Actual:</label>
+                    <input type="number" id="stock_actual" class="form-control" name="stock_actual" min="0" required>
+                </div>
                 <div class="botones-crear">
                 <button class="btn btn-success" type="submit">Guardar</button>
                 <a class='btn btn-primary'href="/productos">Cancelar</a>

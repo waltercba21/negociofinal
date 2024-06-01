@@ -344,6 +344,42 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     
         return Object.values(productos);
     },
+    actualizarStock: function(conexion, idProducto, stockMinimo, stockActual) {
+        return new Promise((resolve, reject) => {
+            const sql = 'UPDATE productos SET stock_minimo = ?, stock_actual = ? WHERE id = ?';
+            conexion.query(sql, [stockMinimo, stockActual, idProducto], (error, results) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            });
+        });
+    },
+    obtenerStock: function(conexion, productoId) {
+        return new Promise((resolve, reject) => {
+            const query = 'SELECT cantidad FROM stock WHERE producto_id = ?';
+            conexion.query(query, [productoId], (error, results) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(results[0].cantidad);
+                }
+            });
+        });
+    },
+    actualizarStock: function(conexion, datosProducto) {
+        return new Promise((resolve, reject) => {
+            const query = 'UPDATE stock SET cantidad = ? WHERE producto_id = ?';
+            conexion.query(query, [datosProducto.stock, datosProducto.id], (error, results) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    },
       obtenerPosicion: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
             const consulta = 'SELECT COUNT(*) AS posicion FROM productos WHERE id <= ? ORDER BY id';
