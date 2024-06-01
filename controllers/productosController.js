@@ -303,17 +303,17 @@ module.exports = {
                     });
                 }).catch(error => {
                     if (!responseSent) {
-                        res.status(500).send("Error al obtener los datos");
+                        res.status(500).send("Error al obtener los datos: " + error.message);
                     }
                 });
             }).catch(error => {
                 if (!responseSent) {
-                    res.status(500).send("Error al obtener los datos de producto_proveedor");
+                    res.status(500).send("Error al obtener los datos de producto_proveedor: " + error.message);
                 }
             });
         }).catch(error => {
             if (!responseSent) {
-                res.status(500).send("Error al obtener los datos");
+                res.status(500).send("Error al obtener los datos del producto: " + error.message);
             }
         });
     },
