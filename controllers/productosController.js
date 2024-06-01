@@ -173,8 +173,7 @@ module.exports = {
             });
             preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
             descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
-            // Aquí es donde actualizamos el stock
-            return producto.actualizarStock(conexion, req.body.id, req.body.stock_minimo, req.body.stock_actual);
+            // No necesitamos actualizar el stock aquí
         }).then(() => {
             res.render('crear', {
                 categorias: categorias,
@@ -191,7 +190,6 @@ module.exports = {
         });
     },
     guardar: function(req, res) {
-        console.log('Inicio de la función guardar');
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
@@ -201,7 +199,6 @@ module.exports = {
             res.status(400).send('Error: no se cargaron archivos');
             return;
         }
-        console.log('Archivos recibidos:', req.files);
         const proveedores = req.body.proveedores;
         const datosProducto = {
             nombre: req.body.nombre,
@@ -216,10 +213,9 @@ module.exports = {
             utilidad: req.body.utilidad,
             precio_venta: req.body.precio_venta,
             estado: req.body.estado,
-            stock_minimo: req.body.stock_minimo, // Agregado
-            stock_actual: req.body.stock_actual  // Agregado
+            stock_minimo: req.body.stock_minimo, 
+            stock_actual: req.body.stock_actual  
         };
-        console.log('Datos del producto:', datosProducto);
         producto.insertarProducto(conexion, datosProducto)
         .then(result => { 
             console.log('Producto insertado:', result);
