@@ -718,17 +718,21 @@ generarStockPDF: async function (req, res) {
                     currentY = doc.y;
                 }
                 doc.fontSize(8)
-    .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90})
-    .text(producto.nombre, 170, currentY + 10, {width: 200, continued: true}) 
-    .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 450, currentY + 10, {width: 110, align: 'left'})
-    .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 460, currentY + 10, {width: 110, align: 'right'}); 
-    doc.moveTo(160, currentY)
-    .lineTo(160, currentY + 30)
-    .moveTo(460, currentY)
-    .lineTo(460, currentY + 30)
-    .moveTo(515, currentY)
-    .lineTo(515, currentY + 30)
-    .stroke();
+                    .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90});
+            
+                let nombreProducto = doc.text(producto.nombre, 170, currentY + 10, {width: 200});
+                let height = nombreProducto.heightOfString(producto.nombre, {width: 200});
+            
+                doc.text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 470, currentY + 10 + height, {width: 40, align: 'center'})
+                    .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 520, currentY + 10 + height, {width: 40, align: 'center'}); 
+            
+                doc.moveTo(160, currentY)
+                    .lineTo(160, currentY + 30)
+                    .moveTo(460, currentY)
+                    .lineTo(460, currentY + 30)
+                    .moveTo(515, currentY)
+                    .lineTo(515, currentY + 30)
+                    .stroke();
                 doc.moveTo(70, currentY + 30)
                    .lineTo(570, currentY + 30)
                    .stroke();
