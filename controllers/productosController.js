@@ -708,8 +708,8 @@ getProductosPorCategoria : async (req, res) => {
                 doc.fontSize(10)
                    .text(producto.codigo_proveedor, 50, currentY) 
                    .text(producto.nombre, doc.page.width / 4, currentY) 
-                   .text(producto.stock_minimo.toString(), doc.page.width / 2, currentY)
-                   .text(producto.stock_actual.toString(), doc.page.width - 150, currentY, {
+                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', doc.page.width / 2, currentY)
+                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', doc.page.width - 150, currentY, {
                        align: 'right'
                    });
                 doc.moveDown();
