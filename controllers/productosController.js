@@ -717,17 +717,15 @@ generarStockPDF: async function (req, res) {
                     doc.addPage();
                     currentY = doc.y;
                 }
-                doc.fontSize(8);
-            
+                doc.fontSize(6);
                 let codigoProveedor = producto.codigo_proveedor;
-                if (codigoProveedor.length > 10) { // Ajusta este valor según tus necesidades
-                    codigoProveedor = codigoProveedor.substring(0, 10) + '...'; // Trunca y añade puntos suspensivos
+                if (codigoProveedor.length > 10) { 
+                    codigoProveedor = codigoProveedor.substring(0, 10) + '...';
                 }
-                doc.text(codigoProveedor, 70, currentY + 10, {align: 'center', width: 90});
-            
+                doc.text(codigoProveedor, 70, currentY + 10, {align: 'left', width: 90});
                 let nombreProducto = producto.nombre;
-                if (nombreProducto.length > 30) { // Ajusta este valor según tus necesidades
-                    nombreProducto = nombreProducto.substring(0, 30) + '...'; // Trunca y añade puntos suspensivos
+                if (nombreProducto.length > 30) { 
+                    nombreProducto = nombreProducto.substring(0, 30) + '...'; 
                 }
                 doc.text(nombreProducto, 170, currentY + 10, {width: 200});
             
