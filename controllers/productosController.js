@@ -754,4 +754,8 @@ generarStockPDF: async function (req, res) {
         res.send(pdfData);
     });
 },
+presupuestoMostrador:function(req, res) {
+    res.render('presupuestoMostrador');
+  },
+
 }

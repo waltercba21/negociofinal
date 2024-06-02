@@ -1,0 +1,25 @@
+
+<%- include ./layouts/head.ejs %>
+<%- include ./layouts/header.ejs %>
+<body>
+   <main>
+      <div id="invoice">
+         <h2>Factura</h2>
+         <div id="invoice-details">
+            <p>Nombre del cliente: <span id="customer-name"></span></p>
+            <p>Fecha: <span id="invoice-date"></span></p>
+            <p>Número de factura: <span id="invoice-number"></span></p>
+         </div>
+         <div id="product-search">
+            <input type="text" id="product-search-input" placeholder="Buscar producto...">
+         </div>
+         <div id="invoice-items">
+            <!-- Aquí se agregarán los productos de la factura -->
+         </div>
+         <div id="invoice-total">
+            <p>Total: <span id="total-amount"></span></p>
+         </div>
+      </div>
+   </main>
+   <%- include ./layouts/footer.ejs %>
+</body>
