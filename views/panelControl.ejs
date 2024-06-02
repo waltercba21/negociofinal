@@ -57,7 +57,7 @@
           <a href="?pagina=<%= paginaActual - 1 %>">&laquo;</a>
       <% } %>
   
-      <% if (paginaActual > 25) { %>
+      <% if (paginaActual > 15) { %>
           <a href="?pagina=1">1</a>
           <span>...</span>
       <% } %>
@@ -70,7 +70,7 @@
           <% } %>
       <% } %>
   
-      <% if (paginaActual < numeroDePaginas - 24) { %>
+      <% if (paginaActual < numeroDePaginas) { %>
           <span>...</span>
           <a href="?pagina=<%= numeroDePaginas %>"><%= numeroDePaginas %></a>
       <% } %>
