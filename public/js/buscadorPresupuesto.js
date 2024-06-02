@@ -15,6 +15,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       const celdaPrecio = fila.insertCell(2);
       celdaCodigo.textContent = producto.codigo;
       celdaDescripcion.textContent = producto.descripcion;
-      celdaPrecio.textContent = producto.precio;
+      celdaPrecio.textContent = producto.precio_venta;
     });
   });
