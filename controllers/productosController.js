@@ -664,7 +664,7 @@ getProductosPorCategoria : async (req, res) => {
       }
     });
   },
-  generarStockPDF: async function (req, res) {
+generarStockPDF: async function (req, res) {
     var doc = new PDFDocument;
     var buffer = new streamBuffers.WritableStreamBuffer({
         initialSize: (1024 * 1024),   
@@ -691,14 +691,14 @@ getProductosPorCategoria : async (req, res) => {
         obtenerProductos.then(productos => {
             console.log('Productos obtenidos:', productos);
             var currentY = doc.y;
-            doc.fontSize(10)
+            doc.fontSize(8)
             .fillColor('blue')
             .text('Código', 70, currentY + 10, {align: 'center', width: 90})
-            .text('Descripción', 170, currentY + 10, {align: 'center', width: 290}) 
+            .text('Descripción', 170, currentY + 10, {align: 'center', width: 250})
+            .text('Stock', 430, currentY + 10, {align: 'center', width: 40}) 
+            .text('Mínimo', 430, currentY + 20, {align: 'center', width: 40}) 
             .text('Stock', 480, currentY + 10, {align: 'center', width: 40}) 
-            .text('Mínimo', 480, currentY + 20, {align: 'center', width: 40}) 
-            .text('Stock', 510, currentY + 10, {align: 'center', width: 40}) 
-            .text('Actual', 510, currentY + 20, {align: 'center', width: 40})
+            .text('Actual', 480, currentY + 20, {align: 'center', width: 40}) 
             .fillColor('black');
             doc.moveTo(160, currentY)
                .lineTo(160, currentY + 40)
@@ -719,10 +719,10 @@ getProductosPorCategoria : async (req, res) => {
                 }
                 doc.fontSize(10)
                 .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90})
-                .text(producto.nombre, 170, currentY + 10, {width: 400, continued: true})
-                .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 400, currentY + 10, {width: 45, align: 'center'}) 
-                .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 380, currentY + 10, {width: 45, align: 'center'}); 
-                doc.moveTo(160, currentY)
+                .text(producto.nombre, 170, currentY + 10, {width: 250, continued: true}) // Ajusta el ancho de la descripción
+                .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 430, currentY + 10, {width: 45, align: 'center'}) // Ajusta la posición de 'Stock Mínimo'
+                .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 480, currentY + 10, {width: 45, align: 'center'}); // Ajusta la posición de 'Stock Actual'
+                   doc.moveTo(160, currentY)
                    .lineTo(160, currentY + 30)
                    .moveTo(460, currentY)
                    .lineTo(460, currentY + 30)
