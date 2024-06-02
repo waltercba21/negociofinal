@@ -150,15 +150,12 @@ module.exports = {
         let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento;
         producto.obtenerCategorias(conexion).then(result => {
             categorias = result;
-            // Obtén las marcas
             return producto.obtenerMarcas(conexion);
         }).then(result => {
             marcas = result;
-            // Obtén los modelos
             return producto.obtenerModelosPorMarca(conexion);
         }).then(result => {
             modelos = result;
-            // Obtén los proveedores y sus descuentos
             return Promise.all([
                 producto.obtenerProveedores(conexion),
                 producto.obtenerDescuentosProveedor(conexion)
@@ -173,7 +170,6 @@ module.exports = {
             });
             preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
             descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
-            // No necesitamos actualizar el stock aquí
         }).then(() => {
             res.render('crear', {
                 categorias: categorias,
@@ -195,7 +191,6 @@ module.exports = {
             return;
         }
         if (!req.files || req.files.length === 0) {
-            console.log('Error: no se cargaron archivos');
             res.status(400).send('Error: no se cargaron archivos');
             return;
         }
@@ -218,7 +213,6 @@ module.exports = {
         };
         producto.insertarProducto(conexion, datosProducto)
         .then(result => { 
-            console.log('Producto insertado:', result);
             const productoId = result.insertId;
             const codigos = req.body.codigo.split(',');
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
@@ -243,11 +237,9 @@ module.exports = {
             return Promise.all([...promesasProveedor, ...promesasImagenes]);
         })
         .then(() => {
-            console.log('Redireccionando a /productos/panelControl');
             res.redirect('/productos/panelControl');
         })
         .catch(error => {
-            console.error('Error:', error); 
             res.status(500).send('Error: ' + error.message);
         });
     },
@@ -257,7 +249,6 @@ module.exports = {
             await producto.eliminar(ids);
             res.json({ success: true });
         } catch (error) {
-            console.error(error);
             res.status(500).json({ success: false, error: error.message });
         }
     },
@@ -299,7 +290,7 @@ module.exports = {
                         proveedores: proveedoresResult,
                         modelos: modelosResult,
                         descuentosProveedor: descuentosProveedoresResult,
-                        stock: stockResult // Añadir stock a la vista
+                        stock: stockResult 
                     });
                 }).catch(error => {
                     if (!responseSent) {
@@ -318,7 +309,6 @@ module.exports = {
         });
     },
     actualizar: function(req, res) {
-        console.log(req.body)
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
@@ -389,7 +379,6 @@ module.exports = {
             res.redirect('/productos/panelControl?pagina=' + datosProducto.paginaActual);
         })
         .catch(error => {
-            console.error('Error:', error); 
             res.status(500).send('Error: ' + error.message);
         });
     },
@@ -626,17 +615,14 @@ obtenerModelosPorMarca: function(req, res) {
         }
         obtenerProductos.then(productos => {
             console.log('Productos obtenidos:', productos);
-
-            // Agregar encabezado de la grilla
             var currentY = doc.y;
-doc.fontSize(12)
+    doc.fontSize(12)
     .text('Código', 50, currentY)
     .text('Descripción', doc.page.width / 4, currentY) 
     .text('Precio', doc.page.width - 150, currentY, {
         align: 'right'
     });
 doc.moveDown();
-
 productos.forEach(producto => {
     var precioFormateado = '$' + parseFloat(producto.precio_venta).toFixed(0);
     currentY = doc.y;
@@ -678,5 +664,70 @@ getProductosPorCategoria : async (req, res) => {
       }
     });
   },
-
+  generarStockPDF: async function (req, res) {
+    var doc = new PDFDocument;
+    var buffer = new streamBuffers.WritableStreamBuffer({
+        initialSize: (1024 * 1024),   
+        incrementAmount: (1024 * 1024) 
+    });
+    doc.pipe(buffer);
+    const proveedorId = req.query.proveedor; 
+    if (!proveedorId) {
+        return res.status(400).send('No se ha proporcionado un ID de proveedor');
+    }
+    try {
+        const proveedores = await producto.obtenerProveedores(conexion);
+        var proveedor = proveedores.find(p => p.id == proveedorId);
+        if (!proveedor) {
+            return res.status(400).send('Proveedor no encontrado');
+        }
+        var nombreProveedor = proveedor.nombre;
+        doc.fontSize(20)
+           .text(nombreProveedor, 0, 50, {
+               align: 'center',
+               width: doc.page.width
+           });
+        var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
+        obtenerProductos.then(productos => {
+            console.log('Productos obtenidos:', productos);
+            var currentY = doc.y;
+            doc.fontSize(12)
+               .text('Código', 50, currentY)
+               .text('Descripción', doc.page.width / 4, currentY) 
+               .text('Stock mínimo', doc.page.width / 2, currentY)
+               .text('Stock actual', doc.page.width - 150, currentY, {
+                   align: 'right'
+               });
+            doc.moveDown();
+            productos.forEach(producto => {
+                currentY = doc.y;
+                if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+                    doc.addPage();
+                    currentY = doc.y;
+                }
+                doc.fontSize(10)
+                   .text(producto.codigo_proveedor, 50, currentY) 
+                   .text(producto.nombre, doc.page.width / 4, currentY) 
+                   .text(producto.stock_minimo.toString(), doc.page.width / 2, currentY)
+                   .text(producto.stock_actual.toString(), doc.page.width - 150, currentY, {
+                       align: 'right'
+                   });
+                doc.moveDown();
+            });
+            doc.end();
+        }).catch(error => {
+            console.log('Error al obtener productos:', error);
+            return res.status(500).send('Error al generar el PDF');
+        });
+    } catch (error) {
+        console.log('Error al obtener proveedores:', error);
+        return res.status(500).send('Error al generar el PDF');
+    }
+    buffer.on('finish', function() {
+        const pdfData = buffer.getContents();
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
+        res.send(pdfData);
+    });
+},
 }

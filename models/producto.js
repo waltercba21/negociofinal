@@ -185,7 +185,6 @@ actualizar: function (conexion, datos, archivo) {
         }
         query += " WHERE id=?";
         params.push(datos.id);
-
         conexion.query(query, params, (error, results) => {
             if (error) {
                 reject(error);
@@ -197,7 +196,6 @@ actualizar: function (conexion, datos, archivo) {
 },
 actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
     return new Promise((resolve, reject) => {
-        // Primero, verifica si ya existe una entrada para este producto y proveedor
         const query = 'SELECT * FROM producto_proveedor WHERE producto_id = ? AND proveedor_id = ?';
         conexion.query(query, [datosProductoProveedor.producto_id, datosProductoProveedor.proveedor_id], (error, results) => {
             if (error) {
@@ -606,6 +604,21 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
     return queryPromise(query, [proveedor, categoria])
         .then(result => {
             console.log('Resultados de obtenerProductosPorProveedorYCategoría:', result);
+            return result;
+        });
+},
+obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
+    console.log('Proveedor:', proveedor);
+    const query = `
+        SELECT producto_proveedor.codigo AS codigo_proveedor, productos.nombre, productos.stock_minimo, productos.stock_actual
+        FROM productos 
+        INNER JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id
+        WHERE producto_proveedor.proveedor_id = ?
+    `;
+    const queryPromise = util.promisify(conexion.query).bind(conexion);
+    return queryPromise(query, [proveedor])
+        .then(result => {
+            console.log('Resultados de obtenerProductosPorProveedorConStock:', result);
             return result;
         });
 },
