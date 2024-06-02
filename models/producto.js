@@ -356,21 +356,20 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             });
         });
     },
-    obtenerStock: function(conexion, productoId) {
+    obtenerStock: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
-            const query = 'SELECT cantidad FROM stock WHERE producto_id = ?';
-            conexion.query(query, [productoId], (error, results) => {
+            conexion.query('SELECT stock_minimo, stock_actual FROM productos WHERE id = ?', [idProducto], (error, results) => {
                 if (error) {
                     reject(error);
                 } else {
-                    resolve(results[0].cantidad);
+                    resolve(results[0]);
                 }
             });
         });
     },
     actualizarStock: function(conexion, datosProducto) {
         return new Promise((resolve, reject) => {
-            const query = 'UPDATE stock SET cantidad = ? WHERE producto_id = ?';
+            const query = 'UPDATE productos SET stock_actual = ? WHERE id = ?';
             conexion.query(query, [datosProducto.stock, datosProducto.id], (error, results) => {
                 if (error) {
                     reject(error);
