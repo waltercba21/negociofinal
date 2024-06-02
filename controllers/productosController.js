@@ -701,6 +701,14 @@ getProductosPorCategoria : async (req, res) => {
                })
                .fillColor('black');
 
+            doc.moveTo(140, currentY)
+               .lineTo(140, currentY + 30)
+               .moveTo(390, currentY)
+               .lineTo(390, currentY + 30)
+               .moveTo(440, currentY)
+               .lineTo(440, currentY + 30)
+               .stroke();
+
             doc.moveTo(50, currentY + 30)
                .lineTo(490, currentY + 30)
                .stroke();
@@ -718,6 +726,14 @@ getProductosPorCategoria : async (req, res) => {
                    .text(producto.nombre, 150, currentY + 10, {width: 240, continued: true})
                    .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 400, currentY + 10, {width: 40, align: 'right'})
                    .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 450, currentY + 10, {width: 40, align: 'right'});
+
+                doc.moveTo(140, currentY)
+                   .lineTo(140, currentY + 30)
+                   .moveTo(390, currentY)
+                   .lineTo(390, currentY + 30)
+                   .moveTo(440, currentY)
+                   .lineTo(440, currentY + 30)
+                   .stroke();
 
                 doc.moveTo(50, currentY + 30)
                    .lineTo(490, currentY + 30)
