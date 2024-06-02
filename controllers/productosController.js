@@ -717,7 +717,7 @@ generarStockPDF: async function (req, res) {
                     doc.addPage();
                     currentY = doc.y;
                 }
-                doc.fontSize(6);
+                doc.fontSize(8);
             
                 doc.text(producto.codigo_proveedor, 70, currentY + 10, {align: 'left', width: 100,});
             
