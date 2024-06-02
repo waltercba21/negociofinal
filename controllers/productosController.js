@@ -720,11 +720,10 @@ generarStockPDF: async function (req, res) {
                 doc.fontSize(8)
                     .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90});
             
-                let nombreProducto = doc.text(producto.nombre, 170, currentY + 10, {width: 200});
-                let height = nombreProducto.heightOfString(producto.nombre, {width: 200});
+                doc.text(producto.nombre, 170, currentY + 10, {width: 200});
             
-                doc.text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 470, currentY + 10 + height, {width: 40, align: 'center'})
-                    .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 520, currentY + 10 + height, {width: 40, align: 'center'}); 
+                doc.text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 470, currentY + 10, {width: 40, align: 'center'})
+                    .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 520, currentY + 10, {width: 40, align: 'center'}); 
             
                 doc.moveTo(160, currentY)
                     .lineTo(160, currentY + 30)
