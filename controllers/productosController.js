@@ -695,25 +695,29 @@ getProductosPorCategoria : async (req, res) => {
                .fillColor('blue')
                .text('Código', 50, currentY + 10)
                .text('Descripción', 150, currentY + 10)
-               .text('Stock mínimo', 400, currentY + 10)
-               .text('Stock actual', 450, currentY + 10, {
+               .text('Stock', 400, currentY + 10)
+               .text('Stock', 450, currentY + 10, {
+                   align: 'right'
+               })
+               .text('Mínimo', 400, currentY + 20)
+               .text('Actual', 450, currentY + 20, {
                    align: 'right'
                })
                .fillColor('black');
 
             doc.moveTo(140, currentY)
-               .lineTo(140, currentY + 30)
+               .lineTo(140, currentY + 40)
                .moveTo(390, currentY)
-               .lineTo(390, currentY + 30)
+               .lineTo(390, currentY + 40)
                .moveTo(440, currentY)
-               .lineTo(440, currentY + 30)
+               .lineTo(440, currentY + 40)
                .stroke();
 
-            doc.moveTo(50, currentY + 30)
-               .lineTo(490, currentY + 30)
+            doc.moveTo(50, currentY + 40)
+               .lineTo(490, currentY + 40)
                .stroke();
 
-            doc.moveDown(2);
+            doc.moveDown(3);
 
             productos.forEach(producto => {
                 currentY = doc.y;
