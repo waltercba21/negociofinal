@@ -695,8 +695,8 @@ generarStockPDF: async function (req, res) {
             .fillColor('blue')
             .text('Código', 70, currentY + 10, {align: 'center', width: 90})
             .text('Descripción', 170, currentY + 10, {align: 'center', width: 250})
-            .text('Stock', 460, currentY + 10, {align: 'center', width: 40}) 
-            .text('Mínimo', 460, currentY + 20, {align: 'center', width: 40}) 
+            .text('Stock', 470, currentY + 10, {align: 'center', width: 40}) 
+            .text('Mínimo', 470, currentY + 20, {align: 'center', width: 40}) 
             .text('Stock', 520, currentY + 10, {align: 'center', width: 40}) 
             .text('Actual', 520, currentY + 20, {align: 'center', width: 40}) 
             .fillColor('black');
@@ -720,8 +720,8 @@ generarStockPDF: async function (req, res) {
                 doc.fontSize(8)
                 .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90})
                 .text(producto.nombre, 170, currentY + 10, {width: 250, continued: true}) // Ajusta el ancho de la descripción
-                .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 430, currentY + 10, {width: 45, align: 'center'}) // Ajusta la posición de 'Stock Mínimo'
-                .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 520, currentY + 10, {width: 45, align: 'center'}); // Ajusta la posición de 'Stock Actual'
+                .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 470, currentY + 10, {width: 45, align: 'center'}) // Ajusta la posición de 'Stock Mínimo'
+                .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 510, currentY + 10, {width: 45, align: 'center'}); // Ajusta la posición de 'Stock Actual'
                    doc.moveTo(160, currentY)
                    .lineTo(160, currentY + 30)
                    .moveTo(460, currentY)
