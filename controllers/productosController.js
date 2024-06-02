@@ -664,7 +664,7 @@ getProductosPorCategoria : async (req, res) => {
       }
     });
   },
-generarStockPDF: async function (req, res) {
+  generarStockPDF: async function (req, res) {
     var doc = new PDFDocument;
     var buffer = new streamBuffers.WritableStreamBuffer({
         initialSize: (1024 * 1024),   
@@ -717,18 +717,22 @@ generarStockPDF: async function (req, res) {
                     doc.addPage();
                     currentY = doc.y;
                 }
-                doc.fontSize(8)
-    .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90})
-    .text(producto.nombre, 170, currentY + 10, {width: 200, continued: true}) 
-    .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 370, currentY + 10, {width: 90, align: 'left'})
-    .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 460, currentY + 10, {width: 110, align: 'right'}); 
-    doc.moveTo(160, currentY)
-    .lineTo(160, currentY + 30)
-    .moveTo(460, currentY)
-    .lineTo(460, currentY + 30)
-    .moveTo(515, currentY)
-    .lineTo(515, currentY + 30)
-    .stroke();
+                let nombreProducto = doc.fontSize(8)
+                    .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90})
+                    .text(producto.nombre, 170, currentY + 10, {width: 200, continued: true});
+
+                let height = nombreProducto.heightOfString(producto.nombre, {width: 200});
+
+                doc.text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 370, currentY + 10 + height, {width: 90, align: 'left'})
+                    .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 460, currentY + 10 + height, {width: 110, align: 'right'}); 
+
+                doc.moveTo(160, currentY)
+                    .lineTo(160, currentY + 30)
+                    .moveTo(460, currentY)
+                    .lineTo(460, currentY + 30)
+                    .moveTo(515, currentY)
+                    .lineTo(515, currentY + 30)
+                    .stroke();
                 doc.moveTo(70, currentY + 30)
                    .lineTo(570, currentY + 30)
                    .stroke();
