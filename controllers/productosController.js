@@ -692,15 +692,14 @@ getProductosPorCategoria : async (req, res) => {
             console.log('Productos obtenidos:', productos);
             var currentY = doc.y;
             doc.fontSize(10)
-               .fillColor('blue')
-               .text('Código', 70, currentY + 10, {align: 'center', width: 90})
-               .text('Descripción', 170, currentY + 10, {align: 'center', width: 290})
-               .text('Stock', 470, currentY + 10, {align: 'center', width: 45})
-               .text('Mínimo', 470, currentY + 20, {align: 'center', width: 45})
-               .text('Stock', 520, currentY + 10, {align: 'center', width: 45})
-               .text('Actual', 520, currentY + 20, {align: 'center', width: 45})
-               .fillColor('black');
-
+            .fillColor('blue')
+            .text('Código', 70, currentY + 10, {align: 'center', width: 90})
+            .text('Descripción', 170, currentY + 10, {align: 'center', width: 340}) 
+            .text('Stock', 520, currentY + 10, {align: 'center', width: 45}) 
+            .text('Mínimo', 520, currentY + 20, {align: 'center', width: 45}) 
+            .text('Stock', 570, currentY + 10, {align: 'center', width: 45}) 
+            .text('Actual', 570, currentY + 20, {align: 'center', width: 45})
+            .fillColor('black');
             doc.moveTo(160, currentY)
                .lineTo(160, currentY + 40)
                .moveTo(460, currentY)
@@ -708,13 +707,10 @@ getProductosPorCategoria : async (req, res) => {
                .moveTo(515, currentY)
                .lineTo(515, currentY + 40)
                .stroke();
-
             doc.moveTo(70, currentY + 40)
                .lineTo(570, currentY + 40)
                .stroke();
-
             doc.moveDown(3);
-
             productos.forEach(producto => {
                 currentY = doc.y;
                 if (currentY + 40 > doc.page.height - doc.page.margins.bottom) {
@@ -722,11 +718,10 @@ getProductosPorCategoria : async (req, res) => {
                     currentY = doc.y;
                 }
                 doc.fontSize(10)
-                   .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90})
-                   .text(producto.nombre, 170, currentY + 10, {width: 290, continued: true})
-                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 470, currentY + 10, {width: 45, align: 'center'})
-                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 520, currentY + 10, {width: 45, align: 'center'});
-
+                .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90})
+                .text(producto.nombre, 170, currentY + 10, {width: 340, continued: true}) 
+                .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 520, currentY + 10, {width: 45, align: 'center'}) 
+                .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 570, currentY + 10, {width: 45, align: 'center'}); 
                 doc.moveTo(160, currentY)
                    .lineTo(160, currentY + 30)
                    .moveTo(460, currentY)
@@ -734,11 +729,9 @@ getProductosPorCategoria : async (req, res) => {
                    .moveTo(515, currentY)
                    .lineTo(515, currentY + 30)
                    .stroke();
-
                 doc.moveTo(70, currentY + 30)
                    .lineTo(570, currentY + 30)
                    .stroke();
-
                 doc.moveDown(2);
             });
             doc.end();
