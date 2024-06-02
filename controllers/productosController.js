@@ -706,12 +706,10 @@ getProductosPorCategoria : async (req, res) => {
                     currentY = doc.y;
                 }
                 doc.fontSize(10)
-                   .text(producto.codigo_proveedor, 50, currentY) 
-                   .text(producto.nombre, doc.page.width / 4, currentY) 
-                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', doc.page.width / 2, currentY)
-                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', doc.page.width - 150, currentY, {
-                       align: 'right'
-                   });
+                   .text(producto.codigo_proveedor, 50, currentY)
+                   .text(producto.nombre, 150, currentY, {width: 200, continued: true})
+                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 400, currentY, {width: 50, align: 'right'})
+                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 450, currentY, {width: 50, align: 'right'});
                 doc.moveDown();
             });
             doc.end();
