@@ -692,24 +692,39 @@ getProductosPorCategoria : async (req, res) => {
             console.log('Productos obtenidos:', productos);
             var currentY = doc.y;
             doc.fontSize(12)
+               .fillColor('blue')
                .text('Código', 50, currentY)
-               .text('Descripción', doc.page.width / 4, currentY) 
-               .text('Stock mínimo', doc.page.width / 2, currentY)
-               .text('Stock actual', doc.page.width - 150, currentY, {
+               .text('Descripción', 150, currentY)
+               .text('Stock mínimo', 400, currentY)
+               .text('Stock actual', 450, currentY, {
                    align: 'right'
-               });
+               })
+               .fillColor('black');
+
+            doc.rect(50, currentY + 20, 80, 20).stroke()
+               .rect(150, currentY + 20, 240, 20).stroke()
+               .rect(400, currentY + 20, 40, 20).stroke()
+               .rect(450, currentY + 20, 40, 20).stroke();
+
             doc.moveDown();
+
             productos.forEach(producto => {
                 currentY = doc.y;
-                if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+                if (currentY + 40 > doc.page.height - doc.page.margins.bottom) {
                     doc.addPage();
                     currentY = doc.y;
                 }
                 doc.fontSize(10)
                    .text(producto.codigo_proveedor, 50, currentY)
-                   .text(producto.nombre, 150, currentY, {width: 200, continued: true})
-                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 400, currentY, {width: 50, align: 'right'})
-                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 450, currentY, {width: 50, align: 'right'});
+                   .text(producto.nombre, 150, currentY, {width: 240, continued: true})
+                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 400, currentY, {width: 40, align: 'right'})
+                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 450, currentY, {width: 40, align: 'right'});
+
+                doc.rect(50, currentY, 80, 20).stroke()
+                   .rect(150, currentY, 240, 20).stroke()
+                   .rect(400, currentY, 40, 20).stroke()
+                   .rect(450, currentY, 40, 20).stroke();
+
                 doc.moveDown();
             });
             doc.end();
