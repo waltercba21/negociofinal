@@ -1,28 +1,19 @@
 let productosOriginales = [];
-
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
-  console.log('Productos originales:', productosOriginales);
 };
-
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
-  console.log(`Buscando: ${busqueda}`);
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = '';
-
   if (!busqueda.trim()) {
     return;
   }
-
   let url = '/productos/api/buscar?q=' + busqueda;
   const respuesta = await fetch(url);
   const productos = await respuesta.json();
-  console.log('Productos de la búsqueda:', productos); // Agregar console.log aquí
-
   productos.forEach((producto, index) => {
-    console.log('Procesando producto:', producto)
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
       producto.imagenes.forEach((imagenObj, i) => {
@@ -65,14 +56,10 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   `;
   contenedorProductos.innerHTML += tarjetaProducto;
   });
-
-
-  // Ahora que las tarjetas de productos se han agregado al DOM, puedes agregar los controladores de eventos a los botones del carrusel
-  $(document).on('click', '.carousel__button', function() {
+ $(document).on('click', '.carousel__button', function() {
     var $carousel = $(this).closest('.card').find('.carousel');
     var $images = $carousel.find('.carousel__image');
     var index = $images.index($carousel.find('.carousel__image:visible'));
-
     if ($(this).find('.fa-chevron-left').length > 0) {
       $images.eq(index).hide();
       index--;
@@ -86,7 +73,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
         index = 0;
       }
     }
-
     $images.eq(index).show();
   });
 });
