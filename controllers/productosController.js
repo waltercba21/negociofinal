@@ -718,16 +718,10 @@ generarStockPDF: async function (req, res) {
                     currentY = doc.y;
                 }
                 doc.fontSize(6);
-                let codigoProveedor = producto.codigo_proveedor;
-                if (codigoProveedor.length > 10) { 
-                    codigoProveedor = codigoProveedor.substring(0, 10) + '...';
-                }
-                doc.text(codigoProveedor, 70, currentY + 10, {align: 'left', width: 90});
-                let nombreProducto = producto.nombre;
-                if (nombreProducto.length > 30) { 
-                    nombreProducto = nombreProducto.substring(0, 30) + '...'; 
-                }
-                doc.text(nombreProducto, 170, currentY + 10, {width: 200});
+            
+                doc.text(producto.codigo_proveedor, 70, currentY + 10, {align: 'left', width: 90, continued: true});
+            
+                doc.text(producto.nombre, 170, currentY + 10, {width: 200, continued: true});
             
                 doc.text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 470, currentY + 10, {width: 40, align: 'center'})
                     .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 520, currentY + 10, {width: 40, align: 'center'}); 
