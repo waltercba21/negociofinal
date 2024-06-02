@@ -695,10 +695,10 @@ getProductosPorCategoria : async (req, res) => {
             .fillColor('blue')
             .text('Código', 70, currentY + 10, {align: 'center', width: 90})
             .text('Descripción', 170, currentY + 10, {align: 'center', width: 290}) 
-            .text('Stock', 460, currentY + 10, {align: 'center', width: 40}) 
-            .text('Mínimo', 460, currentY + 20, {align: 'center', width: 40}) 
-            .text('Stock', 530, currentY + 10, {align: 'center', width: 40}) 
-            .text('Actual', 530, currentY + 20, {align: 'center', width: 40})
+            .text('Stock', 480, currentY + 10, {align: 'center', width: 40}) 
+            .text('Mínimo', 480, currentY + 20, {align: 'center', width: 40}) 
+            .text('Stock', 510, currentY + 10, {align: 'center', width: 40}) 
+            .text('Actual', 510, currentY + 20, {align: 'center', width: 40})
             .fillColor('black');
             doc.moveTo(160, currentY)
                .lineTo(160, currentY + 40)
@@ -719,9 +719,9 @@ getProductosPorCategoria : async (req, res) => {
                 }
                 doc.fontSize(10)
                 .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90})
-                .text(producto.nombre, 170, currentY + 10, {width: 300, continued: true})
-                .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 450, currentY + 10, {width: 45, align: 'center'}) 
-                .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 500, currentY + 10, {width: 45, align: 'center'}); 
+                .text(producto.nombre, 170, currentY + 10, {width: 400, continued: true})
+                .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 400, currentY + 10, {width: 45, align: 'center'}) 
+                .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 450, currentY + 10, {width: 45, align: 'center'}); 
                 doc.moveTo(160, currentY)
                    .lineTo(160, currentY + 30)
                    .moveTo(460, currentY)
