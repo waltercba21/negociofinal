@@ -701,10 +701,9 @@ getProductosPorCategoria : async (req, res) => {
                })
                .fillColor('black');
 
-            doc.rect(50, currentY, 80, 40).stroke()
-               .rect(150, currentY, 240, 40).stroke()
-               .rect(400, currentY, 40, 40).stroke()
-               .rect(450, currentY, 40, 40).stroke();
+            doc.moveTo(50, currentY + 30)
+               .lineTo(490, currentY + 30)
+               .stroke();
 
             doc.moveDown(2);
 
@@ -720,10 +719,9 @@ getProductosPorCategoria : async (req, res) => {
                    .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 400, currentY + 10, {width: 40, align: 'right'})
                    .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 450, currentY + 10, {width: 40, align: 'right'});
 
-                doc.rect(50, currentY, 80, 40).stroke()
-                   .rect(150, currentY, 240, 40).stroke()
-                   .rect(400, currentY, 40, 40).stroke()
-                   .rect(450, currentY, 40, 40).stroke();
+                doc.moveTo(50, currentY + 30)
+                   .lineTo(490, currentY + 30)
+                   .stroke();
 
                 doc.moveDown(2);
             });
