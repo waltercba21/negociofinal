@@ -695,8 +695,10 @@ getProductosPorCategoria : async (req, res) => {
                .fillColor('blue')
                .text('Código', 70, currentY + 10, {align: 'center', width: 90})
                .text('Descripción', 170, currentY + 10, {align: 'center', width: 190})
-               .text('Stock Mínimo', 370, currentY + 10, {align: 'center', width: 90})
-               .text('Stock Actual', 470, currentY + 10, {align: 'center', width: 90})
+               .text('Stock', 370, currentY + 10, {align: 'center', width: 90})
+               .text('Mínimo', 370, currentY + 20, {align: 'center', width: 90})
+               .text('Stock', 470, currentY + 10, {align: 'center', width: 90})
+               .text('Actual', 470, currentY + 20, {align: 'center', width: 90})
                .fillColor('black');
 
             doc.moveTo(160, currentY)
