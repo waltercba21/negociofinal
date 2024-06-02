@@ -689,7 +689,6 @@ getProductosPorCategoria : async (req, res) => {
            });
         var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
         obtenerProductos.then(productos => {
-            console.log('Productos obtenidos:', productos);
             var currentY = doc.y;
             doc.fontSize(10)
             .fillColor('blue')
@@ -717,15 +716,15 @@ getProductosPorCategoria : async (req, res) => {
                     doc.addPage();
                     currentY = doc.y;
                 }
-                let nombreProducto = doc.fontSize(8)
-                    .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90})
-                    .text(producto.nombre, 170, currentY + 10, {width: 200, continued: true});
-
+                doc.fontSize(8)
+                    .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90});
+            
+                let nombreProducto = doc.text(producto.nombre, 170, currentY + 10, {width: 200});
                 let height = nombreProducto.heightOfString(producto.nombre, {width: 200});
-
+            
                 doc.text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 370, currentY + 10 + height, {width: 90, align: 'left'})
                     .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 460, currentY + 10 + height, {width: 110, align: 'right'}); 
-
+            
                 doc.moveTo(160, currentY)
                     .lineTo(160, currentY + 30)
                     .moveTo(460, currentY)
