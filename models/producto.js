@@ -377,7 +377,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                     resolve();
                 }
             });
-        });
+        }); 
     },
       obtenerPosicion: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {

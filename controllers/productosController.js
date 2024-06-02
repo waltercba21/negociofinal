@@ -337,11 +337,11 @@ module.exports = {
             precio_venta: req.body.precio_venta,
             estado: req.body.estado,
             paginaActual: req.body.paginaActual,
-            stock: req.body.stock // Añadir stock a los datos del producto
+            stock_minimo: req.body.stock_minimo, 
+            stock_actual: req.body.stock_actual,
         };
         producto.actualizar(conexion, datosProducto)
         .then(() => {
-            // Si hay archivos, actualiza cada uno
             if (req.files) {
                 const promesasArchivos = req.files.map(file => {
                     return producto.actualizarArchivo(conexion, datosProducto, file);
@@ -377,7 +377,7 @@ module.exports = {
             return Promise.all(promesasProveedor);
         })
         .then(() => {
-            return producto.actualizarStock(conexion, datosProducto); // Actualizar el stock
+            return producto.actualizarStock(conexion, datosProducto); 
         })
         .then(() => {
             return producto.obtenerPosicion(conexion, datosProducto.id);
