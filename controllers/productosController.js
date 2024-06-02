@@ -377,7 +377,7 @@ module.exports = {
             return Promise.all(promesasProveedor);
         })
         .then(() => {
-            return producto.actualizarStock(conexion, datosProducto); 
+            return producto.actualizarStock(conexion, datosProducto.id, datosProducto.stock_minimo, datosProducto.stock_actual); 
         })
         .then(() => {
             return producto.obtenerPosicion(conexion, datosProducto.id);
