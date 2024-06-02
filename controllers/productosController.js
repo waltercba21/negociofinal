@@ -693,10 +693,12 @@ getProductosPorCategoria : async (req, res) => {
             var currentY = doc.y;
             doc.fontSize(10)
                .fillColor('blue')
-               .text('Código', 70, currentY + 10)
-               .text('Descripción', 170, currentY + 10)
-               .text('Stock Mínimo', 370, currentY + 10)
-               .text('Stock Actual', 470, currentY + 10)
+               .text('Código', 70, currentY + 10, {align: 'center'})
+               .text('Descripción', 170, currentY + 10, {align: 'center'})
+               .text('Stock', 370, currentY + 10, {align: 'center'})
+               .text('Mínimo', 370, currentY + 20, {align: 'center'})
+               .text('Stock', 470, currentY + 10, {align: 'center'})
+               .text('Actual', 470, currentY + 20, {align: 'center'})
                .fillColor('black');
 
             doc.moveTo(160, currentY)
@@ -720,10 +722,10 @@ getProductosPorCategoria : async (req, res) => {
                     currentY = doc.y;
                 }
                 doc.fontSize(10)
-                   .text(producto.codigo_proveedor, 70, currentY + 10)
+                   .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center'})
                    .text(producto.nombre, 170, currentY + 10, {width: 190, continued: true})
-                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 370, currentY + 10, {width: 50, align: 'right'})
-                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 470, currentY + 10, {width: 50, align: 'right'});
+                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 370, currentY + 10, {width: 50, align: 'center'})
+                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 470, currentY + 10, {width: 50, align: 'center'});
 
                 doc.moveTo(160, currentY)
                    .lineTo(160, currentY + 30)
