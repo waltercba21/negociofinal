@@ -5,7 +5,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     if (!busqueda.trim()) {
       return;
     }
-    let url = '/productos/api/buscar?q=' + busqueda;
+    let url = '/productos/api/buscarConCodigoPrecio?q=' + busqueda;
     const respuesta = await fetch(url);
     const productos = await respuesta.json();
     productos.forEach((producto) => {
