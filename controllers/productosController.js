@@ -695,20 +695,14 @@ getProductosPorCategoria : async (req, res) => {
                .fillColor('blue')
                .text('Código', 50, currentY + 10)
                .text('Descripción', 150, currentY + 10)
-               .text('Stock', 400, currentY + 10)
-               .text('Stock', 450, currentY + 10, {
-                   align: 'right'
-               })
-               .text('Mínimo', 400, currentY + 20)
-               .text('Actual', 450, currentY + 20, {
-                   align: 'right'
-               })
+               .text('Stock Mínimo', 300, currentY + 10)
+               .text('Stock Actual', 450, currentY + 10)
                .fillColor('black');
 
             doc.moveTo(140, currentY)
                .lineTo(140, currentY + 40)
-               .moveTo(390, currentY)
-               .lineTo(390, currentY + 40)
+               .moveTo(290, currentY)
+               .lineTo(290, currentY + 40)
                .moveTo(440, currentY)
                .lineTo(440, currentY + 40)
                .stroke();
@@ -727,14 +721,14 @@ getProductosPorCategoria : async (req, res) => {
                 }
                 doc.fontSize(10)
                    .text(producto.codigo_proveedor, 50, currentY + 10)
-                   .text(producto.nombre, 150, currentY + 10, {width: 240, continued: true})
-                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 400, currentY + 10, {width: 40, align: 'right'})
+                   .text(producto.nombre, 150, currentY + 10, {width: 140, continued: true})
+                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 300, currentY + 10, {width: 140, align: 'right'})
                    .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 450, currentY + 10, {width: 40, align: 'right'});
 
                 doc.moveTo(140, currentY)
                    .lineTo(140, currentY + 30)
-                   .moveTo(390, currentY)
-                   .lineTo(390, currentY + 30)
+                   .moveTo(290, currentY)
+                   .lineTo(290, currentY + 30)
                    .moveTo(440, currentY)
                    .lineTo(440, currentY + 30)
                    .stroke();
