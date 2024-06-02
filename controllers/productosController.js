@@ -683,9 +683,9 @@ getProductosPorCategoria : async (req, res) => {
         }
         var nombreProveedor = proveedor.nombre;
         doc.fontSize(20)
-           .text(nombreProveedor, 0, 50, {
+           .text(nombreProveedor, 50, 80, {
                align: 'center',
-               width: doc.page.width
+               width: doc.page.width - 100
            });
         var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
         obtenerProductos.then(productos => {
@@ -693,22 +693,22 @@ getProductosPorCategoria : async (req, res) => {
             var currentY = doc.y;
             doc.fontSize(10)
                .fillColor('blue')
-               .text('Código', 50, currentY + 10)
-               .text('Descripción', 150, currentY + 10)
-               .text('Stock Mínimo', 300, currentY + 10)
-               .text('Stock Actual', 450, currentY + 10)
+               .text('Código', 70, currentY + 10)
+               .text('Descripción', 170, currentY + 10)
+               .text('Stock Mínimo', 370, currentY + 10)
+               .text('Stock Actual', 470, currentY + 10)
                .fillColor('black');
 
-            doc.moveTo(140, currentY)
-               .lineTo(140, currentY + 40)
-               .moveTo(290, currentY)
-               .lineTo(290, currentY + 40)
-               .moveTo(440, currentY)
-               .lineTo(440, currentY + 40)
+            doc.moveTo(160, currentY)
+               .lineTo(160, currentY + 40)
+               .moveTo(360, currentY)
+               .lineTo(360, currentY + 40)
+               .moveTo(460, currentY)
+               .lineTo(460, currentY + 40)
                .stroke();
 
-            doc.moveTo(50, currentY + 40)
-               .lineTo(490, currentY + 40)
+            doc.moveTo(70, currentY + 40)
+               .lineTo(570, currentY + 40)
                .stroke();
 
             doc.moveDown(3);
@@ -720,21 +720,21 @@ getProductosPorCategoria : async (req, res) => {
                     currentY = doc.y;
                 }
                 doc.fontSize(10)
-                   .text(producto.codigo_proveedor, 50, currentY + 10)
-                   .text(producto.nombre, 150, currentY + 10, {width: 140, continued: true})
-                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 300, currentY + 10, {width: 140, align: 'right'})
-                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 450, currentY + 10, {width: 40, align: 'right'});
+                   .text(producto.codigo_proveedor, 70, currentY + 10)
+                   .text(producto.nombre, 170, currentY + 10, {width: 190, continued: true})
+                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 370, currentY + 10, {width: 90, align: 'right'})
+                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 470, currentY + 10, {width: 100, align: 'right'});
 
-                doc.moveTo(140, currentY)
-                   .lineTo(140, currentY + 30)
-                   .moveTo(290, currentY)
-                   .lineTo(290, currentY + 30)
-                   .moveTo(440, currentY)
-                   .lineTo(440, currentY + 30)
+                doc.moveTo(160, currentY)
+                   .lineTo(160, currentY + 30)
+                   .moveTo(360, currentY)
+                   .lineTo(360, currentY + 30)
+                   .moveTo(460, currentY)
+                   .lineTo(460, currentY + 30)
                    .stroke();
 
-                doc.moveTo(50, currentY + 30)
-                   .lineTo(490, currentY + 30)
+                doc.moveTo(70, currentY + 30)
+                   .lineTo(570, currentY + 30)
                    .stroke();
 
                 doc.moveDown(2);
