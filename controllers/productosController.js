@@ -691,22 +691,22 @@ getProductosPorCategoria : async (req, res) => {
         obtenerProductos.then(productos => {
             console.log('Productos obtenidos:', productos);
             var currentY = doc.y;
-            doc.fontSize(12)
+            doc.fontSize(10)
                .fillColor('blue')
-               .text('Código', 50, currentY)
-               .text('Descripción', 150, currentY)
-               .text('Stock mínimo', 400, currentY)
-               .text('Stock actual', 450, currentY, {
+               .text('Código', 50, currentY + 10)
+               .text('Descripción', 150, currentY + 10)
+               .text('Stock mínimo', 400, currentY + 10)
+               .text('Stock actual', 450, currentY + 10, {
                    align: 'right'
                })
                .fillColor('black');
 
-            doc.rect(50, currentY + 20, 80, 20).stroke()
-               .rect(150, currentY + 20, 240, 20).stroke()
-               .rect(400, currentY + 20, 40, 20).stroke()
-               .rect(450, currentY + 20, 40, 20).stroke();
+            doc.rect(50, currentY, 80, 40).stroke()
+               .rect(150, currentY, 240, 40).stroke()
+               .rect(400, currentY, 40, 40).stroke()
+               .rect(450, currentY, 40, 40).stroke();
 
-            doc.moveDown();
+            doc.moveDown(2);
 
             productos.forEach(producto => {
                 currentY = doc.y;
@@ -715,17 +715,17 @@ getProductosPorCategoria : async (req, res) => {
                     currentY = doc.y;
                 }
                 doc.fontSize(10)
-                   .text(producto.codigo_proveedor, 50, currentY)
-                   .text(producto.nombre, 150, currentY, {width: 240, continued: true})
-                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 400, currentY, {width: 40, align: 'right'})
-                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 450, currentY, {width: 40, align: 'right'});
+                   .text(producto.codigo_proveedor, 50, currentY + 10)
+                   .text(producto.nombre, 150, currentY + 10, {width: 240, continued: true})
+                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 400, currentY + 10, {width: 40, align: 'right'})
+                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 450, currentY + 10, {width: 40, align: 'right'});
 
-                doc.rect(50, currentY, 80, 20).stroke()
-                   .rect(150, currentY, 240, 20).stroke()
-                   .rect(400, currentY, 40, 20).stroke()
-                   .rect(450, currentY, 40, 20).stroke();
+                doc.rect(50, currentY, 80, 40).stroke()
+                   .rect(150, currentY, 240, 40).stroke()
+                   .rect(400, currentY, 40, 40).stroke()
+                   .rect(450, currentY, 40, 40).stroke();
 
-                doc.moveDown();
+                doc.moveDown(2);
             });
             doc.end();
         }).catch(error => {
