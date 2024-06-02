@@ -318,6 +318,7 @@ module.exports = {
         });
     },
     actualizar: function(req, res) {
+        console.log(req.body)
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
