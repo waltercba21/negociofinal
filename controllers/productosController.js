@@ -694,19 +694,19 @@ getProductosPorCategoria : async (req, res) => {
             doc.fontSize(10)
                .fillColor('blue')
                .text('Código', 70, currentY + 10, {align: 'center', width: 90})
-               .text('Descripción', 170, currentY + 10, {align: 'center', width: 190})
-               .text('Stock', 370, currentY + 10, {align: 'center', width: 45})
-               .text('Mínimo', 370, currentY + 20, {align: 'center', width: 45})
-               .text('Stock', 420, currentY + 10, {align: 'center', width: 45})
-               .text('Actual', 420, currentY + 20, {align: 'center', width: 45})
+               .text('Descripción', 170, currentY + 10, {align: 'center', width: 290})
+               .text('Stock', 470, currentY + 10, {align: 'center', width: 45})
+               .text('Mínimo', 470, currentY + 20, {align: 'center', width: 45})
+               .text('Stock', 520, currentY + 10, {align: 'center', width: 45})
+               .text('Actual', 520, currentY + 20, {align: 'center', width: 45})
                .fillColor('black');
 
             doc.moveTo(160, currentY)
                .lineTo(160, currentY + 40)
-               .moveTo(360, currentY)
-               .lineTo(360, currentY + 40)
-               .moveTo(415, currentY)
-               .lineTo(415, currentY + 40)
+               .moveTo(460, currentY)
+               .lineTo(460, currentY + 40)
+               .moveTo(515, currentY)
+               .lineTo(515, currentY + 40)
                .stroke();
 
             doc.moveTo(70, currentY + 40)
@@ -723,16 +723,16 @@ getProductosPorCategoria : async (req, res) => {
                 }
                 doc.fontSize(10)
                    .text(producto.codigo_proveedor, 70, currentY + 10, {align: 'center', width: 90})
-                   .text(producto.nombre, 170, currentY + 10, {width: 190, continued: true})
-                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 370, currentY + 10, {width: 45, align: 'center'})
-                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 420, currentY + 10, {width: 45, align: 'center'});
+                   .text(producto.nombre, 170, currentY + 10, {width: 290, continued: true})
+                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : 'N/A', 470, currentY + 10, {width: 45, align: 'center'})
+                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'N/A', 520, currentY + 10, {width: 45, align: 'center'});
 
                 doc.moveTo(160, currentY)
                    .lineTo(160, currentY + 30)
-                   .moveTo(360, currentY)
-                   .lineTo(360, currentY + 30)
-                   .moveTo(415, currentY)
-                   .lineTo(415, currentY + 30)
+                   .moveTo(460, currentY)
+                   .lineTo(460, currentY + 30)
+                   .moveTo(515, currentY)
+                   .lineTo(515, currentY + 30)
                    .stroke();
 
                 doc.moveTo(70, currentY + 30)
