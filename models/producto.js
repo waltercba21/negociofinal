@@ -101,89 +101,99 @@ actualizar: function (conexion, datos, archivo) {
         let params = [];
         let first = true;
 
-    if (datos.nombre) {
-        query += first ? "nombre=?" : ", nombre=?";
-        params.push(datos.nombre);
-        first = false;
-    }
-    if (datos.codigo) {
-        query += first ? "codigo=?" : ", codigo=?";
-        params.push(datos.codigo);
-        first = false;
-    }
-    if (datos.categoria_id) {
-        query += first ? "categoria_id=?" : ", categoria_id=?";
-        params.push(datos.categoria_id);
-        first = false;
-    }
-    if (datos.marca_id) {
-        query += first ? "marca_id=?" : ", marca_id=?";
-        params.push(datos.marca_id);
-        first = false;
-    } 
-    if (datos.proveedor_id) {
-        query += first ? "proveedor_id=?" : ", proveedor_id=?";
-        params.push(datos.proveedor_id);
-        first = false;
-    }
-    if (datos.modelo_id) {
-        query += first ? "modelo_id=?" : ", modelo_id=?";
-        params.push(datos.modelo_id);
-        first = false;
-    }
-    if (datos.precio_venta) {
-        query += first ? "precio_venta=?" : ", precio_venta=?";
-        params.push(datos.precio_venta);
-        first = false;
-    }
-    if (datos.utilidad) {
-        query += first ? "utilidad=?" : ", utilidad=?";
-        params.push(datos.utilidad);
-        first = false;
-    }
-    if (datos.descuentos_proveedor_id) {
-        query += first ? "descuentos_proveedor_id=?" : ", descuentos_proveedor_id=?";
-        params.push(datos.descuentos_proveedor_id);
-        first = false;
-    }
-    if (datos.costo_neto) {
-        query += first ? "costo_neto=?" : ", costo_neto=?";
-        params.push(datos.costo_neto);
-        first = false;
-    }
-    if (datos.IVA) {
-        query += first ? "IVA=?" : ", IVA=?";
-        params.push(datos.IVA);
-        first = false;
-    }
-    if (datos.costo_iva) {
-        query += first ? "costo_iva=?" : ", costo_iva=?";
-        params.push(datos.costo_iva);
-        first = false;
-    }
-    if (datos.estado) {
-        query += first ? "estado=?" : ", estado=?";
-        params.push(datos.estado);
-        first = false;
-    }
-    if (archivo) {
-        query += first ? "imagen=?" : ", imagen=?";
-        params.push(archivo.filename);
-    }
-    if (!datos.id) {
-        reject(new Error('Los datos del producto deben incluir un ID'));
-    }
-    query += " WHERE id=?";
-    params.push(datos.id);
-
-    conexion.query(query, params, (error, results) => {
-        if (error) {
-            reject(error);
-        } else {
-            resolve(results);
+        if (datos.nombre) {
+            query += first ? "nombre=?" : ", nombre=?";
+            params.push(datos.nombre);
+            first = false;
         }
+        if (datos.codigo) {
+            query += first ? "codigo=?" : ", codigo=?";
+            params.push(datos.codigo);
+            first = false;
+        }
+        if (datos.categoria_id) {
+            query += first ? "categoria_id=?" : ", categoria_id=?";
+            params.push(datos.categoria_id);
+            first = false;
+        }
+        if (datos.marca_id) {
+            query += first ? "marca_id=?" : ", marca_id=?";
+            params.push(datos.marca_id);
+            first = false;
+        } 
+        if (datos.proveedor_id) {
+            query += first ? "proveedor_id=?" : ", proveedor_id=?";
+            params.push(datos.proveedor_id);
+            first = false;
+        }
+        if (datos.modelo_id) {
+            query += first ? "modelo_id=?" : ", modelo_id=?";
+            params.push(datos.modelo_id);
+            first = false;
+        }
+        if (datos.precio_venta) {
+            query += first ? "precio_venta=?" : ", precio_venta=?";
+            params.push(datos.precio_venta);
+            first = false;
+        }
+        if (datos.utilidad) {
+            query += first ? "utilidad=?" : ", utilidad=?";
+            params.push(datos.utilidad);
+            first = false;
+        }
+        if (datos.descuentos_proveedor_id) {
+            query += first ? "descuentos_proveedor_id=?" : ", descuentos_proveedor_id=?";
+            params.push(datos.descuentos_proveedor_id);
+            first = false;
+        }
+        if (datos.costo_neto) {
+            query += first ? "costo_neto=?" : ", costo_neto=?";
+            params.push(datos.costo_neto);
+            first = false;
+        }
+        if (datos.IVA) {
+            query += first ? "IVA=?" : ", IVA=?";
+            params.push(datos.IVA);
+            first = false;
+        }
+        if (datos.costo_iva) {
+            query += first ? "costo_iva=?" : ", costo_iva=?";
+            params.push(datos.costo_iva);
+            first = false;
+        }
+        if (datos.estado) {
+            query += first ? "estado=?" : ", estado=?";
+            params.push(datos.estado);
+            first = false;
+        }
+        if (datos.stock_minimo) {
+            query += first ? "stock_minimo=?" : ", stock_minimo=?";
+            params.push(datos.stock_minimo);
+            first = false;
+        }
+        if (datos.stock_actual) {
+            query += first ? "stock_actual=?" : ", stock_actual=?";
+            params.push(datos.stock_actual);
+            first = false;
+        }
+        if (archivo) {
+            query += first ? "imagen=?" : ", imagen=?";
+            params.push(archivo.filename);
+        }
+        if (!datos.id) {
+            reject(new Error('Los datos del producto deben incluir un ID'));
+        }
+        query += " WHERE id=?";
+        params.push(datos.id);
+
+        conexion.query(query, params, (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
     });
-});
 },
 actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
     return new Promise((resolve, reject) => {
