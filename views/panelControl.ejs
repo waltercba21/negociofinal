@@ -27,7 +27,6 @@
           <% }); %>
         </select>
         <label for="categoria">Seleccionar Categoría</label>
-       
         <select name="categoria" id="categoria">
           <option value="">Mostrar Todas</option>
           <% categorias.forEach(categoria => { %>
@@ -38,7 +37,7 @@
       </form>
     </div>
     <div class="form-control">
-      <form method="get" action="/productos/generarPDFStock">
+      <form method="get" action="/productos/generarStockPDF">
         <h4>Generar Listado de Stock</h4>
         <label for="proveedorStock">Seleccionar Proveedor</label>
         <select name="proveedor" id="proveedorStock">
