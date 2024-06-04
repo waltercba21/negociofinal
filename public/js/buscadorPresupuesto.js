@@ -1,7 +1,7 @@
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
-  const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-  tablaFactura.innerHTML = '';
+  const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+  resultadosBusqueda.innerHTML = '';
   if (!busqueda.trim()) {
     return;
   }
@@ -9,18 +9,9 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   const respuesta = await fetch(url);
   const productos = await respuesta.json();
   productos.forEach((producto) => {
-    const fila = tablaFactura.insertRow();
-    const celdaCodigo = fila.insertCell(0);
-    const celdaDescripcion = fila.insertCell(1);
-    const celdaPrecio = fila.insertCell(2);
-    celdaCodigo.textContent = producto.codigo;
-    celdaDescripcion.textContent = producto.descripcion;
-    celdaPrecio.textContent = producto.precio_venta;
-
-    // Agregar evento de clic a la fila
-    fila.addEventListener('click', () => {
-      // Aquí puedes agregar el producto a la factura
-      // Por ejemplo, puedes agregar una nueva fila a la tabla de la factura
+    const resultado = document.createElement('div');
+    resultado.textContent = producto.descripcion;
+    resultado.addEventListener('click', () => {
       const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
       const filaFactura = tablaFactura.insertRow();
       const celdaCodigoFactura = filaFactura.insertCell(0);
@@ -29,6 +20,8 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       celdaCodigoFactura.textContent = producto.codigo;
       celdaDescripcionFactura.textContent = producto.descripcion;
       celdaPrecioFactura.textContent = producto.precio_venta;
+      resultadosBusqueda.innerHTML = ''; // Limpiar los resultados de la búsqueda
     });
+    resultadosBusqueda.appendChild(resultado);
   });
 });
