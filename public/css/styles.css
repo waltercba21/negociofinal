@@ -763,6 +763,12 @@ background: rgba(0, 63, 125, 0.8);
 #invoice-form button:hover {
   background-color: #0056b3;
 }
+#invoice-form .input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
   display: flex;
