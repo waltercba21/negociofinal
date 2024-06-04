@@ -132,11 +132,8 @@ module.exports = {
     },
     buscarConCodigoPrecio : async (req, res) => {
         const busqueda_nombre = req.query.q;
-        const categoria_id = req.query.categoria_id;
-        const marca_id = req.query.marca_id; 
-        const modelo_id = req.query.modelo_id;
         const limite = !busqueda_nombre ? 10 : undefined;
-        const productos = await producto.obtenerPorFiltrosConCodigoPrecio(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite); 
+        const productos = await producto.obtenerPorFiltrosConCodigoPrecio(conexion, busqueda_nombre, limite); 
         res.json(productos); 
     },
     detalle: function (req, res) {
