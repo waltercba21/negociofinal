@@ -686,7 +686,7 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre)
 },
 obtenerPorFiltrosConCodigoPrecio: function(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite) {
     return new Promise((resolve, reject) => {
-        let sql = 'SELECT productos.id, productos.nombre, productos.descripcion, producto_proveedor.codigo, producto_proveedor.precio_lista FROM productos';
+        let sql = 'SELECT productos.id, productos.nombre, productos.descripcion, producto_proveedor.codigo, producto_proveedor.precio_lista, producto_proveedor.precio_venta FROM productos';
         sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
         sql += ' WHERE 1=1';
         const parametros = [];
