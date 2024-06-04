@@ -722,6 +722,9 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 10px;
   text-align: center;
 }
+.buscador input[type="text"] {
+  width: 80%;
+}
 #invoice-form input[type="text"],
 #invoice-form input[type="date"],
 #invoice-form input[type="number"] {
@@ -773,6 +776,7 @@ background: rgba(0, 63, 125, 0.8);
 #invoice-details label {
   color: #003f7d;
   margin-top: 15px;
+  font-weight: bold;
 }
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
