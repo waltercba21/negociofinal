@@ -11,6 +11,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   productos.forEach((producto) => {
     const resultado = document.createElement('div');
     resultado.textContent = producto.descripcion;
+    resultado.classList.add('resultado-busqueda');
     resultado.addEventListener('click', () => {
       const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
       const filaFactura = tablaFactura.insertRow();
@@ -20,7 +21,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       celdaCodigoFactura.textContent = producto.codigo;
       celdaDescripcionFactura.textContent = producto.descripcion;
       celdaPrecioFactura.textContent = producto.precio_venta;
-      resultadosBusqueda.innerHTML = ''; // Limpiar los resultados de la búsqueda
+      resultadosBusqueda.innerHTML = ''; 
     });
     resultadosBusqueda.appendChild(resultado);
   });

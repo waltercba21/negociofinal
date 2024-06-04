@@ -2,36 +2,39 @@
 <%- include ./layouts/header.ejs %>
 <body>
    <main>
-      <div id="invoice">
-         <h2>Factura</h2>
-         <div id="invoice-details">
-            <p>Nombre del cliente: <span id="customer-name"></span></p>
-            <p>Fecha: <span id="invoice-date"></span></p>
-            <p>Número de factura: <span id="invoice-number"></span></p>
+      <form id="invoice-form">
+         <div id="invoice">
+           <h2>Presupuesto</h2>
+           <div id="invoice-details">
+             <label>Nombre del cliente: <input type="text" id="customer-name"></label>
+             <label>Fecha: <input type="date" id="invoice-date"></label>
+             <label>Número de presupuesto: <input type="number" id="invoice-number"></label>
+           </div>
+           <div class="buscador">
+             <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej:Escort, Optica, Faro, Agile">
+             <div id="resultadosBusqueda"></div> 
+           </div>
+           <div id="invoice-items">
+             <table class="table" id="tabla-factura">
+               <thead>
+                 <tr>
+                   <th scope="col">Código</th>
+                   <th scope="col">Descripción</th>
+                   <th scope="col">Precio</th>
+                   <th scope="col">Cantidad</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 <!-- Aquí se agregarán los productos de la factura -->
+               </tbody>
+             </table>
+           </div>
+           <div id="invoice-total">
+             <label>Total: <input type="number" id="total-amount" readonly></label>
+           </div>
+           <button type="submit">Guardar Presupuesto</button>
          </div>
-         <div class="buscador">
-            <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej:Escort, Optica, Faro, Agile">
-            <div id="resultadosBusqueda"></div> 
-        </div>
-         <div id="invoice-items">
-            <table class="table" id="tabla-factura">
-              <thead>
-                <tr>
-                  <th scope="col">Código</th>
-                  <th scope="col">Descripción</th>
-                  <th scope="col">Precio</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Aquí se agregarán los productos de la factura -->
-              </tbody>
-            </table>
-         </div>
-         <div id="invoice-total">
-            <p>Total: <span id="total-amount"></span></p>
-         </div>
-      </div>
-   </main>
+       </form>
    <%- include ./layouts/footer.ejs %>
    <script src="/js/buscadorPresupuesto.js"></script> 
 </body>

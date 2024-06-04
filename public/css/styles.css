@@ -48,16 +48,13 @@ header {
   text-shadow: 0px 2px 3px rgba(0,0,0,0.3);
   position: relative;
 }
-
 .hamburger:active {
   top: 3px;
   box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.2);
 }
 header .logo{
   height: 200px;
-
 }
-
 header .navbar a {
   font-size: 18px;
   padding: 0 .9rem;
@@ -141,33 +138,27 @@ header .icons p {
   align-items: flex-start;
 }
 /* ---------------------------------------FOOTER ------------------------------------------- */
-
 footer {
   background-color: #fff;
   box-shadow: 0px 0px 25px rgba(189, 189, 189, 0.52);
   width: 100%;
 }
-
 .main-footer {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
 }
-
 .redes {
   display: flex;
   flex-direction: column;
   align-items: center;
-
 }
-
 .redes .logo{
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-
 .redes h2{
   display: flex;
   flex-direction: column;
@@ -177,7 +168,6 @@ footer {
   font-weight: 800;
   color: #000000;
 }
-
 .redes .iconos-redes {
   display: flex;
   justify-content: space-between;
@@ -185,23 +175,19 @@ footer {
   font-size: 1.5rem;
   color: #1F487E
 } 
-
 .iconos-redes i {
   margin: 0px 20px;
   cursor: pointer;
 }   
-
 .iconos-redes i:hover{
   color: #d90429;
 }
-
 .footer-nav {
   margin-top: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .footer-nav ul a {
   text-decoration: none;
   color: #000000;
@@ -210,11 +196,9 @@ footer {
   margin: 5px;
   list-style-type: none;
 }
-
 .footer-nav ul a:hover{
   color: #d90429;
 }
-
 .suscripcion {
   display: flex;
   flex-direction: column;
@@ -230,7 +214,6 @@ footer {
   font-size: 0.8rem;
   border-radius: 2px;
 }
-
 .main-footer .suscripcion .btn {
   background-color: #1F487E;
   color: #fff;
@@ -247,13 +230,10 @@ footer {
   font-size: 0.6rem;
   font-weight: 600;
 }
-
 .autor h3 a {
   text-decoration: none;
 }
-
 /* --------------------------Pagina Inicio Principal----------------------------------------*/
-
 .contenedor-titulos-controles{
   display: flex;
   flex-direction: row-reverse;
@@ -329,16 +309,13 @@ footer {
 .peliculas-recomendadas .contenedor-principal .flecha-derecha:hover{
 background: rgba(0, 63, 125, 0.8);
 }
-
 .peliculas-recomendadas .contenedor-principal .flecha-izquierda{
   left: 0;
 }
 .peliculas-recomendadas .contenedor-principal .flecha-derecha{
   right:  0;
 }
-
 /* -----------------------------------CARROUSEL--------------------------------------------*/
-
 .peliculas-recomendadas .contenedor-carrousel{
   width: 100%;
   padding: 20px 0;
@@ -354,7 +331,6 @@ background: rgba(0, 63, 125, 0.8);
   transition: .3s ease all;
   box-shadow: 5px 5px 10px rgba(0, 0, 0, .3);
 }
-
 .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula img {
   width: 100%;
   height: 100%;
@@ -363,7 +339,6 @@ background: rgba(0, 63, 125, 0.8);
 .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula.hover{
   transform:scale(1.2);
   transform-origin: center;
-
 } 
 .pelicula {
   position: relative;
@@ -373,7 +348,6 @@ background: rgba(0, 63, 125, 0.8);
 }
 .pelicula:hover .tarjeta-texto{
   display: block;
-  
 }
 .tarjeta-texto{
   position: absolute;
@@ -400,14 +374,11 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: column;
   align-items: center;
 }
-
 .ultimos-productos h2 {
   text-align: center;
   color: #003f7d;
   font-weight: bold;
-
 }
-
 .card-ultimos {
   width: 150px;
   margin: 20px;
@@ -417,17 +388,14 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: column;
   justify-content: space-between;
 }
-
 .card-ultimos:hover {
   box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
 }
-
 .card-ultimos .cover__card {
   width: 100%;
   height: 100px; 
   overflow: hidden;
 }
-
 .card-ultimos .cover__card img {
   width: 100%;
   height: 100%;
@@ -441,7 +409,6 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: column;
   margin-top: 15px;
 }
-
 .titulo-producto h3 {
   white-space: nowrap; 
   overflow: hidden; 
@@ -451,7 +418,6 @@ background: rgba(0, 63, 125, 0.8);
   max-width: 90%; 
   margin: 0 auto;
 }
-
 .precio-producto {
   flex-grow: 1;
   display: flex;
@@ -471,20 +437,16 @@ background: rgba(0, 63, 125, 0.8);
   justify-content: center;
   flex-direction: column;
 }
-
 .categoria-producto h5 {
   font-weight: bold;
   text-align: center;
   width: 100%;
 }
 /*----------------------LOGIN--------------------*/
-
 .body-login{
   margin: auto;
   text-align: center;
 }
-
-
 .login-form {
   display: flex;
   flex-direction: column;
@@ -497,14 +459,12 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
   border-radius: 10px;  
 }
-
 .login-form h2 {
   text-align: center;
   color: #1F487E;
   font-size: 28px;
   font-weight: bold;
   padding: 70px 0 10 0;
-
 }
 .login-form input[type="text"],
 .login-form input[type="password"]{
@@ -526,7 +486,6 @@ background: rgba(0, 63, 125, 0.8);
   font-size: large;
   color: #fff;
 }
-
 .btn-login:hover, .btn-login:active{
   color: #fff;
   background-color: #d90429;
@@ -539,7 +498,6 @@ background: rgba(0, 63, 125, 0.8);
   margin-top: 20px;
   margin-bottom:10px;
 }
-
 .register-form {
   display: flex;
   flex-direction: column;
@@ -558,7 +516,6 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 28px;
   font-weight: bold;
   padding: 70px 0 10 0;
-
 }
 .register-form .error{
   color: #d90429;
@@ -572,7 +529,6 @@ background: rgba(0, 63, 125, 0.8);
   flex-wrap: wrap;
   align-items: center;
 }
-
 .btn-register {
   width: 100%;
   padding: 15px;
@@ -607,14 +563,11 @@ background: rgba(0, 63, 125, 0.8);
   -moz-appearance: button;
   appearance: button;
   text-decoration: none;
-  
   margin-top: 10px;
   margin-right: 10px;
   text-align: center;
   border-radius: 10px;
 }
-
-
 .btn-cancel:hover, .btn-cancel:active{
   color: #fff;
   background-color: #1F487E;
@@ -623,7 +576,6 @@ background: rgba(0, 63, 125, 0.8);
 .btn-guardar:focus{
   box-shadow: 0 0 0 3px #10b981;
 }
-
 .btn-register:hover, .btn-register:active{
   color: #fff;
   background-color: #d90429;
@@ -632,7 +584,6 @@ background: rgba(0, 63, 125, 0.8);
 .btn-guardar:focus{
   box-shadow: 0 0 0 3px #10b981;
 }
-
 .formulario-register{
   display: flex;
   flex-direction: column;
@@ -650,13 +601,11 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 10px;
   box-sizing: border-box;
 }
-
 .btn-guardar{
   display: flex;
   flex-direction: row;
   padding: 20px;
 }
-
 .select-css{
   display: block;
   font-size: 16px;
@@ -669,7 +618,6 @@ background: rgba(0, 63, 125, 0.8);
   margin: 0;
   background-color: #fff;
 }
-
 /* ------------------------------EDITAR----------------------*/
 .form-group-crear {
   display: flex;
@@ -684,20 +632,17 @@ background: rgba(0, 63, 125, 0.8);
   justify-content: flex-start;
   align-items: center;
 }
-
 .imagen-miniatura {
   margin-right: 10px; 
   width: 100px; 
   height: auto;
 }
-
 .pagina {
   color: red;
   font-size: 20px;
   margin: 0 10px;
   text-align: center;
 }
-
 .pagina:visited {
   color: blue;
 }
@@ -753,9 +698,64 @@ background: rgba(0, 63, 125, 0.8);
 .botones-editar button{
   margin-right: 50px;
 }
-
+/*-----------------------------PRESUPUESTO MOSTRADOR--------------------------*/
+.resultado-busqueda {
+  cursor: pointer;
+}
+#invoice-form {
+  width: 80%;
+  margin: auto;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);
+}
+#invoice-form h2 {
+  text-align: center;
+  color: #6c757d;
+}
+#invoice-form label {
+  display: block;
+  margin-bottom: 10px;
+}
+#invoice-form input[type="text"],
+#invoice-form input[type="date"],
+#invoice-form input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.1);
+}
+#invoice-form .buscador {
+  margin-top: 20px;
+}
+#invoice-form .table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+}
+#invoice-form .table th,
+#invoice-form .table td {
+  border: 1px solid #dee2e6;
+  padding: 10px;
+  text-align: left;
+}
+#invoice-form button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  margin-top: 20px;
+  cursor: pointer;
+}
+#invoice-form button:hover {
+  background-color: #0056b3;
+}
 /*-----------------------------CREAR--------------------------*/
-
 .container-crear {
   display: flex;
   flex-direction: column;
