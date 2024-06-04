@@ -710,13 +710,19 @@ background: rgba(0, 63, 125, 0.8);
   border-radius: 5px;
   box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);
   display: flex;
+  flex-direction: column; 
+  align-items: center;
+}
+#invoice-details {
+  display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: center;
+  width: 100%;
 }
 #invoice-form h2 {
   text-align: center;
   color: #6c757d;
+  font-weight: bold;
 }
 #invoice-form label {
   display: block;
