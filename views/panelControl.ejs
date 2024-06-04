@@ -47,7 +47,8 @@
             <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
           <% }); %>
         </select>
-        <button type="submit" class="btn btn-primary">Generar PDF de Stock</button>
+        <button type="submit" class="btn btn-primary">Listado Completo de Stock</button>
+        <button id="btnGenerarPDFStockFaltante" class="btn btn-primary">Stock Faltante</button>
       </form>
     </div>
     
