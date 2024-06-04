@@ -18,9 +18,12 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       const celdaCodigoFactura = filaFactura.insertCell(0);
       const celdaDescripcionFactura = filaFactura.insertCell(1);
       const celdaPrecioFactura = filaFactura.insertCell(2);
+      const celdaCantidadFactura = filaFactura.insertCell(3); // Nueva celda para la cantidad
       celdaCodigoFactura.textContent = producto.codigo;
       celdaDescripcionFactura.textContent = producto.descripcion;
       celdaPrecioFactura.textContent = producto.precio_venta;
+      // Agregar un campo de entrada en la celda de cantidad
+      celdaCantidadFactura.innerHTML = '<input type="number" min="1" value="1">';
       resultadosBusqueda.innerHTML = ''; 
     });
     resultadosBusqueda.appendChild(resultado);

@@ -721,7 +721,7 @@ background: rgba(0, 63, 125, 0.8);
 #invoice-form input[type="text"],
 #invoice-form input[type="date"],
 #invoice-form input[type="number"] {
-  width: 100%;
+  width: 60%;
   padding: 10px;
   border: 1px solid #ced4da;
   border-radius: 4px;
@@ -740,6 +740,9 @@ background: rgba(0, 63, 125, 0.8);
   border: 1px solid #dee2e6;
   padding: 10px;
   text-align: left;
+}
+#invoice-form .table th {
+  color: #003f7d;
 }
 #invoice-form button {
   display: block;
