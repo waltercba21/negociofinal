@@ -684,27 +684,15 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre)
         });
     });
 },
-obtenerPorFiltrosConCodigoPrecio: function(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite) {
+obtenerPorFiltrosConCodigoPrecio: function(conexion, busqueda_nombre, limite) {
     return new Promise((resolve, reject) => {
-        let sql = 'SELECT productos.id, productos.nombre, productos.descripcion, producto_proveedor.codigo, producto_proveedor.precio_lista, producto_proveedor.precio_venta FROM productos';
+        let sql = 'SELECT producto_proveedor.codigo, productos.descripcion, productos.precio_venta FROM productos';
         sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
         sql += ' WHERE 1=1';
         const parametros = [];
         if (busqueda_nombre) {
             sql += ' AND (productos.nombre LIKE ? OR productos.descripcion LIKE ?)';
             parametros.push('%' + busqueda_nombre + '%', '%' + busqueda_nombre + '%');
-        }
-        if (categoria_id) {
-            sql += ' AND productos.categoria_id = ?';
-            parametros.push(categoria_id);
-        }
-        if (marca_id) {
-            sql += ' AND productos.marca_id = ?';
-            parametros.push(marca_id);
-        }
-        if (modelo_id) {
-            sql += ' AND productos.modelo_id = ?';
-            parametros.push(modelo_id);
         }
         sql += ' ORDER BY productos.id DESC';
         if (limite) {
