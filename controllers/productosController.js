@@ -797,15 +797,21 @@ generarPresupuestoPDF: function(req, res) {
        .text('Precio', {align: 'left'})
        .text('Cantidad', {align: 'left'})
        .text('Subtotal', {align: 'left'});
-    datos.productos.forEach(producto => {
-        console.log('Procesando producto: ', producto);
-        doc.moveDown();
-        doc.text(producto.codigo, {align: 'left'})
-           .text(producto.descripcion, {align: 'left'})
-           .text(producto.precio, {align: 'left'})
-           .text(producto.cantidad, {align: 'left'})
-           .text(producto.subtotal, {align: 'left'});
-    });
+
+    if (Array.isArray(datos.productos)) {
+        datos.productos.forEach(producto => {
+            console.log('Procesando producto: ', producto);
+            doc.moveDown();
+            doc.text(producto.codigo, {align: 'left'})
+               .text(producto.descripcion, {align: 'left'})
+               .text(producto.precio, {align: 'left'})
+               .text(producto.cantidad, {align: 'left'})
+               .text(producto.subtotal, {align: 'left'});
+        });
+    } else {
+        console.error('Productos no es un array');
+        return res.status(400).send('Productos no es un array');
+    }
     doc.end();
 }
 }
