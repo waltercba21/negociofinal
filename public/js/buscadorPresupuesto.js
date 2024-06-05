@@ -53,7 +53,8 @@ productos.forEach((producto) => {
     // Usa el evento 'change' en lugar de 'input'
     celdaCantidadFactura.firstChild.addEventListener('change', (e) => {
       const cantidad = e.target.value;
-      celdaSubtotalFactura.textContent = cantidad * producto.precio_venta;
+      // Convierte el precio del producto a un número antes de realizar la multiplicación
+      celdaSubtotalFactura.textContent = cantidad * Number(producto.precio_venta);
     });
   });
 
