@@ -33,9 +33,20 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
         const cantidad = e.target.value;
         // Convierte el precio del producto a un número antes de realizar la multiplicación
         celdaSubtotalFactura.textContent = cantidad * Number(producto.precio_venta);
+        calcularTotal();
       });
     });
 
     resultadosBusqueda.appendChild(resultado);
   });
 });
+
+function calcularTotal() {
+  const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+  let total = 0;
+  for (let i = 0; i < filasFactura.length; i++) {
+    const celdaSubtotal = filasFactura[i].cells[4];
+    total += Number(celdaSubtotal.textContent);
+  }
+  document.getElementById('total-amount').value = total;
+}
