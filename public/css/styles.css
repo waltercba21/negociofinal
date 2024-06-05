@@ -751,7 +751,7 @@ background: rgba(0, 63, 125, 0.8);
   display: inline-block;
   margin-top: 20px;
   margin-bottom: 0;
-  width: 45%;
+  width: 100%;
 }
 .buscador input[type="text"] {
   width: 100%;
