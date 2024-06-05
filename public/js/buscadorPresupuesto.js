@@ -66,16 +66,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
     invoiceDate = invoiceDate.split('-').reverse().join('-');
 
     // Crear una nueva estructura HTML para el PDF
-    const pdfContent = `
-    <div style="font-size: 10px; padding-left: 20px;">
-      <h2 style="font-size: 14px;">Presupuesto</h2>
-      <div>Nombre del cliente: ${customerName}</div>
-      <div>Fecha: ${invoiceDate}</div>
-      <div>Presupuesto N°: ${invoiceNumber}</div>
-      <div style="margin: 20px; font-size: 8px;">${invoiceData}</div>
-      <div style="text-align: right;">Total: ${totalAmount}</div>
+const pdfContent = `
+  <div style="font-size: 10px; padding-left: 20px;">
+    <h2 style="font-size: 14px;">Presupuesto</h2>
+    <div>Nombre del cliente: ${customerName}</div>
+    <div>Fecha: ${invoiceDate}</div>
+    <div>Presupuesto N°: ${invoiceNumber}</div>
+    <div style="margin: 20px; font-size: 8px;">
+      <div style="font-size: 6px;">${invoiceData}</div>
     </div>
-  `;
+    <div style="text-align: right;">Total: ${totalAmount}</div>
+  </div>
+`;
   
   // Crear un nuevo elemento div y agregar la estructura HTML a él
   const pdfElement = document.createElement('div');
