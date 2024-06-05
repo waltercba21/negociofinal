@@ -745,7 +745,21 @@ background: rgba(0, 63, 125, 0.8);
 #entradaBusqueda {
   width: 100%;
 }
-
+.contenedor-presupuestos .buscador input{
+  width: 100%;
+  margin-left: 100px;
+  margin-bottom: 100px;
+  border-radius: 10px;
+  border:none;
+  border-color: #1F487E;
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
+  padding: 8%;
+  outline: none;
+  height: 50px;
+  transition: box-shadow 0.3s ease-in-out;
+  cursor: pointer;
+  font-weight: bold;
+}
 #invoice-items {
   flex: 1;
   box-sizing: border-box;
