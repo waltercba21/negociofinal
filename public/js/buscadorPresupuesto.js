@@ -56,17 +56,11 @@ function calcularTotal() {
 document.addEventListener('DOMContentLoaded', (event) => {
   document.getElementById('print-button').addEventListener('click', function(event) {
     event.preventDefault();
-
-    // Recopilar los datos del formulario
     const customerName = document.getElementById('customer-name').value;
     let invoiceDate = document.getElementById('invoice-date').value;
     const invoiceNumber = document.getElementById('invoice-number').value;
     const totalAmount = document.getElementById('total-amount').value;
-
-    // Cambiar el formato de la fecha
     invoiceDate = invoiceDate.split('-').reverse().join('-');
-
-    // Crear una nueva estructura HTML para el PDF
     const pdfContent = `
       <div style="margin: 20px;">
         <h2>Presupuesto</h2>
@@ -76,27 +70,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
         <div>Total: ${totalAmount}</div>
       </div>
     `;
-
-    // Crear un nuevo elemento div y agregar la estructura HTML a él
     const pdfElement = document.createElement('div');
     pdfElement.innerHTML = pdfContent;
-    pdfElement.style.position = 'absolute'; // Posicionar el div absolutamente
-    pdfElement.style.left = '-9999px'; // Mover el div fuera de la pantalla
-    document.body.appendChild(pdfElement); // Agrega el div al DOM
-
-    // Pasar el nuevo elemento div a html2canvas y jsPDF
+    pdfElement.style.position = 'absolute'; 
+    pdfElement.style.left = '-9999px';
+    document.body.appendChild(pdfElement); 
     html2canvas(pdfElement).then(canvas => {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF();
       pdf.addImage(imgData, 'PNG', 0, 0);
-
-      // Agregar la tabla al PDF
       const invoiceTable = document.getElementById('tabla-factura');
-      pdf.autoTable({ html: invoiceTable });
-
+      pdf.autoTable({ html: invoiceTable.outerHTML }); // Modificación aquí
       pdf.save("presupuesto.pdf");
-
-      // Elimina el div del DOM después de crear el PDF
       document.body.removeChild(pdfElement);
     });
   });
