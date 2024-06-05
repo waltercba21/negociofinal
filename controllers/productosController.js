@@ -768,10 +768,12 @@ presupuestoMostrador:function(req, res) {
     res.render('presupuestoMostrador');
 },
 generarPresupuestoPDF: function(req, res) {
+    console.log('Inicio de generarPresupuestoPDF');
     let doc = new PDFDocument();
     let buffers = [];
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', () => {
+        console.log('Fin de la generación del PDF');
         let pdfData = Buffer.concat(buffers);
         res.writeHead(200, {
             'Content-Length': Buffer.byteLength(pdfData),
@@ -782,6 +784,7 @@ generarPresupuestoPDF: function(req, res) {
     });
 
     let datos = req.body;
+    console.log('Datos recibidos: ', datos);
     doc.fontSize(20).text('Presupuesto', {align: 'center'});
     doc.fontSize(14)
        .text(`Nombre del cliente: ${datos.nombreCliente}`, {align: 'left'})
@@ -795,6 +798,7 @@ generarPresupuestoPDF: function(req, res) {
        .text('Cantidad', {align: 'left'})
        .text('Subtotal', {align: 'left'});
     datos.productos.forEach(producto => {
+        console.log('Procesando producto: ', producto);
         doc.moveDown();
         doc.text(producto.codigo, {align: 'left'})
            .text(producto.descripcion, {align: 'left'})
