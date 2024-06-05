@@ -50,29 +50,30 @@ function calcularTotal() {
   }
   document.getElementById('total-amount').value = total;
 }
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.getElementById('print-button').addEventListener('click', function(event) {
+    event.preventDefault();
 
-document.getElementById('print-button').addEventListener('click', function(event) {
-  event.preventDefault();
+    // Crear una nueva estructura HTML para el PDF
+    const invoiceData = document.getElementById('tabla-factura').outerHTML;
+    const totalAmount = document.getElementById('total-amount').value;
+    const pdfContent = `
+      <div>
+        ${invoiceData}
+        <div>Total: ${totalAmount}</div>
+      </div>
+    `;
 
-  // Crear una nueva estructura HTML para el PDF
-  const invoiceData = document.getElementById('tabla-factura').outerHTML;
-  const totalAmount = document.getElementById('total-amount').value;
-  const pdfContent = `
-    <div>
-      ${invoiceData}
-      <div>Total: ${totalAmount}</div>
-    </div>
-  `;
+    // Crear un nuevo elemento div y agregar la estructura HTML a él
+    const pdfElement = document.createElement('div');
+    pdfElement.innerHTML = pdfContent;
 
-  // Crear un nuevo elemento div y agregar la estructura HTML a él
-  const pdfElement = document.createElement('div');
-  pdfElement.innerHTML = pdfContent;
-
-  // Pasar el nuevo elemento div a html2canvas y jsPDF
-  html2canvas(pdfElement).then(canvas => {
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF();
-    pdf.addImage(imgData, 'PNG', 0, 0);
-    pdf.save("presupuesto.pdf");
+    // Pasar el nuevo elemento div a html2canvas y jsPDF
+    html2canvas(pdfElement).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF();
+      pdf.addImage(imgData, 'PNG', 0, 0);
+      pdf.save("presupuesto.pdf");
+    });
   });
 });
