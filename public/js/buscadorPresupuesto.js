@@ -36,7 +36,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     resultadosBusqueda.appendChild(resultado);
   });
 });
-
 function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
@@ -46,32 +45,27 @@ function calcularTotal() {
   }
   document.getElementById('total-amount').value = total;
 }
-$('#print-button').click(function(e) {
-  e.preventDefault();
-
-  // Recopilar los datos del formulario
-  let datos = {
-      nombreCliente: $('#customer-name').val(),
-      fecha: $('#invoice-date').val(),
-      numeroPresupuesto: $('#invoice-number').val(),
-      productos: []
-  };
-
-  // Recopilar los productos de la tabla
-  $('#tabla-factura tbody tr').each(function() {
-      let producto = {
-          codigo: $(this).find('.codigo').text(),
-          descripcion: $(this).find('.descripcion').text(),
-          precio: $(this).find('.precio').text(),
-          cantidad: $(this).find('.cantidad').text(),
-          subtotal: $(this).find('.subtotal').text()
+(document).ready(function() {
+  $('#print-button').click(function(e) {
+      e.preventDefault();
+      let datos = {
+          nombreCliente: $('#customer-name').val(),
+          fecha: $('#invoice-date').val(),
+          numeroPresupuesto: $('#invoice-number').val(),
+          productos: []
       };
-      datos.productos.push(producto);
-  });
-
-  // Enviar los datos al servidor
-  $.post('/generarPresupuestoPDF', datos, function(url) {
-      // Redirigir al PDF generado
-      window.location.href = url;
+      $('#tabla-factura tbody tr').each(function() {
+          let producto = {
+              codigo: $(this).find('.codigo').text(),
+              descripcion: $(this).find('.descripcion').text(),
+              precio: $(this).find('.precio').text(),
+              cantidad: $(this).find('.cantidad').text(),
+              subtotal: $(this).find('.subtotal').text()
+          };
+          datos.productos.push(producto);
+      });
+      $.post('/generarPresupuestoPDF', datos, function(url) {
+          window.location.href = url;
+      });
   });
 });
