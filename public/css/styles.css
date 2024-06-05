@@ -735,14 +735,26 @@ background: rgba(0, 63, 125, 0.8);
   box-sizing: border-box;
   font-weight: bolder;
 }
-.contenedor-presupuestos{
+.contenedor-presupuestos {
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
 }
-.buscador{
+
+.buscador {
   width: 45%;
-  margin-right: 20px;
-  height: 20px;
+}
+
+#invoice-items {
+  width: 45%;
+}
+
+#entradaBusqueda {
+  width: 100%;
+}
+
+#tabla-factura {
+  width: 100%;
 }
 
 /*-----------------------------CREAR--------------------------*/
