@@ -740,22 +740,20 @@ background: rgba(0, 63, 125, 0.8);
 .buscador {
   position: relative;
   display: inline-block;
-  padding-bottom: 200px; /* Añade un padding-bottom que sea al menos tan grande como la altura máxima de #resultadosBusqueda */
+  margin-top: 200px;
 }
-
 .buscador input[type="text"] {
   width: 100%;
 }
-
 #resultadosBusqueda {
-  width: auto; /* Cambia a auto para que tenga el mismo ancho que el campo de entrada */
-  max-height: 200px; /* Ajusta esto a la altura máxima que prefieras */
+  width: auto; 
+  max-height: 200px; 
   overflow-y: auto; 
   overflow-x: auto; 
   position: absolute; 
   background-color: white; 
   z-index: 1; 
-  margin-top: 5px; /* Añade un poco de margen en la parte superior para separarlo del campo de entrada */
+  top: 100%;
 }
 #invoice-form input[type="text"],
 #invoice-form input[type="date"],
