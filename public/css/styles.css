@@ -751,7 +751,7 @@ background: rgba(0, 63, 125, 0.8);
   overflow-y: auto; 
   overflow-x: auto; 
   position: absolute; 
-  background-color: #e4e2e2; 
+  background-color: #f1f0f0; 
   top: 100%;
   left: 50%; 
   transform: translateX(-50%);
