@@ -767,9 +767,20 @@ generarStockPDF: async function (req, res) {
 presupuestoMostrador:function(req, res) {
     res.render('presupuestoMostrador');
 },
-generarPresupuestoPDF:function(req, res){
+generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
-    let stream = doc.pipe(blobStream());
+    let buffers = [];
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => {
+        let pdfData = Buffer.concat(buffers);
+        res.writeHead(200, {
+            'Content-Length': Buffer.byteLength(pdfData),
+            'Content-Type': 'application/pdf',
+            'Content-disposition': 'attachment;filename=presupuesto.pdf', 
+        });
+        res.end(pdfData);
+    });
+
     let datos = req.body;
     doc.fontSize(20).text('Presupuesto', {align: 'center'});
     doc.fontSize(14)
@@ -792,9 +803,5 @@ generarPresupuestoPDF:function(req, res){
            .text(producto.subtotal, {align: 'left'});
     });
     doc.end();
-    stream.on('finish', function() {
-        const url = stream.toBlobURL('application/pdf');
-        res.redirect(url);
-    });
-},
+}
 }

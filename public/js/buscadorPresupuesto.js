@@ -77,7 +77,7 @@ $(document).ready(function() {
           datos.productos.push(producto);
       });
       console.log("Datos finales: ", datos);
-      $.post('/productos/generarPresupuestoPDF', datos, function(url) {
+      $.post('/generarPresupuestoPDF', datos, function(url) {
           console.log("Respuesta del servidor: ", url);
           window.location.href = url;
       }).fail(function(jqXHR, textStatus, error) {
