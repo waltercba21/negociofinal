@@ -766,6 +766,35 @@ generarStockPDF: async function (req, res) {
 },
 presupuestoMostrador:function(req, res) {
     res.render('presupuestoMostrador');
-  },
-
+},
+generarPresupuestoPDF:function(req, res){
+    let doc = new PDFDocument();
+    let stream = doc.pipe(blobStream());
+    let datos = req.body;
+    doc.fontSize(20).text('Presupuesto', {align: 'center'});
+    doc.fontSize(14)
+       .text(`Nombre del cliente: ${datos.nombreCliente}`, {align: 'left'})
+       .text(`Fecha: ${datos.fecha}`, {align: 'left'})
+       .text(`Presupuesto N°: ${datos.numeroPresupuesto}`, {align: 'left'});
+    doc.moveDown();
+    doc.fontSize(12)
+       .text('Código', {align: 'left'})
+       .text('Descripción', {align: 'left'})
+       .text('Precio', {align: 'left'})
+       .text('Cantidad', {align: 'left'})
+       .text('Subtotal', {align: 'left'});
+    datos.productos.forEach(producto => {
+        doc.moveDown();
+        doc.text(producto.codigo, {align: 'left'})
+           .text(producto.descripcion, {align: 'left'})
+           .text(producto.precio, {align: 'left'})
+           .text(producto.cantidad, {align: 'left'})
+           .text(producto.subtotal, {align: 'left'});
+    });
+    doc.end();
+    stream.on('finish', function() {
+        const url = stream.toBlobURL('application/pdf');
+        res.redirect(url);
+    });
+},
 }

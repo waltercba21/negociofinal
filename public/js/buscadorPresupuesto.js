@@ -46,3 +46,32 @@ function calcularTotal() {
   }
   document.getElementById('total-amount').value = total;
 }
+$('#print-button').click(function(e) {
+  e.preventDefault();
+
+  // Recopilar los datos del formulario
+  let datos = {
+      nombreCliente: $('#customer-name').val(),
+      fecha: $('#invoice-date').val(),
+      numeroPresupuesto: $('#invoice-number').val(),
+      productos: []
+  };
+
+  // Recopilar los productos de la tabla
+  $('#tabla-factura tbody tr').each(function() {
+      let producto = {
+          codigo: $(this).find('.codigo').text(),
+          descripcion: $(this).find('.descripcion').text(),
+          precio: $(this).find('.precio').text(),
+          cantidad: $(this).find('.cantidad').text(),
+          subtotal: $(this).find('.subtotal').text()
+      };
+      datos.productos.push(producto);
+  });
+
+  // Enviar los datos al servidor
+  $.post('/generarPresupuestoPDF', datos, function(url) {
+      // Redirigir al PDF generado
+      window.location.href = url;
+  });
+});
