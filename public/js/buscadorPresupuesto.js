@@ -46,7 +46,9 @@ function calcularTotal() {
   document.getElementById('total-amount').value = total;
 }
 $(document).ready(function() {
+  console.log("Documento listo");
   $('#print-button').click(function(e) {
+      console.log("Botón clickeado");
       e.preventDefault();
       let datos = {
           nombreCliente: $('#customer-name').val(),
@@ -54,6 +56,7 @@ $(document).ready(function() {
           numeroPresupuesto: $('#invoice-number').val(),
           productos: []
       };
+      console.log("Datos iniciales: ", datos);
       $('#tabla-factura tbody tr').each(function() {
           let producto = {
               codigo: $(this).find('.codigo').text(),
@@ -62,10 +65,15 @@ $(document).ready(function() {
               cantidad: $(this).find('.cantidad').text(),
               subtotal: $(this).find('.subtotal').text()
           };
+          console.log("Producto: ", producto);
           datos.productos.push(producto);
       });
+      console.log("Datos finales: ", datos);
       $.post('/productos/generarPresupuestoPDF', datos, function(url) {
+          console.log("Respuesta del servidor: ", url);
           window.location.href = url;
+      }).fail(function(jqXHR, textStatus, error) {
+          console.error("Error en la petición: " + textStatus, error);
       });
   });
 });
