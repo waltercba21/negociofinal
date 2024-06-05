@@ -53,8 +53,23 @@ function calcularTotal() {
 
 document.getElementById('print-button').addEventListener('click', function(event) {
   event.preventDefault();
-  const invoiceForm = document.getElementById('invoice-form');
-  html2canvas(invoiceForm).then(canvas => {
+
+  // Crear una nueva estructura HTML para el PDF
+  const invoiceData = document.getElementById('tabla-factura').outerHTML;
+  const totalAmount = document.getElementById('total-amount').value;
+  const pdfContent = `
+    <div>
+      ${invoiceData}
+      <div>Total: ${totalAmount}</div>
+    </div>
+  `;
+
+  // Crear un nuevo elemento div y agregar la estructura HTML a él
+  const pdfElement = document.createElement('div');
+  pdfElement.innerHTML = pdfContent;
+
+  // Pasar el nuevo elemento div a html2canvas y jsPDF
+  html2canvas(pdfElement).then(canvas => {
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF();
     pdf.addImage(imgData, 'PNG', 0, 0);
