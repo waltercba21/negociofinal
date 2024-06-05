@@ -64,7 +64,7 @@ $(document).ready(function() {
           };
           datos.productos.push(producto);
       });
-      $.post('/generarPresupuestoPDF', datos, function(url) {
+      $.post('/productos/generarPresupuestoPDF', datos, function(url) {
           window.location.href = url;
       });
   });
