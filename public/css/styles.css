@@ -740,6 +740,7 @@ background: rgba(0, 63, 125, 0.8);
 .buscador {
   position: relative;
   display: inline-block;
+  padding-bottom: 200px; /* Añade un padding-bottom que sea al menos tan grande como la altura máxima de #resultadosBusqueda */
 }
 
 .buscador input[type="text"] {
