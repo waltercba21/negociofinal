@@ -825,6 +825,10 @@ background: rgba(0, 63, 125, 0.8);
   justify-content: center;
   gap: 10px; 
 }
+#print-button{
+  background-color: #b80220;
+  color: white;
+}
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
   display: flex;
