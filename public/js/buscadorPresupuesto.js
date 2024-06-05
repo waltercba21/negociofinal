@@ -50,3 +50,12 @@ function calcularTotal() {
   }
   document.getElementById('total-amount').value = total;
 }
+document.getElementById('print-button').addEventListener('click', function() {
+  const invoiceForm = document.getElementById('invoice-form').outerHTML;
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write('<html><head><title>Imprimir Presupuesto</title></head><body>');
+  printWindow.document.write(invoiceForm);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  printWindow.print();
+});
