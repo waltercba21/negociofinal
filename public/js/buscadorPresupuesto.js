@@ -51,11 +51,11 @@ function calcularTotal() {
   document.getElementById('total-amount').value = total;
 }
 document.getElementById('print-button').addEventListener('click', function() {
-  const invoiceForm = document.getElementById('invoice-form').outerHTML;
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write('<html><head><title>Imprimir Presupuesto</title></head><body>');
-  printWindow.document.write(invoiceForm);
-  printWindow.document.write('</body></html>');
-  printWindow.document.close();
-  printWindow.print();
+  const invoiceForm = document.getElementById('invoice-form');
+  html2canvas(invoiceForm).then(canvas => {
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF();
+    pdf.addImage(imgData, 'PNG', 0, 0);
+    pdf.save("presupuesto.pdf");
+  });
 });
