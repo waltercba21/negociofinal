@@ -51,7 +51,7 @@ function calcularTotal() {
   document.getElementById('total-amount').value = total;
 }
 
-
+/*----------------GENERAR PDF PARA IMPRIMIR ----------------------*/
 document.addEventListener('DOMContentLoaded', (event) => {
   document.getElementById('print-button').addEventListener('click', function(event) {
     event.preventDefault();
@@ -68,12 +68,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     // Crear una nueva estructura HTML para el PDF
     const pdfContent = `
-      <div>
+      <div style="margin: 20px;">
         <h2>Presupuesto</h2>
         <div>Nombre del cliente: ${customerName}</div>
         <div>Fecha: ${invoiceDate}</div>
         <div>Presupuesto N°: ${invoiceNumber}</div>
-        <div style="margin: 20px;">${invoiceData}</div>
+        <div>${invoiceData}</div>
         <div style="text-align: right;">Total: ${totalAmount}</div>
       </div>
     `;
