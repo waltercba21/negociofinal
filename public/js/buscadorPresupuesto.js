@@ -50,7 +50,9 @@ function calcularTotal() {
   }
   document.getElementById('total-amount').value = total;
 }
-document.getElementById('print-button').addEventListener('click', function() {
+
+document.getElementById('print-button').addEventListener('click', function(event) {
+  event.preventDefault();
   const invoiceForm = document.getElementById('invoice-form');
   html2canvas(invoiceForm).then(canvas => {
     const imgData = canvas.toDataURL('image/png');
