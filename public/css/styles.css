@@ -735,7 +735,7 @@ background: rgba(0, 63, 125, 0.8);
 #invoice-form input[type="text"],
 #invoice-form input[type="date"],
 #invoice-form input[type="number"] {
-  width: 80%;
+  width: 100%;
   padding: 10px;
   border: 1px solid #ced4da;
   border-radius: 4px;
