@@ -45,7 +45,7 @@ function calcularTotal() {
   }
   document.getElementById('total-amount').value = total;
 }
-(document).ready(function() {
+$(document).ready(function() {
   $('#print-button').click(function(e) {
       e.preventDefault();
       let datos = {
