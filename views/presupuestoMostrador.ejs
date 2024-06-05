@@ -21,30 +21,28 @@
           </div> 
 
           <div class="contenedor-presupuestos">
-
-          <div class="buscador">
-             <input type="text" id="entradaBusqueda" placeholder="Buscar Productos">
-             <div id="resultadosBusqueda"></div> 
-           </div>
-
-           <div id="invoice-items">
-             <table class="table" id="tabla-factura">
-               <thead>
-                 <tr>
-                   <th scope="col">Código</th>
-                   <th scope="col">Descripción</th>
-                   <th scope="col">Precio</th>
-                   <th scope="col">Cantidad</th>
-                   <th scope="col">Subtotal</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 <!-- Aquí se agregarán los productos de la factura -->
-               </tbody>
-             </table>
-           </div>
+            <div class="buscador-presupuesto">
+              <input type="text" id="entradaBusquedaPresupuesto" placeholder="Buscar Productos">
+              <div id="resultadosBusquedaPresupuesto"></div> 
+            </div>
+          
+            <div id="invoice-items">
+              <table class="table" id="tabla-factura">
+                <thead>
+                  <tr>
+                    <th scope="col">Código</th>
+                    <th scope="col">Descripción</th>
+                    <th scope="col">Precio</th>
+                    <th scope="col">Cantidad</th>
+                    <th scope="col">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Aquí se agregarán los productos de la factura -->
+                </tbody>
+              </table>
+            </div>
           </div>
-
           <div id="invoice-total">
              <label>Total: <input type="number" id="total-amount" readonly></label>
            </div>
