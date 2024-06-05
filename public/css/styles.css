@@ -742,9 +742,12 @@ background: rgba(0, 63, 125, 0.8);
 }
 #resultadosBusqueda {
   width: 100%;
-  max-height: 200px;
-  overflow-y: auto;
+  max-height: 200px; /* Establece una altura máxima para el contenedor de los resultados de la búsqueda */
+  overflow-y: auto; /* Permite que el contenido se desplace si supera la altura máxima */
   overflow-x: auto; 
+  position: absolute; /* Posiciona el contenedor de manera absoluta para que no afecte a otros elementos */
+  background-color: white; /* Agrega un fondo blanco para que el contenido sea legible */
+  z-index: 1; /* Asegura que el contenedor se muestre por encima de otros elementos */
 }
 #invoice-form input[type="text"],
 #invoice-form input[type="date"],
