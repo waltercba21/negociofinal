@@ -31,11 +31,18 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
         celdaSubtotalFactura.textContent = cantidad * Number(producto.precio_venta);
         calcularTotal();
       });
+      // Agregar las clases a las celdas
+      celdaCodigoFactura.classList.add('codigo');
+      celdaDescripcionFactura.classList.add('descripcion');
+      celdaPrecioFactura.classList.add('precio');
+      celdaCantidadFactura.classList.add('cantidad');
+      celdaSubtotalFactura.classList.add('subtotal');
     });
 
     resultadosBusqueda.appendChild(resultado);
   });
 });
+
 function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
@@ -45,6 +52,7 @@ function calcularTotal() {
   }
   document.getElementById('total-amount').value = total;
 }
+
 $(document).ready(function() {
   console.log("Documento listo");
   $('#print-button').click(function(e) {
