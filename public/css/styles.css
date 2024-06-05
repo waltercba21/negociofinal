@@ -820,6 +820,11 @@ background: rgba(0, 63, 125, 0.8);
 #invoice-total #total-amount {
   width: 50%; 
 }
+.botones-contenedor {
+  display: flex;
+  justify-content: center;
+  gap: 10px; 
+}
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
   display: flex;
