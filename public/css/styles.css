@@ -746,7 +746,7 @@ background: rgba(0, 63, 125, 0.8);
   width: 100%;
 }
 #resultadosBusqueda {
-  width: auto; 
+  width: 95%;
   max-height: 200px; 
   overflow-y: auto; 
   overflow-x: auto; 
@@ -754,6 +754,10 @@ background: rgba(0, 63, 125, 0.8);
   background-color: white; 
   z-index: 1; 
   top: 100%;
+  left: 1%; 
+  border-radius: 5px; 
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: bold;
 }
 #invoice-form input[type="text"],
 #invoice-form input[type="date"],
