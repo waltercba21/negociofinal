@@ -10,7 +10,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   const productos = await respuesta.json();
   productos.forEach((producto) => {
     const resultado = document.createElement('div');
-    resultado.textContent = producto.descripcion;
+    resultado.textContent = producto.nombre; // Cambia 'descripcion' a 'nombre'
     resultado.classList.add('resultado-busqueda');
     resultado.addEventListener('click', () => {
       const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
@@ -20,7 +20,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       const celdaPrecioFactura = filaFactura.insertCell(2);
       const celdaCantidadFactura = filaFactura.insertCell(3); 
       celdaCodigoFactura.textContent = producto.codigo;
-      celdaDescripcionFactura.textContent = producto.descripcion;
+      celdaDescripcionFactura.textContent = producto.nombre; // Cambia 'descripcion' a 'nombre'
       celdaPrecioFactura.textContent = producto.precio_venta;
       // Agregar un campo de entrada en la celda de cantidad
       celdaCantidadFactura.innerHTML = '<input type="number" min="1" value="1">';
