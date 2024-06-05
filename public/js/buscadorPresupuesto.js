@@ -49,10 +49,13 @@ productos.forEach((producto) => {
     celdaCantidadFactura.innerHTML = '<input type="number" min="1" value="1">';
     celdaSubtotalFactura.textContent = producto.precio_venta;
     resultadosBusqueda.innerHTML = ''; 
-    celdaCantidadFactura.firstChild.addEventListener('input', (e) => {
+
+    // Usa el evento 'change' en lugar de 'input'
+    celdaCantidadFactura.firstChild.addEventListener('change', (e) => {
       const cantidad = e.target.value;
       celdaSubtotalFactura.textContent = cantidad * producto.precio_venta;
     });
   });
+
   resultadosBusqueda.appendChild(resultado);
 });
