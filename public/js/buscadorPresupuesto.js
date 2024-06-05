@@ -60,7 +60,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const customerName = document.getElementById('customer-name').value;
     let invoiceDate = document.getElementById('invoice-date').value;
     const invoiceNumber = document.getElementById('invoice-number').value;
-    const invoiceData = document.getElementById('tabla-factura').outerHTML;
     const totalAmount = document.getElementById('total-amount').value;
 
     // Cambiar el formato de la fecha
@@ -73,8 +72,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         <div>Nombre del cliente: ${customerName}</div>
         <div>Fecha: ${invoiceDate}</div>
         <div>Presupuesto N°: ${invoiceNumber}</div>
-        <div>${invoiceData}</div>
-        <div style="text-align: right;">Total: ${totalAmount}</div>
+        <div>Total: ${totalAmount}</div>
       </div>
     `;
 
@@ -90,6 +88,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF();
       pdf.addImage(imgData, 'PNG', 0, 0);
+
+      // Agregar la tabla al PDF
+      const invoiceTable = document.getElementById('tabla-factura');
+      pdf.autoTable({ html: invoiceTable });
+
       pdf.save("presupuesto.pdf");
 
       // Elimina el div del DOM después de crear el PDF
