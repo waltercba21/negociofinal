@@ -73,21 +73,22 @@ document.addEventListener('DOMContentLoaded', (event) => {
       </div>
     `;
 
-    // Crear un nuevo elemento div y agregar la estructura HTML a él
-    const pdfElement = document.createElement('div');
-    pdfElement.innerHTML = pdfContent;
-    pdfElement.style.display = 'none'; // Asegúrate de que el div no sea visible
-    document.body.appendChild(pdfElement); // Agrega el div al DOM
+// Crear un nuevo elemento div y agregar la estructura HTML a él
+const pdfElement = document.createElement('div');
+pdfElement.innerHTML = pdfContent;
+pdfElement.style.position = 'absolute'; // Posicionar el div absolutamente
+pdfElement.style.left = '-9999px'; // Mover el div fuera de la pantalla
+document.body.appendChild(pdfElement); // Agrega el div al DOM
 
-    // Pasar el nuevo elemento div a html2canvas y jsPDF
-    html2canvas(pdfElement).then(canvas => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF();
-      pdf.addImage(imgData, 'PNG', 0, 0);
-      pdf.save("presupuesto.pdf");
+// Pasar el nuevo elemento div a html2canvas y jsPDF
+html2canvas(pdfElement).then(canvas => {
+  const imgData = canvas.toDataURL('image/png');
+  const pdf = new jsPDF();
+  pdf.addImage(imgData, 'PNG', 0, 0);
+  pdf.save("presupuesto.pdf");
 
-      // Elimina el div del DOM después de crear el PDF
-      document.body.removeChild(pdfElement);
-    });
+  // Elimina el div del DOM después de crear el PDF
+  document.body.removeChild(pdfElement);
+});
   });
 });
