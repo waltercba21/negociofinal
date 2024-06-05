@@ -132,6 +132,10 @@ module.exports = {
     },
     buscarConCodigoPrecio : async (req, res) => {
         const busqueda_nombre = req.query.q;
+        if (!busqueda_nombre || !busqueda_nombre.trim()) { 
+            res.json([]);
+            return;
+        }
         const limite = !busqueda_nombre ? 10 : undefined;
         const productos = await producto.obtenerPorFiltrosConCodigoPrecio(conexion, busqueda_nombre, limite); 
         res.json(productos); 
