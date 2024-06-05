@@ -737,11 +737,21 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 10px;
   text-align: center;
 }
+#invoice-items {
+  display: flex;
+  justify-content: space-between;
+}
+#invoice-form .table {
+  width: 45%; 
+  margin-top: 50px;
+  border-collapse: collapse;
+}
 .buscador {
   position: relative;
   display: inline-block;
   margin-top: 20px;
-  margin-bottom: 220px;
+  margin-bottom: 0;
+  width: 45%;
 }
 .buscador input[type="text"] {
   width: 100%;
@@ -811,15 +821,14 @@ background: rgba(0, 63, 125, 0.8);
   justify-content: center;
   align-items: center;
 }
-
 #invoice-total label {
   color: #003f7d; 
   font-weight: bold;
 }
-
 #invoice-total #total-amount {
   width: 50%; 
 }
+
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
   display: flex;
