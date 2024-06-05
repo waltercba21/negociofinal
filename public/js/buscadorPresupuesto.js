@@ -81,7 +81,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
   const pdfElement = document.createElement('div');
   pdfElement.innerHTML = pdfContent;
   pdfElement.style.position = 'absolute'; // Posicionar el div absolutamente
-  pdfElement.style.left = '-9999px'; // Mover el div fuera de la pantallaument.body.appendChild(pdfElement); // Agrega el div al DOM
+  pdfElement.style.left = '-9999px'; // Mover el div fuera de la pantalla
+  document.body.appendChild(pdfElement); // Agrega el div al DOM
 
     // Pasar el nuevo elemento div a html2canvas y jsPDF
     html2canvas(pdfElement).then(canvas => {
