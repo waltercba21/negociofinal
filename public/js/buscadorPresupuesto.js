@@ -54,11 +54,20 @@ document.addEventListener('DOMContentLoaded', (event) => {
   document.getElementById('print-button').addEventListener('click', function(event) {
     event.preventDefault();
 
-    // Crear una nueva estructura HTML para el PDF
+    // Recopilar los datos del formulario
+    const customerName = document.getElementById('customer-name').value;
+    const invoiceDate = document.getElementById('invoice-date').value;
+    const invoiceNumber = document.getElementById('invoice-number').value;
     const invoiceData = document.getElementById('tabla-factura').outerHTML;
     const totalAmount = document.getElementById('total-amount').value;
+
+    // Crear una nueva estructura HTML para el PDF
     const pdfContent = `
       <div>
+        <h2>Presupuesto</h2>
+        <div>Nombre del cliente: ${customerName}</div>
+        <div>Fecha: ${invoiceDate}</div>
+        <div>Presupuesto N°: ${invoiceNumber}</div>
         ${invoiceData}
         <div>Total: ${totalAmount}</div>
       </div>
@@ -67,6 +76,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     // Crear un nuevo elemento div y agregar la estructura HTML a él
     const pdfElement = document.createElement('div');
     pdfElement.innerHTML = pdfContent;
+    pdfElement.style.display = 'none'; // Asegúrate de que el div no sea visible
+    document.body.appendChild(pdfElement); // Agrega el div al DOM
 
     // Pasar el nuevo elemento div a html2canvas y jsPDF
     html2canvas(pdfElement).then(canvas => {
@@ -74,6 +85,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
       const pdf = new jsPDF();
       pdf.addImage(imgData, 'PNG', 0, 0);
       pdf.save("presupuesto.pdf");
+
+      // Elimina el div del DOM después de crear el PDF
+      document.body.removeChild(pdfElement);
     });
   });
 });
