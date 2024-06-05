@@ -18,12 +18,14 @@
               <label for="invoice-number">Presupuesto N°:</label>
               <input type="number" id="invoice-number">
             </div>
-          </div>
-           <div id="invoice-items">
-            <div class="buscador">
+          </div> 
+          <div class="contenedor-presupuestos">
+          <div class="buscador">
              <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej:Escort, Optica, Faro, Agile">
              <div id="resultadosBusqueda"></div> 
            </div>
+           <div id="invoice-items">
+           
              <table class="table" id="tabla-factura">
                <thead>
                  <tr>
@@ -42,6 +44,7 @@
            <div id="invoice-total">
              <label>Total: <input type="number" id="total-amount" readonly></label>
            </div>
+          </div>
            <button type="submit">Guardar Presupuesto</button>
            <button id="print-button">Imprimir Presupuesto</button>
          </div>
