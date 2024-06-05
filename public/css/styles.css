@@ -743,8 +743,9 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .buscador {
-  width: 45%;
+  flex: 1;
   display: flex;
+  margin-right: 10px;
   flex-direction: column;
   box-sizing: border-box;
 }
@@ -756,14 +757,15 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 #invoice-items {
-  width: 45%;
+  flex: 1;
   box-sizing: border-box;
+  overflow: auto;
 }
+
 #tabla-factura {
   width: 100%;
   box-sizing: border-box;
 }
-
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
   display: flex;
