@@ -719,6 +719,14 @@ background: rgba(0, 63, 125, 0.8);
   justify-content: space-between;
   width: 100%;
 }
+#invoice-details .input-container {
+  margin: 0 10px;
+}
+#invoice-details label {
+  color: #003f7d;
+  margin-top: 15px;
+  font-weight: bold;
+}
 #invoice-form h2 {
   text-align: center;
   color: #6c757d;
@@ -735,7 +743,7 @@ background: rgba(0, 63, 125, 0.8);
 #invoice-form input[type="text"],
 #invoice-form input[type="date"],
 #invoice-form input[type="number"] {
-  width: 100%;
+  width: 90%; 
   padding: 10px;
   border: 1px solid #ced4da;
   border-radius: 4px;
@@ -780,11 +788,7 @@ background: rgba(0, 63, 125, 0.8);
   width: 100%;
   margin-bottom: 10px;
 }
-#invoice-details label {
-  color: #003f7d;
-  margin-top: 15px;
-  font-weight: bold;
-}
+
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
   display: flex;
