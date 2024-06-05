@@ -806,7 +806,20 @@ background: rgba(0, 63, 125, 0.8);
   width: 100%;
   margin-bottom: 10px;
 }
+#invoice-total {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
+#invoice-total label {
+  color: #003f7d; 
+  font-weight: bold;
+}
+
+#invoice-total #total-amount {
+  width: 50%; 
+}
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
   display: flex;
