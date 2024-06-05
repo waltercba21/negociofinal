@@ -79,8 +79,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF();
       pdf.addImage(imgData, 'PNG', 0, 0);
-      const invoiceTable = document.getElementById('tabla-factura');
-      pdf.autoTable({ html: invoiceTable.outerHTML }); // Modificación aquí
+      pdf.autoTable({ html: '#tabla-factura' }); 
       pdf.save("presupuesto.pdf");
       document.body.removeChild(pdfElement);
     });
