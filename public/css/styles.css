@@ -745,13 +745,15 @@ background: rgba(0, 63, 125, 0.8);
   width: 45%; 
   margin-top: 50px;
   border-collapse: collapse;
+  box-sizing: border-box;
 }
 .buscador {
   position: relative;
   display: inline-block;
   margin-top: 20px;
   margin-bottom: 0;
-  width: 100%;
+  width:  50%;
+  box-sizing: border-box;
 }
 .buscador input[type="text"] {
   width: 100%;
