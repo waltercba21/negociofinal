@@ -741,7 +741,7 @@ background: rgba(0, 63, 125, 0.8);
   position: relative;
   display: inline-block;
   margin-top: 200px;
-  margin-bottom: 200px;
+  margin-bottom: 220px;
 }
 .buscador input[type="text"] {
   width: 100%;
@@ -771,12 +771,9 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.1);
   margin: 0 auto; 
 }
-#invoice-form .buscador {
-  margin-top: 20px;
-}
 #invoice-form .table {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 50px;
   border-collapse: collapse;
 }
 #invoice-form .table th,
@@ -790,9 +787,9 @@ background: rgba(0, 63, 125, 0.8);
 }
 #invoice-form button {
   display: block;
-  width: 100%;
+  width: 40%;
   padding: 10px;
-  background-color: #007bff;
+  background-color: #1F487E;
   color: white;
   border: none;
   border-radius: 4px;
