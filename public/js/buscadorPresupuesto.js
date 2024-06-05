@@ -1,5 +1,5 @@
-
-document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
+window.onload = function() {
+ document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
   resultadosBusqueda.innerHTML = '';
@@ -101,3 +101,4 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
   });
 });
+};
