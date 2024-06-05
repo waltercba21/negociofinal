@@ -691,7 +691,7 @@ obtenerPorFiltrosConCodigoPrecio: function(conexion, busqueda_nombre, limite) {
         sql += ' WHERE 1=1';
         const parametros = [];
         if (busqueda_nombre) {
-            sql += ' AND productos.descripcion LIKE ?';
+            sql += ' AND productos.nombre LIKE ?'; // Cambiado de 'descripcion' a 'nombre'
             parametros.push('%' + busqueda_nombre + '%');
         }
         sql += ' ORDER BY productos.id DESC';
