@@ -1,3 +1,6 @@
+const jsPDF = require('jspdf');
+require('jspdf-autotable');
+
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
