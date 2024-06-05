@@ -3,47 +3,41 @@
 <body>
    <main>
       <form id="invoice-form">
-         <div id="invoice-container">
+         <div id="invoice">
            <h2>Presupuesto</h2>
            <div id="invoice-details">
             <div class="input-container">
               <label for="customer-name">Nombre del cliente:</label>
               <input type="text" id="customer-name">
             </div>
+            
             <div class="input-container">
               <label for="invoice-date">Fecha:</label>
               <input type="date" id="invoice-date">
             </div>
+            
             <div class="input-container">
               <label for="invoice-number">Presupuesto N°:</label>
               <input type="number" id="invoice-number">
             </div>
-          </div> 
-
-          <div class="contenedor-presupuestos">
-            <div class="buscador-presupuesto">
-              <input type="text" id="entradaBusquedaPresupuesto" placeholder="Buscar Productos">
-              <div id="resultadosBusquedaPresupuesto"></div> 
-            </div>
-          
-            <div id="invoice-items">
-              <table class="table" id="tabla-factura">
-                <thead>
-                  <tr>
-                    <th scope="col">Código</th>
-                    <th scope="col">Descripción</th>
-                    <th scope="col">Precio</th>
-                    <th scope="col">Cantidad</th>
-                    <th scope="col">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Aquí se agregarán los productos de la factura -->
-                </tbody>
-              </table>
-            </div>
           </div>
-          <div id="invoice-total">
+           <div id="invoice-items">
+             <table class="table" id="tabla-factura">
+               <thead>
+                 <tr>
+                   <th scope="col">Código</th>
+                   <th scope="col">Descripción</th>
+                   <th scope="col">Precio</th>
+                   <th scope="col">Cantidad</th>
+                   <th scope="col">Subtotal</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 <!-- Aquí se agregarán los productos de la factura -->
+               </tbody>
+             </table>
+           </div>
+           <div id="invoice-total">
              <label>Total: <input type="number" id="total-amount" readonly></label>
            </div>
            <button type="submit">Guardar Presupuesto</button>
