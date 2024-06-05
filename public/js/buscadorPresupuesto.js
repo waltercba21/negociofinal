@@ -67,22 +67,21 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     // Crear una nueva estructura HTML para el PDF
     const pdfContent = `
-      <div style="font-size: 10px; padding-left: 20px;">
-        <h2>Presupuesto</h2>
-        <div>Nombre del cliente: ${customerName}</div>
-        <div>Fecha: ${invoiceDate}</div>
-        <div>Presupuesto N°: ${invoiceNumber}</div>
-        <div style="margin: 20px;">${invoiceData}</div>
-        <div style="text-align: right;">Total: ${totalAmount}</div>
-      </div>
-    `;
-
-    // Crear un nuevo elemento div y agregar la estructura HTML a él
-    const pdfElement = document.createElement('div');
-    pdfElement.innerHTML = pdfContent;
-    pdfElement.style.position = 'absolute'; // Posicionar el div absolutamente
-    pdfElement.style.left = '-9999px'; // Mover el div fuera de la pantalla
-    document.body.appendChild(pdfElement); // Agrega el div al DOM
+    <div style="font-size: 10px; padding-left: 20px;">
+      <h2 style="font-size: 14px;">Presupuesto</h2>
+      <div>Nombre del cliente: ${customerName}</div>
+      <div>Fecha: ${invoiceDate}</div>
+      <div>Presupuesto N°: ${invoiceNumber}</div>
+      <div style="margin: 20px; font-size: 8px;">${invoiceData}</div>
+      <div style="text-align: right;">Total: ${totalAmount}</div>
+    </div>
+  `;
+  
+  // Crear un nuevo elemento div y agregar la estructura HTML a él
+  const pdfElement = document.createElement('div');
+  pdfElement.innerHTML = pdfContent;
+  pdfElement.style.position = 'absolute'; // Posicionar el div absolutamente
+  pdfElement.style.left = '-9999px'; // Mover el div fuera de la pantallaument.body.appendChild(pdfElement); // Agrega el div al DOM
 
     // Pasar el nuevo elemento div a html2canvas y jsPDF
     html2canvas(pdfElement).then(canvas => {
