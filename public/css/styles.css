@@ -747,7 +747,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 #resultadosBusqueda {
-  width: 100%; /* Ajusta esto al ancho que prefieras */
+  width: auto; /* Cambia a auto para que tenga el mismo ancho que el campo de entrada */
   max-height: 200px; /* Ajusta esto a la altura máxima que prefieras */
   overflow-y: auto; 
   overflow-x: auto; 
@@ -755,7 +755,6 @@ background: rgba(0, 63, 125, 0.8);
   background-color: white; 
   z-index: 1; 
   margin-top: 5px; /* Añade un poco de margen en la parte superior para separarlo del campo de entrada */
-  border: 1px solid #ccc; /* Añade un borde para que se vea más claramente */
 }
 #invoice-form input[type="text"],
 #invoice-form input[type="date"],
