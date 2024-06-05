@@ -743,14 +743,12 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .buscador {
-  flex: 1;
   display: flex;
   width: 40%;
   margin-right: 10px;
   flex-direction: column;
   box-sizing: border-box;
 }
-
 #entradaBusqueda {
   width: 100%;
   height: 30px;
