@@ -744,9 +744,6 @@ background: rgba(0, 63, 125, 0.8);
 
 #entradaBusqueda {
   width: 100%;
-}
-.contenedor-presupuestos .buscador input{
-  width: 100%;
   margin-left: 100px;
   margin-bottom: 100px;
   border-radius: 10px;
@@ -760,6 +757,7 @@ background: rgba(0, 63, 125, 0.8);
   cursor: pointer;
   font-weight: bold;
 }
+
 #invoice-items {
   flex: 1;
   box-sizing: border-box;
