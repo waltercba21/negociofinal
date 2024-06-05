@@ -740,6 +740,10 @@ background: rgba(0, 63, 125, 0.8);
 .buscador input[type="text"] {
   width: 80%;
 }
+#resultadosBusqueda {
+  width: 100%;
+  overflow-x: auto; 
+}
 #invoice-form input[type="text"],
 #invoice-form input[type="date"],
 #invoice-form input[type="number"] {
