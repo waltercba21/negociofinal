@@ -77,17 +77,21 @@ $(document).ready(function() {
       });
       console.log("Datos finales: ", datos);
       $.ajax({
-          url: '/productos/generarPresupuestoPDF',
-          type: 'POST',
-          data: JSON.stringify(datos),
-          contentType: 'application/json',
-          success: function(url) {
-              console.log("Respuesta del servidor: ", url);
-              window.location.href = url;
-          },
-          error: function(jqXHR, textStatus, error) {
-              console.error("Error en la petición: " + textStatus, error);
-          }
-      });
+        url: '/productos/generarPresupuestoPDF',
+        type: 'POST',
+        data: JSON.stringify(datos),
+        contentType: 'application/json',
+        success: function(data) {
+            console.log("Respuesta del servidor: ", data);
+            var blob = new Blob([data], {type: 'application/pdf'});
+            var link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = 'Presupuesto.pdf';
+            link.click();
+        },
+        error: function(jqXHR, textStatus, error) {
+            console.error("Error en la petición: " + textStatus, error);
+        }
+    });
   });
 });
