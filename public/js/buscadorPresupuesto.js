@@ -52,7 +52,6 @@ function calcularTotal() {
   }
   document.getElementById('total-amount').value = total;
 }
-
 $(document).ready(function() {
   console.log("Documento listo");
   $('#print-button').click(function(e) {
@@ -77,11 +76,18 @@ $(document).ready(function() {
           datos.productos.push(producto);
       });
       console.log("Datos finales: ", datos);
-      $.post('/productos/generarPresupuestoPDF', datos, function(url) {
-          console.log("Respuesta del servidor: ", url);
-          window.location.href = url;
-      }).fail(function(jqXHR, textStatus, error) {
-          console.error("Error en la petición: " + textStatus, error);
+      $.ajax({
+          url: '/productos/generarPresupuestoPDF',
+          type: 'POST',
+          data: JSON.stringify(datos),
+          contentType: 'application/json',
+          success: function(url) {
+              console.log("Respuesta del servidor: ", url);
+              window.location.href = url;
+          },
+          error: function(jqXHR, textStatus, error) {
+              console.error("Error en la petición: " + textStatus, error);
+          }
       });
   });
 });
