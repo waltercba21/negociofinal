@@ -65,16 +65,21 @@ $(document).ready(function() {
       };
       console.log("Datos iniciales: ", datos);
       $('#tabla-factura tbody tr').each(function() {
-          let producto = {
-              codigo: $(this).find('.codigo').text(),
-              descripcion: $(this).find('.descripcion').text(),
-              precio: $(this).find('.precio').text(),
-              cantidad: $(this).find('.cantidad').text(),
-              subtotal: $(this).find('.subtotal').text()
-          };
-          console.log("Producto: ", producto);
-          datos.productos.push(producto);
-      });
+        let cantidad = $(this).find('.cantidad').text();
+        if (!cantidad) {
+            console.error("La cantidad del producto no está definida");
+            return;
+        }
+        let producto = {
+            codigo: $(this).find('.codigo').text(),
+            descripcion: $(this).find('.descripcion').text(),
+            precio: $(this).find('.precio').text(),
+            cantidad: cantidad,
+            subtotal: $(this).find('.subtotal').text()
+        };
+        console.log("Producto: ", producto);
+        datos.productos.push(producto);
+    });
       console.log("Datos finales: ", datos);
       $.ajax({
         url: '/productos/generarPresupuestoPDF',
