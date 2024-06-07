@@ -4,6 +4,8 @@ var borrar = require('fs');
 const PDFDocument = require('pdfkit');
 const blobStream  = require('blob-stream');
 var streamBuffers = require('stream-buffers');
+const xlsx = require('xlsx');
+const fs = require('fs');
 
 function calcularNumeroDePaginas(conexion) {
     return new Promise((resolve, reject) => {
@@ -813,5 +815,21 @@ generarPresupuestoPDF: function(req, res) {
         return res.status(400).send('Productos no es un array');
     }
     doc.end();
-}
+},
+actualizarPrecios : async (req, res) => {
+    try {
+        const file = req.file;
+        const workbook = xlsx.readFile(file.path);
+        const sheet_name_list = workbook.SheetNames;
+        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+        fs.unlinkSync(file.path);
+
+        for (const row of data) {
+            await producto.actualizarPreciosPDF(row.precio_lista, row.codigo);
+        }
+        res.send('Archivo procesado y precios actualizados');
+    } catch (error) {
+        res.status(500).send(error);
+    }
+},
 }

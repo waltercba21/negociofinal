@@ -311,6 +311,18 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     }, 
+    actualizarPreciosPDF: function(conexion, precio, codigo) {
+        return new Promise((resolve, reject) => {
+            const sql = 'UPDATE producto_proveedor SET precio_lista = ? WHERE codigo = ?';
+            conexion.query(sql, [precio, codigo], (error, results) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            });
+        });
+    },
     buscar : async (busqueda, categoria_id, marca_id, modelo_id) => {
         let query = `
             SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 

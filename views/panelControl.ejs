@@ -36,6 +36,21 @@
         <button type="submit" class="btn btn-primary">Generar PDF</button>
       </form>
     </div>
+    <div class="form-control">
+      <form method="post" action="/productos/actualizarPrecios" enctype="multipart/form-data">
+        <h4>Actualizar precios de productos</h4>
+        <label for="proveedorActualizar">Seleccionar Proveedor</label>
+        <select name="proveedor" id="proveedorActualizar">
+          <option value="TODOS">Mostrar Todos</option>
+          <% proveedores.forEach(proveedor => { %>
+            <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
+          <% }); %>
+        </select>
+        <label for="archivo">Subir lista de precios</label>
+        <input type="file" id="archivo" name="archivo" accept=".xlsx,.pdf">
+        <button type="submit" class="btn btn-primary">Actualizar precios</button>
+      </form>
+    </div>
 
     <div class="form-control">
       <form method="get" action="/productos/generarStockPDF">

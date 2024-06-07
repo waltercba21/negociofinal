@@ -46,4 +46,5 @@ router.get('/api/buscar', productosController.buscar);
 router.get('/api/buscarConCodigoPrecio', productosController.buscarConCodigoPrecio);
 router.get('/:id', productosController.detalle); 
 router.post('/generarPresupuestoPDF', productosController.generarPresupuestoPDF);
+router.post('/actualizarPrecios', cargar, productosController.actualizarPrecios);
 module.exports = router;   
