@@ -581,7 +581,7 @@ obtenerModelosPorMarca: function(req, res) {
         console.log('Error al obtener modelos:', error);
       });
   },
-  generarPDF: async function (req, res) {
+generarPDF: async function (req, res) {
     var doc = new PDFDocument;
     var buffer = new streamBuffers.WritableStreamBuffer({
         initialSize: (1024 * 1024),   
@@ -626,17 +626,17 @@ obtenerModelosPorMarca: function(req, res) {
             obtenerProductos = producto.obtenerProductosPorProveedor(conexion, proveedorId);
         }
         obtenerProductos.then(productos => {
-            console.log('Productos obtenidos:', productos);
             var currentY = doc.y;
-    doc.fontSize(12)
-    .text('Código', 50, currentY)
-    .text('Descripción', doc.page.width / 4, currentY) 
-    .text('Precio', doc.page.width - 150, currentY, {
-        align: 'right'
-    });
-doc.moveDown();
+            doc.fontSize(12)
+            .text('Código', 50, currentY)
+            .text('Descripción', doc.page.width / 4, currentY) 
+            .text('Precio de lista', doc.page.width - 150, currentY, {
+                align: 'right'
+            });
+            doc.moveDown();
 productos.forEach(producto => {
-    var precioFormateado = '$' + parseFloat(producto.precio_venta).toFixed(0);
+    var precioVentaFormateado = '$' + parseFloat(producto.precio_venta).toFixed(0);
+    var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(0);
     currentY = doc.y;
     if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
         doc.addPage();
@@ -645,18 +645,19 @@ productos.forEach(producto => {
     doc.fontSize(10)
         .text(producto.codigo_proveedor, 50, currentY) 
         .text(producto.nombre, doc.page.width / 4, currentY) 
-        .text(precioFormateado, doc.page.width - 150, currentY, {
+        .text(precioVentaFormateado, doc.page.width / 2, currentY, {
+            align: 'right'
+        })
+        .text(precioListaFormateado, doc.page.width - 150, currentY, {
             align: 'right'
         });
     doc.moveDown();
 });
-            doc.end();
-        }).catch(error => {
-            console.log('Error al obtener productos:', error);
-            return res.status(500).send('Error al generar el PDF');
-        });
+doc.end();
+}).catch(error => {
+    return res.status(500).send('Error al generar el PDF');
+});
     } catch (error) {
-        console.log('Error al obtener proveedores o categorías:', error);
         return res.status(500).send('Error al generar el PDF');
     }
     buffer.on('finish', function() {
@@ -823,7 +824,6 @@ actualizarPrecios : async (req, res) => {
         const sheet_name_list = workbook.SheetNames;
         const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
         fs.unlinkSync(file.path);
-
         for (const row of data) {
             await producto.actualizarPreciosPDF(row.precio_lista, row.codigo);
         }

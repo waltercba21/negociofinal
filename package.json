@@ -34,7 +34,8 @@
     "pdfkit": "^0.14.0",
     "pdfmake": "^0.2.10",
     "roboto-font": "^0.1.0",
-    "stream-buffers": "^3.0.2"
+    "stream-buffers": "^3.0.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "chai": "^3.5.0",
