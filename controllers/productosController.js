@@ -6,6 +6,7 @@ const blobStream  = require('blob-stream');
 var streamBuffers = require('stream-buffers');
 const xlsx = require('xlsx');
 const fs = require('fs');
+const pdfParse = require('pdf-parse');
 
 function calcularNumeroDePaginas(conexion) {
     return new Promise((resolve, reject) => {
@@ -815,19 +816,29 @@ generarPresupuestoPDF: function(req, res) {
 actualizarPrecios : async (req, res) => {
     try {
         const file = req.file;
-        const workbook = xlsx.readFile(file.path);
-        const sheet_name_list = workbook.SheetNames;
-        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
-        fs.unlinkSync(file.path);
-        for (const row of data) {
-            // Buscar la columna que contiene el código del producto
-            const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
-            // Buscar la columna que contiene el precio del producto
-            const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
-            if (codigoColumn && precioColumn) {
-                await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
+        if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            // Procesar archivo Excel
+            const workbook = xlsx.readFile(file.path);
+            const sheet_name_list = workbook.SheetNames;
+            const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+            for (const row of data) {
+                const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
+                const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
+                if (codigoColumn && precioColumn) {
+                    await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
+                }
             }
+        } else if (file.mimetype === 'application/pdf') {
+            // Procesar archivo PDF
+            const dataBuffer = fs.readFileSync(file.path);
+            const data = await pdfParse(dataBuffer);
+            // Aquí necesitarás escribir código para extraer los códigos y precios de los productos del texto del PDF
+            // Esto puede ser bastante complicado, dependiendo de cómo esté estructurado el PDF
+        } else {
+            res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx o .pdf');
+            return;
         }
+        fs.unlinkSync(file.path);
         res.send('Archivo procesado y precios actualizados');
     } catch (error) {
         res.status(500).send(error);
