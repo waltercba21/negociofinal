@@ -311,17 +311,26 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     }, 
-    actualizarPreciosPDF: function(conexion, precio, codigo) {
+    actualizarPreciosPDF: function(precio, codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'UPDATE producto_proveedor SET precio_lista = ? WHERE codigo = ?';
             console.log(`Ejecutando consulta SQL: ${sql}`);
             console.log(`Con los valores: precio = ${precio}, codigo = ${codigo}`);
-            conexion.query(sql, [precio, codigo], (error, results) => {
-                if (error) {
-                    reject(error);
+            
+            conexion.getConnection((err, conexion) => {
+                if (err) {
+                    console.error('Error al obtener la conexión:', err);
+                    reject(err);
                 } else {
-                    console.log(`Resultados de la consulta SQL: ${JSON.stringify(results)}`);
-                    resolve(results);
+                    conexion.query(sql, [precio, codigo], (error, results) => {
+                        conexion.release();
+                        if (error) {
+                            reject(error);
+                        } else {
+                            console.log(`Resultados de la consulta SQL: ${JSON.stringify(results)}`);
+                            resolve(results);
+                        }
+                    });
                 }
             });
         });
