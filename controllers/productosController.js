@@ -782,7 +782,6 @@ generarPresupuestoPDF: function(req, res) {
         });
         res.end(pdfData);
     });
-
     let datos = req.body;
     console.log('Datos recibidos: ', datos);
     doc.fontSize(20).text('Presupuesto', {align: 'center'});
@@ -797,7 +796,6 @@ generarPresupuestoPDF: function(req, res) {
        .text('Precio', {align: 'left'})
        .text('Cantidad', {align: 'left'})
        .text('Subtotal', {align: 'left'});
-
     if (Array.isArray(datos.productos)) {
         datos.productos.forEach(producto => {
             console.log('Procesando producto: ', producto);
@@ -822,7 +820,13 @@ actualizarPrecios : async (req, res) => {
         const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
         fs.unlinkSync(file.path);
         for (const row of data) {
-            await producto.actualizarPreciosPDF(row.precio_lista, row.codigo);
+            // Buscar la columna que contiene el código del producto
+            const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
+            // Buscar la columna que contiene el precio del producto
+            const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
+            if (codigoColumn && precioColumn) {
+                await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
+            }
         }
         res.send('Archivo procesado y precios actualizados');
     } catch (error) {
