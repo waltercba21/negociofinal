@@ -813,39 +813,34 @@ generarPresupuestoPDF: function(req, res) {
     }
     doc.end();
 },
-actualizarPreciosPDF: function(precio, codigo) {
-    return new Promise((resolve, reject) => {
-        // Primero, actualizamos los precios
-        const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ? WHERE codigo = ?';
-        console.log(`Ejecutando consulta SQL: ${sqlUpdate}`);
-        console.log(`Con los valores: precio = ${precio}, codigo = ${codigo}`);
-        
-        conexion.getConnection((err, conexion) => {
-            if (err) {
-                console.error('Error al obtener la conexión:', err);
-                reject(err);
-            } else {
-                conexion.query(sqlUpdate, [precio, codigo], (error, results) => {
-                    if (error) {
-                        conexion.release();
-                        reject(error);
-                    } else {
-                        console.log(`Resultados de la consulta SQL: ${JSON.stringify(results)}`);
-                        // Luego, obtenemos los productos que se han actualizado
-                        const sqlSelect = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
-                        conexion.query(sqlSelect, [codigo], (error, results) => {
-                            conexion.release();
-                            if (error) {
-                                reject(error);
-                            } else {
-                                console.log(`Productos actualizados: ${JSON.stringify(results)}`);
-                                resolve(results);
-                            }
-                        });
+actualizarPrecios : async (req, res) => {
+    try {
+        console.log("Inicio del procesamiento de archivos");
+        const file = req.files[0]; 
+        if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            console.log("Procesando archivo Excel");
+            const workbook = xlsx.readFile(file.path);
+            const sheet_name_list = workbook.SheetNames;
+            for (const sheet_name of sheet_name_list) {
+                const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+                for (const row of data) {
+                    const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
+                    const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
+                    if (codigoColumn && precioColumn) {
+                        await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
                     }
-                });
+                }
             }
-        });
-    });
+        } else {
+            console.log("Tipo de archivo no soportado");
+            res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
+            return;
+        }
+        fs.unlinkSync(file.path);
+        res.send('Archivo procesado y precios actualizados');
+    } catch (error) {
+        console.log("Error durante el procesamiento de archivos", error);
+        res.status(500).send(error);
+    }
 },
 }
