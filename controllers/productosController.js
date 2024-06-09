@@ -833,8 +833,15 @@ actualizarPrecios : async (req, res) => {
             console.log("Procesando archivo PDF");
             const dataBuffer = fs.readFileSync(file.path);
             const data = await pdfParse(dataBuffer);
-            // Aquí necesitarás escribir código para extraer los códigos y precios de los productos del texto del PDF
-            // Esto puede ser bastante complicado, dependiendo de cómo esté estructurado el PDF
+            const lines = data.text.split('\n');
+            for (const line of lines) {
+                const match = line.match(/(codigo: \S+) (precio: \S+)/);
+                if (match) {
+                    const codigo = match[1];
+                    const precio = match[2];
+                    await producto.actualizarPreciosPDF(precio, codigo);
+                }
+            }
         } else {
             console.log("Tipo de archivo no soportado");
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx o .pdf');
