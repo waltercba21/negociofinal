@@ -816,7 +816,7 @@ generarPresupuestoPDF: function(req, res) {
 actualizarPrecios : async (req, res) => {
     try {
         console.log("Inicio del procesamiento de archivos");
-        const file = req.files[0]; // Aquí está la corrección
+        const file = req.files[0]; 
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             console.log("Procesando archivo Excel");
             const workbook = xlsx.readFile(file.path);
