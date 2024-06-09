@@ -630,29 +630,33 @@ generarPDF: async function (req, res) {
             doc.fontSize(12)
             .text('Código', 50, currentY)
             .text('Descripción', doc.page.width / 4, currentY) 
+            .text('Precio de venta', doc.page.width / 2, currentY, {
+                align: 'right'
+            })
             .text('Precio de lista', doc.page.width - 150, currentY, {
                 align: 'right'
             });
+        doc.moveDown();
+        productos.forEach(producto => {
+            var precioVentaFormateado = '$' + parseFloat(producto.precio_venta).toFixed(0);
+            var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(0);
+            currentY = doc.y;
+            if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+                doc.addPage();
+                currentY = doc.y;
+            }
+            doc.fontSize(10)
+                .text(producto.codigo_proveedor, 50, currentY) 
+                .text(producto.nombre, doc.page.width / 4, currentY) 
+                .text(precioVentaFormateado, doc.page.width / 2, currentY, {
+                    align: 'right'
+                })
+                .text(precioListaFormateado, doc.page.width - 150, currentY, {
+                    align: 'right'
+                });
             doc.moveDown();
-productos.forEach(producto => {
-    var precioVentaFormateado = '$' + parseFloat(producto.precio_venta).toFixed(0);
-    var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(0);
-    currentY = doc.y;
-    if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
-        doc.addPage();
-        currentY = doc.y;
-    }
-    doc.fontSize(10)
-        .text(producto.codigo_proveedor, 50, currentY) 
-        .text(producto.nombre, doc.page.width / 4, currentY) 
-        .text(precioVentaFormateado, doc.page.width / 2, currentY, {
-            align: 'right'
-        })
-        .text(precioListaFormateado, doc.page.width - 150, currentY, {
-            align: 'right'
         });
-    doc.moveDown();
-});
+
 doc.end();
 }).catch(error => {
     return res.status(500).send('Error al generar el PDF');
