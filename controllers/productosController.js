@@ -821,30 +821,19 @@ actualizarPrecios : async (req, res) => {
             console.log("Procesando archivo Excel");
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
-            const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
-            for (const row of data) {
-                const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
-                const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
-                if (codigoColumn && precioColumn) {
-                    await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
-                }
-            }
-        } else if (file.mimetype === 'application/pdf') {
-            console.log("Procesando archivo PDF");
-            const dataBuffer = fs.readFileSync(file.path);
-            const data = await pdfParse(dataBuffer);
-            const lines = data.text.split('\n');
-            for (const line of lines) {
-                const match = line.match(/(codigo: \S+) (precio: \S+)/);
-                if (match) {
-                    const codigo = match[1];
-                    const precio = match[2];
-                    await producto.actualizarPreciosPDF(precio, codigo);
+            for (const sheet_name of sheet_name_list) {
+                const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+                for (const row of data) {
+                    const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
+                    const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
+                    if (codigoColumn && precioColumn) {
+                        await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
+                    }
                 }
             }
         } else {
             console.log("Tipo de archivo no soportado");
-            res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx o .pdf');
+            res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
             return;
         }
         fs.unlinkSync(file.path);
