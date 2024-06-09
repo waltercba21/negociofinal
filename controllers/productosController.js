@@ -625,16 +625,17 @@ generarPDF: async function (req, res) {
         } else {
             obtenerProductos = producto.obtenerProductosPorProveedor(conexion, proveedorId);
         }
+
         obtenerProductos.then(productos => {
             var currentY = doc.y;
             doc.fontSize(12)
             .text('Código', 50, currentY)
             .text('Descripción', doc.page.width / 4, currentY) 
             .text('Precio de venta', doc.page.width / 2, currentY, {
-                align: 'right'
+                align: 'left' // Cambiado a 'left'
             })
-            .text('Precio de lista', doc.page.width - 150, currentY, {
-                align: 'right'
+            .text('Precio de lista', doc.page.width / 2 + 150, currentY, {
+                align: 'left' // Cambiado a 'left'
             });
         doc.moveDown();
         productos.forEach(producto => {
@@ -649,10 +650,10 @@ generarPDF: async function (req, res) {
                 .text(producto.codigo_proveedor, 50, currentY) 
                 .text(producto.nombre, doc.page.width / 4, currentY) 
                 .text(precioVentaFormateado, doc.page.width / 2, currentY, {
-                    align: 'right'
+                    align: 'left' // Cambiado a 'left'
                 })
                 .text(precioListaFormateado, doc.page.width / 2 + 150, currentY, {
-                    align: 'right'
+                    align: 'left' // Cambiado a 'left'
                 });
             doc.moveDown();
         });
