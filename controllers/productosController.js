@@ -651,12 +651,11 @@ generarPDF: async function (req, res) {
                 .text(precioVentaFormateado, doc.page.width / 2, currentY, {
                     align: 'right'
                 })
-                .text(precioListaFormateado, doc.page.width - 150, currentY, {
+                .text(precioListaFormateado, doc.page.width / 2 + 150, currentY, {
                     align: 'right'
                 });
             doc.moveDown();
         });
-
 doc.end();
 }).catch(error => {
     return res.status(500).send('Error al generar el PDF');
