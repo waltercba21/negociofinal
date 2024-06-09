@@ -815,9 +815,10 @@ generarPresupuestoPDF: function(req, res) {
 },
 actualizarPrecios : async (req, res) => {
     try {
+        console.log("Inicio del procesamiento de archivos");
         const file = req.file;
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-            // Procesar archivo Excel
+            console.log("Procesando archivo Excel");
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
             const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
@@ -829,18 +830,20 @@ actualizarPrecios : async (req, res) => {
                 }
             }
         } else if (file.mimetype === 'application/pdf') {
-            // Procesar archivo PDF
+            console.log("Procesando archivo PDF");
             const dataBuffer = fs.readFileSync(file.path);
             const data = await pdfParse(dataBuffer);
             // Aquí necesitarás escribir código para extraer los códigos y precios de los productos del texto del PDF
             // Esto puede ser bastante complicado, dependiendo de cómo esté estructurado el PDF
         } else {
+            console.log("Tipo de archivo no soportado");
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx o .pdf');
             return;
         }
         fs.unlinkSync(file.path);
         res.send('Archivo procesado y precios actualizados');
     } catch (error) {
+        console.log("Error durante el procesamiento de archivos", error);
         res.status(500).send(error);
     }
 },
