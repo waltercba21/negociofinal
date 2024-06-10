@@ -84,6 +84,8 @@ $(document).ready(function() {
 
 $(document).on('change', '.precio_lista', function() {
     actualizarPrecio($(this));
+    actualizarProveedorAsignado();
+    actualizarPrecioFinal();
 });
 $('#costo_neto').change(function() {
     actualizarCostoNeto($(this));
