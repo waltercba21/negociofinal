@@ -743,9 +743,7 @@ background: rgba(0, 63, 125, 0.8);
   margin-top: 20px;
   margin-bottom: 220px;
 }
-.buscador input[type="text"] {
-  width: 100%;
-}
+
 #resultadosBusqueda {
   width: 85%;
   max-height: 200px; 
@@ -985,8 +983,6 @@ background: rgba(0, 63, 125, 0.8);
 .contenedor-busqueda {
   display: flex;
   flex-direction: column;
-  justify-content: center; 
-  align-items: center; 
 }
 .buscador input {
   border-radius: 10px;
@@ -997,7 +993,7 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   width: 50%; 
   margin: auto;
-}
+} 
 
 .buscador input:focus {
   box-shadow: 0 0 2px #719ECE;
