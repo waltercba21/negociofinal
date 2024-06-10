@@ -822,7 +822,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 .botones-contenedor {
   display: flex;
-  justify-content: center;
+  justify-content: center; 
   gap: 10px; 
 }
 #invoice-form #print-button{
@@ -1033,7 +1033,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 .selectores-productos {
   display: flex;
-  flex-direction: column; 
+  flex-direction: row; 
   align-items: center;
   justify-content: space-around;
 }
