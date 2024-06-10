@@ -992,15 +992,15 @@ background: rgba(0, 63, 125, 0.8);
   cursor: pointer;
   font-weight: bold;
   width: 50%; 
-  height: 40px; /* Aumenta la altura del input */
+  height: 40px; 
   margin: auto;
-  display: block; /* Asegura que el input esté centrado */
-  text-align: center; /* Centra el texto del placeholder */
+  display: block;
+  text-align: center;
 } 
 
 .buscador input:focus {
   box-shadow: 0 0 2px #719ECE;
-  outline: none; /* Elimina el borde negro al hacer foco */
+  outline: none; 
 }
 
 .buscador input:valid {

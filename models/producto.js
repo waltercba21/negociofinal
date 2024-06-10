@@ -335,6 +335,30 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             });
         });
     },
+    obtenerProductoPorCodigo: function(codigo) {
+        return new Promise((resolve, reject) => {
+            const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
+            console.log(`Ejecutando consulta SQL: ${sql}`);
+            console.log(`Con el valor: codigo = ${codigo}`);
+            
+            conexion.getConnection((err, conexion) => {
+                if (err) {
+                    console.error('Error al obtener la conexión:', err);
+                    reject(err);
+                } else {
+                    conexion.query(sql, [codigo], (error, results) => {
+                        conexion.release();
+                        if (error) {
+                            reject(error);
+                        } else {
+                            console.log(`Resultados de la consulta SQL: ${JSON.stringify(results)}`);
+                            resolve(results[0]); 
+                        }
+                    });
+                }
+            });
+        });
+    },
     buscar : async (busqueda, categoria_id, marca_id, modelo_id) => {
         let query = `
             SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 

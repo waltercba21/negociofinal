@@ -1,0 +1,27 @@
+
+<%- include ./layouts/head.ejs %>
+<%- include ./layouts/header.ejs %>
+<body>
+   <main>
+    <h1>Productos Actualizados</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Precio</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% productos.forEach(producto => { %>
+                <tr>
+                    <td><%= producto.codigo %></td>
+                    <td><%= producto.precio %></td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+    </main>
+    <script src="/js/profile.js"></script>
+      <%- include ./layouts/footer.ejs %>
+  </body>
+ 
