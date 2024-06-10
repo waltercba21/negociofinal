@@ -35,6 +35,7 @@ router.get('/generarPDF', productosController.generarPDF);
 router.get('/generarStockPDF', productosController.generarStockPDF);
 router.get('/editar/:id', productosController.editar)
 router.post('/actualizar/:id', cargar, productosController.actualizar);
+router.post('/actualizarPrecios/:id', productosController.actualizarPrecios);
 router.post('/eliminarSeleccionados', productosController.eliminarSeleccionados);
 router.delete('/eliminarProveedor/:id', productosController.eliminarProveedor);
 router.delete('/eliminarImagen/:id', productosController.eliminarImagen);
@@ -46,5 +47,5 @@ router.get('/api/buscar', productosController.buscar);
 router.get('/api/buscarConCodigoPrecio', productosController.buscarConCodigoPrecio);
 router.get('/:id', productosController.detalle); 
 router.post('/generarPresupuestoPDF', productosController.generarPresupuestoPDF);
-router.post('/actualizarPrecios', cargar, productosController.actualizarPrecios);
+router.post('/actualizarPreciosExcel', cargar, productosController.actualizarPreciosExcel);
 module.exports = router;   

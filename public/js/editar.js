@@ -97,12 +97,12 @@ function actualizarProveedor(proveedor) {
     var selectedOption = proveedor.find('option:selected');
     var descuento = selectedOption.data('descuento');
     var nombreProveedor = selectedOption.text();
-    var closestFormGroup = proveedor.closest('.proveedor'); // Cambiado aquí
+    var closestFormGroup = proveedor.closest('.proveedor'); 
     closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
-    closestFormGroup.find('.descuentos_proveedor_id').val(descuento); // Cambiado aquí
-    closestFormGroup.find('label[for="codigo"]').text('Código (' + nombreProveedor + ')'); // Cambiado aquí
-    closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')'); // Cambiado aquí
-    closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')'); // Cambiado aquí
+    closestFormGroup.find('.descuentos_proveedor_id').val(descuento); 
+    closestFormGroup.find('label[for="codigo"]').text('Código (' + nombreProveedor + ')'); 
+    closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')'); 
+    closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')');
 }
 $('.proveedores').on('change', function() {
     actualizarProveedor($(this));
@@ -174,4 +174,25 @@ $(document).ready(function() {
     $('.precio_lista').trigger('change');
     $('#costo_neto').trigger('change');
     $('#utilidad').trigger('change');
+});
+
+$('.precio_lista, #costo_neto, #utilidad').on('change', function() {
+    var precioLista = $('.precio_lista').val();
+    var costoNeto = $('#costo_neto').val();
+    var utilidad = $('#utilidad').val();
+
+    $.ajax({
+        url: '/productos/actualizarPrecios/' + idProducto, 
+        method: 'POST',
+        data: {
+            precio_lista: precioLista,
+            costo_neto: costoNeto,
+            utilidad: utilidad
+        },
+        success: function(response) {
+            $('.precio_lista').val(response.precio_lista);
+            $('#costo_neto').val(response.costo_neto);
+            $('#utilidad').val(response.utilidad);
+        }
+    });
 });

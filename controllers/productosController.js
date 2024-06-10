@@ -813,7 +813,23 @@ generarPresupuestoPDF: function(req, res) {
     }
     doc.end();
 },
-actualizarPrecios : async (req, res) => {
+actualizarPrecios: function(req, res) {
+    let datosProducto = {
+        id: req.params.id,
+        precio_lista: req.body.precio_lista,
+        costo_neto: req.body.costo_neto,
+        utilidad: req.body.utilidad
+    };
+
+    producto.actualizarPrecios(conexion, datosProducto)
+    .then(() => {
+        res.json(datosProducto);
+    })
+    .catch(error => {
+        res.status(500).send('Error: ' + error.message);
+    });
+},
+actualizarPreciosExcel : async (req, res) => {
     try {
         console.log("Inicio del procesamiento de archivos");
         const file = req.files[0]; 
