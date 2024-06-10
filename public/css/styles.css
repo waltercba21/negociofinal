@@ -990,10 +990,10 @@ background: rgba(0, 63, 125, 0.8);
   align-items: center; /* Centra verticalmente los elementos hijos */
   gap: 20px; /* Añadir un espacio entre el buscador y los selectores */
   padding: 20px; /* Añadir padding si es necesario para mejor visualización */
+  height: 100px; /* Añadir una altura fija para el contenedor */
 }
 
 .buscador {
-  flex: 1;
   display: flex;
   align-items: center; /* Centrar verticalmente el input dentro del buscador */
   justify-content: center; /* Centrar horizontalmente el input dentro del buscador */
