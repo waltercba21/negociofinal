@@ -169,3 +169,9 @@ function actualizarProveedorAsignado() {
 }
 $('.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad').on('change', actualizarProveedorAsignado);
 
+$(document).ready(function() {
+    // Disparar los eventos 'change' en los elementos relevantes
+    $('.precio_lista').trigger('change');
+    $('#costo_neto').trigger('change');
+    $('#utilidad').trigger('change');
+});
