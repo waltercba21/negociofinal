@@ -846,7 +846,11 @@ actualizarPreciosExcel: async (req, res) => {
                     if (codigoColumn && precioColumn) {
                         await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
                         const productoActualizado = await producto.obtenerProductoPorCodigo(row[codigoColumn]);
-                        productosActualizados.push(productoActualizado); 
+                        if (productoActualizado) {
+                            productosActualizados.push(productoActualizado); 
+                        } else {
+                            console.log(`No se encontró el producto con el código: ${row[codigoColumn]}`);
+                        }
                     }
                 }
             }
