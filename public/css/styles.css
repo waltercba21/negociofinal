@@ -985,12 +985,11 @@ background: rgba(0, 63, 125, 0.8);
 
 .contenedor-busqueda {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: center; 
   align-items: center; 
   gap: 20px; 
   padding: 20px; 
-  height: 100px; 
 }
 
 
