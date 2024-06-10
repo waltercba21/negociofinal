@@ -833,7 +833,7 @@ actualizarPreciosExcel: async (req, res) => {
     try {
         console.log("Inicio del procesamiento de archivos");
         const file = req.files[0]; 
-        let productosActualizados = []; // Lista para guardar los productos actualizados
+        let productosActualizados = []; 
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             console.log("Procesando archivo Excel");
             const workbook = xlsx.readFile(file.path);
