@@ -982,19 +982,13 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   padding: 70px 0 10px 0;
 }
-
 .contenedor-busqueda {
   display: flex;
   flex-direction: column;
   justify-content: center; 
   align-items: center; 
-  gap: 20px; 
-  padding: 20px; 
 }
-
-
 .buscador input {
-  width: 100%;
   border-radius: 10px;
   border: none;
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
@@ -1042,20 +1036,15 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
   border: none;
 }
-
 #categoria_id option, #id_marca option, #modelo_id option {
   font-weight: bold;
 }
-
 #categoria_id option:hover, #id_marca option:hover, #modelo_id option:hover {
   background-color:#007BFF;
 }
-
 .hidden {
   display: none;
 }
-
-
 /*--------------PRODUCTOS--------------*/
 .contenedor-productos{
   display: grid;
