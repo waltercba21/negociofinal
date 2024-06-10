@@ -986,7 +986,10 @@ background: rgba(0, 63, 125, 0.8);
 .contenedor-busqueda {
   display: flex;
   flex-direction: row;
-  gap: 20px;
+  justify-content: center; /* Centra horizontalmente los elementos hijos */
+  align-items: center; /* Centra verticalmente los elementos hijos */
+  gap: 20px; /* Añadir un espacio entre el buscador y los selectores */
+  padding: 20px; /* Añadir padding si es necesario para mejor visualización */
 }
 .buscador {
   flex: 1;
@@ -1039,7 +1042,7 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: row;
   align-items: center;
   justify-content: space-around;
-  gap: 10px; /* Añadir espacio entre los selectores */
+  gap: 10px; 
 }
 
 .selectores-productos label {
@@ -1047,7 +1050,7 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
 }
 .selectores-productos select {
-  min-width: 200px; /* Reducir ancho mínimo para ajustar tamaño */
+  min-width: 200px; 
   color: #b80220;
   font-weight: bold;
   border-radius: 5px;
