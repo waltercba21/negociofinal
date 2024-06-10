@@ -175,24 +175,3 @@ $(document).ready(function() {
     $('#costo_neto').trigger('change');
     $('#utilidad').trigger('change');
 });
-
-$('.precio_lista, #costo_neto, #utilidad').on('change', function() {
-    var precioLista = $('.precio_lista').val();
-    var costoNeto = $('#costo_neto').val();
-    var utilidad = $('#utilidad').val();
-
-    $.ajax({
-        url: '/productos/actualizarPrecios/' + idProducto, 
-        method: 'POST',
-        data: {
-            precio_lista: precioLista,
-            costo_neto: costoNeto,
-            utilidad: utilidad
-        },
-        success: function(response) {
-            $('.precio_lista').val(response.precio_lista);
-            $('#costo_neto').val(response.costo_neto);
-            $('#utilidad').val(response.utilidad);
-        }
-    });
-});
