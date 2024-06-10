@@ -986,28 +986,19 @@ background: rgba(0, 63, 125, 0.8);
 .contenedor-busqueda {
   display: flex;
   flex-direction: row;
-  justify-content: center; /* Centra horizontalmente los elementos hijos */
-  align-items: center; /* Centra verticalmente los elementos hijos */
-  gap: 20px; /* Añadir un espacio entre el buscador y los selectores */
-  padding: 20px; /* Añadir padding si es necesario para mejor visualización */
-  height: 100px; /* Añadir una altura fija para el contenedor */
+  justify-content: center; 
+  align-items: center; 
+  gap: 20px; 
+  padding: 20px; 
+  height: 100px; 
 }
 
-.buscador {
-  display: flex;
-  align-items: center; /* Centrar verticalmente el input dentro del buscador */
-  justify-content: center; /* Centrar horizontalmente el input dentro del buscador */
-}
 
 .buscador input {
   width: 100%;
-  max-width: 300px; /* Limitar el ancho máximo para mejor ajuste */
   border-radius: 10px;
   border: none;
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
-  padding: 8px; /* Reducir padding para ajustar tamaño */
-  outline: none;
-  height: 40px; /* Reducir altura para ajustar tamaño */
   transition: box-shadow 0.3s ease-in-out;
   cursor: pointer;
   font-weight: bold;
@@ -1036,7 +1027,7 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: row;
   align-items: center;
   justify-content: space-around;
-  gap: 10px; /* Añadir espacio entre los selectores */
+  gap: 10px; 
 }
 
 .selectores-productos label {
