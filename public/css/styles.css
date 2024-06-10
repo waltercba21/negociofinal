@@ -1020,7 +1020,7 @@ background: rgba(0, 63, 125, 0.8);
   align-items: center;
   justify-content: space-around;
   gap: 10px; 
-  margin-top: -140px;
+  margin-top: -150px;
 }
 
 .selectores-productos label {
@@ -1111,10 +1111,10 @@ background: rgba(0, 63, 125, 0.8);
   background: #003f7d;
   border: none;
   border-radius: 50%; 
-  font-size: 2.5em;
+  font-size: 1.5em; /* Reduce el tamaño de las flechas */
   cursor: pointer;
-  width: 40px;
-  height: 40px;
+  width: 30px; /* Reduce el tamaño del botón */
+  height: 30px; /* Reduce el tamaño del botón */
   color: #fff;
   display: flex;
   align-items: center;
