@@ -995,15 +995,17 @@ background: rgba(0, 63, 125, 0.8);
   height: 40px; /* Aumenta la altura del input */
   margin: auto;
   display: block; /* Asegura que el input esté centrado */
+  text-align: center; /* Centra el texto del placeholder */
 } 
+
 .buscador input:focus {
   box-shadow: 0 0 2px #719ECE;
+  outline: none; /* Elimina el borde negro al hacer foco */
 }
 
 .buscador input:valid {
   animation: input-glow 3s infinite;
 }
-
 @keyframes input-glow {
   0%, 100% {
     box-shadow: 0 0 4px #1F487E;
