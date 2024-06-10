@@ -995,6 +995,8 @@ background: rgba(0, 63, 125, 0.8);
   transition: box-shadow 0.3s ease-in-out;
   cursor: pointer;
   font-weight: bold;
+  width: 50%; 
+  margin: auto;
 }
 
 .buscador input:focus {
@@ -1029,7 +1031,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .selectores-productos select {
-  min-width: 200px; /* Reducir ancho mínimo para ajustar tamaño */
+  min-width: 200px;
   color: #b80220;
   font-weight: bold;
   border-radius: 5px;
