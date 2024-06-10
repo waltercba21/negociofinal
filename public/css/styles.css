@@ -974,15 +974,14 @@ background: rgba(0, 63, 125, 0.8);
   color: #fff;
   border-color: #333; 
 }
-/*---------------------------Todos los Productos -------------------------------*/
-
 .titulo-principal {
   text-align: center;
   color: #1F487E;
   font-size: 28px;
   font-weight: bold;
-  padding: 70px 0 10 0;
+  padding: 70px 0 10px 0;
 }
+
 .contenedor-busqueda {
   display: flex;
   flex-direction: row;
@@ -991,26 +990,18 @@ background: rgba(0, 63, 125, 0.8);
   gap: 20px; /* Añadir un espacio entre el buscador y los selectores */
   padding: 20px; /* Añadir padding si es necesario para mejor visualización */
 }
+
 .buscador {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin-left: 20px;
+  align-items: center; /* Centrar verticalmente el input dentro del buscador */
+  justify-content: center; /* Centrar horizontalmente el input dentro del buscador */
   width: auto;
 }
-.selectores-productos {
-  flex: 2;
-}
-.buscador{
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin-left: 20px;
-  width: auto;
-}
+
 .buscador input {
   width: 100%;
+  max-width: 300px; /* Limitar el ancho máximo para mejor ajuste */
   border-radius: 10px;
   border: none;
   border-color: #1F487E;
@@ -1022,9 +1013,11 @@ background: rgba(0, 63, 125, 0.8);
   cursor: pointer;
   font-weight: bold;
 }
+
 .buscador input:focus {
   box-shadow: 0 0 2px #719ECE;
 }
+
 .buscador input:valid {
   animation: input-glow 3s infinite;
 }
@@ -1037,35 +1030,42 @@ background: rgba(0, 63, 125, 0.8);
     box-shadow: 0 0 8px #1F487E, 0 0 8px #1F487E;
   }
 }
+
 .selectores-productos {
+  flex: 2;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-around;
-  gap: 10px; 
+  gap: 10px; /* Añadir espacio entre los selectores */
 }
 
 .selectores-productos label {
   color: #003f7d;
   font-weight: bold;
 }
+
 .selectores-productos select {
-  min-width: 200px; 
+  min-width: 200px; /* Reducir ancho mínimo para ajustar tamaño */
   color: #b80220;
   font-weight: bold;
   border-radius: 5px;
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
   border: none;
 }
+
 #categoria_id option, #id_marca option, #modelo_id option {
   font-weight: bold;
 }
+
 #categoria_id option:hover, #id_marca option:hover, #modelo_id option:hover {
   background-color:#007BFF;
 }
+
 .hidden {
   display: none;
 }
+
 
 /*--------------PRODUCTOS--------------*/
 .contenedor-productos{
