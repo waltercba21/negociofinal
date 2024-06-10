@@ -681,8 +681,11 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre)
             parametros.push(modelo);
         }
         if (busqueda_nombre) {
-            sql += ' AND productos.nombre LIKE ?';
-            parametros.push('%' + busqueda_nombre + '%');
+            const palabras = busqueda_nombre.split(' ');
+            palabras.forEach(palabra => {
+                sql += ' AND productos.nombre LIKE ?';
+                parametros.push('%' + palabra + '%');
+            });
         }
 
         // Ordenar por id en orden descendente

@@ -828,7 +828,7 @@ actualizarPrecios: function(req, res) {
     .catch(error => {
         res.status(500).send('Error: ' + error.message);
     });
-},
+},  
 actualizarPreciosExcel : async (req, res) => {
     try {
         console.log("Inicio del procesamiento de archivos");
