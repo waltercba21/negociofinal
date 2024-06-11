@@ -1,19 +1,24 @@
 let productosOriginales = [];
+let timer;
+
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
 };
-document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
-  const busqueda = e.target.value;
-  const contenedorProductos = document.getElementById('contenedor-productos');
-  contenedorProductos.innerHTML = '';
-  if (!busqueda.trim()) {
-    return;
-  }
-  let url = '/productos/api/buscar?q=' + busqueda;
-  const respuesta = await fetch(url);
-  const productos = await respuesta.json();
-  productos.forEach((producto, index) => {
+
+document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
+  clearTimeout(timer);
+  timer = setTimeout(async () => {
+    const busqueda = e.target.value;
+    const contenedorProductos = document.getElementById('contenedor-productos');
+    contenedorProductos.innerHTML = '';
+    if (!busqueda.trim()) {
+      return;
+    }
+    let url = '/productos/api/buscar?q=' + busqueda;
+    const respuesta = await fetch(url);
+    const productos = await respuesta.json();
+    productos.forEach((producto, index) => {
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
       producto.imagenes.forEach((imagenObj, i) => {
@@ -39,23 +44,25 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
     }
     const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
-    const tarjetaProducto = `
-    <div class="card"> 
-      ${imagenes}
-      <div class="titulo-producto">
-        <h3 class="nombre">${producto.nombre}</h3>
+    const tarjetaProducto = document.createElement('div');
+    tarjetaProducto.innerHTML = `
+      <div class="card"> 
+        ${imagenes}
+        <div class="titulo-producto">
+          <h3 class="nombre">${producto.nombre}</h3>
+        </div>
+        <hr>
+        <div class="precio-producto">
+          <p class="precio">${precio_venta}</p>
+        </div>
+        <div class="cantidad-producto">
+          <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+        </div>
       </div>
-      <hr>
-      <div class="precio-producto">
-        <p class="precio">${precio_venta}</p>
-      </div>
-      <div class="cantidad-producto">
-        <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-      </div>
-    </div>
-  `;
-  contenedorProductos.innerHTML += tarjetaProducto;
+    `;
+    contenedorProductos.appendChild(tarjetaProducto);
   });
+}, 500); 
  $(document).on('click', '.carousel__button', function() {
     var $carousel = $(this).closest('.card').find('.carousel');
     var $images = $carousel.find('.carousel__image');
