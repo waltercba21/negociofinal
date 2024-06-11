@@ -62,7 +62,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     `;
     contenedorProductos.appendChild(tarjetaProducto);
   });
-}, 500); 
+}, 300); 
  $(document).on('click', '.carousel__button', function() {
     var $carousel = $(this).closest('.card').find('.carousel');
     var $images = $carousel.find('.carousel__image');
