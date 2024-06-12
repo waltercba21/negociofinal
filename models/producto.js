@@ -45,10 +45,18 @@ obtenerPorId: function (conexion, id, funcion) {
         } else if (resultados.length === 0) {
             return funcion(null, []);
         } else {
-            const producto = {
-                ...resultados[0],
-                imagenes: resultados.filter(resultado => resultado.imagen).map(resultado => resultado.imagen)
-            };
+            const producto = resultados.reduce((producto, resultado) => {
+                if (!producto) {
+                    producto = {
+                        ...resultado,
+                        imagenes: []
+                    };
+                }
+                if (resultado.imagen) {
+                    producto.imagenes.push(resultado.imagen);
+                }
+                return producto;
+            }, null);
             return funcion(null, [producto]);
         }
     });
