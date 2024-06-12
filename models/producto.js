@@ -40,7 +40,7 @@ obtenerTotal: function (conexion, funcion) {
   conexion.query('SELECT COUNT(*) as total FROM productos', funcion);
 },
 obtenerPorId: function (conexion, id, funcion) {
-    conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], funcion);
+    conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre, imagenes_producto.imagen FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE productos.id = ?', [id], funcion);
   },
   insertarProducto: function(conexion, producto) {
     return new Promise((resolve, reject) => {
