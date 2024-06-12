@@ -1172,6 +1172,9 @@ background: rgba(0, 63, 125, 0.8);
 #contenedor-producto .card {
   margin: auto;
 }
+.descripcion {
+  text-align: center;
+}
 /*---------------PANEL DE CONTROL ---------------*/
 .table-light thead th {
   color: #1F487E;
