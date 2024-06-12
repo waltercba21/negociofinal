@@ -6,25 +6,41 @@
         categoria = categoria.replace(/ /g, '_');
         document.body.classList.add(categoria);
       </script>
-    <div id="contenedor-producto" class="contenedor-producto">
-        <div class="card">
-          <div class="cover__card">
-            <img src="../../uploads/productos/<%= producto.imagen %>" alt="Imagen de <%= producto.nombre %>">
+   <div id="contenedor-producto" class="contenedor-producto">
+    <div class="card">
+      <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+        <div class="cover__card">
+          <div class="carousel">
+            <% producto.imagenes.forEach(function(imagen, index) { %>
+              <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
+            <% }); %>
           </div>
-          <div class="titulo-producto">
-            <h3 class="nombre"><%= producto.nombre %></h3>
-          </div> 
-          <hr>
-          <div class="categoria-producto">
-            <h6 class="categoria"><%= producto.categoria_nombre %></h6>
-          </div>
-          <div class="descripcion">
-            <%= producto.descripcion %>
-          </div>
-          <div class="precio-producto">
-            <p class="precio">$<%= producto.precio_venta %></p>
-          </div>
-        </div>  
+        </div>
+        <div class="carousel__buttons">
+          <button class="carousel__button">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button class="carousel__button">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      <% } else { %>
+        <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
+      <% } %>
+      <div class="titulo-producto">
+        <h3 class="nombre"><%= producto.nombre %></h3>
+      </div> 
+      <hr>
+      <div class="categoria-producto">
+        <h6 class="categoria"><%= producto.categoria_nombre %></h6>
       </div>
+      <div class="descripcion">
+        <%= producto.descripcion %>
+      </div>
+      <div class="precio-producto">
+        <p class="precio">$<%= producto.precio_venta %></p>
+      </div>
+    </div>  
+  </div>
       <%- include ./layouts/footer.ejs %>
 </body>
