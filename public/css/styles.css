@@ -1166,6 +1166,9 @@ background: rgba(0, 63, 125, 0.8);
 #detalle {
   background-color: #a3a2a2;
 }
+#contenedor-producto {
+  margin: 30px; 
+}
 #contenedor-producto .card {
   margin: auto;
 }
