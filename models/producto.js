@@ -16,7 +16,6 @@ module.exports ={
                 callback(error);
                 return;
             }
-            // Agrupar las imágenes por producto
             const productos = [];
             const mapaProductos = {};
             resultados.forEach(resultado => {
@@ -40,23 +39,20 @@ obtenerTotal: function (conexion, funcion) {
   conexion.query('SELECT COUNT(*) as total FROM productos', funcion);
 },
 obtenerPorId: function (conexion, id, funcion) {
-    conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON productos.categoria_id = categorias.id WHERE productos.id = ?', [id], function(error, producto) {
-      if (error) {
-        return funcion(error);
-      } else if (producto.length === 0) {
-        return funcion(null, producto);
-      } else {
-        conexion.query('SELECT imagen FROM imagenes_producto WHERE producto_id = ?', [id], function(error, imagenes) {
-          if (error) {
+    conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre, imagenes_producto.imagen FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE productos.id = ?', [id], function(error, resultados) {
+        if (error) {
             return funcion(error);
-          } else {
-            producto[0].imagenes = imagenes.map(imagen => imagen.imagen);
-            return funcion(null, producto);
-          }
-        });
-      }
+        } else if (resultados.length === 0) {
+            return funcion(null, []);
+        } else {
+            const producto = {
+                ...resultados[0],
+                imagenes: resultados.filter(resultado => resultado.imagen).map(resultado => resultado.imagen)
+            };
+            return funcion(null, [producto]);
+        }
     });
-  },
+},
   insertarProducto: function(conexion, producto) {
     return new Promise((resolve, reject) => {
         conexion.query('INSERT INTO productos SET ?', producto, function(error, result) {
