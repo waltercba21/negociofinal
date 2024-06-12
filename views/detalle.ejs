@@ -12,7 +12,7 @@
         <div class="cover__card">
           <div class="carousel">
             <% producto.imagenes.forEach(function(imagen, index) { %>
-              <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
+              <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="/productos/<%= imagen %>" alt="Imagen de <%= producto.nombre %>">
             <% }); %>
           </div>
         </div>
