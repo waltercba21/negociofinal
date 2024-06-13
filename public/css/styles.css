@@ -1179,8 +1179,8 @@ background: rgba(0, 63, 125, 0.8);
 #contenedor-producto .card .cover__card .carousel .carousel__image {
   object-fit: cover; 
 }
-.titulo-producto{
-  font-size: 12px;
+#contenedor-producto .card .nombre{
+  font-size: 14px;
 }
 .descripcion {
   text-align: center;
