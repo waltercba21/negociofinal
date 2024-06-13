@@ -1167,14 +1167,20 @@ background: rgba(0, 63, 125, 0.8);
   background-image: url('/uploads/productos/14.webp');
   background-repeat: no-repeat;
   background-position: center;
-  background-size: cover; /* Añadido para expandir el fondo */
+  background-size: cover; 
 }
 #contenedor-producto {
   margin: 30px; 
 }
 #contenedor-producto .card {
   margin: auto;
-  background: rgba(255, 255, 255, 0.5); /* Añadido para hacer la tarjeta un poco transparente */
+  background: rgba(255, 255, 255, 0.7);
+  width: 80%; /* Ajusta este valor según tus necesidades */
+  height: auto; /* Ajusta este valor según tus necesidades */
+}
+#contenedor-producto .card .cover__card .carousel .carousel__image {
+  width: 100%; /* Ajusta este valor según tus necesidades */
+  height: auto; /* Ajusta este valor según tus necesidades */
 }
 .descripcion {
   text-align: center;
