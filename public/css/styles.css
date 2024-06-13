@@ -1175,12 +1175,12 @@ background: rgba(0, 63, 125, 0.8);
 #contenedor-producto .card {
   margin: auto;
   background: rgba(255, 255, 255, 0.7);
-  width: 80%; /* Ajusta este valor según tus necesidades */
-  height: auto; /* Ajusta este valor según tus necesidades */
+  width: 50%; 
+  height: auto; 
 }
 #contenedor-producto .card .cover__card .carousel .carousel__image {
-  width: 100%; /* Ajusta este valor según tus necesidades */
-  height: auto; /* Ajusta este valor según tus necesidades */
+  width: 80%; 
+  height: auto;
 }
 .descripcion {
   text-align: center;
