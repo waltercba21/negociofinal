@@ -387,7 +387,7 @@ module.exports = {
             return producto.obtenerPosicion(conexion, datosProducto.id);
         })
         .then(() => {
-            console.log('Pagina actual: ', req.body.paginaActual); // Agregado console.log
+            console.log('Pagina actual: ', req.body.paginaActual); 
             res.redirect('/productos/panelControl?pagina=' + req.body.paginaActual);
         })
         .catch(error => {
