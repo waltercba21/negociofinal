@@ -25,7 +25,6 @@ module.exports = {
     index : function (req,res){
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
-                console.log('Error al obtener productos:', error);
                 return res.status(500).send('Error al obtener los productos');
             } else {
                 res.render('index', { productos: productos });
@@ -38,7 +37,6 @@ module.exports = {
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
-            console.log('Error: marca o modelo no son números válidos');
             return res.redirect('/error');
         }
         try {
@@ -53,7 +51,7 @@ module.exports = {
                     }
                 });
             });
-            let numeroDePaginas = Math.ceil(totalProductos / 20);
+            let numeroDePaginas = Math.ceil(totalProductos / 12);
             if (categoria || marca || modelo) {  
                 productos = await new Promise((resolve, reject) => {
                     if (categoria) {
@@ -105,7 +103,6 @@ module.exports = {
                 const todasLasImagenesPromesas = productoIds.map(id => producto.obtenerImagenesProducto(conexion, id));
                 const todasLasImagenes = (await Promise.all(todasLasImagenesPromesas)).flat();
                 for (let producto of productos) {
-                    console.log('Precio antes de la conversión:', producto.precio_venta);
                     if (producto.precio_venta !== null && !isNaN(parseFloat(producto.precio_venta))) {
                         producto.precio_venta = Number(producto.precio_venta);
                     } else {
@@ -120,7 +117,6 @@ module.exports = {
             }
             res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
         }  catch (error) {
-            console.error('Error al obtener productos, categorías, marcas o modelos:', error);
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
@@ -129,7 +125,7 @@ module.exports = {
         const categoria_id = req.query.categoria_id;
         const marca_id = req.query.marca_id; 
         const modelo_id = req.query.modelo_id;
-        const limite = !busqueda_nombre ? 10 : undefined;
+        const limite = !busqueda_nombre ? 12 : undefined;
         const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite); 
         res.json(productos); 
     },
@@ -387,7 +383,6 @@ module.exports = {
             return producto.obtenerPosicion(conexion, datosProducto.id);
         })
         .then(() => {
-            console.log('Pagina actual: ', req.body.paginaActual); 
             res.redirect('/productos/panelControl?pagina=' + req.body.paginaActual);
         })
         .catch(error => {
@@ -427,7 +422,6 @@ module.exports = {
             
             res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual }); 
         } catch (error) {
-            console.log('Error:', error);
             return res.status(500).send('Error: ' + error.message);
         } 
     },    
@@ -488,12 +482,9 @@ todos: function (req, res) {
         if (error) {
             console.log('Error al obtener productos:', error);
         } else {
-            // Formatear el precio de cada producto
             productos.forEach(producto => {
                 producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('de-DE');
             });
-
-            console.log('Productos obtenidos:', productos);
             res.render('productos', { productos: productos });
         }
     });
@@ -503,7 +494,6 @@ eliminarProveedor: function(req, res) {
     producto.eliminarProveedor(conexion, proveedorId).then(() => {
         res.json({ success: true });
     }).catch(error => {
-        console.error("Error al eliminar el proveedor:", error);
         res.status(500).json({ success: false, error: error });
     });
 },
@@ -512,7 +502,6 @@ eliminarImagen: function(req, res) {
     producto.eliminarImagen(imagenId).then(() => {
         res.json({ success: true });
     }).catch(error => {
-        console.error("Error al eliminar la imagen:", error);
         res.status(500).json({ success: false, error: error });
     });
 },
@@ -699,7 +688,6 @@ generarStockPDF: async function (req, res) {
            });
         var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
         obtenerProductos.then(productos => {
-            console.log('Productos obtenidos:', productos);
             var currentY = doc.y;
             doc.fontSize(10)
             .fillColor('blue')
@@ -768,12 +756,10 @@ presupuestoMostrador:function(req, res) {
     res.render('presupuestoMostrador');
 },
 generarPresupuestoPDF: function(req, res) {
-    console.log('Inicio de generarPresupuestoPDF');
     let doc = new PDFDocument();
     let buffers = [];
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', () => {
-        console.log('Fin de la generación del PDF');
         let pdfData = Buffer.concat(buffers);
         res.writeHead(200, {
             'Content-Length': Buffer.byteLength(pdfData),
@@ -783,7 +769,6 @@ generarPresupuestoPDF: function(req, res) {
         res.end(pdfData);
     });
     let datos = req.body;
-    console.log('Datos recibidos: ', datos);
     doc.fontSize(20).text('Presupuesto', {align: 'center'});
     doc.fontSize(14)
        .text(`Nombre del cliente: ${datos.nombreCliente}`, {align: 'left'})
@@ -798,7 +783,6 @@ generarPresupuestoPDF: function(req, res) {
        .text('Subtotal', {align: 'left'});
     if (Array.isArray(datos.productos)) {
         datos.productos.forEach(producto => {
-            console.log('Procesando producto: ', producto);
             doc.moveDown();
             doc.text(producto.codigo, {align: 'left'})
                .text(producto.descripcion, {align: 'left'})
@@ -807,7 +791,6 @@ generarPresupuestoPDF: function(req, res) {
                .text(producto.subtotal, {align: 'left'});
         });
     } else {
-        console.error('Productos no es un array');
         return res.status(400).send('Productos no es un array');
     }
     doc.end();
@@ -830,11 +813,9 @@ actualizarPrecios: function(req, res) {
 },  
 actualizarPreciosExcel: async (req, res) => {
     try {
-        console.log("Inicio del procesamiento de archivos");
         const file = req.files[0]; 
         let productosActualizados = []; 
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-            console.log("Procesando archivo Excel");
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
             for (const sheet_name of sheet_name_list) {
@@ -854,7 +835,6 @@ actualizarPreciosExcel: async (req, res) => {
                 }
             }
         } else {
-            console.log("Tipo de archivo no soportado");
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
             return;
         }

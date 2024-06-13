@@ -14,7 +14,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     contenedorProductos.innerHTML = '';
     let productos = [];
     if (!busqueda.trim()) {
-      productos = productosOriginales.slice(0, 10); 
+      productos = productosOriginales.slice(0, 12); 
     } else {
       let url = '/productos/api/buscar?q=' + busqueda;
       const respuesta = await fetch(url);
