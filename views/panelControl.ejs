@@ -118,9 +118,9 @@
           <td>$<%= parseInt(producto.precio_venta) %></td>
         <td>
           <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-            <form class="form-inline" method="get" action="/productos/editar/<%= producto.id %>">
-                <button class="btn btn-warning" type="submit">Editar</button>
-            </form>
+            <form class="form-inline" method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %>">
+              <button class="btn btn-warning" type="submit">Editar</button>
+          </form>
           </div> 
         </td>
         </tr>

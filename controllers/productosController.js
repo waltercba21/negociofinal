@@ -386,8 +386,8 @@ module.exports = {
         .then(() => {
             return producto.obtenerPosicion(conexion, datosProducto.id);
         })
-        .then(posicion => {
-            res.redirect('/productos/' + datosProducto.id);
+        .then(() => {
+            res.redirect('/productos/panelControl?pagina=' + req.query.pagina);
         })
         .catch(error => {
             res.status(500).send('Error: ' + error.message);
