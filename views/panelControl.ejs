@@ -114,10 +114,10 @@
   <% productos.forEach(producto => { %>
     <tr>
       <td><input type="checkbox" class="product-check" value="<%= producto.id %>"></td>
-      <td> <%= producto.categoria_nombre %></td>
+      <td> <%= producto.categoria %></td>
       <td><%= producto.nombre %></td> 
           <td>
-            <img class="img-thumbnail" width= '150' src="/uploads/productos/<%= producto.imagenes[0].imagen %>" alt="">
+            <img class="img-thumbnail" width= '150' src="/uploads/productos/<%= producto.imagenes[0] %>" alt="">
           </td>
           <td>$<%= parseInt(producto.precio_venta) %></td>
         <td>
