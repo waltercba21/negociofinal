@@ -49,11 +49,11 @@
       </div>
     </div>
     
-<div class="paginacion">
-  <% for(let i = 1; i <= numeroDePaginas; i++) { %>
-    <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
-  <% } %>
-</div>
+    <div class="paginacion">
+      <% for(let i = 1; i <= Math.min(numeroDePaginas, 10); i++) { %>
+        <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
+      <% } %>
+    </div>
 <div id="contenedor-productos" class="contenedor-productos">
   <% productos.forEach(function(producto) { %>
     <div class="card">
@@ -96,7 +96,7 @@
   <% }); %>
 </div>
 <div class="paginacion">
-  <% for(let i = 1; i <= numeroDePaginas; i++) { %>
+  <% for(let i = 1; i <= Math.min(numeroDePaginas, 10); i++) { %>
     <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
   <% } %>
 </div>
