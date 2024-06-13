@@ -5,9 +5,9 @@
         var categoria = '<%= producto.categoria_nombre.toLowerCase() %>';
         categoria = categoria.replace(/ /g, '_');
         document.body.classList.add(categoria);
-    </script>
-   <div id="contenedor-producto-<%= producto.id %>" class="contenedor-producto">
-    <div class="card-<%= producto.id %>">
+      </script>
+   <div id="contenedor-producto" class="contenedor-producto">
+    <div class="card">
       <% if (producto.imagenes && producto.imagenes.length > 0) { %>
         <div class="cover__card">
           <div class="carousel">
@@ -43,5 +43,4 @@
     </div>  
   </div>
       <%- include ./layouts/footer.ejs %>
-      <script src="/js/productos.js"></script> 
 </body>
