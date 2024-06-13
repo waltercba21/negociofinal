@@ -12,12 +12,14 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     const busqueda = e.target.value;
     const contenedorProductos = document.getElementById('contenedor-productos');
     contenedorProductos.innerHTML = '';
+    let productos = [];
     if (!busqueda.trim()) {
-      return;
+      productos = productosOriginales;
+    } else {
+      let url = '/productos/api/buscar?q=' + busqueda;
+      const respuesta = await fetch(url);
+      productos = await respuesta.json();
     }
-    let url = '/productos/api/buscar?q=' + busqueda;
-    const respuesta = await fetch(url);
-    const productos = await respuesta.json();
     productos.forEach((producto, index) => {
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
