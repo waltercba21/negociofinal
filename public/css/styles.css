@@ -1084,7 +1084,7 @@ background: rgba(0, 63, 125, 0.8);
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   transform-origin: center center;
   width: 350px; 
-  height: 400px;
+  height: 380px;
 }
 .cover__card, .carousel {
   display: flex; 
@@ -1138,7 +1138,6 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   color: #1F487E;
   text-align: center;
-  margin: 10px 0;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
