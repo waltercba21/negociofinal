@@ -51,7 +51,7 @@ module.exports = {
                     }
                 });
             });
-            let numeroDePaginas = Math.ceil(totalProductos / 10);
+            let numeroDePaginas = Math.ceil(totalProductos / 20);
             if (categoria || marca || modelo) {  
                 productos = await new Promise((resolve, reject) => {
                     if (categoria) {
