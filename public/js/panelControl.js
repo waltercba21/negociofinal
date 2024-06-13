@@ -51,6 +51,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       console.log('URL de búsqueda:', url);
       const respuesta = await fetch(url);
       const data = await respuesta.json();
+      console.log(data);
       productos = data.productos; // Aquí es donde se cambió el código
       console.log('Productos de la búsqueda:', productos);
     }
