@@ -1164,10 +1164,7 @@ background: rgba(0, 63, 125, 0.8);
 
 /*--------------------DETALLE ---------------*/
 #detalle {
-  background-image: url('/uploads/productos/14.webp');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover; 
+  background: linear-gradient(to right, #f3f3f3, #e0e0e0); 
 }
 #contenedor-producto {
   margin: 30px; 
