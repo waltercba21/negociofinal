@@ -55,25 +55,28 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       console.log('Productos de la búsqueda:', productos);
     }
     productos.forEach((producto, index) => {
-      console.log('Procesando producto', index, producto);
-      const imagen = producto.imagenes && producto.imagenes.length > 0 ? `/uploads/productos/${producto.imagenes[0].imagen}` : '/ruta/valida/a/imagen/por/defecto.jpg';
-      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
-      const filaProducto = document.createElement('tr');
-      filaProducto.innerHTML = `
-        <td><input type="checkbox" class="product-check" value="${producto.id}"></td>
-        <td>${producto.categoria_nombre}</td>
-        <td>${producto.nombre}</td>
-        <td><img class="img-thumbnail" width='150' src="${imagen}" alt="Imagen de ${producto.nombre}"></td>
-        <td>${precio_venta}</td>
-        <td>
-          <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-            <form class="form-inline" method="get" action="/productos/editar/${producto.id}?pagina=${paginaActual}">
-              <button class="btn btn-warning" type="submit">Editar</button>
-            </form>
-          </div> 
-        </td>
-      `;
-      contenedorProductos.appendChild(filaProducto);
+        console.log('Procesando producto', index, producto);
+        const imagen = producto.imagenes && producto.imagenes.length > 0 ? `/uploads/productos/${producto.imagenes[0].imagen}` : '/ruta/valida/a/imagen/por/defecto.jpg';
+        const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+        console.log('Imagen:', imagen);
+        console.log('Precio de venta:', precio_venta);
+        const filaProducto = document.createElement('tr');
+        filaProducto.innerHTML = `
+          <td><input type="checkbox" class="product-check" value="${producto.id}"></td>
+          <td>${producto.categoria_nombre}</td>
+          <td>${producto.nombre}</td>
+          <td><img class="img-thumbnail" width='150' src="${imagen}" alt="Imagen de ${producto.nombre}"></td>
+          <td>${precio_venta}</td>
+          <td>
+            <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+              <form class="form-inline" method="get" action="/productos/editar/${producto.id}?pagina=${paginaActual}">
+                <button class="btn btn-warning" type="submit">Editar</button>
+              </form>
+            </div> 
+          </td>
+        `;
+        contenedorProductos.appendChild(filaProducto);
+        console.log('Producto agregado al contenedor:', filaProducto);
+      });
     });
   }, 300);
-});
