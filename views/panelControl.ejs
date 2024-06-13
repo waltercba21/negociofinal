@@ -98,40 +98,40 @@
           <a href="?pagina=<%= paginaActual + 1 %>">&raquo;</a>
       <% } %>
   </div>
-<<table class="table table-light">
-  <thead class="thead-light">
+<table class="table table-light">
+<thead class="thead-light">
+  <tr>
+    <th><input type="checkbox" id="check-all"></th>
+    <button id="delete-selected" class="btn btn-danger">Eliminar seleccionados</button>
+    <th>Categoría</th>
+    <th>Nombre</th>
+    <th>Imagen</th>
+    <th>Precio</th>
+    <th>Acciones</th>   
+  </tr>
+</thead>
+<tbody id="contenedor-productos">
+  <% productos.forEach(producto => { %>
     <tr>
-      <th><input type="checkbox" id="check-all"></th>
-      <button id="delete-selected" class="btn btn-danger">Eliminar seleccionados</button>
-      <th>Categoría</th>
-      <th>Nombre</th>
-      <th>Imagen</th>
-      <th>Precio</th>
-      <th>Acciones</th>   
-    </tr>
-  </thead>
-  <tbody id="contenedor-productos">
-    <% productos.forEach(producto => { %>
-      <tr>
-        <td><input type="checkbox" class="product-check" value="<%= producto.id %>"></td>
-        <td> <%= producto.categoria_nombre %></td>
-        <td><%= producto.nombre %></td> 
-            <td>
-              <img class="img-thumbnail" width= '150' src="/uploads/productos/<%= producto.imagen %>" alt="">
-            </td>
-            <td>$<%= parseInt(producto.precio_venta) %></td>
+      <td><input type="checkbox" class="product-check" value="<%= producto.id %>"></td>
+      <td> <%= producto.categoria %></td>
+      <td><%= producto.nombre %></td> 
           <td>
-            <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-              <form class="form-inline" method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %>">
-                <button class="btn btn-warning" type="submit">Editar</button>
-            </form>
-            </div> 
+            <img class="img-thumbnail" width= '150' src="/uploads/productos/<%= producto.imagenes[0] %>" alt="">
           </td>
-          </tr>
-          <% }); %>
-      </tbody>
-    </table>
-  </div>
+          <td>$<%= parseInt(producto.precio_venta) %></td>
+        <td>
+          <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+            <form class="form-inline" method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %>">
+              <button class="btn btn-warning" type="submit">Editar</button>
+          </form>
+          </div> 
+        </td>
+        </tr>
+        <% }); %>
+    </tbody>
+  </table>
+</div>
 </main>
 <%- include ./layouts/footer.ejs %>
 <script src="/js/panelControl.js"></script> 
