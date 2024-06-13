@@ -1071,7 +1071,6 @@ background: rgba(0, 63, 125, 0.8);
   transition: background-color 0.3s ease;
   text-decoration: none;
 }
-
 .card-link:hover {
   background-color: #0056b3;
 }
@@ -1101,7 +1100,6 @@ background: rgba(0, 63, 125, 0.8);
   height: 300px;
   margin-bottom: 15px; 
 }
-
 .carousel__buttons {
   position: relative;
   display: flex;
@@ -1113,10 +1111,10 @@ background: rgba(0, 63, 125, 0.8);
   background: #003f7d;
   border: none;
   border-radius: 50%; 
-  font-size: 1.5em; /* Reduce el tamaño de las flechas */
+  font-size: 1.5em; 
   cursor: pointer;
-  width: 30px; /* Reduce el tamaño del botón */
-  height: 30px; /* Reduce el tamaño del botón */
+  width: 30px; 
+  height: 30px; 
   color: #fff;
   display: flex;
   align-items: center;
@@ -1136,7 +1134,7 @@ background: rgba(0, 63, 125, 0.8);
   object-fit: contain; 
 }
 .titulo-producto h3.nombre {
-  font-size: 18px;
+  font-size: 12px;
   font-weight: bold;
   color: #1F487E;
   text-align: center;
@@ -1150,6 +1148,7 @@ background: rgba(0, 63, 125, 0.8);
   min-height: 50px; 
 }
 .categoria-producto h6.categoria {
+  color: #1F487E;
   font-weight: bold;
   text-align: center;
 }
