@@ -31,23 +31,30 @@ document.getElementById('delete-selected').addEventListener('click', function() 
         console.error('Error:', error);
     });
 });
-let timer;
 
+let timer;
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
+    console.log('Evento input detectado');
     clearTimeout(timer);
     timer = setTimeout(async () => {
       const busqueda = e.target.value;
+      console.log('Valor de búsqueda:', busqueda);
       const contenedorProductos = document.getElementById('contenedor-productos');
+      console.log('Contenedor de productos:', contenedorProductos);
       contenedorProductos.innerHTML = '';
       let productos = [];
       if (!busqueda.trim()) {
-        productos = productosOriginales.slice(0, 12); 
+        productos = productosOriginales.slice(0, 12);
+        console.log('Productos originales:', productos);
       } else {
         let url = '/productos/api/buscar?q=' + busqueda;
+        console.log('URL de búsqueda:', url);
         const respuesta = await fetch(url);
         productos = await respuesta.json();
+        console.log('Productos de la búsqueda:', productos);
       }
       productos.forEach((producto, index) => {
+        console.log('Procesando producto', index, producto);
         const imagen = producto.imagenes && producto.imagenes.length > 0 ? `/uploads/productos/${producto.imagenes[0]}` : '/ruta/valida/a/imagen/por/defecto.jpg';
         const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
         const filaProducto = document.createElement('tr');
