@@ -1167,12 +1167,14 @@ background: rgba(0, 63, 125, 0.8);
   background-image: url('/uploads/productos/14.webp');
   background-repeat: no-repeat;
   background-position: center;
+  background-size: cover; /* Añadido para expandir el fondo */
 }
 #contenedor-producto {
   margin: 30px; 
 }
 #contenedor-producto .card {
   margin: auto;
+  background: rgba(255, 255, 255, 0.5); /* Añadido para hacer la tarjeta un poco transparente */
 }
 .descripcion {
   text-align: center;
