@@ -414,8 +414,8 @@ background: rgba(0, 63, 125, 0.8);
   overflow: hidden; 
   text-overflow: ellipsis; 
   font-weight: bold;
-  font-size: 16px;
-  max-width: 90%; 
+  font-size: 12px;
+  max-width: 80%; 
   margin: 0 auto;
 }
 .precio-producto {
@@ -428,7 +428,7 @@ background: rgba(0, 63, 125, 0.8);
 .precio-producto p {
   margin: 0;
   text-align: center;
-  width: 100%;
+  width: 90%;
 }
 .categoria-producto {
   flex-grow: 1;
@@ -1122,7 +1122,6 @@ background: rgba(0, 63, 125, 0.8);
   transition: transform 0.3s ease, box-shadow 0.3s ease; 
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
 }
-
 .carousel__button:hover {
   transform: scale(1.1); 
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); 
