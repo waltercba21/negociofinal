@@ -415,7 +415,7 @@ background: rgba(0, 63, 125, 0.8);
   text-overflow: ellipsis; 
   font-weight: bold;
   font-size: 12px;
-  max-width: 80%; 
+  max-width: 100%; 
   margin: 0 auto;
 }
 .precio-producto {
@@ -438,6 +438,8 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: column;
 }
 .categoria-producto h5 {
+  color: #003f7d;
+  font-size: 12px;
   font-weight: bold;
   text-align: center;
   width: 100%;
