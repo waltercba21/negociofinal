@@ -31,7 +31,6 @@ document.getElementById('delete-selected').addEventListener('click', function() 
         console.error('Error:', error);
     });
 });
-
 let timer;
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   console.log('Evento input detectado');
@@ -62,7 +61,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       const filaProducto = document.createElement('tr');
       filaProducto.innerHTML = `
         <td><input type="checkbox" class="product-check" value="${producto.id}"></td>
-        <td>${producto.categoria}</td>
+        <td>${producto.categoria_nombre}</td>
         <td>${producto.nombre}</td>
         <td><img class="img-thumbnail" width='150' src="${imagen}" alt="Imagen de ${producto.nombre}"></td>
         <td>${precio_venta}</td>
