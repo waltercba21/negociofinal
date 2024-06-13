@@ -31,6 +31,8 @@ document.getElementById('delete-selected').addEventListener('click', function() 
         console.error('Error:', error);
     });
 });
+let timer;
+
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     clearTimeout(timer);
     timer = setTimeout(async () => {
