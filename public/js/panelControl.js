@@ -52,7 +52,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       const respuesta = await fetch(url);
       const data = await respuesta.json();
       console.log(data);
-      productos = data.productos; // Aquí es donde se cambió el código
+      productos = data;     
       console.log('Productos de la búsqueda:', productos);
     }
     productos.forEach((producto, index) => {
