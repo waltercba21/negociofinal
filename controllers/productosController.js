@@ -419,7 +419,6 @@ module.exports = {
             const saltar = (paginaActual - 1) * productosPorPagina;
             let numeroDePaginas = await calcularNumeroDePaginas(conexion);
             let productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
-            
             res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual }); 
         } catch (error) {
             return res.status(500).send('Error: ' + error.message);
