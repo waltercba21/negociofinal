@@ -1181,9 +1181,11 @@ background: rgba(0, 63, 125, 0.8);
 #contenedor-producto .card .cover__card .carousel .carousel__image {
   width: 80%; 
   height: auto;
+  object-fit: cover; 
 }
 .descripcion {
   text-align: center;
+  font-weight: bold;
 }
 /*---------------PANEL DE CONTROL ---------------*/
 .table-light thead th {
