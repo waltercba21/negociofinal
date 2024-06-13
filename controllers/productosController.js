@@ -51,7 +51,7 @@ module.exports = {
                     }
                 });
             });
-            let numeroDePaginas = Math.ceil(totalProductos / 12);
+            let numeroDePaginas = Math.ceil(totalProductos / 10);
             if (categoria || marca || modelo) {  
                 productos = await new Promise((resolve, reject) => {
                     if (categoria) {
@@ -125,7 +125,7 @@ module.exports = {
         const categoria_id = req.query.categoria_id;
         const marca_id = req.query.marca_id; 
         const modelo_id = req.query.modelo_id;
-        const limite = !busqueda_nombre ? 12 : undefined;
+        const limite = !busqueda_nombre ? 10 : undefined;
         const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite); 
         res.json(productos); 
     },
