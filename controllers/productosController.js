@@ -387,9 +387,7 @@ module.exports = {
             return producto.obtenerPosicion(conexion, datosProducto.id);
         })
         .then(posicion => {
-            const productosPorPagina = 10;
-            const pagina = Math.ceil(posicion / productosPorPagina);
-            res.redirect('/productos/panelControl?pagina=' + datosProducto.paginaActual);
+            res.redirect('/productos/' + datosProducto.id);
         })
         .catch(error => {
             res.status(500).send('Error: ' + error.message);
