@@ -37,34 +37,27 @@ document.getElementById('contenedor-productos').addEventListener('click', functi
     }
 });
 let timer;
+let paginaActual = 1;
+
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
-  console.log('Evento input detectado');
   clearTimeout(timer);
   timer = setTimeout(async () => {
     const busqueda = e.target.value;
-    console.log('Valor de búsqueda:', busqueda);
     const contenedorProductos = document.getElementById('contenedor-productos');
-    console.log('Contenedor de productos:', contenedorProductos);
     contenedorProductos.innerHTML = '';
     let productos = [];
     if (!busqueda.trim()) {
       productos = productosOriginales.slice(0, 12);
-      console.log('Productos originales:', productos);
     } else {
       let url = '/productos/api/buscar?q=' + busqueda;
-      console.log('URL de búsqueda:', url);
       const respuesta = await fetch(url);
       const data = await respuesta.json();
-      console.log(data);
       productos = data;     
-      console.log('Productos de la búsqueda:', productos);
     }
+    paginaActual = Math.ceil(productos.length / 10);
     productos.forEach((producto, index) => {
-        console.log('Procesando producto', index, producto);
         const imagen = producto.imagenes && producto.imagenes.length > 0 ? `/uploads/productos/${producto.imagenes[0].imagen}` : '/ruta/valida/a/imagen/por/defecto.jpg';
         const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
-        console.log('Imagen:', imagen);
-        console.log('Precio de venta:', precio_venta);
         const filaProducto = document.createElement('tr');
         filaProducto.innerHTML = `
           <td><input type="checkbox" class="product-check" value="${producto.id}"></td>
@@ -81,7 +74,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
           </td>
         `;
         contenedorProductos.appendChild(filaProducto);
-        console.log('Producto agregado al contenedor:', filaProducto);
       });
     });
   }, 300);
