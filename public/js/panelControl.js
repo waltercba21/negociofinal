@@ -57,7 +57,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     }
     productos.forEach((producto, index) => {
       console.log('Procesando producto', index, producto);
-      const imagen = producto.imagenes && producto.imagenes.length > 0 ? `/uploads/productos/${producto.imagenes[0]}` : '/ruta/valida/a/imagen/por/defecto.jpg';
+      const imagen = producto.imagenes && producto.imagenes.length > 0 ? `/uploads/productos/${producto.imagenes[0].imagen}` : '/ruta/valida/a/imagen/por/defecto.jpg';
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const filaProducto = document.createElement('tr');
       filaProducto.innerHTML = `
