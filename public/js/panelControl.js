@@ -31,3 +31,39 @@ document.getElementById('delete-selected').addEventListener('click', function() 
         console.error('Error:', error);
     });
 });
+document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const busqueda = e.target.value;
+      const contenedorProductos = document.getElementById('contenedor-productos');
+      contenedorProductos.innerHTML = '';
+      let productos = [];
+      if (!busqueda.trim()) {
+        productos = productosOriginales.slice(0, 12); 
+      } else {
+        let url = '/productos/api/buscar?q=' + busqueda;
+        const respuesta = await fetch(url);
+        productos = await respuesta.json();
+      }
+      productos.forEach((producto, index) => {
+        const imagen = producto.imagenes && producto.imagenes.length > 0 ? `/uploads/productos/${producto.imagenes[0]}` : '/ruta/valida/a/imagen/por/defecto.jpg';
+        const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+        const filaProducto = document.createElement('tr');
+        filaProducto.innerHTML = `
+          <td><input type="checkbox" class="product-check" value="${producto.id}"></td>
+          <td>${producto.categoria}</td>
+          <td>${producto.nombre}</td>
+          <td><img class="img-thumbnail" width='150' src="${imagen}" alt="Imagen de ${producto.nombre}"></td>
+          <td>${precio_venta}</td>
+          <td>
+            <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+              <form class="form-inline" method="get" action="/productos/editar/${producto.id}?pagina=${paginaActual}">
+                <button class="btn btn-warning" type="submit">Editar</button>
+              </form>
+            </div> 
+          </td>
+        `;
+        contenedorProductos.appendChild(filaProducto);
+      });
+    }, 300);
+  });

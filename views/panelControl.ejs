@@ -66,7 +66,11 @@
       </form>
     </div>
     
-    <br/>
+    <br/> 
+    <div class="contenedor-busqueda">
+      <div class="buscador">
+        <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej: Escort, Optica, Faro, Agile">
+      </div>
     <div class="paginacion">
       <% if (paginaActual > 1) { %>
           <a href="?pagina=<%= paginaActual - 1 %>">&laquo;</a>
