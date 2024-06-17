@@ -405,7 +405,7 @@ module.exports = {
         let proveedores = await producto.obtenerProveedores(conexion);
         res.render('proveedores', { proveedores: proveedores });
     },
-    panelControl: async function(req, res) {
+    panelControl: async (req, res) => {
         try {
             let proveedores = await producto.obtenerProveedores(conexion);
             let categorias = await producto.obtenerCategorias(conexion);
@@ -425,7 +425,7 @@ module.exports = {
         } catch (error) {
             return res.status(500).send('Error: ' + error.message);
         } 
-    }, 
+    },
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {
