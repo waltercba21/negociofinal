@@ -415,7 +415,7 @@ module.exports = {
             if (isNaN(paginaActual) || paginaActual < 1) {
                 paginaActual = 1;
             }
-            const productosPorPagina = 10;
+            const productosPorPagina = 30;
             const saltar = (paginaActual - 1) * productosPorPagina;
             let numeroDePaginas = await calcularNumeroDePaginas(conexion);
             let productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
