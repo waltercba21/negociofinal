@@ -71,7 +71,7 @@
         <span>...</span>
     <% } %>
 
-    <% for(let i = Math.max(1, paginaActual - 1); i <= Math.min(paginaActual + 1, numeroDePaginas); i++) { %>
+    <% for(let i = Math.max(1, paginaActual - 1); i <= Math.min(paginaActual + 5, numeroDePaginas); i++) { %>
         <% if (paginaActual === i) { %>
             <span class="active"><%= i %></span>
         <% } else { %>
