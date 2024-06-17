@@ -61,33 +61,33 @@
     <br/> 
 <div class="contenedor-busqueda">
       
-    <div class="paginacion">
-      <% if (paginaActual > 1) { %>
-          <a href="?pagina=<%= paginaActual - 1 %>">&laquo;</a>
-      <% } %>
-  
-      <% if (paginaActual > 15) { %>
-          <a href="?pagina=1">1</a>
-          <span>...</span>
-      <% } %>
-  
-      <% for(let i = Math.max(1, paginaActual - 5); i <= Math.min(paginaActual + 15, numeroDePaginas); i++) { %>
-          <% if (paginaActual === i) { %>
-              <span class="active"><%= i %></span>
-          <% } else { %>
-              <a href="?pagina=<%= i %>"><%= i %></a>
-          <% } %>
-      <% } %>
-  
-      <% if (paginaActual < numeroDePaginas) { %>
-          <span>...</span>
-          <a href="?pagina=<%= numeroDePaginas %>"><%= numeroDePaginas %></a>
-      <% } %>
-  
-      <% if (paginaActual < numeroDePaginas) { %>
-          <a href="?pagina=<%= paginaActual + 1 %>">&raquo;</a>
-      <% } %>
-  </div>
+  <div class="paginacion">
+    <% if (paginaActual > 1) { %>
+        <a href="?pagina=<%= paginaActual - 1 %>">&laquo;</a>
+    <% } %>
+
+    <% if (paginaActual > 2) { %>
+        <a href="?pagina=1">1</a>
+        <span>...</span>
+    <% } %>
+
+    <% for(let i = Math.max(1, paginaActual - 1); i <= Math.min(paginaActual + 1, numeroDePaginas); i++) { %>
+        <% if (paginaActual === i) { %>
+            <span class="active"><%= i %></span>
+        <% } else { %>
+            <a href="?pagina=<%= i %>"><%= i %></a>
+        <% } %>
+    <% } %>
+
+    <% if (paginaActual < numeroDePaginas - 1) { %>
+        <span>...</span>
+        <a href="?pagina=<%= numeroDePaginas %>"><%= numeroDePaginas %></a>
+    <% } %>
+
+    <% if (paginaActual < numeroDePaginas) { %>
+        <a href="?pagina=<%= paginaActual + 1 %>">&raquo;</a>
+    <% } %>
+</div>
   <div class="buscador-panel">
         <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej: Escort, Optica, Faro, Agile">
       </div>
