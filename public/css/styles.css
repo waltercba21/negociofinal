@@ -1267,8 +1267,8 @@ background: rgba(0, 63, 125, 0.8);
   color: lightgray;
   font-weight: bold;
 }
-#delete-selected {
-  width: auto !important; /* El ancho del botón será solo lo suficientemente grande para el contenido */
+.btn-delete {
+  width: auto; /* El ancho del botón será solo lo suficientemente grande para el contenido */
   padding: 5px 10px; /* Reduce el padding del botón */
   font-size: 0.8em; /* Reduce el tamaño de la fuente */
   display: inline-block; /* Asegura que el botón no ocupe todo el ancho */
