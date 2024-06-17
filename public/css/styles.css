@@ -1239,13 +1239,11 @@ background: rgba(0, 63, 125, 0.8);
 }
 .form-control form {
   display: flex;
-  flex-direction: column;
-  align-items: center; /* Centrar el contenido */
+  flex-direction: row;
+  align-items: center; 
 }
-
-/* Estilo para los elementos del formulario */
 .form-control form * {
-  margin-bottom: 10px; /* Dar un espacio entre los elementos */
+  margin-bottom: 10px; 
 }
 .form-control {
   width: 40%; 
@@ -1256,10 +1254,14 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 1.2em; 
   font-weight: bold; 
   text-align: center; 
+  color: #003f7d;
 }
 .form-control label, .form-control select, .form-control input, .form-control button {
   font-size: 0.8em; 
   font-weight: bold;
+}
+.form-control button{
+  background-color: #003f7d;
 }
 .paginacion a, .paginacion .active {
   padding: 3px 6px; 
