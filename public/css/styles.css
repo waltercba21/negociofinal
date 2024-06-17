@@ -1268,9 +1268,10 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
 }
 #delete-selected {
-  width: auto; 
-  padding: 5px 10px; 
-  font-size: 0.8em; 
+  width: auto !important; /* El ancho del botón será solo lo suficientemente grande para el contenido */
+  padding: 5px 10px; /* Reduce el padding del botón */
+  font-size: 0.8em; /* Reduce el tamaño de la fuente */
+  display: inline-block; /* Asegura que el botón no ocupe todo el ancho */
 }
 /*---------------PROFILE---------------*/
 .user-card {
