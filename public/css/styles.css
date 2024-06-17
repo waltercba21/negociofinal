@@ -1244,6 +1244,26 @@ background: rgba(0, 63, 125, 0.8);
 .form-control label, .form-control select, .form-control input, .form-control button {
   font-size: 0.8em; 
 }
+.buscador-panel {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+#entradaBusqueda {
+  width: 50%;
+  padding: 10px;
+  font-size: 1.2em;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  font-weight: bold;
+  color: #999;
+}
+
+#entradaBusqueda::placeholder {
+  color: lightgray;
+  font-weight: bold;
+}
 /*---------------PROFILE---------------*/
 .user-card {
   background-color: #fff;
