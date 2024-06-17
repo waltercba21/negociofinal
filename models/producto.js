@@ -910,5 +910,18 @@ eliminarImagen : function(id) {
             resolve(results);
         });
     });
+},
+calcularNumeroDePaginas: function(conexion, productosPorPagina) {
+    return new Promise((resolve, reject) => {
+        conexion.query('SELECT COUNT(*) AS total FROM productos', function(error, results, fields) {
+            if (error) {
+                reject(error);
+            } else {
+                const totalProductos = results[0].total;
+                const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
+                resolve(numeroDePaginas);
+            }
+        });
+    });
 }
 }

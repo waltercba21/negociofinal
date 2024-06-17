@@ -383,7 +383,7 @@ module.exports = {
             return producto.obtenerPosicion(conexion, datosProducto.id);
         })
         .then(() => {
-            res.redirect('/productos/panelControl?pagina=' + req.body.paginaActual);
+            res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
         })
         .catch(error => {
             res.status(500).send('Error: ' + error.message);
@@ -415,6 +415,8 @@ module.exports = {
             if (isNaN(paginaActual) || paginaActual < 1) {
                 paginaActual = 1;
             }
+            // Guardar la página actual en la sesión
+            req.session.paginaActual = paginaActual;
             const productosPorPagina = 30;
             const saltar = (paginaActual - 1) * productosPorPagina;
             let numeroDePaginas = await calcularNumeroDePaginas(conexion);
@@ -423,8 +425,7 @@ module.exports = {
         } catch (error) {
             return res.status(500).send('Error: ' + error.message);
         } 
-    },    
-   
+    },
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {
