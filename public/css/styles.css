@@ -1231,18 +1231,18 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
 }
 .form-control {
-  width: 50%; /* Reduce el ancho del contenedor a la mitad */
-  margin: 0 auto; /* Centra el contenedor */
-  font-size: 0.8em; /* Reduce el tamaño de la fuente */
-  font-weight: bold; /* Hace que el texto sea negrita */
+  width: 50%; 
+  margin: 0 auto;
+  font-size: 0.8em; 
+  font-weight: bold; 
 }
 
 .form-control h4 {
-  font-size: 1.2em; /* Reduce el tamaño de la fuente del título */
+  font-size: 1.2em; 
 }
 
 .form-control label, .form-control select, .form-control input, .form-control button {
-  font-size: 0.8em; /* Reduce el tamaño de la fuente de las etiquetas, selects, inputs y botones */
+  font-size: 0.8em; 
 }
 /*---------------PROFILE---------------*/
 .user-card {
