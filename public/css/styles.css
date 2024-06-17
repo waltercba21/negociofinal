@@ -1257,12 +1257,20 @@ background: rgba(0, 63, 125, 0.8);
   border: none; 
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.15); 
   font-weight: bold;
-  color: #999;
+  color: #777777;
 }
-
+#entradaBusqueda:hover {
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  transition: box-shadow 0.3s ease-in-out; 
+}
 #entradaBusqueda::placeholder {
   color: lightgray;
   font-weight: bold;
+}
+#delete-selected {
+  width: auto; 
+  padding: 5px 10px; 
+  font-size: 0.8em; 
 }
 /*---------------PROFILE---------------*/
 .user-card {
