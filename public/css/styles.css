@@ -1258,6 +1258,7 @@ background: rgba(0, 63, 125, 0.8);
   color: #003f7d;
 }
 .form-control label, .form-control select, .form-control input, .form-control button {
+  align-items: center;
   font-size: 0.8em; 
   font-weight: bold;
 }
