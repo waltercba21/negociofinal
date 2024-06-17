@@ -1204,6 +1204,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 .container a {
   margin: 10px;
+  background-color: #003f7d;
 }
 .table-light thead th {
   color: #003f7d;
