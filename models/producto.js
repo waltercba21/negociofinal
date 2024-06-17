@@ -913,7 +913,8 @@ eliminarImagen : function(id) {
 },
 calcularNumeroDePaginas: function(conexion, productosPorPagina) {
     return new Promise((resolve, reject) => {
-        conexion.query('SELECT COUNT(*) AS total FROM productos', function(error, results, fields) {
+        // Asume que los productos activos tienen un campo 'activo' que es 1
+        conexion.query('SELECT COUNT(*) AS total FROM productos WHERE activo = 1', function(error, results, fields) {
             if (error) {
                 reject(error);
             } else {
