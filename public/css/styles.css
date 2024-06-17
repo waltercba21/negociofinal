@@ -1271,6 +1271,21 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 0.5em; 
   display: inline-block;
 }
+/* Estilo para la tabla */
+.table-light thead th, .table-light tbody td {
+  font-size: 0.8em; /* Tamaño de letra más pequeño */
+  font-weight: bold; /* Letra en negrita */
+}
+
+/* Estilo para el botón 'delete-selected' */
+#delete-selected {
+  font-size: 0.6em; /* Tamaño de letra más pequeño */
+}
+
+/* Estilo para el botón 'btn btn-warning' */
+.btn-warning {
+  font-size: 0.6em; /* Tamaño de letra más pequeño */
+}
 /*---------------PROFILE---------------*/
 .user-card {
   background-color: #fff;
