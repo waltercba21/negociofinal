@@ -1237,6 +1237,11 @@ background: rgba(0, 63, 125, 0.8);
   color: #fff;
   box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
 }
+.form-control {
+  margin: 20px; 
+  width: 80%; 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 .form-control form {
   display: flex;
   flex-direction: row;
