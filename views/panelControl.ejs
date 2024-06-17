@@ -9,10 +9,10 @@
         <a href="/productos/proveedores" class="btn btn-primary" type="button">Ver proveedores</a>
     </div>
     <div class="form-control">
-        <form method="get" action="/productos/generarPDF">
             <h4>Generar Listado de productos</h4>
-            <label for="proveedor">Seleccionar Proveedor</label>
-            <select name="proveedor" id="proveedor">
+                <form method="get" action="/productos/generarPDF">
+                  <label for="proveedor">Seleccionar Proveedor</label>
+                 <select name="proveedor" id="proveedor">
                 <option value="TODOS">Mostrar Todos</option>
                 <% proveedores.forEach(proveedor => { %>
                     <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
@@ -29,8 +29,8 @@
         </form>
     </div>
     <div class="form-control">
-        <form method="post" action="/productos/actualizarPreciosExcel" enctype="multipart/form-data">
-            <h4>Actualizar Precios con Excel</h4>
+        <h4>Actualizar Precios con Excel</h4>
+        <form method="post" action="/productos/actualizarPreciosExcel" enctype="multipart/form-data"> 
             <label for="proveedorActualizar">Seleccionar Proveedor</label>
             <select name="proveedor" id="proveedorActualizar">
                 <option value="TODOS">Mostrar Todos</option>
@@ -44,8 +44,8 @@
         </form>
     </div>
     <div class="form-control">
+        <h4>Generar Listado de Stock</h4>
         <form method="get" action="/productos/generarStockPDF">
-            <h4>Generar Listado de Stock</h4>
             <label for="proveedorStock">Seleccionar Proveedor</label>
             <select name="proveedor" id="proveedorStock">
                 <option value="TODOS">Mostrar Todos</option>
