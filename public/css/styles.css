@@ -1242,6 +1242,10 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 0.8em; 
   font-weight: bold;
 }
+.paginacion a, .paginacion .active {
+  padding: 3px 6px; /* Reducir el padding */
+  font-size: 0.8em; /* Tamaño de letra más pequeño */
+}
 .buscador-panel {
   display: flex;
   justify-content: center;
@@ -1249,8 +1253,8 @@ background: rgba(0, 63, 125, 0.8);
 }
 #entradaBusqueda {
   width: 50%;
-  padding: 10px;
-  font-size: 1.2em;
+  padding: 5px;
+  font-size: 0.8em;
   border-radius: 10px;
   border: none; 
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.15); 
