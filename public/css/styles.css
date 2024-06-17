@@ -1189,6 +1189,16 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
 }
 /*---------------PANEL DE CONTROL ---------------*/
+.container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.container a {
+  margin: 10px;
+}
 .table-light thead th {
   color: #1F487E;
 }
