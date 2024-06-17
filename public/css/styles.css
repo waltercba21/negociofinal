@@ -1195,12 +1195,18 @@ background: rgba(0, 63, 125, 0.8);
   flex-wrap: wrap;
   justify-content: space-between;
 }
-
+.btn-primary {
+  background-color: #003f7d;
+  padding: 5px 10px; 
+  font-size: 0.8em; 
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 .container a {
   margin: 10px;
 }
 .table-light thead th {
-  color: #1F487E;
+  color: #003f7d;
 }
 .paginacion {
   border: none;
@@ -1237,14 +1243,16 @@ background: rgba(0, 63, 125, 0.8);
 }
 .form-control h4 {
   font-size: 1.2em; 
+  font-weight: bold; 
+  text-align: center; 
 }
 .form-control label, .form-control select, .form-control input, .form-control button {
   font-size: 0.8em; 
   font-weight: bold;
 }
 .paginacion a, .paginacion .active {
-  padding: 3px 6px; /* Reducir el padding */
-  font-size: 0.8em; /* Tamaño de letra más pequeño */
+  padding: 3px 6px; 
+  font-size: 0.8em; 
 }
 .buscador-panel {
   display: flex;
@@ -1275,20 +1283,15 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 0.5em; 
   display: inline-block;
 }
-/* Estilo para la tabla */
 .table-light thead th, .table-light tbody td {
-  font-size: 0.8em; /* Tamaño de letra más pequeño */
-  font-weight: bold; /* Letra en negrita */
+  font-size: 0.8em; 
+  font-weight: bold;
 }
-
-/* Estilo para el botón 'delete-selected' */
 #delete-selected {
-  font-size: 0.6em; /* Tamaño de letra más pequeño */
+  font-size: 0.6em; 
 }
-
-/* Estilo para el botón 'btn btn-warning' */
 .btn-warning {
-  font-size: 0.6em; /* Tamaño de letra más pequeño */
+  font-size: 0.6em; 
 }
 /*---------------PROFILE---------------*/
 .user-card {
