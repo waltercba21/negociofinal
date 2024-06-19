@@ -330,24 +330,50 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     }, 
-    actualizarPreciosPDF: function(precio, codigo) {
+    actualizarPreciosPDF: function(precio, precio_venta, codigo) {
         return new Promise((resolve, reject) => {
-            const sql = 'UPDATE producto_proveedor SET precio_lista = ? WHERE codigo = ?';
-            console.log(`Ejecutando consulta SQL: ${sql}`);
-            console.log(`Con los valores: precio = ${precio}, codigo = ${codigo}`);
-            
+            const sqlProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE codigo = ?';
+            const sqlProductos = 'UPDATE productos SET precio_venta = ? WHERE id = (SELECT producto_id FROM producto_proveedor WHERE codigo = ?)';
+    
             conexion.getConnection((err, conexion) => {
                 if (err) {
                     console.error('Error al obtener la conexión:', err);
                     reject(err);
                 } else {
-                    conexion.query(sql, [precio, codigo], (error, results) => {
-                        conexion.release();
-                        if (error) {
-                            reject(error);
+                    conexion.beginTransaction((err) => {
+                        if (err) { 
+                            console.error('Error al iniciar la transacción:', err);
+                            reject(err);
                         } else {
-                            console.log(`Resultados de la consulta SQL: ${JSON.stringify(results)}`);
-                            resolve(results);
+                            conexion.query(sqlProductoProveedor, [precio, codigo], (error, results) => {
+                                if (error) {
+                                    return conexion.rollback(() => {
+                                        console.error('Error al actualizar producto_proveedor:', error);
+                                        reject(error);
+                                    });
+                                }
+    
+                                conexion.query(sqlProductos, [precio_venta, codigo], (error, results) => {
+                                    if (error) {
+                                        return conexion.rollback(() => {
+                                            console.error('Error al actualizar productos:', error);
+                                            reject(error);
+                                        });
+                                    }
+    
+                                    conexion.commit((err) => {
+                                        if (err) {
+                                            return conexion.rollback(() => {
+                                                console.error('Error al realizar commit:', err);
+                                                reject(err);
+                                            });
+                                        }
+    
+                                        console.log('Actualización exitosa!');
+                                        resolve(results);
+                                    });
+                                });
+                            });
                         }
                     });
                 }

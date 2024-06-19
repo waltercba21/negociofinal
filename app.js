@@ -7,20 +7,18 @@ const session = require('express-session');
 const adminMiddleware = require('./middleware/adminMiddleware');
 const middlewares = require('./middleware/middlewares');
 const dotenv = require('dotenv');
-
 dotenv.config();  
 
-//Rutas
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var productosRouter = require('./routes/productos');
 var administracionRouter = require('./routes/administracion');
 var app = express();
+var server = require('http').Server(app); // Agregamos esta línea
+var io = require('socket.io')(server); // Y esta también
 
-// view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
 app.use(session({
   secret: 'tu secreto',
   resave: false,
@@ -29,44 +27,36 @@ app.use(session({
     maxAge: 6200000 
   }
 }));
-
 app.use((req, res, next) => {
-  // Si el usuario ha iniciado sesión y la sesión ha expirado, redirige al index
   if (req.session.usuario && Date.now() > req.session.cookie.expires) {
     res.redirect('/');
     return;
   }
- // Si la sesión está activa o el usuario no ha iniciado sesión, continúa con la siguiente función middleware
   next();
 });
-
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-
 app.use(bodyParser.urlencoded({limit: '50mb', extended: false}));
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(adminMiddleware)
-// Usar el middleware global
 app.use(middlewares.setGlobalVariables);
 app.use((req, res, next) => {
   res.locals.isLogged = req.session.usuario !== undefined;
   res.locals.userLogged = req.session.usuario || {};
   next();
 })
-  
-//Utilizacion de las Rutas
 app.use('/', indexRouter);
 console.log("Router montado correctamente");
 app.use('/users', usersRouter);
 app.use('/productos', productosRouter);
 app.use ('/administracion',administracionRouter);
 
+io.on('connection', (socket) => { 
+  console.log('Un cliente se ha conectado');
+});
 
-
-
-
-module.exports = app;
+module.exports = {app: app, io: io};

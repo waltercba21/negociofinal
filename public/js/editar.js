@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('El elemento con id "preview" no existe.');
         }
     });
-
     Array.from(document.querySelectorAll('.preview-img')).forEach(agregarEventoDblclick);
 });
 $('#marca').change(function() {
@@ -63,6 +62,7 @@ $('#marca').change(function() {
         });
     });
 });
+
 $(document).ready(function() {
     $('#descuentos_proveedor_id').val('');
     $('.proveedores').change(function() {
@@ -81,7 +81,6 @@ $(document).ready(function() {
         $(newProveedor).find('.proveedores').trigger('change');
     });
 });
-
 $(document).on('change', '.precio_lista', function() {
     actualizarPrecio($(this));
     actualizarProveedorAsignado();
@@ -107,7 +106,6 @@ function actualizarProveedor(proveedor) {
 $('.proveedores').on('change', function() {
     actualizarProveedor($(this));
 });
-
 function actualizarPrecio(precioListaElement) {
     var precioLista = parseFloat(precioListaElement.val());
     var proveedorElement = precioListaElement.closest('.proveedor');
