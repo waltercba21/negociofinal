@@ -116,6 +116,9 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
 },
 actualizar: function (conexion, productos, archivo) {
     return new Promise((resolve, reject) => {
+        if (!Array.isArray(productos)) {
+            reject(new Error('productos debe ser un array'));
+        }
         let promises = productos.map(datos => {
             return new Promise((resolve, reject) => {
                 if (!datos.id) {
