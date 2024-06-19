@@ -116,6 +116,11 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
 },
 actualizar: function (conexion, datos, archivo) {
     return new Promise((resolve, reject) => {
+        if (!datos.id) {
+            reject(new Error('Los datos del producto deben incluir un ID'));
+            return;
+        }
+
         let query = "UPDATE productos SET ";
         let params = [];
         let first = true;
