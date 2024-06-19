@@ -7,7 +7,6 @@ var streamBuffers = require('stream-buffers');
 const xlsx = require('xlsx');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
-var io = require('../app').io; 
 
 function calcularNumeroDePaginas(conexion) {
     return new Promise((resolve, reject) => {
@@ -384,7 +383,6 @@ module.exports = {
             return producto.obtenerPosicion(conexion, datosProducto.id);
         })
         .then(() => {
-            io.emit('producto actualizado', datosProducto); // Emitimos un evento de socket.io
             res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
         })
         .catch(error => {
@@ -829,13 +827,6 @@ actualizarPreciosExcel: async (req, res) => {
                         await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
                         const productoActualizado = await producto.obtenerProductoPorCodigo(row[codigoColumn]);
                         if (productoActualizado) {
-                            // Aquí es donde calculas el nuevo precio de venta
-                            const descuento = parseFloat(productoActualizado.descuento);
-                            const costo = productoActualizado.precio - (productoActualizado.precio * descuento / 100);
-                            const costoConIVA = costo + (costo * productoActualizado.IVA / 100);
-                            const precioFinal = costoConIVA + (costoConIVA * productoActualizado.utilidad / 100);
-                            productoActualizado.precio_venta = Math.ceil(precioFinal / 10) * 10;
-                            await producto.actualizar(conexion, productoActualizado);
                             productosActualizados.push(productoActualizado); 
                         } else {
                             console.log(`No se encontró el producto con el código: ${row[codigoColumn]}`);

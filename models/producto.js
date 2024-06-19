@@ -114,20 +114,11 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
         });
     });
 },
-actualizar: function (conexion, productos, archivo) {
+actualizar: function (conexion, datos, archivo) {
     return new Promise((resolve, reject) => {
-        if (!Array.isArray(productos)) {
-            reject(new Error('productos debe ser un array'));
-        }
-        let promises = productos.map(datos => {
-            return new Promise((resolve, reject) => {
-                if (!datos.id) {
-                    reject(new Error('Los datos del producto deben incluir un ID'));
-                }
-
-                let query = "UPDATE productos SET ";
-                let params = [];
-                let first = true;
+        let query = "UPDATE productos SET ";
+        let params = [];
+        let first = true;
 
         if (datos.nombre) {
             query += first ? "nombre=?" : ", nombre=?";
@@ -221,12 +212,6 @@ actualizar: function (conexion, productos, archivo) {
             }
         });
     });
-});
-
-Promise.all(promises)
-    .then(results => resolve(results))
-    .catch(error => reject(error));
-});
 },
 actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
     return new Promise((resolve, reject) => {
@@ -345,50 +330,24 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     }, 
-    actualizarPreciosPDF: function(precio, precio_venta, codigo) {
+    actualizarPreciosPDF: function(precio, codigo) {
         return new Promise((resolve, reject) => {
-            const sqlProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE codigo = ?';
-            const sqlProductos = 'UPDATE productos SET precio_venta = ? WHERE id = (SELECT producto_id FROM producto_proveedor WHERE codigo = ?)';
-    
+            const sql = 'UPDATE producto_proveedor SET precio_lista = ? WHERE codigo = ?';
+            console.log(`Ejecutando consulta SQL: ${sql}`);
+            console.log(`Con los valores: precio = ${precio}, codigo = ${codigo}`);
+            
             conexion.getConnection((err, conexion) => {
                 if (err) {
                     console.error('Error al obtener la conexión:', err);
                     reject(err);
                 } else {
-                    conexion.beginTransaction((err) => {
-                        if (err) { 
-                            console.error('Error al iniciar la transacción:', err);
-                            reject(err);
+                    conexion.query(sql, [precio, codigo], (error, results) => {
+                        conexion.release();
+                        if (error) {
+                            reject(error);
                         } else {
-                            conexion.query(sqlProductoProveedor, [precio, codigo], (error, results) => {
-                                if (error) {
-                                    return conexion.rollback(() => {
-                                        console.error('Error al actualizar producto_proveedor:', error);
-                                        reject(error);
-                                    });
-                                }
-    
-                                conexion.query(sqlProductos, [precio_venta, codigo], (error, results) => {
-                                    if (error) {
-                                        return conexion.rollback(() => {
-                                            console.error('Error al actualizar productos:', error);
-                                            reject(error);
-                                        });
-                                    }
-    
-                                    conexion.commit((err) => {
-                                        if (err) {
-                                            return conexion.rollback(() => {
-                                                console.error('Error al realizar commit:', err);
-                                                reject(err);
-                                            });
-                                        }
-    
-                                        console.log('Actualización exitosa!');
-                                        resolve(results);
-                                    });
-                                });
-                            });
+                            console.log(`Resultados de la consulta SQL: ${JSON.stringify(results)}`);
+                            resolve(results);
                         }
                     });
                 }
