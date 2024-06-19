@@ -114,16 +114,17 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
         });
     });
 },
-actualizar: function (conexion, datos, archivo) {
+actualizar: function (conexion, productos, archivo) {
     return new Promise((resolve, reject) => {
-        if (!datos.id) {
-            reject(new Error('Los datos del producto deben incluir un ID'));
-            return;
-        }
+        let promises = productos.map(datos => {
+            return new Promise((resolve, reject) => {
+                if (!datos.id) {
+                    reject(new Error('Los datos del producto deben incluir un ID'));
+                }
 
-        let query = "UPDATE productos SET ";
-        let params = [];
-        let first = true;
+                let query = "UPDATE productos SET ";
+                let params = [];
+                let first = true;
 
         if (datos.nombre) {
             query += first ? "nombre=?" : ", nombre=?";
@@ -217,6 +218,12 @@ actualizar: function (conexion, datos, archivo) {
             }
         });
     });
+});
+
+Promise.all(promises)
+    .then(results => resolve(results))
+    .catch(error => reject(error));
+});
 },
 actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
     return new Promise((resolve, reject) => {
