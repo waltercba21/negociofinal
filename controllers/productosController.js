@@ -829,10 +829,11 @@ actualizarPreciosExcel: async (req, res) => {
                             const productoActualizado = await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
                             if (productoActualizado !== null) {
                                 productosActualizados.push(productoActualizado);
+                            } else {
+                                console.log(`El producto con el código ${row[codigoColumn]} no existe en la base de datos.`);
                             }
                         } catch (error) {
                             console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
-                            // En lugar de continuar, detén el procesamiento y envía una respuesta al cliente
                             res.status(500).send(`Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}`);
                             return;
                         }
