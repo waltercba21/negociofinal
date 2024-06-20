@@ -8,7 +8,10 @@
         <thead>
             <tr>
                 <th>Código</th>
-                <th>Precio</th>
+                <th>Precio Viejo</th>
+                <th>Precio Nuevo</th>
+                <th>Precio Venta</th>
+                <th>Diferencia</th>
             </tr>
         </thead>
         <tbody>
@@ -21,7 +24,7 @@
                     <td><%= ((producto.precio_lista_nuevo - producto.precio_lista_antiguo) / producto.precio_lista_antiguo * 100).toFixed(2) %>%</td>
                 </tr>
             <% }); %>
-            p>Total de productos actualizados: <%= productos.length %></p>
+            <p>Total de productos actualizados: <%= productos.length %></p>
         </tbody>
     </table>
     </main>
