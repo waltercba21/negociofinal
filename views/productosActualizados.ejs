@@ -27,6 +27,28 @@
             <p>Total de productos actualizados: <%= productos.length %></p>
         </tbody>
     </table>
+    <h1>Productos Sin Modificar</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Precio Viejo</th>
+                <th>Precio Nuevo</th>
+                <th>Precio Venta</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% productosNoModificados.forEach(producto => { %>
+                <tr>
+                    <td><%= producto.codigo %></td>
+                    <td><%= producto.precio_lista_antiguo %></td>
+                    <td><%= producto.precio_lista_nuevo %></td>
+                    <td><%= producto.precio_venta %></td>
+                </tr>
+            <% }); %>
+            <p>Total de productos sin modificar: <%= productosNoModificados.length %></p>
+        </tbody>
+    </table>
     </main>
     <script src="/js/profile.js"></script>
       <%- include ./layouts/footer.ejs %>
