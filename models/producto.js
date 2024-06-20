@@ -346,6 +346,10 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                         } else {
                             let producto = results[0];
                             let descuento = producto.descuento;
+                            if (descuento === undefined) {
+                                reject(new Error('El descuento no está definido para este producto'));
+                                return;
+                            }
                             let costo_neto = precio_lista - (precio_lista * descuento / 100);
                             producto.costo_neto = costo_neto;
                             let IVA = 21; // IVA fijo
