@@ -347,7 +347,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                             let producto = results[0];
                             if (!producto) {
                                 console.log(`No se encontró ningún producto con el código ${codigo}`);
-                                reject(new Error(`No se encontró ningún producto con el código ${codigo}`));
+                                resolve(null); // Si no se encuentra el producto, resuelve la promesa con null y continúa con el siguiente producto
                                 return;
                             }
                             let descuento = producto.descuento;
