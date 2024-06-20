@@ -825,7 +825,9 @@ actualizarPreciosExcel: async (req, res) => {
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
                     if (codigoColumn && precioColumn) {
                         const productoActualizado = await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
-                        productosActualizados.push(productoActualizado);
+                        if (productoActualizado !== null) {
+                            productosActualizados.push(productoActualizado);
+                        }
                     }
                 }
             }

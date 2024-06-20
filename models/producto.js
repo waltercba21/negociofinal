@@ -384,6 +384,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             });
         });
     },
+    
     obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
