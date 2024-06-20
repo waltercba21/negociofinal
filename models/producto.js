@@ -340,10 +340,12 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                     console.error('Error al obtener la conexión:', err);
                     reject(err);
                 } else {
+                    console.log(`Ejecutando consulta SQL con código ${codigo}`);
                     conexion.query(sql, [codigo], (error, results) => {
                         if (error) {
                             reject(error);
                         } else {
+                            console.log(`Resultados de la consulta SQL para el código ${codigo}:`, results);
                             let producto = results[0];
                             if (!producto) {
                                 console.log(`No se encontró ningún producto con el código ${codigo}`);
