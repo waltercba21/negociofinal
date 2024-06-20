@@ -427,7 +427,7 @@ module.exports = {
             req.session.paginaActual = paginaActual;
             const productosPorPagina = 30;
             const saltar = (paginaActual - 1) * productosPorPagina;
-            let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina); // Aquí está la corrección
+            let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
             let productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
             res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual }); 
         } catch (error) {
@@ -835,10 +835,9 @@ actualizarPreciosExcel: async (req, res) => {
                         await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
                         const productoActualizado = await producto.obtenerProductoPorCodigo(row[codigoColumn]);
                         if (productoActualizado) {
-                            // Aquí es donde actualizamos el precio de venta
-                            productoActualizado.precio_venta = calcularPrecioVenta(productoActualizado);
+                            producto.precio_venta = calcularPrecioVenta(productoActualizado);
                             await productoActualizado.save();
-                            productosActualizados.push(productoActualizado); 
+                            producto.push(productoActualizado); 
                         } else {
                             console.log(`No se encontró el producto con el código: ${row[codigoColumn]}`);
                         }
