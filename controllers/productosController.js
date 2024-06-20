@@ -822,7 +822,6 @@ actualizarPrecios: function(req, res) {
 actualizarPreciosExcel: async (req, res) => {
     try {
         const file = req.files[0]; 
-        let productosActualizados = []; 
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
@@ -833,14 +832,6 @@ actualizarPreciosExcel: async (req, res) => {
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
                     if (codigoColumn && precioColumn) {
                         await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
-                        const productoActualizado = await producto.obtenerProductoPorCodigo(row[codigoColumn]);
-                        if (productoActualizado) {
-                            producto.precio_venta = calcularPrecioVenta(productoActualizado);
-                            await productoActualizado.save();
-                            producto.push(productoActualizado); 
-                        } else {
-                            console.log(`No se encontró el producto con el código: ${row[codigoColumn]}`);
-                        }
                     }
                 }
             }
@@ -849,7 +840,7 @@ actualizarPreciosExcel: async (req, res) => {
             return;
         }
         fs.unlinkSync(file.path);
-        res.render('productosActualizados', { productos: productosActualizados });
+        res.send('Precios actualizados correctamente');
     } catch (error) {
         console.log("Error durante el procesamiento de archivos", error);
         res.status(500).send(error);
