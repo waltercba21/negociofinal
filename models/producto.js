@@ -336,21 +336,23 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             console.log('SQL query:', sql);
             console.log('Codigo:', codigo);
             console.log('Precio lista:', precio_lista);
-        conexion.getConnection((err, conexion) => {
-            if (err) {
-                console.error('Error al obtener la conexión:', err);
-                reject(err);
-            } else {
-                console.log(`Ejecutando consulta SQL con código ${codigo}`);
-                conexion.query(sql, [codigo], (error, results) => {
-                    if (error) {
-                        reject(error);
-                    } else {
+            conexion.getConnection((err, conexion) => {
+                if (err) {
+                    console.error('Error al obtener la conexión:', err);
+                    resolve(null);
+                } else {
+                    console.log(`Ejecutando consulta SQL con código ${codigo}`);
+                    conexion.query(sql, [codigo], (error, results) => {
+                        if (error) {
+                            console.error(`Error al ejecutar la consulta SQL para el código ${codigo}:`, error);
+                            resolve(null);
+                            return;
+                        }
                         console.log(`Resultados de la consulta SQL para el código ${codigo}:`, results);
                         let producto = results[0];
                         if (!producto) {
                             console.log(`No se encontró ningún producto con el código ${codigo}`);
-                            resolve(null); // Si no se encuentra el producto, resuelve la promesa con null y continúa con el siguiente producto
+                            resolve(null);
                             return;
                         }
                         let descuento = producto.descuento;
@@ -360,28 +362,29 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                         let costo_iva = costo_neto + (costo_neto * IVA / 100);
                         let utilidad = producto.utilidad;
                         if (isNaN(costo_iva) || isNaN(utilidad)) {
-                            reject(new Error('Costo con IVA o utilidad no es un número válido'));
+                            console.error('Costo con IVA o utilidad no es un número válido');
+                            resolve(null);
                             return;
                         }
                         let precio_venta = costo_iva + (costo_iva * utilidad / 100);
                         precio_venta = Math.ceil(precio_venta / 10) * 10;
-                            const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ?';
-                            conexion.query(sqlUpdate, [precio_lista, producto.producto_id], (errorUpdate, resultsUpdate) => {
-                                conexion.release();
-                                if (errorUpdate) {
-                                    console.error('Error en la consulta SQL de actualización:', errorUpdate);
-                                    reject(errorUpdate);
-                                } else {
-                                    console.log('Resultados de la consulta SQL de actualización:', resultsUpdate);
-                                    resolve({
-                                        codigo: codigo,
-                                        precio_lista_antiguo: producto.precio_lista,
-                                        precio_lista_nuevo: precio_lista,
-                                        precio_venta: precio_venta
-                                    });
-                                }
-                            });
-                        }
+                        const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ?';
+                        conexion.query(sqlUpdate, [precio_lista, producto.producto_id], (errorUpdate, resultsUpdate) => {
+                            conexion.release();
+                            if (errorUpdate) {
+                                console.error('Error en la consulta SQL de actualización:', errorUpdate);
+                                resolve(null);
+                                return;
+                            } else {
+                                console.log('Resultados de la consulta SQL de actualización:', resultsUpdate);
+                                resolve({
+                                    codigo: codigo,
+                                    precio_lista_antiguo: producto.precio_lista,
+                                    precio_lista_nuevo: precio_lista,
+                                    precio_venta: precio_venta
+                                });
+                            }
+                        });
                     });
                 }
             });
