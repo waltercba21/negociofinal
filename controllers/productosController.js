@@ -20,7 +20,15 @@ function calcularNumeroDePaginas(conexion) {
         });
     });
 }
-
+function calcularPrecioVenta(producto) {
+    var costoNeto = parseFloat(producto.costo_neto);
+    var IVA = parseFloat(producto.IVA);
+    var utilidad = parseFloat(producto.utilidad);
+    var costoConIVA = costoNeto + (costoNeto * IVA / 100);
+    var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
+    precioFinal = Math.ceil(precioFinal / 10) * 10; 
+    return precioFinal;
+}
 module.exports = {
     index : function (req,res){
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
@@ -827,6 +835,9 @@ actualizarPreciosExcel: async (req, res) => {
                         await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
                         const productoActualizado = await producto.obtenerProductoPorCodigo(row[codigoColumn]);
                         if (productoActualizado) {
+                            // Aquí es donde actualizamos el precio de venta
+                            productoActualizado.precio_venta = calcularPrecioVenta(productoActualizado);
+                            await productoActualizado.save();
                             productosActualizados.push(productoActualizado); 
                         } else {
                             console.log(`No se encontró el producto con el código: ${row[codigoColumn]}`);
