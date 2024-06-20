@@ -356,7 +356,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                             }
                             let precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
                             precioFinal = Math.ceil(precioFinal / 10) * 10;
-    
+                    
                             const sqlUpdate = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
                             conexion.query(sqlUpdate, [precioFinal, producto.producto_id], (errorUpdate, resultsUpdate) => {
                                 conexion.release();
