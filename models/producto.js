@@ -332,7 +332,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     }, 
     actualizarPreciosPDF: function(precio_lista, codigo) {
         return new Promise((resolve, reject) => {
-            const sql = 'SELECT pp.*, p.utilidad, dp.descuento FROM producto_proveedor pp JOIN productos p ON pp.producto_id = p.id JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id WHERE pp.codigo = ?';
+            const sql = 'SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento FROM producto_proveedor pp JOIN productos p ON pp.producto_id = p.id JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id WHERE pp.codigo = ?';
             console.log('SQL query:', sql);
             console.log('Codigo:', codigo);
             conexion.getConnection((err, conexion) => {
@@ -357,7 +357,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                             }
                             let precio_venta = costo_iva + (costo_iva * utilidad / 100);
                             precio_venta = Math.ceil(precio_venta / 10) * 10;
-                            const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ?, precio_venta = ? WHERE producto_id = ?';
+                            const sqlUpdate = 'UPDATE productos SET precio_lista = ?, precio_venta = ? WHERE id = ?';
                             conexion.query(sqlUpdate, [precio_lista, precio_venta, producto.producto_id], (errorUpdate, resultsUpdate) => {
                                 conexion.release();
                                 if (errorUpdate) {
