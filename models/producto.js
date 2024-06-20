@@ -349,6 +349,11 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                             let IVA = producto.IVA;
                             let costoConIVA = costo + (costo * IVA / 100);
                             let utilidad = producto.utilidad;
+                            if (isNaN(costoConIVA) || isNaN(utilidad)) {
+                                console.error('Costo con IVA o utilidad no es un número válido');
+                                reject(new Error('Costo con IVA o utilidad no es un número válido'));
+                                return;
+                            }
                             let precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
                             precioFinal = Math.ceil(precioFinal / 10) * 10;
     
