@@ -352,18 +352,18 @@ actualizarPreciosPDF: function(precio_lista, codigo) {
                             resolve(null); // Si no se encuentra el producto, resuelve la promesa con null y continúa con el siguiente producto
                             return;
                         }
-                            let descuento = producto.descuento;
-                            let costo_neto = precio_lista - (precio_lista * descuento / 100);
-                            producto.costo_neto = costo_neto;
-                            let IVA = 21; // IVA fijo
-                            let costo_iva = costo_neto + (costo_neto * IVA / 100);
-                            let utilidad = producto.utilidad;
-                            if (isNaN(costo_iva) || isNaN(utilidad)) {
-                                reject(new Error('Costo con IVA o utilidad no es un número válido'));
-                                return;
-                            }
-                            let precio_venta = costo_iva + (costo_iva * utilidad / 100);
-                            precio_venta = Math.ceil(precio_venta / 10) * 10;
+                        let descuento = producto.descuento;
+                        let costo_neto = precio_lista - (precio_lista * descuento / 100);
+                        producto.costo_neto = costo_neto;
+                        let IVA = 21; 
+                        let costo_iva = costo_neto + (costo_neto * IVA / 100);
+                        let utilidad = producto.utilidad;
+                        if (isNaN(costo_iva) || isNaN(utilidad)) {
+                            reject(new Error('Costo con IVA o utilidad no es un número válido'));
+                            return;
+                        }
+                        let precio_venta = costo_iva + (costo_iva * utilidad / 100);
+                        precio_venta = Math.ceil(precio_venta / 10) * 10;
                             const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ?';
                             conexion.query(sqlUpdate, [precio_lista, producto.producto_id], (errorUpdate, resultsUpdate) => {
                                 conexion.release();
