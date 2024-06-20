@@ -345,6 +345,11 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                             reject(error);
                         } else {
                             let producto = results[0];
+                            if (!producto) {
+                                console.log(`No se encontró ningún producto con el código ${codigo}`);
+                                reject(new Error(`No se encontró ningún producto con el código ${codigo}`));
+                                return;
+                            }
                             let descuento = producto.descuento;
                             let costo_neto = precio_lista - (precio_lista * descuento / 100);
                             producto.costo_neto = costo_neto;
