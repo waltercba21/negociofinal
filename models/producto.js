@@ -345,6 +345,10 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                             reject(error);
                         } else {
                             let producto = results[0];
+                            if (!producto) {
+                                reject(new Error('No se encontró el producto con el código proporcionado'));
+                                return;
+                            }
                             let descuento = producto.descuento;
                             if (descuento === undefined) {
                                 reject(new Error('El descuento no está definido para este producto'));
