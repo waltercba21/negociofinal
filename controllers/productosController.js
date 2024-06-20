@@ -815,7 +815,6 @@ actualizarPreciosExcel: async (req, res) => {
     try {
         const file = req.files[0]; 
         let productosActualizados = [];
-        let productosNoModificados = []; // nueva lista para productos no modificados
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
@@ -825,18 +824,8 @@ actualizarPreciosExcel: async (req, res) => {
                     const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
                     if (codigoColumn && precioColumn) {
-                        try {
-                            const productoActualizado = await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
-                            productosActualizados.push(productoActualizado);
-                        } catch (error) {
-                            // si hay un error al actualizar el producto, lo agregamos a la lista de productos no modificados
-                            productosNoModificados.push({
-                                codigo: row[codigoColumn],
-                                precio_lista_antiguo: null,
-                                precio_lista_nuevo: row[precioColumn],
-                                precio_venta: null
-                            });
-                        }
+                        const productoActualizado = await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
+                        productosActualizados.push(productoActualizado);
                     }
                 }
             }
@@ -845,8 +834,7 @@ actualizarPreciosExcel: async (req, res) => {
             return;
         }
         fs.unlinkSync(file.path);
-        // pasamos ambas listas a la vista
-        res.render('productosActualizados', { productos: productosActualizados, productosNoModificados: productosNoModificados });
+        res.render('productosActualizados', { productos: productosActualizados });
     } catch (error) {
         console.log("Error durante el procesamiento de archivos", error);
         res.status(500).send(error);
