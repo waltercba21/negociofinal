@@ -342,12 +342,9 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 } else {
                     conexion.query(sql, [codigo], (error, results) => {
                         if (error) {
-                            console.error('Error en la consulta SQL:', error);
                             reject(error);
                         } else {
-                            console.log('Resultados de la consulta SQL:', results);
                             let producto = results[0];
-                            console.log('Producto:', producto);
                             let descuento = producto.descuento;
                             let costo_neto = precio_lista - (precio_lista * descuento / 100);
                             producto.costo_neto = costo_neto;
@@ -355,26 +352,25 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                             let costo_iva = costo_neto + (costo_neto * IVA / 100);
                             let utilidad = producto.utilidad;
                             if (isNaN(costo_iva) || isNaN(utilidad)) {
-                                console.error('Costo con IVA o utilidad no es un número válido');
                                 reject(new Error('Costo con IVA o utilidad no es un número válido'));
                                 return;
                             }
-                            console.log('Costo con IVA:', costo_iva);
-                            console.log('Utilidad:', utilidad);
                             let precio_venta = costo_iva + (costo_iva * utilidad / 100);
                             precio_venta = Math.ceil(precio_venta / 10) * 10;
-                            console.log('Precio final:', precio_venta);
-                    
-                            const sqlUpdate = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
-                            console.log('SQL update query:', sqlUpdate);
-                            conexion.query(sqlUpdate, [precio_venta, producto.producto_id], (errorUpdate, resultsUpdate) => {
+                            const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ?, precio_venta = ? WHERE producto_id = ?';
+                            conexion.query(sqlUpdate, [precio_lista, precio_venta, producto.producto_id], (errorUpdate, resultsUpdate) => {
                                 conexion.release();
                                 if (errorUpdate) {
                                     console.error('Error en la consulta SQL de actualización:', errorUpdate);
                                     reject(errorUpdate);
                                 } else {
                                     console.log('Resultados de la consulta SQL de actualización:', resultsUpdate);
-                                    resolve(resultsUpdate);
+                                    resolve({
+                                        codigo: codigo,
+                                        precio_lista_antiguo: producto.precio_lista,
+                                        precio_lista_nuevo: precio_lista,
+                                        precio_venta: precio_venta
+                                    });
                                 }
                             });
                         }
