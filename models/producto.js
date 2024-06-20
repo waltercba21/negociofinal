@@ -357,8 +357,8 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                             }
                             let precio_venta = costo_iva + (costo_iva * utilidad / 100);
                             precio_venta = Math.ceil(precio_venta / 10) * 10;
-                            const sqlUpdate = 'UPDATE productos SET precio_lista = ?, precio_venta = ? WHERE id = ?';
-                            conexion.query(sqlUpdate, [precio_lista, precio_venta, producto.producto_id], (errorUpdate, resultsUpdate) => {
+                            const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ?';
+                            conexion.query(sqlUpdate, [precio_lista, producto.producto_id], (errorUpdate, resultsUpdate) => {
                                 conexion.release();
                                 if (errorUpdate) {
                                     console.error('Error en la consulta SQL de actualización:', errorUpdate);
