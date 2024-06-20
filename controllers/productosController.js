@@ -832,6 +832,9 @@ actualizarPreciosExcel: async (req, res) => {
                             }
                         } catch (error) {
                             console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
+                            // En lugar de continuar, detén el procesamiento y envía una respuesta al cliente
+                            res.status(500).send(`Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}`);
+                            return;
                         }
                     }
                 }
