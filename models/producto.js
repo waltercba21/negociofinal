@@ -330,11 +330,12 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     }, 
-actualizarPreciosPDF: function(precio_lista, codigo) {
-    return new Promise((resolve, reject) => {
-        const sql = 'SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento FROM producto_proveedor pp JOIN productos p ON pp.producto_id = p.id JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id WHERE pp.codigo = ?';
-        console.log('SQL query:', sql);
-        console.log('Codigo:', codigo);
+    actualizarPreciosPDF: function(precio_lista, codigo) {
+        return new Promise((resolve, reject) => {
+            const sql = 'SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento FROM producto_proveedor pp JOIN productos p ON pp.producto_id = p.id JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id WHERE pp.codigo = ?';
+            console.log('SQL query:', sql);
+            console.log('Codigo:', codigo);
+            console.log('Precio lista:', precio_lista);
         conexion.getConnection((err, conexion) => {
             if (err) {
                 console.error('Error al obtener la conexión:', err);
