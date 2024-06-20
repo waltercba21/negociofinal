@@ -332,18 +332,35 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     }, 
     actualizarPreciosPDF: function(precio, codigo) {
         return new Promise((resolve, reject) => {
-            const sql = 'UPDATE producto_proveedor SET precio_lista = ? WHERE codigo = ?';
+            const sql = 'SELECT pp.*, p.IVA, p.utilidad FROM producto_proveedor pp JOIN productos p ON pp.producto_id = p.id WHERE pp.codigo = ?';
             conexion.getConnection((err, conexion) => {
                 if (err) {
                     console.error('Error al obtener la conexión:', err);
                     reject(err);
                 } else {
-                    conexion.query(sql, [precio, codigo], (error, results) => {
-                        conexion.release();
+                    conexion.query(sql, [codigo], (error, results) => {
                         if (error) {
                             reject(error);
                         } else {
-                            resolve(results);
+                            let producto = results[0];
+                            let descuento = producto.descuentos_proveedor_id;
+                            let costo = precio - (precio * descuento / 100);
+                            producto.costo_neto = costo;
+                            let IVA = producto.IVA;
+                            let costoConIVA = costo + (costo * IVA / 100);
+                            let utilidad = producto.utilidad;
+                            let precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
+                            precioFinal = Math.ceil(precioFinal / 10) * 10;
+    
+                            const sqlUpdate = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
+                            conexion.query(sqlUpdate, [precioFinal, producto.producto_id], (errorUpdate, resultsUpdate) => {
+                                conexion.release();
+                                if (errorUpdate) {
+                                    reject(errorUpdate);
+                                } else {
+                                    resolve(resultsUpdate);
+                                }
+                            });
                         }
                     });
                 }

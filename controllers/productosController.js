@@ -20,15 +20,7 @@ function calcularNumeroDePaginas(conexion) {
         });
     });
 }
-function calcularPrecioVenta(producto) {
-    var costoNeto = parseFloat(producto.costo_neto);
-    var IVA = parseFloat(producto.IVA);
-    var utilidad = parseFloat(producto.utilidad);
-    var costoConIVA = costoNeto + (costoNeto * IVA / 100);
-    var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
-    precioFinal = Math.ceil(precioFinal / 10) * 10; 
-    return precioFinal;
-}
+
 module.exports = {
     index : function (req,res){
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
