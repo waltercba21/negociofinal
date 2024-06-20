@@ -330,41 +330,61 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     }, 
-    actualizarPreciosExcel: async (req, res) => {
-        try {
-            const file = req.files[0]; 
-            let productosActualizados = [];
-            if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-                const workbook = xlsx.readFile(file.path);
-                const sheet_name_list = workbook.SheetNames;
-                for (const sheet_name of sheet_name_list) {
-                    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
-                    for (const row of data) {
-                        const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
-                        const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
-                        if (codigoColumn && precioColumn) {
-                            console.log(`Procesando producto con código ${row[codigoColumn]} y precio ${row[precioColumn]}`);
-                            try {
-                                const productoActualizado = await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
-                                if (productoActualizado !== null) {
-                                    productosActualizados.push(productoActualizado);
-                                }
-                            } catch (error) {
-                                console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
-                            }
-                        }
-                    }
-                }
+actualizarPreciosPDF: function(precio_lista, codigo) {
+    return new Promise((resolve, reject) => {
+        const sql = 'SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento FROM producto_proveedor pp JOIN productos p ON pp.producto_id = p.id JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id WHERE pp.codigo = ?';
+        console.log('SQL query:', sql);
+        console.log('Codigo:', codigo);
+        conexion.getConnection((err, conexion) => {
+            if (err) {
+                console.error('Error al obtener la conexión:', err);
+                reject(err);
             } else {
-                res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
-                return;
-            }
-            fs.unlinkSync(file.path);
-            res.render('productosActualizados', { productos: productosActualizados });
-        } catch (error) {
-            console.log("Error durante el procesamiento de archivos", error);
-            res.status(500).send(error);
-        }
+                console.log(`Ejecutando consulta SQL con código ${codigo}`);
+                conexion.query(sql, [codigo], (error, results) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        console.log(`Resultados de la consulta SQL para el código ${codigo}:`, results);
+                        let producto = results[0];
+                        if (!producto) {
+                            console.log(`No se encontró ningún producto con el código ${codigo}`);
+                            resolve(null); // Si no se encuentra el producto, resuelve la promesa con null y continúa con el siguiente producto
+                            return;
+                        }
+                            let descuento = producto.descuento;
+                            let costo_neto = precio_lista - (precio_lista * descuento / 100);
+                            producto.costo_neto = costo_neto;
+                            let IVA = 21; // IVA fijo
+                            let costo_iva = costo_neto + (costo_neto * IVA / 100);
+                            let utilidad = producto.utilidad;
+                            if (isNaN(costo_iva) || isNaN(utilidad)) {
+                                reject(new Error('Costo con IVA o utilidad no es un número válido'));
+                                return;
+                            }
+                            let precio_venta = costo_iva + (costo_iva * utilidad / 100);
+                            precio_venta = Math.ceil(precio_venta / 10) * 10;
+                            const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ?';
+                            conexion.query(sqlUpdate, [precio_lista, producto.producto_id], (errorUpdate, resultsUpdate) => {
+                                conexion.release();
+                                if (errorUpdate) {
+                                    console.error('Error en la consulta SQL de actualización:', errorUpdate);
+                                    reject(errorUpdate);
+                                } else {
+                                    console.log('Resultados de la consulta SQL de actualización:', resultsUpdate);
+                                    resolve({
+                                        codigo: codigo,
+                                        precio_lista_antiguo: producto.precio_lista,
+                                        precio_lista_nuevo: precio_lista,
+                                        precio_venta: precio_venta
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        });
     },
     obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {

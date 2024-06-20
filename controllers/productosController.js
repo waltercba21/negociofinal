@@ -825,9 +825,13 @@ actualizarPreciosExcel: async (req, res) => {
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
                     if (codigoColumn && precioColumn) {
                         console.log(`Procesando producto con código ${row[codigoColumn]} y precio ${row[precioColumn]}`);
-                        const productoActualizado = await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
-                        if (productoActualizado !== null) {
-                            productosActualizados.push(productoActualizado);
+                        try {
+                            const productoActualizado = await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
+                            if (productoActualizado !== null) {
+                                productosActualizados.push(productoActualizado);
+                            }
+                        } catch (error) {
+                            console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
                         }
                     }
                 }
