@@ -332,23 +332,23 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     }, 
     actualizarPreciosPDF: function(precio_lista, codigo) {
         return new Promise((resolve, reject) => {
+            if (typeof codigo !== 'string') {
+                console.error(`El código del producto no es una cadena: ${codigo}`);
+                resolve(null);
+                return;
+            }
             const sql = 'SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento FROM producto_proveedor pp JOIN productos p ON pp.producto_id = p.id JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id WHERE pp.codigo = ?';
-            console.log('SQL query:', sql);
-            console.log('Codigo:', codigo);
-            console.log('Precio lista:', precio_lista);
             conexion.getConnection((err, conexion) => {
                 if (err) {
                     console.error('Error al obtener la conexión:', err);
                     resolve(null);
                 } else {
-                    console.log(`Ejecutando consulta SQL con código ${codigo}`);
                     conexion.query(sql, [codigo], (error, results) => {
                         if (error) {
                             console.error(`Error al ejecutar la consulta SQL para el código ${codigo}:`, error);
                             resolve(null);
                             return;
                         }
-                        console.log(`Resultados de la consulta SQL para el código ${codigo}:`, results);
                         let producto = results[0];
                         if (!producto) {
                             console.log(`No se encontró ningún producto con el código ${codigo}`);
@@ -376,7 +376,6 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                                 resolve(null);
                                 return;
                             } else {
-                                console.log('Resultados de la consulta SQL de actualización:', resultsUpdate);
                                 resolve({
                                     codigo: codigo,
                                     precio_lista_antiguo: producto.precio_lista,
