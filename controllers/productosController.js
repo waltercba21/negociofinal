@@ -813,11 +813,12 @@ actualizarPrecios: function(req, res) {
 },  
 actualizarPreciosExcel: async (req, res) => {
     try {
-        const file = req.files[0]; 
+        const file = req.files[0];
         let productosActualizados = [];
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
+            const promises = []; // Almacenar todas las promesas de actualización
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
                 for (const row of data) {
@@ -825,32 +826,35 @@ actualizarPreciosExcel: async (req, res) => {
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
                     if (codigoColumn && precioColumn) {
                         console.log(`Procesando producto con código ${row[codigoColumn]} y precio ${row[precioColumn]}`);
-                        console.log('Codigo columna:', row[codigoColumn]);
-                        console.log('Precio columna:', row[precioColumn]);  
-                        try {
-                            const productoActualizado = await producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn]);
-                            if (productoActualizado !== null) {
-                                productosActualizados.push(productoActualizado);
-                            } else {
-                                console.log(`El producto con el código ${row[codigoColumn]} no existe en la base de datos.`);
-                            }
-                        } catch (error) {
-                            console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
-                            res.status(500).send(`Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}`);
-                            return;
-                        }
+                        // Enviar la promesa al arreglo sin esperar aquí
+                        promises.push(
+                            producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn])
+                                .then(productoActualizado => {
+                                    if (productoActualizado !== null) {
+                                        productosActualizados.push(productoActualizado);
+                                    } else {
+                                        console.log(`El producto con el código ${row[codigoColumn]} no existe en la base de datos.`);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
+                                    throw new Error(`Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}`);
+                                })
+                        );
                     }
                 }
             }
+            // Esperar a que todas las promesas se resuelvan
+            await Promise.all(promises);
         } else {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
             return;
         }
-        fs.unlinkSync(file.path);
+        fs.unlinkSync(file.path); // Eliminar el archivo después de procesarlo
         res.render('productosActualizados', { productos: productosActualizados });
     } catch (error) {
         console.log("Error durante el procesamiento de archivos", error);
-        res.status(500).send(error);
+        res.status(500).send(error.message);
     }
 }
 }
