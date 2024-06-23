@@ -815,26 +815,27 @@ actualizarPreciosExcel: async (req, res) => {
     try {
         const file = req.files[0];
         let productosActualizados = [];
+
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
-            const promises = []; // Almacenar todas las promesas de actualización
+            const promises = []; 
 
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+
                 for (const row of data) {
                     const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
+
                     if (codigoColumn && precioColumn) {
                         console.log(`Procesando producto con código ${row[codigoColumn]} y precio ${row[precioColumn]}`);
-                        // Enviar la promesa al arreglo sin esperar aquí
                         promises.push(
                             producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn])
                                 .then(productoActualizado => {
                                     if (productoActualizado !== null) {
                                         productosActualizados.push(productoActualizado);
                                     } else {
-                                        // Log cuando el producto no existe pero no es un error de ejecución
                                         console.log(`No se encontró ningún producto con el código ${row[codigoColumn]} en la base de datos.`);
                                         return { noExiste: true, codigo: row[codigoColumn] };
                                     }
@@ -844,36 +845,37 @@ actualizarPreciosExcel: async (req, res) => {
                                     return { error: true, message: `Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}` };
                                 })
                         );
+                    } else {
+                        console.error(`No se encontraron las columnas de código o precio en la fila: ${JSON.stringify(row)}`);
                     }
                 }
             }
 
-            // Esperar a que todas las promesas se resuelvan
             const resultados = await Promise.all(promises);
-
-            // Filtrar o manejar los errores y los casos de no existencia después de que todas las promesas se hayan resuelto
             const errores = resultados.filter(resultado => resultado && resultado.error);
             const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
 
             if (errores.length > 0) {
                 console.log("Errores al actualizar algunos productos:", errores);
             }
+
             if (noEncontrados.length > 0) {
                 noEncontrados.forEach(item => {
                     console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
                 });
             }
+
+            fs.unlinkSync(file.path);
+            res.render('productosActualizados', { productos: productosActualizados });
         } else {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
             return;
         }
-
-        fs.unlinkSync(file.path); // Eliminar el archivo después de procesarlo
-        res.render('productosActualizados', { productos: productosActualizados });
     } catch (error) {
         console.log("Error durante el procesamiento de archivos", error);
         res.status(500).send(error.message);
     }
 }
+
 
 }
