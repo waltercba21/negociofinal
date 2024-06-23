@@ -337,58 +337,71 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 resolve(null);
                 return;
             }
+    
             const sql = 'SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento FROM producto_proveedor pp JOIN productos p ON pp.producto_id = p.id JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id WHERE pp.codigo = ?';
+            
             conexion.getConnection((err, conexion) => {
                 if (err) {
                     console.error('Error al obtener la conexión:', err);
                     resolve(null);
-                } else {
-                    conexion.query(sql, [codigo], (error, results) => {
-                        if (error) {
-                            console.error(`Error al ejecutar la consulta SQL para el código ${codigo}:`, error);
-                            resolve(null);
-                            return;
-                        }
-                        let producto = results[0];
-                        if (!producto) {
-                            console.log(`No se encontró ningún producto con el código ${codigo}`);
-                            resolve(null);
-                            return;
-                        }
-                        let descuento = producto.descuento;
-                        let costo_neto = precio_lista - (precio_lista * descuento / 100);
-                        producto.costo_neto = costo_neto;
-                        let IVA = 21; 
-                        let costo_iva = costo_neto + (costo_neto * IVA / 100);
-                        let utilidad = producto.utilidad;
-                        if (isNaN(costo_iva) || isNaN(utilidad)) {
-                            console.error('Costo con IVA o utilidad no es un número válido');
-                            resolve(null);
-                            return;
-                        }
-                        let precio_venta = costo_iva + (costo_iva * utilidad / 100);
-                        precio_venta = Math.ceil(precio_venta / 10) * 10;
-                        const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ?';
-                        conexion.query(sqlUpdate, [precio_lista, producto.producto_id], (errorUpdate, resultsUpdate) => {
-                            conexion.release();
-                            if (errorUpdate) {
-                                console.error('Error en la consulta SQL de actualización:', errorUpdate);
-                                resolve(null);
-                                return;
-                            } else {
-                                resolve({
-                                    codigo: codigo,
-                                    precio_lista_antiguo: producto.precio_lista,
-                                    precio_lista_nuevo: precio_lista,
-                                    precio_venta: precio_venta
-                                });
-                            }
-                        });
-                    });
+                    return;
                 }
+    
+                conexion.query(sql, [codigo], (error, results) => {
+                    if (error) {
+                        console.error(`Error al ejecutar la consulta SQL para el código ${codigo}:`, error);
+                        conexion.release();
+                        resolve(null);
+                        return;
+                    }
+    
+                    let producto = results[0];
+                    if (!producto) {
+                        console.log(`No se encontró ningún producto con el código ${codigo}`);
+                        conexion.release();
+                        resolve(null);
+                        return;
+                    }
+    
+                    let descuento = producto.descuento;
+                    let costo_neto = precio_lista - (precio_lista * descuento / 100);
+                    producto.costo_neto = costo_neto;
+    
+                    let IVA = 21; 
+                    let costo_iva = costo_neto + (costo_neto * IVA / 100);
+                    let utilidad = producto.utilidad;
+    
+                    if (isNaN(costo_iva) || isNaN(utilidad)) {
+                        console.error('Costo con IVA o utilidad no es un número válido');
+                        conexion.release();
+                        resolve(null);
+                        return;
+                    }
+    
+                    let precio_venta = costo_iva + (costo_iva * utilidad / 100);
+                    precio_venta = Math.ceil(precio_venta / 10) * 10;
+    
+                    const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ?';
+                    
+                    conexion.query(sqlUpdate, [precio_lista, producto.producto_id], (errorUpdate, resultsUpdate) => {
+                        conexion.release();
+                        if (errorUpdate) {
+                            console.error('Error en la consulta SQL de actualización:', errorUpdate);
+                            resolve(null);
+                        } else {
+                            resolve({
+                                codigo: codigo,
+                                precio_lista_antiguo: producto.precio_lista,
+                                precio_lista_nuevo: precio_lista,
+                                precio_venta: precio_venta
+                            });
+                        }
+                    });
+                });
             });
         });
     },
+    
     obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';

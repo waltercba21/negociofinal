@@ -819,6 +819,7 @@ actualizarPreciosExcel: async (req, res) => {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
             const promises = []; // Almacenar todas las promesas de actualización
+
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
                 for (const row of data) {
@@ -846,6 +847,7 @@ actualizarPreciosExcel: async (req, res) => {
                     }
                 }
             }
+
             // Esperar a que todas las promesas se resuelvan
             const resultados = await Promise.all(promises);
 
@@ -865,6 +867,7 @@ actualizarPreciosExcel: async (req, res) => {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
             return;
         }
+
         fs.unlinkSync(file.path); // Eliminar el archivo después de procesarlo
         res.render('productosActualizados', { productos: productosActualizados });
     } catch (error) {
@@ -872,4 +875,5 @@ actualizarPreciosExcel: async (req, res) => {
         res.status(500).send(error.message);
     }
 }
+
 }
