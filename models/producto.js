@@ -384,26 +384,37 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                     let precio_venta = costo_iva + (costo_iva * utilidad / 100);
                     precio_venta = Math.ceil(precio_venta / 10) * 10;
     
-                    const sqlUpdate = 'UPDATE producto_proveedor SET precio_lista = ?, precio_venta = ? WHERE producto_id = ?';
-                    conexion.query(sqlUpdate, [precio_lista, precio_venta, producto.producto_id], (errorUpdate, resultsUpdate) => {
-                        conexion.release();
-                        if (errorUpdate) {
-                            console.error('Error en la consulta SQL de actualización:', errorUpdate);
+                    const sqlUpdateProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ?';
+                    const sqlUpdateProductos = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
+    
+                    conexion.query(sqlUpdateProductoProveedor, [precio_lista, producto.producto_id], (errorUpdatePP, resultsUpdatePP) => {
+                        if (errorUpdatePP) {
+                            console.error('Error en la consulta SQL de actualización en producto_proveedor:', errorUpdatePP);
+                            conexion.release();
                             resolve(null);
-                        } else {
-                            resolve({
-                                codigo: codigo,
-                                precio_lista_antiguo: producto.precio_lista,
-                                precio_lista_nuevo: precio_lista,
-                                precio_venta: precio_venta
-                            });
+                            return;
                         }
+    
+                        conexion.query(sqlUpdateProductos, [precio_venta, producto.producto_id], (errorUpdateProd, resultsUpdateProd) => {
+                            conexion.release();
+                            if (errorUpdateProd) {
+                                console.error('Error en la consulta SQL de actualización en productos:', errorUpdateProd);
+                                resolve(null);
+                            } else {
+                                resolve({
+                                    codigo: codigo,
+                                    precio_lista_antiguo: producto.precio_lista,
+                                    precio_lista_nuevo: precio_lista,
+                                    precio_venta: precio_venta
+                                });
+                            }
+                        });
                     });
                 });
             });
         });
     },
-     
+      
     obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
