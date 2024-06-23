@@ -1851,6 +1851,14 @@ table td img:hover {
   border-radius: 5px;
 }
 
+/*-----------Productos Actualizados-----------------*/
+.positivo {
+  color: #09c41c;
+}
+
+.negativo {
+  color: #b30000;
+}
 
 
 /*------------------RESPONSIVE------------------*/

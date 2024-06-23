@@ -15,19 +15,23 @@
                 </tr>
             </thead>
             <tbody>
-                <% productos.forEach(producto => { %>
+                <% productos.forEach(producto => { 
+                    let diferencia = ((producto.precio_lista_nuevo - producto.precio_lista_antiguo) / producto.precio_lista_antiguo * 100).toFixed(2);
+                    let diferenciaClass = diferencia > 0 ? 'positivo' : 'negativo';
+                %>
                     <tr>
                         <td><%= producto.codigo %></td>
                         <td><%= producto.precio_lista_antiguo %></td>
                         <td><%= producto.precio_lista_nuevo %></td>
                         <td><%= producto.precio_venta %></td>
-                        <td><%= ((producto.precio_lista_nuevo - producto.precio_lista_antiguo) / producto.precio_lista_antiguo * 100).toFixed(2) %>%</td>
+                        <td class="<%= diferenciaClass %>"><%= diferencia %> %</td>
                     </tr>
                 <% }); %>
-                <p>Total de productos actualizados: <%= productos.length %></p>
             </tbody>
         </table>
-    </main>    
+        <p>Total de productos actualizados: <%= productos.length %></p>
+    </main>
+    
     <script src="/js/profile.js"></script>
       <%- include ./layouts/footer.ejs %>
   </body>
