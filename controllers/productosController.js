@@ -833,12 +833,13 @@ actualizarPreciosExcel: async (req, res) => {
                                     if (productoActualizado !== null) {
                                         productosActualizados.push(productoActualizado);
                                     } else {
-                                        console.log(`El producto con el código ${row[codigoColumn]} no existe en la base de datos.`);
+                                        // Log cuando el producto no existe pero no es un error de ejecución
+                                        console.log(`No se encontró ningún producto con el código ${row[codigoColumn]} en la base de datos.`);
+                                        return { noExiste: true, codigo: row[codigoColumn] };
                                     }
                                 })
                                 .catch(error => {
                                     console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
-                                    // Devolver un objeto de error en lugar de lanzar un error
                                     return { error: true, message: `Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}` };
                                 })
                         );
@@ -847,10 +848,18 @@ actualizarPreciosExcel: async (req, res) => {
             }
             // Esperar a que todas las promesas se resuelvan
             const resultados = await Promise.all(promises);
-            // Filtrar o manejar los errores después de que todas las promesas se hayan resuelto
+
+            // Filtrar o manejar los errores y los casos de no existencia después de que todas las promesas se hayan resuelto
             const errores = resultados.filter(resultado => resultado && resultado.error);
+            const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
+
             if (errores.length > 0) {
-                console.log("Se encontraron errores al actualizar algunos productos:", errores);
+                console.log("Errores al actualizar algunos productos:", errores);
+            }
+            if (noEncontrados.length > 0) {
+                noEncontrados.forEach(item => {
+                    console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
+                });
             }
         } else {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
