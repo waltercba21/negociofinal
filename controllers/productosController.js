@@ -838,14 +838,20 @@ actualizarPreciosExcel: async (req, res) => {
                                 })
                                 .catch(error => {
                                     console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
-                                    throw new Error(`Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}`);
+                                    // Devolver un objeto de error en lugar de lanzar un error
+                                    return { error: true, message: `Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}` };
                                 })
                         );
                     }
                 }
             }
             // Esperar a que todas las promesas se resuelvan
-            await Promise.all(promises);
+            const resultados = await Promise.all(promises);
+            // Filtrar o manejar los errores después de que todas las promesas se hayan resuelto
+            const errores = resultados.filter(resultado => resultado && resultado.error);
+            if (errores.length > 0) {
+                console.log("Se encontraron errores al actualizar algunos productos:", errores);
+            }
         } else {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
             return;
