@@ -570,14 +570,14 @@ obtenerModelosPorMarca: function(req, res) {
         console.log('Error al obtener modelos:', error);
       });
   },
-generarPDF: async function (req, res) {
-    var doc = new PDFDocument;
+  generarPDF: async (req, res) => {
+    var doc = new PDFDocument({ margin: 50 });
     var buffer = new streamBuffers.WritableStreamBuffer({
-        initialSize: (1024 * 1024),   
-        incrementAmount: (1024 * 1024) 
+        initialSize: (1024 * 1024),
+        incrementAmount: (1024 * 1024)
     });
     doc.pipe(buffer);
-    const proveedorId = req.query.proveedor; 
+    const proveedorId = req.query.proveedor;
     const categoriaId = req.query.categoria;
     if (!proveedorId) {
         return res.status(400).send('No se ha proporcionado un ID de proveedor');
@@ -589,11 +589,7 @@ generarPDF: async function (req, res) {
             return res.status(400).send('Proveedor no encontrado');
         }
         var nombreProveedor = proveedor.nombre;
-        doc.fontSize(20)
-           .text(nombreProveedor, 0, 50, {
-               align: 'center',
-               width: doc.page.width
-           });
+        doc.fontSize(20).text(nombreProveedor, { align: 'center' });
         if (categoriaId) {
             const categorias = await producto.obtenerCategorias(conexion);
             var categoria = categorias.find(c => c.id == categoriaId);
@@ -601,57 +597,54 @@ generarPDF: async function (req, res) {
                 return res.status(400).send('Categoría no encontrada');
             }
             var nombreCategoria = categoria.nombre;
-            doc.fontSize(16)
-               .text(nombreCategoria, 0, doc.y, {
-                   align: 'center',
-                   width: doc.page.width
-               });
-            doc.moveDown(2);
+            doc.fontSize(16).text(nombreCategoria, { align: 'center' });
         }
+        doc.moveDown(2);
         var obtenerProductos;
         if (categoriaId) {
             obtenerProductos = producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorId, categoriaId);
         } else {
             obtenerProductos = producto.obtenerProductosPorProveedor(conexion, proveedorId);
         }
-
-        obtenerProductos.then(productos => {
-            var currentY = doc.y;
-            doc.fontSize(12)
-            .text('Código', 50, currentY)
-            .text('Descripción', doc.page.width / 4, currentY) 
-            .text('Precio de lista', doc.page.width / 2 + 150, currentY, {
-                align: 'left' 
-            });
+        const productos = await obtenerProductos;
+        // Estilos de tabla
+        doc.fontSize(10);
+        const tableTop = doc.y;
+        const itemSpacing = 20;
+        const margin = 50;
+        const columnWidth = (doc.page.width - margin * 2) / 3;
+        // Headers
+        doc.text('Código', margin, tableTop, { width: columnWidth, align: 'left' });
+        doc.text('Descripción', margin + columnWidth, tableTop, { width: columnWidth, align: 'left' });
+        doc.text('Precio de lista', margin + columnWidth * 2, tableTop, { width: columnWidth, align: 'right' });
         doc.moveDown();
-        productos.forEach(producto => {
-            var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(0);
-            currentY = doc.y;
-            if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+        productos.forEach((producto, index) => {
+            const position = tableTop + itemSpacing * (index + 1);
+            const precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(2);
+            if (position + itemSpacing > doc.page.height - margin) {
                 doc.addPage();
-                currentY = doc.y;
+                position = margin;
             }
-            doc.fontSize(10)
-                .text(producto.codigo_proveedor, 50, currentY) 
-                .text(producto.nombre, doc.page.width / 4, currentY) 
-                .text(precioListaFormateado, doc.page.width / 2 + 150, currentY, {
-                    align: 'left' 
-                });
-            doc.moveDown();
+            doc.text(producto.codigo_proveedor, margin, position, { width: columnWidth, align: 'left' });
+            doc.text(producto.nombre, margin + columnWidth, position, { width: columnWidth, align: 'left' });
+            doc.text(precioListaFormateado, margin + columnWidth * 2, position, { width: columnWidth, align: 'right' });
+            doc.moveDown(0.5);
+            doc.moveTo(margin, position + itemSpacing - 5)
+                .lineTo(doc.page.width - margin, position + itemSpacing - 5)
+                .strokeColor('#cccccc')
+                .lineWidth(0.5)
+                .stroke();
         });
-doc.end();
-}).catch(error => {
-    return res.status(500).send('Error al generar el PDF');
-});
+        doc.end();
+        buffer.on('finish', function () {
+            const pdfData = buffer.getContents();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
+            res.send(pdfData);
+        });
     } catch (error) {
         return res.status(500).send('Error al generar el PDF');
     }
-    buffer.on('finish', function() {
-        const pdfData = buffer.getContents();
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-        res.send(pdfData);
-    });
 },
 getProductosPorCategoria : async (req, res) => {
     const categoriaId = req.query.categoria;
