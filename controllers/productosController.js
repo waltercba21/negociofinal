@@ -617,10 +617,10 @@ obtenerModelosPorMarca: function(req, res) {
 
         obtenerProductos.then(productos => {
             var currentY = doc.y;
-            doc.fontSize(12)
+            doc.fontSize(10)
                 .text('Código', 50, currentY)
-                .text('Descripción', doc.page.width / 4, currentY)
-                .text('Precio de lista', doc.page.width - 100, currentY, {
+                .text('Descripción', 150, currentY) // Ajusta la posición de la descripción
+                .text('Precio de lista', doc.page.width - 150, currentY, {
                     align: 'right'
                 });
             doc.moveDown();
@@ -631,10 +631,12 @@ obtenerModelosPorMarca: function(req, res) {
                     doc.addPage();
                     currentY = doc.y;
                 }
-                doc.fontSize(10)
+                doc.fontSize(8)
                     .text(producto.codigo_proveedor, 50, currentY)
-                    .text(producto.nombre, doc.page.width / 4, currentY)
-                    .text(precioListaFormateado, doc.page.width - 100, currentY, {
+                    .text(producto.nombre, 150, currentY, {
+                        width: doc.page.width - 300 // Ajusta el ancho de la descripción
+                    })
+                    .text(precioListaFormateado, doc.page.width - 150, currentY, {
                         align: 'right'
                     });
                 doc.moveDown();
@@ -655,6 +657,7 @@ obtenerModelosPorMarca: function(req, res) {
         res.send(pdfData);
     });
 },
+
 getProductosPorCategoria : async (req, res) => {
     const categoriaId = req.query.categoria;
     producto.obtenerProductosPorCategoria(categoriaId, (error, productos) => {
