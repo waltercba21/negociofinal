@@ -570,14 +570,14 @@ obtenerModelosPorMarca: function(req, res) {
         console.log('Error al obtener modelos:', error);
       });
   },
-generarPDF: async function (req, res) {
+  generarPDF : async function (req, res) {
     var doc = new PDFDocument;
     var buffer = new streamBuffers.WritableStreamBuffer({
-        initialSize: (1024 * 1024),   
-        incrementAmount: (1024 * 1024) 
+        initialSize: (1024 * 1024),
+        incrementAmount: (1024 * 1024)
     });
     doc.pipe(buffer);
-    const proveedorId = req.query.proveedor; 
+    const proveedorId = req.query.proveedor;
     const categoriaId = req.query.categoria;
     if (!proveedorId) {
         return res.status(400).send('No se ha proporcionado un ID de proveedor');
@@ -590,10 +590,10 @@ generarPDF: async function (req, res) {
         }
         var nombreProveedor = proveedor.nombre;
         doc.fontSize(20)
-           .text(nombreProveedor, 0, 50, {
-               align: 'center',
-               width: doc.page.width
-           });
+            .text(nombreProveedor, 0, 50, {
+                align: 'center',
+                width: doc.page.width
+            });
         if (categoriaId) {
             const categorias = await producto.obtenerCategorias(conexion);
             var categoria = categorias.find(c => c.id == categoriaId);
@@ -601,11 +601,11 @@ generarPDF: async function (req, res) {
                 return res.status(400).send('Categoría no encontrada');
             }
             var nombreCategoria = categoria.nombre;
-            doc.fontSize(16)
-               .text(nombreCategoria, 0, doc.y, {
-                   align: 'center',
-                   width: doc.page.width
-               });
+            doc.fontSize(12)
+                .text(nombreCategoria, 0, doc.y, {
+                    align: 'center',
+                    width: doc.page.width
+                });
             doc.moveDown(2);
         }
         var obtenerProductos;
@@ -618,35 +618,37 @@ generarPDF: async function (req, res) {
         obtenerProductos.then(productos => {
             var currentY = doc.y;
             doc.fontSize(12)
-            .text('Código', 50, currentY)
-            .text('Descripción', doc.page.width / 4, currentY) 
-            .text('Precio de lista', doc.page.width / 2 + 150, currentY, {
-                align: 'left' 
-            });
-        doc.moveDown();
-        productos.forEach(producto => {
-            var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(0);
-            currentY = doc.y;
-            if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
-                doc.addPage();
-                currentY = doc.y;
-            }
-            doc.fontSize(10)
-                .text(producto.codigo_proveedor, 50, currentY) 
-                .text(producto.nombre, doc.page.width / 4, currentY) 
-                .text(precioListaFormateado, doc.page.width / 2 + 150, currentY, {
-                    align: 'left' 
+                .text('Código', 50, currentY)
+                .text('Descripción', doc.page.width / 4, currentY)
+                .text('Precio de lista', doc.page.width - 100, currentY, {
+                    align: 'right'
                 });
             doc.moveDown();
+            productos.forEach(producto => {
+                var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(2);
+                currentY = doc.y;
+                if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+                    doc.addPage();
+                    currentY = doc.y;
+                }
+                doc.fontSize(10)
+                    .text(producto.codigo_proveedor, 50, currentY)
+                    .text(producto.nombre, doc.page.width / 4, currentY)
+                    .text(precioListaFormateado, doc.page.width - 100, currentY, {
+                        align: 'right'
+                    });
+                doc.moveDown();
+            });
+            doc.end();
+        }).catch(error => {
+            console.error('Error al obtener productos:', error);
+            return res.status(500).send('Error al generar el PDF');
         });
-doc.end();
-}).catch(error => {
-    return res.status(500).send('Error al generar el PDF');
-});
     } catch (error) {
+        console.error('Error en generarPDF:', error);
         return res.status(500).send('Error al generar el PDF');
     }
-    buffer.on('finish', function() {
+    buffer.on('finish', function () {
         const pdfData = buffer.getContents();
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
