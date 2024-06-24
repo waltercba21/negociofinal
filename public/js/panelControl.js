@@ -1,44 +1,64 @@
-document.getElementById('contenedor-productos').addEventListener('change', function(event) {
-    if (event.target.matches('.product-check')) {
-        var checks = document.querySelectorAll('.product-check');
-        for (var i = 0; i < checks.length; i++) {
-            checks[i].checked = event.target.checked;
-        }
-    }
+document.addEventListener('DOMContentLoaded', function() {
+  var contenedorProductos = document.getElementById('contenedor-productos');
+  var checkAll = document.getElementById('check-all');
+
+  // Evento para seleccionar/deseleccionar todos los checkboxes
+  checkAll.addEventListener('change', function(event) {
+      var checks = document.querySelectorAll('.product-check');
+      for (var i = 0; i < checks.length; i++) {
+          checks[i].checked = event.target.checked;
+      }
+  });
+
+  // Evento para manejar la selección individual de productos
+  contenedorProductos.addEventListener('change', function(event) {
+      if (event.target.matches('.product-check')) {
+          var checks = document.querySelectorAll('.product-check');
+          var allChecked = true;
+          for (var i = 0; i < checks.length; i++) {
+              if (!checks[i].checked) {
+                  allChecked = false;
+                  break;
+              }
+          }
+          checkAll.checked = allChecked;
+      }
+  });
+
+  // Evento para manejar la eliminación de productos seleccionados
+  document.getElementById('contenedor-productos').addEventListener('click', function(event) {
+      if (event.target.matches('#delete-selected')) {
+          var checks = document.querySelectorAll('.product-check');
+          var ids = [];
+          for (var i = 0; i < checks.length; i++) {
+              if (checks[i].checked) {
+                  ids.push(checks[i].value);
+              }
+          }
+          fetch('/productos/eliminarSeleccionados', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ ids: ids }),
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  location.reload();
+              } else {
+                  console.error('Error al eliminar los productos:', data.error);
+              }
+          })
+          .catch((error) => {
+              console.error('Error:', error);
+          });
+      }
+  });
 });
 
-document.getElementById('contenedor-productos').addEventListener('click', function(event) {
-    if (event.target.matches('#delete-selected')) {
-        var checks = document.querySelectorAll('.product-check');
-        var ids = [];
-        for (var i = 0; i < checks.length; i++) {
-            if (checks[i].checked) {
-                ids.push(checks[i].value);
-            }
-        }
-        fetch('/productos/eliminarSeleccionados', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ ids: ids }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                console.error('Error al eliminar los productos:', data.error);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-    }
-});
 let timer;
 let paginaActual = 1;
-
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
