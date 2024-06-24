@@ -100,7 +100,6 @@
                 <th>Imagen</th>
                 <th>Precio</th>
                 <th>Acciones</th>   
-                <th><button id="delete-selected" class="btn btn-danger btn-delete">Eliminar seleccionados</button></th>
             </tr>
         </thead>
         <tbody id="contenedor-productos">
@@ -110,7 +109,7 @@
                     <td> <%= producto.categoria %></td>
                     <td><%= producto.nombre %></td> 
                     <td>
-                        <img class="img-thumbnail" width= '150' src="/uploads/productos/<%= producto.imagenes[0] %>" alt="">
+                        <img class="img-thumbnail" width='150' src="/uploads/productos/<%= producto.imagenes[0] %>" alt="">
                     </td>
                     <td>$<%= parseInt(producto.precio_venta) %></td>
                     <td>
@@ -124,6 +123,7 @@
             <% }); %>
         </tbody>
     </table>
+    <button id="delete-selected" class="btn btn-danger btn-delete">Eliminar seleccionados</button>
 </div>
 </main>
 <%- include ./layouts/footer.ejs %>

@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   var contenedorProductos = document.getElementById('contenedor-productos');
   var checkAll = document.getElementById('check-all');
+  var deleteSelectedButton = document.getElementById('delete-selected');
 
   // Evento para seleccionar/deseleccionar todos los checkboxes
   checkAll.addEventListener('change', function(event) {
@@ -26,15 +27,15 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Evento para manejar la eliminación de productos seleccionados
-  document.getElementById('contenedor-productos').addEventListener('click', function(event) {
-      if (event.target.matches('#delete-selected')) {
-          var checks = document.querySelectorAll('.product-check');
-          var ids = [];
-          for (var i = 0; i < checks.length; i++) {
-              if (checks[i].checked) {
-                  ids.push(checks[i].value);
-              }
+  deleteSelectedButton.addEventListener('click', function(event) {
+      var checks = document.querySelectorAll('.product-check');
+      var ids = [];
+      for (var i = 0; i < checks.length; i++) {
+          if (checks[i].checked) {
+              ids.push(checks[i].value);
           }
+      }
+      if (ids.length > 0) {
           fetch('/productos/eliminarSeleccionados', {
               method: 'POST',
               headers: {
@@ -53,6 +54,8 @@ document.addEventListener('DOMContentLoaded', function() {
           .catch((error) => {
               console.error('Error:', error);
           });
+      } else {
+          console.log('No hay productos seleccionados para eliminar');
       }
   });
 });
