@@ -570,31 +570,30 @@ obtenerModelosPorMarca: function(req, res) {
         console.log('Error al obtener modelos:', error);
       });
   },
-  generarPDF: async function (req, res) {
-    var doc = new PDFDocument({ margin: 50 });
+generarPDF: async function (req, res) {
+    var doc = new PDFDocument;
     var buffer = new streamBuffers.WritableStreamBuffer({
-        initialSize: (1024 * 1024),
-        incrementAmount: (1024 * 1024)
+        initialSize: (1024 * 1024),   
+        incrementAmount: (1024 * 1024) 
     });
     doc.pipe(buffer);
-
-    const proveedorId = req.query.proveedor;
+    const proveedorId = req.query.proveedor; 
     const categoriaId = req.query.categoria;
-
     if (!proveedorId) {
         return res.status(400).send('No se ha proporcionado un ID de proveedor');
     }
-
     try {
         const proveedores = await producto.obtenerProveedores(conexion);
         var proveedor = proveedores.find(p => p.id == proveedorId);
         if (!proveedor) {
             return res.status(400).send('Proveedor no encontrado');
         }
-
         var nombreProveedor = proveedor.nombre;
-        doc.fontSize(20).text(nombreProveedor, { align: 'center' });
-
+        doc.fontSize(20)
+           .text(nombreProveedor, 0, 50, {
+               align: 'center',
+               width: doc.page.width
+           });
         if (categoriaId) {
             const categorias = await producto.obtenerCategorias(conexion);
             var categoria = categorias.find(c => c.id == categoriaId);
@@ -602,11 +601,13 @@ obtenerModelosPorMarca: function(req, res) {
                 return res.status(400).send('Categoría no encontrada');
             }
             var nombreCategoria = categoria.nombre;
-            doc.fontSize(16).text(nombreCategoria, { align: 'center' });
+            doc.fontSize(16)
+               .text(nombreCategoria, 0, doc.y, {
+                   align: 'center',
+                   width: doc.page.width
+               });
+            doc.moveDown(2);
         }
-
-        doc.moveDown(2);
-
         var obtenerProductos;
         if (categoriaId) {
             obtenerProductos = producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorId, categoriaId);
@@ -615,54 +616,37 @@ obtenerModelosPorMarca: function(req, res) {
         }
 
         obtenerProductos.then(productos => {
-            doc.fontSize(12);
-
-            // Definir encabezados y estilos de tabla
-            const tableTop = doc.y;
-            const itemSpacing = 20;
-            const margin = 50;
-            const columnWidth = (doc.page.width - margin * 2) / 3;
-
-            // Encabezados de la tabla
-            doc.text('Código', margin, tableTop, { width: columnWidth, align: 'left' });
-            doc.text('Descripción', margin + columnWidth, tableTop, { width: columnWidth, align: 'left' });
-            doc.text('Precio de lista', margin + columnWidth * 2, tableTop, { width: columnWidth, align: 'right' });
-
-            doc.moveDown();
-
-            productos.forEach((producto, index) => {
-                let position = tableTop + itemSpacing * (index + 1);
-                const precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(2);
-
-                if (position + itemSpacing > doc.page.height - margin) {
-                    doc.addPage();
-                    position = margin;
-                }
-
-                doc.fontSize(10)
-                    .text(producto.codigo_proveedor, margin, position, { width: columnWidth, align: 'left' })
-                    .text(producto.nombre, margin + columnWidth, position, { width: columnWidth, align: 'left' })
-                    .text(precioListaFormateado, margin + columnWidth * 2, position, { width: columnWidth, align: 'right' });
-
-                doc.moveDown(0.5);
-
-                // Dibujar línea separadora
-                doc.moveTo(margin, position + itemSpacing - 5)
-                    .lineTo(doc.page.width - margin, position + itemSpacing - 5)
-                    .strokeColor('#cccccc')
-                    .lineWidth(0.5)
-                    .stroke();
+            var currentY = doc.y;
+            doc.fontSize(12)
+            .text('Código', 50, currentY)
+            .text('Descripción', doc.page.width / 4, currentY) 
+            .text('Precio de lista', doc.page.width / 2 + 150, currentY, {
+                align: 'left' 
             });
-
-            doc.end();
-        }).catch(error => {
-            return res.status(500).send('Error al generar el PDF');
+        doc.moveDown();
+        productos.forEach(producto => {
+            var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(0);
+            currentY = doc.y;
+            if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+                doc.addPage();
+                currentY = doc.y;
+            }
+            doc.fontSize(10)
+                .text(producto.codigo_proveedor, 50, currentY) 
+                .text(producto.nombre, doc.page.width / 4, currentY) 
+                .text(precioListaFormateado, doc.page.width / 2 + 150, currentY, {
+                    align: 'left' 
+                });
+            doc.moveDown();
         });
+doc.end();
+}).catch(error => {
+    return res.status(500).send('Error al generar el PDF');
+});
     } catch (error) {
         return res.status(500).send('Error al generar el PDF');
     }
-
-    buffer.on('finish', function () {
+    buffer.on('finish', function() {
         const pdfData = buffer.getContents();
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
