@@ -621,7 +621,10 @@ obtenerModelosPorMarca: function(req, res) {
                 .text('Código', 50, currentY)
                 .text('Descripción', 150, currentY)
                 .text('Precio de lista', 400, currentY)
-                .text('Precio de venta', 500, currentY);
+                .text('Precio de venta', 500, currentY, {
+                    width: 100, // Ajusta el ancho del texto para que no se divida
+                    align: 'right'
+                });
             doc.moveDown();
             productos.forEach(producto => {
                 var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(2);
@@ -637,7 +640,10 @@ obtenerModelosPorMarca: function(req, res) {
                         width: 250
                     })
                     .text(precioListaFormateado, 400, currentY)
-                    .text(precioVentaFormateado, 500, currentY);
+                    .text(precioVentaFormateado, 500, currentY, {
+                        width: 100, // Ajusta el ancho del texto para que no se divida
+                        align: 'right'
+                    });
                 doc.moveDown();
             });
             doc.end();
