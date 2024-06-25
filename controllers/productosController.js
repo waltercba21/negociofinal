@@ -620,10 +620,10 @@ obtenerModelosPorMarca: function(req, res) {
             doc.fontSize(10)
                 .text('Código', 50, currentY)
                 .text('Descripción', 150, currentY) // Ajusta la posición de la descripción
-                .text('Precio de lista', doc.page.width - 250, currentY, {
+                .text('Precio de lista', 400, currentY, {
                     align: 'right'
                 })
-                .text('Precio de venta', doc.page.width - 100, currentY, {
+                .text('Precio de venta', 500, currentY, {
                     align: 'right'
                 });
             doc.moveDown();
@@ -638,12 +638,12 @@ obtenerModelosPorMarca: function(req, res) {
                 doc.fontSize(8)
                     .text(producto.codigo_proveedor, 50, currentY)
                     .text(producto.nombre, 150, currentY, {
-                        width: doc.page.width - 400 // Ajusta el ancho de la descripción
+                        width: 250 // Ajusta el ancho de la descripción
                     })
-                    .text(precioListaFormateado, doc.page.width - 250, currentY, {
+                    .text(precioListaFormateado, 400, currentY, {
                         align: 'right'
                     })
-                    .text(precioVentaFormateado, doc.page.width - 100, currentY, {
+                    .text(precioVentaFormateado, 500, currentY, {
                         align: 'right'
                     });
                 doc.moveDown();
