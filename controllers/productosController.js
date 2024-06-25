@@ -618,8 +618,8 @@ obtenerModelosPorMarca: function(req, res) {
         obtenerProductos.then(productos => {
             var currentY = doc.y;
             doc.fontSize(10)
-                .text('Código', 50, currentY)
-                .text('Descripción', 150, currentY)
+                .text('Código', 20, currentY) // Mover la columna Código más a la izquierda
+                .text('Descripción', 100, currentY) // Reducir el espacio entre Código y Descripción
                 .text('Precio de lista', 350, currentY, {
                     width: 100,
                     align: 'right'
@@ -638,15 +638,15 @@ obtenerModelosPorMarca: function(req, res) {
                     currentY = doc.y;
                 }
                 doc.fontSize(8)
-                    .text(producto.codigo_proveedor, 50, currentY)
-                    .text(producto.nombre, 150, currentY, {
-                        width: 300 // Ajusta el ancho del nombre del producto
+                    .text(producto.codigo_proveedor, 20, currentY) // Mover la columna Código más a la izquierda
+                    .text(producto.nombre, 100, currentY, {
+                        width: 200 // Ajustar el ancho del nombre del producto
                     })
-                    .text(precioListaFormateado, 450, currentY, {
+                    .text(precioListaFormateado, 350, currentY, {
                         width: 100,
                         align: 'right'
                     })
-                    .text(precioVentaFormateado, 550, currentY, {
+                    .text(precioVentaFormateado, 450, currentY, {
                         width: 100,
                         align: 'right'
                     });
