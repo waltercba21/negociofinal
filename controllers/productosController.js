@@ -617,9 +617,9 @@ obtenerModelosPorMarca: function(req, res) {
 
         obtenerProductos.then(productos => {
             var currentY = doc.y;
-            doc.fontSize(10)
+            doc.fontSize(8)
                 .text('Código', 20, currentY) // Mover la columna Código más a la izquierda
-                .text('Descripción', 100, currentY) // Reducir el espacio entre Código y Descripción
+                .text('Descripción', 80, currentY) // Reducir el espacio entre Código y Descripción
                 .text('Precio de lista', 350, currentY, {
                     width: 100,
                     align: 'right'
