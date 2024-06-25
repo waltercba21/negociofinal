@@ -640,7 +640,7 @@ obtenerModelosPorMarca: function(req, res) {
                 doc.fontSize(8)
                     .text(producto.codigo_proveedor, 20, currentY) // Mover la columna Código más a la izquierda
                     .text(producto.nombre, 100, currentY, {
-                        width: 200 // Ajustar el ancho del nombre del producto
+                        width: 300 // Ajustar el ancho del nombre del producto
                     })
                     .text(precioListaFormateado, 350, currentY, {
                         width: 100,
