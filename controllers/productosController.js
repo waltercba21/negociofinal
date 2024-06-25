@@ -619,13 +619,9 @@ obtenerModelosPorMarca: function(req, res) {
             var currentY = doc.y;
             doc.fontSize(10)
                 .text('Código', 50, currentY)
-                .text('Descripción', 150, currentY) // Ajusta la posición de la descripción
-                .text('Precio de lista', 400, currentY, {
-                    align: 'right'
-                })
-                .text('Precio de venta', 500, currentY, {
-                    align: 'right'
-                });
+                .text('Descripción', 150, currentY)
+                .text('Precio de lista', 400, currentY)
+                .text('Precio de venta', 500, currentY);
             doc.moveDown();
             productos.forEach(producto => {
                 var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(2);
@@ -638,14 +634,10 @@ obtenerModelosPorMarca: function(req, res) {
                 doc.fontSize(8)
                     .text(producto.codigo_proveedor, 50, currentY)
                     .text(producto.nombre, 150, currentY, {
-                        width: 250 // Ajusta el ancho de la descripción
+                        width: 250
                     })
-                    .text(precioListaFormateado, 400, currentY, {
-                        align: 'right'
-                    })
-                    .text(precioVentaFormateado, 500, currentY, {
-                        align: 'right'
-                    });
+                    .text(precioListaFormateado, 400, currentY)
+                    .text(precioVentaFormateado, 500, currentY);
                 doc.moveDown();
             });
             doc.end();
