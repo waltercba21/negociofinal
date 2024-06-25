@@ -620,7 +620,7 @@ obtenerModelosPorMarca: function(req, res) {
             doc.fontSize(8)
                 .text('Código', 20, currentY) // Mover la columna Código más a la izquierda
                 .text('Descripción', 80, currentY) // Reducir el espacio entre Código y Descripción
-                .text('Precio de lista', 380, currentY, {
+                .text('Precio de lista', 410, currentY, {
                     width: 100,
                     align: 'right'
                 })
