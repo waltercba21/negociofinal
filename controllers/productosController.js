@@ -570,7 +570,7 @@ obtenerModelosPorMarca: function(req, res) {
         console.log('Error al obtener modelos:', error);
       });
   },
-  generarPDF : async function (req, res) {
+  generarPDF: async function (req, res) {
     var doc = new PDFDocument;
     var buffer = new streamBuffers.WritableStreamBuffer({
         initialSize: (1024 * 1024),
@@ -620,12 +620,16 @@ obtenerModelosPorMarca: function(req, res) {
             doc.fontSize(10)
                 .text('Código', 50, currentY)
                 .text('Descripción', 150, currentY) // Ajusta la posición de la descripción
-                .text('Precio de lista', doc.page.width - 150, currentY, {
+                .text('Precio de lista', doc.page.width - 250, currentY, {
+                    align: 'right'
+                })
+                .text('Precio de venta', doc.page.width - 100, currentY, {
                     align: 'right'
                 });
             doc.moveDown();
             productos.forEach(producto => {
                 var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(2);
+                var precioVentaFormateado = '$' + parseFloat(producto.precio_venta).toFixed(2);
                 currentY = doc.y;
                 if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
                     doc.addPage();
@@ -634,9 +638,12 @@ obtenerModelosPorMarca: function(req, res) {
                 doc.fontSize(8)
                     .text(producto.codigo_proveedor, 50, currentY)
                     .text(producto.nombre, 150, currentY, {
-                        width: doc.page.width - 300 // Ajusta el ancho de la descripción
+                        width: doc.page.width - 400 // Ajusta el ancho de la descripción
                     })
-                    .text(precioListaFormateado, doc.page.width - 150, currentY, {
+                    .text(precioListaFormateado, doc.page.width - 250, currentY, {
+                        align: 'right'
+                    })
+                    .text(precioVentaFormateado, doc.page.width - 100, currentY, {
                         align: 'right'
                     });
                 doc.moveDown();
@@ -657,7 +664,6 @@ obtenerModelosPorMarca: function(req, res) {
         res.send(pdfData);
     });
 },
-
 getProductosPorCategoria : async (req, res) => {
     const categoriaId = req.query.categoria;
     producto.obtenerProductosPorCategoria(categoriaId, (error, productos) => {
