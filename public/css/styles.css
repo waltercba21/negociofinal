@@ -748,7 +748,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 #resultadosBusqueda {
-  width: 100%;
+  width: 90%;
   max-height: 200px;
   overflow-y: auto;
   overflow-x: auto;
