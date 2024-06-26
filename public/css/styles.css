@@ -739,11 +739,11 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 10px;
   text-align: center;
 }
-.buscador {
-  position: relative;
-  display: inline-block;
-  margin-top: 20px;
-  margin-bottom: 220px;
+/* styles.css o en un bloque de <style> en tu plantilla */
+.buscador-presupuesto #entradaBusqueda {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
 }
 
 #resultadosBusqueda {
