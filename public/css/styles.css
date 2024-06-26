@@ -739,7 +739,6 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 10px;
   text-align: center;
 }
-/* styles.css o en un bloque de <style> en tu plantilla */
 .buscador-presupuesto #entradaBusqueda {
   width: 100%;
   padding: 10px;
