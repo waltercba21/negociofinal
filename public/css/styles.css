@@ -743,24 +743,26 @@ background: rgba(0, 63, 125, 0.8);
   position: relative;
   display: inline-block;
   margin-top: 20px;
-  margin-bottom: 220px;
+  margin-bottom: 20px; /* Ajusta este margen según necesites */
+  width: 80%; /* Cambia el ancho según tus necesidades */
 }
 
 #resultadosBusqueda {
-  width: 85%;
-  max-height: 200px; 
-  overflow-y: auto; 
-  overflow-x: auto; 
-  position: absolute; 
-  background-color: #f1f0f0; 
+  width: 100%; /* Ajusta el ancho de los resultados al 100% del contenedor */
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: auto;
+  position: absolute;
+  background-color: #f1f0f0;
   top: 100%;
-  left: 50%; 
+  left: 50%;
   transform: translateX(-50%);
-  border-radius: 5px; 
+  border-radius: 5px;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
   color: #003f7d;
-  font-weight: bolder;
+  font-weight: bold;
 }
+
 #invoice-form input[type="text"],
 #invoice-form input[type="date"],
 #invoice-form input[type="number"] {
