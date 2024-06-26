@@ -743,12 +743,12 @@ background: rgba(0, 63, 125, 0.8);
   position: relative;
   display: inline-block;
   margin-top: 20px;
-  margin-bottom: 20px; /* Ajusta este margen según necesites */
-  width: 80%; /* Cambia el ancho según tus necesidades */
+  margin-bottom: 20px;
+  width: 100%; 
 }
 
 #resultadosBusqueda {
-  width: 100%; /* Ajusta el ancho de los resultados al 100% del contenedor */
+  width: 100%;
   max-height: 200px;
   overflow-y: auto;
   overflow-x: auto;
