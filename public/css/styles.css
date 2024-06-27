@@ -1162,6 +1162,12 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   text-align: center;
 }
+
+.precio-producto {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .precio-producto p{
   font-size: 20px; 
   font-weight:bold;
