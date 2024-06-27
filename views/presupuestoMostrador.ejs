@@ -7,16 +7,16 @@
         <h2>Presupuesto</h2>
         <div id="invoice-details">
           <div class="input-container">
-            <label for="customer-name">Nombre del cliente:</label>
-            <input type="text" id="customer-name" name="customerName">
+            <label for="nombre-cliente">Nombre del cliente:</label>
+            <input type="text" id="nombre-cliente" name="customerName">
           </div>
           <div class="input-container">
-            <label for="invoice-date">Fecha:</label>
-            <input type="date" id="invoice-date" name="invoiceDate">
+            <label for="fecha-presupuesto">Fecha:</label>
+            <input type="date" id="fecha-presupuesto" name="invoiceDate">
           </div>
           <div class="input-container">
-            <label for="invoice-date">N° Presupuesto</label>
-            <p><%= idPresupuesto %></p> <!-- Esto asumimos que se renderizará en tu motor de plantillas -->
+            <label for="numero-presupuesto">N° Presupuesto</label>
+            <p><%= idPresupuesto %></p> <!-- Asumiendo que esto se renderizará correctamente -->
           </div>
         </div>
         <div class="buscador">
@@ -48,6 +48,7 @@
         </div>
       </div>
     </form>
+    
     
    </main>
    <%- include ./layouts/footer.ejs %>
