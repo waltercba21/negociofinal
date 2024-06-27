@@ -977,17 +977,13 @@ background: rgba(0, 63, 125, 0.8);
   border-color: #333; 
 }
 /*---------------------------Todos los Productos -------------------------------*/
-.titulo-principal {
-  text-align: center;
-  color: #1F487E;
-  font-size: 28px;
-  font-weight: bold;
-  padding: 70px 0 10px 0;
-}
 .contenedor-busqueda {
   display: flex;
   flex-direction: column;
+  align-items: center; /* Alinea los elementos al centro horizontalmente */
+  margin-top: 20px; /* Agrega un margen superior para separarlo del título */
 }
+
 .buscador input {
   border-radius: 10px;
   border: none;
@@ -997,8 +993,7 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   width: 50%; 
   height: 40px; 
-  margin: auto;
-  display: block;
+  margin: 20px 0; /* Margen superior e inferior para separar los elementos */
   text-align: center;
 } 
 
@@ -1010,6 +1005,7 @@ background: rgba(0, 63, 125, 0.8);
 .buscador input:valid {
   animation: input-glow 3s infinite;
 }
+
 @keyframes input-glow {
   0%, 100% {
     box-shadow: 0 0 4px #1F487E;
@@ -1026,7 +1022,7 @@ background: rgba(0, 63, 125, 0.8);
   align-items: center;
   justify-content: space-around;
   gap: 10px; 
-  margin-top: -150px;
+  margin-top: 20px; /* Ajusta el margen superior para posicionar adecuadamente */
 }
 
 .selectores-productos label {
@@ -1042,15 +1038,19 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
   border: none;
 }
+
 #categoria_id option, #id_marca option, #modelo_id option {
   font-weight: bold;
 }
+
 #categoria_id option:hover, #id_marca option:hover, #modelo_id option:hover {
   background-color:#007BFF;
 }
+
 .hidden {
   display: none;
 }
+
 /*--------------PRODUCTOS--------------*/
 .contenedor-productos{
   display: grid;
