@@ -829,7 +829,7 @@ presupuestoMostrador: async function(req, res) {
       console.error('Error al guardar el presupuesto:', error.message);
       res.status(500).json({ error: 'Error al guardar el presupuesto.' });
     }
-  },
+  },  
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];
