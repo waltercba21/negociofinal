@@ -989,6 +989,7 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: column;
   align-items: center;
   margin-top: 20px; 
+  margin-left: 50px;
 }
 .buscador input {
   border-radius: 10px;
@@ -999,7 +1000,7 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   width: 50%; 
   height: 40px; 
-  margin: 20px 0;
+  margin: 20px;
   display: block;
   text-align: center;
 } 
