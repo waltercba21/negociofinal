@@ -769,18 +769,15 @@ generarStockPDF: async function (req, res) {
 },
 presupuestoMostrador : async function(req, res) {
     try {
-        const ultimoPresupuesto = await producto.findOne(req.params.id); // Suponiendo que el id del presupuesto está en req.params.id
+        // Lógica para obtener el próximo ID disponible en presupuesto_mostrador
+        const siguienteID = await producto.obtenerSiguienteID(); // Asumiendo que has implementado esta función en tu modelo
 
-        if (!ultimoPresupuesto) {
-            throw new Error('No se encontró ningún presupuesto.');
-        }
-
-        // Renderizar la vista y pasar el presupuesto encontrado
-        res.render('presupuestoMostrador', { presupuesto: ultimoPresupuesto });
+        // Renderizar la vista y pasar el siguiente ID
+        res.render('presupuestoMostrador', { idPresupuesto: siguienteID });
     } catch (error) {
-        console.error('Error al obtener el presupuesto:', error.message);
+        console.error('Error al obtener el siguiente ID de presupuesto:', error.message);
         // Manejar el error apropiadamente
-        res.status(500).send('Error al obtener el presupuesto.');
+        res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
     }
 },
 generarPresupuestoPDF: function(req, res) {

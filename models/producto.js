@@ -33,22 +33,22 @@ module.exports ={
             callback(null, productos);
         });
     },
-    findOne: function(idPresupuesto, callback) {
-        const consulta = `
-            SELECT * FROM presupuesto_mostrador
-            WHERE id = ?`;
+ obtenerSiguienteID: function() {
+        return new Promise((resolve, reject) => {
+            conexion.query('SHOW TABLE STATUS LIKE "presupuesto_mostrador"', (error, resultado) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
 
-        conexion.query(consulta, [idPresupuesto], (error, resultado) => {
-            if (error) {
-                callback(error);
-                return;
-            }
+                if (resultado.length === 0) {
+                    reject(new Error('No se encontró la tabla presupuesto_mostrador.'));
+                    return;
+                }
 
-            if (resultado.length === 0) {
-                callback(null, null); // Si no se encuentra ningún presupuesto con ese id
-            } else {
-                callback(null, resultado[0]); // Retorna el primer resultado encontrado (debería ser único por id)
-            }
+                const siguienteID = resultado[0].Auto_increment;
+                resolve(siguienteID);
+            });
         });
     },
 obtenerTotal: function (conexion, funcion) {

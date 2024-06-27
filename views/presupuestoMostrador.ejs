@@ -15,22 +15,22 @@
               <input type="date" id="invoice-date">
             </div>
             <div class="input-container">
-              <p>ID: <%= presupuesto.id %></p>
+              <p>ID: <%= idPresupuesto %></p> <!-- Utilizamos el ID de presupuesto obtenido del controlador -->
             </div>
           </div>
            <div class="buscador">
-             <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej:Escort, Optica, Faro, Agile">
+             <input type="text" id="entradaBusqueda" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile">
              <div id="resultadosBusqueda"></div> 
            </div>
            <div id="invoice-items">
              <table class="table" id="tabla-factura">
                <thead>
                  <tr>
-                   <th class= 'codigo'scope="col">Código</th>
-                   <th class= 'descripcion'scope="col">Descripción</th>
-                   <th class= 'precio'scope="col">Precio</th>
-                   <th class= 'cantidad'scope="col">Cantidad</th>
-                   <th class= 'subtotal'scope="col">Subtotal</th>
+                   <th class="codigo" scope="col">Código</th>
+                   <th class="descripcion" scope="col">Descripción</th>
+                   <th class="precio" scope="col">Precio</th>
+                   <th class="cantidad" scope="col">Cantidad</th>
+                   <th class="subtotal" scope="col">Subtotal</th>
                  </tr>
                </thead>
                <tbody>
@@ -43,9 +43,10 @@
            <div class="botones-contenedor">
             <button type="submit">Guardar Presupuesto</button>
             <button type="button" id="print-button">Imprimir Presupuesto</button>
-        </div>
+           </div>
          </div>
        </form>
+   </main>
    <%- include ./layouts/footer.ejs %>
    <script src="/js/buscadorPresupuesto.js"></script> 
 </body>
