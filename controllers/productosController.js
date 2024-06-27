@@ -782,10 +782,8 @@ presupuestoMostrador: async function(req, res) {
   },
   procesarFormulario: async function(req, res) {
     try {
-      const { customerName, invoiceDate, totalAmount, invoiceItems } = req.body;
-  
-      // Verifica los datos recibidos
-      console.log(req.body); // Esto te ayudará a verificar qué datos llegan al servidor
+      const { customerName, invoiceDate, totalAmount } = req.body;
+      const invoiceItems = JSON.parse(req.body.invoiceItems);
   
       // Guardar el presupuesto principal
       const presupuesto = {
@@ -811,7 +809,8 @@ presupuestoMostrador: async function(req, res) {
       console.error('Error al guardar el presupuesto:', error.message);
       res.status(500).json({ error: 'Error al guardar el presupuesto.' });
     }
-  },  
+  },
+  
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];
