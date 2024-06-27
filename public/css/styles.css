@@ -989,8 +989,13 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: column;
   align-items: center;
   margin-top: 20px; 
-  margin-left: 50px;
 }
+.buscador {
+  display: flex;
+  justify-content: center; /* Centra el contenido horizontalmente */
+  margin: 20px 0; /* Margen superior e inferior para separar los elementos */
+}
+
 .buscador input {
   border-radius: 10px;
   border: none;
@@ -1000,10 +1005,9 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   width: 50%; 
   height: 40px; 
-  margin: 20px;
-  display: block;
   text-align: center;
 } 
+
 
 .buscador input:focus {
   box-shadow: 0 0 2px #719ECE;
