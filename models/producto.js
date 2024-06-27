@@ -35,22 +35,22 @@ module.exports ={
     },
     obtenerSiguienteID: function() {
         return new Promise((resolve, reject) => {
-          conexion.query('SHOW TABLE STATUS LIKE "presupuestos_mostrador"', (error, resultado) => {
-            if (error) {
-              reject(error);
-              return;
-            }
+            conexion.query('SELECT MAX(id) AS max_id FROM presupuestos_mostrador', (error, resultado) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
     
-            if (resultado.length === 0) {
-              reject(new Error('No se encontró la tabla presupuestos_mostrador.'));
-              return;
-            }
+                let siguienteID = resultado[0].max_id || 0; // Si no hay registros, el siguiente ID será 0
     
-            const siguienteID = resultado[0].Auto_increment;
-            resolve(siguienteID);
-          });
+                // Incrementar el siguiente ID para el próximo presupuesto
+                siguienteID++;
+    
+                resolve(siguienteID);
+            });
         });
-      },
+    },
+    
       guardarPresupuesto: function(presupuesto) {
         return new Promise((resolve, reject) => {
           conexion.query('INSERT INTO presupuestos_mostrador SET ?', presupuesto, (error, resultado) => {
