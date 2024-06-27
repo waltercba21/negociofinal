@@ -767,8 +767,21 @@ generarStockPDF: async function (req, res) {
         res.send(pdfData);
     });
 },
-presupuestoMostrador:function(req, res) {
-    res.render('presupuestoMostrador');
+presupuestoMostrador : async function(req, res) {
+    try {
+        const ultimoPresupuesto = await producto.findOne(req.params.id); // Suponiendo que el id del presupuesto está en req.params.id
+
+        if (!ultimoPresupuesto) {
+            throw new Error('No se encontró ningún presupuesto.');
+        }
+
+        // Renderizar la vista y pasar el presupuesto encontrado
+        res.render('presupuestoMostrador', { presupuesto: ultimoPresupuesto });
+    } catch (error) {
+        console.error('Error al obtener el presupuesto:', error.message);
+        // Manejar el error apropiadamente
+        res.status(500).send('Error al obtener el presupuesto.');
+    }
 },
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();

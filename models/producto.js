@@ -3,6 +3,7 @@ const util = require('util');
 const path = require('path');
 
 module.exports ={
+    
     obtener: function(conexion, pagina, callback) {
         const offset = (pagina - 1) * 20;
         const consulta = `
@@ -30,6 +31,24 @@ module.exports ={
                 }
             });
             callback(null, productos);
+        });
+    },
+    findOne: function(idPresupuesto, callback) {
+        const consulta = `
+            SELECT * FROM presupuesto_mostrador
+            WHERE id = ?`;
+
+        conexion.query(consulta, [idPresupuesto], (error, resultado) => {
+            if (error) {
+                callback(error);
+                return;
+            }
+
+            if (resultado.length === 0) {
+                callback(null, null); // Si no se encuentra ningún presupuesto con ese id
+            } else {
+                callback(null, resultado[0]); // Retorna el primer resultado encontrado (debería ser único por id)
+            }
         });
     },
 obtenerTotal: function (conexion, funcion) {
