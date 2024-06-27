@@ -2,7 +2,7 @@
 <%- include ./layouts/header.ejs %>
 <body>
    <main>
-    <form id="invoice-form" action="./procesarFormulario" method="POST">
+    <form id="invoice-form" action="/productos/procesarFormulario" method="POST">
       <div id="invoice">
         <h2>Presupuesto</h2>
         <div id="invoice-details">
@@ -54,7 +54,7 @@
    <%- include ./layouts/footer.ejs %>
    <script src="/js/buscadorPresupuesto.js"></script> 
    <script>
-     document.getElementById('invoice-form').addEventListener('submit', function(event) {
+   document.getElementById('invoice-form').addEventListener('submit', function(event) {
     event.preventDefault();
 
     const form = event.target;
@@ -71,6 +71,7 @@
       items.push(item);
     });
 
+    console.log('Items:', items);
     formData.append('invoiceItems', JSON.stringify(items));
 
     fetch(form.action, {

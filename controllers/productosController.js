@@ -782,8 +782,26 @@ presupuestoMostrador: async function(req, res) {
   },
   procesarFormulario: async function(req, res) {
     try {
-      const { nombreCliente, fechaPresupuesto, totalPresupuesto } = req.body;
-      const invoiceItems = JSON.parse(req.body.invoiceItems);
+      // Verifica los datos recibidos
+      console.log('Datos recibidos:', req.body);
+  
+      const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
+  
+      // Verifica cada campo por separado
+      console.log('nombreCliente:', nombreCliente);
+      console.log('fechaPresupuesto:', fechaPresupuesto);
+      console.log('totalPresupuesto:', totalPresupuesto);
+      console.log('invoiceItems:', invoiceItems);
+  
+      // Intenta parsear invoiceItems
+      let parsedItems;
+      try {
+        parsedItems = JSON.parse(invoiceItems);
+        console.log('parsedItems:', parsedItems);
+      } catch (error) {
+        console.error('Error al parsear invoiceItems:', error.message);
+        return res.status(400).json({ error: 'Formato de invoiceItems inválido.' });
+      }
   
       // Guardar el presupuesto principal
       const presupuesto = {
@@ -794,13 +812,15 @@ presupuestoMostrador: async function(req, res) {
       const presupuestoId = await producto.guardarPresupuesto(presupuesto);
   
       // Guardar los items del presupuesto
-      const items = invoiceItems.map(item => [
+      const items = parsedItems.map(item => [
         presupuestoId,
         item.producto_id,
         item.cantidad,
         item.precio_unitario,
         item.subtotal
       ]);
+      console.log('Items a guardar:', items);
+  
       const resultado = await producto.guardarItemsPresupuesto(items);
   
       // Manejar el resultado y responder adecuadamente
@@ -810,8 +830,6 @@ presupuestoMostrador: async function(req, res) {
       res.status(500).json({ error: 'Error al guardar el presupuesto.' });
     }
   },
-  
-  
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];
