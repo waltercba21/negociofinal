@@ -29,28 +29,51 @@ module.exports ={
                 } else if (resultado.imagen) {
                     mapaProductos[resultado.id].imagenes.push(resultado.imagen);
                 }
-            });
+            }); 
             callback(null, productos);
         });
     },
- obtenerSiguienteID: function() {
+    obtenerSiguienteID: function() {
         return new Promise((resolve, reject) => {
-            conexion.query('SHOW TABLE STATUS LIKE "presupuesto_mostrador"', (error, resultado) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-
-                if (resultado.length === 0) {
-                    reject(new Error('No se encontró la tabla presupuesto_mostrador.'));
-                    return;
-                }
-
-                const siguienteID = resultado[0].Auto_increment;
-                resolve(siguienteID);
-            });
+          conexion.query('SHOW TABLE STATUS LIKE "presupuestos_mostrador"', (error, resultado) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+    
+            if (resultado.length === 0) {
+              reject(new Error('No se encontró la tabla presupuestos_mostrador.'));
+              return;
+            }
+    
+            const siguienteID = resultado[0].Auto_increment;
+            resolve(siguienteID);
+          });
         });
-    },
+      },
+      guardarPresupuesto: function(presupuesto) {
+        return new Promise((resolve, reject) => {
+          conexion.query('INSERT INTO presupuestos_mostrador SET ?', presupuesto, (error, resultado) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            resolve(resultado.insertId);
+          });
+        });
+      },
+    
+      guardarItemsPresupuesto: function(items) {
+        return new Promise((resolve, reject) => {
+          conexion.query('INSERT INTO presupuestos_mostrador_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?', [items], (error, resultado) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            resolve(resultado);
+          });
+        });
+      },
 obtenerTotal: function (conexion, funcion) {
   if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');

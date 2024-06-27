@@ -767,19 +767,49 @@ generarStockPDF: async function (req, res) {
         res.send(pdfData);
     });
 },
-presupuestoMostrador : async function(req, res) {
+presupuestoMostrador: async function(req, res) {
     try {
-        // Lógica para obtener el próximo ID disponible en presupuesto_mostrador
-        const siguienteID = await producto.obtenerSiguienteID(); // Asumiendo que has implementado esta función en tu modelo
+      // Lógica para obtener el próximo ID disponible en presupuestos_mostrador
+      const siguienteID = await productoModelo.obtenerSiguienteID();
 
-        // Renderizar la vista y pasar el siguiente ID
-        res.render('presupuestoMostrador', { idPresupuesto: siguienteID });
+      // Renderizar la vista y pasar el siguiente ID
+      res.render('presupuestoMostrador', { idPresupuesto: siguienteID });
     } catch (error) {
-        console.error('Error al obtener el siguiente ID de presupuesto:', error.message);
-        // Manejar el error apropiadamente
-        res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
+      console.error('Error al obtener el siguiente ID de presupuesto:', error.message);
+      // Manejar el error apropiadamente
+      res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
     }
-},
+  },
+
+  procesarFormulario: async function(req, res) {
+    try {
+      const { customerName, invoiceDate, totalAmount, invoiceItems } = req.body;
+
+      // Guardar el presupuesto principal
+      const presupuesto = {
+        nombre_cliente: customerName,
+        fecha: invoiceDate,
+        total: totalAmount
+      };
+      const presupuestoId = await productoModelo.guardarPresupuesto(presupuesto);
+
+      // Guardar los items del presupuesto
+      const items = invoiceItems.map(item => [
+        presupuestoId,
+        item.producto_id,
+        item.cantidad,
+        item.precio_unitario,
+        item.subtotal
+      ]);
+      const resultado = await productoModelo.guardarItemsPresupuesto(items);
+
+      // Manejar el resultado y responder adecuadamente
+      res.status(200).json({ presupuestoId, mensaje: 'Presupuesto guardado exitosamente.' });
+    } catch (error) {
+      console.error('Error al guardar el presupuesto:', error.message);
+      res.status(500).json({ error: 'Error al guardar el presupuesto.' });
+    }
+  },
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];
