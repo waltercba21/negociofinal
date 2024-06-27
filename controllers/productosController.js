@@ -782,14 +782,14 @@ presupuestoMostrador: async function(req, res) {
   },
   procesarFormulario: async function(req, res) {
     try {
-      const { customerName, invoiceDate, totalAmount } = req.body;
+      const { nombreCliente, fechaPresupuesto, totalPresupuesto } = req.body;
       const invoiceItems = JSON.parse(req.body.invoiceItems);
   
       // Guardar el presupuesto principal
       const presupuesto = {
-        nombre_cliente: customerName,
-        fecha: invoiceDate,
-        total: totalAmount
+        nombre_cliente: nombreCliente,
+        fecha: fechaPresupuesto,
+        total: totalPresupuesto
       };
       const presupuestoId = await producto.guardarPresupuesto(presupuesto);
   
@@ -810,6 +810,7 @@ presupuestoMostrador: async function(req, res) {
       res.status(500).json({ error: 'Error al guardar el presupuesto.' });
     }
   },
+  
   
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
