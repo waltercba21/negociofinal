@@ -770,7 +770,7 @@ generarStockPDF: async function (req, res) {
 presupuestoMostrador: async function(req, res) {
     try {
       // Lógica para obtener el próximo ID disponible en presupuestos_mostrador
-      const siguienteID = await productoModelo.obtenerSiguienteID();
+      const siguienteID = await producto.obtenerSiguienteID();
 
       // Renderizar la vista y pasar el siguiente ID
       res.render('presupuestoMostrador', { idPresupuesto: siguienteID });
@@ -791,7 +791,7 @@ presupuestoMostrador: async function(req, res) {
         fecha: invoiceDate,
         total: totalAmount
       };
-      const presupuestoId = await productoModelo.guardarPresupuesto(presupuesto);
+      const presupuestoId = await producto.guardarPresupuesto(presupuesto);
 
       // Guardar los items del presupuesto
       const items = invoiceItems.map(item => [
@@ -801,7 +801,7 @@ presupuestoMostrador: async function(req, res) {
         item.precio_unitario,
         item.subtotal
       ]);
-      const resultado = await productoModelo.guardarItemsPresupuesto(items);
+      const resultado = await producto.guardarItemsPresupuesto(items);
 
       // Manejar el resultado y responder adecuadamente
       res.status(200).json({ presupuestoId, mensaje: 'Presupuesto guardado exitosamente.' });
