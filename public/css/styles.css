@@ -1083,7 +1083,7 @@ background: rgba(0, 63, 125, 0.8);
   text-decoration: none;
 }
 .card-link:hover {
-  background-color: #0056b3;
+  background-color: #6a8bae;
 }
 .card {
   position: relative;
@@ -1165,6 +1165,8 @@ background: rgba(0, 63, 125, 0.8);
 .precio-producto p{
   font-size: 20px; 
   font-weight:bold;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: #d90429;
   margin-top: 15px; 
