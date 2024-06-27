@@ -2,51 +2,53 @@
 <%- include ./layouts/header.ejs %>
 <body>
    <main>
-      <form id="invoice-form">
-         <div id="invoice">
-           <h2>Presupuesto</h2>
-           <div id="invoice-details">
-            <div class="input-container">
-              <label for="customer-name">Nombre del cliente:</label>
-              <input type="text" id="customer-name">
-            </div>
-            <div class="input-container">
-              <label for="invoice-date">Fecha:</label>
-              <input type="date" id="invoice-date">
-            </div>
-            <div class="input-container">
-              <label for="invoice-date">N° Presupuesto</label>
-              <p><%= idPresupuesto %></p>
-            </div>
+    <form id="invoice-form" action="/procesarFormulario" method="POST">
+      <div id="invoice">
+        <h2>Presupuesto</h2>
+        <div id="invoice-details">
+          <div class="input-container">
+            <label for="customer-name">Nombre del cliente:</label>
+            <input type="text" id="customer-name" name="customerName">
           </div>
-           <div class="buscador">
-             <input type="text" id="entradaBusqueda" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile">
-             <div id="resultadosBusqueda"></div> 
-           </div>
-           <div id="invoice-items">
-             <table class="table" id="tabla-factura">
-               <thead>
-                 <tr>
-                   <th class="codigo" scope="col">Código</th>
-                   <th class="descripcion" scope="col">Descripción</th>
-                   <th class="precio" scope="col">Precio</th>
-                   <th class="cantidad" scope="col">Cantidad</th>
-                   <th class="subtotal" scope="col">Subtotal</th>
-                 </tr>
-               </thead>
-               <tbody>
-               </tbody>
-             </table>
-           </div>
-           <div id="invoice-total">
-             <label>Total: <input type="number" id="total-amount" readonly></label>
-           </div>
-           <div class="botones-contenedor">
-            <button type="submit">Guardar Presupuesto</button>
-            <button type="button" id="print-button">Imprimir Presupuesto</button>
-           </div>
-         </div>
-       </form>
+          <div class="input-container">
+            <label for="invoice-date">Fecha:</label>
+            <input type="date" id="invoice-date" name="invoiceDate">
+          </div>
+          <div class="input-container">
+            <label for="invoice-date">N° Presupuesto</label>
+            <p><%= idPresupuesto %></p> <!-- Esto asumimos que se renderizará en tu motor de plantillas -->
+          </div>
+        </div>
+        <div class="buscador">
+          <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile">
+          <div id="resultadosBusqueda"></div>
+        </div>
+        <div id="invoice-items">
+          <table class="table" id="tabla-factura">
+            <thead>
+              <tr>
+                <th class="codigo" scope="col">Código</th>
+                <th class="descripcion" scope="col">Descripción</th>
+                <th class="precio" scope="col">Precio</th>
+                <th class="cantidad" scope="col">Cantidad</th>
+                <th class="subtotal" scope="col">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Aquí se generarán dinámicamente los elementos del presupuesto -->
+            </tbody>
+          </table>
+        </div>
+        <div id="invoice-total">
+          <label>Total: <input type="number" id="total-amount" name="totalAmount" readonly></label>
+        </div>
+        <div class="botones-contenedor">
+          <button type="submit">Guardar Presupuesto</button>
+          <button type="button" id="print-button">Imprimir Presupuesto</button>
+        </div>
+      </div>
+    </form>
+    
    </main>
    <%- include ./layouts/footer.ejs %>
    <script src="/js/buscadorPresupuesto.js"></script> 

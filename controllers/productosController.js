@@ -783,7 +783,6 @@ presupuestoMostrador: async function(req, res) {
   procesarFormulario: async function(req, res) {
     try {
       const { customerName, invoiceDate, totalAmount, invoiceItems } = req.body;
-
       // Guardar el presupuesto principal
       const presupuesto = {
         nombre_cliente: customerName,
@@ -791,7 +790,6 @@ presupuestoMostrador: async function(req, res) {
         total: totalAmount
       };
       const presupuestoId = await producto.guardarPresupuesto(presupuesto);
-
       // Guardar los items del presupuesto
       const items = invoiceItems.map(item => [
         presupuestoId,
@@ -801,7 +799,6 @@ presupuestoMostrador: async function(req, res) {
         item.subtotal
       ]);
       const resultado = await producto.guardarItemsPresupuesto(items);
-
       // Manejar el resultado y responder adecuadamente
       res.status(200).json({ presupuestoId, mensaje: 'Presupuesto guardado exitosamente.' });
     } catch (error) {

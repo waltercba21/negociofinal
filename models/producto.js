@@ -50,7 +50,6 @@ module.exports ={
             });
         });
     },
-    
       guardarPresupuesto: function(presupuesto) {
         return new Promise((resolve, reject) => {
           conexion.query('INSERT INTO presupuestos_mostrador SET ?', presupuesto, (error, resultado) => {
@@ -62,7 +61,6 @@ module.exports ={
           });
         });
       },
-    
       guardarItemsPresupuesto: function(items) {
         return new Promise((resolve, reject) => {
           conexion.query('INSERT INTO presupuestos_mostrador_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?', [items], (error, resultado) => {
