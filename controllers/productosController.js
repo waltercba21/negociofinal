@@ -780,7 +780,6 @@ presupuestoMostrador: async function(req, res) {
       res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
     }
   },
-
   procesarFormulario: async function(req, res) {
     try {
       const { customerName, invoiceDate, totalAmount, invoiceItems } = req.body;
