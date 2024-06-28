@@ -835,17 +835,13 @@ background: rgba(0, 63, 125, 0.8);
   background-color: #b80220;
   color: white;
 }
-.success-message {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  margin-top: 10px;
-  text-align: center;
-  display: none; /* Para ocultar inicialmente el mensaje */
-}
+
 .button-container {
   display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px; /* Ajusta la altura según tus necesidades */
+  margin-top: 20px; /* Ajusta el margen superior según tus necesidades */
 }
 .btn-primary-presupuestos {
   background-color: #1F487E;
