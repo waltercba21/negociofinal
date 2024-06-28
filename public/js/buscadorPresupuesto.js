@@ -49,6 +49,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
           setTimeout(() => {
               successMessage.style.display = 'none';
           }, 3000);
+
+          // Recargar la página para generar un nuevo número de presupuesto
+          window.location.reload();
       } else {
           throw new Error(data.error || 'Error al procesar el formulario');
       }
