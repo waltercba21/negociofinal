@@ -76,21 +76,9 @@ module.exports ={
                 FROM presupuestos_mostrador p
             `);
     
-            const [items] = await pool.query(`
-                SELECT i.presupuesto_id, i.producto_id, i.cantidad, i.precio_unitario, i.subtotal
-                FROM items_presupuesto i
-            `);
+            // Procesamiento adicional si es necesario
     
-            // Organizar los datos en una estructura más útil
-            const presupuestosConItems = presupuestos.map(presupuesto => {
-                const itemsPresupuesto = items.filter(item => item.presupuesto_id === presupuesto.id);
-                return {
-                    ...presupuesto,
-                    items: itemsPresupuesto
-                };
-            });
-    
-            return presupuestosConItems;
+            return presupuestos;
         } catch (error) {
             throw new Error('Error al obtener presupuestos: ' + error.message);
         }
