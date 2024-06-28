@@ -46,30 +46,50 @@ module.exports ={
           });
         });
       },
-      guardarPresupuesto: function(presupuesto) {
+      guardarPresupuesto : (presupuesto) => {
         return new Promise((resolve, reject) => {
           conexion.query('INSERT INTO presupuestos_mostrador SET ?', presupuesto, (error, resultado) => {
             if (error) {
               reject(error);
-              return;
+            } else {
+              resolve(resultado.insertId);
             }
-            resolve(resultado.insertId);
           });
         });
-      },
-      guardarItemsPresupuesto: function(items) {
+    },
+    guardarItemsPresupuesto : (items) => {
         return new Promise((resolve, reject) => {
-          const query = 'INSERT INTO presupuesto_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
+          const query = 'INSERT INTO items_presupuesto (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
           conexion.query(query, [items], (error, resultado) => {
             if (error) {
               reject(error);
-              return;
+            } else {
+              resolve(resultado);
             }
-            resolve(resultado);
           });
         });
       },
-    
+       obtenerProductoIdPorCodigo : (codigo) => {
+        return new Promise((resolve, reject) => {
+          const query = `
+            SELECT p.id 
+            FROM productos p
+            JOIN producto_proveedor pp ON p.id = pp.producto_id
+            WHERE pp.codigo = ?
+          `;
+          conexion.query(query, [codigo], (error, resultados) => {
+            if (error) {
+              reject(error);
+            } else {
+              if (resultados.length > 0) {
+                resolve(resultados[0].id);
+              } else {
+                reject(new Error('Producto no encontrado'));
+              }
+            }
+          });
+        });
+      },      
 obtenerTotal: function (conexion, funcion) {
   if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');

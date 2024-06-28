@@ -804,16 +804,20 @@ presupuestoMostrador: async function(req, res) {
         total: totalPresupuesto
       };
   
-      const presupuestoId = await producto.guardarPresupuesto(presupuesto);
-      const items = parsedItems.map(item => [
-        presupuestoId,
-        item.producto_id,
-        item.cantidad,
-        item.precio_unitario,
-        item.subtotal
-      ]);
+      const presupuestoId = await guardarPresupuesto(presupuesto);
   
-      const resultado = await producto.guardarItemsPresupuesto(items);
+      const items = await Promise.all(parsedItems.map(async item => {
+        const producto_id = await obtenerProductoIdPorCodigo(item.producto_id);
+        return [
+          presupuestoId,
+          producto_id,
+          item.cantidad,
+          item.precio_unitario,
+          item.subtotal
+        ];
+      }));
+  
+      await guardarItemsPresupuesto(items);
       res.status(200).json({ presupuestoId, mensaje: 'Presupuesto guardado exitosamente.' });
     } catch (error) {
       console.error('Error al guardar el presupuesto:', error.message);
