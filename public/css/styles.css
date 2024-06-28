@@ -874,7 +874,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 #presupuestos-table {
   width: 100%;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 #presupuestos-table th {
