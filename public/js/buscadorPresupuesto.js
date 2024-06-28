@@ -52,3 +52,64 @@ function calcularTotal() {
   }
   document.getElementById('total-amount').value = total.toFixed(2); // Asegurarse de mostrar el total con dos decimales
 }
+document.getElementById('invoice-form').addEventListener('submit', async function(e) {
+  e.preventDefault(); // Prevenir el envío por defecto del formulario
+  
+  const invoiceItems = [];
+  const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+  
+  for (let i = 0; i < filasFactura.length; i++) {
+      const codigo = filasFactura[i].cells[0].textContent.trim();
+      const descripcion = filasFactura[i].cells[1].textContent.trim();
+      const precio_unitario = parseFloat(filasFactura[i].cells[2].textContent.trim());
+      const cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value.trim());
+      const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim());
+      
+      invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
+  }
+  
+  document.getElementById('invoiceItems').value = JSON.stringify(invoiceItems);
+  
+  // Enviar los datos del formulario mediante fetch
+  try {
+      const response = await fetch('/productos/procesarFormulario', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+              nombreCliente: document.getElementById('nombre-cliente').value.trim(),
+              fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
+              totalPresupuesto: document.getElementById('total-amount').value.trim(),
+              invoiceItems: JSON.stringify(invoiceItems)
+          })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+          alert(data.message); // Mostrar mensaje de éxito
+          // Limpiar todos los campos del formulario después de guardar
+          document.getElementById('nombre-cliente').value = '';
+          document.getElementById('fecha-presupuesto').value = '';
+          document.getElementById('total-amount').value = '';
+          document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].innerHTML = ''; // Limpiar filas de la tabla
+      } else {
+          throw new Error(data.error || 'Error al procesar el formulario');
+      }
+  } catch (error) {
+      console.error('Error al enviar formulario:', error);
+      // Manejar el error, mostrar mensaje al usuario, etc.
+  }
+});
+
+// Dentro de la sección <script> del HTML
+
+// Reemplaza la parte donde muestras el alert(data.message) con SweetAlert2
+Swal.fire({
+  icon: 'success',
+  title: 'Presupuesto Guardado Correctamente',
+  text: data.message
+}).then((result) => {
+  // Aquí puedes agregar lógica adicional después de que el usuario cierre la alerta
+  // Por ejemplo, limpiar los campos del formulario, etc.
+});
