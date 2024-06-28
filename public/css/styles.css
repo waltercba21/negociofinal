@@ -848,11 +848,12 @@ background: rgba(0, 63, 125, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
 }
 .btn-primary-presupuestos {
-  background-color: #007bff;
+  background-color: #1F487E;
+  border-radius: 10px;
   color: #fff;
+  font-weight: bold;
   border: none;
   padding: 10px 20px;
   font-size: 16px;
