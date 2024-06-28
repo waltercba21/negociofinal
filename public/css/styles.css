@@ -899,9 +899,7 @@ background: rgba(0, 63, 125, 0.8);
   width: 20% !important; /* Ancho para Total */
 }
 
-.thead-custom {
-  background-color: #1F487E;
-}
+
 
 .table th, .table td {
   border: 1px solid #dee2e6;
