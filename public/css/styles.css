@@ -879,7 +879,8 @@ background: rgba(0, 63, 125, 0.8);
 
 #presupuestos-table th, #presupuestos-table td {
   padding: 10px;
-  text-align: center; /* Centrar texto */
+  text-align: center; 
+  color: #003f7d;
 }
 
 #presupuestos-table th:nth-child(1) {
@@ -904,14 +905,9 @@ background: rgba(0, 63, 125, 0.8);
 
 .table th, .table td {
   border: 1px solid #dee2e6;
-  color: #003f7d;
+  color: #fff;
   font-weight: bold;
 }
-
-.table-striped tbody tr:nth-of-type(odd) {
-  background-color: #f2f2f2;
-}
-
 .text-right {
   text-align: right;
 }
