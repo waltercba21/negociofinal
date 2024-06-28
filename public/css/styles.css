@@ -865,6 +865,9 @@ background: rgba(0, 63, 125, 0.8);
   border-radius: 5px;
   box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);
 }
+.thead-presupuestos{
+  background-color: #ccc;
+}
 .titulo-listado {
   text-align: center;
   font-size: 26px; 
@@ -884,11 +887,11 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .table-presupuestos th:nth-child(1) {
-  width: 10% !important; /* Ancho para ID Presupuesto */
+  width: 8% !important; /* Ancho para ID Presupuesto */
 }
 
 .table-presupuestos th:nth-child(2) {
-  width: 15% !important; /* Ancho para Fecha */
+  width: 10% !important; /* Ancho para Fecha */
 }
 
 .table-presupuestos th:nth-child(3) {
