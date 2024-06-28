@@ -1,59 +1,5 @@
-document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
-  const busqueda = e.target.value;
-  const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-  resultadosBusqueda.innerHTML = '';
-  if (!busqueda.trim()) {
-    return;
-  }
-  let url = '/productos/api/buscarConCodigoPrecio?q=' + busqueda;
-  const respuesta = await fetch(url);
-  const productos = await respuesta.json();
-  productos.forEach((producto) => {
-    const resultado = document.createElement('div');
-    resultado.textContent = producto.nombre; 
-    resultado.classList.add('resultado-busqueda');
-    resultado.addEventListener('click', () => {
-      const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-      const filaFactura = tablaFactura.insertRow();
-      const celdaCodigoFactura = filaFactura.insertCell(0);
-      const celdaDescripcionFactura = filaFactura.insertCell(1);
-      const celdaPrecioFactura = filaFactura.insertCell(2);
-      const celdaCantidadFactura = filaFactura.insertCell(3);
-      const celdaSubtotalFactura = filaFactura.insertCell(4); 
-      celdaCodigoFactura.textContent = producto.codigo;
-      celdaDescripcionFactura.textContent = producto.nombre; 
-      celdaPrecioFactura.textContent = producto.precio_venta;
-      celdaCantidadFactura.innerHTML = '<input type="number" min="1" value="1">';
-      celdaSubtotalFactura.textContent = producto.precio_venta;
-      resultadosBusqueda.innerHTML = ''; 
-      calcularTotal();
-      celdaCantidadFactura.firstChild.addEventListener('change', (e) => {
-        const cantidad = e.target.value;
-        celdaSubtotalFactura.textContent = cantidad * Number(producto.precio_venta);
-        calcularTotal();
-      });
-      // Agregar las clases a las celdas
-      celdaCodigoFactura.classList.add('codigo');
-      celdaDescripcionFactura.classList.add('descripcion');
-      celdaPrecioFactura.classList.add('precio');
-      celdaCantidadFactura.classList.add('cantidad');
-      celdaSubtotalFactura.classList.add('subtotal');
-    });
-    resultadosBusqueda.appendChild(resultado);
-  });
-});
-
-function calcularTotal() {
-  const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-  let total = 0;
-  for (let i = 0; i < filasFactura.length; i++) {
-    const celdaSubtotal = filasFactura[i].cells[4];
-    total += Number(celdaSubtotal.textContent);
-  }
-  document.getElementById('total-amount').value = total.toFixed(2); // Asegurarse de mostrar el total con dos decimales
-}
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
-  e.preventDefault(); // Prevenir el envío por defecto del formulario
+  e.preventDefault(); // Evita que el formulario se envíe automáticamente
   
   const invoiceItems = [];
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
@@ -64,13 +10,11 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
       const precio_unitario = parseFloat(filasFactura[i].cells[2].textContent.trim());
       const cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value.trim());
       const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim());
-      
       invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
   }
   
   document.getElementById('invoiceItems').value = JSON.stringify(invoiceItems);
   
-  // Enviar los datos del formulario mediante fetch
   try {
       const response = await fetch('/productos/procesarFormulario', {
           method: 'POST',
@@ -86,30 +30,93 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
       });
 
       const data = await response.json();
+      
       if (response.ok) {
           alert(data.message); // Mostrar mensaje de éxito
-          // Limpiar todos los campos del formulario después de guardar
+          // Limpiar campos del formulario y tabla de factura
           document.getElementById('nombre-cliente').value = '';
           document.getElementById('fecha-presupuesto').value = '';
           document.getElementById('total-amount').value = '';
-          document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].innerHTML = ''; // Limpiar filas de la tabla
+          document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].innerHTML = '';
+          
+          // Mostrar mensaje estilizado de éxito
+          const successMessage = document.createElement('div');
+          successMessage.classList.add('success-message');
+          successMessage.textContent = 'Presupuesto guardado correctamente';
+          document.body.appendChild(successMessage);
+
+          // Ocultar el mensaje después de 3 segundos
+          setTimeout(() => {
+              successMessage.style.display = 'none';
+          }, 3000);
       } else {
           throw new Error(data.error || 'Error al procesar el formulario');
       }
   } catch (error) {
       console.error('Error al enviar formulario:', error);
-      // Manejar el error, mostrar mensaje al usuario, etc.
   }
 });
 
-// Después de mostrar el alert(data.message), puedes agregar esto:
-const successMessage = document.createElement('div');
-successMessage.classList.add('success-message');
-successMessage.textContent = data.message;
-document.body.appendChild(successMessage);
+document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
+  const busqueda = e.target.value;
+  const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+  resultadosBusqueda.innerHTML = '';
 
-// Para mostrar el mensaje y luego ocultarlo después de unos segundos
-successMessage.style.display = 'block';
-setTimeout(() => {
-    successMessage.style.display = 'none';
-}, 3000); // Oculta el mensaje después de 3 segundos (3000 milisegundos)
+  if (!busqueda.trim()) {
+      return;
+  }
+
+  let url = '/productos/api/buscarConCodigoPrecio?q=' + busqueda;
+  const respuesta = await fetch(url);
+  const productos = await respuesta.json();
+
+  productos.forEach((producto) => {
+      const resultado = document.createElement('div');
+      resultado.textContent = producto.nombre;
+      resultado.classList.add('resultado-busqueda');
+      resultado.addEventListener('click', () => {
+          const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+          const filaFactura = tablaFactura.insertRow();
+          
+          filaFactura.insertCell(0).textContent = producto.codigo;
+          filaFactura.insertCell(1).textContent = producto.nombre;
+          filaFactura.insertCell(2).textContent = producto.precio_venta;
+          
+          const celdaCantidad = filaFactura.insertCell(3);
+          const inputCantidad = document.createElement('input');
+          inputCantidad.type = 'number';
+          inputCantidad.min = 1;
+          inputCantidad.value = 1;
+          celdaCantidad.appendChild(inputCantidad);
+
+          filaFactura.insertCell(4).textContent = producto.precio_venta;
+
+          // Calcular y actualizar el total
+          calcularTotal();
+
+          // Evento para actualizar subtotal al cambiar la cantidad
+          inputCantidad.addEventListener('change', () => {
+              const cantidad = parseInt(inputCantidad.value.trim());
+              filaFactura.cells[4].textContent = cantidad * parseFloat(producto.precio_venta);
+              calcularTotal();
+          });
+          
+          // Limpiar resultados de búsqueda al seleccionar un producto
+          resultadosBusqueda.innerHTML = '';
+      });
+
+      resultadosBusqueda.appendChild(resultado);
+  });
+});
+
+function calcularTotal() {
+  const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+  let total = 0;
+
+  for (let i = 0; i < filasFactura.length; i++) {
+      const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim());
+      total += subtotal;
+  }
+
+  document.getElementById('total-amount').value = total.toFixed(2);
+}
