@@ -26,6 +26,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       celdaCantidadFactura.innerHTML = '<input type="number" min="1" value="1">';
       celdaSubtotalFactura.textContent = producto.precio_venta;
       resultadosBusqueda.innerHTML = ''; 
+      calcularTotal();
       celdaCantidadFactura.firstChild.addEventListener('change', (e) => {
         const cantidad = e.target.value;
         celdaSubtotalFactura.textContent = cantidad * Number(producto.precio_venta);
@@ -38,7 +39,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       celdaCantidadFactura.classList.add('cantidad');
       celdaSubtotalFactura.classList.add('subtotal');
     });
-
     resultadosBusqueda.appendChild(resultado);
   });
 });
@@ -50,53 +50,5 @@ function calcularTotal() {
     const celdaSubtotal = filasFactura[i].cells[4];
     total += Number(celdaSubtotal.textContent);
   }
-  document.getElementById('total-amount').value = total;
+  document.getElementById('total-amount').value = total.toFixed(2); // Asegurarse de mostrar el total con dos decimales
 }
-$(document).ready(function() {
-  console.log("Documento listo");
-  $('#print-button').click(function(e) {
-      console.log("Botón clickeado");
-      e.preventDefault();
-      let datos = {
-          nombreCliente: $('#customer-name').val(),
-          fecha: $('#invoice-date').val(),
-          numeroPresupuesto: $('#invoice-number').val(),
-          productos: []
-      };
-      console.log("Datos iniciales: ", datos);
-      $('#tabla-factura tbody tr').each(function() {
-        let cantidad = $(this).find('.cantidad').text();
-        if (!cantidad) {
-            console.error("La cantidad del producto no está definida");
-            return;
-        }
-        let producto = {
-            codigo: $(this).find('.codigo').text(),
-            descripcion: $(this).find('.descripcion').text(),
-            precio: $(this).find('.precio').text(),
-            cantidad: cantidad,
-            subtotal: $(this).find('.subtotal').text()
-        };
-        console.log("Producto: ", producto);
-        datos.productos.push(producto);
-    });
-      console.log("Datos finales: ", datos);
-      $.ajax({
-        url: '/productos/generarPresupuestoPDF',
-        type: 'POST',
-        data: JSON.stringify(datos),
-        contentType: 'application/json',
-        success: function(data) {
-            console.log("Respuesta del servidor: ", data);
-            var blob = new Blob([data], {type: 'application/pdf'});
-            var link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = 'Presupuesto.pdf';
-            link.click();
-        },
-        error: function(jqXHR, textStatus, error) {
-            console.error("Error en la petición: " + textStatus, error);
-        }
-    });
-  });
-});
