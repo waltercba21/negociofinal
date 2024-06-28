@@ -52,8 +52,9 @@
     
    </main>
    <%- include ./layouts/footer.ejs %>
+   <script src="/js/buscadorPresupuesto.js"></script> 
    <script>
-    document.getElementById('invoice-form').addEventListener('submit', async function(e) {
+ document.getElementById('invoice-form').addEventListener('submit', async function(e) {
         e.preventDefault(); // Prevenir el envío por defecto del formulario
         
         const invoiceItems = [];
@@ -98,5 +99,5 @@
             // Manejar el error, mostrar mensaje al usuario, etc.
         }
     });
-   </script>
+  </script>
 </body>
