@@ -878,6 +878,9 @@ background: rgba(0, 63, 125, 0.8);
   margin-top: 20px;
   border-collapse: collapse;
 }
+.thead-custom {
+  background-color: #1F487E; /* Color de fondo de la cabecera */
+}
 
 .table th, .table td {
   border: 1px solid #dee2e6;
