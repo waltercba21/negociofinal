@@ -25,35 +25,35 @@
     </main>
     
     <script src="/js/listadoFacturas.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', function() {
-        cargarPresupuestos();
-    });
-    
-    function cargarPresupuestos() {
-        fetch('/api/presupuestos') // Endpoint para obtener los presupuestos
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.querySelector('#presupuestos-table tbody');
-                let totalPresupuestos = 0;
-    
-                data.forEach(presupuesto => {
-                    totalPresupuestos += parseFloat(presupuesto.total); // Convertir a número flotante si es necesario
-                    const row = `
-                        <tr>
-                            <td>${presupuesto.id}</td>
-                            <td>${presupuesto.fecha}</td>
-                            <td>${presupuesto.nombre_cliente}</td>
-                            <td>${presupuesto.total}</td>
-                        </tr>
-                    `;
-                    tableBody.innerHTML += row;
-                });
-    
-                // Mostrar el total calculado
-                document.getElementById('total-presupuestos').textContent = totalPresupuestos.toFixed(2);
-            })
-            .catch(error => console.error('Error al cargar los presupuestos:', error));
-    }
-    
+    <script>
+ocument.addEventListener('DOMContentLoaded', function() {
+    cargarPresupuestos();
+});
+
+function cargarPresupuestos() {
+    fetch('/api/presupuestos') // Endpoint para obtener los presupuestos
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.querySelector('#presupuestos-table tbody');
+            let totalPresupuestos = 0;
+
+            data.forEach(presupuesto => {
+                totalPresupuestos += parseFloat(presupuesto.total); // Convertir a número flotante si es necesario
+                const row = `
+                    <tr>
+                        <td>${presupuesto.id}</td>
+                        <td>${presupuesto.fecha}</td>
+                        <td>${presupuesto.nombre_cliente}</td>
+                        <td>${presupuesto.total}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+
+            // Mostrar el total calculado
+            document.getElementById('total-presupuestos').textContent = totalPresupuestos.toFixed(2);
+        })
+        .catch(error => console.error('Error al cargar los presupuestos:', error));
+}
         </script>
 </body>
