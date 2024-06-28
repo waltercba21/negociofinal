@@ -914,8 +914,13 @@ background: rgba(0, 63, 125, 0.8);
 
 #total-presupuestos {
   font-weight: bold;
-  color: #1F487E;
+  color: #b30000;
 }
+.tfoot-total {
+  font-weight: bold;
+  color: #b30000;
+}
+
 
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
