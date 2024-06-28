@@ -868,6 +868,9 @@ background: rgba(0, 63, 125, 0.8);
 .thead-presupuestos{
   background-color: #ccc;
 }
+.table-presupuestos th {
+  background-color: #ccc;
+}
 .titulo-listado {
   text-align: center;
   font-size: 26px; 
