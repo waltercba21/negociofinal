@@ -836,7 +836,7 @@ background: rgba(0, 63, 125, 0.8);
   color: white;
 }
 
-.button-container {
+.button-container-presupuesto {
   display: flex;
   justify-content: center;
   align-items: center;
