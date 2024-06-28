@@ -38,11 +38,11 @@
               <!-- Aquí se generarán dinámicamente los elementos del presupuesto -->
               <!-- Ejemplo de fila -->
               <tr>
-                <td class="codigo" data-product-id="123">OP020079</td>
-                <td class="descripcion">Óptica Ford Falc</td>
-                <td class="precio">23700.00</td>
-                <td class="cantidad"><input type="number" value="3"></td>
-                <td class="subtotal">71100</td>
+                <td class="codigo" data-product-id=""></td>
+                <td class="descripcion"></td>
+                <td class="precio"></td>
+                <td class="cantidad"><input type="number"></td>
+                <td class="subtotal"></td>
               </tr>
             </tbody>
           </table>
@@ -57,60 +57,7 @@
       </div>
     </form>
     
-    
-    
    </main>
    <%- include ./layouts/footer.ejs %>
    <script src="/js/buscadorPresupuesto.js"></script> 
-   <script>
-  document.getElementById('invoice-form').addEventListener('submit', function(event) {
-  event.preventDefault();
-
-  const form = event.target;
-  const formData = new FormData(form);
-  const items = [];
-
-  document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
-    const item = {
-      producto_id: row.querySelector('.codigo').dataset.productId, // Usar data attribute para id de producto
-      cantidad: row.querySelector('.cantidad input').value.trim(),
-      precio_unitario: row.querySelector('.precio').textContent.trim(),
-      subtotal: row.querySelector('.subtotal').textContent.trim()
-    };
-    items.push(item);
-  });
-
-  console.log('Items:', items);
-
-  const data = {
-    nombreCliente: formData.get('nombreCliente'),
-    fechaPresupuesto: formData.get('fechaPresupuesto'),
-    searchInput: formData.get('searchInput'),
-    totalPresupuesto: formData.get('totalPresupuesto'),
-    invoiceItems: JSON.stringify(items)
-  };
-
-  console.log('Datos a enviar:', data);
-
-  fetch(form.action, {
-    method: form.method,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.error) {
-      alert('Error al guardar el presupuesto: ' + data.error);
-    } else {
-      alert('Presupuesto guardado exitosamente. ID: ' + data.presupuestoId);
-    }
-  })
-  .catch(error => {
-    console.error('Error al enviar el formulario:', error);
-    alert('Error al guardar el presupuesto.');
-  });
-});
-  </script>
 </body>
