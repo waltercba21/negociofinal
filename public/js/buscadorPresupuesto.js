@@ -102,14 +102,14 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
   }
 });
 
-// Dentro de la sección <script> del HTML
+// Después de mostrar el alert(data.message), puedes agregar esto:
+const successMessage = document.createElement('div');
+successMessage.classList.add('success-message');
+successMessage.textContent = data.message;
+document.body.appendChild(successMessage);
 
-// Reemplaza la parte donde muestras el alert(data.message) con SweetAlert2
-Swal.fire({
-  icon: 'success',
-  title: 'Presupuesto Guardado Correctamente',
-  text: data.message
-}).then((result) => {
-  // Aquí puedes agregar lógica adicional después de que el usuario cierre la alerta
-  // Por ejemplo, limpiar los campos del formulario, etc.
-});
+// Para mostrar el mensaje y luego ocultarlo después de unos segundos
+successMessage.style.display = 'block';
+setTimeout(() => {
+    successMessage.style.display = 'none';
+}, 3000); // Oculta el mensaje después de 3 segundos (3000 milisegundos)

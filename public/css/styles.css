@@ -835,7 +835,15 @@ background: rgba(0, 63, 125, 0.8);
   background-color: #b80220;
   color: white;
 }
-
+.success-message {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin-top: 10px;
+  text-align: center;
+  display: none; /* Para ocultar inicialmente el mensaje */
+}
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
   display: flex;
