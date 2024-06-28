@@ -878,7 +878,7 @@ background: rgba(0, 63, 125, 0.8);
   border-collapse: collapse;
 }
 table {
-  width: 100%;
+  width: 80%;
   table-layout: fixed;
 }
 
