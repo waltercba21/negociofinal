@@ -71,7 +71,7 @@ module.exports ={
       },
       getAllPresupuestos : async () => {
         try {
-            const [presupuestos] = await pool.query(`
+            const [presupuestos] = await conexion.query(`
                 SELECT p.id, p.nombre_cliente, p.fecha, p.total
                 FROM presupuestos_mostrador p
             `);

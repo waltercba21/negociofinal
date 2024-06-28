@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function cargarPresupuestos() {
-    fetch('/api/presupuestos') // Endpoint para obtener los presupuestos
+    fetch('/productos/api/presupuestos')
         .then(response => response.json())
         .then(data => {
             const tableBody = document.querySelector('#presupuestos-table tbody');
