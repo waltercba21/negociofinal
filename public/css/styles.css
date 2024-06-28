@@ -844,6 +844,23 @@ background: rgba(0, 63, 125, 0.8);
   text-align: center;
   display: none; /* Para ocultar inicialmente el mensaje */
 }
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.btn-primary-presupuestos {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.btn-primary-presupuestos:hover {
+  background-color: #0056b3;
+}
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
   display: flex;
