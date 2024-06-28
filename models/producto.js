@@ -78,7 +78,14 @@ module.exports ={
                 if (error) {
                     reject(new Error('Error al obtener presupuestos: ' + error.message));
                 } else {
-                    resolve(resultados);
+                    // Formatear la fecha antes de resolver la promesa
+                    const presupuestosFormateados = resultados.map(presupuesto => {
+                        return {
+                            ...presupuesto,
+                            fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES')  // Cambia 'es-ES' según tu localización
+                        };
+                    });
+                    resolve(presupuestosFormateados);
                 }
             });
         });
