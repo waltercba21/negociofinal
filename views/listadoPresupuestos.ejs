@@ -1,7 +1,7 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body>
-    <main class="container-listadoPresupuesto mt-5">
+    <main class="container-listadoPresupuesto">
         <h2 class="titulo-listado">Listado de Presupuestos</h2>
         <table id="presupuestos-table" class="table table-striped">
             <thead class="thead-custom">
@@ -38,7 +38,7 @@ function cargarPresupuestos() {
             let totalPresupuestos = 0;
 
             data.forEach(presupuesto => {
-                totalPresupuestos += parseFloat(presupuesto.total); // Convertir a número flotante si es necesario
+                totalPresupuestos += parseFloat(presupuesto.total); 
                 const row = `
                     <tr>
                         <td>${presupuesto.id}</td>
