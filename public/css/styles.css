@@ -840,8 +840,7 @@ background: rgba(0, 63, 125, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100px; /* Ajusta la altura según tus necesidades */
-  margin-top: 20px; /* Ajusta el margen superior según tus necesidades */
+  margin: 20px 0; /* Margen superior e inferior */
 }
 .btn-primary-presupuestos {
   background-color: #1F487E;
