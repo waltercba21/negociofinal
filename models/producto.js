@@ -69,19 +69,19 @@ module.exports ={
           });
         });
       },
-      getAllPresupuestos : async () => {
-        try {
-            const [presupuestos] = await conexion.query(`
+      getAllPresupuestos : () => {
+        return new Promise((resolve, reject) => {
+            conexion.query(`
                 SELECT p.id, p.nombre_cliente, p.fecha, p.total
                 FROM presupuestos_mostrador p
-            `);
-    
-            // Procesamiento adicional si es necesario
-    
-            return presupuestos;
-        } catch (error) {
-            throw new Error('Error al obtener presupuestos: ' + error.message);
-        }
+            `, (error, resultados) => {
+                if (error) {
+                    reject(new Error('Error al obtener presupuestos: ' + error.message));
+                } else {
+                    resolve(resultados);
+                }
+            });
+        });
     },
        obtenerProductoIdPorCodigo : (codigo) => {
         return new Promise((resolve, reject) => {
