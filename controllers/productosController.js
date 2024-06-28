@@ -817,8 +817,9 @@ presupuestoMostrador: async function(req, res) {
         ];
       }));
   
-      await producto.guardarItemsPresupuesto(items); // Usar producto.guardarItemsPresupuesto
-      res.status(200).json({ presupuestoId, mensaje: 'Presupuesto guardado exitosamente.' });
+      await producto.guardarItemsPresupuesto(items); 
+      res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
+
     } catch (error) {
       console.error('Error al guardar el presupuesto:', error.message);
       res.status(500).json({ error: 'Error al guardar el presupuesto.' });
