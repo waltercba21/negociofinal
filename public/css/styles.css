@@ -892,15 +892,15 @@ th:nth-child(1) {
 }
 
 th:nth-child(2) {
-  width: 20%; /* Ancho para Fecha */
+  width: 10%; /* Ancho para Fecha */
 }
 
 th:nth-child(3) {
-  width: 40%; /* Ancho para Cliente */
+  width: 30%; /* Ancho para Cliente */
 }
 
 th:nth-child(4) {
-  width: 30%; /* Ancho para Total */
+  width: 15%; /* Ancho para Total */
 }
 .thead-custom {
   background-color: #1F487E; 
