@@ -69,6 +69,37 @@ module.exports ={
           });
         });
       },
+      getAllPresupuestos : async () => {
+        try {
+            const [presupuestos] = await pool.query(`
+                SELECT p.id, p.nombre_cliente, p.fecha, p.total, i.producto_id, i.cantidad, i.precio_unitario, i.subtotal
+                FROM presupuestos_mostrador p
+                LEFT JOIN items_presupuesto i ON p.id = i.presupuesto_id
+            `);
+    
+            // Organizar los datos en una estructura más útil si es necesario
+            const resultado = presupuestos.reduce((acc, row) => {
+                const { id, nombre_cliente, fecha, total, producto_id, cantidad, precio_unitario, subtotal } = row;
+                if (!acc[id]) {
+                    acc[id] = {
+                        id,
+                        nombre_cliente,
+                        fecha,
+                        total,
+                        items: []
+                    };
+                }
+                if (producto_id) {
+                    acc[id].items.push({ producto_id, cantidad, precio_unitario, subtotal });
+                }
+                return acc;
+            }, {});
+    
+            return Object.values(resultado);
+        } catch (error) {
+            throw new Error('Error al obtener presupuestos: ' + error.message);
+        }
+    },
        obtenerProductoIdPorCodigo : (codigo) => {
         return new Promise((resolve, reject) => {
           const query = `

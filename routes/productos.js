@@ -32,6 +32,8 @@ router.get('/proveedores', productosController.proveedores);
 router.get('/crear', productosController.crear);
 router.get('/presupuestoMostrador', productosController.presupuestoMostrador);
 router.post('/procesarFormulario', productosController.procesarFormulario);
+router.get('/listadoPresupuestos', productosController.listadoPresupuestos);
+router.get('/api/presupuestos', productosController.getPresupuestos);
 router.get('/generarPDF', productosController.generarPDF);
 router.get('/generarStockPDF', productosController.generarStockPDF);
 router.get('/editar/:id', productosController.editar)

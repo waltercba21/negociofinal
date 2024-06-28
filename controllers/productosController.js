@@ -825,6 +825,18 @@ presupuestoMostrador: async function(req, res) {
       res.status(500).json({ error: 'Error al guardar el presupuesto.' });
     }
   },
+  listadoPresupuestos : (req, res) => {
+    res.render('listadoPresupuestos');
+},
+getPresupuestos : async (req, res) => {
+    try {
+        const presupuestos = await producto.getAllPresupuestos();
+        res.json(presupuestos);
+    } catch (error) {
+        console.error('Error al obtener presupuestos:', error);
+        res.status(500).json({ error: 'Error al obtener presupuestos' });
+    }
+},
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];
