@@ -883,23 +883,21 @@ background: rgba(0, 63, 125, 0.8);
   color: #003f7d;
 }
 
-#presupuestos-table th:nth-child(1) {
+.table-presupuestos th:nth-child(1) {
   width: 10% !important; /* Ancho para ID Presupuesto */
 }
 
-#presupuestos-table th:nth-child(2) {
+.table-presupuestos th:nth-child(2) {
   width: 15% !important; /* Ancho para Fecha */
 }
 
-#presupuestos-table th:nth-child(3) {
+.table-presupuestos th:nth-child(3) {
   width: 35% !important; /* Ancho para Cliente */
 }
 
-#presupuestos-table th:nth-child(4) {
+.table-presupuestos th:nth-child(4) {
   width: 20% !important; /* Ancho para Total */
 }
-
-
 
 .table th, .table td {
   border: 1px solid #dee2e6;
