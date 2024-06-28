@@ -872,12 +872,12 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 20px; 
   font-weight: bold;
 }
-#presupuestos-table {
+.table-presupuestos {
   width: 100%;
   table-layout: auto;
 }
 
-#presupuestos-table th, #presupuestos-table td {
+.table-presupuestos th, .table-presupuestos td {
   padding: 10px;
   text-align: center; 
   color: #003f7d;
