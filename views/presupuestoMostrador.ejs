@@ -52,4 +52,29 @@
    </main>
    <%- include ./layouts/footer.ejs %>
    <script src="/js/buscadorPresupuesto.js"></script> 
+   <script>
+    document.getElementById('invoice-form').addEventListener('submit', function(e) {
+      const invoiceItems = [];
+      const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+  
+      for (let i = 0; i < filasFactura.length; i++) {
+        const fila = filasFactura[i];
+        const producto_id = fila.cells[0].textContent; // Ajustar según cómo obtienes el ID del producto
+        const descripcion = fila.cells[1].textContent;
+        const precio_unitario = parseFloat(fila.cells[2].textContent);
+        const cantidad = parseInt(fila.cells[3].getElementsByTagName('input')[0].value);
+        const subtotal = parseFloat(fila.cells[4].textContent);
+  
+        invoiceItems.push({
+          producto_id: producto_id,
+          descripcion: descripcion,
+          precio_unitario: precio_unitario,
+          cantidad: cantidad,
+          subtotal: subtotal
+        });
+      }
+  
+      document.getElementById('invoiceItems').value = JSON.stringify(invoiceItems);
+    });
+  </script>
 </body>

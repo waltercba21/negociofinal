@@ -35,21 +35,17 @@ module.exports ={
     },
     obtenerSiguienteID: function() {
         return new Promise((resolve, reject) => {
-            conexion.query('SELECT MAX(id) AS max_id FROM presupuestos_mostrador', (error, resultado) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-    
-                let siguienteID = resultado[0].max_id || 0; // Si no hay registros, el siguiente ID será 0
-    
-                // Incrementar el siguiente ID para el próximo presupuesto
-                siguienteID++;
-    
-                resolve(siguienteID);
-            });
+          conexion.query('SELECT MAX(id) AS max_id FROM presupuestos_mostrador', (error, resultado) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            let siguienteID = resultado[0].max_id || 0;
+            siguienteID++;
+            resolve(siguienteID);
+          });
         });
-    },
+      },
       guardarPresupuesto: function(presupuesto) {
         return new Promise((resolve, reject) => {
           conexion.query('INSERT INTO presupuestos_mostrador SET ?', presupuesto, (error, resultado) => {
@@ -63,7 +59,8 @@ module.exports ={
       },
       guardarItemsPresupuesto: function(items) {
         return new Promise((resolve, reject) => {
-          conexion.query('INSERT INTO presupuestos_mostrador_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?', [items], (error, resultado) => {
+          const query = 'INSERT INTO presupuesto_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
+          conexion.query(query, [items], (error, resultado) => {
             if (error) {
               reject(error);
               return;
@@ -72,6 +69,7 @@ module.exports ={
           });
         });
       },
+    
 obtenerTotal: function (conexion, funcion) {
   if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');

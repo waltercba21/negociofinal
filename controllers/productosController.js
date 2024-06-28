@@ -780,7 +780,7 @@ presupuestoMostrador: async function(req, res) {
       res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
     }
   },
-  procesarFormulario: async function(req, res) {
+  procesarFormulario : async (req, res) => {
     try {
       console.log('Datos recibidos:', req.body);
       const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
@@ -788,6 +788,7 @@ presupuestoMostrador: async function(req, res) {
       console.log('fechaPresupuesto:', fechaPresupuesto);
       console.log('totalPresupuesto:', totalPresupuesto);
       console.log('invoiceItems:', invoiceItems);
+  
       let parsedItems;
       try {
         parsedItems = JSON.parse(invoiceItems);
@@ -796,11 +797,13 @@ presupuestoMostrador: async function(req, res) {
         console.error('Error al parsear invoiceItems:', error.message);
         return res.status(400).json({ error: 'Formato de invoiceItems inválido.' });
       }
+  
       const presupuesto = {
         nombre_cliente: nombreCliente,
         fecha: fechaPresupuesto,
         total: totalPresupuesto
       };
+  
       const presupuestoId = await producto.guardarPresupuesto(presupuesto);
       const items = parsedItems.map(item => [
         presupuestoId,
@@ -809,14 +812,14 @@ presupuestoMostrador: async function(req, res) {
         item.precio_unitario,
         item.subtotal
       ]);
-      console.log('Items a guardar:', items);
+  
       const resultado = await producto.guardarItemsPresupuesto(items);
       res.status(200).json({ presupuestoId, mensaje: 'Presupuesto guardado exitosamente.' });
     } catch (error) {
       console.error('Error al guardar el presupuesto:', error.message);
       res.status(500).json({ error: 'Error al guardar el presupuesto.' });
     }
-  },  
+  },
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];
