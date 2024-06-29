@@ -883,7 +883,7 @@ background: rgba(0, 63, 125, 0.8);
   table-layout: auto;
 }
 
-.table-presupuestos th, .table-presupuestos td {
+.table-presupuestos th{
   padding: 10px;
   text-align: center; 
   color: #003f7d;
@@ -919,6 +919,10 @@ background: rgba(0, 63, 125, 0.8);
   color: #b30000;
 }
 .tfoot-total {
+  font-weight: bold;
+  color: #b30000;
+}
+.table-presupuestos td {
   font-weight: bold;
   color: #b30000;
 }
