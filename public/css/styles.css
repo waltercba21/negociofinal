@@ -922,7 +922,7 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   color: #b30000;
 }
-.table-presupuestos td {
+.table-presupuestos .td-presupuestos {
   font-weight: bold;
   color: #b30000;
 }
