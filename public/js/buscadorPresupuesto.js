@@ -102,7 +102,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       resultadosBusqueda.innerHTML = '';
     }
   });
-  
   function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
@@ -111,7 +110,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim());
       total += subtotal;
     }
-  
     document.getElementById('total-amount').value = total.toFixed(2);
   }
   
