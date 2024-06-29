@@ -20,9 +20,6 @@ function calcularNumeroDePaginas(conexion) {
         });
     });
 }
-function formatearNumero(num) {
-    return num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&.').replace(/\.(\d{2})$/, ',$1');
-  }
 
 module.exports = {
     index : function (req,res){
@@ -770,11 +767,11 @@ generarStockPDF: async function (req, res) {
         res.send(pdfData);
     });
 },
-presupuestoMostrador : async function(req, res) {
+presupuestoMostrador: async function(req, res) {
     try {
       // Lógica para obtener el próximo ID disponible en presupuestos_mostrador
       const siguienteID = await producto.obtenerSiguienteID();
-  
+
       // Renderizar la vista y pasar el siguiente ID
       res.render('presupuestoMostrador', { idPresupuesto: siguienteID });
     } catch (error) {
@@ -807,29 +804,33 @@ presupuestoMostrador : async function(req, res) {
         total: totalPresupuesto
       };
   
-      // Formatear los precios en parsedItems
-      const formattedItems = parsedItems.map(item => ({
-        ...item,
-        precio_unitario: formatearNumero(item.precio_unitario),
-        subtotal: formatearNumero(item.subtotal)
+      const presupuestoId = await producto.guardarPresupuesto(presupuesto); // Usar producto.guardarPresupuesto
+  
+      const items = await Promise.all(parsedItems.map(async item => {
+        const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id); // Usar producto.obtenerProductoIdPorCodigo
+        return [
+          presupuestoId,
+          producto_id,
+          item.cantidad,
+          item.precio_unitario,
+          item.subtotal
+        ];
       }));
-      console.log('formattedItems:', formattedItems);
-      res.json({ message: 'Presupuesto guardado correctamente.' });
+  
+      await producto.guardarItemsPresupuesto(items); 
+      res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
+
     } catch (error) {
-      console.error('Error al procesar el formulario:', error.message);
-      res.status(500).json({ error: 'Error al procesar el formulario.' });
+      console.error('Error al guardar el presupuesto:', error.message);
+      res.status(500).json({ error: 'Error al guardar el presupuesto.' });
     }
   },
   listadoPresupuestos : (req, res) => {
     res.render('listadoPresupuestos');
 },
-getPresupuestos: async (req, res) => {
+getPresupuestos : async (req, res) => {
     try {
-        const { fecha } = req.query;
-        const fechaInicio = fecha;
-        const fechaFin = fecha;
-
-        const presupuestos = await producto.getPresupuestosByFecha(fechaInicio, fechaFin);
+        const presupuestos = await producto.getAllPresupuestos();
         res.json(presupuestos);
     } catch (error) {
         console.error('Error al obtener presupuestos:', error);
