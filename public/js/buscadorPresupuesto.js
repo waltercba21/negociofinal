@@ -58,6 +58,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   const url = '/productos/api/buscar?q=' + busqueda;
   const respuesta = await fetch(url);
   const productos = await respuesta.json();
+
   productos.forEach((producto) => {
     const resultado = document.createElement('div');
     resultado.textContent = `${producto.codigo} - ${producto.nombre} - ${formatearNumero(producto.precio_venta)}`;
