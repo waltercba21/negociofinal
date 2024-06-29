@@ -60,7 +60,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   const productos = await respuesta.json();
   productos.forEach((producto) => {
     const resultado = document.createElement('div');
-    resultado.textContent = producto.nombre;
+    resultado.textContent = `${producto.codigo} - ${producto.nombre} - ${formatearNumero(producto.precio_venta)}`;
     resultado.classList.add('resultado-busqueda');
 
     resultado.addEventListener('click', () => {
