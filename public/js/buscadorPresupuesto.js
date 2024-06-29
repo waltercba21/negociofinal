@@ -1,4 +1,5 @@
 function formatCurrency(value) {
+  // Formatea el valor numérico a un string con separador de miles y coma como decimal
   return value.toLocaleString('es-ES', { minimumFractionDigits: 2 });
 }
 
@@ -10,9 +11,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
   for (let i = 0; i < filasFactura.length; i++) {
     const codigo = filasFactura[i].cells[0].textContent.trim();
     const descripcion = filasFactura[i].cells[1].textContent.trim();
-    const precio_unitario = parseFloat(filasFactura[i].cells[2].textContent.trim());
+    const precio_unitario = parseFloat(filasFactura[i].cells[2].textContent.trim().replace('.', '').replace(',', '.'));
     const cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value.trim());
-    const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim());
+    const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim().replace('.', '').replace(',', '.'));
     invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
   }
   
@@ -123,7 +124,7 @@ function calcularTotal() {
   let total = 0;
 
   for (let i = 0; i < filasFactura.length; i++) {
-    const subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace('.', '').replace(',', '.').trim());
+    const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim().replace('.', '').replace(',', '.'));
     total += subtotal;
   }
 
