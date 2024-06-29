@@ -749,7 +749,7 @@ background: rgba(0, 63, 125, 0.8);
 
 #resultadosBusqueda {
   width: 90%;
-  font-size: 12px;
+  font-size: 14px;
   max-height: 200px;
   overflow-y: auto;
   overflow-x: auto;
@@ -786,6 +786,7 @@ background: rgba(0, 63, 125, 0.8);
 #invoice-form .table th,
 #invoice-form .table td {
   border: 1px solid #dee2e6;
+  color: #003f7d;
   padding: 10px;
   text-align: left;
 }
@@ -841,7 +842,7 @@ background: rgba(0, 63, 125, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 20px 0; /* Margen superior e inferior */
+  margin: 20px 0; 
 }
 .btn-primary-presupuestos {
   background-color: #1F487E;
