@@ -1,14 +1,21 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
+
 <body>
     <main class="container-listadoPresupuesto">
         <h2 class="titulo-listado">Listado de Presupuestos</h2>
+
+        <!-- Date picker for selecting the date -->
+        <label for="fecha">Seleccione la fecha:</label>
+        <input type="date" id="fecha" value="<%= new Date().toISOString().split('T')[0] %>">
+        <button id="buscar">Buscar</button>
+
         <table id="presupuestos-table" class="table-presupuestos">
             <thead class="thead-presupuestos">
                 <tr>
                     <th>ID Presupuesto</th>
                     <th>Fecha</th>
-                    <th>Cliente</th>    
+                    <th>Cliente</th>
                     <th>Total</th>
                 </tr>
             </thead>
@@ -23,38 +30,44 @@
             </tfoot>
         </table>
     </main>
-    
+
     <script src="/js/listadoFacturas.js"></script>
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    cargarPresupuestos();
-});
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            cargarPresupuestos(today);
 
-function cargarPresupuestos() {
-    fetch('/productos/api/presupuestos')
-        .then(response => response.json())
-        .then(data => {
-            const tableBody = document.querySelector('#presupuestos-table tbody');
-            let totalPresupuestos = 0;
-
-            data.forEach(presupuesto => {
-                totalPresupuestos += parseFloat(presupuesto.total.replace(/\./g, '').replace(',', '.')); // Suma correctamente el total
-                const row = `
-                    <tr>
-                        <td>${presupuesto.id}</td>
-                        <td>${presupuesto.fecha}</td>
-                        <td>${presupuesto.nombre_cliente}</td>
-                        <td>${presupuesto.total}</td>
-                    </tr>
-                `;
-                tableBody.innerHTML += row;
+            document.getElementById('buscar').addEventListener('click', function() {
+                const selectedDate = document.getElementById('fecha').value;
+                cargarPresupuestos(selectedDate);
             });
+        });
 
-            // Mostrar el total calculado
-            document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(totalPresupuestos);
-        })
-        .catch(error => console.error('Error al cargar los presupuestos:', error));
-}
+        function cargarPresupuestos(fecha) {
+            fetch(`/productos/api/presupuestos?fecha=${fecha}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector('#presupuestos-table tbody');
+                    tableBody.innerHTML = ''; // Clear previous data
+                    let totalPresupuestos = 0;
 
-        </script>
+                    data.forEach(presupuesto => {
+                        totalPresupuestos += parseFloat(presupuesto.total.replace(/\./g, '').replace(',', '.')); // Suma correctamente el total
+                        const row = `
+                            <tr>
+                                <td>${presupuesto.id}</td>
+                                <td>${presupuesto.fecha}</td>
+                                <td>${presupuesto.nombre_cliente}</td>
+                                <td>${presupuesto.total}</td>
+                            </tr>
+                        `;
+                        tableBody.innerHTML += row;
+                    });
+
+                    // Mostrar el total calculado
+                    document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(totalPresupuestos);
+                })
+                .catch(error => console.error('Error al cargar los presupuestos:', error));
+        }
+    </script>
 </body>

@@ -828,15 +828,21 @@ presupuestoMostrador: async function(req, res) {
   listadoPresupuestos : (req, res) => {
     res.render('listadoPresupuestos');
 },
-getPresupuestos : async (req, res) => {
+getPresupuestos: async (req, res) => {
     try {
-        const presupuestos = await producto.getAllPresupuestos();
+        const { fecha } = req.query;
+        const fechaInicio = fecha;
+        const fechaFin = fecha;
+
+        const presupuestos = await producto.getPresupuestosByFecha(fechaInicio, fechaFin);
         res.json(presupuestos);
     } catch (error) {
         console.error('Error al obtener presupuestos:', error);
         res.status(500).json({ error: 'Error al obtener presupuestos' });
     }
 },
+
+
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];
