@@ -5,9 +5,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
   for (let i = 0; i < filasFactura.length; i++) {
       const codigo = filasFactura[i].cells[0].textContent.trim();
       const descripcion = filasFactura[i].cells[1].textContent.trim();
-      const precio_unitario = parseFloat(filasFactura[i].cells[2].textContent.trim().replace(/\./g, '').replace(',', '.'));
+      const precio_unitario = parseFloat(filasFactura[i].cells[2].textContent.trim());
       const cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value.trim());
-      const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim().replace(/\./g, '').replace(',', '.'));
+      const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim());
       invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
   }
   document.getElementById('invoiceItems').value = JSON.stringify(invoiceItems);
@@ -20,7 +20,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
           body: JSON.stringify({
               nombreCliente: document.getElementById('nombre-cliente').value.trim(),
               fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
-              totalPresupuesto: document.getElementById('total-amount').value.trim().replace(/\./g, '').replace(',', '.'),
+              totalPresupuesto: document.getElementById('total-amount').value.trim(),
               invoiceItems: JSON.stringify(invoiceItems)
           })
       });
@@ -46,7 +46,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
       console.error('Error al enviar formulario:', error);
   }
 });
-
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
@@ -69,7 +68,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   
         filaFactura.insertCell(0).textContent = producto.codigo;
         filaFactura.insertCell(1).textContent = producto.nombre;
-        filaFactura.insertCell(2).textContent = formatearNumero(producto.precio_venta);
+        filaFactura.insertCell(2).textContent = producto.precio_venta;
   
         const celdaCantidad = filaFactura.insertCell(3);
         const inputCantidad = document.createElement('input');
@@ -78,13 +77,13 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
         inputCantidad.value = 1;
         celdaCantidad.appendChild(inputCantidad);
   
-        filaFactura.insertCell(4).textContent = formatearNumero(producto.precio_venta);
+        filaFactura.insertCell(4).textContent = producto.precio_venta;
   
         calcularTotal();
   
         inputCantidad.addEventListener('change', () => {
           const cantidad = parseInt(inputCantidad.value.trim());
-          filaFactura.cells[4].textContent = formatearNumero(cantidad * parseFloat(producto.precio_venta));
+          filaFactura.cells[4].textContent = cantidad * parseFloat(producto.precio_venta);
           calcularTotal();
         });
   
@@ -95,26 +94,23 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     });
   });
   
-document.addEventListener('click', (e) => {
-  const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-  const entradaBusqueda = document.getElementById('entradaBusqueda');
+  document.addEventListener('click', (e) => {
+    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+    const entradaBusqueda = document.getElementById('entradaBusqueda');
+  
+    if (!resultadosBusqueda.contains(e.target) && e.target !== entradaBusqueda) {
+      resultadosBusqueda.innerHTML = '';
+    }
+  });
 
-  if (!resultadosBusqueda.contains(e.target) && e.target !== entradaBusqueda) {
-    resultadosBusqueda.innerHTML = '';
+  function calcularTotal() {
+    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+    let total = 0;
+  
+    for (let i = 0; i < filasFactura.length; i++) {
+      const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim());
+      total += subtotal;
+    }
+    document.getElementById('total-amount').value = total.toFixed(2);
   }
-});
-
-function calcularTotal() {
-  const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-  let total = 0;
-
-  for (let i = 0; i < filasFactura.length; i++) {
-    const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim().replace(/\./g, '').replace(',', '.'));
-    total += subtotal;
-  }
-  document.getElementById('total-amount').value = formatearNumero(total);
-}
-
-function formatearNumero(num) {
-  return num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&.').replace(/\.(\d{2})$/, ',$1');
-}
+  
