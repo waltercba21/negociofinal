@@ -1,9 +1,7 @@
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
-  e.preventDefault(); // Evita que el formulario se envíe automáticamente
-  
+  e.preventDefault(); 
   const invoiceItems = [];
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-  
   for (let i = 0; i < filasFactura.length; i++) {
       const codigo = filasFactura[i].cells[0].textContent.trim();
       const descripcion = filasFactura[i].cells[1].textContent.trim();
@@ -12,9 +10,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
       const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim());
       invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
   }
-  
   document.getElementById('invoiceItems').value = JSON.stringify(invoiceItems);
-  
   try {
       const response = await fetch('/productos/procesarFormulario', {
           method: 'POST',
@@ -28,29 +24,20 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
               invoiceItems: JSON.stringify(invoiceItems)
           })
       });
-
       const data = await response.json();
-      
       if (response.ok) {
-          alert(data.message); // Mostrar mensaje de éxito
-          // Limpiar campos del formulario y tabla de factura
+          alert(data.message); 
           document.getElementById('nombre-cliente').value = '';
           document.getElementById('fecha-presupuesto').value = '';
           document.getElementById('total-amount').value = '';
           document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].innerHTML = '';
-          
-          // Mostrar mensaje estilizado de éxito
           const successMessage = document.createElement('div');
           successMessage.classList.add('success-message');
           successMessage.textContent = 'Presupuesto guardado correctamente';
           document.body.appendChild(successMessage);
-
-          // Ocultar el mensaje después de 3 segundos
           setTimeout(() => {
               successMessage.style.display = 'none';
           }, 3000);
-
-          // Recargar la página para generar un nuevo número de presupuesto
           window.location.reload();
       } else {
           throw new Error(data.error || 'Error al procesar el formulario');
@@ -59,20 +46,16 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
       console.error('Error al enviar formulario:', error);
   }
 });
-
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
   resultadosBusqueda.innerHTML = '';
-
   if (!busqueda.trim()) {
       return;
   }
-
-  let url = '/productos/api/buscarConCodigoPrecio?q=' + busqueda;
+  let url = '/productos/api/buscar?q=' + busqueda;
   const respuesta = await fetch(url);
   const productos = await respuesta.json();
-
   productos.forEach((producto) => {
       const resultado = document.createElement('div');
       resultado.textContent = producto.nombre;
