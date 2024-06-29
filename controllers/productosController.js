@@ -841,8 +841,6 @@ getPresupuestos: async (req, res) => {
         res.status(500).json({ error: 'Error al obtener presupuestos' });
     }
 },
-
-
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];
