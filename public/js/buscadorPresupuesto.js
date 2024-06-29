@@ -78,14 +78,14 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       inputCantidad.value = 1;
       celdaCantidad.appendChild(inputCantidad);
 
-      const subtotal = parseFloat(producto.precio_venta.replace(/\./g, '').replace(',', '.')) * parseInt(inputCantidad.value);
+      const subtotal = parseFloat(producto.precio_venta) * parseInt(inputCantidad.value);
       filaFactura.insertCell(4).textContent = formatearNumero(subtotal);
 
       calcularTotal();
 
       inputCantidad.addEventListener('change', () => {
         const cantidad = parseInt(inputCantidad.value.trim());
-        const subtotal = cantidad * parseFloat(producto.precio_venta.replace(/\./g, '').replace(',', '.'));
+        const subtotal = cantidad * parseFloat(producto.precio_venta);
         filaFactura.cells[4].textContent = formatearNumero(subtotal);
         calcularTotal();
       });
