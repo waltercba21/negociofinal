@@ -69,7 +69,7 @@ module.exports ={
           });
         });
       },
-      getAllPresupuestos : () => {
+      getAllPresupuestos: () => {
         return new Promise((resolve, reject) => {
             conexion.query(`
                 SELECT p.id, p.nombre_cliente, p.fecha, p.total
@@ -78,11 +78,12 @@ module.exports ={
                 if (error) {
                     reject(new Error('Error al obtener presupuestos: ' + error.message));
                 } else {
-                    // Formatear la fecha antes de resolver la promesa
+                    // Formatear la fecha y el total antes de resolver la promesa
                     const presupuestosFormateados = resultados.map(presupuesto => {
                         return {
                             ...presupuesto,
-                            fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES')  // Cambia 'es-ES' según tu localización
+                            fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES'),
+                            total: new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(presupuesto.total)
                         };
                     });
                     resolve(presupuestosFormateados);
