@@ -12,6 +12,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
       invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
   }
 
+  console.log("Invoice Items to be sent:", invoiceItems); // Log the invoice items being sent
+
   try {
       const response = await fetch('/productos/procesarFormulario', {
           method: 'POST',
@@ -22,14 +24,14 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
               nombreCliente: document.getElementById('nombre-cliente').value.trim(),
               fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
               totalPresupuesto: document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim(),
-              invoiceItems  // Asegúrate de enviarlo como un array de objetos.
+              invoiceItems  // Sending as an array of objects.
           })
       });
       const data = await response.json();
+      console.log("Response from server:", data); // Log the response from the server
 
       if (response.ok) {
           alert(data.message);
-          // Aquí puedes manejar el éxito
           window.location.reload();
       } else {
           throw new Error(data.error || 'Error al procesar el formulario');
