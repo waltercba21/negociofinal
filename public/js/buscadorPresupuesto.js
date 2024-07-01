@@ -47,77 +47,83 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
   }
 });
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
-    const busqueda = e.target.value;
-    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-    resultadosBusqueda.innerHTML = '';
+  const busqueda = e.target.value;
+  console.log("Busqueda:", busqueda);  // Log the search term
+  const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+  resultadosBusqueda.innerHTML = '';
 
-    if (!busqueda.trim()) {
-        return;
-    }
-    const url = '/productos/api/buscar?q=' + busqueda;
-    const respuesta = await fetch(url);
-    const productos = await respuesta.json();
-    const formatter = new Intl.NumberFormat('es-CL', {
-        style: 'currency',
-        currency: 'CLP',
-        currencyDisplay: 'symbol',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    });
+  if (!busqueda.trim()) {
+      return;
+  }
+  const url = '/productos/api/buscar?q=' + busqueda;
+  const respuesta = await fetch(url);
+  const productos = await respuesta.json();
+  console.log("Productos encontrados:", productos);  // Log fetched products
 
-    productos.forEach((producto) => {
-        const resultado = document.createElement('div');
-        resultado.textContent = producto.nombre;
-        resultado.classList.add('resultado-busqueda');
-        resultado.addEventListener('click', () => {
-            const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-            const filaFactura = tablaFactura.insertRow();
+  const formatter = new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      currencyDisplay: 'symbol',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+  });
 
-            filaFactura.insertCell(0).textContent = producto.codigo;
-            filaFactura.insertCell(1).textContent = producto.nombre;
-            const precioFormateado = producto.precio_venta.replace('.', '').replace(',', '.');
-            filaFactura.insertCell(2).textContent = formatter.format(parseFloat(precioFormateado));
+  productos.forEach((producto) => {
+      const resultado = document.createElement('div');
+      resultado.textContent = producto.nombre;
+      resultado.classList.add('resultado-busqueda');
+      resultado.addEventListener('click', () => {
+          const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+          const filaFactura = tablaFactura.insertRow();
 
-            const celdaCantidad = filaFactura.insertCell(3);
-            const inputCantidad = document.createElement('input');
-            inputCantidad.type = 'number';
-            inputCantidad.min = 1;
-            inputCantidad.value = 1;
-            celdaCantidad.appendChild(inputCantidad);
+          filaFactura.insertCell(0).textContent = producto.codigo;
+          filaFactura.insertCell(1).textContent = producto.nombre;
+          const precioFormateado = producto.precio_venta.replace('.', '').replace(',', '.');
+          filaFactura.insertCell(2).textContent = formatter.format(parseFloat(precioFormateado));
 
-            filaFactura.insertCell(4).textContent = formatter.format(parseFloat(precioFormateado));
+          const celdaCantidad = filaFactura.insertCell(3);
+          const inputCantidad = document.createElement('input');
+          inputCantidad.type = 'number';
+          inputCantidad.min = 1;
+          inputCantidad.value = 1;
+          celdaCantidad.appendChild(inputCantidad);
 
-            calcularTotal();
+          filaFactura.insertCell(4).textContent = formatter.format(parseFloat(precioFormateado));
 
-            inputCantidad.addEventListener('change', () => {
-                const cantidad = parseInt(inputCantidad.value.trim());
-                filaFactura.cells[4].textContent = formatter.format(cantidad * parseFloat(precioFormateado));
-                calcularTotal();
-            });
+          calcularTotal();
 
-            resultadosBusqueda.innerHTML = '';
-        });
+          inputCantidad.addEventListener('change', () => {
+              const cantidad = parseInt(inputCantidad.value.trim());
+              console.log("Cantidad cambiada:", cantidad);  // Log the changed quantity
+              filaFactura.cells[4].textContent = formatter.format(cantidad * parseFloat(precioFormateado));
+              calcularTotal();
+          });
 
-        resultadosBusqueda.appendChild(resultado);
-    });
+          resultadosBusqueda.innerHTML = '';
+      });
+
+      resultadosBusqueda.appendChild(resultado);
+  });
 });
 
 function calcularTotal() {
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    let total = 0;
-    const formatter = new Intl.NumberFormat('es-CL', {
-        style: 'currency',
-        currency: 'CLP',
-        currencyDisplay: 'symbol',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    });
-    for (let i = 0; i < filasFactura.length; i++) {
-        let subtotalStr = filasFactura[i].cells[4].textContent.replace('$', '').replace(/\./g, '').replace(',', '.');
-        let subtotalNum = parseFloat(subtotalStr);
-        total += subtotalNum;
-    }
-    document.getElementById('total-amount').value = formatter.format(total);
+  const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+  let total = 0;
+  console.log("Subtotales antes del cálculo del total:");
+  for (let i = 0; i < filasFactura.length; i++) {
+      let subtotalStr = filasFactura[i].cells[4].textContent.replace('$', '').replace(/\./g, '').replace(',', '.');
+      let subtotalNum = parseFloat(subtotalStr);
+      console.log(`Subtotal para fila ${i}:`, subtotalStr, subtotalNum);  // Log each subtotal calculation
+      total += subtotalNum;
+  }
+  console.log("Total calculado:", total);  // Log the calculated total
+  const formatter = new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      currencyDisplay: 'symbol',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+  });
+  document.getElementById('total-amount').value = formatter.format(total);
+  console.log("Total formateado:", document.getElementById('total-amount').value);  // Log the formatted total
 }
-
-
