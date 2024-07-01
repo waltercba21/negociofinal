@@ -69,14 +69,13 @@ module.exports ={
           });
         });
       },
-      getAllPresupuestos: (fecha) => {
+      getAllPresupuestos: (fechaInicio, fechaFin) => {
         return new Promise((resolve, reject) => {
-            // Usar la fecha para filtrar los presupuestos
             conexion.query(`
                 SELECT p.id, p.nombre_cliente, p.fecha, p.total
                 FROM presupuestos_mostrador p
-                WHERE DATE(p.fecha) = ?
-            `, [fecha], (error, resultados) => {
+                WHERE DATE(p.fecha) BETWEEN ? AND ?
+            `, [fechaInicio, fechaFin], (error, resultados) => {
                 if (error) {
                     reject(new Error('Error al obtener presupuestos: ' + error.message));
                 } else {
@@ -87,29 +86,6 @@ module.exports ={
                             total: new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(presupuesto.total)
                         };
                     });
-                    resolve(presupuestosFormateados);
-                }
-            });
-        });
-    },
-    
-    getPresupuestosByFecha: (fechaInicio, fechaFin) => {
-        return new Promise((resolve, reject) => {
-            const query = `
-                SELECT p.id, p.nombre_cliente, p.fecha, p.total
-                FROM presupuestos_mostrador p
-                WHERE p.fecha BETWEEN ? AND ?
-            `;
-            conexion.query(query, [fechaInicio, fechaFin], (error, resultados) => {
-                if (error) {
-                    reject(new Error('Error al obtener presupuestos: ' + error.message));
-                } else {
-                    // Formatear la fecha y el total antes de resolver la promesa
-                    const presupuestosFormateados = resultados.map(presupuesto => ({
-                        ...presupuesto,
-                        fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES'),
-                        total: new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(presupuesto.total),
-                    }));
                     resolve(presupuestosFormateados);
                 }
             });

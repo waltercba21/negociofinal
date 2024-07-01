@@ -812,9 +812,9 @@ listadoPresupuestos : (req, res) => {
 },
 getPresupuestos: async (req, res) => {
     try {
-        // Obtener la fecha de la query string
-        const fecha = req.query.fecha;
-        const presupuestos = await producto.getAllPresupuestos(fecha);
+        // Obtener las fechas de la query string
+        const { fechaInicio, fechaFin } = req.query;
+        const presupuestos = await producto.getAllPresupuestos(fechaInicio, fechaFin);
         res.json(presupuestos);
     } catch (error) {
         console.error('Error al obtener presupuestos:', error);
