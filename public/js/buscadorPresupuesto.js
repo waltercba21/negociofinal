@@ -60,14 +60,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   const productos = await respuesta.json();
   console.log("Productos encontrados:", productos);  // Log fetched products
 
-  const formatter = new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      currencyDisplay: 'symbol',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-  });
-
   productos.forEach((producto) => {
       const resultado = document.createElement('div');
       resultado.textContent = producto.nombre;
@@ -78,59 +70,54 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 
           filaFactura.insertCell(0).textContent = producto.codigo;
           filaFactura.insertCell(1).textContent = producto.nombre;
-          const precioFormateado = producto.precio_venta.replace('.', '').replace(',', '.');
-          filaFactura.insertCell(2).textContent = formatter.format(parseFloat(precioFormateado));
+          
+          // Añadir input editable para el precio
+          const cellPrecio = filaFactura.insertCell(2);
+          const inputPrecio = document.createElement('input');
+          inputPrecio.type = 'text';
+          inputPrecio.value = producto.precio_venta;
+          inputPrecio.className = 'precio-editable';
+          cellPrecio.appendChild(inputPrecio);
 
-          const celdaCantidad = filaFactura.insertCell(3);
+          const cellCantidad = filaFactura.insertCell(3);
           const inputCantidad = document.createElement('input');
           inputCantidad.type = 'number';
           inputCantidad.min = 1;
           inputCantidad.value = 1;
-          celdaCantidad.appendChild(inputCantidad);
+          cellCantidad.appendChild(inputCantidad);
 
-          filaFactura.insertCell(4).textContent = formatter.format(parseFloat(precioFormateado));
+          // Subtotal initially set to the product price
+          const cellSubtotal = filaFactura.insertCell(4);
+          cellSubtotal.textContent = producto.precio_venta;
 
-          calcularTotal();
-
-          inputCantidad.addEventListener('change', () => {
-              const cantidad = parseInt(inputCantidad.value.trim());
-              console.log("Cantidad cambiada:", cantidad);  // Log the changed quantity
-              filaFactura.cells[4].textContent = formatter.format(cantidad * parseFloat(precioFormateado));
-              calcularTotal();
+          // Event listeners to update subtotal on change
+          inputPrecio.addEventListener('input', function() {
+              updateSubtotal(filaFactura);
+          });
+          inputCantidad.addEventListener('input', function() {
+              updateSubtotal(filaFactura);
           });
 
-          resultadosBusqueda.innerHTML = '';
+          calcularTotal();
       });
 
       resultadosBusqueda.appendChild(resultado);
   });
 });
 
+function updateSubtotal(row) {
+  const precio = parseFloat(row.cells[2].querySelector('input').value);
+  const cantidad = parseFloat(row.cells[3].querySelector('input').value);
+  const subtotal = precio * cantidad;
+  row.cells[4].textContent = subtotal.toFixed(2);
+  calcularTotal();
+}
+
 function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
-  console.log("Subtotales antes del cálculo del total:");
-
   for (let i = 0; i < filasFactura.length; i++) {
-      let subtotalStr = filasFactura[i].cells[4].textContent.replace('$', '').replace(/\./g, '').replace(',', '.');
-      let subtotalNum = parseFloat(subtotalStr);
-      console.log(`Subtotal para fila ${i}:`, subtotalStr, subtotalNum);  // Log each subtotal calculation
-      total += subtotalNum;
+      total += parseFloat(filasFactura[i].cells[4].textContent);
   }
-  console.log("Total calculado:", total);  // Log the calculated total
-
-  try {
-      const formatter = new Intl.NumberFormat('es-CL', {
-          style: 'currency',
-          currency: 'CLP',
-          currencyDisplay: 'symbol',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0
-      });
-      const formattedTotal = formatter.format(total);
-      document.getElementById('total-amount').value = formattedTotal;
-      console.log("Total formateado:", formattedTotal);  // Log the formatted total
-  } catch (error) {
-      console.error("Error al formatear el total:", error);
-  }
+  document.getElementById('total-amount').value = total.toFixed(2);
 }
