@@ -111,8 +111,13 @@ function calcularTotal() {
       maximumFractionDigits: 0
   });
   for (let i = 0; i < filasFactura.length; i++) {
-      const subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/[^0-9,-]+/g, "").replace(',', '.'));
-      total += subtotal;
+      // Asegurar que eliminamos el signo de moneda y otros caracteres no numéricos correctamente
+      let subtotalStr = filasFactura[i].cells[4].textContent.replace(/\D/g,'').trim();
+      // Convertir el string limpio a número, considerando que el valor está en centavos (debido a eliminación de puntos y comas)
+      let subtotalNum = parseInt(subtotalStr) / 100;
+      total += subtotalNum;
   }
+  // Formatear y mostrar el total
   document.getElementById('total-amount').value = formatter.format(total);
 }
+
