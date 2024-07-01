@@ -868,21 +868,20 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
 },
 obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre) {
     return new Promise((resolve, reject) => {
-        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen FROM productos';
+        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo FROM productos';
         sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
         sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
+        sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id'; // Unión para obtener el código
         sql += ' WHERE 1=1';
         const parametros = [];
         if (categoria) {
             sql += ' AND categoria_id = ?';
             parametros.push(categoria);
         }
-
         if (marca) {
             sql += ' AND marca_id = ?';
             parametros.push(marca);
         }
-
         if (modelo) {
             sql += ' AND modelo_id = ?';
             parametros.push(modelo);
@@ -894,50 +893,25 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre)
                 parametros.push('%' + palabra + '%');
             });
         }
-
-        // Ordenar por id en orden descendente
         sql += ' ORDER BY productos.id DESC';
 
         conexion.query(sql, parametros, (error, productos) => {
             if (error) {
                 reject(error);
             } else {
-                // Agrupar las imágenes por producto
+                // Agrupar las imágenes y códigos por producto
                 const productosAgrupados = productos.reduce((acc, producto) => {
                     const productoExistente = acc.find(p => p.id === producto.id);
                     if (productoExistente) {
                         productoExistente.imagenes.push({ imagen: producto.imagen });
                     } else {
-                        producto.imagenes = [{ imagen: producto.imagen }];
+                        producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
+                        producto.codigo = producto.codigo || ''; // Asegurarse de que siempre hay un código
                         acc.push(producto);
                     }
                     return acc;
                 }, []);
                 resolve(productosAgrupados);
-            }
-        });
-    });
-},
-obtenerPorFiltrosConCodigoPrecio: function(conexion, busqueda_nombre, limite) {
-    return new Promise((resolve, reject) => {
-        let sql = 'SELECT producto_proveedor.codigo, productos.nombre, productos.precio_venta FROM productos';
-        sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
-        sql += ' WHERE 1=1';
-        const parametros = [];
-        if (busqueda_nombre) {
-            sql += ' AND productos.nombre LIKE ?'; 
-            parametros.push('%' + busqueda_nombre + '%');
-        }
-        sql += ' ORDER BY productos.id DESC';
-        if (limite) {
-            sql += ' LIMIT ?';
-            parametros.push(limite);
-        }
-        conexion.query(sql, parametros, (error, productos) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(productos);
             }
         });
     });

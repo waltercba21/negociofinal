@@ -129,16 +129,6 @@ module.exports = {
         const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite); 
         res.json(productos); 
     },
-    buscarConCodigoPrecio : async (req, res) => {
-        const busqueda_nombre = req.query.q;
-        if (!busqueda_nombre || !busqueda_nombre.trim()) { 
-            res.json([]);
-            return;
-        }
-        const limite = !busqueda_nombre ? 10 : undefined;
-        const productos = await producto.obtenerPorFiltrosConCodigoPrecio(conexion, busqueda_nombre, limite); 
-        res.json(productos); 
-    },
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
@@ -146,10 +136,8 @@ module.exports = {
             console.log('Error al obtener producto:', error);
             return res.status(500).send('Error al obtener el producto');
           } else if (producto.length === 0) {
-            // No se encontró ningún producto con el id proporcionado
             return res.status(404).send('Producto no encontrado');
           } else {
-            // Formatear el precio_venta para que no tenga decimales y tenga separadores de miles
             producto[0].precio_venta = Number(producto[0].precio_venta).toLocaleString('es-ES');
             res.render('detalle', { producto: producto[0] });
           }
