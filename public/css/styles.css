@@ -867,6 +867,27 @@ background: rgba(0, 63, 125, 0.8);
   border-radius: 5px;
   box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);
 }
+.container-listadoPresupuesto label,
+.container-listadoPresupuesto input,
+.container-listadoPresupuesto button {
+    margin: 10px;
+}
+
+#buscar {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+#buscar:hover {
+    background-color: #0056b3;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
 .thead-presupuestos{
   background-color: #ccc;
 }
