@@ -2,14 +2,18 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
   e.preventDefault();
   const invoiceItems = [];
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+
   for (let i = 0; i < filasFactura.length; i++) {
       const codigo = filasFactura[i].cells[0].textContent.trim();
       const descripcion = filasFactura[i].cells[1].textContent.trim();
+      // Asegúrate de limpiar correctamente los números antes de parsearlos
       const precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
       const cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value.trim());
       const subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\./g, '').replace(',', '.'));
       invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
   }
+
+  console.log("Invoice Items to be sent:", invoiceItems); // Depuración para verificar los datos
 
   try {
       const response = await fetch('/productos/procesarFormulario', {
@@ -21,10 +25,12 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
               nombreCliente: document.getElementById('nombre-cliente').value.trim(),
               fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
               totalPresupuesto: document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim(),
-              invoiceItems: invoiceItems  // Envía como un array de objetos, no como una cadena.
+              invoiceItems: invoiceItems
           })
       });
       const data = await response.json();
+      console.log("Response from server:", data); // Depuración para ver la respuesta del servidor
+
       if (response.ok) {
           alert(data.message);
           window.location.reload(); // Recarga la página para limpiar el formulario y actualizar la interfaz.
@@ -33,8 +39,10 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
       }
   } catch (error) {
       console.error('Error al enviar formulario:', error);
+      alert('Error al enviar formulario: ' + error.message); // Mostrar alerta de error
   }
 });
+
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
