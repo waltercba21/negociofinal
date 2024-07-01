@@ -871,7 +871,7 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre)
         let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo FROM productos';
         sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
         sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
-        sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id'; // Unión para obtener el código
+        sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
         sql += ' WHERE 1=1';
         const parametros = [];
         if (categoria) {
@@ -899,14 +899,15 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre)
             if (error) {
                 reject(error);
             } else {
-                // Agrupar las imágenes y códigos por producto
+                const formatter = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 });
                 const productosAgrupados = productos.reduce((acc, producto) => {
                     const productoExistente = acc.find(p => p.id === producto.id);
                     if (productoExistente) {
                         productoExistente.imagenes.push({ imagen: producto.imagen });
                     } else {
                         producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
-                        producto.codigo = producto.codigo || ''; // Asegurarse de que siempre hay un código
+                        producto.codigo = producto.codigo || '';
+                        producto.precio_venta = formatter.format(producto.precio_venta); // Formatear el precio
                         acc.push(producto);
                     }
                     return acc;
