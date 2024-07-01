@@ -1,44 +1,33 @@
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
-  e.preventDefault(); 
+  e.preventDefault();
   const invoiceItems = [];
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   for (let i = 0; i < filasFactura.length; i++) {
       const codigo = filasFactura[i].cells[0].textContent.trim();
       const descripcion = filasFactura[i].cells[1].textContent.trim();
-      const precio_unitario = parseFloat(filasFactura[i].cells[2].textContent.trim());
+      const precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
       const cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value.trim());
-      const subtotal = parseFloat(filasFactura[i].cells[4].textContent.trim());
+      const subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\./g, '').replace(',', '.'));
       invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
   }
-  document.getElementById('invoiceItems').value = JSON.stringify(invoiceItems);
+
   try {
-    const response = await fetch('/productos/procesarFormulario', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            nombreCliente: document.getElementById('nombre-cliente').value.trim(),
-            fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
-            totalPresupuesto: document.getElementById('total-amount').value.trim(),
-            invoiceItems: invoiceItems 
-        })
-    });
-    const data = await response.json();
-    if (response.ok) {
-        alert(data.message);
-          document.getElementById('nombre-cliente').value = '';
-          document.getElementById('fecha-presupuesto').value = '';
-          document.getElementById('total-amount').value = '';
-          document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].innerHTML = '';
-          const successMessage = document.createElement('div');
-          successMessage.classList.add('success-message');
-          successMessage.textContent = 'Presupuesto guardado correctamente';
-          document.body.appendChild(successMessage);
-          setTimeout(() => {
-              successMessage.style.display = 'none';
-          }, 3000);
-          window.location.reload();
+      const response = await fetch('/productos/procesarFormulario', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+              nombreCliente: document.getElementById('nombre-cliente').value.trim(),
+              fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
+              totalPresupuesto: document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim(),
+              invoiceItems: invoiceItems  // Envía como un array de objetos, no como una cadena.
+          })
+      });
+      const data = await response.json();
+      if (response.ok) {
+          alert(data.message);
+          window.location.reload(); // Recarga la página para limpiar el formulario y actualizar la interfaz.
       } else {
           throw new Error(data.error || 'Error al procesar el formulario');
       }
@@ -46,6 +35,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
       console.error('Error al enviar formulario:', error);
   }
 });
+
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
