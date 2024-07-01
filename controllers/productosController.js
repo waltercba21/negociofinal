@@ -771,7 +771,6 @@ presupuestoMostrador: async function(req, res) {
   procesarFormulario : async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
-        const total = parseFloat(totalPresupuesto.replace(/\./g, '').replace(',', '.'));
       let parsedItems;
       try {
         parsedItems = JSON.parse(invoiceItems);
