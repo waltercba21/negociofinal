@@ -102,6 +102,16 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
+
+  for (let i = 0; i < filasFactura.length; i++) {
+      // Extraer el contenido de texto de la celda del subtotal, eliminando el símbolo del dólar y los puntos
+      let subtotalStr = filasFactura[i].cells[4].textContent.replace('$', '').replace(/\./g, '');
+      // Convertir la cadena limpia a un número flotante (dividir por 100 si es necesario para manejar los centavos)
+      let subtotalNum = parseFloat(subtotalStr);
+      total += subtotalNum;
+  }
+  
+  // Formatear el total para que se muestre como moneda nuevamente, antes de asignarlo al campo de total
   const formatter = new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP',
@@ -109,13 +119,9 @@ function calcularTotal() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
   });
-  for (let i = 0; i < filasFactura.length; i++) {
-      let subtotalStr = filasFactura[i].cells[4].textContent;
-      subtotalStr = subtotalStr.replace('$', '').replace(/\./g, '');
-      let subtotalNum = parseFloat(subtotalStr);
-      total += subtotalNum;
-  }
+
   document.getElementById('total-amount').value = formatter.format(total);
 }
+
 
 
