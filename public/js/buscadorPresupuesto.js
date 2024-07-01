@@ -48,7 +48,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 });
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
-  console.log("Busqueda:", busqueda);  // Log the search term
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
   resultadosBusqueda.innerHTML = '';
 
@@ -58,24 +57,23 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   const url = '/productos/api/buscar?q=' + busqueda;
   const respuesta = await fetch(url);
   const productos = await respuesta.json();
-  console.log("Productos encontrados:", productos);  // Log fetched products
 
   productos.forEach((producto) => {
       const resultado = document.createElement('div');
       resultado.textContent = producto.nombre;
       resultado.classList.add('resultado-busqueda');
       resultado.addEventListener('click', () => {
+          resultadosBusqueda.innerHTML = '';  // Oculta el desplegable al seleccionar un producto
           const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
           const filaFactura = tablaFactura.insertRow();
 
           filaFactura.insertCell(0).textContent = producto.codigo;
           filaFactura.insertCell(1).textContent = producto.nombre;
           
-          // Añadir input editable para el precio
           const cellPrecio = filaFactura.insertCell(2);
           const inputPrecio = document.createElement('input');
           inputPrecio.type = 'text';
-          inputPrecio.value = producto.precio_venta;
+          inputPrecio.value = formatPrice(producto.precio_venta);
           inputPrecio.className = 'precio-editable';
           cellPrecio.appendChild(inputPrecio);
 
@@ -86,11 +84,9 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
           inputCantidad.value = 1;
           cellCantidad.appendChild(inputCantidad);
 
-          // Subtotal initially set to the product price
           const cellSubtotal = filaFactura.insertCell(4);
-          cellSubtotal.textContent = producto.precio_venta;
+          cellSubtotal.textContent = formatPrice(producto.precio_venta);
 
-          // Event listeners to update subtotal on change
           inputPrecio.addEventListener('input', function() {
               updateSubtotal(filaFactura);
           });
@@ -105,11 +101,20 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   });
 });
 
+function formatPrice(value) {
+  const formatter = new Intl.NumberFormat('es-CL', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+      useGrouping: true
+  });
+  return formatter.format(value);
+}
+
 function updateSubtotal(row) {
-  const precio = parseFloat(row.cells[2].querySelector('input').value);
-  const cantidad = parseFloat(row.cells[3].querySelector('input').value);
+  const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\./g, ''));
+  const cantidad = parseInt(row.cells[3].querySelector('input').value);
   const subtotal = precio * cantidad;
-  row.cells[4].textContent = subtotal.toFixed(2);
+  row.cells[4].textContent = formatPrice(subtotal);
   calcularTotal();
 }
 
@@ -117,7 +122,8 @@ function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
   for (let i = 0; i < filasFactura.length; i++) {
-      total += parseFloat(filasFactura[i].cells[4].textContent);
+      const value = parseFloat(filasFactura[i].cells[4].textContent.replace(/\./g, ''));
+      total += value;
   }
-  document.getElementById('total-amount').value = total.toFixed(2);
+  document.getElementById('total-amount').value = formatPrice(total);
 }
