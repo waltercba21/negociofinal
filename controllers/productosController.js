@@ -807,7 +807,7 @@ presupuestoMostrador: async function(req, res) {
     }
 },
 
-  listadoPresupuestos : (req, res) => {
+listadoPresupuestos : (req, res) => {
     res.render('listadoPresupuestos');
 },
 getPresupuestos : async (req, res) => {

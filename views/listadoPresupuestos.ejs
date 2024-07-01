@@ -34,25 +34,23 @@
     <script src="/js/listadoFacturas.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date().toISOString().split('T')[0];
-            cargarPresupuestos(today);
-
-            document.getElementById('buscar').addEventListener('click', function() {
+            const btnBuscar = document.getElementById('buscar');
+            btnBuscar.addEventListener('click', function() {
                 const selectedDate = document.getElementById('fecha').value;
                 cargarPresupuestos(selectedDate);
             });
         });
-
+    
         function cargarPresupuestos(fecha) {
             fetch(`/productos/api/presupuestos?fecha=${fecha}`)
                 .then(response => response.json())
                 .then(data => {
                     const tableBody = document.querySelector('#presupuestos-table tbody');
-                    tableBody.innerHTML = ''; // Clear previous data
+                    tableBody.innerHTML = '';  // Limpia la tabla antes de agregar nuevos datos
                     let totalPresupuestos = 0;
-
+    
                     data.forEach(presupuesto => {
-                        totalPresupuestos += parseFloat(presupuesto.total.replace(/\./g, '').replace(',', '.')); // Suma correctamente el total
+                        totalPresupuestos += parseFloat(presupuesto.total.replace(/\./g, '').replace(',', '.'));
                         const row = `
                             <tr>
                                 <td>${presupuesto.id}</td>
@@ -63,11 +61,12 @@
                         `;
                         tableBody.innerHTML += row;
                     });
-
-                    // Mostrar el total calculado
+    
+                    // Actualiza el total de presupuestos
                     document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(totalPresupuestos);
                 })
                 .catch(error => console.error('Error al cargar los presupuestos:', error));
         }
     </script>
+    
 </body>
