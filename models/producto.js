@@ -69,16 +69,17 @@ module.exports ={
           });
         });
       },
-      getAllPresupuestos: () => {
+      getAllPresupuestos: (fecha) => {
         return new Promise((resolve, reject) => {
+            // Usar la fecha para filtrar los presupuestos
             conexion.query(`
                 SELECT p.id, p.nombre_cliente, p.fecha, p.total
                 FROM presupuestos_mostrador p
-            `, (error, resultados) => {
+                WHERE DATE(p.fecha) = ?
+            `, [fecha], (error, resultados) => {
                 if (error) {
                     reject(new Error('Error al obtener presupuestos: ' + error.message));
                 } else {
-                    // Formatear la fecha y el total antes de resolver la promesa
                     const presupuestosFormateados = resultados.map(presupuesto => {
                         return {
                             ...presupuesto,
@@ -91,6 +92,7 @@ module.exports ={
             });
         });
     },
+    
     getPresupuestosByFecha: (fechaInicio, fechaFin) => {
         return new Promise((resolve, reject) => {
             const query = `
