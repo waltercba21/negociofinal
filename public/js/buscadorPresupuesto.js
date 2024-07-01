@@ -57,13 +57,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   const url = '/productos/api/buscar?q=' + busqueda;
   const respuesta = await fetch(url);
   const productos = await respuesta.json();
-  const formatter = new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      currencyDisplay: 'symbol',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-  });
 
   productos.forEach((producto) => {
       const resultado = document.createElement('div');
@@ -75,8 +68,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 
           filaFactura.insertCell(0).textContent = producto.codigo;
           filaFactura.insertCell(1).textContent = producto.nombre;
-          const precioFormateado = producto.precio_venta.replace('.', '').replace(',', '.');
-          filaFactura.insertCell(2).textContent = formatter.format(parseFloat(precioFormateado));
+          filaFactura.insertCell(2).textContent = producto.precio_venta;
 
           const celdaCantidad = filaFactura.insertCell(3);
           const inputCantidad = document.createElement('input');
@@ -85,13 +77,14 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
           inputCantidad.value = 1;
           celdaCantidad.appendChild(inputCantidad);
 
-          filaFactura.insertCell(4).textContent = formatter.format(parseFloat(precioFormateado));
+          let precioNum = parseFloat(producto.precio_venta.replace('.', '').replace(',', '.'));
+          filaFactura.insertCell(4).textContent = precioNum.toFixed(2);
 
           calcularTotal();
 
           inputCantidad.addEventListener('change', () => {
               const cantidad = parseInt(inputCantidad.value.trim());
-              filaFactura.cells[4].textContent = formatter.format(cantidad * parseFloat(precioFormateado));
+              filaFactura.cells[4].textContent = (cantidad * precioNum).toFixed(2);
               calcularTotal();
           });
 
@@ -105,19 +98,18 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
+
+  for (let i = 0; i < filasFactura.length; i++) {
+      total += parseFloat(filasFactura[i].cells[4].textContent);
+  }
+
   const formatter = new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP',
       currencyDisplay: 'symbol',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
   });
-  for (let i = 0; i < filasFactura.length; i++) {
-      let subtotalStr = filasFactura[i].cells[4].textContent.replace('$', '').replace(/\./g, '').replace(',', '.');
-      let subtotalNum = parseFloat(subtotalStr);
-      total += subtotalNum;
-  }
+
   document.getElementById('total-amount').value = formatter.format(total);
 }
-
-
