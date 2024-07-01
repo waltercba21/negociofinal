@@ -85,7 +85,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
           cellCantidad.appendChild(inputCantidad);
 
           const cellSubtotal = filaFactura.insertCell(4);
-          cellSubtotal.textContent = formatPrice(producto.precio_venta);
+          cellSubtotal.textContent = formatPrice(producto.precio_venta);  // Initial subtotal
 
           inputPrecio.addEventListener('input', function() {
               updateSubtotal(filaFactura);
@@ -103,15 +103,16 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 
 function formatPrice(value) {
   const formatter = new Intl.NumberFormat('es-CL', {
+      style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
       useGrouping: true
   });
-  return formatter.format(value);
+  return formatter.format(parseFloat(value));
 }
 
 function updateSubtotal(row) {
-  const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\./g, ''));
+  const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\D/g, '')) / 100;
   const cantidad = parseInt(row.cells[3].querySelector('input').value);
   const subtotal = precio * cantidad;
   row.cells[4].textContent = formatPrice(subtotal);
@@ -122,7 +123,7 @@ function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
   for (let i = 0; i < filasFactura.length; i++) {
-      const value = parseFloat(filasFactura[i].cells[4].textContent.replace(/\./g, ''));
+      const value = parseFloat(filasFactura[i].cells[4].textContent.replace(/\D/g, '')) / 100;
       total += value;
   }
   document.getElementById('total-amount').value = formatPrice(total);
