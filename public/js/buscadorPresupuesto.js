@@ -56,9 +56,10 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   const url = '/productos/api/buscar?q=' + busqueda;
   const respuesta = await fetch(url);
   const productos = await respuesta.json();
-  const formatter = new Intl.NumberFormat('es-ES', {
+  const formatter = new Intl.NumberFormat('es-CL', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'CLP',
+      currencyDisplay: 'symbol',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
   });
@@ -72,7 +73,8 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 
           filaFactura.insertCell(0).textContent = producto.codigo;
           filaFactura.insertCell(1).textContent = producto.nombre;
-          filaFactura.insertCell(2).textContent = formatter.format(producto.precio_venta);
+          const precioFormateado = producto.precio_venta.replace('.', '').replace(',', '.');
+          filaFactura.insertCell(2).textContent = formatter.format(parseFloat(precioFormateado));
 
           const celdaCantidad = filaFactura.insertCell(3);
           const inputCantidad = document.createElement('input');
@@ -81,13 +83,13 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
           inputCantidad.value = 1;
           celdaCantidad.appendChild(inputCantidad);
 
-          filaFactura.insertCell(4).textContent = formatter.format(producto.precio_venta);
+          filaFactura.insertCell(4).textContent = formatter.format(parseFloat(precioFormateado));
 
           calcularTotal();
 
           inputCantidad.addEventListener('change', () => {
               const cantidad = parseInt(inputCantidad.value.trim());
-              filaFactura.cells[4].textContent = formatter.format(cantidad * parseFloat(producto.precio_venta.replace(/\D/g, '')));
+              filaFactura.cells[4].textContent = formatter.format(cantidad * parseFloat(precioFormateado));
               calcularTotal();
           });
 
@@ -101,14 +103,15 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
-  const formatter = new Intl.NumberFormat('es-ES', {
+  const formatter = new Intl.NumberFormat('es-CL', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'CLP',
+      currencyDisplay: 'symbol',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
   });
   for (let i = 0; i < filasFactura.length; i++) {
-      const subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\D/g, ''));
+      const subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/[^0-9,-]+/g, "").replace(',', '.'));
       total += subtotal;
   }
   document.getElementById('total-amount').value = formatter.format(total);
