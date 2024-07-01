@@ -112,9 +112,11 @@ function calcularTotal() {
   });
   for (let i = 0; i < filasFactura.length; i++) {
       // Asegurar que eliminamos el signo de moneda y otros caracteres no numéricos correctamente
-      let subtotalStr = filasFactura[i].cells[4].textContent.replace(/\D/g,'').trim();
-      // Convertir el string limpio a número, considerando que el valor está en centavos (debido a eliminación de puntos y comas)
-      let subtotalNum = parseInt(subtotalStr) / 100;
+      let subtotalStr = filasFactura[i].cells[4].textContent;
+      // Eliminar el símbolo de moneda y los puntos de mil, y reemplazar comas por puntos para decimal
+      subtotalStr = subtotalStr.replace(/[^0-9,]+/g, "").replace(',', '.');
+      // Convertir el string limpio a número flotante
+      let subtotalNum = parseFloat(subtotalStr);
       total += subtotalNum;
   }
   // Formatear y mostrar el total
