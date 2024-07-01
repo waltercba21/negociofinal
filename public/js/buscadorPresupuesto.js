@@ -73,7 +73,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
           const cellPrecio = filaFactura.insertCell(2);
           const inputPrecio = document.createElement('input');
           inputPrecio.type = 'text';
-          inputPrecio.value = formatPrice(producto.precio_venta);
+          inputPrecio.value = producto.precio_venta;
           inputPrecio.className = 'precio-editable';
           cellPrecio.appendChild(inputPrecio);
 
@@ -85,7 +85,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
           cellCantidad.appendChild(inputCantidad);
 
           const cellSubtotal = filaFactura.insertCell(4);
-          cellSubtotal.textContent = formatPrice(producto.precio_venta);  // Initial subtotal
+          cellSubtotal.textContent = producto.precio_venta;
 
           inputPrecio.addEventListener('input', function() {
               updateSubtotal(filaFactura);
@@ -101,21 +101,11 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   });
 });
 
-function formatPrice(value) {
-  const formatter = new Intl.NumberFormat('es-CL', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-      useGrouping: true
-  });
-  return formatter.format(parseFloat(value));
-}
-
 function updateSubtotal(row) {
-  const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\D/g, '')) / 100;
+  const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\./g, ''));
   const cantidad = parseInt(row.cells[3].querySelector('input').value);
   const subtotal = precio * cantidad;
-  row.cells[4].textContent = formatPrice(subtotal);
+  row.cells[4].textContent = subtotal.toLocaleString('es-CL');
   calcularTotal();
 }
 
@@ -123,8 +113,8 @@ function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
   for (let i = 0; i < filasFactura.length; i++) {
-      const value = parseFloat(filasFactura[i].cells[4].textContent.replace(/\D/g, '')) / 100;
+      const value = parseFloat(filasFactura[i].cells[4].textContent.replace(/\./g, ''));
       total += value;
   }
-  document.getElementById('total-amount').value = formatPrice(total);
+  document.getElementById('total-amount').value = total.toLocaleString('es-CL');
 }
