@@ -99,7 +99,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       resultadosBusqueda.appendChild(resultado);
   });
 });
-
 function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
@@ -111,15 +110,12 @@ function calcularTotal() {
       maximumFractionDigits: 0
   });
   for (let i = 0; i < filasFactura.length; i++) {
-      // Asegurar que eliminamos el signo de moneda y otros caracteres no numéricos correctamente
       let subtotalStr = filasFactura[i].cells[4].textContent;
-      // Eliminar el símbolo de moneda y los puntos de mil, y reemplazar comas por puntos para decimal
-      subtotalStr = subtotalStr.replace(/[^0-9,]+/g, "").replace(',', '.');
-      // Convertir el string limpio a número flotante
+      subtotalStr = subtotalStr.replace('$', '').replace(/\./g, '');
       let subtotalNum = parseFloat(subtotalStr);
       total += subtotalNum;
   }
-  // Formatear y mostrar el total
   document.getElementById('total-amount').value = formatter.format(total);
 }
+
 
