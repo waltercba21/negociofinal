@@ -771,42 +771,34 @@ presupuestoMostrador: async function(req, res) {
   procesarFormulario : async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
-      let parsedItems;
-      try {
-        parsedItems = JSON.parse(invoiceItems);
-        console.log('parsedItems:', parsedItems);
-      } catch (error) {
-        console.error('Error al parsear invoiceItems:', error.message);
-        return res.status(400).json({ error: 'Formato de invoiceItems inválido.' });
-      }
+      
+        const presupuesto = {
+            nombre_cliente: nombreCliente,
+            fecha: fechaPresupuesto,
+            total: totalPresupuesto
+        };
   
-      const presupuesto = {
-        nombre_cliente: nombreCliente,
-        fecha: fechaPresupuesto,
-        total: totalPresupuesto
-      };
+        const presupuestoId = await producto.guardarPresupuesto(presupuesto); // Usar producto.guardarPresupuesto
   
-      const presupuestoId = await producto.guardarPresupuesto(presupuesto); // Usar producto.guardarPresupuesto
+        const items = await Promise.all(invoiceItems.map(async item => {
+            const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id); // Usar producto.obtenerProductoIdPorCodigo
+            return [
+                presupuestoId,
+                producto_id,
+                item.cantidad,
+                item.precio_unitario,
+                item.subtotal
+            ];
+        }));
   
-      const items = await Promise.all(parsedItems.map(async item => {
-        const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id); // Usar producto.obtenerProductoIdPorCodigo
-        return [
-          presupuestoId,
-          producto_id,
-          item.cantidad,
-          item.precio_unitario,
-          item.subtotal
-        ];
-      }));
-  
-      await producto.guardarItemsPresupuesto(items); 
-      res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
+        await producto.guardarItemsPresupuesto(items); 
+        res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
 
     } catch (error) {
-      console.error('Error al guardar el presupuesto:', error.message);
-      res.status(500).json({ error: 'Error al guardar el presupuesto.' });
+        console.error('Error al guardar el presupuesto:', error.message);
+        res.status(500).json({ error: 'Error al guardar el presupuesto.' });
     }
-  },
+},
   listadoPresupuestos : (req, res) => {
     res.render('listadoPresupuestos');
 },
