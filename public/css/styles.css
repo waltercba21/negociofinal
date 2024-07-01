@@ -1389,6 +1389,7 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 0.8em; 
 }
 .buscador-panel {
+  width: 50%;
   display: flex;
   justify-content: center;
   margin: 20px 0;
@@ -1399,7 +1400,7 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 0.8em;
   border-radius: 10px;
   border: none; 
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.15); 
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25); 
   font-weight: bold;
   color: #777777;
 }
