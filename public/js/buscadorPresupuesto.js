@@ -12,21 +12,21 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
   }
   document.getElementById('invoiceItems').value = JSON.stringify(invoiceItems);
   try {
-      const response = await fetch('/productos/procesarFormulario', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-              nombreCliente: document.getElementById('nombre-cliente').value.trim(),
-              fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
-              totalPresupuesto: document.getElementById('total-amount').value.trim(),
-              invoiceItems: JSON.stringify(invoiceItems)
-          })
-      });
-      const data = await response.json();
-      if (response.ok) {
-          alert(data.message); 
+    const response = await fetch('/productos/procesarFormulario', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            nombreCliente: document.getElementById('nombre-cliente').value.trim(),
+            fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
+            totalPresupuesto: document.getElementById('total-amount').value.trim(),
+            invoiceItems: invoiceItems 
+        })
+    });
+    const data = await response.json();
+    if (response.ok) {
+        alert(data.message);
           document.getElementById('nombre-cliente').value = '';
           document.getElementById('fecha-presupuesto').value = '';
           document.getElementById('total-amount').value = '';
@@ -63,7 +63,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       resultado.textContent = producto.nombre;
       resultado.classList.add('resultado-busqueda');
       resultado.addEventListener('click', () => {
-          resultadosBusqueda.innerHTML = '';  // Oculta el desplegable al seleccionar un producto
+          resultadosBusqueda.innerHTML = '';  
           const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
           const filaFactura = tablaFactura.insertRow();
 
@@ -86,7 +86,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 
           const cellSubtotal = filaFactura.insertCell(4);
           cellSubtotal.textContent = producto.precio_venta;
-
           inputPrecio.addEventListener('input', function() {
               updateSubtotal(filaFactura);
           });
@@ -96,11 +95,9 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 
           calcularTotal();
       });
-
       resultadosBusqueda.appendChild(resultado);
   });
 });
-
 function updateSubtotal(row) {
   const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\./g, ''));
   const cantidad = parseInt(row.cells[3].querySelector('input').value);
@@ -108,7 +105,6 @@ function updateSubtotal(row) {
   row.cells[4].textContent = subtotal.toLocaleString('es-CL');
   calcularTotal();
 }
-
 function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
