@@ -110,6 +110,7 @@ function calcularTotal() {
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   let total = 0;
   console.log("Subtotales antes del cálculo del total:");
+
   for (let i = 0; i < filasFactura.length; i++) {
       let subtotalStr = filasFactura[i].cells[4].textContent.replace('$', '').replace(/\./g, '').replace(',', '.');
       let subtotalNum = parseFloat(subtotalStr);
@@ -117,13 +118,19 @@ function calcularTotal() {
       total += subtotalNum;
   }
   console.log("Total calculado:", total);  // Log the calculated total
-  const formatter = new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      currencyDisplay: 'symbol',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-  });
-  document.getElementById('total-amount').value = formatter.format(total);
-  console.log("Total formateado:", document.getElementById('total-amount').value);  // Log the formatted total
+
+  try {
+      const formatter = new Intl.NumberFormat('es-CL', {
+          style: 'currency',
+          currency: 'CLP',
+          currencyDisplay: 'symbol',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+      });
+      const formattedTotal = formatter.format(total);
+      document.getElementById('total-amount').value = formattedTotal;
+      console.log("Total formateado:", formattedTotal);  // Log the formatted total
+  } catch (error) {
+      console.error("Error al formatear el total:", error);
+  }
 }
