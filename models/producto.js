@@ -200,7 +200,6 @@ actualizar: function (conexion, datos, archivo) {
         let query = "UPDATE productos SET ";
         let params = [];
         let first = true;
-
         if (datos.nombre) {
             query += first ? "nombre=?" : ", nombre=?";
             params.push(datos.nombre);
@@ -843,8 +842,8 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
 },
   contarPorCategoria: function(conexion, categoria, callback) {
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
-},
-obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre) {
+}, 
+obtenerPorFiltros(conexion, categoria, marca, modelo, busqueda_nombre) {
     return new Promise((resolve, reject) => {
         let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo FROM productos';
         sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
@@ -877,15 +876,15 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre)
             if (error) {
                 reject(error);
             } else {
-                const formatter = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 });
                 const productosAgrupados = productos.reduce((acc, producto) => {
                     const productoExistente = acc.find(p => p.id === producto.id);
                     if (productoExistente) {
-                        productoExistente.imagenes.push({ imagen: producto.imagen });
+                        if (producto.imagen) {
+                            productoExistente.imagenes.push({ imagen: producto.imagen });
+                        }
                     } else {
                         producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
                         producto.codigo = producto.codigo || '';
-                        producto.precio_venta = formatter.format(producto.precio_venta); // Formatear el precio
                         acc.push(producto);
                     }
                     return acc;

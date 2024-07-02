@@ -128,7 +128,7 @@ module.exports = {
         const limite = !busqueda_nombre ? 10 : undefined;
         const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite); 
         res.json(productos); 
-    },
+    }, 
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
