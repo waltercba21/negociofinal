@@ -19,6 +19,7 @@
                     <th>Fecha</th>
                     <th>Cliente</th>
                     <th>Total</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -26,7 +27,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3" class="td-presupuestos"><strong>Total:</strong></td>
+                    <td colspan="4" class="td-presupuestos"><strong>Total:</strong></td>
                     <td id="total-presupuestos" class="tfoot-total"></td>
                 </tr>
             </tfoot>
@@ -43,7 +44,7 @@
                 cargarPresupuestos(fechaInicio, fechaFin);
             });
         });
-    
+
         function cargarPresupuestos(fechaInicio, fechaFin) {
             fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
                 .then(response => response.json())
@@ -51,7 +52,7 @@
                     const tableBody = document.querySelector('#presupuestos-table tbody');
                     tableBody.innerHTML = '';  // Limpia la tabla antes de agregar nuevos datos
                     let totalPresupuestos = 0;
-    
+
                     data.forEach(presupuesto => {
                         totalPresupuestos += parseFloat(presupuesto.total.replace(/\./g, '').replace(',', '.'));
                         const row = `
@@ -60,16 +61,56 @@
                                 <td>${presupuesto.fecha}</td>
                                 <td>${presupuesto.nombre_cliente}</td>
                                 <td>${presupuesto.total}</td>
+                                <td>
+                                    <button class="btn-editar" data-id="${presupuesto.id}">Editar</button>
+                                    <button class="btn-eliminar" data-id="${presupuesto.id}">Eliminar</button>
+                                </td>
                             </tr>
                         `;
                         tableBody.innerHTML += row;
                     });
-    
+
                     // Actualiza el total de presupuestos
                     document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(totalPresupuestos);
+
+                    // Agrega eventos a los botones de edición y eliminación
+                    document.querySelectorAll('.btn-editar').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const id = this.getAttribute('data-id');
+                            editarPresupuesto(id);
+                        });
+                    });
+
+                    document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const id = this.getAttribute('data-id');
+                            eliminarPresupuesto(id);
+                        });
+                    });
                 })
                 .catch(error => console.error('Error al cargar los presupuestos:', error));
         }
+
+        function editarPresupuesto(id) {
+            // Lógica para editar el presupuesto
+            window.location.href = `/productos/presupuestos/editar/${id}`;
+        }
+
+        function eliminarPresupuesto(id) {
+            if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
+                fetch(`/productos/api/presupuestos/${id}`, {
+                    method: 'DELETE',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Presupuesto eliminado exitosamente');
+                    // Recargar la tabla de presupuestos
+                    const fechaInicio = document.getElementById('fechaInicio').value;
+                    const fechaFin = document.getElementById('fechaFin').value;
+                    cargarPresupuestos(fechaInicio, fechaFin);
+                })
+                .catch(error => console.error('Error al eliminar el presupuesto:', error));
+            }
+        }
     </script>
-    
 </body>
