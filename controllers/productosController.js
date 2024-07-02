@@ -831,13 +831,16 @@ editPresupuesto: (req, res) => {
         WHERE id = ?
     `, [nombre_cliente, fecha, total, id], (error, resultados) => {
         if (error) {
-            res.status(500).json({ message: 'Error al editar presupuesto: ' + error.message });
+            res.status(500).json({ message: 'Error al editar el presupuesto: ' + error.message });
         } else {
-            res.json({ message: 'Presupuesto editado exitosamente' });
+            if (resultados.affectedRows > 0) {
+                res.json({ message: 'Presupuesto editado exitosamente', affectedRows: resultados.affectedRows });
+            } else {
+                res.status(404).json({ message: 'No se encontró el presupuesto para editar o no se realizaron cambios.' });
+            }
         }
     });
 },
-
 deletePresupuesto: (req, res) => {
     const { id } = req.params;
 
@@ -846,9 +849,13 @@ deletePresupuesto: (req, res) => {
         WHERE id = ?
     `, [id], (error, resultados) => {
         if (error) {
-            res.status(500).json({ message: 'Error al eliminar presupuesto: ' + error.message });
+            res.status(500).json({ message: 'Error al eliminar el presupuesto: ' + error.message });
         } else {
-            res.json({ message: 'Presupuesto eliminado exitosamente' });
+            if (resultados.affectedRows > 0) {
+                res.json({ message: 'Presupuesto eliminado exitosamente', affectedRows: resultados.affectedRows });
+            } else {
+                res.status(404).json({ message: 'No se encontró el presupuesto para eliminar.' });
+            }
         }
     });
 },
