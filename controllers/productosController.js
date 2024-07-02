@@ -821,7 +821,37 @@ getPresupuestos: async (req, res) => {
         res.status(500).json({ error: 'Error al obtener presupuestos' });
     }
 },
+editPresupuesto: (req, res) => {
+    const { id } = req.params;
+    const { nombre_cliente, fecha, total } = req.body;
 
+    conexion.query(`
+        UPDATE presupuestos_mostrador
+        SET nombre_cliente = ?, fecha = ?, total = ?
+        WHERE id = ?
+    `, [nombre_cliente, fecha, total, id], (error, resultados) => {
+        if (error) {
+            res.status(500).json({ message: 'Error al editar presupuesto: ' + error.message });
+        } else {
+            res.json({ message: 'Presupuesto editado exitosamente' });
+        }
+    });
+},
+
+deletePresupuesto: (req, res) => {
+    const { id } = req.params;
+
+    conexion.query(`
+        DELETE FROM presupuestos_mostrador
+        WHERE id = ?
+    `, [id], (error, resultados) => {
+        if (error) {
+            res.status(500).json({ message: 'Error al eliminar presupuesto: ' + error.message });
+        } else {
+            res.json({ message: 'Presupuesto eliminado exitosamente' });
+        }
+    });
+},
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];

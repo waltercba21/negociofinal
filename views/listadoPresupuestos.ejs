@@ -56,14 +56,16 @@
                     data.forEach(presupuesto => {
                         totalPresupuestos += parseFloat(presupuesto.total.replace(/\./g, '').replace(',', '.'));
                         const row = `
-                            <tr>
-                                <td>${presupuesto.id}</td>
-                                <td>${presupuesto.fecha}</td>
-                                <td>${presupuesto.nombre_cliente}</td>
-                                <td>${presupuesto.total}</td>
+                            <tr data-id="${presupuesto.id}">
+                                <td class="id">${presupuesto.id}</td>
+                                <td class="fecha">${presupuesto.fecha}</td>
+                                <td class="cliente">${presupuesto.nombre_cliente}</td>
+                                <td class="total">${presupuesto.total}</td>
                                 <td>
                                     <button class="btn-editar" data-id="${presupuesto.id}">Editar</button>
                                     <button class="btn-eliminar" data-id="${presupuesto.id}">Eliminar</button>
+                                    <button class="btn-guardar" data-id="${presupuesto.id}" style="display:none;">Guardar</button>
+                                    <button class="btn-cancelar" data-id="${presupuesto.id}" style="display:none;">Cancelar</button>
                                 </td>
                             </tr>
                         `;
@@ -77,7 +79,7 @@
                     document.querySelectorAll('.btn-editar').forEach(btn => {
                         btn.addEventListener('click', function() {
                             const id = this.getAttribute('data-id');
-                            editarPresupuesto(id);
+                            habilitarEdicion(id);
                         });
                     });
 
@@ -87,13 +89,71 @@
                             eliminarPresupuesto(id);
                         });
                     });
+
+                    document.querySelectorAll('.btn-guardar').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const id = this.getAttribute('data-id');
+                            guardarCambios(id);
+                        });
+                    });
+
+                    document.querySelectorAll('.btn-cancelar').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const id = this.getAttribute('data-id');
+                            cancelarEdicion(id);
+                        });
+                    });
                 })
                 .catch(error => console.error('Error al cargar los presupuestos:', error));
         }
 
-        function editarPresupuesto(id) {
-            // Lógica para editar el presupuesto
-            window.location.href = `/productos/presupuestos/editar/${id}`;
+        function habilitarEdicion(id) {
+            const row = document.querySelector(`tr[data-id="${id}"]`);
+            row.querySelector('.fecha').innerHTML = `<input type="date" value="${row.querySelector('.fecha').textContent.split('/').reverse().join('-')}">`;
+            row.querySelector('.cliente').innerHTML = `<input type="text" value="${row.querySelector('.cliente').textContent}">`;
+            row.querySelector('.total').innerHTML = `<input type="text" value="${row.querySelector('.total').textContent.replace(/\./g, '').replace(',', '.')}">`;
+
+            row.querySelector('.btn-editar').style.display = 'none';
+            row.querySelector('.btn-eliminar').style.display = 'none';
+            row.querySelector('.btn-guardar').style.display = 'inline';
+            row.querySelector('.btn-cancelar').style.display = 'inline';
+        }
+
+        function cancelarEdicion(id) {
+            const row = document.querySelector(`tr[data-id="${id}"]`);
+            const fecha = row.querySelector('.fecha input').value.split('-').reverse().join('/');
+            const cliente = row.querySelector('.cliente input').value;
+            const total = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(row.querySelector('.total input').value.replace('.', '').replace(',', '.'));
+
+            row.querySelector('.fecha').textContent = fecha;
+            row.querySelector('.cliente').textContent = cliente;
+            row.querySelector('.total').textContent = total;
+
+            row.querySelector('.btn-editar').style.display = 'inline';
+            row.querySelector('.btn-eliminar').style.display = 'inline';
+            row.querySelector('.btn-guardar').style.display = 'none';
+            row.querySelector('.btn-cancelar').style.display = 'none';
+        }
+
+        function guardarCambios(id) {
+            const row = document.querySelector(`tr[data-id="${id}"]`);
+            const fecha = row.querySelector('.fecha input').value;
+            const nombre_cliente = row.querySelector('.cliente input').value;
+            const total = parseFloat(row.querySelector('.total input').value.replace('.', '').replace(',', '.'));
+
+            fetch(`/productos/api/presupuestos/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ fecha, nombre_cliente, total })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Presupuesto actualizado exitosamente');
+                cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
+            })
+            .catch(error => console.error('Error al actualizar el presupuesto:', error));
         }
 
         function eliminarPresupuesto(id) {
