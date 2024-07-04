@@ -835,8 +835,7 @@ editPresupuesto : (req, res) => {
 },
 deletePresupuesto : (req, res) => {
     const { id } = req.params;
-
-    presupuestosModel.eliminarPresupuesto(id)
+    producto.eliminarPresupuesto(id)
         .then(affectedRows => {
             res.json({ message: 'Presupuesto eliminado exitosamente', affectedRows });
         })
