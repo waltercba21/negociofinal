@@ -2,21 +2,23 @@
 <%- include('./layouts/header.ejs') %>
 <body>
 <main>
+    <h2>Detalle del Presupuesto</h2>
     <table>
         <thead>
             <tr>
                 <th colspan="4">Detalle del Presupuesto</th>
             </tr>
             <tr>
-              <p>ID Presupuesto: <%= presupuesto.presupuesto_id %></p>  
-              <p>Fecha: <%= new Date(presupuesto.fecha).toISOString().split('T')[0] %></p>
+                <td>ID Presupuesto: <%= presupuesto.presupuesto_id %></td>
+                <td>Fecha: <%= new Date(presupuesto.fecha).toISOString().split('T')[0] %></td>
                 <td>Cliente: <%= presupuesto.nombre_cliente %></td>
-                
+                <td>Total: <%= presupuesto.total %></td>
             </tr>
             <tr>
                 <th>Producto</th>
                 <th>Cantidad</th>
-                <th>Total</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
             </tr>
         </thead>
         <tbody>
@@ -24,7 +26,8 @@
             <tr>
                 <td><%= item.nombre_producto %></td>
                 <td><%= item.cantidad %></td>
-                <td><%= presupuesto.total %></td>
+                <td><%= item.precio_unitario %></td>
+                <td><%= item.subtotal %></td>
             </tr>
             <% }); %>
         </tbody>
