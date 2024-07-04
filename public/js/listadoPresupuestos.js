@@ -13,8 +13,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function cargarPresupuestos(fechaInicio, fechaFin) {
     fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Data received:', data);
             const tableBody = document.querySelector('#presupuestos-table tbody');
             tableBody.innerHTML = '';  // Limpia la tabla antes de agregar nuevos datos
             let totalPresupuestos = 0;
@@ -146,19 +150,20 @@ function guardarCambios(id) {
 
 function eliminarPresupuesto(id) {
     if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
-        // Log de ID que se enviará para eliminar
         console.log('ID enviado para eliminar:', id);
 
         fetch(`/productos/api/presupuestos/${id}`, {
             method: 'DELETE',
         })
         .then(response => {
+            console.log('response:', response);
             if (!response.ok) {
                 throw new Error('Respuesta del servidor no es OK');
             }
             return response.json();
         })
         .then(data => {
+            console.log('data:', data);
             alert('Presupuesto eliminado exitosamente');
             cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
         })
