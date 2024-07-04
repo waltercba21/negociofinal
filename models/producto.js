@@ -955,10 +955,14 @@ eliminarPresupuesto : (id) => {
 editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
-            if (err) return reject(err);
+            if (err) {
+                console.error('Error obteniendo conexión:', err);
+                return reject(err);
+            }
 
             conexion.beginTransaction(err => {
                 if (err) {
+                    console.error('Error iniciando transacción:', err);
                     conexion.release();
                     return reject(err);
                 }
@@ -984,8 +988,10 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
 
                 const query = `UPDATE presupuestos_mostrador SET ${updateFields.join(', ')} WHERE id = ?`;
 
+                console.log('Executing query:', query, updateValues);
                 conexion.query(query, updateValues, (error, resultados) => {
                     if (error) {
+                        console.error('Error ejecutando query de presupuesto:', error);
                         return conexion.rollback(() => {
                             conexion.release();
                             return reject(error);
@@ -1016,8 +1022,10 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
 
                             const itemQuery = `UPDATE items_presupuesto SET ${itemUpdateFields.join(', ')} WHERE id = ? AND presupuesto_id = ?`;
 
+                            console.log('Executing item query:', itemQuery, itemUpdateValues);
                             conexion.query(itemQuery, itemUpdateValues, (error, result) => {
                                 if (error) {
+                                    console.error('Error ejecutando query de item:', error);
                                     return reject(error);
                                 }
                                 resolve(result);
@@ -1029,6 +1037,7 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                         .then(() => {
                             conexion.commit(err => {
                                 if (err) {
+                                    console.error('Error al hacer commit:', err);
                                     return conexion.rollback(() => {
                                         conexion.release();
                                         return reject(err);
@@ -1039,6 +1048,7 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                             });
                         })
                         .catch(error => {
+                            console.error('Error al actualizar items:', error);
                             conexion.rollback(() => {
                                 conexion.release();
                                 return reject(error);
