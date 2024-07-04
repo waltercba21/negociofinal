@@ -774,10 +774,12 @@ presupuestoMostrador: async function(req, res) {
         console.log("Datos recibidos en el servidor:", req.body);
 
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
+        const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
+        
         const presupuesto = {
             nombre_cliente: nombreCliente,
             fecha: fechaPresupuesto,
-            total: totalPresupuesto
+            total: totalLimpio
         };
 
         // Loguear los datos del presupuesto antes de guardar
