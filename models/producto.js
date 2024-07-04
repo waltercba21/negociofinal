@@ -894,6 +894,124 @@ obtenerPorFiltros(conexion, categoria, marca, modelo, busqueda_nombre) {
         });
     });
 },
+eliminarPresupuesto : (id) => {
+    return new Promise((resolve, reject) => {
+        pool.getConnection((err, conexion) => {
+            if (err) return reject(err);
+
+            conexion.beginTransaction(err => {
+                if (err) {
+                    conexion.release();
+                    return reject(err);
+                }
+
+                conexion.query(`
+                    DELETE FROM presupuesto_items
+                    WHERE presupuesto_id = ?
+                `, [id], (error, resultados) => {
+                    if (error) {
+                        return conexion.rollback(() => {
+                            conexion.release();
+                            return reject(error);
+                        });
+                    }
+
+                    conexion.query(`
+                        DELETE FROM presupuestos_mostrador
+                        WHERE id = ?
+                    `, [id], (error, result) => {
+                        if (error) {
+                            return conexion.rollback(() => {
+                                conexion.release();
+                                return reject(error);
+                            });
+                        }
+
+                        if (result.affectedRows > 0) {
+                            conexion.commit(err => {
+                                if (err) {
+                                    return conexion.rollback(() => {
+                                        conexion.release();
+                                        return reject(err);
+                                    });
+                                }
+                                conexion.release();
+                                resolve(result.affectedRows);
+                            });
+                        } else {
+                            conexion.rollback(() => {
+                                conexion.release();
+                                reject(new Error('No se encontró el presupuesto para eliminar.'));
+                            });
+                        }
+                    });
+                });
+            });
+        });
+    });
+},
+editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
+    return new Promise((resolve, reject) => {
+        pool.getConnection((err, conexion) => {
+            if (err) return reject(err);
+
+            conexion.beginTransaction(err => {
+                if (err) {
+                    conexion.release();
+                    return reject(err);
+                }
+
+                conexion.query(`
+                    UPDATE presupuestos_mostrador
+                    SET nombre_cliente = ?, fecha = ?, total = ?
+                    WHERE id = ?
+                `, [nombre_cliente, fecha, total, id], (error, resultados) => {
+                    if (error) {
+                        return conexion.rollback(() => {
+                            conexion.release();
+                            return reject(error);
+                        });
+                    }
+
+                    const updates = items.map(item => {
+                        return new Promise((resolve, reject) => {
+                            conexion.query(`
+                                UPDATE presupuesto_items
+                                SET producto_id = ?, cantidad = ?, precio_unitario = ?, subtotal = ?
+                                WHERE id = ? AND presupuesto_id = ?
+                            `, [item.producto_id, item.cantidad, item.precio_unitario, item.subtotal, item.id, id], (error, result) => {
+                                if (error) {
+                                    return reject(error);
+                                }
+                                resolve(result);
+                            });
+                        });
+                    });
+
+                    Promise.all(updates)
+                        .then(() => {
+                            conexion.commit(err => {
+                                if (err) {
+                                    return conexion.rollback(() => {
+                                        conexion.release();
+                                        return reject(err);
+                                    });
+                                }
+                                conexion.release();
+                                resolve(resultados.affectedRows);
+                            });
+                        })
+                        .catch(error => {
+                            conexion.rollback(() => {
+                                conexion.release();
+                                return reject(error);
+                            });
+                        });
+                });
+            });
+        });
+    });
+},
   obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
   var query = "SELECT id, nombre, codigo, imagen, descripcion, precio_venta, modelo, categoria_id, marca_id, proveedor_id, modelo_id FROM productos WHERE categoria_id = ? AND marca_id = ? AND modelo_id = ?";
   conexion.query(query, [categoria, marca, modelo], function(error, resultados) {

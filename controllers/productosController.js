@@ -821,105 +821,29 @@ getPresupuestos: async (req, res) => {
         res.status(500).json({ error: 'Error al obtener presupuestos' });
     }
 },
-editPresupuesto: (req, res) => {
+editPresupuesto :(req, res) => {
     const { id } = req.params;
-    const { nombre_cliente, fecha, total, items } = req.body;  // Asumiendo que recibes una lista de items modificados también
+    const { nombre_cliente, fecha, total, items } = req.body;
 
-    conexion.beginTransaction((err) => {
-        if (err) {
-            return res.status(500).json({ message: 'Error iniciando transacción: ' + err.message });
-        }
-        conexion.query(`
-            UPDATE presupuestos_mostrador
-            SET nombre_cliente = ?, fecha = ?, total = ?
-            WHERE id = ?
-        `, [nombre_cliente, fecha, total, id], (error, resultados) => {
-            if (error) {
-                return conexion.rollback(() => {
-                    res.status(500).json({ message: 'Error al editar presupuesto: ' + error.message });
-                });
-            }
-       const updates = items.map(item => {
-                return new Promise((resolve, reject) => {
-                    conexion.query(`
-                        UPDATE presupuesto_items
-                        SET producto_id = ?, cantidad = ?, precio_unitario = ?, subtotal = ?
-                        WHERE id = ? AND presupuesto_id = ?
-                    `, [item.producto_id, item.cantidad, item.precio_unitario, item.subtotal, item.id, id], (error, result) => {
-                        if (error) {
-                            return reject(error);
-                        }
-                        resolve(result);
-                    });
-                });
-            });
-
-            Promise.all(updates)
-                .then(() => {
-                    conexion.commit((err) => {
-                        if (err) {
-                            return conexion.rollback(() => {
-                                res.status(500).json({ message: 'Error al hacer commit de la transacción: ' + err.message });
-                            });
-                        }
-                        res.json({ message: 'Presupuesto editado exitosamente', affectedRows: resultados.affectedRows });
-                    });
-                })
-                .catch((error) => {
-                    conexion.rollback(() => {
-                        res.status(500).json({ message: 'Error al actualizar items del presupuesto: ' + error.message });
-                    });
-                });
+    presupuestosModel.editarPresupuesto(id, nombre_cliente, fecha, total, items)
+        .then(affectedRows => {
+            res.json({ message: 'Presupuesto editado exitosamente', affectedRows });
+        })
+        .catch(error => {
+            res.status(500).json({ message: 'Error al editar presupuesto: ' + error.message });
         });
-    });
 },
-deletePresupuesto: (req, res) => {
+deletePresupuesto : (req, res) => {
     const { id } = req.params;
 
-    conexion.beginTransaction((err) => {
-        if (err) {
-            return res.status(500).json({ message: 'Error iniciando transacción: ' + err.message });
-        }
-
-        conexion.query(`
-            DELETE FROM presupuesto_items
-            WHERE presupuesto_id = ?
-        `, [id], (error, resultados) => {
-            if (error) {
-                return conexion.rollback(() => {
-                    res.status(500).json({ message: 'Error al eliminar items del presupuesto: ' + error.message });
-                });
-            }
-
-            conexion.query(`
-                DELETE FROM presupuestos_mostrador
-                WHERE id = ?
-            `, [id], (error, result) => {
-                if (error) {
-                    return conexion.rollback(() => {
-                        res.status(500).json({ message: 'Error al eliminar el presupuesto: ' + error.message });
-                    });
-                }
-
-                if (result.affectedRows > 0) {
-                    conexion.commit((err) => {
-                        if (err) {
-                            return conexion.rollback(() => {
-                                res.status(500).json({ message: 'Error al hacer commit de la transacción: ' + err.message });
-                            });
-                        }
-                        res.json({ message: 'Presupuesto eliminado exitosamente', affectedRows: result.affectedRows });
-                    });
-                } else {
-                    conexion.rollback(() => {
-                        res.status(404).json({ message: 'No se encontró el presupuesto para eliminar.' });
-                    });
-                }
-            });
+    presupuestosModel.eliminarPresupuesto(id)
+        .then(affectedRows => {
+            res.json({ message: 'Presupuesto eliminado exitosamente', affectedRows });
+        })
+        .catch(error => {
+            res.status(500).json({ message: 'Error al eliminar presupuesto: ' + error.message });
         });
-    });
 },
-
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];
