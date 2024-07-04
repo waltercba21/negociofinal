@@ -969,11 +969,11 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
 
                 const updateFields = [];
                 const updateValues = [];
-                if (nombre_cliente !== undefined) {
+                if (nombre_cliente !== undefined && nombre_cliente !== '') {
                     updateFields.push('nombre_cliente = ?');
                     updateValues.push(nombre_cliente);
                 }
-                if (fecha !== undefined) {
+                if (fecha !== undefined && fecha !== '') {
                     updateFields.push('fecha = ?');
                     updateValues.push(fecha);
                 }
