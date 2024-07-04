@@ -10,55 +10,77 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('El elemento con ID "buscar" no se encontró en el DOM.');
     }
 });
+
 function cargarPresupuestos(fechaInicio, fechaFin) {
     fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-        .then(response => {
-            console.log('Response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Data received:', data);
             const tableBody = document.querySelector('#presupuestos-table tbody');
             tableBody.innerHTML = ''; 
             let totalPresupuestos = 0;
 
             data.forEach(presupuesto => {
-                const totalPresupuesto = parseFloat(presupuesto.total.replace(/\./g, '').replace(',', '.')); // Asegurar que el total se convierte a un número.
-                totalPresupuestos += totalPresupuesto; // Sumar al total general
-
-                const row = `
-                    <tr data-id="${presupuesto.id}">
-                        <td class="id">${presupuesto.id}</td>
-                        <td class="fecha">${presupuesto.fecha}</td>
-                        <td class="cliente">${presupuesto.nombre_cliente}</td>
-                        <td class="total">${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(totalPresupuesto)}</td>
-                        <td>
-                            <button class="btn-ver" data-id="${presupuesto.id}">Ver Detalle</button>
-                            <button class="btn-editar" data-id="${presupuesto.id}">Editar</button>
-                            <button class="btn-eliminar" data-id="${presupuesto.id}">Eliminar</button>
-                            <button class="btn-guardar" data-id="${presupuesto.id}" style="display:none;">Guardar</button>
-                            <button class="btn-cancelar" data-id="${presupuesto.id}" style="display:none;">Cancelar</button>
-                        </td>
-                    </tr>
+                totalPresupuestos += parseFloat(presupuesto.total);
+                const row = document.createElement('tr');
+                row.setAttribute('data-id', presupuesto.id);
+                row.innerHTML = `
+                    <td class="id">${presupuesto.id}</td>
+                    <td class="fecha">${presupuesto.fecha}</td>
+                    <td class="cliente">${presupuesto.nombre_cliente}</td>
+                    <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(presupuesto.total)}</td>
+                    <td>
+                        <button class="btn-ver" data-id="${presupuesto.id}">Ver Detalle</button>
+                        <button class="btn-editar" data-id="${presupuesto.id}">Editar</button>
+                        <button class="btn-eliminar" data-id="${presupuesto.id}">Eliminar</button>
+                        <button class="btn-guardar" data-id="${presupuesto.id}" style="display:none;">Guardar</button>
+                        <button class="btn-cancelar" data-id="${presupuesto.id}" style="display:none;">Cancelar</button>
+                    </td>
                 `;
-                tableBody.innerHTML += row;
+                tableBody.appendChild(row);
             });
 
-            document.querySelectorAll('.btn-ver').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    window.location.href = `/productos/presupuesto/${id}`;
-                });
-            });
-
-            // Actualiza el total de presupuestos en el pie de la tabla
-            document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(totalPresupuestos);
+            addEventListeners();
+            document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalPresupuestos);
         })
-        .catch(error => {
-            console.error('Error al cargar los presupuestos:', error);
-        });
+        .catch(error => console.error('Error al cargar los presupuestos:', error));
 }
 
+function addEventListeners() {
+    document.querySelectorAll('.btn-ver').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            window.location.href = `/productos/presupuesto/${id}`;
+        });
+    });
+
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            habilitarEdicion(id);
+        });
+    });
+
+    document.querySelectorAll('.btn-eliminar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            eliminarPresupuesto(id);
+        });
+    });
+
+    document.querySelectorAll('.btn-guardar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            guardarCambios(id);
+        });
+    });
+
+    document.querySelectorAll('.btn-cancelar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            cancelarEdicion(id);
+        });
+    });
+}
 
 function habilitarEdicion(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
