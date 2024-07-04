@@ -770,15 +770,30 @@ presupuestoMostrador: async function(req, res) {
   },
   procesarFormulario : async (req, res) => {
     try {
+        // Loguear los datos recibidos en el request
+        console.log("Datos recibidos en el servidor:", req.body);
+
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
         const presupuesto = {
             nombre_cliente: nombreCliente,
             fecha: fechaPresupuesto,
             total: totalPresupuesto
         };
+
+        // Loguear los datos del presupuesto antes de guardar
+        console.log("Datos del presupuesto a guardar:", presupuesto);
+
         const presupuestoId = await producto.guardarPresupuesto(presupuesto);
+        
+        // Loguear el ID del presupuesto guardado
+        console.log("ID del presupuesto guardado:", presupuestoId);
+
         const items = await Promise.all(invoiceItems.map(async item => {
             const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id);
+
+            // Loguear el ID del producto obtenido
+            console.log("Producto ID obtenido para:", item.producto_id, "es:", producto_id);
+
             return [
                 presupuestoId,
                 producto_id,
@@ -787,14 +802,17 @@ presupuestoMostrador: async function(req, res) {
                 item.subtotal
             ];
         }));
+
+        // Loguear los items que se intentarán guardar
+        console.log("Items del presupuesto a guardar:", items);
+
         await producto.guardarItemsPresupuesto(items); 
         res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
     } catch (error) {
-        console.error('Error al guardar el presupuesto:', error.message);
-        res.status(500).json({ error: 'Error al guardar el presupuesto.' });
+        console.error('Error al guardar el presupuesto:', error);
+        res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
     }
 },
-
 listadoPresupuestos : (req, res) => {
     res.render('listadoPresupuestos');
 },

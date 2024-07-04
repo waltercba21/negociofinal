@@ -60,6 +60,7 @@ module.exports ={
     guardarItemsPresupuesto : (items) => {
         return new Promise((resolve, reject) => {
             const query = 'INSERT INTO presupuesto_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
+            console.log("Intentando guardar los siguientes items:", items);
             conexion.query(query, [items], (error, resultado) => {
                 if (error) {
                     console.error('Error al insertar items del presupuesto:', error);
@@ -70,7 +71,8 @@ module.exports ={
                 }
             });
         });
-    },    
+    },
+      
       getAllPresupuestos: (fechaInicio, fechaFin) => {
         return new Promise((resolve, reject) => {
             conexion.query(`
