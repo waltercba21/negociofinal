@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
     const btnBuscar = document.getElementById('buscar');
-    console.log('btnBuscar:', btnBuscar); // Verifica si el elemento está presente
     if (btnBuscar) {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
@@ -128,12 +127,14 @@ function guardarCambios(id) {
         body: JSON.stringify({ fecha, nombre_cliente, total, items })
     })
     .then(response => {
+        console.log('response:', response);
         if (!response.ok) {
             throw new Error('Respuesta del servidor no es OK');
         }
         return response.json();
     })
     .then(data => {
+        console.log('data:', data);
         alert('Presupuesto actualizado exitosamente');
         cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
     })
@@ -142,7 +143,6 @@ function guardarCambios(id) {
         alert('Error al actualizar el presupuesto: ' + error.message);
     });
 }
-
 
 function eliminarPresupuesto(id) {
     if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
