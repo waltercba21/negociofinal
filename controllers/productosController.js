@@ -770,23 +770,15 @@ presupuestoMostrador: async function(req, res) {
   },
   procesarFormulario : async (req, res) => {
     try {
-        console.log('Datos recibidos:', req.body); // Log all received data
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
-
         const presupuesto = {
             nombre_cliente: nombreCliente,
             fecha: fechaPresupuesto,
             total: totalPresupuesto
         };
-
-        console.log('Presupuesto a guardar:', presupuesto); // Log the budget to be saved
-
         const presupuestoId = await producto.guardarPresupuesto(presupuesto);
-        console.log('Presupuesto guardado con ID:', presupuestoId); // Log the saved budget ID
-
         const items = await Promise.all(invoiceItems.map(async item => {
             const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id);
-            console.log('Producto ID obtenido:', producto_id); // Log the obtained product ID
             return [
                 presupuestoId,
                 producto_id,
@@ -795,12 +787,8 @@ presupuestoMostrador: async function(req, res) {
                 item.subtotal
             ];
         }));
-
-        await producto.guardarItemsPresupuesto(items);
-        console.log('Items del presupuesto guardados:', items); // Log the saved budget items
-
+        await producto.guardarItemsPresupuesto(items); 
         res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
-
     } catch (error) {
         console.error('Error al guardar el presupuesto:', error.message);
         res.status(500).json({ error: 'Error al guardar el presupuesto.' });

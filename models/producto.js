@@ -59,16 +59,18 @@ module.exports ={
     },
     guardarItemsPresupuesto : (items) => {
         return new Promise((resolve, reject) => {
-          const query = 'INSERT INTO items_presupuesto (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
-          conexion.query(query, [items], (error, resultado) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(resultado);
-            }
-          });
+            const query = 'INSERT INTO presupuesto_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
+            conexion.query(query, [items], (error, resultado) => {
+                if (error) {
+                    console.error('Error al insertar items del presupuesto:', error);
+                    reject(error);
+                } else {
+                    console.log('Items del presupuesto guardados correctamente:', resultado);
+                    resolve(resultado);
+                }
+            });
         });
-      },
+    },    
       getAllPresupuestos: (fechaInicio, fechaFin) => {
         return new Promise((resolve, reject) => {
             conexion.query(`
