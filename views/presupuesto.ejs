@@ -1,37 +1,38 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
+<%- include('./layouts/head.ejs') %>
+<%- include('./layouts/header.ejs') %>
 <body>
- <main>
+<main>
     <h2>Detalle del Presupuesto</h2>
-<p>ID Presupuesto: <%= presupuesto.id %></p>
-<p>Fecha: <%= presupuesto.fecha.toISOString().split('T')[0] %></p>
-<p>Cliente: <%= presupuesto.nombre_cliente %></p>
-<p>Total: <%= presupuesto.total %></p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Producto</th>
-      <th>Cantidad</th>
-      <th>Precio Unitario</th>
-      <th>Subtotal</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% detalles.forEach(item => { %>
-      <tr>
-        <td><%= item.nombre_producto %></td>
-        <td><%= item.cantidad %></td>
-        <td><%= item.precio_unitario %></td>
-        <td><%= item.subtotal %></td>
-      </tr>
-    <% }); %>
-  </tbody>
-</table>
-
-
- </main>
-   <%- include ./layouts/footer.ejs %>
-   <script src="/js/buscadorPresupuesto.js"></script> 
+    <table>
+        <thead>
+            <tr>
+                <th colspan="4">Detalle del Presupuesto</th>
+            </tr>
+            <tr>
+                <td>ID Presupuesto: <%= presupuesto.id %></td>
+                <td>Fecha: <%= presupuesto.fecha.toISOString().split('T')[0] %></td>
+                <td>Cliente: <%= presupuesto.nombre_cliente %></td>
+                <td>Total: <%= presupuesto.total %></td>
+            </tr>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% detalles.forEach(item => { %>
+            <tr>
+                <td><%= item.nombre_producto %></td>
+                <td><%= item.cantidad %></td>
+                <td><%= item.precio_unitario %></td>
+                <td><%= item.subtotal %></td>
+            </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</main>
+<%- include('./layouts/footer.ejs') %>
+<script src="/js/buscadorPresupuesto.js"></script>
 </body>
-  
