@@ -1,6 +1,3 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
-
 <body>
     <main class="container-listadoPresupuesto">
         <h2 class="titulo-listado">Listado de Presupuestos</h2>
@@ -36,14 +33,14 @@
 
     <script src="/js/listadoFacturas.js"></script>
     <script>
-          document.addEventListener('DOMContentLoaded', function() {
-        const btnBuscar = document.getElementById('buscar');
-        btnBuscar.addEventListener('click', function() {
-            const fechaInicio = document.getElementById('fechaInicio').value;
-            const fechaFin = document.getElementById('fechaFin').value;
-            cargarPresupuestos(fechaInicio, fechaFin);
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnBuscar = document.getElementById('buscar');
+            btnBuscar.addEventListener('click', function() {
+                const fechaInicio = document.getElementById('fechaInicio').value;
+                const fechaFin = document.getElementById('fechaFin').value;
+                cargarPresupuestos(fechaInicio, fechaFin);
+            });
         });
-    });
 
         function cargarPresupuestos(fechaInicio, fechaFin) {
             fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
@@ -136,44 +133,20 @@
         }
 
         function guardarCambios(id) {
-        const row = document.querySelector(`tr[data-id="${id}"]`);
-        const fecha = row.querySelector('.fecha input').value;
-        const nombre_cliente = row.querySelector('.cliente input').value;
-        const total = parseFloat(row.querySelector('.total input').value.replace(/\./g, '').replace(',', '.'));
+            const row = document.querySelector(`tr[data-id="${id}"]`);
+            const fecha = row.querySelector('.fecha input').value;
+            const nombre_cliente = row.querySelector('.cliente input').value;
+            const total = parseFloat(row.querySelector('.total input').value.replace(/\./g, '').replace(',', '.'));
 
-        // Log de datos que se enviarán para edición
-        console.log('Datos enviados para edición:', { fecha, nombre_cliente, total });
-
-        fetch(`/productos/api/presupuestos/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ fecha, nombre_cliente, total })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Respuesta del servidor no es OK');
-            }
-            return response.json();
-        })
-        .then(data => {
-            alert('Presupuesto actualizado exitosamente');
-            cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
-        })
-        .catch(error => {
-            console.error('Error al actualizar el presupuesto:', error);
-            alert('Error al actualizar el presupuesto: ' + error.message);
-        });
-    }
-
-    function eliminarPresupuesto(id) {
-        if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
-            // Log de ID que se enviará para eliminar
-            console.log('ID enviado para eliminar:', id);
+            // Log de datos que se enviarán para edición
+            console.log('Datos enviados para edición:', { fecha, nombre_cliente, total });
 
             fetch(`/productos/api/presupuestos/${id}`, {
-                method: 'DELETE',
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ fecha, nombre_cliente, total })
             })
             .then(response => {
                 if (!response.ok) {
@@ -182,14 +155,38 @@
                 return response.json();
             })
             .then(data => {
-                alert('Presupuesto eliminado exitosamente');
+                alert('Presupuesto actualizado exitosamente');
                 cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
             })
             .catch(error => {
-                console.error('Error al eliminar el presupuesto:', error);
-                alert('Error al eliminar el presupuesto: ' + error.message);
+                console.error('Error al actualizar el presupuesto:', error);
+                alert('Error al actualizar el presupuesto: ' + error.message);
             });
         }
-    }
+
+        function eliminarPresupuesto(id) {
+            if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
+                // Log de ID que se enviará para eliminar
+                console.log('ID enviado para eliminar:', id);
+
+                fetch(`/productos/api/presupuestos/${id}`, {
+                    method: 'DELETE',
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Respuesta del servidor no es OK');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('Presupuesto eliminado exitosamente');
+                    cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
+                })
+                .catch(error => {
+                    console.error('Error al eliminar el presupuesto:', error);
+                    alert('Error al eliminar el presupuesto: ' + error.message);
+                });
+            }
+        }
     </script>
 </body>

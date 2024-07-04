@@ -829,7 +829,6 @@ editPresupuesto: (req, res) => {
         if (err) {
             return res.status(500).json({ message: 'Error iniciando transacción: ' + err.message });
         }
-
         conexion.query(`
             UPDATE presupuestos_mostrador
             SET nombre_cliente = ?, fecha = ?, total = ?
@@ -840,9 +839,7 @@ editPresupuesto: (req, res) => {
                     res.status(500).json({ message: 'Error al editar presupuesto: ' + error.message });
                 });
             }
-
-            // Asumiendo que `items` es un array de objetos con id, producto_id, cantidad, precio_unitario, subtotal
-            const updates = items.map(item => {
+       const updates = items.map(item => {
                 return new Promise((resolve, reject) => {
                     conexion.query(`
                         UPDATE presupuesto_items
