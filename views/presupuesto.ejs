@@ -2,15 +2,14 @@
 <%- include('./layouts/header.ejs') %>
 <body>
 <main>
-    <h2>Detalle del Presupuesto</h2>
     <table>
         <thead>
             <tr>
                 <th colspan="4">Detalle del Presupuesto</th>
             </tr>
             <tr>
-                <td>ID Presupuesto: <%= presupuesto.id %></td>
-                <td>Fecha: <%= presupuesto.fecha.toISOString().split('T')[0] %></td>
+              <p>ID Presupuesto: <%= presupuesto.presupuesto_id %></p>  
+              <p>Fecha: <%= new Date(presupuesto.fecha).toISOString().split('T')[0] %></p>
                 <td>Cliente: <%= presupuesto.nombre_cliente %></td>
                 
             </tr>

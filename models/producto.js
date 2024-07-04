@@ -95,7 +95,6 @@ module.exports ={
             });
         });
     },
-    
        obtenerProductoIdPorCodigo : (codigo) => {
         return new Promise((resolve, reject) => {
           const query = `
@@ -995,7 +994,15 @@ obtenerDetallePresupuesto : (id) => {
           console.log("No se encontraron resultados para el ID:", id);
           reject(new Error("No se encontró el presupuesto"));
         } else {
-          resolve(resultados);
+          // Asegurarse de que se devuelva una estructura coherente
+          const presupuesto = resultados[0];
+          const items = resultados.map(r => ({
+            nombre_producto: r.nombre_producto,
+            cantidad: r.cantidad,
+            precio_unitario: r.precio_unitario,
+            subtotal: r.subtotal
+          }));
+          resolve({ presupuesto, items });
         }
       });
     });

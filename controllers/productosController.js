@@ -757,45 +757,25 @@ generarStockPDF: async function (req, res) {
 },
 presupuestoMostrador: async function(req, res) {
     try {
-      // Lógica para obtener el próximo ID disponible en presupuestos_mostrador
       const siguienteID = await producto.obtenerSiguienteID();
-
-      // Renderizar la vista y pasar el siguiente ID
       res.render('presupuestoMostrador', { idPresupuesto: siguienteID });
     } catch (error) {
       console.error('Error al obtener el siguiente ID de presupuesto:', error.message);
-      // Manejar el error apropiadamente
       res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
     }
   },
   procesarFormulario : async (req, res) => {
     try {
-        // Loguear los datos recibidos en el request
-        console.log("Datos recibidos en el servidor:", req.body);
-
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
         const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
-        
         const presupuesto = {
             nombre_cliente: nombreCliente,
             fecha: fechaPresupuesto,
             total: totalLimpio
         };
-
-        // Loguear los datos del presupuesto antes de guardar
-        console.log("Datos del presupuesto a guardar:", presupuesto);
-
         const presupuestoId = await producto.guardarPresupuesto(presupuesto);
-        
-        // Loguear el ID del presupuesto guardado
-        console.log("ID del presupuesto guardado:", presupuestoId);
-
         const items = await Promise.all(invoiceItems.map(async item => {
             const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id);
-
-            // Loguear el ID del producto obtenido
-            console.log("Producto ID obtenido para:", item.producto_id, "es:", producto_id);
-
             return [
                 presupuestoId,
                 producto_id,
@@ -804,10 +784,6 @@ presupuestoMostrador: async function(req, res) {
                 item.subtotal
             ];
         }));
-
-        // Loguear los items que se intentarán guardar
-        console.log("Items del presupuesto a guardar:", items);
-
         await producto.guardarItemsPresupuesto(items); 
         res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
     } catch (error) {
@@ -846,27 +822,26 @@ editPresupuesto : (req, res) => {
 },
 presupuesto : (req, res) => {
     const id = req.params.id;
-    console.log("Solicitud recibida para el presupuesto ID:", id); // Log al recibir la solicitud
+    console.log("Solicitud recibida para el presupuesto ID:", id);
   
     producto.obtenerDetallePresupuesto(id)
-      .then(detalles => {
-        if (detalles.length > 0) {
-          console.log("Detalles del presupuesto encontrados:", detalles); // Log cuando se encuentran detalles
+      .then(data => {
+        if (data && data.items.length > 0) {
+          console.log("Detalles del presupuesto encontrados:", data);
           res.render('presupuesto', {
-            detalles: detalles,
-            presupuesto: detalles[0],
-            items: detalles
+            presupuesto: data.presupuesto,
+            items: data.items
           });
         } else {
-          console.log("No se encontraron detalles para el presupuesto ID:", id); // Log cuando no se encuentran detalles
+          console.log("No se encontraron detalles para el presupuesto ID:", id);
           res.status(404).send('Presupuesto no encontrado');
         }
       })
       .catch(error => {
-        console.error("Error al obtener el detalle del presupuesto:", error); // Log para cualquier otro error
+        console.error("Error al obtener el detalle del presupuesto:", error);
         res.status(500).send('Error interno del servidor');
       });
-  },
+  },  
 deletePresupuesto : (req, res) => {
     const { id } = req.params;
     producto.eliminarPresupuesto(id)
