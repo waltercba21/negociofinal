@@ -6,15 +6,16 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
+        let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);  // Definición correcta de cantidad
         let subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\./g, '').replace(',', '.'));
-        
-        // Asegurar que los valores numéricos son válidos
+
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
+        cantidad = !isNaN(cantidad) ? cantidad : 1;  // Asegurarse de que cantidad tiene un valor predeterminado adecuado
         subtotal = !isNaN(subtotal) ? subtotal : 0;
-    
+
         invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
     }
-    
+
     console.log("Invoice Items to be sent:", invoiceItems); 
     try {
         const response = await fetch('/productos/procesarFormulario', {
@@ -41,7 +42,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         console.error('Error al enviar formulario:', error);
         alert('Error al enviar formulario: ' + error.message);
     }
-  });
+});
+
   
   document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
