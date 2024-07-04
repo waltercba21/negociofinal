@@ -108,15 +108,24 @@ function guardarCambios(id) {
     const nombre_cliente = row.querySelector('.cliente input').value;
     const total = parseFloat(row.querySelector('.total input').value.replace(/\./g, '').replace(',', '.'));
 
+    // Aquí debes añadir la lógica para obtener los items editados
+    const items = Array.from(document.querySelectorAll(`tr[data-id="${id}"] .item-row`)).map(itemRow => ({
+        id: itemRow.dataset.id,
+        producto_id: itemRow.querySelector('.producto_id input').value,
+        cantidad: itemRow.querySelector('.cantidad input').value,
+        precio_unitario: itemRow.querySelector('.precio_unitario input').value,
+        subtotal: itemRow.querySelector('.subtotal input').value
+    }));
+
     // Log de datos que se enviarán para edición
-    console.log('Datos enviados para edición:', { fecha, nombre_cliente, total });
+    console.log('Datos enviados para edición:', { fecha, nombre_cliente, total, items });
 
     fetch(`/productos/api/presupuestos/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ fecha, nombre_cliente, total })
+        body: JSON.stringify({ fecha, nombre_cliente, total, items })
     })
     .then(response => {
         if (!response.ok) {
