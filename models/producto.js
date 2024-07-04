@@ -896,15 +896,13 @@ obtenerPorFiltros(conexion, categoria, marca, modelo, busqueda_nombre) {
 },
 eliminarPresupuesto : (id) => {
     return new Promise((resolve, reject) => {
-        pool.getConnection((err, conexion) => {
+        conexion.getConnection((err, conexion) => {
             if (err) return reject(err);
-
             conexion.beginTransaction(err => {
                 if (err) {
                     conexion.release();
                     return reject(err);
                 }
-
                 conexion.query(`
                     DELETE FROM presupuesto_items
                     WHERE presupuesto_id = ?
@@ -915,7 +913,6 @@ eliminarPresupuesto : (id) => {
                             return reject(error);
                         });
                     }
-
                     conexion.query(`
                         DELETE FROM presupuestos_mostrador
                         WHERE id = ?
@@ -926,7 +923,6 @@ eliminarPresupuesto : (id) => {
                                 return reject(error);
                             });
                         }
-
                         if (result.affectedRows > 0) {
                             conexion.commit(err => {
                                 if (err) {
@@ -952,15 +948,13 @@ eliminarPresupuesto : (id) => {
 },
 editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
     return new Promise((resolve, reject) => {
-        pool.getConnection((err, conexion) => {
+        conexion.getConnection((err, conexion) => {
             if (err) return reject(err);
-
             conexion.beginTransaction(err => {
                 if (err) {
                     conexion.release();
                     return reject(err);
                 }
-
                 conexion.query(`
                     UPDATE presupuestos_mostrador
                     SET nombre_cliente = ?, fecha = ?, total = ?
@@ -972,7 +966,6 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                             return reject(error);
                         });
                     }
-
                     const updates = items.map(item => {
                         return new Promise((resolve, reject) => {
                             conexion.query(`
@@ -987,7 +980,6 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                             });
                         });
                     });
-
                     Promise.all(updates)
                         .then(() => {
                             conexion.commit(err => {
