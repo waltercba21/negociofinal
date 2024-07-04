@@ -23,12 +23,15 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
             let totalPresupuestos = 0;
 
             data.forEach(presupuesto => {
+                const totalPresupuesto = parseFloat(presupuesto.total.replace(/\./g, '').replace(',', '.')); // Asegurar que el total se convierte a un número.
+                totalPresupuestos += totalPresupuesto; // Sumar al total general
+
                 const row = `
                     <tr data-id="${presupuesto.id}">
                         <td class="id">${presupuesto.id}</td>
                         <td class="fecha">${presupuesto.fecha}</td>
                         <td class="cliente">${presupuesto.nombre_cliente}</td>
-                        <td class="total">${presupuesto.total}</td>
+                        <td class="total">${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(totalPresupuesto)}</td>
                         <td>
                             <button class="btn-ver" data-id="${presupuesto.id}">Ver Detalle</button>
                             <button class="btn-editar" data-id="${presupuesto.id}">Editar</button>
@@ -40,46 +43,22 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
                 `;
                 tableBody.innerHTML += row;
             });
+
             document.querySelectorAll('.btn-ver').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
                     window.location.href = `/productos/presupuesto/${id}`;
                 });
             });
-            // Actualiza el total de presupuestos
-            document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(totalPresupuestos);
 
-            // Agrega eventos a los botones de edición y eliminación
-            document.querySelectorAll('.btn-editar').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    habilitarEdicion(id);
-                });
-            });
-
-            document.querySelectorAll('.btn-eliminar').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    eliminarPresupuesto(id);
-                });
-            });
-
-            document.querySelectorAll('.btn-guardar').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    guardarCambios(id);
-                });
-            });
-
-            document.querySelectorAll('.btn-cancelar').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    cancelarEdicion(id);
-                });
-            });
+            // Actualiza el total de presupuestos en el pie de la tabla
+            document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(totalPresupuestos);
         })
-        .catch(error => console.error('Error al cargar los presupuestos:', error));
+        .catch(error => {
+            console.error('Error al cargar los presupuestos:', error);
+        });
 }
+
 
 function habilitarEdicion(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
