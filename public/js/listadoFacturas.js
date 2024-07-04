@@ -5,8 +5,6 @@ window.onload = function() {
     });
     filtrarFacturas();
 };
-
-
 function convertirFechaInput(fechaInput) {
     if (!fechaInput) {
         return '';
