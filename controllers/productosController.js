@@ -826,7 +826,7 @@ editPresupuesto : (req, res) => {
     const { nombre_cliente, fecha, total, items } = req.body;
 
     console.log('Request received to edit presupuesto:', { id, nombre_cliente, fecha, total, items });
-    presupuestosModel.editarPresupuesto(id, nombre_cliente, fecha, total, items)
+    producto.editarPresupuesto(id, nombre_cliente, fecha, total, items)
         .then(affectedRows => {
             console.log('Presupuesto editado exitosamente:', affectedRows);
             res.status(200).json({ message: 'Presupuesto editado exitosamente', affectedRows });
