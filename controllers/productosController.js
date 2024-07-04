@@ -827,7 +827,7 @@ editPresupuesto : (req, res) => {
 
     producto.editarPresupuesto(id, nombre_cliente, fecha, total, items)
         .then(affectedRows => {
-            res.json({ message: 'Presupuesto editado exitosamente', affectedRows });
+            res.status(200).json({ message: 'Presupuesto editado exitosamente', affectedRows });
         })
         .catch(error => {
             res.status(500).json({ message: 'Error al editar presupuesto: ' + error.message });

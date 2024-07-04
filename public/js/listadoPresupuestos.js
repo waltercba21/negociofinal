@@ -143,6 +143,7 @@ function guardarCambios(id) {
     });
 }
 
+
 function eliminarPresupuesto(id) {
     if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
         // Log de ID que se enviará para eliminar
