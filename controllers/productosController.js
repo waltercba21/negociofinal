@@ -838,20 +838,24 @@ editPresupuesto : (req, res) => {
 },
 presupuesto : (req, res) => {
     const id = req.params.id;
+    console.log("Solicitud recibida para el presupuesto ID:", id); // Log al recibir la solicitud
+  
     producto.obtenerDetallePresupuesto(id)
       .then(detalles => {
         if (detalles.length > 0) {
+          console.log("Detalles del presupuesto encontrados:", detalles); // Log cuando se encuentran detalles
           res.render('presupuesto', {
             detalles: detalles,
             presupuesto: detalles[0],
             items: detalles
           });
         } else {
+          console.log("No se encontraron detalles para el presupuesto ID:", id); // Log cuando no se encuentran detalles
           res.status(404).send('Presupuesto no encontrado');
         }
       })
       .catch(error => {
-        console.error('Error al obtener el detalle del presupuesto:', error);
+        console.error("Error al obtener el detalle del presupuesto:", error); // Log para cualquier otro error
         res.status(500).send('Error interno del servidor');
       });
   },

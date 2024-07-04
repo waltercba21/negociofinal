@@ -43,7 +43,7 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
             document.querySelectorAll('.btn-ver').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
-                    window.location.href = `/presupuesto/${id}`;
+                    window.location.href = `/productos/presupuesto/${id}`;
                 });
             });
             // Actualiza el total de presupuestos

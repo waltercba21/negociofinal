@@ -955,15 +955,22 @@ eliminarPresupuesto : (id) => {
 obtenerDetallePresupuesto : (id) => {
     return new Promise((resolve, reject) => {
       const query = `
-        SELECT pm.id, pm.nombre_cliente, pm.fecha, pm.total, pi.producto_id, pi.cantidad, pi.precio_unitario, pi.subtotal
+        SELECT pm.id, pm.nombre_cliente, pm.fecha, pm.total,
+               pi.producto_id, pi.cantidad, pi.precio_unitario, pi.subtotal
         FROM presupuestos_mostrador pm
         JOIN presupuesto_items pi ON pm.id = pi.presupuesto_id
-        WHERE pm.id = ?
+        WHERE pm.id = ?;
       `;
   
+      console.log("Ejecutando consulta para el ID:", id);
       conexion.query(query, [id], (error, resultados) => {
+        console.log("Resultados obtenidos:", resultados);
         if (error) {
+          console.error("Error en la consulta:", error);
           reject(error);
+        } else if (resultados.length === 0) {
+          console.log("No se encontraron resultados para el ID:", id);
+          reject(new Error("No se encontró el presupuesto"));
         } else {
           resolve(resultados);
         }
