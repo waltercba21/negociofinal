@@ -836,6 +836,25 @@ editPresupuesto : (req, res) => {
             res.status(500).json({ message: 'Error al editar presupuesto: ' + error.message });
         });
 },
+presupuesto : (req, res) => {
+    const id = req.params.id;
+    producto.obtenerDetallePresupuesto(id)
+      .then(detalles => {
+        if (detalles.length > 0) {
+          res.render('presupuesto', {
+            detalles: detalles,
+            presupuesto: detalles[0],
+            items: detalles
+          });
+        } else {
+          res.status(404).send('Presupuesto no encontrado');
+        }
+      })
+      .catch(error => {
+        console.error('Error al obtener el detalle del presupuesto:', error);
+        res.status(500).send('Error interno del servidor');
+      });
+  },
 deletePresupuesto : (req, res) => {
     const { id } = req.params;
     producto.eliminarPresupuesto(id)

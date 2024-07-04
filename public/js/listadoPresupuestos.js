@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('El elemento con ID "buscar" no se encontró en el DOM.');
     }
 });
-
 function cargarPresupuestos(fechaInicio, fechaFin) {
     fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => {
@@ -20,11 +19,10 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
         .then(data => {
             console.log('Data received:', data);
             const tableBody = document.querySelector('#presupuestos-table tbody');
-            tableBody.innerHTML = '';  // Limpia la tabla antes de agregar nuevos datos
+            tableBody.innerHTML = ''; 
             let totalPresupuestos = 0;
 
             data.forEach(presupuesto => {
-                totalPresupuestos += parseFloat(presupuesto.total.replace(/\./g, '').replace(',', '.'));
                 const row = `
                     <tr data-id="${presupuesto.id}">
                         <td class="id">${presupuesto.id}</td>
@@ -32,6 +30,7 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
                         <td class="cliente">${presupuesto.nombre_cliente}</td>
                         <td class="total">${presupuesto.total}</td>
                         <td>
+                            <button class="btn-ver" data-id="${presupuesto.id}">Ver Detalle</button>
                             <button class="btn-editar" data-id="${presupuesto.id}">Editar</button>
                             <button class="btn-eliminar" data-id="${presupuesto.id}">Eliminar</button>
                             <button class="btn-guardar" data-id="${presupuesto.id}" style="display:none;">Guardar</button>
@@ -41,6 +40,13 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
                 `;
                 tableBody.innerHTML += row;
             });
+            document.querySelectorAll('.btn-ver').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    window.location.href = `/productos/presupuesto/${id}`;
+                });
+            });
+            
 
             // Actualiza el total de presupuestos
             document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(totalPresupuestos);
