@@ -117,6 +117,24 @@ module.exports ={
           });
         });
       },      
+     obtenerItemsPresupuesto : (presupuestoId) => {
+        return new Promise((resolve, reject) => {
+          const query = `
+            SELECT pi.cantidad, pi.precio_unitario, pi.subtotal, p.nombre as producto_nombre
+            FROM presupuesto_items pi
+            JOIN productos p ON pi.producto_id = p.id
+            WHERE pi.presupuesto_id = ?
+          `;
+      
+          conexion.query(query, [presupuestoId], (error, resultados) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(resultados);
+            }
+          });
+        });
+      },      
 obtenerTotal: function (conexion, funcion) {
   if (typeof funcion !== 'function') {
       throw new Error('funcion debe ser una función');
@@ -959,10 +977,11 @@ eliminarPresupuesto : (id) => {
 obtenerDetallePresupuesto : (id) => {
     return new Promise((resolve, reject) => {
       const query = `
-        SELECT pm.id, pm.nombre_cliente, pm.fecha, pm.total,
-               pi.producto_id, pi.cantidad, pi.precio_unitario, pi.subtotal
+        SELECT pm.id AS presupuesto_id, pm.nombre_cliente, pm.fecha, pm.total,
+               p.nombre AS nombre_producto, pi.cantidad, pi.precio_unitario, pi.subtotal
         FROM presupuestos_mostrador pm
         LEFT JOIN presupuesto_items pi ON pm.id = pi.presupuesto_id
+        LEFT JOIN productos p ON pi.producto_id = p.id
         WHERE pm.id = ?;
       `;
   

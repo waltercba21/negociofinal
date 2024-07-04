@@ -11,16 +11,16 @@
 <table>
   <thead>
     <tr>
-      <th>Producto ID</th>
+      <th>Producto</th>
       <th>Cantidad</th>
       <th>Precio Unitario</th>
       <th>Subtotal</th>
     </tr>
   </thead>
   <tbody>
-    <% items.forEach(item => { %>
+    <% detalles.forEach(item => { %>
       <tr>
-        <td><%= item.producto_id %></td>
+        <td><%= item.nombre_producto %></td>
         <td><%= item.cantidad %></td>
         <td><%= item.precio_unitario %></td>
         <td><%= item.subtotal %></td>
@@ -28,6 +28,7 @@
     <% }); %>
   </tbody>
 </table>
+
 
  </main>
    <%- include ./layouts/footer.ejs %>
