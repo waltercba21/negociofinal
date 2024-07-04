@@ -821,11 +821,11 @@ getPresupuestos: async (req, res) => {
         res.status(500).json({ error: 'Error al obtener presupuestos' });
     }
 },
-editPresupuesto :(req, res) => {
+editPresupuesto : (req, res) => {
     const { id } = req.params;
     const { nombre_cliente, fecha, total, items } = req.body;
 
-    producto.editarPresupuesto(id, nombre_cliente, fecha, total, items)
+    presupuestosModel.editarPresupuesto(id, nombre_cliente, fecha, total, items)
         .then(affectedRows => {
             res.json({ message: 'Presupuesto editado exitosamente', affectedRows });
         })
@@ -836,7 +836,7 @@ editPresupuesto :(req, res) => {
 deletePresupuesto : (req, res) => {
     const { id } = req.params;
 
-    producto.eliminarPresupuesto(id)
+    presupuestosModel.eliminarPresupuesto(id)
         .then(affectedRows => {
             res.json({ message: 'Presupuesto eliminado exitosamente', affectedRows });
         })
