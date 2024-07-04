@@ -20,14 +20,17 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
             let totalPresupuestos = 0;
 
             data.forEach(presupuesto => {
-                totalPresupuestos += parseFloat(presupuesto.total);
+                // Asegurarse de que el total es un número y está correctamente interpretado
+                const totalNumerico = parseFloat(presupuesto.total);
+                totalPresupuestos += totalNumerico;
+                
                 const row = document.createElement('tr');
                 row.setAttribute('data-id', presupuesto.id);
                 row.innerHTML = `
                     <td class="id">${presupuesto.id}</td>
                     <td class="fecha">${presupuesto.fecha}</td>
                     <td class="cliente">${presupuesto.nombre_cliente}</td>
-                    <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(presupuesto.total)}</td>
+                    <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
                     <td>
                         <button class="btn-ver" data-id="${presupuesto.id}">Ver Detalle</button>
                         <button class="btn-editar" data-id="${presupuesto.id}">Editar</button>
@@ -44,6 +47,7 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar los presupuestos:', error));
 }
+
 
 function addEventListeners() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
