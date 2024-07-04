@@ -898,15 +898,13 @@ eliminarPresupuesto : (id) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
             if (err) return reject(err);
-
             conexion.beginTransaction(err => {
                 if (err) {
                     conexion.release();
                     return reject(err);
                 }
-
                 conexion.query(`
-                    DELETE FROM presupuesto_items
+                    DELETE FROM items_presupuesto
                     WHERE presupuesto_id = ?
                 `, [id], (error, resultados) => {
                     if (error) {
@@ -915,7 +913,6 @@ eliminarPresupuesto : (id) => {
                             return reject(error);
                         });
                     }
-
                     conexion.query(`
                         DELETE FROM presupuestos_mostrador
                         WHERE id = ?
@@ -926,7 +923,6 @@ eliminarPresupuesto : (id) => {
                                 return reject(error);
                             });
                         }
-
                         if (result.affectedRows > 0) {
                             conexion.commit(err => {
                                 if (err) {
@@ -954,13 +950,11 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
             if (err) return reject(err);
-
             conexion.beginTransaction(err => {
                 if (err) {
                     conexion.release();
                     return reject(err);
                 }
-
                 const updateFields = [];
                 const updateValues = [];
                 if (nombre_cliente !== undefined) {
@@ -976,9 +970,7 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                     updateValues.push(total);
                 }
                 updateValues.push(id);
-
                 const query = `UPDATE presupuestos_mostrador SET ${updateFields.join(', ')} WHERE id = ?`;
-
                 conexion.query(query, updateValues, (error, resultados) => {
                     if (error) {
                         return conexion.rollback(() => {
@@ -986,7 +978,6 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                             return reject(error);
                         });
                     }
-
                     const updates = items.map(item => {
                         return new Promise((resolve, reject) => {
                             const itemUpdateFields = [];
@@ -1008,9 +999,7 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                                 itemUpdateValues.push(item.subtotal);
                             }
                             itemUpdateValues.push(item.id, id);
-
                             const itemQuery = `UPDATE presupuesto_items SET ${itemUpdateFields.join(', ')} WHERE id = ? AND presupuesto_id = ?`;
-
                             conexion.query(itemQuery, itemUpdateValues, (error, result) => {
                                 if (error) {
                                     return reject(error);
@@ -1019,7 +1008,6 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                             });
                         });
                     });
-
                     Promise.all(updates)
                         .then(() => {
                             conexion.commit(err => {
