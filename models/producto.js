@@ -951,14 +951,14 @@ eliminarPresupuesto : (id) => {
             });
         });
     });
-},
+}, 
 obtenerDetallePresupuesto : (id) => {
     return new Promise((resolve, reject) => {
       const query = `
         SELECT pm.id, pm.nombre_cliente, pm.fecha, pm.total,
                pi.producto_id, pi.cantidad, pi.precio_unitario, pi.subtotal
         FROM presupuestos_mostrador pm
-        JOIN presupuesto_items pi ON pm.id = pi.presupuesto_id
+        LEFT JOIN presupuesto_items pi ON pm.id = pi.presupuesto_id
         WHERE pm.id = ?;
       `;
   
@@ -976,7 +976,7 @@ obtenerDetallePresupuesto : (id) => {
         }
       });
     });
-  },
+  },  
 editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
