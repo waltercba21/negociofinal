@@ -17,12 +17,9 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
             const tableBody = document.querySelector('#presupuestos-table tbody');
             tableBody.innerHTML = ''; 
             let totalPresupuestos = 0;
-
             data.forEach(presupuesto => {
-                // Multiplicar por 100 para ajustar el valor a la escala correcta
                 const totalNumerico = parseFloat(presupuesto.total) * 100;
                 totalPresupuestos += totalNumerico;
-                
                 const row = document.createElement('tr');
                 row.setAttribute('data-id', presupuesto.id);
                 row.innerHTML = `
@@ -40,15 +37,11 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
                 `;
                 tableBody.appendChild(row);
             });
-
             addEventListeners();
             document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalPresupuestos);
         })
         .catch(error => console.error('Error al cargar los presupuestos:', error));
 }
-
-
-
 
 function addEventListeners() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
@@ -57,28 +50,24 @@ function addEventListeners() {
             window.location.href = `/productos/presupuesto/${id}`;
         });
     });
-
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
             habilitarEdicion(id);
         });
     });
-
     document.querySelectorAll('.btn-eliminar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
             eliminarPresupuesto(id);
         });
     });
-
     document.querySelectorAll('.btn-guardar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
             guardarCambios(id);
         });
     });
-
     document.querySelectorAll('.btn-cancelar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
@@ -86,42 +75,34 @@ function addEventListeners() {
         });
     });
 }
-
 function habilitarEdicion(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
     row.querySelector('.fecha').innerHTML = `<input type="date" value="${row.querySelector('.fecha').textContent.split('/').reverse().join('-')}">`;
     row.querySelector('.cliente').innerHTML = `<input type="text" value="${row.querySelector('.cliente').textContent}">`;
     row.querySelector('.total').innerHTML = `<input type="text" value="${row.querySelector('.total').textContent.replace(/\./g, '').replace(',', '.')}">`;
-
     row.querySelector('.btn-editar').style.display = 'none';
     row.querySelector('.btn-eliminar').style.display = 'none';
     row.querySelector('.btn-guardar').style.display = 'inline';
     row.querySelector('.btn-cancelar').style.display = 'inline';
 }
-
 function cancelarEdicion(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
     const fecha = row.querySelector('.fecha input').value.split('-').reverse().join('/');
     const cliente = row.querySelector('.cliente input').value;
     const total = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(row.querySelector('.total input').value.replace('.', '').replace(',', '.'));
-
     row.querySelector('.fecha').textContent = fecha;
     row.querySelector('.cliente').textContent = cliente;
     row.querySelector('.total').textContent = total;
-
     row.querySelector('.btn-editar').style.display = 'inline';
     row.querySelector('.btn-eliminar').style.display = 'inline';
     row.querySelector('.btn-guardar').style.display = 'none';
     row.querySelector('.btn-cancelar').style.display = 'none';
 }
-
 function guardarCambios(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
     const fecha = row.querySelector('.fecha input').value;
     const nombre_cliente = row.querySelector('.cliente input').value;
     const total = parseFloat(row.querySelector('.total input').value.replace(/\./g, '').replace(',', '.'));
-
-    // Aquí debes añadir la lógica para obtener los items editados
     const items = Array.from(document.querySelectorAll(`tr[data-id="${id}"] .item-row`)).map(itemRow => ({
         id: itemRow.dataset.id,
         producto_id: itemRow.querySelector('.producto_id input').value,
@@ -129,9 +110,6 @@ function guardarCambios(id) {
         precio_unitario: itemRow.querySelector('.precio_unitario input').value,
         subtotal: itemRow.querySelector('.subtotal input').value
     }));
-
-    // Log de datos que se enviarán para edición
-    console.log('Datos enviados para edición:', { fecha, nombre_cliente, total, items });
 
     fetch(`/productos/api/presupuestos/${id}`, {
         method: 'PUT',
@@ -141,44 +119,35 @@ function guardarCambios(id) {
         body: JSON.stringify({ fecha, nombre_cliente, total, items })
     })
     .then(response => {
-        console.log('response:', response);
         if (!response.ok) {
             throw new Error('Respuesta del servidor no es OK');
         }
         return response.json();
     })
     .then(data => {
-        console.log('data:', data);
         alert('Presupuesto actualizado exitosamente');
         cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
     })
     .catch(error => {
-        console.error('Error al actualizar el presupuesto:', error);
         alert('Error al actualizar el presupuesto: ' + error.message);
     });
 }
-
 function eliminarPresupuesto(id) {
     if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
-        console.log('ID enviado para eliminar:', id);
-
         fetch(`/productos/api/presupuestos/${id}`, {
             method: 'DELETE',
         })
         .then(response => {
-            console.log('response:', response);
             if (!response.ok) {
                 throw new Error('Respuesta del servidor no es OK');
             }
             return response.json();
         })
         .then(data => {
-            console.log('data:', data);
             alert('Presupuesto eliminado exitosamente');
             cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
         })
         .catch(error => {
-            console.error('Error al eliminar el presupuesto:', error);
             alert('Error al eliminar el presupuesto: ' + error.message);
         });
     }

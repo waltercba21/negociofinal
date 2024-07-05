@@ -949,6 +949,47 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
   color: #b30000;
 }
+/* Estilos generales para los botones de la vista de presupuestos */
+#presupuestos-table button {
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin: 5px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Estilos específicos para cada botón */
+.btn-ver {
+  background-color: #4CAF50; /* Verde */
+  color: white;
+}
+
+.btn-editar {
+  background-color: #FFA500; /* Naranja */
+  color: white;
+}
+
+.btn-eliminar {
+  background-color: #F44336; /* Rojo */
+  color: white;
+}
+
+.btn-guardar {
+  background-color: #2196F3; /* Azul */
+  color: white;
+}
+
+.btn-cancelar {
+  background-color: #9E9E9E; /* Gris */
+  color: white;
+}
+
+/* Estilos para botones ocultos */
+#presupuestos-table button[style*="display: none"] {
+  display: none !important;
+}
+
 
 /*-----------------------------CREAR--------------------------*/
 .container-crear {
