@@ -19,7 +19,7 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
             tableBody.innerHTML = ''; 
             let totalPresupuestos = 0;
             data.forEach(presupuesto => {
-                const totalNumerico = parseFloat(presupuesto.total); // Quitar la multiplicación por 100
+                const totalNumerico = parseFloat(presupuesto.total); // Asegúrate de que el valor está en el formato correcto
                 totalPresupuestos += totalNumerico;
                 const row = document.createElement('tr');
                 row.setAttribute('data-id', presupuesto.id);
