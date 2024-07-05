@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('El elemento con ID "buscar" no se encontró en el DOM.');
     }
 });
-
 function cargarPresupuestos(fechaInicio, fechaFin) {
     fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
@@ -20,8 +19,8 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
             let totalPresupuestos = 0;
 
             data.forEach(presupuesto => {
-                // Multiplicar por 10 si los valores están en centavos o una unidad menor incorrecta
-                const totalNumerico = parseFloat(presupuesto.total) * 10;
+                // Multiplicar por 100 para ajustar el valor a la escala correcta
+                const totalNumerico = parseFloat(presupuesto.total) * 100;
                 totalPresupuestos += totalNumerico;
                 
                 const row = document.createElement('tr');
@@ -47,6 +46,7 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar los presupuestos:', error));
 }
+
 
 
 function addEventListeners() {
