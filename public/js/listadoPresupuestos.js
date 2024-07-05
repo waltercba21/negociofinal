@@ -10,11 +10,11 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('El elemento con ID "buscar" no se encontró en el DOM.');
     }
 });
-
 function cargarPresupuestos(fechaInicio, fechaFin) {
     fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
+            console.log('Datos recibidos del backend:', data);  // Añadir este log
             const tableBody = document.querySelector('#presupuestos-table tbody');
             tableBody.innerHTML = ''; 
             let totalPresupuestos = 0;
