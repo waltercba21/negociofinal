@@ -20,8 +20,8 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
             let totalPresupuestos = 0;
 
             data.forEach(presupuesto => {
-                // Asegurarse de que el total es un número y está correctamente interpretado
-                const totalNumerico = parseFloat(presupuesto.total);
+                // Multiplicar por 10 si los valores están en centavos o una unidad menor incorrecta
+                const totalNumerico = parseFloat(presupuesto.total) * 10;
                 totalPresupuestos += totalNumerico;
                 
                 const row = document.createElement('tr');
@@ -47,7 +47,6 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar los presupuestos:', error));
 }
-
 
 
 function addEventListeners() {
