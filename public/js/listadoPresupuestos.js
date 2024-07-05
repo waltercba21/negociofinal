@@ -45,6 +45,7 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
 }
 
 
+
 function addEventListeners() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
         btn.addEventListener('click', function() {

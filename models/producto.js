@@ -983,18 +983,12 @@ obtenerDetallePresupuesto : (id) => {
         LEFT JOIN productos p ON pi.producto_id = p.id
         WHERE pm.id = ?;
       `;
-  
-      console.log("Ejecutando consulta para el ID:", id);
       conexion.query(query, [id], (error, resultados) => {
-        console.log("Resultados obtenidos:", resultados);
         if (error) {
-          console.error("Error en la consulta:", error);
           reject(error);
         } else if (resultados.length === 0) {
-          console.log("No se encontraron resultados para el ID:", id);
           reject(new Error("No se encontró el presupuesto"));
         } else {
-          // Asegurarse de que se devuelva una estructura coherente
           const presupuesto = resultados[0];
           const items = resultados.map(r => ({
             nombre_producto: r.nombre_producto,

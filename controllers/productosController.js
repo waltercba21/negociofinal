@@ -822,23 +822,18 @@ editPresupuesto : (req, res) => {
 },
 presupuesto : (req, res) => {
     const id = req.params.id;
-    console.log("Solicitud recibida para el presupuesto ID:", id);
-
     producto.obtenerDetallePresupuesto(id)
         .then(data => {
             if (data && data.items.length > 0) {
-                console.log("Detalles del presupuesto encontrados:", data);
                 res.render('presupuesto', {
                     presupuesto: data.presupuesto,
-                    detalles: data.items // Asegúrate de que estás pasando 'detalles' como 'data.items'
+                    detalles: data.items 
                 });
             } else {
-                console.log("No se encontraron detalles para el presupuesto ID:", id);
                 res.status(404).send('Presupuesto no encontrado');
             }
         })
         .catch(error => {
-            console.error("Error al obtener el detalle del presupuesto:", error);
             res.status(500).send('Error interno del servidor');
         });
 },
