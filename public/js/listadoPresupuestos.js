@@ -19,7 +19,7 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
             tableBody.innerHTML = ''; 
             let totalPresupuestos = 0;
             data.forEach(presupuesto => {
-                const totalNumerico = parseFloat(presupuesto.total); // Asegúrate de que el valor está en el formato correcto
+                const totalNumerico = parseFloat(presupuesto.total);
                 totalPresupuestos += totalNumerico;
                 const row = document.createElement('tr');
                 row.setAttribute('data-id', presupuesto.id);
@@ -43,6 +43,7 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar los presupuestos:', error));
 }
+
 
 function addEventListeners() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
