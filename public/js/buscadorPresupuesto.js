@@ -6,11 +6,11 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
-        let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);  // Definición correcta de cantidad
+        let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
         let subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\./g, '').replace(',', '.'));
 
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
-        cantidad = !isNaN(cantidad) ? cantidad : 1;  // Asegurarse de que cantidad tiene un valor predeterminado adecuado
+        cantidad = !isNaN(cantidad) ? cantidad : 1;
         subtotal = !isNaN(subtotal) ? subtotal : 0;
 
         invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
@@ -44,16 +44,15 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     }
 });
 
-  
-  document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
+document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
     resultadosBusqueda.innerHTML = '';
-  
+
     if (!busqueda.trim()) {
         return;
     }
-  
+
     const url = '/productos/api/buscar?q=' + busqueda;
     const respuesta = await fetch(url);
     const productos = await respuesta.json();
@@ -67,46 +66,56 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             const filaFactura = tablaFactura.insertRow();
             filaFactura.insertCell(0).textContent = producto.codigo;
             filaFactura.insertCell(1).textContent = producto.nombre;
-  
+
             const cellPrecio = filaFactura.insertCell(2);
             const inputPrecio = document.createElement('input');
             inputPrecio.type = 'text';
             inputPrecio.value = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
             inputPrecio.className = 'precio-editable';
             cellPrecio.appendChild(inputPrecio);
-  
+
             const cellCantidad = filaFactura.insertCell(3);
             const inputCantidad = document.createElement('input');
             inputCantidad.type = 'number';
             inputCantidad.min = 1;
             inputCantidad.value = 1;
             cellCantidad.appendChild(inputCantidad);
-  
+
             const cellSubtotal = filaFactura.insertCell(4);
             cellSubtotal.textContent = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-  
+
+            const cellEliminar = filaFactura.insertCell(5);
+            const botonEliminar = document.createElement('button');
+            botonEliminar.textContent = '✖';
+            botonEliminar.className = 'boton-eliminar';
+            botonEliminar.addEventListener('click', function() {
+                tablaFactura.deleteRow(filaFactura.rowIndex - 1);
+                calcularTotal();
+            });
+            cellEliminar.appendChild(botonEliminar);
+
             inputPrecio.addEventListener('input', function() {
                 updateSubtotal(filaFactura);
             });
             inputCantidad.addEventListener('input', function() {
                 updateSubtotal(filaFactura);
             });
-  
+
             calcularTotal();
         });
         resultadosBusqueda.appendChild(resultado);
     });
-  });
-  
-  function updateSubtotal(row) {
+});
+
+function updateSubtotal(row) {
     const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
     const cantidad = parseInt(row.cells[3].querySelector('input').value);
     const subtotal = precio * cantidad;
     row.cells[4].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
-  }
-  
-  function calcularTotal() {
+}
+
+function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
     for (let i = 0; i < filasFactura.length; i++) {
@@ -114,5 +123,4 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         total += value;
     }
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-  }
-  
+}

@@ -27,20 +27,21 @@
           <div id="resultadosBusqueda"></div>
         </div>
         <div id="invoice-items">
-          <table class="table" id="tabla-factura">
+          <table id="tabla-factura">
             <thead>
-              <tr>
-                <th class="codigo" scope="col">Código</th>
-                <th class="descripcion" scope="col">Descripción</th>
-                <th class="precio" scope="col">Precio</th>
-                <th class="cantidad" scope="col">Cantidad</th>
-                <th class="subtotal" scope="col">Subtotal</th>
-              </tr>
+                <tr>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th>Precio Unitario</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                    <th>Eliminar</th>
+                </tr>
             </thead>
             <tbody>
-              <!-- Aquí se generarán dinámicamente los elementos del presupuesto -->
+                <!-- Las filas de productos se agregarán aquí -->
             </tbody>
-          </table>
+        </table>
         </div>
         <div id="invoice-total">
          <label>Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
