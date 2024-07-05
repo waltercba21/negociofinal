@@ -837,7 +837,7 @@ presupuesto : (req, res) => {
             res.status(500).send('Error interno del servidor');
         });
 },
-deletePresupuesto : (req, res) => {
+deletePresupuesto: (req, res) => {
     const { id } = req.params;
     producto.eliminarPresupuesto(id)
         .then(affectedRows => {
@@ -847,6 +847,7 @@ deletePresupuesto : (req, res) => {
             res.status(500).json({ message: 'Error al eliminar presupuesto: ' + error.message });
         });
 },
+
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];

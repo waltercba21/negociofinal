@@ -46,7 +46,6 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
         .catch(error => console.error('Error al cargar los presupuestos:', error));
 }
 
-
 function addEventListeners() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
         btn.addEventListener('click', function() {

@@ -915,20 +915,17 @@ obtenerPorFiltros(conexion, categoria, marca, modelo, busqueda_nombre) {
         });
     });
 },
-eliminarPresupuesto : (id) => {
+eliminarPresupuesto: (id) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
             if (err) return reject(err);
-
             conexion.beginTransaction(err => {
                 if (err) {
                     conexion.release();
                     return reject(err);
                 }
-
-                // Eliminar primero los items relacionados
                 conexion.query(`
-                    DELETE FROM items_presupuesto
+                    DELETE FROM presupuesto_items
                     WHERE presupuesto_id = ?
                 `, [id], (error, resultados) => {
                     if (error) {
@@ -937,8 +934,6 @@ eliminarPresupuesto : (id) => {
                             return reject(error);
                         });
                     }
-
-                    // Luego eliminar el presupuesto
                     conexion.query(`
                         DELETE FROM presupuestos_mostrador
                         WHERE id = ?
@@ -972,7 +967,7 @@ eliminarPresupuesto : (id) => {
             });
         });
     });
-}, 
+},
 obtenerDetallePresupuesto : (id) => {
     return new Promise((resolve, reject) => {
       const query = `
