@@ -134,7 +134,7 @@ function guardarCambios(id) {
     .catch(error => {
         alert('Error al actualizar el presupuesto: ' + error.message);
     });
-}
+} 
 function eliminarPresupuesto(id) {
     if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
         fetch(`/productos/api/presupuestos/${id}`, {
@@ -155,3 +155,36 @@ function eliminarPresupuesto(id) {
         });
     }
 }
+document.getElementById('btnImprimir').addEventListener('click', function() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    let y = 10; // Posición inicial en el eje y para los elementos en el PDF.
+    const table = document.getElementById('presupuestos-table');
+    doc.text('Listado de Presupuestos', 14, y);
+    y += 10;
+
+    // Agregar los títulos de las columnas
+    doc.setFontSize(10);
+    doc.text('ID', 14, y);
+    doc.text('Fecha', 50, y);
+    doc.text('Cliente', 80, y);
+    doc.text('Total', 140, y);
+    y += 5;
+
+    // Agregar los datos de cada fila
+    document.querySelectorAll('#presupuestos-table tbody tr').forEach(function(row) {
+        const id = row.querySelector('.id').textContent;
+        const fecha = row.querySelector('.fecha').textContent;
+        const cliente = row.querySelector('.cliente').textContent;
+        const total = row.querySelector('.total').textContent;
+        y += 7;
+        doc.text(id, 14, y);
+        doc.text(fecha, 50, y);
+        doc.text(cliente, 80, y);
+        doc.text(total, 140, y);
+    });
+
+    // Guardar el documento PDF
+    doc.save('listado_presupuestos.pdf');
+});
