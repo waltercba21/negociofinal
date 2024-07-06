@@ -908,15 +908,12 @@ actualizarPreciosExcel: async (req, res) => {
     try {
         const file = req.files[0];
         let productosActualizados = [];
-
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
             const promises = []; 
-
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
-
                 for (const row of data) {
                     const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
@@ -925,9 +922,10 @@ actualizarPreciosExcel: async (req, res) => {
                         console.log(`Procesando producto con código ${row[codigoColumn]} y precio ${row[precioColumn]}`);
                         promises.push(
                             producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn])
-                                .then(productoActualizado => {
+                                .then(async productoActualizado => {
                                     if (productoActualizado !== null) {
                                         productosActualizados.push(productoActualizado);
+                                        await producto.seleccionarProveedorMasBarato(conexion, row[codigoColumn]);
                                     } else {
                                         console.log(`No se encontró ningún producto con el código ${row[codigoColumn]} en la base de datos.`);
                                         return { noExiste: true, codigo: row[codigoColumn] };
@@ -943,21 +941,17 @@ actualizarPreciosExcel: async (req, res) => {
                     }
                 }
             }
-
             const resultados = await Promise.all(promises);
             const errores = resultados.filter(resultado => resultado && resultado.error);
             const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
-
             if (errores.length > 0) {
                 console.log("Errores al actualizar algunos productos:", errores);
             }
-
             if (noEncontrados.length > 0) {
                 noEncontrados.forEach(item => {
                     console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
                 });
             }
-
             fs.unlinkSync(file.path);
             res.render('productosActualizados', { productos: productosActualizados });
         } else {
@@ -968,5 +962,27 @@ actualizarPreciosExcel: async (req, res) => {
         console.log("Error durante el procesamiento de archivos", error);
         res.status(500).send(error.message);
     }
-}
+},
+seleccionarProveedorMasBarato: async function(conexion, productoId) {
+    try {
+        const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
+        if (proveedores.length === 0) {
+            throw new Error(`No se encontraron proveedores para el producto con ID ${productoId}`);
+        }
+
+        let proveedorMasBarato = proveedores[0];
+        proveedores.forEach(proveedor => {
+            const costoConIva = proveedor.precio_lista - (proveedor.precio_lista * (proveedor.descuento / 100));
+            if (costoConIva < proveedorMasBarato.precio_lista - (proveedorMasBarato.precio_lista * (proveedorMasBarato.descuento / 100))) {
+                proveedorMasBarato = proveedor;
+            }
+        });
+
+        await producto.asignarProveedorMasBarato(conexion, productoId, proveedorMasBarato.proveedor_id);
+    } catch (error) {
+        console.error(`Error al seleccionar el proveedor más barato para el producto con ID ${productoId}:`, error);
+        throw error; // Lanzar el error para que pueda ser manejado por el llamador
+    }
+},
+
 }

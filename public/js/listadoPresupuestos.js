@@ -180,16 +180,11 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
         totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g,"").replace(',', '.'));
     });
     y += 10; 
-
-    // Calcular el ancho del texto del total para alinearlo más centrado hacia la derecha
     const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalGeneral);
     const textWidth = doc.getTextWidth(totalText);
     const pageWidth = doc.internal.pageSize.getWidth();
-    const textX = (pageWidth / 2) + (pageWidth / 4) - (textWidth / 2); // Posición x calculada desde la mitad más un cuarto de página menos la mitad del ancho del texto
-
+    const textX = (pageWidth / 2) + (pageWidth / 4) - (textWidth / 2); 
     doc.text(totalText, textX, y);
-
-    // Guardar el documento PDF
     doc.save('listado_presupuestos.pdf');
 });
 

@@ -154,17 +154,28 @@ function actualizarProveedorAsignado() {
     var costosConIva = document.querySelectorAll('.costo_iva');
     var costoMasBajo = Infinity;
     var proveedorMasBarato = null;
+    
     costosConIva.forEach(function(costoConIva) {
         var costoActual = parseFloat(costoConIva.value);
-        var proveedorActual = costoConIva.parentElement.parentElement.querySelector('.nombre_proveedor').textContent;
+        var proveedorActual = costoConIva.closest('.proveedor').querySelector('.nombre_proveedor').textContent;
         if (costoActual < costoMasBajo) {
             costoMasBajo = costoActual;
             proveedorMasBarato = proveedorActual;
         }
     });
+
     var divProveedorAsignado = document.querySelector('#proveedorAsignado');
-    divProveedorAsignado.textContent =  proveedorMasBarato;
+    if (divProveedorAsignado) {
+        divProveedorAsignado.textContent = proveedorMasBarato;
+    }
+
+    // Actualizar el precio de venta final
+    var utilidad = parseFloat(document.getElementById('utilidad').value);
+    var precioFinal = costoMasBajo + (costoMasBajo * utilidad / 100);
+    precioFinal = Math.ceil(precioFinal / 10) * 10; 
+    document.getElementById('precio_venta').value = precioFinal;
 }
+
 $('.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad').on('change', actualizarProveedorAsignado);
 
 $(document).ready(function() {

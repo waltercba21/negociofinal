@@ -1174,6 +1174,18 @@ obtenerImagenesProducto: function(conexion, id) {
         });
     });
 },
+asignarProveedorMasBarato:function(conexion, productoId, proveedorId) {
+    return new Promise((resolve, reject) => {
+        const query = 'UPDATE productos SET proveedor_id = ? WHERE id = ?';
+        conexion.query(query, [proveedorId, productoId], (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+},
 obtenerDescuentosProveedor: function(conexion) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT proveedor_id, descuento FROM descuentos_proveedor', function(error, results, fields) {
