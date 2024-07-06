@@ -159,21 +159,15 @@ function eliminarPresupuesto(id) {
 document.getElementById('btnImprimir').addEventListener('click', function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-
-    let y = 10; // Posición inicial en el eje y para los elementos en el PDF.
+    let y = 10; 
     const table = document.getElementById('presupuestos-table');
-
-    // Agregar los títulos de las columnas
     doc.setFontSize(10);
     doc.text('ID', 14, y);
     doc.text('Fecha', 50, y);
     doc.text('Cliente', 80, y);
     doc.text('Total', 140, y);
     y += 5;
-
-    let totalGeneral = 0; // Para almacenar la sumatoria de todos los presupuestos
-
-    // Agregar los datos de cada fila
+    let totalGeneral = 0;
     document.querySelectorAll('#presupuestos-table tbody tr').forEach(function(row) {
         const id = row.querySelector('.id').textContent;
         const fecha = row.querySelector('.fecha').textContent;
@@ -184,16 +178,16 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
         doc.text(fecha, 50, y);
         doc.text(cliente, 80, y);
         doc.text(total, 140, y);
-
-        // Sumar al total general convertido de formato moneda a número
         totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g,"").replace(',', '.'));
     });
-
-    // Agregar el total general al final del PDF
-    y += 10; // Espacio antes del total general
-    doc.text('Total General: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalGeneral), 14, y);
-
-    // Guardar el documento PDF
+    y += 10; 
+    const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalGeneral);
+    const textWidth = doc.getTextWidth(totalText);
+    const marginRight = 10; 
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const textX = pageWidth - textWidth - marginRight;
+    doc.text(totalText, textX, y);
     doc.save('listado_presupuestos.pdf');
 });
+
 
