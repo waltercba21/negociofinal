@@ -20,6 +20,15 @@ function calcularNumeroDePaginas(conexion) {
         });
     });
 }
+const compararCodigos = (codigo1, codigo2) => {
+    for (let i = 0; i <= codigo1.length - 4; i++) {
+        const substring = codigo1.substring(i, i + 4);
+        if (codigo2.includes(substring)) {
+            return true;
+        }
+    }
+    return false;
+};
 
 module.exports = {
     index : function (req,res){
@@ -919,7 +928,6 @@ actualizarPreciosExcel: async (req, res) => {
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
 
                     if (codigoColumn && precioColumn) {
-                        console.log(`Procesando producto con código ${row[codigoColumn]} y precio ${row[precioColumn]}`);
                         promises.push(
                             producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn])
                                 .then(async productoActualizado => {
@@ -977,11 +985,10 @@ seleccionarProveedorMasBarato: async function(conexion, productoId) {
                 proveedorMasBarato = proveedor;
             }
         });
-
         await producto.asignarProveedorMasBarato(conexion, productoId, proveedorMasBarato.proveedor_id);
     } catch (error) {
         console.error(`Error al seleccionar el proveedor más barato para el producto con ID ${productoId}:`, error);
-        throw error; // Lanzar el error para que pueda ser manejado por el llamador
+        throw error; 
     }
 },
 
