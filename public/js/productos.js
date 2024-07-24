@@ -6,7 +6,7 @@ $(document).ready(function() {
     var $nextButton = $carousel.closest('.card').find('.carousel__button:has(.fa-chevron-right)');
     var index = 0;
 
-    // Inicializar mostrando solo la primera imagen
+    // Ocultar todas las imágenes excepto la primera
     $images.hide().eq(index).show();
 
     $prevButton.on('click', function() {
@@ -22,3 +22,4 @@ $(document).ready(function() {
     });
   });
 });
+
