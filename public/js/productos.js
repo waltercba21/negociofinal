@@ -6,21 +6,18 @@ $(document).ready(function() {
     var $nextButton = $carousel.closest('.card').find('.carousel__button:has(.fa-chevron-right)');
     var index = 0;
 
-    $prevButton.click(function() {
+    // Inicializar mostrando solo la primera imagen
+    $images.hide().eq(index).show();
+
+    $prevButton.on('click', function() {
       $images.eq(index).hide();
-      index--;
-      if (index < 0) {
-        index = $images.length - 1;
-      }
+      index = (index > 0) ? index - 1 : $images.length - 1;
       $images.eq(index).show();
     });
 
-    $nextButton.click(function() {
+    $nextButton.on('click', function() {
       $images.eq(index).hide();
-      index++;
-      if (index >= $images.length) {
-        index = 0;
-      }
+      index = (index < $images.length - 1) ? index + 1 : 0;
       $images.eq(index).show();
     });
   });
