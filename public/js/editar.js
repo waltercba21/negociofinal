@@ -143,3 +143,22 @@ function actualizarProveedor(proveedor) {
     closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
     closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')');
 }
+function actualizarProveedorAsignado() {
+    var costosConIva = document.querySelectorAll('.costo_iva');
+    var costoMasBajo = Infinity;
+    var proveedorMasBarato = null;
+    
+    costosConIva.forEach(function(costoConIva) {
+        var costoActual = parseFloat(costoConIva.value);
+        var proveedorActual = costoConIva.closest('.proveedor').querySelector('.nombre_proveedor').textContent;
+        if (costoActual < costoMasBajo) {
+            costoMasBajo = costoActual;
+            proveedorMasBarato = proveedorActual;
+        }
+    });
+
+    var divProveedorAsignado = document.querySelector('#proveedorAsignado');
+    if (divProveedorAsignado) {
+        divProveedorAsignado.textContent = proveedorMasBarato;
+    }
+}
