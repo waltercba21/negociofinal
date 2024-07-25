@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Agrega eventos a imágenes para su eliminación
     function agregarEventoDblclick(div) {
         div.addEventListener('dblclick', function() {
             var imagenId = div.dataset.imagenId;
@@ -18,11 +17,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Carga y visualiza imágenes seleccionadas
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
         if (preview) {
-            preview.innerHTML = ''; // Limpia el contenedor de imágenes previas
+            preview.innerHTML = '';
             Array.from(e.target.files).forEach(file => {
                 var img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
@@ -41,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Inicialización de Sortable si es necesario
     if (typeof Sortable !== 'undefined' && document.getElementById('preview')) {
         new Sortable(document.getElementById('preview'), {
             animation: 150,
@@ -52,29 +49,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Operaciones relacionadas con el manejo de proveedores y precios
 $(document).ready(function() {
-    // Eventos de cambio para los proveedores
     $('.proveedores').on('change', function() {
         actualizarProveedor($(this));
         actualizarProveedorAsignado();
     });
 
-    // Agregar proveedores
     $('#addProveedor').click(function(e) {
         e.preventDefault();
         var newProveedor = $('.proveedor').first().clone(true);
-        newProveedor.find('input, select').val(''); // Limpia los valores
+        newProveedor.find('input, select').val('');
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
     });
 
-    // Eliminación de proveedores
     $(document).on('click', '.eliminar-proveedor', function() {
         var proveedorId = $(this).data('proveedor-id');
         var elementoProveedor = $(this).closest('.proveedor');
-
         fetch('/eliminarProveedor/' + proveedorId, {
             method: 'DELETE'
         }).then(response => response.json())
@@ -82,7 +74,7 @@ $(document).ready(function() {
             if (data.success) {
                 elementoProveedor.remove();
                 console.log('Proveedor eliminado correctamente.');
-                actualizarProveedorAsignado(); // Reevalúa el proveedor asignado tras la eliminación
+                actualizarProveedorAsignado();
             } else {
                 console.error('Error al eliminar el proveedor:', data.error);
             }
@@ -91,21 +83,18 @@ $(document).ready(function() {
         });
     });
 
-    // Prevenir envío del formulario con la tecla Enter
     $('form').on('keypress', function(e) {
         if (e.keyCode === 13) {
             e.preventDefault();
         }
     });
 
-    // Eventos para actualizar los costos y precio de venta cuando se cambia el precio de lista o la utilidad
     $(document).on('change', '.precio_lista, #utilidad', function() {
         var proveedorElement = $(this).closest('.proveedor');
         calcularCostos(proveedorElement);
         actualizarPrecioVenta();
     });
 
-    // Disparadores iniciales para establecer estado inicial correcto
     $('.precio_lista').trigger('change');
     $('#utilidad').trigger('change');
 });
@@ -115,7 +104,7 @@ function actualizarProveedor(proveedorSelectElement) {
     var descuento = selectedOption.data('descuento');
     var nombreProveedor = selectedOption.text();
     var closestFormGroup = proveedorSelectElement.closest('.proveedor');
-    
+
     closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
     closestFormGroup.find('.descuentos_proveedor_id').val(descuento);
     closestFormGroup.find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
@@ -127,7 +116,7 @@ function calcularCostos(proveedorElement) {
     var precioLista = parseFloat(proveedorElement.find('.precio_lista').val() || 0);
     var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || 0);
     var costoNeto = precioLista - (precioLista * descuento / 100);
-    var iva = parseFloat(proveedorElement.find('.IVA').val() || 0);
+    var iva = 21;  // IVA fijo del 21%
     var costoConIVA = costoNeto * (1 + iva / 100);
 
     proveedorElement.find('.costo_neto').val(costoNeto.toFixed(2));
