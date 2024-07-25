@@ -56,7 +56,7 @@ $(document).ready(function() {
         e.preventDefault();
         var newProveedor = $('.proveedor').first().clone(true);
         newProveedor.find('input:not([type="button"]), select').val('');
-        newProveedor.find('.IVA').val('21');
+        newProveedor.find('.IVA').val('21');  // Asegurar que el IVA se fija correctamente
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
@@ -66,7 +66,7 @@ $(document).ready(function() {
     $(document).on('click', '.eliminar-proveedor', function() {
         var proveedorId = $(this).data('proveedor-id');
         var elementoProveedor = $(this).closest('.proveedor');
-        fetch('/productos/eliminarProveedor/' + proveedorId, {
+        fetch('/eliminarProveedor/' + proveedorId, {
             method: 'DELETE'
         }).then(response => response.json())
         .then(data => {
@@ -113,7 +113,7 @@ function calcularCostos(proveedorElement) {
     var precioLista = parseFloat(proveedorElement.find('.precio_lista').val() || 0);
     var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || 0);
     var costoNeto = Math.ceil(precioLista - (precioLista * descuento / 100));
-    var iva = 21;
+    var iva = 21;  // IVA fijo
     var costoConIVA = Math.ceil(costoNeto * (1 + iva / 100));
 
     proveedorElement.find('.costo_neto').val(costoNeto);
@@ -136,5 +136,7 @@ function actualizarProveedorAsignado() {
     if (proveedorMasBarato) {
         var nombreProveedor = proveedorMasBarato.find('.nombre_proveedor').text();
         $('#proveedorAsignado').text(nombreProveedor);
+    } else {
+        $('#proveedorAsignado').text('Seleccione un proveedor');
     }
 }
