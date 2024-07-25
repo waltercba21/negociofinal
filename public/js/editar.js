@@ -56,7 +56,7 @@ $(document).ready(function() {
         e.preventDefault();
         var newProveedor = $('.proveedor').first().clone(true);
         newProveedor.find('input:not([type="button"]), select').val('');
-        newProveedor.find('.IVA').val('21');  // Asegurar que el IVA se fija correctamente
+        newProveedor.find('.IVA').val('21');
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
@@ -119,6 +119,7 @@ function calcularCostos(proveedorElement) {
     proveedorElement.find('.costo_neto').val(costoNeto);
     proveedorElement.find('.costo_iva').val(costoConIVA);
 }
+
 function actualizarProveedorAsignado() {
     var costosConIva = $('.costo_iva');
     var costoMasBajo = Infinity;
@@ -139,4 +140,3 @@ function actualizarProveedorAsignado() {
         $('#proveedorAsignado').val('Seleccione un proveedor');  // Cambiado .text() a .val()
     }
 }
-
