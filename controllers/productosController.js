@@ -491,7 +491,8 @@ eliminarProveedor: function(req, res) {
     producto.eliminarProveedor(conexion, proveedorId).then(() => {
         res.json({ success: true });
     }).catch(error => {
-        res.status(500).json({ success: false, error: error });
+        console.error("Error eliminando el proveedor:", error); 
+        res.status(500).json({ success: false, error: "Error al eliminar el proveedor. Por favor, intente nuevamente más tarde." });
     });
 },
 eliminarImagen: function(req, res) {
