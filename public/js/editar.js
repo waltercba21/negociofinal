@@ -60,7 +60,7 @@ $(document).ready(function() {
         var newProveedor = $('.proveedor').first().clone(true);
         newProveedor.find('input, select').val('');
         newProveedor.find('.nombre_proveedor').text('');
-        newProveedor.find('.IVA').val('21');
+        newProveedor.find('.IVA').val('21'); // Fija el IVA al 21%
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
     });
@@ -74,7 +74,6 @@ $(document).ready(function() {
         .then(data => {
             if (data.success) {
                 elementoProveedor.remove();
-                console.log('Proveedor eliminado correctamente.');
                 actualizarProveedorAsignado();
             } else {
                 console.error('Error al eliminar el proveedor:', data.error);
@@ -100,28 +99,15 @@ $(document).ready(function() {
     $('#utilidad').trigger('change');
 });
 
-function actualizarProveedor(proveedorSelectElement) {
-    var selectedOption = proveedorSelectElement.find('option:selected');
-    var descuento = selectedOption.data('descuento');
-    var nombreProveedor = selectedOption.text();
-    var closestFormGroup = proveedorSelectElement.closest('.proveedor');
-
-    closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
-    closestFormGroup.find('.descuentos_proveedor_id').val(descuento);
-    closestFormGroup.find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
-    closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
-    closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')');
-}
-
 function calcularCostos(proveedorElement) {
     var precioLista = parseFloat(proveedorElement.find('.precio_lista').val() || 0);
     var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || 0);
-    var costoNeto = precioLista - (precioLista * descuento / 100);
+    var costoNeto = Math.ceil(precioLista - (precioLista * descuento / 100));
     var iva = 21;  // IVA fijo del 21%
-    var costoConIVA = costoNeto * (1 + iva / 100);
+    var costoConIVA = Math.ceil(costoNeto * (1 + iva / 100));
 
-    proveedorElement.find('.costo_neto').val(costoNeto.toFixed(2));
-    proveedorElement.find('.costo_iva').val(costoConIVA.toFixed(2));
+    proveedorElement.find('.costo_neto').val(costoNeto);
+    proveedorElement.find('.costo_iva').val(costoConIVA);
 
     actualizarProveedorAsignado();
 }
@@ -148,7 +134,7 @@ function actualizarPrecioVenta() {
     var costoConIVA = parseFloat($('.costo_iva').filter(function() {
         return parseFloat($(this).val()) === Math.min(...$.map($('.costo_iva'), function(el) { return parseFloat($(el).val()); }));
     }).val() || 0);
-    var precioVenta = costoConIVA * (1 + utilidad / 100);
+    var precioVenta = Math.ceil(costoConIVA * (1 + utilidad / 100));
 
-    $('#precio_venta').val(precioVenta.toFixed(2));
+    $('#precio_venta').val(precioVenta);
 }
