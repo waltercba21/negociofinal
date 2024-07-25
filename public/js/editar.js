@@ -101,3 +101,36 @@ $(document).ready(function() {
     // Disparadores iniciales para establecer estado inicial correcto
     $('.proveedores').first().trigger('change');
 });
+
+function actualizarProveedor(proveedorSelectElement) {
+    var selectedOption = proveedorSelectElement.find('option:selected');
+    var descuento = selectedOption.data('descuento');
+    var nombreProveedor = selectedOption.text();
+    var closestFormGroup = proveedorSelectElement.closest('.proveedor');
+    
+    closestFormGroup.find('.nombre_proveedor').text(nombreProveedor);
+    closestFormGroup.find('.descuentos_proveedor_id').val(descuento);
+    closestFormGroup.find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
+    closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
+    closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')');
+}
+
+function actualizarProveedorAsignado() {
+    var costosConIva = document.querySelectorAll('.costo_iva');
+    var costoMasBajo = Infinity;
+    var proveedorMasBarato = null;
+    
+    costosConIva.forEach(function(costoConIva) {
+        var costoActual = parseFloat(costoConIva.value);
+        var proveedorActual = costoConIva.closest('.proveedor').querySelector('.nombre_proveedor').textContent;
+        if (costoActual < costoMasBajo) {
+            costoMasBajo = costoActual;
+            proveedorMasBarato = proveedorActual;
+        }
+    });
+
+    var divProveedorAsignado = document.querySelector('#proveedorAsignado');
+    if (divProveedorAsignado) {
+        divProveedorAsignado.textContent = proveedorMasBarato;
+    }
+}
