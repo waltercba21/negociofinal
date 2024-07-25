@@ -88,9 +88,9 @@ $(document).ready(function() {
     $(document).on('change', '.precio_lista, #utilidad', function() {
         var proveedorElement = $(this).closest('.proveedor');
         calcularCostos(proveedorElement);
+        actualizarProveedorAsignado();
     });
 
-    // Llamar explícitamente al final para asegurar la inicialización correcta
     $('.precio_lista').trigger('change');
     $('#utilidad').trigger('change');
 });
@@ -116,9 +116,6 @@ function calcularCostos(proveedorElement) {
 
     proveedorElement.find('.costo_neto').val(costoNeto);
     proveedorElement.find('.costo_iva').val(costoConIVA);
-
-    // Asegúrate de actualizar después de todos los costos están calculados
-    actualizarProveedorAsignado();
 }
 
 function actualizarProveedorAsignado() {
