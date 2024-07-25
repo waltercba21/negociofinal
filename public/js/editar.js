@@ -19,20 +19,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
-        preview.innerHTML = '';
-        Array.from(e.target.files).forEach(file => {
-            var img = document.createElement('img');
-            img.src = URL.createObjectURL(file);
-            img.height = 100;
-            img.width = 100;
-            img.classList.add('imagen-miniatura');
-            var div = document.createElement('div');
-            div.classList.add('preview-img');
-            div.dataset.imagenId = img.src;
-            div.appendChild(img);
-            agregarEventoDblclick(div);
-            preview.appendChild(div);
-        });
+        if (preview) {
+            preview.innerHTML = ''; // Limpia el contenedor de imágenes previas
+            Array.from(e.target.files).forEach(file => {
+                var img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.height = 100;
+                img.width = 100;
+                img.classList.add('imagen-miniatura');
+                var div = document.createElement('div');
+                div.classList.add('preview-img');
+                div.dataset.imagenId = img.src;
+                div.appendChild(img);
+                agregarEventoDblclick(div);
+                preview.appendChild(div);
+            });
+        } else {
+            console.error('El elemento con id "preview" no existe.');
+        }
     });
 
     if (typeof Sortable !== 'undefined' && document.getElementById('preview')) {
@@ -47,8 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 $(document).ready(function() {
     $('.proveedores').on('change', function() {
-        var proveedorElement = $(this).closest('.proveedor');
-        calcularCostos(proveedorElement);
+        actualizarProveedor($(this));
         actualizarProveedorAsignado();
     });
 
@@ -56,11 +59,10 @@ $(document).ready(function() {
         e.preventDefault();
         var newProveedor = $('.proveedor').first().clone(true);
         newProveedor.find('input:not([type="button"]), select').val('');
-        newProveedor.find('.IVA').val('21');
+        newProveedor.find('.IVA').val('21'); // Fija el IVA al 21%
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
-        calcularCostos(newProveedor);
     });
 
     $(document).on('click', '.eliminar-proveedor', function() {
@@ -90,7 +92,7 @@ $(document).ready(function() {
     $(document).on('change', '.precio_lista, #utilidad', function() {
         var proveedorElement = $(this).closest('.proveedor');
         calcularCostos(proveedorElement);
-        actualizarProveedorAsignado();
+        actualizarPrecioVenta();
     });
 
     $('.precio_lista').trigger('change');
@@ -107,17 +109,20 @@ function actualizarProveedor(proveedorSelectElement) {
     closestFormGroup.find('.descuentos_proveedor_id').val(descuento);
     closestFormGroup.find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
     closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
+    closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')');
 }
 
 function calcularCostos(proveedorElement) {
     var precioLista = parseFloat(proveedorElement.find('.precio_lista').val() || 0);
     var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || 0);
     var costoNeto = Math.ceil(precioLista - (precioLista * descuento / 100));
-    var iva = 21;  // IVA fijo
+    var iva = 21; // IVA fijo del 21%
     var costoConIVA = Math.ceil(costoNeto * (1 + iva / 100));
 
     proveedorElement.find('.costo_neto').val(costoNeto);
     proveedorElement.find('.costo_iva').val(costoConIVA);
+
+    actualizarProveedorAsignado();
 }
 
 function actualizarProveedorAsignado() {
@@ -133,10 +138,16 @@ function actualizarProveedorAsignado() {
         }
     });
 
-    if (proveedorMasBarato) {
-        var nombreProveedor = proveedorMasBarato.find('.nombre_proveedor').text();
-        $('#proveedorAsignado').val(nombreProveedor);  // Cambiado .text() a .val()
-    } else {
-        $('#proveedorAsignado').val('Seleccione un proveedor');  // Cambiado .text() a .val()
-    }
+    var nombreProveedor = proveedorMasBarato.find('.nombre_proveedor').text();
+    $('#proveedorAsignado').text(nombreProveedor);
+}
+
+function actualizarPrecioVenta() {
+    var utilidad = parseFloat($('#utilidad').val() || 0);
+    var costoConIVA = parseFloat($('.costo_iva').filter(function() {
+        return parseFloat($(this).val()) === Math.min(...$.map($('.costo_iva'), function(el) { return parseFloat($(el).val()); }));
+    }).val() || 0);
+    var precioVenta = Math.ceil(costoConIVA * (1 + utilidad / 100));
+
+    $('#precio_venta').val(precioVenta);
 }
