@@ -66,7 +66,7 @@ $(document).ready(function() {
     $(document).on('click', '.eliminar-proveedor', function() {
         var proveedorId = $(this).data('proveedor-id');
         var elementoProveedor = $(this).closest('.proveedor');
-        fetch('/eliminarProveedor/' + proveedorId, {
+        fetch('/productos/eliminarProveedor/' + proveedorId, {
             method: 'DELETE'
         }).then(response => response.json())
         .then(data => {
