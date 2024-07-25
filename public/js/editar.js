@@ -60,6 +60,7 @@ $(document).ready(function() {
         var newProveedor = $('.proveedor').first().clone(true);
         newProveedor.find('input, select').val('');
         newProveedor.find('.nombre_proveedor').text('');
+        newProveedor.find('.IVA').val('21');
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
     });
