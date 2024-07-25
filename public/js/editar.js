@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
-        preview.innerHTML = ''; // Limpia el contenedor de imágenes previas
+        preview.innerHTML = '';
         Array.from(e.target.files).forEach(file => {
             var img = document.createElement('img');
             img.src = URL.createObjectURL(file);
@@ -48,13 +48,14 @@ document.addEventListener('DOMContentLoaded', function() {
 $(document).ready(function() {
     $('.proveedores').on('change', function() {
         actualizarProveedor($(this));
+        actualizarProveedorAsignado();
     });
 
     $('#addProveedor').click(function(e) {
         e.preventDefault();
         var newProveedor = $('.proveedor').first().clone(true);
         newProveedor.find('input:not([type="button"]), select').val('');
-        newProveedor.find('.IVA').val('21'); // Fija el IVA al 21%
+        newProveedor.find('.IVA').val('21');
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
@@ -89,6 +90,7 @@ $(document).ready(function() {
         calcularCostos(proveedorElement);
     });
 
+    // Asegurar que los costos se recalculen y se actualice el proveedor asignado en la carga inicial
     $('.precio_lista').trigger('change');
     $('#utilidad').trigger('change');
 });
@@ -114,7 +116,8 @@ function calcularCostos(proveedorElement) {
 
     proveedorElement.find('.costo_neto').val(costoNeto);
     proveedorElement.find('.costo_iva').val(costoConIVA);
-    actualizarProveedorAsignado();
+
+    actualizarProveedorAsignado(); // Asegurarse de llamar esto después de calcular costos
 }
 
 function actualizarProveedorAsignado() {
