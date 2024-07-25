@@ -138,8 +138,8 @@ function actualizarProveedorAsignado() {
         }
     });
 
-    var nombreProveedor = proveedorMasBarato.find('.nombre_proveedor').text();
-    $('#proveedorAsignado').text(nombreProveedor);
+    var nombreProveedor = proveedorMasBarato ? proveedorMasBarato.find('.nombre_proveedor').text() : '';
+    $('#proveedorAsignado').val(nombreProveedor);  // Cambio aquí de .text() a .val()
 }
 
 function actualizarPrecioVenta() {
