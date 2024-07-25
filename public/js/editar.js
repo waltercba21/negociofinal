@@ -103,15 +103,26 @@ $(document).ready(function() {
 
     $('.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad').on('change', actualizarProveedorAsignado);
 
-    // Eliminar proveedor
     $(document).on('click', '.eliminar-proveedor', function() {
         var proveedorId = $(this).data('proveedor-id');
         var elementoProveedor = $(this).closest('.proveedor');
-        elementoProveedor.remove();
-        // Opcional: Llamada AJAX para eliminar el proveedor del servidor
-        // fetch('/productos/eliminarProveedor/' + proveedorId, { method: 'DELETE' })
-        // .then(response => response.json())
-        // .then(data => console.log(data));
+
+        // Realizar la petición DELETE al servidor
+        fetch('/eliminarProveedor/' + proveedorId, {
+            method: 'DELETE'
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Eliminar visualmente el proveedor de la interfaz si la eliminación fue exitosa
+                elementoProveedor.remove();
+                console.log('Proveedor eliminado correctamente.');
+            } else {
+                // Manejar visualmente el error
+                console.error('Error al eliminar el proveedor:', data.error);
+            }
+        }).catch(error => {
+            console.error('Error al hacer la solicitud:', error);
+        });
     });
 
     // Disparadores iniciales para establecer estado inicial correcto
