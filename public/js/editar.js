@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded', function() {
 $(document).ready(function() {
     $('.proveedores').on('change', function() {
         actualizarProveedor($(this));
-        actualizarProveedorAsignado();
     });
 
     $('#addProveedor').click(function(e) {
@@ -59,6 +58,7 @@ $(document).ready(function() {
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
+        calcularCostos(newProveedor);
     });
 
     $(document).on('click', '.eliminar-proveedor', function() {
@@ -90,7 +90,7 @@ $(document).ready(function() {
         calcularCostos(proveedorElement);
     });
 
-    // Asegurar que los costos se recalculen y se actualice el proveedor asignado en la carga inicial
+    // Llamar explícitamente al final para asegurar la inicialización correcta
     $('.precio_lista').trigger('change');
     $('#utilidad').trigger('change');
 });
@@ -111,13 +111,14 @@ function calcularCostos(proveedorElement) {
     var precioLista = parseFloat(proveedorElement.find('.precio_lista').val() || 0);
     var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || 0);
     var costoNeto = Math.ceil(precioLista - (precioLista * descuento / 100));
-    var iva = 21; // IVA fijo del 21%
+    var iva = 21;
     var costoConIVA = Math.ceil(costoNeto * (1 + iva / 100));
 
     proveedorElement.find('.costo_neto').val(costoNeto);
     proveedorElement.find('.costo_iva').val(costoConIVA);
 
-    actualizarProveedorAsignado(); // Asegurarse de llamar esto después de calcular costos
+    // Asegúrate de actualizar después de todos los costos están calculados
+    actualizarProveedorAsignado();
 }
 
 function actualizarProveedorAsignado() {
@@ -137,14 +138,4 @@ function actualizarProveedorAsignado() {
         var nombreProveedor = proveedorMasBarato.find('.nombre_proveedor').text();
         $('#proveedorAsignado').text(nombreProveedor);
     }
-}
-
-function actualizarPrecioVenta() {
-    var utilidad = parseFloat($('#utilidad').val() || 0);
-    var costoConIVA = parseFloat($('.costo_iva').filter(function() {
-        return parseFloat($(this).val()) === Math.min(...$.map($('.costo_iva'), function(el) { return parseFloat($(el).val()); }));
-    }).val() || 0);
-    var precioVenta = Math.ceil(costoConIVA * (1 + utilidad / 100));
-
-    $('#precio_venta').val(precioVenta);
 }
