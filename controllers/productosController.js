@@ -319,7 +319,6 @@ module.exports = {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
-    
         let datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre, 
@@ -327,7 +326,7 @@ module.exports = {
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
             modelo_id: req.body.modelo_id,
-            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id ,
             costo_neto: req.body.costo_neto,
             IVA: req.body.IVA[0],
             costo_iva: req.body.costo_iva,
@@ -338,7 +337,6 @@ module.exports = {
             stock_minimo: req.body.stock_minimo, 
             stock_actual: req.body.stock_actual,
         };
-    
         producto.actualizar(conexion, datosProducto)
         .then(() => {
             if (req.files) {
@@ -350,6 +348,8 @@ module.exports = {
                 return Promise.resolve();
             }
         })
+        .catch(error => {
+        })
         .then(() => {
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
                 return {
@@ -360,8 +360,7 @@ module.exports = {
                     precio_venta: req.body.precio_venta
                 };
             });
-    
-            const promesasProveedor = proveedores.map((proveedor) => {
+            const promesasProveedor = proveedores.map((proveedor, index) => {
                 const datosProductoProveedor = {
                     producto_id: datosProducto.id,
                     proveedor_id: proveedor.id,
@@ -372,7 +371,6 @@ module.exports = {
                 };
                 return producto.actualizarProductoProveedor(conexion, datosProductoProveedor);
             });
-    
             return Promise.all(promesasProveedor);
         })
         .then(() => {
@@ -387,7 +385,7 @@ module.exports = {
         .catch(error => {
             res.status(500).send('Error: ' + error.message);
         });
-    },    
+    },
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
