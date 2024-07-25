@@ -47,7 +47,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 $(document).ready(function() {
     $('.proveedores').on('change', function() {
-        actualizarProveedor($(this));
+        var proveedorElement = $(this).closest('.proveedor');
+        calcularCostos(proveedorElement);
+        actualizarProveedorAsignado();
     });
 
     $('#addProveedor').click(function(e) {
