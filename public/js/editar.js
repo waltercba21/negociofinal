@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded', function() {
 $(document).ready(function() {
     $('.proveedores').on('change', function() {
         actualizarProveedor($(this));
-        actualizarProveedorAsignado();
     });
 
     $('#addProveedor').click(function(e) {
@@ -59,7 +58,6 @@ $(document).ready(function() {
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
-        calcularCostos(newProveedor);
     });
 
     $(document).on('click', '.eliminar-proveedor', function() {
@@ -91,10 +89,8 @@ $(document).ready(function() {
         calcularCostos(proveedorElement);
     });
 
-    // Asegúrate de que se actualiza al cargar la página
     $('.precio_lista').trigger('change');
     $('#utilidad').trigger('change');
-    setTimeout(actualizarProveedorAsignado, 100); // Asegura que se actualiza después de que todos los DOM y scripts están completamente cargados
 });
 
 function actualizarProveedor(proveedorSelectElement) {
