@@ -19,24 +19,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
-        if (preview) {
-            preview.innerHTML = ''; // Limpia el contenedor de imágenes previas
-            Array.from(e.target.files).forEach(file => {
-                var img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                img.height = 100;
-                img.width = 100;
-                img.classList.add('imagen-miniatura');
-                var div = document.createElement('div');
-                div.classList.add('preview-img');
-                div.dataset.imagenId = img.src;
-                div.appendChild(img);
-                agregarEventoDblclick(div);
-                preview.appendChild(div);
-            });
-        } else {
-            console.error('El elemento con id "preview" no existe.');
-        }
+        preview.innerHTML = ''; // Limpia el contenedor de imágenes previas
+        Array.from(e.target.files).forEach(file => {
+            var img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.height = 100;
+            img.width = 100;
+            img.classList.add('imagen-miniatura');
+            var div = document.createElement('div');
+            div.classList.add('preview-img');
+            div.dataset.imagenId = img.src;
+            div.appendChild(img);
+            agregarEventoDblclick(div);
+            preview.appendChild(div);
+        });
     });
 
     if (typeof Sortable !== 'undefined' && document.getElementById('preview')) {
@@ -52,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
 $(document).ready(function() {
     $('.proveedores').on('change', function() {
         actualizarProveedor($(this));
+        actualizarProveedorAsignado();
     });
 
     $('#addProveedor').click(function(e) {
@@ -63,7 +60,6 @@ $(document).ready(function() {
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
         calcularCostos(newProveedor);
-        actualizarProveedorAsignado();
     });
 
     $(document).on('click', '.eliminar-proveedor', function() {
@@ -93,8 +89,6 @@ $(document).ready(function() {
     $(document).on('change', '.precio_lista, #utilidad', function() {
         var proveedorElement = $(this).closest('.proveedor');
         calcularCostos(proveedorElement);
-        actualizarPrecioVenta();
-        actualizarProveedorAsignado();
     });
 
     // Asegúrate de que se actualiza al cargar la página
@@ -113,7 +107,6 @@ function actualizarProveedor(proveedorSelectElement) {
     closestFormGroup.find('.descuentos_proveedor_id').val(descuento);
     closestFormGroup.find('label[for="codigo"]').text('Código (' + nombreProveedor + ')');
     closestFormGroup.find('label[for="precio_lista"]').text('Precio de Lista (' + nombreProveedor + ')');
-    closestFormGroup.find('label[for="descuentos_proveedor_id"]').text('Descuento (' + nombreProveedor + ')');
 }
 
 function calcularCostos(proveedorElement) {
@@ -125,6 +118,7 @@ function calcularCostos(proveedorElement) {
 
     proveedorElement.find('.costo_neto').val(costoNeto);
     proveedorElement.find('.costo_iva').val(costoConIVA);
+    actualizarProveedorAsignado();
 }
 
 function actualizarProveedorAsignado() {
