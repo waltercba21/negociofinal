@@ -46,16 +46,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 $(document).ready(function() {
-    function actualizarTodo() {
-        $('.proveedor').each(function() {
-            calcularCostos($(this));
-        });
-        setTimeout(actualizarProveedorAsignado, 50); // Pequeño retraso para asegurar que todos los costos se han calculado
-    }
-
     $('.proveedores').on('change', function() {
-        calcularCostos($(this).closest('.proveedor'));
-        setTimeout(actualizarProveedorAsignado, 50);
+        var proveedorElement = $(this).closest('.proveedor');
+        calcularCostos(proveedorElement);
+        actualizarProveedorAsignado();
     });
 
     $('#addProveedor').click(function(e) {
@@ -64,10 +58,11 @@ $(document).ready(function() {
         newProveedor.find('input, select').val('');
         newProveedor.find('.IVA').val('21');
         newProveedor.insertBefore(this);
+        newProveedor.find('.proveedores').trigger('change');
         setTimeout(function() {
-            newProveedor.find('.proveedores').trigger('change');
-            actualizarTodo();
-        }, 0);
+            calcularCostos(newProveedor);
+            actualizarProveedorAsignado();
+        }, 100);
     });
 
     $(document).on('click', '.eliminar-proveedor', function() {
@@ -79,7 +74,7 @@ $(document).ready(function() {
         .then(data => {
             if (data.success) {
                 elementoProveedor.remove();
-                actualizarTodo();
+                actualizarProveedorAsignado();
             } else {
                 console.error('Error al eliminar el proveedor:', data.error);
             }
@@ -95,10 +90,13 @@ $(document).ready(function() {
     });
 
     $(document).on('change', '.precio_lista, #utilidad', function() {
-        actualizarTodo();
+        var proveedorElement = $(this).closest('.proveedor');
+        calcularCostos(proveedorElement);
+        actualizarProveedorAsignado();
     });
 
-    setTimeout(actualizarTodo, 100);
+    $('.precio_lista').trigger('change');
+    $('#utilidad').trigger('change');
 });
 
 function calcularCostos(proveedorElement) {
@@ -127,10 +125,8 @@ function actualizarProveedorAsignado() {
 
     if (proveedorMasBarato) {
         var nombreProveedor = proveedorMasBarato.find('.nombre_proveedor').text();
-        $('#proveedorAsignado').val(nombreProveedor);
-        console.log("Proveedor asignado: " + nombreProveedor);
+        $('#proveedorAsignado').val(nombreProveedor); // Asegúrese de que está usando .val() para campos de entrada
     } else {
         $('#proveedorAsignado').val('Seleccione un proveedor');
-        console.log("No se encontró proveedor con costo más bajo");
     }
 }
