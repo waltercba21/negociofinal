@@ -143,8 +143,8 @@ function actualizarProveedorAsignado() {
     $('.proveedor').removeClass('proveedor-asignado');
     $('.proveedor').find('span:contains("Proveedor Asignado")').remove();
 
-    // Agregar la leyenda (Proveedor Asignado) solo al proveedor con el costo más bajo
-    if (proveedorMasBarato) {
+    // Agregar la leyenda (Proveedor Asignado) solo al proveedor con el costo más bajo si tiene un costo asociado
+    if (proveedorMasBarato && costoMasBajo !== Infinity) {
         proveedorMasBarato.addClass('proveedor-asignado');
         proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
     }

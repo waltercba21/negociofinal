@@ -701,8 +701,8 @@ background: rgba(0, 63, 125, 0.8);
   margin-right: 50px;
 }
 .proveedor-asignado {
-  background-color: #dff0d8; /* Color de fondo verde claro */
-  border: 1px solid #3e8e41; /* Borde verde */
+  background-color: #dff0d8; 
+  border: 1px solid #3e8e41; 
   padding: 10px;
 }
 /*-----------------------------PRESUPUESTO MOSTRADOR--------------------------*/
