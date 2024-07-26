@@ -97,12 +97,12 @@ $(document).ready(function() {
         }
     });
 
-    $('#nombre_producto').on('change', function() {
+    $('#nombre_producto').on('input', function() {
         // Actualizar el nombre del producto aquí
         console.log('Nombre del producto cambiado');
     });
 
-    $('#precio_venta').on('change', function() {
+    $('#precio_venta').on('input', function() {
         // Actualizar el precio de venta aquí
         console.log('Precio de venta cambiado');
     });
