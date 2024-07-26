@@ -64,8 +64,6 @@ $(document).ready(function() {
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.insertBefore(this);
         newProveedor.find('.proveedores').trigger('change');
-        $('#nombre_producto').trigger('change');
-        $('#precio_venta').trigger('change');
     });
 
     $(document).on('click', '.eliminar-proveedor', function() {
@@ -97,6 +95,16 @@ $(document).ready(function() {
         if ($(this).val() !== '') {
             actualizarProveedorAsignado(); 
         }
+    });
+
+    $('#nombre_producto').on('change', function() {
+        // Actualizar el nombre del producto aquí
+        console.log('Nombre del producto cambiado');
+    });
+
+    $('#precio_venta').on('change', function() {
+        // Actualizar el precio de venta aquí
+        console.log('Precio de venta cambiado');
     });
 
     $('.precio_lista').trigger('change');
