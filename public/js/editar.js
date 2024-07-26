@@ -55,6 +55,15 @@ $(document).ready(function() {
             actualizarPrecioVenta();
             actualizarProveedorAsignado();
         });
+
+        proveedorElement.find('.proveedores').on('change', function() {
+            var selectedOption = $(this).find('option:selected');
+            var descuento = selectedOption.data('descuento');
+            proveedorElement.find('.descuentos_proveedor_id').val(descuento);
+            calcularCostos(proveedorElement);
+            actualizarPrecioVenta();
+            actualizarProveedorAsignado();
+        });
     }
 
     $(document).on('click', '.eliminar-proveedor', function() {
