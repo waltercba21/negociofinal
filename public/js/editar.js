@@ -47,15 +47,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 $(document).ready(function() {
-    $(document).on('change', '.precio_lista', function() {
-        var proveedorElement = $(this).closest('.proveedor');
-        console.log('Precio lista cambiado:', $(this).val());
-        calcularCostos(proveedorElement);
-        actualizarPrecioVenta();
-        if ($(this).val() !== '') {
-            actualizarProveedorAsignado();
-        }
-    });
+    function bindEventsToProveedor(proveedorElement) {
+        proveedorElement.find('.precio_lista').on('change', function() {
+            var proveedorElement = $(this).closest('.proveedor');
+            console.log('Precio lista cambiado:', $(this).val());
+            calcularCostos(proveedorElement);
+            actualizarPrecioVenta();
+            if ($(this).val() !== '') {
+                actualizarProveedorAsignado();
+            }
+        });
+
+        proveedorElement.find('.descuentos_proveedor_id').on('change', function() {
+            var proveedorElement = $(this).closest('.proveedor');
+            calcularCostos(proveedorElement);
+            actualizarPrecioVenta();
+            if ($(this).val() !== '') {
+                actualizarProveedorAsignado();
+            }
+        });
+    }
 
     $(document).on('click', '.eliminar-proveedor', function() {
         var proveedorId = $(this).data('proveedor-id');
@@ -84,7 +95,10 @@ $(document).ready(function() {
         newProveedor.find('.nombre_proveedor').text('');
         $('#proveedoresContainer').append(newProveedor);
         console.log('Proveedor agregado');
-        
+
+        // Enlazar eventos al nuevo proveedor
+        bindEventsToProveedor(newProveedor);
+
         // Calcular costos y actualizar proveedor asignado después de agregar nuevo proveedor
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
@@ -94,6 +108,11 @@ $(document).ready(function() {
         if (e.keyCode === 13) {
             e.preventDefault();
         }
+    });
+
+    // Enlazar eventos a los proveedores existentes
+    $('.proveedor').each(function() {
+        bindEventsToProveedor($(this));
     });
 
     // Llamada inicial para asegurarse de que los cálculos se realicen en la carga inicial
