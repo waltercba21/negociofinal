@@ -133,16 +133,21 @@ function actualizarProveedorAsignado() {
 
     costosConIva.each(function() {
         var costoActual = parseFloat($(this).val());
-        if (costoActual < costoMasBajo) {
+        if (!isNaN(costoActual) && costoActual < costoMasBajo) {
             costoMasBajo = costoActual;
             proveedorMasBarato = $(this).closest('.proveedor');
         }
     });
 
-    // Resalta el proveedor con el costo más bajo
+    // Remover la leyenda (Proveedor Asignado) de todos los proveedores
     $('.proveedor').removeClass('proveedor-asignado');
-    proveedorMasBarato.addClass('proveedor-asignado');
-    proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
+    $('.proveedor').find('span:contains("Proveedor Asignado")').remove();
+
+    // Agregar la leyenda (Proveedor Asignado) solo al proveedor con el costo más bajo
+    if (proveedorMasBarato) {
+        proveedorMasBarato.addClass('proveedor-asignado');
+        proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
+    }
 }
 
 function actualizarPrecioVenta() {
