@@ -139,3 +139,22 @@ function actualizarPrecioVenta() {
     $('#precio_venta').val(precioVenta);
     console.log('Precio de venta actualizado:', precioVenta);
 }
+$('form').on('submit', function(e) {
+    e.preventDefault();
+    var formData = $(this).serializeArray();
+    console.log('Datos del formulario:', formData);
+
+    // Enviar el formulario manualmente con fetch o AJAX si es necesario
+    $.ajax({
+        url: $(this).attr('action'),
+        method: $(this).attr('method'),
+        data: formData,
+        success: function(response) {
+            console.log('Respuesta del servidor:', response);
+            // Manejar la respuesta del servidor aquí
+        },
+        error: function(error) {
+            console.error('Error en la solicitud:', error);
+        }
+    });
+});
