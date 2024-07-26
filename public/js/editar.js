@@ -139,16 +139,19 @@ function actualizarProveedorAsignado() {
         }
     });
 
-    // Remover la leyenda (Proveedor Asignado) de todos los proveedores
+    // Remover la leyenda (Proveedor Asignado) y la clase proveedor-asignado de todos los proveedores
     $('.proveedor').removeClass('proveedor-asignado');
     $('.proveedor').find('span:contains("Proveedor Asignado")').remove();
 
-    // Agregar la leyenda (Proveedor Asignado) solo al proveedor con el costo más bajo si tiene un costo asociado
+    // Agregar la leyenda (Proveedor Asignado) y la clase proveedor-asignado solo al proveedor con el costo más bajo si tiene un costo asociado
     if (proveedorMasBarato && costoMasBajo !== Infinity) {
         proveedorMasBarato.addClass('proveedor-asignado');
         proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
     }
 }
+
+// Agregar estilo para el proveedor asignado
+$('.proveedor-asignado').css('background-color', '#dff0d8');
 
 function actualizarPrecioVenta() {
     var utilidad = parseFloat($('#utilidad').val() || 0);
