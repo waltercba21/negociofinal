@@ -221,6 +221,7 @@ actualizar: function (conexion, datos, archivo) {
         let query = "UPDATE productos SET ";
         let params = [];
         let first = true;
+        
         if (datos.nombre) {
             query += first ? "nombre=?" : ", nombre=?";
             params.push(datos.nombre);
@@ -240,11 +241,6 @@ actualizar: function (conexion, datos, archivo) {
             query += first ? "marca_id=?" : ", marca_id=?";
             params.push(datos.marca_id);
             first = false;
-        } 
-        if (datos.proveedor_id) {
-            query += first ? "proveedor_id=?" : ", proveedor_id=?";
-            params.push(datos.proveedor_id);
-            first = false;
         }
         if (datos.modelo_id) {
             query += first ? "modelo_id=?" : ", modelo_id=?";
@@ -259,26 +255,6 @@ actualizar: function (conexion, datos, archivo) {
         if (datos.utilidad) {
             query += first ? "utilidad=?" : ", utilidad=?";
             params.push(datos.utilidad);
-            first = false;
-        }
-        if (datos.descuentos_proveedor_id) {
-            query += first ? "descuentos_proveedor_id=?" : ", descuentos_proveedor_id=?";
-            params.push(datos.descuentos_proveedor_id);
-            first = false;
-        }
-        if (datos.costo_neto) {
-            query += first ? "costo_neto=?" : ", costo_neto=?";
-            params.push(datos.costo_neto);
-            first = false;
-        }
-        if (datos.IVA) {
-            query += first ? "IVA=?" : ", IVA=?";
-            params.push(datos.IVA);
-            first = false;
-        }
-        if (datos.costo_iva) {
-            query += first ? "costo_iva=?" : ", costo_iva=?";
-            params.push(datos.costo_iva);
             first = false;
         }
         if (datos.estado) {
@@ -305,6 +281,10 @@ actualizar: function (conexion, datos, archivo) {
         }
         query += " WHERE id=?";
         params.push(datos.id);
+        
+        console.log('Consulta SQL:', query);
+        console.log('Parámetros:', params);
+
         conexion.query(query, params, (error, results) => {
             if (error) {
                 reject(error);
@@ -316,16 +296,23 @@ actualizar: function (conexion, datos, archivo) {
 },
 actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
     return new Promise((resolve, reject) => {
-        const query = 'SELECT * FROM producto_proveedor WHERE producto_id = ? AND proveedor_id = ?';
-        conexion.query(query, [datosProductoProveedor.producto_id, datosProductoProveedor.proveedor_id], (error, results) => {
+        const querySelect = 'SELECT * FROM producto_proveedor WHERE producto_id = ? AND proveedor_id = ?';
+        conexion.query(querySelect, [datosProductoProveedor.producto_id, datosProductoProveedor.proveedor_id], (error, results) => {
             if (error) {
                 reject(error);
                 return;
             }
             if (results.length > 0) {
                 // Si ya existe una entrada, actualízala
-                const query = 'UPDATE producto_proveedor SET precio_lista = ?, codigo = ? WHERE producto_id = ? AND proveedor_id = ?';
-                conexion.query(query, [datosProductoProveedor.precio_lista, datosProductoProveedor.codigo, datosProductoProveedor.producto_id, datosProductoProveedor.proveedor_id], (error, results) => {
+                const queryUpdate = 'UPDATE producto_proveedor SET precio_lista = ?, codigo = ?, costo_iva = ?, precio_venta = ? WHERE producto_id = ? AND proveedor_id = ?';
+                conexion.query(queryUpdate, [
+                    datosProductoProveedor.precio_lista,
+                    datosProductoProveedor.codigo,
+                    datosProductoProveedor.costo_iva,
+                    datosProductoProveedor.precio_venta,
+                    datosProductoProveedor.producto_id,
+                    datosProductoProveedor.proveedor_id
+                ], (error, results) => {
                     if (error) {
                         reject(error);
                         return;
@@ -334,8 +321,15 @@ actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
                 });
             } else {
                 // Si no existe una entrada, crea una nueva
-                const query = 'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?)';
-                conexion.query(query, [datosProductoProveedor.producto_id, datosProductoProveedor.proveedor_id, datosProductoProveedor.precio_lista, datosProductoProveedor.codigo], (error, results) => {
+                const queryInsert = 'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo, costo_iva, precio_venta) VALUES (?, ?, ?, ?, ?, ?)';
+                conexion.query(queryInsert, [
+                    datosProductoProveedor.producto_id,
+                    datosProductoProveedor.proveedor_id,
+                    datosProductoProveedor.precio_lista,
+                    datosProductoProveedor.codigo,
+                    datosProductoProveedor.costo_iva,
+                    datosProductoProveedor.precio_venta
+                ], (error, results) => {
                     if (error) {
                         reject(error);
                         return;

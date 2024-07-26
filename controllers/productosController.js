@@ -324,82 +324,69 @@ module.exports = {
     
         let datosProducto = {
             id: req.body.id,
-            nombre: req.body.nombre, 
+            nombre: req.body.nombre,
             descripcion: req.body.descripcion,
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
             modelo_id: req.body.modelo_id,
-            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
-            costo_neto: req.body.costo_neto,
-            IVA: req.body.IVA[0],
-            costo_iva: req.body.costo_iva,
             utilidad: req.body.utilidad,
             precio_venta: req.body.precio_venta,
             estado: req.body.estado,
             paginaActual: req.body.paginaActual,
-            stock_minimo: req.body.stock_minimo, 
-            stock_actual: req.body.stock_actual,
+            stock_minimo: req.body.stock_minimo,
+            stock_actual: req.body.stock_actual
         };
     
         console.log('Datos del producto procesados:', datosProducto);
     
         producto.actualizar(conexion, datosProducto)
-        .then(() => {
-            if (req.files) {
-                const promesasArchivos = req.files.map(file => {
-                    return producto.actualizarArchivo(conexion, datosProducto, file);
+            .then(() => {
+                if (req.files) {
+                    const promesasArchivos = req.files.map(file => {
+                        return producto.actualizarArchivo(conexion, datosProducto, file);
+                    });
+                    return Promise.all(promesasArchivos);
+                } else {
+                    return Promise.resolve();
+                }
+            })
+            .then(() => {
+                console.log('Archivos actualizados');
+                const proveedores = req.body.proveedores.map((proveedorId, index) => {
+                    return {
+                        producto_id: datosProducto.id,
+                        proveedor_id: proveedorId,
+                        precio_lista: req.body.precio_lista[index],
+                        codigo: req.body.codigo[index],
+                        costo_iva: req.body.costo_iva[index],
+                        precio_venta: req.body.precio_venta
+                    };
                 });
-                return Promise.all(promesasArchivos);
-            } else {
-                return Promise.resolve();
-            }
-        })
-        .then(() => {
-            console.log('Archivos actualizados');
-            const proveedores = req.body.proveedores.map((proveedorId, index) => {
-                return {
-                    id: proveedorId,
-                    codigo: req.body['codigo'][index],
-                    precio_lista: req.body.precio_lista[index],
-                    costo_iva: req.body.costo_iva[index],
-                    precio_venta: req.body.precio_venta
-                };
+    
+                console.log('Datos de los proveedores procesados:', proveedores);
+    
+                const promesasProveedor = proveedores.map((proveedor, index) => {
+                    return producto.actualizarProductoProveedor(conexion, proveedor);
+                });
+                return Promise.all(promesasProveedor);
+            })
+            .then(() => {
+                console.log('Proveedores actualizados');
+                return producto.actualizarStock(conexion, datosProducto.id, datosProducto.stock_minimo, datosProducto.stock_actual);
+            })
+            .then(() => {
+                console.log('Stock actualizado');
+                return producto.obtenerPosicion(conexion, datosProducto.id);
+            })
+            .then(() => {
+                console.log('Posición del producto obtenida');
+                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
+            })
+            .catch(error => {
+                console.error('Error en la actualización del producto:', error);
+                res.status(500).send('Error: ' + error.message);
             });
-    
-            console.log('Datos de los proveedores procesados:', proveedores);
-    
-            const promesasProveedor = proveedores.map((proveedor, index) => {
-                const datosProductoProveedor = {
-                    producto_id: datosProducto.id,
-                    proveedor_id: proveedor.id,
-                    precio_lista: proveedor.precio_lista,
-                    codigo: proveedor.codigo,
-                    costo_iva: proveedor.costo_iva, 
-                    precio_venta: proveedor.precio_venta
-                };
-                return producto.actualizarProductoProveedor(conexion, datosProductoProveedor);
-            });
-            return Promise.all(promesasProveedor);
-        })
-        .then(() => {
-            console.log('Proveedores actualizados');
-            return producto.actualizarStock(conexion, datosProducto.id, datosProducto.stock_minimo, datosProducto.stock_actual); 
-        })
-        .then(() => {
-            console.log('Stock actualizado');
-            return producto.obtenerPosicion(conexion, datosProducto.id);
-        })
-        .then(() => {
-            console.log('Posición del producto obtenida');
-            res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
-        })
-        .catch(error => {
-            console.error('Error en la actualización del producto:', error);
-            res.status(500).send('Error: ' + error.message);
-        });
-    },
-    
-    
+    },    
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
