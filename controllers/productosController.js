@@ -334,7 +334,11 @@ module.exports = {
             estado: req.body.estado,
             paginaActual: req.body.paginaActual,
             stock_minimo: req.body.stock_minimo,
-            stock_actual: req.body.stock_actual
+            stock_actual: req.body.stock_actual,
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
+            costo_neto: req.body.costo_neto,
+            IVA: req.body.IVA,
+            costo_iva: req.body.costo_iva
         };
     
         console.log('Datos del producto procesados:', datosProducto);
@@ -358,7 +362,6 @@ module.exports = {
                         proveedor_id: proveedorId,
                         precio_lista: req.body.precio_lista[index],
                         codigo: req.body.codigo[index],
-                        costo_iva: req.body.costo_iva[index],
                         precio_venta: req.body.precio_venta
                     };
                 });
