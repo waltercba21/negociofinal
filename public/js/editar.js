@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+
+
 $(document).ready(function() {
     $('.proveedores').on('change', function() {
         actualizarProveedor($(this));
@@ -89,10 +91,11 @@ $(document).ready(function() {
         }
     });
 
-    $(document).on('change', '.precio_lista, #utilidad', function() {
+    $(document).on('change', '.precio_lista', function() {
         var proveedorElement = $(this).closest('.proveedor');
         calcularCostos(proveedorElement);
         actualizarPrecioVenta();
+        actualizarProveedorAsignado(); 
     });
 
     $('.precio_lista').trigger('change');
