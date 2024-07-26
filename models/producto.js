@@ -191,7 +191,7 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
     conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
     [proveedor_id, descuento], funcion);
   },
-  eliminar : async (idOrIds) => {
+eliminar : async (idOrIds) => {
     return new Promise((resolve, reject) => {
         const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
         const idList = ids.join(',');

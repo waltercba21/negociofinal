@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   });
 
-  // Evento para manejar la eliminación de productos seleccionados
   deleteSelectedButton.addEventListener('click', function(event) {
       var checks = document.querySelectorAll('.product-check');
       var ids = [];
