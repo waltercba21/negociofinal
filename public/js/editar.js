@@ -51,19 +51,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-$(document).ready(function() {
-    $('.proveedores').on('change', function() {
-        actualizarProveedor($(this));
+$('#addProveedor').click(function(e) {
+    e.preventDefault();
+    $('.proveedor').removeClass('proveedor-asignado');
+    var newProveedor = $('.proveedor').first().clone(true);
+    newProveedor.find('input:not([type="button"]), select').val('');
+    newProveedor.find('.IVA').val('21'); 
+    newProveedor.find('.nombre_proveedor').text('');
+    newProveedor.insertBefore(this);
+    newProveedor.find('.proveedores').trigger('change');
+    
+    // Actualizar eventos de cambio para los campos de nombre del producto y precio de venta
+    newProveedor.find('#nombre_producto').on('input', function() {
+        // Actualizar el nombre del producto aquí
+        console.log('Nombre del producto cambiado');
     });
-    $('#addProveedor').click(function(e) {
-        e.preventDefault();
-        $('.proveedor').removeClass('proveedor-asignado');
-        var newProveedor = $('.proveedor').first().clone(true);
-        newProveedor.find('input:not([type="button"]), select').val('');
-        newProveedor.find('.IVA').val('21'); 
-        newProveedor.find('.nombre_proveedor').text('');
-        newProveedor.insertBefore(this);
-        newProveedor.find('.proveedores').trigger('change');
+    
+    newProveedor.find('#precio_venta').on('input', function() {
+        // Actualizar el precio de venta aquí
+        console.log('Precio de venta cambiado');
     });
 
     $(document).on('click', '.eliminar-proveedor', function() {
@@ -95,16 +101,6 @@ $(document).ready(function() {
         if ($(this).val() !== '') {
             actualizarProveedorAsignado(); 
         }
-    });
-
-    $('#nombre_producto').on('input', function() {
-        // Actualizar el nombre del producto aquí
-        console.log('Nombre del producto cambiado');
-    });
-
-    $('#precio_venta').on('input', function() {
-        // Actualizar el precio de venta aquí
-        console.log('Precio de venta cambiado');
     });
 
     $('.precio_lista').trigger('change');
