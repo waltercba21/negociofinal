@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Sortable no está definido o no se pudo inicializar.');
     }
 });
-
 $(document).ready(function() {
     $(document).on('change', '.precio_lista', function() {
         var proveedorElement = $(this).closest('.proveedor');
@@ -85,6 +84,10 @@ $(document).ready(function() {
         newProveedor.find('.nombre_proveedor').text('');
         $('#proveedoresContainer').append(newProveedor);
         console.log('Proveedor agregado');
+        
+        // Calcular costos y actualizar proveedor asignado después de agregar nuevo proveedor
+        calcularCostos(newProveedor);
+        actualizarProveedorAsignado();
     });
 
     $('form').on('keypress', function(e) {
@@ -93,8 +96,13 @@ $(document).ready(function() {
         }
     });
 
-    $('.precio_lista').trigger('change');
-    $('#utilidad').trigger('change');
+    // Llamada inicial para asegurarse de que los cálculos se realicen en la carga inicial
+    $('.precio_lista').each(function() {
+        var proveedorElement = $(this).closest('.proveedor');
+        calcularCostos(proveedorElement);
+    });
+    actualizarPrecioVenta();
+    actualizarProveedorAsignado();
 });
 
 function calcularCostos(proveedorElement) {
@@ -139,5 +147,3 @@ function actualizarPrecioVenta() {
     $('#precio_venta').val(precioVenta);
     console.log('Precio de venta actualizado:', precioVenta);
 }
-
-
