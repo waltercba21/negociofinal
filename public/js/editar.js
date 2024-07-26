@@ -50,26 +50,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-
-$('#addProveedor').click(function(e) {
-    e.preventDefault();
-    $('.proveedor').removeClass('proveedor-asignado');
-    var newProveedor = $('.proveedor').first().clone(true);
-    newProveedor.find('input:not([type="button"]), select').val('');
-    newProveedor.find('.IVA').val('21'); 
-    newProveedor.find('.nombre_proveedor').text('');
-    newProveedor.insertBefore(this);
-    newProveedor.find('.proveedores').trigger('change');
-    
-    // Actualizar eventos de cambio para los campos de nombre del producto y precio de venta
-    newProveedor.find('#nombre_producto').on('input', function() {
-        // Actualizar el nombre del producto aquí
-        console.log('Nombre del producto cambiado');
-    });
-    
-    newProveedor.find('#precio_venta').on('input', function() {
-        // Actualizar el precio de venta aquí
-        console.log('Precio de venta cambiado');
+$(document).ready(function() {
+    // Vincular eventos a los elementos originales
+    $(document).on('change', '.precio_lista', function() {
+        var proveedorElement = $(this).closest('.proveedor');
+        calcularCostos(proveedorElement);
+        actualizarPrecioVenta();
+        if ($(this).val() !== '') {
+            actualizarProveedorAsignado(); 
+        }
     });
 
     $(document).on('click', '.eliminar-proveedor', function() {
@@ -89,17 +78,39 @@ $('#addProveedor').click(function(e) {
             console.error('Error al hacer la solicitud:', error);
         });
     });
+
+    $('#addProveedor').click(function(e) {
+        e.preventDefault();
+        $('.proveedor').removeClass('proveedor-asignado');
+        var newProveedor = $('.proveedor').first().clone(true);
+        newProveedor.find('input:not([type="button"]), select').val('');
+        newProveedor.find('.IVA').val('21'); 
+        newProveedor.find('.nombre_proveedor').text('');
+        
+        // Desvincular eventos del elemento clonado
+        newProveedor.off('change', '.precio_lista');
+        newProveedor.off('click', '.eliminar-proveedor');
+        newProveedor.off('input', '#nombre_producto');
+        newProveedor.off('input', '#precio_venta');
+        
+        newProveedor.insertBefore(this);
+        newProveedor.find('.proveedores').trigger('change');
+        
+        // Actualizar eventos de cambio para los campos de nombre del producto y precio de venta
+        newProveedor.find('#nombre_producto').on('input', function() {
+            // Actualizar el nombre del producto aquí
+            console.log('Nombre del producto cambiado');
+        });
+        
+        newProveedor.find('#precio_venta').on('input', function() {
+            // Actualizar el precio de venta aquí
+            console.log('Precio de venta cambiado');
+        });
+    });
+
     $('form').on('keypress', function(e) {
         if (e.keyCode === 13) {
             e.preventDefault();
-        }
-    });
-    $(document).on('change', '.precio_lista', function() {
-        var proveedorElement = $(this).closest('.proveedor');
-        calcularCostos(proveedorElement);
-        actualizarPrecioVenta();
-        if ($(this).val() !== '') {
-            actualizarProveedorAsignado(); 
         }
     });
 
