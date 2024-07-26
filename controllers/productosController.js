@@ -322,6 +322,7 @@ module.exports = {
     
         console.log('Datos del producto recibidos:', req.body);
     
+        // Solo toma el primer elemento de cada array (ajusta según tu lógica de negocio)
         let datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
@@ -335,10 +336,10 @@ module.exports = {
             paginaActual: req.body.paginaActual,
             stock_minimo: req.body.stock_minimo,
             stock_actual: req.body.stock_actual,
-            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
-            costo_neto: req.body.costo_neto,
-            IVA: req.body.IVA,
-            costo_iva: req.body.costo_iva
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id[0],
+            costo_neto: req.body.costo_neto[0],
+            IVA: req.body.IVA[0],
+            costo_iva: req.body.costo_iva[0]
         };
     
         console.log('Datos del producto procesados:', datosProducto);
