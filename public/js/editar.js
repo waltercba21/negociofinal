@@ -121,9 +121,8 @@ function calcularCostos(proveedorElement) {
 
     proveedorElement.find('.costo_neto').val(costoNeto);
     proveedorElement.find('.costo_iva').val(costoConIVA);
-
-    actualizarProveedorAsignado();
 }
+
 function actualizarProveedorAsignado() {
     var costosConIva = $('.costo_iva');
     var costoMasBajo = Infinity;
@@ -137,10 +136,11 @@ function actualizarProveedorAsignado() {
         }
     });
 
-    var nombreProveedor = proveedorMasBarato ? proveedorMasBarato.find('.nombre_proveedor').text() : '';
-    $('#proveedorAsignado').text(nombreProveedor);
+    // Resalta el proveedor con el costo más bajo
+    $('.proveedor').removeClass('proveedor-asignado');
+    proveedorMasBarato.addClass('proveedor-asignado');
+    proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
 }
-
 
 function actualizarPrecioVenta() {
     var utilidad = parseFloat($('#utilidad').val() || 0);
