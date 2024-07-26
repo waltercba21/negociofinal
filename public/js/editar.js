@@ -139,32 +139,5 @@ function actualizarPrecioVenta() {
     $('#precio_venta').val(precioVenta);
     console.log('Precio de venta actualizado:', precioVenta);
 }
-$('form').on('submit', function(e) {
-    e.preventDefault();
-    var formData = $(this).serializeArray();
-    console.log('Datos del formulario:', formData);
 
-    // Enviar el formulario manualmente con fetch o AJAX si es necesario
-    $.ajax({
-        url: $(this).attr('action'),
-        method: $(this).attr('method'),
-        data: formData,
-        success: function(response) {
-            console.log('Respuesta del servidor:', response);
-            if (response.success) {
-                alert('Producto actualizado correctamente');
-            } else {
-                alert('Error al actualizar el producto: ' + response.error);
-            }
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.error('Error en la solicitud:', {
-                textStatus: textStatus,
-                errorThrown: errorThrown,
-                responseText: jqXHR.responseText
-            });
-            alert('Error al enviar la solicitud: ' + textStatus + ' - ' + errorThrown);
-        }
-    });
-});
 

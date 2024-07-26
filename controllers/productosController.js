@@ -399,6 +399,7 @@ module.exports = {
         });
     },
     
+    
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
