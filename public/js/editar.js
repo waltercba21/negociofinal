@@ -48,23 +48,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 $(document).ready(function() {
     function bindEventsToProveedor(proveedorElement) {
-        proveedorElement.find('.precio_lista').on('change', function() {
+        proveedorElement.find('.precio_lista, .descuentos_proveedor_id').on('change', function() {
             var proveedorElement = $(this).closest('.proveedor');
-            console.log('Precio lista cambiado:', $(this).val());
+            console.log('Precio lista o descuento cambiado:', $(this).val());
             calcularCostos(proveedorElement);
             actualizarPrecioVenta();
-            if ($(this).val() !== '') {
-                actualizarProveedorAsignado();
-            }
-        });
-
-        proveedorElement.find('.descuentos_proveedor_id').on('change', function() {
-            var proveedorElement = $(this).closest('.proveedor');
-            calcularCostos(proveedorElement);
-            actualizarPrecioVenta();
-            if ($(this).val() !== '') {
-                actualizarProveedorAsignado();
-            }
+            actualizarProveedorAsignado();
         });
     }
 
@@ -116,7 +105,7 @@ $(document).ready(function() {
     });
 
     // Llamada inicial para asegurarse de que los cálculos se realicen en la carga inicial
-    $('.precio_lista').each(function() {
+    $('.precio_lista, .descuentos_proveedor_id').each(function() {
         var proveedorElement = $(this).closest('.proveedor');
         calcularCostos(proveedorElement);
     });
