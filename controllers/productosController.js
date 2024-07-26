@@ -362,8 +362,7 @@ module.exports = {
                         producto_id: datosProducto.id,
                         proveedor_id: proveedorId,
                         precio_lista: req.body.precio_lista[index],
-                        codigo: req.body.codigo[index],
-                        precio_venta: req.body.precio_venta
+                        codigo: req.body.codigo[index]
                     };
                 });
     
@@ -390,7 +389,7 @@ module.exports = {
                 console.error('Error en la actualización del producto:', error);
                 res.status(500).send('Error: ' + error.message);
             });
-    },    
+    },     
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
