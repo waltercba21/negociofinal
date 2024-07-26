@@ -59,6 +59,8 @@ $(document).ready(function() {
 
     $('#addProveedor').click(function(e) {
         e.preventDefault();
+        // Remover la clase proveedor-asignado de todos los proveedores
+        $('.proveedor').removeClass('proveedor-asignado');
         var newProveedor = $('.proveedor').first().clone(true);
         newProveedor.find('input:not([type="button"]), select').val('');
         newProveedor.find('.IVA').val('21'); // Fija el IVA al 21%
