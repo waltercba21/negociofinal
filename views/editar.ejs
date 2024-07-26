@@ -3,11 +3,11 @@
 
 <body>
     <main>
-        <div class="container-crear">
-            <div class="titulo-crear">Editar Producto</div>
-            <div class="contenido-crear">
+        <div class="container-editar">
+            <div class="titulo-editar">Editar Producto</div>
+            <div class="contenido-editar">
                 <div class="card-body">
-                    <form class="form-crear" method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
+                    <form class="form-editar" method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
                         <input type="hidden" name="pagina" value="<%= producto.paginaActual %>">
                         <div class="caracteristicas">
                             <input type="hidden" name="id" value="<%= producto.id %>">
@@ -68,7 +68,7 @@
                         </div>
                         <div id="proveedoresContainer">
                             <% productoProveedores.forEach(function(productoProveedor, index) { %>
-                                <div class="proveedor">
+                                <div class="proveedor-editar">
                                     <div class="form-group-crear">
                                         <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
                                         <select class="proveedores" name="proveedores[]">
@@ -97,17 +97,13 @@
                                         <label for="IVA">IVA:</label>
                                         <input class="IVA form-control" type="number" name="IVA[]" value="21" readonly>
                                     </div>
-                                    <div class="form-group-crear">
-                                        <label for="costo_iva">Costo Neto Con IVA:</label>
-                                        <input class="costo_iva form-control" type="number" name="costo_iva[]" value="<%= productoProveedor.costo_iva %>">
-                                    </div>
-                                    <div class="form-group-crear">
-                                        <button class="eliminar-proveedor" type="button" data-proveedor-id="<%= productoProveedor.proveedor_id %>">Eliminar proveedor</button>
-                                    </div>
+                                    div class="form-group-editar">
+                                    <button class="eliminar-proveedor-editar" type="button" data-proveedor-id="<%= productoProveedor.proveedor_id %>">Eliminar</button>
                                 </div>
-                            <% }); %>
-                        </div>
-                        <button id="addProveedor" type="button">+</button>
+                            </div>
+                        <% }); %>
+                        <button id="addProveedorEditar" class="btn-agregar-proveedor-editar" type="button">+</button>
+                    </div>
                         <div class="utilidades">
                             <div class="form-group-crear">
                                 <label for="utilidad">Utilidad:</label>
