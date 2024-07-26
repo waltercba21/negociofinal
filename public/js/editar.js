@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
+
+
 $(document).ready(function() {
     // Vincular eventos a los elementos originales
     $(document).on('change', '.precio_lista', function() {
@@ -87,14 +89,39 @@ $(document).ready(function() {
         newProveedor.find('.IVA').val('21'); 
         newProveedor.find('.nombre_proveedor').text('');
         
-        // Desvincular eventos del elemento clonado
         newProveedor.off('change', '.precio_lista');
         newProveedor.off('click', '.eliminar-proveedor');
         newProveedor.off('input', '#nombre_producto');
         newProveedor.off('input', '#precio_venta');
-        
+
         newProveedor.insertBefore(this);
-        newProveedor.find('.proveedores').trigger('change');
+          // Vincular eventos para el nuevo elemento clonado
+    newProveedor.find('.precio_lista').on('change', function() {
+        var proveedorElement = $(this).closest('.proveedor');
+        calcularCostos(proveedorElement);
+        actualizarPrecioVenta();
+        if ($(this).val() !== '') {
+            actualizarProveedorAsignado(); 
+        }
+    });
+
+    newProveedor.find('.eliminar-proveedor').on('click', function() {
+        var proveedorId = $(this).data('proveedor-id');
+        var elementoProveedor = $(this).closest('.proveedor');
+        fetch('/eliminarProveedor/' + proveedorId, {
+            method: 'DELETE'
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                elementoProveedor.remove();
+                actualizarProveedorAsignado();
+            } else {
+                console.error('Error al eliminar el proveedor:', data.error);
+            }
+        }).catch(error => {
+            console.error('Error al hacer la solicitud:', error);
+        });
+    });
         
         // Actualizar eventos de cambio para los campos de nombre del producto y precio de venta
         newProveedor.find('#nombre_producto').on('input', function() {
