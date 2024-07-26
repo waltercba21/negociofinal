@@ -319,6 +319,9 @@ module.exports = {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
+    
+        console.log('Datos del producto recibidos:', req.body);
+    
         let datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre, 
@@ -326,7 +329,7 @@ module.exports = {
             categoria_id: req.body.categoria,
             marca_id: req.body.marca,
             modelo_id: req.body.modelo_id,
-            descuentos_proveedor_id: req.body.descuentos_proveedor_id ,
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
             costo_neto: req.body.costo_neto,
             IVA: req.body.IVA[0],
             costo_iva: req.body.costo_iva,
@@ -337,6 +340,9 @@ module.exports = {
             stock_minimo: req.body.stock_minimo, 
             stock_actual: req.body.stock_actual,
         };
+    
+        console.log('Datos del producto procesados:', datosProducto);
+    
         producto.actualizar(conexion, datosProducto)
         .then(() => {
             if (req.files) {
@@ -348,9 +354,8 @@ module.exports = {
                 return Promise.resolve();
             }
         })
-        .catch(error => {
-        })
         .then(() => {
+            console.log('Archivos actualizados');
             const proveedores = req.body.proveedores.map((proveedorId, index) => {
                 return {
                     id: proveedorId,
@@ -360,6 +365,9 @@ module.exports = {
                     precio_venta: req.body.precio_venta
                 };
             });
+    
+            console.log('Datos de los proveedores procesados:', proveedores);
+    
             const promesasProveedor = proveedores.map((proveedor, index) => {
                 const datosProductoProveedor = {
                     producto_id: datosProducto.id,
@@ -374,18 +382,23 @@ module.exports = {
             return Promise.all(promesasProveedor);
         })
         .then(() => {
+            console.log('Proveedores actualizados');
             return producto.actualizarStock(conexion, datosProducto.id, datosProducto.stock_minimo, datosProducto.stock_actual); 
         })
         .then(() => {
+            console.log('Stock actualizado');
             return producto.obtenerPosicion(conexion, datosProducto.id);
         })
         .then(() => {
+            console.log('Posición del producto obtenida');
             res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
         })
         .catch(error => {
+            console.error('Error en la actualización del producto:', error);
             res.status(500).send('Error: ' + error.message);
         });
     },
+    
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {

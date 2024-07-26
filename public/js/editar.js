@@ -151,10 +151,20 @@ $('form').on('submit', function(e) {
         data: formData,
         success: function(response) {
             console.log('Respuesta del servidor:', response);
-            // Manejar la respuesta del servidor aquí
+            if (response.success) {
+                alert('Producto actualizado correctamente');
+            } else {
+                alert('Error al actualizar el producto: ' + response.error);
+            }
         },
-        error: function(error) {
-            console.error('Error en la solicitud:', error);
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error('Error en la solicitud:', {
+                textStatus: textStatus,
+                errorThrown: errorThrown,
+                responseText: jqXHR.responseText
+            });
+            alert('Error al enviar la solicitud: ' + textStatus + ' - ' + errorThrown);
         }
     });
 });
+
