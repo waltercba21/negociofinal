@@ -54,7 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
 $(document).ready(function() {
     $('.proveedores').on('change', function() {
         actualizarProveedor($(this));
-        actualizarProveedorAsignado();
     });
 
     $('#addProveedor').click(function(e) {
@@ -97,7 +96,10 @@ $(document).ready(function() {
         var proveedorElement = $(this).closest('.proveedor');
         calcularCostos(proveedorElement);
         actualizarPrecioVenta();
-        actualizarProveedorAsignado(); 
+        // Verificar si el campo .precio_lista tiene un valor antes de llamar a actualizarProveedorAsignado()
+        if ($(this).val() !== '') {
+            actualizarProveedorAsignado(); 
+        }
     });
 
     $('.precio_lista').trigger('change');
