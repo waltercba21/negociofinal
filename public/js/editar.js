@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    var imagenesExistentes = document.querySelectorAll('.preview-img');
+    imagenesExistentes.forEach(function(imagen) {
+        agregarEventoDblclick(imagen);
+    });
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
         if (preview) {
