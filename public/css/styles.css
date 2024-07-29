@@ -1041,7 +1041,8 @@ background: rgba(0, 63, 125, 0.8);
 
 .card-body-editar {
   display: flex;
-  padding: 0; /* Eliminando padding para evitar problemas de alineación */
+  flex-direction: row;
+  padding: 0; 
   background-color: #f9f9f9;
 }
 
