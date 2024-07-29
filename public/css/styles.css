@@ -1023,7 +1023,6 @@ background: rgba(0, 63, 125, 0.8);
   background-color: lightgreen;
   color: black;
 }
-/* ------------------------------EDITAR----------------------*/
 .container-editar {
   max-width: 1200px;
   margin: 0 auto;
@@ -1041,39 +1040,38 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .card-body-editar {
-  padding: 20px;
-  border-radius: 10px;
+  display: flex;
+  padding: 0; /* Eliminando padding para evitar problemas de alineación */
   background-color: #f9f9f9;
 }
 
 .contenido-editar {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  flex-direction: row; /* Asegura disposición horizontal */
+  justify-content: space-between; /* Distribuye los elementos */
   gap: 20px;
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  box-sizing: border-box;
+  box-sizing: border-box; /* Incluye padding y border en el tamaño total */
 }
 
 .caracteristicas-editar, 
 #proveedoresContainer-editar, 
 .utilidades-editar {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* Asegura que los elementos no excedan el ancho del contenedor */
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden; /* Evita que el contenido se desborde */
 }
 
 .caracteristicas-editar {
-  border-right: 1px solid #ccc;
+  border-right: 1px solid #ccc; /* Línea divisoria */
 }
 
 .utilidades-editar {
-  border-left: 1px solid #ccc;
+  border-left: 1px solid #ccc; /* Línea divisoria */
 }
 
 .form-group-editar {
