@@ -1052,18 +1052,24 @@ background: rgba(0, 63, 125, 0.8);
   grid-template-columns: 1fr 1fr 1fr; /* Tres columnas de igual tamaño */
   gap: 20px;
   width: 100%;
+  box-sizing: border-box; /* Incluir padding y border en el tamaño total */
 }
+
 .caracteristicas-editar, 
 #proveedoresContainer-editar, 
 .utilidades-editar {
-  flex: 1; /* Distribución igual del espacio */
-  min-width: 0; /* Asegura que los elementos no crezcan más allá de su contenedor */
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden; /* Evita que el contenido se desborde */
+  overflow: hidden;
+  min-height: 300px; /* Establece una altura mínima para que todos los elementos se alineen correctamente */
 }
+
+#proveedoresContainer-editar {
+  overflow-y: auto; /* Permite el desplazamiento vertical si el contenido es demasiado grande */
+}
+
 
 .caracteristicas-editar {
   border-right: 1px solid #ccc; /* Línea divisoria */
