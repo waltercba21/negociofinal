@@ -1042,6 +1042,7 @@ background: rgba(0, 63, 125, 0.8);
 
 .contenido-editar {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   gap: 20px;
 }
