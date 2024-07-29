@@ -1025,6 +1025,8 @@ background: rgba(0, 63, 125, 0.8);
 }
 /* ------------------------------EDITAR----------------------*/
 .container-editar {
+  display: flex;
+  flex-direction: row;
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
