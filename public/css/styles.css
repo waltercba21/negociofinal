@@ -1040,22 +1040,28 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 20px;
 }
 
+.card-body-editar {
+  padding: 20px;
+  border-radius: 10px;
+  background-color: #f9f9f9;
+}
+
 .contenido-editar {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   gap: 20px;
   width: 100%;
-  max-width: 1200px; /* Asegúrate de ajustar el ancho máximo según sea necesario */
-  margin: 0 auto; /* Centrar el contenedor */
-  box-sizing: border-box; /* Incluye padding y border en el tamaño total */
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .caracteristicas-editar, 
 #proveedoresContainer-editar, 
 .utilidades-editar {
-  flex: 1; /* Hace que todos los elementos tengan el mismo ancho */
-  min-width: 0; /* Evita que los elementos crezcan más allá del contenedor */
+  flex: 1;
+  min-width: 0;
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -1069,7 +1075,6 @@ background: rgba(0, 63, 125, 0.8);
 .utilidades-editar {
   border-left: 1px solid #ccc;
 }
-
 
 .form-group-editar {
   margin-bottom: 20px;
