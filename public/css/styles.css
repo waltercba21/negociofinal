@@ -1049,7 +1049,6 @@ background: rgba(0, 63, 125, 0.8);
 .contenido-editar {
   display: flex; /* Habilita el modelo de caja flexible */
   flex-direction: row; /* Disposición horizontal */
-  justify-content: space-between; /* Espacio uniforme entre elementos */
   gap: 20px; /* Espacio entre los elementos */
   width: 100%; /* Ancho total disponible */
   box-sizing: border-box; /* Incluir padding y border en el tamaño total */
