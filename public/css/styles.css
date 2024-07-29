@@ -1025,8 +1025,6 @@ background: rgba(0, 63, 125, 0.8);
 }
 /* ------------------------------EDITAR----------------------*/
 .container-editar {
-  display: flex;
-  flex-direction: row;
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
@@ -1047,15 +1045,20 @@ background: rgba(0, 63, 125, 0.8);
   flex-direction: row;
   justify-content: space-between;
   gap: 20px;
+  width: 100%;
+  max-width: 1200px; /* Asegúrate de ajustar el ancho máximo según sea necesario */
+  margin: 0 auto; /* Centrar el contenedor */
+  box-sizing: border-box; /* Incluye padding y border en el tamaño total */
 }
 
-.caracteristicas-editar,
-#proveedoresContainer-editar,
+.caracteristicas-editar, 
+#proveedoresContainer-editar, 
 .utilidades-editar {
-  flex: 1;
+  flex: 1; /* Hace que todos los elementos tengan el mismo ancho */
+  min-width: 0; /* Evita que los elementos crezcan más allá del contenedor */
+  padding: 20px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  padding: 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -1066,6 +1069,7 @@ background: rgba(0, 63, 125, 0.8);
 .utilidades-editar {
   border-left: 1px solid #ccc;
 }
+
 
 .form-group-editar {
   margin-bottom: 20px;
