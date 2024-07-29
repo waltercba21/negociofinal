@@ -1048,12 +1048,10 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .contenido-editar {
-  display: flex;
-  flex-direction: row; /* Asegura disposición horizontal */
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* Tres columnas de igual tamaño */
   gap: 20px;
   width: 100%;
-  box-sizing: border-box; /* Asegura que padding y border estén incluidos en el tamaño total */
 }
 .caracteristicas-editar, 
 #proveedoresContainer-editar, 
