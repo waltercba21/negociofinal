@@ -1042,22 +1042,23 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .card-body-editar {
-  padding: 0; /* Asegurando que no haya padding extra */
+  display: flex;
+  flex-wrap: nowrap; 
   background-color: #f9f9f9;
 }
 
 .contenido-editar {
-  display: flex; /* Habilita el modelo de caja flexible */
-  flex-direction: row; /* Disposición horizontal */
-  gap: 20px; /* Espacio entre los elementos */
-  width: 100%; /* Ancho total disponible */
-  box-sizing: border-box; /* Incluir padding y border en el tamaño total */
+  display: flex;
+  flex-direction: row; /* Asegura disposición horizontal */
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box; /* Asegura que padding y border estén incluidos en el tamaño total */
 }
-
 .caracteristicas-editar, 
 #proveedoresContainer-editar, 
 .utilidades-editar {
-  flex: 1; /* Cada contenedor toma un tamaño proporcional igual */
+  flex: 1; /* Distribución igual del espacio */
   min-width: 0; /* Asegura que los elementos no crezcan más allá de su contenedor */
   padding: 20px;
   border: 1px solid #ccc;
