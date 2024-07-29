@@ -1025,60 +1025,40 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 /*-----------------------------EDITAR--------------------------*/
-.container-editar {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.titulo-editar {
-  text-align: center;
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
-}
-
-.card-body-editar {
-  display: flex;
-  flex-wrap: nowrap; 
-  background-color: #f9f9f9;
-}
-
+/* Estilos generales para el contenedor */
 .contenido-editar {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr; /* Tres columnas de igual tamaño */
-  gap: 20px;
-  width: 100%;
+  display: flex; /* Utilizar flex para la disposición en fila */
+  flex-direction: row; /* Asegurar disposición horizontal */
+  justify-content: space-between; /* Distribuir elementos uniformemente */
+  gap: 20px; /* Espacio entre elementos */
+  width: 100%; /* Abarcar todo el ancho disponible */
   box-sizing: border-box; /* Incluir padding y border en el tamaño total */
+  overflow: hidden; /* Evitar desbordamiento */
 }
 
+/* Cada uno de los bloques dentro del contenedor principal */
 .caracteristicas-editar, 
 #proveedoresContainer-editar, 
 .utilidades-editar {
+  flex: 1; /* Distribución proporcional del espacio */
+  min-width: 0; /* Prevenir que los elementos excedan el ancho */
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  min-height: 300px; /* Establece una altura mínima para que todos los elementos se alineen correctamente */
+  overflow: hidden; /* Evitar desbordamiento */
 }
 
-#proveedoresContainer-editar {
-  overflow-y: auto; /* Permite el desplazamiento vertical si el contenido es demasiado grande */
-}
-
-
+/* Bordes divisorios */
 .caracteristicas-editar {
-  border-right: 1px solid #ccc; /* Línea divisoria */
+  border-right: 1px solid #ccc; /* Línea divisoria derecha */
 }
 
 .utilidades-editar {
-  border-left: 1px solid #ccc; /* Línea divisoria */
+  border-left: 1px solid #ccc; /* Línea divisoria izquierda */
 }
 
+/* Estilo de los grupos de formularios */
 .form-group-editar {
   margin-bottom: 20px;
 }
@@ -1100,6 +1080,7 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
 }
 
+/* Estilo para imágenes de vista previa */
 .imagen-miniatura-contenedor {
   display: flex;
   gap: 10px;
@@ -1131,6 +1112,7 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 12px;
 }
 
+/* Estilo del botón para agregar proveedor */
 #addProveedor-editar {
   margin: 20px 0;
   font-size: 24px;
@@ -1142,6 +1124,7 @@ background: rgba(0, 63, 125, 0.8);
   cursor: pointer;
 }
 
+/* Botones de acción */
 .botones-editar {
   display: flex;
   justify-content: space-between;
@@ -1154,10 +1137,10 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
 }
 
+/* Estilo para el proveedor asignado */
 .proveedor-asignado {
   background-color: #dff0d8;
 }
-
 
 /*-------------------------PAGINACIÓN---------------*/
 .paginacion {
