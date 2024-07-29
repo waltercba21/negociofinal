@@ -3,17 +3,17 @@
 
 <body>
     <main>
-        <div class="container-crear">
-            <div class="titulo-crear">Editar Producto</div>
-            <div class="contenido-crear">
+        <div class="container-editar">
+            <div class="titulo-editar">Editar Producto</div>
+            <div class="contenido-editar">
                 <div class="card-body">
-                    <form class="form-crear" method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
+                    <form class="form-editar" method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
                         <input type="hidden" name="pagina" value="<%= producto.paginaActual %>">
-                        <div class="caracteristicas">
+                        <div class="caracteristicas-editar">
                             <input type="hidden" name="id" value="<%= producto.id %>">
                             <input type="hidden" name="paginaActual" value="<%= producto.paginaActual %>">
-
-                            <div class="form-group-crear">
+        
+                            <div class="form-group-editar">
                                 <label for="imagen">Imagen</label>
                                 <input id="imagen" class="form-control-file" type="file" name="archivos[]" multiple>
                                 <% if (producto && producto.imagenes && producto.imagenes.length > 0) { %>
@@ -26,19 +26,19 @@
                                     </div>
                                 <% } %>
                             </div>
-                            <div class="form-group-crear">
+                            <div class="form-group-editar">
                                 <label for="nombre">Nombre:</label>
                                 <input id="nombre" class="form-control" type="text" name="nombre" value="<%= producto ? producto.nombre : '' %>">
                             </div>
-                            <div class="form-group-crear">
+                            <div class="form-group-editar">
                                 <label for="descripcion">Descripcion:</label>
                                 <input id="descripcion" class="form-control" type="text" name="descripcion" value="<%= producto ? producto.descripcion : '' %>">
                             </div>
-                            <div class="form-group-crear">
+                            <div class="form-group-editar">
                                 <label for="oferta">Oferta:</label>
                                 <input id="oferta" type="checkbox" name="oferta" <%= producto && producto.oferta ? 'checked' : '' %>>
                             </div>
-                            <div class="form-group-crear">
+                            <div class="form-group-editar">
                                 <label for="categoria">Categoria</label>
                                 <select id="categoria" name="categoria">
                                     <option value="" <%= !producto || !producto.categoria_id ? 'selected' : '' %>>Selecciona una categoría...</option>
@@ -47,7 +47,7 @@
                                     <% }); %>
                                 </select>
                             </div>
-                            <div class="form-group-crear">
+                            <div class="form-group-editar">
                                 <label for="marca">Marca:</label>
                                 <select id="marca" name="marca">
                                     <option value="" <%= !producto || !producto.marca_id ? 'selected' : '' %>>Selecciona una marca...</option>
@@ -56,7 +56,7 @@
                                     <% }); %>
                                 </select>
                             </div>
-                            <div class="form-group-crear">
+                            <div class="form-group-editar">
                                 <label for="modelo_id">Modelo:</label>
                                 <select id="modelo_id" name="modelo_id">
                                     <option value="" <%= !producto || !producto.modelo_id ? 'selected' : '' %>>Selecciona un modelo...</option>
@@ -66,10 +66,10 @@
                                 </select>
                             </div>
                         </div>
-                        <div id="proveedoresContainer">
+                        <div id="proveedoresContainer-editar">
                             <% productoProveedores.forEach(function(productoProveedor, index) { %>
-                                <div class="proveedor">
-                                    <div class="form-group-crear">
+                                <div class="proveedor-editar"> 
+                                    <div class="form-group-editar">
                                         <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
                                         <select class="proveedores" name="proveedores[]">
                                             <% proveedores.forEach(function(proveedor) { %>
@@ -77,47 +77,47 @@
                                             <% }); %>
                                         </select>
                                     </div>
-                                    <div class="form-group-crear">
+                                    <div class="form-group-editar">
                                         <label for="codigo">Código:</label>
                                         <input class="codigo" type="text" name="codigo[]" value="<%= productoProveedor.codigo %>">
                                     </div>
-                                    <div class="form-group-crear">
+                                    <div class="form-group-editar">
                                         <label for="precio_lista">Precio de Lista:</label>
                                         <input class="precio_lista form-control" type="number" name="precio_lista[]" value="<%= productoProveedor.precio_lista %>">
                                     </div>
-                                    <div class="form-group-crear">
+                                    <div class="form-group-editar">
                                         <label for="descuentos_proveedor_id">Descuentos Proveedor:</label>
                                         <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="<%= productoProveedor.descuento %>" readonly>
                                     </div>
-                                    <div class="form-group-crear">
+                                    <div class="form-group-editar">
                                         <label for="costo_neto">Costo Neto:</label>
                                         <input class="costo_neto form-control" type="number" name="costo_neto[]" value="<%= productoProveedor.costo_neto %>" readonly>
                                     </div>
-                                    <div class="form-group-crear">
+                                    <div class="form-group-editar">
                                         <label for="IVA">IVA:</label>
                                         <input class="IVA form-control" type="number" name="IVA[]" value="21" readonly>
                                     </div>
-                                    <div class="form-group-crear">
+                                    <div class="form-group-editar">
                                         <label for="costo_iva">Costo Neto Con IVA:</label>
                                         <input class="costo_iva form-control" type="number" name="costo_iva[]" value="<%= productoProveedor.costo_iva %>">
                                     </div>
-                                    <div class="form-group-crear">
-                                        <button class="eliminar-proveedor" type="button" data-proveedor-id="<%= productoProveedor.proveedor_id %>">Eliminar proveedor</button>
+                                    <div class="form-group-editar">
+                                        <button class="eliminar-proveedor-editar" type="button" data-proveedor-id="<%= productoProveedor.proveedor_id %>">Eliminar proveedor</button>
                                     </div>
                                 </div>
                             <% }); %>
                         </div>
-                        <button id="addProveedor" type="button">+</button>
-                        <div class="utilidades">
-                            <div class="form-group-crear">
+                        <button id="addProveedor-editar" type="button">+</button>
+                        <div class="utilidades-editar">
+                            <div class="form-group-editar">
                                 <label for="utilidad">Utilidad:</label>
                                 <input id="utilidad" class="form-control" type="number" name="utilidad" value="<%= producto ? producto.utilidad : '' %>">
                             </div>
-                            <div class="form-group-crear">
+                            <div class="form-group-editar">
                                 <label for="precio_venta">Precio Venta:</label>
                                 <input id="precio_venta" class="form-control" type="number" name="precio_venta" data-manual="false" value="<%= producto ? producto.precio_venta : '' %>">
                             </div>
-                            <div class="form-group-crear">
+                            <div class="form-group-editar">
                                 <label for="estado">Estado:</label>
                                 <select id="estado" class="form-control" name="estado">
                                     <option value="" <%= !producto || !producto.estado ? 'selected' : '' %>>Selecciona un estado...</option>
@@ -125,15 +125,15 @@
                                     <option value="inactivo" <%= producto && producto.estado == 'inactivo' ? 'selected' : '' %>>Inactivo</option>
                                 </select>
                             </div>
-                            <div class="form-group-crear">
+                            <div class="form-group-editar">
                                 <label for="stock_minimo">Stock Mínimo:</label>
                                 <input type="number" id="stock_minimo" class="form-control" name="stock_minimo" min="0" value="<%= stock.stock_minimo %>" required>
                             </div>
-                            <div class="form-group-crear">
+                            <div class="form-group-editar">
                                 <label for="stock_actual">Stock Actual:</label>
                                 <input type="number" id="stock_actual" class="form-control" name="stock_actual" min="0" value="<%= stock.stock_actual %>" required>
                             </div>
-                            <div class="botones-crear">
+                            <div class="botones-editar">
                                 <button class="btn btn-success" type="submit">Guardar</button>
                                 <a class="btn btn-primary" href="/productos">Cancelar</a>
                             </div>
@@ -142,6 +142,7 @@
                 </div>
             </div>
         </div>
+        
     </main>
     <%- include ./layouts/footer.ejs %>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
