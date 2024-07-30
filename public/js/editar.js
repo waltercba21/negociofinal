@@ -127,7 +127,7 @@ $(document).ready(function() {
         calcularCostos(proveedorElement);
     });
     actualizarPrecioVenta();
-    actualizarProveedorAsignado(); 
+    actualizarProveedorAsignado();
 
     $('#utilidad').on('change', function() {
         actualizarPrecioVenta();
@@ -152,14 +152,14 @@ function actualizarProveedorAsignado() {
     var proveedorMasBarato = null;
     costosConIva.each(function() {
         var costoActual = parseFloat($(this).val());
-        if (!isNaN(costoActual) && costoActual < costoMasBajo) {
+        if (!isNaN(costoActual) && costoActual < costoMasBajo && costoActual !== 0) {
             costoMasBajo = costoActual;
             proveedorMasBarato = $(this).closest('.proveedor');
         }
     });
     $('.proveedor').removeClass('proveedor-asignado');
     $('.proveedor').find('span:contains("Proveedor Asignado")').remove();
-    if (proveedorMasBarato && costoMasBajo !== Infinity && proveedorMasBarato.find('.costo_iva').val() !== '') {
+    if (proveedorMasBarato && costoMasBajo !== Infinity) {
         proveedorMasBarato.addClass('proveedor-asignado');
         proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
     }
