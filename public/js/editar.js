@@ -92,7 +92,7 @@ $(document).ready(function() {
             });
         }
     });
-    
+
     $('#addProveedor-editar').click(function(e) {
         e.preventDefault();
         var newProveedor = $('.proveedor-editar').first().clone(true);
@@ -102,15 +102,12 @@ $(document).ready(function() {
         newProveedor.find('.IVA').val('21');
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.find('select.proveedores').attr('name', 'proveedores[]').prop('selectedIndex', 0);
-        newProveedor.find('input, select').each(function() {
-            $(this).attr('data-proveedor-id', ''); // Asigna un ID temporal
-        });
 
         // Añadir el nuevo proveedor al contenedor
         $('#proveedoresContainer-editar').append(newProveedor);
         bindEventsToProveedor(newProveedor);
-        calcularCostos(newProveedor);
-        actualizarProveedorAsignado();
+        newProveedor.find('.costo_neto, .costo_iva').val(''); // Limpiar campos calculados
+        console.log('Nuevo proveedor agregado.');
     });
 
     $('form').on('keypress', function(e) {
@@ -121,11 +118,6 @@ $(document).ready(function() {
 
     $('.proveedor-editar').each(function() {
         bindEventsToProveedor($(this));
-    });
-
-    $('.precio_lista, .descuentos_proveedor_id').each(function() {
-        var proveedorElement = $(this).closest('.proveedor-editar');
-        calcularCostos(proveedorElement);
     });
 
     actualizarPrecioVenta();
