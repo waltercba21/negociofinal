@@ -945,6 +945,7 @@ background: rgba(0, 63, 125, 0.8);
 .form-crear {
   display: flex;
   justify-content: space-between;
+  width: 100%;
 }
 .caracteristicas, #proveedoresContainer, .utilidades {
   flex: 1 1 0;
