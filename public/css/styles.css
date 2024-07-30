@@ -1040,45 +1040,53 @@ background: rgba(0, 63, 125, 0.8);
   text-align: center;
   font-size: 24px;
   font-weight: bold;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  color: #003f7d;
 }
 
 .card-body-editar {
-  padding: 0; /* Asegura que no haya padding extra */
+  padding: 0; 
   background-color: #f9f9f9;
 }
-
 .contenido-editar {
-  display: flex; /* Disposición en fila */
-  flex-direction: row; /* Asegurar que los elementos estén en fila */
-  justify-content: space-between; /* Distribuir espacio entre elementos */
-  gap: 20px; /* Espacio entre elementos */
-  width: 100%; /* Abarcar el ancho completo */
-  box-sizing: border-box; /* Incluir padding y border en el tamaño total */
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 20px; 
+  width: 100%; 
+  box-sizing: border-box;
 }
-
 .caracteristicas-editar, 
 #proveedoresContainer-editar, 
 .utilidades-editar {
-  flex: 1; /* Todos los elementos tienen el mismo tamaño */
-  min-width: 0; /* Asegura que los elementos no crezcan más allá de su contenedor */
+  flex: 1; 
+  min-width: 0; 
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: #fff; /* Fondo blanco para consistencia */
+  background-color: #fff; 
 }
-
+.form-group-editar input,
+.form-group-editar select,
+.form-group-editar .form-control {
+  width: 100%;
+  padding: 6px; 
+  font-size: 14px; 
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: none; 
+  height: auto; 
+  box-sizing: border-box; 
+}
 .caracteristicas-editar {
-  border-right: 1px solid #ccc; /* Línea divisoria derecha */
+  border-right: 1px solid #ccc;
 }
-
 .utilidades-editar {
-  border-left: 1px solid #ccc; /* Línea divisoria izquierda */
+  border-left: 1px solid #ccc;
 }
-
 .form-group-editar {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .form-group-editar label {
@@ -1098,15 +1106,16 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
 }
 
+.imagen-miniatura-contenedor .imagen-miniatura {
+  width: 80px; /* Disminuir el tamaño de las miniaturas de imágenes */
+  height: 80px;
+}
 .imagen-miniatura-contenedor {
   display: flex;
   gap: 10px;
   margin-top: 10px;
 }
-
 .imagen-miniatura {
-  width: 100px;
-  height: 100px;
   object-fit: cover;
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1131,15 +1140,19 @@ background: rgba(0, 63, 125, 0.8);
 
 #addProveedor-editar {
   margin: 20px 0;
-  font-size: 24px;
-  padding: 5px 10px;
+  font-size: 20px;
+  padding: 4px 8px;
   border: none;
   background-color: #007bff;
   color: white;
   border-radius: 50%;
   cursor: pointer;
 }
-
+.botones-editar .btn {
+  padding: 8px 16px; /* Reducir el padding de los botones */
+  font-size: 14px; /* Reducir el tamaño de la fuente en los botones */
+  border-radius: 4px; /* Ajustar el borde redondeado */
+}
 .botones-editar {
   display: flex;
   justify-content: space-between;
@@ -1147,8 +1160,6 @@ background: rgba(0, 63, 125, 0.8);
 }
 
 .botones-editar .btn {
-  padding: 10px 20px;
-  border-radius: 5px;
   font-weight: bold;
 }
 
