@@ -75,8 +75,7 @@ $(document).ready(function() {
     $(document).on('click', '.eliminar-proveedor-editar', function() {
         var proveedorId = $(this).data('proveedor-id');
         var elementoProveedor = $(this).closest('.proveedor-editar');
-        console.log('Eliminar proveedor ID:', proveedorId);
-        fetch('/eliminarProveedor/' + proveedorId, {
+        fetch('/productos/eliminarProveedor/' + proveedorId, {
             method: 'DELETE'
         }).then(response => response.json())
         .then(data => {
@@ -99,14 +98,15 @@ $(document).ready(function() {
         newProveedor.find('.nombre_proveedor').text('');
         $('#proveedoresContainer-editar').append(newProveedor);
         console.log('Proveedor agregado');
-
+    
         // Enlazar eventos al nuevo proveedor
         bindEventsToProveedor(newProveedor);
-
+    
         // Calcular costos y actualizar proveedor asignado después de agregar nuevo proveedor
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
     });
+    
 
     $('form').on('keypress', function(e) {
         if (e.keyCode === 13) {

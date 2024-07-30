@@ -73,7 +73,7 @@
                     <% productoProveedores.forEach(function(productoProveedor, index) { %>
                         <div class="proveedor-editar"> 
                             <div class="form-group-editar">
-                                <label for="proveedores">Proveedores<span class="nombre_proveedor"></span></label>
+                                <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
                                 <select class="proveedores" name="proveedores[]">
                                     <% proveedores.forEach(function(proveedor) { %>
                                         <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>" <%= productoProveedor.proveedor_id === proveedor.id ? 'selected' : '' %>><%= proveedor.nombre %></option>
