@@ -67,20 +67,28 @@
                             </div>
                         </div>
                         <div id="proveedoresContainer">
+                            <div class="tabs">
+                                <% productoProveedores.forEach(function(productoProveedor, index) { %>
+                                    <div class="tab <%= index === 0 ? 'active' : '' %>" data-index="<%= index %>">
+                                        Proveedor <%= index + 1 %>
+                                    </div>
+                                <% }); %>
+                            </div>
                             <% productoProveedores.forEach(function(productoProveedor, index) { %>
-                                <div class="proveedor"> 
-                                    <div class="form-group-crear">
-                                        <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
-                                        <select class="proveedores" name="proveedores[]">
-                                            <% proveedores.forEach(function(proveedor) { %>
-                                                <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>" <%= productoProveedor.proveedor_id === proveedor.id ? 'selected' : '' %>><%= proveedor.nombre %></option>
-                                            <% }); %>
-                                        </select>
-                                    </div>
-                                    <div class="form-group-crear">
-                                        <label for="codigo">Código:</label>
-                                        <input class="codigo" type="text" name="codigo[]" value="<%= productoProveedor.codigo %>">
-                                    </div>
+                                <div class="tab-content <%= index === 0 ? 'active' : '' %>">
+                                    <div class="proveedor">
+                                        <div class="form-group-crear">
+                                            <label for="proveedores">Proveedores<span class="nombre_proveedor"></span></label>
+                                            <select class="proveedores" name="proveedores[]">
+                                                <% proveedores.forEach(function(proveedor) { %>
+                                                    <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>" <%= productoProveedor.proveedor_id === proveedor.id ? 'selected' : '' %>><%= proveedor.nombre %></option>
+                                                <% }); %>
+                                            </select>
+                                        </div>
+                                        <div class="form-group-crear">
+                                            <label for="codigo">Código</label>
+                                            <input class="codigo" type="text" name="codigo[]" value="<%= productoProveedor.codigo %>">
+                                        </div>
                                     <div class="form-group-crear">
                                         <label for="precio_lista">Precio de Lista:</label>
                                         <input class="precio_lista form-control" type="number" name="precio_lista[]" value="<%= productoProveedor.precio_lista %>">
@@ -108,6 +116,7 @@
                             <% }); %>
                         </div>
                         <button id="addProveedor" type="button">+</button>
+
                         <div class="utilidades">
                             <div class="form-group-crear">
                                 <label for="utilidad">Utilidad:</label>

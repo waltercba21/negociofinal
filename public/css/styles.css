@@ -1169,6 +1169,48 @@ background: rgba(0, 63, 125, 0.8);
 .proveedor-asignado {
   background-color: #dff0d8;
 }
+#proveedoresContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs {
+  display: flex;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.tab {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  border-bottom: none;
+  margin-right: 5px;
+  background-color: #f1f1f1;
+  transition: background-color 0.3s ease;
+}
+
+.tab.active {
+  background-color: #fff;
+  border-bottom: 1px solid #fff;
+}
+
+.tab-content {
+  border: 1px solid #ccc;
+  padding: 10px;
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.proveedor {
+  margin-bottom: 20px;
+}
+
+.proveedor-asignado {
+  background-color: #dff0d8;
+}
 
 /*-------------------------PAGINACIÓN---------------*/
 .paginacion {
