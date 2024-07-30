@@ -99,10 +99,8 @@ $(document).ready(function() {
         $('#proveedoresContainer').append(newProveedor);
         console.log('Proveedor agregado');
 
-        // Enlazar eventos al nuevo proveedor
         bindEventsToProveedor(newProveedor);
 
-        // Calcular costos y actualizar proveedor asignado después de agregar nuevo proveedor
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
     });
@@ -113,7 +111,6 @@ $(document).ready(function() {
         }
     });
 
-    // Enlazar eventos a los proveedores existentes
     $('.proveedor').each(function() {
         bindEventsToProveedor($(this));
     });
@@ -125,7 +122,6 @@ $(document).ready(function() {
         $('.tab-content').eq(index).addClass('active');
     });
 
-    // Llamada inicial para asegurarse de que los cálculos se realicen en la carga inicial
     $('.precio_lista, .descuentos_proveedor_id').each(function() {
         var proveedorElement = $(this).closest('.proveedor');
         calcularCostos(proveedorElement);
