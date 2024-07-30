@@ -985,6 +985,7 @@ background: rgba(0, 63, 125, 0.8);
   width: 100%;
   text-align: center; 
   font-weight: bold;
+  border-radius: 10px;
 }
 .botones-crear {
   display: flex;
@@ -1192,19 +1193,14 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 15px;
 }
 
-.form-group-crear label {
-  width: 150px; /* Ajusta este valor según sea necesario */
-  margin-right: 10px;
-}
-
 .form-group-crear input,
 .form-group-crear select {
   flex: 1;
   max-width: 100%;
 }
 .form-group-crear select {
-  padding: 5px; /* Ajusta el padding según sea necesario */
-  border-radius: 5px; /* Opcional: Bordes redondeados para los select */
+  padding: 5px; 
+  border-radius: 5px; 
 }
 
 /*-------------------------PAGINACIÓN---------------*/
