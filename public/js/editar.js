@@ -55,7 +55,6 @@ $(document).ready(function() {
     function bindEventsToProveedor(proveedorElement) {
         proveedorElement.find('.precio_lista, .descuentos_proveedor_id').off('change').on('change', function() {
             var proveedorElement = $(this).closest('.proveedor');
-            console.log('Precio lista o descuento cambiado:', $(this).val());
             calcularCostos(proveedorElement);
             actualizarPrecioVenta();
             actualizarProveedorAsignado();
@@ -74,7 +73,6 @@ $(document).ready(function() {
     $(document).on('click', '.eliminar-proveedor', function() {
         var proveedorId = $(this).data('proveedor-id');
         var elementoProveedor = $(this).closest('.proveedor');
-        console.log('Eliminar proveedor ID:', proveedorId);
         fetch('/eliminarProveedor/' + proveedorId, {
             method: 'DELETE'
         }).then(response => response.json())
@@ -97,7 +95,6 @@ $(document).ready(function() {
         newProveedor.find('.IVA').val('21');
         newProveedor.find('.nombre_proveedor').text('');
         $('#proveedoresContainer').append(newProveedor);
-        console.log('Proveedor agregado');
 
         bindEventsToProveedor(newProveedor);
 
@@ -152,14 +149,14 @@ function actualizarProveedorAsignado() {
     var proveedorMasBarato = null;
     costosConIva.each(function() {
         var costoActual = parseFloat($(this).val());
-        if (!isNaN(costoActual) && costoActual < costoMasBajo && costoActual !== 0) {
+        if (!isNaN(costoActual) && costoActual < costoMasBajo && costoActual > 0) {
             costoMasBajo = costoActual;
             proveedorMasBarato = $(this).closest('.proveedor');
         }
     });
     $('.proveedor').removeClass('proveedor-asignado');
     $('.proveedor').find('span:contains("Proveedor Asignado")').remove();
-    if (proveedorMasBarato && costoMasBajo !== Infinity) {
+    if (proveedorMasBarato) {
         proveedorMasBarato.addClass('proveedor-asignado');
         proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
     }
@@ -176,3 +173,4 @@ function actualizarPrecioVenta() {
     $('#precio_venta').val(precioVenta);
     console.log('Precio de venta actualizado:', precioVenta);
 }
+
