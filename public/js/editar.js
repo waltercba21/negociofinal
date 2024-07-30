@@ -103,7 +103,7 @@ $(document).ready(function() {
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.find('select.proveedores').attr('name', 'proveedores[]').prop('selectedIndex', 0);
         newProveedor.find('input, select').each(function() {
-            $(this).attr('data-proveedor-id', ''); // Asigna un ID temporal
+            $(this).attr('data-proveedor-id', ''); 
         });
         $('#proveedoresContainer-editar').append(newProveedor);
         bindEventsToProveedor(newProveedor);
