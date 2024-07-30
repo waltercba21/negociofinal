@@ -75,7 +75,8 @@ $(document).ready(function() {
     $(document).on('click', '.eliminar-proveedor-editar', function() {
         var proveedorId = $(this).data('proveedor-id');
         var elementoProveedor = $(this).closest('.proveedor-editar');
-        fetch('/productos/eliminarProveedor/' + proveedorId, {
+        console.log('Eliminar proveedor ID:', proveedorId);
+        fetch('/eliminarProveedor/' + proveedorId, {
             method: 'DELETE'
         }).then(response => response.json())
         .then(data => {
@@ -98,15 +99,14 @@ $(document).ready(function() {
         newProveedor.find('.nombre_proveedor').text('');
         $('#proveedoresContainer-editar').append(newProveedor);
         console.log('Proveedor agregado');
-    
+
         // Enlazar eventos al nuevo proveedor
         bindEventsToProveedor(newProveedor);
-    
+
         // Calcular costos y actualizar proveedor asignado después de agregar nuevo proveedor
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
     });
-    
 
     $('form').on('keypress', function(e) {
         if (e.keyCode === 13) {
@@ -135,7 +135,7 @@ function calcularCostos(proveedorElement) {
     var precioLista = parseFloat(proveedorElement.find('.precio_lista').val() || 0);
     var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || 0);
     var costoNeto = Math.ceil(precioLista - (precioLista * descuento / 100));
-    var iva = 21; 
+    var iva = 21; // IVA fijo del 21%
     var costoConIVA = Math.ceil(costoNeto * (1 + iva / 100));
 
     proveedorElement.find('.costo_neto').val(costoNeto);
