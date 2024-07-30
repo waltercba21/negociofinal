@@ -67,46 +67,38 @@
                             </div>
                         </div>
                         <div id="proveedoresContainer">
-                            <div class="tabs">
-                                <% productoProveedores.forEach(function(productoProveedor, index) { %>
-                                    <div class="tab <%= index === 0 ? 'active' : '' %>" data-index="<%= index %>">
-                                        Proveedor <%= index + 1 %>
-                                    </div>
-                                <% }); %>
-                            </div>
                             <% productoProveedores.forEach(function(productoProveedor, index) { %>
-                                <div class="tab-content <%= index === 0 ? 'active' : '' %>">
-                                    <div class="proveedor">
-                                        <div class="form-group-crear">
-                                            <label for="proveedores">Proveedores<span class="nombre_proveedor"></span></label>
-                                            <select class="proveedores" name="proveedores[]">
-                                                <% proveedores.forEach(function(proveedor) { %>
-                                                    <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>" <%= productoProveedor.proveedor_id === proveedor.id ? 'selected' : '' %>><%= proveedor.nombre %></option>
-                                                <% }); %>
-                                            </select>
-                                        </div>
-                                        <div class="form-group-crear">
-                                            <label for="codigo">Código</label>
-                                            <input class="codigo" type="text" name="codigo[]" value="<%= productoProveedor.codigo %>">
-                                        </div>
+                                <div class="proveedor"> 
                                     <div class="form-group-crear">
-                                        <label for="precio_lista">Precio de Lista</label>
+                                        <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
+                                        <select class="proveedores" name="proveedores[]">
+                                            <% proveedores.forEach(function(proveedor) { %>
+                                                <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>" <%= productoProveedor.proveedor_id === proveedor.id ? 'selected' : '' %>><%= proveedor.nombre %></option>
+                                            <% }); %>
+                                        </select>
+                                    </div>
+                                    <div class="form-group-crear">
+                                        <label for="codigo">Código:</label>
+                                        <input class="codigo" type="text" name="codigo[]" value="<%= productoProveedor.codigo %>">
+                                    </div>
+                                    <div class="form-group-crear">
+                                        <label for="precio_lista">Precio de Lista:</label>
                                         <input class="precio_lista form-control" type="number" name="precio_lista[]" value="<%= productoProveedor.precio_lista %>">
                                     </div>
                                     <div class="form-group-crear">
-                                        <label for="descuentos_proveedor_id">Descuentos Proveedor</label>
+                                        <label for="descuentos_proveedor_id">Descuentos Proveedor:</label>
                                         <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="<%= productoProveedor.descuento %>" readonly>
                                     </div>
                                     <div class="form-group-crear">
-                                        <label for="costo_neto">Costo Neto</label>
+                                        <label for="costo_neto">Costo Neto:</label>
                                         <input class="costo_neto form-control" type="number" name="costo_neto[]" value="<%= productoProveedor.costo_neto %>" readonly>
                                     </div>
                                     <div class="form-group-crear">
-                                        <label for="IVA">IVA</label>
+                                        <label for="IVA">IVA:</label>
                                         <input class="IVA form-control" type="number" name="IVA[]" value="21" readonly>
                                     </div>
                                     <div class="form-group-crear">
-                                        <label for="costo_iva">Costo Neto Con IVA</label>
+                                        <label for="costo_iva">Costo Neto Con IVA:</label>
                                         <input class="costo_iva form-control" type="number" name="costo_iva[]" value="<%= productoProveedor.costo_iva %>">
                                     </div>
                                     <div class="form-group-crear">
@@ -115,7 +107,6 @@
                                 </div>
                             <% }); %>
                         </div>
-                    </div>
                         <button id="addProveedor" type="button">+</button>
 
                         <div class="utilidades">
