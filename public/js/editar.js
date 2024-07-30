@@ -98,12 +98,7 @@ $(document).ready(function() {
         newProveedor.find('.IVA').val('21');
         newProveedor.find('.nombre_proveedor').text('');
         $('#proveedoresContainer').append(newProveedor);
-        console.log('Proveedor agregado');
-
-        // Enlazar eventos al nuevo proveedor
         bindEventsToProveedor(newProveedor);
-
-        // Calcular costos y actualizar proveedor asignado después de agregar nuevo proveedor
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
     });
@@ -113,13 +108,9 @@ $(document).ready(function() {
             e.preventDefault();
         }
     });
-
-    // Enlazar eventos a los proveedores existentes
     $('.proveedor').each(function() {
         bindEventsToProveedor($(this));
     });
-
-    // Llamada inicial para asegurarse de que los cálculos se realicen en la carga inicial
     $('.precio_lista, .descuentos_proveedor_id').each(function() {
         var proveedorElement = $(this).closest('.proveedor');
         calcularCostos(proveedorElement);
@@ -160,7 +151,7 @@ if (proveedorMasBarato && costoMasBajo !== Infinity && proveedorMasBarato.find('
     proveedorMasBarato.addClass('proveedor-asignado');
     proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
 }
-$('.proveedor-asignado').css('background-color', '#dff0d8');
+$('.proveedor-asignado').css('background-color', '#09c41c');
 console.log('Proveedor asignado:', proveedorMasBarato ? proveedorMasBarato.find('.nombre_proveedor').text() : 'Ninguno');
 }
 
