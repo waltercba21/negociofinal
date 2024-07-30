@@ -1105,6 +1105,23 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   font-weight: bold;
 }
+/* Asegurar que los selects tengan el mismo ancho y estén centrados */
+.proveedor-editar .form-group-editar select.proveedores {
+  width: 100%; /* Asegura que el select tome todo el ancho disponible */
+  padding: 6px; /* Ajusta el padding para consistencia */
+  margin: 0; /* Asegura que no haya margen adicional que lo desplace */
+  box-sizing: border-box; /* Incluir padding y border en el tamaño total */
+}
+
+/* Ajuste para que los selects y otros elementos no tengan desplazamientos */
+.proveedor-editar .form-group-editar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Alinear a la izquierda por defecto */
+  width: 100%;
+  margin: 0; /* Elimina cualquier margen adicional */
+}
+
 
 .imagen-miniatura-contenedor .imagen-miniatura {
   width: 80px; /* Disminuir el tamaño de las miniaturas de imágenes */
@@ -1143,7 +1160,7 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 20px;
   padding: 4px 8px;
   border: none;
-  background-color: #007bff;
+  background-color: #09c41c;
   color: white;
   border-radius: 50%;
   cursor: pointer;
