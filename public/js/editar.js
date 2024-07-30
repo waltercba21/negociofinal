@@ -76,7 +76,7 @@ $(document).ready(function() {
         var proveedorId = $(this).data('proveedor-id');
         var elementoProveedor = $(this).closest('.proveedor');
         console.log('Eliminar proveedor ID:', proveedorId);
-        fetch('/eliminarProveedor/' + proveedorId, {
+        fetch('/productos/eliminarProveedor/' + proveedorId, {
             method: 'DELETE'
         }).then(response => response.json())
         .then(data => {
@@ -135,7 +135,7 @@ function calcularCostos(proveedorElement) {
 var precioLista = parseFloat(proveedorElement.find('.precio_lista').val() || 0);
 var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || 0);
 var costoNeto = Math.ceil(precioLista - (precioLista * descuento / 100));
-var iva = 21; // IVA fijo del 21%
+var iva = 21; 
 var costoConIVA = Math.ceil(costoNeto * (1 + iva / 100));
 
 proveedorElement.find('.costo_neto').val(costoNeto);
