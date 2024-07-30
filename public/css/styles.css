@@ -1186,6 +1186,22 @@ background: rgba(0, 63, 125, 0.8);
 .eliminar-proveedor:hover {
   background-color: #ff1a1a; 
 }
+.form-group-crear {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.form-group-crear label {
+  width: 150px; /* Ajusta este valor según sea necesario */
+  margin-right: 10px;
+}
+
+.form-group-crear input,
+.form-group-crear select {
+  flex: 1;
+  max-width: 100%;
+}
 .form-group-crear select {
   padding: 5px; /* Ajusta el padding según sea necesario */
   border-radius: 5px; /* Opcional: Bordes redondeados para los select */
