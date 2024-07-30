@@ -1149,7 +1149,7 @@ background: rgba(0, 63, 125, 0.8);
   font-size: 20px;
   padding: 4px 8px;
   border: none;
-  background-color: #09c41c;
+  background-color: #4CAF50;
   color: white;
   border-radius: 50%;
   cursor: pointer;
@@ -1168,7 +1168,7 @@ background: rgba(0, 63, 125, 0.8);
   font-weight: bold;
 }
 .proveedor-asignado {
-  background-color: #dff0d8;
+  width: 100%;
 }
 #proveedoresContainer {
   display: flex;

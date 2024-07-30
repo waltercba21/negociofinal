@@ -151,7 +151,7 @@ if (proveedorMasBarato && costoMasBajo !== Infinity && proveedorMasBarato.find('
     proveedorMasBarato.addClass('proveedor-asignado');
     proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
 }
-$('.proveedor-asignado').css('background-color', '#09c41c');
+$('.proveedor-asignado').css('background-color', '#4CAF50');
 console.log('Proveedor asignado:', proveedorMasBarato ? proveedorMasBarato.find('.nombre_proveedor').text() : 'Ninguno');
 }
 
