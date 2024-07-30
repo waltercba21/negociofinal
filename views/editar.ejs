@@ -65,7 +65,7 @@
                                 <% }); %>
                             </select>
                         </div>
-                    </form>
+                    
                 </div>
                 
                 <!-- Proveedores -->
@@ -114,7 +114,6 @@
 
                 <!-- Utilidades del producto -->
                 <div class="utilidades-editar">
-                    <form class="form-editar" method="POST" action="/productos/actualizarUtilidades/<%= producto.id %>">
                         <div class="form-group-editar">
                             <label for="utilidad">Utilidad:</label>
                             <input id="utilidad" class="form-control" type="number" name="utilidad" value="<%= producto ? producto.utilidad : '' %>">
@@ -143,8 +142,9 @@
                             <button class="btn btn-success" type="submit">Guardar</button>
                             <a class="btn btn-primary" href="/productos">Cancelar</a>
                         </div>
+                    </div>
                     </form>
-                </div>
+                
             </div>
         </div>
     </main>
