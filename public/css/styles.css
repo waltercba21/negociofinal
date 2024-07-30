@@ -977,6 +977,7 @@ background: rgba(0, 63, 125, 0.8);
 .form-group-crear label {
   font-weight: bold;
   color: #1F487E;
+  font-size: 14px;
 }
 .form-group-crear input, .form-group-crear select {
   border: none;
@@ -986,6 +987,7 @@ background: rgba(0, 63, 125, 0.8);
   text-align: center; 
   font-weight: bold;
   border-radius: 10px;
+  font-size: 12px;
 }
 .botones-crear {
   display: flex;
@@ -1013,7 +1015,7 @@ background: rgba(0, 63, 125, 0.8);
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-size: 16px;
+  font-size: 12px;
   margin: 4px 2px;
   cursor: pointer;
   box-shadow: 0 8px 16px 0 rgba(0,0,0,0.5);
@@ -1038,7 +1040,7 @@ background: rgba(0, 63, 125, 0.8);
 }
 .titulo-editar {
   text-align: center;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
   margin-bottom: 10px;
   color: #003f7d;
@@ -1071,7 +1073,7 @@ background: rgba(0, 63, 125, 0.8);
 .form-group-editar .form-control {
   width: 100%;
   padding: 6px; 
-  font-size: 14px; 
+  font-size: 12px; 
   border: 1px solid #ccc;
   border-radius: 5px;
   box-shadow: none; 
@@ -1092,6 +1094,7 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 5px;
   color: blue;
   font-weight: bold;
+  font-size: 12px;
 }
 .form-group-editar input,
 .form-group-editar select {
@@ -1101,6 +1104,7 @@ background: rgba(0, 63, 125, 0.8);
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   font-weight: bold;
+  font-size: 12px;
 }
 .proveedor-editar .form-group-editar select.proveedores {
   width: 100%; 
