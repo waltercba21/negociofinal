@@ -945,7 +945,6 @@ background: rgba(0, 63, 125, 0.8);
 .form-crear {
   display: flex;
   justify-content: space-between;
-  width: 100%;
 }
 .caracteristicas, #proveedoresContainer, .utilidades {
   flex: 1 1 0;
@@ -1196,7 +1195,6 @@ background: rgba(0, 63, 125, 0.8);
   display: flex;
   align-items: center;
   margin-bottom: 15px;
-  width: 80%;
 }
 
 .form-group-crear input,
