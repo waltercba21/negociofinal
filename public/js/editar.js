@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
         if (preview) {
-            preview.innerHTML = ''; 
+            preview.innerHTML = ''; // Limpia el contenedor de imágenes previas
             Array.from(e.target.files).forEach(file => {
                 var img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
@@ -50,14 +50,17 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Sortable no está definido o no se pudo inicializar.');
     }
 });
+
 $(document).ready(function() {
     function bindEventsToProveedor(proveedorElement) {
         proveedorElement.find('.precio_lista, .descuentos_proveedor_id').off('change').on('change', function() {
             var proveedorElement = $(this).closest('.proveedor-editar');
+            console.log('Precio lista o descuento cambiado:', $(this).val());
             calcularCostos(proveedorElement);
             actualizarPrecioVenta();
             actualizarProveedorAsignado();
         });
+
         proveedorElement.find('.proveedores').off('change').on('change', function() {
             var selectedOption = $(this).find('option:selected');
             var descuento = selectedOption.data('descuento');
@@ -65,49 +68,44 @@ $(document).ready(function() {
             calcularCostos(proveedorElement);
             actualizarPrecioVenta();
             actualizarProveedorAsignado();
+        
         });
     }
 
     $(document).on('click', '.eliminar-proveedor-editar', function() {
         var proveedorId = $(this).data('proveedor-id');
-        if (!proveedorId) {
-            console.error('Proveedor ID no válido:', proveedorId);
-            return;
-        }
-
         var elementoProveedor = $(this).closest('.proveedor-editar');
-        if (confirm("¿Estás seguro de que quieres eliminar este proveedor?")) {
-            fetch('/productos/eliminarProveedor/' + proveedorId, {
-                method: 'DELETE'
-            }).then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    elementoProveedor.remove();
-                    actualizarProveedorAsignado();
-                } else {
-                    console.error('Error al eliminar el proveedor:', data.error);
-                }
-            }).catch(error => {
-                console.error('Error al hacer la solicitud:', error);
-            });
-        }
+        console.log('Eliminar proveedor ID:', proveedorId);
+        fetch('/eliminarProveedor/' + proveedorId, {
+            method: 'DELETE'
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                elementoProveedor.remove();
+                actualizarProveedorAsignado();
+            } else {
+                console.error('Error al eliminar el proveedor:', data.error);
+            }
+        }).catch(error => {
+            console.error('Error al hacer la solicitud:', error);
+        });
     });
 
     $('#addProveedor-editar').click(function(e) {
         e.preventDefault();
         var newProveedor = $('.proveedor-editar').first().clone(true);
-
-        // Limpiar los valores de los inputs clonados
         newProveedor.find('input:not([type="button"]), select').val('');
         newProveedor.find('.IVA').val('21');
         newProveedor.find('.nombre_proveedor').text('');
-        newProveedor.find('select.proveedores').attr('name', 'proveedores[]').prop('selectedIndex', 0);
-
-        // Añadir el nuevo proveedor al contenedor
         $('#proveedoresContainer-editar').append(newProveedor);
+        console.log('Proveedor agregado');
+
+        // Enlazar eventos al nuevo proveedor
         bindEventsToProveedor(newProveedor);
-        newProveedor.find('.costo_neto, .costo_iva').val(''); // Limpiar campos calculados
-        console.log('Nuevo proveedor agregado.');
+
+        // Calcular costos y actualizar proveedor asignado después de agregar nuevo proveedor
+        calcularCostos(newProveedor);
+        actualizarProveedorAsignado();
     });
 
     $('form').on('keypress', function(e) {
@@ -116,26 +114,33 @@ $(document).ready(function() {
         }
     });
 
+    // Enlazar eventos a los proveedores existentes
     $('.proveedor-editar').each(function() {
         bindEventsToProveedor($(this));
     });
 
+    // Llamada inicial para asegurarse de que los cálculos se realicen en la carga inicial
+    $('.precio_lista, .descuentos_proveedor_id').each(function() {
+        var proveedorElement = $(this).closest('.proveedor-editar');
+        calcularCostos(proveedorElement);
+    });
     actualizarPrecioVenta();
     actualizarProveedorAsignado(); 
-
     $('#utilidad').on('change', function() {
         actualizarPrecioVenta();
-    });
+            });
 });
 
 function calcularCostos(proveedorElement) {
     var precioLista = parseFloat(proveedorElement.find('.precio_lista').val() || 0);
     var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || 0);
     var costoNeto = Math.ceil(precioLista - (precioLista * descuento / 100));
-    var iva = 21; 
+    var iva = 21; // IVA fijo del 21%
     var costoConIVA = Math.ceil(costoNeto * (1 + iva / 100));
+
     proveedorElement.find('.costo_neto').val(costoNeto);
     proveedorElement.find('.costo_iva').val(costoConIVA);
+    console.log('Costos calculados:', { costoNeto, costoConIVA });
 }
 
 function actualizarProveedorAsignado() {
@@ -156,6 +161,7 @@ function actualizarProveedorAsignado() {
         proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
     }
     $('.proveedor-asignado').css('background-color', '#dff0d8');
+    console.log('Proveedor asignado:', proveedorMasBarato ? proveedorMasBarato.find('.nombre_proveedor').text() : 'Ninguno');
 }
 
 function actualizarPrecioVenta() {
@@ -165,4 +171,5 @@ function actualizarPrecioVenta() {
     }).val() || 0);
     var precioVenta = Math.ceil(costoConIVA * (1 + utilidad / 100));
     $('#precio_venta').val(precioVenta);
+    console.log('Precio de venta actualizado:', precioVenta);
 }
