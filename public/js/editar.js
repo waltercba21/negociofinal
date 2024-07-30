@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Sortable no está definido o no se pudo inicializar.');
     }
 });
-
 $(document).ready(function() {
     function bindEventsToProveedor(proveedorElement) {
         proveedorElement.find('.precio_lista, .descuentos_proveedor_id').off('change').on('change', function() {
@@ -75,7 +74,7 @@ $(document).ready(function() {
             console.error('Proveedor ID no válido:', proveedorId);
             return;
         }
-    
+
         var elementoProveedor = $(this).closest('.proveedor-editar');
         if (confirm("¿Estás seguro de que quieres eliminar este proveedor?")) {
             fetch('/productos/eliminarProveedor/' + proveedorId, {
@@ -94,41 +93,47 @@ $(document).ready(function() {
         }
     });
     
-    
     $('#addProveedor-editar').click(function(e) {
         e.preventDefault();
         var newProveedor = $('.proveedor-editar').first().clone(true);
+
+        // Limpiar los valores de los inputs clonados
         newProveedor.find('input:not([type="button"]), select').val('');
         newProveedor.find('.IVA').val('21');
         newProveedor.find('.nombre_proveedor').text('');
         newProveedor.find('select.proveedores').attr('name', 'proveedores[]').prop('selectedIndex', 0);
         newProveedor.find('input, select').each(function() {
-            $(this).attr('data-proveedor-id', ''); 
+            $(this).attr('data-proveedor-id', ''); // Asigna un ID temporal
         });
+
+        // Añadir el nuevo proveedor al contenedor
         $('#proveedoresContainer-editar').append(newProveedor);
         bindEventsToProveedor(newProveedor);
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
     });
-    
 
     $('form').on('keypress', function(e) {
         if (e.keyCode === 13) {
             e.preventDefault();
         }
     });
+
     $('.proveedor-editar').each(function() {
         bindEventsToProveedor($(this));
     });
+
     $('.precio_lista, .descuentos_proveedor_id').each(function() {
         var proveedorElement = $(this).closest('.proveedor-editar');
         calcularCostos(proveedorElement);
     });
+
     actualizarPrecioVenta();
     actualizarProveedorAsignado(); 
+
     $('#utilidad').on('change', function() {
         actualizarPrecioVenta();
-            });
+    });
 });
 
 function calcularCostos(proveedorElement) {
