@@ -365,6 +365,7 @@ module.exports = {
                         codigo: req.body.codigo[index]
                     };
                 });
+                
     
                 console.log('Datos de los proveedores procesados:', proveedores);
     
