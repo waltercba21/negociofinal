@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
         if (preview) {
-            preview.innerHTML = ''; // Limpia el contenedor de imágenes previas
+            preview.innerHTML = ''; 
             Array.from(e.target.files).forEach(file => {
                 var img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
@@ -60,7 +60,6 @@ $(document).ready(function() {
             actualizarPrecioVenta();
             actualizarProveedorAsignado();
         });
-
         proveedorElement.find('.proveedores').off('change').on('change', function() {
             var selectedOption = $(this).find('option:selected');
             var descuento = selectedOption.data('descuento');
@@ -76,21 +75,23 @@ $(document).ready(function() {
         var proveedorId = $(this).data('proveedor-id');
         var elementoProveedor = $(this).closest('.proveedor-editar');
         console.log('Eliminar proveedor ID:', proveedorId);
-        fetch('/eliminarProveedor/' + proveedorId, {
-            method: 'DELETE'
-        }).then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                elementoProveedor.remove();
-                actualizarProveedorAsignado();
-            } else {
-                console.error('Error al eliminar el proveedor:', data.error);
-            }
-        }).catch(error => {
-            console.error('Error al hacer la solicitud:', error);
-        });
+        if (confirm("¿Estás seguro de que quieres eliminar este proveedor?")) {
+            fetch('/productos/eliminarProveedor/' + proveedorId, {
+                method: 'DELETE'
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    elementoProveedor.remove();
+                    actualizarProveedorAsignado();
+                } else {
+                    console.error('Error al eliminar el proveedor:', data.error);
+                }
+            }).catch(error => {
+                console.error('Error al hacer la solicitud:', error);
+            });
+        }
     });
-
+    
     $('#addProveedor-editar').click(function(e) {
         e.preventDefault();
         var newProveedor = $('.proveedor-editar').first().clone(true);
@@ -99,27 +100,18 @@ $(document).ready(function() {
         newProveedor.find('.nombre_proveedor').text('');
         $('#proveedoresContainer-editar').append(newProveedor);
         console.log('Proveedor agregado');
-
-        // Enlazar eventos al nuevo proveedor
         bindEventsToProveedor(newProveedor);
-
-        // Calcular costos y actualizar proveedor asignado después de agregar nuevo proveedor
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
     });
-
     $('form').on('keypress', function(e) {
         if (e.keyCode === 13) {
             e.preventDefault();
         }
     });
-
-    // Enlazar eventos a los proveedores existentes
     $('.proveedor-editar').each(function() {
         bindEventsToProveedor($(this));
     });
-
-    // Llamada inicial para asegurarse de que los cálculos se realicen en la carga inicial
     $('.precio_lista, .descuentos_proveedor_id').each(function() {
         var proveedorElement = $(this).closest('.proveedor-editar');
         calcularCostos(proveedorElement);

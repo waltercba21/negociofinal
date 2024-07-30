@@ -1035,7 +1035,6 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   background-color: #fff;
 }
-
 .titulo-editar {
   text-align: center;
   font-size: 24px;
@@ -1043,7 +1042,6 @@ background: rgba(0, 63, 125, 0.8);
   margin-bottom: 10px;
   color: #003f7d;
 }
-
 .card-body-editar {
   padding: 0; 
   background-color: #f9f9f9;
@@ -1088,14 +1086,12 @@ background: rgba(0, 63, 125, 0.8);
 .form-group-editar {
   margin-bottom: 15px;
 }
-
 .form-group-editar label {
   display: block;
   margin-bottom: 5px;
   color: blue;
   font-weight: bold;
 }
-
 .form-group-editar input,
 .form-group-editar select {
   width: 100%;
@@ -1105,26 +1101,21 @@ background: rgba(0, 63, 125, 0.8);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   font-weight: bold;
 }
-/* Asegurar que los selects tengan el mismo ancho y estén centrados */
 .proveedor-editar .form-group-editar select.proveedores {
-  width: 100%; /* Asegura que el select tome todo el ancho disponible */
-  padding: 6px; /* Ajusta el padding para consistencia */
-  margin: 0; /* Asegura que no haya margen adicional que lo desplace */
-  box-sizing: border-box; /* Incluir padding y border en el tamaño total */
+  width: 100%; 
+  padding: 6px;
+  margin: 0;
+  box-sizing: border-box;
 }
-
-/* Ajuste para que los selects y otros elementos no tengan desplazamientos */
 .proveedor-editar .form-group-editar {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* Alinear a la izquierda por defecto */
+  align-items: flex-start;
   width: 100%;
-  margin: 0; /* Elimina cualquier margen adicional */
+  margin: 0;
 }
-
-
 .imagen-miniatura-contenedor .imagen-miniatura {
-  width: 80px; /* Disminuir el tamaño de las miniaturas de imágenes */
+  width: 80px;
   height: 80px;
 }
 .imagen-miniatura-contenedor {
@@ -1137,12 +1128,10 @@ background: rgba(0, 63, 125, 0.8);
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
 .preview-img {
   position: relative;
   cursor: pointer;
 }
-
 .preview-img::after {
   content: '✕';
   position: absolute;
@@ -1154,7 +1143,6 @@ background: rgba(0, 63, 125, 0.8);
   border-radius: 50%;
   font-size: 12px;
 }
-
 #addProveedor-editar {
   margin: 20px 0;
   font-size: 20px;
@@ -1166,20 +1154,18 @@ background: rgba(0, 63, 125, 0.8);
   cursor: pointer;
 }
 .botones-editar .btn {
-  padding: 8px 16px; /* Reducir el padding de los botones */
-  font-size: 14px; /* Reducir el tamaño de la fuente en los botones */
-  border-radius: 4px; /* Ajustar el borde redondeado */
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 4px;
 }
 .botones-editar {
   display: flex;
   justify-content: space-between;
   margin-top: 20px;
 }
-
 .botones-editar .btn {
   font-weight: bold;
 }
-
 .proveedor-asignado {
   background-color: #dff0d8;
 }
