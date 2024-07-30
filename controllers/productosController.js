@@ -322,7 +322,7 @@ module.exports = {
     
         console.log('Datos del producto recibidos:', req.body);
     
-        // Solo toma el primer elemento de cada array (ajusta según tu lógica de negocio)
+        // Procesar datos del producto
         let datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
@@ -365,11 +365,11 @@ module.exports = {
                         codigo: req.body.codigo[index]
                     };
                 });
-                
-    
+
                 console.log('Datos de los proveedores procesados:', proveedores);
-    
-                const promesasProveedor = proveedores.map((proveedor, index) => {
+
+                // Usar actualizarProductoProveedor para cada proveedor
+                const promesasProveedor = proveedores.map((proveedor) => {
                     return producto.actualizarProductoProveedor(conexion, proveedor);
                 });
                 return Promise.all(promesasProveedor);
@@ -390,7 +390,7 @@ module.exports = {
                 console.error('Error en la actualización del producto:', error);
                 res.status(500).send('Error: ' + error.message);
             });
-    },     
+    },
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
