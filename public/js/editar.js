@@ -55,7 +55,6 @@ $(document).ready(function() {
     function bindEventsToProveedor(proveedorElement) {
         proveedorElement.find('.precio_lista, .descuentos_proveedor_id').off('change').on('change', function() {
             var proveedorElement = $(this).closest('.proveedor-editar');
-            console.log('Precio lista o descuento cambiado:', $(this).val());
             calcularCostos(proveedorElement);
             actualizarPrecioVenta();
             actualizarProveedorAsignado();
@@ -67,14 +66,17 @@ $(document).ready(function() {
             calcularCostos(proveedorElement);
             actualizarPrecioVenta();
             actualizarProveedorAsignado();
-        
         });
     }
 
     $(document).on('click', '.eliminar-proveedor-editar', function() {
         var proveedorId = $(this).data('proveedor-id');
+        if (!proveedorId) {
+            console.error('Proveedor ID no válido:', proveedorId);
+            return;
+        }
+    
         var elementoProveedor = $(this).closest('.proveedor-editar');
-        console.log('Eliminar proveedor ID:', proveedorId);
         if (confirm("¿Estás seguro de que quieres eliminar este proveedor?")) {
             fetch('/productos/eliminarProveedor/' + proveedorId, {
                 method: 'DELETE'
@@ -92,18 +94,24 @@ $(document).ready(function() {
         }
     });
     
+    
     $('#addProveedor-editar').click(function(e) {
         e.preventDefault();
         var newProveedor = $('.proveedor-editar').first().clone(true);
         newProveedor.find('input:not([type="button"]), select').val('');
         newProveedor.find('.IVA').val('21');
         newProveedor.find('.nombre_proveedor').text('');
+        newProveedor.find('select.proveedores').attr('name', 'proveedores[]').prop('selectedIndex', 0);
+        newProveedor.find('input, select').each(function() {
+            $(this).attr('data-proveedor-id', ''); // Asigna un ID temporal
+        });
         $('#proveedoresContainer-editar').append(newProveedor);
-        console.log('Proveedor agregado');
         bindEventsToProveedor(newProveedor);
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
     });
+    
+
     $('form').on('keypress', function(e) {
         if (e.keyCode === 13) {
             e.preventDefault();
@@ -127,12 +135,10 @@ function calcularCostos(proveedorElement) {
     var precioLista = parseFloat(proveedorElement.find('.precio_lista').val() || 0);
     var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || 0);
     var costoNeto = Math.ceil(precioLista - (precioLista * descuento / 100));
-    var iva = 21; // IVA fijo del 21%
+    var iva = 21; 
     var costoConIVA = Math.ceil(costoNeto * (1 + iva / 100));
-
     proveedorElement.find('.costo_neto').val(costoNeto);
     proveedorElement.find('.costo_iva').val(costoConIVA);
-    console.log('Costos calculados:', { costoNeto, costoConIVA });
 }
 
 function actualizarProveedorAsignado() {
@@ -153,7 +159,6 @@ function actualizarProveedorAsignado() {
         proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
     }
     $('.proveedor-asignado').css('background-color', '#dff0d8');
-    console.log('Proveedor asignado:', proveedorMasBarato ? proveedorMasBarato.find('.nombre_proveedor').text() : 'Ninguno');
 }
 
 function actualizarPrecioVenta() {
@@ -163,5 +168,4 @@ function actualizarPrecioVenta() {
     }).val() || 0);
     var precioVenta = Math.ceil(costoConIVA * (1 + utilidad / 100));
     $('#precio_venta').val(precioVenta);
-    console.log('Precio de venta actualizado:', precioVenta);
 }

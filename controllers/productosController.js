@@ -319,10 +319,7 @@ module.exports = {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
-    
         console.log('Datos del producto recibidos:', req.body);
-    
-        // Solo toma el primer elemento de cada array (ajusta según tu lógica de negocio)
         let datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
@@ -341,9 +338,7 @@ module.exports = {
             IVA: req.body.IVA[0],
             costo_iva: req.body.costo_iva[0]
         };
-    
         console.log('Datos del producto procesados:', datosProducto);
-    
         producto.actualizar(conexion, datosProducto)
             .then(() => {
                 if (req.files) {
