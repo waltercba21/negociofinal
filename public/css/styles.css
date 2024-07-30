@@ -1195,6 +1195,7 @@ background: rgba(0, 63, 125, 0.8);
   display: flex;
   align-items: center;
   margin-bottom: 15px;
+  width: 80%;
 }
 
 .form-group-crear input,
