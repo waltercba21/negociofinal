@@ -317,6 +317,9 @@ module.exports = {
                 res.status(500).send("Error al obtener los datos del producto: " + error.message);
             }
         });
+        console.log('Datos del producto:', producto);
+console.log('Datos del proveedor:', proveedores);
+console.log('Datos del proveedor del producto:', productoProveedores);
     },    
     actualizar: function(req, res) {
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
