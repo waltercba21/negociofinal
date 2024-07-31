@@ -1232,9 +1232,9 @@ retornarDatosProveedores: function(conexion, productoId) {
         });
     });
 },
-eliminarProveedor: function(conexion, proveedorId) {
+eliminarProveedor: function(conexion, proveedorId, productoId) {
     return new Promise((resolve, reject) => {
-        conexion.query('DELETE FROM producto_proveedor WHERE proveedor_id = ?', [proveedorId], function(error, results, fields) {
+        conexion.query('DELETE FROM producto_proveedor WHERE proveedor_id = ? AND producto_id = ?', [proveedorId, productoId], function(error, results, fields) {
             if (error) {
                 reject(error);
             } else {
@@ -1243,6 +1243,7 @@ eliminarProveedor: function(conexion, proveedorId) {
         });
     });
 },
+
 insertarImagenProducto: function(conexion, datosImagen) {
     return new Promise((resolve, reject) => {
         const sql = 'INSERT INTO imagenes_producto (producto_id, imagen) VALUES (?, ?)';

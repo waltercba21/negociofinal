@@ -259,7 +259,7 @@ module.exports = {
         }
     },
     editar: function(req, res) {
-        let productoResult;
+        let productoResult;  
         let responseSent = false;
     
         producto.retornarDatosId(conexion, req.params.id).then(result => {
@@ -497,13 +497,15 @@ todos: function (req, res) {
 },
 eliminarProveedor: function(req, res) {
     let proveedorId = req.params.id;
-    producto.eliminarProveedor(conexion, proveedorId).then(() => {
+    let productoId = req.body.productoId;
+    producto.eliminarProveedor(conexion, proveedorId, productoId).then(() => {
         res.json({ success: true });
     }).catch(error => {
         console.error("Error eliminando el proveedor:", error); 
         res.status(500).json({ success: false, error: "Error al eliminar el proveedor. Por favor, intente nuevamente más tarde." });
     });
 },
+
 eliminarImagen: function(req, res) {
     let imagenId = req.params.id;
     producto.eliminarImagen(imagenId).then(() => {
