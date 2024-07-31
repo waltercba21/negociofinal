@@ -85,6 +85,7 @@ $(document).ready(function() {
         .then(data => {
             if (data.success) {
                 elementoProveedor.remove();
+                console.log('Proveedor eliminado correctamente.');
                 actualizarProveedorAsignado();
             } else {
                 console.error('Error al eliminar el proveedor:', data.error);
@@ -104,6 +105,7 @@ $(document).ready(function() {
         bindEventsToProveedor(newProveedor);
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
+        console.log('Proveedor nuevo añadido.');
     });
 
     $('form').on('keypress', function(e) {
@@ -171,4 +173,3 @@ function actualizarPrecioVenta() {
     $('#precio_venta').val(precioVenta);
     console.log('Precio de venta actualizado:', precioVenta);
 }
-
