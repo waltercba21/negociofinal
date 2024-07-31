@@ -1213,7 +1213,8 @@ obtenerDescuentosProveedor: function(conexion) {
           resolve(results);
       });
   });
-},retornarDatosProveedores: function(conexion, productoId) {
+},
+retornarDatosProveedores: function(conexion, productoId) {
     return new Promise((resolve, reject) => {
         const query = `
             SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento, p.costo_neto, p.costo_iva, p.utilidad, p.precio_venta

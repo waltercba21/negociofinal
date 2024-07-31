@@ -261,12 +261,14 @@ module.exports = {
     editar: function(req, res) {
         let productoResult;
         let responseSent = false;
+    
         producto.retornarDatosId(conexion, req.params.id).then(result => {
             if (!result) {
                 res.status(404).send("No se encontró el producto");
                 responseSent = true;
                 return;
             }
+    
             productoResult = result;
             productoResult.precio_lista = Math.round(productoResult.precio_lista);
             productoResult.costo_neto = Math.round(productoResult.costo_neto);
@@ -274,12 +276,14 @@ module.exports = {
             productoResult.utilidad = Math.round(productoResult.utilidad);
             productoResult.precio_venta = Math.round(productoResult.precio_venta);
             productoResult.paginaActual = req.query.pagina;
+    
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
                     productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
                     productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
                 });
+    
                 Promise.all([
                     producto.obtenerCategorias(conexion),
                     producto.obtenerMarcas(conexion),
@@ -296,7 +300,7 @@ module.exports = {
                         proveedores: proveedoresResult,
                         modelos: modelosResult,
                         descuentosProveedor: descuentosProveedoresResult,
-                        stock: stockResult 
+                        stock: stockResult
                     });
                 }).catch(error => {
                     if (!responseSent) {
@@ -313,7 +317,7 @@ module.exports = {
                 res.status(500).send("Error al obtener los datos del producto: " + error.message);
             }
         });
-    },
+    },    
     actualizar: function(req, res) {
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
