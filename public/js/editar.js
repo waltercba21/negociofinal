@@ -97,6 +97,7 @@ $(document).ready(function() {
 
     $('#addProveedor').click(function(e) {
         e.preventDefault();
+        console.log('Botón de añadir proveedor clickeado');
         var newProveedor = $('.proveedor').first().clone(true);
         newProveedor.find('input:not([type="button"]), select').val('');
         newProveedor.find('.IVA').val('21');
@@ -105,8 +106,8 @@ $(document).ready(function() {
         bindEventsToProveedor(newProveedor);
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
-        console.log('Proveedor nuevo añadido.');
     });
+    
 
     $('form').on('keypress', function(e) {
         if (e.keyCode === 13) {
