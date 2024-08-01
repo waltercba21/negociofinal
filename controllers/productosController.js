@@ -292,6 +292,7 @@ module.exports = {
                     producto.obtenerDescuentosProveedor(conexion),
                     producto.obtenerStock(conexion, req.params.id) // Añadir la obtención de datos de stock
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult, stockResult]) => {
+                    // Aquí se asegura de pasar correctamente todas las variables necesarias a la vista
                     res.render('editar', {
                         producto: productoResult,
                         productoProveedores: productoProveedoresResult,
@@ -302,6 +303,12 @@ module.exports = {
                         descuentosProveedor: descuentosProveedoresResult,
                         stock: stockResult
                     });
+    
+                    // Coloca los console.log aquí para que accedan a las variables correctamente
+                    console.log('Datos del producto:', productoResult);
+                    console.log('Datos del proveedor:', proveedoresResult);
+                    console.log('Datos del proveedor del producto:', productoProveedoresResult);
+    
                 }).catch(error => {
                     if (!responseSent) {
                         res.status(500).send("Error al obtener los datos: " + error.message);
@@ -317,10 +324,8 @@ module.exports = {
                 res.status(500).send("Error al obtener los datos del producto: " + error.message);
             }
         });
-        console.log('Datos del producto:', producto);
-console.log('Datos del proveedor:', proveedores);
-console.log('Datos del proveedor del producto:', productoProveedores);
-    },    
+    },
+      
     actualizar: function(req, res) {
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
