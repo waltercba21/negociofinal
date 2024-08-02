@@ -933,7 +933,7 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-actualizarPreciosExcel : async (req, res) => {
+ actualizarPreciosExcel : async (req, res) => {
     try {
         const file = req.files[0];
         let productosActualizados = [];
@@ -948,30 +948,41 @@ actualizarPreciosExcel : async (req, res) => {
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
 
                     if (codigoColumn && precioColumn) {
-                        // Convertir el precio a un número decimal adecuado
-                        const precio = parseFloat(row[precioColumn].replace(',', '.'));
+                        let precioRaw = row[precioColumn];
 
-                        if (isNaN(precio) || precio <= 0) {
-                            console.error(`Precio inválido para el código ${row[codigoColumn]}: ${row[precioColumn]}`);
-                            continue;
+                        // Asegurarse de que precioRaw es una cadena antes de reemplazar
+                        if (typeof precioRaw === 'number') {
+                            precioRaw = precioRaw.toString();
                         }
 
-                        promises.push(
-                            producto.actualizarPreciosPDF(precio, row[codigoColumn])
-                                .then(async productoActualizado => {
-                                    if (productoActualizado !== null) {
-                                        productosActualizados.push(productoActualizado);
-                                        await producto.seleccionarProveedorMasBarato(conexion, row[codigoColumn]);
-                                    } else {
-                                        console.log(`No se encontró ningún producto con el código ${row[codigoColumn]} en la base de datos.`);
-                                        return { noExiste: true, codigo: row[codigoColumn] };
-                                    }
-                                })
-                                .catch(error => {
-                                    console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
-                                    return { error: true, message: `Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}` };
-                                })
-                        );
+                        if (typeof precioRaw === 'string') {
+                            // Convertir el precio a un número decimal adecuado
+                            const precio = parseFloat(precioRaw.replace(',', '.'));
+
+                            if (isNaN(precio) || precio <= 0) {
+                                console.error(`Precio inválido para el código ${row[codigoColumn]}: ${row[precioColumn]}`);
+                                continue;
+                            }
+
+                            promises.push(
+                                producto.actualizarPreciosPDF(precio, row[codigoColumn])
+                                    .then(async productoActualizado => {
+                                        if (productoActualizado !== null) {
+                                            productosActualizados.push(productoActualizado);
+                                            await producto.seleccionarProveedorMasBarato(conexion, row[codigoColumn]);
+                                        } else {
+                                            console.log(`No se encontró ningún producto con el código ${row[codigoColumn]} en la base de datos.`);
+                                            return { noExiste: true, codigo: row[codigoColumn] };
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
+                                        return { error: true, message: `Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}` };
+                                    })
+                            );
+                        } else {
+                            console.error(`Tipo de dato no esperado para el precio en el código ${row[codigoColumn]}: ${typeof precioRaw}`);
+                        }
                     } else {
                         console.error(`No se encontraron las columnas de código o precio en la fila: ${JSON.stringify(row)}`);
                     }
@@ -999,6 +1010,7 @@ actualizarPreciosExcel : async (req, res) => {
         res.status(500).send(error.message);
     }
 },
+
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
