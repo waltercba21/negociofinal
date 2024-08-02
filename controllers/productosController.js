@@ -955,18 +955,10 @@ actualizarPreciosExcel : async (req, res) => {
 
                         if (codigos.length === precios.length) {
                             for (let i = 0; i < codigos.length; i++) {
-                                // Verificación manual del código
                                 const codigo = codigos[i];
                                 const precio = precios[i];
 
-                                // Verificar existencia del código en la base de datos
-                                const [rows] = await conexion.query('SELECT * FROM producto_proveedor WHERE codigo = ?', [codigo]);
-                                if (rows.length === 0) {
-                                    console.log(`El código ${codigo} no existe en la base de datos.`);
-                                    continue;
-                                }
-
-                                // Actualización de precios
+                                // Llamada a la función actualizarPreciosPDF para cada par de código y precio
                                 promises.push(
                                     producto.actualizarPreciosPDF(precio, codigo)
                                         .then(async productoActualizado => {
