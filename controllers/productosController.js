@@ -955,7 +955,7 @@ actualizarPreciosExcel : async (req, res) => {
 
                         if (codigos.length === precios.length) {
                             for (let i = 0; i < codigos.length; i++) {
-                                const codigo = codigos[i];
+                                const codigo = codigos[i].trim();
                                 const precio = precios[i];
 
                                 // Llamada a la función actualizarPreciosPDF para cada par de código y precio
