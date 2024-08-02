@@ -933,14 +933,15 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-actualizarPreciosExcel: async (req, res) => {
+actualizarPreciosExcel : async (req, res) => {
     try {
         const file = req.files[0];
         let productosActualizados = [];
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
-            const promises = []; 
+            const promises = [];
+
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
                 for (const row of data) {
@@ -969,6 +970,7 @@ actualizarPreciosExcel: async (req, res) => {
                     }
                 }
             }
+
             const resultados = await Promise.all(promises);
             const errores = resultados.filter(resultado => resultado && resultado.error);
             const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
