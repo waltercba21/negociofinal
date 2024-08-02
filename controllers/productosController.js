@@ -958,7 +958,12 @@ actualizarPreciosExcel : async (req, res) => {
                                 const codigo = codigos[i].trim();
                                 const precio = precios[i];
 
-                                // Llamada a la función actualizarPreciosPDF para cada par de código y precio
+                                // Verifica que el precio es un número válido antes de actualizar
+                                if (isNaN(precio) || precio <= 0) {
+                                    console.error(`Precio inválido para el código ${codigo}: ${precio}`);
+                                    continue;
+                                }
+
                                 promises.push(
                                     producto.actualizarPreciosPDF(precio, codigo)
                                         .then(async productoActualizado => {
