@@ -933,7 +933,7 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-actualizarPreciosExcel: async (req, res) => {
+actualizarPreciosExcel : async (req, res) => {
     try {
         const file = req.files[0];
         let productosActualizados = [];
@@ -948,8 +948,16 @@ actualizarPreciosExcel: async (req, res) => {
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
 
                     if (codigoColumn && precioColumn) {
+                        // Convertir el precio a un número decimal adecuado
+                        const precio = parseFloat(row[precioColumn].replace(',', '.'));
+
+                        if (isNaN(precio) || precio <= 0) {
+                            console.error(`Precio inválido para el código ${row[codigoColumn]}: ${row[precioColumn]}`);
+                            continue;
+                        }
+
                         promises.push(
-                            producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn])
+                            producto.actualizarPreciosPDF(precio, row[codigoColumn])
                                 .then(async productoActualizado => {
                                     if (productoActualizado !== null) {
                                         productosActualizados.push(productoActualizado);
