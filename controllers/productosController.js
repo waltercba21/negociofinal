@@ -944,27 +944,49 @@ actualizarPreciosExcel : async (req, res) => {
 
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+
                 for (const row of data) {
                     const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
 
                     if (codigoColumn && precioColumn) {
-                        promises.push(
-                            producto.actualizarPreciosPDF(row[precioColumn], row[codigoColumn])
-                                .then(async productoActualizado => {
-                                    if (productoActualizado !== null) {
-                                        productosActualizados.push(productoActualizado);
-                                        await producto.seleccionarProveedorMasBarato(conexion, row[codigoColumn]);
-                                    } else {
-                                        console.log(`No se encontró ningún producto con el código ${row[codigoColumn]} en la base de datos.`);
-                                        return { noExiste: true, codigo: row[codigoColumn] };
-                                    }
-                                })
-                                .catch(error => {
-                                    console.log(`Error al actualizar el producto con el código ${row[codigoColumn]}:`, error);
-                                    return { error: true, message: `Error al actualizar el producto con el código ${row[codigoColumn]}: ${error.message}` };
-                                })
-                        );
+                        const codigos = row[codigoColumn].toString().split('\n');
+                        const precios = row[precioColumn].toString().split('\n').map(precio => parseFloat(precio.replace(',', '.')));
+
+                        if (codigos.length === precios.length) {
+                            for (let i = 0; i < codigos.length; i++) {
+                                // Verificación manual del código
+                                const codigo = codigos[i];
+                                const precio = precios[i];
+
+                                // Verificar existencia del código en la base de datos
+                                const [rows] = await conexion.query('SELECT * FROM producto_proveedor WHERE codigo = ?', [codigo]);
+                                if (rows.length === 0) {
+                                    console.log(`El código ${codigo} no existe en la base de datos.`);
+                                    continue;
+                                }
+
+                                // Actualización de precios
+                                promises.push(
+                                    producto.actualizarPreciosPDF(precio, codigo)
+                                        .then(async productoActualizado => {
+                                            if (productoActualizado !== null) {
+                                                productosActualizados.push(productoActualizado);
+                                                await producto.seleccionarProveedorMasBarato(conexion, codigo);
+                                            } else {
+                                                console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
+                                                return { noExiste: true, codigo: codigo };
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
+                                            return { error: true, message: `Error al actualizar el producto con el código ${codigo}: ${error.message}` };
+                                        })
+                                );
+                            }
+                        } else {
+                            console.error(`Las cantidades de códigos y precios no coinciden en la fila: ${JSON.stringify(row)}`);
+                        }
                     } else {
                         console.error(`No se encontraron las columnas de código o precio en la fila: ${JSON.stringify(row)}`);
                     }
