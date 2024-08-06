@@ -9,13 +9,13 @@ $(document).ready(function() {
   }
 
   $('#prevButton').on('click', function() {
-    console.log('Prev button clicked'); // Añade una traza para verificar el clic
+    console.log('Prev button clicked'); 
     var newIndex = (index > 0) ? index - 1 : $images.length - 1;
     showImage(newIndex);
   });
 
   $('#nextButton').on('click', function() {
-    console.log('Next button clicked'); // Añade una traza para verificar el clic
+    console.log('Next button clicked'); 
     var newIndex = (index < $images.length - 1) ? index + 1 : 0;
     showImage(newIndex);
   });
