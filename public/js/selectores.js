@@ -18,11 +18,9 @@ document.getElementById('marca_id').addEventListener('change', function() {
       })
       .catch(error => console.error('Error:', error));
 });
-
 document.addEventListener('DOMContentLoaded', function() {
   const selectores = document.querySelectorAll('#categoria_id, #marca_id, #modelo_id');
   const contenedorProductos = document.getElementById('contenedor-productos');
-  
   selectores.forEach(selector => {
       selector.addEventListener('change', function() {
           const categoria_id = document.getElementById('categoria_id').value;
@@ -51,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
           .catch(error => console.error('Error:', error));
       });
   });
-
   function renderizarProductos(productos) {
       contenedorProductos.innerHTML = '';
       productos.forEach((producto, index) => {
@@ -60,51 +57,42 @@ document.addEventListener('DOMContentLoaded', function() {
           producto.imagenes.forEach((imagenObj, i) => {
             const imagen = imagenObj.imagen;
             imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
-          });
-          
-          let botonesCarrusel = '';
-          if (producto.imagenes.length > 1) {
-            botonesCarrusel = `
-              <div class="carousel__buttons">
-                <button class="carousel__button">
-                  <i class="fas fa-chevron-left"></i>
-                </button>
-                <button class="carousel__button">
-                  <i class="fas fa-chevron-right"></i>
-                </button>
-              </div>
-            `;
-          }
-
+        });
           imagenes = `
             <div class="cover__card">
               <div class="carousel">
                 ${imagenes}
               </div>
             </div>
-            ${botonesCarrusel}
+            <div class="carousel__buttons">
+              <button class="carousel__button">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="carousel__button">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
           `;
         } else {
-          imagenes = `<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">`;
+          imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
         }
-
         const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
         const tarjetaProducto = `
-          <div class="card"> 
-            ${imagenes}
-            <div class="titulo-producto">
-              <h3 class="nombre">${producto.nombre}</h3>
-            </div>
-            <hr>
-            <div class="precio-producto">
-              <p class="precio">${precio_venta}</p>
-            </div>
-            <div class="cantidad-producto">
-              <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-            </div>
+        <div class="card"> 
+          ${imagenes}
+          <div class="titulo-producto">
+            <h3 class="nombre">${producto.nombre}</h3>
           </div>
-        `;
-        contenedorProductos.innerHTML += tarjetaProducto;
+          <hr>
+          <div class="precio-producto">
+            <p class="precio">${precio_venta}</p>
+          </div>
+          <div class="cantidad-producto">
+            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+          </div>
+        </div>
+      `;
+      contenedorProductos.innerHTML += tarjetaProducto;
       });
   }
 

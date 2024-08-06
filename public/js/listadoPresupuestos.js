@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     const btnBuscar = document.getElementById('buscar');
+    const btnImprimirTotal = document.getElementById('btnImprimirTotal');
+
+
     if (btnBuscar) {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
@@ -9,8 +12,37 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('El elemento con ID "buscar" no se encontró en el DOM.');
     }
-});
 
+    if (btnImprimirTotal) {
+        btnImprimirTotal.addEventListener('click', function() {
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            imprimirTotalPresupuestos(fechaInicio, fechaFin);
+        });
+    } else {
+        console.error('El elemento con ID "btnImprimirTotal" no se encontró en el DOM.');
+    }
+});
+function imprimirTotalPresupuestos(fechaInicio, fechaFin) {
+    fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
+        .then(response => response.json())
+        .then(data => {
+            let totalPresupuestos = 0;
+            data.forEach(presupuesto => {
+                const totalNumerico = parseFloat(presupuesto.total.replace('.', '').replace(',', '.'));
+                totalPresupuestos += totalNumerico;
+            });
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(16);
+            doc.text('Total de Presupuestos', 14, 20);
+            const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalPresupuestos);
+            doc.text(totalText, 14, 40);
+            doc.save('total_presupuestos.pdf');
+        })
+        .catch(error => console.error('Error al cargar los presupuestos:', error));
+}
 function cargarPresupuestos(fechaInicio, fechaFin) {
     fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
@@ -174,7 +206,7 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
         const total = row.querySelector('.total').textContent;
         y += 7;
         doc.text(id, 14, y);
-        doc.text(fecha, 50, y);
+        doc.text(fecha, 50, y); 
         doc.text(cliente, 80, y);
         doc.text(total, 140, y);
         totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g,"").replace(',', '.'));
