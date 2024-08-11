@@ -385,53 +385,51 @@ footer {
   transition: 2000ms;
   cursor: pointer;
 }
-/* --------------------------CONTENEDOR ULTIMOS PRODUCTOS Y OFERTAS-----------------------------------*/
+/* --------------------------CONTENEDOR PRINCIPAL PRODUCTOS----------------------------------------*/
 .contenedor-principal-productos {
   display: flex;
-  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px; /* Espacio entre los contenedores */
+  margin: 50px 0; /* Margen superior e inferior */
 }
-/* --------------------------PAGINA ULTIMOS PRODUCTOS CARGADOS----------------------------------------*/
+
+/* --------------------------ULTIMOS PRODUCTOS CARGADOS----------------------------------------*/
 .ultimos-productos {
-  margin-top: 50px;
-  margin-bottom: 30px;
-  width: 100%;
+  flex: 1; /* Ocupa el espacio restante */
+  max-width: 45%; /* Ancho máximo del 45% del contenedor principal */
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-
 .ultimos-productos h2 {
   text-align: center;
   color: #003f7d;
   font-weight: bold;
 }
-
 .card-ultimos {
-  width: 150px;
-  margin: 20px;
+  width: 100%; /* Ancho completo del contenedor */
+  max-width: 150px; /* Ancho máximo de la tarjeta */
+  margin: 10px; /* Margen alrededor de la tarjeta */
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   transition: 0.3s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
-
 .card-ultimos:hover {
   box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
 }
-
 .card-ultimos .cover__card {
   width: 100%;
   height: 100px; 
   overflow: hidden;
 }
-
 .card-ultimos .cover__card img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
-
 .titulo-producto {
   flex-grow: 1;
   display: flex;
@@ -440,7 +438,6 @@ footer {
   flex-direction: column;
   margin-top: 15px;
 }
-
 .titulo-producto h3 {
   white-space: nowrap; 
   overflow: hidden; 
@@ -450,7 +447,6 @@ footer {
   max-width: 100%; 
   margin: 0 auto;
 }
-
 .precio-producto {
   flex-grow: 1;
   display: flex;
@@ -458,13 +454,11 @@ footer {
   justify-content: center;
   flex-direction: column;
 }
-
 .precio-producto p {
   margin: 0;
   text-align: center;
   width: 90%;
 }
-
 .categoria-producto {
   flex-grow: 1;
   display: flex;
@@ -472,7 +466,6 @@ footer {
   justify-content: center;
   flex-direction: column;
 }
-
 .categoria-producto h5 {
   color: #003f7d;
   font-size: 12px;
@@ -481,49 +474,53 @@ footer {
   width: 100%;
 }
 
-/* --------------------------PAGINA OFERTAS PRODUCTOS----------------------------------------*/
+/* --------------------------OFERTAS PRODUCTOS----------------------------------------*/
 .ofertas-productos {
-  margin-top: 50px;
-  margin-bottom: 30px;
-  width: 100%;
+  flex: 1; /* Ocupa el espacio restante */
+  max-width: 45%; /* Ancho máximo del 45% del contenedor principal */
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
-
 .ofertas-productos h2 {
   text-align: center;
-  color: #d9534f;
+  color: #003f7d;
   font-weight: bold;
 }
 
+/* --------------------------CARROUSEL----------------------------------------*/
+.contenedor-carrousel {
+  width: 100%;
+  padding: 20px 0;
+  overflow: hidden;
+}
+.carrousel {
+  display: flex;
+  flex-wrap: nowrap;
+}
 .card-oferta {
-  width: 150px;
-  margin: 20px;
+  width: 100%;
+  max-width: 150px; /* Ancho máximo de la tarjeta */
+  margin: 10px; /* Margen alrededor de la tarjeta */
   box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
   transition: 0.3s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
-
 .card-oferta:hover {
   box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
 }
-
 .card-oferta .cover__card {
   width: 100%;
   height: 100px; 
   overflow: hidden;
 }
-
 .card-oferta .cover__card img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
-
-.titulo-producto {
+.titulo-producto-oferta {
   flex-grow: 1;
   display: flex;
   align-items: center; 
@@ -531,8 +528,7 @@ footer {
   flex-direction: column;
   margin-top: 15px;
 }
-
-.titulo-producto h3 {
+.titulo-producto-oferta h3 {
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 
@@ -541,114 +537,33 @@ footer {
   max-width: 100%; 
   margin: 0 auto;
 }
-
-.precio-producto {
+.precio-producto-oferta {
   flex-grow: 1;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   flex-direction: column;
 }
-
-.precio-producto p {
+.precio-producto-oferta p {
   margin: 0;
   text-align: center;
   width: 90%;
 }
-
-.categoria-producto {
+.categoria-producto-oferta {
   flex-grow: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
 }
-
-.categoria-producto h5 {
-  color: #d9534f;
+.categoria-producto-oferta h5 {
+  color: #003f7d;
   font-size: 12px;
   font-weight: bold;
   text-align: center;
   width: 100%;
 }
 
-/* --------------------------CONTENEDOR Y CARROUSEL DE OFERTAS----------------------------------------*/
-.contenedor-carrousel {
-  width: 100%;
-  padding: 20px 0;
-  overflow: hidden;
-  scroll-behavior: smooth;
-}
-
-.contenedor-carrousel .carrousel {
-  display: flex;
-  flex-wrap: nowrap;
-}
-
-.contenedor-carrousel .carrousel .card-oferta {
-  min-width: 35%;
-  transition: .3s ease all;
-  box-shadow: 5px 5px 10px rgba(0, 0, 0, .3);
-}
-
-.contenedor-carrousel .carrousel .card-oferta img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.contenedor-carrousel .carrousel .card-oferta.hover {
-  transform: scale(1.2);
-  transform-origin: center;
-}
-
-.flecha-izquierda,
-.flecha-derecha {
-  position: absolute;
-  border: none;
-  background: rgba(51, 51, 51, 0.8);
-  border-radius: 10px;
-  background-size: 50px 50px;
-  animation: pulsar 2s infinite;
-  height: 30%; 
-  top: calc(50% - 20%); 
-  line-height: 40px; 
-  width: 30px; 
-  color: #ced4da;
-  cursor: pointer;
-  z-index: 500;
-  transition: .2s ease all;
-}
-
-.flecha-izquierda i,
-.flecha-derecha i {
-  font-size: 30px; 
-}
-
-@keyframes pulsar {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.flecha-izquierda:hover,
-.flecha-derecha:hover {
-  background: rgba(0, 63, 125, 0.8);
-}
-
-.flecha-izquierda {
-  left: 0;
-}
-
-.flecha-derecha {
-  right: 0;
-}
 
 /*----------------------LOGIN--------------------*/
 .body-login{
