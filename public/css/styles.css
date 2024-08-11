@@ -411,7 +411,7 @@ footer {
   text-align: center;
   color: #003f7d;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 20px;
 }
 .card-ultimos {
   width: 100%;
@@ -496,24 +496,23 @@ footer {
   text-align: center;
   color: #003f7d;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 20px;
 }
 .card-oferta {
-  width: 100%; /* Ancho completo del contenedor */
-  max-width: 150px; /* Ancho máximo de la tarjeta */
-  margin: 10px; /* Margen alrededor de la tarjeta */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Sombra para profundidad */
+  width: 100%; 
+  max-width: 150px; 
+  margin: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
   transition: 0.3s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 .card-oferta:hover {
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Sombra más pronunciada al pasar el ratón */
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2); 
 }
 .card-oferta .cover__card {
   width: 100%;
-  height: 200px; 
   overflow: hidden;
   display: flex;
   align-items: center;
