@@ -31,7 +31,7 @@ const compararCodigos = (codigo1, codigo2) => {
 };
 
 module.exports = {
-    index : (req, res) => {
+    index: (req, res) => {
         producto.obtenerUltimos(conexion, 3, (error, productos) => {
             if (error) {
                 return res.status(500).send('Error al obtener los productos');
@@ -40,12 +40,14 @@ module.exports = {
                     if (error) {
                         return res.status(500).send('Error al obtener las ofertas');
                     } else {
+                        console.log('Productos obtenidos:', productos);
+                        console.log('Productos en oferta obtenidos:', productosOferta);
                         res.render('index', { productos, productosOferta });
                     }
                 });
             }
         });
-    },
+    },    
     lista: async function (req, res) {
         const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
