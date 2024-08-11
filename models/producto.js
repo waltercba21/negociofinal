@@ -295,6 +295,12 @@ actualizar: function (conexion, datos, archivo) {
         if (archivo) {
             query += first ? "imagen=?" : ", imagen=?";
             params.push(archivo.filename);
+            first = false;
+        }
+        if (typeof datos.oferta !== 'undefined') {  // Asegúrate de comprobar la existencia del campo
+            query += first ? "oferta=?" : ", oferta=?";
+            params.push(datos.oferta);
+            first = false;
         }
         if (!datos.id) {
             reject(new Error('Los datos del producto deben incluir un ID'));
@@ -314,6 +320,7 @@ actualizar: function (conexion, datos, archivo) {
         });
     });
 },
+
 actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
     return new Promise((resolve, reject) => {
         const querySelect = 'SELECT * FROM producto_proveedor WHERE producto_id = ? AND proveedor_id = ?';

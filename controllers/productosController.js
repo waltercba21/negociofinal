@@ -265,7 +265,7 @@ module.exports = {
         }
     },
     editar: function(req, res) {
-        let productoResult;  
+        let productoResult;
         let responseSent = false;
     
         producto.retornarDatosId(conexion, req.params.id).then(result => {
@@ -283,6 +283,8 @@ module.exports = {
             productoResult.precio_venta = Math.round(productoResult.precio_venta);
             productoResult.paginaActual = req.query.pagina;
     
+            console.log('Valor de oferta:', productoResult.oferta);
+    
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
                     productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
@@ -298,7 +300,6 @@ module.exports = {
                     producto.obtenerDescuentosProveedor(conexion),
                     producto.obtenerStock(conexion, req.params.id) // Añadir la obtención de datos de stock
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult, stockResult]) => {
-                    // Aquí se asegura de pasar correctamente todas las variables necesarias a la vista
                     res.render('editar', {
                         producto: productoResult,
                         productoProveedores: productoProveedoresResult,
@@ -310,11 +311,9 @@ module.exports = {
                         stock: stockResult
                     });
     
-                    // Coloca los console.log aquí para que accedan a las variables correctamente
                     console.log('Datos del producto:', productoResult);
                     console.log('Datos del proveedor:', proveedoresResult);
                     console.log('Datos del proveedor del producto:', productoProveedoresResult);
-    
                 }).catch(error => {
                     if (!responseSent) {
                         res.status(500).send("Error al obtener los datos: " + error.message);
@@ -330,8 +329,7 @@ module.exports = {
                 res.status(500).send("Error al obtener los datos del producto: " + error.message);
             }
         });
-    },
-      
+    },    
     actualizar: function(req, res) {
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
@@ -409,7 +407,7 @@ module.exports = {
                 console.error('Error en la actualización del producto:', error);
                 res.status(500).send('Error: ' + error.message);
             });
-    },
+    },    
     
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
