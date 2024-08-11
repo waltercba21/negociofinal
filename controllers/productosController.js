@@ -357,7 +357,8 @@ module.exports = {
             descuentos_proveedor_id: req.body.descuentos_proveedor_id[0],
             costo_neto: req.body.costo_neto[0],
             IVA: req.body.IVA[0],
-            costo_iva: req.body.costo_iva[0]
+            costo_iva: req.body.costo_iva[0],
+            oferta: req.body.oferta === 'on' ? 1 : 0 // Aquí se procesa el valor del checkbox
         };
     
         console.log('Datos del producto procesados:', datosProducto);
@@ -383,9 +384,9 @@ module.exports = {
                         codigo: req.body.codigo[index]
                     };
                 });
-
+    
                 console.log('Datos de los proveedores procesados:', proveedores);
-
+    
                 // Usar actualizarProductoProveedor para cada proveedor
                 const promesasProveedor = proveedores.map((proveedor) => {
                     return producto.actualizarProductoProveedor(conexion, proveedor);
@@ -409,6 +410,7 @@ module.exports = {
                 res.status(500).send('Error: ' + error.message);
             });
     },
+    
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
