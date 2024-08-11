@@ -486,6 +486,7 @@ footer {
   max-width: 45%; /* Ancho máximo del 45% del contenedor principal */
   display: flex;
   flex-direction: column;
+  margin-right: 20px;
   border-radius: 20px;
   border: 1px solid #ddd; /* Borde para distinguir el contenedor */
   box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Sombra para profundidad */
