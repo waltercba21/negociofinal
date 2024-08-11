@@ -91,62 +91,67 @@
           </div>
       </div>
   
-      <div class="ultimos-productos contenedor">
-        <h2>Últimos productos agregados</h2>
-        <div class="contenedor-productos">
+      <div class="contenedor-principal-productos">
+        <div class="ultimos-productos contenedor">
+          <h2>Últimos productos agregados</h2>
+          <div class="contenedor-productos">
             <% productos.forEach(function(producto) { %>
-                <div class="card card-ultimos">
-                    <div class="cover__card">
-                        <% if (producto.imagen && producto.imagen.length > 0) { %>
-                            <img src="/uploads/productos/<%= producto.imagen %>" alt="<%= producto.nombre %>">
-                        <% } else { %>
-                            <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
-                        <% } %>
-                    </div>
-                    <div class="titulo-producto">
-                        <h3 class="nombre"><%= producto.nombre %></h3>
-                    </div>
-                    <hr>
-                    <div class="categoria-producto">
-                        <h5 class="categoria"><%= producto.categoria_nombre %></h5>
-                    </div>
-                    <div class="precio-producto">
-                        <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %></p>
-                    </div>
+              <div class="card card-ultimos">
+                <div class="cover__card">
+                  <% if (producto.imagen && producto.imagen.length > 0) { %>
+                    <img src="../../uploads/productos/<%= producto.imagen %>" alt="<%= producto.nombre %>">
+                  <% } else { %>
+                    <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
+                  <% } %>
                 </div>
+                <div class="titulo-producto">
+                  <h3 class="nombre"><%= producto.nombre %></h3>
+                </div>
+                <hr>
+                <div class="categoria-producto">
+                  <h5 class="categoria"><%= producto.categoria_nombre %></h5>
+                </div>
+                <div class="precio-producto">
+                  <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %></p>
+                </div>
+              </div>
             <% }); %>
+          </div>
         </div>
-    </div>
-    <div class="ofertas-productos contenedor">
-        <h2>Ofertas</h2>
-        <div class="contenedor-productos">
-            <% productosOferta.forEach(function(oferta) { %>
+    
+        <div class="ofertas-productos contenedor">
+          <h2>Ofertas</h2>
+          <div class="contenedor-carrousel">
+            <div class="carrousel">
+              <% productosOferta.forEach(function(oferta) { %>
                 <div class="card card-oferta">
-                    <div class="cover__card">
-                        <% 
-                        let imagenes = oferta.imagenes ? oferta.imagenes.split(',') : [];
-                        let primeraImagen = imagenes.length > 0 ? imagenes[0] : null;
-                        %>
-                        <% if (primeraImagen) { %>
-                            <img src="../../uploads/productos/<%= primeraImagen %>" alt="<%= oferta.nombre %>">
-                        <% } else { %>
-                            <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
-                        <% } %>
-                    </div>
-                    <div class="titulo-producto">
-                        <h3 class="nombre"><%= oferta.nombre %></h3>
-                    </div>
-                    <hr>
-                    <div class="categoria-producto">
-                        <h5 class="categoria"><%= oferta.categoria_nombre %></h5>
-                    </div>
-                    <div class="precio-producto">
-                        <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
-                    </div>
+                  <div class="cover__card">
+                    <% if (oferta.imagen && oferta.imagen.length > 0) { %>
+                      <img src="../../uploads/productos/<%= oferta.imagen %>" alt="<%= oferta.nombre %>">
+                    <% } else { %>
+                      <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
+                    <% } %>
+                  </div>
+                  <div class="titulo-producto">
+                    <h3 class="nombre"><%= oferta.nombre %></h3>
+                  </div>
+                  <hr>
+                  <div class="categoria-producto">
+                    <h5 class="categoria"><%= oferta.categoria_nombre %></h5>
+                  </div>
+                  <div class="precio-producto">
+                    <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
+                  </div>
                 </div>
-            <% }); %>
+              <% }); %>
+            </div>
+            <button class="flecha-izquierda"><i class="fas fa-chevron-left"></i></button>
+            <button class="flecha-derecha"><i class="fas fa-chevron-right"></i></button>
+          </div>
         </div>
-    </div>
+      </div>
+      
+      </main>
     
     <%- include ./layouts/footer.ejs %>
     <script src="js/index.js"></script> 
