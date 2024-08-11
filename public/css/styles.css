@@ -405,11 +405,13 @@ footer {
   box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
   padding: 10px; 
   margin-left: 20px;
+  border-radius: 20px;
 }
 .ultimos-productos h2 {
   text-align: center;
   color: #003f7d;
   font-weight: bold;
+  font-size: 16px;
 }
 .card-ultimos {
   width: 100%;
@@ -488,11 +490,13 @@ footer {
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   padding: 10px; 
   margin-right: 20px;
+  border-radius: 20px;
 }
 .ofertas-productos h2 {
   text-align: center;
   color: #003f7d;
   font-weight: bold;
+  font-size: 16px;
 }
 .card-oferta {
   width: 100%; /* Ancho completo del contenedor */
