@@ -40,8 +40,6 @@ module.exports = {
                     if (error) {
                         return res.status(500).send('Error al obtener las ofertas');
                     } else {
-                        console.log('Productos obtenidos:', productos);
-                        console.log('Productos en oferta obtenidos:', productosOferta);
                         res.render('index', { productos, productosOferta });
                     }
                 });

@@ -118,29 +118,31 @@
         </div>
     </div>
     
-    <div class="contenedor-productos">
-        <% productosOferta.forEach(function(oferta) { %>
-            <div class="card card-oferta">
-                <div class="cover__card">
-                    <% if (oferta.imagen && oferta.imagen.length > 0) { %>
-                        <img src="../../uploads/productos/<%= oferta.imagen %>" alt="<%= oferta.nombre %>">
-                    <% } else { %>
-                        <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
-                    <% } %>
+    <div class="ofertas-productos contenedor">
+        <h2>Ofertas</h2>
+        <div class="contenedor-productos">
+            <% productosOferta.forEach(function(oferta) { %>
+                <div class="card card-oferta">
+                    <div class="cover__card">
+                        <% if (oferta.imagen && oferta.imagen.length > 0) { %>
+                            <img src="../../uploads/productos/<%= oferta.imagen %>" alt="<%= oferta.nombre %>">
+                        <% } else { %>
+                            <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
+                        <% } %>
+                    </div>
+                    <div class="titulo-producto">
+                        <h3 class="nombre"><%= oferta.nombre %></h3>
+                    </div>
+                    <hr>
+                    <div class="categoria-producto">
+                        <h5 class="categoria"><%= oferta.categoria_nombre %></h5>
+                    </div>
+                    <div class="precio-producto">
+                        <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
+                    </div>
                 </div>
-                <div class="titulo-producto">
-                    <h3 class="nombre"><%= oferta.nombre %></h3>
-                </div>
-                <hr>
-                <div class="categoria-producto">
-                    <h5 class="categoria"><%= oferta.categoria_nombre %></h5>
-                </div>
-                <div class="precio-producto">
-                    <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
-                </div>
-            </div>
-        <% }); %>
-    </div>
+            <% }); %>
+        </div>
     </div>
     
   
