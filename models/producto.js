@@ -1286,5 +1286,9 @@ calcularNumeroDePaginas: function(conexion, productosPorPagina) {
             }
         });
     });
+},
+obtenerProductosOferta : (conexion, callback) => {
+    const query = 'SELECT * FROM productos WHERE oferta = TRUE';
+    conexion.query(query, callback);
 }
 }
