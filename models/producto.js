@@ -1294,6 +1294,7 @@ calcularNumeroDePaginas: function(conexion, productosPorPagina) {
         });
     });
 },
+// Modelo
 obtenerProductosOferta: (conexion, callback) => {
     const query = `
         SELECT p.*, GROUP_CONCAT(i.imagen) AS imagenes
@@ -1302,6 +1303,20 @@ obtenerProductosOferta: (conexion, callback) => {
         WHERE p.oferta = TRUE
         GROUP BY p.id
     `;
-    conexion.query(query, callback);
+    conexion.query(query, (error, results) => {
+        if (error) {
+            return callback(error);
+        }
+        // Procesar las imágenes
+        results.forEach(producto => {
+            if (producto.imagenes) {
+                producto.imagenes = producto.imagenes.split(',');
+            } else {
+                producto.imagenes = [];
+            }
+        });
+        callback(null, results);
+    });
 }
+
 }

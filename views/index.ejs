@@ -124,13 +124,17 @@
             <div class="contenedor-productos">
                 <% productosOferta.forEach(function(oferta) { %>
                     <div class="card card-oferta">
-                        <div class="cover__card">
-                            <% if (oferta.imagen && oferta.imagen.length > 0) { %>
-                                <img src="../../uploads/productos/<%= oferta.imagen %>" alt="<%= oferta.nombre %>">
-                            <% } else { %>
+                        <% if (oferta.imagenes.length > 0) { %>
+                            <div class="cover__card">
+                                <% oferta.imagenes.forEach(function(imagen) { %>
+                                    <img src="../../uploads/productos/<%= imagen %>" alt="<%= oferta.nombre %>">
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <div class="cover__card">
                                 <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
-                            <% } %>
-                        </div>
+                            </div>
+                        <% } %>
                         <div class="titulo-producto">
                             <h3 class="nombre"><%= oferta.nombre %></h3>
                         </div>
@@ -146,9 +150,8 @@
             </div>
             <button class="flecha-izquierda"><i class="fas fa-chevron-left"></i></button>
             <button class="flecha-derecha"><i class="fas fa-chevron-right"></i></button>
-          </div>
         </div>
-      </div>
+        
 
       </main>
     
