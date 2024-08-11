@@ -516,7 +516,7 @@ footer {
 
 .card-oferta .cover__card {
   width: 100%;
-  height: 150px; /* Ajusta la altura de la imagen */
+  height: 120px; /* Ajusta la altura de la imagen */
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -542,7 +542,7 @@ footer {
   overflow: hidden; 
   text-overflow: ellipsis; 
   font-weight: bold;
-  font-size: 12px; /* Tamaño de fuente más pequeño */
+  font-size: 10px; /* Tamaño de fuente más pequeño */
   max-width: 100%; 
   margin: 0 auto;
 }
