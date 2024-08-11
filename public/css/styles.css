@@ -496,6 +496,8 @@ footer {
   font-weight: bold;
   font-size: 20px;
 }
+
+/* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
   width: 100%; 
   max-width: 150px; 
@@ -505,31 +507,36 @@ footer {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  height: 300px; /* Ajusta la altura total de la tarjeta */
 }
+
 .card-oferta:hover {
   box-shadow: 0 8px 16px rgba(0,0,0,0.2); 
 }
+
 .card-oferta .cover__card {
   width: 100%;
-  height: 200px; 
+  height: 150px; /* Ajusta la altura de la imagen */
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .card-oferta .cover__card img {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
+  object-fit: cover; /* Ajuste de imagen para evitar deformación */
 }
+
 .titulo-producto-oferta {
-  flex-grow: 1;
   display: flex;
   align-items: center; 
   justify-content: center;
   flex-direction: column;
-  margin-top: 15px;
+  margin-top: 10px; /* Ajuste de margen superior */
 }
+
 .titulo-producto-oferta h3 {
   white-space: nowrap; 
   overflow: hidden; 
@@ -539,25 +546,29 @@ footer {
   max-width: 100%; 
   margin: 0 auto;
 }
+
 .precio-producto-oferta {
-  flex-grow: 1;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   flex-direction: column;
+  margin-top: 10px; /* Ajuste de margen superior */
 }
+
 .precio-producto-oferta p {
   margin: 0;
   text-align: center;
   width: 90%;
 }
+
 .categoria-producto-oferta {
-  flex-grow: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  margin-top: 10px; /* Ajuste de margen superior */
 }
+
 .categoria-producto-oferta h5 {
   color: #003f7d;
   font-size: 12px; /* Tamaño de fuente más pequeño */
@@ -565,6 +576,7 @@ footer {
   text-align: center;
   width: 100%;
 }
+
 /* --------------------------CARROUSEL----------------------------------------*/
 .contenedor-carrousel {
   display: flex;
