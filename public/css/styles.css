@@ -396,14 +396,15 @@ footer {
 
 /* --------------------------ULTIMOS PRODUCTOS CARGADOS----------------------------------------*/
 .ultimos-productos {
-  flex: 1; /* Ocupa el espacio restante */
-  max-width: 45%; /* Ancho máximo del 45% del contenedor principal */
+  flex: 1; 
+  max-width: 45%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid #ddd; /* Borde para distinguir el contenedor */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Sombra para profundidad */
-  padding: 10px; /* Relleno interno */
+  border: 1px solid #ddd; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+  padding: 10px; 
+  margin-left: 20px;
 }
 .ultimos-productos h2 {
   text-align: center;
@@ -411,17 +412,17 @@ footer {
   font-weight: bold;
 }
 .card-ultimos {
-  width: 100%; /* Ancho completo del contenedor */
-  max-width: 150px; /* Ancho máximo de la tarjeta */
-  margin: 10px; /* Margen alrededor de la tarjeta */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Sombra para profundidad */
+  width: 100%;
+  max-width: 150px; 
+  margin: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   transition: 0.3s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 .card-ultimos:hover {
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Sombra más pronunciada al pasar el ratón */
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2); 
 }
 .card-ultimos .cover__card {
   width: 100%;
@@ -446,7 +447,7 @@ footer {
   overflow: hidden; 
   text-overflow: ellipsis; 
   font-weight: bold;
-  font-size: 12px; /* Tamaño de fuente más pequeño */
+  font-size: 10px;
   max-width: 100%; 
   margin: 0 auto;
 }
@@ -479,13 +480,14 @@ footer {
 
 /* --------------------------OFERTAS PRODUCTOS----------------------------------------*/
 .ofertas-productos {
-  flex: 1; /* Ocupa el espacio restante */
-  max-width: 45%; /* Ancho máximo del 45% del contenedor principal */
+  flex: 1; 
+  max-width: 45%; 
   display: flex;
   flex-direction: column;
-  border: 1px solid #ddd; /* Borde para distinguir el contenedor */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Sombra para profundidad */
-  padding: 10px; /* Relleno interno */
+  border: 1px solid #ddd; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  padding: 10px; 
+  margin-right: 20px;
 }
 .ofertas-productos h2 {
   text-align: center;
