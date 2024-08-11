@@ -1296,12 +1296,12 @@ calcularNumeroDePaginas: function(conexion, productosPorPagina) {
 },
 obtenerProductosOferta: (conexion, callback) => {
     const query = `
-        SELECT p.*, i.imagen
+        SELECT p.*, GROUP_CONCAT(i.imagen) AS imagenes
         FROM productos p
         LEFT JOIN imagenes_producto i ON p.id = i.producto_id
         WHERE p.oferta = TRUE
+        GROUP BY p.id
     `;
     conexion.query(query, callback);
 }
-
 }

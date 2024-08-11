@@ -117,15 +117,18 @@
             <% }); %>
         </div>
     </div>
-    
     <div class="ofertas-productos contenedor">
         <h2>Ofertas</h2>
         <div class="contenedor-productos">
             <% productosOferta.forEach(function(oferta) { %>
                 <div class="card card-oferta">
                     <div class="cover__card">
-                        <% if (oferta.imagen && oferta.imagen.length > 0) { %>
-                            <img src="../../uploads/productos/<%= oferta.imagen %>" alt="<%= oferta.nombre %>">
+                        <% 
+                        let imagenes = oferta.imagenes ? oferta.imagenes.split(',') : [];
+                        let primeraImagen = imagenes.length > 0 ? imagenes[0] : null;
+                        %>
+                        <% if (primeraImagen) { %>
+                            <img src="../../uploads/productos/<%= primeraImagen %>" alt="<%= oferta.nombre %>">
                         <% } else { %>
                             <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
                         <% } %>
@@ -144,8 +147,6 @@
             <% }); %>
         </div>
     </div>
-    
-  
     
     <%- include ./layouts/footer.ejs %>
     <script src="js/index.js"></script> 
