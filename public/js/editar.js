@@ -93,7 +93,7 @@ $(document).ready(function() {
         }).catch(error => {
             console.error('Error al hacer la solicitud:', error);
         });
-    });
+    }); 
 
     $('#addProveedor').click(function(e) {
         e.preventDefault();
