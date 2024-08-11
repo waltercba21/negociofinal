@@ -385,6 +385,11 @@ footer {
   transition: 2000ms;
   cursor: pointer;
 }
+/* --------------------------CONTENEDOR ULTIMOS PRODUCTOS Y OFERTAS-----------------------------------*/
+.contenedor-principal-productos {
+  display: flex;
+  flex-direction: row;
+}
 /* --------------------------PAGINA ULTIMOS PRODUCTOS CARGADOS----------------------------------------*/
 .ultimos-productos {
   margin-top: 50px;
