@@ -496,15 +496,15 @@ footer {
 
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
-  flex: 0 0 calc(33.33% - 20px); /* Ajusta el tamaño de las tarjetas */
-  margin: 10px;
+  flex: 0 0 calc(33.33% - 20px); /* Ajusta el tamaño de las tarjetas para mostrar 3 por fila */
+  margin: 10px; /* Margen para separar las tarjetas */
   box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
   transition: 0.3s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   border-radius: 20px;
-  background-color: #fff; /* Añade un fondo blanco para las tarjetas */
+  background-color: #fff; /* Fondo blanco para las tarjetas */
 }
 
 .card-oferta .cover__card {
@@ -545,10 +545,9 @@ footer {
 .contenedor-productos {
   display: flex;
   overflow: hidden; /* Oculta el scroll */
-  gap: 10px;
+  gap: 10px; /* Espacio entre tarjetas */
   flex: 1;
   flex-wrap: nowrap; /* Asegura que las tarjetas no se envuelvan en múltiples filas */
-  transition: transform 0.5s ease; /* Transición para el movimiento del carrusel */
 }
 
 .flecha-izquierda, .flecha-derecha {
