@@ -496,6 +496,7 @@ footer {
 
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
+  height: 250px; /* Ajusta este valor según tus necesidades */
   flex: 0 0 calc(33.33% - 20px);
   margin: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
@@ -549,7 +550,7 @@ footer {
   overflow: hidden;
   gap: 10px; 
   flex: 1;
-  flex-wrap: nowrap; 
+  flex-wrap: wrap; 
   transition: transform 0.3s ease;
   width: 100%;
 }
