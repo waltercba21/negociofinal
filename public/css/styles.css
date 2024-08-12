@@ -497,7 +497,7 @@ footer {
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
   flex: 0 0 calc(33.33% - 20px); /* Ajusta el ancho para mostrar 3 tarjetas por fila */
-  margin: 10px; /* Espacio entre tarjetas */
+  margin: 0 10px; /* Espacio entre tarjetas (ajustado para el contenedor del carrusel) */
   box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
   transition: 0.3s;
   display: flex;
@@ -505,10 +505,10 @@ footer {
   justify-content: space-between;
   border-radius: 20px;
   background-color: #fff; /* Fondo blanco para las tarjetas */
-  /* Ajustar el tamaño máximo y el ancho mínimo si es necesario */
-  max-width: calc(33.33% - 20px); /* Ajustar para el espacio disponible */
+  /* El tamaño de la tarjeta está determinado por flex y width */
   width: calc(33.33% - 20px); /* Ajustar para el espacio disponible */
 }
+
 .card-oferta .cover__card {
   height: 150px;
   overflow: hidden;
@@ -540,18 +540,21 @@ footer {
 .contenedor-carrousel {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center; /* Centra el carrusel horizontalmente */
   width: 100%;
+  overflow: hidden; /* Asegura que el contenido excedente esté oculto */
 }
 
 .contenedor-productos {
   display: flex;
-  overflow: hidden; /* Oculta el scroll */
+  overflow: hidden; /* Oculta el contenido que sale del área visible */
   gap: 10px; /* Espacio entre tarjetas */
   flex: 1;
   flex-wrap: nowrap; /* Asegura que las tarjetas no se envuelvan en múltiples filas */
-  width: 100%; /* Asegúrate de que el contenedor ocupe todo el ancho disponible */
+  transition: transform 0.3s ease; /* Transición suave para el desplazamiento del carrusel */
+  width: 100%; /* Asegura que el contenedor ocupe todo el ancho disponible */
 }
+
 
 .flecha-izquierda, .flecha-derecha {
   background-color: #003f7d; /* Color de fondo */
