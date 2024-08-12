@@ -8,8 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <style>
     .ofertas-productos {
-      flex: 1;
-      max-width: 45%;
+      max-width: 100%;
       display: flex;
       flex-direction: column;
       border: 1px solid #ddd;
@@ -26,7 +25,7 @@
     }
 
     .card-oferta {
-      flex: 0 0 calc(33.33% - 20px); /* Ajusta el ancho para que quepan 3 tarjetas con espacio entre ellas */
+      flex: 0 0 calc(33.33% - 20px);
       margin: 10px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
       transition: 0.3s;
@@ -39,7 +38,7 @@
 
     .card-oferta .cover__card {
       width: 100%;
-      height: 110px; /* Ajusta la altura de la imagen */
+      height: 110px;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -49,7 +48,7 @@
     .card-oferta .cover__card img {
       max-width: 100%;
       max-height: 100%;
-      object-fit: cover; /* Ajuste de imagen para evitar distorsión */
+      object-fit: cover;
     }
 
     .flecha-izquierda, .flecha-derecha {
@@ -81,15 +80,6 @@
       display: flex;
       transition: transform 0.5s ease;
     }
-
-    .pelicula {
-      min-width: 200px;
-      margin-right: 10px;
-    }
-
-    .pelicula img {
-      width: 100%;
-    }
   </style>
 </head>
 <body class="body-index">  
@@ -101,7 +91,6 @@
         <button role="button" id="flecha-izquierda" class="flecha-izquierda"><i class="fa-solid fa-angle-left"></i></button>
         <div class="contenedor-carrousel">
           <div class="carrousel">
-            <!-- Tarjetas de productos -->
             <div class="pelicula">
               <a href="/productos?categoria=31"><img class="imagen-carrusel" data-categoria="31" src="uploads/productos/faros-led1.webp" alt=""></a>
               <div class="tarjeta-texto">
@@ -114,7 +103,6 @@
                 <p>FAROS TRASEROS LED</p>
               </div>
             </div>
-            <!-- Más tarjetas de productos -->
           </div>
         </div>
         <button role="button" id="flecha-derecha" class="flecha-derecha"><i class="fa-solid fa-angle-right"></i></button>
@@ -153,7 +141,7 @@
         <h2>OFERTAS</h2>
         <div class="contenedor-carrousel">
           <button class="flecha-izquierda"><i class="fas fa-chevron-left"></i></button>
-          <div class="contenedor-productos">
+          <div class="contenedor-productos carrousel">
             <% productosOferta.forEach(function(oferta) { %>
               <div class="card card-oferta">
                 <% if (oferta.imagenes.length > 0) { %>
@@ -183,55 +171,39 @@
           <button class="flecha-derecha"><i class="fas fa-chevron-right"></i></button>
         </div>
       </div>
+    </div>
   </main>
 
   <%- include ./layouts/footer.ejs %>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const contenedorProductos = document.querySelector('.contenedor-productos');
+      const contenedorCarrousel = document.querySelector('.carrousel');
       const tarjetas = document.querySelectorAll('.card-oferta');
       const flechaIzquierda = document.querySelector('.flecha-izquierda');
       const flechaDerecha = document.querySelector('.flecha-derecha');
     
-      console.log('Contenedor de productos:', contenedorProductos);
-      console.log('Tarjetas:', tarjetas);
-      console.log('Flecha izquierda:', flechaIzquierda);
-      console.log('Flecha derecha:', flechaDerecha);
-    
       let index = 0;
       const tarjetasPorPagina = 3;
-    
+
       function mostrarTarjetas() {
-        console.log('Mostrando tarjetas desde índice:', index);
-        tarjetas.forEach((tarjeta, i) => {
-          if (i >= index && i < index + tarjetasPorPagina) {
-            tarjeta.style.display = 'flex';
-          } else {
-            tarjeta.style.display = 'none';
-          }
-        });
+        const offset = -index * (100 / tarjetasPorPagina);
+        contenedorCarrousel.style.transform = `translateX(${offset}%)`;
       }
-    
+
       flechaDerecha.addEventListener('click', function() {
-        console.log('Flecha derecha clickeada');
         if (index + tarjetasPorPagina < tarjetas.length) {
-          index += tarjetasPorPagina;
-        } else {
-          console.log('No hay más tarjetas a la derecha');
+          index++;
         }
         mostrarTarjetas();
       });
-    
+
       flechaIzquierda.addEventListener('click', function() {
-        console.log('Flecha izquierda clickeada');
-        if (index - tarjetasPorPagina >= 0) {
-          index -= tarjetasPorPagina;
-        } else {
-          console.log('No hay más tarjetas a la izquierda');
+        if (index > 0) {
+          index--;
         }
         mostrarTarjetas();
       });
-    
+
       mostrarTarjetas();
     });
   </script>
