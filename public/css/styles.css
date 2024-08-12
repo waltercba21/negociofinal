@@ -519,23 +519,16 @@ footer {
 .card-oferta .cover__card img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .titulo-producto-oferta h3 {
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-  font-weight: bold;
-  font-size: 10px;
-  max-width: 100%; 
-  margin: 0 auto;
-  color: #003f7d;
+  font-size: 12px;
+  max-width: 100%;
 }
 
 .precio-producto-oferta p {
   font-size: 14px;
-  color: #b30000;
 }
 
 .categoria-producto-oferta h5 {
