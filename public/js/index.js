@@ -84,51 +84,50 @@ function abrirMapa() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  const contenedorProductos = document.querySelector('.ofertas-productos .contenedor-productos');
-  const tarjetas = document.querySelectorAll('.ofertas-productos .card-oferta');
-  const flechaIzquierda = document.querySelector('.ofertas-productos .flecha-izquierda');
-  const flechaDerecha = document.querySelector('.ofertas-productos .flecha-derecha');
+  const contenedorProductosOfertas = document.querySelector('.contenedor-productos-ofertas');
+  const tarjetasOfertas = document.querySelectorAll('.card-oferta');
+  const flechaIzquierdaOfertas = document.querySelector('.flecha-izquierda-ofertas');
+  const flechaDerechaOfertas = document.querySelector('.flecha-derecha-ofertas');
 
-  let index = 0;
-  const tarjetasPorPagina = 3; // Número de tarjetas a mostrar en una vista
+  let indexOfertas = 0;
+  const tarjetasPorPaginaOfertas = 3; // Número de tarjetas a mostrar en una vista
 
-  function actualizarCarrusel() {
-    // Calcular el desplazamiento en porcentaje basado en el índice
-    const desplazamiento = -((index / tarjetas.length) * 100);
-    contenedorProductos.style.transform = `translateX(${desplazamiento}%)`;
+  function actualizarCarruselOfertas() {
+    const desplazamientoOfertas = -((indexOfertas / tarjetasOfertas.length) * 100);
+    contenedorProductosOfertas.style.transform = `translateX(${desplazamientoOfertas}%)`;
   }
 
-  function mostrarTarjetas() {
-    tarjetas.forEach((tarjeta, i) => {
-      if (i >= index && i < index + tarjetasPorPagina) {
-        tarjeta.style.display = 'flex'; // Asegura que la tarjeta se muestre
+  function mostrarTarjetasOfertas() {
+    tarjetasOfertas.forEach((tarjeta, i) => {
+      if (i >= indexOfertas && i < indexOfertas + tarjetasPorPaginaOfertas) {
+        tarjeta.style.display = 'flex';
       } else {
-        tarjeta.style.display = 'none'; // Oculta la tarjeta
+        tarjeta.style.display = 'none';
       }
     });
   }
 
-  if (flechaDerecha) {
-    flechaDerecha.addEventListener('click', function() {
-      if (index + tarjetasPorPagina < tarjetas.length) {
-        index += tarjetasPorPagina;
-        mostrarTarjetas();
-        actualizarCarrusel();
+  if (flechaDerechaOfertas) {
+    flechaDerechaOfertas.addEventListener('click', function() {
+      if (indexOfertas + tarjetasPorPaginaOfertas < tarjetasOfertas.length) {
+        indexOfertas += tarjetasPorPaginaOfertas;
+        mostrarTarjetasOfertas();
+        actualizarCarruselOfertas();
       }
     });
   }
 
-  if (flechaIzquierda) {
-    flechaIzquierda.addEventListener('click', function() {
-      if (index - tarjetasPorPagina >= 0) {
-        index -= tarjetasPorPagina;
-        mostrarTarjetas();
-        actualizarCarrusel();
+  if (flechaIzquierdaOfertas) {
+    flechaIzquierdaOfertas.addEventListener('click', function() {
+      if (indexOfertas - tarjetasPorPaginaOfertas >= 0) {
+        indexOfertas -= tarjetasPorPaginaOfertas;
+        mostrarTarjetasOfertas();
+        actualizarCarruselOfertas();
       }
     });
   }
 
-  // Mostrar las primeras tarjetas al cargar la página
-  mostrarTarjetas();
-  actualizarCarrusel();
+  mostrarTarjetasOfertas();
+  actualizarCarruselOfertas();
 });
+
