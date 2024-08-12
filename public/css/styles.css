@@ -505,6 +505,7 @@ footer {
   justify-content: space-between;
   border-radius: 20px;
   background-color: #fff;
+  max-width: 100%; /* Asegura que la tarjeta no exceda el ancho del contenedor */
 }
 
 /* Ajustes de imagen para tarjetas */
@@ -534,6 +535,7 @@ footer {
 .categoria-producto-oferta h5 {
   font-size: 12px;
 }
+
 /* --------------------------CARROUSEL----------------------------------------*/
 .contenedor-carrousel {
   display: flex;
@@ -547,8 +549,10 @@ footer {
   display: flex;
   overflow: hidden; /* Oculta el scroll */
   gap: 10px; /* Espacio entre tarjetas */
-  width: 100%;
+  flex: 1;
+  flex-wrap: nowrap; /* Asegura que las tarjetas no se envuelvan en múltiples filas */
   transition: transform 0.3s ease; /* Agrega una transición suave para el desplazamiento */
+  width: 100%;
 }
 
 .flecha-izquierda, .flecha-derecha {
