@@ -496,8 +496,8 @@ footer {
 
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
-  flex: 0 0 calc(33.33% - 20px); /* Ajusta el ancho para mostrar 3 tarjetas por fila */
-  margin: 10px; /* Espacio entre tarjetas */
+  flex: 0 0 calc(33.33% - 20px);
+  margin: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
   transition: 0.3s;
   display: flex;
@@ -505,12 +505,11 @@ footer {
   justify-content: space-between;
   border-radius: 20px;
   background-color: #fff;
-  max-width: 100%; /* Asegura que la tarjeta no exceda el ancho del contenedor */
+  max-width: 100%;
 }
 
-/* Ajustes de imagen para tarjetas */
 .card-oferta .cover__card {
-  height: 150px; /* Ajusta según el diseño deseado */
+  height: 150px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -547,22 +546,22 @@ footer {
 
 .contenedor-productos {
   display: flex;
-  overflow: hidden; /* Oculta el scroll */
-  gap: 10px; /* Espacio entre tarjetas */
+  overflow: hidden;
+  gap: 10px; 
   flex: 1;
-  flex-wrap: nowrap; /* Asegura que las tarjetas no se envuelvan en múltiples filas */
-  transition: transform 0.3s ease; /* Agrega una transición suave para el desplazamiento */
+  flex-wrap: nowrap; 
+  transition: transform 0.3s ease;
   width: 100%;
 }
 
 .flecha-izquierda, .flecha-derecha {
-  background-color: #003f7d; /* Color de fondo */
-  color: white; /* Color de la flecha */
-  border: none; /* Sin borde */
-  border-radius: 50%; /* Bordes redondeados */
-  padding: 10px; /* Espaciado interno */
-  cursor: pointer; /* Cursor en forma de mano */
-  font-size: 20px; /* Tamaño de la flecha */
+  background-color: #003f7d; 
+  color: white;
+  border: none; 
+  border-radius: 50%;
+  padding: 10px; 
+  cursor: pointer; 
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
