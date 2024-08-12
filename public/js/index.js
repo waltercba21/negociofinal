@@ -130,4 +130,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Mostrar las primeras tarjetas al cargar la página
   mostrarTarjetas();
+  actualizarCarrusel();
 });
