@@ -496,8 +496,8 @@ footer {
 
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
-  flex: 0 0 calc(33.33% - 20px); /* Ajusta el tamaño de las tarjetas para mostrar 3 por fila */
-  margin: 10px; /* Margen para separar las tarjetas */
+  flex: 0 0 calc(33.33% - 20px); /* Ajusta el ancho para mostrar 3 tarjetas por fila */
+  margin: 10px; /* Espacio entre tarjetas */
   box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
   transition: 0.3s;
   display: flex;
@@ -505,8 +505,10 @@ footer {
   justify-content: space-between;
   border-radius: 20px;
   background-color: #fff; /* Fondo blanco para las tarjetas */
+  /* Ajustar el tamaño máximo y el ancho mínimo si es necesario */
+  max-width: calc(33.33% - 20px); /* Ajustar para el espacio disponible */
+  width: calc(33.33% - 20px); /* Ajustar para el espacio disponible */
 }
-
 .card-oferta .cover__card {
   height: 150px;
   overflow: hidden;
@@ -548,6 +550,7 @@ footer {
   gap: 10px; /* Espacio entre tarjetas */
   flex: 1;
   flex-wrap: nowrap; /* Asegura que las tarjetas no se envuelvan en múltiples filas */
+  width: 100%; /* Asegúrate de que el contenedor ocupe todo el ancho disponible */
 }
 
 .flecha-izquierda, .flecha-derecha {
