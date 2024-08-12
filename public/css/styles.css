@@ -491,7 +491,6 @@ footer {
   padding: 10px;
   position: relative; 
 }
-
 .ofertas-productos h2 {
   text-align: center;
   color: #003f7d;
@@ -500,31 +499,26 @@ footer {
 }
 
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
-.contenedor-productos {
-  display: flex;
-  overflow: hidden; /* Oculta el scroll */
-  gap: 10px;
-  flex: 1;
-  scroll-behavior: smooth; /* Suaviza el desplazamiento */
-  width: calc(150px * 3 + 20px * 2); /* Ajusta el ancho para mostrar 3 tarjetas a la vez */
-}
-
 .card-oferta {
-  width: 150px; /* Ancho fijo de cada tarjeta */
-  height: 300px; /* Ajusta la altura para todas las tarjetas */
+  width: 100%; 
+  max-width: 150px; 
   margin: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
   transition: 0.3s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  flex-shrink: 0; /* Impide que las tarjetas se reduzcan */
+  height: 300px; 
+  border-radius: 20px;
 }
 
-/* Ajustar imagen y contenido */
+.card-oferta:hover {
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2); 
+}
+
 .card-oferta .cover__card {
   width: 100%;
-  height: 150px; /* Ajusta la altura de la imagen */
+  height: 110px; /* Ajusta la altura de la imagen */
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -534,20 +528,24 @@ footer {
 .card-oferta .cover__card img {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
+  object-fit: cover; /* Ajuste de imagen para evitar deformación */
 }
 
-.titulo-producto-oferta, .precio-producto-oferta, .categoria-producto-oferta {
-  margin-top: 10px;
+.titulo-producto-oferta {
+  display: flex;
+  align-items: center; 
+  justify-content: center;
+  flex-direction: column;
+  margin-top: 10px; /* Ajuste de margen superior */
 }
 
 .titulo-producto-oferta h3 {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
   font-weight: bold;
-  font-size: 10px;
-  max-width: 100%;
+  font-size: 10px; /* Tamaño de fuente más pequeño */
+  max-width: 100%; 
   margin: 0 auto;
 }
 
@@ -556,6 +554,7 @@ footer {
   align-items: flex-end;
   justify-content: center;
   flex-direction: column;
+  margin-top: 10px; /* Ajuste de margen superior */
 }
 
 .precio-producto-oferta p {
@@ -569,11 +568,12 @@ footer {
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  margin-top: 10px; /* Ajuste de margen superior */
 }
 
 .categoria-producto-oferta h5 {
   color: #003f7d;
-  font-size: 12px;
+  font-size: 12px; /* Tamaño de fuente más pequeño */
   font-weight: bold;
   text-align: center;
   width: 100%;
@@ -585,31 +585,31 @@ footer {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  position: relative; /* Necesario para posicionar las flechas */
 }
 
+.contenedor-productos {
+  display: flex;
+  overflow: hidden; /* Oculta el scroll */
+  gap: 10px;
+  flex: 1;
+}
 .flecha-izquierda, .flecha-derecha {
-  background-color: #003f7d;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  padding: 10px;
-  cursor: pointer;
-  font-size: 20px;
+  background-color: #003f7d; /* Color de fondo */
+  color: white; /* Color de la flecha */
+  border: none; /* Sin borde */
+  border-radius: 50%; /* Bordes redondeados */
+  padding: 10px; /* Espaciado interno */
+  cursor: pointer; /* Cursor en forma de mano */
+  font-size: 20px; /* Tamaño de la flecha */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
 }
-
 .flecha-izquierda {
-  position: absolute;
-  left: 0;
+  margin-right: 10px; /* Espacio entre la flecha izquierda y el contenedor de productos */
 }
-
 .flecha-derecha {
-  position: absolute;
-  right: 0;
+  margin-left: 10px; /* Espacio entre la flecha derecha y el contenedor de productos */
 }
 
 /*----------------------LOGIN--------------------*/
