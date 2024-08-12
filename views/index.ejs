@@ -1,212 +1,239 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
-  <body class="body-index">  
-    <main>
-      <div class="peliculas-recomendadas contenedor">
-          <div class="contenedor-principal">
-              <button role="button" id="flecha-izquierda" class="flecha-izquierda"><i class="fa-solid fa-angle-left"></i></button>
-              <div class="contenedor-carrousel">
-                  <div class="carrousel">
-                      <div class="pelicula">
-                          <a href="/productos?categoria=31"><img class="imagen-carrusel" data-categoria="31" src="uploads/productos/faros-led1.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>FAROS AUXILIARES LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=30"><img class="imagen-carrusel" data-categoria="30" src="uploads/productos/faro-trasero-led1.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>FAROS TRASEROS LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=25"><img class="imagen-carrusel" data-categoria="25" src="uploads/productos/opticas-led1.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>OPTICAS LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=28"><img class="imagen-carrusel" data-categoria="28" src="uploads/productos/lamparas-led1.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>LAMPARAS LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=2"><img class="imagen-carrusel" data-categoria="2" src="uploads/productos/lamparas1.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>LAMPARAS</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=15"><img class="imagen-carrusel" data-categoria="15" src="uploads/productos/16.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>FAROS AUXILIARES</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=16"><img class="imagen-carrusel" data-categoria="16" src="uploads/productos/14.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>BARRAS LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=5"><img class="imagen-carrusel" data-categoria="5" src="uploads/productos/10.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>FAROS LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=12"><img class="imagen-carrusel" data-categoria="12" src="uploads/productos/3.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>LINEA UNIVERSAL</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=13"><img class="imagen-carrusel" data-categoria="13" src="uploads/productos/2.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>LINEA CAMIONES</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=9"><img class="imagen-carrusel" data-categoria="9" src="uploads/productos/5.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>ESPEJOS UNIVERSALES</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=14"><img class="imagen-carrusel" data-categoria="14" src="uploads/productos/6.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>VIDRIOS DE ESPEJOS</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=11"><img class="imagen-carrusel" data-categoria="11" src="uploads/productos/4.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>VIDRIOS DE OPTICAS</p>
-                          </div>
-                      </div>
-                  </div>
-                  <button role="button" id="flecha-derecha" class="flecha-derecha"><i class="fa-solid fa-angle-right"></i></button>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ofertas de Productos</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <style>
+    .ofertas-productos {
+      flex: 1;
+      max-width: 45%;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      padding: 10px;
+      position: relative;
+    }
+
+    .ofertas-productos h2 {
+      text-align: center;
+      color: #003f7d;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .card-oferta {
+      flex: 0 0 calc(33.33% - 20px); /* Ajusta el ancho para que quepan 3 tarjetas con espacio entre ellas */
+      margin: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+      transition: 0.3s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 300px; 
+      border-radius: 20px;
+    }
+
+    .card-oferta .cover__card {
+      width: 100%;
+      height: 110px; /* Ajusta la altura de la imagen */
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-oferta .cover__card img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: cover; /* Ajuste de imagen para evitar distorsión */
+    }
+
+    .flecha-izquierda, .flecha-derecha {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    .flecha-izquierda {
+      left: 0;
+    }
+
+    .flecha-derecha {
+      right: 0;
+    }
+
+    .contenedor-productos {
+      display: flex;
+      overflow: hidden;
+    }
+
+    .carrousel {
+      display: flex;
+      transition: transform 0.5s ease;
+    }
+
+    .pelicula {
+      min-width: 200px;
+      margin-right: 10px;
+    }
+
+    .pelicula img {
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="body-index">  
+  <%- include ./layouts/head.ejs %>
+  <%- include ./layouts/header.ejs %>
+  <main>
+    <div class="peliculas-recomendadas contenedor">
+      <div class="contenedor-principal">
+        <button role="button" id="flecha-izquierda" class="flecha-izquierda"><i class="fa-solid fa-angle-left"></i></button>
+        <div class="contenedor-carrousel">
+          <div class="carrousel">
+            <!-- Tarjetas de productos -->
+            <div class="pelicula">
+              <a href="/productos?categoria=31"><img class="imagen-carrusel" data-categoria="31" src="uploads/productos/faros-led1.webp" alt=""></a>
+              <div class="tarjeta-texto">
+                <p>FAROS AUXILIARES LED</p>
               </div>
+            </div>
+            <div class="pelicula">
+              <a href="/productos?categoria=30"><img class="imagen-carrusel" data-categoria="30" src="uploads/productos/faro-trasero-led1.webp" alt=""></a>
+              <div class="tarjeta-texto">
+                <p>FAROS TRASEROS LED</p>
+              </div>
+            </div>
+            <!-- Más tarjetas de productos -->
           </div>
+        </div>
+        <button role="button" id="flecha-derecha" class="flecha-derecha"><i class="fa-solid fa-angle-right"></i></button>
       </div>
-  
-      <div class="contenedor-principal-productos">
-        <div class="ultimos-productos contenedor">
-          <h2>ÚLTIMOS AGREGADOS</h2>
+    </div>
+
+    <div class="contenedor-principal-productos">
+      <div class="ultimos-productos contenedor">
+        <h2>ÚLTIMOS AGREGADOS</h2>
+        <div class="contenedor-productos">
+          <% productos.forEach(function(producto) { %>
+            <div class="card card-ultimos">
+              <div class="cover__card">
+                <% if (producto.imagen && producto.imagen.length > 0) { %>
+                  <img src="../../uploads/productos/<%= producto.imagen %>" alt="<%= producto.nombre %>">
+                <% } else { %>
+                  <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
+                <% } %>
+              </div>
+              <div class="titulo-producto">
+                <h3 class="nombre"><%= producto.nombre %></h3>
+              </div>
+              <hr>
+              <div class="categoria-producto">
+                <h5 class="categoria"><%= producto.categoria_nombre %></h5>
+              </div>
+              <div class="precio-producto">
+                <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %></p>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+
+      <div class="ofertas-productos contenedor">
+        <h2>OFERTAS</h2>
+        <div class="contenedor-carrousel">
+          <button class="flecha-izquierda"><i class="fas fa-chevron-left"></i></button>
           <div class="contenedor-productos">
-            <% productos.forEach(function(producto) { %>
-              <div class="card card-ultimos">
-                <div class="cover__card">
-                  <% if (producto.imagen && producto.imagen.length > 0) { %>
-                    <img src="../../uploads/productos/<%= producto.imagen %>" alt="<%= producto.nombre %>">
-                  <% } else { %>
-                    <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
-                  <% } %>
-                </div>
-                <div class="titulo-producto">
-                  <h3 class="nombre"><%= producto.nombre %></h3>
+            <% productosOferta.forEach(function(oferta) { %>
+              <div class="card card-oferta">
+                <% if (oferta.imagenes.length > 0) { %>
+                  <div class="cover__card">
+                    <% oferta.imagenes.forEach(function(imagen) { %>
+                      <img src="../../uploads/productos/<%= imagen %>" alt="<%= oferta.nombre %>">
+                    <% }); %>
+                  </div>
+                <% } else { %>
+                  <div class="cover__card">
+                    <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
+                  </div>
+                <% } %>
+                <div class="titulo-producto-oferta">
+                  <h3 class="nombre"><%= oferta.nombre %></h3>
                 </div>
                 <hr>
-                <div class="categoria-producto">
-                  <h5 class="categoria"><%= producto.categoria_nombre %></h5>
+                <div class="categoria-producto-oferta">
+                  <h5 class="categoria"><%= oferta.categoria_nombre %></h5>
                 </div>
-                <div class="precio-producto">
-                  <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %></p>
+                <div class="precio-producto-oferta">
+                  <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
                 </div>
               </div>
             <% }); %>
           </div>
+          <button class="flecha-derecha"><i class="fas fa-chevron-right"></i></button>
         </div>
-    
-        <div class="ofertas-productos contenedor">
-            <h2>OFERTAS</h2>
-            <div class="contenedor-carrousel">
-              <button class="flecha-izquierda"><i class="fas fa-chevron-left"></i></button>
-              <div class="contenedor-productos">
-                <% productosOferta.forEach(function(oferta) { %>
-                  <div class="card card-oferta">
-                    <% if (oferta.imagenes.length > 0) { %>
-                      <div class="cover__card">
-                        <% oferta.imagenes.forEach(function(imagen) { %>
-                          <img src="../../uploads/productos/<%= imagen %>" alt="<%= oferta.nombre %>">
-                        <% }); %>
-                      </div>
-                    <% } else { %>
-                      <div class="cover__card">
-                        <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
-                      </div>
-                    <% } %>
-                    <div class="titulo-producto-oferta">
-                      <h3 class="nombre"><%= oferta.nombre %></h3>
-                    </div>
-                    <hr>
-                    <div class="categoria-producto-oferta">
-                      <h5 class="categoria"><%= oferta.categoria_nombre %></h5>
-                    </div>
-                    <div class="precio-producto-oferta">
-                      <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
-                    </div>
-                  </div>
-                <% }); %>
-              </div>
-              <button class="flecha-derecha"><i class="fas fa-chevron-right"></i></button>
-            </div>
-          </div>
-      </main>
-    
-    <%- include ./layouts/footer.ejs %>
-    <script src="js/index.js"></script> 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-    const contenedorProductos = document.querySelector('.contenedor-productos');
-    const tarjetas = document.querySelectorAll('.card-oferta');
-    const flechaIzquierda = document.querySelector('.flecha-izquierda');
-    const flechaDerecha = document.querySelector('.flecha-derecha');
-  
-    console.log('Contenedor de productos:', contenedorProductos);
-    console.log('Tarjetas:', tarjetas);
-    console.log('Flecha izquierda:', flechaIzquierda);
-    console.log('Flecha derecha:', flechaDerecha);
-  
-    let index = 0;
-    const tarjetasPorPagina = 3;
-  
-    function mostrarTarjetas() {
-      console.log('Mostrando tarjetas desde índice:', index);
-      tarjetas.forEach((tarjeta, i) => {
-        if (i >= index && i < index + tarjetasPorPagina) {
-          tarjeta.style.display = 'flex';
-        } else {
-          tarjeta.style.display = 'none';
-        }
-      });
-    }
-  
-    flechaDerecha.addEventListener('click', function() {
-      console.log('Flecha derecha clickeada');
-      if (index + tarjetasPorPagina < tarjetas.length) {
-        index += tarjetasPorPagina;
-      } else {
-        console.log('No hay más tarjetas a la derecha');
-      }
-      mostrarTarjetas();
-    });
-  
-    flechaIzquierda.addEventListener('click', function() {
-      console.log('Flecha izquierda clickeada');
-      if (index - tarjetasPorPagina >= 0) {
-        index -= tarjetasPorPagina;
-      } else {
-        console.log('No hay más tarjetas a la izquierda');
-      }
-      mostrarTarjetas();
-    });
-  
-    mostrarTarjetas();
-  });
-  
-    </script> 
-</body>
+      </div>
+  </main>
 
+  <%- include ./layouts/footer.ejs %>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const contenedorProductos = document.querySelector('.contenedor-productos');
+      const tarjetas = document.querySelectorAll('.card-oferta');
+      const flechaIzquierda = document.querySelector('.flecha-izquierda');
+      const flechaDerecha = document.querySelector('.flecha-derecha');
+    
+      console.log('Contenedor de productos:', contenedorProductos);
+      console.log('Tarjetas:', tarjetas);
+      console.log('Flecha izquierda:', flechaIzquierda);
+      console.log('Flecha derecha:', flechaDerecha);
+    
+      let index = 0;
+      const tarjetasPorPagina = 3;
+    
+      function mostrarTarjetas() {
+        console.log('Mostrando tarjetas desde índice:', index);
+        tarjetas.forEach((tarjeta, i) => {
+          if (i >= index && i < index + tarjetasPorPagina) {
+            tarjeta.style.display = 'flex';
+          } else {
+            tarjeta.style.display = 'none';
+          }
+        });
+      }
+    
+      flechaDerecha.addEventListener('click', function() {
+        console.log('Flecha derecha clickeada');
+        if (index + tarjetasPorPagina < tarjetas.length) {
+          index += tarjetasPorPagina;
+        } else {
+          console.log('No hay más tarjetas a la derecha');
+        }
+        mostrarTarjetas();
+      });
+    
+      flechaIzquierda.addEventListener('click', function() {
+        console.log('Flecha izquierda clickeada');
+        if (index - tarjetasPorPagina >= 0) {
+          index -= tarjetasPorPagina;
+        } else {
+          console.log('No hay más tarjetas a la izquierda');
+        }
+        mostrarTarjetas();
+      });
+    
+      mostrarTarjetas();
+    });
+  </script>
+</body>
 </html>
