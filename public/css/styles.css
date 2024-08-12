@@ -503,6 +503,9 @@ footer {
 
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
+  display: none;
+}
+.card-oferta {
   flex: 0 0 calc(33.33% - 20px);
   margin: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
@@ -514,8 +517,8 @@ footer {
 }
 
 .card-oferta .cover__card {
-  width: 400px;
-  height: 140px;
+  width: 150px;
+  height: 300px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -559,6 +562,8 @@ footer {
   margin: 0;
   text-align: center;
   width: 90%;
+  color: #b30000;
+  font-weight: bold;
 }
 
 .categoria-producto-oferta {

@@ -83,10 +83,10 @@ function abrirMapa() {
   window.open("https://maps.app.goo.gl/c6bik6TL7uBQP3KZ8", "_blank");
 }
 document.addEventListener('DOMContentLoaded', function() {
-  const contenedorProductos = document.querySelector('.contenedor-productos');
-  const tarjetas = document.querySelectorAll('.card-oferta');
-  const flechaIzquierda = document.querySelector('.flecha-izquierda');
-  const flechaDerecha = document.querySelector('.flecha-derecha');
+  const contenedorProductos = document.querySelector('.ofertas-productos .contenedor-productos');
+  const tarjetas = document.querySelectorAll('.ofertas-productos .card-oferta');
+  const flechaIzquierda = document.querySelector('.ofertas-productos .flecha-izquierda');
+  const flechaDerecha = document.querySelector('.ofertas-productos .flecha-derecha');
 
   console.log('Contenedor de productos:', contenedorProductos);
   console.log('Tarjetas:', tarjetas);
@@ -107,25 +107,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  flechaDerecha.addEventListener('click', function() {
-    console.log('Flecha derecha clickeada');
-    if (index + tarjetasPorPagina < tarjetas.length) {
-      index += tarjetasPorPagina;
-    } else {
-      console.log('No hay más tarjetas a la derecha');
-    }
-    mostrarTarjetas();
-  });
+  if (flechaDerecha) {
+    flechaDerecha.addEventListener('click', function() {
+      console.log('Flecha derecha clickeada');
+      if (index + tarjetasPorPagina < tarjetas.length) {
+        index += tarjetasPorPagina;
+      } else {
+        console.log('No hay más tarjetas a la derecha');
+      }
+      mostrarTarjetas();
+    });
+  }
 
-  flechaIzquierda.addEventListener('click', function() {
-    console.log('Flecha izquierda clickeada');
-    if (index - tarjetasPorPagina >= 0) {
-      index -= tarjetasPorPagina;
-    } else {
-      console.log('No hay más tarjetas a la izquierda');
-    }
-    mostrarTarjetas();
-  });
+  if (flechaIzquierda) {
+    flechaIzquierda.addEventListener('click', function() {
+      console.log('Flecha izquierda clickeada');
+      if (index - tarjetasPorPagina >= 0) {
+        index -= tarjetasPorPagina;
+      } else {
+        console.log('No hay más tarjetas a la izquierda');
+      }
+      mostrarTarjetas();
+    });
+  }
 
   mostrarTarjetas();
 });
