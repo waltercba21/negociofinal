@@ -514,6 +514,7 @@ footer {
 }
 
 .card-oferta .cover__card {
+  width: 400px;
   overflow: hidden;
   display: flex;
   align-items: center;
