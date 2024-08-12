@@ -506,11 +506,12 @@ footer {
   gap: 10px;
   flex: 1;
   scroll-behavior: smooth; /* Suaviza el desplazamiento */
+  width: calc(150px * 3 + 20px * 2); /* Ajusta el ancho para mostrar 3 tarjetas a la vez */
 }
 
 .card-oferta {
-  width: 150px; /* Asegúrate de que el ancho sea fijo */
-  height: 300px; /* Ajusta la altura para que todas las tarjetas sean del mismo tamaño */
+  width: 150px; /* Ancho fijo de cada tarjeta */
+  height: 300px; /* Ajusta la altura para todas las tarjetas */
   margin: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   transition: 0.3s;
@@ -523,7 +524,7 @@ footer {
 /* Ajustar imagen y contenido */
 .card-oferta .cover__card {
   width: 100%;
-  height: 150px; /* Ajusta la altura para que todas las tarjetas sean del mismo tamaño */
+  height: 150px; /* Ajusta la altura de la imagen */
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -610,7 +611,6 @@ footer {
   position: absolute;
   right: 0;
 }
-
 
 /*----------------------LOGIN--------------------*/
 .body-login{
