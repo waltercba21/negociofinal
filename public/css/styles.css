@@ -389,7 +389,6 @@ footer {
 .contenedor-principal {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
   gap: 20px;
   margin: 50px 0;
 }
@@ -397,14 +396,13 @@ footer {
 /* Últimos productos cargados */
 .ultimos-productos {
   flex: 1;
-  max-width: 45%;
+  max-width: 48%;
   display: flex;
   flex-direction: column;
   align-items: center;
   border: 1px solid #ddd;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   padding: 10px;
-  margin-left: 20px;
   border-radius: 20px;
 }
 .ultimos-productos h2 {
@@ -483,7 +481,7 @@ footer {
 /* Ofertas productos */
 .contenedor-ofertas {
   flex: 1;
-  max-width: 45%;
+  max-width: 48%;
   display: flex;
   flex-direction: column;
   border: 1px solid #ddd;
@@ -491,7 +489,6 @@ footer {
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   padding: 10px;
   position: relative;
-  margin-right: 20px;
 }
 
 .card-oferta {
@@ -508,7 +505,7 @@ footer {
 }
 
 .cover-card-oferta {
-  height: 120px;
+  height: 180px; /* Aumentar la altura de la imagen */
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -566,6 +563,7 @@ footer {
   justify-content: center;
   z-index: 1;
 }
+
 
 
 /*----------------------LOGIN--------------------*/
