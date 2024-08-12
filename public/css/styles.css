@@ -482,15 +482,14 @@ footer {
 
 /* --------------------------OFERTAS PRODUCTOS----------------------------------------*/
 .ofertas-productos {
-  flex: 1; /* Ocupa el espacio restante */
-  max-width: 45%; /* Ancho máximo del 45% del contenedor principal */
+  flex: 1;
+  max-width: 45%;
   display: flex;
   flex-direction: column;
-  margin-right: 20px;
-  border-radius: 20px;
-  border: 1px solid #ddd; /* Borde para distinguir el contenedor */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Sombra para profundidad */
-  padding: 10px; /* Relleno interno */
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  padding: 10px;
+  position: relative; 
 }
 .ofertas-productos h2 {
   text-align: center;
@@ -501,35 +500,32 @@ footer {
 
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
-  width: 100%; 
-  max-width: 150px; 
+  width: 100%;
+  max-width: 150px;
   margin: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   transition: 0.3s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 300px; 
-  border-radius: 20px;
+  flex-shrink: 0; /* Impide que las tarjetas se reduzcan */
 }
 
 .card-oferta:hover {
   box-shadow: 0 8px 16px rgba(0,0,0,0.2); 
 }
-
 .card-oferta .cover__card {
   width: 100%;
-  height: 110px; /* Ajusta la altura de la imagen */
+  height: 150px; /* Ajusta la altura para que todas las tarjetas sean del mismo tamaño */
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .card-oferta .cover__card img {
   max-width: 100%;
   max-height: 100%;
-  object-fit: cover; /* Ajuste de imagen para evitar deformación */
+  object-fit: contain;
 }
 
 .titulo-producto-oferta {
@@ -549,7 +545,9 @@ footer {
   max-width: 100%; 
   margin: 0 auto;
 }
-
+.titulo-producto-oferta, .precio-producto-oferta, .categoria-producto-oferta {
+  margin-top: 10px;
+}
 .precio-producto-oferta {
   display: flex;
   align-items: flex-end;
@@ -583,35 +581,38 @@ footer {
 /* --------------------------CARROUSEL----------------------------------------*/
 .contenedor-carrousel {
   display: flex;
-  align-items: center; /* Alineación vertical de las flechas */
-  justify-content: space-between; /* Espacio entre las flechas y el contenedor de productos */
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
 }
+
 .contenedor-productos {
   display: flex;
-  overflow-x: auto; /* Permitir desplazamiento horizontal si es necesario */
-  gap: 10px; /* Espacio entre las tarjetas */
-  flex: 1; /* Ocupa el espacio restante */
+  overflow: hidden; /* Oculta el scroll */
+  gap: 10px;
+  flex: 1;
 }
 .flecha-izquierda, .flecha-derecha {
-  background-color: #003f7d; /* Color de fondo */
-  color: white; /* Color de la flecha */
-  border: none; /* Sin borde */
-  border-radius: 50%; /* Bordes redondeados */
-  padding: 10px; /* Espaciado interno */
-  cursor: pointer; /* Cursor en forma de mano */
-  font-size: 20px; /* Tamaño de la flecha */
+  background-color: #003f7d;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 10; /* Asegura que las flechas estén sobre las tarjetas */
 }
 .flecha-izquierda {
-  margin-right: 10px; /* Espacio entre la flecha izquierda y el contenedor de productos */
+  position: absolute;
+  left: 0;
 }
 .flecha-derecha {
-  margin-left: 10px; /* Espacio entre la flecha derecha y el contenedor de productos */
+  position: absolute;
+  right: 0;
 }
-
 /*----------------------LOGIN--------------------*/
 .body-login{
   margin: auto;
