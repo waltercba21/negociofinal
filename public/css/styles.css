@@ -390,94 +390,8 @@ footer {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 20px; 
-  margin: 50px 0; 
-}
-
-/* --------------------------ULTIMOS PRODUCTOS CARGADOS----------------------------------------*/
-.ultimos-productos {
-  flex: 1; 
-  max-width: 45%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 1px solid #ddd; 
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
-  padding: 10px; 
-  margin-left: 20px;
-  border-radius: 20px;
-}
-.ultimos-productos h2 {
-  text-align: center;
-  color: #003f7d;
-  font-weight: bold;
-  font-size: 20px;
-}
-.card-ultimos {
-  width: 100%;
-  max-width: 150px; 
-  margin: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  transition: 0.3s;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-.card-ultimos:hover {
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2); 
-}
-.card-ultimos .cover__card {
-  width: 100%;
-  height: 100px; 
-  overflow: hidden;
-}
-.card-ultimos .cover__card img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-.titulo-producto {
-  flex-grow: 1;
-  display: flex;
-  align-items: center; 
-  justify-content: center;
-  flex-direction: column;
-  margin-top: 15px;
-}
-.titulo-producto h3 {
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-  font-weight: bold;
-  font-size: 10px;
-  max-width: 100%; 
-  margin: 0 auto;
-}
-.precio-producto {
-  flex-grow: 1;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  flex-direction: column;
-}
-.precio-producto p {
-  margin: 0;
-  text-align: center;
-  width: 90%;
-}
-.categoria-producto {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-}
-.categoria-producto h5 {
-  color: #003f7d;
-  font-size: 12px; 
-  font-weight: bold;
-  text-align: center;
-  width: 100%;
+  gap: 20px;
+  margin: 50px 0;
 }
 
 /* --------------------------OFERTAS PRODUCTOS----------------------------------------*/
@@ -496,17 +410,16 @@ footer {
 
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
-  height: 250px; /* Ajusta este valor según tus necesidades */
-  flex: 0 0 calc(33.33% - 20px);
+  flex: 0 0 33.33%; /* Tamaño fijo para mostrar 3 tarjetas a la vez */
   margin: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   transition: 0.3s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   border-radius: 10px;
   background-color: #fff;
-  max-width: 100%;
+  box-sizing: border-box; /* Para incluir el padding y el border en el tamaño total */
 }
 
 .card-oferta .cover__card {
@@ -548,20 +461,20 @@ footer {
 .contenedor-productos {
   display: flex;
   overflow: hidden;
-  gap: 10px; 
+  gap: 10px;
   flex: 1;
-  flex-wrap: wrap; 
+  flex-wrap: nowrap;
   transition: transform 0.3s ease;
   width: 100%;
 }
 
 .flecha-izquierda, .flecha-derecha {
-  background-color: #003f7d; 
+  background-color: #003f7d;
   color: white;
-  border: none; 
+  border: none;
   border-radius: 50%;
-  padding: 10px; 
-  cursor: pointer; 
+  padding: 10px;
+  cursor: pointer;
   font-size: 20px;
   display: flex;
   align-items: center;
