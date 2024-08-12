@@ -15,9 +15,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function mostrarTarjetas() {
       console.log('Mostrando tarjetas desde índice:', index);
       tarjetas.forEach((tarjeta, i) => {
-        tarjeta.style.display = 'none';
         if (i >= index && i < index + tarjetasPorPagina) {
           tarjeta.style.display = 'flex';
+        } else {
+          tarjeta.style.display = 'none';
         }
       });
     }
@@ -26,16 +27,20 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('Flecha derecha clickeada');
       if (index + tarjetasPorPagina < tarjetas.length) {
         index += tarjetasPorPagina;
-        mostrarTarjetas();
+      } else {
+        console.log('No hay más tarjetas a la derecha');
       }
+      mostrarTarjetas();
     });
   
     flechaIzquierda.addEventListener('click', function() {
       console.log('Flecha izquierda clickeada');
       if (index - tarjetasPorPagina >= 0) {
         index -= tarjetasPorPagina;
-        mostrarTarjetas();
+      } else {
+        console.log('No hay más tarjetas a la izquierda');
       }
+      mostrarTarjetas();
     });
   
     mostrarTarjetas();
