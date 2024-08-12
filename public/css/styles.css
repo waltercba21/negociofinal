@@ -503,13 +503,13 @@ footer {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-radius: 20px;
+  border-radius: 10px;
   background-color: #fff;
   max-width: 100%;
 }
 
 .card-oferta .cover__card {
-  height: 150px;
+  height: 120px;
   overflow: hidden;
   display: flex;
   align-items: center;
