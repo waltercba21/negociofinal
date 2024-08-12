@@ -515,7 +515,7 @@ footer {
 
 .card-oferta .cover__card {
   width: 80%;
-  height: 160px;
+  height: 140px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -541,9 +541,10 @@ footer {
   overflow: hidden; 
   text-overflow: ellipsis; 
   font-weight: bold;
-  font-size: 30px;
+  font-size: 16px;
   max-width: 100%; 
   margin: 0 auto;
+  color: #003f7d;
 }
 
 .precio-producto-oferta {
