@@ -1,33 +1,35 @@
 document.addEventListener('DOMContentLoaded', function() {
     const contenedorProductos = document.querySelector('.contenedor-productos');
+    const tarjetas = document.querySelectorAll('.card-oferta');
     const flechaIzquierda = document.querySelector('.flecha-izquierda');
     const flechaDerecha = document.querySelector('.flecha-derecha');
   
-    let scrollAmount = 0;
-    const cardWidth = 150 + 20; // Ancho de cada tarjeta más el margen
-    const cardsVisible = 3; // Número de tarjetas visibles a la vez
+    let index = 0;
+    const tarjetasPorPagina = 3;
+  
+    function mostrarTarjetas() {
+      tarjetas.forEach((tarjeta, i) => {
+        tarjeta.style.display = 'none';
+        if (i >= index && i < index + tarjetasPorPagina) {
+          tarjeta.style.display = 'flex';
+        }
+      });
+    }
   
     flechaDerecha.addEventListener('click', function() {
-        const maxScroll = contenedorProductos.scrollWidth - contenedorProductos.clientWidth;
-        if (scrollAmount < maxScroll) {
-            scrollAmount += cardWidth * cardsVisible; // Mueve 3 tarjetas a la vez
-            if (scrollAmount > maxScroll) scrollAmount = maxScroll;
-            contenedorProductos.scrollTo({
-                left: scrollAmount,
-                behavior: 'smooth'
-            });
-        }
+      if (index + tarjetasPorPagina < tarjetas.length) {
+        index += tarjetasPorPagina;
+        mostrarTarjetas();
+      }
     });
   
     flechaIzquierda.addEventListener('click', function() {
-        if (scrollAmount > 0) {
-            scrollAmount -= cardWidth * cardsVisible; // Mueve 3 tarjetas a la vez
-            if (scrollAmount < 0) scrollAmount = 0;
-            contenedorProductos.scrollTo({
-                left: scrollAmount,
-                behavior: 'smooth'
-            });
-        }
+      if (index - tarjetasPorPagina >= 0) {
+        index -= tarjetasPorPagina;
+        mostrarTarjetas();
+      }
     });
+  
+    mostrarTarjetas();
   });
   

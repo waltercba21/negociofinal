@@ -489,7 +489,7 @@ footer {
   border: 1px solid #ddd;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   padding: 10px;
-  position: relative; 
+  position: relative;
 }
 
 .ofertas-productos h2 {
@@ -501,8 +501,7 @@ footer {
 
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
-  width: 100%; 
-  max-width: 150px; 
+  width: 150px; 
   margin: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
   transition: 0.3s;
@@ -511,6 +510,13 @@ footer {
   justify-content: space-between;
   height: 300px; 
   border-radius: 20px;
+  display: none; /* Ocultar todas las tarjetas por defecto */
+}
+
+.card-oferta:first-child, 
+.card-oferta:nth-child(2), 
+.card-oferta:nth-child(3) {
+  display: flex; /* Mostrar las primeras tres tarjetas */
 }
 
 .card-oferta:hover {
@@ -593,11 +599,6 @@ footer {
   overflow: hidden; /* Oculta el scroll */
   gap: 10px;
   flex: 1;
-  white-space: nowrap; /* Evita que las tarjetas se vayan a la siguiente fila */
-}
-
-.card-oferta {
-  display: inline-block; /* Permite el desplazamiento horizontal */
 }
 
 .flecha-izquierda, .flecha-derecha {

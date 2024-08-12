@@ -122,37 +122,38 @@
         <div class="ofertas-productos contenedor">
             <h2>OFERTAS</h2>
             <div class="contenedor-carrousel">
-                <button class="flecha-izquierda"><i class="fas fa-chevron-left"></i></button>
-                <div class="contenedor-productos">
-                    <% productosOferta.forEach(function(oferta) { %>
-                        <div class="card card-oferta">
-                            <% if (oferta.imagenes.length > 0) { %>
-                                <div class="cover__card">
-                                    <% oferta.imagenes.forEach(function(imagen) { %>
-                                        <img src="../../uploads/productos/<%= imagen %>" alt="<%= oferta.nombre %>">
-                                    <% }); %>
-                                </div>
-                            <% } else { %>
-                                <div class="cover__card">
-                                    <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
-                                </div>
-                            <% } %>
-                            <div class="titulo-producto">
-                                <h3 class="nombre"><%= oferta.nombre %></h3>
-                            </div>
-                            <hr>
-                            <div class="categoria-producto">
-                                <h5 class="categoria"><%= oferta.categoria_nombre %></h5>
-                            </div>
-                            <div class="precio-producto">
-                                <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
-                            </div>
-                        </div>
-                    <% }); %>
-                </div>
-                <button class="flecha-derecha"><i class="fas fa-chevron-right"></i></button>
+              <button class="flecha-izquierda"><i class="fas fa-chevron-left"></i></button>
+              <div class="contenedor-productos">
+                <% productosOferta.forEach(function(oferta) { %>
+                  <div class="card card-oferta">
+                    <% if (oferta.imagenes.length > 0) { %>
+                      <div class="cover__card">
+                        <% oferta.imagenes.forEach(function(imagen) { %>
+                          <img src="../../uploads/productos/<%= imagen %>" alt="<%= oferta.nombre %>">
+                        <% }); %>
+                      </div>
+                    <% } else { %>
+                      <div class="cover__card">
+                        <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
+                      </div>
+                    <% } %>
+                    <div class="titulo-producto-oferta">
+                      <h3 class="nombre"><%= oferta.nombre %></h3>
+                    </div>
+                    <hr>
+                    <div class="categoria-producto-oferta">
+                      <h5 class="categoria"><%= oferta.categoria_nombre %></h5>
+                    </div>
+                    <div class="precio-producto-oferta">
+                      <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+              <button class="flecha-derecha"><i class="fas fa-chevron-right"></i></button>
             </div>
-        </div>
+          </div>
+          
         
         
 
