@@ -494,19 +494,9 @@ footer {
   margin-right: 20px;
 }
 
-.ofertas-productos h2 {
-  text-align: center;
-  color: #003f7d;
-  font-weight: bold;
-  font-size: 20px;
-}
-
 /* --------------------------TARJETAS OFERTAS----------------------------------------*/
 .card-oferta {
-  display: none;
-}
-.card-oferta {
-  flex: 0 0 calc(33.33% - 20px);
+  flex: 0 0 calc(33.33% - 20px); /* Ajusta el tamaño de las tarjetas */
   margin: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
   transition: 0.3s;
@@ -514,6 +504,7 @@ footer {
   flex-direction: column;
   justify-content: space-between;
   border-radius: 20px;
+  background-color: #fff; /* Añade un fondo blanco para las tarjetas */
 }
 
 .card-oferta .cover__card {
@@ -530,55 +521,17 @@ footer {
   object-fit: cover;
 }
 
-.titulo-producto-oferta {
-  display: flex;
-  align-items: center; 
-  justify-content: center;
-  flex-direction: column;
-  margin-top: 10px;
-}
-
 .titulo-producto-oferta h3 {
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-  font-weight: bold;
   font-size: 12px;
-  max-width: 100%; 
-  margin: 0 auto;
-  color: #003f7d;
-}
-
-.precio-producto-oferta {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  flex-direction: column;
-  margin-top: 10px;
+  max-width: 100%;
 }
 
 .precio-producto-oferta p {
-  margin: 0;
-  text-align: center;
-  width: 90%;
-  color: #b30000;
-  font-weight: bold;
-}
-
-.categoria-producto-oferta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  margin-top: 10px; 
+  font-size: 14px;
 }
 
 .categoria-producto-oferta h5 {
-  color: #003f7d;
   font-size: 12px;
-  font-weight: bold;
-  text-align: center;
-  width: 100%;
 }
 
 /* --------------------------CARROUSEL----------------------------------------*/
@@ -595,6 +548,7 @@ footer {
   gap: 10px;
   flex: 1;
   flex-wrap: nowrap; /* Asegura que las tarjetas no se envuelvan en múltiples filas */
+  transition: transform 0.5s ease; /* Transición para el movimiento del carrusel */
 }
 
 .flecha-izquierda, .flecha-derecha {
@@ -608,7 +562,9 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1; /* Asegura que las flechas estén por encima del contenido del carrusel */
 }
+
 
 
 
