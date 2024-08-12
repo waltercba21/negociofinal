@@ -491,6 +491,7 @@ footer {
   padding: 10px;
   position: relative; 
 }
+
 .ofertas-productos h2 {
   text-align: center;
   color: #003f7d;
@@ -592,7 +593,13 @@ footer {
   overflow: hidden; /* Oculta el scroll */
   gap: 10px;
   flex: 1;
+  white-space: nowrap; /* Evita que las tarjetas se vayan a la siguiente fila */
 }
+
+.card-oferta {
+  display: inline-block; /* Permite el desplazamiento horizontal */
+}
+
 .flecha-izquierda, .flecha-derecha {
   background-color: #003f7d; /* Color de fondo */
   color: white; /* Color de la flecha */
@@ -604,12 +611,6 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.flecha-izquierda {
-  margin-right: 10px; /* Espacio entre la flecha izquierda y el contenedor de productos */
-}
-.flecha-derecha {
-  margin-left: 10px; /* Espacio entre la flecha derecha y el contenedor de productos */
 }
 
 /*----------------------LOGIN--------------------*/
