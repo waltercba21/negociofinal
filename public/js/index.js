@@ -90,11 +90,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   let indexOfertas = 0;
   const tarjetasPorPaginaOfertas = 3; // Número de tarjetas a mostrar en una vista
+  const tarjetaAncho = 150; // Ancho máximo de una tarjeta, ajusta si es necesario
 
   function actualizarCarruselOfertas() {
-    // Asegúrate de que el valor de desplazamiento sea correcto
-    const desplazamientoOfertas = -(indexOfertas * (100 / tarjetasPorPaginaOfertas));
-    contenedorProductosOfertas.style.transform = `translateX(${desplazamientoOfertas}%)`;
+    const desplazamientoOfertas = -indexOfertas * tarjetaAncho;
+    contenedorProductosOfertas.style.transform = `translateX(${desplazamientoOfertas}px)`;
   }
 
   function mostrarTarjetasOfertas() {
@@ -126,5 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
   mostrarTarjetasOfertas();
   actualizarCarruselOfertas();
 });
+
 
 
