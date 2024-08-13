@@ -502,9 +502,12 @@ footer {
   flex-direction: column;
   justify-content: space-between;
 }
+.card-oferta :hover {
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
 
 .cover-card-oferta {
-  height: 180px; /* Aumentar la altura de la imagen */
+  height: 180px; 
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -530,7 +533,7 @@ footer {
   font-size: 12px;
 }
 
-/* Carrusel */
+/*---------------Carrusel-------------------- */
 .contenedor-carrousel-ofertas {
   display: flex;
   align-items: center;
@@ -544,7 +547,7 @@ footer {
   overflow: hidden;
   gap: 10px;
   flex: 1;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   transition: transform 0.3s ease;
   width: 100%;
 }
