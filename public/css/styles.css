@@ -571,21 +571,21 @@ footer {
   justify-content: center;
   width: 100%;
   overflow: hidden;
-  position: relative;
 }
 
 .contenedor-productos-ofertas {
   display: flex;
-  flex-wrap: nowrap; /* Asegúrate de que las tarjetas no se envuelvan en una nueva fila */
-  overflow: hidden; /* Oculta las tarjetas fuera del contenedor */
-  margin: 20px;
-  gap: 20px; /* Espacio entre tarjetas, ajusta si es necesario */
+  overflow: hidden;
+  margin: 20px auto; /* Ajusta el margen para centrar el carrusel */
+  gap: 40px;
+  flex: 1;
+  flex-wrap: nowrap; /* Asegúrate de que las tarjetas no se envuelvan en filas */
   transition: transform 0.3s ease;
-  width: calc(100% + 20px); /* Ajusta el ancho para permitir la visualización completa */
+  width: max-content; /* Asegúrate de que el contenedor tenga el ancho necesario para las tarjetas */
+  justify-content: center; /* Centra las tarjetas dentro del contenedor */
 }
 
-
-
+/* Ajusta la alineación de las flechas si es necesario */
 .flecha-izquierda-ofertas, .flecha-derecha-ofertas {
   background-color: #003f7d;
   color: white;
@@ -598,10 +598,8 @@ footer {
   align-items: center;
   justify-content: center;
   z-index: 1;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
 }
+
 
 .flecha-izquierda-ofertas {
   left: 10px;
