@@ -394,7 +394,7 @@ footer {
   margin: 50px 0;
 }
 
-/* Últimos productos cargados */
+/* ------------Últimos productos cargados---------- */
 .ultimos-productos {
   flex: 1;
   max-width: 48%;
@@ -402,7 +402,7 @@ footer {
   flex-direction: column;
   align-items: center;
   border: 1px solid #ddd;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
   padding: 10px;
   border-radius: 20px;
 }
@@ -479,7 +479,7 @@ footer {
   width: 100%;
 }
 
-/* Ofertas productos */
+/* ----------Ofertas productos---------- */
 .contenedor-ofertas {
   flex: 1;
   max-width: 48%;
@@ -487,22 +487,20 @@ footer {
   flex-direction: column;
   border: 1px solid #ddd;
   border-radius: 20px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
   padding: 10px;
   position: relative;
 }
 
 .card-oferta {
-  flex: 0 0 calc(33.33% - 20px);
+  width: 100%;
+  max-width: 150px;
   margin: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   transition: 0.3s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-radius: 10px;
-  background-color: #fff;
-  max-width: 100%;
 }
 
 .cover-card-oferta {
