@@ -119,39 +119,38 @@
           </div>
         </div>
     
-        <div class="ofertas-productos contenedor-ofertas">
-          <h2>OFERTAS</h2>
-          <div class="contenedor-carrousel-ofertas">
-            <button class="flecha-izquierda-ofertas"><i class="fas fa-chevron-left"></i></button>
-            <div class="contenedor-productos-ofertas">
-              <% productosOferta.forEach(function(oferta) { %>
-                <div class="card-oferta">
-                  <% if (oferta.imagenes.length > 0) { %>
-                    <div class="cover-card-oferta">
-                      <% oferta.imagenes.forEach(function(imagen) { %>
-                        <img src="../../uploads/productos/<%= imagen %>" alt="<%= oferta.nombre %>">
-                      <% }); %>
-                    </div>
-                  <% } else { %>
-                    <div class="cover-card-oferta">
-                      <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
-                    </div>
-                  <% } %>
-                  <div class="titulo-producto-oferta">
-                    <h3 class="nombre-oferta"><%= oferta.nombre %></h3>
+        <div class="contenedor-carrousel-ofertas">
+          <button class="flecha-izquierda-ofertas"><i class="fas fa-chevron-left"></i></button>
+          <div class="contenedor-productos-ofertas">
+            <% productosOferta.forEach(function(oferta) { %>
+              <div class="card-oferta">
+                <% if (oferta.imagenes.length > 0) { %>
+                  <div class="cover-card-oferta">
+                    <% oferta.imagenes.forEach(function(imagen) { %>
+                      <img src="../../uploads/productos/<%= imagen %>" alt="<%= oferta.nombre %>">
+                    <% }); %>
                   </div>
-                  <hr>
-                  <div class="categoria-producto-oferta">
-                    <h5 class="categoria-oferta"><%= oferta.categoria_nombre %></h5>
+                <% } else { %>
+                  <div class="cover-card-oferta">
+                    <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
                   </div>
-                  <div class="precio-producto-oferta">
-                    <p class="precio-oferta"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
-                  </div>
+                <% } %>
+                <div class="titulo-producto-oferta">
+                  <h3 class="nombre-oferta"><%= oferta.nombre %></h3>
                 </div>
-              <% }); %>
-            </div>
-            <button class="flecha-derecha-ofertas"><i class="fas fa-chevron-right"></i></button>
+                <hr>
+                <div class="categoria-producto-oferta">
+                  <h5 class="categoria-oferta"><%= oferta.categoria_nombre %></h5>
+                </div>
+                <div class="precio-producto-oferta">
+                  <p class="precio-oferta"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
+                </div>
+              </div>
+            <% }); %>
           </div>
+          <button class="flecha-derecha-ofertas"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        
         </div>
           </div>
       </main>

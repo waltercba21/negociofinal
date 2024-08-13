@@ -92,17 +92,14 @@ document.addEventListener('DOMContentLoaded', function() {
   const tarjetasPorPaginaOfertas = 3; // Número de tarjetas a mostrar en una vista
 
   function actualizarCarruselOfertas() {
-    const desplazamientoOfertas = -((indexOfertas / tarjetasOfertas.length) * 100);
+    // Asegúrate de que el valor de desplazamiento sea correcto
+    const desplazamientoOfertas = -(indexOfertas * (100 / tarjetasPorPaginaOfertas));
     contenedorProductosOfertas.style.transform = `translateX(${desplazamientoOfertas}%)`;
   }
 
   function mostrarTarjetasOfertas() {
     tarjetasOfertas.forEach((tarjeta, i) => {
-      if (i >= indexOfertas && i < indexOfertas + tarjetasPorPaginaOfertas) {
-        tarjeta.style.display = 'flex';
-      } else {
-        tarjeta.style.display = 'none';
-      }
+      tarjeta.style.display = (i >= indexOfertas && i < indexOfertas + tarjetasPorPaginaOfertas) ? 'flex' : 'none';
     });
   }
 
@@ -110,11 +107,9 @@ document.addEventListener('DOMContentLoaded', function() {
     flechaDerechaOfertas.addEventListener('click', function() {
       if (indexOfertas + tarjetasPorPaginaOfertas < tarjetasOfertas.length) {
         indexOfertas += tarjetasPorPaginaOfertas;
-      } else {
-        indexOfertas = 0; // Volver al inicio si se supera el límite
+        mostrarTarjetasOfertas();
+        actualizarCarruselOfertas();
       }
-      mostrarTarjetasOfertas();
-      actualizarCarruselOfertas();
     });
   }
 
@@ -122,15 +117,14 @@ document.addEventListener('DOMContentLoaded', function() {
     flechaIzquierdaOfertas.addEventListener('click', function() {
       if (indexOfertas - tarjetasPorPaginaOfertas >= 0) {
         indexOfertas -= tarjetasPorPaginaOfertas;
-      } else {
-        indexOfertas = Math.max(0, tarjetasOfertas.length - tarjetasPorPaginaOfertas); // Ir al final si se llega al inicio
+        mostrarTarjetasOfertas();
+        actualizarCarruselOfertas();
       }
-      mostrarTarjetasOfertas();
-      actualizarCarruselOfertas();
     });
   }
 
   mostrarTarjetasOfertas();
   actualizarCarruselOfertas();
 });
+
 
