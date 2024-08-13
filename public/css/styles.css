@@ -386,13 +386,10 @@ footer {
   cursor: pointer;
 }
 /* Contenedor principal */
-/* Contenedor principal */
 .contenedor-principal-productos {
   display: flex;
   justify-content: space-between;
   margin: 20px;
-  border-radius: 20px;
-  overflow: hidden;
 }
 
 /* Contenedores secundarios */
@@ -402,16 +399,14 @@ footer {
   border-radius: 20px;
   margin: 0 10px;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Asegurar que los contenedores secundarios tengan el mismo tamaño */
 .ultimos-productos {
   margin-right: 20px;
-}
-
-.contenedor-productos, .contenedor-productos-ofertas {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
 }
 
 /* Tarjetas de productos */
@@ -421,14 +416,12 @@ footer {
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
-  flex: 1 1 calc(33.333% - 20px);
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   padding: 10px;
-  max-width: 31%;
+  box-sizing: border-box;
 }
 
 .card img, .card-oferta img {
@@ -488,7 +481,6 @@ footer {
 .flecha-izquierda-ofertas i, .flecha-derecha-ofertas i {
   font-size: 1.5em;
 }
-
 
 /*----------------------LOGIN--------------------*/
 .body-login{
