@@ -547,7 +547,7 @@ footer {
 .contenedor-productos-ofertas {
   display: flex;
   overflow: hidden;
-  gap: 30px;
+  gap: 40px;
   flex: 1;
   flex-wrap: wrap;
   transition: transform 0.3s ease;
