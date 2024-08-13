@@ -528,10 +528,12 @@ footer {
 .titulo-producto-oferta h3 {
   font-size: 12px;
   color: #003f7d;
+  font-weight: bold;
 }
 
 .precio-producto-oferta p {
-  font-size: 14px;
+  font-size: 16px;
+  color: #b30000;
 }
 
 .categoria-producto-oferta h5 {
