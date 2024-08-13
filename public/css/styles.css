@@ -576,13 +576,14 @@ footer {
 
 .contenedor-productos-ofertas {
   display: flex;
-  flex-wrap: nowrap; /* Evita que las tarjetas se envuelvan en una nueva fila */
-  overflow: hidden;
+  flex-wrap: nowrap; /* Asegúrate de que las tarjetas no se envuelvan en una nueva fila */
+  overflow: hidden; /* Oculta las tarjetas fuera del contenedor */
   margin: 20px;
   gap: 20px; /* Espacio entre tarjetas, ajusta si es necesario */
   transition: transform 0.3s ease;
-  width: calc(100% + 20px); /* Asegúrate de que el contenedor pueda mostrar las tarjetas correctamente */
+  width: calc(100% + 20px); /* Ajusta el ancho para permitir la visualización completa */
 }
+
 
 
 .flecha-izquierda-ofertas, .flecha-derecha-ofertas {
