@@ -491,15 +491,10 @@ footer {
   padding: 10px;
   position: relative;
 }
-.ofertas-productos h2{
-  text-align: center;
-  color: #003f7d;
-  font-weight: bold;
-  font-size: 20px;
-}
 
 .card-oferta {
   width: 100%;
+  max-width: 150px;
   margin: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   transition: 0.3s;
@@ -507,7 +502,12 @@ footer {
   flex-direction: column;
   justify-content: space-between;
 }
-
+.ofertas-productos h2{
+  text-align: center;
+  color: #003f7d;
+  font-weight: bold;
+  font-size: 20px;
+}
 .cover-card-oferta {
   height: 180px; 
   overflow: hidden;
