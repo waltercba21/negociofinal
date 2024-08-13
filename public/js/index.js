@@ -82,7 +82,6 @@ function toggleMenu() {
 function abrirMapa() {
   window.open("https://maps.app.goo.gl/c6bik6TL7uBQP3KZ8", "_blank");
 }
-
 document.addEventListener('DOMContentLoaded', function() {
   const contenedorProductosOfertas = document.querySelector('.contenedor-productos-ofertas');
   const tarjetasOfertas = document.querySelectorAll('.card-oferta');
@@ -111,9 +110,11 @@ document.addEventListener('DOMContentLoaded', function() {
     flechaDerechaOfertas.addEventListener('click', function() {
       if (indexOfertas + tarjetasPorPaginaOfertas < tarjetasOfertas.length) {
         indexOfertas += tarjetasPorPaginaOfertas;
-        mostrarTarjetasOfertas();
-        actualizarCarruselOfertas();
+      } else {
+        indexOfertas = 0; // Volver al inicio si se supera el límite
       }
+      mostrarTarjetasOfertas();
+      actualizarCarruselOfertas();
     });
   }
 
@@ -121,9 +122,11 @@ document.addEventListener('DOMContentLoaded', function() {
     flechaIzquierdaOfertas.addEventListener('click', function() {
       if (indexOfertas - tarjetasPorPaginaOfertas >= 0) {
         indexOfertas -= tarjetasPorPaginaOfertas;
-        mostrarTarjetasOfertas();
-        actualizarCarruselOfertas();
+      } else {
+        indexOfertas = Math.max(0, tarjetasOfertas.length - tarjetasPorPaginaOfertas); // Ir al final si se llega al inicio
       }
+      mostrarTarjetasOfertas();
+      actualizarCarruselOfertas();
     });
   }
 
