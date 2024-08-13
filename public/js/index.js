@@ -82,7 +82,6 @@ function toggleMenu() {
 function abrirMapa() {
   window.open("https://maps.app.goo.gl/c6bik6TL7uBQP3KZ8", "_blank");
 }
-
 document.addEventListener('DOMContentLoaded', function() {
   const contenedorProductosOfertas = document.querySelector('.contenedor-productos-ofertas');
   const tarjetasOfertas = document.querySelectorAll('.card-oferta');
@@ -93,18 +92,21 @@ document.addEventListener('DOMContentLoaded', function() {
   const tarjetasPorPaginaOfertas = 3; // Número de tarjetas a mostrar en una vista
 
   function actualizarCarruselOfertas() {
-    const tarjetaAncho = document.querySelector('.card-oferta').offsetWidth + parseInt(window.getComputedStyle(document.querySelector('.card-oferta')).marginRight);
-    const desplazamientoOfertas = -indexOfertas * tarjetaAncho;
+    // Calcular el ancho de cada tarjeta y el espacio entre ellas
+    const tarjetaAncho = tarjetasOfertas[0].offsetWidth;
+    const espacioEntreTarjetas = parseFloat(getComputedStyle(tarjetasOfertas[0]).marginRight);
+    const desplazamientoOfertas = -((indexOfertas * (tarjetaAncho + espacioEntreTarjetas)));
+    
     contenedorProductosOfertas.style.transform = `translateX(${desplazamientoOfertas}px)`;
   }
 
   function mostrarTarjetasOfertas() {
-    // Si el número total de tarjetas es menor que el número de tarjetas a mostrar, ajusta el índice
-    if (tarjetasOfertas.length <= tarjetasPorPaginaOfertas) {
-      indexOfertas = 0;
-    }
     tarjetasOfertas.forEach((tarjeta, i) => {
-      tarjeta.style.display = (i >= indexOfertas && i < indexOfertas + tarjetasPorPaginaOfertas) ? 'flex' : 'none';
+      if (i >= indexOfertas && i < indexOfertas + tarjetasPorPaginaOfertas) {
+        tarjeta.style.display = 'flex';
+      } else {
+        tarjeta.style.display = 'none';
+      }
     });
   }
 
@@ -131,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
   mostrarTarjetasOfertas();
   actualizarCarruselOfertas();
 });
+
 
 
 
