@@ -82,6 +82,7 @@ function toggleMenu() {
 function abrirMapa() {
   window.open("https://maps.app.goo.gl/c6bik6TL7uBQP3KZ8", "_blank");
 }
+
 document.addEventListener('DOMContentLoaded', function() {
   const contenedorProductosOfertas = document.querySelector('.contenedor-productos-ofertas');
   const tarjetasOfertas = document.querySelectorAll('.card-oferta');
@@ -92,7 +93,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const tarjetasPorPaginaOfertas = 3; // Número de tarjetas a mostrar en una vista
 
   function actualizarCarruselOfertas() {
-    // Calcular el ancho de cada tarjeta y el espacio entre ellas
     const tarjetaAncho = tarjetasOfertas[0].offsetWidth;
     const espacioEntreTarjetas = parseFloat(getComputedStyle(tarjetasOfertas[0]).marginRight);
     const desplazamientoOfertas = -((indexOfertas * (tarjetaAncho + espacioEntreTarjetas)));
@@ -133,8 +133,3 @@ document.addEventListener('DOMContentLoaded', function() {
   mostrarTarjetasOfertas();
   actualizarCarruselOfertas();
 });
-
-
-
-
-

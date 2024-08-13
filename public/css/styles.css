@@ -577,12 +577,12 @@ footer {
   display: flex;
   overflow: hidden;
   margin: 0 auto; /* Centra el contenedor del carrusel */
-  gap: 40px;
+  gap: 40px; /* Ajusta el espacio entre las tarjetas según sea necesario */
   flex: 1;
   flex-wrap: nowrap; /* Asegúrate de que las tarjetas no se envuelvan en filas */
   transition: transform 0.3s ease;
   width: max-content; /* Asegúrate de que el contenedor tenga el ancho necesario para las tarjetas */
-  justify-content: center; /* Centra las tarjetas dentro del contenedor */
+  justify-content: flex-start; /* Alinea las tarjetas a la izquierda */
 }
 .flecha-izquierda-ofertas, .flecha-derecha-ofertas {
   background-color: #003f7d;
