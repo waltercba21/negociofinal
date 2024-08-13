@@ -522,7 +522,7 @@ footer {
 .cover-card-oferta img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; 
 }
 
 .titulo-producto-oferta h3 {
