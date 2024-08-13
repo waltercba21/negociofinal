@@ -386,7 +386,7 @@ footer {
   cursor: pointer;
 }
 /*----------------------- Contenedor principal---------------------------- */
-.contenedor-principal {
+.contenedor-principal-productos {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
