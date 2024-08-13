@@ -581,8 +581,8 @@ footer {
   flex: 1;
   flex-wrap: nowrap; /* Asegúrate de que las tarjetas no se envuelvan en filas */
   transition: transform 0.3s ease;
-  width: max-content; /* Asegúrate de que el contenedor tenga el ancho necesario para las tarjetas */
-  justify-content: flex-start; /* Alinea las tarjetas a la izquierda */
+  width: max-content; 
+  justify-content: center;
 }
 .flecha-izquierda-ofertas, .flecha-derecha-ofertas {
   background-color: #003f7d;
