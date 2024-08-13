@@ -481,6 +481,7 @@ footer {
 }
 
 /* ----------Ofertas productos---------- */
+
 .contenedor-ofertas {
   flex: 1;
   max-width: 48%;
@@ -526,7 +527,7 @@ footer {
 
 .titulo-producto-oferta h3 {
   font-size: 12px;
-  max-width: 100%;
+  color: #003f7d;
 }
 
 .precio-producto-oferta p {
