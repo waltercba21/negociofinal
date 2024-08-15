@@ -576,10 +576,10 @@ footer {
 .contenedor-productos-ofertas {
   display: flex;
   overflow: hidden;
-  margin: 0 auto; /* Centra el contenedor del carrusel */
-  gap: 40px; /* Ajusta el espacio entre las tarjetas según sea necesario */
+  margin: 0 auto; 
+  gap: 60px; 
   flex: 1;
-  flex-wrap: nowrap; /* Asegúrate de que las tarjetas no se envuelvan en filas */
+  flex-wrap: nowrap;
   transition: transform 0.3s ease;
   width: max-content; 
   justify-content: center;

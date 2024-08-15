@@ -51,6 +51,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 $(document).ready(function() {
+    var marcaId = $('#marca').val();
+    if (marcaId) {
+        $('#modelo_id').empty();
+        $('#modelo_id').append('<option value="">Selecciona un modelo...</option>');
+        $.get('/productos/modelos/' + marcaId, function(modelosPorMarca) {
+            modelosPorMarca.forEach(function(modelo) {
+                $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
+            });
+        });
+    }
+
+    $('#marca').change(function() {
+        var marcaId = $(this).val();
+        $('#modelo_id').empty();
+        $('#modelo_id').append('<option value="">Selecciona un modelo...</option>');
+        $.get('/productos/modelos/' + marcaId, function(modelosPorMarca) {
+            modelosPorMarca.forEach(function(modelo) {
+                $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
+            });
+        });
+    });
+});
+$(document).ready(function() {
     function bindEventsToProveedor(proveedorElement) {
         proveedorElement.find('.precio_lista, .descuentos_proveedor_id').off('change').on('change', function() {
             var proveedorElement = $(this).closest('.proveedor');
