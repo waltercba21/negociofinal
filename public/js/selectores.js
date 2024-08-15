@@ -3,6 +3,9 @@ document.getElementById('marca_id').addEventListener('change', function() {
   fetch('/productos/modelos/' + marcaId)
       .then(response => response.json())
       .then(modelos => {
+          modelos.sort(function(a, b) {
+              return a.id - b.id;
+          });
           const modeloSelect = document.getElementById('modelo_id');
           modeloSelect.innerHTML = '';
           const defaultOption = document.createElement('option');
