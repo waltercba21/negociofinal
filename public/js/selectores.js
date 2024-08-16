@@ -4,7 +4,13 @@ document.getElementById('marca_id').addEventListener('change', function() {
       .then(response => response.json())
       .then(modelos => {
           modelos.sort(function(a, b) {
-              return a.id - b.id;
+              if (a.nombre.startsWith('12V') && !b.nombre.startsWith('12V')) {
+                  return -1;
+              } else if (!a.nombre.startsWith('12V') && b.nombre.startsWith('12V')) {
+                  return 1;
+              } else {
+                  return a.id - b.id;
+              }
           });
           const modeloSelect = document.getElementById('modelo_id');
           modeloSelect.innerHTML = '';
