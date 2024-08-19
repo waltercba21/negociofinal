@@ -939,7 +939,7 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-actualizarPrecios : async (req, res) => {
+actualizarPreciosExcel: async (req, res) => {
     try {
         const file = req.files[0];
         let productosActualizados = [];
