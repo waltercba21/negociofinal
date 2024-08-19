@@ -466,6 +466,8 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 return;
             }
     
+            console.log(`Actualizando producto con código: ${codigo} y precio lista: ${precio_lista}`);
+    
             const sql = `SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento 
                          FROM producto_proveedor pp 
                          JOIN productos p ON pp.producto_id = p.id 
