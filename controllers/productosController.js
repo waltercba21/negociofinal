@@ -6,7 +6,7 @@ const blobStream  = require('blob-stream');
 var streamBuffers = require('stream-buffers');
 const xlsx = require('xlsx');
 const fs = require('fs');
-const pdfParse = require('pdf-parse');
+const pdf = require('pdf-parse');
 
 function calcularNumeroDePaginas(conexion) {
     return new Promise((resolve, reject) => {
