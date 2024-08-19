@@ -939,7 +939,7 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-actualizarPreciosExcel: async (req, res) => {
+actualizarPreciosExcel : async (req, res) => {
     try {
         const file = req.files[0];
         let productosActualizados = [];
@@ -1003,8 +1003,11 @@ actualizarPreciosExcel: async (req, res) => {
             const lines = data.text.split('\n');
 
             for (const line of lines) {
-                const [codigo, precioRaw] = line.split(/\s+/); // Ajustar según el formato del PDF
-                
+                // Suponiendo que cada línea tiene el formato "codigo precio"
+                const parts = line.trim().split(/\s+/);
+                const codigo = parts[0];
+                const precioRaw = parts[1];
+
                 if (codigo && precioRaw) {
                     const precio = parseFloat(precioRaw.replace(',', '.'));
 
