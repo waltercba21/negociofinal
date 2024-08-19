@@ -939,16 +939,20 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
- actualizarPreciosExcel : async (req, res) => {
+actualizarPrecios : async (req, res) => {
     try {
         const file = req.files[0];
         let productosActualizados = [];
+        let promises = [];
+
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            // Procesar archivo Excel
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
-            const promises = []; 
+            
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+                
                 for (const row of data) {
                     const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
@@ -956,13 +960,11 @@ actualizarPrecios: function(req, res) {
                     if (codigoColumn && precioColumn) {
                         let precioRaw = row[precioColumn];
 
-                        // Asegurarse de que precioRaw es una cadena antes de reemplazar
                         if (typeof precioRaw === 'number') {
                             precioRaw = precioRaw.toString();
                         }
 
                         if (typeof precioRaw === 'string') {
-                            // Convertir el precio a un número decimal adecuado
                             const precio = parseFloat(precioRaw.replace(',', '.'));
 
                             if (isNaN(precio) || precio <= 0) {
@@ -994,29 +996,66 @@ actualizarPrecios: function(req, res) {
                     }
                 }
             }
-            const resultados = await Promise.all(promises);
-            const errores = resultados.filter(resultado => resultado && resultado.error);
-            const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
-            if (errores.length > 0) {
-                console.log("Errores al actualizar algunos productos:", errores);
+        } else if (file.mimetype === 'application/pdf') {
+            // Procesar archivo PDF
+            const dataBuffer = fs.readFileSync(file.path);
+            const data = await pdf(dataBuffer);
+            const lines = data.text.split('\n');
+
+            for (const line of lines) {
+                const [codigo, precioRaw] = line.split(/\s+/); // Ajustar según el formato del PDF
+                
+                if (codigo && precioRaw) {
+                    const precio = parseFloat(precioRaw.replace(',', '.'));
+
+                    if (isNaN(precio) || precio <= 0) {
+                        console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
+                        continue;
+                    }
+
+                    promises.push(
+                        producto.actualizarPreciosPDF(precio, codigo)
+                            .then(async productoActualizado => {
+                                if (productoActualizado !== null) {
+                                    productosActualizados.push(productoActualizado);
+                                    await producto.seleccionarProveedorMasBarato(conexion, codigo);
+                                } else {
+                                    console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
+                                    return { noExiste: true, codigo };
+                                }
+                            })
+                            .catch(error => {
+                                console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
+                                return { error: true, message: `Error al actualizar el producto con el código ${codigo}: ${error.message}` };
+                            })
+                    );
+                } else {
+                    console.error(`No se encontraron los datos de código o precio en la línea: ${line}`);
+                }
             }
-            if (noEncontrados.length > 0) {
-                noEncontrados.forEach(item => {
-                    console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
-                });
-            }
-            fs.unlinkSync(file.path);
-            res.render('productosActualizados', { productos: productosActualizados });
         } else {
-            res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
+            res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx o .pdf');
             return;
         }
+
+        const resultados = await Promise.all(promises);
+        const errores = resultados.filter(resultado => resultado && resultado.error);
+        const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
+        if (errores.length > 0) {
+            console.log("Errores al actualizar algunos productos:", errores);
+        }
+        if (noEncontrados.length > 0) {
+            noEncontrados.forEach(item => {
+                console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
+            });
+        }
+        fs.unlinkSync(file.path);
+        res.render('productosActualizados', { productos: productosActualizados });
     } catch (error) {
         console.log("Error durante el procesamiento de archivos", error);
         res.status(500).send(error.message);
     }
 },
-
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
