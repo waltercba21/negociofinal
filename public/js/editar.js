@@ -52,6 +52,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 $(document).ready(function() {
     var marcaId = $('#marca').val();
+    var modeloSeleccionado = $('#modelo_id').data('selected'); // Supongamos que el modelo seleccionado está almacenado en un atributo data
+
     if (marcaId) {
         $('#modelo_id').empty();
         $('#modelo_id').append('<option value="">Selecciona un modelo...</option>');
@@ -60,7 +62,8 @@ $(document).ready(function() {
                 return a.id - b.id;
             });
             modelosPorMarca.forEach(function(modelo) {
-                $('#modelo_id').append('<option value="' + modelo.id + '">' + modelo.nombre + '</option>');
+                var selected = modelo.id == modeloSeleccionado ? ' selected' : '';
+                $('#modelo_id').append('<option value="' + modelo.id + '"' + selected + '>' + modelo.nombre + '</option>');
             });
         });
     }
@@ -79,6 +82,7 @@ $(document).ready(function() {
         });
     });
 });
+
 $(document).ready(function() {
     function bindEventsToProveedor(proveedorElement) {
         proveedorElement.find('.precio_lista, .descuentos_proveedor_id').off('change').on('change', function() {
