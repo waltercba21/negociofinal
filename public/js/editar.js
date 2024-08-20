@@ -49,10 +49,9 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('Sortable no está definido o no se pudo inicializar.');
     }
-});
-$(document).ready(function() {
+});$(document).ready(function() {
     var marcaId = $('#marca').val();
-    var modeloSeleccionado = $('#modelo_id').data('selected'); // Supongamos que el modelo seleccionado está almacenado en un atributo data
+    var modeloSeleccionado = $('#modelo_id').data('selected'); // Obtiene el modelo seleccionado desde el atributo data
 
     if (marcaId) {
         $('#modelo_id').empty();
@@ -82,6 +81,7 @@ $(document).ready(function() {
         });
     });
 });
+
 
 $(document).ready(function() {
     function bindEventsToProveedor(proveedorElement) {
