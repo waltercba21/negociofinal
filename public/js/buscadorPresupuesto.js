@@ -7,7 +7,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
-        let subtotal = parseFloat(filasFactura[i].cells[5].textContent.replace(/\./g, '').replace(',', '.'));
+        let subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\./g, '').replace(',', '.'));
 
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
@@ -81,14 +81,10 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
             inputCantidad.value = 1;
             cellCantidad.appendChild(inputCantidad);
 
-            // Agregar la celda de stock
-            const cellStock = filaFactura.insertCell(4);
-            cellStock.textContent = producto.stock_actual;
-
-            const cellSubtotal = filaFactura.insertCell(5);
+            const cellSubtotal = filaFactura.insertCell(4);
             cellSubtotal.textContent = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
-            const cellEliminar = filaFactura.insertCell(6);
+            const cellEliminar = filaFactura.insertCell(5);
             const botonEliminar = document.createElement('button');
             botonEliminar.textContent = '✖';
             botonEliminar.className = 'boton-eliminar';
@@ -115,7 +111,7 @@ function updateSubtotal(row) {
     const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
     const cantidad = parseInt(row.cells[3].querySelector('input').value);
     const subtotal = precio * cantidad;
-    row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    row.cells[4].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
 }
 
@@ -123,7 +119,7 @@ function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
     for (let i = 0; i < filasFactura.length; i++) {
-        const value = parseFloat(filasFactura[i].cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
+        const value = parseFloat(filasFactura[i].cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
         total += value;
     }
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
