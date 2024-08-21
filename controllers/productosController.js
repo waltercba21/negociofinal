@@ -719,7 +719,7 @@ getProductosPorCategoria : async (req, res) => {
             return res.status(400).send('Proveedor no encontrado');
         }
         var nombreProveedor = proveedor.nombre;
-        doc.fontSize(20)
+        doc.fontSize(14)
            .text(nombreProveedor, {
                align: 'center',
                width: doc.page.width - 100
