@@ -723,10 +723,18 @@ getProductosPorCategoria : async (req, res) => {
         const nombreProveedor = proveedor.nombre;
 
         doc.fontSize(20)
-           .text(nombreProveedor, 50, 80, {
+           .text('Listado de Productos con Stock Bajo', {
                align: 'center',
                width: doc.page.width - 100
-           });
+           })
+           .moveDown();
+
+        doc.fontSize(16)
+           .text(nombreProveedor, {
+               align: 'center',
+               width: doc.page.width - 100
+           })
+           .moveDown();
 
         // Obtener productos del proveedor
         const productos = await producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
@@ -734,8 +742,8 @@ getProductosPorCategoria : async (req, res) => {
 
         if (productosFaltantes.length === 0) {
             doc.fontSize(12)
-               .text('No hay productos con stock inferior al stock mínimo para el proveedor seleccionado.', 50, 100, {
-                   align: 'left',
+               .text('No hay productos con stock inferior al stock mínimo para el proveedor seleccionado.', {
+                   align: 'center',
                    width: doc.page.width - 100
                });
             doc.end();
@@ -748,46 +756,66 @@ getProductosPorCategoria : async (req, res) => {
             return;
         }
 
-        let currentY = doc.y;
+        // Define table headers
+        let startX = 50;
+        let startY = 150;
+        let rowHeight = 30;
+        let columnWidths = [100, 250, 70, 70];
+        
         doc.fontSize(10)
            .fillColor('blue')
-           .text('Código', 70, currentY + 10, {align: 'center', width: 90})
-           .text('Descripción', 170, currentY + 10, {align: 'center', width: 250})
-           .text('Stock Actual', 470, currentY + 10, {align: 'center', width: 70})
-           .text('Stock Mínimo', 470, currentY + 20, {align: 'center', width: 70})
+           .text('Código', startX, startY, {align: 'center', width: columnWidths[0]})
+           .text('Descripción', startX + columnWidths[0], startY, {align: 'center', width: columnWidths[1]})
+           .text('Stock Actual', startX + columnWidths[0] + columnWidths[1], startY, {align: 'center', width: columnWidths[2]})
+           .text('Stock Mínimo', startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, {align: 'center', width: columnWidths[3]})
            .fillColor('black');
-        doc.moveTo(160, currentY)
-           .lineTo(160, currentY + 40)
-           .moveTo(460, currentY)
-           .lineTo(460, currentY + 40)
+        
+        doc.moveTo(startX, startY + rowHeight)
+           .lineTo(startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY + rowHeight)
            .stroke();
-        doc.moveTo(70, currentY + 40)
-           .lineTo(570, currentY + 40)
+
+        doc.moveTo(startX + columnWidths[0], startY)
+           .lineTo(startX + columnWidths[0], startY + rowHeight * (productosFaltantes.length + 1))
+           .moveTo(startX + columnWidths[0] + columnWidths[1], startY)
+           .lineTo(startX + columnWidths[0] + columnWidths[1], startY + rowHeight * (productosFaltantes.length + 1))
+           .moveTo(startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY)
+           .lineTo(startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY + rowHeight * (productosFaltantes.length + 1))
            .stroke();
-        doc.moveDown(3);
+
+        let currentY = startY + rowHeight;
 
         productosFaltantes.forEach(producto => {
-            currentY = doc.y;
-            if (currentY + 40 > doc.page.height - doc.page.margins.bottom) {
+            if (currentY + rowHeight > doc.page.height - doc.page.margins.bottom) {
                 doc.addPage();
-                currentY = doc.y;
+                currentY = 50;
+                doc.fontSize(10)
+                   .fillColor('blue')
+                   .text('Código', startX, startY, {align: 'center', width: columnWidths[0]})
+                   .text('Descripción', startX + columnWidths[0], startY, {align: 'center', width: columnWidths[1]})
+                   .text('Stock Actual', startX + columnWidths[0] + columnWidths[1], startY, {align: 'center', width: columnWidths[2]})
+                   .text('Stock Mínimo', startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, {align: 'center', width: columnWidths[3]})
+                   .fillColor('black');
+                
+                doc.moveTo(startX, startY + rowHeight)
+                   .lineTo(startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], startY + rowHeight)
+                   .stroke();
+
+                doc.moveTo(startX + columnWidths[0], startY)
+                   .lineTo(startX + columnWidths[0], startY + rowHeight * (productosFaltantes.length + 1))
+                   .moveTo(startX + columnWidths[0] + columnWidths[1], startY)
+                   .lineTo(startX + columnWidths[0] + columnWidths[1], startY + rowHeight * (productosFaltantes.length + 1))
+                   .moveTo(startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY)
+                   .lineTo(startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY + rowHeight * (productosFaltantes.length + 1))
+                   .stroke();
             }
-            doc.fontSize(8);
 
-            doc.text(producto.codigo_proveedor, 70, currentY + 10, {align: 'left', width: 100})
-               .text(producto.nombre, 170, currentY + 10, {width: 220, ellipsis: true})
-               .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 470, currentY + 10, {width: 70, align: 'center'})
-               .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 470, currentY + 20, {width: 70, align: 'center'});
+            doc.fontSize(8)
+               .text(producto.codigo_proveedor, startX, currentY, {align: 'left', width: columnWidths[0]})
+               .text(producto.nombre, startX + columnWidths[0], currentY, {width: columnWidths[1]})
+               .text(producto.stock_actual !== undefined ? producto.stock_actual.toString() : 'Sin Stock', startX + columnWidths[0] + columnWidths[1], currentY, {align: 'center', width: columnWidths[2]})
+               .text(producto.stock_minimo !== undefined ? producto.stock_minimo.toString() : '0', startX + columnWidths[0] + columnWidths[1] + columnWidths[2], currentY, {align: 'center', width: columnWidths[3]});
 
-            doc.moveTo(160, currentY)
-               .lineTo(160, currentY + 30)
-               .moveTo(460, currentY)
-               .lineTo(460, currentY + 30)
-               .stroke();
-            doc.moveTo(70, currentY + 30)
-               .lineTo(570, currentY + 30)
-               .stroke();
-            doc.moveDown(2);
+            currentY += rowHeight;
         });
 
         doc.end();
@@ -803,6 +831,7 @@ getProductosPorCategoria : async (req, res) => {
         res.send(pdfData);
     });
 },
+
 
 presupuestoMostrador: async function(req, res) {
     try {
