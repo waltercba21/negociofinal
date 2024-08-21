@@ -116,10 +116,24 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 function updateSubtotal(row) {
     const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
     const cantidad = parseInt(row.cells[3].querySelector('input').value);
+    const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
     const subtotal = precio * cantidad;
+
+    // Comprueba si el stock actual es menor o igual al stock mínimo
+    const stockMinimo = 5; // Define el stock mínimo según tu lógica o obtenlo de la base de datos
+    if (stockActual <= stockMinimo) {
+        Swal.fire({
+            title: 'ALERTA',
+            text: 'LLEGANDO AL LIMITE DE STOCK',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+    }
+
     row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
 }
+
 
 function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
