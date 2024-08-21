@@ -733,8 +733,8 @@ getProductosPorCategoria : async (req, res) => {
             let currentY = doc.y;
             doc.fontSize(12)
                .fillColor('black')
-               .text('Código', 70, currentY, {align: 'left', width: 100})
-               .text('Descripción', 170, currentY, {align: 'left', width: 220})
+               .text('Código', 60, currentY, {align: 'left', width: 100})
+               .text('Descripción', 150, currentY, {align: 'left', width: 220})
                .text('Stock Mínimo', 400, currentY, {align: 'center', width: 80})
                .text('Stock Actual', 480, currentY, {align: 'center', width: 80})
                .moveDown(2);
@@ -746,7 +746,7 @@ getProductosPorCategoria : async (req, res) => {
                     currentY = doc.y;
                 }
 
-                doc.fontSize(10)
+                doc.fontSize(8)
                    .text(producto.codigo_proveedor, 70, currentY, {align: 'left', width: 100})
                    .text(producto.nombre, 170, currentY, {align: 'left', width: 220})
                    .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, {align: 'center', width: 80})
