@@ -799,7 +799,7 @@ presupuestoMostrador: async function(req, res) {
       res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
     }
   },
-  procesarFormulario : async (req, res) => {
+  procesarFormulario: async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
         const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
@@ -811,6 +811,8 @@ presupuestoMostrador: async function(req, res) {
         const presupuestoId = await producto.guardarPresupuesto(presupuesto);
         const items = await Promise.all(invoiceItems.map(async item => {
             const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id);
+            // Actualizar stock del producto
+            await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
             return [
                 presupuestoId,
                 producto_id,
@@ -819,13 +821,14 @@ presupuestoMostrador: async function(req, res) {
                 item.subtotal
             ];
         }));
-        await producto.guardarItemsPresupuesto(items); 
+        await producto.guardarItemsPresupuesto(items);
         res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
     } catch (error) {
         console.error('Error al guardar el presupuesto:', error);
         res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
     }
 },
+
 listadoPresupuestos : (req, res) => {
     res.render('listadoPresupuestos');
 },

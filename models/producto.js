@@ -621,6 +621,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             });
         });
     },
+
     obtenerStock: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
             conexion.query('SELECT stock_minimo, stock_actual FROM productos WHERE id = ?', [idProducto], (error, results) => {
@@ -632,18 +633,20 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             });
         });
     },
-    actualizarStock: function(conexion, datosProducto) {
-        return new Promise((resolve, reject) => {
-            const query = 'UPDATE productos SET stock_actual = ? WHERE id = ?';
-            conexion.query(query, [datosProducto.stock, datosProducto.id], (error, results) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        }); 
-    },
+actualizarStockPresupuesto: (producto_id, cantidadVendida) => {
+    return new Promise((resolve, reject) => {
+        const query = 'UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?';
+        conexion.query(query, [cantidadVendida, producto_id], (error, resultado) => {
+            if (error) {
+                console.error('Error al actualizar el stock:', error);
+                reject(error);
+            } else {
+                console.log('Stock actualizado correctamente para el producto con ID:', producto_id);
+                resolve(resultado);
+            }
+        });
+    });
+},
       obtenerPosicion: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
             const consulta = 'SELECT COUNT(*) AS posicion FROM productos WHERE id <= ? ORDER BY id';
@@ -954,7 +957,7 @@ eliminarPresupuesto: (id) => {
             conexion.beginTransaction(err => {
                 if (err) {
                     conexion.release();
-                    return reject(err);
+                    return reject(err); 
                 }
                 conexion.query(`
                     DELETE FROM presupuesto_items
