@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
               },
               body: JSON.stringify({ ids: ids }),
           })
-          .then(response => response.json())
+          .then(response => response.json())  
           .then(data => {
               if (data.success) {
                   location.reload();
