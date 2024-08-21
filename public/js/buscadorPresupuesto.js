@@ -119,6 +119,19 @@ function updateSubtotal(row) {
     const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
     const subtotal = precio * cantidad;
 
+    // Comprueba si la cantidad solicitada es mayor que el stock actual
+    if (cantidad > stockActual) {
+        Swal.fire({
+            title: 'ALERTA',
+            text: 'NO HAY STOCK DISPONIBLE',
+            icon: 'error',
+            confirmButtonText: 'Entendido'
+        });
+        // Restablece la cantidad a 1 o a una cantidad válida
+        row.cells[3].querySelector('input').value = 1;
+        return;
+    }
+
     // Comprueba si el stock actual es menor o igual al stock mínimo
     const stockMinimo = 5; // Define el stock mínimo según tu lógica o obtenlo de la base de datos
     if (stockActual <= stockMinimo) {
