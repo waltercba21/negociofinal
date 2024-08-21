@@ -2,6 +2,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     e.preventDefault();
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+    
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
@@ -15,8 +16,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
         invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
     }
-
-    console.log("Invoice Items to be sent:", invoiceItems); 
+    
     try {
         const response = await fetch('/productos/procesarFormulario', {
             method: 'POST',
@@ -30,8 +30,10 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 invoiceItems
             })
         });
+
         const data = await response.json();
         console.log("Response from server:", data); 
+
         if (response.ok) {
             alert(data.message);
             window.location.reload();
@@ -56,35 +58,41 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     const url = '/productos/api/buscar?q=' + busqueda;
     const respuesta = await fetch(url);
     const productos = await respuesta.json();
+
     productos.forEach((producto) => {
         const resultado = document.createElement('div');
         resultado.textContent = producto.nombre;
         resultado.classList.add('resultado-busqueda');
+        
         resultado.addEventListener('click', () => {
             resultadosBusqueda.innerHTML = '';  
             const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
             const filaFactura = tablaFactura.insertRow();
+    
             filaFactura.insertCell(0).textContent = producto.codigo;
             filaFactura.insertCell(1).textContent = producto.nombre;
-
+    
             const cellPrecio = filaFactura.insertCell(2);
             const inputPrecio = document.createElement('input');
             inputPrecio.type = 'text';
             inputPrecio.value = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
             inputPrecio.className = 'precio-editable';
             cellPrecio.appendChild(inputPrecio);
-
+    
             const cellCantidad = filaFactura.insertCell(3);
             const inputCantidad = document.createElement('input');
             inputCantidad.type = 'number';
             inputCantidad.min = 1;
             inputCantidad.value = 1;
             cellCantidad.appendChild(inputCantidad);
-
-            const cellSubtotal = filaFactura.insertCell(4);
+    
+            // Agregar el stock actual
+            filaFactura.insertCell(4).textContent = producto.stock_actual;
+    
+            const cellSubtotal = filaFactura.insertCell(5);
             cellSubtotal.textContent = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-            const cellEliminar = filaFactura.insertCell(5);
+    
+            const cellEliminar = filaFactura.insertCell(6);
             const botonEliminar = document.createElement('button');
             botonEliminar.textContent = '✖';
             botonEliminar.className = 'boton-eliminar';
@@ -93,16 +101,17 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
                 calcularTotal();
             });
             cellEliminar.appendChild(botonEliminar);
-
+    
             inputPrecio.addEventListener('input', function() {
                 updateSubtotal(filaFactura);
             });
             inputCantidad.addEventListener('input', function() {
                 updateSubtotal(filaFactura);
             });
-
+    
             calcularTotal();
         });
+    
         resultadosBusqueda.appendChild(resultado);
     });
 });
