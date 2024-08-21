@@ -724,9 +724,12 @@ getProductosPorCategoria : async (req, res) => {
                align: 'center',
                width: doc.page.width - 100
            });
-        
+
         var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
         obtenerProductos.then(productos => {
+            // Filtrar productos con stock actual menor al stock mínimo
+            const productosConStockFaltante = productos.filter(producto => producto.stock_actual < producto.stock_minimo);
+
             let currentY = doc.y;
             doc.fontSize(12)
                .fillColor('black')
@@ -736,7 +739,7 @@ getProductosPorCategoria : async (req, res) => {
                .text('Stock Actual', 480, currentY, {align: 'center', width: 80})
                .moveDown(2);
 
-            productos.forEach(producto => {
+            productosConStockFaltante.forEach(producto => {
                 currentY = doc.y;
                 if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
                     doc.addPage();
