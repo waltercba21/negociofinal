@@ -17,15 +17,18 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
     }
 
-    // Limpia el valor del total antes de validarlo y enviarlo
-    let totalPresupuesto = document.getElementById('total-amount').textContent.replace(/\$|\./g, '').replace(',', '.').trim();
-    
+    // Limpiar y extraer el valor del total
+    let totalPresupuesto = document.getElementById('total-amount').textContent
+        .replace(/[^\d,.-]/g, '') // Eliminar cualquier cosa que no sea un número, coma, punto o signo negativo
+        .replace(',', '.') // Reemplazar coma por punto decimal
+        .trim();
+
     // Log para depuración
-    console.log("Valor de totalPresupuesto antes de la conversión: ", totalPresupuesto);
-    
-    // Convertir el valor limpio a número
+    console.log("Valor de totalPresupuesto después de limpieza: ", totalPresupuesto);
+
+    // Convertir a número
     totalPresupuesto = parseFloat(totalPresupuesto);
-    
+
     // Log para depuración
     console.log("Valor de totalPresupuesto después de la conversión: ", totalPresupuesto);
 
@@ -78,6 +81,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 
 
