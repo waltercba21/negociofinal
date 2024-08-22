@@ -16,7 +16,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
         invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
     }
-    
     try {
         const response = await fetch('/productos/procesarFormulario', {
             method: 'POST',
@@ -32,11 +31,16 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
 
         const data = await response.json();
-        console.log("Response from server:", data); 
 
         if (response.ok) {
-            alert(data.message);
-            window.location.reload();
+            Swal.fire({
+                title: '¡Éxito!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonText: 'Entendido'
+            }).then(() => {
+                window.location.reload();
+            });
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
         }
@@ -98,8 +102,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
                 calcularTotal();
             });
             cellEliminar.appendChild(botonEliminar);
-
-            // Eventos para actualizar el subtotal y recalcular el total cuando cambian la cantidad o el precio
             inputPrecio.addEventListener('input', function() {
                 updateSubtotal(filaFactura);
             });
@@ -112,14 +114,11 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
         resultadosBusqueda.appendChild(resultado);
     });
 });
-
 function updateSubtotal(row) {
     const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
     const cantidad = parseInt(row.cells[3].querySelector('input').value);
     const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
     const subtotal = precio * cantidad;
-
-    // Comprueba si la cantidad solicitada es mayor que el stock actual
     if (cantidad > stockActual) {
         Swal.fire({
             title: 'ALERTA',
@@ -127,13 +126,10 @@ function updateSubtotal(row) {
             icon: 'error',
             confirmButtonText: 'Entendido'
         });
-        // Restablece la cantidad a 1 o a una cantidad válida
         row.cells[3].querySelector('input').value = 1;
         return;
     }
-
-    // Comprueba si el stock actual es menor o igual al stock mínimo
-    const stockMinimo = 5; // Define el stock mínimo según tu lógica o obtenlo de la base de datos
+    const stockMinimo = 5; 
     if (stockActual <= stockMinimo) {
         Swal.fire({
             title: 'ALERTA',

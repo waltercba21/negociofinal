@@ -724,12 +724,9 @@ getProductosPorCategoria : async (req, res) => {
                align: 'center',
                width: doc.page.width - 100
            });
-
         var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
         obtenerProductos.then(productos => {
-            // Filtrar productos con stock actual menor al stock mínimo
             const productosConStockFaltante = productos.filter(producto => producto.stock_actual < producto.stock_minimo);
-
             let currentY = doc.y;
             doc.fontSize(12)
                .fillColor('black')
@@ -745,7 +742,6 @@ getProductosPorCategoria : async (req, res) => {
                     doc.addPage();
                     currentY = doc.y;
                 }
-
                 doc.fontSize(8)
                    .text(producto.codigo_proveedor, 60, currentY, {align: 'left', width: 100})
                    .text(producto.nombre, 150, currentY, {align: 'left', width: 220})
@@ -769,8 +765,6 @@ getProductosPorCategoria : async (req, res) => {
         res.send(pdfData);
     });
 },
-
-
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();
