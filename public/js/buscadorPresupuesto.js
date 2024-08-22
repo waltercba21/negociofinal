@@ -17,10 +17,14 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
     }
 
-    const totalPresupuesto = document.getElementById('total-amount').textContent.replace(/\$|\./g, '').replace(',', '.').trim();
+    // Limpia el valor del total antes de validarlo y enviarlo
+    let totalPresupuesto = document.getElementById('total-amount').textContent.replace(/\$|\./g, '').replace(',', '.').trim();
+    
+    // Convertir el valor limpio a número
+    totalPresupuesto = parseFloat(totalPresupuesto);
 
     // Validación antes de enviar el formulario
-    if (!totalPresupuesto || isNaN(totalPresupuesto) || totalPresupuesto === '') {
+    if (isNaN(totalPresupuesto) || totalPresupuesto <= 0) {
         Swal.fire({
             title: 'Error',
             text: 'El total del presupuesto no es válido.',
@@ -39,7 +43,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
-                totalPresupuesto: totalPresupuesto,
+                totalPresupuesto: totalPresupuesto, // Valor limpio y convertido a número
                 invoiceItems
             })
         });
@@ -68,6 +72,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
