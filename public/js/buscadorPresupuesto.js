@@ -1,46 +1,33 @@
-document.getElementById('invoice-form').addEventListener('submit', async function(e) {
+document.getElementById('guardar-presupuesto').addEventListener('click', async function(e) {
     e.preventDefault();
+
+    const totalPresupuestoElement = document.getElementById('total-amount');
+    let totalPresupuesto = totalPresupuestoElement.value.replace(/\$|\./g, '').replace(',', '.').trim();
+
+    totalPresupuesto = parseFloat(totalPresupuesto);
+
+    console.log("Valor de totalPresupuesto después de la conversión:", totalPresupuesto);
+
+    if (isNaN(totalPresupuesto)) {
+        alert('El total del presupuesto no es válido.');
+        return;
+    }
+
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
 
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
-        let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
-        let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
-        let subtotal = parseFloat(filasFactura[i].cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
+        let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.').trim());
+        let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value.trim());
+        let subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\$|\./g, '').replace(',', '.').trim());
 
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
         subtotal = !isNaN(subtotal) ? subtotal : 0;
 
         invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
-    }
-
-    // Limpiar y extraer el valor del total
-    let totalPresupuesto = document.getElementById('total-amount').textContent
-        .replace(/[^\d,.-]/g, '') // Eliminar cualquier cosa que no sea un número, coma, punto o signo negativo
-        .replace(',', '.') // Reemplazar coma por punto decimal
-        .trim();
-
-    // Log para depuración
-    console.log("Valor de totalPresupuesto después de limpieza: ", totalPresupuesto);
-
-    // Convertir a número
-    totalPresupuesto = parseFloat(totalPresupuesto);
-
-    // Log para depuración
-    console.log("Valor de totalPresupuesto después de la conversión: ", totalPresupuesto);
-
-    // Validación antes de enviar el formulario
-    if (isNaN(totalPresupuesto) || totalPresupuesto <= 0) {
-        Swal.fire({
-            title: 'Error',
-            text: 'El total del presupuesto no es válido.',
-            icon: 'error',
-            confirmButtonText: 'Entendido'
-        });
-        return;
     }
 
     try {
@@ -52,35 +39,24 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
-                totalPresupuesto: totalPresupuesto, // Valor limpio y convertido a número
+                totalPresupuesto,
                 invoiceItems
             })
         });
-
         const data = await response.json();
 
         if (response.ok) {
-            Swal.fire({
-                title: '¡Éxito!',
-                text: data.message,
-                icon: 'success',
-                confirmButtonText: 'Entendido'
-            }).then(() => {
-                window.location.reload(); // Recarga la página después de cerrar la alerta
-            });
+            alert(data.message);
+            window.location.reload();
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
         }
     } catch (error) {
         console.error('Error al enviar formulario:', error);
-        Swal.fire({
-            title: 'Error',
-            text: 'Error al enviar formulario: ' + error.message,
-            icon: 'error',
-            confirmButtonText: 'Entendido'
-        });
+        alert('Error al enviar formulario: ' + error.message);
     }
 });
+
 
 
 
