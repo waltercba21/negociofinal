@@ -20,8 +20,14 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     // Limpia el valor del total antes de validarlo y enviarlo
     let totalPresupuesto = document.getElementById('total-amount').textContent.replace(/\$|\./g, '').replace(',', '.').trim();
     
+    // Log para depuración
+    console.log("Valor de totalPresupuesto antes de la conversión: ", totalPresupuesto);
+    
     // Convertir el valor limpio a número
     totalPresupuesto = parseFloat(totalPresupuesto);
+    
+    // Log para depuración
+    console.log("Valor de totalPresupuesto después de la conversión: ", totalPresupuesto);
 
     // Validación antes de enviar el formulario
     if (isNaN(totalPresupuesto) || totalPresupuesto <= 0) {
@@ -72,6 +78,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 
 
