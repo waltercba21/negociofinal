@@ -8,7 +8,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
-        let subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\./g, '').replace(',', '.'));
+        let subtotal = parseFloat(filasFactura[i].cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
 
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
@@ -16,6 +16,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
         invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
     }
+
     try {
         const response = await fetch('/productos/procesarFormulario', {
             method: 'POST',
@@ -25,7 +26,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
-                totalPresupuesto: document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim(),
+                totalPresupuesto: document.getElementById('total-amount').textContent.replace(/\$|\./g, '').replace(',', '.').trim(),
                 invoiceItems
             })
         });
@@ -119,12 +120,13 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
         resultadosBusqueda.appendChild(resultado);
     });
 });
+
 function updateSubtotal(row) {
     const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
     const cantidad = parseInt(row.cells[3].querySelector('input').value);
     const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
-    const subtotal = precio * cantidad;
-    const stockMinimo = 5; // Puedes cambiar este valor según sea necesario
+    const subtotal = !isNaN(precio) && !isNaN(cantidad) ? precio * cantidad : 0;
+    const stockMinimo = 5;
 
     if (cantidad > stockActual) {
         Swal.fire({
@@ -137,10 +139,8 @@ function updateSubtotal(row) {
         return;
     }
 
-    // Calcular stock restante después de la cantidad solicitada
     const stockRestante = stockActual - cantidad;
 
-    // Mostrar alerta si el stock restante es menor o igual al stock mínimo
     if (stockRestante <= stockMinimo) {
         Swal.fire({
             title: 'ALERTA',
@@ -153,6 +153,7 @@ function updateSubtotal(row) {
     row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
 }
+
 function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
