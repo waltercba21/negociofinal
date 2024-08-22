@@ -164,5 +164,5 @@ function calcularTotal() {
         total += subtotal;
     }
 
-    document.getElementById('total-amount').textContent = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' }); // Usar 'value' en lugar de 'textContent'
 }
