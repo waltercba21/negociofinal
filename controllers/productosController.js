@@ -260,7 +260,7 @@ module.exports = {
         try {
             await producto.eliminar(ids);
             res.json({ success: true });
-        } catch (error) {
+        } catch (error) { 
             res.status(500).json({ success: false, error: error.message });
         }
     },

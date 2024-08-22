@@ -191,28 +191,31 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
     conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
     [proveedor_id, descuento], funcion);
   },
-eliminar : async (idOrIds) => {
+  eliminar: async (idOrIds) => {
     return new Promise((resolve, reject) => {
         const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
         const idList = ids.join(',');
-        conexion.query(`DELETE FROM imagenes_producto WHERE producto_id IN (${idList})`, (error, results) => {
+
+        // Eliminar primero las relaciones en `producto_proveedor`
+        conexion.query(`DELETE FROM producto_proveedor WHERE producto_id IN (${idList})`, (error, results) => {
             if (error) {
-                reject(error);
-            } else {
-                conexion.query(`DELETE FROM producto_proveedor WHERE producto_id IN (${idList})`, (error, results) => {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        conexion.query(`DELETE FROM productos WHERE id IN (${idList})`, (error, results) => {
-                            if (error) {
-                                reject(error);
-                            } else {
-                                resolve(results);
-                            }
-                        });
-                    }
-                });
+                return reject(error);
             }
+
+            // Luego, eliminar las imágenes relacionadas en `imagenes_producto`
+            conexion.query(`DELETE FROM imagenes_producto WHERE producto_id IN (${idList})`, (error, results) => {
+                if (error) {
+                    return reject(error);
+                }
+
+                // Finalmente, eliminar los productos de la tabla `productos`
+                conexion.query(`DELETE FROM productos WHERE id IN (${idList})`, (error, results) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    resolve(results);
+                });
+            });
         });
     });
 },
