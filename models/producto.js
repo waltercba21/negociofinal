@@ -469,7 +469,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 return;
             }
     
-            console.log(`Actualizando producto con código: ${codigo} y precio lista: ${precio_lista}`);
+            console.log(`Actualizando productos con código: ${codigo} y precio lista: ${precio_lista}`);
     
             const sql = `SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento 
                          FROM producto_proveedor pp 
@@ -492,61 +492,70 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                         return;
                     }
     
-                    let producto = results[0];
-                    if (!producto) {
+                    if (results.length === 0) {
                         console.log(`No se encontró ningún producto con el código ${codigo}`);
                         conexion.release();
                         resolve(null);
                         return;
                     }
     
-                    let descuento = producto.descuento;
-                    let costo_neto = precio_lista - (precio_lista * descuento / 100);
-                    producto.costo_neto = costo_neto;
-                    let IVA = 21; 
-                    let costo_iva = costo_neto + (costo_neto * IVA / 100);
-                    let utilidad = producto.utilidad;
+                    const updatePromises = results.map(producto => {
+                        let descuento = producto.descuento;
+                        let costo_neto = precio_lista - (precio_lista * descuento / 100);
+                        let IVA = 21; 
+                        let costo_iva = costo_neto + (costo_neto * IVA / 100);
+                        let utilidad = producto.utilidad;
     
-                    if (isNaN(costo_iva) || isNaN(utilidad)) {
-                        console.error('Costo con IVA o utilidad no es un número válido');
-                        conexion.release();
-                        resolve(null);
-                        return;
-                    }
-    
-                    let precio_venta = costo_iva + (costo_iva * utilidad / 100);
-                    precio_venta = Math.ceil(precio_venta / 10) * 10;
-    
-                    const sqlUpdateProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ? AND codigo = ?';
-                    const sqlUpdateProductos = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
-    
-                    conexion.query(sqlUpdateProductoProveedor, [precio_lista, producto.producto_id, codigo], (errorUpdatePP, resultsUpdatePP) => {
-                        if (errorUpdatePP) {
-                            console.error('Error en la consulta SQL de actualización en producto_proveedor:', errorUpdatePP);
-                            conexion.release();
-                            resolve(null);
-                            return;
+                        if (isNaN(costo_iva) || isNaN(utilidad)) {
+                            console.error('Costo con IVA o utilidad no es un número válido');
+                            return Promise.resolve(null);
                         }
     
-                        conexion.query(sqlUpdateProductos, [precio_venta, producto.producto_id], (errorUpdateProd, resultsUpdateProd) => {
-                            conexion.release();
-                            if (errorUpdateProd) {
-                                console.error('Error en la consulta SQL de actualización en productos:', errorUpdateProd);
-                                resolve(null);
-                            } else {
-                                resolve({
-                                    codigo: codigo,
-                                    precio_lista_antiguo: producto.precio_lista,
-                                    precio_lista_nuevo: precio_lista,
-                                    precio_venta: precio_venta
+                        let precio_venta = costo_iva + (costo_iva * utilidad / 100);
+                        precio_venta = Math.ceil(precio_venta / 10) * 10;
+    
+                        const sqlUpdateProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ? AND codigo = ?';
+                        const sqlUpdateProductos = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
+    
+                        return new Promise((resolveUpdate, rejectUpdate) => {
+                            conexion.query(sqlUpdateProductoProveedor, [precio_lista, producto.producto_id, codigo], (errorUpdatePP, resultsUpdatePP) => {
+                                if (errorUpdatePP) {
+                                    console.error('Error en la consulta SQL de actualización en producto_proveedor:', errorUpdatePP);
+                                    resolveUpdate(null);
+                                    return;
+                                }
+    
+                                conexion.query(sqlUpdateProductos, [precio_venta, producto.producto_id], (errorUpdateProd, resultsUpdateProd) => {
+                                    if (errorUpdateProd) {
+                                        console.error('Error en la consulta SQL de actualización en productos:', errorUpdateProd);
+                                        resolveUpdate(null);
+                                    } else {
+                                        resolveUpdate({
+                                            codigo: codigo,
+                                            producto_id: producto.producto_id,
+                                            precio_lista_antiguo: producto.precio_lista,
+                                            precio_lista_nuevo: precio_lista,
+                                            precio_venta: precio_venta
+                                        });
+                                    }
                                 });
-                            }
+                            });
                         });
+                    });
+    
+                    Promise.all(updatePromises).then(updatedProducts => {
+                        conexion.release();
+                        resolve(updatedProducts.filter(producto => producto !== null));
+                    }).catch(err => {
+                        console.error('Error al actualizar los productos:', err);
+                        conexion.release();
+                        resolve(null);
                     });
                 });
             });
         });
-    },    
+    },
+    
     obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
