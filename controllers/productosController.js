@@ -948,16 +948,14 @@ actualizarPreciosExcel: async (req, res) => {
                                 console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
                                 continue;
                             }
-
-                            // Aquí buscamos todos los productos que coincidan con el código
+                    
+                            // Actualiza todos los productos con el mismo código
                             promises.push(
-                                producto.buscarProductosPorCodigo(codigo)
-                                    .then(async productos => {
-                                        if (productos && productos.length > 0) {
-                                            for (const productoEncontrado of productos) {
-                                                await producto.actualizarPreciosPDF(precio, productoEncontrado.codigo);
-                                                productosActualizados.push(productoEncontrado);
-                                                await producto.seleccionarProveedorMasBarato(conexion, productoEncontrado.codigo);
+                                producto.actualizarPreciosPDF(precio, codigo)
+                                    .then(async productosActualizados => {
+                                        if (productosActualizados && productosActualizados.length > 0) {
+                                            for (const productoActualizado of productosActualizados) {
+                                                await producto.seleccionarProveedorMasBarato(conexion, productoActualizado.codigo);
                                             }
                                         } else {
                                             console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
