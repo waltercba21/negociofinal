@@ -20,7 +20,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       const respuesta = await fetch(url);
       productos = await respuesta.json();
     }
-    productos.forEach((producto, index) => {
+    productos.forEach((producto) => {
       let imagenes = '';
       if (producto.imagenes && producto.imagenes.length > 0) {
         producto.imagenes.forEach((imagenObj, i) => {
@@ -34,10 +34,10 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
             </div>
           </div>
           <div class="carousel__buttons">
-            <button class="carousel__button">
+            <button class="carousel__button carousel__button--left">
               <i class="fas fa-chevron-left"></i>
             </button>
-            <button class="carousel__button">
+            <button class="carousel__button carousel__button--right">
               <i class="fas fa-chevron-right"></i>
             </button>
           </div>
@@ -47,42 +47,38 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       }
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = document.createElement('div');
+      tarjetaProducto.classList.add('card');
       tarjetaProducto.innerHTML = `
-        <div class="card"> 
-          ${imagenes}
-          <div class="titulo-producto">
-            <h3 class="nombre">${producto.nombre}</h3>
-          </div>
-          <hr>
-          <div class="precio-producto">
-            <p class="precio">${precio_venta}</p>
-          </div>
-          <div class="cantidad-producto">
-            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-          </div>
+        ${imagenes}
+        <div class="titulo-producto">
+          <h3 class="nombre">${producto.nombre}</h3>
+        </div>
+        <hr>
+        <div class="precio-producto">
+          <p class="precio">${precio_venta}</p>
+        </div>
+        <div class="cantidad-producto">
+          <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
         </div>
       `;
       contenedorProductos.appendChild(tarjetaProducto);
 
-      // Reasignar eventos de clic para las flechas del carrusel
-      $(tarjetaProducto).find('.carousel__button').on('click', function() {
-        var $carousel = $(this).closest('.card').find('.carousel');
-        var $images = $carousel.find('.carousel__image');
-        var index = $images.index($carousel.find('.carousel__image:visible'));
-        if ($(this).find('.fa-chevron-left').length > 0) {
-          $images.eq(index).hide();
-          index--;
-          if (index < 0) {
-            index = $images.length - 1;
-          }
-        } else {
-          $images.eq(index).hide();
-          index++;
-          if (index >= $images.length) {
-            index = 0;
-          }
-        }
-        $images.eq(index).show();
+      // Asignar eventos a las flechas del carrusel
+      const leftButton = tarjetaProducto.querySelector('.carousel__button--left');
+      const rightButton = tarjetaProducto.querySelector('.carousel__button--right');
+      const images = tarjetaProducto.querySelectorAll('.carousel__image');
+      let currentIndex = 0;
+
+      leftButton.addEventListener('click', () => {
+        images[currentIndex].classList.add('hidden');
+        currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
+        images[currentIndex].classList.remove('hidden');
+      });
+
+      rightButton.addEventListener('click', () => {
+        images[currentIndex].classList.add('hidden');
+        currentIndex = (currentIndex === images.length - 1) ? 0 : currentIndex + 1;
+        images[currentIndex].classList.remove('hidden');
       });
     });
   }, 300);
