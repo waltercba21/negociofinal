@@ -2,7 +2,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     e.preventDefault();
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    
+
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
@@ -17,6 +17,19 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
     }
 
+    const totalPresupuesto = document.getElementById('total-amount').textContent.replace(/\$|\./g, '').replace(',', '.').trim();
+
+    // Validación antes de enviar el formulario
+    if (!totalPresupuesto || isNaN(totalPresupuesto) || totalPresupuesto === '') {
+        Swal.fire({
+            title: 'Error',
+            text: 'El total del presupuesto no es válido.',
+            icon: 'error',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
+
     try {
         const response = await fetch('/productos/procesarFormulario', {
             method: 'POST',
@@ -26,7 +39,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
-                totalPresupuesto: document.getElementById('total-amount').textContent.replace(/\$|\./g, '').replace(',', '.').trim(),
+                totalPresupuesto: totalPresupuesto,
                 invoiceItems
             })
         });
@@ -55,6 +68,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
