@@ -39,14 +39,19 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 icon: 'success',
                 confirmButtonText: 'Entendido'
             }).then(() => {
-                window.location.reload();
+                window.location.reload(); // Recarga la página después de cerrar la alerta
             });
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
         }
     } catch (error) {
         console.error('Error al enviar formulario:', error);
-        alert('Error al enviar formulario: ' + error.message);
+        Swal.fire({
+            title: 'Error',
+            text: 'Error al enviar formulario: ' + error.message,
+            icon: 'error',
+            confirmButtonText: 'Entendido'
+        });
     }
 });
 
@@ -119,6 +124,8 @@ function updateSubtotal(row) {
     const cantidad = parseInt(row.cells[3].querySelector('input').value);
     const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
     const subtotal = precio * cantidad;
+    const stockMinimo = 5; // Puedes cambiar este valor según sea necesario
+
     if (cantidad > stockActual) {
         Swal.fire({
             title: 'ALERTA',
@@ -129,8 +136,12 @@ function updateSubtotal(row) {
         row.cells[3].querySelector('input').value = 1;
         return;
     }
-    const stockMinimo = 5; 
-    if (stockActual <= stockMinimo) {
+
+    // Calcular stock restante después de la cantidad solicitada
+    const stockRestante = stockActual - cantidad;
+
+    // Mostrar alerta si el stock restante es menor o igual al stock mínimo
+    if (stockRestante <= stockMinimo) {
         Swal.fire({
             title: 'ALERTA',
             text: 'LLEGANDO AL LIMITE DE STOCK',
@@ -141,15 +152,4 @@ function updateSubtotal(row) {
 
     row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
-}
-
-
-function calcularTotal() {
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    let total = 0;
-    for (let i = 0; i < filasFactura.length; i++) {
-        const value = parseFloat(filasFactura[i].cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
-        total += value;
-    }
-    document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
