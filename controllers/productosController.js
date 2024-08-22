@@ -917,7 +917,7 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
- actualizarPreciosExcel : async (req, res) => {
+actualizarPreciosExcel: async (req, res) => {
     try {
         const file = req.files[0];
         let productosActualizados = [];
@@ -935,10 +935,8 @@ actualizarPrecios: function(req, res) {
                         let codigoRaw = row[codigoColumn];
                         let precioRaw = row[precioColumn];
                     
-                        // Asegúrate de que el código se maneje como una cadena
                         let codigo = codigoRaw.toString().trim();
                     
-                        // Asegúrate de que precioRaw es una cadena antes de reemplazar
                         if (typeof precioRaw === 'number') {
                             precioRaw = precioRaw.toString();
                         }
@@ -950,13 +948,17 @@ actualizarPrecios: function(req, res) {
                                 console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
                                 continue;
                             }
-                    
+
+                            // Aquí buscamos todos los productos que coincidan con el código
                             promises.push(
-                                producto.actualizarPreciosPDF(precio, codigo)
-                                    .then(async productoActualizado => {
-                                        if (productoActualizado !== null) {
-                                            productosActualizados.push(productoActualizado);
-                                            await producto.seleccionarProveedorMasBarato(conexion, codigo);
+                                producto.buscarProductosPorCodigo(codigo)
+                                    .then(async productos => {
+                                        if (productos && productos.length > 0) {
+                                            for (const productoEncontrado of productos) {
+                                                await producto.actualizarPreciosPDF(precio, productoEncontrado.codigo);
+                                                productosActualizados.push(productoEncontrado);
+                                                await producto.seleccionarProveedorMasBarato(conexion, productoEncontrado.codigo);
+                                            }
                                         } else {
                                             console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
                                             return { noExiste: true, codigo: codigo };
@@ -973,7 +975,6 @@ actualizarPrecios: function(req, res) {
                     } else {
                         console.error(`No se encontraron las columnas de código o precio en la fila: ${JSON.stringify(row)}`);
                     }
-                    
                 }
             }
             const resultados = await Promise.all(promises);
@@ -998,6 +999,7 @@ actualizarPrecios: function(req, res) {
         res.status(500).send(error.message);
     }
 },
+
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);

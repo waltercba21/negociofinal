@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('imagen').addEventListener('change', function(e) {
         var preview = document.getElementById('preview');
         if (preview) {
-            preview.innerHTML = ''; // Limpia el contenedor de imágenes previas
+            preview.innerHTML = '';
             Array.from(e.target.files).forEach(file => {
                 var img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
@@ -51,8 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });$(document).ready(function() {
     var marcaId = $('#marca').val();
-    var modeloSeleccionado = $('#modelo_id').data('selected'); // Obtiene el modelo seleccionado desde el atributo data
-
+    var modeloSeleccionado = $('#modelo_id').data('selected');
     if (marcaId) {
         $('#modelo_id').empty();
         $('#modelo_id').append('<option value="">Selecciona un modelo...</option>');
@@ -66,7 +65,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-
     $('#marca').change(function() {
         var marcaId = $(this).val();
         $('#modelo_id').empty();
@@ -80,9 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
-});
-
-
+}); 
 $(document).ready(function() {
     function bindEventsToProveedor(proveedorElement) {
         proveedorElement.find('.precio_lista, .descuentos_proveedor_id').off('change').on('change', function() {
@@ -102,7 +98,6 @@ $(document).ready(function() {
             actualizarProveedorAsignado();
         });
     }
-
     $(document).on('click', '.eliminar-proveedor', function() {
         var proveedorId = $(this).data('proveedor-id');
         var productoId = $('input[name="id"]').val(); 
@@ -127,7 +122,6 @@ $(document).ready(function() {
             console.error('Error al hacer la solicitud:', error);
         });
     }); 
-
     $('#addProveedor').click(function(e) {
         e.preventDefault();
         console.log('Botón de añadir proveedor clickeado');
@@ -140,8 +134,6 @@ $(document).ready(function() {
         calcularCostos(newProveedor);
         actualizarProveedorAsignado();
     });
-    
-
     $('form').on('keypress', function(e) {
         if (e.keyCode === 13) {
             e.preventDefault();
@@ -164,7 +156,6 @@ $(document).ready(function() {
         actualizarPrecioVenta();
     });
 });
-
 function calcularCostos(proveedorElement) {
     var precioLista = parseFloat(proveedorElement.find('.precio_lista').val() || 0);
     var descuento = parseFloat(proveedorElement.find('.descuentos_proveedor_id').val() || 0);
@@ -176,7 +167,6 @@ function calcularCostos(proveedorElement) {
     proveedorElement.find('.costo_iva').val(costoConIVA);
     console.log('Costos calculados:', { costoNeto, costoConIVA });
 }
-
 function actualizarProveedorAsignado() {
     var costosConIva = $('.costo_iva');
     var costoMasBajo = Infinity;
@@ -197,7 +187,6 @@ function actualizarProveedorAsignado() {
     $('.proveedor-asignado').css('background-color', '#dff0d8');
     console.log('Proveedor asignado:', proveedorMasBarato ? proveedorMasBarato.find('.nombre_proveedor').text() : 'Ninguno');
 }
-
 function actualizarPrecioVenta() {
     var utilidad = parseFloat($('#utilidad').val() || 0);
     var costoConIVA = parseFloat($('.costo_iva').filter(function() {
