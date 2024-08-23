@@ -120,11 +120,15 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
                 calcularTotal();
             });
             cellEliminar.appendChild(botonEliminar);
-            inputPrecio.addEventListener('input', function() {
-                updateSubtotal(filaFactura);
-            });
+
+            // Actualiza subtotal y stock solo cuando se cambia la cantidad
             inputCantidad.addEventListener('input', function() {
                 updateSubtotal(filaFactura);
+            });
+
+            // Mantén la actualización de subtotal cuando se cambia el precio
+            inputPrecio.addEventListener('input', function() {
+                updateSubtotal(filaFactura, false); // Pasa false para no verificar stock
             });
 
             calcularTotal();
@@ -133,33 +137,35 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     });
 });
 
-function updateSubtotal(row) {
+function updateSubtotal(row, verificarStock = true) {
     const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
     const cantidad = parseInt(row.cells[3].querySelector('input').value);
     const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
     const subtotal = !isNaN(precio) && !isNaN(cantidad) ? precio * cantidad : 0;
     const stockMinimo = 5;
 
-    if (cantidad > stockActual) {
-        Swal.fire({
-            title: 'ALERTA',
-            text: 'NO HAY STOCK DISPONIBLE',
-            icon: 'error',
-            confirmButtonText: 'Entendido'
-        });
-        row.cells[3].querySelector('input').value = 1;
-        return;
-    }
+    if (verificarStock) {
+        if (cantidad > stockActual) {
+            Swal.fire({
+                title: 'ALERTA',
+                text: 'NO HAY STOCK DISPONIBLE',
+                icon: 'error',
+                confirmButtonText: 'Entendido'
+            });
+            row.cells[3].querySelector('input').value = 1;
+            return;
+        }
 
-    const stockRestante = stockActual - cantidad;
+        const stockRestante = stockActual - cantidad;
 
-    if (stockRestante <= stockMinimo) {
-        Swal.fire({
-            title: 'ALERTA',
-            text: 'LLEGANDO AL LIMITE DE STOCK',
-            icon: 'warning',
-            confirmButtonText: 'Entendido'
-        });
+        if (stockRestante <= stockMinimo) {
+            Swal.fire({
+                title: 'ALERTA',
+                text: 'LLEGANDO AL LIMITE DE STOCK',
+                icon: 'warning',
+                confirmButtonText: 'Entendido'
+            });
+        }
     }
 
     row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
