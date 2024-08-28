@@ -471,6 +471,11 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     
             codigo = codigo.trim(); // Asegúrate de que no haya espacios en blanco en el código
     
+            // Convertir el precio de la lista a cadena si no lo es
+            if (typeof precio_lista !== 'string') {
+                precio_lista = precio_lista.toString();
+            }
+    
             // Convertir el precio de la lista de precios de formato "5.000,00" a "5000.00"
             precio_lista = parseFloat(precio_lista.replace(/\./g, '').replace(',', '.'));
     
