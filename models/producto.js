@@ -469,13 +469,17 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 return;
             }
     
+            codigo = codigo.trim(); // Asegúrate de que no haya espacios en blanco en el código
+    
             console.log(`Actualizando productos con código: ${codigo} y precio lista: ${precio_lista}`);
     
-            const sql = `SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento 
-                         FROM producto_proveedor pp 
-                         JOIN productos p ON pp.producto_id = p.id 
-                         JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id 
-                         WHERE pp.codigo = ?`;
+            const sql = `
+                SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento 
+                FROM producto_proveedor pp 
+                JOIN productos p ON pp.producto_id = p.id 
+                LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id 
+                WHERE pp.codigo = ?
+            `;
     
             conexion.getConnection((err, conexion) => {
                 if (err) {
@@ -500,11 +504,11 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                     }
     
                     const updatePromises = results.map(producto => {
-                        let descuento = producto.descuento;
+                        let descuento = producto.descuento || 0;
                         let costo_neto = precio_lista - (precio_lista * descuento / 100);
                         let IVA = 21; 
                         let costo_iva = costo_neto + (costo_neto * IVA / 100);
-                        let utilidad = producto.utilidad;
+                        let utilidad = producto.utilidad || 0;
     
                         if (isNaN(costo_iva) || isNaN(utilidad)) {
                             console.error('Costo con IVA o utilidad no es un número válido');
@@ -514,8 +518,16 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                         let precio_venta = costo_iva + (costo_iva * utilidad / 100);
                         precio_venta = Math.ceil(precio_venta / 10) * 10;
     
-                        const sqlUpdateProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ? AND codigo = ?';
-                        const sqlUpdateProductos = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
+                        const sqlUpdateProductoProveedor = `
+                            UPDATE producto_proveedor 
+                            SET precio_lista = ? 
+                            WHERE producto_id = ? AND codigo = ?
+                        `;
+                        const sqlUpdateProductos = `
+                            UPDATE productos 
+                            SET precio_venta = ? 
+                            WHERE id = ?
+                        `;
     
                         return new Promise((resolveUpdate, rejectUpdate) => {
                             conexion.query(sqlUpdateProductoProveedor, [precio_lista, producto.producto_id, codigo], (errorUpdatePP, resultsUpdatePP) => {
@@ -554,8 +566,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 });
             });
         });
-    },
-    
+    },    
     obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
