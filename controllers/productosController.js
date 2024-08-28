@@ -921,6 +921,8 @@ actualizarPreciosExcel: async (req, res) => {
     try {
         const file = req.files[0];
         let productosActualizados = [];
+        let productosNoActualizados = [];
+
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
@@ -952,14 +954,14 @@ actualizarPreciosExcel: async (req, res) => {
                             // Actualiza todos los productos con el mismo código
                             promises.push(
                                 producto.actualizarPreciosPDF(precio, codigo)
-                                    .then(async productosActualizados => {
-                                        if (productosActualizados && productosActualizados.length > 0) {
-                                            for (const productoActualizado of productosActualizados) {
+                                    .then(async productosActualizadosDB => {
+                                        if (productosActualizadosDB && productosActualizadosDB.length > 0) {
+                                            for (const productoActualizado of productosActualizadosDB) {
                                                 await producto.seleccionarProveedorMasBarato(conexion, productoActualizado.codigo);
+                                                productosActualizados.push(productoActualizado); // Agrega los productos actualizados a la lista
                                             }
                                         } else {
-                                            console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
-                                            return { noExiste: true, codigo: codigo };
+                                            productosNoActualizados.push(codigo); // Agrega los códigos de productos no encontrados
                                         }
                                     })
                                     .catch(error => {
@@ -983,11 +985,14 @@ actualizarPreciosExcel: async (req, res) => {
             }
             if (noEncontrados.length > 0) {
                 noEncontrados.forEach(item => {
-                    console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
+                    productosNoActualizados.push(item.codigo); // Agrega los productos no encontrados
                 });
             }
             fs.unlinkSync(file.path);
-            res.render('productosActualizados', { productos: productosActualizados });
+            res.render('productosActualizados', { 
+                productos: productosActualizados, 
+                noModificados: productosNoActualizados // Enviar también la lista de productos no modificados
+            });
         } else {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
             return;
@@ -997,6 +1002,7 @@ actualizarPreciosExcel: async (req, res) => {
         res.status(500).send(error.message);
     }
 },
+
 
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
