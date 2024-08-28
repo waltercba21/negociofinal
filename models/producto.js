@@ -471,6 +471,15 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     
             codigo = codigo.trim(); // Asegúrate de que no haya espacios en blanco en el código
     
+            // Convertir el precio de la lista de precios de formato "5.000,00" a "5000.00"
+            precio_lista = parseFloat(precio_lista.replace(/\./g, '').replace(',', '.'));
+    
+            if (isNaN(precio_lista)) {
+                console.error(`El precio de la lista no es un número válido: ${precio_lista}`);
+                resolve(null);
+                return;
+            }
+    
             console.log(`Actualizando productos con código: ${codigo} y precio lista: ${precio_lista}`);
     
             const sql = `
