@@ -950,9 +950,10 @@ actualizarPreciosExcel: async (req, res) => {
                             }
                             promises.push(
                                 producto.actualizarPreciosPDF(precio, codigo)
-                                    .then(async productosActualizados => {
-                                        if (productosActualizados && productosActualizados.length > 0) {
-                                            for (const productoActualizado of productosActualizados) {
+                                    .then(async productosActualizadosTemp => {
+                                        if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
+                                            productosActualizados.push(...productosActualizadosTemp);
+                                            for (const productoActualizado of productosActualizadosTemp) {
                                                 await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo);
                                             }
                                         } else {
