@@ -1004,7 +1004,6 @@ actualizarPreciosExcel: async (req, res) => {
     }
 },
 
-
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
