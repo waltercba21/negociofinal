@@ -469,31 +469,13 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 return;
             }
     
-            codigo = codigo.trim(); // Asegúrate de que no haya espacios en blanco en el código
-    
-            // Convertir el precio de la lista a cadena si no lo es
-            if (typeof precio_lista !== 'string') {
-                precio_lista = precio_lista.toString();
-            }
-    
-            // Convertir el precio de la lista de precios de formato "5.000,00" a "5000.00"
-            precio_lista = parseFloat(precio_lista.replace(/\./g, '').replace(',', '.'));
-    
-            if (isNaN(precio_lista)) {
-                console.error(`El precio de la lista no es un número válido: ${precio_lista}`);
-                resolve(null);
-                return;
-            }
-    
             console.log(`Actualizando productos con código: ${codigo} y precio lista: ${precio_lista}`);
     
-            const sql = `
-                SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento 
-                FROM producto_proveedor pp 
-                JOIN productos p ON pp.producto_id = p.id 
-                LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id 
-                WHERE pp.codigo = ?
-            `;
+            const sql = `SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento 
+                         FROM producto_proveedor pp 
+                         JOIN productos p ON pp.producto_id = p.id 
+                         JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id 
+                         WHERE pp.codigo = ?`;
     
             conexion.getConnection((err, conexion) => {
                 if (err) {
@@ -518,11 +500,11 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                     }
     
                     const updatePromises = results.map(producto => {
-                        let descuento = producto.descuento || 0;
+                        let descuento = producto.descuento;
                         let costo_neto = precio_lista - (precio_lista * descuento / 100);
                         let IVA = 21; 
                         let costo_iva = costo_neto + (costo_neto * IVA / 100);
-                        let utilidad = producto.utilidad || 0;
+                        let utilidad = producto.utilidad;
     
                         if (isNaN(costo_iva) || isNaN(utilidad)) {
                             console.error('Costo con IVA o utilidad no es un número válido');
@@ -532,16 +514,8 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                         let precio_venta = costo_iva + (costo_iva * utilidad / 100);
                         precio_venta = Math.ceil(precio_venta / 10) * 10;
     
-                        const sqlUpdateProductoProveedor = `
-                            UPDATE producto_proveedor 
-                            SET precio_lista = ? 
-                            WHERE producto_id = ? AND codigo = ?
-                        `;
-                        const sqlUpdateProductos = `
-                            UPDATE productos 
-                            SET precio_venta = ? 
-                            WHERE id = ?
-                        `;
+                        const sqlUpdateProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ? AND codigo = ?';
+                        const sqlUpdateProductos = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
     
                         return new Promise((resolveUpdate, rejectUpdate) => {
                             conexion.query(sqlUpdateProductoProveedor, [precio_lista, producto.producto_id, codigo], (errorUpdatePP, resultsUpdatePP) => {
