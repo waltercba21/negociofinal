@@ -957,8 +957,13 @@ actualizarPreciosExcel: async (req, res) => {
                                     .then(async productosActualizadosDB => {
                                         if (productosActualizadosDB && productosActualizadosDB.length > 0) {
                                             for (const productoActualizado of productosActualizadosDB) {
-                                                await producto.seleccionarProveedorMasBarato(conexion, productoActualizado.codigo);
-                                                productosActualizados.push(productoActualizado);
+                                                try {
+                                                    await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo, proveedorId);
+                                                    productosActualizados.push(productoActualizado);
+                                                } catch (error) {
+                                                    console.log(`Error al asignar proveedor más barato para el producto con código ${codigo}:`, error);
+                                                    productosNoActualizados.push(codigo);
+                                                }
                                             }
                                         } else {
                                             productosNoActualizados.push(codigo);
@@ -1003,7 +1008,6 @@ actualizarPreciosExcel: async (req, res) => {
         res.status(500).send(error.message);
     }
 },
-
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
