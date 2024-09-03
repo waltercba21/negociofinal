@@ -2503,4 +2503,36 @@ table td img:hover {
   .carrito-productos {
     margin-right: 0;
   }
+
+  /*------------------INDEX CONTENEDOR OFERTAS Y AGREGADOS --------------*/
+  .contenedor-principal-productos {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .ultimos-productos, .contenedor-ofertas {
+    max-width: 100%;
+    margin: 0;
+  }
+  .card-ultimos, .card-oferta {
+    width: 100%;
+    max-width: 100%;
+  } 
+  .titulo-producto h3, .titulo-producto-oferta h3 {
+    font-size: 14px;
+  }
+  .precio-producto p, .precio-producto-oferta p {
+    font-size: 12px;
+  }
+  .flecha-izquierda-ofertas, .flecha-derecha-ofertas {
+    display: none;
+  }
+  .contenedor-principal-productos {
+    padding: 10px;
+  }
+  .ultimos-productos, .contenedor-ofertas {
+    padding: 10px;
+  }
+  .card-ultimos, .card-oferta {
+    padding: 10px;
+  }
 }
