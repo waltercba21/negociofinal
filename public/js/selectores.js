@@ -4,13 +4,7 @@ document.getElementById('marca_id').addEventListener('change', function() {
       .then(response => response.json())
       .then(modelos => {
           modelos.sort(function(a, b) {
-              if (a.nombre.startsWith('12V') && !b.nombre.startsWith('12V')) {
-                  return -1;
-              } else if (!a.nombre.startsWith('12V') && b.nombre.startsWith('12V')) {
-                  return 1;
-              } else {
-                  return a.id - b.id;
-              }
+              return a.nombre.localeCompare(b.nombre);
           });
           const modeloSelect = document.getElementById('modelo_id');
           modeloSelect.innerHTML = '';
@@ -27,6 +21,7 @@ document.getElementById('marca_id').addEventListener('change', function() {
       })
       .catch(error => console.error('Error:', error));
 });
+
 document.addEventListener('DOMContentLoaded', function() {
   const selectores = document.querySelectorAll('#categoria_id, #marca_id, #modelo_id');
   const contenedorProductos = document.getElementById('contenedor-productos');
