@@ -1020,8 +1020,12 @@ seleccionarProveedorMasBarato: async function(conexion, productoId) {
 generarPDFProveedorBarato: async (req, res) => {
     const { proveedorId } = req.params;
     try {
-        // Obtener los productos asignados al proveedor con el precio más barato
+        // Obtener productos con el costo más bajo asignado al proveedor
         const productos = await Producto.obtenerProductosAsignadosProveedorBarato(proveedorId);
+
+        if (productos.length === 0) {
+            return res.status(404).send('PRODUCTO NO ENCONTRADO');
+        }
 
         // Crear un nuevo documento PDF
         const doc = new PDFDocument();
@@ -1030,7 +1034,7 @@ generarPDFProveedorBarato: async (req, res) => {
         res.setHeader('Content-Disposition', 'attachment; filename=productos_proveedor_barato.pdf');
         res.setHeader('Content-Type', 'application/pdf');
 
-        // Piping del documento PDF a la respuesta
+        // Enviar el PDF a la respuesta
         doc.pipe(res);
 
         // Agregar contenido al PDF
@@ -1040,7 +1044,7 @@ generarPDFProveedorBarato: async (req, res) => {
         productos.forEach((producto, index) => {
             doc.fontSize(12).text(`Producto #${index + 1}: ${producto.nombre}`);
             doc.text(`Descripción: ${producto.descripcion}`);
-            doc.text(`Precio con IVA: ${producto.precio_iva}`);
+            doc.text(`Costo IVA: ${producto.costo_iva}`);
             doc.moveDown();
         });
 

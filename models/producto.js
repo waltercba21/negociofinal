@@ -1238,11 +1238,12 @@ obtenerProductosAsignadosProveedorBarato: async (proveedorId) => {
         SELECT p.*
         FROM productos p
         JOIN producto_proveedor pp ON p.id = pp.producto_id
-        WHERE pp.proveedor_id = ? 
-        AND pp.costo_iva = (
-            SELECT MIN(costo_iva)
-            FROM producto_proveedor
-            WHERE producto_id = p.id
+        WHERE pp.proveedor_id = ?
+        AND p.costo_iva = (
+            SELECT MIN(p2.costo_iva)
+            FROM productos p2
+            JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
+            WHERE pp2.proveedor_id = pp.proveedor_id
         )
     `;
     const [results] = await db.execute(query, [proveedorId]);
