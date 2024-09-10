@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var contenedorProductos = document.getElementById('contenedor-productos');
   var checkAll = document.getElementById('check-all');
   var deleteSelectedButton = document.getElementById('delete-selected');
-  var btnGenerarPDFProveedorBarato = document.getElementById('btnGenerarPDFProveedorBarato');
 
   // Evento para seleccionar/deseleccionar todos los checkboxes
   checkAll.addEventListener('change', function (event) {
@@ -59,19 +58,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Evento para generar el listado de productos asignados al proveedor con precio más bajo
-  btnGenerarPDFProveedorBarato.addEventListener('click', function (e) {
-    e.preventDefault(); // Evita el envío normal del formulario
-
-    // Obtener el valor del proveedor seleccionado
-    var proveedorSeleccionado = document.getElementById('proveedorStock').value;
-
-    // Construir la URL para la solicitud
-    var url = '/productos/generarPDFProveedorBarato?proveedor=' + encodeURIComponent(proveedorSeleccionado);
-
-    // Redirigir a la URL para generar el PDF
-    window.location.href = url;
-  });
 });
 
 let timer;

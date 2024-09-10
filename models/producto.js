@@ -1233,32 +1233,6 @@ asignarProveedorMasBarato:function(conexion, productoId, proveedorId) {
         });
     });
 }, 
-obtenerProductosAsignadosProveedorBarato: async (proveedorId) => {
-    console.log(`Obteniendo productos para proveedor con ID: ${proveedorId}`);
-    const query = `
-        SELECT p.*
-        FROM productos p
-        JOIN producto_proveedor pp ON p.id = pp.producto_id
-        WHERE pp.proveedor_id = ?
-        AND p.costo_iva = (
-            SELECT MIN(p2.costo_iva)
-            FROM productos p2
-            JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
-            WHERE pp2.proveedor_id = ?
-              AND pp2.producto_id = pp.producto_id
-        )
-    `;
-    console.log(`Ejecutando consulta SQL: ${query}`);
-    try {
-        const [results] = await db.execute(query, [proveedorId, proveedorId]);
-        console.log('Resultados obtenidos:', results);
-        return results;
-    } catch (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        throw error; 
-    }
-},
-
 
 obtenerDescuentosProveedor: function(conexion) {
   return new Promise((resolve, reject) => {

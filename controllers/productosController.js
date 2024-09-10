@@ -1017,40 +1017,5 @@ seleccionarProveedorMasBarato: async function(conexion, productoId) {
         throw error; 
     }
 },
-generarPDFProveedorBarato: async (req, res) => {
-    const { proveedorId } = req.params;
-    console.log(`Generando PDF para el proveedor con ID: ${proveedorId}`);
-    try {
-        const productos = await producto.obtenerProductosAsignadosProveedorBarato(proveedorId);
-        console.log('Productos obtenidos:', productos);
-
-        if (productos.length === 0) {
-            console.log('No se encontraron productos para el proveedor especificado.');
-            return res.status(404).send('PRODUCTO NO ENCONTRADO');
-        }
-
-        const doc = new PDFDocument();
-        res.setHeader('Content-Disposition', 'attachment; filename=productos_proveedor_barato.pdf');
-        res.setHeader('Content-Type', 'application/pdf');
-        doc.pipe(res);
-
-        doc.fontSize(16).text('Productos Asignados al Proveedor con el Precio Más Barato', { align: 'center' });
-        doc.moveDown();
-
-        productos.forEach((producto, index) => {
-            console.log(`Añadiendo producto al PDF: ${producto.nombre}`);
-            doc.fontSize(12).text(`Producto #${index + 1}: ${producto.nombre}`);
-            doc.text(`Descripción: ${producto.descripcion}`);
-            doc.text(`Costo IVA: ${producto.costo_iva}`);
-            doc.moveDown();
-        });
-
-        doc.end();
-    } catch (error) {
-        console.error('Error al generar el PDF para el proveedor barato:', error);
-        res.status(500).send('Error al generar el PDF');
-    }
-},
-
 
 }

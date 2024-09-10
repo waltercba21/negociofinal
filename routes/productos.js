@@ -37,7 +37,6 @@ router.get('/api/presupuestos', productosController.getPresupuestos);
 router.put('/api/presupuestos/:id', productosController.editPresupuesto);
 router.delete('/api/presupuestos/:id', productosController.deletePresupuesto);
 router.get('/generarPDF', productosController.generarPDF);
-router.get('/generarPDFProveedorBarato/:proveedorId', productosController.generarPDFProveedorBarato);
 router.get('/generarStockPDF', productosController.generarStockPDF);
 router.get('/editar/:id', productosController.editar);
 router.post('/actualizar/:id', cargar, productosController.actualizar);
