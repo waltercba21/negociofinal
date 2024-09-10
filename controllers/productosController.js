@@ -1023,7 +1023,7 @@ generarPDFProveedorBarato: async (req, res) => {
 
     try {
         // Obtener productos con el costo más bajo asignado al proveedor
-        const productos = await Producto.obtenerProductosAsignadosProveedorBarato(proveedorId);
+        const productos = await producto.obtenerProductosAsignadosProveedorBarato(proveedorId);
 
         console.log('Productos obtenidos:', productos);
 
