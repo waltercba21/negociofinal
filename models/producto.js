@@ -885,10 +885,15 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
     SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
     FROM productos p
     INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-    WHERE pp.proveedor_id = ? AND pp.costo_iva = (
-        SELECT MIN(pp2.costo_iva)
-        FROM producto_proveedor pp2
-        WHERE pp2.producto_id = p.id
+    WHERE pp.proveedor_id = ? AND p.id IN (
+        SELECT p2.id
+        FROM productos p2
+        INNER JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
+        WHERE pp2.proveedor_id = ? AND p2.costo_iva = (
+            SELECT MIN(p3.costo_iva)
+            FROM productos p3
+            WHERE p3.id = p2.id
+        )
     ) AND p.stock_actual <= p.stock_minimo
 `;
     const queryPromise = util.promisify(conexion.query).bind(conexion);
