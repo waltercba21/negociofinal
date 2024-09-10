@@ -882,20 +882,15 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
 obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
     console.log('Proveedor:', proveedor);
     const query = `
-    SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
-    FROM productos p
-    INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-    WHERE pp.proveedor_id = ? AND p.id IN (
-        SELECT p2.id
-        FROM productos p2
-        INNER JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
-        WHERE pp2.proveedor_id = ? AND p2.costo_iva = (
-            SELECT MIN(p3.costo_iva)
-            FROM productos p3
-            WHERE p3.id = p2.id
-        )
-    ) AND p.stock_actual <= p.stock_minimo
-`;
+        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
+        FROM productos p
+        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+        WHERE pp.proveedor_id = ? AND p.costo_iva = (
+            SELECT MIN(p2.costo_iva)
+            FROM productos p2
+            WHERE p2.id = p.id
+        ) AND p.stock_actual <= p.stock_minimo
+    `;
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, [proveedor])
         .then(result => {
@@ -1241,8 +1236,7 @@ asignarProveedorMasBarato:function(conexion, productoId, proveedorId) {
             }
         });
     });
-}, 
-
+},
 obtenerDescuentosProveedor: function(conexion) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT proveedor_id, descuento FROM descuentos_proveedor', function(error, results, fields) {
