@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
     for (var i = 0; i < checks.length; i++) {
       checks[i].checked = event.target.checked;
     }
-  });
+  });  
 
   // Evento para manejar la selección individual de productos
   contenedorProductos.addEventListener('change', function (event) {
