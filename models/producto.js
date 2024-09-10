@@ -1232,6 +1232,21 @@ asignarProveedorMasBarato:function(conexion, productoId, proveedorId) {
             }
         });
     });
+}, 
+obtenerProductosAsignadosProveedorBarato: async (proveedorId) => {
+    const query = `
+        SELECT p.*
+        FROM productos p
+        JOIN proveedores_productos pp ON p.id = pp.producto_id
+        WHERE pp.proveedor_id = ? 
+        AND pp.precio_iva = (
+            SELECT MIN(precio_iva)
+            FROM proveedores_productos
+            WHERE producto_id = p.id
+        )
+    `;
+    const [results] = await db.execute(query, [proveedorId]);
+    return results;
 },
 obtenerDescuentosProveedor: function(conexion) {
   return new Promise((resolve, reject) => {

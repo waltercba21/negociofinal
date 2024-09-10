@@ -1,61 +1,76 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   var contenedorProductos = document.getElementById('contenedor-productos');
   var checkAll = document.getElementById('check-all');
   var deleteSelectedButton = document.getElementById('delete-selected');
+  var btnGenerarPDFProveedorBarato = document.getElementById('btnGenerarPDFProveedorBarato');
 
   // Evento para seleccionar/deseleccionar todos los checkboxes
-  checkAll.addEventListener('change', function(event) {
-      var checks = document.querySelectorAll('.product-check');
-      for (var i = 0; i < checks.length; i++) {
-          checks[i].checked = event.target.checked;
-      }
+  checkAll.addEventListener('change', function (event) {
+    var checks = document.querySelectorAll('.product-check');
+    for (var i = 0; i < checks.length; i++) {
+      checks[i].checked = event.target.checked;
+    }
   });
 
   // Evento para manejar la selección individual de productos
-  contenedorProductos.addEventListener('change', function(event) {
-      if (event.target.matches('.product-check')) {
-          var checks = document.querySelectorAll('.product-check');
-          var allChecked = true;
-          for (var i = 0; i < checks.length; i++) {
-              if (!checks[i].checked) {
-                  allChecked = false;
-                  break;
-              }
-          }
-          checkAll.checked = allChecked;
+  contenedorProductos.addEventListener('change', function (event) {
+    if (event.target.matches('.product-check')) {
+      var checks = document.querySelectorAll('.product-check');
+      var allChecked = true;
+      for (var i = 0; i < checks.length; i++) {
+        if (!checks[i].checked) {
+          allChecked = false;
+          break;
+        }
       }
+      checkAll.checked = allChecked;
+    }
   });
 
-  deleteSelectedButton.addEventListener('click', function(event) {
-      var checks = document.querySelectorAll('.product-check');
-      var ids = [];
-      for (var i = 0; i < checks.length; i++) {
-          if (checks[i].checked) {
-              ids.push(checks[i].value);
+  deleteSelectedButton.addEventListener('click', function (event) {
+    var checks = document.querySelectorAll('.product-check');
+    var ids = [];
+    for (var i = 0; i < checks.length; i++) {
+      if (checks[i].checked) {
+        ids.push(checks[i].value);
+      }
+    }
+    if (ids.length > 0) {
+      fetch('/productos/eliminarSeleccionados', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids: ids }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            location.reload();
+          } else {
+            console.error('Error al eliminar los productos:', data.error);
           }
-      }
-      if (ids.length > 0) {
-          fetch('/productos/eliminarSeleccionados', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ ids: ids }),
-          })
-          .then(response => response.json())  
-          .then(data => {
-              if (data.success) {
-                  location.reload();
-              } else {
-                  console.error('Error al eliminar los productos:', data.error);
-              }
-          })
-          .catch((error) => {
-              console.error('Error:', error);
-          });
-      } else {
-          console.log('No hay productos seleccionados para eliminar');
-      }
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+    } else {
+      console.log('No hay productos seleccionados para eliminar');
+    }
+  });
+
+  // Evento para generar el listado de productos asignados al proveedor con precio más bajo
+  btnGenerarPDFProveedorBarato.addEventListener('click', function (e) {
+    e.preventDefault(); // Evita el envío normal del formulario
+
+    // Obtener el valor del proveedor seleccionado
+    var proveedorSeleccionado = document.getElementById('proveedorStock').value;
+
+    // Construir la URL para la solicitud
+    var url = '/productos/generarPDFProveedorBarato?proveedor=' + encodeURIComponent(proveedorSeleccionado);
+
+    // Redirigir a la URL para generar el PDF
+    window.location.href = url;
   });
 });
 
@@ -74,28 +89,33 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       let url = '/productos/api/buscar?q=' + busqueda;
       const respuesta = await fetch(url);
       const data = await respuesta.json();
-      productos = data;     
+      productos = data;
     }
     paginaActual = Math.ceil(productos.length / 10);
     productos.forEach((producto, index) => {
-        const imagen = producto.imagenes && producto.imagenes.length > 0 ? `/uploads/productos/${producto.imagenes[0].imagen}` : '/ruta/valida/a/imagen/por/defecto.jpg';
-        const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
-        const filaProducto = document.createElement('tr');
-        filaProducto.innerHTML = `
-          <td><input type="checkbox" class="product-check" value="${producto.id}"></td>
-          <td>${producto.categoria_nombre}</td>
-          <td>${producto.nombre}</td>
-          <td><img class="img-thumbnail" width='150' src="${imagen}" alt="Imagen de ${producto.nombre}"></td>
-          <td>${precio_venta}</td>
-          <td>
-            <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-              <form class="form-inline" method="get" action="/productos/editar/${producto.id}?pagina=${paginaActual}">
-                <button class="btn btn-warning" type="submit">Editar</button>
-              </form>
-            </div> 
-          </td>
-        `;
-        contenedorProductos.appendChild(filaProducto);
-      });
+      const imagen =
+        producto.imagenes && producto.imagenes.length > 0
+          ? `/uploads/productos/${producto.imagenes[0].imagen}`
+          : '/ruta/valida/a/imagen/por/defecto.jpg';
+      const precio_venta = producto.precio_venta
+        ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
+        : 'Precio no disponible';
+      const filaProducto = document.createElement('tr');
+      filaProducto.innerHTML = `
+        <td><input type="checkbox" class="product-check" value="${producto.id}"></td>
+        <td>${producto.categoria_nombre}</td>
+        <td>${producto.nombre}</td>
+        <td><img class="img-thumbnail" width='150' src="${imagen}" alt="Imagen de ${producto.nombre}"></td>
+        <td>${precio_venta}</td>
+        <td>
+          <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+            <form class="form-inline" method="get" action="/productos/editar/${producto.id}?pagina=${paginaActual}">
+              <button class="btn btn-warning" type="submit">Editar</button>
+            </form>
+          </div>
+        </td>
+      `;
+      contenedorProductos.appendChild(filaProducto);
     });
   }, 300);
+});
