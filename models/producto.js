@@ -1234,6 +1234,8 @@ asignarProveedorMasBarato:function(conexion, productoId, proveedorId) {
     });
 }, 
 obtenerProductosAsignadosProveedorBarato: async (proveedorId) => {
+    console.log(`Obteniendo productos para proveedor con ID: ${proveedorId}`);
+
     const query = `
         SELECT p.*
         FROM productos p
@@ -1246,9 +1248,18 @@ obtenerProductosAsignadosProveedorBarato: async (proveedorId) => {
             WHERE pp2.proveedor_id = pp.proveedor_id
         )
     `;
-    const [results] = await db.execute(query, [proveedorId]);
-    return results;
+
+    console.log(`Ejecutando consulta SQL: ${query}`);
+    try {
+        const [results] = await db.execute(query, [proveedorId]);
+        console.log('Resultados obtenidos:', results);
+        return results;
+    } catch (error) {
+        console.error('Error al ejecutar la consulta:', error);
+        throw error; // Lanza el error para manejarlo en el controlador
+    }
 },
+
 obtenerDescuentosProveedor: function(conexion) {
   return new Promise((resolve, reject) => {
       conexion.query('SELECT proveedor_id, descuento FROM descuentos_proveedor', function(error, results, fields) {
