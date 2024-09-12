@@ -90,8 +90,8 @@
         <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
       </div>
       <% if (isAdminUser) { %>
-        <div class="stock-producto">
-          <p>Stock: <%= producto.stock_actual %></p>
+        <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
+          <p>Stock Disponible: <%= producto.stock_actual %></p>
         </div>
       <% } %>
       <div class="cantidad-producto">

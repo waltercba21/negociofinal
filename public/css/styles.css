@@ -1593,7 +1593,26 @@ footer {
   color: #d90429;
   margin-top: 15px; 
 }
+.stock-producto {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
 
+.stock-producto p {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Agregar esta regla para cambiar el color del stock según el stock_minimo */
+.stock-producto.bajo-stock p {
+  color: #b30000;
+}
+
+.stock-producto.suficiente-stock p {
+  color: #09c41c;
+}
 
 /*--------------------DETALLE ---------------*/
 #detalle {
