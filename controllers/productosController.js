@@ -726,6 +726,7 @@ getProductosPorCategoria : async (req, res) => {
            });
            var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
            obtenerProductos.then(productos => {
+            productos.sort((a, b) => a.nombre.localeCompare(b.nombre));
             let currentY = doc.y;
             doc.fontSize(12)
                .fillColor('black')

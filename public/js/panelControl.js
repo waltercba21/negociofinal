@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });  
 
-  // Evento para manejar la selección individual de productos
   contenedorProductos.addEventListener('change', function (event) {
     if (event.target.matches('.product-check')) {
       var checks = document.querySelectorAll('.product-check');
