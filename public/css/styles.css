@@ -1603,25 +1603,25 @@ footer {
 .stock-producto p {
   font-weight: bold;
   font-size: 16px;
+  padding: 20px;
 }
+
 .stock-producto.bajo-stock {
   animation: stock-bajo 3s infinite;
 }
 
 @keyframes stock-bajo {
   0% {
-    background-color: #fff;
     transform: scale(1);
   }
   50% {
-    background-color: #f00;
     transform: scale(1.1);
   }
   100% {
-    background-color: #fff;
     transform: scale(1);
   }
 }
+
 .stock-producto.bajo-stock p {
   color: #fff;
   background-color: #b30000;
