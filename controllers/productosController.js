@@ -52,7 +52,7 @@ module.exports = {
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
-            return res.redirect('/error');
+            return res.redirect('/error'); 
         }
         try {
             let productos;

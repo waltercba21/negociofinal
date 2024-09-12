@@ -89,6 +89,11 @@
       <div class="precio-producto">
         <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
       </div>
+      <% if (isAdminUser) { %>
+        <div class="stock-producto">
+          <p>Stock: <%= producto.stock_actual %></p>
+        </div>
+      <% } %>
       <div class="cantidad-producto">
         <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
       </div>

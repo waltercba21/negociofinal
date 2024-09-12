@@ -911,9 +911,9 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
   contarPorCategoria: function(conexion, categoria, callback) {
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 }, 
-obtenerPorFiltros(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
+obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
     return new Promise((resolve, reject) => {
-        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo FROM productos';
+        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual FROM productos';
         sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
         sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
         sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
