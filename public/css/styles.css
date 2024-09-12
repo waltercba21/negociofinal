@@ -1605,7 +1605,7 @@ footer {
   font-size: 16px;
 }
 .stock-producto.bajo-stock {
-  animation: stock-bajo 1s infinite;
+  animation: stock-bajo 3s infinite;
 }
 
 @keyframes stock-bajo {
@@ -1623,11 +1623,13 @@ footer {
   }
 }
 .stock-producto.bajo-stock p {
-  color: #b30000;
+  color: #fff;
+  background-color: #b30000;
 }
 
 .stock-producto.suficiente-stock p {
-  color: #09c41c;
+  color: #fff;
+  background-color: #09c41c;
 }
 
 /*--------------------DETALLE ---------------*/
