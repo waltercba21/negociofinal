@@ -890,6 +890,7 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
             FROM productos p2
             WHERE p2.id = p.id
         )
+        ORDER BY pp.codigo ASC
     `;
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, [proveedor])
