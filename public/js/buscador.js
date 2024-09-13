@@ -1,12 +1,9 @@
 let productosOriginales = [];
 let timer;
-let isAdminUser = false; 
 
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
-  const data = await respuesta.json();
-  productosOriginales = data.productos;
-  isAdminUser = data.isAdminUser;
+  productosOriginales = await respuesta.json();
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
@@ -21,8 +18,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     } else {
       let url = '/productos/api/buscar?q=' + busqueda;
       const respuesta = await fetch(url);
-      const data = await respuesta.json();
-      productos = data.productos;
+      productos = await respuesta.json();
     }
     productos.forEach((producto) => {
       let imagenes = '';
@@ -63,7 +59,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         </div>
         <div class="cantidad-producto">
           <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-          ${isAdminUser ? `<p class="stock">Stock: ${producto.stock_actual}</p>` : ''}
         </div>
       `;
       contenedorProductos.appendChild(tarjetaProducto);
