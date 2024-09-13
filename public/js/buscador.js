@@ -1,10 +1,12 @@
 let productosOriginales = [];
+let isAdminUser = false; // Mover la declaración fuera del evento para acceso global
 let timer;
 
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   const data = await respuesta.json();
   productosOriginales = data.productos;
+  isAdminUser = data.isAdminUser; // Asignar valor a isAdminUser
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
@@ -14,17 +16,15 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     const contenedorProductos = document.getElementById('contenedor-productos');
     contenedorProductos.innerHTML = '';
     let productos = [];
-    let isAdminUser = false;
 
     if (!busqueda.trim()) {
-      productos = productosOriginales.slice(0, 12); 
-      isAdminUser = productosOriginales.isAdminUser;
+      productos = productosOriginales.slice(0, 12);
     } else {
       let url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
       const respuesta = await fetch(url);
       const data = await respuesta.json();
       productos = data.productos;
-      isAdminUser = data.isAdminUser;
+      isAdminUser = data.isAdminUser; // Reasignar valor cada vez que se busca
     }
 
     // Debug: Verificar los productos obtenidos
@@ -53,8 +53,9 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
           </div>
         `;
       } else {
-        imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
+        imagenes = `<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">`;
       }
+      
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = document.createElement('div');
       tarjetaProducto.classList.add('card');
