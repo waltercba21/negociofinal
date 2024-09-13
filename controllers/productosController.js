@@ -861,7 +861,6 @@ deletePresupuesto: (req, res) => {
             res.status(500).json({ message: 'Error al eliminar presupuesto: ' + error.message });
         });
 },
-
 generarPresupuestoPDF: function(req, res) {
     let doc = new PDFDocument();
     let buffers = [];

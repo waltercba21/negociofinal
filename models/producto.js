@@ -882,15 +882,19 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
 obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
     console.log('Proveedor:', proveedor);
     const query = `
-        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
-        FROM productos p
-        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-        WHERE pp.proveedor_id = ? AND p.costo_iva = (
-            SELECT MIN(p2.costo_iva)
-            FROM productos p2
-            WHERE p2.id = p.id
-        )
-        ORDER BY pp.codigo ASC
+       SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
+FROM productos p
+INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+WHERE p.id IN (
+    SELECT p2.id
+    FROM productos p2
+    WHERE p2.id = p.id AND p2.costo_iva = (
+        SELECT MIN(p3.costo_iva)
+        FROM productos p3
+        WHERE p3.id = p2.id
+    )
+) AND pp.proveedor_id = ?
+ORDER BY pp.codigo ASC
     `;
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, [proveedor])
