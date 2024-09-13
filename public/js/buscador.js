@@ -3,7 +3,8 @@ let timer;
 
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
-  productosOriginales = await respuesta.json();
+  const data = await respuesta.json();
+  productosOriginales = data.productos;
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
@@ -19,12 +20,15 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       productos = productosOriginales.slice(0, 12); 
       isAdminUser = productosOriginales.isAdminUser;
     } else {
-      let url = '/productos/api/buscar?q=' + busqueda;
+      let url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
       const respuesta = await fetch(url);
       const data = await respuesta.json();
       productos = data.productos;
       isAdminUser = data.isAdminUser;
     }
+
+    // Debug: Verificar los productos obtenidos
+    console.log('Productos obtenidos en el cliente:', productos);
 
     productos.forEach((producto) => {
       let imagenes = '';
@@ -73,25 +77,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         </div>
       `;
       contenedorProductos.appendChild(tarjetaProducto);
-
-      // Asignar eventos a las flechas del carrusel
-      const leftButton = tarjetaProducto.querySelector('.carousel__button--left');
-      const rightButton = tarjetaProducto.querySelector('.carousel__button--right');
-      const images = tarjetaProducto.querySelectorAll('.carousel__image');
-      let currentIndex = 0;
-
-      leftButton.addEventListener('click', () => {
-        images[currentIndex].classList.add('hidden');
-        currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
-        images[currentIndex].classList.remove('hidden');
-      });
-
-      rightButton.addEventListener('click', () => {
-        images[currentIndex].classList.add('hidden');
-        currentIndex = (currentIndex === images.length - 1) ? 0 : currentIndex + 1;
-        images[currentIndex].classList.remove('hidden');
-      });
     });
   }, 300);
 });
-

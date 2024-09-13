@@ -144,14 +144,17 @@ module.exports = {
     
         try {
             const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
+            
+            // Debug: Mostrar los productos obtenidos
+            console.log('Productos obtenidos:', productos);
+    
             const isAdminUser = req.user && req.user.rol === 'admin'; 
             res.json({ productos, isAdminUser });
         } catch (error) {
             console.error('Error al buscar productos:', error);
             res.status(500).json({ error: 'Error al buscar productos' });
         }
-    },
-     
+    },    
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
