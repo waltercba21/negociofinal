@@ -882,19 +882,21 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
 obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
     console.log('Proveedor:', proveedor);
     const query = `
-       SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
-FROM productos p
-INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-WHERE p.id IN (
-    SELECT p2.id
-    FROM productos p2
-    WHERE p2.id = p.id AND p2.costo_iva = (
-        SELECT MIN(p3.costo_iva)
-        FROM productos p3
-        WHERE p3.id = p2.id
-    )
-) AND pp.proveedor_id = ?
-ORDER BY pp.codigo ASC
+        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
+        FROM productos p
+        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+        WHERE (p.id, pp.proveedor_id) IN (
+            SELECT p2.id, pp2.proveedor_id
+            FROM productos p2
+            INNER JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
+            WHERE pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100) + (pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100)) * 0.21 = (
+                SELECT MIN(pp3.precio_lista - (pp3.precio_lista * p3.descuentos_proveedor_id / 100) + (pp3.precio_lista - (pp3.precio_lista * p3.descuentos_proveedor_id / 100)) * 0.21)
+                FROM productos p3
+                INNER JOIN producto_proveedor pp3 ON p3.id = pp3.producto_id
+                WHERE p3.id = p2.id
+            )
+        ) AND pp.proveedor_id = ?
+        ORDER BY pp.codigo ASC
     `;
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, [proveedor])

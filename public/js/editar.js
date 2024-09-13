@@ -49,7 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('Sortable no está definido o no se pudo inicializar.');
     }
-});$(document).ready(function() {
+});
+$(document).ready(function() {
     var marcaId = $('#marca').val();
     var modeloSeleccionado = $('#modelo_id').data('selected');
     if (marcaId) {
