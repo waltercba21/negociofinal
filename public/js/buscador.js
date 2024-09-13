@@ -13,13 +13,19 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     const contenedorProductos = document.getElementById('contenedor-productos');
     contenedorProductos.innerHTML = '';
     let productos = [];
+    let isAdminUser = false;
+
     if (!busqueda.trim()) {
       productos = productosOriginales.slice(0, 12); 
+      isAdminUser = productosOriginales.isAdminUser;
     } else {
       let url = '/productos/api/buscar?q=' + busqueda;
       const respuesta = await fetch(url);
-      productos = await respuesta.json();
+      const data = await respuesta.json();
+      productos = data.productos;
+      isAdminUser = data.isAdminUser;
     }
+
     productos.forEach((producto) => {
       let imagenes = '';
       if (producto.imagenes && producto.imagenes.length > 0) {
@@ -57,6 +63,11 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         <div class="precio-producto">
           <p class="precio">${precio_venta}</p>
         </div>
+        ${isAdminUser ? `
+          <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
+            <p>Stock Disponible: <%= producto.stock_actual %></p>
+          </div>
+        ` : ''}
         <div class="cantidad-producto">
           <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
         </div>

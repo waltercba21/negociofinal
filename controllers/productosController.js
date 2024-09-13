@@ -141,9 +141,17 @@ module.exports = {
         const marca_id = req.query.marca_id; 
         const modelo_id = req.query.modelo_id;
         const limite = busqueda_nombre || categoria_id || marca_id || modelo_id ? undefined : 10;
-        const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
-        res.json(productos);
-    },    
+    
+        try {
+            const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
+            const isAdminUser = req.user && req.user.rol === 'admin'; // Ajusta esto según cómo determines el rol en tu sistema de autenticación
+            res.json({ productos, isAdminUser });
+        } catch (error) {
+            console.error('Error al buscar productos:', error);
+            res.status(500).json({ error: 'Error al buscar productos' });
+        }
+    },
+     
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {

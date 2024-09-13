@@ -919,7 +919,7 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
         sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
         sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
         sql += ' WHERE 1=1';
-        const parametros = [];
+        const parametros = []; 
         if (categoria) {
             sql += ' AND categoria_id = ?';
             parametros.push(categoria);
