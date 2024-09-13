@@ -1,12 +1,12 @@
 let productosOriginales = [];
 let timer;
-let isAdminUser = false; // Agregar esta variable para almacenar si el usuario es administrador
+let isAdminUser = false; 
 
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   const data = await respuesta.json();
   productosOriginales = data.productos;
-  isAdminUser = data.isAdminUser; // Obtener el valor de isAdminUser desde el servidor
+  isAdminUser = data.isAdminUser;
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
