@@ -58,6 +58,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
           <p class="precio">${precio_venta}</p>
         </div>
         <div class="cantidad-producto">
+        <p class="stock">Stock: ${producto.stock_actual}</p>
           <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
         </div>
       `;
