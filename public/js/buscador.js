@@ -49,19 +49,18 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       const tarjetaProducto = document.createElement('div');
       tarjetaProducto.classList.add('card');
       tarjetaProducto.innerHTML = `
-  ${imagenes}
-  <div class="titulo-producto">
-    <h3 class="nombre">${producto.nombre}</h3>
-  </div>
-  <hr>
-  <div class="precio-producto">
-    <p class="precio">${precio_venta}</p>
-  </div>
-  <div class="cantidad-producto">
-    <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-    ${isAdminUser ? `<p class="stock">Stock: ${producto.stock_actual}</p>` : ''}
-  </div>
-`;
+        ${imagenes}
+        <div class="titulo-producto">
+          <h3 class="nombre">${producto.nombre}</h3>
+        </div>
+        <hr>
+        <div class="precio-producto">
+          <p class="precio">${precio_venta}</p>
+        </div>
+        <div class="cantidad-producto">
+          <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+        </div>
+      `;
       contenedorProductos.appendChild(tarjetaProducto);
 
       // Asignar eventos a las flechas del carrusel
