@@ -25,10 +25,10 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       const data = await respuesta.json();
       productos = data.productos;
       isAdminUser = data.isAdminUser; // Reasignar valor cada vez que se busca
+      
+      // Debug: Verificar los productos obtenidos en la búsqueda
+      console.log('Productos originales al cargar la página:', productosOriginales);
     }
-
-    // Debug: Verificar los productos obtenidos
-    console.log('Productos obtenidos en el cliente:', productos);
 
     productos.forEach((producto) => {
       let imagenes = '';

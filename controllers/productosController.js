@@ -135,26 +135,64 @@ module.exports = {
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
-    buscar: async (req, res) => {
-        const busqueda_nombre = req.query.q;
-        const categoria_id = req.query.categoria_id;
-        const marca_id = req.query.marca_id; 
-        const modelo_id = req.query.modelo_id;
-        const limite = busqueda_nombre || categoria_id || marca_id || modelo_id ? undefined : 10;
-    
+    buscar: async function (req, res) {
         try {
-            const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
+            const busqueda = req.query.q ? req.query.q.trim() : '';
+            let productos = [];
+            let isAdminUser = req.user && req.user.role === 'admin'; // Verifica si el usuario es admin
             
-            // Debug: Mostrar los productos obtenidos
-            console.log('Productos obtenidos:', productos);
+            if (busqueda) {
+                productos = await new Promise((resolve, reject) => {
+                    producto.buscar(conexion, busqueda, (error, resultados) => {
+                        if (error) {
+                            console.error('Error al buscar productos:', error);
+                            reject(error);
+                        } else {
+                            resolve(resultados);
+                        }
+                    });
+                });
+            } else {
+                productos = await new Promise((resolve, reject) => {
+                    producto.obtener(conexion, 1, (error, resultados) => { // Paginación por defecto
+                        if (error) {
+                            console.error('Error al obtener productos:', error);
+                            reject(error);
+                        } else {
+                            resolve(resultados);
+                        }
+                    });
+                });
+            }
     
-            const isAdminUser = req.user && req.user.rol === 'admin'; 
+            // Agregar imágenes y verificar datos de stock
+            const productoIds = productos.map(producto => producto.id);
+            const todasLasImagenesPromesas = productoIds.map(id => producto.obtenerImagenesProducto(conexion, id));
+            const todasLasImagenes = (await Promise.all(todasLasImagenesPromesas)).flat();
+    
+            for (let producto of productos) {
+                if (producto.precio_venta !== null && !isNaN(parseFloat(producto.precio_venta))) {
+                    producto.precio_venta = Number(producto.precio_venta);
+                } else {
+                    producto.precio_venta = 'No disponible';
+                }
+    
+                producto.imagenes = todasLasImagenes.filter(imagen => imagen.producto_id.toString() === producto.id.toString());
+    
+                // Asegurarse de que el stock esté presente en los datos
+                if (!producto.stock_actual || !producto.stock_minimo) {
+                    producto.stock_actual = producto.stock_actual || 0;
+                    producto.stock_minimo = producto.stock_minimo || 0;
+                }
+            }
+    
             res.json({ productos, isAdminUser });
         } catch (error) {
-            console.error('Error al buscar productos:', error);
-            res.status(500).json({ error: 'Error al buscar productos' });
+            console.error('Error al procesar la búsqueda de productos:', error);
+            res.status(500).json({ productos: [], isAdminUser: false });
         }
-    },    
+    },
+     
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
