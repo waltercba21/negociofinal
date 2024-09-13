@@ -1,9 +1,12 @@
 let productosOriginales = [];
 let timer;
+let isAdminUser = false; // Agregar esta variable para almacenar si el usuario es administrador
 
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
-  productosOriginales = await respuesta.json();
+  const data = await respuesta.json();
+  productosOriginales = data.productos;
+  isAdminUser = data.isAdminUser; // Obtener el valor de isAdminUser desde el servidor
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
@@ -18,7 +21,8 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     } else {
       let url = '/productos/api/buscar?q=' + busqueda;
       const respuesta = await fetch(url);
-      productos = await respuesta.json();
+      const data = await respuesta.json();
+      productos = data.productos;
     }
     productos.forEach((producto) => {
       let imagenes = '';
@@ -48,7 +52,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = document.createElement('div');
       tarjetaProducto.classList.add('card');
-      tarjetaProducto.innerHTML = `
+      let html = `
         ${imagenes}
         <div class="titulo-producto">
           <h3 class="nombre">${producto.nombre}</h3>
@@ -58,10 +62,13 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
           <p class="precio">${precio_venta}</p>
         </div>
         <div class="cantidad-producto">
-        <p class="stock">Stock: ${producto.stock_actual}</p>
           <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-        </div>
       `;
+      if (isAdminUser) {
+        html += `<p class="stock">Stock: ${producto.stock_actual}</p>`;
+      }
+      html += '</div>';
+      tarjetaProducto.innerHTML = html;
       contenedorProductos.appendChild(tarjetaProducto);
 
       // Asignar eventos a las flechas del carrusel

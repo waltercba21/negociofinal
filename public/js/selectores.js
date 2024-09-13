@@ -53,35 +53,35 @@ document.addEventListener('DOMContentLoaded', function() {
           .catch(error => console.error('Error:', error));
       });
   });
-  function renderizarProductos(productos) {
-      contenedorProductos.innerHTML = '';
-      productos.forEach((producto, index) => {
-        let imagenes = '';
-        if (producto.imagenes && producto.imagenes.length > 0) {
-          producto.imagenes.forEach((imagenObj, i) => {
-            const imagen = imagenObj.imagen;
-            imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
+  function renderizarProductos(productos, isAdminUser) {
+    contenedorProductos.innerHTML = '';
+    productos.forEach((producto, index) => {
+      let imagenes = '';
+      if (producto.imagenes && producto.imagenes.length > 0) {
+        producto.imagenes.forEach((imagenObj, i) => {
+          const imagen = imagenObj.imagen;
+          imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
         });
-          imagenes = `
-            <div class="cover__card">
-              <div class="carousel">
-                ${imagenes}
-              </div>
+        imagenes = `
+          <div class="cover__card">
+            <div class="carousel">
+              ${imagenes}
             </div>
-            <div class="carousel__buttons">
-              <button class="carousel__button">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <button class="carousel__button">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-            </div>
-          `;
-        } else {
-          imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
-        }
-        const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
-        const tarjetaProducto = `
+          </div>
+          <div class="carousel__buttons">
+            <button class="carousel__button">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="carousel__button">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        `;
+      } else {
+        imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
+      }
+      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+      let tarjetaProducto = `
         <div class="card"> 
           ${imagenes}
           <div class="titulo-producto">
@@ -92,13 +92,19 @@ document.addEventListener('DOMContentLoaded', function() {
             <p class="precio">${precio_venta}</p>
           </div>
           <div class="cantidad-producto">
-          <p class="stock">Stock: ${producto.stock_actual}</p>
             <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
           </div>
-        </div>
       `;
+      if (isAdminUser) {
+        tarjetaProducto += `
+          <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
+            <p>Stock Disponible: ${producto.stock_actual}</p>
+          </div>
+        `;
+      }
+      tarjetaProducto += '</div>';
       contenedorProductos.innerHTML += tarjetaProducto;
-      });
+    });
   }
 
   $(document).on('click', '.carousel__button', function() {
