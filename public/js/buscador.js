@@ -57,6 +57,11 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         <div class="precio-producto">
           <p class="precio">${precio_venta}</p>
         </div>
+        <% if (isAdminUser) { %>
+          <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
+            <p>Stock Disponible: <%= producto.stock_actual %></p>
+          </div>
+        <% } %>
         <div class="cantidad-producto">
           <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
         </div>
