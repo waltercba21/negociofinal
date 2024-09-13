@@ -48,6 +48,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = document.createElement('div');
       tarjetaProducto.classList.add('card');
+      const isAdminUser = document.body.dataset.isAdminUser === 'true';
       let html = `
         ${imagenes}
         <div class="titulo-producto">
