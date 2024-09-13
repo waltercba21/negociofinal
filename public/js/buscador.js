@@ -65,7 +65,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         </div>
         ${isAdminUser ? `
           <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
-            <p>Stock Disponible: <%= producto.stock_actual %></p>
+            <p>Stock Disponible: ${producto.stock_actual}</p>
           </div>
         ` : ''}
         <div class="cantidad-producto">
@@ -94,3 +94,4 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     });
   }, 300);
 });
+

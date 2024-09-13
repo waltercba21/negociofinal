@@ -144,7 +144,7 @@ module.exports = {
     
         try {
             const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
-            const isAdminUser = req.user && req.user.rol === 'admin'; // Ajusta esto según cómo determines el rol en tu sistema de autenticación
+            const isAdminUser = req.user && req.user.rol === 'admin'; 
             res.json({ productos, isAdminUser });
         } catch (error) {
             console.error('Error al buscar productos:', error);
