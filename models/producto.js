@@ -914,7 +914,7 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
 }, 
 obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
     return new Promise((resolve, reject) => {
-        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual FROM productos';
+        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo FROM productos';
         sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
         sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
         sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
