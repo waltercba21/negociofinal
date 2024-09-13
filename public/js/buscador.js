@@ -48,7 +48,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = document.createElement('div');
       tarjetaProducto.classList.add('card');
-      tarjetaProducto.innerHTML = `
+      let html = `
         ${imagenes}
         <div class="titulo-producto">
           <h3 class="nombre">${producto.nombre}</h3>
@@ -57,15 +57,20 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         <div class="precio-producto">
           <p class="precio">${precio_venta}</p>
         </div>
-        <% if (isAdminUser) { %>
-          <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
-            <p>Stock Disponible: <%= producto.stock_actual %></p>
+      `;
+      if (isAdminUser) {
+        html += `
+          <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
+            <p>Stock Disponible: ${producto.stock_actual}</p>
           </div>
-        <% } %>
+        `;
+      }
+      html += `
         <div class="cantidad-producto">
           <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
         </div>
       `;
+      tarjetaProducto.innerHTML = html;
       contenedorProductos.appendChild(tarjetaProducto);
 
       // Asignar eventos a las flechas del carrusel
