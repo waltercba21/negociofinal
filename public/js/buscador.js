@@ -1,12 +1,9 @@
 let productosOriginales = [];
-let isAdminUser = false; // Mover la declaración fuera del evento para acceso global
 let timer;
 
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
-  const data = await respuesta.json();
-  productosOriginales = data.productos;
-  isAdminUser = data.isAdminUser; // Asignar valor a isAdminUser
+  productosOriginales = await respuesta.json();
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
@@ -16,20 +13,13 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     const contenedorProductos = document.getElementById('contenedor-productos');
     contenedorProductos.innerHTML = '';
     let productos = [];
-
     if (!busqueda.trim()) {
-      productos = productosOriginales.slice(0, 12);
+      productos = productosOriginales.slice(0, 12); 
     } else {
-      let url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
+      let url = '/productos/api/buscar?q=' + busqueda;
       const respuesta = await fetch(url);
-      const data = await respuesta.json();
-      productos = data.productos;
-      isAdminUser = data.isAdminUser; // Reasignar valor cada vez que se busca
-      
-      // Debug: Verificar los productos obtenidos en la búsqueda
-      console.log('Productos originales al cargar la página:', productosOriginales);
+      productos = await respuesta.json();
     }
-
     productos.forEach((producto) => {
       let imagenes = '';
       if (producto.imagenes && producto.imagenes.length > 0) {
@@ -53,9 +43,8 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
           </div>
         `;
       } else {
-        imagenes = `<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">`;
+        imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
       }
-      
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = document.createElement('div');
       tarjetaProducto.classList.add('card');
@@ -68,16 +57,29 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         <div class="precio-producto">
           <p class="precio">${precio_venta}</p>
         </div>
-        ${isAdminUser ? `
-          <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
-            <p>Stock Disponible: ${producto.stock_actual}</p>
-          </div>
-        ` : ''}
         <div class="cantidad-producto">
           <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
         </div>
       `;
       contenedorProductos.appendChild(tarjetaProducto);
+
+      // Asignar eventos a las flechas del carrusel
+      const leftButton = tarjetaProducto.querySelector('.carousel__button--left');
+      const rightButton = tarjetaProducto.querySelector('.carousel__button--right');
+      const images = tarjetaProducto.querySelectorAll('.carousel__image');
+      let currentIndex = 0;
+
+      leftButton.addEventListener('click', () => {
+        images[currentIndex].classList.add('hidden');
+        currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
+        images[currentIndex].classList.remove('hidden');
+      });
+
+      rightButton.addEventListener('click', () => {
+        images[currentIndex].classList.add('hidden');
+        currentIndex = (currentIndex === images.length - 1) ? 0 : currentIndex + 1;
+        images[currentIndex].classList.remove('hidden');
+      });
     });
   }, 300);
 });
