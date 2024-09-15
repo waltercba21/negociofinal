@@ -766,7 +766,7 @@ getProductosPorCategoria : async (req, res) => {
         res.send(pdfData);
     });
 },
-generarListadoProveedorAsignado: async function (req, res) {
+generarAsignadosProveedorPDF: async function (req, res) {
     var doc = new PDFDocument;
     var buffer = new streamBuffers.WritableStreamBuffer({
         initialSize: (1024 * 1024),   
