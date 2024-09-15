@@ -52,6 +52,5 @@ router.get('/api/buscar', productosController.buscar);
 router.get('/:id', productosController.detalle);
 router.post('/generarPresupuestoPDF', productosController.generarPresupuestoPDF);
 router.post('/actualizarPreciosExcel', cargar, productosController.actualizarPreciosExcel);
-router.get('/generarAsignadosProveedorPDF', productosController.generarAsignadosProveedorPDF);
 
 module.exports = router;
