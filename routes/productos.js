@@ -53,4 +53,7 @@ router.get('/:id', productosController.detalle);
 router.post('/generarPresupuestoPDF', productosController.generarPresupuestoPDF);
 router.post('/actualizarPreciosExcel', cargar, productosController.actualizarPreciosExcel);
 
+// Nueva ruta para generar el PDF de productos asignados al proveedor con costo más bajo
+router.get('/generarAsignadosProveedorPDF', productosController.generarAsignadosProveedorPDF);
+
 module.exports = router;

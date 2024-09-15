@@ -53,9 +53,23 @@
                     <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
                 <% }); %>
             </select>
-            <button type="submit" class="btn btn-primary">Listado Completo de Stock</button>
+            <button type="submit" class="btn btn-primary">Faltante de Stock</button>
         </form>
     </div>
+    <div class="form-control">
+        <h4>Generar Listado de Productos por Proveedor Asignado (Costo más Bajo)</h4>
+        <form method="get" action="/productos/generarListadoProveedorAsignado">
+            <label for="proveedorAsignado">Seleccionar Proveedor</label>
+            <select name="proveedor" id="proveedorAsignado">
+                <option value="TODOS">Mostrar Todos</option>
+                <% proveedores.forEach(proveedor => { %>
+                    <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
+                <% }); %>
+            </select>
+            <button type="submit" class="btn btn-primary">Generar Listado</button>
+        </form>
+    </div>
+    
 </div>
     <br/> 
 <div class="contenedor-busqueda">
