@@ -880,6 +880,7 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
         });
 },
 obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
+    console.log('Proveedor:', proveedor);
     const query = `
         SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
         FROM productos p
@@ -895,7 +896,12 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, [proveedor])
         .then(result => {
+            console.log('Resultados de obtenerProductosPorProveedorConStock:', result);
             return result;
+        })
+        .catch(error => {
+            console.log('Error al obtener productos:', error);
+            throw error;
         });
 },
   contarTodos: function (conexion, parametro, callback) {

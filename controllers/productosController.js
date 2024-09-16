@@ -702,6 +702,7 @@ getProductosPorCategoria : async (req, res) => {
     });
   },
   generarStockPDF: async function (req, res) {
+    console.log('Proveedor ID:', req.query.proveedor);
     var doc = new PDFDocument;
     var buffer = new streamBuffers.WritableStreamBuffer({
         initialSize: (1024 * 1024),   
@@ -714,10 +715,12 @@ getProductosPorCategoria : async (req, res) => {
     }
     try {
         const proveedores = await producto.obtenerProveedores(conexion);
+        console.log('Proveedores:', proveedores);
         var proveedor = proveedores.find(p => p.id == proveedorId);
         if (!proveedor) {
             return res.status(400).send('Proveedor no encontrado');
         }
+        console.log('Proveedor seleccionado:', proveedor);
         var nombreProveedor = proveedor.nombre;
         doc.fontSize(14)
            .text(nombreProveedor, {
@@ -726,6 +729,7 @@ getProductosPorCategoria : async (req, res) => {
            });
            var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
            obtenerProductos.then(productos => {
+            console.log('Productos:', productos);
             let currentY = doc.y;
             doc.fontSize(12)
                .fillColor('black')
