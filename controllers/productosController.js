@@ -702,36 +702,69 @@ getProductosPorCategoria : async (req, res) => {
     });
   },
   generarStockPDF: async function (req, res) {
-    const proveedorSeleccionado = req.query.proveedor;
-    let productos;
-    
-    if (proveedorSeleccionado === 'TODOS') {
-        // Obtener productos con el proveedor más barato
-        productos = await producto.obtenerProductosPorProveedorConStock(conexion, proveedorSeleccionado);
-    } else {
-        // Obtener productos del proveedor seleccionado
-        productos = await producto.obtenerProductosPorProveedorConStock(conexion, proveedorSeleccionado);
-    }
-    
-    // Generar el PDF con los productos
-    const doc = new PDFDocument();
-
-    doc.fontSize(20).text('Listado de Stock de Productos', { align: 'center' });
-    doc.moveDown();
-    
-    productos.forEach(producto => {
-        doc.fontSize(12).text(`Producto: ${producto.nombre}`);
-        doc.text(`Código Proveedor: ${producto.codigo_proveedor}`);
-        doc.text(`Stock Actual: ${producto.stock_actual}`);
-        doc.text(`Stock Mínimo: ${producto.stock_minimo}`);
-        doc.text(`Precio Costo con IVA: ${producto.costo_iva}`);
-        doc.moveDown();
+    var doc = new PDFDocument;
+    var buffer = new streamBuffers.WritableStreamBuffer({
+        initialSize: (1024 * 1024),   
+        incrementAmount: (1024 * 1024) 
     });
-    
-    // Configurar la respuesta como PDF
-    res.setHeader('Content-type', 'application/pdf');
-    doc.pipe(res);
-    doc.end();
+    doc.pipe(buffer);
+    const proveedorId = req.query.proveedor; 
+    if (!proveedorId) {
+        return res.status(400).send('No se ha proporcionado un ID de proveedor');
+    }
+    try {
+        const proveedores = await producto.obtenerProveedores(conexion);
+        var proveedor = proveedores.find(p => p.id == proveedorId);
+        if (!proveedor) {
+            return res.status(400).send('Proveedor no encontrado');
+        }
+        var nombreProveedor = proveedor.nombre;
+        doc.fontSize(14)
+           .text(nombreProveedor, {
+               align: 'center',
+               width: doc.page.width - 100
+           });
+           var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
+           obtenerProductos.then(productos => {
+            let currentY = doc.y;
+            doc.fontSize(12)
+               .fillColor('black')
+               .text('Código', 60, currentY, {align: 'left', width: 100})
+               .text('Descripción', 150, currentY, {align: 'left', width: 220})
+               .text('Stock Mínimo', 400, currentY, {align: 'center', width: 80})
+               .text('Stock Actual', 480, currentY, {align: 'center', width: 80})
+               .moveDown(2);
+        
+            productos.forEach(producto => {
+                if (producto.stock_actual < producto.stock_minimo) {
+                    currentY = doc.y;
+                    if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
+                        doc.addPage();
+                        currentY = doc.y;
+                    }
+                    doc.fontSize(8)
+                       .text(producto.codigo_proveedor, 60, currentY, {align: 'left', width: 100})
+                       .text(producto.nombre, 150, currentY, {align: 'left', width: 220})
+                       .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, {align: 'center', width: 80})
+                       .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 480, currentY, {align: 'center', width: 80})
+                       .moveDown(1);
+                }
+            });
+            doc.end();
+        }).catch(error => {
+            console.log('Error al obtener productos:', error);
+            return res.status(500).send('Error al generar el PDF');
+        });
+    } catch (error) {
+        console.log('Error al obtener proveedores:', error);
+        return res.status(500).send('Error al generar el PDF');
+    }
+    buffer.on('finish', function() {
+        const pdfData = buffer.getContents();
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
+        res.send(pdfData);
+    });
 },
 presupuestoMostrador: async function(req, res) {
     try {
