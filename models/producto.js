@@ -885,21 +885,21 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
         SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
         FROM productos p
         INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-        WHERE (p.id, pp.proveedor_id) IN (
-            SELECT p2.id, pp2.proveedor_id
+        WHERE pp.proveedor_id = ? AND p.id IN (
+            SELECT p2.id
             FROM productos p2
             INNER JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
-            WHERE pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100) + (pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100)) * 0.21 = (
+            WHERE pp2.proveedor_id = ? AND pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100) + (pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100)) * 0.21 = (
                 SELECT MIN(pp3.precio_lista - (pp3.precio_lista * p3.descuentos_proveedor_id / 100) + (pp3.precio_lista - (pp3.precio_lista * p3.descuentos_proveedor_id / 100)) * 0.21)
                 FROM productos p3
                 INNER JOIN producto_proveedor pp3 ON p3.id = pp3.producto_id
-                WHERE p3.id = p2.id
+                WHERE p3.id = p2.id AND pp3.proveedor_id = ?
             )
-        ) AND pp.proveedor_id = ?
+        )
         ORDER BY pp.codigo ASC
     `;
     const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return queryPromise(query, [proveedor])
+    return queryPromise(query, [proveedor, proveedor, proveedor])
         .then(result => {
             console.log('Resultados de obtenerProductosPorProveedorConStock:', result);
             return result;
