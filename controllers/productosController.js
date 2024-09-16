@@ -703,18 +703,14 @@ getProductosPorCategoria : async (req, res) => {
   },
   generarStockPDF: async function (req, res) {
     const proveedorSeleccionado = req.query.proveedor;
-    
-    // Conexión a la base de datos
-    const conexion = await obtenerConexion(); // Suponiendo que ya tienes una función para la conexión
-
     let productos;
     
     if (proveedorSeleccionado === 'TODOS') {
         // Obtener productos con el proveedor más barato
-        productos = await modelo.obtenerProductosPorProveedorConStock(conexion, proveedorSeleccionado);
+        productos = await producto.obtenerProductosPorProveedorConStock(conexion, proveedorSeleccionado);
     } else {
         // Obtener productos del proveedor seleccionado
-        productos = await modelo.obtenerProductosPorProveedorConStock(conexion, proveedorSeleccionado);
+        productos = await producto.obtenerProductosPorProveedorConStock(conexion, proveedorSeleccionado);
     }
     
     // Generar el PDF con los productos
