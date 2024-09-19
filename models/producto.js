@@ -944,7 +944,8 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
                 parametros.push('%' + palabra + '%', '%' + palabra + '%');
             });
         }
-        sql += ' ORDER BY productos.id DESC';
+        sql += ' AND MATCH (productos.nombre, productos.descripcion) AGAINST (?)';
+        parametros.push(busqueda_nombre);
         if (limite) {
             sql += ' LIMIT ?';
             parametros.push(limite);
