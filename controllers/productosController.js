@@ -730,6 +730,12 @@ getProductosPorCategoria : async (req, res) => {
            var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
            obtenerProductos.then(productos => {
             console.log('Productos:', productos);
+        
+            // Ordenar los productos por el campo nombre en el controlador
+            productos.sort((a, b) => {
+                return a.nombre.toLowerCase().localeCompare(b.nombre.toLowerCase());
+            });
+        
             let currentY = doc.y;
             doc.fontSize(12)
                .fillColor('black')
@@ -759,6 +765,7 @@ getProductosPorCategoria : async (req, res) => {
             console.log('Error al obtener productos:', error);
             return res.status(500).send('Error al generar el PDF');
         });
+        
     } catch (error) {
         console.log('Error al obtener proveedores:', error);
         return res.status(500).send('Error al generar el PDF');
