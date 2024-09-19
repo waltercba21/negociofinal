@@ -46,7 +46,7 @@ module.exports ={
           });
         });
       },
-      guardarPresupuesto : (presupuesto) => {
+guardarPresupuesto : (presupuesto) => {
         return new Promise((resolve, reject) => {
           conexion.query('INSERT INTO presupuestos_mostrador SET ?', presupuesto, (error, resultado) => {
             if (error) {
@@ -57,6 +57,18 @@ module.exports ={
           });
         });
     },
+    guardarFactura: (factura) => {
+        return new Promise((resolve, reject) => {
+            conexion.query('INSERT INTO facturas_mostrador SET ?', factura, (error, resultado) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(resultado.insertId);
+                }
+            });
+        });
+    },
+    
     guardarItemsPresupuesto : (items) => {
         return new Promise((resolve, reject) => {
             const query = 'INSERT INTO presupuesto_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
@@ -72,6 +84,22 @@ module.exports ={
             });
         });
     },
+    guardarItemsFactura: (items) => {
+        return new Promise((resolve, reject) => {
+            const query = 'INSERT INTO factura_items (factura_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
+            console.log("Intentando guardar los siguientes items de la factura:", items);
+            conexion.query(query, [items], (error, resultado) => {
+                if (error) {
+                    console.error('Error al insertar items de la factura:', error);
+                    reject(error);
+                } else {
+                    console.log('Items de la factura guardados correctamente:', resultado);
+                    resolve(resultado);
+                }
+            });
+        });
+    },
+    
       
       getAllPresupuestos: (fechaInicio, fechaFin) => {
         return new Promise((resolve, reject) => {
@@ -91,6 +119,28 @@ module.exports ={
                         };
                     });
                     resolve(presupuestosFormateados);
+                }
+            });
+        });
+    },
+    getAllFacturas: (fechaInicio, fechaFin) => {
+        return new Promise((resolve, reject) => {
+            conexion.query(`
+                SELECT p.id, p.nombre_cliente, p.fecha, p.total
+                FROM facturas_mostrador p
+                WHERE DATE(p.fecha) BETWEEN ? AND ?
+            `, [fechaInicio, fechaFin], (error, resultados) => {
+                if (error) {
+                    reject(new Error('Error al obtener presupuestos: ' + error.message));
+                } else {
+                    const facturasFormateados = resultados.map(presupuesto => {
+                        return {
+                            ...presupuesto,
+                            fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES'),
+                            total: new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(presupuesto.total)
+                        };
+                    });
+                    resolve(facturasFormateados);
                 }
             });
         });
@@ -972,18 +1022,21 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
         });
     });
 },
-eliminarPresupuesto: (id) => {
+eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
             if (err) return reject(err);
+
             conexion.beginTransaction(err => {
                 if (err) {
                     conexion.release();
                     return reject(err); 
                 }
+
+                // Eliminar los items relacionados con la factura
                 conexion.query(`
-                    DELETE FROM presupuesto_items
-                    WHERE presupuesto_id = ?
+                    DELETE FROM factura_items
+                    WHERE factura_id = ?
                 `, [id], (error, resultados) => {
                     if (error) {
                         return conexion.rollback(() => {
@@ -991,8 +1044,10 @@ eliminarPresupuesto: (id) => {
                             return reject(error);
                         });
                     }
+
+                    // Eliminar la factura
                     conexion.query(`
-                        DELETE FROM presupuestos_mostrador
+                        DELETE FROM facturas_mostrador
                         WHERE id = ?
                     `, [id], (error, result) => {
                         if (error) {
@@ -1016,7 +1071,7 @@ eliminarPresupuesto: (id) => {
                         } else {
                             conexion.rollback(() => {
                                 conexion.release();
-                                reject(new Error('No se encontró el presupuesto para eliminar.'));
+                                reject(new Error('No se encontró la factura para eliminar.'));
                             });
                         }
                     });
@@ -1053,6 +1108,35 @@ obtenerDetallePresupuesto : (id) => {
       });
     });
   },  
+  obtenerDetalleFactura: (id) => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT fm.id AS factura_id, fm.nombre_cliente, fm.fecha, fm.total,
+                   p.nombre AS nombre_producto, fi.cantidad, fi.precio_unitario, fi.subtotal
+            FROM facturas_mostrador fm
+            LEFT JOIN factura_items fi ON fm.id = fi.factura_id
+            LEFT JOIN productos p ON fi.producto_id = p.id
+            WHERE fm.id = ?;
+        `;
+        conexion.query(query, [id], (error, resultados) => {
+            if (error) {
+                reject(error);
+            } else if (resultados.length === 0) {
+                reject(new Error("No se encontró la factura"));
+            } else {
+                const factura = resultados[0];
+                const items = resultados.map(r => ({
+                    nombre_producto: r.nombre_producto,
+                    cantidad: r.cantidad,
+                    precio_unitario: r.precio_unitario,
+                    subtotal: r.subtotal
+                }));
+                resolve({ factura, items });
+            }
+        });
+    });
+},
+
 editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
@@ -1160,6 +1244,114 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
         });
     });
 },
+editarFactura: (id, nombre_cliente, fecha, total, items) => {
+    return new Promise((resolve, reject) => {
+        conexion.getConnection((err, conexion) => {
+            if (err) {
+                console.error('Error obteniendo conexión:', err);
+                return reject(err);
+            }
+
+            conexion.beginTransaction(err => {
+                if (err) {
+                    console.error('Error iniciando transacción:', err);
+                    conexion.release();
+                    return reject(err);
+                }
+
+                const updateFields = [];
+                const updateValues = [];
+                if (nombre_cliente !== undefined && nombre_cliente !== '') {
+                    updateFields.push('nombre_cliente = ?');
+                    updateValues.push(nombre_cliente);
+                }
+                if (fecha !== undefined && fecha !== '') {
+                    updateFields.push('fecha = ?');
+                    updateValues.push(fecha);
+                }
+                if (total !== undefined) {
+                    updateFields.push('total = ?');
+                    updateValues.push(total);
+                }
+                if (updateFields.length === 0) {
+                    return reject(new Error('No fields to update'));
+                }
+                updateValues.push(id);
+
+                const query = `UPDATE facturas_mostrador SET ${updateFields.join(', ')} WHERE id = ?`;
+
+                console.log('Executing query:', query, updateValues);
+                conexion.query(query, updateValues, (error, resultados) => {
+                    if (error) {
+                        console.error('Error ejecutando query de factura:', error);
+                        return conexion.rollback(() => {
+                            conexion.release();
+                            return reject(error);
+                        });
+                    }
+
+                    const updates = items.map(item => {
+                        return new Promise((resolve, reject) => {
+                            const itemUpdateFields = [];
+                            const itemUpdateValues = [];
+                            if (item.producto_id !== undefined) {
+                                itemUpdateFields.push('producto_id = ?');
+                                itemUpdateValues.push(item.producto_id);
+                            }
+                            if (item.cantidad !== undefined) {
+                                itemUpdateFields.push('cantidad = ?');
+                                itemUpdateValues.push(item.cantidad);
+                            }
+                            if (item.precio_unitario !== undefined) {
+                                itemUpdateFields.push('precio_unitario = ?');
+                                itemUpdateValues.push(item.precio_unitario);
+                            }
+                            if (item.subtotal !== undefined) {
+                                itemUpdateFields.push('subtotal = ?');
+                                itemUpdateValues.push(item.subtotal);
+                            }
+                            itemUpdateValues.push(item.id, id);
+
+                            const itemQuery = `UPDATE factura_items SET ${itemUpdateFields.join(', ')} WHERE id = ? AND factura_id = ?`;
+
+                            console.log('Executing item query:', itemQuery, itemUpdateValues);
+                            conexion.query(itemQuery, itemUpdateValues, (error, result) => {
+                                if (error) {
+                                    console.error('Error ejecutando query de item:', error);
+                                    return reject(error);
+                                }
+                                resolve(result);
+                            });
+                        });
+                    });
+
+                    Promise.all(updates)
+                        .then(() => {
+                            conexion.commit(err => {
+                                if (err) {
+                                    console.error('Error al hacer commit:', err);
+                                    return conexion.rollback(() => {
+                                        conexion.release();
+                                        return reject(err);
+                                    });
+                                }
+                                conexion.release();
+                                resolve(resultados.affectedRows);
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error al actualizar items:', error);
+                            conexion.rollback(() => {
+                                conexion.release();
+                                return reject(error);
+                            });
+                        });
+                });
+            });
+        });
+    });
+},
+
   obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
   var query = "SELECT id, nombre, codigo, imagen, descripcion, precio_venta, modelo, categoria_id, marca_id, proveedor_id, modelo_id FROM productos WHERE categoria_id = ? AND marca_id = ? AND modelo_id = ?";
   conexion.query(query, [categoria, marca, modelo], function(error, resultados) {

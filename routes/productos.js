@@ -29,6 +29,7 @@ router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
 router.get('/panelControl', productosController.panelControl);
 router.get('/proveedores', productosController.proveedores);
 router.get('/crear', productosController.crear);
+
 router.get('/presupuestoMostrador', productosController.presupuestoMostrador);
 router.post('/procesarFormulario', productosController.procesarFormulario);
 router.get('/presupuesto/:id', productosController.presupuesto);
@@ -36,6 +37,16 @@ router.get('/listadoPresupuestos', productosController.listadoPresupuestos);
 router.get('/api/presupuestos', productosController.getPresupuestos);
 router.put('/api/presupuestos/:id', productosController.editPresupuesto);
 router.delete('/api/presupuestos/:id', productosController.deletePresupuesto);
+
+router.get('/facturasMostrador', productosController.facturasMostrador);
+router.post('/procesarFormularioFacturas', productosController.procesarFormularioFacturas);
+router.get('/factura/:id', productosController.factura);
+router.get('/listadoFacturas', productosController.listaFacturas);
+router.get('/api/facturas', productosController.getFacturas);
+router.put('/api/facturas/:id', productosController.editarFacturas);
+router.delete('/api/facturas/:id', productosController.deleteFactura);
+
+
 router.get('/generarPDF', productosController.generarPDF);
 router.get('/generarStockPDF', productosController.generarStockPDF);
 router.get('/editar/:id', productosController.editar);

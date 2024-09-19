@@ -794,6 +794,15 @@ presupuestoMostrador: async function(req, res) {
       res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
     }
   },
+  facturasMostrador: async function(req, res) {
+    try {
+      const siguienteID = await producto.obtenerSiguienteID();
+      res.render('facturasMostrador', { idPresupuesto: siguienteID });
+    } catch (error) {
+      console.error('Error al obtener el siguiente ID de presupuesto:', error.message);
+      res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
+    }
+  },
   procesarFormulario: async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
@@ -823,9 +832,40 @@ presupuestoMostrador: async function(req, res) {
         res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
     }
 },
-
+procesarFormularioFacturas: async (req, res) => {
+    try {
+        const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
+        const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
+        const presupuesto = {
+            nombre_cliente: nombreCliente,
+            fecha: fechaPresupuesto,
+            total: totalLimpio
+        };
+        const presupuestoId = await producto.guardarFactura(presupuesto);
+        const items = await Promise.all(invoiceItems.map(async item => {
+            const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id);
+            // Actualizar stock del producto
+            await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
+            return [
+                presupuestoId,
+                producto_id,
+                item.cantidad,
+                item.precio_unitario,
+                item.subtotal
+            ];
+        }));
+        await producto.guardarItemsFactura(items);
+        res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
+    } catch (error) {
+        console.error('Error al guardar el presupuesto:', error);
+        res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
+    }
+},
 listadoPresupuestos : (req, res) => {
     res.render('listadoPresupuestos');
+},
+listaFacturas : (req, res) => {
+    res.render('listaFacturas');
 },
 getPresupuestos: async (req, res) => {
     try {
@@ -838,12 +878,38 @@ getPresupuestos: async (req, res) => {
         res.status(500).json({ error: 'Error al obtener presupuestos' });
     }
 },
+getFacturas: async (req, res) => {
+    try {
+        // Obtener las fechas de la query string
+        const { fechaInicio, fechaFin } = req.query;
+        const presupuestos = await producto.getAllPresupuestos(fechaInicio, fechaFin);
+        res.json(presupuestos);
+    } catch (error) {
+        console.error('Error al obtener presupuestos:', error);
+        res.status(500).json({ error: 'Error al obtener presupuestos' });
+    }
+},
+
 editPresupuesto : (req, res) => {
     const { id } = req.params;
     const { nombre_cliente, fecha, total, items } = req.body;
 
     console.log('Request received to edit presupuesto:', { id, nombre_cliente, fecha, total, items });
     producto.editarPresupuesto(id, nombre_cliente, fecha, total, items)
+        .then(affectedRows => {
+            console.log('Presupuesto editado exitosamente:', affectedRows);
+            res.status(200).json({ message: 'Presupuesto editado exitosamente', affectedRows });
+        })
+        .catch(error => {
+            console.error('Error al editar presupuesto:', error);
+            res.status(500).json({ message: 'Error al editar presupuesto: ' + error.message });
+        });
+},
+editarFacturas : (req, res) => {
+    const { id } = req.params;
+    const { nombre_cliente, fecha, total, items } = req.body;
+    console.log('Request received to edit presupuesto:', { id, nombre_cliente, fecha, total, items });
+    producto.editarFacturas(id, nombre_cliente, fecha, total, items)
         .then(affectedRows => {
             console.log('Presupuesto editado exitosamente:', affectedRows);
             res.status(200).json({ message: 'Presupuesto editado exitosamente', affectedRows });
@@ -870,9 +936,36 @@ presupuesto : (req, res) => {
             res.status(500).send('Error interno del servidor');
         });
 },
+factura: (req, res) => {
+    const id = req.params.id;
+    producto.obtenerDetalleFactura(id)
+        .then(data => {
+            if (data && data.items.length > 0) {
+                res.render('presupuesto', {
+                    presupuesto: data.presupuesto,
+                    detalles: data.items 
+                });
+            } else {
+                res.status(404).send('Presupuesto no encontrado');
+            }
+        })
+        .catch(error => {
+            res.status(500).send('Error interno del servidor');
+        });
+},
 deletePresupuesto: (req, res) => {
     const { id } = req.params;
     producto.eliminarPresupuesto(id)
+        .then(affectedRows => {
+            res.json({ message: 'Presupuesto eliminado exitosamente', affectedRows });
+        })
+        .catch(error => {
+            res.status(500).json({ message: 'Error al eliminar presupuesto: ' + error.message });
+        });
+},
+deleteFactura: (req, res) => {
+    const { id } = req.params;
+    producto.eliminarFactura(id)
         .then(affectedRows => {
             res.json({ message: 'Presupuesto eliminado exitosamente', affectedRows });
         })
