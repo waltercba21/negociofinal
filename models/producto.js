@@ -891,7 +891,7 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
             INNER JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
             GROUP BY p2.id
         )
-        ORDER BY pp.codigo ASC
+        ORDER BY p.nombre ASC
     `;
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, [proveedor])
