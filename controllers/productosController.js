@@ -731,9 +731,16 @@ getProductosPorCategoria : async (req, res) => {
            obtenerProductos.then(productos => {
             console.log('Productos:', productos);
         
-            // Ordenar los productos por el campo nombre en el controlador
+            // Función para normalizar las descripciones eliminando números y caracteres especiales al inicio
+            function normalizeString(str) {
+                return str.replace(/^[^a-zA-Z]+/, '').toLowerCase();
+            }
+        
+            // Ordenar los productos por el campo nombre normalizado
             productos.sort((a, b) => {
-                return a.nombre.toLowerCase().localeCompare(b.nombre.toLowerCase());
+                const nameA = normalizeString(a.nombre);
+                const nameB = normalizeString(b.nombre);
+                return nameA.localeCompare(nameB);
             });
         
             let currentY = doc.y;
@@ -765,6 +772,7 @@ getProductosPorCategoria : async (req, res) => {
             console.log('Error al obtener productos:', error);
             return res.status(500).send('Error al generar el PDF');
         });
+        
         
     } catch (error) {
         console.log('Error al obtener proveedores:', error);
