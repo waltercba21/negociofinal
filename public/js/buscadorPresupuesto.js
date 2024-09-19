@@ -22,7 +22,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             precio_unitario, 
             cantidad, 
             subtotal 
-        });
+        }); 
     }
 
     console.log("Invoice Items to be sent:", invoiceItems); // Confirmar que invoiceItems es un array
