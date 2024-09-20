@@ -130,15 +130,21 @@ guardarPresupuesto : (presupuesto) => {
                 FROM facturas_mostrador p
                 WHERE DATE(p.fecha) BETWEEN ? AND ?;
             `;
+    
+            console.log('Consulta SQL:', sqlQuery);
+            console.log('Parámetros:', fechaInicio, fechaFin);
+    
             conexion.query(sqlQuery, [fechaInicio, fechaFin], (error, resultados) => {
                 if (error) {
                     reject(new Error('Error al obtener presupuestos: ' + error.message));
                 } else {
+                    console.log('Resultados:', resultados); // Verificar que se retornan resultados
                     resolve(resultados);
                 }
             });
         });
     },
+    
 
 obtenerProductoIdPorCodigo : (codigo) => {
         return new Promise((resolve, reject) => {

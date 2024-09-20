@@ -43,12 +43,11 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
 
-
-
 function cargarFacturas(fechaInicio, fechaFin) {
     fetch(`/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
+            console.log('Facturas recibidas:', data); // Verificar si se reciben datos
             const tableBody = document.querySelector('#presupuestos-table tbody');
             tableBody.innerHTML = '';
 
@@ -76,6 +75,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
+
 
 
 function addEventListeners() {

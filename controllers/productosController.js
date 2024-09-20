@@ -869,7 +869,6 @@ listaFacturas : (req, res) => {
 },
 getPresupuestos: async (req, res) => {
     try {
-        // Obtener las fechas de la query string
         const { fechaInicio, fechaFin } = req.query;
         const presupuestos = await producto.getAllPresupuestos(fechaInicio, fechaFin);
         res.json(presupuestos);
@@ -881,21 +880,18 @@ getPresupuestos: async (req, res) => {
 getFacturas: async (req, res) => {
     try {
         const { fechaInicio, fechaFin } = req.query;
-
-        // Verifica las fechas recibidas
-        console.log('Recibido en la API - Fecha Inicio:', fechaInicio, 'Fecha Fin:', fechaFin);
+        
+        // Verificar que las fechas se están recibiendo
+        console.log('Fecha Inicio:', fechaInicio, 'Fecha Fin:', fechaFin);
 
         const presupuestos = await producto.getAllFacturas(fechaInicio, fechaFin);
-
-        // Verifica los resultados obtenidos
-        console.log('Resultados obtenidos:', presupuestos);
-
         res.json(presupuestos);
     } catch (error) {
         console.error('Error al obtener facturas:', error);
         res.status(500).json({ error: 'Error al obtener facturas' });
     }
 },
+
 
 editPresupuesto : (req, res) => {
     const { id } = req.params;
