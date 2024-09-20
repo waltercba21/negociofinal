@@ -6,26 +6,41 @@ document.addEventListener('DOMContentLoaded', function() {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
+            console.log('Buscando facturas desde:', fechaInicio, 'hasta:', fechaFin); // Verificar las fechas al buscar
             cargarFacturas(fechaInicio, fechaFin);
         });
     } else {
         console.error('El elemento con ID "buscar" no se encontró en el DOM.');
     }
+
     if (btnImprimirTotal) {
         btnImprimirTotal.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
+            if (!fechaInicio || !fechaFin) {
+                alert('Por favor selecciona ambas fechas.');
+                return; // Evita continuar si las fechas no están establecidas
+            }
             imprimirTotalFacturas(fechaInicio, fechaFin);
-        }); 
+        });
     } else {
         console.error('El elemento con ID "btnImprimirTotal" no se encontró en el DOM.');
     }
 });
 
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
+    console.log('Fechas seleccionadas:', fechaInicio, fechaFin); // Para verificar que las fechas sean correctas
+    
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Datos recibidos:', data); // Para verificar que los datos se reciban correctamente
+            
             let totalFacturas = 0;
             data.forEach(factura => {
                 const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
@@ -42,7 +57,6 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
-
 function cargarFacturas(fechaInicio, fechaFin) {
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
