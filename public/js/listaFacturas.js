@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('El elemento con ID "buscar" no se encontró en el DOM.');
     }
-
     if (btnImprimirTotal) {
         btnImprimirTotal.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
@@ -44,39 +43,40 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
 
+
+
 function cargarFacturas(fechaInicio, fechaFin) {
     fetch(`/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
-            console.log('Datos recibidos del backend:', data);
-            const tableBody = document.querySelector('#facturas-table tbody');
-            tableBody.innerHTML = ''; 
+            const tableBody = document.querySelector('#presupuestos-table tbody');
+            tableBody.innerHTML = '';
+
+            if (data.length === 0) {
+                alert("No se encontraron facturas en el rango de fechas seleccionado.");
+                return;
+            }
+
             let totalFacturas = 0;
             data.forEach(factura => {
                 const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
                 totalFacturas += totalNumerico;
                 const row = document.createElement('tr');
-                row.setAttribute('data-id', factura.id);
                 row.innerHTML = `
-                    <td class="id">${factura.id}</td>
-                    <td class="fecha">${factura.fecha}</td>
-                    <td class="cliente">${factura.nombre_cliente}</td>
-                    <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
+                    <td>${factura.id}</td>
+                    <td>${new Date(factura.fecha).toLocaleDateString()}</td>
+                    <td>${factura.nombre_cliente}</td>
+                    <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
                     <td>
                         <button class="btn-ver" data-id="${factura.id}">Ver Detalle</button>
-                        <button class="btn-editar" data-id="${factura.id}">Editar</button>
-                        <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
-                        <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
-                        <button class="btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
-            addEventListeners();
-            document.getElementById('total-facturas').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
+
 
 function addEventListeners() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
@@ -208,3 +208,4 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
 
     doc.save('facturas.pdf');
 });
+ 

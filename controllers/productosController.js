@@ -881,6 +881,10 @@ getPresupuestos: async (req, res) => {
 getFacturas: async (req, res) => {
     try {
         const { fechaInicio, fechaFin } = req.query;
+
+        // Verifica las fechas recibidas
+        console.log('Fecha Inicio:', fechaInicio, 'Fecha Fin:', fechaFin);
+
         const presupuestos = await producto.getAllFacturas(fechaInicio, fechaFin);
         res.json(presupuestos);
     } catch (error) {
@@ -888,7 +892,6 @@ getFacturas: async (req, res) => {
         res.status(500).json({ error: 'Error al obtener presupuestos' });
     }
 },
-
 editPresupuesto : (req, res) => {
     const { id } = req.params;
     const { nombre_cliente, fecha, total, items } = req.body;

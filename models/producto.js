@@ -125,27 +125,22 @@ guardarPresupuesto : (presupuesto) => {
     },
     getAllFacturas: (fechaInicio, fechaFin) => {
         return new Promise((resolve, reject) => {
-            conexion.query(`
+            const sqlQuery = `
                 SELECT p.id, p.nombre_cliente, p.fecha, p.total
                 FROM facturas_mostrador p
-                WHERE DATE(p.fecha) BETWEEN ? AND ?
-            `, [fechaInicio, fechaFin], (error, resultados) => {
+                WHERE DATE(p.fecha) BETWEEN ? AND ?;
+            `;
+            conexion.query(sqlQuery, [fechaInicio, fechaFin], (error, resultados) => {
                 if (error) {
                     reject(new Error('Error al obtener presupuestos: ' + error.message));
                 } else {
-                    const facturasFormateados = resultados.map(presupuesto => {
-                        return {
-                            ...presupuesto,
-                            fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES'),
-                            total: new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(presupuesto.total)
-                        };
-                    });
-                    resolve(facturasFormateados);
+                    resolve(resultados);
                 }
             });
         });
     },
-       obtenerProductoIdPorCodigo : (codigo) => {
+
+obtenerProductoIdPorCodigo : (codigo) => {
         return new Promise((resolve, reject) => {
           const query = `
             SELECT p.id 
