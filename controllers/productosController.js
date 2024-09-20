@@ -880,19 +880,17 @@ getPresupuestos: async (req, res) => {
 getFacturas: async (req, res) => {
     try {
         const { fechaInicio, fechaFin } = req.query;
+        console.log(`Buscando facturas desde ${fechaInicio} hasta ${fechaFin}`);
         
-        // Verificar que las fechas se están recibiendo
-        console.log('Fecha Inicio:', fechaInicio, 'Fecha Fin:', fechaFin);
-
-        const presupuestos = await producto.getAllFacturas(fechaInicio, fechaFin);
-        res.json(presupuestos);
+        const facturas = await producto.getAllFacturas(fechaInicio, fechaFin);
+        console.log('Facturas encontradas:', facturas);
+        
+        res.json(facturas);
     } catch (error) {
         console.error('Error al obtener facturas:', error);
         res.status(500).json({ error: 'Error al obtener facturas' });
     }
 },
-
-
 editPresupuesto : (req, res) => {
     const { id } = req.params;
     const { nombre_cliente, fecha, total, items } = req.body;
