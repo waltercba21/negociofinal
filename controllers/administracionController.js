@@ -1,4 +1,4 @@
-const administracion = require('../models/administracion')
+/*const administracion = require('../models/administracion')
 var pdfmake = require('pdfmake');
 var fonts = {
     Roboto: {
@@ -213,4 +213,4 @@ module.exports = {
             })
         });
     },
-}
+}*/

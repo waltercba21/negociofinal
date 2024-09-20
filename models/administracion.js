@@ -1,4 +1,4 @@
-const pool = require('../config/conexion');
+/*const pool = require('../config/conexion');
 const conexion = require('../config/conexion')
 
 module.exports ={
@@ -96,4 +96,4 @@ module.exports ={
             callback(null, results);
         });
     },
-}
+}*/
