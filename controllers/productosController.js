@@ -880,9 +880,8 @@ getPresupuestos: async (req, res) => {
 },
 getFacturas: async (req, res) => {
     try {
-        // Obtener las fechas de la query string
         const { fechaInicio, fechaFin } = req.query;
-        const presupuestos = await producto.getAllPresupuestos(fechaInicio, fechaFin);
+        const presupuestos = await producto.getAllFacturas(fechaInicio, fechaFin);
         res.json(presupuestos);
     } catch (error) {
         console.error('Error al obtener presupuestos:', error);
