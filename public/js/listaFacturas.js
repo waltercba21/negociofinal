@@ -70,10 +70,9 @@ function cargarFacturas(fechaInicio, fechaFin) {
 
             let totalFacturas = 0;
             data.forEach(factura => {
-                // Asegúrate de que el formato de `factura.total` es correcto
                 const totalNumerico = parseFloat(factura.total.replace(/\./g, '').replace(',', '.'));
                 totalFacturas += totalNumerico;
-                
+            
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${factura.id}</td>
@@ -86,15 +85,11 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 `;
                 tableBody.appendChild(row);
             });
-
-            // Mostrar el total de facturas si es necesario
+            
             console.log('Total de facturas:', totalFacturas);
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
-
-
-
 
 function addEventListeners() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
