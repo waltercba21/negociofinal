@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
-            cargarPresupuestos(fechaInicio, fechaFin);
+            cargarFacturas(fechaInicio, fechaFin);
         });
     } else {
         console.error('El elemento con ID "buscar" no se encontró en el DOM.');
@@ -16,73 +16,73 @@ document.addEventListener('DOMContentLoaded', function() {
         btnImprimirTotal.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
-            imprimirTotalPresupuestos(fechaInicio, fechaFin);
+            imprimirTotalFacturas(fechaInicio, fechaFin);
         });
     } else {
         console.error('El elemento con ID "btnImprimirTotal" no se encontró en el DOM.');
     }
 });
 
-function imprimirTotalPresupuestos(fechaInicio, fechaFin) {
-    fetch(`/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
+function imprimirTotalFacturas(fechaInicio, fechaFin) {
+    fetch(`/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
-            let totalPresupuestos = 0;
-            data.forEach(presupuesto => {
-                const totalNumerico = parseFloat(presupuesto.total.replace('.', '').replace(',', '.'));
-                totalPresupuestos += totalNumerico;
+            let totalFacturas = 0;
+            data.forEach(factura => {
+                const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
+                totalFacturas += totalNumerico;
             });
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.setFontSize(16);
-            doc.text('Total de Presupuestos', 14, 20);
-            const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalPresupuestos);
+            doc.text('Total de Facturas', 14, 20);
+            const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
             doc.text(totalText, 14, 40);
-            doc.save('total_presupuestos.pdf');
+            doc.save('total_facturas.pdf');
         })
-        .catch(error => console.error('Error al cargar los presupuestos:', error));
+        .catch(error => console.error('Error al cargar las facturas:', error));
 }
 
-function cargarPresupuestos(fechaInicio, fechaFin) {
-    fetch(`/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
+function cargarFacturas(fechaInicio, fechaFin) {
+    fetch(`/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
             console.log('Datos recibidos del backend:', data);
-            const tableBody = document.querySelector('#presupuestos-table tbody');
+            const tableBody = document.querySelector('#facturas-table tbody');
             tableBody.innerHTML = ''; 
-            let totalPresupuestos = 0;
-            data.forEach(presupuesto => {
-                const totalNumerico = parseFloat(presupuesto.total.replace('.', '').replace(',', '.'));
-                totalPresupuestos += totalNumerico;
+            let totalFacturas = 0;
+            data.forEach(factura => {
+                const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
+                totalFacturas += totalNumerico;
                 const row = document.createElement('tr');
-                row.setAttribute('data-id', presupuesto.id);
+                row.setAttribute('data-id', factura.id);
                 row.innerHTML = `
-                    <td class="id">${presupuesto.id}</td>
-                    <td class="fecha">${presupuesto.fecha}</td>
-                    <td class="cliente">${presupuesto.nombre_cliente}</td>
+                    <td class="id">${factura.id}</td>
+                    <td class="fecha">${factura.fecha}</td>
+                    <td class="cliente">${factura.nombre_cliente}</td>
                     <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
                     <td>
-                        <button class="btn-ver" data-id="${presupuesto.id}">Ver Detalle</button>
-                        <button class="btn-editar" data-id="${presupuesto.id}">Editar</button>
-                        <button class="btn-eliminar" data-id="${presupuesto.id}">Eliminar</button>
-                        <button class="btn-guardar" data-id="${presupuesto.id}" style="display:none;">Guardar</button>
-                        <button class="btn-cancelar" data-id="${presupuesto.id}" style="display:none;">Cancelar</button>
+                        <button class="btn-ver" data-id="${factura.id}">Ver Detalle</button>
+                        <button class="btn-editar" data-id="${factura.id}">Editar</button>
+                        <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
+                        <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
+                        <button class="btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
             addEventListeners();
-            document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalPresupuestos);
+            document.getElementById('total-facturas').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
         })
-        .catch(error => console.error('Error al cargar los presupuestos:', error));
+        .catch(error => console.error('Error al cargar las facturas:', error));
 }
 
 function addEventListeners() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            window.location.href = `/presupuesto/${id}`;
+            window.location.href = `/factura/${id}`;
         });
     });
     document.querySelectorAll('.btn-editar').forEach(btn => {
@@ -94,7 +94,7 @@ function addEventListeners() {
     document.querySelectorAll('.btn-eliminar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            eliminarPresupuesto(id);
+            eliminarFactura(id);
         });
     });
     document.querySelectorAll('.btn-guardar').forEach(btn => {
@@ -141,20 +141,13 @@ function guardarCambios(id) {
     const fecha = row.querySelector('.fecha input').value;
     const nombre_cliente = row.querySelector('.cliente input').value;
     const total = parseFloat(row.querySelector('.total input').value.replace(/\./g, '').replace(',', '.'));
-    const items = Array.from(document.querySelectorAll(`tr[data-id="${id}"] .item-row`)).map(itemRow => ({
-        id: itemRow.dataset.id,
-        producto_id: itemRow.querySelector('.producto_id input').value,
-        cantidad: itemRow.querySelector('.cantidad input').value,
-        precio_unitario: itemRow.querySelector('.precio_unitario input').value,
-        subtotal: itemRow.querySelector('.subtotal input').value
-    }));
 
-    fetch(`/api/presupuestos/${id}`, {
+    fetch(`/api/facturas/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ fecha, nombre_cliente, total, items })
+        body: JSON.stringify({ fecha, nombre_cliente, total })
     })
     .then(response => {
         if (!response.ok) {
@@ -163,17 +156,17 @@ function guardarCambios(id) {
         return response.json();
     })
     .then(data => {
-        alert('Presupuesto actualizado exitosamente');
-        cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
+        alert('Factura actualizada exitosamente');
+        cargarFacturas(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
     })
     .catch(error => {
-        alert('Error al actualizar el presupuesto: ' + error.message);
+        alert('Error al actualizar la factura: ' + error.message);
     });
 }
 
-function eliminarPresupuesto(id) {
-    if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
-        fetch(`/api/presupuestos/${id}`, {
+function eliminarFactura(id) {
+    if (confirm('¿Está seguro de que desea eliminar esta factura?')) {
+        fetch(`/api/facturas/${id}`, {
             method: 'DELETE',
         })
         .then(response => {
@@ -183,11 +176,11 @@ function eliminarPresupuesto(id) {
             return response.json();
         })
         .then(data => {
-            alert('Presupuesto eliminado exitosamente');
-            cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
+            alert('Factura eliminada exitosamente');
+            cargarFacturas(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
         })
         .catch(error => {
-            alert('Error al eliminar el presupuesto: ' + error.message);
+            alert('Error al eliminar la factura: ' + error.message);
         });
     }
 }
@@ -199,20 +192,19 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
 
     // Agregar encabezado
     doc.setFontSize(18);
-    doc.text('Lista de Presupuestos', 10, y);
+    doc.text('Lista de Facturas', 10, y);
     y += 10;
 
-    // Agregar tabla de presupuestos
-    const table = document.getElementById('presupuestos-table');
+    // Agregar tabla de facturas
+    const table = document.getElementById('facturas-table');
     const rows = table.getElementsByTagName('tr');
 
     Array.from(rows).forEach(row => {
         const cells = row.getElementsByTagName('td');
         const cellData = Array.from(cells).map(cell => cell.textContent);
-        doc.text(cellData.join(' - '), 10, y);
+        doc.text(cellData.join(' | '), 10, y);
         y += 10;
     });
 
-    // Guardar el documento
-    doc.save('presupuestos.pdf');
+    doc.save('facturas.pdf');
 });
