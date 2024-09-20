@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
-    fetch(`/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
+    fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
             let totalFacturas = 0;
@@ -44,7 +44,7 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
 }
 
 function cargarFacturas(fechaInicio, fechaFin) {
-    fetch(`/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
+    fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
             console.log('Facturas recibidas:', data); // Verificar si se reciben datos
@@ -142,7 +142,7 @@ function guardarCambios(id) {
     const nombre_cliente = row.querySelector('.cliente input').value;
     const total = parseFloat(row.querySelector('.total input').value.replace(/\./g, '').replace(',', '.'));
 
-    fetch(`/api/facturas/${id}`, {
+    fetch(`/productos/api/facturas/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
@@ -166,7 +166,7 @@ function guardarCambios(id) {
 
 function eliminarFactura(id) {
     if (confirm('¿Está seguro de que desea eliminar esta factura?')) {
-        fetch(`/api/facturas/${id}`, {
+        fetch(`/productos/api/facturas/${id}`, {
             method: 'DELETE',
         })
         .then(response => {
