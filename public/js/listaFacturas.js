@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
-            console.log('Buscando facturas desde:', fechaInicio, 'hasta:', fechaFin); // Verificar las fechas al buscar
+            console.log('Buscando facturas desde:', fechaInicio, 'hasta:', fechaFin); 
             cargarFacturas(fechaInicio, fechaFin);
         });
     } else {
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const fechaFin = document.getElementById('fechaFin').value;
             if (!fechaInicio || !fechaFin) {
                 alert('Por favor selecciona ambas fechas.');
-                return; // Evita continuar si las fechas no están establecidas
+                return; 
             }
             imprimirTotalFacturas(fechaInicio, fechaFin);
         });
@@ -70,8 +70,10 @@ function cargarFacturas(fechaInicio, fechaFin) {
 
             let totalFacturas = 0;
             data.forEach(factura => {
-                const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
+                // Asegúrate de que el formato de `factura.total` es correcto
+                const totalNumerico = parseFloat(factura.total.replace(/\./g, '').replace(',', '.'));
                 totalFacturas += totalNumerico;
+                
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${factura.id}</td>
@@ -84,9 +86,13 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 `;
                 tableBody.appendChild(row);
             });
+
+            // Mostrar el total de facturas si es necesario
+            console.log('Total de facturas:', totalFacturas);
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
+
 
 
 
