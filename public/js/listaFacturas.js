@@ -56,22 +56,19 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
 }
 
 function cargarFacturas(fechaInicio, fechaFin) {
-    // Convertir las fechas a objetos Date
     const fechaInicioObj = new Date(fechaInicio);
     const fechaFinObj = new Date(fechaFin);
     
-    // Ajustar horas para incluir todo el rango
-    fechaInicioObj.setHours(0, 0, 0, 0); // Inicio del día
-    fechaFinObj.setHours(23, 59, 59, 999); // Fin del día
+    fechaInicioObj.setHours(0, 0, 0, 0);
+    fechaFinObj.setHours(23, 59, 59, 999);
 
-    // Formatear las fechas a YYYY-MM-DD para la consulta
     const fechaInicioFormatted = fechaInicioObj.toISOString().split('T')[0];
     const fechaFinFormatted = fechaFinObj.toISOString().split('T')[0];
 
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`)
         .then(response => response.json())
         .then(data => {
-            console.log('Facturas recibidas:', data); // Verificar si se reciben datos
+            console.log('Facturas recibidas:', data);
             const tableBody = document.querySelector('#presupuestos-table tbody');
             tableBody.innerHTML = '';
 
@@ -88,7 +85,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${factura.id}</td>
-                    <td>${new Date(factura.fecha).toLocaleDateString()}</td>
+                    <td>${new Date(factura.fecha).toLocaleDateString('es-CL')}</td>
                     <td>${factura.nombre_cliente}</td>
                     <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
                     <td>
@@ -102,6 +99,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
+
 
 
 function addEventListeners() {
