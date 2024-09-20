@@ -64,7 +64,7 @@ header .navbar a {
   font-weight: bold;
   z-index: 10;
 }
-.nav-link-factura{
+.navbar .nav-link-factura{
   color: #b80220;
 }
 .navbar .nav-link:hover {
