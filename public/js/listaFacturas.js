@@ -29,8 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
-    console.log('Fechas seleccionadas:', fechaInicio, fechaFin); // Para verificar que las fechas sean correctas
-    
+    console.log('Fechas seleccionadas:', fechaInicio, fechaFin);
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => {
             if (!response.ok) {
@@ -39,14 +38,12 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
             return response.json();
         })
         .then(data => {
-            console.log('Datos recibidos:', data); // Para verificar que los datos se reciban correctamente
-            
+            console.log('Datos recibidos:', data);
             let totalFacturas = 0;
             data.forEach(factura => {
                 const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
                 totalFacturas += totalNumerico;
             });
-
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.setFontSize(16);
@@ -57,6 +54,7 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
+
 function cargarFacturas(fechaInicio, fechaFin) {
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
