@@ -9,13 +9,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
         let subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
-
-        // Validaciones para asegurarnos de que los valores son válidos
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
         subtotal = !isNaN(subtotal) ? subtotal : 0;
-
-        // Añadir el objeto al array invoiceItems
         invoiceItems.push({ 
             producto_id: codigo, 
             descripcion, 
@@ -24,11 +20,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             subtotal 
         }); 
     }
-
-    console.log("Invoice Items to be sent:", invoiceItems); // Confirmar que invoiceItems es un array
-
     try {
-        const response = await fetch('/productos/procesarFormulario', {
+        const response = await fetch('/productos/procesarFormularioFacturas', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -37,13 +30,11 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
                 totalPresupuesto: document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim(),
-                invoiceItems  // Enviar el array correctamente
+                invoiceItems  
             })
         });
-
         const data = await response.json();
-        console.log("Response from server:", data); // Confirmar respuesta del servidor
-
+        console.log("Response from server:", data); 
         if (response.ok) {
             Swal.fire({
                 title: '¡Éxito!',
@@ -51,7 +42,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 icon: 'success',
                 confirmButtonText: 'Entendido'
             }).then(() => {
-                window.location.reload(); // Recarga la página después de cerrar la alerta
+                window.location.reload(); 
             });
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
@@ -67,7 +58,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     }
 });
 
-
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
@@ -76,7 +66,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     if (!busqueda.trim()) {
         return;
     }
-  
     const url = '/productos/api/buscar?q=' + busqueda;
     const respuesta = await fetch(url);
     const productos = await respuesta.json();
@@ -120,17 +109,12 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
                 calcularTotal();
             });
             cellEliminar.appendChild(botonEliminar);
-
-            // Actualiza subtotal y stock solo cuando se cambia la cantidad
             inputCantidad.addEventListener('input', function() {
                 updateSubtotal(filaFactura);
             });
-
-            // Mantén la actualización de subtotal cuando se cambia el precio
             inputPrecio.addEventListener('input', function() {
-                updateSubtotal(filaFactura, false); // Pasa false para no verificar stock
+                updateSubtotal(filaFactura, false);
             });
-
             calcularTotal();
         });
         resultadosBusqueda.appendChild(resultado);
@@ -143,7 +127,6 @@ function updateSubtotal(row, verificarStock = true) {
     const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
     const subtotal = !isNaN(precio) && !isNaN(cantidad) ? precio * cantidad : 0;
     const stockMinimo = 5;
-
     if (verificarStock) {
         if (cantidad > stockActual) {
             Swal.fire({
@@ -155,9 +138,7 @@ function updateSubtotal(row, verificarStock = true) {
             row.cells[3].querySelector('input').value = 1;
             return;
         }
-
         const stockRestante = stockActual - cantidad;
-
         if (stockRestante <= stockMinimo) {
             Swal.fire({
                 title: 'ALERTA',
@@ -167,20 +148,16 @@ function updateSubtotal(row, verificarStock = true) {
             });
         }
     }
-
     row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
 }
-
 function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
-
     for (let i = 0; i < filasFactura.length; i++) {
         let subtotal = parseFloat(filasFactura[i].cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
         subtotal = !isNaN(subtotal) ? subtotal : 0;
         total += subtotal;
     }
-
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' }); 
 }

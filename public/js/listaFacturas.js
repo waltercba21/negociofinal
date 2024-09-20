@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
             imprimirTotalFacturas(fechaInicio, fechaFin);
-        });
+        }); 
     } else {
         console.error('El elemento con ID "btnImprimirTotal" no se encontró en el DOM.');
     }
