@@ -175,25 +175,10 @@ function eliminarFactura(id) {
         });
     }
 }
-document.getElementById('btnImprimirTotal').addEventListener('click', () => {
-    const fechaInicio = document.getElementById('fechaInicio').value;
-    const fechaFin = document.getElementById('fechaFin').value;
-    
-    // Verificar si hay facturas antes de imprimir
-    const tableBody = document.querySelector('#facturas-table tbody');
-    if (!tableBody) {
-        alert('La tabla de facturas no se ha encontrado.');
-        return;
-    }
-
-    imprimirTotalFacturas(fechaInicio, fechaFin);
-});
-
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
     const tableBody = document.querySelector('#facturas-table tbody');
-
-    // Verificar si el cuerpo de la tabla tiene filas
     const rows = tableBody.querySelectorAll('tr');
+
     if (rows.length === 0) {
         alert('No hay facturas para imprimir.');
         return;
@@ -201,7 +186,6 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
 
     let totalFacturas = 0;
 
-    // Sumar los totales de cada fila
     rows.forEach(row => {
         const totalCell = row.querySelector('.total');
         if (totalCell) {
@@ -214,17 +198,10 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // Agregar título
     doc.setFontSize(18);
     doc.text('Resumen de Facturas', 10, 10);
-
-    // Agregar fecha seleccionada
     doc.setFontSize(12);
     doc.text(fechaSeleccionada, 10, 20);
-
-    // Agregar total
     doc.text(`Total de Facturas: ${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas)}`, 10, 30);
-
-    // Guardar el PDF
     doc.save('Resumen_Facturas.pdf');
 }
