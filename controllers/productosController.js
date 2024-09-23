@@ -863,7 +863,7 @@ generarPedidoPDF: async function (req, res) {
                  .text(producto.nombre, 150, currentY, {align: 'left', width: 220})
                  .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 370, currentY, {align: 'center', width: 50}) // Ajustado
                  .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 430, currentY, {align: 'center', width: 50}) // Ajustado
-                 .text(producto.stock_actual < producto.stock_minimo ? `PEDIR ${producto.stock_minimo - producto.stock_actual}` : 'REVISAR STOCK', 510, currentY, {align: 'left', width: 100}) // Ajustado
+                 .text(producto.stock_actual < producto.stock_minimo ? `PEDIR ${producto.stock_minimo - producto.stock_actual}` : 'REVISAR STOCK', 510, currentY, {align: 'center', width: 100}) // Ajustado
                  .moveDown(1);
             }
           });
