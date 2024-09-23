@@ -933,28 +933,59 @@ obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria
 },
 obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
     console.log('Proveedor:', proveedor);
-    const query = `
-        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
-        FROM productos p
-        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-        WHERE pp.proveedor_id = ? AND (p.id, pp.precio_lista - (pp.precio_lista * p.descuentos_proveedor_id / 100) + (pp.precio_lista - (pp.precio_lista * p.descuentos_proveedor_id / 100)) * 0.21) IN (
-            SELECT p2.id, MIN(pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100) + (pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100)) * 0.21)
-            FROM productos p2
-            INNER JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
-            GROUP BY p2.id
-        )
-        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
-    `;
-    const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return queryPromise(query, [proveedor])
-        .then(result => {
-            console.log('Resultados de obtenerProductosPorProveedorConStock:', result);
-            return result;
-        })
-        .catch(error => {
-            console.log('Error al obtener productos:', error);
-            throw error;
-        });
+    
+    if (!proveedor) {
+        // Obtener productos con un solo proveedor
+        const query = `
+            SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
+            FROM productos p
+            INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+            WHERE 
+                p.id NOT IN (
+                    SELECT DISTINCT producto_id 
+                    FROM producto_proveedor 
+                    WHERE proveedor_id != pp.proveedor_id
+                )
+            ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+        `;
+        const queryPromise = util.promisify(conexion.query).bind(conexion);
+        return queryPromise(query)
+            .then(result => {
+                console.log('Resultados de obtenerProductosPorProveedorConStock:', result);
+                return result;
+            })
+            .catch(error => {
+                console.log('Error al obtener productos:', error);
+                throw error;
+            });
+    } else {
+        // Obtener productos por proveedor específico
+        const query = `
+            SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
+            FROM productos p
+            INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+            WHERE 
+                pp.proveedor_id = ? 
+                AND (p.id, pp.precio_lista - (pp.precio_lista * p.descuentos_proveedor_id / 100) + (pp.precio_lista - (pp.precio_lista * p.descuentos_proveedor_id / 100)) * 0.21) 
+                IN (
+                    SELECT p2.id, MIN(pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100) + (pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100)) * 0.21)
+                    FROM productos p2
+                    INNER JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
+                    GROUP BY p2.id
+                )
+            ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+        `;
+        const queryPromise = util.promisify(conexion.query).bind(conexion);
+        return queryPromise(query, [proveedor])
+            .then(result => {
+                console.log('Resultados de obtenerProductosPorProveedorConStock:', result);
+                return result;
+            })
+            .catch(error => {
+                console.log('Error al obtener productos:', error);
+                throw error;
+            });
+    }
 },
   contarTodos: function (conexion, parametro, callback) {
   const query = 'SELECT COUNT(*) AS total FROM productos';

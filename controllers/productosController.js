@@ -709,40 +709,47 @@ getProductosPorCategoria : async (req, res) => {
         incrementAmount: (1024 * 1024) 
     });
     doc.pipe(buffer);
+    
     const proveedorId = req.query.proveedor; 
-    if (!proveedorId) {
-        return res.status(400).send('No se ha proporcionado un ID de proveedor');
-    }
+    
     try {
         const proveedores = await producto.obtenerProveedores(conexion);
         console.log('Proveedores:', proveedores);
-        var proveedor = proveedores.find(p => p.id == proveedorId);
-        if (!proveedor) {
-            return res.status(400).send('Proveedor no encontrado');
+        
+        let proveedor;
+        if (proveedorId) {
+            proveedor = proveedores.find(p => p.id == proveedorId);
+            if (!proveedor) {
+                return res.status(400).send('Proveedor no encontrado');
+            }
         }
+        
         console.log('Proveedor seleccionado:', proveedor);
-        var nombreProveedor = proveedor.nombre;
+        var nombreProveedor = proveedor ? proveedor.nombre : 'Productos con un solo proveedor';
+        
         doc.fontSize(14)
            .text(nombreProveedor, {
                align: 'center',
                width: doc.page.width - 100
            });
-           var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
-           obtenerProductos.then(productos => {
-            console.log('Productos:', productos);
         
+        var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
+        
+        obtenerProductos.then(productos => {
+            console.log('Productos:', productos);
+            
             // Función para normalizar las descripciones eliminando números y caracteres especiales al inicio
             function normalizeString(str) {
                 return str.replace(/^[^a-zA-Z]+/, '').toLowerCase();
             }
-        
+            
             // Ordenar los productos por el campo nombre normalizado
             productos.sort((a, b) => {
                 const nameA = normalizeString(a.nombre);
                 const nameB = normalizeString(b.nombre);
                 return nameA.localeCompare(nameB);
             });
-        
+            
             let currentY = doc.y;
             doc.fontSize(12)
                .fillColor('black')
@@ -751,7 +758,7 @@ getProductosPorCategoria : async (req, res) => {
                .text('Stock Mínimo', 400, currentY, {align: 'center', width: 80})
                .text('Stock Actual', 480, currentY, {align: 'center', width: 80})
                .moveDown(2);
-        
+            
             productos.forEach(producto => {
                 if (producto.stock_actual < producto.stock_minimo) {
                     currentY = doc.y;
