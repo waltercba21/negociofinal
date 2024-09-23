@@ -1021,6 +1021,7 @@ obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor) {
         INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
         WHERE 
           pp.proveedor_id = ? 
+          AND p.stock_actual <= p.stock_minimo
           AND (p.id, pp.precio_lista - (pp.precio_lista * p.descuentos_proveedor_id / 100) + (pp.precio_lista - (pp.precio_lista * p.descuentos_proveedor_id / 100)) * 0.21) 
           IN (
             SELECT p2.id, MIN(pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100) + (pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100)) * 0.21)
@@ -1028,7 +1029,6 @@ obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor) {
             INNER JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
             GROUP BY p2.id
           )
-          AND p.stock_actual <= p.stock_minimo
         ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
       `;
       const queryPromise = util.promisify(conexion.query).bind(conexion);
