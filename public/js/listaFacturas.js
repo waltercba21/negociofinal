@@ -184,3 +184,29 @@ function eliminarFactura(id) {
         });
     }
 }
+
+
+document.getElementById('btnImprimir').addEventListener('click', function() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y = 10; // posición inicial en y
+
+    // Agregar encabezado
+    doc.setFontSize(18);
+    doc.text('Lista de Facturas', 10, y);
+    y += 10;
+
+    // Agregar tabla de facturas
+    const table = document.getElementById('facturas-table');
+    const rows = table.getElementsByTagName('tr');
+
+    Array.from(rows).forEach(row => {
+        const cells = row.getElementsByTagName('td');
+        const cellData = Array.from(cells).map(cell => cell.textContent);
+        doc.text(cellData.join(' | '), 10, y);
+        y += 10;
+    });
+
+    doc.save('facturas.pdf');
+});
+ 
