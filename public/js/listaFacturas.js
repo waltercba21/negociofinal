@@ -175,6 +175,20 @@ function eliminarFactura(id) {
         });
     }
 }
+document.getElementById('btnImprimirTotal').addEventListener('click', () => {
+    const fechaInicio = document.getElementById('fechaInicio').value;
+    const fechaFin = document.getElementById('fechaFin').value;
+    
+    // Verificar si hay facturas antes de imprimir
+    const tableBody = document.querySelector('#facturas-table tbody');
+    if (!tableBody) {
+        alert('La tabla de facturas no se ha encontrado.');
+        return;
+    }
+
+    imprimirTotalFacturas(fechaInicio, fechaFin);
+});
+
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
     const tableBody = document.querySelector('#facturas-table tbody');
 
@@ -214,4 +228,3 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
     // Guardar el PDF
     doc.save('Resumen_Facturas.pdf');
 }
-
