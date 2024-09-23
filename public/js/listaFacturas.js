@@ -176,7 +176,7 @@ function eliminarFactura(id) {
     }
 }
 
-document.getElementById('btnImprimir').addEventListener('click', function() {
+document.getElementById('btnImprimirTotal').addEventListener('click', function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     let y = 10; 
