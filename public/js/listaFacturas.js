@@ -178,14 +178,8 @@ function eliminarFactura(id) {
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
     const tableBody = document.querySelector('#facturas-table tbody');
 
-    // Verificar si se encontró el cuerpo de la tabla
-    if (!tableBody) {
-        alert('No se pudo encontrar el cuerpo de la tabla.');
-        return;
-    }
-
+    // Verificar si el cuerpo de la tabla tiene filas
     const rows = tableBody.querySelectorAll('tr');
-    
     if (rows.length === 0) {
         alert('No hay facturas para imprimir.');
         return;
@@ -220,3 +214,4 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
     // Guardar el PDF
     doc.save('Resumen_Facturas.pdf');
 }
+
