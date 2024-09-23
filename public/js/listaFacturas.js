@@ -31,48 +31,48 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Funciones para cargar y mostrar las facturas
 function cargarFacturas(fechaInicio, fechaFin) {
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
             console.log('Datos recibidos del backend:', data);
-            const tableBody = document.querySelector('#facturas-table tbody');
-            if (!tableBody) {
-                throw new Error('El tbody de la tabla de facturas no se encontró.');
-            }
-
-            tableBody.innerHTML = ''; // Limpia el contenido de la tabla antes de insertar nuevas filas
+            const tableBody = document.querySelector('#presupuestos-table tbody');
+            tableBody.innerHTML = ''; 
             let totalFacturas = 0;
+            data.forEach(factura => {
+                const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
+                totalFacturas += totalNumerico;
 
-            if (data.length === 0) {
-                console.log('No se encontraron facturas.');
-            } else {
-                data.forEach(factura => {
-                    const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
-                    totalFacturas += totalNumerico;
-                    const row = document.createElement('tr');
-                    row.setAttribute('data-id', factura.id);
-                    row.innerHTML = `
-                        <td class="id">${factura.id}</td>
-                        <td class="fecha">${factura.fecha}</td>
-                        <td class="cliente">${factura.nombre_cliente}</td>
-                        <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
-                        <td>
-                            <button class="btn-ver" data-id="${factura.id}">Ver Detalle</button>
-                            <button class="btn-editar" data-id="${factura.id}">Editar</button>
-                            <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
-                            <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
-                            <button class="btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
+                const fechaFormateada = new Date(factura.fecha).toLocaleDateString('es-CL', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
                 });
-            }
-            addEventListenersFacturas();
+
+                const totalFormateado = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico);
+
+                const row = document.createElement('tr');
+                row.setAttribute('data-id', factura.id);
+                row.innerHTML = `
+                    <td class="id">${factura.id}</td>
+                    <td class="fecha">${fechaFormateada}</td>
+                    <td class="cliente">${factura.nombre_cliente}</td>
+                    <td class="total">${totalFormateado}</td>
+                    <td>
+                        <button class="btn-ver" data-id="${factura.id}">Ver Detalle</button>
+                        <button class="btn-editar" data-id="${factura.id}">Editar</button>
+                        <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
+                        <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
+                        <button class="btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+            document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
+
 
 
 function addEventListenersFacturas() {
