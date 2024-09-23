@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnImprimirTotal = document.getElementById('btnImprimirTotal');
     const tableBody = document.querySelector('#facturas-table tbody');
 
-    // Verifica que los elementos existen antes de agregar event listeners
     if (btnBuscar) {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
@@ -36,7 +35,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
         .then(response => response.json())
         .then(data => {
             console.log('Datos recibidos del backend:', data);
-            const tableBody = document.querySelector('#presupuestos-table tbody');
+            const tableBody = document.querySelector('#facturas-table tbody'); // Cambiar aquí
             tableBody.innerHTML = ''; 
             let totalFacturas = 0;
             data.forEach(factura => {
@@ -72,8 +71,6 @@ function cargarFacturas(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
-
-
 
 function addEventListenersFacturas() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
