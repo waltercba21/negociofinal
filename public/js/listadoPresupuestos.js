@@ -47,12 +47,10 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
     fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
-            console.log('Datos recibidos del backend:', data);  // Añadir este log
             const tableBody = document.querySelector('#presupuestos-table tbody');
             tableBody.innerHTML = ''; 
             let totalPresupuestos = 0;
             data.forEach(presupuesto => {
-                // Reemplazar puntos decimales por comas si es necesario
                 const totalNumerico = parseFloat(presupuesto.total.replace('.', '').replace(',', '.'));
                 totalPresupuestos += totalNumerico;
                 const row = document.createElement('tr');

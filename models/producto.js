@@ -132,14 +132,21 @@ guardarPresupuesto : (presupuesto) => {
             `;
             conexion.query(sqlQuery, [fechaInicio, fechaFin], (error, resultados) => {
                 if (error) {
-                    reject(new Error('Error al obtener presupuestos: ' + error.message));
+                    reject(new Error('Error al obtener facturas: ' + error.message));
                 } else {
-                    console.log('Resultados:', resultados); // Verificar que se retornan resultados
-                    resolve(resultados);
+                    const facturasFormateadas = resultados.map(factura => {
+                        return {
+                            ...factura,
+                            fecha: new Date(factura.fecha).toLocaleDateString('es-CL'), // Formatear la fecha
+                            total: new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(factura.total) // Formatear el total
+                        };
+                    });
+                    resolve(facturasFormateadas);
                 }
             });
         });
-    }, 
+    },
+    
 obtenerProductoIdPorCodigo : (codigo) => {
         return new Promise((resolve, reject) => {
           const query = `
