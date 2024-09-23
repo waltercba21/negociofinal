@@ -636,7 +636,7 @@ obtenerModelosPorMarca: function(req, res) {
             obtenerProductos = producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorId, categoriaId);
         } else {
             obtenerProductos = producto.obtenerProductosPorProveedor(conexion, proveedorId);
-        }
+        } 
 
         obtenerProductos.then(productos => {
             var currentY = doc.y;
