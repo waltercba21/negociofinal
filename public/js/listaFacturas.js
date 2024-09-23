@@ -1,46 +1,38 @@
 document.addEventListener('DOMContentLoaded', function() {
     const btnBuscar = document.getElementById('buscar');
     const btnImprimirTotal = document.getElementById('btnImprimirTotal');
+
     if (btnBuscar) {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
-            console.log('Buscando facturas desde:', fechaInicio, 'hasta:', fechaFin); 
             cargarFacturas(fechaInicio, fechaFin);
         });
     } else {
         console.error('El elemento con ID "buscar" no se encontró en el DOM.');
     }
+
     if (btnImprimirTotal) {
         btnImprimirTotal.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
-            if (!fechaInicio || !fechaFin) {
-                alert('Por favor selecciona ambas fechas.');
-                return; 
-            }
             imprimirTotalFacturas(fechaInicio, fechaFin);
         });
     } else {
         console.error('El elemento con ID "btnImprimirTotal" no se encontró en el DOM.');
     }
 });
+
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
-    console.log('Fechas seleccionadas:', fechaInicio, fechaFin);
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Datos recibidos:', data);
             let totalFacturas = 0;
             data.forEach(factura => {
-                const totalNumerico = parseFloat(factura.total.replace(/\./g, '').replace(',', '.')).toFixed(2);
+                const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
                 totalFacturas += totalNumerico;
             });
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.setFontSize(16);
@@ -51,65 +43,52 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
-function cargarFacturas(fechaInicio, fechaFin) {
-    const fechaInicioObj = new Date(fechaInicio);
-    const fechaFinObj = new Date(fechaFin);
-    fechaInicioObj.setHours(0, 0, 0, 0);
-    fechaFinObj.setHours(23, 59, 59, 999);
-    const fechaInicioFormatted = fechaInicioObj.toISOString().split('T')[0];
-    const fechaFinFormatted = fechaFinObj.toISOString().split('T')[0];
 
-    fetch(`/productos/api/facturas?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`)
+function cargarFacturas(fechaInicio, fechaFin) {
+    fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
-            const tableBody = document.querySelector('#presupuestos-table tbody');
-            tableBody.innerHTML = '';
-
-            if (data.length === 0) {
-                alert("No se encontraron facturas en el rango de fechas seleccionado.");
-                return;
-            }
+            console.log('Datos recibidos del backend:', data);
+            const tableBody = document.querySelector('#facturas-table tbody');
+            tableBody.innerHTML = ''; 
             let totalFacturas = 0;
-            // Dentro de cargarFacturas
             data.forEach(factura => {
-                // Asegúrate de que el total sea numérico, eliminando puntos y comas, pero controlando bien los separadores
-                const totalNumerico = parseFloat(factura.total.replace(/\./g, '').replace(',', '.'));
-            
-                // Validación para ver si el número está siendo correctamente interpretado
-                if (isNaN(totalNumerico)) {
-                    console.error('Total inválido:', factura.total);
-                }
-            
+                const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
+                totalFacturas += totalNumerico;
                 const row = document.createElement('tr');
+                row.setAttribute('data-id', factura.id);
                 row.innerHTML = `
-                    <td>${factura.id}</td>
-                    <td>${fechaFormateada}</td>
-                    <td>${factura.nombre_cliente}</td>
-                    <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
+                    <td class="id">${factura.id}</td>
+                    <td class="fecha">${factura.fecha}</td>
+                    <td class="cliente">${factura.nombre_cliente}</td>
+                    <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
                     <td>
                         <button class="btn-ver" data-id="${factura.id}">Ver Detalle</button>
+                        <button class="btn-editar" data-id="${factura.id}">Editar</button>
+                        <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
+                        <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
+                        <button class="btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
-            
-
-            console.log('Total de facturas:', totalFacturas);
+            addEventListenersFacturas();
+            document.getElementById('total-facturas').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
 
-function addEventListeners() {
+function addEventListenersFacturas() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            window.location.href = `/factura/${id}`;
+            window.location.href = `/productos/factura/${id}`;
         });
     });
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            habilitarEdicion(id);
+            habilitarEdicionFactura(id);
         });
     });
     document.querySelectorAll('.btn-eliminar').forEach(btn => {
@@ -121,18 +100,18 @@ function addEventListeners() {
     document.querySelectorAll('.btn-guardar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            guardarCambios(id);
+            guardarCambiosFactura(id);
         });
     });
     document.querySelectorAll('.btn-cancelar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            cancelarEdicion(id);
+            cancelarEdicionFactura(id);
         });
     });
 }
 
-function habilitarEdicion(id) {
+function habilitarEdicionFactura(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
     row.querySelector('.fecha').innerHTML = `<input type="date" value="${row.querySelector('.fecha').textContent.split('/').reverse().join('-')}">`;
     row.querySelector('.cliente').innerHTML = `<input type="text" value="${row.querySelector('.cliente').textContent}">`;
@@ -143,7 +122,7 @@ function habilitarEdicion(id) {
     row.querySelector('.btn-cancelar').style.display = 'inline';
 }
 
-function cancelarEdicion(id) {
+function cancelarEdicionFactura(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
     const fecha = row.querySelector('.fecha input').value.split('-').reverse().join('/');
     const cliente = row.querySelector('.cliente input').value;
@@ -157,7 +136,7 @@ function cancelarEdicion(id) {
     row.querySelector('.btn-cancelar').style.display = 'none';
 }
 
-function guardarCambios(id) {
+function guardarCambiosFactura(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
     const fecha = row.querySelector('.fecha input').value;
     const nombre_cliente = row.querySelector('.cliente input').value;
@@ -205,28 +184,3 @@ function eliminarFactura(id) {
         });
     }
 }
-
-document.getElementById('btnImprimir').addEventListener('click', function() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    let y = 10; // posición inicial en y
-
-    // Agregar encabezado
-    doc.setFontSize(18);
-    doc.text('Lista de Facturas', 10, y);
-    y += 10;
-
-    // Agregar tabla de facturas
-    const table = document.getElementById('facturas-table');
-    const rows = table.getElementsByTagName('tr');
-
-    Array.from(rows).forEach(row => {
-        const cells = row.getElementsByTagName('td');
-        const cellData = Array.from(cells).map(cell => cell.textContent);
-        doc.text(cellData.join(' | '), 10, y);
-        y += 10;
-    });
-
-    doc.save('facturas.pdf');
-});
- 
