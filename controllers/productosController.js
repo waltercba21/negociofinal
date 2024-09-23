@@ -792,6 +792,97 @@ getProductosPorCategoria : async (req, res) => {
         res.send(pdfData);
     });
 },
+generarPedidoPDF: async function (req, res) {
+    console.log('Proveedor ID:', req.query.proveedor);
+    var doc = new PDFDocument;
+    var buffer = new streamBuffers.WritableStreamBuffer({
+      initialSize: (1024 * 1024),   
+      incrementAmount: (1024 * 1024) 
+    });
+    doc.pipe(buffer);
+  
+    const proveedorId = req.query.proveedor; 
+  
+    try {
+      const proveedores = await producto.obtenerProveedores(conexion);
+      console.log('Proveedores:', proveedores);
+      
+      let proveedor;
+      if (proveedorId) {
+        proveedor = proveedores.find(p => p.id == proveedorId);
+        if (!proveedor) {
+          return res.status(400).send('Proveedor no encontrado');
+        }
+      }
+      
+      console.log('Proveedor seleccionado:', proveedor);
+      var nombreProveedor = proveedor ? proveedor.nombre : 'Productos con un solo proveedor';
+      
+      doc.fontSize(14)
+         .text(nombreProveedor, {
+             align: 'center',
+             width: doc.page.width - 100
+         });
+  
+      var obtenerProductos = producto.obtenerProductosParaPedidoPorProveedorConStock(conexion, proveedorId);
+      
+      obtenerProductos.then(productos => {
+        console.log('Productos:', productos);
+  
+        // Función para normalizar las descripciones eliminando números y caracteres especiales al inicio
+        function normalizeString(str) {
+          return str.replace(/^[^a-zA-Z]+/, '').toLowerCase();
+        }
+  
+        // Ordenar los productos por el campo nombre normalizado
+        productos.sort((a, b) => {
+          const nameA = normalizeString(a.nombre);
+          const nameB = normalizeString(b.nombre);
+          return nameA.localeCompare(nameB);
+        });
+  
+        let currentY = doc.y;
+        doc.fontSize(12)
+           .fillColor('black')
+           .text('Código', 60, currentY, {align: 'left', width: 100})
+           .text('Descripción', 150, currentY, {align: 'left', width: 220})
+           .text('Stock Mínimo', 400, currentY, {align: 'center', width: 80})
+           .text('Stock Actual', 480, currentY, {align: 'center', width: 80})
+           .text('Cantidad a Pedir', 560, currentY, {align: 'center', width: 80})
+           .moveDown(2);
+  
+        productos.forEach(producto => {
+          if (producto.stock_actual <= producto.stock_minimo) {
+            currentY = doc.y;
+            if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
+              doc.addPage();
+              currentY = doc.y;
+            }
+            doc.fontSize(8)
+               .text(producto.codigo_proveedor, 60, currentY, {align: 'left', width: 100})
+               .text(producto.nombre, 150, currentY, {align: 'left', width: 220})
+               .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, {align: 'center', width: 80})
+               .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 480, currentY, {align: 'center', width: 80})
+               .text(producto.stock_actual < producto.stock_minimo ? `PEDIR ${producto.stock_minimo - producto.stock_actual}` : 'REVISAR STOCK', 560, currentY, {align: 'center', width: 80})
+               .moveDown(1);
+          }
+        });
+        doc.end();
+      }).catch(error => {
+        console.log('Error al obtener productos:', error);
+        return res.status(500).send('Error al generar el PDF');
+      });
+    } catch (error) {
+      console.log('Error al obtener proveedores:', error);
+      return res.status(500).send('Error al generar el PDF');
+    }
+    buffer.on('finish', function() {
+      const pdfData = buffer.getContents();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=pedido.pdf');
+      res.send(pdfData);
+    });
+  },
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();
