@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const btnBuscar = document.getElementById('buscar');
     const btnImprimirTotal = document.getElementById('btnImprimirTotal');
-
     if (btnBuscar) {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
@@ -12,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('El elemento con ID "buscar" no se encontró en el DOM.');
     }
-
     if (btnImprimirTotal) {
         btnImprimirTotal.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
@@ -27,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('El elemento con ID "btnImprimirTotal" no se encontró en el DOM.');
     }
 });
-
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
     console.log('Fechas seleccionadas:', fechaInicio, fechaFin);
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
@@ -41,7 +38,7 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
             console.log('Datos recibidos:', data);
             let totalFacturas = 0;
             data.forEach(factura => {
-                const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
+                const totalNumerico = parseFloat(factura.total.replace(/\./g, '').replace(',', '.')).toFixed(2);
                 totalFacturas += totalNumerico;
             });
             const { jsPDF } = window.jspdf;
@@ -54,14 +51,11 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
-
 function cargarFacturas(fechaInicio, fechaFin) {
     const fechaInicioObj = new Date(fechaInicio);
     const fechaFinObj = new Date(fechaFin);
-    
     fechaInicioObj.setHours(0, 0, 0, 0);
     fechaFinObj.setHours(23, 59, 59, 999);
-
     const fechaInicioFormatted = fechaInicioObj.toISOString().split('T')[0];
     const fechaFinFormatted = fechaFinObj.toISOString().split('T')[0];
 
@@ -79,13 +73,13 @@ function cargarFacturas(fechaInicio, fechaFin) {
 
             let totalFacturas = 0;
             data.forEach(factura => {
-                const totalNumerico = parseFloat(factura.total.replace(/\./g, '').replace(',', '.'));
-                totalFacturas += totalNumerico;
-                
+                const totalNumerico = parseFloat(factura.total.replace(/\./g, '').replace(',', '.')).toFixed(2);
+                totalFacturas += parseFloat(totalNumerico);
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${factura.id}</td>
-                    <td>${new Date(factura.fecha).toLocaleDateString('es-CL')}</td>
+                    <td>${new Date(factura.fecha + 'T00:00:00').toLocaleDateString('es-CL')}</td> <!-- Ajuste de la fecha -->
                     <td>${factura.nombre_cliente}</td>
                     <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
                     <td>
@@ -94,13 +88,11 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 `;
                 tableBody.appendChild(row);
             });
-            
+
             console.log('Total de facturas:', totalFacturas);
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
-
-
 
 function addEventListeners() {
     document.querySelectorAll('.btn-ver').forEach(btn => {

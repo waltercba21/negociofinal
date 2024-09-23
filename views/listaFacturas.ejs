@@ -3,13 +3,12 @@
 <body>
     <main class="container-listadoPresupuesto">
         <h2 class="titulo-listado">Listado de Facturas</h2>
-        <!-- Date pickers for selecting the date range -->
         <label for="fechaInicio">Desde:</label>
         <input type="date" id="fechaInicio" value="<%= new Date().toISOString().split('T')[0] %>">
         <label for="fechaFin">Hasta:</label>
         <input type="date" id="fechaFin" value="<%= new Date().toISOString().split('T')[0] %>">
         <button id="buscar">Buscar</button>
-        <button id="btnImprimirTotal" class="btn btn-secondary">Imprimir Total</button> <!-- Nuevo botón -->
+        <button id="btnImprimirTotal" class="btn btn-secondary">Imprimir Total</button> 
 
         <table id="presupuestos-table" class="table-presupuestos">
             <thead class="thead-presupuestos">
