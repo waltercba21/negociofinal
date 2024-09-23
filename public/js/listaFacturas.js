@@ -176,7 +176,13 @@ function eliminarFactura(id) {
     }
 }
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
-    const totalPresupuestos = document.getElementById('total-presupuestos').textContent.replace(/\./g, '').replace('CLP', '').trim();
+    const totalElement = document.getElementById('total-presupuestos');
+    if (!totalElement) {
+        console.error('El elemento total-presupuestos no se encontró.');
+        return; // Salir si el elemento no existe
+    }
+
+    const totalPresupuestos = totalElement.textContent.replace(/\./g, '').replace('CLP', '').trim();
     const fechaSeleccionada = `Desde: ${fechaInicio} Hasta: ${fechaFin}`;
 
     const { jsPDF } = window.jspdf;
@@ -191,9 +197,12 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
     doc.text(fechaSeleccionada, 10, 20);
 
     // Agregar total
-    doc.text(`Total de Facturas: ${totalPresupuestos} CLP`, 10, 30);
+    if (totalPresupuestos) {
+        doc.text(`Total de Facturas: ${totalPresupuestos} CLP`, 10, 30);
+    } else {
+        doc.text('No hay facturas para mostrar.', 10, 30);
+    }
 
     // Guardar el PDF
     doc.save('Resumen_Facturas.pdf');
 }
-
