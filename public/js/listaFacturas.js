@@ -177,6 +177,13 @@ function eliminarFactura(id) {
 }
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
     const tableBody = document.querySelector('#facturas-table tbody');
+
+    // Verificar si se encontró el cuerpo de la tabla
+    if (!tableBody) {
+        alert('No se pudo encontrar el cuerpo de la tabla.');
+        return;
+    }
+
     const rows = tableBody.querySelectorAll('tr');
     
     if (rows.length === 0) {
@@ -189,8 +196,10 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
     // Sumar los totales de cada fila
     rows.forEach(row => {
         const totalCell = row.querySelector('.total');
-        const totalNumerico = parseFloat(totalCell.textContent.replace(/\./g, '').replace(',', '.'));
-        totalFacturas += totalNumerico;
+        if (totalCell) {
+            const totalNumerico = parseFloat(totalCell.textContent.replace(/\./g, '').replace(',', '.'));
+            totalFacturas += totalNumerico;
+        }
     });
 
     const fechaSeleccionada = `Desde: ${fechaInicio} Hasta: ${fechaFin}`;
