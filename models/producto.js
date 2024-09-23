@@ -135,9 +135,16 @@ guardarPresupuesto : (presupuesto) => {
                     reject(new Error('Error al obtener facturas: ' + error.message));
                 } else {
                     const facturasFormateadas = resultados.map(factura => {
+                        // Formatear la fecha como "DD/MM/YYYY"
+                        const fecha = new Date(factura.fecha);
+                        const dia = String(fecha.getDate()).padStart(2, '0');
+                        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+                        const anio = fecha.getFullYear();
+                        const fechaFormateada = `${dia}/${mes}/${anio}`; // Formato deseado
+    
                         return {
                             ...factura,
-                            fecha: new Date(factura.fecha).toLocaleDateString('es-CL'), // Formatear la fecha
+                            fecha: fechaFormateada, // Asignar la fecha formateada
                             total: new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(factura.total) // Formatear el total
                         };
                     });
@@ -146,6 +153,7 @@ guardarPresupuesto : (presupuesto) => {
             });
         });
     },
+    
     
 obtenerProductoIdPorCodigo : (codigo) => {
         return new Promise((resolve, reject) => {

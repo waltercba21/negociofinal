@@ -47,7 +47,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 const dia = String(fecha.getDate()).padStart(2, '0'); 
                 const mes = String(fecha.getMonth() + 1).padStart(2, '0');
                 const anio = fecha.getFullYear();
-                const fechaFormateada = `${dia}/${mes}/${anio}`; // DD/MM/YYYY
+                const fechaFormateada = `${dia}/${mes}/${anio}`; 
 
                 const totalFormateado = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico);
 
