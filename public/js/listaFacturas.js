@@ -34,16 +34,15 @@ function cargarFacturas(fechaInicio, fechaFin) {
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
-            const tableBody = document.querySelector('#facturas-table');
-            tableBody.innerHTML = ''; 
+            const tableBody = document.querySelector('#facturas-table tbody');
+            tableBody.innerHTML = ''; // Limpia el tbody antes de agregar nuevas filas
             let totalFacturas = 0;
+
             data.forEach(factura => {
                 const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
                 totalFacturas += totalNumerico;
 
-                // La fecha ya está formateada como 'DD/MM/YYYY', no es necesario formatearla aquí.
                 const fechaFormateada = factura.fecha; 
-
                 const totalFormateado = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico);
 
                 const row = document.createElement('tr');
@@ -65,9 +64,11 @@ function cargarFacturas(fechaInicio, fechaFin) {
             });
 
             document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
+            console.log('Facturas cargadas:', tableBody.innerHTML);
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
+
 
 function addEventListenersFacturas() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
@@ -195,7 +196,6 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
         alert('No hay facturas para imprimir.');
         return;
     }
-
     let totalFacturas = 0;
 
     // Sumar los totales de cada fila
