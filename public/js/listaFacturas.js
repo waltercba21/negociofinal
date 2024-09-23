@@ -176,15 +176,24 @@ function eliminarFactura(id) {
     }
 }
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
-    const totalElement = document.getElementById('total-presupuestos');
-    if (!totalElement) {
-        console.error('El elemento total-presupuestos no se encontró.');
-        return; // Salir si el elemento no existe
+    const tableBody = document.querySelector('#facturas-table tbody');
+    const rows = tableBody.querySelectorAll('tr');
+    
+    if (rows.length === 0) {
+        alert('No hay facturas para imprimir.');
+        return;
     }
 
-    const totalPresupuestos = totalElement.textContent.replace(/\./g, '').replace('CLP', '').trim();
-    const fechaSeleccionada = `Desde: ${fechaInicio} Hasta: ${fechaFin}`;
+    let totalFacturas = 0;
 
+    // Sumar los totales de cada fila
+    rows.forEach(row => {
+        const totalCell = row.querySelector('.total');
+        const totalNumerico = parseFloat(totalCell.textContent.replace(/\./g, '').replace(',', '.'));
+        totalFacturas += totalNumerico;
+    });
+
+    const fechaSeleccionada = `Desde: ${fechaInicio} Hasta: ${fechaFin}`;
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
@@ -197,11 +206,7 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
     doc.text(fechaSeleccionada, 10, 20);
 
     // Agregar total
-    if (totalPresupuestos) {
-        doc.text(`Total de Facturas: ${totalPresupuestos} CLP`, 10, 30);
-    } else {
-        doc.text('No hay facturas para mostrar.', 10, 30);
-    }
+    doc.text(`Total de Facturas: ${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas)}`, 10, 30);
 
     // Guardar el PDF
     doc.save('Resumen_Facturas.pdf');
