@@ -37,16 +37,17 @@ function cargarFacturas(fechaInicio, fechaFin) {
             const tableBody = document.querySelector('#facturas-table');
             tableBody.innerHTML = ''; 
             let totalFacturas = 0;
+
             data.forEach(factura => {
                 const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
                 totalFacturas += totalNumerico;
 
                 // Formatear la fecha a "DD/MM/YYYY"
                 const fecha = new Date(factura.fecha);
-                const dia = String(fecha.getDate()).padStart(2, '0'); // Asegura que el día tenga 2 dígitos
-                const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // Mes comienza en 0
+                const dia = String(fecha.getDate()).padStart(2, '0'); 
+                const mes = String(fecha.getMonth() + 1).padStart(2, '0');
                 const anio = fecha.getFullYear();
-                const fechaFormateada = `${dia}/${mes}/${anio}`;
+                const fechaFormateada = `${dia}/${mes}/${anio}`; // DD/MM/YYYY
 
                 const totalFormateado = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico);
 
@@ -67,10 +68,12 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 `;
                 tableBody.appendChild(row);
             });
+
             document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
+
 
 
 function addEventListenersFacturas() {
