@@ -62,7 +62,6 @@ function cargarFacturas(fechaInicio, fechaFin) {
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`)
         .then(response => response.json())
         .then(data => {
-            console.log('Facturas recibidas:', data);
             const tableBody = document.querySelector('#presupuestos-table tbody');
             tableBody.innerHTML = '';
 
@@ -70,16 +69,21 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 alert("No se encontraron facturas en el rango de fechas seleccionado.");
                 return;
             }
-
             let totalFacturas = 0;
+            // Dentro de cargarFacturas
             data.forEach(factura => {
-                const totalNumerico = parseFloat(factura.total.replace(/\./g, '').replace(',', '.')).toFixed(2);
-                totalFacturas += parseFloat(totalNumerico);
-
+                // Asegúrate de que el total sea numérico, eliminando puntos y comas, pero controlando bien los separadores
+                const totalNumerico = parseFloat(factura.total.replace(/\./g, '').replace(',', '.'));
+            
+                // Validación para ver si el número está siendo correctamente interpretado
+                if (isNaN(totalNumerico)) {
+                    console.error('Total inválido:', factura.total);
+                }
+            
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${factura.id}</td>
-                    <td>${new Date(factura.fecha + 'T00:00:00').toLocaleDateString('es-CL')}</td> <!-- Ajuste de la fecha -->
+                    <td>${fechaFormateada}</td>
                     <td>${factura.nombre_cliente}</td>
                     <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
                     <td>
@@ -88,6 +92,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 `;
                 tableBody.appendChild(row);
             });
+            
 
             console.log('Total de facturas:', totalFacturas);
         })
