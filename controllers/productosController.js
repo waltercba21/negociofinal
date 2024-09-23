@@ -851,22 +851,22 @@ generarPedidoPDF: async function (req, res) {
            .text('Cantidad a Pedir', 560, currentY, {align: 'center', width: 80})
            .moveDown(2);
   
-        productos.forEach(producto => {
-          if (producto.stock_actual <= producto.stock_minimo) {
-            currentY = doc.y;
-            if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
-              doc.addPage();
+           productos.forEach(producto => {
+            if (producto.stock_actual <= producto.stock_minimo) {
               currentY = doc.y;
+              if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
+                doc.addPage();
+                currentY = doc.y;
+              }
+              doc.fontSize(8)
+                 .text(producto.codigo_proveedor, 60, currentY, {align: 'left', width: 100})
+                 .text(producto.nombre, 150, currentY, {align: 'left', width: 220})
+                 .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 370, currentY, {align: 'center', width: 50}) // Ajustado
+                 .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 430, currentY, {align: 'center', width: 50}) // Ajustado
+                 .text(producto.stock_actual < producto.stock_minimo ? `PEDIR ${producto.stock_minimo - producto.stock_actual}` : 'REVISAR STOCK', 490, currentY, {align: 'left', width: 100}) // Ajustado
+                 .moveDown(1);
             }
-            doc.fontSize(8)
-               .text(producto.codigo_proveedor, 60, currentY, {align: 'left', width: 100})
-               .text(producto.nombre, 150, currentY, {align: 'left', width: 220})
-               .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, {align: 'center', width: 80})
-               .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 480, currentY, {align: 'center', width: 80})
-               .text(producto.stock_actual < producto.stock_minimo ? `PEDIR ${producto.stock_minimo - producto.stock_actual}` : 'REVISAR STOCK', 560, currentY, {align: 'center', width: 80})
-               .moveDown(1);
-          }
-        });
+          });
         doc.end();
       }).catch(error => {
         console.log('Error al obtener productos:', error);
