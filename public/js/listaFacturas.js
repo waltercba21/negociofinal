@@ -34,8 +34,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
-            console.log('Datos recibidos del backend:', data);
-            const tableBody = document.querySelector('#presupuestos-table tbody'); // Cambiar aquí
+            const tableBody = document.querySelector('#facturas-table');
             tableBody.innerHTML = ''; 
             let totalFacturas = 0;
             data.forEach(factura => {
