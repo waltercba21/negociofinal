@@ -179,31 +179,39 @@ function eliminarFactura(id) {
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
     const tableBody = document.querySelector('#facturas-table tbody');
 
-    // Verifica si tableBody es null
     if (!tableBody) {
         console.error('El cuerpo de la tabla no se encontró.');
         alert('Error: No se encontró el cuerpo de la tabla.');
         return;
     }
 
-    // Mostrar el contenido de tableBody
     console.log('Contenido de tableBody:', tableBody.innerHTML);
 
     const rows = tableBody.querySelectorAll('tr');
 
-    // Verificar si el cuerpo de la tabla tiene filas
     if (rows.length === 0) {
         alert('No hay facturas para imprimir.');
         return;
     }
+
     let totalFacturas = 0;
 
-    // Sumar los totales de cada fila
     rows.forEach(row => {
         const totalCell = row.querySelector('.total');
         if (totalCell) {
-            const totalNumerico = parseFloat(totalCell.textContent.replace(/\./g, '').replace(',', '.'));
-            totalFacturas += totalNumerico;
+            // Mostrar el contenido de la celda total antes de convertir
+            console.log('Contenido de la celda total:', totalCell.textContent);
+
+            // Asegúrate de eliminar el símbolo de moneda y los puntos
+            const totalNumerico = parseFloat(totalCell.textContent.replace(/\./g, '').replace('$', '').replace(',', '.'));
+            console.log('Total numérico:', totalNumerico); // Verifica el valor numérico
+
+            // Verifica que totalNumerico sea un número válido
+            if (!isNaN(totalNumerico)) {
+                totalFacturas += totalNumerico;
+            } else {
+                console.warn('El valor total no es un número válido:', totalCell.textContent);
+            }
         } else {
             console.warn('No se encontró la celda total en una fila:', row);
         }
