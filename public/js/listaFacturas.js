@@ -175,35 +175,25 @@ function eliminarFactura(id) {
         });
     }
 }
+function imprimirTotalFacturas(fechaInicio, fechaFin) {
+    const totalPresupuestos = document.getElementById('total-presupuestos').textContent.replace(/\./g, '').replace('CLP', '').trim();
+    const fechaSeleccionada = `Desde: ${fechaInicio} Hasta: ${fechaFin}`;
 
-document.getElementById('btnImprimirTotal').addEventListener('click', function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    let y = 10; 
-    doc.setFontSize(10);
-    doc.text('ID', 14, y);
-    doc.text('Fecha', 50, y);
-    doc.text('Cliente', 80, y);
-    doc.text('Total', 140, y);
-    y += 5;
-    let totalGeneral = 0;
-    document.querySelectorAll('#presupuestos-table tbody tr').forEach(function(row) {
-        const id = row.querySelector('.id').textContent;
-        const fecha = row.querySelector('.fecha').textContent;
-        const cliente = row.querySelector('.cliente').textContent;
-        const total = row.querySelector('.total').textContent;
-        y += 7;
-        doc.text(id, 14, y);
-        doc.text(fecha, 50, y); 
-        doc.text(cliente, 80, y);
-        doc.text(total, 140, y);
-        totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g,"").replace(',', '.'));
-    });
-    y += 10; 
-    const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalGeneral);
-    const textWidth = doc.getTextWidth(totalText);
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const textX = (pageWidth / 2) + (pageWidth / 4) - (textWidth / 2); 
-    doc.text(totalText, textX, y);
-    doc.save('listado_facturas.pdf');
-});
+
+    // Agregar título
+    doc.setFontSize(18);
+    doc.text('Resumen de Facturas', 10, 10);
+
+    // Agregar fecha seleccionada
+    doc.setFontSize(12);
+    doc.text(fechaSeleccionada, 10, 20);
+
+    // Agregar total
+    doc.text(`Total de Facturas: ${totalPresupuestos} CLP`, 10, 30);
+
+    // Guardar el PDF
+    doc.save('Resumen_Facturas.pdf');
+}
+
