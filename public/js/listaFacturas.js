@@ -37,17 +37,12 @@ function cargarFacturas(fechaInicio, fechaFin) {
             const tableBody = document.querySelector('#facturas-table');
             tableBody.innerHTML = ''; 
             let totalFacturas = 0;
-
             data.forEach(factura => {
                 const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
                 totalFacturas += totalNumerico;
 
-                // Formatear la fecha a "DD/MM/YYYY"
-                const fecha = new Date(factura.fecha);
-                const dia = String(fecha.getDate()).padStart(2, '0'); 
-                const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-                const anio = fecha.getFullYear();
-                const fechaFormateada = `${dia}/${mes}/${anio}`; 
+                // La fecha ya está formateada como 'DD/MM/YYYY', no es necesario formatearla aquí.
+                const fechaFormateada = factura.fecha; 
 
                 const totalFormateado = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico);
 
@@ -73,8 +68,6 @@ function cargarFacturas(fechaInicio, fechaFin) {
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
-
-
 
 function addEventListenersFacturas() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
@@ -183,28 +176,34 @@ function eliminarFactura(id) {
     }
 }
 
-
 document.getElementById('btnImprimir').addEventListener('click', function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    let y = 10; // posición inicial en y
-
-    // Agregar encabezado
-    doc.setFontSize(18);
-    doc.text('Lista de Facturas', 10, y);
-    y += 10;
-
-    // Agregar tabla de facturas
-    const table = document.getElementById('facturas-table');
-    const rows = table.getElementsByTagName('tr');
-
-    Array.from(rows).forEach(row => {
-        const cells = row.getElementsByTagName('td');
-        const cellData = Array.from(cells).map(cell => cell.textContent);
-        doc.text(cellData.join(' | '), 10, y);
-        y += 10;
+    let y = 10; 
+    doc.setFontSize(10);
+    doc.text('ID', 14, y);
+    doc.text('Fecha', 50, y);
+    doc.text('Cliente', 80, y);
+    doc.text('Total', 140, y);
+    y += 5;
+    let totalGeneral = 0;
+    document.querySelectorAll('#presupuestos-table tbody tr').forEach(function(row) {
+        const id = row.querySelector('.id').textContent;
+        const fecha = row.querySelector('.fecha').textContent;
+        const cliente = row.querySelector('.cliente').textContent;
+        const total = row.querySelector('.total').textContent;
+        y += 7;
+        doc.text(id, 14, y);
+        doc.text(fecha, 50, y); 
+        doc.text(cliente, 80, y);
+        doc.text(total, 140, y);
+        totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g,"").replace(',', '.'));
     });
-
-    doc.save('facturas.pdf');
+    y += 10; 
+    const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalGeneral);
+    const textWidth = doc.getTextWidth(totalText);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const textX = (pageWidth / 2) + (pageWidth / 4) - (textWidth / 2); 
+    doc.text(totalText, textX, y);
+    doc.save('listado_facturas.pdf');
 });
- 
