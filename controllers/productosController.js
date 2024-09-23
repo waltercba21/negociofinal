@@ -846,9 +846,9 @@ generarPedidoPDF: async function (req, res) {
            .fillColor('black')
            .text('Código', 60, currentY, {align: 'left', width: 100})
            .text('Descripción', 150, currentY, {align: 'left', width: 220})
-           .text('Stock Mínimo', 370, currentY, {align: 'center', width: 50}) // Ajustado
-           .text('Stock Actual', 430, currentY, {align: 'center', width: 50}) // Ajustado
-           .text('Cantidad a Pedir', 490, currentY, {align: 'left', width: 100}) // Ajustado
+           .text('Stock Mínimo', 370, currentY, {align: 'center', width: 50})
+           .text('Stock Actual', 430, currentY, {align: 'center', width: 50})
+           .text('Cantidad a Pedir', 510, currentY, {align: 'left', width: 100})
            .moveDown(2);
   
            productos.forEach(producto => {
@@ -863,7 +863,7 @@ generarPedidoPDF: async function (req, res) {
                  .text(producto.nombre, 150, currentY, {align: 'left', width: 220})
                  .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 370, currentY, {align: 'center', width: 50}) // Ajustado
                  .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 430, currentY, {align: 'center', width: 50}) // Ajustado
-                 .text(producto.stock_actual < producto.stock_minimo ? `PEDIR ${producto.stock_minimo - producto.stock_actual}` : 'REVISAR STOCK', 490, currentY, {align: 'left', width: 100}) // Ajustado
+                 .text(producto.stock_actual < producto.stock_minimo ? `PEDIR ${producto.stock_minimo - producto.stock_actual}` : 'REVISAR STOCK', 510, currentY, {align: 'left', width: 100}) // Ajustado
                  .moveDown(1);
             }
           });
