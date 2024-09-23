@@ -846,9 +846,9 @@ generarPedidoPDF: async function (req, res) {
            .fillColor('black')
            .text('Código', 60, currentY, {align: 'left', width: 100})
            .text('Descripción', 150, currentY, {align: 'left', width: 220})
-           .text('Stock Mínimo', 400, currentY, {align: 'center', width: 80})
-           .text('Stock Actual', 480, currentY, {align: 'center', width: 80})
-           .text('Cantidad a Pedir', 560, currentY, {align: 'center', width: 80})
+           .text('Stock Mínimo', 370, currentY, {align: 'center', width: 50}) // Ajustado
+           .text('Stock Actual', 430, currentY, {align: 'center', width: 50}) // Ajustado
+           .text('Cantidad a Pedir', 490, currentY, {align: 'left', width: 100}) // Ajustado
            .moveDown(2);
   
            productos.forEach(producto => {
