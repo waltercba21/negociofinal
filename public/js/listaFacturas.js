@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const btnBuscar = document.getElementById('buscar');
     const btnImprimirTotal = document.getElementById('btnImprimirTotal');
+    const tableBody = document.querySelector('#facturas-table tbody');
 
+    // Verifica que los elementos existen antes de agregar event listeners
     if (btnBuscar) {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
@@ -9,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cargarFacturas(fechaInicio, fechaFin);
         });
     } else {
-        console.error('El elemento con ID "buscar" no se encontró en el DOM.');
+        console.error('El botón con ID "buscar" no se encontró en el DOM.');
     }
 
     if (btnImprimirTotal) {
@@ -19,64 +21,59 @@ document.addEventListener('DOMContentLoaded', function() {
             imprimirTotalFacturas(fechaInicio, fechaFin);
         });
     } else {
-        console.error('El elemento con ID "btnImprimirTotal" no se encontró en el DOM.');
+        console.error('El botón con ID "btnImprimirTotal" no se encontró en el DOM.');
+    }
+
+    if (tableBody) {
+        tableBody.innerHTML = ''; // Asegura que la tabla esté lista
+    } else {
+        console.error('El tbody de la tabla de facturas no se encontró.');
     }
 });
 
-function imprimirTotalFacturas(fechaInicio, fechaFin) {
-    fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-        .then(response => response.json())
-        .then(data => {
-            let totalFacturas = 0;
-            data.forEach(factura => {
-                const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
-                totalFacturas += totalNumerico;
-            });
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFontSize(16);
-            doc.text('Total de Facturas', 14, 20);
-            const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
-            doc.text(totalText, 14, 40);
-            doc.save('total_facturas.pdf');
-        })
-        .catch(error => console.error('Error al cargar las facturas:', error));
-}
-
+// Funciones para cargar y mostrar las facturas
 function cargarFacturas(fechaInicio, fechaFin) {
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(data => {
             console.log('Datos recibidos del backend:', data);
             const tableBody = document.querySelector('#facturas-table tbody');
-            tableBody.innerHTML = ''; 
+            if (!tableBody) {
+                throw new Error('El tbody de la tabla de facturas no se encontró.');
+            }
+
+            tableBody.innerHTML = ''; // Limpia el contenido de la tabla antes de insertar nuevas filas
             let totalFacturas = 0;
-            data.forEach(factura => {
-                const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
-                totalFacturas += totalNumerico;
-                const row = document.createElement('tr');
-                row.setAttribute('data-id', factura.id);
-                row.innerHTML = `
-                    <td class="id">${factura.id}</td>
-                    <td class="fecha">${factura.fecha}</td>
-                    <td class="cliente">${factura.nombre_cliente}</td>
-                    <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
-                    <td>
-                        <button class="btn-ver" data-id="${factura.id}">Ver Detalle</button>
-                        <button class="btn-editar" data-id="${factura.id}">Editar</button>
-                        <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
-                        <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
-                        <button class="btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
+
+            if (data.length === 0) {
+                console.log('No se encontraron facturas.');
+            } else {
+                data.forEach(factura => {
+                    const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
+                    totalFacturas += totalNumerico;
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-id', factura.id);
+                    row.innerHTML = `
+                        <td class="id">${factura.id}</td>
+                        <td class="fecha">${factura.fecha}</td>
+                        <td class="cliente">${factura.nombre_cliente}</td>
+                        <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
+                        <td>
+                            <button class="btn-ver" data-id="${factura.id}">Ver Detalle</button>
+                            <button class="btn-editar" data-id="${factura.id}">Editar</button>
+                            <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
+                            <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
+                            <button class="btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
             addEventListenersFacturas();
-            document.getElementById('total-facturas').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
+
 
 function addEventListenersFacturas() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
