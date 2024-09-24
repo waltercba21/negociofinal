@@ -1669,7 +1669,7 @@ border-radius: 10px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  grid-auto-rows: minmax(150px, auto);
+  grid-auto-rows: 1fr;
   padding: 20px;
 }
 
@@ -1679,13 +1679,11 @@ border-radius: 10px;
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-.form-control.botones {
+.form-control.botones a {
+  height: 40px; 
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  justify-content: space-around;
-  gap: 10px;
-  height: 100%; /* Asegúrate de que el contenedor tenga la altura completa */
 }
 
 .btn-primary {
