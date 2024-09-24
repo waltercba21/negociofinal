@@ -2,13 +2,13 @@
 <%- include ./layouts/header.ejs %>
 <body>
  <main>
-    <div style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-between;"></div>
+    
+    <div class="container"> 
+        <div class="form-control">
         <a href="/productos/crear" class="btn btn-primary" type="button">Crear un nuevo producto</a>
         <a href="/productos/modificarPorProveedor" class="btn btn-primary" type="button">Modificar producto por proveedor</a>
         <a href="/productos/proveedores" class="btn btn-primary" type="button">Ver proveedores</a>
-    </div>
-  <div class="container">  
-    
+        </div> 
     <div class="form-control">
             <h4>Generar Listado de productos</h4>
                 <form method="get" action="/productos/generarPDF">
