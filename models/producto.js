@@ -243,32 +243,60 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
   },
   eliminar: async (idOrIds) => {
     return new Promise((resolve, reject) => {
-        const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
-        const idList = ids.join(',');
-
-        // Eliminar primero las relaciones en `producto_proveedor`
-        conexion.query(`DELETE FROM producto_proveedor WHERE producto_id IN (${idList})`, (error, results) => {
+      const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
+      const idList = ids.join(',');
+      // Eliminar registros en tablas relacionadas
+      conexion.query(`DELETE FROM estadisticas WHERE producto_id IN (${idList})`, (error, results) => {
+        if (error) {
+          return reject(error);
+        }
+  
+        conexion.query(`DELETE FROM factura_items WHERE producto_id IN (${idList})`, (error, results) => {
+          if (error) {
+            return reject(error);
+          }
+  
+          conexion.query(`DELETE FROM imagenes_producto WHERE producto_id IN (${idList})`, (error, results) => {
             if (error) {
-                return reject(error);
+              return reject(error);
             }
-
-            // Luego, eliminar las imágenes relacionadas en `imagenes_producto`
-            conexion.query(`DELETE FROM imagenes_producto WHERE producto_id IN (${idList})`, (error, results) => {
+  
+            conexion.query(`DELETE FROM items_presupuesto WHERE producto_id IN (${idList})`, (error, results) => {
+              if (error) {
+                return reject(error);
+              }
+  
+              conexion.query(`DELETE FROM presupuesto_items WHERE producto_id IN (${idList})`, (error, results) => {
                 if (error) {
-                    return reject(error);
+                  return reject(error);
                 }
-
-                // Finalmente, eliminar los productos de la tabla `productos`
-                conexion.query(`DELETE FROM productos WHERE id IN (${idList})`, (error, results) => {
+  
+                conexion.query(`DELETE FROM presupuesto_productos WHERE producto_id IN (${idList})`, (error, results) => {
+                  if (error) {
+                    return reject(error);
+                  }
+  
+                  conexion.query(`DELETE FROM producto_proveedor WHERE producto_id IN (${idList})`, (error, results) => {
                     if (error) {
-                        return reject(error);
+                      return reject(error);
                     }
-                    resolve(results);
+  
+                    // Finalmente, eliminar los productos de la tabla productos
+                    conexion.query(`DELETE FROM productos WHERE id IN (${idList})`, (error, results) => {
+                      if (error) {
+                        return reject(error);
+                      }
+                      resolve(results);
+                    });
+                  });
                 });
+              });
             });
+          });
         });
+      });
     });
-},
+  },
 actualizar: function (conexion, datos, archivo) {
     return new Promise((resolve, reject) => {
         let query = "UPDATE productos SET ";
