@@ -1679,11 +1679,13 @@ border-radius: 10px;
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-.form-control.botones a {
-  height: 40px; 
+.form-control.botones {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  justify-content: space-around;
+  gap: 10px;
+  height: 100%; 
 }
 
 .btn-primary {
