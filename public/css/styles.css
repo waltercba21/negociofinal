@@ -1682,7 +1682,7 @@ border-radius: 10px;
 .btn-primary {
   background-color: #003f7d;
   padding: 10px 20px;
-  font-size: 0.5em;
+  font-size: 0.8em;
   color: #fff;
   border: none;
   border-radius: 5px;
@@ -1711,7 +1711,7 @@ border-radius: 10px;
 }
 
 .form-control label, .form-control select, .form-control input, .form-control button {
-  font-size: 0.5em;
+  font-size: 0.8em;
   font-weight: bold;
 }
 
@@ -1729,7 +1729,7 @@ border-radius: 10px;
 }
 
 .form-control h4 {
-  font-size: 1em;
+  font-size: 1.2em;
   font-weight: bold;
   text-align: center;
   color: #b30000;
