@@ -1788,6 +1788,7 @@ border-radius: 10px;
   min-height: 150px;
 }
 .form-control.botones a {
+  font-weight: bold;
   margin-bottom: 10px; 
   background-color: #f4f3f4; 
   color: #003f7d;
@@ -1799,7 +1800,7 @@ border-radius: 10px;
 }
 
 .form-control.botones a:hover {
-  background-color: #a3a2a2;
+  background-color: #e5e2e2;
 }
 /*---------------PROFILE---------------*/
 .user-card {
