@@ -1782,8 +1782,6 @@ border-radius: 10px;
   transition: transform 0.3s ease-in-out;
 }
 
-/* Grid uniforme */
-
 .container > div {
   min-height: 150px;
 }
@@ -1801,6 +1799,123 @@ border-radius: 10px;
 
 .form-control.botones a:hover {
   background-color: #e5e2e2;
+}
+.contenedor-busqueda {
+  padding: 20px;
+  background-color: #f7f7f7;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.paginacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.paginacion a {
+  margin: 0 5px;
+  padding: 10px 15px;
+  background-color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.paginacion a:hover {
+  background-color: #ddd;
+}
+
+.paginacion .active {
+  background-color: #004d99;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 5px;
+}
+
+.buscador-panel {
+  margin-bottom: 20px;
+}
+
+.buscador-panel input[type="text"] {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  font-weight: bold;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 15px;
+  border: 1px solid #ddd;
+}
+
+th {
+  background-color: #f0f0f0;
+}
+
+td {
+  vertical-align: middle;
+}
+
+.img-thumbnail {
+  border: none;
+  border-radius: 5px;
+}
+
+.btn-group-vertical {
+  display: flex;
+  flex-direction: column;
+}
+
+.btn-group-vertical button {
+  margin-bottom: 10px;
+  padding: 10px 15px;
+  background-color: #004d99;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.btn-group-vertical button:hover {
+  background-color: #007bff;
+}
+
+#delete-selected {
+  margin-top: 20px;
+  padding: 15px 30px;
+  background-color: #b80220;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+#delete-selected:hover {
+  background-color: #840000;
+}
+
+/* Animaciones */
+
+.contenedor-busqueda:hover {
+  transform: scale(1.01);
+  transition: transform 0.3s ease-in-out;
+}
+
+.paginacion a:active {
+  transform: scale(0.95);
+  transition: transform 0.3s ease-in-out;
 }
 /*---------------PROFILE---------------*/
 .user-card {
