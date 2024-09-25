@@ -1668,17 +1668,24 @@ border-radius: 10px;
 .container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  grid-auto-rows: 1fr;
-  padding: 20px;
+  gap: 10px;
+  padding: 10px;
 }
 
 .container > div {
   background-color: #f7f7f7;
-  padding: 20px;
-  border-radius: 10px;
+  padding: 15px;
+  border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+.form-control {
+  background-color: #003f7d;
+  color: #fff;
+  padding: 15px;
+  border-radius: 5px;
+}
+
 .form-control.botones {
   display: flex;
   flex-direction: column;
@@ -1687,9 +1694,9 @@ border-radius: 10px;
 }
 
 .btn-primary {
-  background-color: #003f7d;
-  padding: 10px 20px;
-  font-size: 0.8em;
+  background-color: #b80220;
+  padding: 8px 15px;
+  font-size: 0.7em;
   color: #fff;
   border: none;
   border-radius: 5px;
@@ -1698,33 +1705,18 @@ border-radius: 10px;
 }
 
 .btn-primary:hover {
-  background-color: #b80220;
-}
-
-.form-control {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.form-control form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+  background-color: #840000;
 }
 
 .form-control label, .form-control select, .form-control input, .form-control button {
-  font-size: 0.8em;
+  font-size: 0.7em;
   font-weight: bold;
+  color: #fff;
 }
 
 .form-control button{
-  background-color: #003f7d;
-  padding: 10px 20px;
+  background-color: #b80220;
+  padding: 8px 15px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -1732,21 +1724,21 @@ border-radius: 10px;
 }
 
 .form-control button:hover {
-  background-color: #b80220;
+  background-color: #840000;
 }
 
 .form-control h4 {
-  font-size: 1.2em;
+  font-size: 1em;
   font-weight: bold;
   text-align: center;
-  color: #b30000;
+  color: #fff;
   margin-bottom: 10px;
 }
 
 /* Animaciones */
 
 .container > div:hover {
-  transform: scale(1.05);
+  transform: scale(1.02);
   transition: transform 0.3s ease-in-out;
 }
 
