@@ -1673,17 +1673,11 @@ border-radius: 10px;
 }
 
 .container > div {
-  background-color: #f7f7f7;
+  background-color: #003f7d;
   padding: 15px;
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.form-control {
-  background-color: #003f7d;
   color: #fff;
-  padding: 15px;
-  border-radius: 5px;
 }
 
 .form-control.botones {
@@ -1745,6 +1739,12 @@ border-radius: 10px;
 .btn-primary:active {
   transform: scale(0.95);
   transition: transform 0.3s ease-in-out;
+}
+
+/* Grid uniforme */
+
+.container > div {
+  min-height: 150px; /* ajusta según necesidad */
 }
 /*---------------PROFILE---------------*/
 .user-card {
