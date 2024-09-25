@@ -1785,11 +1785,11 @@ border-radius: 10px;
 /* Grid uniforme */
 
 .container > div {
-  min-height: 150px; /* ajusta según necesidad */
+  min-height: 150px;
 }
 .form-control.botones a {
-  margin-bottom: 10px; /* separa los botones */
-  background-color: #004d99; /* cambia el color de fondo */
+  margin-bottom: 10px; 
+  background-color: #a3a2a3; 
   color: #fff;
   padding: 10px 20px;
   border: none;
@@ -1799,7 +1799,7 @@ border-radius: 10px;
 }
 
 .form-control.botones a:hover {
-  background-color: #007bff; /* cambia el color de fondo al pasar el mouse */
+  background-color: #a3a2a2;
 }
 /*---------------PROFILE---------------*/
 .user-card {
