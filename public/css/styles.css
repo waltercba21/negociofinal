@@ -1680,13 +1680,7 @@ border-radius: 10px;
   color: #fff;
 }
 
-.form-control .botones {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-around;
-}
-.form-control .btn-primary{
+.form-control.botones {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1709,15 +1703,50 @@ border-radius: 10px;
 }
 
 .form-control label, .form-control select, .form-control input, .form-control button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-around;
   font-size: 0.7em;
   font-weight: bold;
   color: #fff;
+}
+.form-control select {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #f7f7f7;
+  color: #333;
+  text-align: center;
+}
 
+.form-control select option {
+  background-color: #f7f7f7;
+  color: #333;
+  padding: 10px;
+}
 
+.form-control button[type="submit"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #b80220;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.form-control button[type="submit"]:hover {
+  background-color: #840000;
+}
+
+.form-control label {
+  margin-bottom: 10px;
+}
+
+.form-control input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
 }
 
 .form-control button{
