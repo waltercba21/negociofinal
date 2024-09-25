@@ -1703,9 +1703,15 @@ border-radius: 10px;
 }
 
 .form-control label, .form-control select, .form-control input, .form-control button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
   font-size: 0.7em;
   font-weight: bold;
   color: #fff;
+
+
 }
 
 .form-control button{
