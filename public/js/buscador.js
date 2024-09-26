@@ -47,7 +47,14 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       }
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       const tarjetaProducto = document.createElement('div');
-      tarjetaProducto.classList.add('card');
+      
+      // Añade una clase específica si tiene calidad_original
+      if (producto.calidad_original) {
+        tarjetaProducto.classList.add('calidad-original'); // Agrega la clase para el color
+      } else {
+        tarjetaProducto.classList.add('card'); // Clase base si no tiene calidad_original
+      }
+
       const isAdminUser = document.body.dataset.isAdminUser === 'true';
       let html = `
         ${imagenes}
@@ -73,8 +80,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       `;
       tarjetaProducto.innerHTML = html;
       contenedorProductos.appendChild(tarjetaProducto);
-
-      // Asignar eventos a las flechas del carrusel
+      
       const leftButton = tarjetaProducto.querySelector('.carousel__button--left');
       const rightButton = tarjetaProducto.querySelector('.carousel__button--right');
       const images = tarjetaProducto.querySelectorAll('.carousel__image');

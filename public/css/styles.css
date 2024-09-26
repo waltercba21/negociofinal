@@ -1614,7 +1614,6 @@ border-radius: 10px;
   color: #fff;
   background-color: #b30000;
 }
-
 .stock-producto.suficiente-stock p {
   color: #fff;
   background-color: #09c41c;
@@ -1630,13 +1629,9 @@ border-radius: 10px;
 .card.calidad-original-fitam .categoria-producto h6 {
   color: #ffffff; 
 }
-
-/* Estilo para el precio del producto */
 .card.calidad-original-fitam .precio-producto p {
   color: #ffffff; 
 }
-
-/* Estilo del texto de stock (para admin) */
 .card.calidad-original-fitam .stock-producto p {
   color: #ffffff 
 }
@@ -1670,8 +1665,6 @@ border-radius: 10px;
 .card.calidad-original-fitam .carousel__image {
   border: 2px solid #003f7d; 
 }
-
-/* Estilo de la línea divisoria */
 .card.calidad-original-fitam hr {
   border-color: #ffffff;
 }
