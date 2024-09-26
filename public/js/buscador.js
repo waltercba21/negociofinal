@@ -4,6 +4,7 @@ let timer;
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
+  mostrarProductos(productosOriginales.slice(0, 12)); // Mostrar los primeros 12 productos al cargar
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
@@ -11,92 +12,102 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   timer = setTimeout(async () => {
     const busqueda = e.target.value;
     const contenedorProductos = document.getElementById('contenedor-productos');
-    contenedorProductos.innerHTML = '';
+    contenedorProductos.innerHTML = ''; // Limpiar el contenedor
+
     let productos = [];
     if (!busqueda.trim()) {
-      productos = productosOriginales.slice(0, 12); 
+      productos = productosOriginales.slice(0, 12); // Si no hay búsqueda, mostrar los primeros 12 productos
     } else {
       let url = '/productos/api/buscar?q=' + busqueda;
       const respuesta = await fetch(url);
       productos = await respuesta.json();
     }
-    productos.forEach((producto) => {
-      let imagenes = '';
-      if (producto.imagenes && producto.imagenes.length > 0) {
-        producto.imagenes.forEach((imagenObj, i) => {
-          const imagen = imagenObj.imagen;
-          imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
-        });
-        imagenes = `
-          <div class="cover__card">
-            <div class="carousel">
-              ${imagenes}
-            </div>
-          </div>
-          <div class="carousel__buttons">
-            <button class="carousel__button carousel__button--left">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="carousel__button carousel__button--right">
-              <i class="fas fa-chevron-right"></i>
-            </button>
-          </div>
-        `;
-      } else {
-        imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
-      }
-      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
-      const tarjetaProducto = document.createElement('div');
-      
-      // Añade una clase específica si tiene calidad_original
-      if (producto.calidad_original) {
-        tarjetaProducto.classList.add('calidad-original'); // Agrega la clase para el color
-      } else {
-        tarjetaProducto.classList.add('card'); // Clase base si no tiene calidad_original
-      }
-
-      const isAdminUser = document.body.dataset.isAdminUser === 'true';
-      let html = `
-        ${imagenes}
-        <div class="titulo-producto">
-          <h3 class="nombre">${producto.nombre}</h3>
-        </div>
-        <hr>
-        <div class="precio-producto">
-          <p class="precio">${precio_venta}</p>
-        </div>
-      `;
-      if (isAdminUser) {
-        html += `
-          <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
-            <p>Stock Disponible: ${producto.stock_actual}</p>
-          </div>
-        `;
-      }
-      html += `
-        <div class="cantidad-producto">
-          <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-        </div>
-      `;
-      tarjetaProducto.innerHTML = html;
-      contenedorProductos.appendChild(tarjetaProducto);
-      
-      const leftButton = tarjetaProducto.querySelector('.carousel__button--left');
-      const rightButton = tarjetaProducto.querySelector('.carousel__button--right');
-      const images = tarjetaProducto.querySelectorAll('.carousel__image');
-      let currentIndex = 0;
-
-      leftButton.addEventListener('click', () => {
-        images[currentIndex].classList.add('hidden');
-        currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
-        images[currentIndex].classList.remove('hidden');
-      });
-
-      rightButton.addEventListener('click', () => {
-        images[currentIndex].classList.add('hidden');
-        currentIndex = (currentIndex === images.length - 1) ? 0 : currentIndex + 1;
-        images[currentIndex].classList.remove('hidden');
-      });
-    });
-  }, 300);
+    
+    mostrarProductos(productos);
+  }, 300); // Ajustar el tiempo de espera para evitar múltiples llamadas
 });
+
+function mostrarProductos(productos) {
+  const contenedorProductos = document.getElementById('contenedor-productos');
+  
+  productos.forEach((producto) => {
+    let imagenes = '';
+    if (producto.imagenes && producto.imagenes.length > 0) {
+      producto.imagenes.forEach((imagenObj, i) => {
+        const imagen = imagenObj.imagen;
+        imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
+      });
+      imagenes = `
+        <div class="cover__card">
+          <div class="carousel">
+            ${imagenes}
+          </div>
+        </div>
+        <div class="carousel__buttons">
+          <button class="carousel__button carousel__button--left">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button class="carousel__button carousel__button--right">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      `;
+    } else {
+      imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
+    }
+
+    const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+    const tarjetaProducto = document.createElement('div');
+
+    // Añade la clase 'card' para el diseño base
+    tarjetaProducto.classList.add('card'); 
+    if (producto.calidad_original) {
+      tarjetaProducto.classList.add('calidad-original-fitam'); // Clase para productos de calidad original
+    }
+
+    const isAdminUser = document.body.dataset.isAdminUser === 'true';
+    let html = `
+      ${imagenes}
+      <div class="titulo-producto">
+        <h3 class="nombre">${producto.nombre}</h3>
+      </div>
+      <hr>
+      <div class="precio-producto">
+        <p class="precio">${precio_venta}</p>
+      </div>
+    `;
+    if (isAdminUser) {
+      html += `
+        <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
+          <p>Stock Disponible: ${producto.stock_actual}</p>
+        </div>
+      `;
+    }
+    html += `
+      <div class="cantidad-producto">
+        <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+      </div>
+    `;
+    
+    tarjetaProducto.innerHTML = html;
+    contenedorProductos.appendChild(tarjetaProducto);
+    
+    // Configurar los botones del carrusel para la tarjeta
+    const leftButton = tarjetaProducto.querySelector('.carousel__button--left');
+    const rightButton = tarjetaProducto.querySelector('.carousel__button--right');
+    const images = tarjetaProducto.querySelectorAll('.carousel__image');
+    let currentIndex = 0;
+
+    leftButton.addEventListener('click', () => {
+      images[currentIndex].classList.add('hidden');
+      currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
+      images[currentIndex].classList.remove('hidden');
+    });
+
+    rightButton.addEventListener('click', () => {
+      images[currentIndex].classList.add('hidden');
+      currentIndex = (currentIndex === images.length - 1) ? 0 : currentIndex + 1;
+      images[currentIndex].classList.remove('hidden');
+    });
+  });
+}
