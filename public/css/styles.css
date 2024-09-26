@@ -1619,55 +1619,41 @@ border-radius: 10px;
   color: #fff;
   background-color: #09c41c;
 }
-/* Estilos generales para la tarjeta */
 .card.calidad-original-fitam {
-  background-color: #003f7d; /* Color de fondo */
-  border: 1px solid #003f7d; /* Borde de la tarjeta */
-  color: #ffffff; /* Color del texto por defecto */
+  background-color: #003f7d;
+  color: #ffffff; 
   position: relative;
 }
-
-/* Estilo del texto del título del producto */
 .card.calidad-original-fitam .titulo-producto h3 {
-  color: #ffffff; /* Color del nombre del producto */
+  color: #ffffff; 
 }
-
-/* Estilo del texto de la categoría del producto */
 .card.calidad-original-fitam .categoria-producto h6 {
-  color: #d4e0f4; /* Color de la categoría */
+  color: #ffffff; 
 }
 
 /* Estilo para el precio del producto */
 .card.calidad-original-fitam .precio-producto p {
-  color: #f7d545; /* Color del precio */
+  color: #ffffff; 
 }
 
 /* Estilo del texto de stock (para admin) */
 .card.calidad-original-fitam .stock-producto p {
-  color: #ffcccc; /* Color del stock */
+  color: #ffffff 
 }
-
-/* Estilos para los botones de navegación del carrusel */
 .card.calidad-original-fitam .carousel__button {
-  background-color: #005099; /* Fondo del botón */
+  background-color: #005099; 
   border: none;
-  color: #ffffff; /* Color del icono de las flechas */
+  color: #ffffff;
 }
-
 .card.calidad-original-fitam .carousel__button:hover {
-  background-color: #0077b6; /* Fondo al hacer hover */
+  background-color: #0077b6;
 }
-
-/* Estilo para los links dentro de la tarjeta */
 .card.calidad-original-fitam .card-link {
-  color: #ffcc00; /* Color del enlace de detalles */
+  color: #ffffff;
 }
-
 .card.calidad-original-fitam .card-link:hover {
-  color: #ffffff; /* Color del enlace al hacer hover */
+  color: #ffffff; 
 }
-
-/* Texto antes del contenido de la tarjeta (indicando calidad original) */
 .card.calidad-original-fitam::before {
   content: "Calidad Original Fitam";
   position: absolute;
