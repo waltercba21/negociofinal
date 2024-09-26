@@ -153,9 +153,3 @@ function actualizarProveedorAsignado() {
 }
 
 $('.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad').on('change', actualizarProveedorAsignado);
-
-$('.form-crear-producto').submit(function(event) {
-    event.preventDefault();
-    var datos = $(this).serializeArray();
-    datos.push({name: 'calidad_original_fitam', value: $('#calidad_original_fitam').prop('checked')});
-  });

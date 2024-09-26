@@ -220,8 +220,9 @@ module.exports = {
             utilidad: req.body.utilidad,
             precio_venta: req.body.precio_venta,
             estado: req.body.estado,
-            stock_minimo: req.body.stock_minimo, 
-            stock_actual: req.body.stock_actual  
+            stock_minimo: req.body.stock_minimo,
+            stock_actual: req.body.stock_actual,
+            calidad_original: req.body.calidad_original_fitam ? 1 : 0 
         };
         producto.insertarProducto(conexion, datosProducto)
         .then(result => { 

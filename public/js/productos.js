@@ -20,9 +20,3 @@ $(document).ready(function() {
     showImage(newIndex);
   });
 });
-$('.card').each(function() {
-  var producto = $(this).data('producto');
-  if (producto.calidad_original_fitam) {
-    $(this).addClass('calidad-original-fitam');
-  }
-});

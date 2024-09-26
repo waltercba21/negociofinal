@@ -223,7 +223,7 @@ obtenerPorId: function (conexion, id, funcion) {
             }
         });
     });
-},
+}, 
 insertarProductoProveedor: function(conexion, productoProveedor) {
     return new Promise((resolve, reject) => {
         const fila = [productoProveedor.producto_id, productoProveedor.proveedor_id, productoProveedor.precio_lista, productoProveedor.codigo];
