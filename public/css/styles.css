@@ -1619,53 +1619,62 @@ border-radius: 10px;
   color: #fff;
   background-color: #09c41c;
 }
-
+/* Estilos generales para la tarjeta */
 .card.calidad-original-fitam {
-  background-color: #003f7d;
-  border: 1px solid #003f7d;
-  color: #ffffff; 
+  background-color: #003f7d; /* Color de fondo */
+  border: 1px solid #003f7d; /* Borde de la tarjeta */
+  color: #ffffff; /* Color del texto por defecto */
   position: relative;
 }
 
+/* Estilo del texto del título del producto */
 .card.calidad-original-fitam .titulo-producto h3 {
-  color: #ffffff;
+  color: #ffffff; /* Color del nombre del producto */
 }
 
+/* Estilo del texto de la categoría del producto */
 .card.calidad-original-fitam .categoria-producto h6 {
-  color: #d4e0f4; 
+  color: #d4e0f4; /* Color de la categoría */
 }
+
+/* Estilo para el precio del producto */
 .card.calidad-original-fitam .precio-producto p {
-  color: #f7d545; 
+  color: #f7d545; /* Color del precio */
 }
 
+/* Estilo del texto de stock (para admin) */
 .card.calidad-original-fitam .stock-producto p {
-  color: #ffcccc; 
+  color: #ffcccc; /* Color del stock */
 }
 
+/* Estilos para los botones de navegación del carrusel */
 .card.calidad-original-fitam .carousel__button {
-  background-color: #005099; 
+  background-color: #005099; /* Fondo del botón */
   border: none;
-  color: #ffffff; 
+  color: #ffffff; /* Color del icono de las flechas */
 }
 
 .card.calidad-original-fitam .carousel__button:hover {
-  background-color: #0077b6; 
+  background-color: #0077b6; /* Fondo al hacer hover */
 }
 
+/* Estilo para los links dentro de la tarjeta */
 .card.calidad-original-fitam .card-link {
-  color: #b80220; 
+  color: #ffcc00; /* Color del enlace de detalles */
 }
 
 .card.calidad-original-fitam .card-link:hover {
-  color: #ffffff; 
+  color: #ffffff; /* Color del enlace al hacer hover */
 }
+
+/* Texto antes del contenido de la tarjeta (indicando calidad original) */
 .card.calidad-original-fitam::before {
   content: "Calidad Original Fitam";
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #0251a0; 
+  background-color: #003f7d; 
   color: #ffffff;
   padding: 5px;
   font-size: 14px;
@@ -1676,6 +1685,7 @@ border-radius: 10px;
   border: 2px solid #003f7d; 
 }
 
+/* Estilo de la línea divisoria */
 .card.calidad-original-fitam hr {
   border-color: #ffffff;
 }

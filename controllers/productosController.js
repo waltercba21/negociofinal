@@ -332,14 +332,13 @@ module.exports = {
         });
     },    
     actualizar: function(req, res) {
+        // Verifica que haya al menos un proveedor seleccionado
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
     
-        console.log('Datos del producto recibidos:', req.body);
-    
-        // Procesar datos del producto
+        // Asigna los datos del producto a partir del formulario enviado
         let datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
@@ -357,13 +356,14 @@ module.exports = {
             costo_neto: req.body.costo_neto[0],
             IVA: req.body.IVA[0],
             costo_iva: req.body.costo_iva[0],
-            oferta: req.body.oferta === 'on' ? 1 : 0 // Aquí se procesa el valor del checkbox
+            oferta: req.body.oferta === 'on' ? 1 : 0, // Si está marcado, se guarda como 1
+            calidad_original: req.body.calidad_original_fitam ? 1 : 0 // Asigna 1 si está marcado, 0 si no lo está
         };
     
-        console.log('Datos del producto procesados:', datosProducto);
-    
+        // Llama a la función de actualización del producto
         producto.actualizar(conexion, datosProducto)
             .then(() => {
+                // Si hay archivos para actualizar, se procesan
                 if (req.files) {
                     const promesasArchivos = req.files.map(file => {
                         return producto.actualizarArchivo(conexion, datosProducto, file);
@@ -375,6 +375,8 @@ module.exports = {
             })
             .then(() => {
                 console.log('Archivos actualizados');
+    
+                // Mapea los datos de los proveedores y precios
                 const proveedores = req.body.proveedores.map((proveedorId, index) => {
                     return {
                         producto_id: datosProducto.id,
@@ -386,7 +388,7 @@ module.exports = {
     
                 console.log('Datos de los proveedores procesados:', proveedores);
     
-                // Usar actualizarProductoProveedor para cada proveedor
+                // Actualiza los datos de cada proveedor
                 const promesasProveedor = proveedores.map((proveedor) => {
                     return producto.actualizarProductoProveedor(conexion, proveedor);
                 });
@@ -394,14 +396,17 @@ module.exports = {
             })
             .then(() => {
                 console.log('Proveedores actualizados');
+                // Actualiza el stock del producto
                 return producto.actualizarStock(conexion, datosProducto.id, datosProducto.stock_minimo, datosProducto.stock_actual);
             })
             .then(() => {
                 console.log('Stock actualizado');
+                // Obtiene la posición del producto en el panel de control
                 return producto.obtenerPosicion(conexion, datosProducto.id);
             })
             .then(() => {
                 console.log('Posición del producto obtenida');
+                // Redirecciona a la página de control
                 res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
             })
             .catch(error => {
@@ -409,7 +414,6 @@ module.exports = {
                 res.status(500).send('Error: ' + error.message);
             });
     },    
-    
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {

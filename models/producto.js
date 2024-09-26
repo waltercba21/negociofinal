@@ -297,12 +297,12 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
       });
     });
   },
-actualizar: function (conexion, datos, archivo) {
+  actualizar: function (conexion, datos, archivo) {
     return new Promise((resolve, reject) => {
         let query = "UPDATE productos SET ";
         let params = [];
         let first = true;
-        
+
         if (datos.nombre) {
             query += first ? "nombre=?" : ", nombre=?";
             params.push(datos.nombre);
@@ -378,9 +378,10 @@ actualizar: function (conexion, datos, archivo) {
             params.push(archivo.filename);
             first = false;
         }
-        if (typeof datos.oferta !== 'undefined') {  // Asegúrate de comprobar la existencia del campo
-            query += first ? "oferta=?" : ", oferta=?";
-            params.push(datos.oferta);
+        // Nuevo campo calidad_original
+        if (typeof datos.calidad_original !== 'undefined') {
+            query += first ? "calidad_original=?" : ", calidad_original=?";
+            params.push(datos.calidad_original);
             first = false;
         }
         if (!datos.id) {
@@ -388,9 +389,6 @@ actualizar: function (conexion, datos, archivo) {
         }
         query += " WHERE id=?";
         params.push(datos.id);
-        
-        console.log('Consulta SQL:', query);
-        console.log('Parámetros:', params);
 
         conexion.query(query, params, (error, results) => {
             if (error) {
@@ -401,7 +399,6 @@ actualizar: function (conexion, datos, archivo) {
         });
     });
 },
-
 actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
     return new Promise((resolve, reject) => {
         const querySelect = 'SELECT * FROM producto_proveedor WHERE producto_id = ? AND proveedor_id = ?';
