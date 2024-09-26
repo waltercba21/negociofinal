@@ -20,4 +20,8 @@ $(document).ready(function() {
     showImage(newIndex);
   });
 });
-
+$('#form-crear-producto').submit(function(event) {
+  event.preventDefault();
+  var datos = $(this).serializeArray();
+  datos.push({name: 'calidad_original_fitam', value: $('#calidad_original_fitam').prop('checked')});
+});

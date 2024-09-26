@@ -56,8 +56,6 @@ $(document).ready(function() {
         $(newProveedor).find('.nombre_proveedor').text('');
         $(newProveedor).find('.proveedores').trigger('change');
     });
-
-    // Evitar que el formulario se envíe con Enter
     $('form').on('keypress', function(e) {
         if (e.keyCode === 13) {
             e.preventDefault();
@@ -136,7 +134,6 @@ function actualizarPrecioFinal() {
     precioFinal = Math.ceil(precioFinal / 10) * 10;
     $('#precio_venta').val(precioFinal);
 }
-
 $('.costo_iva, #utilidad').on('change', actualizarPrecioFinal);
 
 function actualizarProveedorAsignado() {
@@ -156,3 +153,5 @@ function actualizarProveedorAsignado() {
 }
 
 $('.costo_iva, .proveedores, .precio_lista, #costo_neto, #utilidad').on('change', actualizarProveedorAsignado);
+
+

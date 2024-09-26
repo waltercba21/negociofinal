@@ -575,7 +575,6 @@ footer {
   width: 100%;
   overflow: hidden;
 }
-
 .contenedor-productos-ofertas {
   display: flex;
   overflow: hidden;
@@ -600,18 +599,12 @@ footer {
   justify-content: center;
   z-index: 1;
 }
-
-
 .flecha-izquierda-ofertas {
   left: 10px;
 }
-
 .flecha-derecha-ofertas {
   right: 10px;
 }
-
-
-
 
 /*----------------------LOGIN--------------------*/
 .body-login{
@@ -1412,10 +1405,9 @@ footer {
 }
 .buscador {
   display: flex;
-  justify-content: center; /* Centra el contenido horizontalmente */
-  margin: 20px 0; /* Margen superior e inferior para separar los elementos */
+  justify-content: center; 
+  margin: 20px 0;
 }
-
 .buscador input {
   border-radius: 10px;
   border: none;
@@ -1427,13 +1419,10 @@ footer {
   height: 40px; 
   text-align: center;
 } 
-
-
 .buscador input:focus {
   box-shadow: 0 0 2px #719ECE;
   outline: none; 
 }
-
 .buscador input:valid {
   animation: input-glow 3s infinite;
 }
@@ -1445,7 +1434,6 @@ footer {
     box-shadow: 0 0 8px #1F487E, 0 0 8px #1F487E;
   }
 }
-
 .selectores-productos {
   flex: 2;
   display: flex;
@@ -1455,12 +1443,10 @@ footer {
   gap: 10px; 
   margin-top: 20px;
 }
-
 .selectores-productos label {
   color: #003f7d;
   font-weight: bold;
 }
-
 .selectores-productos select {
   min-width: 200px;
   color: #b80220;
@@ -1603,18 +1589,15 @@ footer {
   margin-top: 10px;
   
 }
-
 .stock-producto p {
   font-weight: bold;
   font-size: 16px;
   padding: 10px;
 border-radius: 10px;
 }
-
 .stock-producto.bajo-stock {
   animation: stock-bajo 3s infinite;
 }
-
 @keyframes stock-bajo {
   0% {
     transform: scale(1);
@@ -1636,7 +1619,23 @@ border-radius: 10px;
   color: #fff;
   background-color: #09c41c;
 }
+.card.calidad-original-fitam {
+  background-color: #003f7d;
+  border: 1px solid #003f7d; 
+}
 
+.card.calidad-original-fitam::before {
+  content: "Calidad Original Fitam";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #003f7d; 
+  color: #fff;
+  padding: 5px;
+  font-size: 14px;
+  font-weight: bold;
+}
 /*--------------------DETALLE ---------------*/
 #detalle {
   background: linear-gradient(to right, #f3f3f3, #e0e0e0); 
@@ -1905,8 +1904,6 @@ td {
 #delete-selected:hover {
   background-color: #840000;
 }
-
-/* Animaciones */
 
 .contenedor-busqueda:hover {
   transform: scale(1.01);
