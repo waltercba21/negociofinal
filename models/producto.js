@@ -1480,7 +1480,6 @@ retornarDatosId: function(conexion, id) {
     return new Promise((resolve, reject) => {
         conexion.query('SELECT productos.*, IFNULL(productos.costo_neto, 0) AS costo_neto, IFNULL(productos.costo_iva, 0) AS costo_iva, IFNULL(productos.utilidad, 0) AS utilidad, productos.precio_venta, imagenes_producto.id AS imagen_id, imagenes_producto.imagen FROM productos LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE productos.id = ?', [id], function(error, results, fields) {
             if (error) {
-                console.log("Error en la consulta:", error);
                 reject(error);
             } else {
                 if (results.length > 0) {
@@ -1492,10 +1491,8 @@ retornarDatosId: function(conexion, id) {
                             imagen: imagenRuta
                         };
                     });
-                    console.log("Producto obtenido:", producto);
                     resolve(producto);
                 } else {
-                    console.log("No se encontró el producto con id:", id);
                     resolve(null);
                 }
             }
