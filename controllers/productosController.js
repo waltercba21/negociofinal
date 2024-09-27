@@ -282,6 +282,7 @@ module.exports = {
             productoResult.costo_iva = Math.round(productoResult.costo_iva);
             productoResult.utilidad = Math.round(productoResult.utilidad);
             productoResult.precio_venta = Math.round(productoResult.precio_venta);
+            productoResult.calidad_original_fitam = result.calidad_original_fitam;
             productoResult.paginaActual = req.query.pagina;
     
             console.log('Valor de oferta:', productoResult.oferta);
