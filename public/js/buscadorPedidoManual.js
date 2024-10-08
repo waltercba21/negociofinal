@@ -2,41 +2,37 @@ let productosOriginales = [];
 let productosSeleccionados = [];
 let timer;
 
+// Cargar productos en memoria, pero no mostrarlos inicialmente
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
-  mostrarProductos(productosOriginales.slice(0, 12));
 };
 
-// Buscar productos
+// Buscar productos cuando se escribe en la barra de búsqueda
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
-    const busqueda = e.target.value;
+    const busqueda = e.target.value.trim();
     const contenedorProductos = document.getElementById('contenedor-productos');
-    contenedorProductos.innerHTML = ''; // Limpiar el listado anterior
+    contenedorProductos.innerHTML = ''; // Limpiar la lista anterior
 
-    let productos = [];
-    if (!busqueda.trim()) {
-      productos = productosOriginales.slice(0, 12);
-    } else {
-      let url = '/productos/api/buscar?q=' + busqueda;
+    if (busqueda) {
+      const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
       const respuesta = await fetch(url);
-      productos = await respuesta.json();
+      const productos = await respuesta.json();
+      mostrarProductos(productos);
     }
-
-    mostrarProductos(productos);
   }, 300);
 });
 
-// Mostrar productos en el listado de búsqueda
+// Mostrar productos en el listado de búsqueda (solo el nombre)
 function mostrarProductos(productos) {
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = ''; // Limpiar el listado previo
 
   productos.forEach(producto => {
     const divProducto = document.createElement('div');
-    divProducto.innerHTML = `<strong>${producto.nombre}</strong> - ${producto.codigo} - $${producto.costo_neto}`;
+    divProducto.textContent = producto.nombre; // Mostrar solo el nombre
     divProducto.classList.add('producto-item');
     divProducto.addEventListener('click', () => agregarProductoATabla(producto));
     contenedorProductos.appendChild(divProducto);
@@ -45,6 +41,7 @@ function mostrarProductos(productos) {
 
 // Agregar un producto a la tabla de pedido
 function agregarProductoATabla(producto) {
+  // Evitar agregar duplicados
   if (!productosSeleccionados.some(p => p.id === producto.id)) {
     producto.cantidad = 1;
     producto.precioTotal = producto.costo_neto;

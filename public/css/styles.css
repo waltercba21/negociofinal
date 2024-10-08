@@ -1668,7 +1668,18 @@ border-radius: 10px;
 .card.calidad-original-fitam hr {
   border-color: #ffffff;
 }
+/*--------------------Pedido Manual---------------*/
+.producto-item {
+  cursor: pointer;
+  padding: 8px;
+  border: 1px solid #ccc;
+  margin: 5px 0;
+  border-radius: 4px;
+}
 
+.producto-item:hover {
+  background-color: #f0f0f0;
+}
 /*--------------------DETALLE ---------------*/
 #detalle {
   background: linear-gradient(to right, #f3f3f3, #e0e0e0); 
