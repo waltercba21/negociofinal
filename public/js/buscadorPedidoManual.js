@@ -53,7 +53,7 @@ function agregarProductoATabla(producto) {
   const existe = productosSeleccionados.some(p => p.id === producto.id);
   if (!existe) {
     producto.cantidad = 1;
-    producto.precioTotal = producto.costo_neto;
+    producto.precioTotal = parseFloat(producto.costo_neto) || 0; // Asegurarse que es un número
     productosSeleccionados.push(producto);
 
     actualizarTabla();  // Actualizar la tabla con el producto agregado
@@ -74,6 +74,8 @@ function actualizarTabla() {
   tablaBody.innerHTML = ''; // Limpiar la tabla antes de actualizarla
 
   productosSeleccionados.forEach((producto, index) => {
+    const precioTotal = parseFloat(producto.precioTotal) || 0; // Asegurarse que precioTotal es un número
+
     const fila = document.createElement('tr');
     fila.innerHTML = `
       <td>${producto.codigo}</td>
@@ -84,7 +86,7 @@ function actualizarTabla() {
         ${producto.cantidad}
         <button onclick="cambiarCantidad(${index}, 1)">+</button>
       </td>
-      <td>$<span id="precio-total-${producto.id}">${producto.precioTotal.toFixed(2)}</span></td>
+      <td>$<span id="precio-total-${producto.id}">${precioTotal.toFixed(2)}</span></td>
     `;
     tablaBody.appendChild(fila);
   });
@@ -100,7 +102,7 @@ function cambiarCantidad(index, cambio) {
   if (producto.cantidad < 1) {
     productosSeleccionados.splice(index, 1); // Eliminar producto si la cantidad es menor que 1
   } else {
-    producto.precioTotal = producto.costo_neto * producto.cantidad;
+    producto.precioTotal = parseFloat(producto.costo_neto) * producto.cantidad; // Asegurarse de realizar operaciones con números
   }
 
   actualizarTabla(); // Actualizar la tabla después de cambiar la cantidad
@@ -108,6 +110,6 @@ function cambiarCantidad(index, cambio) {
 
 // Función para actualizar el total del pedido
 function actualizarTotalPedido() {
-  let total = productosSeleccionados.reduce((sum, producto) => sum + producto.precioTotal, 0);
+  let total = productosSeleccionados.reduce((sum, producto) => sum + (parseFloat(producto.precioTotal) || 0), 0);
   document.getElementById('total-pedido').innerText = `$${total.toFixed(2)}`;
 }
