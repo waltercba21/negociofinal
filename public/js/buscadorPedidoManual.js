@@ -47,6 +47,8 @@ function mostrarProductos(productos) {
 
 // Función para agregar el producto a la tabla
 function agregarProductoATabla(producto) {
+  console.log("Producto seleccionado:", producto); // Verificar en la consola si el producto es seleccionado
+
   // Verificar si el producto ya está en la tabla
   const existe = productosSeleccionados.some(p => p.id === producto.id);
   if (!existe) {
@@ -55,6 +57,8 @@ function agregarProductoATabla(producto) {
     productosSeleccionados.push(producto);
 
     actualizarTabla();  // Actualizar la tabla con el producto agregado
+  } else {
+    console.log("El producto ya está en la tabla");
   }
 }
 
