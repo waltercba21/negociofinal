@@ -1206,6 +1206,6 @@ seleccionarProveedorMasBarato: async function(conexion, productoId) {
     }
 },
 generarPedidoManual: (req, res) => {
-    res.render('generarPedidoManual'); 
+    res.render('pedidoManual'); 
 }
 }
