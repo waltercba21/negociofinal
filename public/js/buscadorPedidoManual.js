@@ -2,7 +2,7 @@ let productosOriginales = [];
 let productosSeleccionados = [];
 let timer;
 
-// Cargar productos en memoria, pero no mostrarlos inicialmente
+// Cargar productos en memoria cuando se carga la página, pero no mostrarlos
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
@@ -25,51 +25,52 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   }, 300);
 });
 
-// Mostrar productos en el listado de búsqueda (solo el nombre)
+// Mostrar productos en el listado de búsqueda
 function mostrarProductos(productos) {
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = ''; // Limpiar el listado previo
 
   productos.forEach(producto => {
     const divProducto = document.createElement('div');
-    divProducto.textContent = producto.nombre; // Mostrar solo el nombre
-    divProducto.classList.add('producto-item');
-    
+    divProducto.textContent = producto.nombre; // Mostrar solo el nombre del producto
+    divProducto.classList.add('producto-item'); // Clase para estilos
+
+    // Agregar el evento para seleccionar el producto
     divProducto.addEventListener('click', () => {
-      agregarProductoATabla(producto);
+      agregarProductoATabla(producto);  // Llamada a la función para agregar el producto a la tabla
+      limpiarBusqueda();                // Limpiar la barra de búsqueda después de la selección
     });
-    
+
     contenedorProductos.appendChild(divProducto);
   });
 }
 
-// Agregar un producto a la tabla de pedido
+// Función para agregar el producto a la tabla
 function agregarProductoATabla(producto) {
-  // Evitar agregar duplicados
-  if (!productosSeleccionados.some(p => p.id === producto.id)) {
+  // Verificar si el producto ya está en la tabla
+  const existe = productosSeleccionados.some(p => p.id === producto.id);
+  if (!existe) {
     producto.cantidad = 1;
     producto.precioTotal = producto.costo_neto;
     productosSeleccionados.push(producto);
 
-    actualizarTabla();
-    limpiarBusqueda(); // Limpiar la barra de búsqueda y ocultar productos solo después de agregar el producto
+    actualizarTabla();  // Actualizar la tabla con el producto agregado
   }
 }
 
-// Función para limpiar la barra de búsqueda y el listado de productos
+// Función para limpiar la barra de búsqueda y ocultar el listado de productos
 function limpiarBusqueda() {
   document.getElementById('entradaBusqueda').value = ''; // Vaciar la barra de búsqueda
   document.getElementById('contenedor-productos').innerHTML = ''; // Ocultar el listado de productos
 }
 
-// Actualizar la tabla con los productos seleccionados
+// Función para actualizar la tabla con los productos seleccionados
 function actualizarTabla() {
   const tablaBody = document.getElementById('tabla-pedido-body');
   tablaBody.innerHTML = ''; // Limpiar la tabla antes de actualizarla
 
   productosSeleccionados.forEach((producto, index) => {
     const fila = document.createElement('tr');
-
     fila.innerHTML = `
       <td>${producto.codigo}</td>
       <td>${producto.nombre}</td>
@@ -81,15 +82,13 @@ function actualizarTabla() {
       </td>
       <td>$<span id="precio-total-${producto.id}">${producto.precioTotal.toFixed(2)}</span></td>
     `;
-
     tablaBody.appendChild(fila);
   });
 
-  // Actualizar el total del pedido
-  actualizarTotalPedido();
+  actualizarTotalPedido(); // Actualizar el total del pedido
 }
 
-// Cambiar la cantidad de un producto
+// Función para cambiar la cantidad del producto
 function cambiarCantidad(index, cambio) {
   const producto = productosSeleccionados[index];
   producto.cantidad += cambio;
@@ -100,10 +99,10 @@ function cambiarCantidad(index, cambio) {
     producto.precioTotal = producto.costo_neto * producto.cantidad;
   }
 
-  actualizarTabla();
+  actualizarTabla(); // Actualizar la tabla después de cambiar la cantidad
 }
 
-// Actualizar el total del pedido
+// Función para actualizar el total del pedido
 function actualizarTotalPedido() {
   let total = productosSeleccionados.reduce((sum, producto) => sum + producto.precioTotal, 0);
   document.getElementById('total-pedido').innerText = `$${total.toFixed(2)}`;
