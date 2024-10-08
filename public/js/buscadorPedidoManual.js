@@ -113,3 +113,44 @@ function actualizarTotalPedido() {
   let total = productosSeleccionados.reduce((sum, producto) => sum + (parseFloat(producto.precioTotal) || 0), 0);
   document.getElementById('total-pedido').innerText = `$${total.toFixed(2)}`;
 }
+document.getElementById('btn-confirmar').addEventListener('click', function() {
+    generarPDF();
+ });
+ 
+ function generarPDF() {
+   // Crear una instancia de jsPDF
+   const { jsPDF } = window.jspdf;
+   const doc = new jsPDF();
+ 
+   // Título del PDF
+   doc.setFontSize(18);
+   doc.text('Pedido Confirmado', 10, 10);
+ 
+   // Agregar los encabezados de la tabla
+   const headers = [['Código', 'Producto', 'Costo Neto', 'Cantidad', 'Precio Total']];
+   
+   // Extraer datos de la tabla
+   const rows = productosSeleccionados.map(producto => [
+     producto.codigo, 
+     producto.nombre, 
+     `$${parseFloat(producto.costo_neto).toFixed(2)}`, 
+     producto.cantidad, 
+     `$${parseFloat(producto.precioTotal).toFixed(2)}`
+   ]);
+ 
+   // Insertar la tabla de productos en el PDF
+   doc.autoTable({
+     head: headers,
+     body: rows,
+     startY: 20,  // Comenzar a mostrar la tabla un poco más abajo
+   });
+ 
+   // Total del pedido
+   let total = productosSeleccionados.reduce((sum, producto) => sum + parseFloat(producto.precioTotal), 0);
+   doc.setFontSize(12);
+   doc.text(`Total Pedido: $${total.toFixed(2)}`, 10, doc.previousAutoTable.finalY + 10);
+ 
+   // Guardar el PDF
+   doc.save('pedido_confirmado.pdf');
+ }
+ 
