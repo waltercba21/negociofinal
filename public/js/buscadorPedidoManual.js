@@ -34,9 +34,18 @@ function mostrarProductos(productos) {
     const divProducto = document.createElement('div');
     divProducto.textContent = producto.nombre; // Mostrar solo el nombre
     divProducto.classList.add('producto-item');
-    divProducto.addEventListener('click', () => agregarProductoATabla(producto));
+    divProducto.addEventListener('click', () => {
+      agregarProductoATabla(producto);
+      limpiarBusqueda(); // Limpiar la barra de búsqueda y ocultar productos
+    });
     contenedorProductos.appendChild(divProducto);
   });
+}
+
+// Función para limpiar la barra de búsqueda y el listado de productos
+function limpiarBusqueda() {
+  document.getElementById('entradaBusqueda').value = ''; // Vaciar la barra de búsqueda
+  document.getElementById('contenedor-productos').innerHTML = ''; // Ocultar el listado de productos
 }
 
 // Agregar un producto a la tabla de pedido
@@ -68,7 +77,7 @@ function actualizarTabla() {
         ${producto.cantidad}
         <button onclick="cambiarCantidad(${index}, 1)">+</button>
       </td>
-      <td>$<span id="precio-total-${producto.id}">${producto.precioTotal}</span></td>
+      <td>$<span id="precio-total-${producto.id}">${producto.precioTotal.toFixed(2)}</span></td>
     `;
 
     tablaBody.appendChild(fila);
