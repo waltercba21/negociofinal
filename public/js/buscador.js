@@ -4,19 +4,17 @@ let timer;
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
-  mostrarProductos(productosOriginales.slice(0, 12)); // Mostrar los primeros 12 productos al cargar
+  mostrarProductos(productosOriginales.slice(0, 12));
 };
-
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
     const busqueda = e.target.value;
     const contenedorProductos = document.getElementById('contenedor-productos');
-    contenedorProductos.innerHTML = ''; // Limpiar el contenedor
-
+    contenedorProductos.innerHTML = ''; 
     let productos = [];
     if (!busqueda.trim()) {
-      productos = productosOriginales.slice(0, 12); // Si no hay búsqueda, mostrar los primeros 12 productos
+      productos = productosOriginales.slice(0, 12);
     } else {
       let url = '/productos/api/buscar?q=' + busqueda;
       const respuesta = await fetch(url);
@@ -24,7 +22,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     }
     
     mostrarProductos(productos);
-  }, 300); // Ajustar el tiempo de espera para evitar múltiples llamadas
+  }, 300); 
 });
 
 function mostrarProductos(productos) {
@@ -58,11 +56,9 @@ function mostrarProductos(productos) {
 
     const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
     const tarjetaProducto = document.createElement('div');
-
-    // Añade la clase 'card' para el diseño base
     tarjetaProducto.classList.add('card'); 
     if (producto.calidad_original) {
-      tarjetaProducto.classList.add('calidad-original-fitam'); // Clase para productos de calidad original
+      tarjetaProducto.classList.add('calidad-original-fitam');
     }
 
     const isAdminUser = document.body.dataset.isAdminUser === 'true';

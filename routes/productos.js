@@ -56,6 +56,7 @@ router.post('/actualizarPrecios/:id', productosController.actualizarPrecios);
 router.post('/eliminarSeleccionados', productosController.eliminarSeleccionados);
 router.delete('/eliminarProveedor/:id', productosController.eliminarProveedor);
 router.delete('/eliminarImagen/:id', productosController.eliminarImagen);
+router.get('/generarPedidoManual', productosController.generarPedidoManual);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);

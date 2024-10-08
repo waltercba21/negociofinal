@@ -1,0 +1,26 @@
+<%- include('./layouts/head.ejs') %>
+<%- include('./layouts/header.ejs') %>
+<body>
+    <main>
+        <div class="buscador-panel">
+            <input type="text" id="entradaBusqueda" placeholder="Buscar producto por código o descripción">
+        </div>
+        <table id="tabla-productos" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Precio Unitario (costo_neto)</th>
+                    <th>Cantidad</th>
+                    <th>Precio Total</th>
+                </tr>
+            </thead>
+            <tbody id="contenedor-productos"></tbody>
+        </table>
+        <div>
+            <strong>Total Pedido: $<span id="total-pedido">0</span></strong>
+        </div>
+    </main>
+    <%- include('./layouts/footer.ejs') %>
+    <script src="/js/buscadorPedidoManual.js"></script>
+</body>
