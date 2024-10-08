@@ -145,10 +145,18 @@ document.getElementById('btn-confirmar').addEventListener('click', function() {
      startY: 20,  // Comenzar a mostrar la tabla un poco más abajo
    });
  
-   // Total del pedido
-   let total = productosSeleccionados.reduce((sum, producto) => sum + parseFloat(producto.precioTotal), 0);
-   doc.setFontSize(12);
-   doc.text(`Total Pedido: $${total.toFixed(2)}`, 10, doc.previousAutoTable.finalY + 10);
+// Total del pedido
+let total = productosSeleccionados.reduce((sum, producto) => sum + parseFloat(producto.precioTotal), 0);
+doc.setFontSize(12);
+const totalText = `Total Pedido: $${total.toFixed(2)}`;
+
+// Calcular la posición del centro de la página
+const pageWidth = doc.internal.pageSize.getWidth();
+const textWidth = doc.getTextWidth(totalText);
+const x = (pageWidth - textWidth) / 2; // Centrar el texto
+
+doc.text(totalText, x, doc.previousAutoTable.finalY + 10);
+
  
    // Guardar el PDF
    doc.save('pedido_confirmado.pdf');
