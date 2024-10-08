@@ -3,24 +3,32 @@
 <body>
     <main>
         <div class="buscador-panel">
-            <input type="text" id="entradaBusqueda" placeholder="Buscar producto por código o descripción">
+            <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej: Escort, Optica, Faro, Agile">
         </div>
-        <table id="tabla-productos" class="table table-striped">
+        <div id="contenedor-productos"></div> <!-- Mostrar el listado de productos buscados -->
+        
+        <!-- Tabla donde se agregan los productos seleccionados -->
+        <table id="tabla-pedido">
             <thead>
                 <tr>
                     <th>Código</th>
                     <th>Nombre</th>
-                    <th>Precio Unitario (costo_neto)</th>
+                    <th>Precio Unitario</th>
                     <th>Cantidad</th>
                     <th>Precio Total</th>
                 </tr>
             </thead>
-            <tbody id="contenedor-productos"></tbody>
+            <tbody id="tabla-pedido-body">
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4">Total del pedido:</td>
+                    <td id="total-pedido">0</td>
+                </tr>
+            </tfoot>
         </table>
-        <div>
-            <strong>Total Pedido: $<span id="total-pedido">0</span></strong>
-        </div>
     </main>
+    
     <%- include('./layouts/footer.ejs') %>
     <script src="/js/buscadorPedidoManual.js"></script>
 </body>
