@@ -784,7 +784,7 @@ actualizarStockPresupuesto: (producto_id, cantidadVendida) => {
                 return result;
             });
     },
-  obtenerProveedores: function(conexion) {
+obtenerProveedores: function(conexion) {
     return new Promise((resolve, reject) => {
         const query = 'SELECT proveedores.id, proveedores.nombre, descuentos_proveedor.descuento FROM proveedores LEFT JOIN descuentos_proveedor ON proveedores.id = descuentos_proveedor.proveedor_id';
         conexion.query(query, function(error, resultados) {
