@@ -797,6 +797,7 @@ obtenerProveedores: function(conexion) {
         });
     });
 },
+
 obtenerMarcas: function(conexion) {
     return new Promise((resolve, reject) => {
         conexion.query('SELECT * FROM marcas ORDER BY nombre ASC', function(error, resultados) {
