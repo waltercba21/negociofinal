@@ -1205,7 +1205,13 @@ seleccionarProveedorMasBarato: async function(conexion, productoId) {
         throw error; 
     }
 },
-generarPedidoManual: (req, res) => {
-    res.render('pedidoManual'); 
+generarPedidoManual : async (req, res) => {
+    try {
+        const proveedores = await obtenerProveedores(conexion);
+        res.render('pedidoManual', { proveedores });
+    } catch (error) {
+        console.error("Error al generar el pedido manual:", error);
+        res.status(500).send("Error al generar el pedido manual");
+    }
 }
 }
