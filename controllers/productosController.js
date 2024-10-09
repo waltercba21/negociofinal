@@ -1211,7 +1211,9 @@ generarPedidoManual : async (req, res) => {
         res.render('pedidoManual', { proveedores });
     } catch (error) {
         console.error("Error al generar el pedido manual:", error);
-        res.status(500).send("Error al generar el pedido manual");
+        res.status(500).send("Error al generar el pedido manual: " + error.message); // Agregar el mensaje del error
     }
-}
+},
+
+
 }
