@@ -1213,6 +1213,21 @@ generarPedidoManual: async (req, res) => {
         console.error("Error al generar el pedido manual:", error);
         res.status(500).send("Error al generar el pedido manual: " + error.message);
     }
+},
+guardarPedido : async (req, res) => {
+    try {
+        const { proveedor_id, total, productos } = req.body;
+        const pedido_id = await producto.crearPedido(proveedor_id, total);
+        for (let producto of productos) {
+            const { id, cantidad, costo_neto } = producto;
+            const subtotal = cantidad * parseFloat(costo_neto);
+            await producto.crearPedidoItem(pedido_id, id, cantidad, costo_neto, subtotal);
+        }
+        res.status(200).json({ message: 'Pedido guardado con éxito', pedido_id });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error al guardar el pedido' });
+    }
 }
 
 

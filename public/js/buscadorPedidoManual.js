@@ -63,10 +63,9 @@ function formatearNumero(num) {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-// Función para actualizar la tabla con los productos seleccionados
 function actualizarTabla() {
   const tablaBody = document.getElementById('tabla-pedido-body');
-  tablaBody.innerHTML = ''; // Limpiar la tabla antes de actualizarla
+  tablaBody.innerHTML = ''; 
 
   productosSeleccionados.forEach((producto, index) => {
     const precioTotal = parseFloat(producto.precioTotal) || 0;
@@ -82,7 +81,7 @@ function actualizarTabla() {
         <button onclick="cambiarCantidad(${index}, 1)">+</button>
       </td>
       <td>$<span id="precio-total-${producto.id}">${formatearNumero(precioTotal)}</span></td>
-      <td><button onclick="eliminarProducto(${index})" class="btn btn-danger">Eliminar</button></td>  <!-- Botón de eliminar -->
+      <td><button onclick="eliminarProducto(${index})" class="btn btn-danger">Eliminar</button></td>
     `;
     tablaBody.appendChild(fila);
   });
@@ -113,10 +112,52 @@ function actualizarTotalPedido() {
   document.getElementById('total-pedido').innerText = `$${formatearNumero(total)}`;
 }
 
-document.getElementById('btn-confirmar').addEventListener('click', function() {
-    generarPDF();
- });
+// Evento de confirmación del pedido
+document.getElementById('btn-confirmar').addEventListener('click', async function() {
+    // Obtenemos los datos para enviar al servidor
+    const proveedor_id = document.querySelector('.proveedores').value; // Asegúrate de tener un select o input de proveedores en tu HTML
+    let total = productosSeleccionados.reduce((sum, producto) => sum + parseFloat(producto.precioTotal), 0);
 
+    // Crear el objeto con los datos del pedido
+    const datosPedido = {
+        proveedor_id,
+        total,
+        productos: productosSeleccionados.map(producto => ({
+            id: producto.id,
+            cantidad: producto.cantidad,
+            costo_neto: producto.costo_neto
+        }))
+    };
+
+    try {
+        // Enviar los datos del pedido al servidor
+        const respuesta = await fetch('/pedido/guardar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(datosPedido)
+        });
+
+        if (respuesta.ok) {
+            const resultado = await respuesta.json();
+            alert('Pedido guardado con éxito');
+            
+            // Generar el PDF después de confirmar que el pedido fue guardado
+            generarPDF();
+
+            // Opcionalmente, podrías redirigir al usuario o limpiar la tabla
+            // limpiarTabla();
+        } else {
+            alert('Error al guardar el pedido');
+        }
+    } catch (error) {
+        console.error('Error al guardar el pedido:', error);
+        alert('Error en la conexión con el servidor');
+    }
+});
+
+// Función para generar el PDF
 function generarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();

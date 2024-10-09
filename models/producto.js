@@ -1599,7 +1599,6 @@ insertarImagenProducto: function(conexion, datosImagen) {
 },
 eliminarImagen : function(id) {
     return new Promise((resolve, reject) => {
-        console.log('Eliminar imagen llamado con id:', id); 
         const sql = 'DELETE FROM imagenes_producto WHERE id = ?';
         conexion.query(sql, [id], function(err, results) {
             if (err) {
@@ -1648,6 +1647,23 @@ obtenerProductosOferta: (conexion, callback) => {
         });
         callback(null, results);
     });
+},
+crearPedido: (proveedor_id, total) => {
+    return new Promise((resolve, reject) => {
+        const sql = 'INSERT INTO pedidos (proveedor_id, total) VALUES (?, ?)';
+        conexion.query(sql, [proveedor_id, total], (err, result) => {
+            if (err) reject(err);
+            resolve(result.insertId); 
+        });
+    });
+},
+crearPedidoItem : (pedido_id, producto_id, cantidad, precio_unitario, subtotal) => {
+    return new Promise((resolve, reject) => {
+        const sql = 'INSERT INTO pedido_items (pedido_id, producto_id, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)';
+        conexion.query(sql, [pedido_id, producto_id, cantidad, precio_unitario, subtotal], (err, result) => {
+            if (err) reject(err);
+            resolve(result);
+        });
+    });
 }
-
 }
