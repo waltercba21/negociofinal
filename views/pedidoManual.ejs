@@ -25,22 +25,22 @@
                     <th>Precio Unitario</th>
                     <th>Cantidad</th>
                     <th>Precio Total</th>
+                    <th>Acciones</th> <!-- Nueva columna para el botón de eliminar -->
                 </tr>
             </thead>
             <tbody id="tabla-pedido-body">
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="4">Total del pedido:</td>
+                    <td colspan="5">Total del pedido:</td>
                     <td id="total-pedido">0</td>
                 </tr>
             </tfoot>
         </table>
-        <!-- Botón para confirmar y generar el PDF -->
         
-    <div style="text-align: right; margin-top: 10px; margin-right: 20px;">
-    <button id="btn-confirmar" class="btn btn-success">CONFIRMAR</button>
-    </div>
+        <div style="text-align: right; margin-top: 10px; margin-right: 20px;">
+            <button id="btn-confirmar" class="btn btn-success">CONFIRMAR</button>
+        </div>
     </main>
 
     <%- include('./layouts/footer.ejs') %>

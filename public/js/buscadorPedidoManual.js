@@ -6,6 +6,7 @@ window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
 };
+
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
@@ -31,7 +32,6 @@ function mostrarProductos(productos) {
     divProducto.textContent = producto.nombre;
     divProducto.classList.add('producto-item'); 
 
-    // Agregar el evento para seleccionar el producto
     divProducto.addEventListener('click', () => {
       agregarProductoATabla(producto); 
       limpiarBusqueda();                
@@ -42,9 +42,6 @@ function mostrarProductos(productos) {
 }
 
 function agregarProductoATabla(producto) {
-  console.log("Producto seleccionado:", producto); 
-
-  // Verificar si el producto ya está en la tabla
   const existe = productosSeleccionados.some(p => p.id === producto.id);
   if (!existe) {
     producto.cantidad = 1;
@@ -61,6 +58,7 @@ function limpiarBusqueda() {
   document.getElementById('entradaBusqueda').value = '';
   document.getElementById('contenedor-productos').innerHTML = ''; 
 }
+
 function formatearNumero(num) {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
@@ -71,24 +69,25 @@ function actualizarTabla() {
   tablaBody.innerHTML = ''; // Limpiar la tabla antes de actualizarla
 
   productosSeleccionados.forEach((producto, index) => {
-    const precioTotal = parseFloat(producto.precioTotal) || 0; // Asegurarse que precioTotal es un número
+    const precioTotal = parseFloat(producto.precioTotal) || 0;
 
     const fila = document.createElement('tr');
     fila.innerHTML = `
       <td>${producto.codigo}</td>
       <td>${producto.nombre}</td>
-      <td>$${formatearNumero(parseFloat(producto.costo_neto))}</td>  <!-- Precio con separadores de miles -->
+      <td>$${formatearNumero(parseFloat(producto.costo_neto))}</td>
       <td>
         <button onclick="cambiarCantidad(${index}, -1)">-</button>
         ${producto.cantidad}
         <button onclick="cambiarCantidad(${index}, 1)">+</button>
       </td>
-      <td>$<span id="precio-total-${producto.id}">${formatearNumero(precioTotal)}</span></td>  <!-- Precio total con separadores de miles -->
+      <td>$<span id="precio-total-${producto.id}">${formatearNumero(precioTotal)}</span></td>
+      <td><button onclick="eliminarProducto(${index})" class="btn btn-danger">Eliminar</button></td>  <!-- Botón de eliminar -->
     `;
     tablaBody.appendChild(fila);
   });
 
-  actualizarTotalPedido(); // Actualizar el total del pedido
+  actualizarTotalPedido(); 
 }
 
 function cambiarCantidad(index, cambio) {
@@ -104,50 +103,46 @@ function cambiarCantidad(index, cambio) {
   actualizarTabla(); 
 }
 
+function eliminarProducto(index) {
+  productosSeleccionados.splice(index, 1); 
+  actualizarTabla();
+}
+
 function actualizarTotalPedido() {
   let total = productosSeleccionados.reduce((sum, producto) => sum + (parseFloat(producto.precioTotal) || 0), 0);
-  document.getElementById('total-pedido').innerText = `$${formatearNumero(total)}`;  // Total con separadores de miles
+  document.getElementById('total-pedido').innerText = `$${formatearNumero(total)}`;
 }
 
 document.getElementById('btn-confirmar').addEventListener('click', function() {
     generarPDF();
  });
- 
- function generarPDF() {
-  // Crear una instancia de jsPDF
+
+function generarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  // Título del PDF
   doc.setFontSize(18);
   doc.text('Pedido Confirmado', 10, 10);
 
-  // Agregar los encabezados de la tabla
   const headers = [['Código', 'Producto', 'Costo Neto', 'Cantidad', 'Precio Total']];
-  
-  // Extraer datos de la tabla
+
   const rows = productosSeleccionados.map(producto => [
     producto.codigo, 
     producto.nombre, 
-    `$${formatearNumero(parseFloat(producto.costo_neto))}`,  // Formatear costo neto
+    `$${formatearNumero(parseFloat(producto.costo_neto))}`,
     producto.cantidad, 
-    `$${formatearNumero(parseFloat(producto.precioTotal))}`  // Formatear precio total
+    `$${formatearNumero(parseFloat(producto.precioTotal))}`
   ]);
 
-  // Insertar la tabla de productos en el PDF
   doc.autoTable({
     head: headers,
     body: rows,
-    startY: 20,  // Comenzar a mostrar la tabla un poco más abajo
+    startY: 20,
   });
 
-  // Total del pedido
   let total = productosSeleccionados.reduce((sum, producto) => sum + parseFloat(producto.precioTotal), 0);
   doc.setFontSize(12);
-  doc.text(`Total Pedido: $${formatearNumero(total)}`, 10, doc.previousAutoTable.finalY + 10);  // Formatear total del pedido
+  doc.text(`Total Pedido: $${formatearNumero(total)}`, 10, doc.previousAutoTable.finalY + 10);
 
-  // Guardar el PDF
   doc.save('pedido_confirmado.pdf');
 }
-
- 
