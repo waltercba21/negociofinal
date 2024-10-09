@@ -131,7 +131,7 @@ document.getElementById('btn-confirmar').addEventListener('click', async functio
 
     try {
         // Enviar los datos del pedido al servidor
-        const respuesta = await fetch('/pedido/guardar', {
+        const respuesta = await fetch('/productos/guardarPedido', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -142,12 +142,7 @@ document.getElementById('btn-confirmar').addEventListener('click', async functio
         if (respuesta.ok) {
             const resultado = await respuesta.json();
             alert('Pedido guardado con éxito');
-            
-            // Generar el PDF después de confirmar que el pedido fue guardado
             generarPDF();
-
-            // Opcionalmente, podrías redirigir al usuario o limpiar la tabla
-            // limpiarTabla();
         } else {
             alert('Error al guardar el pedido');
         }
