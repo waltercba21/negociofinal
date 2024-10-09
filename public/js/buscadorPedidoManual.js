@@ -112,45 +112,53 @@ function actualizarTotalPedido() {
   document.getElementById('total-pedido').innerText = `$${formatearNumero(total)}`;
 }
 
-// Evento de confirmación del pedido
 document.getElementById('btn-confirmar').addEventListener('click', async function() {
-    // Obtenemos los datos para enviar al servidor
-    const proveedor_id = document.querySelector('.proveedores').value; // Asegúrate de tener un select o input de proveedores en tu HTML
-    let total = productosSeleccionados.reduce((sum, producto) => sum + parseFloat(producto.precioTotal), 0);
+  const proveedor_id = document.querySelector('.proveedores').value;
+  
+  // Asegúrate de que hay productos seleccionados
+  if (productosSeleccionados.length === 0) {
+      alert('No hay productos seleccionados');
+      return;
+  }
 
-    // Crear el objeto con los datos del pedido
-    const datosPedido = {
-        proveedor_id,
-        total,
-        productos: productosSeleccionados.map(producto => ({
-            id: producto.id,
-            cantidad: producto.cantidad,
-            costo_neto: producto.costo_neto
-        }))
-    };
+  // Calcular el total del pedido
+  let total = productosSeleccionados.reduce((sum, producto) => sum + parseFloat(producto.precioTotal), 0);
 
-    try {
-        // Enviar los datos del pedido al servidor
-        const respuesta = await fetch('/productos/guardarPedido', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(datosPedido)
-        });
+  // Crear el objeto con los datos del pedido
+  const datosPedido = {
+      proveedor_id,
+      total,
+      productos: productosSeleccionados.map(producto => ({
+          id: producto.id,
+          cantidad: producto.cantidad,
+          costo_neto: producto.costo_neto
+      }))
+  };
 
-        if (respuesta.ok) {
-            const resultado = await respuesta.json();
-            alert('Pedido guardado con éxito');
-            generarPDF();
-        } else {
-            alert('Error al guardar el pedido');
-        }
-    } catch (error) {
-        console.error('Error al guardar el pedido:', error);
-        alert('Error en la conexión con el servidor');
-    }
+  try {
+      // Enviar los datos al servidor
+      const respuesta = await fetch('/productos/guardarPedido', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(datosPedido)
+      });
+
+      if (respuesta.ok) {
+          const resultado = await respuesta.json();
+          alert('Pedido guardado con éxito');
+          generarPDF();  // Llamar la función para generar el PDF
+      } else {
+          const errorData = await respuesta.json();
+          alert('Error al guardar el pedido: ' + errorData.message);
+      }
+  } catch (error) {
+      console.error('Error al guardar el pedido:', error);
+      alert('Error en la conexión con el servidor');
+  }
 });
+
 
 // Función para generar el PDF
 function generarPDF() {

@@ -1214,21 +1214,46 @@ generarPedidoManual: async (req, res) => {
         res.status(500).send("Error al generar el pedido manual: " + error.message);
     }
 },
-guardarPedido : async (req, res) => {
+// Controlador
+guardarPedido: async (req, res) => {
     try {
         const { proveedor_id, total, productos } = req.body;
+        
+        if (!proveedor_id || !total || productos.length === 0) {
+            return res.status(400).json({ message: 'Datos del pedido incompletos' });
+        }
+
+        // Crear el pedido y obtener el ID del nuevo pedido
         const pedido_id = await producto.crearPedido(proveedor_id, total);
+        
+        // Verificar que el pedido se creó correctamente
+        if (!pedido_id) {
+            throw new Error('No se pudo crear el pedido');
+        }
+
+        // Iterar sobre los productos y crear los items del pedido
         for (let producto of productos) {
             const { id, cantidad, costo_neto } = producto;
+
+            // Validar que los datos de cada producto sean correctos
+            if (!id || !cantidad || !costo_neto) {
+                throw new Error('Datos de producto incompletos');
+            }
+
+            // Calcular el subtotal
             const subtotal = cantidad * parseFloat(costo_neto);
+
+            // Crear el item del pedido
             await producto.crearPedidoItem(pedido_id, id, cantidad, costo_neto, subtotal);
         }
+
         res.status(200).json({ message: 'Pedido guardado con éxito', pedido_id });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error al guardar el pedido' });
+        console.error('Error en guardarPedido:', err.message);
+        res.status(500).json({ message: 'Error al guardar el pedido', error: err.message });
     }
 }
+
 
 
 }
