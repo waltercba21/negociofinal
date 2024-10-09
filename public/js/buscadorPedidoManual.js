@@ -159,8 +159,6 @@ document.getElementById('btn-confirmar').addEventListener('click', async functio
   }
 });
 
-
-// Función para generar el PDF
 function generarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
