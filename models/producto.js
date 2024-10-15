@@ -536,7 +536,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     }, 
-    actualizarPreciosPDF: function(precio_lista, codigo) {
+    actualizarPreciosPDF: function (precio_lista, codigo) {
         return new Promise((resolve, reject) => {
             if (typeof codigo !== 'string') {
                 console.error(`El código del producto no es una cadena: ${codigo}`);
@@ -546,7 +546,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     
             console.log(`Actualizando productos con código: ${codigo} y precio lista: ${precio_lista}`);
     
-            const sql = `SELECT pp.*, p.utilidad, p.precio_venta, dp.descuento 
+            const sql = `SELECT pp.*, p.utilidad, p.precio_venta, p.nombre, dp.descuento 
                          FROM producto_proveedor pp 
                          JOIN productos p ON pp.producto_id = p.id 
                          JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id 
@@ -607,6 +607,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                                     } else {
                                         resolveUpdate({
                                             codigo: codigo,
+                                            nombre: producto.nombre, // Aquí se incluye el nombre del producto
                                             producto_id: producto.producto_id,
                                             precio_lista_antiguo: producto.precio_lista,
                                             precio_lista_nuevo: precio_lista,
@@ -630,6 +631,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             });
         });
     },
+    
     
     obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
