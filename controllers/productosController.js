@@ -1214,7 +1214,6 @@ generarPedidoManual: async (req, res) => {
         res.status(500).send("Error al generar el pedido manual: " + error.message);
     }
 },
-// Controlador
 guardarPedido: async (req, res) => {
     try {
         const { proveedor_id, total, productos } = req.body;
@@ -1232,8 +1231,8 @@ guardarPedido: async (req, res) => {
         }
 
         // Iterar sobre los productos y crear los items del pedido
-        for (let producto of productos) {
-            const { id, cantidad, costo_neto } = producto;
+        for (let item of productos) { // Cambié 'producto' por 'item' para evitar el conflicto de nombres
+            const { id, cantidad, costo_neto } = item;
 
             // Validar que los datos de cada producto sean correctos
             if (!id || !cantidad || !costo_neto) {
@@ -1256,4 +1255,5 @@ guardarPedido: async (req, res) => {
 
 
 
-}
+
+} 
