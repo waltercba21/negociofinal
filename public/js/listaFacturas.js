@@ -64,11 +64,12 @@ function cargarFacturas(fechaInicio, fechaFin) {
             });
 
             document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
-            console.log('Facturas cargadas:', tableBody.innerHTML);
+
+            // Asignar los eventos a los botones una vez que las facturas se han cargado
+            addEventListenersFacturas();
         })
         .catch(error => console.error('Error al cargar las facturas:', error));
 }
-
 
 function addEventListenersFacturas() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
@@ -118,7 +119,7 @@ function cancelarEdicionFactura(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
     const fecha = row.querySelector('.fecha input').value.split('-').reverse().join('/');
     const cliente = row.querySelector('.cliente input').value;
-    const total = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(row.querySelector('.total input').value.replace('.', '').replace(',', '.'));
+    const total = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(row.querySelector('.total input').value.replace(/\./g, '').replace(',', '.'));
     row.querySelector('.fecha').textContent = fecha;
     row.querySelector('.cliente').textContent = cliente;
     row.querySelector('.total').textContent = total;
@@ -175,63 +176,4 @@ function eliminarFactura(id) {
             alert('Error al eliminar la factura: ' + error.message);
         });
     }
-}
-function imprimirTotalFacturas(fechaInicio, fechaFin) {
-    const tableBody = document.querySelector('#facturas-table tbody');
-
-    if (!tableBody) {
-        console.error('El cuerpo de la tabla no se encontró.');
-        alert('Error: No se encontró el cuerpo de la tabla.');
-        return;
-    }
-
-    console.log('Contenido de tableBody:', tableBody.innerHTML);
-
-    const rows = tableBody.querySelectorAll('tr');
-
-    if (rows.length === 0) {
-        alert('No hay facturas para imprimir.');
-        return;
-    }
-
-    let totalFacturas = 0;
-
-    rows.forEach(row => {
-        const totalCell = row.querySelector('.total');
-        if (totalCell) {
-            // Mostrar el contenido de la celda total antes de convertir
-            console.log('Contenido de la celda total:', totalCell.textContent);
-
-            // Asegúrate de eliminar el símbolo de moneda y los puntos
-            const totalNumerico = parseFloat(totalCell.textContent.replace(/\./g, '').replace('$', '').replace(',', '.'));
-            console.log('Total numérico:', totalNumerico); // Verifica el valor numérico
-
-            // Verifica que totalNumerico sea un número válido
-            if (!isNaN(totalNumerico)) {
-                totalFacturas += totalNumerico;
-            } else {
-                console.warn('El valor total no es un número válido:', totalCell.textContent);
-            }
-        } else {
-            console.warn('No se encontró la celda total en una fila:', row);
-        }
-    });
-
-    const fechaSeleccionada = `Desde: ${fechaInicio} Hasta: ${fechaFin}`;
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    // Agregar título
-    doc.setFontSize(18);
-    doc.text('Resumen de Facturas', 10, 10);
-
-    // Agregar fecha seleccionada
-    doc.setFontSize(12);
-    doc.text(fechaSeleccionada, 10, 20);
-
-    // Agregar total
-    doc.text(`Total de Facturas: ${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas)}`, 10, 30);
-
-    // Guardar el PDF
-    doc.save('Resumen_Facturas.pdf');
 }

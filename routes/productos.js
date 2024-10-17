@@ -35,7 +35,7 @@ router.post('/procesarFormulario', productosController.procesarFormulario);
 router.get('/presupuesto/:id', productosController.presupuesto);
 router.get('/listadoPresupuestos', productosController.listadoPresupuestos);
 router.get('/api/presupuestos', productosController.getPresupuestos);
-router.put('/api/presupuestos/:id', productosController.editPresupuesto);
+router.put('/api/presupuestos/:id', productosController.editPresupuesto); 
 router.delete('/api/presupuestos/:id', productosController.deletePresupuesto);
 
 router.get('/facturasMostrador', productosController.facturasMostrador);

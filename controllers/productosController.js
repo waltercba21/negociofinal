@@ -940,7 +940,7 @@ listadoPresupuestos : (req, res) => {
     res.render('listadoPresupuestos');
 },
 listaFacturas : (req, res) => {
-    res.render('listaFacturas');
+    res.render('listaFacturas'); 
 },
 getPresupuestos: async (req, res) => {
     try {
