@@ -177,16 +177,18 @@ function eliminarFactura(id) {
         });
     }
 }
+
 $.ajax({
     url: `/factura/${facturaId}`,  // Llamada a tu ruta de la factura
     method: 'GET',
     success: function(response) {
-        console.log(response);  // Agregar este log para verificar la respuesta
+        console.log(response);  // Verifica la respuesta
+
         if (response.factura && response.items.length > 0) {
-            // Rellenar los datos en el modal
+            // Llenar los detalles de la factura
             $('#nombreCliente').text(response.factura.nombre_cliente);
-            $('#fechaFactura').text(response.factura.fecha);
-            $('#totalFactura').text(response.factura.total);
+            $('#fechaFactura').text(response.factura.fecha.split('T')[0]);  // Ajustar el formato de la fecha
+            $('#totalFactura').text('$' + response.factura.total);
 
             // Limpiar la tabla de productos antes de llenarla
             $('#productosFactura').empty();
