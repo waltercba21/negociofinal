@@ -1017,18 +1017,20 @@ factura: (req, res) => {
     producto.obtenerDetalleFactura(id)
         .then(data => {
             if (data && data.items.length > 0) {
-                res.render('presupuesto', {
-                    presupuesto: data.presupuesto,
-                    detalles: data.items 
+                // En lugar de renderizar, enviar los datos como JSON
+                res.json({
+                    factura: data.factura,
+                    items: data.items
                 });
             } else {
-                res.status(404).send('Presupuesto no encontrado');
+                res.status(404).json({ message: 'Factura no encontrada' });
             }
         })
         .catch(error => {
-            res.status(500).send('Error interno del servidor');
+            res.status(500).json({ message: 'Error interno del servidor' });
         });
 },
+
 deletePresupuesto: (req, res) => {
     const { id } = req.params;
     producto.eliminarPresupuesto(id)
