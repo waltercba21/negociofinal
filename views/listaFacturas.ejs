@@ -30,45 +30,43 @@
                 </tr>
             </tfoot>
         </table>
+
         <!-- Modal para mostrar detalles de la factura -->
-<div class="modal fade" id="detalleFacturaModal" tabindex="-1" role="dialog" aria-labelledby="detalleFacturaLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="detalleFacturaLabel">Detalles de la Factura</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+        <div class="modal fade" id="detalleFacturaModal" tabindex="-1" aria-labelledby="detalleFacturaLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="detalleFacturaLabel">Detalles de la Factura</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>Cliente: <span id="nombreCliente"></span></h6>
+                        <h6>Fecha: <span id="fechaFactura"></span></h6>
+                        <h6>Total: $<span id="totalFactura"></span></h6>
+                        <hr>
+                        <h6>Productos:</h6>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productosFactura">
+                                <!-- Aquí se cargarán los productos de la factura -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="modal-body">
-          <!-- Aquí se mostrarán los detalles de la factura -->
-          <h6>Cliente: <span id="nombreCliente"></span></h6>
-          <h6>Fecha: <span id="fechaFactura"></span></h6>
-          <h6>Total: $<span id="totalFactura"></span></h6>
-          <hr>
-          <h6>Productos:</h6>
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Precio Unitario</th>
-                <th>Subtotal</th>
-              </tr>
-            </thead>
-            <tbody id="productosFactura">
-              <!-- Aquí se cargarán los productos de la factura -->
-            </tbody>
-          </table>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
     </main>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
     <script src="/js/listaFacturas.js"></script>
 </body>

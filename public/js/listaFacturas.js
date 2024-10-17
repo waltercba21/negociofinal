@@ -53,7 +53,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
                     <td class="cliente">${factura.nombre_cliente}</td>
                     <td class="total">${totalFormateado}</td>
                     <td>
-                        <button class="btn-ver" data-id="${factura.id}">Ver Detalle</button>
+                         <button class="btn-ver ver-detalle" data-id="${factura.id}">Ver Detalle</button>
                         <button class="btn-editar" data-id="${factura.id}">Editar</button>
                         <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
                         <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
@@ -182,10 +182,9 @@ $(document).on('click', '.ver-detalle', function() {
 
     // Hacer una petición AJAX para obtener los detalles de la factura
     $.ajax({
-        url: `/factura/${facturaId}`,  // Llamada a tu ruta de la factura
+        url: `/factura/${facturaId}`,  // Asegúrate de que esta ruta devuelva los datos correctos
         method: 'GET',
         success: function(response) {
-            // Verifica si la respuesta tiene los datos necesarios
             if (response.factura && response.items.length > 0) {
                 // Rellenar los datos en el modal
                 $('#nombreCliente').text(response.factura.nombre_cliente);
@@ -210,7 +209,7 @@ $(document).on('click', '.ver-detalle', function() {
                 // Mostrar el modal
                 $('#detalleFacturaModal').modal('show');
             } else {
-                alert('Factura no encontrada');
+                alert('Factura no encontrada o sin items');
             }
         },
         error: function(error) {
