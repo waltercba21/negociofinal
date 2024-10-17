@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
+            console.log('Buscando facturas desde:', fechaInicio, 'hasta:', fechaFin); // Log de fechas
             cargarFacturas(fechaInicio, fechaFin);
         });
     } else {
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnImprimirTotal.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
+            console.log('Imprimiendo total de facturas desde:', fechaInicio, 'hasta:', fechaFin); // Log de fechas
             imprimirTotalFacturas(fechaInicio, fechaFin);
         });
     } else {
@@ -31,9 +33,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function cargarFacturas(fechaInicio, fechaFin) {
+    console.log('Cargando facturas...'); // Log de inicio de carga
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Datos de facturas recibidos:', data); // Log de datos recibidos
             const tableBody = document.querySelector('#facturas-table tbody');
             tableBody.innerHTML = ''; // Limpia el tbody antes de agregar nuevas filas
             let totalFacturas = 0;
@@ -53,7 +62,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
                     <td class="cliente">${factura.nombre_cliente}</td>
                     <td class="total">${totalFormateado}</td>
                     <td>
-                         <button class="btn-ver ver-detalle" data-id="${factura.id}">Ver Detalle</button>
+                        <button class="btn-ver ver-detalle" data-id="${factura.id}">Ver Detalle</button>
                         <button class="btn-editar" data-id="${factura.id}">Editar</button>
                         <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
                         <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
@@ -64,41 +73,50 @@ function cargarFacturas(fechaInicio, fechaFin) {
             });
 
             document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
+            console.log('Total de facturas:', totalFacturas); // Log del total calculado
 
             // Asignar los eventos a los botones una vez que las facturas se han cargado
             addEventListenersFacturas();
         })
-        .catch(error => console.error('Error al cargar las facturas:', error));
+        .catch(error => {
+            console.error('Error al cargar las facturas:', error);
+        });
 }
 
 function addEventListenersFacturas() {
+    console.log('Asignando eventos a botones de facturas'); // Log de asignación de eventos
     document.querySelectorAll('.btn-ver').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
+            console.log('Ver detalle de factura ID:', id); // Log del ID de la factura
             window.location.href = `/productos/factura/${id}`;
         });
     });
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
+            console.log('Habilitando edición de factura ID:', id); // Log del ID de la factura
             habilitarEdicionFactura(id);
         });
     });
     document.querySelectorAll('.btn-eliminar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
+            console.log('Eliminando factura ID:', id); // Log del ID de la factura
             eliminarFactura(id);
         });
     });
     document.querySelectorAll('.btn-guardar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
+            console.log('Guardando cambios de factura ID:', id); // Log del ID de la factura
             guardarCambiosFactura(id);
         });
     });
     document.querySelectorAll('.btn-cancelar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
+            console.log('Cancelando edición de factura ID:', id); // Log del ID de la factura
             cancelarEdicionFactura(id);
         });
     });
@@ -135,6 +153,8 @@ function guardarCambiosFactura(id) {
     const nombre_cliente = row.querySelector('.cliente input').value;
     const total = parseFloat(row.querySelector('.total input').value.replace(/\./g, '').replace(',', '.'));
 
+    console.log('Guardando cambios:', { id, fecha, nombre_cliente, total }); // Log de datos a guardar
+
     fetch(`/productos/api/facturas/${id}`, {
         method: 'PUT',
         headers: {
@@ -154,6 +174,7 @@ function guardarCambiosFactura(id) {
     })
     .catch(error => {
         alert('Error al actualizar la factura: ' + error.message);
+        console.error('Error en guardar cambios:', error); // Log de error
     });
 }
 
@@ -174,45 +195,24 @@ function eliminarFactura(id) {
         })
         .catch(error => {
             alert('Error al eliminar la factura: ' + error.message);
+            console.error('Error en eliminar factura:', error); // Log de error
         });
     }
 }
 
-$.ajax({
-    url: `/factura/${facturaId}`,  // Llamada a tu ruta de la factura
-    method: 'GET',
-    success: function(response) {
-        console.log(response);  // Verifica la respuesta
-
-        if (response.factura && response.items.length > 0) {
-            // Llenar los detalles de la factura
-            $('#nombreCliente').text(response.factura.nombre_cliente);
-            $('#fechaFactura').text(response.factura.fecha.split('T')[0]);  // Ajustar el formato de la fecha
-            $('#totalFactura').text('$' + response.factura.total);
-
-            // Limpiar la tabla de productos antes de llenarla
-            $('#productosFactura').empty();
-
-            // Agregar cada producto a la tabla
-            response.items.forEach(function(item) {
-                $('#productosFactura').append(`
-                    <tr>
-                        <td>${item.nombre_producto}</td>
-                        <td>${item.cantidad}</td>
-                        <td>$${item.precio_unitario}</td>
-                        <td>$${item.subtotal}</td>
-                    </tr>
-                `);
-            });
-
-            // Mostrar el modal
-            $('#detalleFacturaModal').modal('show');
-        } else {
-            alert('Factura no encontrada');
-        }
-    },
-    error: function(error) {
-        console.error('Error al obtener los detalles de la factura:', error);
-        alert('Error al obtener los detalles de la factura');
-    }
-});
+function imprimirTotalFacturas(fechaInicio, fechaFin) {
+    fetch(`/productos/api/facturas/total?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor al obtener total');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Total de facturas obtenido:', data.total); // Log del total obtenido
+            alert(`Total de facturas entre ${fechaInicio} y ${fechaFin}: ${data.total}`);
+        })
+        .catch(error => {
+            console.error('Error al imprimir total de facturas:', error); // Log de error
+        });
+}
