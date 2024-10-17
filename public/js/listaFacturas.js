@@ -177,44 +177,40 @@ function eliminarFactura(id) {
         });
     }
 }
-$(document).on('click', '.ver-detalle', function() {
-    const facturaId = $(this).data('id');
+$.ajax({
+    url: `/factura/${facturaId}`,  // Llamada a tu ruta de la factura
+    method: 'GET',
+    success: function(response) {
+        console.log(response);  // Agregar este log para verificar la respuesta
+        if (response.factura && response.items.length > 0) {
+            // Rellenar los datos en el modal
+            $('#nombreCliente').text(response.factura.nombre_cliente);
+            $('#fechaFactura').text(response.factura.fecha);
+            $('#totalFactura').text(response.factura.total);
 
-    // Hacer una petición AJAX para obtener los detalles de la factura
-    $.ajax({
-        url: `/factura/${facturaId}`,  // Asegúrate de que esta ruta devuelva los datos correctos
-        method: 'GET',
-        success: function(response) {
-            if (response.factura && response.items.length > 0) {
-                // Rellenar los datos en el modal
-                $('#nombreCliente').text(response.factura.nombre_cliente);
-                $('#fechaFactura').text(response.factura.fecha);
-                $('#totalFactura').text(response.factura.total);
+            // Limpiar la tabla de productos antes de llenarla
+            $('#productosFactura').empty();
 
-                // Limpiar la tabla de productos antes de llenarla
-                $('#productosFactura').empty();
+            // Agregar cada producto a la tabla
+            response.items.forEach(function(item) {
+                $('#productosFactura').append(`
+                    <tr>
+                        <td>${item.nombre_producto}</td>
+                        <td>${item.cantidad}</td>
+                        <td>$${item.precio_unitario}</td>
+                        <td>$${item.subtotal}</td>
+                    </tr>
+                `);
+            });
 
-                // Agregar cada producto a la tabla
-                response.items.forEach(function(item) {
-                    $('#productosFactura').append(`
-                        <tr>
-                            <td>${item.nombre_producto}</td>
-                            <td>${item.cantidad}</td>
-                            <td>$${item.precio_unitario}</td>
-                            <td>$${item.subtotal}</td>
-                        </tr>
-                    `);
-                });
-
-                // Mostrar el modal
-                $('#detalleFacturaModal').modal('show');
-            } else {
-                alert('Factura no encontrada o sin items');
-            }
-        },
-        error: function(error) {
-            console.error('Error al obtener los detalles de la factura:', error);
-            alert('Error al obtener los detalles de la factura');
+            // Mostrar el modal
+            $('#detalleFacturaModal').modal('show');
+        } else {
+            alert('Factura no encontrada');
         }
-    });
+    },
+    error: function(error) {
+        console.error('Error al obtener los detalles de la factura:', error);
+        alert('Error al obtener los detalles de la factura');
+    }
 });
