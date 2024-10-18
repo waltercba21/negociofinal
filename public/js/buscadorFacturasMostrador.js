@@ -28,7 +28,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         cantidad = !isNaN(cantidad) ? cantidad : 1; 
         
         let subtotal = precio_unitario * cantidad; 
-
         console.log(`Subtotal calculado para fila ${i + 1}:`, subtotal);
 
         invoiceItems.push({ 
@@ -46,7 +45,13 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     // Total presupuesto a enviar
     const totalPresupuesto = document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim();
     console.log("Total presupuesto antes de enviar:", totalPresupuesto);
-    
+
+    // Obtener los métodos de pago seleccionados
+    const metodosPago = [];
+    document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
+        metodosPago.push(checkbox.value);
+    });
+
     try {
         const response = await fetch('/productos/procesarFormularioFacturas', {
             method: 'POST',
@@ -57,7 +62,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
                 totalPresupuesto,
-                invoiceItems  
+                invoiceItems,
+                metodosPago: metodosPago.join(', ') // Pasar los métodos de pago como cadena
             })
         });
 
@@ -86,6 +92,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
