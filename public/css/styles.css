@@ -970,7 +970,46 @@ footer {
   transform: scale(1.5) !important; /* Agranda el checkbox */
   cursor: pointer !important; /* Cambia el cursor a una mano */
 }
+/* Colores y estilo específicos para cada botón */
+.btn-ver {
+  background-color: #3498db; /* Azul claro */
+  color: white;
+}
 
+.btn-editar {
+  background-color: #f39c12; /* Naranja */
+  color: white;
+}
+
+.btn-eliminar {
+  background-color: #e74c3c; /* Rojo */
+  color: white;
+}
+
+.btn-guardar {
+  background-color: #2ecc71; /* Verde */
+  color: white;
+}
+
+.btn-cancelar {
+  background-color: #95a5a6; /* Gris */
+  color: white;
+}
+
+/* Efecto hover para mejorar la interacción */
+button:hover {
+  opacity: 0.9;
+}
+
+/* Efecto de tamaño para todos los botones */
+button {
+  transition: all 0.3s ease;
+}
+
+/* Tamaño mayor al hacer hover */
+button:hover {
+  transform: scale(1.05);
+}
 
 
 /*--------------------------listadoPresupuestos--------------------------*/
