@@ -298,31 +298,37 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
     const doc = new jsPDF();
     let y = 10; 
     doc.setFontSize(10);
-    
+
+    // Ajuste de las posiciones X de las columnas
+    const posXFecha = 20;        // Posición más cercana a la izquierda
+    const posXCliente = 70;      // Ajuste adecuado para la columna del cliente
+    const posXTotal = 120;       // Columna del total más centrada
+    const posXMetodoPago = 160;  // Método de Pago más alejado del margen derecho
+
     // Títulos de las columnas
-    doc.text('Fecha', 30, y);
-    doc.text('Cliente', 90, y);
-    doc.text('Total', 150, y);
-    doc.text('Método de Pago', 180, y); // Nueva columna para el método de pago
+    doc.text('Fecha', posXFecha, y);
+    doc.text('Cliente', posXCliente, y);
+    doc.text('Total', posXTotal, y);
+    doc.text('Método de Pago', posXMetodoPago, y); // Nueva columna para el método de pago
     y += 5;
 
     let totalGeneral = 0;
-    
+
     // Iterar sobre las filas de la tabla de facturas
     document.querySelectorAll('#facturas-table tbody tr').forEach(function(row) {
         const fecha = row.querySelector('.fecha') ? row.querySelector('.fecha').textContent.trim() : 'N/A';
         const cliente = row.querySelector('.cliente') ? row.querySelector('.cliente').textContent.trim() : 'N/A';
         const total = row.querySelector('.total') ? row.querySelector('.total').textContent.trim() : '0.00';
         const metodosPago = row.querySelector('.metodos-pago') ? row.querySelector('.metodos-pago').textContent.trim() : 'N/A'; // Obtener el método de pago
-        
+
         console.log(`Fecha: ${fecha}, Cliente: ${cliente}, Total: ${total}, Método de Pago: ${metodosPago}`); // Para depuración
 
         y += 7;
-        doc.text(fecha, 30, y); 
-        doc.text(cliente, 90, y);
-        doc.text(total, 150, y);
-        doc.text(metodosPago, 180, y);
-        
+        doc.text(fecha, posXFecha, y); 
+        doc.text(cliente, posXCliente, y);
+        doc.text(total, posXTotal, y);
+        doc.text(metodosPago, posXMetodoPago, y);
+
         // Sumar al total general
         totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g, "").replace(',', '.'));
     });
@@ -333,7 +339,7 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
     const pageWidth = doc.internal.pageSize.getWidth();
     const textX = (pageWidth / 2) + (pageWidth / 4) - (textWidth / 2); 
     doc.text(totalText, textX, y);
-    
+
     // Guardar el PDF
     doc.save('detalle_ventas.pdf');
 });
