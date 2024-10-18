@@ -10,12 +10,19 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         
-        let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
+        // Obtener el valor del input de precio unitario
+        const precioInput = filasFactura[i].cells[2].querySelector('input').value;
+        console.log(`Fila ${i + 1}: Valor de Precio Unitario antes de procesar:`, precioInput);
+        
+        let precio_unitario = parseFloat(precioInput.replace(/\./g, '').replace(',', '.'));
+        console.log(`Fila ${i + 1}: Precio Unitario procesado:`, precio_unitario);
+        
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
         
         // Asegúrate de que los valores son válidos
         console.log(`Fila ${i + 1}: Código: ${codigo}, Descripción: ${descripcion}, Precio Unitario: ${precio_unitario}, Cantidad: ${cantidad}`);
 
+        // Manejo de valores no válidos
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0; 
         cantidad = !isNaN(cantidad) ? cantidad : 1; 
         
