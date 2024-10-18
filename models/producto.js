@@ -128,19 +128,21 @@ guardarPresupuesto : (presupuesto) => {
         return new Promise((resolve, reject) => {
             const sqlQuery = `
                 SELECT p.id, p.nombre_cliente, DATE_FORMAT(p.fecha, '%d/%m/%Y') AS fecha, 
-                       p.total, p.metodo_pago // Asegúrate de usar el nombre correcto de la columna
+                       p.total, p.metodo_pago 
                 FROM facturas_mostrador p
                 WHERE DATE(p.fecha) BETWEEN ? AND ?;
             `;
+            console.log(`Ejecutando consulta: ${sqlQuery} con fechas ${fechaInicio} y ${fechaFin}`);
             conexion.query(sqlQuery, [fechaInicio, fechaFin], (error, resultados) => {
                 if (error) {
+                    console.error('Error en la consulta:', error);
                     reject(new Error('Error al obtener facturas: ' + error.message));
                 } else {
                     const facturasFormateadas = resultados.map(factura => {
                         return {
                             ...factura,
                             total: new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(factura.total),
-                            metodoPago: factura.metodo_pago || 'N/A' // Agregar el método de pago
+                            metodoPago: factura.metodo_pago || 'N/A' 
                         };
                     });
                     resolve(facturasFormateadas);
