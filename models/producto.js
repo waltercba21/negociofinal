@@ -127,7 +127,8 @@ guardarPresupuesto : (presupuesto) => {
     getAllFacturas: (fechaInicio, fechaFin) => {
         return new Promise((resolve, reject) => {
             const sqlQuery = `
-                SELECT p.id, p.nombre_cliente, DATE_FORMAT(p.fecha, '%d/%m/%Y') AS fecha, p.total
+                SELECT p.id, p.nombre_cliente, DATE_FORMAT(p.fecha, '%d/%m/%Y') AS fecha, 
+                       p.total, p.metodo_pago // Asegúrate de usar el nombre correcto de la columna
                 FROM facturas_mostrador p
                 WHERE DATE(p.fecha) BETWEEN ? AND ?;
             `;
@@ -138,7 +139,8 @@ guardarPresupuesto : (presupuesto) => {
                     const facturasFormateadas = resultados.map(factura => {
                         return {
                             ...factura,
-                            total: new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(factura.total) // Formatear el total
+                            total: new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(factura.total),
+                            metodoPago: factura.metodo_pago || 'N/A' // Agregar el método de pago
                         };
                     });
                     resolve(facturasFormateadas);

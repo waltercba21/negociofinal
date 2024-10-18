@@ -320,7 +320,7 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
         doc.text(fecha, 30, y); 
         doc.text(cliente, 90, y);
         doc.text(total, 150, y);
-        doc.text(metodosPago, 180, y); // Agregar el método de pago al PDF
+        doc.text(metodosPago, 180, y);
         
         // Sumar al total general
         totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g, "").replace(',', '.'));
