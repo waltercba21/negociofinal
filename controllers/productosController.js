@@ -909,24 +909,39 @@ presupuestoMostrador: async function(req, res) {
 },
 procesarFormularioFacturas: async (req, res) => {
     try {
+        // Destructuramos los datos del cuerpo de la solicitud
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
-        
-        // Verifica que invoiceItems sea un arreglo y parsea
-        const itemsParsed = JSON.parse(invoiceItems);
-        
+
+        // Limpieza del total recibido
         const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
+
+        // Creación del objeto de presupuesto
         const presupuesto = {
             nombre_cliente: nombreCliente,
             fecha: fechaPresupuesto,
             total: totalLimpio
         };
-        
+
+        // Guardar la factura y obtener el ID
         const presupuestoId = await producto.guardarFactura(presupuesto);
-        
-        const items = await Promise.all(itemsParsed.map(async item => {
+
+        // Validar que invoiceItems sea un arreglo
+        if (!Array.isArray(invoiceItems) || invoiceItems.length === 0) {
+            return res.status(400).json({ error: 'No se proporcionaron items de factura.' });
+        }
+
+        // Procesar los items de la factura
+        const items = await Promise.all(invoiceItems.map(async item => {
             const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id);
+            
+            // Verifica si el producto fue encontrado
+            if (!producto_id) {
+                throw new Error(`Producto con ID ${item.producto_id} no encontrado.`);
+            }
+
             // Actualizar stock del producto
             await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
+
             return [
                 presupuestoId,
                 producto_id,
@@ -935,15 +950,19 @@ procesarFormularioFacturas: async (req, res) => {
                 item.subtotal
             ];
         }));
-        
+
+        // Guardar los items de la factura
         await producto.guardarItemsFactura(items);
+
+        // Responder con éxito
         res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
     } catch (error) {
         console.error('Error al guardar el presupuesto:', error);
+        
+        // Responder con error
         res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
     }
 },
-
 
 listadoPresupuestos : (req, res) => {
     res.render('listadoPresupuestos');
