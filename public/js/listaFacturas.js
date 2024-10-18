@@ -85,7 +85,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
 
 function addEventListenersFacturas() {
     console.log('Asignando eventos a botones de facturas'); // Log de asignación de eventos
-    document.querySelectorAll('.btn-ver').forEach(btn => {
+    document.querySelectorAll('.ver-detalle').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
             console.log('Ver detalle de factura ID:', id);  // Log del ID de la factura
@@ -149,14 +149,12 @@ function cargarDetallesFactura(id) {
         })
         .then(data => {
             console.log('Detalles de factura recibidos:', data); 
-            
-            // Asignar los datos al modal
             document.getElementById('nombreCliente').textContent = data.nombre_cliente;
             document.getElementById('fechaFactura').textContent = data.fecha;
             document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(data.total);
             
             const productosFactura = document.getElementById('productosFactura');
-            productosFactura.innerHTML = ''; // Limpia el tbody antes de agregar nuevas filas
+            productosFactura.innerHTML = '';
             
             data.productos.forEach(producto => {
                 const row = document.createElement('tr');
