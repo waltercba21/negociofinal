@@ -58,7 +58,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
                     <td class="fecha">${fechaFormateada}</td>
                     <td class="cliente">${factura.nombre_cliente}</td>
                     <td class="total">${totalFormateado}</td>
-                    <td class="metodos-pago">${factura.metodoPago || 'N/A'}</td> <!-- Asegúrate de que esto esté aquí -->
+                    <td class="metodos-pago">${factura.metodos_pago || 'N/A'}</td> <!-- Cambiado a metodos_pago -->
                     <td>
                         <button class="btn-ver ver-detalle" data-id="${factura.id}">Ver Detalle</button>
                         <button class="btn-editar" data-id="${factura.id}">Editar</button>
@@ -76,6 +76,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
             console.error('Error al cargar las facturas:', error);
         });
 }
+
 
 function addEventListenersFacturas() {
     document.querySelectorAll('.ver-detalle').forEach(btn => {
