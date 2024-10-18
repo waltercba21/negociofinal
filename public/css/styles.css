@@ -941,32 +941,36 @@ footer {
   background-color: #0056b3;
 }
 #metodos-pago {
-  margin: 20px 0;
+  margin: 20px auto; 
+  text-align: center;
 }
-
 #metodos-pago h3 {
-  font-size: 18px; /* Ajuste del tamaño del título */
-  margin-bottom: 10px;
-  text-align: left; /* Alineación del texto a la izquierda */
+  font-size: 24px !important;
+  margin-bottom: 15px;
+  text-align: center !important;
+  color: #003f7d;
+  font-weight: bold;
 }
 
 .metodos-pago-checkboxes {
-  display: flex; /* Coloca los checkboxes en una fila */
-  flex-wrap: wrap; /* Permite que los checkboxes se ajusten a nuevas filas si es necesario */
-  gap: 15px; /* Espacio entre cada checkbox */
+  display: flex !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+  gap: 20px !important;
 }
 
 .metodos-pago-checkboxes label {
-  font-size: 16px; /* Tamaño del texto en las etiquetas */
-  display: flex;
-  align-items: center;
-  gap: 5px; /* Espacio entre el checkbox y el texto */
+  font-size: 18px !important; /* Ajusta el tamaño del texto */
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important; /* Espacio entre el checkbox y el texto */
 }
 
 .metodos-pago-checkboxes input[type="checkbox"] {
-  transform: scale(1.5); /* Aumenta el tamaño de los checkboxes */
-  cursor: pointer; /* Cambia el cursor a una mano para mejor interacción */
+  transform: scale(1.5) !important; /* Agranda el checkbox */
+  cursor: pointer !important; /* Cambia el cursor a una mano */
 }
+
 
 
 /*--------------------------listadoPresupuestos--------------------------*/
