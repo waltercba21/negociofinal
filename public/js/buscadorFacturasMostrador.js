@@ -2,10 +2,10 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     e.preventDefault();
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    
+
     // Verificar la cantidad de filas en la tabla
     console.log("Cantidad de filas en la factura:", filasFactura.length);
-    
+
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
@@ -14,9 +14,10 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const precioInput = filasFactura[i].cells[2].querySelector('input').value;
         console.log(`Fila ${i + 1}: Valor de Precio Unitario antes de procesar:`, precioInput);
         
-        let precio_unitario = parseFloat(precioInput.replace(/\./g, '').replace(',', '.'));
+        // Eliminar el símbolo de dólar y convertir a float
+        let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
         console.log(`Fila ${i + 1}: Precio Unitario procesado:`, precio_unitario);
-        
+
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
         
         // Asegúrate de que los valores son válidos
