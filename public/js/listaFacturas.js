@@ -308,11 +308,13 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
     
     // Iterar sobre las filas de la tabla de facturas
     document.querySelectorAll('#facturas-table tbody tr').forEach(function(row) {
-        const fecha = row.querySelector('.fecha').textContent.trim();
-        const cliente = row.querySelector('.cliente').textContent.trim();
-        const total = row.querySelector('.total').textContent.trim();
-        const metodosPago = row.querySelector('.metodos-pago').textContent.trim(); // Obtener el método de pago
+        const fecha = row.querySelector('.fecha') ? row.querySelector('.fecha').textContent.trim() : 'N/A';
+        const cliente = row.querySelector('.cliente') ? row.querySelector('.cliente').textContent.trim() : 'N/A';
+        const total = row.querySelector('.total') ? row.querySelector('.total').textContent.trim() : '0.00';
+        const metodosPago = row.querySelector('.metodos-pago') ? row.querySelector('.metodos-pago').textContent.trim() : 'N/A'; // Obtener el método de pago
         
+        console.log(`Fecha: ${fecha}, Cliente: ${cliente}, Total: ${total}, Método de Pago: ${metodosPago}`); // Para depuración
+
         y += 7;
         doc.text(fecha, 30, y); 
         doc.text(cliente, 90, y);
