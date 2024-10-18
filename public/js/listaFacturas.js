@@ -88,10 +88,13 @@ function addEventListenersFacturas() {
     document.querySelectorAll('.btn-ver').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            console.log('Ver detalle de factura ID:', id); // Log del ID de la factura
-            window.location.href = `/productos/factura/${id}`;
+            console.log('Ver detalle de factura ID:', id);  // Log del ID de la factura
+            
+            // Llama a la función para cargar los detalles de la factura
+            cargarDetallesFactura(id); // Cambia aquí
         });
     });
+    
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
@@ -99,6 +102,7 @@ function addEventListenersFacturas() {
             habilitarEdicionFactura(id);
         });
     });
+    
     document.querySelectorAll('.btn-eliminar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
@@ -106,6 +110,7 @@ function addEventListenersFacturas() {
             eliminarFactura(id);
         });
     });
+    
     document.querySelectorAll('.btn-guardar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
@@ -113,6 +118,7 @@ function addEventListenersFacturas() {
             guardarCambiosFactura(id);
         });
     });
+    
     document.querySelectorAll('.btn-cancelar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
@@ -121,6 +127,7 @@ function addEventListenersFacturas() {
         });
     });
 }
+
 
 function habilitarEdicionFactura(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
@@ -131,6 +138,43 @@ function habilitarEdicionFactura(id) {
     row.querySelector('.btn-eliminar').style.display = 'none';
     row.querySelector('.btn-guardar').style.display = 'inline';
     row.querySelector('.btn-cancelar').style.display = 'inline';
+}
+function cargarDetallesFactura(id) {
+    fetch(`/productos/api/factura/${id}`) // Ajusta esta URL a tu API
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Detalles de factura recibidos:', data); // Log de detalles recibidos
+            
+            // Asignar los datos al modal
+            document.getElementById('nombreCliente').textContent = data.nombre_cliente;
+            document.getElementById('fechaFactura').textContent = data.fecha;
+            document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(data.total);
+            
+            const productosFactura = document.getElementById('productosFactura');
+            productosFactura.innerHTML = ''; // Limpia el tbody antes de agregar nuevas filas
+            
+            data.productos.forEach(producto => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${producto.nombre}</td>
+                    <td>${producto.cantidad}</td>
+                    <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_unitario)}</td>
+                    <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.subtotal)}</td>
+                `;
+                productosFactura.appendChild(row);
+            });
+            
+            // Mostrar el modal
+            $('#detalleFacturaModal').modal('show');
+        })
+        .catch(error => {
+            console.error('Error al cargar detalles de la factura:', error);
+        });
 }
 
 function cancelarEdicionFactura(id) {
@@ -214,5 +258,47 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
         })
         .catch(error => {
             console.error('Error al imprimir total de facturas:', error); // Log de error
+        });
+}
+
+function verDetalleFactura(id) {
+    console.log(`Ver detalle de factura ID: ${id}`); // Log del ID de la factura a ver
+    fetch(`/productos/api/factura/${id}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Datos de la factura recibidos:', data); // Log de los datos de la factura
+            const factura = data.factura;
+            const items = data.items;
+
+            // Llenar el modal con los datos de la factura
+            document.getElementById('nombreCliente').textContent = factura.nombre_cliente;
+            document.getElementById('fechaFactura').textContent = new Date(factura.fecha).toLocaleDateString('es-CL');
+            document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(factura.total);
+
+            // Llenar la lista de items
+            const productosFactura = document.getElementById('productosFactura');
+            productosFactura.innerHTML = ''; // Limpiar la tabla antes de llenarla
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.nombre_producto}</td>
+                    <td>${item.cantidad}</td>
+                    <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(item.precio_unitario)}</td>
+                    <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(item.subtotal)}</td>
+                `;
+                productosFactura.appendChild(row);
+            });
+
+            // Mostrar el modal
+            $('#detalleFacturaModal').modal('show');
+        })
+        .catch(error => {
+            console.error('Error al obtener los detalles de la factura:', error);
+            alert('Error al obtener los detalles de la factura.');
         });
 }
