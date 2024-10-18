@@ -970,45 +970,47 @@ footer {
   transform: scale(1.5) !important; /* Agranda el checkbox */
   cursor: pointer !important; /* Cambia el cursor a una mano */
 }
+/* Estilo para todos los botones dentro de la tabla */
+#facturas-table td button {
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  margin: 5px;
+}
+
 /* Colores y estilo específicos para cada botón */
-.btn-ver {
+#facturas-table td .btn-ver {
   background-color: #3498db; /* Azul claro */
   color: white;
 }
 
-.btn-editar {
+#facturas-table td .btn-editar {
   background-color: #f39c12; /* Naranja */
   color: white;
 }
 
-.btn-eliminar {
+#facturas-table td .btn-eliminar {
   background-color: #e74c3c; /* Rojo */
   color: white;
 }
 
-.btn-guardar {
+#facturas-table td .btn-guardar {
   background-color: #2ecc71; /* Verde */
   color: white;
 }
 
-.btn-cancelar {
+#facturas-table td .btn-cancelar {
   background-color: #95a5a6; /* Gris */
   color: white;
 }
 
-/* Efecto hover para mejorar la interacción */
-button:hover {
+/* Efecto hover */
+#facturas-table td button:hover {
   opacity: 0.9;
-}
-
-/* Efecto de tamaño para todos los botones */
-button {
+  transform: scale(1.05); /* Efecto de tamaño */
   transition: all 0.3s ease;
-}
-
-/* Tamaño mayor al hacer hover */
-button:hover {
-  transform: scale(1.05);
 }
 
 
