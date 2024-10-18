@@ -151,19 +151,19 @@ function cargarDetallesFactura(id) {
             console.log('Detalles de factura recibidos:', data); 
             
             // Actualizar los detalles de la factura
-            document.getElementById('nombreCliente').textContent = data.nombre_cliente;
-            document.getElementById('fechaFactura').textContent = data.fecha;
-            document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(data.total);
+            document.getElementById('nombreCliente').textContent = data.factura.nombre_cliente;
+            document.getElementById('fechaFactura').textContent = data.factura.fecha;
+            document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(data.factura.total);
             
             const productosFactura = document.getElementById('productosFactura');
             productosFactura.innerHTML = '';  // Limpiar la tabla antes de agregar nuevos datos
             
-            // Validar si `data.productos` es un array
-            if (Array.isArray(data.productos) && data.productos.length > 0) {
-                data.productos.forEach(producto => {
+            // Validar si `data.items` es un array
+            if (Array.isArray(data.items) && data.items.length > 0) {
+                data.items.forEach(producto => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${producto.nombre}</td>
+                        <td>${producto.nombre_producto}</td> <!-- Corregido: nombre_producto -->
                         <td>${producto.cantidad}</td>
                         <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_unitario)}</td>
                         <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.subtotal)}</td>
@@ -184,6 +184,7 @@ function cargarDetallesFactura(id) {
             console.error('Error al cargar detalles de la factura:', error);
         });
 }
+
 
 
 function cancelarEdicionFactura(id) {
