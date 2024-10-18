@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnBuscar.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
-            console.log('Buscando facturas desde:', fechaInicio, 'hasta:', fechaFin); // Log de fechas
+            console.log('Buscando facturas desde:', fechaInicio, 'hasta:', fechaFin); 
             cargarFacturas(fechaInicio, fechaFin);
         });
     } else {
@@ -18,22 +18,20 @@ document.addEventListener('DOMContentLoaded', function() {
         btnImprimirTotal.addEventListener('click', function() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
-            console.log('Imprimiendo total de facturas desde:', fechaInicio, 'hasta:', fechaFin); // Log de fechas
             imprimirTotalFacturas(fechaInicio, fechaFin);
         });
     } else {
         console.error('El botón con ID "btnImprimirTotal" no se encontró en el DOM.');
     }
-
     if (tableBody) {
-        tableBody.innerHTML = ''; // Asegura que la tabla esté lista
+        tableBody.innerHTML = ''; 
     } else {
         console.error('El tbody de la tabla de facturas no se encontró.');
     }
 });
 
 function cargarFacturas(fechaInicio, fechaFin) {
-    console.log('Cargando facturas...'); // Log de inicio de carga
+    console.log('Cargando facturas...'); 
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => {
             if (!response.ok) {
@@ -42,11 +40,10 @@ function cargarFacturas(fechaInicio, fechaFin) {
             return response.json();
         })
         .then(data => {
-            console.log('Datos de facturas recibidos:', data); // Log de datos recibidos
+            console.log('Datos de facturas recibidos:', data); 
             const tableBody = document.querySelector('#facturas-table tbody');
-            tableBody.innerHTML = ''; // Limpia el tbody antes de agregar nuevas filas
+            tableBody.innerHTML = '';
             let totalFacturas = 0;
-
             data.forEach(factura => {
                 const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
                 totalFacturas += totalNumerico;
@@ -71,11 +68,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 `;
                 tableBody.appendChild(row);
             });
-
             document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
-            console.log('Total de facturas:', totalFacturas); // Log del total calculado
-
-            // Asignar los eventos a los botones una vez que las facturas se han cargado
             addEventListenersFacturas();
         })
         .catch(error => {
@@ -84,29 +77,22 @@ function cargarFacturas(fechaInicio, fechaFin) {
 }
 
 function addEventListenersFacturas() {
-    console.log('Asignando eventos a botones de facturas'); // Log de asignación de eventos
     document.querySelectorAll('.ver-detalle').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            console.log('Ver detalle de factura ID:', id);  // Log del ID de la factura
-            
-            // Llama a la función para cargar los detalles de la factura
-            cargarDetallesFactura(id); // Cambia aquí
+            cargarDetallesFactura(id); 
         });
     });
     
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            console.log('Habilitando edición de factura ID:', id); // Log del ID de la factura
             habilitarEdicionFactura(id);
         });
     });
-    
     document.querySelectorAll('.btn-eliminar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            console.log('Eliminando factura ID:', id); // Log del ID de la factura
             eliminarFactura(id);
         });
     });
@@ -114,7 +100,6 @@ function addEventListenersFacturas() {
     document.querySelectorAll('.btn-guardar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            console.log('Guardando cambios de factura ID:', id); // Log del ID de la factura
             guardarCambiosFactura(id);
         });
     });
@@ -122,7 +107,6 @@ function addEventListenersFacturas() {
     document.querySelectorAll('.btn-cancelar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            console.log('Cancelando edición de factura ID:', id); // Log del ID de la factura
             cancelarEdicionFactura(id);
         });
     });
@@ -148,22 +132,17 @@ function cargarDetallesFactura(id) {
             return response.json();
         })
         .then(data => {
-            console.log('Detalles de factura recibidos:', data);
-
-            // Cambiar formato de la fecha
             const fechaOriginal = new Date(data.factura.fecha); 
-            const dia = fechaOriginal.getDate().toString().padStart(2, '0'); // Agregar cero a la izquierda si es necesario
-            const mes = (fechaOriginal.getMonth() + 1).toString().padStart(2, '0'); // Meses en JS van de 0 a 11
-            const año = fechaOriginal.getFullYear().toString().slice(-2); // Solo últimos dos dígitos del año
+            const dia = fechaOriginal.getDate().toString().padStart(2, '0'); 
+            const mes = (fechaOriginal.getMonth() + 1).toString().padStart(2, '0'); 
+            const año = fechaOriginal.getFullYear().toString().slice(-2); 
             const fechaFormateada = `${dia}/${mes}/${año}`;
-
-            // Actualizar los detalles de la factura
             document.getElementById('nombreCliente').textContent = data.factura.nombre_cliente;
             document.getElementById('fechaFactura').textContent = fechaFormateada;
             document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(data.factura.total);
-            
+        
             const productosFactura = document.getElementById('productosFactura');
-            productosFactura.innerHTML = '';  // Limpiar la tabla antes de agregar nuevos datos
+            productosFactura.innerHTML = '';
             
             if (Array.isArray(data.items) && data.items.length > 0) {
                 data.items.forEach(producto => {
@@ -181,8 +160,6 @@ function cargarDetallesFactura(id) {
                 row.innerHTML = `<td colspan="4">No hay productos en esta factura.</td>`;
                 productosFactura.appendChild(row);
             }
-            
-            // Mostrar el modal
             $('#detalleFacturaModal').modal('show');
         })
         .catch(error => {
@@ -211,9 +188,6 @@ function guardarCambiosFactura(id) {
     const fecha = row.querySelector('.fecha input').value;
     const nombre_cliente = row.querySelector('.cliente input').value;
     const total = parseFloat(row.querySelector('.total input').value.replace(/\./g, '').replace(',', '.'));
-
-    console.log('Guardando cambios:', { id, fecha, nombre_cliente, total }); // Log de datos a guardar
-
     fetch(`/productos/api/facturas/${id}`, {
         method: 'PUT',
         headers: {

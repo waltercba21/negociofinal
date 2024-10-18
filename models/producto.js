@@ -66,7 +66,7 @@ guardarPresupuesto : (presupuesto) => {
                     resolve(resultado.insertId);
                 }
             });
-        });
+        });  
     },
     
     guardarItemsPresupuesto : (items) => {

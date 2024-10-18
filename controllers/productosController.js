@@ -910,14 +910,20 @@ presupuestoMostrador: async function(req, res) {
 procesarFormularioFacturas: async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
+        
+        // Verifica que invoiceItems sea un arreglo y parsea
+        const itemsParsed = JSON.parse(invoiceItems);
+        
         const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
         const presupuesto = {
             nombre_cliente: nombreCliente,
             fecha: fechaPresupuesto,
             total: totalLimpio
         };
+        
         const presupuestoId = await producto.guardarFactura(presupuesto);
-        const items = await Promise.all(invoiceItems.map(async item => {
+        
+        const items = await Promise.all(itemsParsed.map(async item => {
             const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id);
             // Actualizar stock del producto
             await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
@@ -929,6 +935,7 @@ procesarFormularioFacturas: async (req, res) => {
                 item.subtotal
             ];
         }));
+        
         await producto.guardarItemsFactura(items);
         res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
     } catch (error) {
@@ -936,6 +943,7 @@ procesarFormularioFacturas: async (req, res) => {
         res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
     }
 },
+
 listadoPresupuestos : (req, res) => {
     res.render('listadoPresupuestos');
 },
