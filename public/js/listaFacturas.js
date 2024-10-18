@@ -301,6 +301,7 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
     doc.text('Fecha', 30, y);
     doc.text('Cliente', 90, y);
     doc.text('Total', 150, y);
+    doc.text('Método de Pago', 180, y); // Nueva columna para el método de pago
     y += 5;
 
     let totalGeneral = 0;
@@ -310,11 +311,13 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
         const fecha = row.querySelector('.fecha').textContent.trim();
         const cliente = row.querySelector('.cliente').textContent.trim();
         const total = row.querySelector('.total').textContent.trim();
+        const metodosPago = row.querySelector('.metodos-pago').textContent.trim(); // Obtener el método de pago
         
         y += 7;
         doc.text(fecha, 30, y); 
         doc.text(cliente, 90, y);
         doc.text(total, 150, y);
+        doc.text(metodosPago, 180, y); // Agregar el método de pago al PDF
         
         // Sumar al total general
         totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g, "").replace(',', '.'));
@@ -330,3 +333,4 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
     // Guardar el PDF
     doc.save('detalle_ventas.pdf');
 });
+
