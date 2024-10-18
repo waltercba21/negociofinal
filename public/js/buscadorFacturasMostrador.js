@@ -139,11 +139,14 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 });
 
 function updateSubtotal(row, verificarStock = true) {
-    const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
-    const cantidad = parseInt(row.cells[3].querySelector('input').value);
-    const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
-    const subtotal = !isNaN(precio) && !isNaN(cantidad) ? precio * cantidad : 0;
+    const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.')) || 0;
+    const cantidad = parseInt(row.cells[3].querySelector('input').value) || 0;
+    const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.')) || 0;
+
+    // Calcula subtotal
+    const subtotal = precio * cantidad;
     const stockMinimo = 5;
+
     if (verificarStock) {
         if (cantidad > stockActual) {
             Swal.fire({
@@ -152,7 +155,7 @@ function updateSubtotal(row, verificarStock = true) {
                 icon: 'error',
                 confirmButtonText: 'Entendido'
             });
-            row.cells[3].querySelector('input').value = 1;
+            row.cells[3].querySelector('input').value = 1; // Resetea a 1
             return;
         }
         const stockRestante = stockActual - cantidad;
@@ -165,9 +168,12 @@ function updateSubtotal(row, verificarStock = true) {
             });
         }
     }
+
+    // Actualiza el subtotal
     row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
 }
+
 function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
