@@ -1234,24 +1234,34 @@ obtenerDetallePresupuesto : (id) => {
             LEFT JOIN productos p ON fi.producto_id = p.id
             WHERE fm.id = ?;
         `;
+
         conexion.query(query, [id], (error, resultados) => {
             if (error) {
                 reject(error);
             } else if (resultados.length === 0) {
                 reject(new Error("No se encontró la factura"));
             } else {
-                const factura = resultados[0];
-                const items = resultados.map(r => ({
+                const factura = {
+                    id: resultados[0].factura_id,
+                    nombre_cliente: resultados[0].nombre_cliente,
+                    fecha: resultados[0].fecha,
+                    total: resultados[0].total
+                };
+
+                // Si no hay items, devolvemos un array vacío.
+                const items = resultados[0].nombre_producto ? resultados.map(r => ({
                     nombre_producto: r.nombre_producto,
                     cantidad: r.cantidad,
                     precio_unitario: r.precio_unitario,
                     subtotal: r.subtotal
-                }));
+                })) : [];
+
                 resolve({ factura, items });
             }
         });
     });
 },
+
 
 editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
     return new Promise((resolve, reject) => {
