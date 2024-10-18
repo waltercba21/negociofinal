@@ -22,6 +22,15 @@
             <p><%= idPresupuesto %></p>
           </div>
         </div>
+        <div class="input-container">
+          <label>Método de Pago:</label><br>
+          <input type="checkbox" name="metodosPago" value="EFECTIVO"> Efectivo<br>
+          <input type="checkbox" name="metodosPago" value="CREDITO"> Crédito<br>
+          <input type="checkbox" name="metodosPago" value="DEBITO"> Débito<br>
+          <input type="checkbox" name="metodosPago" value="TRANSFERENCIA"> Transferencia<br>
+          <input type="checkbox" name="metodosPago" value="QR"> QR<br>
+        </div>
+        
         <div class="buscador">
           <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
           <div id="resultadosBusqueda"></div>

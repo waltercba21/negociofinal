@@ -63,11 +63,12 @@ guardarPresupuesto : (presupuesto) => {
                 if (error) {
                     reject(error);
                 } else {
-                    resolve(resultado.insertId);
+                    resolve(resultado.insertId); 
                 }
             });
         });  
     },
+    
     
     guardarItemsPresupuesto : (items) => {
         return new Promise((resolve, reject) => {

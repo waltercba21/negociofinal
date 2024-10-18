@@ -909,21 +909,26 @@ presupuestoMostrador: async function(req, res) {
 },
 procesarFormularioFacturas: async (req, res) => {
     try {
-        const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
+        const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
 
         // Registrar los datos recibidos
-        console.log("Datos recibidos:", { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems });
+        console.log("Datos recibidos:", { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago });
 
         // Limpieza del total recibido
         const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
 
-        const presupuesto = {
+        // Convertir el arreglo de métodos de pago a una cadena
+        const metodosPagoString = Array.isArray(metodosPago) ? metodosPago.join(', ') : metodosPago;
+
+        const factura = {
             nombre_cliente: nombreCliente,
             fecha: fechaPresupuesto,
-            total: totalLimpio
+            total: totalLimpio,
+            metodos_pago: metodosPagoString // Agregar métodos de pago
         };
 
-        const presupuestoId = await producto.guardarFactura(presupuesto);
+        // Guardar la factura en la base de datos
+        const facturaId = await producto.guardarFactura(factura);
 
         if (!Array.isArray(invoiceItems) || invoiceItems.length === 0) {
             console.error("No se proporcionaron items de factura.");
@@ -942,7 +947,7 @@ procesarFormularioFacturas: async (req, res) => {
             await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
 
             return [
-                presupuestoId,
+                facturaId, // Cambia de presupuestoId a facturaId
                 producto_id,
                 item.cantidad,
                 item.precio_unitario,
@@ -954,10 +959,10 @@ procesarFormularioFacturas: async (req, res) => {
 
         await producto.guardarItemsFactura(items);
 
-        res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
+        res.status(200).json({ message: 'FACTURA GUARDADA CORRECTAMENTE' });
     } catch (error) {
-        console.error('Error al guardar el presupuesto:', error);
-        res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
+        console.error('Error al guardar la factura:', error);
+        res.status(500).json({ error: 'Error al guardar la factura: ' + error.message });
     }
 },
 
