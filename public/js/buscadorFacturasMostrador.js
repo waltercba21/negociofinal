@@ -31,9 +31,14 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             subtotal 
         }); 
     }
-    
-    console.log("Items de la factura antes de enviar:", invoiceItems);
 
+    // Log de los items antes de enviar
+    console.log("Items de la factura antes de enviar:", invoiceItems);
+    
+    // Total presupuesto a enviar
+    const totalPresupuesto = document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim();
+    console.log("Total presupuesto antes de enviar:", totalPresupuesto);
+    
     try {
         const response = await fetch('/productos/procesarFormularioFacturas', {
             method: 'POST',
@@ -43,7 +48,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
-                totalPresupuesto: document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim(),
+                totalPresupuesto,
                 invoiceItems  
             })
         });
