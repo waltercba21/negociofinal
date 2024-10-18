@@ -3,6 +3,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     
+    // Verificar la cantidad de filas en la tabla
+    console.log("Cantidad de filas en la factura:", filasFactura.length);
+    
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
@@ -10,11 +13,16 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
         
-        precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0; // Asegúrate de que el precio no sea NaN
-        cantidad = !isNaN(cantidad) ? cantidad : 1; // Asegúrate de que la cantidad sea válida
-    
-        let subtotal = precio_unitario * cantidad; // Calcula el subtotal aquí
-    
+        // Asegúrate de que los valores son válidos
+        console.log(`Fila ${i + 1}: Código: ${codigo}, Descripción: ${descripcion}, Precio Unitario: ${precio_unitario}, Cantidad: ${cantidad}`);
+
+        precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0; 
+        cantidad = !isNaN(cantidad) ? cantidad : 1; 
+        
+        let subtotal = precio_unitario * cantidad; 
+
+        console.log(`Subtotal calculado para fila ${i + 1}:`, subtotal);
+
         invoiceItems.push({ 
             producto_id: codigo, 
             descripcion, 
@@ -24,6 +32,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         }); 
     }
     
+    console.log("Items de la factura antes de enviar:", invoiceItems);
+
     try {
         const response = await fetch('/productos/procesarFormularioFacturas', {
             method: 'POST',
@@ -37,8 +47,10 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 invoiceItems  
             })
         });
+
         const data = await response.json();
         console.log("Response from server:", data); 
+
         if (response.ok) {
             Swal.fire({
                 title: '¡Éxito!',
@@ -61,6 +73,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;

@@ -88,6 +88,7 @@ guardarPresupuesto : (presupuesto) => {
         return new Promise((resolve, reject) => {
             const query = 'INSERT INTO factura_items (factura_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
             console.log("Intentando guardar los siguientes items de la factura:", items);
+            
             conexion.query(query, [items], (error, resultado) => {
                 if (error) {
                     console.error('Error al insertar items de la factura:', error);
@@ -98,8 +99,7 @@ guardarPresupuesto : (presupuesto) => {
                 }
             });
         });
-    },
-    
+    },    
       
       getAllPresupuestos: (fechaInicio, fechaFin) => {
         return new Promise((resolve, reject) => {
