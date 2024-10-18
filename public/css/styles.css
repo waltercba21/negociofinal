@@ -940,6 +940,34 @@ footer {
 .btn-primary-presupuestos:hover {
   background-color: #0056b3;
 }
+#metodos-pago {
+  margin: 20px 0;
+}
+
+#metodos-pago h3 {
+  font-size: 18px; /* Ajuste del tamaño del título */
+  margin-bottom: 10px;
+  text-align: left; /* Alineación del texto a la izquierda */
+}
+
+.metodos-pago-checkboxes {
+  display: flex; /* Coloca los checkboxes en una fila */
+  flex-wrap: wrap; /* Permite que los checkboxes se ajusten a nuevas filas si es necesario */
+  gap: 15px; /* Espacio entre cada checkbox */
+}
+
+.metodos-pago-checkboxes label {
+  font-size: 16px; /* Tamaño del texto en las etiquetas */
+  display: flex;
+  align-items: center;
+  gap: 5px; /* Espacio entre el checkbox y el texto */
+}
+
+.metodos-pago-checkboxes input[type="checkbox"] {
+  transform: scale(1.5); /* Aumenta el tamaño de los checkboxes */
+  cursor: pointer; /* Cambia el cursor a una mano para mejor interacción */
+}
+
 
 /*--------------------------listadoPresupuestos--------------------------*/
 .container-listadoPresupuestos {
