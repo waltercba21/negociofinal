@@ -149,23 +149,33 @@ function cargarDetallesFactura(id) {
         })
         .then(data => {
             console.log('Detalles de factura recibidos:', data); 
+            
+            // Actualizar los detalles de la factura
             document.getElementById('nombreCliente').textContent = data.nombre_cliente;
             document.getElementById('fechaFactura').textContent = data.fecha;
             document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(data.total);
             
             const productosFactura = document.getElementById('productosFactura');
-            productosFactura.innerHTML = '';
+            productosFactura.innerHTML = '';  // Limpiar la tabla antes de agregar nuevos datos
             
-            data.productos.forEach(producto => {
+            // Validar si `data.productos` es un array
+            if (Array.isArray(data.productos) && data.productos.length > 0) {
+                data.productos.forEach(producto => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${producto.nombre}</td>
+                        <td>${producto.cantidad}</td>
+                        <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_unitario)}</td>
+                        <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.subtotal)}</td>
+                    `;
+                    productosFactura.appendChild(row);
+                });
+            } else {
+                // Si no hay productos, muestra un mensaje o realiza una acción
                 const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${producto.nombre}</td>
-                    <td>${producto.cantidad}</td>
-                    <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_unitario)}</td>
-                    <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.subtotal)}</td>
-                `;
+                row.innerHTML = `<td colspan="4">No hay productos en esta factura.</td>`;
                 productosFactura.appendChild(row);
-            });
+            }
             
             // Mostrar el modal
             $('#detalleFacturaModal').modal('show');
@@ -174,6 +184,7 @@ function cargarDetallesFactura(id) {
             console.error('Error al cargar detalles de la factura:', error);
         });
 }
+
 
 function cancelarEdicionFactura(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
