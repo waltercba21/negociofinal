@@ -148,22 +148,28 @@ function cargarDetallesFactura(id) {
             return response.json();
         })
         .then(data => {
-            console.log('Detalles de factura recibidos:', data); 
-            
+            console.log('Detalles de factura recibidos:', data);
+
+            // Cambiar formato de la fecha
+            const fechaOriginal = new Date(data.factura.fecha); 
+            const dia = fechaOriginal.getDate().toString().padStart(2, '0'); // Agregar cero a la izquierda si es necesario
+            const mes = (fechaOriginal.getMonth() + 1).toString().padStart(2, '0'); // Meses en JS van de 0 a 11
+            const año = fechaOriginal.getFullYear().toString().slice(-2); // Solo últimos dos dígitos del año
+            const fechaFormateada = `${dia}/${mes}/${año}`;
+
             // Actualizar los detalles de la factura
             document.getElementById('nombreCliente').textContent = data.factura.nombre_cliente;
-            document.getElementById('fechaFactura').textContent = data.factura.fecha;
+            document.getElementById('fechaFactura').textContent = fechaFormateada;
             document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(data.factura.total);
             
             const productosFactura = document.getElementById('productosFactura');
             productosFactura.innerHTML = '';  // Limpiar la tabla antes de agregar nuevos datos
             
-            // Validar si `data.items` es un array
             if (Array.isArray(data.items) && data.items.length > 0) {
                 data.items.forEach(producto => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${producto.nombre_producto}</td> <!-- Corregido: nombre_producto -->
+                        <td>${producto.nombre_producto}</td>
                         <td>${producto.cantidad}</td>
                         <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_unitario)}</td>
                         <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.subtotal)}</td>
@@ -171,7 +177,6 @@ function cargarDetallesFactura(id) {
                     productosFactura.appendChild(row);
                 });
             } else {
-                // Si no hay productos, muestra un mensaje o realiza una acción
                 const row = document.createElement('tr');
                 row.innerHTML = `<td colspan="4">No hay productos en esta factura.</td>`;
                 productosFactura.appendChild(row);
