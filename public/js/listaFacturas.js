@@ -58,7 +58,7 @@ function cargarFacturas(fechaInicio, fechaFin) {
                     <td class="fecha">${fechaFormateada}</td>
                     <td class="cliente">${factura.nombre_cliente}</td>
                     <td class="total">${totalFormateado}</td>
-                    <td class="metodos-pago">${factura.metodoPago}</td>
+                    <td class="metodos-pago">${factura.metodoPago || 'N/A'}</td> <!-- Asegúrate de que esto esté aquí -->
                     <td>
                         <button class="btn-ver ver-detalle" data-id="${factura.id}">Ver Detalle</button>
                         <button class="btn-editar" data-id="${factura.id}">Editar</button>
