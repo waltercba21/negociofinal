@@ -335,4 +335,3 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
     // Guardar el PDF
     doc.save('detalle_ventas.pdf');
 });
-
