@@ -140,7 +140,7 @@ function habilitarEdicionFactura(id) {
     row.querySelector('.btn-cancelar').style.display = 'inline';
 }
 function cargarDetallesFactura(id) {
-    fetch(`/productos/api/factura/${id}`) // Ajusta esta URL a tu API
+    fetch(`/productos/factura/${id}`) 
         .then(response => {
             if (!response.ok) {
                 throw new Error('Error en la respuesta del servidor');
@@ -148,7 +148,7 @@ function cargarDetallesFactura(id) {
             return response.json();
         })
         .then(data => {
-            console.log('Detalles de factura recibidos:', data); // Log de detalles recibidos
+            console.log('Detalles de factura recibidos:', data); 
             
             // Asignar los datos al modal
             document.getElementById('nombreCliente').textContent = data.nombre_cliente;
