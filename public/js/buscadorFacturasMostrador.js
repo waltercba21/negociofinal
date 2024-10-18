@@ -6,13 +6,15 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
+        
         let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
-        let subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
+        
+        precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0; // Asegúrate de que el precio no sea NaN
+        cantidad = !isNaN(cantidad) ? cantidad : 1; // Asegúrate de que la cantidad sea válida
     
-        precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
-        cantidad = !isNaN(cantidad) ? cantidad : 1;
-        subtotal = !isNaN(subtotal) ? subtotal : 0;
+        let subtotal = precio_unitario * cantidad; // Calcula el subtotal aquí
+    
         invoiceItems.push({ 
             producto_id: codigo, 
             descripcion, 
@@ -21,6 +23,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             subtotal 
         }); 
     }
+    
     try {
         const response = await fetch('/productos/procesarFormularioFacturas', {
             method: 'POST',
