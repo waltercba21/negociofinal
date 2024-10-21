@@ -3,33 +3,15 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
 
-    // Verificar la cantidad de filas en la tabla
-    console.log("Cantidad de filas en la factura:", filasFactura.length);
-
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
-        
-        // Obtener el valor del input de precio unitario
         const precioInput = filasFactura[i].cells[2].querySelector('input').value;
-        console.log(`Fila ${i + 1}: Valor de Precio Unitario antes de procesar:`, precioInput);
-        
-        // Eliminar el símbolo de dólar y convertir a float
         let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
-        console.log(`Fila ${i + 1}: Precio Unitario procesado:`, precio_unitario);
-
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
-        
-        // Asegúrate de que los valores son válidos
-        console.log(`Fila ${i + 1}: Código: ${codigo}, Descripción: ${descripcion}, Precio Unitario: ${precio_unitario}, Cantidad: ${cantidad}`);
-
-        // Manejo de valores no válidos
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0; 
         cantidad = !isNaN(cantidad) ? cantidad : 1; 
-        
         let subtotal = precio_unitario * cantidad; 
-        console.log(`Subtotal calculado para fila ${i + 1}:`, subtotal);
-
         invoiceItems.push({ 
             producto_id: codigo, 
             descripcion, 
@@ -39,14 +21,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         }); 
     }
 
-    // Log de los items antes de enviar
-    console.log("Items de la factura antes de enviar:", invoiceItems);
-    
-    // Total presupuesto a enviar
-    const totalPresupuesto = document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim();
-    console.log("Total presupuesto antes de enviar:", totalPresupuesto);
-
-    // Obtener los métodos de pago seleccionados
+    const totalFactura = document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim();
     const metodosPago = [];
     document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
         metodosPago.push(checkbox.value);
@@ -60,16 +35,14 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             },
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
-                fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
-                totalPresupuesto,
+                fechaFactura: document.getElementById('fecha-factura').value.trim(),
+                totalFactura,
                 invoiceItems,
-                metodosPago: metodosPago.join(', ') // Pasar los métodos de pago como cadena
+                metodosPago: metodosPago.join(', ')
             })
         });
 
         const data = await response.json();
-        console.log("Response from server:", data); 
-
         if (response.ok) {
             Swal.fire({
                 title: '¡Éxito!',
@@ -83,7 +56,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             throw new Error(data.error || 'Error al procesar el formulario');
         }
     } catch (error) {
-        console.error('Error al enviar formulario:', error);
         Swal.fire({
             title: 'Error',
             text: 'Error al enviar formulario: ' + error.message,
@@ -92,8 +64,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
-
-
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
@@ -162,11 +132,8 @@ function updateSubtotal(row, verificarStock = true) {
     const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.')) || 0;
     const cantidad = parseInt(row.cells[3].querySelector('input').value) || 0;
     const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.')) || 0;
-
-    // Calcula subtotal
     const subtotal = precio * cantidad;
     const stockMinimo = 5;
-
     if (verificarStock) {
         if (cantidad > stockActual) {
             Swal.fire({
@@ -175,7 +142,7 @@ function updateSubtotal(row, verificarStock = true) {
                 icon: 'error',
                 confirmButtonText: 'Entendido'
             });
-            row.cells[3].querySelector('input').value = 1; // Resetea a 1
+            row.cells[3].querySelector('input').value = 1;
             return;
         }
         const stockRestante = stockActual - cantidad;
@@ -188,12 +155,9 @@ function updateSubtotal(row, verificarStock = true) {
             });
         }
     }
-
-    // Actualiza el subtotal
     row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
 }
-
 function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
