@@ -2,20 +2,18 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     e.preventDefault();
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    
+
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         let precio_unitario = parseFloat(filasFactura[i].cells[2].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
-        let subtotal = parseFloat(filasFactura[i].cells[4].textContent.replace(/\$|\./g, '').replace(',', '.'));
+        let subtotal = parseFloat(filasFactura[i].cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
 
-        // Validaciones para asegurarnos de que los valores son válidos
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
         subtotal = !isNaN(subtotal) ? subtotal : 0;
 
-        // Añadir el objeto al array invoiceItems
         invoiceItems.push({ 
             producto_id: codigo, 
             descripcion, 
@@ -24,8 +22,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             subtotal 
         }); 
     }
-
-    console.log("Invoice Items to be sent:", invoiceItems); // Confirmar que invoiceItems es un array
 
     try {
         const response = await fetch('/productos/procesarFormulario', {
@@ -37,12 +33,11 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
                 totalPresupuesto: document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim(),
-                invoiceItems  // Enviar el array correctamente
+                invoiceItems 
             })
         });
 
         const data = await response.json();
-        console.log("Response from server:", data); // Confirmar respuesta del servidor
 
         if (response.ok) {
             Swal.fire({
@@ -51,7 +46,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 icon: 'success',
                 confirmButtonText: 'Entendido'
             }).then(() => {
-                window.location.reload(); // Recarga la página después de cerrar la alerta
+                window.location.reload();
             });
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
@@ -67,7 +62,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     }
 });
 
-
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
@@ -76,16 +70,17 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     if (!busqueda.trim()) {
         return;
     }
-  
+
     const url = '/productos/api/buscar?q=' + busqueda;
     const respuesta = await fetch(url);
     const productos = await respuesta.json();
+
     productos.forEach((producto) => {
         const resultado = document.createElement('div');
         resultado.textContent = producto.nombre;
         resultado.classList.add('resultado-busqueda');
         resultado.addEventListener('click', () => {
-            resultadosBusqueda.innerHTML = '';  
+            resultadosBusqueda.innerHTML = '';
             const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
             const filaFactura = tablaFactura.insertRow();
             filaFactura.insertCell(0).textContent = producto.codigo;
@@ -121,14 +116,12 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
             });
             cellEliminar.appendChild(botonEliminar);
 
-            // Actualiza subtotal y stock solo cuando se cambia la cantidad
             inputCantidad.addEventListener('input', function() {
                 updateSubtotal(filaFactura);
             });
 
-            // Mantén la actualización de subtotal cuando se cambia el precio
             inputPrecio.addEventListener('input', function() {
-                updateSubtotal(filaFactura, false); // Pasa false para no verificar stock
+                updateSubtotal(filaFactura, false);
             });
 
             calcularTotal();

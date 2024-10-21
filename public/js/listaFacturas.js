@@ -299,11 +299,10 @@ document.getElementById('btnImprimir').addEventListener('click', function() {
     let y = 10; 
     doc.setFontSize(10);
 
-    // Ajuste de las posiciones X de las columnas
-    const posXFecha = 20;        // Posición más cercana a la izquierda
-    const posXCliente = 70;      // Ajuste adecuado para la columna del cliente
-    const posXTotal = 120;       // Columna del total más centrada
-    const posXMetodoPago = 160;  // Método de Pago más alejado del margen derecho
+    const posXFecha = 20;       
+    const posXCliente = 70;     
+    const posXTotal = 120;      
+    const posXMetodoPago = 160; 
 
     // Títulos de las columnas
     doc.text('Fecha', posXFecha, y);
