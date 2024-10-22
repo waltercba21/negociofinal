@@ -4,7 +4,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
 
-    // Log para ver el número de filas en la tabla
     console.log('Número de filas en la tabla:', filasFactura.length);
 
     for (let i = 0; i < filasFactura.length; i++) {
@@ -12,7 +11,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         const precioInput = filasFactura[i].cells[2].querySelector('input').value;
 
-        // Logs para verificar los valores de los productos
         console.log(`Producto ${i + 1} - Código: ${codigo}, Descripción: ${descripcion}, Precio input: ${precioInput}`);
 
         let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
@@ -21,7 +19,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         cantidad = !isNaN(cantidad) ? cantidad : 1; 
         let subtotal = precio_unitario * cantidad; 
 
-        // Logs para verificar los cálculos de subtotal y cantidad
         console.log(`Producto ${i + 1} - Precio Unitario: ${precio_unitario}, Cantidad: ${cantidad}, Subtotal: ${subtotal}`);
 
         invoiceItems.push({ 
@@ -33,28 +30,37 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         }); 
     }
 
-    // Log para verificar si se encuentra el elemento de total-amount
+    // Verificar y obtener el valor de 'total-amount'
     const totalFacturaElement = document.getElementById('total-amount');
     console.log('Elemento total-amount:', totalFacturaElement);
 
-    // Log para verificar el valor de totalFacturaElement
     if (totalFacturaElement) {
         console.log('Valor de total-amount antes de aplicar replace:', totalFacturaElement.value);
+    } else {
+        console.error('No se encontró el elemento total-amount.');
     }
 
     let totalFactura = totalFacturaElement && totalFacturaElement.value 
         ? totalFacturaElement.value.replace(/\./g, '').replace(',', '.').trim()
         : '0';
 
-    // Log para verificar el valor final de totalFactura
     console.log('Valor de totalFactura después de replace:', totalFactura);
+
+    // Verificar y obtener el valor de 'fecha-presupuesto'
+    const fechaFacturaElement = document.getElementById('fecha-presupuesto');
+    const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
+
+    if (fechaFacturaElement) {
+        console.log('Valor de fecha-presupuesto:', fechaFactura);
+    } else {
+        console.error('No se encontró el elemento fecha-presupuesto.');
+    }
 
     const metodosPago = [];
     document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
         metodosPago.push(checkbox.value);
     });
 
-    // Log para verificar los métodos de pago seleccionados
     console.log('Métodos de pago seleccionados:', metodosPago);
 
     try {
@@ -65,7 +71,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             },
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
-                fechaFactura: document.getElementById('fecha-presupuesto').value.trim(),
+                fechaFactura, // Corregido para enviar el valor de fechaFactura
                 totalFactura,
                 invoiceItems,
                 metodosPago: metodosPago.join(', ')
@@ -86,7 +92,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             throw new Error(data.error || 'Error al procesar el formulario');
         }
     } catch (error) {
-        // Log para mostrar el error en consola
         console.error('Error al enviar el formulario:', error);
         Swal.fire({
             title: 'Error',
