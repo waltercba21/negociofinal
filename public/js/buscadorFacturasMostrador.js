@@ -34,17 +34,16 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const totalFacturaElement = document.getElementById('total-amount');
     console.log('Elemento total-amount:', totalFacturaElement);
 
+    let totalFactura = '0'; // Valor por defecto
     if (totalFacturaElement) {
         console.log('Valor de total-amount antes de aplicar replace:', totalFacturaElement.value);
+        // Limpia el valor del total para enviar solo el número
+        totalFactura = totalFacturaElement.value.replace(/\./g, '').replace(',', '.').replace('$', '').trim();
     } else {
         console.error('No se encontró el elemento total-amount.');
     }
 
-    let totalFactura = totalFacturaElement && totalFacturaElement.value 
-        ? totalFacturaElement.value.replace(/\./g, '').replace(',', '.').trim()
-        : '0';
-
-    console.log('Valor de totalFactura después de replace:', totalFactura);
+    console.log('Valor de totalFactura después de limpiar:', totalFactura);
 
     // Verificar y obtener el valor de 'fecha-presupuesto'
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
@@ -56,6 +55,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         console.error('No se encontró el elemento fecha-presupuesto.');
     }
 
+    // Obtener métodos de pago
     const metodosPago = [];
     document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
         metodosPago.push(checkbox.value);
@@ -71,8 +71,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             },
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
-                fechaFactura, // Corregido para enviar el valor de fechaFactura
-                totalFactura,
+                fechaPresupuesto: fechaFactura, // Enviar el valor de fechaFactura
+                totalPresupuesto: totalFactura,  // Enviar el valor limpio del total
                 invoiceItems,
                 metodosPago: metodosPago.join(', ')
             })
@@ -101,6 +101,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
