@@ -35,7 +35,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             },
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
-                fechaFactura: document.getElementById('fecha-factura').value.trim(),
+                fechaFactura: document.getElementById('fecha-presupuesto').value.trim(),
                 totalFactura,
                 invoiceItems,
                 metodosPago: metodosPago.join(', ')
