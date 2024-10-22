@@ -21,7 +21,11 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         }); 
     }
 
-    const totalFactura = document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim();
+    const totalFacturaElement = document.getElementById('total-amount').value;
+    const totalFactura = totalFacturaElement 
+        ? totalFacturaElement.replace(/\./g, '').replace(',', '.').trim()
+        : '0';
+
     const metodosPago = [];
     document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
         metodosPago.push(checkbox.value);
@@ -158,6 +162,7 @@ function updateSubtotal(row, verificarStock = true) {
     row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
 }
+
 function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
