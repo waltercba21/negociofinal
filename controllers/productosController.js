@@ -1140,13 +1140,16 @@ actualizarPrecios: function(req, res) {
     });
 },  
 actualizarPreciosExcel: async (req, res) => {
+    let productosActualizados = [];
     try {
         const file = req.files[0];
-        let productosActualizados = [];
+
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
-            const promises = []; 
+            const promises = [];
+            const limit = pLimit(10); // Controlar el número de promesas simultáneas
+
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
                 for (const row of data) {
@@ -1154,40 +1157,31 @@ actualizarPreciosExcel: async (req, res) => {
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
 
                     if (codigoColumn && precioColumn) {
-                        let codigoRaw = row[codigoColumn];
+                        const codigo = row[codigoColumn].toString().trim();
                         let precioRaw = row[precioColumn];
-                    
-                        let codigo = codigoRaw.toString().trim();
-                    
-                        if (typeof precioRaw === 'number') {
-                            precioRaw = precioRaw.toString();
-                        }
-                    
+
                         if (typeof precioRaw === 'string') {
                             const precio = parseFloat(precioRaw.replace(',', '.'));
-                    
                             if (isNaN(precio) || precio <= 0) {
                                 console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
                                 continue;
                             }
-                            promises.push(
-                                producto.actualizarPreciosPDF(precio, codigo)
-                                    .then(async productosActualizadosTemp => {
-                                        if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
-                                            productosActualizados.push(...productosActualizadosTemp);
-                                            for (const productoActualizado of productosActualizadosTemp) {
-                                                await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo);
-                                            }
-                                        } else {
-                                            console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
-                                            return { noExiste: true, codigo: codigo };
+
+                            promises.push(limit(() => producto.actualizarPreciosPDF(precio, codigo)
+                                .then(async productosActualizadosTemp => {
+                                    if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
+                                        productosActualizados.push(...productosActualizadosTemp);
+                                        for (const productoActualizado of productosActualizadosTemp) {
+                                            await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo);
                                         }
-                                    })
-                                    .catch(error => {
-                                        console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
-                                        return { error: true, message: `Error al actualizar el producto con el código ${codigo}: ${error.message}` };
-                                    })
-                            );
+                                    } else {
+                                        console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
+                                })
+                            ));
                         } else {
                             console.error(`Tipo de dato no esperado para el precio en el código ${codigo}: ${typeof precioRaw}`);
                         }
@@ -1196,29 +1190,19 @@ actualizarPreciosExcel: async (req, res) => {
                     }
                 }
             }
-            const resultados = await Promise.all(promises);
-            const errores = resultados.filter(resultado => resultado && resultado.error);
-            const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
-            if (errores.length > 0) {
-                console.log("Errores al actualizar algunos productos:", errores);
-            }
-            if (noEncontrados.length > 0) {
-                noEncontrados.forEach(item => {
-                    console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
-                });
-            }
+
+            await Promise.all(promises);
+
             fs.unlinkSync(file.path);
             res.render('productosActualizados', { productos: productosActualizados });
         } else {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
-            return;
         }
     } catch (error) {
         console.log("Error durante el procesamiento de archivos", error);
         res.status(500).send(error.message);
     }
 },
-
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
