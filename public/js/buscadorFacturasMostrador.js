@@ -1,5 +1,6 @@
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
+    
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
 
@@ -21,9 +22,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         }); 
     }
 
-    const totalFacturaElement = document.getElementById('total-amount').value;
-    const totalFactura = totalFacturaElement 
-        ? totalFacturaElement.replace(/\./g, '').replace(',', '.').trim()
+    const totalFacturaElement = document.getElementById('total-amount');
+    let totalFactura = totalFacturaElement && totalFacturaElement.value 
+        ? totalFacturaElement.value.replace(/\./g, '').replace(',', '.').trim()
         : '0';
 
     const metodosPago = [];
@@ -68,6 +69,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
