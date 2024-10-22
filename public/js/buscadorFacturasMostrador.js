@@ -165,7 +165,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
         resultadosBusqueda.appendChild(resultado);
     });
 });
-
 function updateSubtotal(row, verificarStock = true) {
     const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.')) || 0;
     const cantidad = parseInt(row.cells[3].querySelector('input').value) || 0;
@@ -206,4 +205,5 @@ function calcularTotal() {
         total += subtotal;
     }
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' }); 
-}
+    console.log('Total calculado:', total);
+}  
