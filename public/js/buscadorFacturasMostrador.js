@@ -4,15 +4,26 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
 
+    // Log para ver el número de filas en la tabla
+    console.log('Número de filas en la tabla:', filasFactura.length);
+
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         const precioInput = filasFactura[i].cells[2].querySelector('input').value;
+
+        // Logs para verificar los valores de los productos
+        console.log(`Producto ${i + 1} - Código: ${codigo}, Descripción: ${descripcion}, Precio input: ${precioInput}`);
+
         let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0; 
         cantidad = !isNaN(cantidad) ? cantidad : 1; 
         let subtotal = precio_unitario * cantidad; 
+
+        // Logs para verificar los cálculos de subtotal y cantidad
+        console.log(`Producto ${i + 1} - Precio Unitario: ${precio_unitario}, Cantidad: ${cantidad}, Subtotal: ${subtotal}`);
+
         invoiceItems.push({ 
             producto_id: codigo, 
             descripcion, 
@@ -22,15 +33,29 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         }); 
     }
 
+    // Log para verificar si se encuentra el elemento de total-amount
     const totalFacturaElement = document.getElementById('total-amount');
+    console.log('Elemento total-amount:', totalFacturaElement);
+
+    // Log para verificar el valor de totalFacturaElement
+    if (totalFacturaElement) {
+        console.log('Valor de total-amount antes de aplicar replace:', totalFacturaElement.value);
+    }
+
     let totalFactura = totalFacturaElement && totalFacturaElement.value 
         ? totalFacturaElement.value.replace(/\./g, '').replace(',', '.').trim()
         : '0';
+
+    // Log para verificar el valor final de totalFactura
+    console.log('Valor de totalFactura después de replace:', totalFactura);
 
     const metodosPago = [];
     document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
         metodosPago.push(checkbox.value);
     });
+
+    // Log para verificar los métodos de pago seleccionados
+    console.log('Métodos de pago seleccionados:', metodosPago);
 
     try {
         const response = await fetch('/productos/procesarFormularioFacturas', {
@@ -61,6 +86,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             throw new Error(data.error || 'Error al procesar el formulario');
         }
     } catch (error) {
+        // Log para mostrar el error en consola
+        console.error('Error al enviar el formulario:', error);
         Swal.fire({
             title: 'Error',
             text: 'Error al enviar formulario: ' + error.message,
