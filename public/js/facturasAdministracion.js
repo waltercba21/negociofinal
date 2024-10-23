@@ -10,7 +10,6 @@ document.getElementById('mostrarFormulario').addEventListener('click', function(
   }
 });
 
-// Evento de escucha para el botón "Cancelar"
 document.querySelector('.btn-facturas-guardar button[type="reset"]').addEventListener('click', function(e) {
   e.preventDefault();
   document.getElementById('formularioFacturas').style.display = 'none';
