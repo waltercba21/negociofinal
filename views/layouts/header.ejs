@@ -11,11 +11,12 @@
   
     <% if (userLogged.isAdmin) { %>
       <% if (userLogged.isAccountingAdmin) { %>
-        <a class="nav-link" href="/administracion">ADMINISTRACIÓN</a>
+        
       <% } else { %>
         <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
         <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
         <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
+        <a class="nav-link" href="/administracion">ADMINISTRACIÓN</a>
       <% } %>
     <% } else if (isLogged) { %>
     <% } %>
