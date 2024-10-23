@@ -1,3 +1,10 @@
+// Prevenir el envío del formulario al presionar ENTER en los inputs
+document.getElementById('invoice-form').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();  // Evita que el formulario se envíe
+        return false;  // Retorna false para asegurar que no se realice la acción
+    }
+});
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     const invoiceItems = [];
@@ -176,4 +183,4 @@ function calcularTotal() {
     }
 
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' }); 
-}
+} 
