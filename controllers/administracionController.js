@@ -32,7 +32,7 @@ module.exports = {
                 console.error(error);
                 res.status(500).send('Error al obtener los proveedores');
             } else {
-                res.render('facturas', { proveedores: proveedores });
+                res.render('facturasAdministracion', { proveedores: proveedores });
             }
         });
     },
