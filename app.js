@@ -53,7 +53,7 @@ app.use('/', indexRouter);
 console.log("Router montado correctamente");
 app.use('/users', usersRouter);
 app.use('/productos', productosRouter);
-//app.use ('/administracion',administracionRouter);
+app.use ('/administracion',administracionRouter);
 
 io.on('connection', (socket) => { 
   console.log('Un cliente se ha conectado');
