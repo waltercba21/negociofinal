@@ -1,3 +1,10 @@
+// Prevenir el envío del formulario al presionar ENTER en los inputs
+document.getElementById('invoice-form').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();  // Evita que el formulario se envíe
+        return false;  // Retorna false para asegurar que no se realice la acción
+    }
+});
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -112,7 +119,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     if (!busqueda.trim()) {
         return;
     }
-    const url = '/productos/api/buscar?q=' + busqueda;
+    const url = '/productos/api/buscar?q=' + busqueda; 
     const respuesta = await fetch(url);
     const productos = await respuesta.json();
     productos.forEach((producto) => {
