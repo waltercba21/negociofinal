@@ -46,6 +46,20 @@ module.exports ={
           });
         });
       },
+      obtenerSiguienteIDFactura: function() {
+        return new Promise((resolve, reject) => {
+            conexion.query('SELECT MAX(id) AS max_id FROM facturas_mostrador', (error, resultado) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                let siguienteID = resultado[0].max_id || 0;
+                siguienteID++;
+                resolve(siguienteID);
+            });
+        });
+    },
+    
 guardarPresupuesto : (presupuesto) => {
         return new Promise((resolve, reject) => {
           conexion.query('INSERT INTO presupuestos_mostrador SET ?', presupuesto, (error, resultado) => {
