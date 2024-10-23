@@ -10,10 +10,23 @@ module.exports ={
             callback(null, results);
         });
     },
-    insertFactura : function(factura, callback) {
+    insertFactura: function(factura, callback) {
         pool.query('INSERT INTO facturas SET ?', factura, function(error, results) {
             if (error) throw error;
-            callback(results);
+            // Devolver el ID de la factura recién creada
+            callback(results.insertId);
+        });
+    },
+    insertarItemFactura: function(itemFactura, callback) {
+        pool.query('INSERT INTO facturas_admin_items SET ?', itemFactura, function(error, results) {
+            if (error) throw error;
+            if (callback) callback(results);
+        });
+    },
+    actualizarStockProducto: function(productoID, cantidad, callback) {
+        pool.query('UPDATE productos SET stock_actual = stock_actual + ? WHERE id = ?', [cantidad, productoID], function(error, results) {
+            if (error) throw error;
+            if (callback) callback(results);
         });
     },
     getFacturas : function(callback) {

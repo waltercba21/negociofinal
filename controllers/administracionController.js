@@ -46,10 +46,30 @@ module.exports = {
             condicion: req.body.condicion,
             comprobante_pago: req.file ? req.file.filename : null
         };
-        administracion.insertFactura(nuevaFactura, function() {
+        
+        let productosFactura = JSON.parse(req.body.invoiceItems); // Recibes los productos del frontend
+        
+        // Insertar factura
+        administracion.insertFactura(nuevaFactura, function(facturaID) {
+            // Insertar productos en facturas_admin_items
+            productosFactura.forEach(function(item) {
+                let itemFactura = {
+                    factura_id: facturaID,
+                    producto_id: item.id,
+                    cantidad: item.cantidad,
+                    precio_unitario: item.precio_unitario,
+                    subtotal: item.subtotal
+                };
+                administracion.insertarItemFactura(itemFactura);
+    
+                // Actualizar el stock del producto
+                administracion.actualizarStockProducto(item.id, item.cantidad);
+            });
+    
             res.redirect('/administracion/facturas');
         });
     },
+    
     listadoFacturas : function(req, res) {
         administracion.getFacturas(function(error, facturas) {
             if (error) {
