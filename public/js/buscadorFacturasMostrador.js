@@ -1,33 +1,23 @@
-// Prevenir el envío del formulario al presionar ENTER en los inputs
 document.getElementById('invoice-form').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
-        e.preventDefault();  // Evita que el formulario se envíe
-        return false;  // Retorna false para asegurar que no se realice la acción
+        e.preventDefault();  
+        return false; 
     }
 });
+
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-
-    console.log('Número de filas en la tabla:', filasFactura.length);
-
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[0].textContent.trim();
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         const precioInput = filasFactura[i].cells[2].querySelector('input').value;
-
-        console.log(`Producto ${i + 1} - Código: ${codigo}, Descripción: ${descripcion}, Precio input: ${precioInput}`);
-
         let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
         let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0; 
         cantidad = !isNaN(cantidad) ? cantidad : 1; 
         let subtotal = precio_unitario * cantidad; 
-
-        console.log(`Producto ${i + 1} - Precio Unitario: ${precio_unitario}, Cantidad: ${cantidad}, Subtotal: ${subtotal}`);
-
         invoiceItems.push({ 
             producto_id: codigo, 
             descripcion, 
@@ -36,23 +26,13 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             subtotal 
         }); 
     }
-
-    // Verificar y obtener el valor de 'total-amount'
     const totalFacturaElement = document.getElementById('total-amount');
-    console.log('Elemento total-amount:', totalFacturaElement);
-
-    let totalFactura = '0'; // Valor por defecto
+    let totalFactura = '0'; 
     if (totalFacturaElement) {
-        console.log('Valor de total-amount antes de aplicar replace:', totalFacturaElement.value);
-        // Limpia el valor del total para enviar solo el número
         totalFactura = totalFacturaElement.value.replace(/\./g, '').replace(',', '.').replace('$', '').trim();
     } else {
         console.error('No se encontró el elemento total-amount.');
     }
-
-    console.log('Valor de totalFactura después de limpiar:', totalFactura);
-
-    // Verificar y obtener el valor de 'fecha-presupuesto'
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
@@ -62,13 +42,10 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         console.error('No se encontró el elemento fecha-presupuesto.');
     }
 
-    // Obtener métodos de pago
     const metodosPago = [];
     document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
         metodosPago.push(checkbox.value);
     });
-
-    console.log('Métodos de pago seleccionados:', metodosPago);
 
     try {
         const response = await fetch('/productos/procesarFormularioFacturas', {
@@ -78,8 +55,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             },
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
-                fechaPresupuesto: fechaFactura, // Enviar el valor de fechaFactura
-                totalPresupuesto: totalFactura,  // Enviar el valor limpio del total
+                fechaPresupuesto: fechaFactura,
+                totalPresupuesto: totalFactura,
                 invoiceItems,
                 metodosPago: metodosPago.join(', ')
             })
@@ -108,9 +85,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
-
-
-
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
@@ -213,5 +187,4 @@ function calcularTotal() {
         total += subtotal;
     }
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' }); 
-    console.log('Total calculado:', total);
 }  

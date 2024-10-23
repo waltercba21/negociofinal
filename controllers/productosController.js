@@ -871,13 +871,14 @@ presupuestoMostrador: async function(req, res) {
   },
   facturasMostrador: async function(req, res) {
     try {
-      const siguienteID = await producto.obtenerSiguienteID();
-      res.render('facturasMostrador', { idPresupuesto: siguienteID });
+        const siguienteIDFactura = await producto.obtenerSiguienteIDFactura(); // Obtener el siguiente ID de facturas
+        res.render('facturasMostrador', { idFactura: siguienteIDFactura }); // Cambiar el nombre a idFactura
     } catch (error) {
-      console.error('Error al obtener el siguiente ID de presupuesto:', error.message);
-      res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
+        console.error('Error al obtener el siguiente ID de factura:', error.message);
+        res.status(500).send('Error al obtener el siguiente ID de factura.');
     }
-  },
+},
+
   procesarFormulario: async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;

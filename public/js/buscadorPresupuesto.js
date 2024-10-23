@@ -59,7 +59,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             throw new Error(data.error || 'Error al procesar el formulario');
         }
     } catch (error) {
-        console.error('Error al enviar formulario:', error);
         Swal.fire({
             title: 'Error',
             text: 'Error al enviar formulario: ' + error.message,
@@ -171,11 +170,9 @@ function updateSubtotal(row, verificarStock = true) {
     row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
 }
-
 function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
-
     for (let i = 0; i < filasFactura.length; i++) {
         let subtotal = parseFloat(filasFactura[i].cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
         subtotal = !isNaN(subtotal) ? subtotal : 0;
