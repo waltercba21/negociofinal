@@ -17,6 +17,7 @@ module.exports ={
             callback(results.insertId);
         });
     },
+    
     insertarItemFactura: function(itemFactura, callback) {
         console.log("Insertando item en la factura:", itemFactura); 
         pool.query('INSERT INTO facturas_admin_items SET ?', itemFactura, function(error, results) {
@@ -26,11 +27,13 @@ module.exports ={
     },
     
     actualizarStockProducto: function(productoID, cantidad, callback) {
-        pool.query('UPDATE productos SET stock_actual = stock_actual + ? WHERE id = ?', [cantidad, productoID], function(error, results) {
+        // Se debe restar la cantidad en lugar de sumarla para reflejar la venta
+        pool.query('UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?', [cantidad, productoID], function(error, results) {
             if (error) throw error;
             if (callback) callback(results);
         });
     },
+    
     getFacturas : function(callback) {
         pool.query('SELECT facturas.*, proveedores.nombre AS nombre_proveedor FROM facturas LEFT JOIN proveedores ON facturas.id_proveedor = proveedores.id', function(error, results) {
             if (error) {
