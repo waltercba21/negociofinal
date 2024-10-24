@@ -46,7 +46,8 @@ module.exports = {
             condicion: req.body.condicion,
             comprobante_pago: req.file ? req.file.filename : null
         };
-        
+        console.log("Contenido de invoiceItems:", req.body.invoiceItems);
+
         let productosFactura = JSON.parse(req.body.invoiceItems); // Recibes los productos del frontend
         
         // Insertar factura
