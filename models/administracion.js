@@ -18,11 +18,13 @@ module.exports ={
         });
     },
     insertarItemFactura: function(itemFactura, callback) {
+        console.log("Insertando item en la factura:", itemFactura); 
         pool.query('INSERT INTO facturas_admin_items SET ?', itemFactura, function(error, results) {
             if (error) throw error;
             if (callback) callback(results);
         });
     },
+    
     actualizarStockProducto: function(productoID, cantidad, callback) {
         pool.query('UPDATE productos SET stock_actual = stock_actual + ? WHERE id = ?', [cantidad, productoID], function(error, results) {
             if (error) throw error;

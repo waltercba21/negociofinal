@@ -78,31 +78,35 @@ document.getElementById('formularioFacturas').addEventListener('submit', async f
   formData.append('invoiceItems', JSON.stringify(invoiceItems));
 
   try {
-      const response = await fetch('administracion/facturas', {
-          method: 'POST',
-          body: formData
-      });
+    const response = await fetch('/administracion/facturas', {
+        method: 'POST',
+        body: formData
+    });
 
-      const data = await response.json();
-      if (response.ok) {
-          Swal.fire({
-              title: '¡Éxito!',
-              text: data.message,
-              icon: 'success',
-              confirmButtonText: 'Entendido'
-          }).then(() => {
-              window.location.reload(); 
-          });
-      } else {
-          throw new Error(data.message);
-      }
-  } catch (error) {
-      console.error('Error al enviar el formulario:', error);
-      Swal.fire({
-          title: 'Error',
-          text: error.message,
-          icon: 'error',
-          confirmButtonText: 'Reintentar'
-      });
-  }
+    const data = await response.json(); // Esta línea puede lanzar un error si la respuesta no es JSON
+    
+    console.log(data); // Imprimir la respuesta para depurar
+
+    if (response.ok) {
+        Swal.fire({
+            title: '¡Éxito!',
+            text: data.message,
+            icon: 'success',
+            confirmButtonText: 'Entendido'
+        }).then(() => {
+            window.location.reload(); 
+        });
+    } else {
+        throw new Error(data.message);
+    }
+} catch (error) {
+    console.error('Error al enviar el formulario:', error);
+
+    Swal.fire({
+        title: 'Error',
+        text: error.message || 'Hubo un problema al procesar la solicitud',
+        icon: 'error',
+        confirmButtonText: 'Reintentar'
+    });
+}
 });

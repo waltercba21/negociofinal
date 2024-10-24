@@ -62,9 +62,14 @@ module.exports = {
                 administracion.actualizarStockProducto(item.id, item.cantidad);
             });
     
-            res.redirect('/administracion/facturas');
+            // Enviar respuesta JSON
+            res.json({
+                message: 'Factura guardada exitosamente',
+                facturaID: facturaID
+            });
         });
     },
+    
     
     listadoFacturas : function(req, res) {
         administracion.getFacturas(function(error, facturas) {
