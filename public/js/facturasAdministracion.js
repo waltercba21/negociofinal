@@ -39,7 +39,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
       resultado.textContent = producto.nombre;
       resultado.classList.add('resultado-busqueda');
       resultado.addEventListener('click', () => {
-          resultadosBusqueda.innerHTML = ''; // Limpiar los resultados de búsqueda
+          resultadosBusqueda.innerHTML = '';
           const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
           const filaFactura = tablaFactura.insertRow();
           filaFactura.insertCell(0).textContent = producto.codigo;
@@ -102,7 +102,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
   formData.append('comprobante_pago', document.getElementById('comprobante_pago').files[0]);
 
   try {
-      const response = await fetch('/facturas', {
+      const response = await fetch('administracion/facturas', {
           method: 'POST',
           body: formData
       });
