@@ -34,23 +34,16 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
           filaFactura.insertCell(0).textContent = producto.codigo;
           filaFactura.insertCell(1).textContent = producto.nombre;
 
-          const cellPrecio = filaFactura.insertCell(2);
-          const inputPrecio = document.createElement('input');
-          inputPrecio.type = 'text';
-          inputPrecio.value = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-          cellPrecio.appendChild(inputPrecio);
-
-          const cellCantidad = filaFactura.insertCell(3);
+          // Columna de cantidad (input)
+          const cellCantidad = filaFactura.insertCell(2);
           const inputCantidad = document.createElement('input');
           inputCantidad.type = 'number';
           inputCantidad.min = 1;
           inputCantidad.value = 1;
           cellCantidad.appendChild(inputCantidad);
 
-          const cellStock = filaFactura.insertCell(4);
-          cellStock.textContent = producto.stock_actual;
-
-          const cellEliminar = filaFactura.insertCell(5);
+          // Columna de eliminar (botón)
+          const cellEliminar = filaFactura.insertCell(3);
           const botonEliminar = document.createElement('button');
           botonEliminar.textContent = '✖';
           botonEliminar.className = 'boton-eliminar';
@@ -72,13 +65,11 @@ document.getElementById('formularioFacturas').addEventListener('submit', async f
   for (let i = 0; i < filasFactura.length; i++) {
       const codigo = filasFactura[i].cells[0].textContent.trim();
       const descripcion = filasFactura[i].cells[1].textContent.trim();
-      const precioInput = filasFactura[i].cells[2].querySelector('input').value;
-      const cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
+      const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
 
       invoiceItems.push({
           id: codigo,
           descripcion,
-          precio_unitario: precioInput,
           cantidad
       });
   }
