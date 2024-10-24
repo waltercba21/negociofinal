@@ -40,40 +40,31 @@
             </select>
         
             <div class="contenedor-buscador-facturas">
-            <div class="buscador">
-              <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
-              <div id="resultadosBusqueda"></div>
-            </div>
-        
-            <div id="invoice-items">
-              <table id="tabla-factura">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Descripción</th>
-                    <th>Precio Unitario</th>
-                    <th>Cantidad</th>
-                    <th>Stock Actual</th>
-                    <th>Subtotal</th>
-                    <th>Eliminar</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Las filas de productos se agregarán dinámicamente aquí -->
-                </tbody>
-              </table>
-            </div>
-        </div>
-            <div id="invoice-total">
-              <label>Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
-            </div>
-            
-            <input type="hidden" id="invoiceItems" name="invoiceItems">
-        
-            <div class="botones-contenedor">
-              <button type="submit">Guardar Factura</button>
-              <button type="button" id="print-button">Imprimir Factura</button>
-            </div>
+              <div class="buscador">
+                  <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
+                  <div id="resultadosBusqueda"></div>
+              </div>
+          
+              <div id="invoice-items">
+                  <table id="tabla-factura">
+                      <thead>
+                          <tr>
+                              <th>Código</th>
+                              <th>Descripción</th>
+                              <th>Cantidad</th>
+                              <th>Stock Actual</th>
+                              <th>Eliminar</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <!-- Las filas de productos se agregarán dinámicamente aquí -->
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+          <input type="hidden" id="invoiceItems" name="invoiceItems">
+
+          <button id="guardarFactura" type="button">Guardar Factura</button>
           </div>
         </div>
         </form>

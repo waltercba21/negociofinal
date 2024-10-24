@@ -57,12 +57,8 @@ module.exports = {
                     factura_id: facturaID,
                     producto_id: item.id,
                     cantidad: item.cantidad,
-                    precio_unitario: item.precio_unitario,
-                    subtotal: item.subtotal
                 };
                 administracion.insertarItemFactura(itemFactura);
-    
-                // Actualizar el stock del producto
                 administracion.actualizarStockProducto(item.id, item.cantidad);
             });
     
