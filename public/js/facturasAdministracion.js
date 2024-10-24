@@ -61,21 +61,27 @@ document.getElementById('formularioFacturas').addEventListener('submit', async f
 
   const invoiceItems = [];
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-
+  
   for (let i = 0; i < filasFactura.length; i++) {
       const codigo = filasFactura[i].cells[0].textContent.trim();
       const descripcion = filasFactura[i].cells[1].textContent.trim();
       const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
-
-      invoiceItems.push({
-          id: codigo,
-          descripcion,
-          cantidad
-      });
+  
+      // Verificar que los campos no estén vacíos o mal formados
+      if (codigo && descripcion && !isNaN(cantidad)) {
+          invoiceItems.push({
+              id: codigo,
+              descripcion: descripcion,
+              cantidad: cantidad
+          });
+      }
   }
+  
+  console.log("Invoice Items:", invoiceItems); // Verifica que no haya elementos vacíos
   
   const formData = new FormData(this);
   formData.append('invoiceItems', JSON.stringify(invoiceItems));
+  
 
   try {
     const response = await fetch('/administracion/facturas', {

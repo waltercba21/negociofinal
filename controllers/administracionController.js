@@ -37,6 +37,7 @@ module.exports = {
         });
     },
     postFactura: function(req, res) {
+        // Crear objeto nuevaFactura con los datos recibidos
         let nuevaFactura = {
             id_proveedor: req.body.id_proveedor,
             fecha: req.body.fecha,
@@ -46,21 +47,40 @@ module.exports = {
             condicion: req.body.condicion,
             comprobante_pago: req.file ? req.file.filename : null
         };
-        console.log("Contenido de invoiceItems:", req.body.invoiceItems);
-
-        let productosFactura = JSON.parse(req.body.invoiceItems); // Recibes los productos del frontend
         
+        console.log("Contenido de invoiceItems:", req.body.invoiceItems);
+        
+        // Verificar si invoiceItems existe y tiene contenido
+        let productosFactura = [];
+        
+        if (req.body.invoiceItems && req.body.invoiceItems.length > 0) {
+            try {
+                productosFactura = JSON.parse(req.body.invoiceItems); // Parsear los productos del frontend
+            } catch (error) {
+                console.error("Error al parsear invoiceItems:", error);
+                return res.status(400).json({ message: 'Datos de productos inválidos' });
+            }
+        } else {
+            return res.status(400).json({ message: 'No se enviaron productos' });
+        }
+    
         // Insertar factura
         administracion.insertFactura(nuevaFactura, function(facturaID) {
             // Insertar productos en facturas_admin_items
             productosFactura.forEach(function(item) {
-                let itemFactura = {
-                    factura_id: facturaID,
-                    producto_id: item.id,
-                    cantidad: item.cantidad,
-                };
-                administracion.insertarItemFactura(itemFactura);
-                administracion.actualizarStockProducto(item.id, item.cantidad);
+                // Validar que cada item tenga el formato correcto
+                if (item.id && item.cantidad) {
+                    let itemFactura = {
+                        factura_id: facturaID,
+                        producto_id: item.id,
+                        cantidad: item.cantidad,
+                    };
+                    administracion.insertarItemFactura(itemFactura);
+                    administracion.actualizarStockProducto(item.id, item.cantidad);
+                } else {
+                    console.error("Item de factura inválido:", item);
+                    return res.status(400).json({ message: 'Item de factura inválido' });
+                }
             });
     
             // Enviar respuesta JSON
@@ -70,6 +90,7 @@ module.exports = {
             });
         });
     },
+    
     
     
     listadoFacturas : function(req, res) {
