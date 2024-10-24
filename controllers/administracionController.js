@@ -37,7 +37,6 @@ module.exports = {
         });
     },
     postFactura: function(req, res) {
-        // Crear objeto nuevaFactura con los datos recibidos
         let nuevaFactura = {
             id_proveedor: req.body.id_proveedor,
             fecha: req.body.fecha,
@@ -50,15 +49,23 @@ module.exports = {
         
         console.log("Contenido de invoiceItems:", req.body.invoiceItems);
         
-        // Verificar si invoiceItems existe y tiene contenido
+        // Comprobar que invoiceItems no esté vacío
         let productosFactura = [];
         
         if (req.body.invoiceItems && req.body.invoiceItems.length > 0) {
-            try {
-                productosFactura = JSON.parse(req.body.invoiceItems); // Parsear los productos del frontend
-            } catch (error) {
-                console.error("Error al parsear invoiceItems:", error);
-                return res.status(400).json({ message: 'Datos de productos inválidos' });
+            // Filtrar solo los elementos válidos (no vacíos)
+            const validItems = req.body.invoiceItems.filter(item => item.trim() !== '');
+    
+            if (validItems.length > 0) {
+                try {
+                    // Suponiendo que el JSON válido está en el primer elemento no vacío
+                    productosFactura = JSON.parse(validItems[0]); // Parsear solo el primer elemento válido
+                } catch (error) {
+                    console.error("Error al parsear invoiceItems:", error);
+                    return res.status(400).json({ message: 'Datos de productos inválidos' });
+                }
+            } else {
+                return res.status(400).json({ message: 'No se enviaron productos válidos' });
             }
         } else {
             return res.status(400).json({ message: 'No se enviaron productos' });
@@ -90,9 +97,6 @@ module.exports = {
             });
         });
     },
-    
-    
-    
     listadoFacturas : function(req, res) {
         administracion.getFacturas(function(error, facturas) {
             if (error) {
