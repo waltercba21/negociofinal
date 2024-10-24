@@ -1,26 +1,15 @@
 document.getElementById('mostrarFormulario').addEventListener('click', function() {
   var formulario = document.getElementById('formularioFacturas');
   var fondoOscuro = document.getElementById('fondoOscuro');
-  if (formulario.style.display === 'none') {
-      formulario.style.display = 'block';
-      fondoOscuro.style.display = 'block';
-  } else {
-      formulario.style.display = 'none';
-      fondoOscuro.style.display = 'none';
-  }
+  formulario.style.display = 'block';
+  fondoOscuro.style.display = 'block';
 });
 
-document.querySelector('.btn-facturas-guardar button[type="reset"]').addEventListener('click', function(e) {
-  e.preventDefault();
+document.getElementById('cerrarFormulario').addEventListener('click', function() {
   document.getElementById('formularioFacturas').style.display = 'none';
   document.getElementById('fondoOscuro').style.display = 'none';
 });
 
-// Evento de escucha para el fondo oscuro
-document.getElementById('fondoOscuro').addEventListener('click', function() {
-  document.getElementById('formularioFacturas').style.display = 'none';
-  this.style.display = 'none';
-}); 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
@@ -74,14 +63,12 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
   });
 });
 
-// Manejar el envío del formulario
-document.getElementById('invoice-form').addEventListener('submit', async function (e) {
+document.getElementById('formularioFacturas').addEventListener('submit', async function (e) {
   e.preventDefault();
 
   const invoiceItems = [];
   const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
 
-  // Recopilar datos de la tabla
   for (let i = 0; i < filasFactura.length; i++) {
       const codigo = filasFactura[i].cells[0].textContent.trim();
       const descripcion = filasFactura[i].cells[1].textContent.trim();
@@ -95,11 +82,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
           cantidad
       });
   }
-
-  // Crear el FormData para enviar
-  const formData = new FormData();
+  
+  const formData = new FormData(this);
   formData.append('invoiceItems', JSON.stringify(invoiceItems));
-  formData.append('comprobante_pago', document.getElementById('comprobante_pago').files[0]);
 
   try {
       const response = await fetch('administracion/facturas', {
@@ -115,18 +100,18 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
               icon: 'success',
               confirmButtonText: 'Entendido'
           }).then(() => {
-              window.location.reload(); // Recargar la página
+              window.location.reload(); 
           });
       } else {
-          throw new Error(data.error || 'Error al procesar el formulario');
+          throw new Error(data.message);
       }
   } catch (error) {
       console.error('Error al enviar el formulario:', error);
       Swal.fire({
           title: 'Error',
-          text: 'Error al enviar formulario: ' + error.message,
+          text: error.message,
           icon: 'error',
-          confirmButtonText: 'Entendido'
+          confirmButtonText: 'Reintentar'
       });
   }
 });
