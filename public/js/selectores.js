@@ -31,21 +31,31 @@ document.addEventListener('DOMContentLoaded', function() {
       const categoria_id = document.getElementById('categoria_id').value;
       const marca_id = document.getElementById('marca_id').value;
       const modelo_id = document.getElementById('modelo_id').value;
-
+  
       console.log('Valores de los selectores:', categoria_id, marca_id, modelo_id);
-
-      fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(productos => renderizarProductos(productos, contenedorProductos, false))
-        .catch(error => console.error('Error:', error));
+  
+      const cargador = document.getElementById('cargador');
+      cargador.classList.remove('hidden');
+  
+      fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`, {
+        timeout: 10000 // 10 segundos
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(productos => {
+        cargador.classList.add('hidden');
+        renderizarProductos(productos, contenedorProductos, false);
+      })
+      .catch(error => {
+        cargador.classList.add('hidden');
+        console.error('Error:', error);
+      });
     });
   });
-});
 
 function renderizarProductos(productos, contenedorProductos, isAdminUser) {
   contenedorProductos.innerHTML = '';
@@ -126,3 +136,4 @@ function renderizarProductos(productos, contenedorProductos, isAdminUser) {
     $images.eq(index).show();
   });
 
+});
