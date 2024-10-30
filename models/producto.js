@@ -314,7 +314,7 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
       });
     });
   },
-  actualizar: function (conexion, datos, archivo) {
+  actualizar: function (conexion, datos, archivo) { 
     return new Promise((resolve, reject) => {
         let query = "UPDATE productos SET ";
         let params = [];
@@ -395,16 +395,15 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
             params.push(archivo.filename);
             first = false;
         }
-        // Campo calidad_original
         if (typeof datos.calidad_original !== 'undefined') {
             query += first ? "calidad_original=?" : ", calidad_original=?";
             params.push(datos.calidad_original);
             first = false;
         }
         // Campo VIC
-        if (typeof datos.VIC !== 'undefined') {
-            query += first ? "VIC=?" : ", VIC=?";
-            params.push(datos.VIC);
+        if (typeof datos.calidad_vic !== 'undefined') {
+            query += first ? "calidad_vic=?" : ", calidad_vic=?";
+            params.push(datos.calidad_vic);
             first = false;
         }
         if (!datos.id) {
