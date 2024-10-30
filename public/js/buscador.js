@@ -60,6 +60,10 @@ function mostrarProductos(productos) {
     if (producto.calidad_original) {
       tarjetaProducto.classList.add('calidad-original-fitam');
     }
+    if (producto.calidad_vic) {
+      tarjetaProducto.classList.add('calidad_vic');
+    }
+
 
     const isAdminUser = document.body.dataset.isAdminUser === 'true';
     let html = `
@@ -88,7 +92,6 @@ function mostrarProductos(productos) {
     tarjetaProducto.innerHTML = html;
     contenedorProductos.appendChild(tarjetaProducto);
     
-    // Configurar los botones del carrusel para la tarjeta
     const leftButton = tarjetaProducto.querySelector('.carousel__button--left');
     const rightButton = tarjetaProducto.querySelector('.carousel__button--right');
     const images = tarjetaProducto.querySelectorAll('.carousel__image');

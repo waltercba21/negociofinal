@@ -104,6 +104,7 @@
         </div>
       <% }); %>
     </div>
+    
 <div class="paginacion">
   <% for(let i = 1; i <= Math.min(numeroDePaginas, 10); i++) { %>
     <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
