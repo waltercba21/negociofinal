@@ -60,15 +60,6 @@
           <%= producto.calidad_original ? 'calidad_original_fitam' : '' %> 
           <%= producto.calidad_vic ? 'calidad_vic' : '' %>">
           
-          <div>
-            <label>
-              <input type="checkbox" class="check-calidad-vic" 
-                     data-producto-id="<%= producto.id %>" 
-                     <%= producto.calidad_vic ? 'checked' : '' %> />
-              Calidad VIC
-            </label>
-          </div>
-    
           <% if (producto.imagenes && producto.imagenes.length > 0) { %>
             <div class="cover__card">
               <div class="carousel">
