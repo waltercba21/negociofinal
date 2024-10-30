@@ -33,10 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const modelo_id = document.getElementById('modelo_id').value;
   
       console.log('Valores de los selectores:', categoria_id, marca_id, modelo_id);
-  
-      const cargador = document.getElementById('cargador');
-      cargador.classList.remove('hidden');
-  
+
       fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`, {
         timeout: 10000 // 10 segundos
       })
