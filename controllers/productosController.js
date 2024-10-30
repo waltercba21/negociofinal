@@ -136,14 +136,32 @@ module.exports = {
         }
     },
     buscar: async (req, res) => {
-        const busqueda_nombre = req.query.q;
-        const categoria_id = req.query.categoria_id;
-        const marca_id = req.query.marca_id; 
-        const modelo_id = req.query.modelo_id;
-        const limite = busqueda_nombre || categoria_id || marca_id || modelo_id ? undefined : 10;
-        const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
-        res.json(productos);
-    },    
+        try {
+            // Extrae y registra los parámetros de consulta
+            const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
+            console.log('Parámetros recibidos:', { categoria_id, marca_id, modelo_id, busqueda_nombre });
+    
+            // Define el límite de resultados
+            const limite = busqueda_nombre || categoria_id || marca_id || modelo_id ? undefined : 10;
+    
+            // Llama a la función del modelo para obtener los productos
+            const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
+    
+            // Verifica si se encontraron productos y registra el resultado
+            if (productos && productos.length > 0) {
+                console.log('Productos encontrados:', productos.length);
+            } else {
+                console.log('No se encontraron productos para los parámetros dados.');
+            }
+    
+            // Envía la respuesta con los productos en formato JSON
+            res.json(productos);
+        } catch (error) {
+            // En caso de error, registra el error y envía una respuesta de error
+            console.error('Error en la búsqueda de productos:', error);
+            res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
+        }
+    },      
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {
