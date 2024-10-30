@@ -25,35 +25,28 @@ document.getElementById('marca_id').addEventListener('change', function() {
 document.addEventListener('DOMContentLoaded', function() {
   const selectores = document.querySelectorAll('#categoria_id, #marca_id, #modelo_id');
   const contenedorProductos = document.getElementById('contenedor-productos');
+
   selectores.forEach(selector => {
-      selector.addEventListener('change', function() {
-          const categoria_id = document.getElementById('categoria_id').value;
-          const marca_id = document.getElementById('marca_id').value;
-          const modelo_id = document.getElementById('modelo_id').value;
-          console.log('Valores de los selectores:', categoria_id, marca_id, modelo_id);
-          fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
-          .then(response => {
-            console.log('Respuesta del servidor:', response);
-              if (response.status === 502) {
-                  console.error('Error 502: Bad Gateway');
-                  throw new Error('Bad Gateway');
-              }
-              if (!response.ok) {
-                  console.error('Response status:', response.status);
-                  return response.text().then(text => {
-                      console.error('Response text:', text);
-                      throw new Error('Network response was not ok');
-                  });
-              }
-              return response.json();
-          })
-          .then(productos => {
-              renderizarProductos(productos);
-          })
-          .catch(error => console.error('Error:', error));
-      });
+    selector.addEventListener('change', function() {
+      const categoria_id = document.getElementById('categoria_id').value;
+      const marca_id = document.getElementById('marca_id').value;
+      const modelo_id = document.getElementById('modelo_id').value;
+
+      console.log('Valores de los selectores:', categoria_id, marca_id, modelo_id);
+
+      fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(renderizarProductos)
+        .catch(error => console.error('Error:', error));
+    });
   });
-  
+});
+
   function renderizarProductos(productos, isAdminUser) {
     contenedorProductos.innerHTML = '';
     productos.forEach((producto, index) => {
@@ -132,4 +125,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
     $images.eq(index).show();
   });
-});
+
