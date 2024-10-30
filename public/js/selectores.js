@@ -44,11 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return response.json();
       })
       .then(productos => {
-        cargador.classList.add('hidden');
         renderizarProductos(productos, contenedorProductos, false);
       })
       .catch(error => {
-        cargador.classList.add('hidden');
         console.error('Error:', error);
       });
     });
