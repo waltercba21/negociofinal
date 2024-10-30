@@ -1787,7 +1787,7 @@ border-radius: 10px;
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #7d0000;
+  background-color: #b30000;
   color: #ffffff;
   padding: 5px;
   font-size: 14px;
@@ -1796,7 +1796,7 @@ border-radius: 10px;
 }
 
 .card.calidad_vic .carousel__image {
-  border: 2px solid #7d0000;
+  border: 2px solid #b30000;
 }
 
 .card.calidad_vic hr {
