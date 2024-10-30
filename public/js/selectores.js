@@ -1,8 +1,10 @@
 document.getElementById('marca_id').addEventListener('change', function() {
   const marcaId = this.value;
+  console.log('Marca seleccionada:', marcaId); // Agregar este log
   fetch('/productos/modelos/' + marcaId)
       .then(response => response.json())
       .then(modelos => {
+          console.log('Modelos recibidos:', modelos); // Agregar este log
           modelos.sort(function(a, b) {
               return a.nombre.localeCompare(b.nombre);
           });
@@ -19,7 +21,7 @@ document.getElementById('marca_id').addEventListener('change', function() {
               modeloSelect.appendChild(option);
           });
       })
-      .catch(error => console.error('Error:', error));
+      .catch(error => console.error('Error al obtener modelos:', error));
 });
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -30,6 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
           const categoria_id = document.getElementById('categoria_id').value;
           const marca_id = document.getElementById('marca_id').value;
           const modelo_id = document.getElementById('modelo_id').value;
+
+          console.log('Valores seleccionados - Categoría:', categoria_id, 'Marca:', marca_id, 'Modelo:', modelo_id); // Agregar este log
 
           fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
           .then(response => {
@@ -47,13 +51,15 @@ document.addEventListener('DOMContentLoaded', function() {
               return response.json();
           })
           .then(productos => {
-              console.log(productos); 
+              console.log('Productos devueltos de la API:', productos); // Agregar este log
               renderizarProductos(productos);
           })
-          .catch(error => console.error('Error:', error));
+          .catch(error => console.error('Error al buscar productos:', error));
       });
   });
+
   function renderizarProductos(productos, isAdminUser) {
+    console.log('Productos a renderizar:', productos);
     contenedorProductos.innerHTML = '';
     productos.forEach((producto, index) => {
       let imagenes = '';

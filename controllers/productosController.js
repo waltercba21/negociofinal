@@ -143,9 +143,13 @@ module.exports = {
     
             // Define el límite de resultados
             const limite = busqueda_nombre || categoria_id || marca_id || modelo_id ? undefined : 10;
+            
+            console.log('Límite de resultados:', limite); // Agregar este log
     
             // Llama a la función del modelo para obtener los productos
             const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
+            
+            console.log('Productos devueltos:', productos); // Agregar este log
     
             // Verifica si se encontraron productos y registra el resultado
             if (productos && productos.length > 0) {
@@ -161,7 +165,8 @@ module.exports = {
             console.error('Error en la búsqueda de productos:', error);
             res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
         }
-    },      
+    },
+    
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {

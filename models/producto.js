@@ -1113,30 +1113,40 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
         sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
         sql += ' WHERE 1=1';
         const parametros = []; 
+        
+        // Añadir logs para cada filtro
         if (categoria) {
             sql += ' AND categoria_id = ?';
             parametros.push(categoria);
+            console.log('Filtro de categoría aplicado:', categoria); // Agregar este log
         }
         if (marca) {
             sql += ' AND marca_id = ?';
             parametros.push(marca);
+            console.log('Filtro de marca aplicado:', marca); // Agregar este log
         }
         if (modelo) {
             sql += ' AND modelo_id = ?';
             parametros.push(modelo);
+            console.log('Filtro de modelo aplicado:', modelo); // Agregar este log
         }
         if (busqueda_nombre) {
             const palabras = busqueda_nombre.split(' ');
             palabras.forEach(palabra => {
                 sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
                 parametros.push('%' + palabra + '%', '%' + palabra + '%');
+                console.log('Filtro de búsqueda aplicado:', palabra); // Agregar este log
             });
         }
+        
         sql += ' ORDER BY productos.nombre ASC'; // Ordena los productos alfabéticamente
         if (limite) {
             sql += ' LIMIT ?';
             parametros.push(limite);
+            console.log('Límite aplicado:', limite); // Agregar este log
         }
+
+        console.log('Consulta SQL ejecutada:', sql, 'Con parámetros:', parametros); // Agregar este log
 
         conexion.query(sql, parametros, (error, productos) => {
             if (error) {
@@ -1155,11 +1165,13 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
                     }
                     return acc;
                 }, []);
+                console.log('Productos agrupados:', productosAgrupados); // Agregar este log
                 resolve(productosAgrupados);
             }
         });
     });
 },
+
 eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
