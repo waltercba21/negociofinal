@@ -1,25 +1,25 @@
 document.getElementById('marca_id').addEventListener('change', function() {
   const marcaId = this.value;
   fetch('/productos/modelos/' + marcaId)
-      .then(response => response.json())
-      .then(modelos => {
-          modelos.sort(function(a, b) {
-              return a.nombre.localeCompare(b.nombre);
-          });
-          const modeloSelect = document.getElementById('modelo_id');
-          modeloSelect.innerHTML = '';
-          const defaultOption = document.createElement('option');
-          defaultOption.value = '';
-          defaultOption.text = 'Selecciona un modelo';
-          modeloSelect.appendChild(defaultOption);
-          modelos.forEach(modelo => {
-              const option = document.createElement('option');
-              option.value = modelo.id;
-              option.text = modelo.nombre;
-              modeloSelect.appendChild(option);
-          });
-      })
-      .catch(error => console.error('Error:', error));
+    .then(response => response.json())
+    .then(modelos => {
+      modelos.sort(function(a, b) {
+        return a.nombre.localeCompare(b.nombre);
+      });
+      const modeloSelect = document.getElementById('modelo_id');
+      modeloSelect.innerHTML = '';
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.text = 'Selecciona un modelo';
+      modeloSelect.appendChild(defaultOption);
+      modelos.forEach(modelo => {
+        const option = document.createElement('option');
+        option.value = modelo.id;
+        option.text = modelo.nombre;
+        modeloSelect.appendChild(option);
+      });
+    })
+    .catch(error => console.error('Error:', error));
 });
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -28,32 +28,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
   selectores.forEach(selector => {
     selector.addEventListener('change', function() {
+      // Obtener valores de los selectores
       const categoria_id = document.getElementById('categoria_id').value;
       const marca_id = document.getElementById('marca_id').value;
       const modelo_id = document.getElementById('modelo_id').value;
-  
-      console.log('Valores de los selectores:', categoria_id, marca_id, modelo_id);
 
-      fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`, {
-        timeout: 10000 // 10 segundos
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(productos => {
-        renderizarProductos(productos, contenedorProductos, false);
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
+      // Verificar que al menos uno de los valores sea diferente de vacío
+      if (categoria_id || marca_id || modelo_id) {
+        console.log('Valores de los selectores:', { categoria_id, marca_id, modelo_id });
+
+        fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`, {
+          timeout: 10000 // 10 segundos
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(productos => {
+          renderizarProductos(productos, contenedorProductos, false);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+      } else {
+        console.log("Seleccione al menos una categoría, marca o modelo para realizar la búsqueda.");
+      }
     });
   });
 
-function renderizarProductos(productos, contenedorProductos, isAdminUser) {
-  contenedorProductos.innerHTML = '';
+  function renderizarProductos(productos, contenedorProductos, isAdminUser) {
+    contenedorProductos.innerHTML = '';
     productos.forEach((producto, index) => {
       let imagenes = '';
       if (producto.imagenes && producto.imagenes.length > 0) {
