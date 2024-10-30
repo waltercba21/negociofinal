@@ -62,68 +62,76 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   });
 
- // Función para renderizar los productos
+// Función para renderizar los productos
 function renderizarProductos(productos) {
   console.log('Productos a renderizar:', productos);
   contenedorProductos.innerHTML = ''; // Limpiar contenedor antes de agregar nuevos productos
 
   // Comprobar si hay productos
   if (productos.length === 0) {
-      contenedorProductos.innerHTML = '<p>No se encontraron productos.</p>';
-      return;
+    contenedorProductos.innerHTML = '<p>No se encontraron productos.</p>';
+    return;
   }
 
   // Crear un fragmento de documento para mejorar el rendimiento
   const fragment = document.createDocumentFragment();
 
   productos.forEach(producto => {
-      let imagenes = '';
-      if (producto.imagenes && producto.imagenes.length > 0) {
-          producto.imagenes.forEach((imagenObj, i) => {
-              const imagen = imagenObj.imagen;
-              imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
-          });
-          imagenes = `
-              <div class="cover__card">
-                  <div class="carousel">
-                      ${imagenes}
-                  </div>
-              </div>
-              <div class="carousel__buttons">
-                  <button class="carousel__button"><i class="fas fa-chevron-left"></i></button>
-                  <button class="carousel__button"><i class="fas fa-chevron-right"></i></button>
-              </div>
-          `;
-      } else {
-          imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
-      }
-
-      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
-
-      const tarjetaProducto = document.createElement('div');
-      tarjetaProducto.classList.add('card');
-      tarjetaProducto.innerHTML = `
-          ${imagenes}
-          <div class="titulo-producto">
-              <h3 class="nombre">${producto.nombre}</h3>
+    let imagenes = '';
+    if (producto.imagenes && producto.imagenes.length > 0) {
+      producto.imagenes.forEach((imagenObj, i) => {
+        const imagen = imagenObj.imagen;
+        imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
+      });
+      imagenes = `
+        <div class="cover__card">
+          <div class="carousel">
+            ${imagenes}
           </div>
-          <hr>
-          <div class="precio-producto">
-              <p class="precio">${precio_venta}</p>
-          </div>
-          <div class="cantidad-producto">
-              <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-          </div>
+        </div>
+        <div class="carousel__buttons">
+          <button class="carousel__button"><i class="fas fa-chevron-left"></i></button>
+          <button class="carousel__button"><i class="fas fa-chevron-right"></i></button>
+        </div>
       `;
+    } else {
+      imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
+    }
 
-      // Agregar tarjeta al fragmento
-      fragment.appendChild(tarjetaProducto);
+    const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+
+    const tarjetaProducto = document.createElement('div');
+    tarjetaProducto.classList.add('card');
+
+    // Aquí se añaden las clases según las propiedades del producto
+    if (producto.calidad_original) {
+      tarjetaProducto.classList.add('calidad-original-fitam');
+    }
+    if (producto.calidad_vic) {
+      tarjetaProducto.classList.add('calidad-vic');
+    }
+
+    tarjetaProducto.innerHTML = `
+      ${imagenes}
+      <div class="titulo-producto">
+        <h3 class="nombre">${producto.nombre}</h3>
+      </div>
+      <hr>
+      <div class="precio-producto">
+        <p class="precio">${precio_venta}</p>
+      </div>
+      <div class="cantidad-producto">
+        <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+      </div>
+    `;
+
+    // Agregar tarjeta al fragmento
+    fragment.appendChild(tarjetaProducto);
   });
 
   // Añadir todas las tarjetas al contenedor de una vez
   contenedorProductos.appendChild(fragment);
 }
-
 
   // Lógica para el carrusel
   $(document).on('click', '.carousel__button', function() {
