@@ -1,30 +1,34 @@
-document.getElementById('marca_id').addEventListener('change', function() {
+marcaSelect.addEventListener('change', function() {
   const marcaId = this.value;
-  fetch('/productos/modelos/' + marcaId)
-      .then(response => response.json())
-      .then(modelos => {
-          modelos.sort(function(a, b) {
-              return a.nombre.localeCompare(b.nombre);
-          });
-          const modeloSelect = document.getElementById('modelo_id');
-          modeloSelect.innerHTML = '';
-          const defaultOption = document.createElement('option');
-          defaultOption.value = '';
-          defaultOption.text = 'Selecciona un modelo';
-          modeloSelect.appendChild(defaultOption);
-          modelos.forEach(modelo => {
-              const option = document.createElement('option');
-              option.value = modelo.id;
-              option.text = modelo.nombre;
-              modeloSelect.appendChild(option);
-          });
-      })
-      .catch(error => console.error('Error:', error));
+
+  if (marcaId) {
+      fetch(`/productos/modelos/${marcaId}`)
+          .then(response => {
+              if (!response.ok) throw new Error('Error al cargar modelos');
+              return response.json();
+          })
+          .then(modelos => {
+              modeloSelect.innerHTML = '<option value="">Selecciona un modelo</option>'; // Reiniciar opciones
+              modelos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+              modelos.forEach(modelo => {
+                  const option = document.createElement('option');
+                  option.value = modelo.id;
+                  option.text = modelo.nombre;
+                  modeloSelect.appendChild(option);
+              });
+              realizarBusqueda(); // Ejecuta la búsqueda si ya hay datos seleccionados
+          })
+          .catch(error => console.error('Error:', error));
+  } else {
+      modeloSelect.innerHTML = '<option value="">Selecciona un modelo</option>';
+      realizarBusqueda(); // Realiza la búsqueda si no hay marca seleccionada
+  }
 });
+
 let productosOriginales = [];
 let timer;
-const productosPorPagina = 20; // Número de productos a mostrar por página
-let paginaActual = 1; // Página inicial
+const productosPorPagina = 20; 
+let paginaActual = 1; 
 
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
