@@ -30,108 +30,121 @@ document.addEventListener('DOMContentLoaded', function() {
   const contenedorProductos = document.getElementById('contenedor-productos');
   
   selectores.forEach(selector => {
-      selector.addEventListener('change', function() {
-          // Obtener los valores seleccionados de los selectores
-          const categoria_id = document.getElementById('categoria_id').value;
-          const marca_id = document.getElementById('marca_id').value;
-          const modelo_id = document.getElementById('modelo_id').value;
+    selector.addEventListener('change', function() {
+      const categoria_id = document.getElementById('categoria_id').value;
+      const marca_id = document.getElementById('marca_id').value;
+      const modelo_id = document.getElementById('modelo_id').value;
 
-          // Log para depuración
-          console.log('Valores seleccionados - Categoría:', categoria_id, 'Marca:', marca_id, 'Modelo:', modelo_id);
+      console.log('Valores seleccionados - Categoría:', categoria_id, 'Marca:', marca_id, 'Modelo:', modelo_id);
+      contenedorProductos.innerHTML = '<p>Cargando productos...</p>';
 
-          // Mostrar un mensaje de carga
-          contenedorProductos.innerHTML = '<p>Cargando productos...</p>';
-
-          // Hacer la solicitud a la API para buscar productos
-          fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
-              .then(response => {
-                  if (!response.ok) {
-                      console.error('Error en la respuesta de la API:', response.status);
-                      throw new Error('Error en la respuesta de la API');
-                  }
-                  return response.json();
-              })
-              .then(productos => {
-                  console.log('Productos devueltos de la API:', productos); // Log de productos devueltos
-                  renderizarProductos(productos); // Llamada a la función para renderizar productos
-              })
-              .catch(error => {
-                  console.error('Error al buscar productos:', error);
-                  contenedorProductos.innerHTML = '<p>Error al cargar los productos. Intenta nuevamente.</p>'; // Mensaje de error
-              });
-      });
+      fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
+        .then(response => {
+          if (!response.ok) {
+            console.error('Error en la respuesta de la API:', response.status);
+            throw new Error('Error en la respuesta de la API');
+          }
+          return response.json();
+        })
+        .then(productos => {
+          console.log('Productos devueltos de la API:', productos);
+          renderizarProductos(productos);
+        })
+        .catch(error => {
+          console.error('Error al buscar productos:', error);
+          contenedorProductos.innerHTML = '<p>Error al cargar los productos. Intenta nuevamente.</p>';
+        });
+    });
   });
 
-// Función para renderizar los productos
-function renderizarProductos(productos) {
-  console.log('Productos a renderizar:', productos);
-  contenedorProductos.innerHTML = ''; // Limpiar contenedor antes de agregar nuevos productos
+  // Función para renderizar los productos
+  function renderizarProductos(productos) {
+    console.log('Productos a renderizar:', productos);
+    contenedorProductos.innerHTML = ''; // Limpiar contenedor antes de agregar nuevos productos
 
-  // Comprobar si hay productos
-  if (productos.length === 0) {
-    contenedorProductos.innerHTML = '<p>No se encontraron productos.</p>';
-    return;
-  }
+    if (productos.length === 0) {
+      contenedorProductos.innerHTML = '<p>No se encontraron productos.</p>';
+      return;
+    }
 
-  // Crear un fragmento de documento para mejorar el rendimiento
-  const fragment = document.createDocumentFragment();
+    const fragment = document.createDocumentFragment();
 
-  productos.forEach(producto => {
-    let imagenes = '';
-    if (producto.imagenes && producto.imagenes.length > 0) {
-      producto.imagenes.forEach((imagenObj, i) => {
-        const imagen = imagenObj.imagen;
-        imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
-      });
-      imagenes = `
-        <div class="cover__card">
-          <div class="carousel">
-            ${imagenes}
+    productos.forEach(producto => {
+      let imagenes = '';
+      if (producto.imagenes && producto.imagenes.length > 0) {
+        producto.imagenes.forEach((imagenObj, i) => {
+          const imagen = imagenObj.imagen;
+          imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
+        });
+        imagenes = `
+          <div class="cover__card">
+            <div class="carousel">
+              ${imagenes}
+            </div>
           </div>
+          <div class="carousel__buttons">
+            <button class="carousel__button carousel__button--left"><i class="fas fa-chevron-left"></i></button>
+            <button class="carousel__button carousel__button--right"><i class="fas fa-chevron-right"></i></button>
+          </div>
+        `;
+      } else {
+        imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
+      }
+
+      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+      const tarjetaProducto = document.createElement('div');
+      tarjetaProducto.classList.add('card');
+
+      // Aquí se añaden las clases según las propiedades del producto
+      if (producto.calidad_original) {
+        tarjetaProducto.classList.add('calidad-original-fitam');
+      }
+      if (producto.calidad_vic) {
+        tarjetaProducto.classList.add('calidad-vic');
+      }
+
+      tarjetaProducto.innerHTML = `
+        ${imagenes}
+        <div class="titulo-producto">
+          <h3 class="nombre">${producto.nombre}</h3>
         </div>
-        <div class="carousel__buttons">
-          <button class="carousel__button"><i class="fas fa-chevron-left"></i></button>
-          <button class="carousel__button"><i class="fas fa-chevron-right"></i></button>
+        <hr>
+        <div class="precio-producto">
+          <p class="precio">${precio_venta}</p>
+        </div>
+        <div class="cantidad-producto">
+          <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
         </div>
       `;
-    } else {
-      imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
-    }
 
-    const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+      // Agregar tarjeta al fragmento
+      fragment.appendChild(tarjetaProducto);
+    });
 
-    const tarjetaProducto = document.createElement('div');
-    tarjetaProducto.classList.add('card');
+    // Añadir todas las tarjetas al contenedor de una vez
+    contenedorProductos.appendChild(fragment);
 
-    // Aquí se añaden las clases según las propiedades del producto
-    if (producto.calidad_original) {
-      tarjetaProducto.classList.add('calidad-original-fitam');
-    }
-    if (producto.calidad_vic) {
-      tarjetaProducto.classList.add('calidad-vic');
-    }
+    // Configuración de eventos para los botones del carrusel
+    const tarjetas = contenedorProductos.querySelectorAll('.card');
+    tarjetas.forEach(tarjeta => {
+      const leftButton = tarjeta.querySelector('.carousel__button--left');
+      const rightButton = tarjeta.querySelector('.carousel__button--right');
+      const images = tarjeta.querySelectorAll('.carousel__image');
+      let currentIndex = 0;
 
-    tarjetaProducto.innerHTML = `
-      ${imagenes}
-      <div class="titulo-producto">
-        <h3 class="nombre">${producto.nombre}</h3>
-      </div>
-      <hr>
-      <div class="precio-producto">
-        <p class="precio">${precio_venta}</p>
-      </div>
-      <div class="cantidad-producto">
-        <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-      </div>
-    `;
+      leftButton.addEventListener('click', () => {
+        images[currentIndex].classList.add('hidden');
+        currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
+        images[currentIndex].classList.remove('hidden');
+      });
 
-    // Agregar tarjeta al fragmento
-    fragment.appendChild(tarjetaProducto);
-  });
-
-  // Añadir todas las tarjetas al contenedor de una vez
-  contenedorProductos.appendChild(fragment);
-}
+      rightButton.addEventListener('click', () => {
+        images[currentIndex].classList.add('hidden');
+        currentIndex = (currentIndex === images.length - 1) ? 0 : currentIndex + 1;
+        images[currentIndex].classList.remove('hidden');
+      });
+    });
+  }
 
   // Lógica para el carrusel
   $(document).on('click', '.carousel__button', function() {
