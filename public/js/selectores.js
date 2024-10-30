@@ -41,14 +41,14 @@ document.addEventListener('DOMContentLoaded', function() {
           }
           return response.json();
         })
-        .then(renderizarProductos)
+        .then(productos => renderizarProductos(productos, contenedorProductos, false))
         .catch(error => console.error('Error:', error));
     });
   });
 });
 
-  function renderizarProductos(productos, isAdminUser) {
-    contenedorProductos.innerHTML = '';
+function renderizarProductos(productos, contenedorProductos, isAdminUser) {
+  contenedorProductos.innerHTML = '';
     productos.forEach((producto, index) => {
       let imagenes = '';
       if (producto.imagenes && producto.imagenes.length > 0) {
