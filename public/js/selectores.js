@@ -47,7 +47,6 @@ document.addEventListener('DOMContentLoaded', function() {
               return response.json();
           })
           .then(productos => {
-              console.log(productos); 
               renderizarProductos(productos);
           })
           .catch(error => console.error('Error:', error));
@@ -82,7 +81,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
       let tarjetaProducto = `
-        <div class="card"> 
+        <div class="card 
+          ${producto.calidad_original ? 'calidad-original-fitam' : ''}
+          ${producto.calidad_vic ? 'calidad_vic' : ''}
+        "> 
           ${imagenes}
           <div class="titulo-producto">
             <h3 class="nombre">${producto.nombre}</h3>
