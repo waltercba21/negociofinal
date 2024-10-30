@@ -28,30 +28,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
   selectores.forEach(selector => {
     selector.addEventListener('change', function() {
-      // Obtener valores de los selectores
       const categoria_id = document.getElementById('categoria_id').value;
       const marca_id = document.getElementById('marca_id').value;
       const modelo_id = document.getElementById('modelo_id').value;
 
-      // Verificar que al menos uno de los valores sea diferente de vacío
-      if (categoria_id || marca_id || modelo_id) {
-        console.log('Valores de los selectores:', { categoria_id, marca_id, modelo_id });
+      // Construir la URL solo con los parámetros que tengan valor
+      let url = '/productos/api/buscar?';
+      if (categoria_id) url += `categoria_id=${categoria_id}&`;
+      if (marca_id) url += `marca_id=${marca_id}&`;
+      if (modelo_id) url += `modelo_id=${modelo_id}`;
 
-        fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`, {
-          timeout: 10000 // 10 segundos
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(productos => {
-          renderizarProductos(productos, contenedorProductos, false);
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
+      // Remover cualquier '&' al final de la URL si existe
+      url = url.replace(/&$/, '');
+
+      // Validar que hay al menos un criterio de búsqueda
+      if (categoria_id || marca_id || modelo_id) {
+        console.log('URL de búsqueda:', url);
+
+        fetch(url, { timeout: 10000 }) // Tiempo límite de 10 segundos
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(productos => {
+            renderizarProductos(productos, contenedorProductos, false);
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
       } else {
         console.log("Seleccione al menos una categoría, marca o modelo para realizar la búsqueda.");
       }
@@ -60,49 +66,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function renderizarProductos(productos, contenedorProductos, isAdminUser) {
     contenedorProductos.innerHTML = '';
-    productos.forEach((producto, index) => {
-      let imagenes = '';
-      if (producto.imagenes && producto.imagenes.length > 0) {
-        producto.imagenes.forEach((imagenObj, i) => {
-          const imagen = imagenObj.imagen;
-          imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
-        });
-        imagenes = `
-          <div class="cover__card">
-            <div class="carousel">
-              ${imagenes}
-            </div>
-          </div>
-          <div class="carousel__buttons">
-            <button class="carousel__button">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="carousel__button">
-              <i class="fas fa-chevron-right"></i>
-            </button>
-          </div>
-        `;
-      } else {
-        imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">';
-      }
-      const precio_venta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+    productos.forEach(producto => {
+      const imagenes = producto.imagenes?.map((img, i) => `
+        <img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${img.imagen}" alt="Imagen de ${producto.nombre}">
+      `).join('') || '<img src="/ruta/a/imagen/defecto.jpg" alt="Imagen no disponible">';
+
+      const precioVenta = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+
       let tarjetaProducto = `
-        <div class="card 
-          ${producto.calidad_original ? 'calidad-original-fitam' : ''}
-          ${producto.calidad_vic ? 'calidad_vic' : ''}
-        "> 
-          ${imagenes}
-          <div class="titulo-producto">
-            <h3 class="nombre">${producto.nombre}</h3>
+        <div class="card">
+          <div class="carousel">
+            ${imagenes}
           </div>
+          <div class="titulo-producto"><h3 class="nombre">${producto.nombre}</h3></div>
           <hr>
-          <div class="precio-producto">
-            <p class="precio">${precio_venta}</p>
-          </div>
-          <div class="cantidad-producto">
-            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-          </div>
+          <div class="precio-producto"><p class="precio">${precioVenta}</p></div>
+          <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+        </div>
       `;
+
       if (isAdminUser) {
         tarjetaProducto += `
           <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
@@ -110,10 +92,12 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         `;
       }
-      tarjetaProducto += '</div>';
+
       contenedorProductos.innerHTML += tarjetaProducto;
     });
   }
+});
+
 
   $(document).on('click', '.carousel__button', function() {
     var $carousel = $(this).closest('.card').find('.carousel');
@@ -137,4 +121,3 @@ document.addEventListener('DOMContentLoaded', function() {
     $images.eq(index).show();
   });
 
-});
