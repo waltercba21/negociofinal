@@ -396,7 +396,7 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
             first = false;
         }
         if (typeof datos.calidad_original !== 'undefined') {
-            query += first ? "calidad_original=?" : ", calidad_original=?";
+            query += first ? "calidad_original_fitam=?" : ", calidad_original_fitam=?";
             params.push(datos.calidad_original);
             first = false;
         }
