@@ -395,10 +395,16 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
             params.push(archivo.filename);
             first = false;
         }
-        // Nuevo campo calidad_original
+        // Campo calidad_original
         if (typeof datos.calidad_original !== 'undefined') {
             query += first ? "calidad_original=?" : ", calidad_original=?";
             params.push(datos.calidad_original);
+            first = false;
+        }
+        // Campo VIC
+        if (typeof datos.VIC !== 'undefined') {
+            query += first ? "VIC=?" : ", VIC=?";
+            params.push(datos.VIC);
             first = false;
         }
         if (!datos.id) {

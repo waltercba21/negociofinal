@@ -69,9 +69,14 @@
                         </div>
                         <div id="proveedoresContainer">
                             <div class="form-group-crear">
-                                <label for="calidad_original_fitam">Calidad Original</label>
+                                <label for="calidad_original_fitam">Calidad FITAM</label>
                                 <input type="checkbox" id="calidad_original_fitam" name="calidad_original_fitam" value="1" 
                                 <%= producto.calidad_original_fitam === 1 ? 'checked' : '' %>>
+                            </div>
+                            <div class="form-group-crear">
+                                <label for="calidad_vic">Calidad VIC</label>
+                                <input type="checkbox" id="calidad_vic" name="calidad_vic" value="1" 
+                                       <%= producto.calidad_vic === 1 ? 'checked' : '' %>>
                             </div>
                             <% productoProveedores.forEach(function(productoProveedor, index) { %>
                                 <div class="proveedor"> 

@@ -281,6 +281,7 @@ module.exports = {
             productoResult.utilidad = Math.round(productoResult.utilidad);
             productoResult.precio_venta = Math.round(productoResult.precio_venta);
             productoResult.calidad_original_fitam = result.calidad_original_fitam;
+            productoResult.calidad_vic = result.calidad_vic; 
             productoResult.paginaActual = req.query.pagina;
 
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
@@ -295,7 +296,7 @@ module.exports = {
                     producto.obtenerProveedores(conexion),
                     producto.obtenerModelosPorMarca(conexion, productoResult.marca),
                     producto.obtenerDescuentosProveedor(conexion),
-                    producto.obtenerStock(conexion, req.params.id) // Añadir la obtención de datos de stock
+                    producto.obtenerStock(conexion, req.params.id) 
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult, stockResult]) => {
                     res.render('editar', {
                         producto: productoResult,
@@ -346,7 +347,8 @@ module.exports = {
             IVA: req.body.IVA[0],
             costo_iva: req.body.costo_iva[0],
             oferta: req.body.oferta === 'on' ? 1 : 0,
-            calidad_original: req.body.calidad_original_fitam ? 1 : 0 
+            calidad_original_fitam: req.body.calidad_original_fitam ? 1 : 0, 
+            calidad_vic: req.body.calidad_vic ? 1 : 0 
         };
         producto.actualizar(conexion, datosProducto)
             .then(() => {
@@ -878,7 +880,6 @@ presupuestoMostrador: async function(req, res) {
         res.status(500).send('Error al obtener el siguiente ID de factura.');
     }
 },
-
   procesarFormulario: async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;

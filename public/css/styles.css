@@ -1740,7 +1740,69 @@ border-radius: 10px;
 }
 .card.calidad-original-fitam hr {
   border-color: #ffffff;
+} 
+.card.calidad_vic {
+  background-color: #7d0000; /* Color de fondo rojo */
+  color: #ffffff; 
+  position: relative;
 }
+
+.card.calidad_vic .titulo-producto h3 {
+  color: #ffffff; 
+}
+
+.card.calidad_vic .categoria-producto h6 {
+  color: #ffffff; 
+}
+
+.card.calidad_vic .precio-producto p {
+  color: #ffffff; 
+}
+
+.card.calidad_vic .stock-producto p {
+  color: #ffffff; 
+}
+
+.card.calidad_vic .carousel__button {
+  background-color: #990000; /* Color del botón */
+  border: none;
+  color: #ffffff;
+}
+
+.card.calidad_vic .carousel__button:hover {
+  background-color: #b60000; /* Color del botón al pasar el mouse */
+}
+
+.card.calidad_vic .card-link {
+  color: #ffffff;
+}
+
+.card.calidad_vic .card-link:hover {
+  color: #ffffff; 
+}
+
+.card.calidad_vic::before {
+  content: "Calidad VIC"; /* Texto de la calidad */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #7d0000; /* Color de fondo del texto */
+  color: #ffffff;
+  padding: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.card.calidad_vic .carousel__image {
+  border: 2px solid #7d0000; /* Borde de la imagen */
+}
+
+.card.calidad_vic hr {
+  border-color: #ffffff; /* Color de las líneas */
+}
+
 /*--------------------Pedido Manual---------------*/
 .producto-item {
   cursor: pointer;
