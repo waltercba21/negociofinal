@@ -245,7 +245,8 @@ module.exports = {
             estado: req.body.estado,
             stock_minimo: req.body.stock_minimo,
             stock_actual: req.body.stock_actual,
-            calidad_original: req.body.calidad_original_fitam ? 1 : 0 
+            calidad_original: req.body.calidad_original_fitam ? 1 : 0 , 
+            calidad_vic: req.body.calidad_vic ? 1 : 0
         };
         producto.insertarProducto(conexion, datosProducto)
         .then(result => { 
