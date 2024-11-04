@@ -1169,14 +1169,22 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-actualizarPreciosExcel: async (req, res) => {
+actualizarPreciosExcel : async (req, res) => {
     try {
-        const file = req.files[0];
+        const proveedor_id = req.body.proveedor; // Obtener el proveedor seleccionado
+        const file = req.files[0]; // Suponiendo que multer está configurado para manejar archivos
         let productosActualizados = [];
+
+        // Validar que se ha seleccionado un proveedor y que se ha subido un archivo
+        if (!proveedor_id || !file) {
+            return res.status(400).send('Proveedor y archivo son requeridos.');
+        }
+
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
             const promises = []; 
+
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
                 for (const row of data) {
@@ -1200,8 +1208,9 @@ actualizarPreciosExcel: async (req, res) => {
                                 console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
                                 continue;
                             }
+                            
                             promises.push(
-                                producto.actualizarPreciosPDF(precio, codigo,proveedor_id)
+                                producto.actualizarPreciosPDF(precio, codigo, proveedor_id) // Usar proveedor_id aquí
                                     .then(async productosActualizadosTemp => {
                                         if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
                                             productosActualizados.push(...productosActualizadosTemp);
@@ -1226,9 +1235,11 @@ actualizarPreciosExcel: async (req, res) => {
                     }
                 }
             }
+
             const resultados = await Promise.all(promises);
             const errores = resultados.filter(resultado => resultado && resultado.error);
             const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
+
             if (errores.length > 0) {
                 console.log("Errores al actualizar algunos productos:", errores);
             }
@@ -1237,6 +1248,8 @@ actualizarPreciosExcel: async (req, res) => {
                     console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
                 });
             }
+            
+            // Eliminar el archivo subido después de procesarlo
             fs.unlinkSync(file.path);
             res.render('productosActualizados', { productos: productosActualizados });
         } else {
@@ -1248,7 +1261,6 @@ actualizarPreciosExcel: async (req, res) => {
         res.status(500).send(error.message);
     }
 },
-
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
