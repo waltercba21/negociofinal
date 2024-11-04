@@ -417,32 +417,45 @@ module.exports = {
     },
     panelControl: async (req, res) => {
         try {
+            // Recupera los datos de proveedores y categorías
             let proveedores = await producto.obtenerProveedores(conexion);
             let categorias = await producto.obtenerCategorias(conexion);
-            const proveedorSeleccionado = req.query.proveedor;
-            const categoriaSeleccionada = req.query.categoria;
+    
+            // Parámetros seleccionados por el usuario (con fallback a valores en sesión)
+            const proveedorSeleccionado = req.query.proveedor || req.session.proveedorSeleccionado || null;
+            const categoriaSeleccionada = req.query.categoria || req.session.categoriaSeleccionada || null;
             
-            let paginaActual = req.query.pagina ? Number(req.query.pagina) : 1;
+            // Página actual
+            let paginaActual = req.query.pagina ? Number(req.query.pagina) : (req.session.paginaActual || 1);
             if (isNaN(paginaActual) || paginaActual < 1) {
                 paginaActual = 1;
             }
             req.session.paginaActual = paginaActual;
-            
-            const busqueda = req.query.busqueda || ''; // Término de búsqueda
+    
+            // Parámetro de búsqueda
+            const busqueda = req.query.busqueda || req.session.busqueda || ''; 
+            req.session.busqueda = busqueda; // Guardar búsqueda en la sesión
+    
+            // Parámetros de paginación
             const productosPorPagina = 30;
             const saltar = (paginaActual - 1) * productosPorPagina;
-            
-            // Si hay un término de búsqueda, llama a `obtenerPorFiltros`, de lo contrario usa `obtenerTodos`
+    
+            // Obtiene productos en función de si hay búsqueda o no
             let productos;
             if (busqueda) {
                 productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda);
             } else {
                 productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
             }
-            
+    
+            // Calcular número total de páginas
             let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
     
-            // Renderiza la vista con los datos y el término de búsqueda
+            // Guardar selección de proveedor y categoría en la sesión
+            req.session.proveedorSeleccionado = proveedorSeleccionado;
+            req.session.categoriaSeleccionada = categoriaSeleccionada;
+    
+            // Renderizar la vista con todos los datos y términos de búsqueda
             res.render('panelControl', {
                 proveedores: proveedores,
                 proveedorSeleccionado: proveedorSeleccionado,
@@ -451,13 +464,12 @@ module.exports = {
                 numeroDePaginas: numeroDePaginas,
                 productos: productos,
                 paginaActual: paginaActual,
-                busqueda: busqueda // Agregar búsqueda para el input en la vista
+                busqueda: busqueda // Para que el input de búsqueda en la vista mantenga el valor
             });
         } catch (error) {
             return res.status(500).send('Error: ' + error.message);
         }
-    },
-    
+    },    
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {
