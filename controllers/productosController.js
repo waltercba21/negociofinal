@@ -1201,7 +1201,7 @@ actualizarPreciosExcel: async (req, res) => {
                                 continue;
                             }
                             promises.push(
-                                producto.actualizarPreciosPDF(precio, codigo)
+                                producto.actualizarPreciosPDF(precio, codigo,proveedor_id)
                                     .then(async productosActualizadosTemp => {
                                         if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
                                             productosActualizados.push(...productosActualizadosTemp);

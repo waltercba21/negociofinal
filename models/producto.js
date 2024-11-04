@@ -574,7 +574,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
             }
         });
     }, 
-    actualizarPreciosPDF: function (precio_lista, codigo) {
+    actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
         return new Promise((resolve, reject) => {
             if (typeof codigo !== 'string') {
                 console.error(`El código del producto no es una cadena: ${codigo}`);
@@ -584,11 +584,12 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
     
             console.log(`Actualizando productos con código: ${codigo} y precio lista: ${precio_lista}`);
     
+            // Actualiza la consulta para incluir el ID del proveedor
             const sql = `SELECT pp.*, p.utilidad, p.precio_venta, p.nombre, dp.descuento 
                          FROM producto_proveedor pp 
                          JOIN productos p ON pp.producto_id = p.id 
                          JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id 
-                         WHERE pp.codigo = ?`;
+                         WHERE pp.codigo = ? AND pp.proveedor_id = ?`; // Asegúrate de filtrar por proveedor
     
             conexion.getConnection((err, conexion) => {
                 if (err) {
@@ -597,7 +598,8 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                     return;
                 }
     
-                conexion.query(sql, [codigo], (error, results) => {
+                // Cambiar los parámetros de la consulta
+                conexion.query(sql, [codigo, proveedor_id], (error, results) => {
                     if (error) {
                         console.error(`Error al ejecutar la consulta SQL para el código ${codigo}:`, error);
                         conexion.release();
@@ -606,7 +608,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                     }
     
                     if (results.length === 0) {
-                        console.log(`No se encontró ningún producto con el código ${codigo}`);
+                        console.log(`No se encontró ningún producto con el código ${codigo} para el proveedor especificado`);
                         conexion.release();
                         resolve(null);
                         return;
@@ -627,11 +629,11 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                         let precio_venta = costo_iva + (costo_iva * utilidad / 100);
                         precio_venta = Math.ceil(precio_venta / 10) * 10;
     
-                        const sqlUpdateProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ? AND codigo = ?';
+                        const sqlUpdateProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ? AND codigo = ? AND proveedor_id = ?'; // Asegúrate de actualizar por proveedor
                         const sqlUpdateProductos = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
     
                         return new Promise((resolveUpdate, rejectUpdate) => {
-                            conexion.query(sqlUpdateProductoProveedor, [precio_lista, producto.producto_id, codigo], (errorUpdatePP, resultsUpdatePP) => {
+                            conexion.query(sqlUpdateProductoProveedor, [precio_lista, producto.producto_id, codigo, producto.proveedor_id], (errorUpdatePP, resultsUpdatePP) => {
                                 if (errorUpdatePP) {
                                     console.error('Error en la consulta SQL de actualización en producto_proveedor:', errorUpdatePP);
                                     resolveUpdate(null);
@@ -668,7 +670,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 });
             });
         });
-    },
+    },    
     
 obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
