@@ -59,7 +59,23 @@ module.exports ={
             });
         });
     },
-    
+    eliminarPresupuesto : (conexion, id) => {
+        return new Promise((resolve, reject) => {
+            // Primero, eliminamos los ítems asociados al presupuesto
+            conexion.query('DELETE FROM presupuesto_items WHERE presupuesto_id = ?', [id], (error, results) => {
+                if (error) {
+                    return reject(error);
+                }
+                // Luego, eliminamos el presupuesto en sí
+                conexion.query('DELETE FROM presupuestos_mostrador WHERE id = ?', [id], (error, results) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    resolve(results.affectedRows);
+                });
+            });
+        });
+    },
 guardarPresupuesto : (presupuesto) => {
         return new Promise((resolve, reject) => {
           conexion.query('INSERT INTO presupuestos_mostrador SET ?', presupuesto, (error, resultado) => {
