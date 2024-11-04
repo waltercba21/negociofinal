@@ -137,35 +137,19 @@ module.exports = {
     },
     buscar: async (req, res) => {
         try {
-            // Extrae y registra los parámetros de consulta
             const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
-            console.log('Parámetros recibidos:', { categoria_id, marca_id, modelo_id, busqueda_nombre });
-    
-            // Define el límite de resultados
-            const limite = busqueda_nombre || categoria_id || marca_id || modelo_id ? undefined : 10;
             
-            console.log('Límite de resultados:', limite); // Agregar este log
-    
-            // Llama a la función del modelo para obtener los productos
+            req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
+            
+            const limite = busqueda_nombre || categoria_id || marca_id || modelo_id ? undefined : 10;
             const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
             
-            console.log('Productos devueltos:', productos); // Agregar este log
-    
-            // Verifica si se encontraron productos y registra el resultado
-            if (productos && productos.length > 0) {
-                console.log('Productos encontrados:', productos.length);
-            } else {
-                console.log('No se encontraron productos para los parámetros dados.');
-            }
-    
-            // Envía la respuesta con los productos en formato JSON
             res.json(productos);
         } catch (error) {
-            // En caso de error, registra el error y envía una respuesta de error
-            console.error('Error en la búsqueda de productos:', error);
             res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
         }
     },
+    
     
     detalle: function (req, res) {
         const id = req.params.id;
@@ -433,46 +417,42 @@ module.exports = {
     },
     panelControl: async (req, res) => {
         try {
+            // Recupera los parámetros de búsqueda de la sesión
+            const { busqueda_nombre, categoria_id, marca_id, modelo_id } = req.session.busquedaParams || {};
+    
             let proveedores = await producto.obtenerProveedores(conexion);
             let categorias = await producto.obtenerCategorias(conexion);
             const proveedorSeleccionado = req.query.proveedor;
             const categoriaSeleccionada = req.query.categoria;
-            
             let paginaActual = req.query.pagina ? Number(req.query.pagina) : 1;
+    
+            // Valida la página actual
             if (isNaN(paginaActual) || paginaActual < 1) {
                 paginaActual = 1;
             }
+    
             req.session.paginaActual = paginaActual;
-            
-            const busqueda = req.query.busqueda || ''; // Término de búsqueda
+    
             const productosPorPagina = 30;
             const saltar = (paginaActual - 1) * productosPorPagina;
-            
-            // Si hay un término de búsqueda, llama a `obtenerPorFiltros`, de lo contrario usa `obtenerTodos`
-            let productos;
-            if (busqueda) {
-                productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda);
-            } else {
-                productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
-            }
-            
             let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
     
-            // Renderiza la vista con los datos y el término de búsqueda
-            res.render('panelControl', {
-                proveedores: proveedores,
-                proveedorSeleccionado: proveedorSeleccionado,
-                categorias: categorias,
-                categoriaSeleccionada: categoriaSeleccionada,
-                numeroDePaginas: numeroDePaginas,
-                productos: productos,
-                paginaActual: paginaActual,
-                busqueda: busqueda // Agregar búsqueda para el input en la vista
+            // Usa los parámetros de búsqueda al obtener productos
+            let productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, marca_id, modelo_id, busqueda_nombre, productosPorPagina, saltar);
+    
+            res.render('panelControl', { 
+                proveedores: proveedores, 
+                proveedorSeleccionado: proveedorSeleccionado, 
+                categorias: categorias, 
+                categoriaSeleccionada: categoriaSeleccionada, 
+                numeroDePaginas: numeroDePaginas, 
+                productos: productos, 
+                paginaActual: paginaActual 
             });
         } catch (error) {
             return res.status(500).send('Error: ' + error.message);
         }
-    },
+    },    
     
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
