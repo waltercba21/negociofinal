@@ -417,42 +417,46 @@ module.exports = {
     },
     panelControl: async (req, res) => {
         try {
-            // Recupera los parámetros de búsqueda de la sesión
-            const { busqueda_nombre, categoria_id, marca_id, modelo_id } = req.session.busquedaParams || {};
-    
             let proveedores = await producto.obtenerProveedores(conexion);
             let categorias = await producto.obtenerCategorias(conexion);
             const proveedorSeleccionado = req.query.proveedor;
             const categoriaSeleccionada = req.query.categoria;
+            
             let paginaActual = req.query.pagina ? Number(req.query.pagina) : 1;
-    
-            // Valida la página actual
             if (isNaN(paginaActual) || paginaActual < 1) {
                 paginaActual = 1;
             }
-    
             req.session.paginaActual = paginaActual;
-    
+            
+            const busqueda = req.query.busqueda || ''; // Término de búsqueda
             const productosPorPagina = 30;
             const saltar = (paginaActual - 1) * productosPorPagina;
+            
+            // Si hay un término de búsqueda, llama a `obtenerPorFiltros`, de lo contrario usa `obtenerTodos`
+            let productos;
+            if (busqueda) {
+                productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda);
+            } else {
+                productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
+            }
+            
             let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
     
-            // Usa los parámetros de búsqueda al obtener productos
-            let productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, marca_id, modelo_id, busqueda_nombre, productosPorPagina, saltar);
-    
-            res.render('panelControl', { 
-                proveedores: proveedores, 
-                proveedorSeleccionado: proveedorSeleccionado, 
-                categorias: categorias, 
-                categoriaSeleccionada: categoriaSeleccionada, 
-                numeroDePaginas: numeroDePaginas, 
-                productos: productos, 
-                paginaActual: paginaActual 
+            // Renderiza la vista con los datos y el término de búsqueda
+            res.render('panelControl', {
+                proveedores: proveedores,
+                proveedorSeleccionado: proveedorSeleccionado,
+                categorias: categorias,
+                categoriaSeleccionada: categoriaSeleccionada,
+                numeroDePaginas: numeroDePaginas,
+                productos: productos,
+                paginaActual: paginaActual,
+                busqueda: busqueda // Agregar búsqueda para el input en la vista
             });
         } catch (error) {
             return res.status(500).send('Error: ' + error.message);
         }
-    },    
+    },
     
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
