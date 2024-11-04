@@ -179,7 +179,6 @@ module.exports = {
             producto[0].precio_venta = Number(producto[0].precio_venta).toLocaleString('es-ES');
             res.render('detalle', { 
                 producto: producto[0], 
-                isAdminUser: req.isAuthenticated() && req.user.isAdmin // ejemplo de cómo pasar isAdminUser
             });
           }
         }); 
