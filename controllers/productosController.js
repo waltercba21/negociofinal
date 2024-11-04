@@ -135,49 +135,37 @@ module.exports = {
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
-    panelControl: async (req, res) => {
+    buscar: async (req, res) => {
         try {
-            let proveedores = await producto.obtenerProveedores(conexion);
-            let categorias = await producto.obtenerCategorias(conexion);
-            const proveedorSeleccionado = req.query.proveedor;
-            const categoriaSeleccionada = req.query.categoria;
-            
-            let paginaActual = req.query.pagina ? Number(req.query.pagina) : 1;
-            if (isNaN(paginaActual) || paginaActual < 1) {
-                paginaActual = 1;
-            }
-            req.session.paginaActual = paginaActual;
-            
-            const busqueda = req.query.busqueda || ''; // Término de búsqueda
-            const productosPorPagina = 30;
-            const saltar = (paginaActual - 1) * productosPorPagina;
-            
-            // Si hay un término de búsqueda, llama a `obtenerPorFiltros`, de lo contrario usa `obtenerTodos`
-            let productos;
-            if (busqueda) {
-                productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda);
-            } else {
-                productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
-            }
-            
-            let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
+            // Extrae y registra los parámetros de consulta
+            const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
+            console.log('Parámetros recibidos:', { categoria_id, marca_id, modelo_id, busqueda_nombre });
     
-            // Renderiza la vista con los datos y el término de búsqueda
-            res.render('panelControl', {
-                proveedores: proveedores,
-                proveedorSeleccionado: proveedorSeleccionado,
-                categorias: categorias,
-                categoriaSeleccionada: categoriaSeleccionada,
-                numeroDePaginas: numeroDePaginas,
-                productos: productos,
-                paginaActual: paginaActual,
-                busqueda: busqueda 
-            });
+            // Define el límite de resultados
+            const limite = busqueda_nombre || categoria_id || marca_id || modelo_id ? undefined : 10;
+            
+            console.log('Límite de resultados:', limite); // Agregar este log
+    
+            // Llama a la función del modelo para obtener los productos
+            const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
+            
+            console.log('Productos devueltos:', productos); // Agregar este log
+    
+            // Verifica si se encontraron productos y registra el resultado
+            if (productos && productos.length > 0) {
+                console.log('Productos encontrados:', productos.length);
+            } else {
+                console.log('No se encontraron productos para los parámetros dados.');
+            }
+    
+            // Envía la respuesta con los productos en formato JSON
+            res.json(productos);
         } catch (error) {
-            return res.status(500).send('Error: ' + error.message);
+            // En caso de error, registra el error y envía una respuesta de error
+            console.error('Error en la búsqueda de productos:', error);
+            res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
         }
     },
-    
     
     detalle: function (req, res) {
         const id = req.params.id;
@@ -449,21 +437,43 @@ module.exports = {
             let categorias = await producto.obtenerCategorias(conexion);
             const proveedorSeleccionado = req.query.proveedor;
             const categoriaSeleccionada = req.query.categoria;
+            
             let paginaActual = req.query.pagina ? Number(req.query.pagina) : 1;
             if (isNaN(paginaActual) || paginaActual < 1) {
                 paginaActual = 1;
             }
-            // Guardar la página actual en la sesión
             req.session.paginaActual = paginaActual;
+            
+            const busqueda = req.query.busqueda || ''; // Término de búsqueda
             const productosPorPagina = 30;
             const saltar = (paginaActual - 1) * productosPorPagina;
+            
+            // Si hay un término de búsqueda, llama a `obtenerPorFiltros`, de lo contrario usa `obtenerTodos`
+            let productos;
+            if (busqueda) {
+                productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda);
+            } else {
+                productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
+            }
+            
             let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
-            let productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
-            res.render('panelControl', { proveedores: proveedores, proveedorSeleccionado: proveedorSeleccionado, categorias: categorias, categoriaSeleccionada: categoriaSeleccionada, numeroDePaginas: numeroDePaginas, productos: productos, paginaActual: paginaActual }); 
+    
+            // Renderiza la vista con los datos y el término de búsqueda
+            res.render('panelControl', {
+                proveedores: proveedores,
+                proveedorSeleccionado: proveedorSeleccionado,
+                categorias: categorias,
+                categoriaSeleccionada: categoriaSeleccionada,
+                numeroDePaginas: numeroDePaginas,
+                productos: productos,
+                paginaActual: paginaActual,
+                busqueda: busqueda // Agregar búsqueda para el input en la vista
+            });
         } catch (error) {
             return res.status(500).send('Error: ' + error.message);
-        } 
+        }
     },
+    
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {
@@ -1183,8 +1193,8 @@ actualizarPrecios: function(req, res) {
 },  
 actualizarPreciosExcel : async (req, res) => {
     try {
-        const proveedor_id = req.body.proveedor;
-        const file = req.files[0]; 
+        const proveedor_id = req.body.proveedor; // Obtener el proveedor seleccionado
+        const file = req.files[0]; // Suponiendo que multer está configurado para manejar archivos
         let productosActualizados = [];
 
         // Validar que se ha seleccionado un proveedor y que se ha subido un archivo
