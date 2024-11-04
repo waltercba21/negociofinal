@@ -1092,9 +1092,9 @@ factura: (req, res) => {
 },
 
 
-deletePresupuesto: (req, res) => {
+deletePresupuesto : (req, res) => {
     const { id } = req.params;
-    producto.eliminarPresupuesto(id)
+    producto.eliminarPresupuesto(conexion, id)
         .then(affectedRows => {
             res.json({ message: 'Presupuesto eliminado exitosamente', affectedRows });
         })
@@ -1102,6 +1102,7 @@ deletePresupuesto: (req, res) => {
             res.status(500).json({ message: 'Error al eliminar presupuesto: ' + error.message });
         });
 },
+
 deleteFactura: (req, res) => {
     const { id } = req.params;
     producto.eliminarFactura(id)
