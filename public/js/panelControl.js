@@ -94,7 +94,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         <td>${precio_venta}</td>
         <td>
           <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-            <form class="form-inline" method="get" action="/productos/editar/${producto.id}?pagina=${paginaActual}">
+            <form class="form-inline" method="get" action="/productos/editar/${producto.id}?pagina=${paginaActual}&busqueda=${encodeURIComponent(busqueda)}">
               <button class="btn btn-warning" type="submit">Editar</button>
             </form>
           </div>

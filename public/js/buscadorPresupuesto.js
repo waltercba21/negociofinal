@@ -1,12 +1,28 @@
 // Prevenir el envío del formulario al presionar ENTER en los inputs
 document.getElementById('invoice-form').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
-        e.preventDefault();  // Evita que el formulario se envíe
-        return false;  // Retorna false para asegurar que no se realice la acción
+        e.preventDefault();  
+        return false; SVGAnimateMotionElement
     }
 });
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
+
+    // Verificar si los datos requeridos están completos
+    const nombreCliente = document.getElementById('nombre-cliente').value.trim();
+    const fechaPresupuesto = document.getElementById('fecha-presupuesto').value.trim();
+    const totalPresupuesto = document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim();
+
+    if (!nombreCliente || !fechaPresupuesto || !totalPresupuesto) {
+        Swal.fire({
+            title: 'Error',
+            text: 'Por favor complete todos los datos requeridos antes de guardar el presupuesto.',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+        return; // Detener el proceso si faltan datos
+    }
+
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
 
@@ -37,9 +53,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                nombreCliente: document.getElementById('nombre-cliente').value.trim(),
-                fechaPresupuesto: document.getElementById('fecha-presupuesto').value.trim(),
-                totalPresupuesto: document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim(),
+                nombreCliente,
+                fechaPresupuesto,
+                totalPresupuesto,
                 invoiceItems 
             })
         });
@@ -67,6 +83,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
