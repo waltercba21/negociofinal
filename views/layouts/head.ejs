@@ -7,7 +7,7 @@
   <!-- Open Graph -->
   <meta property="og:title" content="<%= (typeof producto !== 'undefined' && producto) ? producto.nombre : 'AUTOFAROS' %>" />
   <meta property="og:description" content="<%= (typeof producto !== 'undefined' && producto) ? producto.descripcion : 'Descripción del sitio' %>" />
-  <meta property="og:image" content="<%= (typeof producto !== 'undefined' && producto && producto.imagenes.length > 0) ? '/uploads/productos/' + producto.imagenes[0] : '/ruta/a/imagen/por/defecto.jpg' %>" />
+  <meta property="og:image" content="<%= (typeof producto !== 'undefined' && producto && Array.isArray(producto.imagenes) && producto.imagenes.length > 0) ? '/uploads/productos/' + producto.imagenes[0] : '/ruta/a/imagen/por/defecto.jpg' %>" />
   <meta property="og:url" content="<%= (typeof producto !== 'undefined' && producto) ? 'http://tu-sitio.com/productos/' + producto.id : 'http://tu-sitio.com' %>" />
 
   <!-- CSS -->

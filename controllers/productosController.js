@@ -1171,8 +1171,8 @@ actualizarPrecios: function(req, res) {
 },  
 actualizarPreciosExcel : async (req, res) => {
     try {
-        const proveedor_id = req.body.proveedor; // Obtener el proveedor seleccionado
-        const file = req.files[0]; // Suponiendo que multer está configurado para manejar archivos
+        const proveedor_id = req.body.proveedor;
+        const file = req.files[0]; 
         let productosActualizados = [];
 
         // Validar que se ha seleccionado un proveedor y que se ha subido un archivo
