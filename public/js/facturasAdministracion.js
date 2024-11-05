@@ -57,62 +57,60 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 });
 
 document.getElementById('formularioFacturas').addEventListener('submit', async function (e) {
-  e.preventDefault();
-
-  const invoiceItems = [];
-  const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-  
-  for (let i = 0; i < filasFactura.length; i++) {
-      const codigo = filasFactura[i].cells[0].textContent.trim();
-      const descripcion = filasFactura[i].cells[1].textContent.trim();
-      const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
-  
-      // Verificar que los campos no estén vacíos o mal formados
-      if (codigo && descripcion && !isNaN(cantidad)) {
-          invoiceItems.push({
-              id: codigo,
-              descripcion: descripcion,
-              cantidad: cantidad
-          });
-      }
-  }
-  
-  console.log("Invoice Items:", invoiceItems); // Verifica que no haya elementos vacíos
-  
-  const formData = new FormData(this);
-  formData.append('invoiceItems', JSON.stringify(invoiceItems));
-  
-
-  try {
-    const response = await fetch('/administracion/facturas', {
-        method: 'POST',
-        body: formData
-    });
-
-    const data = await response.json(); // Esta línea puede lanzar un error si la respuesta no es JSON
+    e.preventDefault();
+    const invoiceItems = [];
+    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     
-    console.log(data); // Imprimir la respuesta para depurar
+    for (let i = 0; i < filasFactura.length; i++) {
+        const codigo = filasFactura[i].cells[0].textContent.trim();
+        const descripcion = filasFactura[i].cells[1].textContent.trim();
+        const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
 
-    if (response.ok) {
-        Swal.fire({
-            title: '¡Éxito!',
-            text: data.message,
-            icon: 'success',
-            confirmButtonText: 'Entendido'
-        }).then(() => {
-            window.location.reload(); 
-        });
-    } else {
-        throw new Error(data.message);
+        // Verificar que los campos no estén vacíos o mal formados
+        if (codigo && descripcion && !isNaN(cantidad)) {
+            invoiceItems.push({
+                id: codigo, // Asegúrate de que `codigo` sea el identificador del producto.
+                descripcion: descripcion,
+                cantidad: cantidad
+            });
+        }
     }
-} catch (error) {
-    console.error('Error al enviar el formulario:', error);
 
-    Swal.fire({
-        title: 'Error',
-        text: error.message || 'Hubo un problema al procesar la solicitud',
-        icon: 'error',
-        confirmButtonText: 'Reintentar'
-    });
-}
+    // Log para verificar el contenido de `invoiceItems`
+    console.log("Contenido de invoiceItems antes de enviar:", invoiceItems);
+
+    const formData = new FormData(this);
+    formData.append('invoiceItems', JSON.stringify(invoiceItems));
+    
+    try {
+        const response = await fetch('/administracion/facturas', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        // Log para verificar la respuesta del servidor
+        console.log("Respuesta del servidor:", data);
+        
+        if (response.ok) {
+            Swal.fire({
+                title: '¡Éxito!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonText: 'Entendido'
+            }).then(() => {
+                window.location.reload(); 
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.error("Error al enviar el formulario:", error);
+        Swal.fire({
+            title: 'Error',
+            text: error.message || 'Hubo un problema al procesar la solicitud',
+            icon: 'error',
+            confirmButtonText: 'Reintentar'
+        });
+    }
 });

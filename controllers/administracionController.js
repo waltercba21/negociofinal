@@ -37,6 +37,10 @@ module.exports = {
         });
     },
     postFactura: function(req, res) {
+        // Verificar los datos recibidos en el cuerpo de la solicitud
+        console.log("Datos recibidos en req.body:", req.body);
+    
+        // Crear objeto de nueva factura con los datos de la solicitud
         let nuevaFactura = {
             id_proveedor: req.body.id_proveedor,
             fecha: req.body.fecha,
@@ -46,22 +50,29 @@ module.exports = {
             condicion: req.body.condicion,
             comprobante_pago: req.file ? req.file.filename : null
         };
-        
-        console.log("Contenido de invoiceItems:", req.body.invoiceItems);
-        
-        // Comprobar que invoiceItems no esté vacío
+    
+        // Log para verificar los datos de la nueva factura
+        console.log("Datos de nuevaFactura:", nuevaFactura);
+    
         let productosFactura = [];
-        
+    
+        // Verificar si `invoiceItems` contiene productos
         if (req.body.invoiceItems && req.body.invoiceItems.length > 0) {
-            // Filtrar solo los elementos válidos (no vacíos)
             const validItems = req.body.invoiceItems.filter(item => item.trim() !== '');
+    
+            // Log para ver qué productos fueron validados
+            console.log("Productos validados en invoiceItems:", validItems);
     
             if (validItems.length > 0) {
                 try {
-                    // Suponiendo que el JSON válido está en el primer elemento no vacío
-                    productosFactura = JSON.parse(validItems[0]); // Parsear solo el primer elemento válido
+                    // Intentar parsear los productos recibidos
+                    productosFactura = JSON.parse(validItems[0]);
+                    
+                    // Log para verificar el contenido de productosFactura después de parsear
+                    console.log("Contenido de productosFactura:", productosFactura);
+    
                 } catch (error) {
-                    console.error("Error al parsear invoiceItems:", error);
+                    console.error("Error al parsear productos:", error);
                     return res.status(400).json({ message: 'Datos de productos inválidos' });
                 }
             } else {
@@ -71,32 +82,37 @@ module.exports = {
             return res.status(400).json({ message: 'No se enviaron productos' });
         }
     
-        // Insertar factura
+        // Llamada para insertar la factura en la base de datos
         administracion.insertFactura(nuevaFactura, function(facturaID) {
-            // Insertar productos en facturas_admin_items
+            console.log("Factura creada con ID:", facturaID);
+    
             productosFactura.forEach(function(item) {
-                // Validar que cada item tenga el formato correcto
                 if (item.id && item.cantidad) {
                     let itemFactura = {
                         factura_id: facturaID,
                         producto_id: item.id,
                         cantidad: item.cantidad,
                     };
+    
+                    // Log para verificar cada item antes de la inserción
+                    console.log("Item para insertar en la factura:", itemFactura);
+    
                     administracion.insertarItemFactura(itemFactura);
                     administracion.actualizarStockProducto(item.id, item.cantidad);
+    
                 } else {
                     console.error("Item de factura inválido:", item);
                     return res.status(400).json({ message: 'Item de factura inválido' });
                 }
             });
     
-            // Enviar respuesta JSON
+            // Respuesta final de éxito
             res.json({
                 message: 'Factura guardada exitosamente',
                 facturaID: facturaID
             });
         });
-    },
+    },    
     listadoFacturas : function(req, res) {
         administracion.getFacturas(function(error, facturas) {
             if (error) {
