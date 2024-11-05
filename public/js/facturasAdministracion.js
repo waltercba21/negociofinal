@@ -4,21 +4,17 @@ document.getElementById('mostrarFormulario').addEventListener('click', function(
   formulario.style.display = 'block';
   fondoOscuro.style.display = 'block';
 });
-
 document.getElementById('cerrarFormulario').addEventListener('click', function() {
   document.getElementById('formularioFacturas').style.display = 'none';
   document.getElementById('fondoOscuro').style.display = 'none';
 });
-
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
   const busqueda = e.target.value;
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
   resultadosBusqueda.innerHTML = '';
-
   if (!busqueda.trim()) {
       return;
   }
-
   const url = '/productos/api/buscar?q=' + busqueda;
   const respuesta = await fetch(url);
   const productos = await respuesta.json();
@@ -42,7 +38,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
           inputCantidad.value = 1;
           cellCantidad.appendChild(inputCantidad);
 
-          // Columna de eliminar (botón)
           const cellEliminar = filaFactura.insertCell(3);
           const botonEliminar = document.createElement('button');
           botonEliminar.textContent = '✖';
@@ -62,21 +57,19 @@ document.getElementById('formularioFacturas').addEventListener('submit', async f
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     
     for (let i = 0; i < filasFactura.length; i++) {
-        const codigo = filasFactura[i].cells[0].textContent.trim();
+        const productoId = filasFactura[i].dataset.productoId; // Usar el `producto_id` del dataset
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
-
-        // Verificar que los campos no estén vacíos o mal formados
-        if (codigo && descripcion && !isNaN(cantidad)) {
+        
+        if (productoId && descripcion && !isNaN(cantidad)) {
             invoiceItems.push({
-                id: codigo, // Asegúrate de que `codigo` sea el identificador del producto.
+                id: productoId,  // Enviar el `producto_id` correcto aquí
                 descripcion: descripcion,
                 cantidad: cantidad
             });
         }
     }
 
-    // Log para verificar el contenido de `invoiceItems`
     console.log("Contenido de invoiceItems antes de enviar:", invoiceItems);
 
     const formData = new FormData(this);
@@ -88,8 +81,6 @@ document.getElementById('formularioFacturas').addEventListener('submit', async f
             body: formData
         });
         const data = await response.json();
-        
-        // Log para verificar la respuesta del servidor
         console.log("Respuesta del servidor:", data);
         
         if (response.ok) {
