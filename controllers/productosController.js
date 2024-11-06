@@ -1197,12 +1197,17 @@ actualizarPreciosExcel: async (req, res) => {
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
                 for (const row of data) {
+                    console.log('Fila procesada:', row); // Mostrar cada fila para depuración
+
+                    // Buscar las columnas correctas
                     const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
 
                     if (codigoColumn && precioColumn) {
                         let codigo = row[codigoColumn]?.toString().trim(); // Usar optional chaining para evitar undefined
                         let precioRaw = row[precioColumn];
+
+                        console.log(`Código: ${codigo}, Precio: ${precioRaw}`); // Verificar los valores del código y precio
 
                         // Validación de precioRaw antes de acceder a toString
                         if (precioRaw !== undefined && precioRaw !== null && precioRaw !== '') {
@@ -1234,6 +1239,8 @@ actualizarPreciosExcel: async (req, res) => {
                             console.log(`Precio no encontrado o es inválido para el producto con código ${codigo}`);
                             noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
                         }
+                    } else {
+                        console.log(`No se encontraron las columnas 'código' o 'precio' en la fila:`, row);
                     }
                 }
             }
@@ -1313,6 +1320,7 @@ actualizarPreciosExcel: async (req, res) => {
         res.status(500).send(error.message);
     }
 },
+
 
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
