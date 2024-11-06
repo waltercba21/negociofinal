@@ -1,13 +1,12 @@
-const conexion = require('../config/conexion');
-const producto = require('../models/producto');
+const conexion = require('../config/conexion')
+const producto = require('../models/producto')
 var borrar = require('fs');
 const PDFDocument = require('pdfkit');
-const blobStream = require('blob-stream');
+const blobStream  = require('blob-stream');
 var streamBuffers = require('stream-buffers');
 const xlsx = require('xlsx');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
-const path = require('path');
 
 function calcularNumeroDePaginas(conexion) {
     return new Promise((resolve, reject) => {
@@ -268,18 +267,15 @@ module.exports = {
             res.status(500).send('Error: ' + error.message);
         });
     },
-    eliminarSeleccionados: async (req, res) => {
+    eliminarSeleccionados : async (req, res) => {
         const { ids } = req.body;
-        console.log("IDs recibidos para eliminar:", ids); // Verificar IDs
         try {
             await producto.eliminar(ids);
             res.json({ success: true });
-        } catch (error) {
-            console.error("Error en el controlador al eliminar productos:", error);
+        } catch (error) { 
             res.status(500).json({ success: false, error: error.message });
         }
     },
-    
     editar: function(req, res) {
         let productoResult;
         let responseSent = false;
@@ -1174,15 +1170,13 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-actualizarPreciosExcel: async (req, res) => {
+actualizarPreciosExcel : async (req, res) => {
     try {
-        console.log('Iniciando la actualización de precios y generación del PDF...');
-
-        const proveedor_id = req.body.proveedor;
-        const file = req.files[0];
+        const proveedor_id = req.body.proveedor; // Obtener el proveedor seleccionado
+        const file = req.files[0]; // Suponiendo que multer está configurado para manejar archivos
         let productosActualizados = [];
-        let noEncontrados = []; // Array para guardar los códigos de productos no encontrados
 
+        // Validar que se ha seleccionado un proveedor y que se ha subido un archivo
         if (!proveedor_id || !file) {
             return res.status(400).send('Proveedor y archivo son requeridos.');
         }
@@ -1190,158 +1184,84 @@ actualizarPreciosExcel: async (req, res) => {
         if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
-            const promises = [];
-
-            console.log('Archivo Excel recibido. Nombre de las hojas:', sheet_name_list);
+            const promises = []; 
 
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
-                console.log(`Procesando hoja: ${sheet_name}. Filas encontradas: ${data.length}`);
-
                 for (const row of data) {
-                    console.log('Fila procesada:', row); // Mostrar cada fila para depuración
-
-                    // Buscar las columnas correctas
                     const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
 
-                    // Validar que ambas columnas existen en la fila
                     if (codigoColumn && precioColumn) {
-                        let codigo = row[codigoColumn];
+                        let codigoRaw = row[codigoColumn];
                         let precioRaw = row[precioColumn];
-
-                        // Verificar si los valores están definidos
-                        if (codigo === undefined || codigo === null) {
-                            console.log(`Código undefined o null en la fila:`, row);
-                            noEncontrados.push('Código no encontrado');
-                            continue;
+                    
+                        let codigo = codigoRaw.toString().trim();
+                    
+                        if (typeof precioRaw === 'number') {
+                            precioRaw = precioRaw.toString();
                         }
-                        if (precioRaw === undefined || precioRaw === null) {
-                            console.log(`Precio undefined o null en la fila:`, row);
-                            noEncontrados.push(codigo || 'Precio no encontrado');
-                            continue;
-                        }
-
-                        // Asegúrate de que precioRaw sea un string antes de usar replace
-                        if (typeof precioRaw !== 'string') {
-                            precioRaw = String(precioRaw);  // Convertir a string si no lo es
-                        }
-                        precioRaw = precioRaw.replace(/\./g, ''); // Eliminar puntos
-                        precioRaw = precioRaw.replace(',', '.'); // Convertir la coma a punto
-
-                        // Convertir el precio a un número
-                        let precio = parseFloat(precioRaw);
-
-                        // Verificar que el precio sea un número válido
-                        if (isNaN(precio) || precio <= 0) {
-                            console.log(`El precio ${precioRaw} no es válido para el código: ${codigo}`);
-                            noEncontrados.push(codigo);
-                            continue;
-                        }
-
-                        console.log(`Precio convertido: ${precio}`);
-
-                        // Procesar la actualización del precio
-                        promises.push(
-                            producto.actualizarPreciosPDF(precio, codigo, proveedor_id)
-                                .then(async productosActualizadosTemp => {
-                                    if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
-                                        productosActualizados.push(...productosActualizadosTemp);
-                                        for (const productoActualizado of productosActualizadosTemp) {
-                                            await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo);
+                    
+                        if (typeof precioRaw === 'string') {
+                            const precio = parseFloat(precioRaw.replace(',', '.'));
+                    
+                            if (isNaN(precio) || precio <= 0) {
+                                console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
+                                continue;
+                            }
+                            
+                            promises.push(
+                                producto.actualizarPreciosPDF(precio, codigo, proveedor_id) // Usar proveedor_id aquí
+                                    .then(async productosActualizadosTemp => {
+                                        if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
+                                            productosActualizados.push(...productosActualizadosTemp);
+                                            for (const productoActualizado of productosActualizadosTemp) {
+                                                await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo);
+                                            }
+                                        } else {
+                                            console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
+                                            return { noExiste: true, codigo: codigo };
                                         }
-                                    } else {
-                                        console.log(`Producto con código ${codigo} no encontrado`);
-                                        noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
-                                    }
-                                })
-                                .catch(error => {
-                                    console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
-                                })
-                        );
+                                    })
+                                    .catch(error => {
+                                        console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
+                                        return { error: true, message: `Error al actualizar el producto con el código ${codigo}: ${error.message}` };
+                                    })
+                            );
+                        } else {
+                            console.error(`Tipo de dato no esperado para el precio en el código ${codigo}: ${typeof precioRaw}`);
+                        }
                     } else {
-                        console.log(`No se encontraron las columnas 'código' o 'precio' en la fila:`, row);
+                        console.error(`No se encontraron las columnas de código o precio en la fila: ${JSON.stringify(row)}`);
                     }
                 }
             }
 
-            console.log('Esperando que todos los productos se actualicen...');
-            await Promise.all(promises);
+            const resultados = await Promise.all(promises);
+            const errores = resultados.filter(resultado => resultado && resultado.error);
+            const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
 
-            // Generación del PDF
-            console.log('Generando el PDF de productos actualizados y no encontrados...');
-            const doc = new PDFDocument();
-            const bufferStream = new streamBuffers.WritableStreamBuffer();
-
-            doc.pipe(bufferStream);
-            doc.font('Helvetica');  // Usar una fuente estándar para evitar problemas de caracteres
-            doc.fontSize(16).text('Informe de Productos Actualizados y No Encontrados', { align: 'center' });
-            doc.moveDown();
-
-            // Sección de productos actualizados
-            if (productosActualizados.length > 0) {
-                doc.fontSize(14).text('Productos Actualizados', { underline: true });
-                doc.moveDown();
-
-                // Encabezados de las columnas
-                doc.fontSize(12);
-                doc.text('Código', 100, doc.y);
-                doc.text('Precio Actualizado', 200, doc.y);
-                doc.moveDown();
-
-                productosActualizados.forEach(producto => {
-                    doc.text(producto.codigo, 100, doc.y);
-                    doc.text(producto.precio.toString(), 200, doc.y);
-                    doc.moveDown();
-                });
-            } else {
-                doc.fontSize(12).text('No se encontraron productos actualizados.');
-                doc.moveDown();
+            if (errores.length > 0) {
+                console.log("Errores al actualizar algunos productos:", errores);
             }
-
-            // Sección de productos no encontrados
             if (noEncontrados.length > 0) {
-                doc.fontSize(14).text('Productos No Encontrados', { underline: true });
-                doc.moveDown();
-
-                noEncontrados.forEach(codigo => {
-                    doc.fontSize(12).text(`Código: ${codigo}`);
-                    doc.moveDown();
+                noEncontrados.forEach(item => {
+                    console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
                 });
-            } else {
-                doc.fontSize(12).text('Todos los productos fueron encontrados y actualizados.');
-                doc.moveDown();
             }
-
-            doc.end();
-
-            bufferStream.on('finish', () => {
-                const pdfData = bufferStream.getContents();
-                console.log('PDF generado correctamente, enviando al cliente...');
-
-                // Aquí enviamos el PDF
-                res.setHeader('Content-Type', 'application/pdf');
-                res.setHeader('Content-Disposition', 'attachment; filename=informe_productos_actualizados.pdf');
-                res.send(pdfData);  // Enviar el PDF
-
-                // Eliminar el archivo subido después de procesarlo
-                fs.unlinkSync(file.path);
-
-                console.log('PDF enviado correctamente.');
-            });
-
+            
+            // Eliminar el archivo subido después de procesarlo
+            fs.unlinkSync(file.path);
+            res.render('productosActualizados', { productos: productosActualizados });
         } else {
-            console.log('Tipo de archivo no soportado. Solo se permiten archivos .xlsx');
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
+            return;
         }
-
     } catch (error) {
         console.log("Error durante el procesamiento de archivos", error);
         res.status(500).send(error.message);
     }
 },
-
-
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
