@@ -7,6 +7,7 @@ var streamBuffers = require('stream-buffers');
 const xlsx = require('xlsx');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
+const path = require('path');
 
 function calcularNumeroDePaginas(conexion) {
     return new Promise((resolve, reject) => {
