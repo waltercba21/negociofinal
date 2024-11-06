@@ -1174,7 +1174,7 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-actualizarPreciosYGenerarPDF: async (req, res) => {
+actualizarPreciosExcel: async (req, res) => {
     try {
         console.log('Iniciando la actualización de precios y generación del PDF...');
 
