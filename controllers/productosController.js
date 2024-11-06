@@ -1225,7 +1225,7 @@ actualizarPreciosExcel: async (req, res) => {
 
             await Promise.all(promises);
 
-            // Verifica si hay productos no encontrados
+            // Si hay productos no encontrados, generamos el PDF
             if (noEncontrados.length > 0) {
                 // Crear el PDF en memoria
                 const doc = new PDFDocument();
@@ -1241,23 +1241,21 @@ actualizarPreciosExcel: async (req, res) => {
 
                 doc.end();
 
-                // Espera a que el buffer esté listo y luego envíalo al cliente
+                // Espera a que el buffer esté listo y luego lo envía al cliente
                 bufferStream.on('finish', () => {
                     const pdfData = bufferStream.getContents();
                     res.setHeader('Content-Type', 'application/pdf');
                     res.setHeader('Content-Disposition', 'attachment; filename=productos_no_encontrados.pdf');
                     res.send(pdfData);
                 });
-            } else {
-                // Si no hay productos no encontrados, redirige a la vista de productos actualizados
-                res.render('productosActualizados', {
-                    productos: productosActualizados,
-                    mensaje: 'Todos los productos fueron actualizados correctamente.',
-                    pdfPath: null
-                });
             }
 
-            // Eliminar el archivo subido después de procesarlo
+            // Siempre renderizamos la vista de productos actualizados, sin importar si se generó el PDF
+            res.render('productosActualizados', {
+                productos: productosActualizados,
+                mensaje: noEncontrados.length > 0 ? 'Algunos productos no fueron encontrados.' : 'Todos los productos fueron actualizados correctamente.',
+                productosNoEncontrados: noEncontrados
+            });
             fs.unlinkSync(file.path);
 
         } else {
