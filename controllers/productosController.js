@@ -1174,7 +1174,8 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-actualizarPreciosExcel: async (req, res) => {
+
+actualizarPreciosExcel: async (req, res) => { 
     try {
         const proveedor_id = req.body.proveedor;
         const file = req.files[0];
@@ -1267,14 +1268,19 @@ actualizarPreciosExcel: async (req, res) => {
 
                 doc.end();
 
-                // Guardar el archivo PDF en un buffer
-                bufferStream.on('finish', () => {
-                    const pdfBuffer = bufferStream.getContents();
-                    // El PDF se genera correctamente, enviar a la vista con el PDF
-                    res.render('productosActualizados', {
-                        productos: productosActualizados,
-                        pdfBuffer: pdfBuffer.toString('base64')  // Enviar el PDF en base64 a la vista
+                // Esperar hasta que el PDF se haya generado completamente antes de enviar la respuesta
+                const pdfBuffer = await new Promise((resolve, reject) => {
+                    bufferStream.on('finish', () => {
+                        const buffer = bufferStream.getContents();
+                        resolve(buffer);
                     });
+                    bufferStream.on('error', reject);
+                });
+
+                // El PDF se genera correctamente, enviar a la vista con el PDF
+                res.render('productosActualizados', {
+                    productos: productosActualizados,
+                    pdfBuffer: pdfBuffer.toString('base64')  // Enviar el PDF en base64 a la vista
                 });
             } else {
                 // Si no hay productos no encontrados, redirigir a la vista con los productos actualizados
