@@ -1207,14 +1207,16 @@ actualizarPreciosExcel: async (req, res) => {
 
                     // Validar que ambas columnas existen en la fila
                     if (codigoColumn && precioColumn) {
-                        let codigo = row[codigoColumn]?.toString().trim(); // Usar optional chaining para evitar undefined
+                        let codigo = row[codigoColumn]?.toString()?.trim(); // Usar optional chaining y asegurarnos de que no sea undefined
                         let precioRaw = row[precioColumn];
 
                         console.log(`Código: ${codigo}, Precio: ${precioRaw}`); // Verificar los valores del código y precio
 
                         // Validación de precioRaw antes de acceder a toString
                         if (precioRaw !== undefined && precioRaw !== null && precioRaw !== '') {
-                            if (typeof precioRaw === 'number') precioRaw = precioRaw.toString();
+                            if (typeof precioRaw === 'number') {
+                                precioRaw = precioRaw.toString();
+                            }
                             const precio = parseFloat(precioRaw.replace(',', '.'));
 
                             // Asegurarse de que el precio sea un número válido
