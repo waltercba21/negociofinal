@@ -1176,6 +1176,8 @@ actualizarPrecios: function(req, res) {
 },  
 actualizarPreciosExcel: async (req, res) => {
     try {
+        console.log('Iniciando la actualización de precios...');
+        
         const proveedor_id = req.body.proveedor;
         const file = req.files[0];
         let productosActualizados = [];
@@ -1189,6 +1191,8 @@ actualizarPreciosExcel: async (req, res) => {
             const workbook = xlsx.readFile(file.path);
             const sheet_name_list = workbook.SheetNames;
             const promises = [];
+
+            console.log('Archivo Excel recibido y procesando datos...');
 
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
@@ -1207,12 +1211,14 @@ actualizarPreciosExcel: async (req, res) => {
                             promises.push(
                                 producto.actualizarPreciosPDF(precio, codigo, proveedor_id)
                                     .then(async productosActualizadosTemp => {
+                                        console.log(`Producto con código ${codigo} actualizado`);
                                         if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
                                             productosActualizados.push(...productosActualizadosTemp);
                                             for (const productoActualizado of productosActualizadosTemp) {
                                                 await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo);
                                             }
                                         } else {
+                                            console.log(`Producto con código ${codigo} no encontrado`);
                                             noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
                                         }
                                     })
@@ -1223,11 +1229,12 @@ actualizarPreciosExcel: async (req, res) => {
                 }
             }
 
+            console.log('Esperando que todos los productos se actualicen...');
             await Promise.all(promises);
 
             // Si hay productos no encontrados, generamos el PDF
             if (noEncontrados.length > 0) {
-                // Crear el PDF en memoria
+                console.log('Generando el PDF de productos no encontrados...');
                 const doc = new PDFDocument();
                 const bufferStream = new streamBuffers.WritableStreamBuffer();
 
@@ -1241,13 +1248,17 @@ actualizarPreciosExcel: async (req, res) => {
 
                 doc.end();
 
-                // Espera a que el buffer esté listo y luego lo envía al cliente
                 bufferStream.on('finish', () => {
                     const pdfData = bufferStream.getContents();
+                    console.log('PDF generado correctamente, enviando al cliente...');
+
+                    // Aquí enviamos el PDF
                     res.setHeader('Content-Type', 'application/pdf');
                     res.setHeader('Content-Disposition', 'attachment; filename=productos_no_encontrados.pdf');
-                    res.send(pdfData);
+                    res.send(pdfData);  // Enviar el PDF
 
+                    console.log('PDF enviado, ahora renderizando la vista de productos actualizados...');
+                    
                     // Después de enviar el PDF, renderizamos la vista de productos actualizados
                     res.render('productosActualizados', {
                         productos: productosActualizados,
@@ -1258,7 +1269,9 @@ actualizarPreciosExcel: async (req, res) => {
                     // Eliminar el archivo subido después de procesarlo
                     fs.unlinkSync(file.path);
                 });
+
             } else {
+                console.log('Todos los productos se actualizaron correctamente, renderizando la vista...');
                 // Si no hay productos no encontrados, solo renderizamos la vista
                 res.render('productosActualizados', {
                     productos: productosActualizados,
@@ -1271,6 +1284,7 @@ actualizarPreciosExcel: async (req, res) => {
             }
 
         } else {
+            console.log('Tipo de archivo no soportado. Solo se permiten archivos .xlsx');
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
         }
     } catch (error) {
