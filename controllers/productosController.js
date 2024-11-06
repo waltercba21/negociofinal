@@ -1204,26 +1204,35 @@ actualizarPreciosExcel: async (req, res) => {
                         let codigo = row[codigoColumn].toString().trim();
                         let precioRaw = row[precioColumn];
 
-                        if (typeof precioRaw === 'number') precioRaw = precioRaw.toString();
-                        const precio = parseFloat(precioRaw.replace(',', '.'));
+                        // Validación de precioRaw antes de acceder a toString
+                        if (precioRaw !== undefined && precioRaw !== null) {
+                            if (typeof precioRaw === 'number') precioRaw = precioRaw.toString();
+                            const precio = parseFloat(precioRaw.replace(',', '.'));
 
-                        if (!isNaN(precio) && precio > 0) {
-                            promises.push(
-                                producto.actualizarPreciosPDF(precio, codigo, proveedor_id)
-                                    .then(async productosActualizadosTemp => {
-                                        console.log(`Producto con código ${codigo} actualizado`);
-                                        if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
-                                            productosActualizados.push(...productosActualizadosTemp);
-                                            for (const productoActualizado of productosActualizadosTemp) {
-                                                await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo);
+                            if (!isNaN(precio) && precio > 0) {
+                                promises.push(
+                                    producto.actualizarPreciosPDF(precio, codigo, proveedor_id)
+                                        .then(async productosActualizadosTemp => {
+                                            console.log(`Producto con código ${codigo} actualizado`);
+                                            if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
+                                                productosActualizados.push(...productosActualizadosTemp);
+                                                for (const productoActualizado of productosActualizadosTemp) {
+                                                    await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo);
+                                                }
+                                            } else {
+                                                console.log(`Producto con código ${codigo} no encontrado`);
+                                                noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
                                             }
-                                        } else {
-                                            console.log(`Producto con código ${codigo} no encontrado`);
-                                            noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
-                                        }
-                                    })
-                                    .catch(error => console.log(`Error al actualizar el producto con el código ${codigo}:`, error))
-                            );
+                                        })
+                                        .catch(error => console.log(`Error al actualizar el producto con el código ${codigo}:`, error))
+                                );
+                            } else {
+                                console.log(`El precio del producto con código ${codigo} no es válido: ${precioRaw}`);
+                                noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
+                            }
+                        } else {
+                            console.log(`Precio no encontrado para el producto con código ${codigo}`);
+                            noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
                         }
                     }
                 }
