@@ -1227,6 +1227,7 @@ actualizarPreciosExcel: async (req, res) => {
 
             // Verifica si hay productos no encontrados
             if (noEncontrados.length > 0) {
+                // Crear el PDF en memoria
                 const doc = new PDFDocument();
                 const bufferStream = new streamBuffers.WritableStreamBuffer();
 
@@ -1247,9 +1248,8 @@ actualizarPreciosExcel: async (req, res) => {
                     res.setHeader('Content-Disposition', 'attachment; filename=productos_no_encontrados.pdf');
                     res.send(pdfData);
                 });
-
             } else {
-                // Si no hay productos no encontrados, redirigimos a la vista de productos actualizados
+                // Si no hay productos no encontrados, redirige a la vista de productos actualizados
                 res.render('productosActualizados', {
                     productos: productosActualizados,
                     mensaje: 'Todos los productos fueron actualizados correctamente.',
