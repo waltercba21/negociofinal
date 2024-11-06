@@ -1225,38 +1225,67 @@ actualizarPreciosExcel: async (req, res) => {
 
             await Promise.all(promises);
 
-            // Crear el PDF en memoria si hay productos no encontrados
+            // Crear el PDF si hay productos no encontrados
             if (noEncontrados.length > 0) {
                 const doc = new PDFDocument();
-                const bufferStream = new streamBuffers.WritableStreamBuffer();
+                const bufferStream = new streamBuffers.WritableStreamBuffer({
+                    initialSize: (100 * 1024),   // Tamaño inicial del buffer
+                    incrementAmount: (10 * 1024) // Incremento del tamaño
+                });
 
                 doc.pipe(bufferStream);
+
+                // Título del PDF
                 doc.fontSize(16).text('Productos no encontrados en la base de datos', { align: 'center' });
                 doc.moveDown();
 
-                noEncontrados.forEach(codigo => {
-                    doc.fontSize(12).text(`Código: ${codigo}`);
+                const marginLeft = 50; // Margen izquierdo
+                const marginTop = 80;  // Margen superior
+                const columnWidth = 150; // Ancho de cada columna
+                const rowHeight = 20;    // Alto de cada fila
+
+                let xPosition = marginLeft;
+                let yPosition = marginTop;
+
+                // Agregar los códigos a las columnas
+                noEncontrados.forEach((codigo, index) => {
+                    if (index > 0 && index % 3 === 0) {  // Cambio de columna después de 3 productos
+                        xPosition += columnWidth;
+                        yPosition = marginTop;  // Reiniciar la posición vertical
+                    }
+
+                    doc.fontSize(12).text(`Código: ${codigo}`, xPosition, yPosition);
+                    yPosition += rowHeight; // Mover hacia abajo para el siguiente código
+
+                    // Controlar el cambio de página si es necesario
+                    if (yPosition > doc.page.height - marginTop - rowHeight) {
+                        doc.addPage();
+                        xPosition = marginLeft;  // Reiniciar posición horizontal al inicio de la página
+                        yPosition = marginTop;
+                    }
                 });
 
                 doc.end();
 
-                // Espera a que el buffer esté listo y luego envíalo al cliente
+                // Guardar el archivo PDF en un buffer
                 bufferStream.on('finish', () => {
-                    const pdfData = bufferStream.getContents();
-                    res.setHeader('Content-Type', 'application/pdf');
-                    res.setHeader('Content-Disposition', 'attachment; filename=productos_no_encontrados.pdf');
-                    res.send(pdfData);
+                    const pdfBuffer = bufferStream.getContents();
+                    // El PDF se genera correctamente, enviar a la vista con el PDF
+                    res.render('productosActualizados', {
+                        productos: productosActualizados,
+                        pdfBuffer: pdfBuffer.toString('base64')  // Enviar el PDF en base64 a la vista
+                    });
                 });
             } else {
+                // Si no hay productos no encontrados, redirigir a la vista con los productos actualizados
                 res.render('productosActualizados', {
                     productos: productosActualizados,
-                    pdfPath: null
+                    pdfBuffer: null
                 });
             }
 
             // Eliminar el archivo subido después de procesarlo
             fs.unlinkSync(file.path);
-
         } else {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
         }
