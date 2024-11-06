@@ -1174,7 +1174,6 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-
 actualizarPreciosExcel: async (req, res) => {
     try {
         const proveedor_id = req.body.proveedor;
@@ -1248,8 +1247,9 @@ actualizarPreciosExcel: async (req, res) => {
                     res.setHeader('Content-Disposition', 'attachment; filename=productos_no_encontrados.pdf');
                     res.send(pdfData);
                 });
+
             } else {
-                // Si no hay productos no encontrados, simplemente redirige a la vista
+                // Si no hay productos no encontrados, redirigimos a la vista de productos actualizados
                 res.render('productosActualizados', {
                     productos: productosActualizados,
                     mensaje: 'Todos los productos fueron actualizados correctamente.',
