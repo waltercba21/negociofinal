@@ -1222,45 +1222,43 @@ actualizarPreciosExcel: async (req, res) => {
                             continue;
                         }
 
-                        // Convertir valores de manera segura
-                        try {
-                            codigo = codigo.toString().trim(); // Asegurarse de que el código es una cadena
-                            console.log(`Código convertido a string: ${codigo}`);
-
-                            // Validar y convertir el precio
-                            let precio = parseFloat(precioRaw.replace(',', '.'));
-
-                            // Verificar que el precio sea un número válido
-                            if (isNaN(precio) || precio <= 0) {
-                                console.log(`El precio ${precioRaw} no es válido para el código: ${codigo}`);
-                                noEncontrados.push(codigo);
-                                continue;
-                            }
-
-                            console.log(`Precio convertido: ${precio}`);
-
-                            // Procesar la actualización del precio
-                            promises.push(
-                                producto.actualizarPreciosPDF(precio, codigo, proveedor_id)
-                                    .then(async productosActualizadosTemp => {
-                                        if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
-                                            productosActualizados.push(...productosActualizadosTemp);
-                                            for (const productoActualizado of productosActualizadosTemp) {
-                                                await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo);
-                                            }
-                                        } else {
-                                            console.log(`Producto con código ${codigo} no encontrado`);
-                                            noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
-                                    })
-                            );
-                        } catch (error) {
-                            console.error(`Error procesando la fila con código ${codigo}:`, error);
-                            noEncontrados.push(codigo); // Añadir código no procesado
+                        // Asegúrate de que precioRaw sea un string antes de usar replace
+                        if (typeof precioRaw !== 'string') {
+                            precioRaw = String(precioRaw);  // Convertir a string si no lo es
                         }
+                        precioRaw = precioRaw.replace(/\./g, ''); // Eliminar puntos
+                        precioRaw = precioRaw.replace(',', '.'); // Convertir la coma a punto
+
+                        // Convertir el precio a un número
+                        let precio = parseFloat(precioRaw);
+
+                        // Verificar que el precio sea un número válido
+                        if (isNaN(precio) || precio <= 0) {
+                            console.log(`El precio ${precioRaw} no es válido para el código: ${codigo}`);
+                            noEncontrados.push(codigo);
+                            continue;
+                        }
+
+                        console.log(`Precio convertido: ${precio}`);
+
+                        // Procesar la actualización del precio
+                        promises.push(
+                            producto.actualizarPreciosPDF(precio, codigo, proveedor_id)
+                                .then(async productosActualizadosTemp => {
+                                    if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
+                                        productosActualizados.push(...productosActualizadosTemp);
+                                        for (const productoActualizado of productosActualizadosTemp) {
+                                            await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo);
+                                        }
+                                    } else {
+                                        console.log(`Producto con código ${codigo} no encontrado`);
+                                        noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
+                                    }
+                                })
+                                .catch(error => {
+                                    console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
+                                })
+                        );
                     } else {
                         console.log(`No se encontraron las columnas 'código' o 'precio' en la fila:`, row);
                     }
@@ -1342,6 +1340,7 @@ actualizarPreciosExcel: async (req, res) => {
         res.status(500).send(error.message);
     }
 },
+
 
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
