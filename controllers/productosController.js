@@ -1192,10 +1192,12 @@ actualizarPreciosExcel: async (req, res) => {
             const sheet_name_list = workbook.SheetNames;
             const promises = [];
 
-            console.log('Archivo Excel recibido y procesando datos...');
+            console.log('Archivo Excel recibido. Nombre de las hojas:', sheet_name_list);
 
             for (const sheet_name of sheet_name_list) {
                 const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+                console.log(`Procesando hoja: ${sheet_name}. Filas encontradas: ${data.length}`);
+
                 for (const row of data) {
                     console.log('Fila procesada:', row); // Mostrar cada fila para depuración
 
@@ -1203,6 +1205,7 @@ actualizarPreciosExcel: async (req, res) => {
                     const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
 
+                    // Validar que ambas columnas existen en la fila
                     if (codigoColumn && precioColumn) {
                         let codigo = row[codigoColumn]?.toString().trim(); // Usar optional chaining para evitar undefined
                         let precioRaw = row[precioColumn];
@@ -1214,6 +1217,7 @@ actualizarPreciosExcel: async (req, res) => {
                             if (typeof precioRaw === 'number') precioRaw = precioRaw.toString();
                             const precio = parseFloat(precioRaw.replace(',', '.'));
 
+                            // Asegurarse de que el precio sea un número válido
                             if (!isNaN(precio) && precio > 0) {
                                 promises.push(
                                     producto.actualizarPreciosPDF(precio, codigo, proveedor_id)
@@ -1229,7 +1233,9 @@ actualizarPreciosExcel: async (req, res) => {
                                                 noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
                                             }
                                         })
-                                        .catch(error => console.log(`Error al actualizar el producto con el código ${codigo}:`, error))
+                                        .catch(error => {
+                                            console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
+                                        })
                                 );
                             } else {
                                 console.log(`El precio del producto con código ${codigo} no es válido: ${precioRaw}`);
@@ -1320,7 +1326,6 @@ actualizarPreciosExcel: async (req, res) => {
         res.status(500).send(error.message);
     }
 },
-
 
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
