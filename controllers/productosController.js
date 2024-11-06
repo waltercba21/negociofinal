@@ -1,8 +1,8 @@
-const conexion = require('../config/conexion')
-const producto = require('../models/producto')
+const conexion = require('../config/conexion');
+const producto = require('../models/producto');
 var borrar = require('fs');
 const PDFDocument = require('pdfkit');
-const blobStream  = require('blob-stream');
+const blobStream = require('blob-stream');
 var streamBuffers = require('stream-buffers');
 const xlsx = require('xlsx');
 const fs = require('fs');
@@ -1238,6 +1238,7 @@ actualizarPreciosExcel: async (req, res) => {
             const bufferStream = new streamBuffers.WritableStreamBuffer();
 
             doc.pipe(bufferStream);
+            doc.font('Helvetica');  // Usar una fuente estándar para evitar problemas de caracteres
             doc.fontSize(16).text('Informe de Productos Actualizados y No Encontrados', { align: 'center' });
             doc.moveDown();
 
@@ -1246,11 +1247,15 @@ actualizarPreciosExcel: async (req, res) => {
                 doc.fontSize(14).text('Productos Actualizados', { underline: true });
                 doc.moveDown();
 
-                doc.fontSize(12).text('Código\t\t\tPrecio Actualizado');
+                // Encabezados de las columnas
+                doc.fontSize(12);
+                doc.text('Código', 100, doc.y);
+                doc.text('Precio Actualizado', 200, doc.y);
                 doc.moveDown();
 
                 productosActualizados.forEach(producto => {
-                    doc.text(`${producto.codigo}\t\t\t${producto.precio}`, { continued: true });
+                    doc.text(producto.codigo, 100, doc.y);
+                    doc.text(producto.precio.toString(), 200, doc.y);
                     doc.moveDown();
                 });
             } else {
