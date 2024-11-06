@@ -1174,10 +1174,10 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-actualizarPreciosExcel: async (req, res) => {
+actualizarPreciosYGenerarPDF: async (req, res) => {
     try {
-        console.log('Iniciando la actualización de precios...');
-        
+        console.log('Iniciando la actualización de precios y generación del PDF...');
+
         const proveedor_id = req.body.proveedor;
         const file = req.files[0];
         let productosActualizados = [];
@@ -1232,56 +1232,68 @@ actualizarPreciosExcel: async (req, res) => {
             console.log('Esperando que todos los productos se actualicen...');
             await Promise.all(promises);
 
-            // Si hay productos no encontrados, generamos el PDF
-            if (noEncontrados.length > 0) {
-                console.log('Generando el PDF de productos no encontrados...');
-                const doc = new PDFDocument();
-                const bufferStream = new streamBuffers.WritableStreamBuffer();
+            // Generación del PDF
+            console.log('Generando el PDF de productos actualizados y no encontrados...');
+            const doc = new PDFDocument();
+            const bufferStream = new streamBuffers.WritableStreamBuffer();
 
-                doc.pipe(bufferStream);
-                doc.fontSize(16).text('Productos no encontrados en la base de datos', { align: 'center' });
+            doc.pipe(bufferStream);
+            doc.fontSize(16).text('Informe de Productos Actualizados y No Encontrados', { align: 'center' });
+            doc.moveDown();
+
+            // Sección de productos actualizados
+            if (productosActualizados.length > 0) {
+                doc.fontSize(14).text('Productos Actualizados', { underline: true });
+                doc.moveDown();
+
+                doc.fontSize(12).text('Código\t\t\tPrecio Actualizado');
+                doc.moveDown();
+
+                productosActualizados.forEach(producto => {
+                    doc.text(`${producto.codigo}\t\t\t${producto.precio}`, { continued: true });
+                    doc.moveDown();
+                });
+            } else {
+                doc.fontSize(12).text('No se encontraron productos actualizados.');
+                doc.moveDown();
+            }
+
+            // Sección de productos no encontrados
+            if (noEncontrados.length > 0) {
+                doc.fontSize(14).text('Productos No Encontrados', { underline: true });
                 doc.moveDown();
 
                 noEncontrados.forEach(codigo => {
                     doc.fontSize(12).text(`Código: ${codigo}`);
+                    doc.moveDown();
                 });
-
-                doc.end();
-
-                bufferStream.on('finish', () => {
-                    const pdfData = bufferStream.getContents();
-                    console.log('PDF generado correctamente, enviando al cliente...');
-
-                    // Aquí enviamos el PDF
-                    res.setHeader('Content-Type', 'application/pdf');
-                    res.setHeader('Content-Disposition', 'attachment; filename=productos_no_encontrados.pdf');
-                    res.send(pdfData);  // Enviar el PDF
-
-                    // Eliminar el archivo subido después de procesarlo
-                    fs.unlinkSync(file.path);
-
-                    console.log('PDF enviado correctamente.');
-                    return; // Aseguramos que no seguimos ejecutando el código después de enviar el PDF
-                });
-
             } else {
-                console.log('Todos los productos se actualizaron correctamente, renderizando la vista...');
-                
-                // Si no hay productos no encontrados, solo renderizamos la vista
-                res.render('productosActualizados', {
-                    productos: productosActualizados,
-                    mensaje: 'Todos los productos fueron actualizados correctamente.',
-                    productosNoEncontrados: []
-                });
+                doc.fontSize(12).text('Todos los productos fueron encontrados y actualizados.');
+                doc.moveDown();
+            }
+
+            doc.end();
+
+            bufferStream.on('finish', () => {
+                const pdfData = bufferStream.getContents();
+                console.log('PDF generado correctamente, enviando al cliente...');
+
+                // Aquí enviamos el PDF
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', 'attachment; filename=informe_productos_actualizados.pdf');
+                res.send(pdfData);  // Enviar el PDF
 
                 // Eliminar el archivo subido después de procesarlo
                 fs.unlinkSync(file.path);
-            }
+
+                console.log('PDF enviado correctamente.');
+            });
 
         } else {
             console.log('Tipo de archivo no soportado. Solo se permiten archivos .xlsx');
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
         }
+
     } catch (error) {
         console.log("Error durante el procesamiento de archivos", error);
         res.status(500).send(error.message);
