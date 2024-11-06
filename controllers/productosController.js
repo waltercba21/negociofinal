@@ -267,15 +267,18 @@ module.exports = {
             res.status(500).send('Error: ' + error.message);
         });
     },
-    eliminarSeleccionados : async (req, res) => {
+    eliminarSeleccionados: async (req, res) => {
         const { ids } = req.body;
+        console.log("IDs recibidos para eliminar:", ids); // Verificar IDs
         try {
             await producto.eliminar(ids);
             res.json({ success: true });
-        } catch (error) { 
+        } catch (error) {
+            console.error("Error en el controlador al eliminar productos:", error);
             res.status(500).json({ success: false, error: error.message });
         }
     },
+    
     editar: function(req, res) {
         let productoResult;
         let responseSent = false;
@@ -417,45 +420,28 @@ module.exports = {
     },
     panelControl: async (req, res) => {
         try {
-            // Recupera los datos de proveedores y categorías
             let proveedores = await producto.obtenerProveedores(conexion);
             let categorias = await producto.obtenerCategorias(conexion);
-    
-            // Parámetros seleccionados por el usuario (con fallback a valores en sesión)
             const proveedorSeleccionado = req.query.proveedor || req.session.proveedorSeleccionado || null;
             const categoriaSeleccionada = req.query.categoria || req.session.categoriaSeleccionada || null;
-            
-            // Página actual
             let paginaActual = req.query.pagina ? Number(req.query.pagina) : (req.session.paginaActual || 1);
             if (isNaN(paginaActual) || paginaActual < 1) {
                 paginaActual = 1;
             }
             req.session.paginaActual = paginaActual;
-    
-            // Parámetro de búsqueda
             const busqueda = req.query.busqueda || req.session.busqueda || ''; 
-            req.session.busqueda = busqueda; // Guardar búsqueda en la sesión
-    
-            // Parámetros de paginación
+            req.session.busqueda = busqueda; 
             const productosPorPagina = 30;
             const saltar = (paginaActual - 1) * productosPorPagina;
-    
-            // Obtiene productos en función de si hay búsqueda o no
             let productos;
             if (busqueda) {
                 productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda);
             } else {
                 productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
             }
-    
-            // Calcular número total de páginas
             let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
-    
-            // Guardar selección de proveedor y categoría en la sesión
             req.session.proveedorSeleccionado = proveedorSeleccionado;
             req.session.categoriaSeleccionada = categoriaSeleccionada;
-    
-            // Renderizar la vista con todos los datos y términos de búsqueda
             res.render('panelControl', {
                 proveedores: proveedores,
                 proveedorSeleccionado: proveedorSeleccionado,
@@ -464,7 +450,7 @@ module.exports = {
                 numeroDePaginas: numeroDePaginas,
                 productos: productos,
                 paginaActual: paginaActual,
-                busqueda: busqueda // Para que el input de búsqueda en la vista mantenga el valor
+                busqueda: busqueda 
             });
         } catch (error) {
             return res.status(500).send('Error: ' + error.message);

@@ -278,47 +278,71 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
     return new Promise((resolve, reject) => {
       const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
       const idList = ids.join(',');
-      // Eliminar registros en tablas relacionadas
+      console.log("ID list para eliminar:", idList); // Verificar lista de IDs
+  
+      // Eliminar registros en la tabla estadisticas
       conexion.query(`DELETE FROM estadisticas WHERE producto_id IN (${idList})`, (error, results) => {
         if (error) {
+          console.error("Error al eliminar de estadisticas:", error);
           return reject(error);
         }
+        console.log("Eliminación exitosa en estadisticas");
   
+        // Eliminar registros en la tabla factura_items
         conexion.query(`DELETE FROM factura_items WHERE producto_id IN (${idList})`, (error, results) => {
           if (error) {
+            console.error("Error al eliminar de factura_items:", error);
             return reject(error);
           }
+          console.log("Eliminación exitosa en factura_items");
   
+          // Eliminar registros en la tabla imagenes_producto
           conexion.query(`DELETE FROM imagenes_producto WHERE producto_id IN (${idList})`, (error, results) => {
             if (error) {
+              console.error("Error al eliminar de imagenes_producto:", error);
               return reject(error);
             }
+            console.log("Eliminación exitosa en imagenes_producto");
   
+            // Eliminar registros en la tabla items_presupuesto
             conexion.query(`DELETE FROM items_presupuesto WHERE producto_id IN (${idList})`, (error, results) => {
               if (error) {
+                console.error("Error al eliminar de items_presupuesto:", error);
                 return reject(error);
               }
+              console.log("Eliminación exitosa en items_presupuesto");
   
+              // Eliminar registros en la tabla presupuesto_items
               conexion.query(`DELETE FROM presupuesto_items WHERE producto_id IN (${idList})`, (error, results) => {
                 if (error) {
+                  console.error("Error al eliminar de presupuesto_items:", error);
                   return reject(error);
                 }
+                console.log("Eliminación exitosa en presupuesto_items");
   
+                // Eliminar registros en la tabla presupuesto_productos
                 conexion.query(`DELETE FROM presupuesto_productos WHERE producto_id IN (${idList})`, (error, results) => {
                   if (error) {
+                    console.error("Error al eliminar de presupuesto_productos:", error);
                     return reject(error);
                   }
+                  console.log("Eliminación exitosa en presupuesto_productos");
   
+                  // Eliminar registros en la tabla producto_proveedor
                   conexion.query(`DELETE FROM producto_proveedor WHERE producto_id IN (${idList})`, (error, results) => {
                     if (error) {
+                      console.error("Error al eliminar de producto_proveedor:", error);
                       return reject(error);
                     }
+                    console.log("Eliminación exitosa en producto_proveedor");
   
                     // Finalmente, eliminar los productos de la tabla productos
                     conexion.query(`DELETE FROM productos WHERE id IN (${idList})`, (error, results) => {
                       if (error) {
+                        console.error("Error al eliminar de la tabla productos:", error); // Error en la tabla final
                         return reject(error);
                       }
+                      console.log("Eliminación exitosa en la tabla productos");
                       resolve(results);
                     });
                   });
@@ -330,6 +354,7 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
       });
     });
   },
+  
   actualizar: function (conexion, datos, archivo) { 
     return new Promise((resolve, reject) => {
         let query = "UPDATE productos SET ";
