@@ -1174,7 +1174,6 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
-
 actualizarPreciosExcel: async (req, res) => {
     try {
         console.log('Iniciando la actualización de precios...');
@@ -1260,13 +1259,14 @@ actualizarPreciosExcel: async (req, res) => {
 
                     // Eliminar el archivo subido después de procesarlo
                     fs.unlinkSync(file.path);
-                });
 
-                // Aseguramos que la ejecución se detiene aquí después de enviar el PDF
-                return;
+                    console.log('PDF enviado correctamente.');
+                    return; // Aseguramos que no seguimos ejecutando el código después de enviar el PDF
+                });
 
             } else {
                 console.log('Todos los productos se actualizaron correctamente, renderizando la vista...');
+                
                 // Si no hay productos no encontrados, solo renderizamos la vista
                 res.render('productosActualizados', {
                     productos: productosActualizados,
