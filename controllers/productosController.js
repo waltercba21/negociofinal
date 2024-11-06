@@ -1175,7 +1175,7 @@ actualizarPrecios: function(req, res) {
     });
 },  
 
-actualizarPreciosExcel: async (req, res) => { 
+actualizarPreciosExcel: async (req, res) => {
     try {
         const proveedor_id = req.body.proveedor;
         const file = req.files[0];
@@ -1226,72 +1226,40 @@ actualizarPreciosExcel: async (req, res) => {
 
             await Promise.all(promises);
 
-            // Crear el PDF si hay productos no encontrados
+            // Crear el PDF en memoria si hay productos no encontrados
             if (noEncontrados.length > 0) {
                 const doc = new PDFDocument();
-                const bufferStream = new streamBuffers.WritableStreamBuffer({
-                    initialSize: (100 * 1024),   // Tamaño inicial del buffer
-                    incrementAmount: (10 * 1024) // Incremento del tamaño
-                });
+                const bufferStream = new streamBuffers.WritableStreamBuffer();
 
                 doc.pipe(bufferStream);
-
-                // Título del PDF
                 doc.fontSize(16).text('Productos no encontrados en la base de datos', { align: 'center' });
                 doc.moveDown();
 
-                const marginLeft = 50; // Margen izquierdo
-                const marginTop = 80;  // Margen superior
-                const columnWidth = 150; // Ancho de cada columna
-                const rowHeight = 20;    // Alto de cada fila
-
-                let xPosition = marginLeft;
-                let yPosition = marginTop;
-
-                // Agregar los códigos a las columnas
-                noEncontrados.forEach((codigo, index) => {
-                    if (index > 0 && index % 3 === 0) {  // Cambio de columna después de 3 productos
-                        xPosition += columnWidth;
-                        yPosition = marginTop;  // Reiniciar la posición vertical
-                    }
-
-                    doc.fontSize(12).text(`Código: ${codigo}`, xPosition, yPosition);
-                    yPosition += rowHeight; // Mover hacia abajo para el siguiente código
-
-                    // Controlar el cambio de página si es necesario
-                    if (yPosition > doc.page.height - marginTop - rowHeight) {
-                        doc.addPage();
-                        xPosition = marginLeft;  // Reiniciar posición horizontal al inicio de la página
-                        yPosition = marginTop;
-                    }
+                noEncontrados.forEach(codigo => {
+                    doc.fontSize(12).text(`Código: ${codigo}`);
                 });
 
                 doc.end();
 
-                // Esperar hasta que el PDF se haya generado completamente antes de enviar la respuesta
-                const pdfBuffer = await new Promise((resolve, reject) => {
-                    bufferStream.on('finish', () => {
-                        const buffer = bufferStream.getContents();
-                        resolve(buffer);
+                // Espera a que el buffer esté listo y luego envíalo al cliente
+                bufferStream.on('finish', () => {
+                    const pdfData = bufferStream.getContents();
+                    res.render('productosActualizados', {
+                        productos: productosActualizados,
+                        pdfBuffer: pdfData.toString('base64')  // Enviar el PDF en base64 a la vista
                     });
-                    bufferStream.on('error', reject);
-                });
-
-                // El PDF se genera correctamente, enviar a la vista con el PDF
-                res.render('productosActualizados', {
-                    productos: productosActualizados,
-                    pdfBuffer: pdfBuffer.toString('base64')  // Enviar el PDF en base64 a la vista
                 });
             } else {
                 // Si no hay productos no encontrados, redirigir a la vista con los productos actualizados
                 res.render('productosActualizados', {
                     productos: productosActualizados,
-                    pdfBuffer: null
+                    pdfBuffer: null  // No generar PDF si no hay productos no encontrados
                 });
             }
 
             // Eliminar el archivo subido después de procesarlo
             fs.unlinkSync(file.path);
+
         } else {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
         }
