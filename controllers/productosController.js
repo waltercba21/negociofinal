@@ -1174,7 +1174,7 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 },  
- actualizarPreciosExcel : async (req, res) => {
+actualizarPreciosExcel: async (req, res) => {
     try {
         const proveedor_id = req.body.proveedor;
         const file = req.files[0];
@@ -1225,13 +1225,12 @@ actualizarPrecios: function(req, res) {
 
             await Promise.all(promises);
 
-            // Crear el PDF si hay productos no encontrados
+            // Crear el PDF en memoria si hay productos no encontrados
             if (noEncontrados.length > 0) {
-                const pdfPath = path.join(__dirname, '../public', 'productos_no_encontrados.pdf');
                 const doc = new PDFDocument();
-                
-                doc.pipe(fs.createWriteStream(pdfPath));
+                const bufferStream = new streamBuffers.WritableStreamBuffer();
 
+                doc.pipe(bufferStream);
                 doc.fontSize(16).text('Productos no encontrados en la base de datos', { align: 'center' });
                 doc.moveDown();
 
@@ -1240,15 +1239,24 @@ actualizarPrecios: function(req, res) {
                 });
 
                 doc.end();
+
+                // Espera a que el buffer esté listo y luego envíalo al cliente
+                bufferStream.on('finish', () => {
+                    const pdfData = bufferStream.getContents();
+                    res.setHeader('Content-Type', 'application/pdf');
+                    res.setHeader('Content-Disposition', 'attachment; filename=productos_no_encontrados.pdf');
+                    res.send(pdfData);
+                });
+            } else {
+                res.render('productosActualizados', {
+                    productos: productosActualizados,
+                    pdfPath: null
+                });
             }
 
             // Eliminar el archivo subido después de procesarlo
             fs.unlinkSync(file.path);
 
-            res.render('productosActualizados', {
-                productos: productosActualizados,
-                pdfPath: noEncontrados.length > 0 ? '/public/productos_no_encontrados.pdf' : null
-            });
         } else {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
         }
@@ -1257,6 +1265,7 @@ actualizarPrecios: function(req, res) {
         res.status(500).send(error.message);
     }
 },
+
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
