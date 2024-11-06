@@ -1226,7 +1226,7 @@ actualizarPreciosExcel: async (req, res) => {
 
             await Promise.all(promises);
 
-            // Crear el PDF en memoria si hay productos no encontrados
+            // Verifica si hay productos no encontrados
             if (noEncontrados.length > 0) {
                 const doc = new PDFDocument();
                 const bufferStream = new streamBuffers.WritableStreamBuffer();
@@ -1244,16 +1244,16 @@ actualizarPreciosExcel: async (req, res) => {
                 // Espera a que el buffer esté listo y luego envíalo al cliente
                 bufferStream.on('finish', () => {
                     const pdfData = bufferStream.getContents();
-                    res.render('productosActualizados', {
-                        productos: productosActualizados,
-                        pdfBuffer: pdfData.toString('base64')  // Enviar el PDF en base64 a la vista
-                    });
+                    res.setHeader('Content-Type', 'application/pdf');
+                    res.setHeader('Content-Disposition', 'attachment; filename=productos_no_encontrados.pdf');
+                    res.send(pdfData);
                 });
             } else {
-                // Si no hay productos no encontrados, redirigir a la vista con los productos actualizados
+                // Si no hay productos no encontrados, simplemente redirige a la vista
                 res.render('productosActualizados', {
                     productos: productosActualizados,
-                    pdfBuffer: null  // No generar PDF si no hay productos no encontrados
+                    mensaje: 'Todos los productos fueron actualizados correctamente.',
+                    pdfPath: null
                 });
             }
 
@@ -1268,7 +1268,6 @@ actualizarPreciosExcel: async (req, res) => {
         res.status(500).send(error.message);
     }
 },
-
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
