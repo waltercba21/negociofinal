@@ -1201,11 +1201,11 @@ actualizarPreciosExcel: async (req, res) => {
                     const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
 
                     if (codigoColumn && precioColumn) {
-                        let codigo = row[codigoColumn].toString().trim();
+                        let codigo = row[codigoColumn]?.toString().trim(); // Usar optional chaining para evitar undefined
                         let precioRaw = row[precioColumn];
 
                         // Validación de precioRaw antes de acceder a toString
-                        if (precioRaw !== undefined && precioRaw !== null) {
+                        if (precioRaw !== undefined && precioRaw !== null && precioRaw !== '') {
                             if (typeof precioRaw === 'number') precioRaw = precioRaw.toString();
                             const precio = parseFloat(precioRaw.replace(',', '.'));
 
@@ -1231,7 +1231,7 @@ actualizarPreciosExcel: async (req, res) => {
                                 noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
                             }
                         } else {
-                            console.log(`Precio no encontrado para el producto con código ${codigo}`);
+                            console.log(`Precio no encontrado o es inválido para el producto con código ${codigo}`);
                             noEncontrados.push(codigo); // Añadir a la lista de productos no encontrados
                         }
                     }
@@ -1313,6 +1313,7 @@ actualizarPreciosExcel: async (req, res) => {
         res.status(500).send(error.message);
     }
 },
+
 seleccionarProveedorMasBarato: async function(conexion, productoId) {
     try {
         const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
