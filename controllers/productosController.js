@@ -1247,16 +1247,28 @@ actualizarPreciosExcel: async (req, res) => {
                     res.setHeader('Content-Type', 'application/pdf');
                     res.setHeader('Content-Disposition', 'attachment; filename=productos_no_encontrados.pdf');
                     res.send(pdfData);
-                });
-            }
 
-            // Siempre renderizamos la vista de productos actualizados, sin importar si se generó el PDF
-            res.render('productosActualizados', {
-                productos: productosActualizados,
-                mensaje: noEncontrados.length > 0 ? 'Algunos productos no fueron encontrados.' : 'Todos los productos fueron actualizados correctamente.',
-                productosNoEncontrados: noEncontrados
-            });
-            fs.unlinkSync(file.path);
+                    // Después de enviar el PDF, renderizamos la vista de productos actualizados
+                    res.render('productosActualizados', {
+                        productos: productosActualizados,
+                        mensaje: noEncontrados.length > 0 ? 'Algunos productos no fueron encontrados.' : 'Todos los productos fueron actualizados correctamente.',
+                        productosNoEncontrados: noEncontrados
+                    });
+
+                    // Eliminar el archivo subido después de procesarlo
+                    fs.unlinkSync(file.path);
+                });
+            } else {
+                // Si no hay productos no encontrados, solo renderizamos la vista
+                res.render('productosActualizados', {
+                    productos: productosActualizados,
+                    mensaje: 'Todos los productos fueron actualizados correctamente.',
+                    productosNoEncontrados: []
+                });
+
+                // Eliminar el archivo subido después de procesarlo
+                fs.unlinkSync(file.path);
+            }
 
         } else {
             res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
