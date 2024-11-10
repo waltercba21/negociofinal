@@ -814,9 +814,9 @@ generarPedidoPDF: async function (req, res) {
            .fillColor('black')
            .text('Código', 60, currentY, { align: 'left', width: 100 })
            .text('Descripción', 150, currentY, { align: 'left', width: 220 })
-           .text('Stock Mínimo', 400, currentY, { align: 'center', width: 80 })
-           .text('Stock Actual', 480, currentY, { align: 'center', width: 80 })
-           .text('Categoría', 560, currentY, { align: 'left', width: 100 })
+           .text('Stock Mínimo', 400, currentY, { align: 'center', width: 60 })
+           .text('Stock Actual', 480, currentY, { align: 'center', width: 70 })
+           .text('Categoría', 560, currentY, { align: 'left', width: 90 })
            .moveDown(2);
 
         // Agregar cada producto a la tabla
