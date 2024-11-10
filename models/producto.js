@@ -972,27 +972,33 @@ contarProductos: function(conexion, callback) {
       }
   });
 },  
-obtenerProductosPorProveedorYCategoría: function(conexion, proveedor, categoria) {
-    console.log('Proveedor:', proveedor, 'Categoría:', categoria);
-    const query = `
-    SELECT productos.*, producto_proveedor.codigo AS codigo_proveedor, producto_proveedor.precio_lista, productos.precio_venta
-    FROM productos 
-    INNER JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id
-    WHERE producto_proveedor.proveedor_id = ? AND productos.categoria_id = ?
-    ORDER BY productos.nombre ASC
-`;
+obtenerProductosPorProveedorYCategoria: function(conexion, proveedor, categoria) {
+    let query = `
+        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
+        FROM productos p
+        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+        WHERE 1=1
+    `;
+    
+    const params = [];
+    if (proveedor && proveedor !== 'TODOS') {
+        query += ` AND pp.proveedor_id = ?`;
+        params.push(proveedor);
+    }
+    if (categoria && categoria !== 'TODAS') {
+        query += ` AND p.categoria_id = ?`;
+        params.push(categoria);
+    }
+
+    query += `
+        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+    `;
+
     const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return queryPromise(query, [proveedor, categoria])
-        .then(result => {
-            console.log('Resultados de obtenerProductosPorProveedorYCategoría:', result);
-            return result;
-        });
+    return queryPromise(query, params);
 },
 obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
-    console.log('Proveedor:', proveedor);
-    
     if (!proveedor) {
-        // Obtener productos con un solo proveedor
         const query = `
             SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
             FROM productos p
@@ -1008,11 +1014,9 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
         const queryPromise = util.promisify(conexion.query).bind(conexion);
         return queryPromise(query)
             .then(result => {
-                console.log('Resultados de obtenerProductosPorProveedorConStock:', result);
                 return result;
             })
             .catch(error => {
-                console.log('Error al obtener productos:', error);
                 throw error;
             });
     } else {
@@ -1034,11 +1038,9 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
         const queryPromise = util.promisify(conexion.query).bind(conexion);
         return queryPromise(query, [proveedor])
             .then(result => {
-                console.log('Resultados de obtenerProductosPorProveedorConStock:', result);
                 return result;
             })
             .catch(error => {
-                console.log('Error al obtener productos:', error);
                 throw error;
             });
     }

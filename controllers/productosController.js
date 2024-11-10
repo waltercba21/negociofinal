@@ -709,90 +709,68 @@ getProductosPorCategoria : async (req, res) => {
     });
   },
   generarStockPDF: async function (req, res) {
-    console.log('Proveedor ID:', req.query.proveedor);
-    var doc = new PDFDocument;
-    var buffer = new streamBuffers.WritableStreamBuffer({
-        initialSize: (1024 * 1024),   
-        incrementAmount: (1024 * 1024) 
+    const PDFDocument = require('pdfkit');
+    const streamBuffers = require('stream-buffers');
+    const buffer = new streamBuffers.WritableStreamBuffer({
+        initialSize: (1024 * 1024),
+        incrementAmount: (1024 * 1024)
     });
+    const doc = new PDFDocument;
     doc.pipe(buffer);
-    
-    const proveedorId = req.query.proveedor; 
-    
+
+    const proveedorId = req.query.proveedor;
+    const categoriaId = req.query.categoria;
+
     try {
         const proveedores = await producto.obtenerProveedores(conexion);
-        console.log('Proveedores:', proveedores);
-        
-        let proveedor;
-        if (proveedorId) {
-            proveedor = proveedores.find(p => p.id == proveedorId);
-            if (!proveedor) {
-                return res.status(400).send('Proveedor no encontrado');
-            }
-        }
-        
-        console.log('Proveedor seleccionado:', proveedor);
-        var nombreProveedor = proveedor ? proveedor.nombre : 'Productos con un solo proveedor';
-        
+        const categorias = await producto.obtenerCategorias(conexion);
+
+        let proveedor = proveedores.find(p => p.id == proveedorId);
+        let categoria = categorias.find(c => c.id == categoriaId);
+
+        const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
+        const nombreCategoria = categoria ? categoria.nombre : 'Todas las categorías';
+
         doc.fontSize(14)
-           .text(nombreProveedor, {
+           .text(`Listado de Stock - ${nombreProveedor} - ${nombreCategoria}`, {
                align: 'center',
                width: doc.page.width - 100
            });
-        
-        var obtenerProductos = producto.obtenerProductosPorProveedorConStock(conexion, proveedorId);
-        
-        obtenerProductos.then(productos => {
-            console.log('Productos:', productos);
-            
-            // Función para normalizar las descripciones eliminando números y caracteres especiales al inicio
-            function normalizeString(str) {
-                return str.replace(/^[^a-zA-Z]+/, '').toLowerCase();
-            }
-            
-            // Ordenar los productos por el campo nombre normalizado
-            productos.sort((a, b) => {
-                const nameA = normalizeString(a.nombre);
-                const nameB = normalizeString(b.nombre);
-                return nameA.localeCompare(nameB);
-            });
-            
-            let currentY = doc.y;
-            doc.fontSize(12)
-               .fillColor('black')
-               .text('Código', 60, currentY, {align: 'left', width: 100})
-               .text('Descripción', 150, currentY, {align: 'left', width: 220})
-               .text('Stock Mínimo', 400, currentY, {align: 'center', width: 80})
-               .text('Stock Actual', 480, currentY, {align: 'center', width: 80})
-               .moveDown(2);
-            
-            productos.forEach(producto => {
-                if (producto.stock_actual < producto.stock_minimo) {
+
+        const productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+
+        // Generar tabla de productos
+        let currentY = doc.y + 20;
+        doc.fontSize(12)
+           .fillColor('black')
+           .text('Código', 60, currentY, { align: 'left', width: 100 })
+           .text('Descripción', 150, currentY, { align: 'left', width: 220 })
+           .text('Stock Mínimo', 400, currentY, { align: 'center', width: 80 })
+           .text('Stock Actual', 480, currentY, { align: 'center', width: 80 })
+           .moveDown(2);
+
+        productos.forEach(producto => {
+            if (producto.stock_actual < producto.stock_minimo) {
+                currentY = doc.y;
+                if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
+                    doc.addPage();
                     currentY = doc.y;
-                    if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
-                        doc.addPage();
-                        currentY = doc.y;
-                    }
-                    doc.fontSize(8)
-                       .text(producto.codigo_proveedor, 60, currentY, {align: 'left', width: 100})
-                       .text(producto.nombre, 150, currentY, {align: 'left', width: 220})
-                       .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, {align: 'center', width: 80})
-                       .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 480, currentY, {align: 'center', width: 80})
-                       .moveDown(1);
                 }
-            });
-            doc.end();
-        }).catch(error => {
-            console.log('Error al obtener productos:', error);
-            return res.status(500).send('Error al generar el PDF');
+                doc.fontSize(8)
+                   .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 100 })
+                   .text(producto.nombre, 150, currentY, { align: 'left', width: 220 })
+                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, { align: 'center', width: 80 })
+                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 480, currentY, { align: 'center', width: 80 })
+                   .moveDown(1);
+            }
         });
-        
-        
+
+        doc.end();
     } catch (error) {
-        console.log('Error al obtener proveedores:', error);
-        return res.status(500).send('Error al generar el PDF');
+        res.status(500).send('Error al generar el PDF');
     }
-    buffer.on('finish', function() {
+
+    buffer.on('finish', function () {
         const pdfData = buffer.getContents();
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
