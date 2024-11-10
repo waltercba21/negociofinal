@@ -778,14 +778,13 @@ getProductosPorCategoria : async (req, res) => {
     });
 },
 generarPedidoPDF: async function (req, res) {
-    console.log('Proveedor ID:', req.query.proveedor);
-    console.log('Categoría ID:', req.query.categoria);
-
-    var doc = new PDFDocument();
-    var buffer = new streamBuffers.WritableStreamBuffer({
+    const PDFDocument = require('pdfkit');
+    const streamBuffers = require('stream-buffers');
+    const buffer = new streamBuffers.WritableStreamBuffer({
         initialSize: (1024 * 1024),
         incrementAmount: (1024 * 1024)
     });
+    const doc = new PDFDocument;
     doc.pipe(buffer);
 
     const proveedorId = req.query.proveedor;
@@ -795,47 +794,54 @@ generarPedidoPDF: async function (req, res) {
         const proveedores = await producto.obtenerProveedores(conexion);
         const categorias = await producto.obtenerCategorias(conexion);
 
-        let proveedor = proveedorId && proveedorId !== "TODOS" 
-            ? proveedores.find(p => p.id == proveedorId) 
-            : null;
-        if (proveedorId && !proveedor) {
-            return res.status(400).send('Proveedor no encontrado');
-        }
+        let proveedor = proveedores.find(p => p.id == proveedorId);
+        let categoria = categorias.find(c => c.id == categoriaId);
 
-        let categoria = categoriaId && categoriaId !== "TODAS" 
-            ? categorias.find(c => c.id == categoriaId) 
-            : null;
-        if (categoriaId && !categoria) {
-            return res.status(400).send('Categoría no encontrada');
-        }
-
-        const nombreProveedor = proveedor ? proveedor.nombre : 'Productos con un solo proveedor';
-        const nombreCategoria = categoria ? categoria.nombre : 'Todas las Categorías';
+        const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
+        const nombreCategoria = categoria ? categoria.nombre : 'Todas las categorías';
 
         doc.fontSize(14)
-           .text(`${nombreProveedor} - ${nombreCategoria}`, { align: 'center', width: doc.page.width - 100 });
+           .text(`Pedido de Productos - ${nombreProveedor} - ${nombreCategoria}`, {
+               align: 'center',
+               width: doc.page.width - 100
+           });
 
-        const productos = await producto.obtenerProductosParaPedidoPorProveedorConStock(conexion, proveedorId, categoriaId);
-        
+        const productos = await producto.obtenerProductosParaPedidoPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+
+        // Encabezado de la tabla de productos
+        let currentY = doc.y + 20;
+        doc.fontSize(12)
+           .fillColor('black')
+           .text('Código', 60, currentY, { align: 'left', width: 100 })
+           .text('Descripción', 150, currentY, { align: 'left', width: 220 })
+           .text('Stock Mínimo', 400, currentY, { align: 'center', width: 80 })
+           .text('Stock Actual', 480, currentY, { align: 'center', width: 80 })
+           .text('Categoría', 560, currentY, { align: 'left', width: 100 })
+           .moveDown(2);
+
+        // Agregar cada producto a la tabla
         productos.forEach(producto => {
-            doc.fontSize(12)
-               .text(`Producto: ${producto.nombre}`, { continued: false })
-               .moveDown(0.2)
-               .text(`Código Proveedor: ${producto.codigo_proveedor}`, { indent: 20 })
-               .text(`Stock Actual: ${producto.stock_actual}`, { indent: 20 })
-               .text(`Stock Mínimo: ${producto.stock_minimo}`, { indent: 20 })
-               .text(`Categoría: ${producto.categoria}`, { indent: 20 })
-               .moveDown();
+            currentY = doc.y;
+            if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
+                doc.addPage();
+                currentY = doc.y;
+            }
+            doc.fontSize(8)
+               .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 100 })
+               .text(producto.nombre, 150, currentY, { align: 'left', width: 220 })
+               .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, { align: 'center', width: 80 })
+               .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 480, currentY, { align: 'center', width: 80 })
+               .text(producto.categoria, 560, currentY, { align: 'left', width: 100 })
+               .moveDown(1);
         });
-        
 
         doc.end();
     } catch (error) {
         console.log('Error al generar el PDF:', error);
-        return res.status(500).send('Error al generar el PDF');
+        res.status(500).send('Error al generar el PDF');
     }
 
-    buffer.on('finish', function() {
+    buffer.on('finish', function () {
         const pdfData = buffer.getContents();
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename=pedido.pdf');
