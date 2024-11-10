@@ -79,9 +79,19 @@
               <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
             <% }); %>
           </select>
+      
+          <label for="categoriaPedido">Seleccionar Categoría</label>
+          <select name="categoria" id="categoriaPedido">
+            <option value="TODAS">Mostrar Todas</option>
+            <% categorias.forEach(categoria => { %>
+              <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>><%= categoria.nombre %></option>
+            <% }); %>
+          </select>
+      
           <button type="submit" class="btn btn-primary">Generar Pedido</button>
         </form>
-    </div>
+      </div>
+      
     
 </div>
     <br/> 

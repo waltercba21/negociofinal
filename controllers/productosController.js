@@ -779,68 +779,66 @@ getProductosPorCategoria : async (req, res) => {
 },
 generarPedidoPDF: async function (req, res) {
     console.log('Proveedor ID:', req.query.proveedor);
+    console.log('Categoría ID:', req.query.categoria);
+  
     var doc = new PDFDocument();
-    var buffer = new streamBuffers.WritableStreamBuffer({ initialSize: (1024 * 1024), incrementAmount: (1024 * 1024) });
-    doc.pipe(buffer);
-    
-    const proveedorId = req.query.proveedor; 
-
-    try {
-        const proveedores = await producto.obtenerProveedores(conexion);
-        console.log('Proveedores:', proveedores);
-        
-        let proveedor = proveedorId !== 'TODOS' ? proveedores.find(p => p.id == proveedorId) : null;
-        if (proveedorId !== 'TODOS' && !proveedor) {
-            return res.status(400).send('Proveedor no encontrado');
-        }
-        
-        console.log('Proveedor seleccionado:', proveedor);
-        const nombreProveedor = proveedor ? proveedor.nombre : 'Productos con un solo proveedor';
-
-        doc.fontSize(14).text(nombreProveedor, { align: 'center', width: doc.page.width - 100 });
-
-        const productos = await producto.obtenerProductosParaPedidoPorProveedorConStock(conexion, proveedorId === 'TODOS' ? null : proveedorId);
-        
-        let currentY = doc.y;
-        doc.fontSize(12)
-           .fillColor('black')
-           .text('Código', 60, currentY, { align: 'left', width: 100 })
-           .text('Descripción', 150, currentY, { align: 'left', width: 220 })
-           .text('Stock Mínimo', 370, currentY, { align: 'center', width: 50 })
-           .text('Stock Actual', 430, currentY, { align: 'center', width: 50 })
-           .text('Cantidad a Pedir', 510, currentY, { align: 'left', width: 100 })
-           .moveDown(2);
-
-        productos.forEach(producto => {
-            if (producto.stock_actual <= producto.stock_minimo) {
-                currentY = doc.y;
-                if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
-                    doc.addPage();
-                    currentY = doc.y;
-                }
-                doc.fontSize(8)
-                   .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 100 })
-                   .text(producto.nombre, 150, currentY, { align: 'left', width: 220 })
-                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 370, currentY, { align: 'center', width: 50 })
-                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 430, currentY, { align: 'center', width: 50 })
-                   .text(producto.stock_actual < producto.stock_minimo ? `PEDIR ${producto.stock_minimo - producto.stock_actual}` : 'REVISAR STOCK', 510, currentY, { align: 'center', width: 100 })
-                   .moveDown(1);
-            }
-        });
-        
-        doc.end();
-    } catch (error) {
-        console.log('Error:', error);
-        return res.status(500).send('Error al generar el PDF');
-    }
-
-    buffer.on('finish', function() {
-        const pdfData = buffer.getContents();
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=pedido.pdf');
-        res.send(pdfData);
+    var buffer = new streamBuffers.WritableStreamBuffer({
+      initialSize: (1024 * 1024),
+      incrementAmount: (1024 * 1024)
     });
-},
+    doc.pipe(buffer);
+  
+    const proveedorId = req.query.proveedor;
+    const categoriaId = req.query.categoria;
+  
+    try {
+      const proveedores = await producto.obtenerProveedores(conexion);
+      const categorias = await producto.obtenerCategorias(conexion);
+  
+      let proveedor;
+      if (proveedorId && proveedorId !== "TODOS") {
+        proveedor = proveedores.find(p => p.id == proveedorId);
+        if (!proveedor) {
+          return res.status(400).send('Proveedor no encontrado');
+        }
+      }
+  
+      let categoria;
+      if (categoriaId && categoriaId !== "TODAS") {
+        categoria = categorias.find(c => c.id == categoriaId);
+        if (!categoria) {
+          return res.status(400).send('Categoría no encontrada');
+        }
+      }
+  
+      const nombreProveedor = proveedor ? proveedor.nombre : 'Productos con un solo proveedor';
+      const nombreCategoria = categoria ? categoria.nombre : 'Todas las Categorías';
+  
+      doc.fontSize(14)
+         .text(`${nombreProveedor} - ${nombreCategoria}`, { align: 'center', width: doc.page.width - 100 });
+  
+      const obtenerProductos = producto.obtenerProductosParaPedidoPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+  
+      obtenerProductos.then(productos => {
+        // Código para escribir los productos en el PDF...
+        doc.end();
+      }).catch(error => {
+        console.log('Error al obtener productos:', error);
+        return res.status(500).send('Error al generar el PDF');
+      });
+    } catch (error) {
+      console.log('Error al obtener proveedores o categorías:', error);
+      return res.status(500).send('Error al generar el PDF');
+    }
+  
+    buffer.on('finish', function() {
+      const pdfData = buffer.getContents();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=pedido.pdf');
+      res.send(pdfData);
+    });
+  },
+  
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();

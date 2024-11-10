@@ -1045,38 +1045,41 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
             });
     }
 },
-obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor) {
-    console.log('Proveedor:', proveedor);
-
-    const query = proveedor ? `
-        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
-        FROM productos p
-        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-        WHERE pp.proveedor_id = ? AND p.stock_actual < p.stock_minimo
-        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
-    ` : `
-        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
-        FROM productos p
-        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-        WHERE p.id NOT IN (
-            SELECT DISTINCT producto_id 
-            FROM producto_proveedor 
-            WHERE proveedor_id != pp.proveedor_id
-        ) AND p.stock_actual < p.stock_minimo
-        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+obtenerProductosParaPedidoPorProveedorYCategoria: function(conexion, proveedorId, categoriaId) {
+    let query = `
+      SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
+      FROM productos p
+      INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+      WHERE p.stock_actual < p.stock_minimo
     `;
+  
+    const queryParams = [];
     
+    if (proveedorId && proveedorId !== "TODOS") {
+      query += " AND pp.proveedor_id = ?";
+      queryParams.push(proveedorId);
+    }
+  
+    if (categoriaId && categoriaId !== "TODAS") {
+      query += " AND p.categoria_id = ?";
+      queryParams.push(categoriaId);
+    }
+  
+    query += `
+      ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+    `;
+  
     const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return queryPromise(query, proveedor ? [proveedor] : [])
-        .then(result => {
-            console.log('Resultados:', result);
-            return result;
-        })
-        .catch(error => {
-            console.log('Error al obtener productos:', error);
-            throw error;
-        });
-},
+    return queryPromise(query, queryParams)
+      .then(result => {
+        console.log('Resultados de obtenerProductosParaPedidoPorProveedorYCategoria:', result);
+        return result;
+      })
+      .catch(error => {
+        console.log('Error al obtener productos:', error);
+        throw error;
+      });
+  },  
   contarTodos: function (conexion, parametro, callback) {
   const query = 'SELECT COUNT(*) AS total FROM productos';
   conexion.query(query, function (error, resultados) {
