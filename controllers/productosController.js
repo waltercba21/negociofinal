@@ -780,65 +780,67 @@ getProductosPorCategoria : async (req, res) => {
 generarPedidoPDF: async function (req, res) {
     console.log('Proveedor ID:', req.query.proveedor);
     console.log('Categoría ID:', req.query.categoria);
-  
+
     var doc = new PDFDocument();
     var buffer = new streamBuffers.WritableStreamBuffer({
-      initialSize: (1024 * 1024),
-      incrementAmount: (1024 * 1024)
+        initialSize: (1024 * 1024),
+        incrementAmount: (1024 * 1024)
     });
     doc.pipe(buffer);
-  
+
     const proveedorId = req.query.proveedor;
     const categoriaId = req.query.categoria;
-  
+
     try {
-      const proveedores = await producto.obtenerProveedores(conexion);
-      const categorias = await producto.obtenerCategorias(conexion);
-  
-      let proveedor;
-      if (proveedorId && proveedorId !== "TODOS") {
-        proveedor = proveedores.find(p => p.id == proveedorId);
-        if (!proveedor) {
-          return res.status(400).send('Proveedor no encontrado');
+        const proveedores = await producto.obtenerProveedores(conexion);
+        const categorias = await producto.obtenerCategorias(conexion);
+
+        let proveedor = proveedorId && proveedorId !== "TODOS" 
+            ? proveedores.find(p => p.id == proveedorId) 
+            : null;
+        if (proveedorId && !proveedor) {
+            return res.status(400).send('Proveedor no encontrado');
         }
-      }
-  
-      let categoria;
-      if (categoriaId && categoriaId !== "TODAS") {
-        categoria = categorias.find(c => c.id == categoriaId);
-        if (!categoria) {
-          return res.status(400).send('Categoría no encontrada');
+
+        let categoria = categoriaId && categoriaId !== "TODAS" 
+            ? categorias.find(c => c.id == categoriaId) 
+            : null;
+        if (categoriaId && !categoria) {
+            return res.status(400).send('Categoría no encontrada');
         }
-      }
-  
-      const nombreProveedor = proveedor ? proveedor.nombre : 'Productos con un solo proveedor';
-      const nombreCategoria = categoria ? categoria.nombre : 'Todas las Categorías';
-  
-      doc.fontSize(14)
-         .text(`${nombreProveedor} - ${nombreCategoria}`, { align: 'center', width: doc.page.width - 100 });
-  
-      const obtenerProductos = producto.obtenerProductosParaPedidoPorProveedorYCategoria(conexion, proveedorId, categoriaId);
-  
-      obtenerProductos.then(productos => {
-        // Código para escribir los productos en el PDF...
+
+        const nombreProveedor = proveedor ? proveedor.nombre : 'Productos con un solo proveedor';
+        const nombreCategoria = categoria ? categoria.nombre : 'Todas las Categorías';
+
+        doc.fontSize(14)
+           .text(`${nombreProveedor} - ${nombreCategoria}`, { align: 'center', width: doc.page.width - 100 });
+
+        const productos = await producto.obtenerProductosParaPedidoPorProveedorConStock(conexion, proveedorId, categoriaId);
+        
+        productos.forEach(producto => {
+            doc.fontSize(12)
+               .text(`Producto: ${producto.nombre}`, { continued: true })
+               .text(` - Código Proveedor: ${producto.codigo_proveedor}`, { continued: true })
+               .text(` - Stock Actual: ${producto.stock_actual}`, { continued: true })
+               .text(` - Stock Mínimo: ${producto.stock_minimo}`, { continued: true })
+               .text(` - Categoría: ${producto.categoria}`, { align: 'left' });
+            doc.moveDown();
+        });
+
         doc.end();
-      }).catch(error => {
-        console.log('Error al obtener productos:', error);
-        return res.status(500).send('Error al generar el PDF');
-      });
     } catch (error) {
-      console.log('Error al obtener proveedores o categorías:', error);
-      return res.status(500).send('Error al generar el PDF');
+        console.log('Error al generar el PDF:', error);
+        return res.status(500).send('Error al generar el PDF');
     }
-  
+
     buffer.on('finish', function() {
-      const pdfData = buffer.getContents();
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename=pedido.pdf');
-      res.send(pdfData);
+        const pdfData = buffer.getContents();
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=pedido.pdf');
+        res.send(pdfData);
     });
-  },
-  
+},
+
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();
