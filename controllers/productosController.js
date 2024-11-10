@@ -792,7 +792,6 @@ generarPedidoPDF: async function (req, res) {
 
     try {
         const proveedores = await producto.obtenerProveedores(conexion);
-
         let proveedor = proveedores.find(p => p.id == proveedorId);
         const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
 
@@ -803,20 +802,20 @@ generarPedidoPDF: async function (req, res) {
                width: doc.page.width - 100
            });
 
-        // Obtener productos sin categoría
+        // Obtener productos
         const productos = await producto.obtenerProductosParaPedidoPorProveedorConStock(conexion, proveedorId, categoriaId);
 
-        // Encabezado centrado
+        // Encabezado de la tabla ajustado
         let currentY = doc.y + 20;
         doc.fontSize(12)
            .fillColor('black')
-           .text('Código', 100, currentY, { align: 'center', width: 100 })
-           .text('Descripción', 200, currentY, { align: 'center', width: 200 })
-           .text('Stock Mínimo', 400, currentY, { align: 'center', width: 80 })
-           .text('Stock Actual', 480, currentY, { align: 'center', width: 80 })
+           .text('Código', 60, currentY, { align: 'left', width: 80 })       // Más a la izquierda
+           .text('Descripción', 150, currentY, { align: 'left', width: 250 }) // Ancho ampliado
+           .text('Stock Mínimo', 420, currentY, { align: 'center', width: 80 })
+           .text('Stock Actual', 500, currentY, { align: 'center', width: 80 })
            .moveDown(2);
 
-        // Cuerpo de la tabla centrado
+        // Cuerpo de la tabla ajustado
         productos.forEach(producto => {
             currentY = doc.y;
             if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
@@ -824,10 +823,10 @@ generarPedidoPDF: async function (req, res) {
                 currentY = doc.y;
             }
             doc.fontSize(8)
-               .text(producto.codigo_proveedor, 100, currentY, { align: 'center', width: 100 })
-               .text(producto.nombre, 200, currentY, { align: 'center', width: 200 })
-               .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, { align: 'center', width: 80 })
-               .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 480, currentY, { align: 'center', width: 80 })
+               .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 80 })       // Más a la izquierda
+               .text(producto.nombre, 150, currentY, { align: 'left', width: 250 })               // Ancho ampliado
+               .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 420, currentY, { align: 'center', width: 80 })
+               .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 500, currentY, { align: 'center', width: 80 })
                .moveDown(1);
         });
 
@@ -844,8 +843,6 @@ generarPedidoPDF: async function (req, res) {
         res.send(pdfData);
     });
 },
-
-
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();
