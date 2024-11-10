@@ -806,7 +806,7 @@ generarPedidoPDF: async function (req, res) {
                width: doc.page.width - 100
            });
 
-        const productos = await producto.obtenerProductosParaPedidoPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+        const productos = await producto.obtenerProductosParaPedidoPorProveedorConStock(conexion, proveedorId, categoriaId);
 
         // Encabezado de la tabla de productos
         let currentY = doc.y + 20;
