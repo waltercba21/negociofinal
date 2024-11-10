@@ -819,13 +819,15 @@ generarPedidoPDF: async function (req, res) {
         
         productos.forEach(producto => {
             doc.fontSize(12)
-               .text(`Producto: ${producto.nombre}`, { continued: true })
-               .text(` - Código Proveedor: ${producto.codigo_proveedor}`, { continued: true })
-               .text(` - Stock Actual: ${producto.stock_actual}`, { continued: true })
-               .text(` - Stock Mínimo: ${producto.stock_minimo}`, { continued: true })
-               .text(` - Categoría: ${producto.categoria}`, { align: 'left' });
-            doc.moveDown();
+               .text(`Producto: ${producto.nombre}`, { continued: false })
+               .moveDown(0.2)
+               .text(`Código Proveedor: ${producto.codigo_proveedor}`, { indent: 20 })
+               .text(`Stock Actual: ${producto.stock_actual}`, { indent: 20 })
+               .text(`Stock Mínimo: ${producto.stock_minimo}`, { indent: 20 })
+               .text(`Categoría: ${producto.categoria}`, { indent: 20 })
+               .moveDown();
         });
+        
 
         doc.end();
     } catch (error) {
