@@ -940,139 +940,79 @@ footer {
 .btn-primary-presupuestos:hover {
   background-color: #0056b3;
 }
-/* ----------------facturas mostrador --------------*/
-/* Estilo para el formulario general */
-#invoice-form-facturas {
-  background-color: #f9f9f9; /* Fondo diferente */
-  border-radius: 12px; /* Bordes redondeados */
-  padding: 20px;
-  max-width: 700px;
-  margin: 20px auto;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para darle profundidad */
-  font-family: Arial, sans-serif;
-}
-
-/* Estilo para el título principal */
-#invoice h2 {
-  text-align: center;
-  font-size: 24px;
-  color: #333;
-}
-
-/* Estilo para los contenedores de entrada */
-.input-container {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 15px;
-}
-
-.input-container label {
-  font-weight: bold;
-  color: #555;
-  margin-bottom: 5px;
-}
-
-.input-container input[type="text"],
-.input-container input[type="date"] {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px; /* Bordes redondeados */
-  font-size: 16px;
-}
-
-/* Estilo para el contenedor de métodos de pago */
 #metodos-pago {
-  margin-top: 20px;
-  background-color: #e3e7eb;
-  padding: 10px;
-  border-radius: 8px;
+  margin: 20px auto; 
+  text-align: center;
 }
-
 #metodos-pago h3 {
-  font-size: 18px;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-#metodos-pago label {
-  display: block;
-  font-size: 14px;
-  color: #333;
-}
-
-/* Estilo para el buscador */
-.buscador {
-  margin-top: 20px;
-}
-
-.buscador input[type="text"] {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-}
-
-/* Estilo para la tabla de productos */
-#tabla-factura {
-  width: 100%;
-  margin-top: 20px;
-  border-collapse: collapse;
-}
-
-#tabla-factura th,
-#tabla-factura td {
-  padding: 10px;
-  border: 1px solid #ddd;
-  text-align: left;
-}
-
-#tabla-factura th {
-  background-color: #f1f1f1;
-  color: #333;
-}
-
-/* Estilo para el total */
-#invoice-total {
-  margin-top: 20px;
-  text-align: right;
-  font-size: 18px;
-  color: #333;
-}
-
-#invoice-total label {
+  font-size: 24px !important;
+  margin-bottom: 15px;
+  text-align: center !important;
+  color: #003f7d;
   font-weight: bold;
 }
 
-/* Estilo para los botones */
-.botones-contenedor {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
+.metodos-pago-checkboxes {
+  display: flex !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+  gap: 20px !important;
 }
 
-.botones-contenedor button {
-  background-color: #4CAF50;
-  color: white;
+.metodos-pago-checkboxes label {
+  font-size: 18px !important; /* Ajusta el tamaño del texto */
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important; /* Espacio entre el checkbox y el texto */
+}
+
+.metodos-pago-checkboxes input[type="checkbox"] {
+  transform: scale(1.5) !important; /* Agranda el checkbox */
+  cursor: pointer !important; /* Cambia el cursor a una mano */
+}
+/* Estilo para todos los botones dentro de la tabla */
+#facturas-table td button {
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 5px;
   border: none;
-  border-radius: 8px;
-  padding: 10px 15px;
-  font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  margin: 5px;
 }
 
-.botones-contenedor button:hover {
-  background-color: #45a049;
+/* Colores y estilo específicos para cada botón */
+#facturas-table td .btn-ver {
+  background-color: #3498db; /* Azul claro */
+  color: white;
 }
 
-#print-button {
-  background-color: #2196F3;
+#facturas-table td .btn-editar {
+  background-color: #f39c12; /* Naranja */
+  color: white;
 }
 
-#print-button:hover {
-  background-color: #1976D2;
+#facturas-table td .btn-eliminar {
+  background-color: #e74c3c; /* Rojo */
+  color: white;
 }
+
+#facturas-table td .btn-guardar {
+  background-color: #2ecc71; /* Verde */
+  color: white;
+}
+
+#facturas-table td .btn-cancelar {
+  background-color: #95a5a6; /* Gris */
+  color: white;
+}
+
+/* Efecto hover */
+#facturas-table td button:hover {
+  opacity: 0.9;
+  transform: scale(1.05); /* Efecto de tamaño */
+  transition: all 0.3s ease;
+}
+
 
 /*--------------------------listadoPresupuestos--------------------------*/
 .container-listadoPresupuestos {

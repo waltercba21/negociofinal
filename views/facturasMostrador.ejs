@@ -5,7 +5,7 @@
     <div class="button-container-presupuesto">
       <button class="btn-primary-presupuestos" onclick="window.location.href='/productos/listadoFacturas'">Listado de Facturas</button>
   </div>
-    <form id="invoice-form-facturas" action="/productos/procesarFormularioFacturas" method="POST">
+    <form id="invoice-form" action="/productos/procesarFormularioFacturas" method="POST">
       <div id="invoice">
         <h2>Facturas</h2>
         <div id="invoice-details">
@@ -49,7 +49,7 @@
         <div id="invoice-items">
             <table id="tabla-factura">
               <thead>
-                  <tr> 
+                  <tr>
                       <th>Código</th>
                       <th>Descripción</th>
                       <th>Precio Unitario</th>
