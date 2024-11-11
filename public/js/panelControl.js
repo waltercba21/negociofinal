@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     for (var i = 0; i < checks.length; i++) {
       checks[i].checked = event.target.checked;
     }
-  });  
+  });
 
   contenedorProductos.addEventListener('change', function (event) {
     if (event.target.matches('.product-check')) {
@@ -33,31 +33,66 @@ document.addEventListener('DOMContentLoaded', function () {
         ids.push(checks[i].value);
       }
     }
+
     if (ids.length > 0) {
-      fetch('/productos/eliminarSeleccionados', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ids: ids }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            location.reload();
-          } else {
-            console.error('Error al eliminar los productos:', data.error);
-          }
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-        });
+      // Mostrar advertencia con SweetAlert2
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Esta acción eliminará los productos seleccionados y no se puede deshacer.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Si el usuario confirma, realiza la eliminación
+          fetch('/productos/eliminarSeleccionados', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ids: ids }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                Swal.fire(
+                  '¡Eliminado!',
+                  'Los productos seleccionados han sido eliminados.',
+                  'success'
+                ).then(() => {
+                  location.reload(); // Recargar la página después de la confirmación de eliminación
+                });
+              } else {
+                Swal.fire(
+                  'Error',
+                  'Hubo un error al eliminar los productos.',
+                  'error'
+                );
+              }
+            })
+            .catch((error) => {
+              Swal.fire(
+                'Error',
+                'Hubo un error al procesar la solicitud.',
+                'error'
+              );
+              console.error('Error:', error);
+            });
+        }
+      });
     } else {
-      console.log('No hay productos seleccionados para eliminar');
+      Swal.fire(
+        'Sin selección',
+        'No hay productos seleccionados para eliminar.',
+        'info'
+      );
     }
   });
-
 });
+
 
 let timer;
 let paginaActual = 1;
