@@ -132,16 +132,17 @@ module.exports ={
             callback(null, results);
         });
     },
-    getProductosByFacturaId : function(facturaID, callback) {
+    getProductosByFacturaId: function(facturaID, callback) {
         const query = `
-            SELECT pf.*, prod.nombre AS nombre_producto 
-            FROM productos_factura pf
-            JOIN productos prod ON pf.producto_id = prod.id 
-            WHERE pf.factura_id = ?
+            SELECT fai.*, prod.nombre AS nombre_producto 
+            FROM facturas_admin_items fai
+            JOIN productos prod ON fai.producto_id = prod.id 
+            WHERE fai.factura_id = ?
         `;
         pool.query(query, [facturaID], function(error, results) {
             if (error) throw error;
             callback(null, results);
         });
     },
+    
 }
