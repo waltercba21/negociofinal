@@ -18,9 +18,8 @@ router.get('/', administracionController.administracion);
 router.get('/facturas', administracionController.facturas);
 router.post('/facturas', upload.single('comprobante_pago'), administracionController.postFactura);
 router.get('/presupuestos', administracionController.presupuestos);
-
 router.get('/listadoFacturas', administracionController.listadoFacturas);
-router.get('/detalle/:id', administracionController.verDetalle);
+router.get('/facturas/detalle/:id', administracionController.verDetalle);
 router.get('/facturas/modificar/:id', administracionController.getModificarFactura);
 router.post('/facturas/modificar/:id', upload.single('comprobante_pago'), administracionController.postModificarFactura);
 router.get('/facturas/eliminar/:id', administracionController.getEliminarFactura);
