@@ -92,8 +92,14 @@ module.exports ={
             callback(results);
         });
     },
-    getFacturaById : function(id, callback) {
-        pool.query('SELECT * FROM facturas WHERE id = ?', [id], function(error, results) {
+    getFacturaById: function(id, callback) {
+        const query = `
+            SELECT facturas.*, proveedores.nombre AS nombre_proveedor 
+            FROM facturas 
+            LEFT JOIN proveedores ON facturas.id_proveedor = proveedores.id 
+            WHERE facturas.id = ?
+        `;
+        pool.query(query, [id], function(error, results) {
             if (error) throw error;
             if (results.length > 0) {
                 callback(null, results[0]);
@@ -122,6 +128,18 @@ module.exports ={
     },
     getFacturasByProveedorId : function(idProveedor, callback) {
         pool.query('SELECT * FROM facturas WHERE id_proveedor = ?', [idProveedor], function(error, results) {
+            if (error) throw error;
+            callback(null, results);
+        });
+    },
+    getProductosByFacturaId : function(facturaID, callback) {
+        const query = `
+            SELECT pf.*, prod.nombre AS nombre_producto 
+            FROM productos_factura pf
+            JOIN productos prod ON pf.producto_id = prod.id 
+            WHERE pf.factura_id = ?
+        `;
+        pool.query(query, [facturaID], function(error, results) {
             if (error) throw error;
             callback(null, results);
         });

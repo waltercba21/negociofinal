@@ -92,7 +92,9 @@
                         <form action="/administracion/facturas/eliminar/<%= factura.id %>" method="post" style="display: inline;">
                             <button type="submit" class="btn-eliminar">Eliminar</button>
                         </form>
+                        <button class="btn-detalle" onclick="location.href='/administracion/facturas/detalle/<%= factura.id %>'">Ver Detalle</button>
                     </td>
+                    
                 </tr>
             <% }); %>
         

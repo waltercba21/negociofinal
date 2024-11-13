@@ -214,6 +214,26 @@ module.exports = {
             }
         });
     },
+    verDetalle: (req, res) => {
+        const facturaID = req.params.id;
+
+        facturasModel.getFacturaById(facturaID, (error, factura) => {
+            if (error) {
+                return res.status(500).send('Error al obtener la factura');
+            }
+
+            facturasModel.getProductosByFacturaId(facturaID, (error, productos) => {
+                if (error) {
+                    return res.status(500).send('Error al obtener los productos de la factura');
+                }
+
+                res.render('facturaDetalle', {
+                    factura: factura,
+                    productos: productos
+                });
+            });
+        });
+    },
     generarPDFProveedor : function(req, res) {
         var printer = new pdfmake(fonts);
         var idProveedor = req.query.proveedorListado;
