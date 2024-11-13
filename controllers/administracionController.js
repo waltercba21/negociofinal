@@ -227,7 +227,7 @@ module.exports = {
                     return res.status(500).send('Error al obtener los productos de la factura');
                 }
 
-                res.render('facturaDetalle', {
+                res.render('detalleFactura', {
                     factura: factura,
                     productos: productos
                 });
