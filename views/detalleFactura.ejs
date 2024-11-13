@@ -1,23 +1,19 @@
 <%- include('./layouts/head.ejs') %>
 <%- include('./layouts/header.ejs') %>
 <body>
-    <main>
-        <h2>Detalle de la Factura ID: <%= factura.id %></h2>
-        <p>Proveedor: <%= factura.nombre_proveedor %></p>
-        <p>Fecha de Factura: <%= factura.fecha %></p>
-        <p>Número de Factura: <%= factura.numero_factura %></p>
-        <p>Fecha de Pago: <%= factura.fecha_pago %></p>
-        <p>Importe: <%= factura.importe %></p>
-        <p>Condición: <%= factura.condicion %></p>
-
-        <h3>Productos en la Factura</h3>
-        <table>
+    <main class="factura-main">
+        <p class="factura-proveedor">Proveedor: <%= factura.nombre_proveedor %></p>
+        <p class="factura-fecha">Fecha de Factura: <%= factura.fecha %></p>
+        <p class="factura-numero">Número de Factura: <%= factura.numero_factura %></p>
+        <p class="factura-fecha-pago">Fecha de Pago: <%= factura.fecha_pago %></p>
+        <p class="factura-importe">Importe: <%= factura.importe %></p>
+        <p class="factura-condicion">Condición: <%= factura.condicion %></p>
+        <h3 class="factura-titulo-productos">Productos en la Factura</h3>
+        <table class="factura-productos-table">
             <thead>
                 <tr>
                     <th>Nombre del Producto</th>
                     <th>Cantidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Subtotal</th>
                 </tr>
             </thead>
             <tbody>
@@ -25,13 +21,11 @@
                     <tr>
                         <td><%= producto.nombre_producto %></td>
                         <td><%= producto.cantidad %></td>
-                        <td><%= producto.precio_unitario %></td>
-                        <td><%= producto.cantidad * producto.precio_unitario %></td>
                     </tr>
                 <% }); %>
             </tbody>
         </table>
-        <button onclick="history.back()">Volver</button>
+        <button class="factura-volver-btn" onclick="history.back()">Volver</button>
     </main>
 </body>
 <%- include('./layouts/footer.ejs') %>
