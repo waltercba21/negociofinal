@@ -216,24 +216,37 @@ module.exports = {
     },
     verDetalle: (req, res) => {
         const facturaID = req.params.id;
-
+    
         administracion.getFacturaById(facturaID, (error, factura) => {
             if (error) {
                 return res.status(500).send('Error al obtener la factura');
             }
-
+    
+            // Formatear las fechas antes de pasar a la vista
+            const formatDate = (date) => {
+                const d = new Date(date);
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+            };
+    
+            // Formatear las fechas de la factura
+            factura.fecha = formatDate(factura.fecha);
+            factura.fecha_pago = formatDate(factura.fecha_pago);
+    
             administracion.getProductosByFacturaId(facturaID, (error, productos) => {
                 if (error) {
                     return res.status(500).send('Error al obtener los productos de la factura');
                 }
-
+    
                 res.render('detalleFactura', {
                     factura: factura,
                     productos: productos
                 });
             });
         });
-    },
+    },    
     generarPDFProveedor : function(req, res) {
         var printer = new pdfmake(fonts);
         var idProveedor = req.query.proveedorListado;
