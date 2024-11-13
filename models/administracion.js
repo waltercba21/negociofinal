@@ -26,10 +26,24 @@ module.exports ={
     },
     
     actualizarStockProducto: function(productoID, cantidad, callback) {
-        pool.query('UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?', [cantidad, productoID], function(error, results) {
-            if (error) throw error;
-            if (callback) callback(results);
-        });
+        if (!productoID || !cantidad) {
+            return callback(new Error("El productoID y la cantidad son obligatorios"));
+        }
+    
+        pool.query(
+            'UPDATE productos SET stock_actual = stock_actual + ? WHERE id = ?',
+            [cantidad, productoID],
+            function(error, results) {
+                if (error) {
+                    console.error("Error al actualizar el stock:", error);
+                    return callback(error);
+                }
+                if (results.affectedRows === 0) {
+                    return callback(new Error("No se pudo actualizar el stock: producto no encontrado"));
+                }
+                callback(null, results);  // La actualización fue exitosa
+            }
+        );
     },
     
     getFacturas : function(callback) {
