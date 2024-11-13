@@ -37,10 +37,7 @@ module.exports = {
         });
     },
     postFactura: function(req, res) {
-        // Verificar los datos recibidos en el cuerpo de la solicitud
         console.log("Datos recibidos en req.body:", req.body);
-    
-        // Crear objeto de nueva factura con los datos de la solicitud
         let nuevaFactura = {
             id_proveedor: req.body.id_proveedor,
             fecha: req.body.fecha,
@@ -50,25 +47,14 @@ module.exports = {
             condicion: req.body.condicion,
             comprobante_pago: req.file ? req.file.filename : null
         };
-    
-        // Log para verificar los datos de la nueva factura
         console.log("Datos de nuevaFactura:", nuevaFactura);
-    
         let productosFactura = [];
-    
-        // Verificar si `invoiceItems` contiene productos
         if (req.body.invoiceItems && req.body.invoiceItems.length > 0) {
             const validItems = req.body.invoiceItems.filter(item => item.trim() !== '');
-    
-            // Log para ver qué productos fueron validados
             console.log("Productos validados en invoiceItems:", validItems);
-    
             if (validItems.length > 0) {
                 try {
-                    // Intentar parsear los productos recibidos
                     productosFactura = JSON.parse(validItems[0]);
-                    
-                    // Log para verificar el contenido de productosFactura después de parsear
                     console.log("Contenido de productosFactura:", productosFactura);
     
                 } catch (error) {
@@ -81,11 +67,8 @@ module.exports = {
         } else {
             return res.status(400).json({ message: 'No se enviaron productos' });
         }
-    
-        // Llamada para insertar la factura en la base de datos
         administracion.insertFactura(nuevaFactura, function(facturaID) {
             console.log("Factura creada con ID:", facturaID);
-    
             productosFactura.forEach(function(item) {
                 if (item.id && item.cantidad) {
                     let itemFactura = {
@@ -93,20 +76,14 @@ module.exports = {
                         producto_id: item.id,
                         cantidad: item.cantidad,
                     };
-    
-                    // Log para verificar cada item antes de la inserción
                     console.log("Item para insertar en la factura:", itemFactura);
-    
                     administracion.insertarItemFactura(itemFactura);
                     administracion.actualizarStockProducto(item.id, item.cantidad);
-    
                 } else {
                     console.error("Item de factura inválido:", item);
                     return res.status(400).json({ message: 'Item de factura inválido' });
                 }
             });
-    
-            // Respuesta final de éxito
             res.json({
                 message: 'Factura guardada exitosamente',
                 facturaID: facturaID

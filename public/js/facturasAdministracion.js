@@ -1,107 +1,116 @@
-document.getElementById('mostrarFormulario').addEventListener('click', function() {
-  var formulario = document.getElementById('formularioFacturas');
-  var fondoOscuro = document.getElementById('fondoOscuro');
-  formulario.style.display = 'block';
-  fondoOscuro.style.display = 'block';
-});
-document.getElementById('cerrarFormulario').addEventListener('click', function() {
-  document.getElementById('formularioFacturas').style.display = 'none';
-  document.getElementById('fondoOscuro').style.display = 'none';
-});
-document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
-  const busqueda = e.target.value;
-  const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-  resultadosBusqueda.innerHTML = '';
-  if (!busqueda.trim()) {
-      return;
-  }
-  const url = '/productos/api/buscar?q=' + busqueda;
-  const respuesta = await fetch(url);
-  const productos = await respuesta.json();
-
-  productos.forEach((producto) => {
-      const resultado = document.createElement('div');
-      resultado.textContent = producto.nombre;
-      resultado.classList.add('resultado-busqueda');
-      resultado.addEventListener('click', () => {
-          resultadosBusqueda.innerHTML = '';
-          const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-          const filaFactura = tablaFactura.insertRow();
-          filaFactura.insertCell(0).textContent = producto.codigo;
-          filaFactura.insertCell(1).textContent = producto.nombre;
-
-          // Columna de cantidad (input)
-          const cellCantidad = filaFactura.insertCell(2);
-          const inputCantidad = document.createElement('input');
-          inputCantidad.type = 'number';
-          inputCantidad.min = 1;
-          inputCantidad.value = 1;
-          cellCantidad.appendChild(inputCantidad);
-
-          const cellEliminar = filaFactura.insertCell(3);
-          const botonEliminar = document.createElement('button');
-          botonEliminar.textContent = '✖';
-          botonEliminar.className = 'boton-eliminar';
-          botonEliminar.addEventListener('click', function () {
-              tablaFactura.deleteRow(filaFactura.rowIndex - 1);
-          });
-          cellEliminar.appendChild(botonEliminar);
-      });
-      resultadosBusqueda.appendChild(resultado);
+document.getElementById('mostrarFormulario').addEventListener('click', function () {
+    var formulario = document.getElementById('formularioFacturas');
+    var fondoOscuro = document.getElementById('fondoOscuro');
+    formulario.style.display = 'block';
+    fondoOscuro.style.display = 'block';
   });
-});
-
-document.getElementById('formularioFacturas').addEventListener('submit', async function (e) {
-    e.preventDefault();
-    const invoiceItems = [];
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    
-    for (let i = 0; i < filasFactura.length; i++) {
-        const productoId = filasFactura[i].dataset.productoId; // Usar el `producto_id` del dataset
-        const descripcion = filasFactura[i].cells[1].textContent.trim();
-        const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
-        
-        if (productoId && descripcion && !isNaN(cantidad)) {
-            invoiceItems.push({
-                id: productoId,  // Enviar el `producto_id` correcto aquí
-                descripcion: descripcion,
-                cantidad: cantidad
-            });
-        }
+  document.getElementById('cerrarFormulario').addEventListener('click', function () {
+    document.getElementById('formularioFacturas').style.display = 'none';
+    document.getElementById('fondoOscuro').style.display = 'none';
+  });
+  document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
+    const busqueda = e.target.value;
+    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+    resultadosBusqueda.innerHTML = '';
+    if (!busqueda.trim()) {
+        return;
     }
-
-    console.log("Contenido de invoiceItems antes de enviar:", invoiceItems);
-
-    const formData = new FormData(this);
-    formData.append('invoiceItems', JSON.stringify(invoiceItems));
-    
-    try {
-        const response = await fetch('/administracion/facturas', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await response.json();
-        console.log("Respuesta del servidor:", data);
-        
-        if (response.ok) {
-            Swal.fire({
-                title: '¡Éxito!',
-                text: data.message,
-                icon: 'success',
-                confirmButtonText: 'Entendido'
-            }).then(() => {
-                window.location.reload(); 
+    const url = '/productos/api/buscar?q=' + busqueda;
+    const respuesta = await fetch(url);
+    const productos = await respuesta.json();
+  
+    productos.forEach((producto) => {
+        const resultado = document.createElement('div');
+        resultado.textContent = producto.nombre;
+        resultado.classList.add('resultado-busqueda');
+        resultado.addEventListener('click', () => {
+            resultadosBusqueda.innerHTML = '';
+            const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+            const filaFactura = tablaFactura.insertRow();
+            filaFactura.dataset.productoId = producto.id; // Agrega el ID del producto
+            filaFactura.insertCell(0).textContent = producto.codigo;
+            filaFactura.insertCell(1).textContent = producto.nombre;
+  
+            // Columna de cantidad (input)
+            const cellCantidad = filaFactura.insertCell(2);
+            const inputCantidad = document.createElement('input');
+            inputCantidad.type = 'number';
+            inputCantidad.min = 1;
+            inputCantidad.value = 1;
+            cellCantidad.appendChild(inputCantidad);
+  
+            // Columna de total (calculado dinámicamente)
+            const cellTotal = filaFactura.insertCell(3);
+            cellTotal.textContent = producto.precio * inputCantidad.value; 
+  
+            inputCantidad.addEventListener('input', function () {
+                cellTotal.textContent = producto.precio * inputCantidad.value;
             });
-        } else {
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        console.error("Error al enviar el formulario:", error);
-        Swal.fire({
-            title: 'Error',
-            text: error.message || 'Hubo un problema al procesar la solicitud',
-            icon: 'error',
-            confirmButtonText: 'Reintentar'
+  
+            // Columna de eliminar
+            const cellEliminar = filaFactura.insertCell(4);
+            const botonEliminar = document.createElement('button');
+            botonEliminar.textContent = '✖';
+            botonEliminar.className = 'boton-eliminar';
+            botonEliminar.addEventListener('click', function () {
+                filaFactura.remove();
+            });
+            cellEliminar.appendChild(botonEliminar);
         });
-    }
-});
+        resultadosBusqueda.appendChild(resultado);
+    });
+  });
+  
+  document.getElementById('formularioFacturas').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const invoiceItems = [];
+      const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+      
+      for (let i = 0; i < filasFactura.length; i++) {
+          const productoId = filasFactura[i].dataset.productoId;
+          const descripcion = filasFactura[i].cells[1].textContent.trim();
+          const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
+          
+          if (productoId && descripcion && !isNaN(cantidad)) {
+              invoiceItems.push({
+                  id: productoId,
+                  descripcion: descripcion,
+                  cantidad: cantidad
+              });
+          }
+      }
+  
+      console.log("Contenido de invoiceItems antes de enviar:", invoiceItems);
+  
+      const formData = new FormData(this);
+      formData.append('invoiceItems', JSON.stringify(invoiceItems));
+      
+      try {
+          const response = await fetch('/administracion/facturas', {
+              method: 'POST',
+              body: formData
+          });
+          const data = await response.json();
+          
+          if (response.ok) {
+              Swal.fire({
+                  title: '¡Éxito!',
+                  text: data.message,
+                  icon: 'success',
+                  confirmButtonText: 'Entendido'
+              }).then(() => {
+                  window.location.reload(); 
+              });
+          } else {
+              throw new Error(data.message);
+          }
+      } catch (error) {
+          Swal.fire({
+              title: 'Error',
+              text: error.message || 'Hubo un problema al procesar la solicitud',
+              icon: 'error',
+              confirmButtonText: 'Reintentar'
+          });
+      }
+  });
+  

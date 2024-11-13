@@ -13,7 +13,6 @@ module.exports ={
     insertFactura: function(factura, callback) {
         pool.query('INSERT INTO facturas SET ?', factura, function(error, results) {
             if (error) throw error;
-            // Devolver el ID de la factura recién creada
             callback(results.insertId);
         });
     },
@@ -27,7 +26,6 @@ module.exports ={
     },
     
     actualizarStockProducto: function(productoID, cantidad, callback) {
-        // Se debe restar la cantidad en lugar de sumarla para reflejar la venta
         pool.query('UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?', [cantidad, productoID], function(error, results) {
             if (error) throw error;
             if (callback) callback(results);
