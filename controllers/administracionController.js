@@ -102,7 +102,7 @@ module.exports = {
                         console.error(error);
                         res.status(500).send('Error al obtener los proveedores');
                     } else {
-                        res.render('listadoFacturas', { 
+                        res.render('listadoFacturasAdmin', { 
                             facturas: facturas, 
                             proveedores: proveedores,
                             parseDate: function(dateString) {
