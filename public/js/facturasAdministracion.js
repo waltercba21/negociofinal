@@ -1,28 +1,34 @@
+// Mostrar formulario de facturas
 document.getElementById('mostrarFormulario').addEventListener('click', function () {
     var formulario = document.getElementById('formularioFacturas');
     var fondoOscuro = document.getElementById('fondoOscuro');
     formulario.style.display = 'block';
-    fondoOscuro.style.display = 'block';
-  });
-  document.getElementById('cerrarFormulario').addEventListener('click', function () {
+    fondoOscuro.style.display = 'flex'; // Cambiado a 'flex' para centrar
+});
+
+// Cerrar formulario de facturas
+document.getElementById('cerrarFormulario').addEventListener('click', function () {
     document.getElementById('formularioFacturas').style.display = 'none';
     document.getElementById('fondoOscuro').style.display = 'none';
-  });
-  document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
+});
+
+// Funcionalidad de agregar productos a la tabla
+document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
     resultadosBusqueda.innerHTML = '';
-    if (!busqueda.trim()) {
-        return;
-    }
+    
+    if (!busqueda.trim()) return;
+
     const url = '/productos/api/buscar?q=' + busqueda;
     const respuesta = await fetch(url);
     const productos = await respuesta.json();
-  
+
     productos.forEach((producto) => {
         const resultado = document.createElement('div');
         resultado.textContent = producto.nombre;
         resultado.classList.add('resultado-busqueda');
+        
         resultado.addEventListener('click', () => {
             resultadosBusqueda.innerHTML = '';
             const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
@@ -31,19 +37,16 @@ document.getElementById('mostrarFormulario').addEventListener('click', function 
             filaFactura.insertCell(0).textContent = producto.codigo;
             filaFactura.insertCell(1).textContent = producto.nombre;
 
+            // Columna de cantidad con input
             const cellCantidad = filaFactura.insertCell(2);
             const inputCantidad = document.createElement('input');
             inputCantidad.type = 'number';
             inputCantidad.min = 1;
             inputCantidad.value = 1;
             cellCantidad.appendChild(inputCantidad);
-  
-            inputCantidad.addEventListener('input', function () {
-                cellTotal.textContent = producto.precio * inputCantidad.value;
-            });
-  
-            // Columna de eliminar
-            const cellEliminar = filaFactura.insertCell(4);
+
+            // Columna de eliminar con botón
+            const cellEliminar = filaFactura.insertCell(3);
             const botonEliminar = document.createElement('button');
             botonEliminar.textContent = '✖';
             botonEliminar.className = 'boton-eliminar';
@@ -52,10 +55,11 @@ document.getElementById('mostrarFormulario').addEventListener('click', function 
             });
             cellEliminar.appendChild(botonEliminar);
         });
+        
         resultadosBusqueda.appendChild(resultado);
     });
-  });
-  
+});
+
   document.getElementById('formularioFacturas').addEventListener('submit', async function (e) {
       e.preventDefault();
       const invoiceItems = [];

@@ -2327,7 +2327,10 @@ td {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto; /* Permitir desplazamiento */
 }
 
 #formularioFacturas {
@@ -2347,10 +2350,14 @@ td {
 }
 
 .facturas-contenedor {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  background: white;
+  padding: 20px;
+  width: 80%;
+  max-height: 90vh; /* Limitar la altura */
+  overflow-y: auto; /* Activar desplazamiento interno */
+  border-radius: 8px;
 }
+
 
 .facturas-contenedor label {
   font-weight: bold;
@@ -2392,8 +2399,8 @@ td {
 
 #tabla-factura {
   width: 100%;
-  border-collapse: collapse;
 }
+
 
 #tabla-factura th,
 #tabla-factura td {
@@ -2429,7 +2436,12 @@ td {
   width: 150px;
   align-self: center; /* Centra el botón debajo de la tabla */
 }
-
+.boton-eliminar {
+  background: none;
+  border: none;
+  color: red;
+  cursor: pointer;
+}
 
 /*------------------Listado de Facturas------------------*/
 .form-container {
