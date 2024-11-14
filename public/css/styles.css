@@ -2338,7 +2338,7 @@ td {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 20;
-  width: 60%; /* Ajustar para que coincida con el ancho de .facturas-contenedor */
+  width: 60%;
   max-width: 700px;
   padding: 20px;
   background-color: #e1dede;
@@ -2346,9 +2346,12 @@ td {
 }
 
 .facturas-contenedor {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centra el contenido dentro del contenedor */
   background: white;
   padding: 20px;
-  width: 100%; /* Para que ocupe todo el ancho disponible en #formularioFacturas */
+  width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   border-radius: 8px;
@@ -2357,22 +2360,26 @@ td {
 .facturas-contenedor label {
   font-weight: bold;
   margin-top: 10px;
+  text-align: center;
+  width: 100%; /* Hace que el label tome todo el ancho */
 }
 
 .facturas-contenedor select,
 .facturas-contenedor input {
-  width: 80%; /* Reducir el ancho de los inputs */
-  padding: 6px; /* Reducir el padding */
-  font-size: 14px; /* Reducir el tamaño de fuente */
+  width: 80%;
+  padding: 6px;
+  font-size: 14px;
   border-radius: 5px;
   border: 1px solid #8d8c8c;
   text-align: center;
+  margin-bottom: 10px; /* Añade espacio entre cada input */
 }
 
 .contenedor-buscador-facturas {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
   margin-top: 20px;
 }
 
@@ -2392,6 +2399,7 @@ td {
 
 #tabla-factura {
   width: 100%;
+  margin-top: 10px;
 }
 
 #tabla-factura th,
@@ -2411,21 +2419,18 @@ td {
   padding: 8px 16px;
   font-size: 14px;
   cursor: pointer;
-  width: 120px; /* Tamaño igual para ambos botones */
-  margin-top: 20px;
-  align-self: center;
+  width: 120px;
+  margin: 10px 5px; /* Añade espacio entre los botones */
+}
+
+#guardarFactura {
+  background-color: #1F487E;
 }
 
 #cerrarFormulario {
-  background-color: #d90429; /* Color específico para el botón de cerrar */
+  background-color: #d90429;
 }
 
-.boton-eliminar {
-  background: none;
-  border: none;
-  color: red;
-  cursor: pointer;
-}
 
 
 /*------------------Listado de Facturas------------------*/
