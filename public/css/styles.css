@@ -2300,7 +2300,7 @@ td {
   height: 100vh;
 }
 
-.botones-administrador .btn {
+.botones-administrador .btn { 
   margin: 30px 50px; 
   padding: 20px 40px;
   border: none;
@@ -2336,73 +2336,87 @@ td {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 20;
-  display: grid; 
-  grid-template-columns: repeat(2, 1fr); 
-  gap: 10px; 
-  width: 70%; 
-  max-width: none; 
-  height: auto;
-  max-height: none; 
-  padding: 20px; 
+  display: grid;
+  grid-template-columns: 1fr; /* Una columna para centrar el formulario */
+  gap: 10px;
+  width: 70%;
+  max-width: 800px;
+  padding: 20px;
   background-color: #e1dede;
   border-radius: 20px;
 }
+
 .facturas-contenedor {
-  display: grid; 
-  grid-template-columns: repeat(2, 1fr); 
-  gap: 5px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
 .facturas-contenedor label {
   font-weight: bold;
-  display: block;
   margin-top: 10px;
-  text-align: center; 
+  text-align: center;
 }
 
 .facturas-contenedor select,
 .facturas-contenedor input {
-  width: 85%;
+  width: 90%;
   padding: 10px;
   border-radius: 5px;
   border: 1px solid #8d8c8c;
   font-size: 16px;
-  font-weight: bold;
-  text-align: center; 
+  text-align: center;
 }
 
-.facturas-contenedor select:hover,
-.facturas-contenedor input:hover {
-  border-color: #888;
-}
-
-.facturas-contenedor select option:hover {
-  background-color: #f0f0f0;
-}
-.btn-facturas-guardar{
+.contenedor-buscador-facturas {
   grid-column: span 2;
   display: flex;
-  flex-direction: row;
-  padding: 20px;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   margin-top: 20px;
-
 }
-.facturas-contenedor button[type="submit"] {
+
+.buscador {
+  width: 100%;
+  max-width: 500px;
+  margin-bottom: 10px;
+}
+
+#entradaBusqueda {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #8d8c8c;
+}
+
+#tabla-factura {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#tabla-factura th,
+#tabla-factura td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #8d8c8c;
+}
+
+#guardarFactura {
   background-color: #1F487E;
   color: white;
   font-weight: bold;
   border: none;
   border-radius: 5px;
   padding: 10px 20px;
-  margin-right: 20px;
-  font-size: 16px;
   margin-top: 20px;
+  font-size: 16px;
   cursor: pointer;
+  width: 150px;
+  align-self: center; /* Centra el botón debajo de la tabla */
 }
 
-.facturas-contenedor button[type="reset"] {
+#cerrarFormulario {
   background-color: #d90429;
   color: white;
   font-weight: bold;
@@ -2412,11 +2426,10 @@ td {
   font-size: 16px;
   margin-top: 20px;
   cursor: pointer;
+  width: 150px;
+  align-self: center; /* Centra el botón debajo de la tabla */
 }
 
-.facturas-contenedor button:hover {
-  opacity: 0.8;
-}
 
 /*------------------Listado de Facturas------------------*/
 .form-container {
