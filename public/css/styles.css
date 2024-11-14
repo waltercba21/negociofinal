@@ -2334,7 +2334,7 @@ td {
 
 #formularioFacturas {
   position: fixed;
-  top: 55%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 20;
@@ -2343,8 +2343,8 @@ td {
   padding: 20px;
   background-color: #e1dede;
   border-radius: 20px;
-  max-height: 80vh; /* Reduce la altura máxima del formulario */
-  overflow-y: auto; /* Habilita el scroll en caso de contenido extenso */
+  max-height: 80vh;
+  overflow: hidden; 
 }
 
 .facturas-contenedor {
@@ -2354,7 +2354,7 @@ td {
   background: white;
   padding: 20px;
   width: 100%;
-  max-height: 75vh; /* Reduce la altura máxima del contenedor interno */
+  max-height: 75vh; 
   overflow-y: auto;
   border-radius: 8px;
 }
