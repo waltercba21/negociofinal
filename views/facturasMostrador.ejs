@@ -2,12 +2,10 @@
 <%- include ./layouts/header.ejs %>
 <body>
    <main>
-    <div style="text-align: center; margin-bottom: 20px;">
-      <button onclick="window.location.href='/productos/listadoFacturas'">
-        Listado de Facturas
-      </button>
-    </div>
-    <form id="invoice-form" action="/productos/procesarFormularioFacturas" method="POST" style="background-color: #db8a8a" >
+    <div class="button-container-presupuesto">
+      <button class="btn-primary-presupuestos" onclick="window.location.href='/productos/listadoFacturas'">Listado de Facturas</button>
+  </div>
+    <form id="invoice-form" action="/productos/procesarFormularioFacturas" method="POST">
       <div id="invoice">
         <h2>Facturas</h2>
         <div id="invoice-details">
@@ -41,7 +39,7 @@
           <label>
               <input type="checkbox" name="metodosPago" value="QR"> QR
           </label>
-        </div>
+      </div>
 
         <div class="buscador">
           <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
@@ -63,16 +61,16 @@
               <tbody>
                   <!-- Las filas de productos se agregarán dinámicamente aquí -->
               </tbody>
-            </table>
+          </table>
+          
         </div>
         <div id="invoice-total">
-          <label>Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
+         <label>Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
         </div>
         <input type="hidden" id="invoiceItems" name="invoiceItems">
-        <div style="text-align: center; margin-top: 20px; margin-left: 20px; ">
-          <button >
-            Guardar Factura
-          </button>
+        <div class="botones-contenedor">
+          <button type="submit">Guardar Factura</button>
+          <button type="button" id="print-button">Imprimir Factura</button>
         </div>
       </div>
     </form>
