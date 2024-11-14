@@ -27,21 +27,16 @@ document.getElementById('mostrarFormulario').addEventListener('click', function 
             resultadosBusqueda.innerHTML = '';
             const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
             const filaFactura = tablaFactura.insertRow();
-            filaFactura.dataset.productoId = producto.id; // Agrega el ID del producto
+            filaFactura.dataset.productoId = producto.id; 
             filaFactura.insertCell(0).textContent = producto.codigo;
             filaFactura.insertCell(1).textContent = producto.nombre;
-  
-            // Columna de cantidad (input)
+
             const cellCantidad = filaFactura.insertCell(2);
             const inputCantidad = document.createElement('input');
             inputCantidad.type = 'number';
             inputCantidad.min = 1;
             inputCantidad.value = 1;
             cellCantidad.appendChild(inputCantidad);
-  
-            // Columna de total (calculado dinámicamente)
-            const cellTotal = filaFactura.insertCell(3);
-            cellTotal.textContent = producto.precio * inputCantidad.value; 
   
             inputCantidad.addEventListener('input', function () {
                 cellTotal.textContent = producto.precio * inputCantidad.value;
