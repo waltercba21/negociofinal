@@ -609,9 +609,11 @@ obtenerModelosPorMarca: function(req, res) {
     doc.pipe(buffer);
     const proveedorId = req.query.proveedor;
     const categoriaId = req.query.categoria;
+
     if (!proveedorId) {
         return res.status(400).send('No se ha proporcionado un ID de proveedor');
     }
+
     try {
         const proveedores = await producto.obtenerProveedores(conexion);
         var proveedor = proveedores.find(p => p.id == proveedorId);
@@ -619,11 +621,13 @@ obtenerModelosPorMarca: function(req, res) {
             return res.status(400).send('Proveedor no encontrado');
         }
         var nombreProveedor = proveedor.nombre;
+
         doc.fontSize(20)
             .text(nombreProveedor, 0, 50, {
                 align: 'center',
                 width: doc.page.width
             });
+
         if (categoriaId) {
             const categorias = await producto.obtenerCategorias(conexion);
             var categoria = categorias.find(c => c.id == categoriaId);
@@ -631,6 +635,7 @@ obtenerModelosPorMarca: function(req, res) {
                 return res.status(400).send('Categoría no encontrada');
             }
             var nombreCategoria = categoria.nombre;
+
             doc.fontSize(12)
                 .text(nombreCategoria, 0, doc.y, {
                     align: 'center',
@@ -638,59 +643,58 @@ obtenerModelosPorMarca: function(req, res) {
                 });
             doc.moveDown(2);
         }
-        var obtenerProductos;
-        if (categoriaId) {
-            obtenerProductos = producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorId, categoriaId);
-        } else {
-            obtenerProductos = producto.obtenerProductosPorProveedor(conexion, proveedorId);
-        } 
 
-        obtenerProductos.then(productos => {
-            var currentY = doc.y;
+        let productos;
+        if (categoriaId && categoriaId !== '') {
+            productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+        } else {
+            productos = await producto.obtenerProductosPorProveedor(conexion, proveedorId);
+        }
+
+        var currentY = doc.y;
+        doc.fontSize(8)
+            .text('Código', 20, currentY)
+            .text('Descripción', 80, currentY)
+            .text('Precio de lista', 390, currentY, {
+                width: 100,
+                align: 'right'
+            })
+            .text('Precio de venta', 480, currentY, {
+                width: 100,
+                align: 'right'
+            });
+        doc.moveDown();
+
+        productos.forEach(producto => {
+            var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(2);
+            var precioVentaFormateado = '$' + parseFloat(producto.precio_venta).toFixed(2);
+            currentY = doc.y;
+            if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
+                doc.addPage();
+                currentY = doc.y;
+            }
             doc.fontSize(8)
-                .text('Código', 20, currentY) // Mover la columna Código más a la izquierda
-                .text('Descripción', 80, currentY) // Reducir el espacio entre Código y Descripción
-                .text('Precio de lista', 390, currentY, {
+                .text(producto.codigo_proveedor, 20, currentY)
+                .text(producto.nombre, 80, currentY, {
+                    width: 400
+                })
+                .text(precioListaFormateado, 390, currentY, {
                     width: 100,
                     align: 'right'
                 })
-                .text('Precio de venta', 480, currentY, {
+                .text(precioVentaFormateado, 480, currentY, {
                     width: 100,
                     align: 'right'
                 });
             doc.moveDown();
-            productos.forEach(producto => {
-                var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(2);
-                var precioVentaFormateado = '$' + parseFloat(producto.precio_venta).toFixed(2);
-                currentY = doc.y;
-                if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
-                    doc.addPage();
-                    currentY = doc.y;
-                }
-                doc.fontSize(8)
-                    .text(producto.codigo_proveedor, 20, currentY) // Mover la columna Código más a la izquierda
-                    .text(producto.nombre, 80, currentY, {
-                        width: 400 // Ajustar el ancho del nombre del producto
-                    })
-                    .text(precioListaFormateado, 390, currentY, {
-                        width: 100,
-                        align: 'right'
-                    })
-                    .text(precioVentaFormateado, 480, currentY, {
-                        width: 100,
-                        align: 'right'
-                    });
-                doc.moveDown();
-            });
-            doc.end();
-        }).catch(error => {
-            console.error('Error al obtener productos:', error);
-            return res.status(500).send('Error al generar el PDF');
         });
+
+        doc.end();
     } catch (error) {
         console.error('Error en generarPDF:', error);
         return res.status(500).send('Error al generar el PDF');
     }
+
     buffer.on('finish', function () {
         const pdfData = buffer.getContents();
         res.setHeader('Content-Type', 'application/pdf');

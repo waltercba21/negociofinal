@@ -973,6 +973,18 @@ contarProductos: function(conexion, callback) {
       }
   });
 },  
+obtenerProductosPorProveedor: function (conexion, proveedor) {
+    let query = `
+        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
+        FROM productos p
+        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+        WHERE pp.proveedor_id = ?
+        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+    `;
+
+    const queryPromise = util.promisify(conexion.query).bind(conexion);
+    return queryPromise(query, [proveedor]);
+},
 obtenerProductosPorProveedorYCategoria: function(conexion, proveedor, categoria) {
     let query = `
         SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
