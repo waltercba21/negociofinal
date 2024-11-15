@@ -979,7 +979,7 @@ obtenerProductosPorProveedorYCategoria: function(conexion, proveedor, categoria)
             pp.codigo AS codigo_proveedor, 
             p.nombre, 
             pp.precio_lista, 
-            pp.precio_venta, 
+            p.precio_venta, 
             p.stock_minimo, 
             p.stock_actual
         FROM productos p
@@ -1004,7 +1004,6 @@ obtenerProductosPorProveedorYCategoria: function(conexion, proveedor, categoria)
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, params);
 },
-
 
 obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
     if (!proveedor) {
