@@ -607,6 +607,7 @@ obtenerModelosPorMarca: function(req, res) {
         incrementAmount: (1024 * 1024)
     });
     doc.pipe(buffer);
+
     const proveedorId = req.query.proveedor;
     const categoriaId = req.query.categoria;
 
@@ -616,12 +617,11 @@ obtenerModelosPorMarca: function(req, res) {
 
     try {
         const proveedores = await producto.obtenerProveedores(conexion);
-        var proveedor = proveedores.find(p => p.id == proveedorId);
+        const proveedor = proveedores.find(p => p.id == proveedorId);
         if (!proveedor) {
             return res.status(400).send('Proveedor no encontrado');
         }
-        var nombreProveedor = proveedor.nombre;
-
+        const nombreProveedor = proveedor.nombre;
         doc.fontSize(20)
             .text(nombreProveedor, 0, 50, {
                 align: 'center',
@@ -630,12 +630,11 @@ obtenerModelosPorMarca: function(req, res) {
 
         if (categoriaId) {
             const categorias = await producto.obtenerCategorias(conexion);
-            var categoria = categorias.find(c => c.id == categoriaId);
+            const categoria = categorias.find(c => c.id == categoriaId);
             if (!categoria) {
                 return res.status(400).send('Categoría no encontrada');
             }
-            var nombreCategoria = categoria.nombre;
-
+            const nombreCategoria = categoria.nombre;
             doc.fontSize(12)
                 .text(nombreCategoria, 0, doc.y, {
                     align: 'center',
@@ -644,12 +643,7 @@ obtenerModelosPorMarca: function(req, res) {
             doc.moveDown(2);
         }
 
-        let productos;
-        if (categoriaId && categoriaId !== '') {
-            productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
-        } else {
-            productos = await producto.obtenerProductosPorProveedor(conexion, proveedorId);
-        }
+        const productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
 
         var currentY = doc.y;
         doc.fontSize(8)
@@ -666,18 +660,15 @@ obtenerModelosPorMarca: function(req, res) {
         doc.moveDown();
 
         productos.forEach(producto => {
-            var precioListaFormateado = producto.precio_lista
-                ? '$' + parseFloat(producto.precio_lista).toFixed(2)
-                : 'N/A';
-            var precioVentaFormateado = producto.precio_venta
-                ? '$' + parseFloat(producto.precio_venta).toFixed(2)
-                : 'N/A';
-                
+            const precioListaFormateado = producto.precio_lista ? '$' + parseFloat(producto.precio_lista).toFixed(2) : 'N/A';
+            const precioVentaFormateado = producto.precio_venta ? '$' + parseFloat(producto.precio_venta).toFixed(2) : 'N/A';
             currentY = doc.y;
+
             if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
                 doc.addPage();
                 currentY = doc.y;
             }
+
             doc.fontSize(8)
                 .text(producto.codigo_proveedor, 20, currentY)
                 .text(producto.nombre, 80, currentY, {
@@ -693,20 +684,21 @@ obtenerModelosPorMarca: function(req, res) {
                 });
             doc.moveDown();
         });
-        
+
         doc.end();
+
+        buffer.on('finish', function () {
+            const pdfData = buffer.getContents();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
+            res.send(pdfData);
+        });
     } catch (error) {
         console.error('Error en generarPDF:', error);
         return res.status(500).send('Error al generar el PDF');
     }
-
-    buffer.on('finish', function () {
-        const pdfData = buffer.getContents();
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-        res.send(pdfData);
-    });
 },
+
 getProductosPorCategoria : async (req, res) => {
     const categoriaId = req.query.categoria;
     producto.obtenerProductosPorCategoria(categoriaId, (error, productos) => {
