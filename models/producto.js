@@ -973,26 +973,20 @@ contarProductos: function(conexion, callback) {
       }
   });
 },  
-obtenerProductosPorProveedor: function (conexion, proveedor) {
-    let query = `
-        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
-        FROM productos p
-        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-        WHERE pp.proveedor_id = ?
-        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
-    `;
-
-    const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return queryPromise(query, [proveedor]);
-},
 obtenerProductosPorProveedorYCategoria: function(conexion, proveedor, categoria) {
     let query = `
-        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
+        SELECT 
+            pp.codigo AS codigo_proveedor, 
+            p.nombre, 
+            p.stock_minimo, 
+            p.stock_actual,
+            p.precio_lista, 
+            p.precio_venta
         FROM productos p
         INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
         WHERE 1=1
     `;
-    
+
     const params = [];
     if (proveedor && proveedor !== 'TODOS') {
         query += ` AND pp.proveedor_id = ?`;
@@ -1009,6 +1003,25 @@ obtenerProductosPorProveedorYCategoria: function(conexion, proveedor, categoria)
 
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, params);
+},
+
+obtenerProductosPorProveedor: function(conexion, proveedor) {
+    let query = `
+        SELECT 
+            pp.codigo AS codigo_proveedor, 
+            p.nombre, 
+            p.stock_minimo, 
+            p.stock_actual,
+            p.precio_lista, 
+            p.precio_venta
+        FROM productos p
+        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+        WHERE pp.proveedor_id = ?
+        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+    `;
+
+    const queryPromise = util.promisify(conexion.query).bind(conexion);
+    return queryPromise(query, [proveedor]);
 },
 obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
     if (!proveedor) {

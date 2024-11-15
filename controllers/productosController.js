@@ -666,8 +666,13 @@ obtenerModelosPorMarca: function(req, res) {
         doc.moveDown();
 
         productos.forEach(producto => {
-            var precioListaFormateado = '$' + parseFloat(producto.precio_lista).toFixed(2);
-            var precioVentaFormateado = '$' + parseFloat(producto.precio_venta).toFixed(2);
+            var precioListaFormateado = producto.precio_lista
+                ? '$' + parseFloat(producto.precio_lista).toFixed(2)
+                : 'N/A';
+            var precioVentaFormateado = producto.precio_venta
+                ? '$' + parseFloat(producto.precio_venta).toFixed(2)
+                : 'N/A';
+                
             currentY = doc.y;
             if (currentY + 20 > doc.page.height - doc.page.margins.bottom) {
                 doc.addPage();
@@ -688,7 +693,7 @@ obtenerModelosPorMarca: function(req, res) {
                 });
             doc.moveDown();
         });
-
+        
         doc.end();
     } catch (error) {
         console.error('Error en generarPDF:', error);
