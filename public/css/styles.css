@@ -2443,7 +2443,7 @@ td {
 .resultado-busqueda {
   transition: background-color 0.3s ease;
   position: relative;
-  margin-bottom: 30px; /* Ajusta el margen inferior a un valor mayor */
+  margin-bottom: 50px; /* Ajusta el margen inferior a un valor mayor */
   z-index: 1; /* Valor base para que se muestre correctamente */
 }
 
@@ -2452,7 +2452,7 @@ td {
   background-color: #d90429;
   color: #fff;
   cursor: pointer;
-  z-index: 5; /* Valor mayor al hacer hover para superponerse a los demás */
+  z-index: 5; 
 }
 
 .resultado-busqueda:hover .miniatura {
