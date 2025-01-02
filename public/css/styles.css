@@ -2422,7 +2422,7 @@ td {
   font-size: 14px;
   cursor: pointer;
   width: 120px;
-  margin: 10px 5px; /* Añade espacio entre los botones */
+  margin: 10px 5px; 
 }
 
 #guardarFactura {
@@ -2437,14 +2437,16 @@ td {
   height: 50px;
   object-fit: cover;
   margin-right: 10px;
-  transition: transform 2s ease; 
+  transition: transform 1s ease; 
 }
 
 .resultado-busqueda {
-  transition: background-color 2s ease;
+  transition: background-color 1s ease;
   position: relative; 
 }
-
+.resultado-contenedor{
+  margin-bottom: 15px;;
+}
 .resultado-busqueda:hover {
   overflow: visible; 
   background-color: #d90429;
