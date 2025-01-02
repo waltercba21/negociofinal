@@ -2432,7 +2432,12 @@ td {
 #cerrarFormulario {
   background-color: #d90429;
 }
-
+.miniatura {
+  width: 50px;  /* Ancho deseado */
+  height: 50px; /* Altura deseada */
+  object-fit: cover; /* Ajusta la imagen para que cubra el espacio asignado */
+  margin-right: 10px; /* Espacio entre la imagen y el texto (opcional) */
+}
 
 
 /*------------------Listado de Facturas------------------*/

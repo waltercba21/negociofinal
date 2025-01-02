@@ -105,6 +105,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
 
         // Añadir la imagen
         if (producto.imagenes && producto.imagenes.length > 0) {
+            
             const imagen = document.createElement('img');
             imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen; // Ajusta la ruta según tu estructura
             imagen.classList.add('miniatura');
