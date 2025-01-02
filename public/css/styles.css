@@ -2442,17 +2442,14 @@ td {
 
 .resultado-busqueda {
   transition: background-color 0.3s ease;
-  position: relative;
-  margin-bottom: 50px; /* Ajusta el margen inferior a un valor mayor */
-  z-index: 1; /* Valor base para que se muestre correctamente */
+  position: relative; /* Importante para el posicionamiento absoluto de la imagen */
 }
 
 .resultado-busqueda:hover {
-  overflow: visible;
+  overflow: visible; /* Permitir que la imagen ampliada se vea completa */
   background-color: #d90429;
   color: #fff;
   cursor: pointer;
-  z-index: 5; 
 }
 
 .resultado-busqueda:hover .miniatura {
@@ -2460,13 +2457,8 @@ td {
   top: 50%;
   left: 50%;
   transform: scale(1.5) translateX(-50%) translateY(-50%);
-  z-index: 10; /* Asegúrate de que la imagen tenga un z-index mayor */
+  z-index: 10;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
-}
-#resultadosBusqueda {
-  max-height: 200px;
-  overflow-y: auto; 
-  margin-bottom: 500px;
 }
 
 
