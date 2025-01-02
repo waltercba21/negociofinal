@@ -2443,7 +2443,9 @@ td {
 }
 
 .resultado-busqueda:hover {
-  background-color: #007bff; /* Color de fondo al pasar el mouse */
+  overflow: visible;
+  background-color: #d90429; /* Color de fondo al pasar el mouse */
+  color: #fff;
   cursor: pointer; /* Cambia el cursor a una mano */
 }
 
