@@ -2464,7 +2464,7 @@ td {
   max-height: 200px; /* Define una altura máxima para el contenedor */
   overflow-y: auto; /* Genera scroll vertical cuando el contenido excede la altura máxima */
   /* overflow-x: visible; overflow-y: visible;  <- Elimina estas líneas */
-  margin-bottom: 30px;
+  margin-bottom: 50px;
 }
 
 
