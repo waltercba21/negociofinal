@@ -86,89 +86,99 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     }
 });
 
-document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
-    const busqueda = e.target.value;
+document.addEventListener('DOMContentLoaded', () => {
+    const entradaBusqueda = document.getElementById('entradaBusqueda');
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-    resultadosBusqueda.innerHTML = '';
 
-    if (!busqueda.trim()) {
-        return;
-    }
-    const url = '/productos/api/buscar?q=' + busqueda;
-    const respuesta = await fetch(url);
-    const productos = await respuesta.json();
-    productos.forEach((producto) => {
-        const resultado = document.createElement('div');
-        resultado.classList.add('resultado-busqueda');
+    entradaBusqueda.addEventListener('input', async (e) => {
+        const busqueda = e.target.value;
+        resultadosBusqueda.innerHTML = '';
 
-        // Contenedor para imagen y nombre
-        const contenedor = document.createElement('div');
-        contenedor.classList.add('resultado-contenedor');
-
-        // Añadir la imagen miniatura
-        if (producto.imagenes && producto.imagenes.length > 0) {
-            const imagen = document.createElement('img');
-            imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen; // Ruta a la imagen
-            imagen.classList.add('miniatura');
-            contenedor.appendChild(imagen);
+        if (!busqueda.trim()) {
+            return;
         }
+        const url = '/productos/api/buscar?q=' + busqueda;
+        const respuesta = await fetch(url);
+        const productos = await respuesta.json();
+        const limite = 5;
+        const productosLimitados = productos.slice(0, limite);
+        productosLimitados.forEach((producto) => {
+            const resultado = document.createElement('div');
+            resultado.classList.add('resultado-busqueda');
+            const contenedor = document.createElement('div');
+            contenedor.classList.add('resultado-contenedor');
+            if (producto.imagenes && producto.imagenes.length > 0) {
+                const imagen = document.createElement('img');
+                imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
+                imagen.classList.add('miniatura');
+                contenedor.appendChild(imagen);
+            }
+            const nombreProducto = document.createElement('span');
+            nombreProducto.textContent = producto.nombre;
+            contenedor.appendChild(nombreProducto);
+            resultado.appendChild(contenedor);
 
-        // Añadir el nombre del producto
-        const nombreProducto = document.createElement('span');
-        nombreProducto.textContent = producto.nombre;
-        contenedor.appendChild(nombreProducto);
+            resultado.addEventListener('mouseenter', function() {
+                const resultados = document.querySelectorAll('.resultado-busqueda');
+                resultados.forEach(r => r.classList.remove('hover-activo'));
+                this.classList.add('hover-activo');
+            });
 
-        resultado.appendChild(contenedor);
+            resultado.addEventListener('mouseleave', function() {
+                this.classList.remove('hover-activo');
+            });
 
-        resultado.addEventListener('click', () => {
-            resultadosBusqueda.innerHTML = '';
-            const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-            const filaFactura = tablaFactura.insertRow();
-            filaFactura.insertCell(0).textContent = producto.codigo;
-            filaFactura.insertCell(1).textContent = producto.nombre;
+            resultado.addEventListener('click', () => {
+                resultadosBusqueda.innerHTML = '';
+                const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+                const filaFactura = tablaFactura.insertRow();
+                filaFactura.insertCell(0).textContent = producto.codigo;
+                filaFactura.insertCell(1).textContent = producto.nombre;
+                const cellPrecio = filaFactura.insertCell(2);
+                const inputPrecio = document.createElement('input');
+                inputPrecio.type = 'text';
+                inputPrecio.value = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+                inputPrecio.className = 'precio-editable';
+                cellPrecio.appendChild(inputPrecio);
+                const cellCantidad = filaFactura.insertCell(3);
+                const inputCantidad = document.createElement('input');
+                inputCantidad.type = 'number';
+                inputCantidad.min = 1;
+                inputCantidad.value = 1;
+                cellCantidad.appendChild(inputCantidad);
+                const cellStock = filaFactura.insertCell(4);
+                cellStock.textContent = producto.stock_actual;
+                const cellSubtotal = filaFactura.insertCell(5);
+                cellSubtotal.textContent = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+                const cellEliminar = filaFactura.insertCell(6);
+                const botonEliminar = document.createElement('button');
+                botonEliminar.textContent = '✖';
+                botonEliminar.className = 'boton-eliminar';
+                botonEliminar.addEventListener('click', function() {
+                    tablaFactura.deleteRow(filaFactura.rowIndex - 1);
+                    calcularTotal();
+                });
+                cellEliminar.appendChild(botonEliminar);
 
-            const cellPrecio = filaFactura.insertCell(2);
-            const inputPrecio = document.createElement('input');
-            inputPrecio.type = 'text';
-            inputPrecio.value = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-            inputPrecio.className = 'precio-editable';
-            cellPrecio.appendChild(inputPrecio);
+                inputCantidad.addEventListener('input', function() {
+                    updateSubtotal(filaFactura);
+                });
 
-            const cellCantidad = filaFactura.insertCell(3);
-            const inputCantidad = document.createElement('input');
-            inputCantidad.type = 'number';
-            inputCantidad.min = 1;
-            inputCantidad.value = 1;
-            cellCantidad.appendChild(inputCantidad);
+                inputPrecio.addEventListener('input', function() {
+                    updateSubtotal(filaFactura, false);
+                });
 
-            const cellStock = filaFactura.insertCell(4);
-            cellStock.textContent = producto.stock_actual;
-
-            const cellSubtotal = filaFactura.insertCell(5);
-            cellSubtotal.textContent = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-            const cellEliminar = filaFactura.insertCell(6);
-            const botonEliminar = document.createElement('button');
-            botonEliminar.textContent = '✖';
-            botonEliminar.className = 'boton-eliminar';
-            botonEliminar.addEventListener('click', function() {
-                tablaFactura.deleteRow(filaFactura.rowIndex - 1);
                 calcularTotal();
             });
-            cellEliminar.appendChild(botonEliminar);
 
-            inputCantidad.addEventListener('input', function() {
-                updateSubtotal(filaFactura);
-            });
-
-            inputPrecio.addEventListener('input', function() {
-                updateSubtotal(filaFactura, false);
-            });
-
-            calcularTotal();
+            resultadosBusqueda.appendChild(resultado);
         });
+    });
 
-        resultadosBusqueda.appendChild(resultado);
+    // Cerrar el contenedor de búsqueda cuando el mouse sale
+    resultadosBusqueda.addEventListener('mouseleave', () => {
+        resultadosBusqueda.innerHTML = '';
+        entradaBusqueda.value = '';
     });
 });
 
