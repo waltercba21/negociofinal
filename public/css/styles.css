@@ -2437,16 +2437,16 @@ td {
   height: 50px;
   object-fit: cover;
   margin-right: 10px;
-  transition: transform 0.3s ease; /* Agregamos la transición aquí */
+  transition: transform 0.6s ease; /* Agregamos la transición aquí */
 }
 
 .resultado-busqueda {
-  transition: background-color 0.3s ease;
-  position: relative; /* Importante para el posicionamiento absoluto de la imagen */
+  transition: background-color 0.6s ease;
+  position: relative; 
 }
 
 .resultado-busqueda:hover {
-  overflow: visible; /* Permitir que la imagen ampliada se vea completa */
+  overflow: visible; 
   background-color: #d90429;
   color: #fff;
   cursor: pointer;
