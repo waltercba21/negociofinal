@@ -2394,7 +2394,7 @@ td {
 #entradaBusqueda {
   width: 100%;
   padding: 8px;
-  font-size: 14px;
+  font-size: 12px;
   border-radius: 5px;
   border: 1px solid #8d8c8c;
 }
@@ -2433,10 +2433,11 @@ td {
   background-color: #d90429;
 }
 .miniatura {
-  width: 50px;
-  height: 50px;
+  width: 30px;
+  height: 30px;
   object-fit: cover;
-  margin-right: 10px;
+  margin-left: 20px;
+  margin-right: 20px;
   transition: transform 1s ease; 
 }
 
@@ -2451,7 +2452,6 @@ td {
   color: #fff;
   cursor: pointer;
 }
-
 
 /*------------------Listado de Facturas------------------*/
 .form-container {
