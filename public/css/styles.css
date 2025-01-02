@@ -2438,6 +2438,21 @@ td {
   object-fit: cover; /* Ajusta la imagen para que cubra el espacio asignado */
   margin-right: 10px; /* Espacio entre la imagen y el texto (opcional) */
 }
+.resultado-busqueda {
+  transition: background-color 0.3s ease; /* Transición suave para el color de fondo */
+}
+
+.resultado-busqueda:hover {
+  background-color: #f0f0f0; /* Color de fondo al pasar el mouse */
+  cursor: pointer; /* Cambia el cursor a una mano */
+}
+
+.resultado-busqueda:hover .miniatura {
+  transform: scale(1.5); /* Aumenta el tamaño de la imagen al 150% */
+  transition: transform 0.3s ease; /* Transición suave para el cambio de tamaño */
+  z-index: 10; /* Asegura que la imagen se superponga a otros elementos */
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5); /* Sombra para resaltar la imagen */
+}
 
 /*------------------Listado de Facturas------------------*/
 .form-container {
