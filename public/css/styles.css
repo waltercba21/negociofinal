@@ -2433,11 +2433,10 @@ td {
   background-color: #d90429;
 }
 .miniatura {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   object-fit: cover;
-  margin-left: 20px;
-  margin-right: 20px;
+  margin: 20px;
   transition: transform 1s ease; 
 }
 
