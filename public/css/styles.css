@@ -2442,25 +2442,14 @@ td {
 
 .resultado-busqueda {
   transition: background-color 1s ease;
-  position: relative; 
 }
 .resultado-contenedor{
   margin-bottom: 15px;;
 }
 .resultado-busqueda:hover {
-  overflow: visible; 
   background-color: #d90429;
   color: #fff;
   cursor: pointer;
-}
-
-.resultado-busqueda:hover .miniatura {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: scale(1.5) translateX(-50%) translateY(-50%);
-  z-index: 10;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
 }
 
 
