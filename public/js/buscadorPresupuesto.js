@@ -26,11 +26,11 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
 
     for (let i = 0; i < filasFactura.length; i++) {
-        const codigo = filasFactura[i].cells[1].textContent.trim(); // Celda del código ahora está en el índice 1
-        const descripcion = filasFactura[i].cells[2].textContent.trim(); // Celda de la descripción ahora está en el índice 2
-        let precio_unitario = parseFloat(filasFactura[i].cells[3].querySelector('input').value.replace(/\./g, '').replace(',', '.')); // Celda del precio ahora está en el índice 3
-        let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value); // Celda de la cantidad ahora está en el índice 4
-        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.')); // Celda del subtotal ahora está en el índice 6
+        const codigo = filasFactura[i].cells[1].textContent.trim();
+        const descripcion = filasFactura[i].cells[2].textContent.trim();
+        let precio_unitario = parseFloat(filasFactura[i].cells[3].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
+        let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value);
+        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
 
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
@@ -68,7 +68,16 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 icon: 'success',
                 confirmButtonText: 'Entendido'
             }).then(() => {
-                window.location.reload();
+                // Mostrar la alerta después de guardar el presupuesto
+                Swal.fire({
+                    title: 'Nuevo Presupuesto',
+                    text: 'Está por realizar un nuevo presupuesto. Complete los datos.',
+                    icon: 'info',
+                    confirmButtonText: 'Entendido'
+                }).then(() => {
+                    // Recargar la página o limpiar los campos
+                    window.location.reload(); // Opcional: recargar la página
+                });
             });
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
@@ -84,6 +93,14 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Mostrar la alerta al cargar la página
+    Swal.fire({
+        title: 'Está en la sección de Presupuestos',
+        text: 'Recuerde que está realizando un presupuesto, no una factura.',
+        icon: 'info',
+        confirmButtonText: 'Entendido'
+    });
+
     const entradaBusqueda = document.getElementById('entradaBusqueda');
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
     let timeoutId;
