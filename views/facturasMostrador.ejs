@@ -4,14 +4,14 @@
    <main>
     <div class="button-container-presupuesto">
       <button class="btn-primary-presupuestos" onclick="window.location.href='/productos/listadoFacturas'">Listado de Facturas</button>
-  </div>
+    </div>
     <form id="invoice-form" action="/productos/procesarFormularioFacturas" method="POST">
       <div id="invoice">
         <h2>Facturas</h2>
         <div id="invoice-details">
           <div class="input-container">
             <label for="nombre-cliente">Nombre del cliente:</label>
-            <input type="text" id="nombre-cliente" name="nombreCliente">  
+            <input type="text" id="nombre-cliente" name="nombreCliente">
           </div>
           <div class="input-container">
             <label for="fecha-presupuesto">Fecha:</label>
@@ -25,21 +25,21 @@
         <div id="metodos-pago">
           <h3>Método de Pago</h3>
           <label>
-              <input type="checkbox" name="metodosPago" value="EFECTIVO"> Efectivo
+            <input type="checkbox" name="metodosPago" value="EFECTIVO"> Efectivo
           </label>
           <label>
-              <input type="checkbox" name="metodosPago" value="CREDITO"> Crédito
+            <input type="checkbox" name="metodosPago" value="CREDITO"> Crédito
           </label>
           <label>
-              <input type="checkbox" name="metodosPago" value="DEBITO"> Débito
+            <input type="checkbox" name="metodosPago" value="DEBITO"> Débito
           </label>
           <label>
-              <input type="checkbox" name="metodosPago" value="TRANSFERENCIA"> Transferencia
+            <input type="checkbox" name="metodosPago" value="TRANSFERENCIA"> Transferencia
           </label>
           <label>
-              <input type="checkbox" name="metodosPago" value="QR"> QR
+            <input type="checkbox" name="metodosPago" value="QR"> QR
           </label>
-      </div>
+        </div>
 
         <div class="buscador">
           <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
@@ -53,16 +53,15 @@
                       <th>Descripción</th>
                       <th>Precio Unitario</th>
                       <th>Cantidad</th>
-                      <th>Stock Actual</th> 
+                      <th>Stock Actual</th>
                       <th>Subtotal</th>
                       <th>Eliminar</th>
                   </tr>
               </thead>
               <tbody>
-                  <!-- Las filas de productos se agregarán dinámicamente aquí -->
-              </tbody>
+                  </tbody>
           </table>
-          
+
         </div>
         <div id="invoice-total">
          <label>Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
@@ -76,6 +75,6 @@
     </form>
    </main>
    <%- include ./layouts/footer.ejs %>
-   <script src="/js/buscadorFacturasMostrador.js"></script> 
+   <script src="/js/buscadorFacturasMostrador.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
