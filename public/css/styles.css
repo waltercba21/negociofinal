@@ -2452,6 +2452,12 @@ td {
   cursor: pointer;
 }
 
+.miniatura-tabla {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+}
+
 /*------------------Listado de Facturas------------------*/
 .form-container {
   display: flex;
