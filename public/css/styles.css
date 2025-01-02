@@ -2463,6 +2463,7 @@ td {
 #resultadosBusqueda {
   overflow-x: visible; /* Permite el desbordamiento horizontal */
   overflow-y: visible; /* Permite el desbordamiento vertical */
+  margin-bottom: 15px;
 }
 
 
