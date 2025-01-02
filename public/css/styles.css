@@ -2443,7 +2443,7 @@ td {
 }
 
 .resultado-busqueda:hover {
-  background-color: #f0f0f0; /* Color de fondo al pasar el mouse */
+  background-color: #007bff; /* Color de fondo al pasar el mouse */
   cursor: pointer; /* Cambia el cursor a una mano */
 }
 
