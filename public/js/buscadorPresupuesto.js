@@ -8,7 +8,6 @@ document.getElementById('invoice-form').addEventListener('keydown', function(e) 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // Verificar si los datos requeridos están completos
     const nombreCliente = document.getElementById('nombre-cliente').value.trim();
     const fechaPresupuesto = document.getElementById('fecha-presupuesto').value.trim();
     const totalPresupuesto = document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim();
@@ -94,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultadosBusqueda.innerHTML = '';
 
         if (!busqueda.trim()) {
-            resultadosBusqueda.style.display = 'none'; // Ocultar el contenedor si no hay búsqueda
+            resultadosBusqueda.style.display = 'none';
             return;
         }
 
@@ -103,15 +102,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const productos = await respuesta.json();
         const limite = 5;
         const productosLimitados = productos.slice(0, limite);
+
         productosLimitados.forEach((producto) => {
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
 
-            // Crear un contenedor para la imagen y el nombre
             const contenedor = document.createElement('div');
             contenedor.classList.add('resultado-contenedor');
 
-            // Añadir la imagen
             if (producto.imagenes && producto.imagenes.length > 0) {
                 const imagen = document.createElement('img');
                 imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
@@ -119,14 +117,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 contenedor.appendChild(imagen);
             }
 
-            // Añadir el nombre del producto
             const nombreProducto = document.createElement('span');
             nombreProducto.textContent = producto.nombre;
             contenedor.appendChild(nombreProducto);
 
             resultado.appendChild(contenedor);
 
-            //Efecto para que se agrande la imagen y cambie el fondo
             resultado.addEventListener('mouseenter', function() {
                 const resultados = document.querySelectorAll('.resultado-busqueda');
                 resultados.forEach(r => r.classList.remove('hover-activo'));
@@ -138,8 +134,22 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             resultado.addEventListener('click', () => {
-                resultadosBusqueda.style.display = 'none'; // Ocultar el contenedor al hacer clic
+                // No cerrar el contenedor de búsqueda aquí
                 const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+
+                // Verificar si el producto ya existe en la tabla
+                const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[0].textContent.trim() === producto.codigo);
+                if (productoExistente) {
+                    Swal.fire({
+                        title: 'Producto Duplicado',
+                        text: 'Este producto ya ha sido añadido a la lista.',
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido'
+                    });
+                    return; // Salir si el producto ya existe
+                }
+
+                // Continuar con el proceso de agregar el producto si no está duplicado
                 const filaFactura = tablaFactura.insertRow();
                 filaFactura.insertCell(0).textContent = producto.codigo;
                 filaFactura.insertCell(1).textContent = producto.nombre;
@@ -186,21 +196,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             resultadosBusqueda.appendChild(resultado);
-            resultadosBusqueda.style.display = 'block'; // Mostrar el contenedor de resultados
+            resultadosBusqueda.style.display = 'block';
         });
     });
 
-    // Cerrar el contenedor de búsqueda cuando el mouse sale
     resultadosBusqueda.addEventListener('mouseleave', () => {
         timeoutId = setTimeout(() => {
-            resultadosBusqueda.innerHTML = '';
-            entradaBusqueda.value = '';
-            resultadosBusqueda.style.display = 'none'; // Ocultar el contenedor
-        }, 300); // Retardo de 300 milisegundos
+            // entradaBusqueda.value = ''; // No borrar el texto del input
+            resultadosBusqueda.style.display = 'none';
+        }, 300);
     });
+
     resultadosBusqueda.addEventListener('mouseenter', () => {
-        clearTimeout(timeoutId); // Limpiar el timeout si el mouse vuelve a entrar
-        resultadosBusqueda.style.display = 'block'; // Asegurarse de que el contenedor esté visible
+        clearTimeout(timeoutId);
+        resultadosBusqueda.style.display = 'block';
     });
 });
 
