@@ -2387,7 +2387,7 @@ td {
 
 .buscador {
   width: 100%;
-  max-width: 500px;
+  max-width: 1500px;
   margin-bottom: 10px;
 }
 
@@ -2438,7 +2438,6 @@ td {
   object-fit: cover; /* Ajusta la imagen para que cubra el espacio asignado */
   margin-right: 10px; /* Espacio entre la imagen y el texto (opcional) */
 }
-
 
 /*------------------Listado de Facturas------------------*/
 .form-container {
