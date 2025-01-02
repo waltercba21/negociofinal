@@ -1,4 +1,3 @@
-// Prevenir el envío del formulario al presionar ENTER en los inputs
 document.getElementById('invoice-form').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();  
@@ -20,7 +19,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             icon: 'warning',
             confirmButtonText: 'Entendido'
         });
-        return; // Detener el proceso si faltan datos
+        return; 
     }
 
     const invoiceItems = [];
@@ -84,7 +83,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     }
 });
 
-
 document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
     const busqueda = e.target.value;
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
@@ -93,15 +91,33 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     if (!busqueda.trim()) {
         return;
     }
-
     const url = '/productos/api/buscar?q=' + busqueda;
     const respuesta = await fetch(url);
     const productos = await respuesta.json();
 
     productos.forEach((producto) => {
         const resultado = document.createElement('div');
-        resultado.textContent = producto.nombre;
         resultado.classList.add('resultado-busqueda');
+
+        // Crear un contenedor para la imagen y el nombre
+        const contenedor = document.createElement('div');
+        contenedor.classList.add('resultado-contenedor');
+
+        // Añadir la imagen
+        if (producto.imagenes && producto.imagenes.length > 0) {
+            const imagen = document.createElement('img');
+            imagen.src = '/uploads/products/' + producto.imagenes[0].imagen; // Ajusta la ruta según tu estructura
+            imagen.classList.add('miniatura');
+            contenedor.appendChild(imagen);
+        }
+
+        // Añadir el nombre del producto
+        const nombreProducto = document.createElement('span');
+        nombreProducto.textContent = producto.nombre;
+        contenedor.appendChild(nombreProducto);
+
+        resultado.appendChild(contenedor);
+
         resultado.addEventListener('click', () => {
             resultadosBusqueda.innerHTML = '';
             const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
@@ -152,7 +168,6 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
         resultadosBusqueda.appendChild(resultado);
     });
 });
-
 function updateSubtotal(row, verificarStock = true) {
     const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
     const cantidad = parseInt(row.cells[3].querySelector('input').value);
