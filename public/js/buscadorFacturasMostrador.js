@@ -10,11 +10,11 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     for (let i = 0; i < filasFactura.length; i++) {
-        const codigo = filasFactura[i].cells[0].textContent.trim();
-        const descripcion = filasFactura[i].cells[1].textContent.trim();
-        const precioInput = filasFactura[i].cells[2].querySelector('input').value;
+        const codigo = filasFactura[i].cells[1].textContent.trim();
+        const descripcion = filasFactura[i].cells[2].textContent.trim();
+        const precioInput = filasFactura[i].cells[3].querySelector('input').value;
         let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
-        let cantidad = parseInt(filasFactura[i].cells[3].querySelector('input').value);
+        let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value);
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
         let subtotal = precio_unitario * cantidad;
@@ -70,7 +70,16 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 icon: 'success',
                 confirmButtonText: 'Entendido'
             }).then(() => {
-                window.location.reload();
+                // Mostrar la alerta después de guardar la factura
+                Swal.fire({
+                    title: 'Nueva Factura',
+                    text: 'Está por realizar una nueva factura. Complete los datos.',
+                    icon: 'info',
+                    confirmButtonText: 'Entendido'
+                }).then(() => {
+                    // Recargar la página o limpiar los campos
+                    window.location.reload(); // Opcional: recargar la página
+                });
             });
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
@@ -87,35 +96,51 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Mostrar la alerta al cargar la página
+    Swal.fire({
+        title: 'Está en la sección de Facturas',
+        text: 'Recuerde que está realizando una factura, no un presupuesto.',
+        icon: 'info',
+        confirmButtonText: 'Entendido'
+    });
+
     const entradaBusqueda = document.getElementById('entradaBusqueda');
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+    let timeoutId;
 
     entradaBusqueda.addEventListener('input', async (e) => {
         const busqueda = e.target.value;
         resultadosBusqueda.innerHTML = '';
 
         if (!busqueda.trim()) {
+            resultadosBusqueda.style.display = 'none';
             return;
         }
+
         const url = '/productos/api/buscar?q=' + busqueda;
         const respuesta = await fetch(url);
         const productos = await respuesta.json();
         const limite = 5;
         const productosLimitados = productos.slice(0, limite);
+
         productosLimitados.forEach((producto) => {
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
+
             const contenedor = document.createElement('div');
             contenedor.classList.add('resultado-contenedor');
+
             if (producto.imagenes && producto.imagenes.length > 0) {
                 const imagen = document.createElement('img');
                 imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
                 imagen.classList.add('miniatura');
                 contenedor.appendChild(imagen);
             }
+
             const nombreProducto = document.createElement('span');
             nombreProducto.textContent = producto.nombre;
             contenedor.appendChild(nombreProducto);
+
             resultado.appendChild(contenedor);
 
             resultado.addEventListener('mouseenter', function() {
@@ -129,28 +154,57 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             resultado.addEventListener('click', () => {
-                resultadosBusqueda.innerHTML = '';
                 const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+
+                // Verificar si el producto ya existe en la tabla
+                const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === producto.codigo);
+                if (productoExistente) {
+                    Swal.fire({
+                        title: 'Producto Duplicado',
+                        text: 'Este producto ya ha sido añadido a la lista.',
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido'
+                    });
+                    return;
+                }
+
+                // Agregar la fila con la imagen
                 const filaFactura = tablaFactura.insertRow();
-                filaFactura.insertCell(0).textContent = producto.codigo;
-                filaFactura.insertCell(1).textContent = producto.nombre;
-                const cellPrecio = filaFactura.insertCell(2);
+
+                // Celda para la imagen
+                const cellImagen = filaFactura.insertCell(0);
+                if (producto.imagenes && producto.imagenes.length > 0) {
+                    const imagen = document.createElement('img');
+                    imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
+                    imagen.classList.add('miniatura-tabla');
+                    cellImagen.appendChild(imagen);
+                }
+
+                // Celdas para los demás datos del producto
+                filaFactura.insertCell(1).textContent = producto.codigo;
+                filaFactura.insertCell(2).textContent = producto.nombre;
+
+                const cellPrecio = filaFactura.insertCell(3);
                 const inputPrecio = document.createElement('input');
                 inputPrecio.type = 'text';
                 inputPrecio.value = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
                 inputPrecio.className = 'precio-editable';
                 cellPrecio.appendChild(inputPrecio);
-                const cellCantidad = filaFactura.insertCell(3);
+
+                const cellCantidad = filaFactura.insertCell(4);
                 const inputCantidad = document.createElement('input');
                 inputCantidad.type = 'number';
                 inputCantidad.min = 1;
                 inputCantidad.value = 1;
                 cellCantidad.appendChild(inputCantidad);
-                const cellStock = filaFactura.insertCell(4);
+
+                const cellStock = filaFactura.insertCell(5);
                 cellStock.textContent = producto.stock_actual;
-                const cellSubtotal = filaFactura.insertCell(5);
+
+                const cellSubtotal = filaFactura.insertCell(6);
                 cellSubtotal.textContent = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-                const cellEliminar = filaFactura.insertCell(6);
+
+                const cellEliminar = filaFactura.insertCell(7);
                 const botonEliminar = document.createElement('button');
                 botonEliminar.textContent = '✖';
                 botonEliminar.className = 'boton-eliminar';
@@ -172,21 +226,27 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             resultadosBusqueda.appendChild(resultado);
+            resultadosBusqueda.style.display = 'block';
         });
     });
 
-    // Cerrar el contenedor de búsqueda cuando el mouse sale
     resultadosBusqueda.addEventListener('mouseleave', () => {
-        resultadosBusqueda.innerHTML = '';
-        entradaBusqueda.value = '';
+        timeoutId = setTimeout(() => {
+            resultadosBusqueda.style.display = 'none';
+        }, 300);
+    });
+
+    resultadosBusqueda.addEventListener('mouseenter', () => {
+        clearTimeout(timeoutId);
+        resultadosBusqueda.style.display = 'block';
     });
 });
 
 function updateSubtotal(row, verificarStock = true) {
-    const precio = parseFloat(row.cells[2].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.')) || 0;
-    const cantidad = parseInt(row.cells[3].querySelector('input').value) || 0;
-    const stockActual = parseInt(row.cells[4].textContent.replace(/\$|\./g, '').replace(',', '.')) || 0;
-    const subtotal = precio * cantidad;
+    const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
+    const cantidad = parseInt(row.cells[4].querySelector('input').value);
+    const stockActual = parseInt(row.cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
+    const subtotal = !isNaN(precio) && !isNaN(cantidad) ? precio * cantidad : 0;
     const stockMinimo = 5;
 
     if (verificarStock) {
@@ -197,11 +257,12 @@ function updateSubtotal(row, verificarStock = true) {
                 icon: 'error',
                 confirmButtonText: 'Entendido'
             });
-            row.cells[3].querySelector('input').value = 1;
+            row.cells[4].querySelector('input').value = 1;
             return;
         }
 
         const stockRestante = stockActual - cantidad;
+
         if (stockRestante <= stockMinimo) {
             Swal.fire({
                 title: 'ALERTA',
@@ -212,7 +273,7 @@ function updateSubtotal(row, verificarStock = true) {
         }
     }
 
-    row.cells[5].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    row.cells[6].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     calcularTotal();
 }
 
@@ -220,7 +281,7 @@ function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
     for (let i = 0; i < filasFactura.length; i++) {
-        let subtotal = parseFloat(filasFactura[i].cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
+        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
         subtotal = !isNaN(subtotal) ? subtotal : 0;
         total += subtotal;
     }
