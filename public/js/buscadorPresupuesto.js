@@ -71,7 +71,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 // Mostrar la alerta después de guardar el presupuesto
                 Swal.fire({
                     title: 'Nuevo Presupuesto',
-                    text: 'Está por realizar un nuevo presupuesto. Complete los datos.',
+                    text: 'Estás por realizar un nuevo presupuesto',
                     icon: 'info',
                     confirmButtonText: 'Entendido'
                 }).then(() => {
@@ -95,8 +95,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 document.addEventListener('DOMContentLoaded', () => {
     // Mostrar la alerta al cargar la página
     Swal.fire({
-        title: 'Está en la sección de Presupuestos',
-        text: 'Recuerde que está realizando un presupuesto, no una factura.',
+        title: 'Estas en la sección de Presupuestos',
+        text: 'Recordá que estás realizando un presupuesto, no una factura.',
         icon: 'info',
         confirmButtonText: 'Entendido'
     });

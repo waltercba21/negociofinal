@@ -36,12 +36,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
-    if (fechaFacturaElement) {
-        console.log('Valor de fecha-presupuesto:', fechaFactura);
-    } else {
-        console.error('No se encontró el elemento fecha-presupuesto.');
-    }
-
     const metodosPago = [];
     document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
         metodosPago.push(checkbox.value);
