@@ -13,7 +13,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const codigo = filasFactura[i].cells[1].textContent.trim();
         const descripcion = filasFactura[i].cells[2].textContent.trim();
         const precioInput = filasFactura[i].cells[3].querySelector('input').value;
-        let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
+        let precio_unitario = parseFloat(precioInput.replace(/\$|\./g, '').replace(',', '.').trim());
         let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value);
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
@@ -64,15 +64,13 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 icon: 'success',
                 confirmButtonText: 'Entendido'
             }).then(() => {
-                // Mostrar la alerta después de guardar la factura
                 Swal.fire({
                     title: 'Nueva Factura',
                     text: 'Está por realizar una nueva factura. Complete los datos.',
                     icon: 'info',
                     confirmButtonText: 'Entendido'
                 }).then(() => {
-                    // Recargar la página o limpiar los campos
-                    window.location.reload(); // Opcional: recargar la página
+                    window.location.reload();
                 });
             });
         } else {
@@ -90,7 +88,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Mostrar la alerta al cargar la página
     Swal.fire({
         title: 'Está en la sección de Facturas',
         text: 'Recuerde que está realizando una factura, no un presupuesto.',
@@ -150,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
             resultado.addEventListener('click', () => {
                 const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
 
-                // Verificar si el producto ya existe en la tabla
                 const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === producto.codigo);
                 if (productoExistente) {
                     Swal.fire({
@@ -162,10 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // Agregar la fila con la imagen
                 const filaFactura = tablaFactura.insertRow();
 
-                // Celda para la imagen
                 const cellImagen = filaFactura.insertCell(0);
                 if (producto.imagenes && producto.imagenes.length > 0) {
                     const imagen = document.createElement('img');
@@ -174,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     cellImagen.appendChild(imagen);
                 }
 
-                // Celdas para los demás datos del producto
                 filaFactura.insertCell(1).textContent = producto.codigo;
                 filaFactura.insertCell(2).textContent = producto.nombre;
 
@@ -281,4 +274,24 @@ function calcularTotal() {
     }
 
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+
+    const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
+    const interesAmountInput = document.getElementById('interes-amount');
+    const totalFinalAmountInput = document.getElementById('total-final-amount');
+    let interes = 0;
+    let totalConInteres = total;
+
+    if (creditoCheckbox && creditoCheckbox.checked) {
+        interes = total * 0.20;
+        totalConInteres += interes;
+        interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    } else {
+        interesAmountInput.value = '';
+    }
+
+    totalFinalAmountInput.value = totalConInteres.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
+
+document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
+    checkbox.addEventListener('change', calcularTotal);
+});
