@@ -186,7 +186,7 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
 
     // Verificar si el producto ya existe en la tabla
-    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === codigoProducto);
+    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim().toUpperCase() === codigoProducto.trim().toUpperCase());
     if (productoExistente) {
         console.log("Producto ya existe en la tabla:", codigoProducto);
         Swal.fire({
