@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultado.addEventListener('click', () => {
                 const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
 
-                // Verificar si el producto ya existe en la tabla ANTES de agregar la fila
+                // Verificar si el producto ya existe en la tabla por CODIGO
                 const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === producto.codigo);
                 if (productoExistente) {
                     Swal.fire({
