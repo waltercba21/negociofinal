@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.classList.remove('hover-activo');
             });
 
-            resultado.addEventListener('click', () => {
+            resultado.addEventListener('click', function() {
                 const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
 
                 // Verificar si el producto ya existe en la tabla por CODIGO (Antes de agregar la fila)
