@@ -8,6 +8,28 @@ document.getElementById('invoice-form').addEventListener('keydown', function(e) 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
+    // Recopilar los datos de la tabla de productos
+    const invoiceItems = [];
+    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+    for (let i = 0; i < filasFactura.length; i++) {
+        const codigo = filasFactura[i].cells[1].textContent.trim();
+        const descripcion = filasFactura[i].cells[2].textContent.trim();
+        const precioInput = filasFactura[i].cells[3].querySelector('input').value;
+        let precio_unitario = parseFloat(precioInput.replace(/\$|\./g, '').replace(',', '.').trim());
+        let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value);
+        precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
+        cantidad = !isNaN(cantidad) ? cantidad : 1;
+        let subtotal = precio_unitario * cantidad;
+        invoiceItems.push({
+            producto_id: codigo,
+            descripcion,
+            precio_unitario,
+            cantidad,
+            subtotal
+        });
+    }
+
+    // Recopilar los datos del formulario
     const nombreCliente = document.getElementById('nombre-cliente').value.trim();
     const fechaPresupuesto = document.getElementById('fecha-presupuesto').value.trim();
     const totalPresupuesto = document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim();
@@ -22,29 +44,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         return;
     }
 
-    const invoiceItems = [];
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-
-    for (let i = 0; i < filasFactura.length; i++) {
-        const codigo = filasFactura[i].cells[1].textContent.trim();
-        const descripcion = filasFactura[i].cells[2].textContent.trim();
-        let precio_unitario = parseFloat(filasFactura[i].cells[3].querySelector('input').value.replace(/\./g, '').replace(',', '.'));
-        let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value);
-        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
-
-        precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
-        cantidad = !isNaN(cantidad) ? cantidad : 1;
-        subtotal = !isNaN(subtotal) ? subtotal : 0;
-
-        invoiceItems.push({
-            producto_id: codigo,
-            descripcion,
-            precio_unitario,
-            cantidad,
-            subtotal
-        });
-    }
-
+    // Enviar los datos al servidor
     try {
         const response = await fetch('/productos/procesarFormulario', {
             method: 'POST',
@@ -68,7 +68,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 icon: 'success',
                 confirmButtonText: 'Entendido'
             }).then(() => {
-                // Mostrar la alerta después de guardar el presupuesto
                 Swal.fire({
                     title: 'Nuevo Presupuesto',
                     text: 'Está por realizar un nuevo presupuesto. Complete los datos.',
@@ -92,6 +91,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Alerta inicial
     Swal.fire({
         title: 'Está en la sección de Presupuestos',
         text: 'Recuerde que está realizando un presupuesto, no una factura.',
@@ -195,14 +195,12 @@ function agregarProductoDesdeResultado(evento) {
     agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
 }
 
+
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
-    console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
 
     // Verificar si el producto ya existe en la tabla
-    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim().toUpperCase() === codigoProducto.trim().toUpperCase());
-    if (productoExistente) {
-        console.log("Producto ya existe en la tabla:", codigoProducto);
+    if (productoYaExisteEnTabla(tablaFactura, codigoProducto)) {
         Swal.fire({
             title: 'Producto Duplicado',
             text: 'Este producto ya ha sido añadido a la lista.',
@@ -212,11 +210,17 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
         return;
     }
 
-    // Agregar la fila con la imagen
+    // Si no existe, proceder a agregar la fila
     const filaFactura = tablaFactura.insertRow();
-
-    // Celda para la imagen
     const cellImagen = filaFactura.insertCell(0);
+    const cellCodigo = filaFactura.insertCell(1);
+    const cellNombre = filaFactura.insertCell(2);
+    const cellPrecio = filaFactura.insertCell(3);
+    const cellCantidad = filaFactura.insertCell(4);
+    const cellStock = filaFactura.insertCell(5);
+    const cellSubtotal = filaFactura.insertCell(6);
+    const cellEliminar = filaFactura.insertCell(7);
+
     if (imagenProducto) {
         const imagen = document.createElement('img');
         imagen.src = imagenProducto;
@@ -224,55 +228,46 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
         cellImagen.appendChild(imagen);
     }
 
-    // Celdas para los demás datos del producto
-    filaFactura.insertCell(1).textContent = codigoProducto;
-    filaFactura.insertCell(2).textContent = nombreProducto;
+    cellCodigo.textContent = codigoProducto;
+    cellNombre.textContent = nombreProducto;
 
-    const cellPrecio = filaFactura.insertCell(3);
     const inputPrecio = document.createElement('input');
     inputPrecio.type = 'text';
     inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     inputPrecio.className = 'precio-editable';
+    inputPrecio.oninput = () => updateSubtotal(filaFactura, false);
     cellPrecio.appendChild(inputPrecio);
 
-    const cellCantidad = filaFactura.insertCell(4);
     const inputCantidad = document.createElement('input');
     inputCantidad.type = 'number';
     inputCantidad.min = 1;
     inputCantidad.value = 1;
+    inputCantidad.oninput = () => updateSubtotal(filaFactura);
     cellCantidad.appendChild(inputCantidad);
 
-    const cellStock = filaFactura.insertCell(5);
     cellStock.textContent = stockActual;
+    cellSubtotal.textContent = inputPrecio.value;
 
-    const cellSubtotal = filaFactura.insertCell(6);
-    cellSubtotal.textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-    const cellEliminar = filaFactura.insertCell(7);
     const botonEliminar = document.createElement('button');
     botonEliminar.textContent = '✖';
     botonEliminar.className = 'boton-eliminar';
-    botonEliminar.addEventListener('click', function() {
+    botonEliminar.onclick = () => {
         tablaFactura.deleteRow(filaFactura.rowIndex - 1);
         calcularTotal();
-    });
+    };
     cellEliminar.appendChild(botonEliminar);
-
-    inputCantidad.addEventListener('input', function() {
-        updateSubtotal(filaFactura);
-    });
-
-    inputPrecio.addEventListener('input', function() {
-        updateSubtotal(filaFactura, false);
-    });
 
     calcularTotal();
 }
 
+function productoYaExisteEnTabla(tablaFactura, codigoProducto) {
+    return Array.from(tablaFactura.rows).some(row => row.cells[1].textContent.trim().toUpperCase() === codigoProducto.trim().toUpperCase());
+}
+
 function updateSubtotal(row, verificarStock = true) {
-    const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
+    const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/[^0-9,-]/g, '').replace(',', '.'));
     const cantidad = parseInt(row.cells[4].querySelector('input').value);
-    const stockActual = parseInt(row.cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
+    const stockActual = parseInt(row.cells[5].textContent.replace(/\D/g, ''));
     const subtotal = !isNaN(precio) && !isNaN(cantidad) ? precio * cantidad : 0;
     const stockMinimo = 5;
 
@@ -289,7 +284,6 @@ function updateSubtotal(row, verificarStock = true) {
         }
 
         const stockRestante = stockActual - cantidad;
-
         if (stockRestante <= stockMinimo) {
             Swal.fire({
                 title: 'ALERTA',
@@ -308,11 +302,10 @@ function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
     for (let i = 0; i < filasFactura.length; i++) {
-        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
+        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/[^0-9,-]/g, '').replace(',', '.'));
         subtotal = !isNaN(subtotal) ? subtotal : 0;
         total += subtotal;
     }
 
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
 }
