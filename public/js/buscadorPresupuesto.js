@@ -42,7 +42,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     });
 
     try {
-        const response = await fetch('/productos/procesarFormularioFacturas', {
+        const response = await fetch('/productos/procesarFormulario', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
