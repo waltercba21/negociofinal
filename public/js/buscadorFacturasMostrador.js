@@ -146,10 +146,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resultado.addEventListener('click', () => {
                 const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-            
+
+                // Verificar si el producto ya existe en la tabla ANTES de agregar la fila
+                const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === producto.codigo);
+                if (productoExistente) {
+                    Swal.fire({
+                        title: 'Producto Duplicado',
+                        text: 'Este producto ya ha sido añadido a la lista.',
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido'
+                    });
+                    return;
+                }
+
                 // Agregar la fila con la imagen
                 const filaFactura = tablaFactura.insertRow();
-            
+
                 // Celda para la imagen
                 const cellImagen = filaFactura.insertCell(0);
                 if (producto.imagenes && producto.imagenes.length > 0) {
@@ -158,31 +170,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     imagen.classList.add('miniatura-tabla');
                     cellImagen.appendChild(imagen);
                 }
-            
+
                 // Celdas para los demás datos del producto
                 filaFactura.insertCell(1).textContent = producto.codigo;
                 filaFactura.insertCell(2).textContent = producto.nombre;
-            
+
                 const cellPrecio = filaFactura.insertCell(3);
                 const inputPrecio = document.createElement('input');
                 inputPrecio.type = 'text';
                 inputPrecio.value = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
                 inputPrecio.className = 'precio-editable';
                 cellPrecio.appendChild(inputPrecio);
-            
+
                 const cellCantidad = filaFactura.insertCell(4);
                 const inputCantidad = document.createElement('input');
                 inputCantidad.type = 'number';
                 inputCantidad.min = 1;
                 inputCantidad.value = 1;
                 cellCantidad.appendChild(inputCantidad);
-            
+
                 const cellStock = filaFactura.insertCell(5);
                 cellStock.textContent = producto.stock_actual;
-            
+
                 const cellSubtotal = filaFactura.insertCell(6);
                 cellSubtotal.textContent = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-            
+
                 const cellEliminar = filaFactura.insertCell(7);
                 const botonEliminar = document.createElement('button');
                 botonEliminar.textContent = '✖';
@@ -192,28 +204,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     calcularTotal();
                 });
                 cellEliminar.appendChild(botonEliminar);
-            
+
                 inputCantidad.addEventListener('input', function() {
                     updateSubtotal(filaFactura);
                 });
-            
+
                 inputPrecio.addEventListener('input', function() {
                     updateSubtotal(filaFactura, false);
                 });
-            
-                // Verificar si el producto ya existe en la tabla
-                const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === producto.codigo);
-                if (productoExistente) {
-                    Swal.fire({
-                        title: 'Producto Duplicado',
-                        text: 'Este producto ya ha sido añadido a la lista.',
-                        icon: 'warning',
-                        confirmButtonText: 'Entendido'
-                    });
-                    tablaFactura.deleteRow(filaFactura.rowIndex);
-                    calcularTotal();
-                    return;
-                }
+
                 calcularTotal();
             });
 
