@@ -71,12 +71,11 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 // Mostrar la alerta después de guardar el presupuesto
                 Swal.fire({
                     title: 'Nuevo Presupuesto',
-                    text: 'Estás por realizar un nuevo presupuesto',
+                    text: 'Está por realizar un nuevo presupuesto. Complete los datos.',
                     icon: 'info',
                     confirmButtonText: 'Entendido'
                 }).then(() => {
-                    // Recargar la página o limpiar los campos
-                    window.location.reload(); // Opcional: recargar la página
+                    window.location.reload();
                 });
             });
         } else {
@@ -93,10 +92,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Mostrar la alerta al cargar la página
     Swal.fire({
-        title: 'Estas en la sección de Presupuestos',
-        text: 'Recordá que estás realizando un presupuesto, no una factura.',
+        title: 'Está en la sección de Presupuestos',
+        text: 'Recuerde que está realizando un presupuesto, no una factura.',
         icon: 'info',
         confirmButtonText: 'Entendido'
     });
@@ -153,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
             resultado.addEventListener('click', () => {
                 const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
 
-                // Verificar si el producto ya existe en la tabla
                 const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === producto.codigo);
                 if (productoExistente) {
                     Swal.fire({

@@ -13,7 +13,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const codigo = filasFactura[i].cells[1].textContent.trim();
         const descripcion = filasFactura[i].cells[2].textContent.trim();
         const precioInput = filasFactura[i].cells[3].querySelector('input').value;
-        let precio_unitario = parseFloat(precioInput.replace(/\$|\./g, '').replace(',', '.').trim());
+        let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
         let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value);
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
@@ -147,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultado.addEventListener('click', () => {
                 const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
 
+                // Verificar si el producto ya existe en la tabla
                 const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === producto.codigo);
                 if (productoExistente) {
                     Swal.fire({
@@ -158,8 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+                // Agregar la fila con la imagen
                 const filaFactura = tablaFactura.insertRow();
 
+                // Celda para la imagen
                 const cellImagen = filaFactura.insertCell(0);
                 if (producto.imagenes && producto.imagenes.length > 0) {
                     const imagen = document.createElement('img');
@@ -168,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cellImagen.appendChild(imagen);
                 }
 
+                // Celdas para los demás datos del producto
                 filaFactura.insertCell(1).textContent = producto.codigo;
                 filaFactura.insertCell(2).textContent = producto.nombre;
 
