@@ -9,7 +9,7 @@ module.exports ={
             }
             callback(null, results);
         });
-    }, 
+    },
     insertFactura: function(factura, callback) {
         pool.query('INSERT INTO facturas SET ?', factura, function(error, results) {
             if (error) throw error;
