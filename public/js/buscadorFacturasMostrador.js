@@ -146,9 +146,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resultado.addEventListener('click', () => {
                 const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-
+            
                 // Verificar si el producto ya existe en la tabla
-                const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === producto.codigo);
+                const productoExistente = Array.from(tablaFactura.rows).find(row => {
+                    // Compara con el CODIGO del producto, no con el nombre
+                    return row.cells[1].textContent.trim() === producto.codigo;
+                });
+            
                 if (productoExistente) {
                     Swal.fire({
                         title: 'Producto Duplicado',
