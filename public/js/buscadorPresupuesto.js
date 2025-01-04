@@ -7,15 +7,13 @@ document.getElementById('invoice-form').addEventListener('keydown', function(e) 
 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-
-    // Recopilar los datos de la tabla de productos
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[1].textContent.trim();
         const descripcion = filasFactura[i].cells[2].textContent.trim();
         const precioInput = filasFactura[i].cells[3].querySelector('input').value;
-        let precio_unitario = parseFloat(precioInput.replace(/\$|\./g, '').replace(',', '.').trim());
+        let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
         let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value);
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
@@ -28,39 +26,37 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             subtotal
         });
     }
-
-    // Recopilar los datos del formulario
-    const nombreCliente = document.getElementById('nombre-cliente').value.trim();
-    const fechaPresupuesto = document.getElementById('fecha-presupuesto').value.trim();
-    const totalPresupuesto = document.getElementById('total-amount').value.replace(/\./g, '').replace(',', '.').trim();
-
-    if (!nombreCliente || !fechaPresupuesto || !totalPresupuesto) {
-        Swal.fire({
-            title: 'Error',
-            text: 'Por favor complete todos los datos requeridos antes de guardar el presupuesto.',
-            icon: 'warning',
-            confirmButtonText: 'Entendido'
-        });
-        return;
+    const totalFacturaElement = document.getElementById('total-amount');
+    let totalFactura = '0';
+    if (totalFacturaElement) {
+        totalFactura = totalFacturaElement.value.replace(/\./g, '').replace(',', '.').replace('$', '').trim();
+    } else {
+        console.error('No se encontró el elemento total-amount.');
     }
+    const fechaFacturaElement = document.getElementById('fecha-presupuesto');
+    const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
-    // Enviar los datos al servidor
+    const metodosPago = [];
+    document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
+        metodosPago.push(checkbox.value);
+    });
+
     try {
-        const response = await fetch('/productos/procesarFormulario', {
+        const response = await fetch('/productos/procesarFormularioFacturas', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                nombreCliente,
-                fechaPresupuesto,
-                totalPresupuesto,
-                invoiceItems
+                nombreCliente: document.getElementById('nombre-cliente').value.trim(),
+                fechaPresupuesto: fechaFactura,
+                totalPresupuesto: totalFactura,
+                invoiceItems,
+                metodosPago: metodosPago.join(', ')
             })
         });
 
         const data = await response.json();
-
         if (response.ok) {
             Swal.fire({
                 title: '¡Éxito!',
@@ -69,8 +65,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 confirmButtonText: 'Entendido'
             }).then(() => {
                 Swal.fire({
-                    title: 'Nuevo Presupuesto',
-                    text: 'Está por realizar un nuevo presupuesto. Complete los datos.',
+                    title: 'Nueva Factura',
+                    text: 'Está por realizar una nueva factura. Complete los datos.',
                     icon: 'info',
                     confirmButtonText: 'Entendido'
                 }).then(() => {
@@ -81,6 +77,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             throw new Error(data.error || 'Error al procesar el formulario');
         }
     } catch (error) {
+        console.error('Error al enviar el formulario:', error);
         Swal.fire({
             title: 'Error',
             text: 'Error al enviar formulario: ' + error.message,
@@ -91,10 +88,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Alerta inicial
     Swal.fire({
-        title: 'Está en la sección de Presupuestos',
-        text: 'Recuerde que está realizando un presupuesto, no una factura.',
+        title: 'Está en la sección de Facturas',
+        text: 'Recuerde que está realizando una factura, no un presupuesto.',
         icon: 'info',
         confirmButtonText: 'Entendido'
     });
@@ -115,19 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = '/productos/api/buscar?q=' + busqueda;
         const respuesta = await fetch(url);
         const productos = await respuesta.json();
+        console.log("Productos recibidos:", productos);
         const limite = 5;
         const productosLimitados = productos.slice(0, limite);
 
         productosLimitados.forEach((producto) => {
+            console.log("Procesando producto:", producto);
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
             resultado.dataset.codigo = producto.codigo;
-            resultado.dataset.nombre = producto.nombre;
-            resultado.dataset.precio_venta = producto.precio_venta;
-            resultado.dataset.stock_actual = producto.stock_actual;
-            if (producto.imagenes && producto.imagenes.length > 0) {
-                resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
-            }
 
             const contenedor = document.createElement('div');
             contenedor.classList.add('resultado-contenedor');
@@ -159,8 +151,22 @@ document.addEventListener('DOMContentLoaded', () => {
             resultadosBusqueda.style.display = 'block';
         });
 
-        // Configurar los listeners para cada resultado de búsqueda
-        configurarListenersParaResultados(productosLimitados);
+        // Evento click para los resultados de búsqueda
+        resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
+            resultado.addEventListener('click', function() {
+                const codigoProducto = this.dataset.codigo;
+                console.log("Código del producto clickeado:", codigoProducto);
+
+                const productoSeleccionado = productosLimitados.find(p => p.codigo === codigoProducto);
+                console.log("Producto seleccionado:", productoSeleccionado);
+
+                if (productoSeleccionado) {
+                    agregarProductoATabla(productoSeleccionado.codigo, productoSeleccionado.nombre, productoSeleccionado.precio_venta, productoSeleccionado.stock_actual, productoSeleccionado.imagenes && productoSeleccionado.imagenes.length > 0 ? '/uploads/productos/' + productoSeleccionado.imagenes[0].imagen : null);
+                } else {
+                    console.error('Producto no encontrado:', codigoProducto);
+                }
+            });
+        });
     });
 
     resultadosBusqueda.addEventListener('mouseleave', () => {
@@ -175,52 +181,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function configurarListenersParaResultados(productos) {
-    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-    resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
-        resultado.removeEventListener('click', agregarProductoDesdeResultado);
-        resultado.addEventListener('click', agregarProductoDesdeResultado);
-    });
-}
-
-function agregarProductoDesdeResultado(evento) {
-    const resultado = evento.currentTarget;
-    const codigoProducto = resultado.dataset.codigo;
-    const nombreProducto = resultado.dataset.nombre;
-    const precioVenta = resultado.dataset.precio_venta;
-    const stockActual = resultado.dataset.stock_actual;
-    const imagenProducto = resultado.dataset.imagen;
-
-    console.log("Producto clickeado:", codigoProducto, nombreProducto);
-    agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
-}
-
-
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
+    console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
 
-    // Verificar si el producto ya existe en la tabla
-    if (productoYaExisteEnTabla(tablaFactura, codigoProducto)) {
-        Swal.fire({
-            title: 'Producto Duplicado',
-            text: 'Este producto ya ha sido añadido a la lista.',
-            icon: 'warning',
-            confirmButtonText: 'Entendido'
-        });
-        return;
-    }
-
-    // Si no existe, proceder a agregar la fila
+    // Agregar la fila con la imagen
     const filaFactura = tablaFactura.insertRow();
-    const cellImagen = filaFactura.insertCell(0);
-    const cellCodigo = filaFactura.insertCell(1);
-    const cellNombre = filaFactura.insertCell(2);
-    const cellPrecio = filaFactura.insertCell(3);
-    const cellCantidad = filaFactura.insertCell(4);
-    const cellStock = filaFactura.insertCell(5);
-    const cellSubtotal = filaFactura.insertCell(6);
-    const cellEliminar = filaFactura.insertCell(7);
 
+    // Celda para la imagen
+    const cellImagen = filaFactura.insertCell(0);
     if (imagenProducto) {
         const imagen = document.createElement('img');
         imagen.src = imagenProducto;
@@ -228,46 +197,55 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
         cellImagen.appendChild(imagen);
     }
 
-    cellCodigo.textContent = codigoProducto;
-    cellNombre.textContent = nombreProducto;
+    // Celdas para los demás datos del producto
+    filaFactura.insertCell(1).textContent = codigoProducto;
+    filaFactura.insertCell(2).textContent = nombreProducto;
 
+    const cellPrecio = filaFactura.insertCell(3);
     const inputPrecio = document.createElement('input');
     inputPrecio.type = 'text';
     inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     inputPrecio.className = 'precio-editable';
-    inputPrecio.oninput = () => updateSubtotal(filaFactura, false);
     cellPrecio.appendChild(inputPrecio);
 
+    const cellCantidad = filaFactura.insertCell(4);
     const inputCantidad = document.createElement('input');
     inputCantidad.type = 'number';
     inputCantidad.min = 1;
     inputCantidad.value = 1;
-    inputCantidad.oninput = () => updateSubtotal(filaFactura);
     cellCantidad.appendChild(inputCantidad);
 
+    const cellStock = filaFactura.insertCell(5);
     cellStock.textContent = stockActual;
-    cellSubtotal.textContent = inputPrecio.value;
 
+    const cellSubtotal = filaFactura.insertCell(6);
+    cellSubtotal.textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+
+    const cellEliminar = filaFactura.insertCell(7);
     const botonEliminar = document.createElement('button');
     botonEliminar.textContent = '✖';
     botonEliminar.className = 'boton-eliminar';
-    botonEliminar.onclick = () => {
+    botonEliminar.addEventListener('click', function() {
         tablaFactura.deleteRow(filaFactura.rowIndex - 1);
         calcularTotal();
-    };
+    });
     cellEliminar.appendChild(botonEliminar);
+
+    inputCantidad.addEventListener('input', function() {
+        updateSubtotal(filaFactura);
+    });
+
+    inputPrecio.addEventListener('input', function() {
+        updateSubtotal(filaFactura, false);
+    });
 
     calcularTotal();
 }
 
-function productoYaExisteEnTabla(tablaFactura, codigoProducto) {
-    return Array.from(tablaFactura.rows).some(row => row.cells[1].textContent.trim().toUpperCase() === codigoProducto.trim().toUpperCase());
-}
-
 function updateSubtotal(row, verificarStock = true) {
-    const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/[^0-9,-]/g, '').replace(',', '.'));
+    const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
     const cantidad = parseInt(row.cells[4].querySelector('input').value);
-    const stockActual = parseInt(row.cells[5].textContent.replace(/\D/g, ''));
+    const stockActual = parseInt(row.cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
     const subtotal = !isNaN(precio) && !isNaN(cantidad) ? precio * cantidad : 0;
     const stockMinimo = 5;
 
@@ -284,6 +262,7 @@ function updateSubtotal(row, verificarStock = true) {
         }
 
         const stockRestante = stockActual - cantidad;
+
         if (stockRestante <= stockMinimo) {
             Swal.fire({
                 title: 'ALERTA',
@@ -302,10 +281,30 @@ function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
     for (let i = 0; i < filasFactura.length; i++) {
-        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/[^0-9,-]/g, '').replace(',', '.'));
+        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
         subtotal = !isNaN(subtotal) ? subtotal : 0;
         total += subtotal;
     }
 
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+
+    const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
+    const interesAmountInput = document.getElementById('interes-amount');
+    const totalFinalAmountInput = document.getElementById('total-final-amount');
+    let interes = 0;
+    let totalConInteres = total;
+
+    if (creditoCheckbox && creditoCheckbox.checked) {
+        interes = total * 0.20;
+        totalConInteres += interes;
+        interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    } else {
+        interesAmountInput.value = '';
+    }
+
+    totalFinalAmountInput.value = totalConInteres.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
+
+document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
+    checkbox.addEventListener('change', calcularTotal);
+});
