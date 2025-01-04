@@ -1,11 +1,11 @@
-document.getElementById('invoice-form').addEventListener('keydown', function (e) {
+document.getElementById('invoice-form').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
         return false;
     }
 });
 
-document.getElementById('invoice-form').addEventListener('submit', async function (e) {
+document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
@@ -37,7 +37,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
     const metodosPago = [];
-    document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function (checkbox) {
+    document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
         metodosPago.push(checkbox.value);
     });
 
@@ -137,14 +137,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resultado.appendChild(contenedor);
 
-            resultado.addEventListener('mouseenter', function () {
+            resultado.addEventListener('mouseenter', function() {
                 const resultados = document.querySelectorAll('.resultado-busqueda');
                 resultados.forEach(r => r.classList.remove('hover-activo'));
                 this.classList.add('hover-activo');
             });
 
-            resultado.addEventListener('mouseleave', function () {
+            resultado.addEventListener('mouseleave', function() {
                 this.classList.remove('hover-activo');
+            });
+
+            resultado.addEventListener('click', function(event) {
+                const codigoProducto = this.dataset.codigo;
+                const nombreProducto = this.dataset.nombre;
+                const precioVenta = this.dataset.precio_venta;
+                const stockActual = this.dataset.stock_actual;
+                const imagenProducto = this.dataset.imagen;
+        
+                console.log("Producto clickeado:", codigoProducto, nombreProducto);
+                agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
             });
 
             resultadosBusqueda.appendChild(resultado);
@@ -167,33 +178,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function configurarListenersParaResultados(productos) {
-    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-    resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
-        resultado.addEventListener('click', function () {
-            const codigoProducto = this.dataset.codigo;
-            const productoSeleccionado = productos.find(p => p.codigo === codigoProducto);
+function agregarProductoDesdeResultado(evento) {
+    const resultado = evento.currentTarget;
+    const codigoProducto = resultado.dataset.codigo;
+    const nombreProducto = resultado.dataset.nombre;
+    const precioVenta = resultado.dataset.precio_venta;
+    const stockActual = resultado.dataset.stock_actual;
+    const imagenProducto = resultado.dataset.imagen;
 
-            if (productoSeleccionado) {
-                agregarProductoATabla(
-                    productoSeleccionado.codigo,
-                    productoSeleccionado.nombre,
-                    productoSeleccionado.precio_venta,
-                    productoSeleccionado.stock_actual,
-                    productoSeleccionado.imagenes && productoSeleccionado.imagenes.length > 0
-                        ? '/uploads/productos/' + productoSeleccionado.imagenes[0].imagen
-                        : null
-                );
-            } else {
-                console.error('Producto no encontrado:', codigoProducto);
-            }
-        });
-    });
+    console.log("Producto clickeado:", codigoProducto, nombreProducto);
+    agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
 }
 
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
     console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+
+    // Verificar si el producto ya existe en la tabla
+    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim().toUpperCase() === codigoProducto.trim().toUpperCase());
+    if (productoExistente) {
+        console.log("Producto ya existe en la tabla:", codigoProducto);
+        Swal.fire({
+            title: 'Producto Duplicado',
+            text: 'Este producto ya ha sido añadido a la lista.',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
 
     // Agregar la fila con la imagen
     const filaFactura = tablaFactura.insertRow();
@@ -235,17 +247,17 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     const botonEliminar = document.createElement('button');
     botonEliminar.textContent = '✖';
     botonEliminar.className = 'boton-eliminar';
-    botonEliminar.addEventListener('click', function () {
+    botonEliminar.addEventListener('click', function() {
         tablaFactura.deleteRow(filaFactura.rowIndex - 1);
         calcularTotal();
     });
     cellEliminar.appendChild(botonEliminar);
 
-    inputCantidad.addEventListener('input', function () {
+    inputCantidad.addEventListener('input', function() {
         updateSubtotal(filaFactura);
     });
 
-    inputPrecio.addEventListener('input', function () {
+    inputPrecio.addEventListener('input', function() {
         updateSubtotal(filaFactura, false);
     });
 
