@@ -1,11 +1,11 @@
-document.getElementById('invoice-form').addEventListener('keydown', function(e) {
+document.getElementById('invoice-form').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
         e.preventDefault();
         return false;
     }
 });
 
-document.getElementById('invoice-form').addEventListener('submit', async function(e) {
+document.getElementById('invoice-form').addEventListener('submit', async function (e) {
     e.preventDefault();
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
@@ -37,7 +37,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
     const metodosPago = [];
-    document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
+    document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function (checkbox) {
         metodosPago.push(checkbox.value);
     });
 
@@ -137,13 +137,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resultado.appendChild(contenedor);
 
-            resultado.addEventListener('mouseenter', function() {
+            resultado.addEventListener('mouseenter', function () {
                 const resultados = document.querySelectorAll('.resultado-busqueda');
                 resultados.forEach(r => r.classList.remove('hover-activo'));
                 this.classList.add('hover-activo');
             });
 
-            resultado.addEventListener('mouseleave', function() {
+            resultado.addEventListener('mouseleave', function () {
                 this.classList.remove('hover-activo');
             });
 
@@ -151,22 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
             resultadosBusqueda.style.display = 'block';
         });
 
-        // Evento click para los resultados de búsqueda
-        resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
-            resultado.addEventListener('click', function() {
-                const codigoProducto = this.dataset.codigo;
-                console.log("Código del producto clickeado:", codigoProducto);
-
-                const productoSeleccionado = productosLimitados.find(p => p.codigo === codigoProducto);
-                console.log("Producto seleccionado:", productoSeleccionado);
-
-                if (productoSeleccionado) {
-                    agregarProductoATabla(productoSeleccionado.codigo, productoSeleccionado.nombre, productoSeleccionado.precio_venta, productoSeleccionado.stock_actual, productoSeleccionado.imagenes && productoSeleccionado.imagenes.length > 0 ? '/uploads/productos/' + productoSeleccionado.imagenes[0].imagen : null);
-                } else {
-                    console.error('Producto no encontrado:', codigoProducto);
-                }
-            });
-        });
+        // Configurar los listeners para cada resultado de búsqueda
+        configurarListenersParaResultados(productosLimitados);
     });
 
     resultadosBusqueda.addEventListener('mouseleave', () => {
@@ -180,6 +166,30 @@ document.addEventListener('DOMContentLoaded', () => {
         resultadosBusqueda.style.display = 'block';
     });
 });
+
+function configurarListenersParaResultados(productos) {
+    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+    resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
+        resultado.addEventListener('click', function () {
+            const codigoProducto = this.dataset.codigo;
+            const productoSeleccionado = productos.find(p => p.codigo === codigoProducto);
+
+            if (productoSeleccionado) {
+                agregarProductoATabla(
+                    productoSeleccionado.codigo,
+                    productoSeleccionado.nombre,
+                    productoSeleccionado.precio_venta,
+                    productoSeleccionado.stock_actual,
+                    productoSeleccionado.imagenes && productoSeleccionado.imagenes.length > 0
+                        ? '/uploads/productos/' + productoSeleccionado.imagenes[0].imagen
+                        : null
+                );
+            } else {
+                console.error('Producto no encontrado:', codigoProducto);
+            }
+        });
+    });
+}
 
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
     console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
@@ -225,17 +235,17 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     const botonEliminar = document.createElement('button');
     botonEliminar.textContent = '✖';
     botonEliminar.className = 'boton-eliminar';
-    botonEliminar.addEventListener('click', function() {
+    botonEliminar.addEventListener('click', function () {
         tablaFactura.deleteRow(filaFactura.rowIndex - 1);
         calcularTotal();
     });
     cellEliminar.appendChild(botonEliminar);
 
-    inputCantidad.addEventListener('input', function() {
+    inputCantidad.addEventListener('input', function () {
         updateSubtotal(filaFactura);
     });
 
-    inputPrecio.addEventListener('input', function() {
+    inputPrecio.addEventListener('input', function () {
         updateSubtotal(filaFactura, false);
     });
 
