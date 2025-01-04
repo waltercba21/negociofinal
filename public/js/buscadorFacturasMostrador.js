@@ -120,12 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
             resultado.dataset.codigo = producto.codigo;
-            resultado.dataset.nombre = producto.nombre;
-            resultado.dataset.precio_venta = producto.precio_venta;
-            resultado.dataset.stock_actual = producto.stock_actual;
-            if (producto.imagenes && producto.imagenes.length > 0) {
-                resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
-            }
 
             const contenedor = document.createElement('div');
             contenedor.classList.add('resultado-contenedor');
@@ -157,8 +151,22 @@ document.addEventListener('DOMContentLoaded', () => {
             resultadosBusqueda.style.display = 'block';
         });
 
-        // Configurar los listeners para cada resultado de búsqueda
-        configurarListenersParaResultados();
+        // Evento click para los resultados de búsqueda
+        resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
+            resultado.addEventListener('click', function() {
+                const codigoProducto = this.dataset.codigo;
+                console.log("Código del producto clickeado:", codigoProducto);
+
+                const productoSeleccionado = productosLimitados.find(p => p.codigo === codigoProducto);
+                console.log("Producto seleccionado:", productoSeleccionado);
+
+                if (productoSeleccionado) {
+                    agregarProductoATabla(productoSeleccionado.codigo, productoSeleccionado.nombre, productoSeleccionado.precio_venta, productoSeleccionado.stock_actual, productoSeleccionado.imagenes && productoSeleccionado.imagenes.length > 0 ? '/uploads/productos/' + productoSeleccionado.imagenes[0].imagen : null);
+                } else {
+                    console.error('Producto no encontrado:', codigoProducto);
+                }
+            });
+        });
     });
 
     resultadosBusqueda.addEventListener('mouseleave', () => {
@@ -173,42 +181,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function configurarListenersParaResultados() {
-    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-    resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
-        resultado.removeEventListener('click', agregarProductoDesdeResultado);
-        resultado.addEventListener('click', agregarProductoDesdeResultado);
-    });
-}
-
-function agregarProductoDesdeResultado(evento) {
-    const resultado = evento.currentTarget;
-    const codigoProducto = resultado.dataset.codigo;
-    const nombreProducto = resultado.dataset.nombre;
-    const precioVenta = resultado.dataset.precio_venta;
-    const stockActual = resultado.dataset.stock_actual;
-    const imagenProducto = resultado.dataset.imagen;
-
-    console.log("Producto clickeado:", codigoProducto, nombreProducto);
-    agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
-}
-
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
     console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-
-    // Verificar si el producto ya existe en la tabla
-    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim().toUpperCase() === codigoProducto.trim().toUpperCase());
-    if (productoExistente) {
-        console.log("Producto ya existe en la tabla:", codigoProducto);
-        Swal.fire({
-            title: 'Producto Duplicado',
-            text: 'Este producto ya ha sido añadido a la lista.',
-            icon: 'warning',
-            confirmButtonText: 'Entendido'
-        });
-        return;
-    }
 
     // Agregar la fila con la imagen
     const filaFactura = tablaFactura.insertRow();
