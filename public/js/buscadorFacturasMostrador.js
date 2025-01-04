@@ -111,15 +111,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = '/productos/api/buscar?q=' + busqueda;
         const respuesta = await fetch(url);
         const productos = await respuesta.json();
-        console.log("Productos recibidos:", productos);
+        console.log("Productos recibidos:", productos); // LOG 1: Verifica los productos recibidos
+
         const limite = 5;
         const productosLimitados = productos.slice(0, limite);
 
         productosLimitados.forEach((producto) => {
-            console.log("Procesando producto:", producto);
+            console.log("Procesando producto:", producto); // LOG 2: Verifica el producto actual
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
-            resultado.dataset.codigo = producto.codigo;
+            resultado.dataset.codigo = producto.codigo; // Añadir el código como dataset
+            resultado.dataset.nombre = producto.nombre;
+            resultado.dataset.precio_venta = producto.precio_venta;
+            resultado.dataset.stock_actual = producto.stock_actual;
+            if (producto.imagenes && producto.imagenes.length > 0) {
+                resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
+            }
 
             const contenedor = document.createElement('div');
             contenedor.classList.add('resultado-contenedor');
@@ -147,25 +154,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.classList.remove('hover-activo');
             });
 
-            resultadosBusqueda.appendChild(resultado);
-            resultadosBusqueda.style.display = 'block';
-        });
-
-        // Evento click para los resultados de búsqueda
-        resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
+            // Asociar el evento click a cada resultado individualmente
             resultado.addEventListener('click', function() {
                 const codigoProducto = this.dataset.codigo;
+                const nombreProducto = this.dataset.nombre;
+                const precioVenta = this.dataset.precio_venta;
+                const stockActual = this.dataset.stock_actual;
+                const imagenProducto = this.dataset.imagen;
+
                 console.log("Código del producto clickeado:", codigoProducto);
 
-                const productoSeleccionado = productosLimitados.find(p => p.codigo === codigoProducto);
-                console.log("Producto seleccionado:", productoSeleccionado); 
-
-                if (productoSeleccionado) {
-                    agregarProductoATabla(productoSeleccionado);
-                } else {
-                    console.error('Producto no encontrado:', codigoProducto);
-                }
+                agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
             });
+
+            resultadosBusqueda.appendChild(resultado);
+            resultadosBusqueda.style.display = 'block';
         });
     });
 
@@ -181,14 +184,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function agregarProductoATabla(producto) {
-    console.log("Agregando producto a tabla:", producto);
+function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
+    console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-
+  
     // Verificar si el producto ya existe en la tabla
-    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim().toUpperCase() === producto.codigo.trim().toUpperCase());
+    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === codigoProducto);
     if (productoExistente) {
-        console.log("Producto ya existe en la tabla:", producto.codigo);
+        console.log("Producto ya existe en la tabla:", codigoProducto);
         Swal.fire({
             title: 'Producto Duplicado',
             text: 'Este producto ya ha sido añadido a la lista.',
@@ -197,43 +200,43 @@ function agregarProductoATabla(producto) {
         });
         return;
     }
-
+  
     // Agregar la fila con la imagen
     const filaFactura = tablaFactura.insertRow();
-
+  
     // Celda para la imagen
     const cellImagen = filaFactura.insertCell(0);
-    if (producto.imagenes && producto.imagenes.length > 0) {
+    if (imagenProducto) {
         const imagen = document.createElement('img');
-        imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
+        imagen.src = imagenProducto;
         imagen.classList.add('miniatura-tabla');
         cellImagen.appendChild(imagen);
     }
-
+  
     // Celdas para los demás datos del producto
-    filaFactura.insertCell(1).textContent = producto.codigo;
-    filaFactura.insertCell(2).textContent = producto.nombre;
-
+    filaFactura.insertCell(1).textContent = codigoProducto;
+    filaFactura.insertCell(2).textContent = nombreProducto;
+  
     const cellPrecio = filaFactura.insertCell(3);
     const inputPrecio = document.createElement('input');
     inputPrecio.type = 'text';
-    inputPrecio.value = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     inputPrecio.className = 'precio-editable';
     cellPrecio.appendChild(inputPrecio);
-
+  
     const cellCantidad = filaFactura.insertCell(4);
     const inputCantidad = document.createElement('input');
     inputCantidad.type = 'number';
     inputCantidad.min = 1;
     inputCantidad.value = 1;
     cellCantidad.appendChild(inputCantidad);
-
+  
     const cellStock = filaFactura.insertCell(5);
-    cellStock.textContent = producto.stock_actual;
-
+    cellStock.textContent = stockActual;
+  
     const cellSubtotal = filaFactura.insertCell(6);
-    cellSubtotal.textContent = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
+    cellSubtotal.textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+  
     const cellEliminar = filaFactura.insertCell(7);
     const botonEliminar = document.createElement('button');
     botonEliminar.textContent = '✖';
@@ -243,17 +246,18 @@ function agregarProductoATabla(producto) {
         calcularTotal();
     });
     cellEliminar.appendChild(botonEliminar);
-
+  
     inputCantidad.addEventListener('input', function() {
         updateSubtotal(filaFactura);
     });
-
+  
     inputPrecio.addEventListener('input', function() {
         updateSubtotal(filaFactura, false);
     });
-
+  
     calcularTotal();
-}
+  }
+  
 
 function updateSubtotal(row, verificarStock = true) {
     const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
