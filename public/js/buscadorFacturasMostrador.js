@@ -111,20 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = '/productos/api/buscar?q=' + busqueda;
         const respuesta = await fetch(url);
         const productos = await respuesta.json();
-
-        // LOG 1: Verifica los productos recibidos
         console.log("Productos recibidos:", productos);
-
         const limite = 5;
         const productosLimitados = productos.slice(0, limite);
 
         productosLimitados.forEach((producto) => {
-            // LOG 2: Verifica el producto actual
             console.log("Procesando producto:", producto);
-
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
-            resultado.dataset.codigo = producto.codigo; // Añadir el código como dataset
+            resultado.dataset.codigo = producto.codigo;
 
             const contenedor = document.createElement('div');
             contenedor.classList.add('resultado-contenedor');
@@ -160,12 +155,10 @@ document.addEventListener('DOMContentLoaded', () => {
         resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
             resultado.addEventListener('click', function() {
                 const codigoProducto = this.dataset.codigo;
-                // LOG 3: Verifica el código del producto clickeado
                 console.log("Código del producto clickeado:", codigoProducto);
 
                 const productoSeleccionado = productosLimitados.find(p => p.codigo === codigoProducto);
-                // LOG 4: Verifica el producto seleccionado
-                console.log("Producto seleccionado:", productoSeleccionado);
+                console.log("Producto seleccionado:", productoSeleccionado); 
 
                 if (productoSeleccionado) {
                     agregarProductoATabla(productoSeleccionado);
@@ -189,15 +182,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function agregarProductoATabla(producto) {
-    // LOG 5: Verifica que la función se llama y el producto
     console.log("Agregando producto a tabla:", producto);
-
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
 
     // Verificar si el producto ya existe en la tabla
-    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === producto.codigo);
+    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim().toUpperCase() === producto.codigo.trim().toUpperCase());
     if (productoExistente) {
-        // LOG 6: Verifica si se detecta el duplicado
         console.log("Producto ya existe en la tabla:", producto.codigo);
         Swal.fire({
             title: 'Producto Duplicado',
