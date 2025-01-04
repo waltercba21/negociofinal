@@ -120,6 +120,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
             resultado.dataset.codigo = producto.codigo;
+            resultado.dataset.nombre = producto.nombre;
+            resultado.dataset.precio_venta = producto.precio_venta;
+            resultado.dataset.stock_actual = producto.stock_actual;
+            if (producto.imagenes && producto.imagenes.length > 0) {
+                resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
+            }
 
             const contenedor = document.createElement('div');
             contenedor.classList.add('resultado-contenedor');
@@ -147,13 +153,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.classList.remove('hover-activo');
             });
 
-            resultado.addEventListener('click', function(event) {
+            // Asociar el evento click directamente a cada resultado
+            resultado.addEventListener('click', function() {
                 const codigoProducto = this.dataset.codigo;
                 const nombreProducto = this.dataset.nombre;
                 const precioVenta = this.dataset.precio_venta;
                 const stockActual = this.dataset.stock_actual;
                 const imagenProducto = this.dataset.imagen;
-        
+
                 console.log("Producto clickeado:", codigoProducto, nombreProducto);
                 agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
             });
@@ -161,9 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
             resultadosBusqueda.appendChild(resultado);
             resultadosBusqueda.style.display = 'block';
         });
-
-        // Configurar los listeners para cada resultado de búsqueda
-        configurarListenersParaResultados(productosLimitados);
     });
 
     resultadosBusqueda.addEventListener('mouseleave', () => {
@@ -178,34 +182,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function agregarProductoDesdeResultado(evento) {
-    const resultado = evento.currentTarget;
-    const codigoProducto = resultado.dataset.codigo;
-    const nombreProducto = resultado.dataset.nombre;
-    const precioVenta = resultado.dataset.precio_venta;
-    const stockActual = resultado.dataset.stock_actual;
-    const imagenProducto = resultado.dataset.imagen;
-
-    console.log("Producto clickeado:", codigoProducto, nombreProducto);
-    agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
-}
-
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
     console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-
-    // Verificar si el producto ya existe en la tabla
-    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim().toUpperCase() === codigoProducto.trim().toUpperCase());
-    if (productoExistente) {
-        console.log("Producto ya existe en la tabla:", codigoProducto);
-        Swal.fire({
-            title: 'Producto Duplicado',
-            text: 'Este producto ya ha sido añadido a la lista.',
-            icon: 'warning',
-            confirmButtonText: 'Entendido'
-        });
-        return;
-    }
 
     // Agregar la fila con la imagen
     const filaFactura = tablaFactura.insertRow();
