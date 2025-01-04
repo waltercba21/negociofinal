@@ -121,6 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
         productosLimitados.forEach((producto) => {
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
+            resultado.dataset.codigo = producto.codigo;
+            resultado.dataset.nombre = producto.nombre;
+            resultado.dataset.precio_venta = producto.precio_venta;
+            resultado.dataset.stock_actual = producto.stock_actual;
+            if (producto.imagenes && producto.imagenes.length > 0) {
+                resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
+            }
 
             const contenedor = document.createElement('div');
             contenedor.classList.add('resultado-contenedor');
@@ -148,80 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.classList.remove('hover-activo');
             });
 
-            resultado.addEventListener('click', () => {
-                const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-
-                const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim() === producto.codigo);
-                if (productoExistente) {
-                    Swal.fire({
-                        title: 'Producto Duplicado',
-                        text: 'Este producto ya ha sido añadido a la lista.',
-                        icon: 'warning',
-                        confirmButtonText: 'Entendido'
-                    });
-                    return;
-                }
-
-                // Agregar la fila con la imagen
-                const filaFactura = tablaFactura.insertRow();
-
-                // Celda para la imagen
-                const cellImagen = filaFactura.insertCell(0);
-                if (producto.imagenes && producto.imagenes.length > 0) {
-                    const imagen = document.createElement('img');
-                    imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
-                    imagen.classList.add('miniatura-tabla');
-                    cellImagen.appendChild(imagen);
-                }
-
-                // Celdas para los demás datos del producto
-                filaFactura.insertCell(1).textContent = producto.codigo;
-                filaFactura.insertCell(2).textContent = producto.nombre;
-
-                const cellPrecio = filaFactura.insertCell(3);
-                const inputPrecio = document.createElement('input');
-                inputPrecio.type = 'text';
-                inputPrecio.value = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-                inputPrecio.className = 'precio-editable';
-                cellPrecio.appendChild(inputPrecio);
-
-                const cellCantidad = filaFactura.insertCell(4);
-                const inputCantidad = document.createElement('input');
-                inputCantidad.type = 'number';
-                inputCantidad.min = 1;
-                inputCantidad.value = 1;
-                cellCantidad.appendChild(inputCantidad);
-
-                const cellStock = filaFactura.insertCell(5);
-                cellStock.textContent = producto.stock_actual;
-
-                const cellSubtotal = filaFactura.insertCell(6);
-                cellSubtotal.textContent = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-                const cellEliminar = filaFactura.insertCell(7);
-                const botonEliminar = document.createElement('button');
-                botonEliminar.textContent = '✖';
-                botonEliminar.className = 'boton-eliminar';
-                botonEliminar.addEventListener('click', function() {
-                    tablaFactura.deleteRow(filaFactura.rowIndex - 1);
-                    calcularTotal();
-                });
-                cellEliminar.appendChild(botonEliminar);
-
-                inputCantidad.addEventListener('input', function() {
-                    updateSubtotal(filaFactura);
-                });
-
-                inputPrecio.addEventListener('input', function() {
-                    updateSubtotal(filaFactura, false);
-                });
-
-                calcularTotal();
-            });
-
             resultadosBusqueda.appendChild(resultado);
             resultadosBusqueda.style.display = 'block';
         });
+
+        // Configurar los listeners para cada resultado de búsqueda
+        configurarListenersParaResultados(productosLimitados);
     });
 
     resultadosBusqueda.addEventListener('mouseleave', () => {
@@ -235,6 +174,100 @@ document.addEventListener('DOMContentLoaded', () => {
         resultadosBusqueda.style.display = 'block';
     });
 });
+
+function configurarListenersParaResultados(productos) {
+    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+    resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
+        resultado.removeEventListener('click', agregarProductoDesdeResultado);
+        resultado.addEventListener('click', agregarProductoDesdeResultado);
+    });
+}
+
+function agregarProductoDesdeResultado(evento) {
+    const resultado = evento.currentTarget;
+    const codigoProducto = resultado.dataset.codigo;
+    const nombreProducto = resultado.dataset.nombre;
+    const precioVenta = resultado.dataset.precio_venta;
+    const stockActual = resultado.dataset.stock_actual;
+    const imagenProducto = resultado.dataset.imagen;
+
+    console.log("Producto clickeado:", codigoProducto, nombreProducto);
+    agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
+}
+
+function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
+    console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
+    const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+
+    // Verificar si el producto ya existe en la tabla
+    const productoExistente = Array.from(tablaFactura.rows).find(row => row.cells[1].textContent.trim().toUpperCase() === codigoProducto.trim().toUpperCase());
+    if (productoExistente) {
+        console.log("Producto ya existe en la tabla:", codigoProducto);
+        Swal.fire({
+            title: 'Producto Duplicado',
+            text: 'Este producto ya ha sido añadido a la lista.',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
+
+    // Agregar la fila con la imagen
+    const filaFactura = tablaFactura.insertRow();
+
+    // Celda para la imagen
+    const cellImagen = filaFactura.insertCell(0);
+    if (imagenProducto) {
+        const imagen = document.createElement('img');
+        imagen.src = imagenProducto;
+        imagen.classList.add('miniatura-tabla');
+        cellImagen.appendChild(imagen);
+    }
+
+    // Celdas para los demás datos del producto
+    filaFactura.insertCell(1).textContent = codigoProducto;
+    filaFactura.insertCell(2).textContent = nombreProducto;
+
+    const cellPrecio = filaFactura.insertCell(3);
+    const inputPrecio = document.createElement('input');
+    inputPrecio.type = 'text';
+    inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    inputPrecio.className = 'precio-editable';
+    cellPrecio.appendChild(inputPrecio);
+
+    const cellCantidad = filaFactura.insertCell(4);
+    const inputCantidad = document.createElement('input');
+    inputCantidad.type = 'number';
+    inputCantidad.min = 1;
+    inputCantidad.value = 1;
+    cellCantidad.appendChild(inputCantidad);
+
+    const cellStock = filaFactura.insertCell(5);
+    cellStock.textContent = stockActual;
+
+    const cellSubtotal = filaFactura.insertCell(6);
+    cellSubtotal.textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+
+    const cellEliminar = filaFactura.insertCell(7);
+    const botonEliminar = document.createElement('button');
+    botonEliminar.textContent = '✖';
+    botonEliminar.className = 'boton-eliminar';
+    botonEliminar.addEventListener('click', function() {
+        tablaFactura.deleteRow(filaFactura.rowIndex - 1);
+        calcularTotal();
+    });
+    cellEliminar.appendChild(botonEliminar);
+
+    inputCantidad.addEventListener('input', function() {
+        updateSubtotal(filaFactura);
+    });
+
+    inputPrecio.addEventListener('input', function() {
+        updateSubtotal(filaFactura, false);
+    });
+
+    calcularTotal();
+}
 
 function updateSubtotal(row, verificarStock = true) {
     const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
@@ -281,4 +314,5 @@ function calcularTotal() {
     }
 
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+
 }
