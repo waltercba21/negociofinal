@@ -65,8 +65,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 confirmButtonText: 'Entendido'
             }).then(() => {
                 Swal.fire({
-                    title: 'Nueva Factura',
-                    text: 'Está por realizar una nueva factura. Complete los datos.',
+                    title: 'Nuevo Presupuesto',
+                    text: 'Está por realizar un PRESUPUESTO',
                     icon: 'info',
                     confirmButtonText: 'Entendido'
                 }).then(() => {
@@ -89,8 +89,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
 document.addEventListener('DOMContentLoaded', () => {
     Swal.fire({
-        title: 'Está en la sección de Facturas',
-        text: 'Recuerde que está realizando una factura, no un presupuesto.',
+        title: 'Está en la sección PRESUPUESTO',
+        text: 'Recuerde que está realizando un PRESUPUESTO, NO UNA FACTURA',
         icon: 'info',
         confirmButtonText: 'Entendido'
     });
