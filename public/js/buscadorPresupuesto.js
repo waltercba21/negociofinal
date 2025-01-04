@@ -36,12 +36,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
-    const metodosPago = [];
-    document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
-        metodosPago.push(checkbox.value);
-    });
-
     try {
+        // Cambiar la URL a la correcta para procesar presupuestos
         const response = await fetch('/productos/procesarFormulario', {
             method: 'POST',
             headers: {
@@ -52,7 +48,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 fechaPresupuesto: fechaFactura,
                 totalPresupuesto: totalFactura,
                 invoiceItems,
-                metodosPago: metodosPago.join(', ')
+                metodosPago: []  // No hay métodos de pago en presupuesto
             })
         });
 
@@ -66,7 +62,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             }).then(() => {
                 Swal.fire({
                     title: 'Nuevo Presupuesto',
-                    text: 'Está por realizar un PRESUPUESTO',
+                    text: 'Está por realizar un nuevo presupuesto. Complete los datos.',
                     icon: 'info',
                     confirmButtonText: 'Entendido'
                 }).then(() => {
@@ -89,8 +85,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
 document.addEventListener('DOMContentLoaded', () => {
     Swal.fire({
-        title: 'Está en la sección PRESUPUESTO',
-        text: 'Recuerde que está realizando un PRESUPUESTO, NO UNA FACTURA',
+        title: 'Está en la sección de Presupuestos',
+        text: 'Recuerde que está realizando un presupuesto, no una factura.',
         icon: 'info',
         confirmButtonText: 'Entendido'
     });
@@ -101,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     entradaBusqueda.addEventListener('input', async (e) => {
         const busqueda = e.target.value;
-        resultadosBusqueda.innerHTML = ''; 
+        resultadosBusqueda.innerHTML = '';
 
         if (!busqueda.trim()) {
             resultadosBusqueda.style.display = 'none';
@@ -114,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const limite = 5;
         const productosLimitados = productos.slice(0, limite);
 
-        
         productosLimitados.forEach((producto) => {
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
@@ -152,33 +147,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.classList.remove('hover-activo');
             });
 
-            resultado.addEventListener('click', function() {
-                agregarProductoATabla(
-                    producto.codigo, 
-                    producto.nombre, 
-                    producto.precio_venta, 
-                    producto.stock_actual, 
-                    producto.imagenes && producto.imagenes.length > 0 ? '/uploads/productos/' + producto.imagenes[0].imagen : null
-                );
-            });
-
             resultadosBusqueda.appendChild(resultado);
             resultadosBusqueda.style.display = 'block';
         });
-    });
 
-    // Efecto para cerrar la búsqueda al hacer clic fuera de ella
-    document.addEventListener('click', function(event) {
-        if (!entradaBusqueda.contains(event.target) && !resultadosBusqueda.contains(event.target)) {
-            resultadosBusqueda.style.display = 'none';
-        }
-    });
-
-    // Efecto para mostrar la búsqueda al hacer clic en la entrada de búsqueda
-    entradaBusqueda.addEventListener('click', function() {
-        if (resultadosBusqueda.innerHTML.trim() !== '') {
-            resultadosBusqueda.style.display = 'block';
-        }
+        // Configurar los listeners para cada resultado de búsqueda
+        resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
+            resultado.removeEventListener('click', agregarProductoDesdeResultado);
+            resultado.addEventListener('click', agregarProductoDesdeResultado);
+        });
     });
 
     resultadosBusqueda.addEventListener('mouseleave', () => {
@@ -189,8 +166,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     resultadosBusqueda.addEventListener('mouseenter', () => {
         clearTimeout(timeoutId);
+        resultadosBusqueda.style.display = 'block';
     });
 });
+
+function agregarProductoDesdeResultado(evento) {
+    const resultado = evento.currentTarget;
+    const codigoProducto = resultado.dataset.codigo;
+    const nombreProducto = resultado.dataset.nombre;
+    const precioVenta = resultado.dataset.precio_venta;
+    const stockActual = resultado.dataset.stock_actual;
+    const imagenProducto = resultado.dataset.imagen;
+
+    agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
+}
 
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
@@ -297,24 +286,4 @@ function calcularTotal() {
     }
 
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-    const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
-    const interesAmountInput = document.getElementById('interes-amount');
-    const totalFinalAmountInput = document.getElementById('total-final-amount');
-    let interes = 0;
-    let totalConInteres = total;
-
-    if (creditoCheckbox && creditoCheckbox.checked) {
-        interes = total * 0.20;
-        totalConInteres += interes;
-        interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    } else {
-        interesAmountInput.value = '';
-    }
-
-    totalFinalAmountInput.value = totalConInteres.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
-
-document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
-    checkbox.addEventListener('change', calcularTotal);
-});
