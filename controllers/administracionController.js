@@ -69,27 +69,52 @@ module.exports = {
         }
         administracion.insertFactura(nuevaFactura, function(facturaID) {
             console.log("Factura creada con ID:", facturaID);
-            productosFactura.forEach(function(item) {
-                if (item.id && item.cantidad) {
-                    let itemFactura = {
-                        factura_id: facturaID,
-                        producto_id: item.id,
-                        cantidad: item.cantidad,
-                    };
-                    console.log("Item para insertar en la factura:", itemFactura);
-                    administracion.insertarItemFactura(itemFactura);
-                    administracion.actualizarStockProducto(item.id, item.cantidad);
-                } else {
-                    console.error("Item de factura inválido:", item);
-                    return res.status(400).json({ message: 'Item de factura inválido' });
-                }
+    
+            // Usando Promise.all para manejar la asincronía
+            const promesas = productosFactura.map(function(item) {
+                return new Promise((resolve, reject) => {
+                    if (item.id && item.cantidad) {
+                        let itemFactura = {
+                            factura_id: facturaID,
+                            producto_id: item.id,
+                            cantidad: item.cantidad,
+                        };
+                        console.log("Item para insertar en la factura:", itemFactura);
+    
+                        administracion.insertarItemFactura(itemFactura, (error) => {
+                            if (error) {
+                                console.error("Error al insertar item de factura:", error);
+                                return reject(error);
+                            }
+                            // Ahora pasamos el callback a actualizarStockProducto
+                            administracion.actualizarStockProducto(item.id, item.cantidad, (error) => {
+                                if (error) {
+                                    console.error("Error al actualizar stock del producto:", error);
+                                    return reject(error);
+                                }
+                                resolve();
+                            });
+                        });
+                    } else {
+                        console.error("Item de factura inválido:", item);
+                        reject('Item de factura inválido');
+                    }
+                });
             });
-            res.json({
-                message: 'Factura guardada exitosamente',
-                facturaID: facturaID
-            });
+    
+            Promise.all(promesas)
+                .then(() => {
+                    res.json({
+                        message: 'Factura guardada exitosamente',
+                        facturaID: facturaID
+                    });
+                })
+                .catch(error => {
+                    console.error("Error en la operación:", error);
+                    res.status(500).json({ message: 'Error al procesar la factura' });
+                });
         });
-    },    
+    }, 
     listadoFacturas : function(req, res) {
         administracion.getFacturas(function(error, facturas) {
             if (error) {

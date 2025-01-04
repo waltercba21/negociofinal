@@ -15,7 +15,7 @@ var storage = multer.diskStorage({
 var upload = multer({ storage: storage });
 
 router.get('/', administracionController.administracion);
-router.get('/facturas', administracionController.facturas);
+router.get('/facturas', administracionController.facturas); 
 router.post('/facturas', upload.single('comprobante_pago'), administracionController.postFactura);
 router.get('/presupuestos', administracionController.presupuestos);
 router.get('/listadoFacturas', administracionController.listadoFacturas);
