@@ -7,7 +7,8 @@
     
     <h2>Registrate</h2>
 
-    <form action="./register" method="post" class="formulario-register">
+    <form action="./register" method="post" class="formulario-register" autocomplete="off">
+
 
         <label for="nombre">Nombre Completo</label>
         <input type="text" name="nombre" value="<%= locals.oldData ? oldData.nombre : '' %>">
@@ -26,7 +27,8 @@
          <% } %>
 
         <label for="email">Email</label>
-        <input type="text" name="email" value="<%= locals.oldData ? oldData.email : '' %>">
+        <input type="text" name="email" value="<%= locals.oldData ? oldData.email : '' %>" autocomplete="email">
+
         <% if (locals.errors && errors.email) { %>
           <div class="error">
            <%= errors.email.msg %>
