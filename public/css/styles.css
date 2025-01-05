@@ -2938,16 +2938,23 @@ table td img:hover {
     .select-css {
       width: 100%;
     }
+    
     .password-container {
       position: relative;
     }
     
     #eye-icon {
       position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
+      right: 10px; /* Ajusta el espacio a la derecha */
+      bottom: -25px; /* Mueve el ícono hacia abajo */
       cursor: pointer;
+      color: #003f7d; /* Color del ícono, puedes ajustarlo a lo que prefieras */
+      transition: color 0.3s ease; /* Efecto suave al cambiar color */
+    }
+    
+    #eye-icon:hover {
+      color: #004d99; /* Color cuando el cursor pasa por encima */
+      cursor: pointer; /* Cambia el puntero a mano */
     }
     
     #password-tooltip {
@@ -2955,6 +2962,7 @@ table td img:hover {
       color: #888;
       margin-top: 5px;
     }
+    
     
   /*------TODOS LOS PRODUCTOS------*/
   .contenedor-productos {
