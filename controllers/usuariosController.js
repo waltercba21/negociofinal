@@ -11,19 +11,20 @@ module.exports = {
   },
   processRegister: (req, res) => {
     const resultValidation = validationResult(req);
-
+  
     if (!resultValidation.isEmpty()) {
       return res.render('register', {
         errors: resultValidation.mapped(),
         oldData: req.body,
       });
     }
+  
     const email = req.body.email;
     usuario.obtenerPorEmail(email, function (error, datos) {
       if (error) {
         // Manejar el error
       }
-
+  
       if (datos.length > 0) {
         return res.render('register', {
           errors: {
@@ -32,6 +33,7 @@ module.exports = {
           oldData: req.body,
         });
       }
+  
       const password = req.body.password;
       bcryptjs.genSalt(10, function (err, salt) {
         if (err) {
@@ -41,13 +43,17 @@ module.exports = {
           if (err) {
             // Manejar el error
           }
+          // Crear el nuevo usuario, incluyendo todos los campos
           usuario.crear({ ...req.body, password: hash }, function (error) {
-            res.render('login');
+            if (error) {
+              // Manejar el error
+            }
+            res.render('login'); // Redirigir al login después de registrarse
           });
         });
       });
     });
-  },
+  },  
   login: (req, res) => {
     return res.render('login');
   },  

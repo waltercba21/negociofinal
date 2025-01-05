@@ -5,8 +5,14 @@ module.exports = {
     conexion.query('SELECT * FROM usuarios', funcion);
   },
   crear: function (datos, funcion) {
-    conexion.query('INSERT INTO usuarios (nombre,email,password) VALUES (?,?,?)', [datos.nombre, datos.email, datos.password], funcion);
-  },
+    const { nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos } = datos;
+    conexion.query(
+      `INSERT INTO usuarios (nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+      [nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos],
+      funcion
+    );
+  },  
   obtenerPorEmail: function (email, funcion) {
     conexion.query('SELECT * FROM usuarios WHERE email = ?', [email], funcion);
   },
