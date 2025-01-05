@@ -128,6 +128,46 @@ async function cargarLocalidades() {
 // Llamar a cargar provincias al cargar la página
 window.onload = cargarProvincias;
 
+function validarFormulario() {
+  // Obtener los valores de los campos
+  const nombre = document.querySelector('input[name="nombre"]').value;
+  const apellido = document.querySelector('input[name="apellido"]').value;
+  const email = document.querySelector('input[name="email"]').value;
+  const password = document.querySelector('input[name="password"]').value;
+  const confirmarPassword = document.querySelector('input[name="confirmar_password"]').value;
+  const celular = document.querySelector('input[name="celular"]').value;
+  const direccion = document.querySelector('input[name="direccion"]').value;
+  const fechaNacimiento = document.querySelector('input[name="fecha_nacimiento"]').value;
+  const aceptoTerminos = document.querySelector('input[name="acepto_terminos"]').checked;
+
+  // Verificar que los campos no estén vacíos
+  if (!nombre || !apellido || !email || !password || !confirmarPassword || !celular || !direccion || !fechaNacimiento) {
+    alert("Todos los campos son obligatorios.");
+    return false;
+  }
+
+  // Validación de la contraseña (debe tener al menos 8 caracteres, 1 mayúscula y 1 número)
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    alert("La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.");
+    return false;
+  }
+
+  // Verificar que las contraseñas coincidan
+  if (password !== confirmarPassword) {
+    alert("Las contraseñas no coinciden.");
+    return false;
+  }
+
+  // Verificar que el usuario haya aceptado los términos
+  if (!aceptoTerminos) {
+    alert("Debes aceptar los términos y condiciones.");
+    return false;
+  }
+
+  // Si todas las validaciones pasaron, el formulario se envía
+  return true;
+}
 </script>
 
 </body>
