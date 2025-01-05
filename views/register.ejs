@@ -62,21 +62,17 @@
           </div>
          <% } %>
 
-        <label for="localidad">Localidad</label>
-        <input type="text" name="localidad" value="<%= locals.oldData ? oldData.localidad : '' %>">
-        <% if (locals.errors && errors.localidad) { %>
-          <div class="error">
-           <%= errors.localidad.msg %>
-          </div>
-         <% } %>
-
-        <label for="provincia">Provincia</label>
-        <input type="text" name="provincia" value="<%= locals.oldData ? oldData.provincia : '' %>">
-        <% if (locals.errors && errors.provincia) { %>
-          <div class="error">
-           <%= errors.provincia.msg %>
-          </div>
-         <% } %>
+         <label for="provincia">Provincia</label>
+         <select name="provincia" id="provincia" onchange="cargarLocalidades()">
+           <option value="">Selecciona una provincia</option>
+           <!-- Las opciones de provincia se cargarán aquí -->
+         </select>
+         
+         <label for="localidad">Localidad</label>
+         <select name="localidad" id="localidad">
+           <option value="">Selecciona una localidad</option>
+           <!-- Las opciones de localidad se cargarán aquí -->
+         </select>
 
         <label for="fecha_nacimiento">Fecha de Nacimiento</label>
         <input type="date" name="fecha_nacimiento" value="<%= locals.oldData ? oldData.fecha_nacimiento : '' %>">
@@ -104,6 +100,67 @@
     </form>
   </div>
 </main>
-    <%- include ./layouts/footer.ejs %>
+
+<%- include ./layouts/footer.ejs %>
+
+<script>
+  // Cargar provincias desde la API al cargar la página
+  async function cargarProvincias() {
+    try {
+      const response = await fetch('https://apis.datos.gob.ar/georef/api/provincias');
+      const data = await response.json();
+      const provincias = data.provincias;
+      const provinciaSelect = document.getElementById('provincia');
+      
+      // Ordenar alfabéticamente y agregar las provincias al select
+      provincias.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      
+      provincias.forEach(provincia => {
+        const option = document.createElement('option');
+        option.value = provincia.id;
+        option.textContent = provincia.nombre;
+        provinciaSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error al cargar provincias:', error);
+    }
+  }
+
+  // Cargar localidades de la provincia seleccionada
+  async function cargarLocalidades() {
+    const provinciaId = document.getElementById('provincia').value;
+    const localidadSelect = document.getElementById('localidad');
+
+    if (provinciaId) {
+      try {
+        const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?provincia=${provinciaId}`);
+        const data = await response.json();
+        const localidades = data.localidades;
+
+        // Limpiar las opciones de localidad
+        localidadSelect.innerHTML = '<option value="">Selecciona una localidad</option>';
+
+        // Ordenar alfabéticamente y agregar las localidades al select
+        localidades.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+        localidades.forEach(localidad => {
+          const option = document.createElement('option');
+          option.value = localidad.id;
+          option.textContent = localidad.nombre;
+          localidadSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error al cargar localidades:', error);
+      }
+    } else {
+      // Limpiar las opciones si no se selecciona provincia
+      localidadSelect.innerHTML = '<option value="">Selecciona una localidad</option>';
+    }
+  }
+
+  // Llamar a cargar provincias al cargar la página
+  window.onload = cargarProvincias;
+</script>
+
 </body>
 </html>
