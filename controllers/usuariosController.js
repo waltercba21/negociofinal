@@ -13,6 +13,7 @@ module.exports = {
     const resultValidation = validationResult(req);
   
     if (!resultValidation.isEmpty()) {
+      console.log('Errores de validación:', resultValidation.mapped());
       return res.render('register', {
         errors: resultValidation.mapped(),
         oldData: req.body,
@@ -22,10 +23,17 @@ module.exports = {
     const email = req.body.email;
     usuario.obtenerPorEmail(email, function (error, datos) {
       if (error) {
-        // Manejar el error
+        console.error('Error al buscar el usuario por email:', error);
+        return res.render('register', {
+          error: 'Ocurrió un error al verificar el email.',
+          oldData: req.body,
+        });
       }
   
+      console.log('Datos obtenidos por email:', datos);
+  
       if (datos.length > 0) {
+        console.log('Email ya registrado:', email);
         return res.render('register', {
           errors: {
             emailExists: { msg: 'El email ya está registrado' },
@@ -37,18 +45,38 @@ module.exports = {
       const password = req.body.password;
       bcryptjs.genSalt(10, function (err, salt) {
         if (err) {
-          // Manejar el error
+          console.error('Error al generar el salt para la contraseña:', err);
+          return res.render('register', {
+            error: 'Ocurrió un error al generar la contraseña.',
+            oldData: req.body,
+          });
         }
+  
+        console.log('Salt generado correctamente:', salt);
+  
         bcryptjs.hash(password, salt, function (err, hash) {
           if (err) {
-            // Manejar el error
+            console.error('Error al generar el hash de la contraseña:', err);
+            return res.render('register', {
+              error: 'Ocurrió un error al generar la contraseña.',
+              oldData: req.body,
+            });
           }
-          // Crear el nuevo usuario, incluyendo todos los campos
-          usuario.crear({ ...req.body, password: hash }, function (error) {
+  
+          console.log('Hash de la contraseña generado:', hash);
+  
+          // Crear el nuevo usuario
+          usuario.crear({ ...req.body, password: hash }, function (error, result) {
             if (error) {
-              // Manejar el error
+              console.error('Error al insertar en la base de datos:', error);
+              return res.render('register', {
+                error: 'Ocurrió un error al registrar el usuario.',
+                oldData: req.body,
+              });
             }
-            res.render('login'); // Redirigir al login después de registrarse
+  
+            console.log('Usuario registrado exitosamente:', result);
+            res.render('login'); // Redirigir al login después del registro
           });
         });
       });

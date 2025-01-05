@@ -5,12 +5,28 @@ module.exports = {
     conexion.query('SELECT * FROM usuarios', funcion);
   },
   crear: function (datos, funcion) {
-    const { nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos } = datos;
-    
+    const {
+      nombre,
+      apellido,
+      email,
+      password,
+      celular,
+      direccion,
+      localidad,
+      provincia,
+      fecha_nacimiento,
+      acepto_terminos,
+    } = datos;
+  
+    // Verificar si faltan campos
     if (!nombre || !apellido || !email || !password || !celular || !direccion || !localidad || !provincia || !fecha_nacimiento || !acepto_terminos) {
-      return funcion(new Error("Todos los campos son obligatorios"));
+      console.error('Campos faltantes en los datos del usuario:', datos);
+      return funcion(new Error('Todos los campos son obligatorios'));
     }
   
+    console.log('Datos a insertar en la base de datos:', datos);
+  
+    // Query de inserción
     conexion.query(
       `INSERT INTO usuarios (nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -20,12 +36,12 @@ module.exports = {
           console.error('Error al insertar en la base de datos:', error);
           return funcion(error);
         }
+  
+        console.log('Resultado de la inserción:', result);
         funcion(null, result);
       }
     );
-    
-  },
-   
+  },   
   obtenerPorEmail: function (email, funcion) {
     conexion.query('SELECT * FROM usuarios WHERE email = ?', [email], funcion);
   },
