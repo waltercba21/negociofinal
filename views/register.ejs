@@ -135,8 +135,8 @@ async function cargarLocalidades() {
 
   if (provinciaId) {
     try {
-      // Modificar la URL para incluir un mayor número de localidades
-      const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?provincia=${provinciaId}&max=9999`);
+      // Modificar la URL para incluir un número máximo válido de localidades
+      const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?provincia=${provinciaId}&max=5000`);
       const data = await response.json();
       
       console.log('Respuesta de localidades:', data);  // Verifica la respuesta de la API
@@ -177,6 +177,7 @@ async function cargarLocalidades() {
     localidadSelect.innerHTML = '<option value="">Selecciona una localidad</option>';
   }
 }
+
 // Llamar a cargar provincias al cargar la página
 window.onload = cargarProvincias;
 
