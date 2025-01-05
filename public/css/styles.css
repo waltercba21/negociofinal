@@ -793,10 +793,11 @@ footer {
 #eye-icon {
   position: absolute;
   right: 10px; /* Ajusta el espacio a la derecha */
-  bottom: -25px; /* Mueve el ícono hacia abajo */
+  bottom: -5px; /* Mueve el ícono hacia abajo */
   cursor: pointer;
   color: #003f7d; /* Color del ícono, puedes ajustarlo a lo que prefieras */
   transition: color 0.3s ease; /* Efecto suave al cambiar color */
+  margin-bottom: 20px;
 }
 
 #eye-icon:hover {
