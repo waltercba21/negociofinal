@@ -49,7 +49,7 @@
 </main>
 
 <%- include ./layouts/footer.ejs %>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // Cargar provincias desde la API al cargar la página
 async function cargarProvincias() {
@@ -140,28 +140,98 @@ function validarFormulario() {
   const fechaNacimiento = document.querySelector('input[name="fecha_nacimiento"]').value;
   const aceptoTerminos = document.querySelector('input[name="acepto_terminos"]').checked;
 
-  // Verificar que los campos no estén vacíos
-  if (!nombre || !apellido || !email || !password || !confirmarPassword || !celular || !direccion || !fechaNacimiento) {
-    alert("Todos los campos son obligatorios.");
+  // Validación de campos vacíos
+  if (!nombre) {
+    Swal.fire({
+      icon: 'error',
+      title: '¡Campo vacío!',
+      text: 'Por favor, ingresa tu nombre completo.',
+    });
+    return false;
+  }
+  if (!apellido) {
+    Swal.fire({
+      icon: 'error',
+      title: '¡Campo vacío!',
+      text: 'Por favor, ingresa tu apellido.',
+    });
+    return false;
+  }
+  if (!email) {
+    Swal.fire({
+      icon: 'error',
+      title: '¡Campo vacío!',
+      text: 'Por favor, ingresa tu correo electrónico.',
+    });
+    return false;
+  }
+  if (!password) {
+    Swal.fire({
+      icon: 'error',
+      title: '¡Campo vacío!',
+      text: 'Por favor, ingresa una contraseña.',
+    });
+    return false;
+  }
+  if (!confirmarPassword) {
+    Swal.fire({
+      icon: 'error',
+      title: '¡Campo vacío!',
+      text: 'Por favor, confirma tu contraseña.',
+    });
+    return false;
+  }
+  if (!celular) {
+    Swal.fire({
+      icon: 'error',
+      title: '¡Campo vacío!',
+      text: 'Por favor, ingresa tu número de teléfono.',
+    });
+    return false;
+  }
+  if (!direccion) {
+    Swal.fire({
+      icon: 'error',
+      title: '¡Campo vacío!',
+      text: 'Por favor, ingresa tu dirección.',
+    });
+    return false;
+  }
+  if (!fechaNacimiento) {
+    Swal.fire({
+      icon: 'error',
+      title: '¡Campo vacío!',
+      text: 'Por favor, ingresa tu fecha de nacimiento.',
+    });
+    return false;
+  }
+  if (!aceptoTerminos) {
+    Swal.fire({
+      icon: 'error',
+      title: '¡Falta aceptar los términos!',
+      text: 'Debes aceptar los términos y condiciones para continuar.',
+    });
     return false;
   }
 
   // Validación de la contraseña (debe tener al menos 8 caracteres, 1 mayúscula y 1 número)
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
   if (!passwordRegex.test(password)) {
-    alert("La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.");
+    Swal.fire({
+      icon: 'error',
+      title: 'Contraseña no válida',
+      text: 'La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.',
+    });
     return false;
   }
 
   // Verificar que las contraseñas coincidan
   if (password !== confirmarPassword) {
-    alert("Las contraseñas no coinciden.");
-    return false;
-  }
-
-  // Verificar que el usuario haya aceptado los términos
-  if (!aceptoTerminos) {
-    alert("Debes aceptar los términos y condiciones.");
+    Swal.fire({
+      icon: 'error',
+      title: 'Las contraseñas no coinciden',
+      text: 'Las contraseñas que has ingresado no coinciden. Por favor, verifica.',
+    });
     return false;
   }
 
