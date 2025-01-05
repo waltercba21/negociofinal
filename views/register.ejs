@@ -127,36 +127,38 @@
   }
 
   // Cargar localidades de la provincia seleccionada
-  async function cargarLocalidades() {
-    const provinciaId = document.getElementById('provincia').value;
-    const localidadSelect = document.getElementById('localidad');
+async function cargarLocalidades() {
+  const provinciaId = document.getElementById('provincia').value;
+  const localidadSelect = document.getElementById('localidad');
 
-    if (provinciaId) {
-      try {
-        const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?provincia=${provinciaId}`);
-        const data = await response.json();
-        const localidades = data.localidades;
+  if (provinciaId) {
+    try {
+      // Modificar la URL para incluir un mayor número de localidades
+      const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?provincia=${provinciaId}&max=9999`);
+      const data = await response.json();
+      const localidades = data.localidades;
 
-        // Limpiar las opciones de localidad
-        localidadSelect.innerHTML = '<option value="">Selecciona una localidad</option>';
-
-        // Ordenar alfabéticamente y agregar las localidades al select
-        localidades.sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-        localidades.forEach(localidad => {
-          const option = document.createElement('option');
-          option.value = localidad.id;
-          option.textContent = localidad.nombre;
-          localidadSelect.appendChild(option);
-        });
-      } catch (error) {
-        console.error('Error al cargar localidades:', error);
-      }
-    } else {
-      // Limpiar las opciones si no se selecciona provincia
+      // Limpiar las opciones de localidad
       localidadSelect.innerHTML = '<option value="">Selecciona una localidad</option>';
+
+      // Ordenar alfabéticamente y agregar las localidades al select
+      localidades.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+      localidades.forEach(localidad => {
+        const option = document.createElement('option');
+        option.value = localidad.id;
+        option.textContent = localidad.nombre;
+        localidadSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error al cargar localidades:', error);
     }
+  } else {
+    // Limpiar las opciones si no se selecciona provincia
+    localidadSelect.innerHTML = '<option value="">Selecciona una localidad</option>';
   }
+}
+
 
   // Llamar a cargar provincias al cargar la página
   window.onload = cargarProvincias;
