@@ -6,14 +6,25 @@ module.exports = {
   },
   crear: function (datos, funcion) {
     const { nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos } = datos;
-    console.log("Datos del registro:", datos);
+    
+    if (!nombre || !apellido || !email || !password || !celular || !direccion || !localidad || !provincia || !fecha_nacimiento || !acepto_terminos) {
+      return funcion(new Error("Todos los campos son obligatorios"));
+    }
+  
     conexion.query(
       `INSERT INTO usuarios (nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
       [nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos],
-      funcion
+      (error, result) => {
+        if (error) {
+          console.error('Error al insertar en la base de datos:', error);
+          return funcion(error);
+        }
+        funcion(null, result);
+      }
     );
-  },  
+  },
+   
   obtenerPorEmail: function (email, funcion) {
     conexion.query('SELECT * FROM usuarios WHERE email = ?', [email], funcion);
   },
