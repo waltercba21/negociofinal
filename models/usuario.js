@@ -12,9 +12,9 @@ module.exports = {
     }
   
     conexion.query(
-      `INSERT INTO usuarios (nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
-      [nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos],
+      `INSERT INTO usuarios (nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento],
       (error, result) => {
         if (error) {
           console.error('Error al insertar en la base de datos:', error);
@@ -23,6 +23,7 @@ module.exports = {
         funcion(null, result);
       }
     );
+    
   },
    
   obtenerPorEmail: function (email, funcion) {
