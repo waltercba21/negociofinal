@@ -72,6 +72,27 @@ async function cargarProvincias() {
   
     return true;
   }
+  document.addEventListener('DOMContentLoaded', function () {
+    const eyeIcon = document.getElementById('eye-icon');
+    const passwordInput = document.getElementById('password-input');
+  
+    eyeIcon.addEventListener('click', function () {
+      if (passwordInput.type === 'password') {
+        // Cambiar a tipo texto para mostrar la contraseña
+        passwordInput.type = 'text';
+        // Cambiar el icono al de "ojo cerrado"
+        eyeIcon.classList.remove('fa-eye');
+        eyeIcon.classList.add('fa-eye-slash');
+      } else {
+        // Cambiar a tipo contraseña para ocultarla
+        passwordInput.type = 'password';
+        // Cambiar el icono al de "ojo abierto"
+        eyeIcon.classList.remove('fa-eye-slash');
+        eyeIcon.classList.add('fa-eye');
+      }
+    });
+  });
+  
   
   document.getElementById('provincia').addEventListener('change', cargarLocalidades);
   document.addEventListener('DOMContentLoaded', cargarProvincias);
