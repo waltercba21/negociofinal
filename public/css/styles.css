@@ -2945,16 +2945,16 @@ table td img:hover {
     
     #eye-icon {
       position: absolute;
-      right: 10px; /* Ajusta el espacio a la derecha */
-      bottom: -25px; /* Mueve el ícono hacia abajo */
-      cursor: pointer;
-      color: #003f7d; /* Color del ícono, puedes ajustarlo a lo que prefieras */
-      transition: color 0.3s ease; /* Efecto suave al cambiar color */
+      right: 10px !important; /* Ajusta el espacio a la derecha */
+      bottom: -25px !important; /* Mueve el ícono hacia abajo */
+      cursor: pointer !important;
+      color: #003f7d !important; /* Color del ícono */
+      transition: color 0.3s ease !important; /* Efecto suave al cambiar color */
     }
     
     #eye-icon:hover {
-      color: #004d99; /* Color cuando el cursor pasa por encima */
-      cursor: pointer; /* Cambia el puntero a mano */
+      color: #004d99 !important; /* Color cuando el cursor pasa por encima */
+      cursor: pointer !important; /* Cambia el puntero a mano */
     }
     
     #password-tooltip {
