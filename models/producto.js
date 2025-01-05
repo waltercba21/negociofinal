@@ -103,13 +103,11 @@ guardarPresupuesto : (presupuesto) => {
     guardarItemsPresupuesto : (items) => {
         return new Promise((resolve, reject) => {
             const query = 'INSERT INTO presupuesto_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
-            console.log("Intentando guardar los siguientes items:", items);
             conexion.query(query, [items], (error, resultado) => {
                 if (error) {
                     console.error('Error al insertar items del presupuesto:', error);
                     reject(error);
                 } else {
-                    console.log('Items del presupuesto guardados correctamente:', resultado);
                     resolve(resultado);
                 }
             });
@@ -118,14 +116,12 @@ guardarPresupuesto : (presupuesto) => {
     guardarItemsFactura: (items) => {
         return new Promise((resolve, reject) => {
             const query = 'INSERT INTO factura_items (factura_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
-            console.log("Intentando guardar los siguientes items de la factura:", items);
             
             conexion.query(query, [items], (error, resultado) => {
                 if (error) {
                     console.error('Error al insertar items de la factura:', error);
                     reject(error);
                 } else {
-                    console.log('Items de la factura guardados correctamente:', resultado);
                     resolve(resultado);
                 }
             });
@@ -444,10 +440,6 @@ actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
                     datosProductoProveedor.producto_id,
                     datosProductoProveedor.proveedor_id
                 ];
-                
-                console.log('Consulta SQL de actualización:', queryUpdate);
-                console.log('Parámetros:', paramsUpdate);
-
                 conexion.query(queryUpdate, paramsUpdate, (error, results) => {
                     if (error) {
                         reject(error);
@@ -464,10 +456,6 @@ actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
                     datosProductoProveedor.precio_lista,
                     datosProductoProveedor.codigo
                 ];
-                
-                console.log('Consulta SQL de inserción:', queryInsert);
-                console.log('Parámetros:', paramsInsert);
-
                 conexion.query(queryInsert, paramsInsert, (error, results) => {
                     if (error) {
                         reject(error);
@@ -534,7 +522,6 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                         console.error('Error al ejecutar la consulta:', error);
                         callback(error);
                     } else {
-                        console.log('Filas actualizadas:', results.affectedRows);
                         callback(null);
                     }
                 });
@@ -557,7 +544,6 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                         console.error('Error al ejecutar la consulta:', error);
                         callback(error);
                     } else {
-                        console.log('Filas actualizadas:', results.affectedRows);
                         callback(null);
                     }
                 });
@@ -571,10 +557,6 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                 resolve(null);
                 return;
             }
-    
-            console.log(`Actualizando productos con código: ${codigo} y precio lista: ${precio_lista}`);
-    
-            // Actualiza la consulta para incluir el ID del proveedor
             const sql = `SELECT pp.*, p.utilidad, p.precio_venta, p.nombre, dp.descuento 
                          FROM producto_proveedor pp 
                          JOIN productos p ON pp.producto_id = p.id 
@@ -598,7 +580,6 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
                     }
     
                     if (results.length === 0) {
-                        console.log(`No se encontró ningún producto con el código ${codigo} para el proveedor especificado`);
                         conexion.release();
                         resolve(null);
                         return;
@@ -665,12 +646,8 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
 obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
-            console.log(`Ejecutando consulta SQL: ${sql}`);
-            console.log(`Con el valor: codigo = ${codigo}`);
-            
             conexion.getConnection((err, conexion) => {
                 if (err) {
-                    console.error('Error al obtener la conexión:', err);
                     reject(err);
                 } else {
                     conexion.query(sql, [codigo], (error, results) => {
@@ -678,7 +655,6 @@ obtenerProductoPorCodigo: function(codigo) {
                         if (error) {
                             reject(error);
                         } else {
-                            console.log(`Resultados de la consulta SQL: ${JSON.stringify(results)}`);
                             resolve(results[0]); 
                         }
                     });
@@ -712,7 +688,6 @@ obtenerProductoPorCodigo: function(codigo) {
         }
     
         const [filas] = await conexion.promise().query(query, params);
-        console.log('Filas obtenidas de la base de datos:', filas);
         const productos = {};
         filas.forEach(fila => {
             if (!productos[fila.id]) {
@@ -759,7 +734,6 @@ actualizarStockPresupuesto: (producto_id, cantidadVendida) => {
                 console.error('Error al actualizar el stock:', error);
                 reject(error);
             } else {
-                console.log('Stock actualizado correctamente para el producto con ID:', producto_id);
                 resolve(resultado);
             }
         });
@@ -800,7 +774,6 @@ actualizarStockPresupuesto: (producto_id, cantidadVendida) => {
         });
     },
 obtenerProductosPorProveedorYCategoría: function (conexion, proveedor, categoria) {
-    console.log('Proveedor:', proveedor, 'Categoría:', categoria);
     const query = `
         SELECT productos.*, producto_proveedor.codigo AS codigo_proveedor, producto_proveedor.precio_lista, productos.precio_venta
         FROM productos 
@@ -812,7 +785,6 @@ obtenerProductosPorProveedorYCategoría: function (conexion, proveedor, categori
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, [proveedor, categoria])
         .then(result => {
-            console.log('Resultados de obtenerProductosPorProveedorYCategoría:', result);
             return result;
         });
 },
@@ -823,7 +795,6 @@ obtenerProveedores: function(conexion) {
             if (error) {
                 reject(error);
             } else {
-                console.log('Resultados de la consulta:', resultados);
                 resolve(resultados);
             }
         });
@@ -834,7 +805,6 @@ obtenerMarcas: function(conexion) {
     return new Promise((resolve, reject) => {
         conexion.query('SELECT * FROM marcas ORDER BY nombre ASC', function(error, resultados) {
             if (error) {
-                console.log('Error al obtener marcas:', error);
                 reject(error);
             } else {
                 resolve(resultados);
@@ -858,19 +828,16 @@ obtenerMarcas: function(conexion) {
             if (error) {
                 reject(error);
             } else {
-                console.log('Resultados de la consulta:', resultados);
                 resolve(resultados);
             }
         });
     });
   },
 obtenerModeloPorId: function (conexion, id, callback) {
-  console.log('id:', id); // Verificar el valor de id
   conexion.query('SELECT * FROM modelos WHERE id = ?', [id], function (error, resultados) {
       if (error) {
           callback(error, null);
       } else {
-          console.log('resultados:', resultados); // Verificar los resultados de la consulta
           callback(null, resultados);
       }
   });
@@ -1054,7 +1021,6 @@ obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
     }
 },
 obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor, categoria) {
-    console.log('Proveedor:', proveedor, 'Categoría:', categoria);
 
     const query = `
         SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual, c.nombre AS categoria
@@ -1074,11 +1040,9 @@ obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor, ca
     const queryPromise = util.promisify(conexion.query).bind(conexion);
     return queryPromise(query, params)
         .then(result => {
-            console.log('Resultados:', result);
             return result;
         })
         .catch(error => {
-            console.log('Error al obtener productos:', error);
             throw error;
         });
 },
@@ -1109,24 +1073,20 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
         if (categoria) {
             sql += ' AND categoria_id = ?';
             parametros.push(categoria);
-            console.log('Filtro de categoría aplicado:', categoria); // Agregar este log
         }
         if (marca) {
             sql += ' AND marca_id = ?';
             parametros.push(marca);
-            console.log('Filtro de marca aplicado:', marca); // Agregar este log
         }
         if (modelo) {
             sql += ' AND modelo_id = ?';
             parametros.push(modelo);
-            console.log('Filtro de modelo aplicado:', modelo); // Agregar este log
         }
         if (busqueda_nombre) {
             const palabras = busqueda_nombre.split(' ');
             palabras.forEach(palabra => {
                 sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
                 parametros.push('%' + palabra + '%', '%' + palabra + '%');
-                console.log('Filtro de búsqueda aplicado:', palabra); // Agregar este log
             });
         }
         
@@ -1134,11 +1094,7 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
         if (limite) {
             sql += ' LIMIT ?';
             parametros.push(limite);
-            console.log('Límite aplicado:', limite); // Agregar este log
         }
-
-        console.log('Consulta SQL ejecutada:', sql, 'Con parámetros:', parametros); // Agregar este log
-
         conexion.query(sql, parametros, (error, productos) => {
             if (error) {
                 reject(error);
@@ -1156,7 +1112,6 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
                     }
                     return acc;
                 }, []);
-                console.log('Productos agrupados:', productosAgrupados); // Agregar este log
                 resolve(productosAgrupados);
             }
         });
@@ -1323,11 +1278,8 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                 updateValues.push(id);
 
                 const query = `UPDATE presupuestos_mostrador SET ${updateFields.join(', ')} WHERE id = ?`;
-
-                console.log('Executing query:', query, updateValues);
                 conexion.query(query, updateValues, (error, resultados) => {
                     if (error) {
-                        console.error('Error ejecutando query de presupuesto:', error);
                         return conexion.rollback(() => {
                             conexion.release();
                             return reject(error);
@@ -1357,8 +1309,6 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                             itemUpdateValues.push(item.id, id);
 
                             const itemQuery = `UPDATE items_presupuesto SET ${itemUpdateFields.join(', ')} WHERE id = ? AND presupuesto_id = ?`;
-
-                            console.log('Executing item query:', itemQuery, itemUpdateValues);
                             conexion.query(itemQuery, itemUpdateValues, (error, result) => {
                                 if (error) {
                                     console.error('Error ejecutando query de item:', error);
@@ -1430,8 +1380,6 @@ editarFactura: (id, nombre_cliente, fecha, total, items) => {
                 updateValues.push(id);
 
                 const query = `UPDATE facturas_mostrador SET ${updateFields.join(', ')} WHERE id = ?`;
-
-                console.log('Executing query:', query, updateValues);
                 conexion.query(query, updateValues, (error, resultados) => {
                     if (error) {
                         console.error('Error ejecutando query de factura:', error);
@@ -1464,8 +1412,6 @@ editarFactura: (id, nombre_cliente, fecha, total, items) => {
                             itemUpdateValues.push(item.id, id);
 
                             const itemQuery = `UPDATE factura_items SET ${itemUpdateFields.join(', ')} WHERE id = ? AND factura_id = ?`;
-
-                            console.log('Executing item query:', itemQuery, itemUpdateValues);
                             conexion.query(itemQuery, itemUpdateValues, (error, result) => {
                                 if (error) {
                                     console.error('Error ejecutando query de item:', error);
@@ -1547,7 +1493,6 @@ obtenerImagenesProducto: function(conexion, id) {
                 console.error('Error al obtener las imágenes del producto:', error);
                 reject(error);
             } else {
-                console.log('Imágenes del producto obtenidas:', resultados);
                 resolve(resultados);
             }
         });
@@ -1565,7 +1510,6 @@ obtenerImagenesProducto: function(conexion, id) {
                 console.error('Error al obtener los proveedores del producto:', error);
                 reject(error);
             } else {
-                console.log('Resultados de la consulta:', resultados);
                 resolve(resultados);
             }
         });
@@ -1638,10 +1582,8 @@ eliminarImagen : function(id) {
         const sql = 'DELETE FROM imagenes_producto WHERE id = ?';
         conexion.query(sql, [id], function(err, results) {
             if (err) {
-                console.log('Error al ejecutar la consulta SQL:', err); 
                 return reject(err);
             }
-            console.log('Resultados de la consulta SQL:', results); 
             resolve(results);
         });
     });
@@ -1660,7 +1602,6 @@ calcularNumeroDePaginas: function(conexion, productosPorPagina) {
         });
     });
 },
-// Modelo
 obtenerProductosOferta: (conexion, callback) => {
     const query = `
         SELECT p.*, GROUP_CONCAT(i.imagen) AS imagenes
@@ -1700,6 +1641,40 @@ crearPedidoItem : (pedido_id, producto_id, cantidad, precio_unitario, subtotal) 
             if (err) reject(err);
             resolve(result);
         });
+    });
+},
+obtenerProductoConImagenes : (conexion, id_producto, callback) => {
+    const query = `
+        SELECT 
+            p.id AS producto_id,
+            p.nombre,
+            p.descripcion,
+            p.precio_venta,
+            p.stock_actual,
+            p.oferta,
+            GROUP_CONCAT(i.imagen) AS imagenes
+        FROM 
+            productos p
+        LEFT JOIN 
+            imagenes_producto i ON p.id = i.producto_id
+        WHERE 
+            p.id = ?
+        GROUP BY 
+            p.id;
+    `;
+
+    conexion.query(query, [id_producto], (error, resultados) => {
+        if (error) {
+            callback(error, null);
+        } else {
+            if (resultados.length > 0) {
+                const producto = resultados[0];
+                producto.imagenes = producto.imagenes ? producto.imagenes.split(',') : [];
+                callback(null, producto);
+            } else {
+                callback(null, null); // Producto no encontrado
+            }
+        }
     });
 }
 }

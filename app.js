@@ -13,6 +13,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var productosRouter = require('./routes/productos');
 var administracionRouter = require('./routes/administracion');
+const carritoRoutes = require('./routes/carrito');
 var app = express();
 var server = require('http').Server(app); // Agregamos esta línea
 var io = require('socket.io')(server); // Y esta también
@@ -54,6 +55,7 @@ console.log("Router montado correctamente");
 app.use('/users', usersRouter);
 app.use('/productos', productosRouter);
 app.use ('/administracion',administracionRouter);
+app.use('/carrito', carritoRouter);
 
 io.on('connection', (socket) => { 
   console.log('Un cliente se ha conectado');
