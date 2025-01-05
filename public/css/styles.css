@@ -793,6 +793,7 @@ footer {
 #eye-icon {
   position: absolute;
   right: 10px; 
+  bottom: -2px;
   cursor: pointer;
   color: #003f7d; 
   transition: color 0.3s ease; 
