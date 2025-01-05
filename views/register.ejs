@@ -6,7 +6,7 @@
 <main>
   <div class="register-form">
     <h2>Regístrate</h2>
-    <form action="/register" method="post" class="formulario-register" autocomplete="off" onsubmit="return validarFormulario()">
+    <form action="./register" method="post" class="formulario-register" autocomplete="off" onsubmit="return validarFormulario()">
       <label for="nombre">Nombre Completo</label>
       <input type="text" name="nombre" value="<%= locals.oldData ? oldData.nombre : '' %>">
 
