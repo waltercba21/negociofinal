@@ -2938,6 +2938,24 @@ table td img:hover {
     .select-css {
       width: 100%;
     }
+    .password-container {
+      position: relative;
+    }
+    
+    #eye-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+    
+    #password-tooltip {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+    
   /*------TODOS LOS PRODUCTOS------*/
   .contenedor-productos {
     display: flex;

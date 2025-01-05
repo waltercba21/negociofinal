@@ -65,38 +65,57 @@ module.exports = {
         oldData: req.body,
       });
     }
-    const email = req.body.email;
-    const password = req.body.password;
+  
+    const { email, password } = req.body;
+  
     usuario.obtenerPorEmail(email, function (error, datos) {
       if (error) {
-        console.log(error);
+        console.error('Error al buscar el usuario:', error);
+        return res.render('login', {
+          error: 'Ocurrió un error en el servidor. Inténtalo de nuevo.',
+          oldData: req.body,
+        });
       }
+  
       if (datos.length === 0) {
         return res.render('login', {
           error: 'Credenciales inválidas',
           oldData: req.body,
         });
       }
-      const storedPasswordHash = datos[0].password; 
+  
+      const storedPasswordHash = datos[0].password; // Asegúrate de que este es el hash correcto
+  
       bcryptjs.compare(password, storedPasswordHash, function (err, result) {
         if (err) {
-        }    
+          console.error('Error al comparar contraseñas:', err);
+          return res.render('login', {
+            error: 'Ocurrió un error en el servidor. Inténtalo de nuevo.',
+            oldData: req.body,
+          });
+        }
+  
         if (!result) {
           return res.render('login', {
             error: 'Credenciales inválidas',
             oldData: req.body,
           });
         }
+  
+        // Configurar sesión si las credenciales son correctas
         req.session.usuario = datos[0];
         req.session.usuario.isAdmin = adminEmails.includes(email);
         req.session.usuario.isAccountingAdmin = email === 'gera@autofaros.com.ar';
+  
         if (req.session.usuario.firstLogin === undefined) {
           req.session.usuario.firstLogin = true;
         }
+  
         res.redirect('/');
       });
     });
   },
+  
   profile: async (req, res) => {
     if (req.session && req.session.usuario) {
       if (!req.session.usuario.firstLogin) {
