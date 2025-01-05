@@ -6,6 +6,7 @@ module.exports = {
   },
   crear: function (datos, funcion) {
     const { nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos } = datos;
+    console.log("Datos del registro:", datos);
     conexion.query(
       `INSERT INTO usuarios (nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento, acepto_terminos) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
