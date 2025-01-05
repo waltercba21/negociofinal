@@ -7,99 +7,44 @@
     
     <h2>Registrate</h2>
 
-    <form action="./register" method="post" class="formulario-register" autocomplete="off">
+    <form action="./register" method="post" class="formulario-register" autocomplete="off" onsubmit="return validarFormulario()">
 
-
-        <label for="nombre">Nombre Completo</label>
-        <input type="text" name="nombre" value="<%= locals.oldData ? oldData.nombre : '' %>">
-        <% if (locals.errors && errors.nombre) { %>
-          <div class="error">
-           <%= errors.nombre.msg %>
-          </div>
-         <% } %>
-
-        <label for="apellido">Apellido</label>
-        <input type="text" name="apellido" value="<%= locals.oldData ? oldData.apellido : '' %>">
-        <% if (locals.errors && errors.apellido) { %>
-          <div class="error">
-           <%= errors.apellido.msg %>
-          </div>
-         <% } %>
-
-        <label for="email">Email</label>
-        <input type="text" name="email" value="<%= locals.oldData ? oldData.email : '' %>" autocomplete="email">
-
-        <% if (locals.errors && errors.email) { %>
-          <div class="error">
-           <%= errors.email.msg %>
-          </div>
-         <% } %>
-         <% if (locals.errors && errors.emailExists) { %>
-          <div class="error">
-           <%= errors.emailExists.msg %>
-          </div>
-         <% } %>
-
-        <label for="password">Contraseña</label>
-        <input type="password" name="password" value="<%= locals.oldData ? oldData.password : '' %>">
-        <% if (locals.errors && errors.password) { %>
-          <div class="error">
-           <%= errors.password.msg %>
-          </div>
-         <% } %>
-
-        <label for="telefono">Teléfono</label>
-        <input type="text" name="celular" value="<%= locals.oldData ? oldData.celular : '' %>">
-        <% if (locals.errors && errors.celular) { %>
-          <div class="error">
-           <%= errors.celular.msg %>
-          </div>
-         <% } %>
-
-        <label for="direccion">Dirección</label>
-        <input type="text" name="direccion" value="<%= locals.oldData ? oldData.direccion : '' %>">
-        <% if (locals.errors && errors.direccion) { %>
-          <div class="error">
-           <%= errors.direccion.msg %>
-          </div>
-         <% } %>
-
-         <label for="provincia">Provincia</label>
-         <select name="provincia" id="provincia" onchange="cargarLocalidades()">
-           <option value="">Selecciona una provincia</option>
-           <!-- Las opciones de provincia se cargarán aquí -->
-         </select>
-         
-         <label for="localidad">Localidad</label>
-         <select name="localidad" id="localidad">
-           <option value="">Selecciona una localidad</option>
-           <!-- Las opciones de localidad se cargarán aquí -->
-         </select>
-
-        <label for="fecha_nacimiento">Fecha de Nacimiento</label>
-        <input type="date" name="fecha_nacimiento" value="<%= locals.oldData ? oldData.fecha_nacimiento : '' %>">
-        <% if (locals.errors && errors.fecha_nacimiento) { %>
-          <div class="error">
-           <%= errors.fecha_nacimiento.msg %>
-          </div>
-         <% } %>
-
-        <label for="acepto_terminos">
-            <input type="checkbox" name="acepto_terminos" <%= locals.oldData && oldData.acepto_terminos ? 'checked' : '' %> required>
-            Acepto los <a href="/terminos" target="_blank">términos y condiciones</a>
-        </label>
-        <% if (locals.errors && errors.acepto_terminos) { %>
-          <div class="error">
-           <%= errors.acepto_terminos.msg %>
-          </div>
-         <% } %>
-
-        <div class="btn-guardar">
-            <input type="submit" value="Guardar" class="btn-register"> 
-            <a href="/" class="btn-cancel">Cancelar</a> 
-        </div>
-
+      <label for="nombre">Nombre Completo</label>
+      <input type="text" name="nombre" value="<%= locals.oldData ? oldData.nombre : '' %>">
+      
+      <label for="apellido">Apellido</label>
+      <input type="text" name="apellido" value="<%= locals.oldData ? oldData.apellido : '' %>">
+      
+      <label for="email">Email</label>
+      <input type="text" name="email" value="<%= locals.oldData ? oldData.email : '' %>">
+      
+      <label for="password">Contraseña</label>
+      <input type="password" name="password" value="<%= locals.oldData ? oldData.password : '' %>">
+    
+      <label for="confirmar_password">Confirmar Contraseña</label>
+      <input type="password" name="confirmar_password">
+    
+      <label for="telefono">Teléfono</label>
+      <input type="text" name="celular" value="<%= locals.oldData ? oldData.celular : '' %>">
+    
+      <label for="direccion">Dirección</label>
+      <input type="text" name="direccion" value="<%= locals.oldData ? oldData.direccion : '' %>">
+    
+      <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+      <input type="date" name="fecha_nacimiento" value="<%= locals.oldData ? oldData.fecha_nacimiento : '' %>">
+      
+      <label for="acepto_terminos">
+        <input type="checkbox" name="acepto_terminos" <%= locals.oldData && oldData.acepto_terminos ? 'checked' : '' %> required>
+        Acepto los <a href="/terminos" target="_blank">términos y condiciones</a>
+      </label>
+    
+      <div class="btn-guardar">
+        <input type="submit" value="Guardar" class="btn-register">
+        <a href="/" class="btn-cancel">Cancelar</a>
+      </div>
+    
     </form>
+    
   </div>
 </main>
 
