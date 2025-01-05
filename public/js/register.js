@@ -79,17 +79,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const passwordInput = document.getElementById('password-input');
   
     if (eyeIcon && passwordInput) {
+      console.log("Elementos encontrados: ", eyeIcon, passwordInput); // Verifica que los elementos existan
       eyeIcon.addEventListener('click', function () {
+        console.log("Se hizo clic en el ícono del ojo"); // Verifica que el clic funcione
         if (passwordInput.type === 'password') {
-          // Cambiar a tipo texto para mostrar la contraseña
-          passwordInput.type = 'text';
-          // Cambiar el icono al de "ojo cerrado"
+          passwordInput.type = 'text'; // Cambiar a texto
           eyeIcon.classList.remove('fa-eye');
           eyeIcon.classList.add('fa-eye-slash');
         } else {
-          // Cambiar a tipo contraseña para ocultarla
-          passwordInput.type = 'password';
-          // Cambiar el icono al de "ojo abierto"
+          passwordInput.type = 'password'; // Cambiar a contraseña
           eyeIcon.classList.remove('fa-eye-slash');
           eyeIcon.classList.add('fa-eye');
         }
