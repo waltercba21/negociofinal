@@ -1829,6 +1829,53 @@ border-radius: 10px;
 .card.calidad_vic hr {
   border-color: #ffffff; 
 }
+.cantidad-producto {
+  margin: 10px 0;
+}
+
+.cantidad-input {
+  width: 50px;
+  margin-right: 10px;
+}
+
+.btn-agregar-carrito {
+  padding: 5px 10px;
+  background-color: #003f7d;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-agregar-carrito:hover {
+  background-color: #004d99;
+}
+
+.indicador-disponibilidad {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.circulo {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.verde {
+  background-color: green;
+}
+
+.amarillo {
+  background-color: yellow;
+}
+
+.rojo {
+  background-color: red;
+}
+
 
 /*--------------------Pedido Manual---------------*/
 .producto-item {

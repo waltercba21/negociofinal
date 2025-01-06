@@ -55,55 +55,51 @@
       <% } %>
     </div>
 
-   <div id="contenedor-productos" class="contenedor-productos">
-  <% productos.forEach(function(producto) { %>
-    <div class="card 
-      <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
-      <%= producto.calidad_vic ? 'calidad_vic' : '' %>
-    ">
-          <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-            <div class="cover__card">
-              <div class="carousel">
-                <% producto.imagenes.forEach(function(imagen, index) { %>
-                  <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
-                <% }); %>
-              </div>
-            </div>
-            <div class="carousel__buttons">
-              <button class="carousel__button">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <button class="carousel__button">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-            </div>
-          <% } else { %>
-            <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
-          <% } %>
+    <div id="contenedor-productos" class="contenedor-productos">
+      <% productos.forEach(function(producto) { %>
+        <div class="card">
+          <div class="cover__card">
+            <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+              <img src="../../uploads/productos/<%= producto.imagenes[0].imagen %>" alt="Imagen de <%= producto.nombre %>">
+            <% } else { %>
+              <img src="/ruta/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
+            <% } %>
+          </div>
           <div class="titulo-producto">
-            <h3 class="nombre"><%= producto.nombre %></h3>
-          </div>
-          <hr>
-          <div class="categoria-producto">
-            <h6 class="categoria"><%= producto.categoria %></h6>
-          </div>
-          <div class="descripcion" style="display: none;">
-            <%= producto.descripcion %>
+            <h3><%= producto.nombre %></h3>
           </div>
           <div class="precio-producto">
-            <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
+            <p>$<%= producto.precio_venta.toLocaleString('de-DE') %></p>
           </div>
-          <% if (isAdminUser) { %>
-            <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
-              <p>Stock Disponible:   <%= producto.stock_actual %> </p>
+          
+          <% if (isUserLoggedIn) { %>
+            <div class="cantidad-producto">
+              <label for="cantidad-<%= producto.id %>">Cantidad:</label>
+              <input type="number" id="cantidad-<%= producto.id %>" class="cantidad-input" min="1" max="99" value="1">
+              <button class="btn-agregar-carrito" data-id="<%= producto.id %>">Agregar al Carrito</button>
             </div>
+            <div class="indicador-disponibilidad">
+              <% if (producto.disponibilidad === 'disponible') { %>
+                <div class="circulo verde"></div>
+              <% } else if (producto.disponibilidad === 'pendiente') { %>
+                <div class="circulo amarillo"></div>
+              <% } else { %>
+                <div class="circulo rojo"></div>
+              <% } %>
+              <span>
+                <% if (producto.disponibilidad === 'disponible') { %>Disponible
+                <% } else if (producto.disponibilidad === 'pendiente') { %>Pendiente
+                <% } else { %>A pedido
+                <% } %>
+              </span>
+            </div>
+          <% } else { %>
+            <p class="mensaje-registro">Regístrate o inicia sesión para agregar productos al carrito.</p>
           <% } %>
-          <div class="cantidad-producto">
-            <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
-          </div>
         </div>
       <% }); %>
     </div>
+    
     
 <div class="paginacion">
   <% for(let i = 1; i <= Math.min(numeroDePaginas, 10); i++) { %>
