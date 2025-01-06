@@ -135,13 +135,20 @@ module.exports = {
                         producto.categoria = categoriaProducto.nombre;
                     }
                     producto.imagenes = todasLasImagenes.filter(imagen => imagen.producto_id.toString() === producto.id.toString());
+    
+                    // Verificar disponibilidad
+                    if (producto.cantidad_disponible > 0) {
+                        producto.disponibilidad = 'disponible';  // Puedes cambiar esto a un semáforo visual
+                    } else {
+                        producto.disponibilidad = 'no disponible';
+                    }
                 }
             } else {
                 console.log('No se encontraron productos para estos filtros');
             }
     
             // Verifica si el usuario está autenticado
-            const isUserLoggedIn = !!req.session.userId; // Reemplaza esto con tu lógica de autenticación
+            const isUserLoggedIn = !!req.session.usuario; // Asegúrate de usar la variable correcta para verificar la sesión
     
             res.render('productos', { 
                 productos, 
@@ -162,10 +169,11 @@ module.exports = {
                 numeroDePaginas: 1, 
                 pagina, 
                 modelo: undefined,
-                isUserLoggedIn: !!req.session.userId // Manejo del error
+                isUserLoggedIn: !!req.session.usuario // Manejo del error
             });
         }
-    },    
+    },
+    
     buscar: async (req, res) => {
         try {
             const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;

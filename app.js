@@ -25,9 +25,12 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: { 
-    maxAge: 6200000 
+    maxAge: 6200000, 
+    secure: true, // Asegúrate de usar HTTPS para que esto funcione
+    httpOnly: true, // Protege contra ataques de XSS
   }
 }));
+
 app.use((req, res, next) => {
   if (req.session.usuario && Date.now() > req.session.cookie.expires) {
     res.redirect('/');
@@ -35,6 +38,7 @@ app.use((req, res, next) => {
   }
   next();
 });
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -46,10 +50,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(adminMiddleware)
 app.use(middlewares.setGlobalVariables);
 app.use((req, res, next) => {
-  res.locals.isLogged = req.session.usuario !== undefined;
-  res.locals.userLogged = req.session.usuario || {};
+  res.locals.isLogged = !!req.session.usuario; // Booleano
+  res.locals.userLogged = req.session.usuario || null; // Datos del usuario
   next();
-})
+});
+
 app.use('/', indexRouter);
 console.log("Router montado correctamente");
 app.use('/users', usersRouter);
