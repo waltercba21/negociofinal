@@ -24,12 +24,11 @@ document.addEventListener('DOMContentLoaded', function () {
         selectProvincia.appendChild(option);
       });
 
-      // Seleccionar provincia del usuario
-      if (provinciaUsuario) {
+      // Seleccionar la provincia del usuario
+      if (nombreProvinciaUsuario) {
         selectProvincia.value = nombreProvinciaUsuario;
+        cargarLocalidades(); // Cargar localidades automáticamente
       }
-
-      cargarLocalidades(); // Cargar localidades al seleccionar la provincia
 
       selectProvincia.addEventListener('change', cargarLocalidades);
     } catch (error) {
@@ -59,8 +58,8 @@ document.addEventListener('DOMContentLoaded', function () {
           selectLocalidad.appendChild(option);
         });
 
-        // Seleccionar localidad del usuario
-        if (localidadUsuario) {
+        // Seleccionar la localidad del usuario
+        if (nombreLocalidadUsuario) {
           selectLocalidad.value = nombreLocalidadUsuario;
         }
       } catch (error) {
@@ -71,6 +70,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Inicializar carga
+  // Inicializar carga de provincias
   cargarProvincias();
 });
