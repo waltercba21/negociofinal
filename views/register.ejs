@@ -19,22 +19,13 @@
       <label for="provincia">Provincia</label>
       <select id="provincia" name="provincia" required>
         <option value="">Selecciona una provincia</option>
-        <% provincias.forEach(prov => { %>
-          <option value="<%= prov.nombre %>" <%= prov.nombre === oldData?.provincia ? 'selected' : '' %>>
-            <%= prov.nombre %>
-          </option>
-        <% }) %>
       </select>
       
       <label for="localidad">Localidad</label>
       <select id="localidad" name="localidad" required>
         <option value="">Selecciona una localidad</option>
-        <% localidades.forEach(loc => { %>
-          <option value="<%= loc.nombre %>" <%= loc.nombre === oldData?.localidad ? 'selected' : '' %>>
-            <%= loc.nombre %>
-          </option>
-        <% }) %>
       </select>
+      
       
 
       <label for="password">Contraseña</label>
