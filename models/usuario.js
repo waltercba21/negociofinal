@@ -18,15 +18,11 @@ module.exports = {
       acepto_terminos,
     } = datos;
   
-    // Verificar si faltan campos
     if (!nombre || !apellido || !email || !password || !celular || !direccion || !localidad || !provincia || !fecha_nacimiento || !acepto_terminos) {
       console.error('Campos faltantes en los datos del usuario:', datos);
       return funcion(new Error('Todos los campos son obligatorios'));
     }
   
-    console.log('Datos a insertar en la base de datos:', datos);
-  
-    // Query de inserción
     conexion.query(
       `INSERT INTO usuarios (nombre, apellido, email, password, celular, direccion, localidad, provincia, fecha_nacimiento) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -41,20 +37,35 @@ module.exports = {
         funcion(null, result);
       }
     );
-  },   
+  },  
   obtenerPorEmail: function (email, funcion) {
     conexion.query('SELECT * FROM usuarios WHERE email = ?', [email], funcion);
   },
   actualizar: function (id, datos, callback) {
-    const query = 'UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, celular = ?, direccion = ?, localidad = ?, provincia = ? WHERE id = ?';
-    const values = [datos.nombre, datos.apellido, datos.email, datos.celular, datos.direccion, datos.localidad, datos.provincia, id];
+    const query = `
+      UPDATE usuarios 
+      SET nombre = ?, apellido = ?, email = ?, celular = ?, direccion = ?, localidad = ?, provincia = ? 
+      WHERE id = ?
+    `;
+    const values = [
+      datos.nombre,
+      datos.apellido,
+      datos.email,
+      datos.celular,
+      datos.direccion,
+      datos.localidad,
+      datos.provincia,
+      id,
+    ];
+  
     conexion.query(query, values, function (error, resultados) {
       if (error) {
+        console.error('Error al actualizar en la base de datos:', error);
         return callback(error);
       }
       return callback(null);
     });
-  },
+  },  
   eliminar: function (id, callback) {
     const query = 'DELETE FROM usuarios WHERE id = ?';
     conexion.query(query, [id], function (error, resultados) {

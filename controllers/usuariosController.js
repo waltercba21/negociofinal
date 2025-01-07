@@ -9,79 +9,58 @@ module.exports = {
   register: (req, res) => {
     return res.render('register');
   },
-  processRegister: (req, res) => {
+  processRegister: async (req, res) => {
     const resultValidation = validationResult(req);
   
     if (!resultValidation.isEmpty()) {
-      console.log('Errores de validación:', resultValidation.mapped());
+      const provincias = await obtenerProvincias(); // Método para obtener provincias
+      const localidades = await obtenerLocalidades(); // Método para obtener localidades
+  
       return res.render('register', {
         errors: resultValidation.mapped(),
         oldData: req.body,
+        provincias,
+        localidades,
       });
     }
   
     const email = req.body.email;
-    usuario.obtenerPorEmail(email, function (error, datos) {
+  
+    usuario.obtenerPorEmail(email, async (error, datos) => {
       if (error) {
-        console.error('Error al buscar el usuario por email:', error);
         return res.render('register', {
           error: 'Ocurrió un error al verificar el email.',
           oldData: req.body,
         });
       }
   
-      console.log('Datos obtenidos por email:', datos);
-  
       if (datos.length > 0) {
-        console.log('Email ya registrado:', email);
+        const provincias = await obtenerProvincias();
+        const localidades = await obtenerLocalidades();
+  
         return res.render('register', {
-          errors: {
-            emailExists: { msg: 'El email ya está registrado' },
-          },
+          errors: { emailExists: { msg: 'El email ya está registrado' } },
           oldData: req.body,
+          provincias,
+          localidades,
         });
       }
   
-      const password = req.body.password;
-      bcryptjs.genSalt(10, function (err, salt) {
-        if (err) {
-          console.error('Error al generar el salt para la contraseña:', err);
+      const salt = await bcryptjs.genSalt(10);
+      const hash = await bcryptjs.hash(req.body.password, salt);
+  
+      usuario.crear({ ...req.body, password: hash }, (error, result) => {
+        if (error) {
           return res.render('register', {
-            error: 'Ocurrió un error al generar la contraseña.',
+            error: 'Ocurrió un error al registrar el usuario.',
             oldData: req.body,
           });
         }
   
-        console.log('Salt generado correctamente:', salt);
-  
-        bcryptjs.hash(password, salt, function (err, hash) {
-          if (err) {
-            console.error('Error al generar el hash de la contraseña:', err);
-            return res.render('register', {
-              error: 'Ocurrió un error al generar la contraseña.',
-              oldData: req.body,
-            });
-          }
-  
-          console.log('Hash de la contraseña generado:', hash);
-  
-          // Crear el nuevo usuario
-          usuario.crear({ ...req.body, password: hash }, function (error, result) {
-            if (error) {
-              console.error('Error al insertar en la base de datos:', error);
-              return res.render('register', {
-                error: 'Ocurrió un error al registrar el usuario.',
-                oldData: req.body,
-              });
-            }
-  
-            console.log('Usuario registrado exitosamente:', result);
-            res.render('login'); // Redirigir al login después del registro
-          });
-        });
+        res.render('login');
       });
     });
-  },  
+  },    
   login: (req, res) => {
     return res.render('login');
   },  
@@ -146,21 +125,11 @@ module.exports = {
   
   profile: async (req, res) => {
     if (req.session && req.session.usuario) {
-      if (!req.session.usuario.firstLogin) {
-        return res.redirect('/');
-      }
-      req.session.usuario.firstLogin = false;
-      req.session.save(err => {
-        if (err) {
-          console.log(err);
-        } else {
-          return res.render('profile', { usuario: req.session.usuario });
-        }
-      });
+      return res.render('profile', { usuario: req.session.usuario });
     } else {
       return res.redirect('/users/login');
     }
-  },
+  },  
   logout: (req, res) => {
     req.session.destroy((error) => {
       if (error) {
@@ -171,35 +140,59 @@ module.exports = {
   updateProfile: (req, res) => {
     const userId = req.session.usuario.id;
     const updatedData = req.body;
+  
+    // Validación básica (puedes usar una librería como express-validator para mayor robustez)
+    if (!updatedData.nombre || !updatedData.email) {
+      return res.render('profile', {
+        error: 'El nombre y el email son obligatorios',
+        oldData: updatedData,
+      });
+    }
+  
     usuario.actualizar(userId, updatedData, function (error) {
       if (error) {
+        console.error('Error al actualizar el perfil:', error);
+        return res.render('profile', {
+          error: 'Ocurrió un error al actualizar el perfil. Intenta nuevamente.',
+          oldData: updatedData,
+        });
       }
+  
+      // Actualizar datos en la sesión
       req.session.usuario = { ...req.session.usuario, ...updatedData };
-      req.session.usuario.provincia = updatedData.provincia;
-      req.session.usuario.nombreProvincia = updatedData.nombreProvincia;
-      req.session.usuario.localidad = updatedData.localidad;
-      req.session.usuario.nombreLocalidad = updatedData.nombreLocalidad;
-      req.session.save(function(err) {
-        if(err) {
-          console.log(err);
+  
+      req.session.save(function (err) {
+        if (err) {
+          console.error('Error al guardar la sesión:', err);
+          return res.render('profile', {
+            error: 'Ocurrió un error al actualizar tu sesión. Intenta nuevamente.',
+            oldData: updatedData,
+          });
         }
+  
         res.redirect('/');
       });
     });
-  },
-  deleteAccount : (req, res, next) => {
-    console.log("ID del usuario a eliminar: ", req.session.usuario.id);
-    usuario.eliminar(req.session.usuario.id, (err) => {
+  },  
+  deleteAccount: (req, res, next) => {
+    const userId = req.session.usuario.id;
+  
+    usuario.eliminar(userId, (err) => {
       if (err) {
-        return next(err);
+        console.error('Error al eliminar la cuenta:', err);
+        return next(err); // Esto manejará el error globalmente o con middleware de errores.
       }
+  
       req.session.destroy((err) => {
         if (err) {
+          console.error('Error al destruir la sesión:', err);
           return next(err);
         }
-        res.redirect('/');
+  
+        // Redirigir a una página de confirmación o al inicio
+        res.redirect('/cuenta-eliminada');
       });
     });
-  },
+  },  
  
 }
