@@ -12,7 +12,7 @@ $(document).ready(function() {
     console.log('Prev button clicked'); 
     var newIndex = (index > 0) ? index - 1 : $images.length - 1;
     showImage(newIndex);
-  });
+  }); 
 
   $('#nextButton').on('click', function() {
     console.log('Next button clicked'); 
