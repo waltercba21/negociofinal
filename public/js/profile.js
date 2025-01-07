@@ -24,11 +24,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Seleccionar la provincia del usuario
       if (nombreProvinciaUsuario) {
-        // Buscar el índice de la provincia en el array de provincias
+        // Buscamos la provincia en la lista de opciones
         const provinciaSeleccionada = provincias.find(p => p.nombre === nombreProvinciaUsuario);
         if (provinciaSeleccionada) {
           selectProvincia.value = provinciaSeleccionada.nombre;
-          cargarLocalidades(provinciaSeleccionada.id); // Cargar localidades al seleccionar la provincia
+          cargarLocalidades(provinciaSeleccionada.id); // Cargar localidades de esta provincia
         }
       }
 
@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const provinciaId = provincias.find(p => p.nombre === selectProvincia.value)?.id;
         cargarLocalidades(provinciaId);
       });
+
     } catch (error) {
       console.error('Error al cargar provincias:', error);
     }
