@@ -27,7 +27,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
 
 function mostrarProductos(productos) {
   const contenedorProductos = document.getElementById('contenedor-productos');
-  
+  const isUserLoggedIn = document.body.dataset.isUserLoggedIn === 'true';
   productos.forEach((producto) => {
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
@@ -76,6 +76,16 @@ function mostrarProductos(productos) {
         <p class="precio">${precio_venta}</p>
       </div>
     `;
+      // Agregar lógica del semáforo
+      if (isUserLoggedIn) { 
+        html += `
+          <div class="semaforo-stock">
+            ${producto.stock_actual >= producto.stock_minimo ? 
+              '<span class="semaforo verde"></span> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA' : 
+              '<span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
+          </div>
+        `;
+      }
     if (isAdminUser) {
       html += `
         <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
