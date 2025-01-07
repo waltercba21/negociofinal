@@ -1,6 +1,6 @@
 <header>
   <a href="/">
-    <img class="logo" src="/uploads/productos/logo.png" alt="LOGO" />
+    <img class="logo" src="/uploads/productos/logo.png"  alt="LOGO" />
   </a>
   
   <button class="hamburger" onclick="toggleMenu()">☰</button>
@@ -9,35 +9,33 @@
     <a class="nav-link" href="/">INICIO</a>
     <a class="nav-link" href="/productos">PRODUCTOS</a>
   
-    <% if (userLogged && userLogged.isAdmin) { %>  <!-- Verifica que userLogged existe antes de acceder a isAdmin -->
+    <% if (userLogged.isAdmin) { %>
       <% if (userLogged.isAccountingAdmin) { %>
-        <!-- Mostrar opciones para administradores contables si es necesario -->
+        
       <% } else { %>
         <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
         <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
         <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
         <a class="nav-link" href="/administracion">ADMINISTRACIÓN</a>
       <% } %>
-    <% } else if (userLogged) { %>  <!-- Solo muestra esto si el usuario está logueado y no es admin -->
-      <!-- Mostrar contenido para usuarios regulares, si es necesario -->
+    <% } else if (isLogged) { %>
     <% } %>
-
     <a class="nav-link" href="https://wa.me/+543513820440/" target="_blank">WHATSAPP</a>
     <a class="nav-link" href="#" onclick="abrirMapa(); return false;">UBICACIÓN</a>
   </nav>
   
   <div class="icons">
-    <% if (userLogged) { %>  <!-- Verifica si el usuario está logueado -->
+    <% if (isLogged) { %>
       <div class="logueado"> 
         <a href="/users/profile"> 
-          <p>Hola <%= userLogged.nombre %> </p> <!-- Mostrar el nombre del usuario logueado -->
+          <p>Hola <%= userLogged.nombre %> </p> <!-- Cambiado de usuario.nombre a userLogged.nombre -->
         </a>
         <a href="/users/logout">
           <i class="fa-solid fa-right-from-bracket"></i>
           <span>Salir</span> <!-- Aquí se añade el texto "Salir" -->
         </a>
       </div>
-    <% } else { %>  <!-- Si no está logueado -->
+    <% } else if (!isAdminUser) { %> <!-- Agregamos esta condición para no mostrar esto al admin -->
       <a href="/users/login">Iniciar Sesión</a>
       <a class="register-link" href="/users/register">Registrarme</a>
     <% } %> 

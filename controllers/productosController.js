@@ -51,11 +51,9 @@ module.exports = {
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
-    
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
-            return res.redirect('/error');
+            return res.redirect('/error'); 
         }
-    
         try {
             let productos;
             const totalProductos = await new Promise((resolve, reject) => {
@@ -68,10 +66,8 @@ module.exports = {
                     }
                 });
             });
-    
             let numeroDePaginas = Math.ceil(totalProductos / 20);
-    
-            if (categoria || marca || modelo) {
+            if (categoria || marca || modelo) {  
                 productos = await new Promise((resolve, reject) => {
                     if (categoria) {
                         producto.obtenerProductosPorCategoria(conexion, categoria, (error, resultados) => {
@@ -96,34 +92,31 @@ module.exports = {
             } else {
                 productos = await new Promise((resolve, reject) => {
                     producto.obtener(conexion, pagina, (error, resultados) => {
-                        if (error) {
-                            console.error('Error al obtener productos:', error);
-                            reject(error);
-                        } else {
-                            resolve(resultados);
-                        }
+                      if (error) {
+                        console.error('Error al obtener productos:', error);
+                        reject(error);
+                      } else {
+                        resolve(resultados);
+                      }
                     });
-                });
+                  });
             }
-    
             const categorias = await producto.obtenerCategorias(conexion);
             const marcas = await producto.obtenerMarcas(conexion);
             let modelosPorMarca;
-    
             if (marca) {
                 modelosPorMarca = await producto.obtenerModelosPorMarca(conexion, marca);
             }
-    
             let modeloSeleccionado;
             if (modelo && modelosPorMarca) {
                 modeloSeleccionado = modelosPorMarca.find(m => m.id === modelo);
             }
-    
-            if (productos.length > 0) {
+            if (productos.length === 0) {
+                console.log('No se encontraron productos para estos filtros');
+            } else {
                 const productoIds = productos.map(producto => producto.id);
                 const todasLasImagenesPromesas = productoIds.map(id => producto.obtenerImagenesProducto(conexion, id));
                 const todasLasImagenes = (await Promise.all(todasLasImagenesPromesas)).flat();
-    
                 for (let producto of productos) {
                     if (producto.precio_venta !== null && !isNaN(parseFloat(producto.precio_venta))) {
                         producto.precio_venta = Number(producto.precio_venta);
@@ -135,48 +128,13 @@ module.exports = {
                         producto.categoria = categoriaProducto.nombre;
                     }
                     producto.imagenes = todasLasImagenes.filter(imagen => imagen.producto_id.toString() === producto.id.toString());
-    
-                    // Verificar disponibilidad
-                    if (producto.cantidad_disponible > 0) {
-                        producto.disponibilidad = 'disponible';
-                    } else {
-                        producto.disponibilidad = 'no disponible';
-                    }
                 }
-            } else {
-                console.log('No se encontraron productos para estos filtros');
             }
-    
-            // Verifica si el usuario está autenticado
-            const isUserLoggedIn = !!req.session.usuario; // Asegúrate de usar la variable correcta para verificar la sesión
-            const userLogged = req.session.usuario || null; // Pasamos el usuario logueado a la vista
-    
-            res.render('productos', {
-                productos,
-                categorias,
-                marcas,
-                modelosPorMarca,
-                numeroDePaginas,
-                pagina,
-                modelo: modeloSeleccionado,
-                isUserLoggedIn,  // Pasar si está logueado
-                userLogged // Pasar toda la información del usuario a la vista
-            });
-        } catch (error) {
-            res.render('productos', {
-                productos: [],
-                categorias: [],
-                marcas: [],
-                modelosPorMarca: [],
-                numeroDePaginas: 1,
-                pagina,
-                modelo: undefined,
-                isUserLoggedIn: !!req.session.usuario, // Manejo del error
-                userLogged: req.session.usuario || null // Pasar el usuario (o null si no está logueado)
-            });
+            res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
+        }  catch (error) {
+            res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
-    
     buscar: async (req, res) => {
         try {
             const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;

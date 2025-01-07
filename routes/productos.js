@@ -22,7 +22,7 @@ var maxImagenes = 10;
 var multerInstance = multer({ storage: rutaAlmacen });
 var cargar = multerInstance.array('archivos[]', maxImagenes);
 
-// Rutas 
+// Rutas
 router.get('/', productosController.lista);
 router.post('/', cargar, productosController.guardar);
 router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
