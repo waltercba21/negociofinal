@@ -130,7 +130,7 @@ module.exports = {
                     producto.imagenes = todasLasImagenes.filter(imagen => imagen.producto_id.toString() === producto.id.toString());
                 }
             }
-            res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
+            res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado,req });
         }  catch (error) {
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
