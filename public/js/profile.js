@@ -1,10 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
   const selectProvincia = document.getElementById('provincia');
-  const provinciaUsuario = document.getElementById('provincia').dataset.provincia;
   const nombreProvinciaUsuario = document.getElementById('nombreProvincia').value;
 
   const selectLocalidad = document.getElementById('localidad');
-  const localidadUsuario = document.getElementById('localidad').dataset.localidad;
   const nombreLocalidadUsuario = document.getElementById('nombreLocalidad').value;
 
   // Función para cargar provincias
@@ -26,23 +24,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Seleccionar la provincia del usuario
       if (nombreProvinciaUsuario) {
-        selectProvincia.value = nombreProvinciaUsuario;
-        cargarLocalidades(); // Cargar localidades automáticamente
+        // Buscar el índice de la provincia en el array de provincias
+        const provinciaSeleccionada = provincias.find(p => p.nombre === nombreProvinciaUsuario);
+        if (provinciaSeleccionada) {
+          selectProvincia.value = provinciaSeleccionada.nombre;
+          cargarLocalidades(provinciaSeleccionada.id); // Cargar localidades al seleccionar la provincia
+        }
       }
 
-      selectProvincia.addEventListener('change', cargarLocalidades);
+      selectProvincia.addEventListener('change', function() {
+        const provinciaId = provincias.find(p => p.nombre === selectProvincia.value)?.id;
+        cargarLocalidades(provinciaId);
+      });
     } catch (error) {
       console.error('Error al cargar provincias:', error);
     }
   }
 
   // Función para cargar localidades
-  async function cargarLocalidades() {
-    const provinciaSeleccionada = selectProvincia.value;
-
-    if (provinciaSeleccionada) {
+  async function cargarLocalidades(provinciaId) {
+    if (provinciaId) {
       try {
-        const provinciaId = selectProvincia.selectedOptions[0]?.dataset.id;
         const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?provincia=${provinciaId}&max=5000`);
         const data = await response.json();
         const localidades = data.localidades || [];
