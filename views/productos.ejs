@@ -55,12 +55,12 @@
       <% } %>
     </div>
 
-   <div id="contenedor-productos" class="contenedor-productos">
-  <% productos.forEach(function(producto) { %>
-    <div class="card 
-      <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
-      <%= producto.calidad_vic ? 'calidad_vic' : '' %>
-    ">
+    <div id="contenedor-productos" class="contenedor-productos">
+      <% productos.forEach(function(producto) { %>
+        <div class="card 
+          <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
+          <%= producto.calidad_vic ? 'calidad_vic' : '' %>
+        ">
           <% if (producto.imagenes && producto.imagenes.length > 0) { %>
             <div class="cover__card">
               <div class="carousel">
@@ -93,11 +93,16 @@
           <div class="precio-producto">
             <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
           </div>
-          <% if (isAdminUser) { %>
-            <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
-              <p>Stock Disponible:   <%= producto.stock_actual %> </p>
+    
+          <% if (req.session && req.session.usuario) { %> <div class="semaforo-stock">
+              <% if (producto.stock_actual >= producto.stock_minimo) { %>
+                <span class="semaforo verde"></span> 
+              <% } else { %>
+                <span class="semaforo rojo"></span> 
+              <% } %>
             </div>
           <% } %>
+    
           <div class="cantidad-producto">
             <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
           </div>

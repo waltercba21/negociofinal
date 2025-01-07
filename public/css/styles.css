@@ -1851,31 +1851,25 @@ border-radius: 10px;
   background-color: #004d99;
 }
 
-.indicador-disponibilidad {
-  display: flex;
-  align-items: center;
-  margin-top: 10px;
+.semaforo-stock {
+  display: inline-block; /* Para que el semáforo se muestre en línea */
+  margin-top: 10px; /* Ajusta el margen superior según tu diseño */
 }
 
-.circulo {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  margin-right: 10px;
+.semaforo {
+  width: 20px; /* Ajusta el tamaño del círculo */
+  height: 20px;
+  border-radius: 50%; /* Para que sea un círculo */
+  display: inline-block;
 }
 
 .verde {
-  background-color: green;
-}
-
-.amarillo {
-  background-color: yellow;
+  background-color: green; /* Color verde para stock disponible */
 }
 
 .rojo {
-  background-color: red;
+  background-color: red; /* Color rojo para falta de stock */
 }
-
 
 /*--------------------Pedido Manual---------------*/
 .producto-item {

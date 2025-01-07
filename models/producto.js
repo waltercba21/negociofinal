@@ -725,7 +725,7 @@ obtenerProductoPorCodigo: function(codigo) {
                 }
             });
         });
-    },
+    }, 
 actualizarStockPresupuesto: (producto_id, cantidadVendida) => {
     return new Promise((resolve, reject) => {
         const query = 'UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?';

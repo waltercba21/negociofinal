@@ -62,7 +62,7 @@ module.exports = {
                         console.error('Error al obtener el total de productos:', error);
                         reject(error);
                     } else {
-                        resolve(resultados[0].total);
+                        resolve(resultados[0].total); 
                     }
                 });
             });
