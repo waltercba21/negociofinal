@@ -72,7 +72,7 @@
             <p>$<%= producto.precio_venta.toLocaleString('de-DE') %></p>
           </div>
           
-          <% if (isUserLoggedIn) { %>
+          <% if (isUserLoggedIn) { %> <!-- Verifica si el usuario está logueado -->
             <div class="cantidad-producto">
               <label for="cantidad-<%= producto.id %>">Cantidad:</label>
               <input type="number" id="cantidad-<%= producto.id %>" class="cantidad-input" min="1" max="<%= producto.cantidad_disponible %>" value="1">
@@ -100,8 +100,6 @@
         </div>
       <% }); %>
     </div>
-    
-    
 <div class="paginacion">
   <% for(let i = 1; i <= Math.min(numeroDePaginas, 10); i++) { %>
     <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>

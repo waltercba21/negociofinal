@@ -53,7 +53,7 @@ module.exports = {
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
     
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
-            return res.redirect('/error'); 
+            return res.redirect('/error');
         }
     
         try {
@@ -71,7 +71,7 @@ module.exports = {
     
             let numeroDePaginas = Math.ceil(totalProductos / 20);
     
-            if (categoria || marca || modelo) {  
+            if (categoria || marca || modelo) {
                 productos = await new Promise((resolve, reject) => {
                     if (categoria) {
                         producto.obtenerProductosPorCategoria(conexion, categoria, (error, resultados) => {
@@ -138,7 +138,7 @@ module.exports = {
     
                     // Verificar disponibilidad
                     if (producto.cantidad_disponible > 0) {
-                        producto.disponibilidad = 'disponible';  // Puedes cambiar esto a un semáforo visual
+                        producto.disponibilidad = 'disponible';
                     } else {
                         producto.disponibilidad = 'no disponible';
                     }
@@ -149,27 +149,30 @@ module.exports = {
     
             // Verifica si el usuario está autenticado
             const isUserLoggedIn = !!req.session.usuario; // Asegúrate de usar la variable correcta para verificar la sesión
+            const userLogged = req.session.usuario || null; // Pasamos el usuario logueado a la vista
     
-            res.render('productos', { 
-                productos, 
-                categorias, 
-                marcas, 
-                modelosPorMarca, 
-                numeroDePaginas, 
-                pagina, 
+            res.render('productos', {
+                productos,
+                categorias,
+                marcas,
+                modelosPorMarca,
+                numeroDePaginas,
+                pagina,
                 modelo: modeloSeleccionado,
-                isUserLoggedIn // Pasar la variable a la vista
+                isUserLoggedIn,  // Pasar si está logueado
+                userLogged // Pasar toda la información del usuario a la vista
             });
         } catch (error) {
-            res.render('productos', { 
-                productos: [], 
-                categorias: [], 
-                marcas: [], 
-                modelosPorMarca: [], 
-                numeroDePaginas: 1, 
-                pagina, 
+            res.render('productos', {
+                productos: [],
+                categorias: [],
+                marcas: [],
+                modelosPorMarca: [],
+                numeroDePaginas: 1,
+                pagina,
                 modelo: undefined,
-                isUserLoggedIn: !!req.session.usuario // Manejo del error
+                isUserLoggedIn: !!req.session.usuario, // Manejo del error
+                userLogged: req.session.usuario || null // Pasar el usuario (o null si no está logueado)
             });
         }
     },
