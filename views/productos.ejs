@@ -94,13 +94,17 @@
             <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
           </div>
     
-          <% if (req.session && req.session.usuario) { %> 
+          <% if (req.session && req.session.usuario && !isAdminUser) { %> 
             <div class="semaforo-stock">
               <% if (producto.stock_actual >= producto.stock_minimo) { %>
                 <span class="semaforo verde"></span> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA
               <% } else { %>
                 <span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO
               <% } %>
+            </div>
+          <% } else if (isAdminUser) { %>
+            <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
+              <p>Stock Disponible: <%= producto.stock_actual %> </p>
             </div>
           <% } %>
     
