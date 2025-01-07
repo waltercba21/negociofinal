@@ -6,33 +6,48 @@ module.exports ={
     
     obtener: function(conexion, pagina, callback) {
         const offset = (pagina - 1) * 20;
-        const consulta = `
-            SELECT productos.*, imagenes_producto.imagen 
-            FROM productos 
-            LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
-            ORDER BY productos.id DESC
-            LIMIT 20 OFFSET ?`;
-        conexion.query(consulta, [offset], (error, resultados) => {
+        const consultaProductos = `
+          SELECT * 
+          FROM productos 
+          ORDER BY id DESC
+          LIMIT 20 OFFSET ?`;
+      
+        conexion.query(consultaProductos, [offset], (error, productos) => {
+          if (error) {
+            callback(error);
+            return;
+          }
+      
+          const productoIds = productos.map(producto => producto.id);
+          const consultaImagenes = `
+            SELECT producto_id, imagen 
+            FROM imagenes_producto 
+            WHERE producto_id IN (?)`;
+      
+          conexion.query(consultaImagenes, [productoIds], (error, resultadosImagenes) => {
             if (error) {
-                callback(error);
-                return;
+              callback(error);
+              return;
             }
-            const productos = [];
-            const mapaProductos = {};
-            resultados.forEach(resultado => {
-                if (!mapaProductos[resultado.id]) {
-                    mapaProductos[resultado.id] = {
-                        ...resultado,
-                        imagenes: resultado.imagen ? [resultado.imagen] : []
-                    };
-                    productos.push(mapaProductos[resultado.id]);
-                } else if (resultado.imagen) {
-                    mapaProductos[resultado.id].imagenes.push(resultado.imagen);
-                }
-            }); 
+      
+            // Agrupar imágenes por producto
+            const imagenesPorProducto = {};
+            resultadosImagenes.forEach(imagen => {
+              if (!imagenesPorProducto[imagen.producto_id]) {
+                imagenesPorProducto[imagen.producto_id] = [];
+              }
+              imagenesPorProducto[imagen.producto_id].push(imagen.imagen);
+            });
+      
+            // Asignar las imágenes a cada producto
+            productos.forEach(producto => {
+              producto.imagenes = imagenesPorProducto[producto.id] || [];
+            });
+      
             callback(null, productos);
+          });
         });
-    },
+      },
     obtenerSiguienteID: function() {
         return new Promise((resolve, reject) => {
           conexion.query('SELECT MAX(id) AS max_id FROM presupuestos_mostrador', (error, resultado) => {
