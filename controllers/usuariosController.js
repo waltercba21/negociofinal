@@ -129,7 +129,7 @@ module.exports = {
     } else {
       return res.redirect('/users/login');
     }
-  },  
+  },   
   logout: (req, res) => {
     req.session.destroy((error) => {
       if (error) {

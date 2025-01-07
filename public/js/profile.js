@@ -1,49 +1,76 @@
-document.addEventListener('DOMContentLoaded', (event) => {
+document.addEventListener('DOMContentLoaded', function () {
   const selectProvincia = document.getElementById('provincia');
-  const provinciaUsuario = selectProvincia.dataset.provincia;
+  const provinciaUsuario = document.getElementById('provincia').dataset.provincia;
+  const nombreProvinciaUsuario = document.getElementById('nombreProvincia').value;
 
   const selectLocalidad = document.getElementById('localidad');
-  const localidadUsuario = selectLocalidad.dataset.localidad;
+  const localidadUsuario = document.getElementById('localidad').dataset.localidad;
+  const nombreLocalidadUsuario = document.getElementById('nombreLocalidad').value;
 
-  fetch('https://apis.datos.gob.ar/georef/api/provincias')
-  .then(response => response.json())
-  .then(data => {
-    const provincias = data.provincias;
-    provincias.forEach(provincia => {
-      const option = document.createElement('option');
-      option.value = provincia.id;
-      option.text = provincia.nombre;
-      selectProvincia.appendChild(option);
-    });
-    selectProvincia.value = provinciaUsuario;
-    if (selectProvincia.selectedIndex !== -1) { 
-      document.getElementById('nombreProvincia').value = selectProvincia.options[selectProvincia.selectedIndex].text;
+  // Función para cargar provincias
+  async function cargarProvincias() {
+    try {
+      const response = await fetch('https://apis.datos.gob.ar/georef/api/provincias');
+      const data = await response.json();
+      const provincias = data.provincias;
+
+      provincias.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+      provincias.forEach(provincia => {
+        const option = document.createElement('option');
+        option.value = provincia.nombre; // Usar el nombre como valor
+        option.dataset.id = provincia.id;
+        option.textContent = provincia.nombre;
+        selectProvincia.appendChild(option);
+      });
+
+      // Seleccionar provincia del usuario
+      if (provinciaUsuario) {
+        selectProvincia.value = nombreProvinciaUsuario;
+      }
+
+      cargarLocalidades(); // Cargar localidades al seleccionar la provincia
+
+      selectProvincia.addEventListener('change', cargarLocalidades);
+    } catch (error) {
+      console.error('Error al cargar provincias:', error);
     }
-    selectProvincia.addEventListener('change', function() {
-      const provinciaSeleccionada = this.value;
-      const nombreProvincia = this.options[this.selectedIndex].text;
-      document.getElementById('nombreProvincia').value = nombreProvincia;
-      fetch(`https://apis.datos.gob.ar/georef/api/municipios?provincia=${provinciaSeleccionada}&campos=id,nombre&max=5000`)
-      .then(response => response.json())
-      .then(data => {
-        const localidades = data.municipios;
-        selectLocalidad.innerHTML = '';
+  }
+
+  // Función para cargar localidades
+  async function cargarLocalidades() {
+    const provinciaSeleccionada = selectProvincia.value;
+
+    if (provinciaSeleccionada) {
+      try {
+        const provinciaId = selectProvincia.selectedOptions[0]?.dataset.id;
+        const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?provincia=${provinciaId}&max=5000`);
+        const data = await response.json();
+        const localidades = data.localidades || [];
+
+        selectLocalidad.innerHTML = '<option value="">Selecciona una localidad</option>';
+        localidades.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
         localidades.forEach(localidad => {
           const option = document.createElement('option');
-          option.value = localidad.id;
-          option.text = localidad.nombre;
+          option.value = localidad.nombre; // Usar el nombre como valor
+          option.dataset.id = localidad.id;
+          option.textContent = localidad.nombre;
           selectLocalidad.appendChild(option);
         });
-        if (localidadUsuario !== "") {
-          selectLocalidad.value = localidadUsuario;
-          document.getElementById('nombreLocalidad').value = selectLocalidad.options[selectLocalidad.selectedIndex].text;
+
+        // Seleccionar localidad del usuario
+        if (localidadUsuario) {
+          selectLocalidad.value = nombreLocalidadUsuario;
         }
-        selectLocalidad.addEventListener('change', function() {
-          const nombreLocalidad = this.options[this.selectedIndex].text;
-          document.getElementById('nombreLocalidad').value = nombreLocalidad;
-        });
-      });
-    });
-    selectProvincia.dispatchEvent(new Event('change'));
-  });
+      } catch (error) {
+        console.error('Error al cargar localidades:', error);
+      }
+    } else {
+      selectLocalidad.innerHTML = '<option value="">Selecciona una localidad</option>';
+    }
+  }
+
+  // Inicializar carga
+  cargarProvincias();
 });
