@@ -92,14 +92,14 @@ module.exports = {
             } else {
                 productos = await new Promise((resolve, reject) => {
                     producto.obtener(conexion, pagina, (error, resultados) => {
-                        if (error) {
-                            console.error('Error al obtener productos:', error);
-                            reject(error);
-                        } else {
-                            resolve(resultados);
-                        }
+                      if (error) {
+                        console.error('Error al obtener productos:', error);
+                        reject(error);
+                      } else {
+                        resolve(resultados);
+                      }
                     });
-                });
+                  });
             }
             const categorias = await producto.obtenerCategorias(conexion);
             const marcas = await producto.obtenerMarcas(conexion);
@@ -111,14 +111,6 @@ module.exports = {
             if (modelo && modelosPorMarca) {
                 modeloSeleccionado = modelosPorMarca.find(m => m.id === modelo);
             }
-    
-            // Obtener el stock para cada producto
-            for (let producto of productos) {
-                const stock = await producto.obtenerStock(conexion, producto.id);
-                producto.stock_actual = stock.stock_actual;
-                producto.stock_minimo = stock.stock_minimo;
-            }
-    
             if (productos.length === 0) {
                 console.log('No se encontraron productos para estos filtros');
             } else {
@@ -139,11 +131,10 @@ module.exports = {
                 }
             }
             res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado });
-        } catch (error) {
+        }  catch (error) {
             res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
         }
     },
-    
     buscar: async (req, res) => {
         try {
             const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
