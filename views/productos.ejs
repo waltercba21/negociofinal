@@ -94,11 +94,12 @@
             <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
           </div>
     
-          <% if (req.session && req.session.usuario) { %> <div class="semaforo-stock">
+          <% if (req.session && req.session.usuario) { %> 
+            <div class="semaforo-stock">
               <% if (producto.stock_actual >= producto.stock_minimo) { %>
-                <span class="semaforo verde"></span> 
+                <span class="semaforo verde"></span> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA
               <% } else { %>
-                <span class="semaforo rojo"></span> 
+                <span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO
               <% } %>
             </div>
           <% } %>
