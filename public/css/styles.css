@@ -1884,7 +1884,7 @@ border-radius: 10px;
 
 /* Estilo del texto del semáforo */
 .texto-semaforo {
-  font-size: 0.9em;
+  font-size: 0.5em;
   font-weight: bold;
   color: #333;
 }
