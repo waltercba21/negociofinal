@@ -51,9 +51,12 @@ module.exports = {
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
+        
+        // Validar que los parámetros de marca y modelo sean números
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             return res.redirect('/error'); 
         }
+    
         try {
             let productos;
             const totalProductos = await new Promise((resolve, reject) => {
@@ -66,7 +69,10 @@ module.exports = {
                     }
                 });
             });
-            let numeroDePaginas = Math.ceil(totalProductos / 20);
+    
+            const numeroDePaginas = Math.ceil(totalProductos / 20);
+    
+            // Obtener productos con filtros si existen
             if (categoria || marca || modelo) {  
                 productos = await new Promise((resolve, reject) => {
                     if (categoria) {
@@ -79,7 +85,7 @@ module.exports = {
                             }
                         });
                     } else {
-                        producto.obtenerPorFiltros(conexion, categoria !== undefined ? categoria : null, marca, modelo, (error, resultados) => {
+                        producto.obtenerPorFiltros(conexion, categoria || null, marca, modelo, (error, resultados) => {
                             if (error) {
                                 console.error('Error al obtener productos por filtros:', error);
                                 reject(error);
@@ -92,15 +98,16 @@ module.exports = {
             } else {
                 productos = await new Promise((resolve, reject) => {
                     producto.obtener(conexion, pagina, (error, resultados) => {
-                      if (error) {
-                        console.error('Error al obtener productos:', error);
-                        reject(error);
-                      } else {
-                        resolve(resultados);
-                      }
+                        if (error) {
+                            console.error('Error al obtener productos:', error);
+                            reject(error);
+                        } else {
+                            resolve(resultados);
+                        }
                     });
-                  });
+                });
             }
+    
             const categorias = await producto.obtenerCategorias(conexion);
             const marcas = await producto.obtenerMarcas(conexion);
             let modelosPorMarca;
@@ -111,30 +118,53 @@ module.exports = {
             if (modelo && modelosPorMarca) {
                 modeloSeleccionado = modelosPorMarca.find(m => m.id === modelo);
             }
+    
+            // Obtener imágenes de los productos
             if (productos.length === 0) {
                 console.log('No se encontraron productos para estos filtros');
             } else {
                 const productoIds = productos.map(producto => producto.id);
                 const todasLasImagenesPromesas = productoIds.map(id => producto.obtenerImagenesProducto(conexion, id));
                 const todasLasImagenes = (await Promise.all(todasLasImagenesPromesas)).flat();
+    
                 for (let producto of productos) {
                     if (producto.precio_venta !== null && !isNaN(parseFloat(producto.precio_venta))) {
                         producto.precio_venta = Number(producto.precio_venta);
                     } else {
                         producto.precio_venta = 'No disponible';
                     }
+    
                     const categoriaProducto = categorias.find(categoria => categoria.id === producto.categoria_id);
                     if (categoriaProducto) {
                         producto.categoria = categoriaProducto.nombre;
                     }
+    
                     producto.imagenes = todasLasImagenes.filter(imagen => imagen.producto_id.toString() === producto.id.toString());
                 }
             }
-            res.render('productos', { productos, categorias, marcas, modelosPorMarca, numeroDePaginas, pagina, modelo: modeloSeleccionado,req });
-        }  catch (error) {
-            res.render('productos', { productos: [], categorias: [], marcas: [], modelosPorMarca: [], numeroDePaginas: 1, pagina, modelo });
+    
+            res.render('productos', {
+                productos,
+                categorias,
+                marcas,
+                modelosPorMarca,
+                numeroDePaginas,
+                pagina,
+                modelo: modeloSeleccionado,
+                req
+            });
+        } catch (error) {
+            res.render('productos', {
+                productos: [],
+                categorias: [],
+                marcas: [],
+                modelosPorMarca: [],
+                numeroDePaginas: 1,
+                pagina,
+                modelo
+            });
         }
-    },
+    },    
     buscar: async (req, res) => {
         try {
             const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
