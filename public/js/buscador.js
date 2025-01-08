@@ -2,9 +2,13 @@ let productosOriginales = [];
 let timer;
 
 window.onload = async () => {
-  const respuesta = await fetch('/productos/api/buscar');
-  productosOriginales = await respuesta.json();
-  mostrarProductos(productosOriginales.slice(0, 12));
+  try {
+    const respuesta = await fetch('/productos/api/buscar');
+    productosOriginales = await respuesta.json();
+    mostrarProductos(productosOriginales.slice(0, 20)); // Mostrar 20 productos por defecto
+  } catch (error) {
+    console.error('Error al cargar productos:', error);
+  }
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
@@ -16,11 +20,15 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     let productos = [];
 
     if (!busqueda) {
-      productos = productosOriginales.slice(0, 12); // Mostrar productos iniciales si no hay búsqueda
+      productos = productosOriginales.slice(0, 20); // Mostrar productos iniciales si no hay búsqueda
     } else {
-      const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
-      const respuesta = await fetch(url);
-      productos = await respuesta.json();
+      try {
+        const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
+        const respuesta = await fetch(url);
+        productos = await respuesta.json();
+      } catch (error) {
+        console.error('Error al buscar productos:', error);
+      }
     }
 
     mostrarProductos(productos);
@@ -30,7 +38,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
 function mostrarProductos(productos) {
   const contenedorProductos = document.getElementById('contenedor-productos');
   const isAdminUser = document.body.dataset.isAdminUser === 'true';
-  const isUserLoggedIn = !!document.body.dataset.isUserLoggedIn; // Validar si el usuario está logueado
+  const isUserLoggedIn = document.body.dataset.isUserLoggedIn === 'true'; // Verificar si el usuario está logueado
 
   contenedorProductos.innerHTML = ''; // Limpiar antes de agregar nuevos productos
 
@@ -87,7 +95,7 @@ function mostrarProductos(productos) {
       </div>
     `;
 
-    // Lógica del semáforo
+    // Lógica del semáforo de stock
     if (isUserLoggedIn) {
       html += `
         <div class="semaforo-stock">
@@ -117,7 +125,7 @@ function mostrarProductos(productos) {
     tarjetaProducto.innerHTML = html;
     contenedorProductos.appendChild(tarjetaProducto);
 
-    // Carousel funcionalidad
+    // Funcionalidad del carousel
     const leftButton = tarjetaProducto.querySelector('.carousel__button--left');
     const rightButton = tarjetaProducto.querySelector('.carousel__button--right');
     const images = tarjetaProducto.querySelectorAll('.carousel__image');
