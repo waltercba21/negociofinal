@@ -8,7 +8,9 @@ window.onload = async () => {
     if (!respuesta.ok) throw new Error("Error al cargar los productos.");
     productosOriginales = await respuesta.json();
     console.log("Productos cargados correctamente:", productosOriginales);
-    mostrarProductos(productosOriginales.slice(0, 12));
+
+    // Mostrar productos iniciales
+    mostrarProductos(productosOriginales.slice(0, 12)); 
   } catch (error) {
     console.error("Error en la carga inicial:", error);
   }
@@ -23,6 +25,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
       const contenedorProductos = document.getElementById('contenedor-productos');
       contenedorProductos.innerHTML = ''; // Limpiar productos actuales
       let productos = [];
+
       if (!busqueda) {
         productos = productosOriginales.slice(0, 12);
         console.log("Mostrando productos originales:", productos);
@@ -34,6 +37,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         productos = await respuesta.json();
         console.log("Productos encontrados:", productos);
       }
+
       mostrarProductos(productos);
     } catch (error) {
       console.error("Error durante la búsqueda:", error);
@@ -85,7 +89,7 @@ function mostrarProductos(productos) {
     if (producto.calidad_original) tarjetaProducto.classList.add('calidad-original-fitam');
     if (producto.calidad_vic) tarjetaProducto.classList.add('calidad_vic');
 
-    // Lógica de contenido
+    // Contenido de la tarjeta
     let html = `
       ${imagenes}
       <div class="titulo-producto">
