@@ -5,44 +5,36 @@ window.onload = async () => {
   try {
     console.log("Cargando productos desde la API...");
     const respuesta = await fetch('/productos/api/buscar');
-    if (!respuesta.ok) throw new Error("Error al cargar los productos.");
     productosOriginales = await respuesta.json();
     console.log("Productos cargados correctamente:", productosOriginales);
-
-    // Mostrar productos iniciales
-    mostrarProductos(productosOriginales.slice(0, 12)); 
+    mostrarProductos(productosOriginales.slice(0, 12)); // Mostrar los primeros 12 productos por defecto
   } catch (error) {
-    console.error("Error en la carga inicial:", error);
+    console.error("Error al cargar los productos:", error);
   }
 };
 
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
-    const busqueda = e.target.value.trim();
-    console.log("Busqueda ingresada:", busqueda);
-    try {
-      const contenedorProductos = document.getElementById('contenedor-productos');
-      contenedorProductos.innerHTML = ''; // Limpiar productos actuales
-      let productos = [];
+    const busqueda = e.target.value;
+    const contenedorProductos = document.getElementById('contenedor-productos');
+    contenedorProductos.innerHTML = ''; 
+    let productos = [];
 
-      if (!busqueda) {
-        productos = productosOriginales.slice(0, 12);
-        console.log("Mostrando productos originales:", productos);
-      } else {
-        const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
-        console.log("URL de búsqueda:", url);
+    if (!busqueda.trim()) {
+      productos = productosOriginales.slice(0, 12); // Mostrar los primeros 12 productos si no hay búsqueda
+    } else {
+      const url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
+      try {
         const respuesta = await fetch(url);
-        if (!respuesta.ok) throw new Error("Error al buscar productos.");
         productos = await respuesta.json();
-        console.log("Productos encontrados:", productos);
+      } catch (error) {
+        console.error("Error al buscar productos:", error);
       }
-
-      mostrarProductos(productos);
-    } catch (error) {
-      console.error("Error durante la búsqueda:", error);
     }
-  }, 300); // Esperar 300ms para evitar múltiples solicitudes
+
+    mostrarProductos(productos);
+  }, 300); // Espera de 300 ms antes de procesar la búsqueda
 });
 
 function mostrarProductos(productos) {
@@ -50,19 +42,14 @@ function mostrarProductos(productos) {
   const isUserLoggedIn = document.body.dataset.isUserLoggedIn === 'true';
   const isAdminUser = document.body.dataset.isAdminUser === 'true';
 
-  console.log("Usuario logueado:", isUserLoggedIn, "Usuario administrador:", isAdminUser);
-  console.log("Productos a mostrar:", productos);
-
-  contenedorProductos.innerHTML = ''; // Limpiar antes de agregar nuevos productos
+  contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de agregar nuevos productos
 
   productos.forEach((producto) => {
-    console.log("Procesando producto:", producto);
-
-    // Crear imágenes del carrusel
     let imagenes = '';
     if (producto.imagenes && producto.imagenes.length > 0) {
       producto.imagenes.forEach((imagenObj, i) => {
-        imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagenObj.imagen}" alt="Imagen de ${producto.nombre}">`;
+        const imagen = imagenObj.imagen;
+        imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
       });
       imagenes = `
         <div class="cover__card">
@@ -83,13 +70,19 @@ function mostrarProductos(productos) {
       imagenes = `<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">`;
     }
 
-    // Crear tarjeta del producto
+    const precio_venta = producto.precio_venta
+      ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
+      : 'Precio no disponible';
+
     const tarjetaProducto = document.createElement('div');
     tarjetaProducto.classList.add('card');
-    if (producto.calidad_original) tarjetaProducto.classList.add('calidad-original-fitam');
-    if (producto.calidad_vic) tarjetaProducto.classList.add('calidad_vic');
+    if (producto.calidad_original) {
+      tarjetaProducto.classList.add('calidad-original-fitam');
+    }
+    if (producto.calidad_vic) {
+      tarjetaProducto.classList.add('calidad_vic');
+    }
 
-    // Contenido de la tarjeta
     let html = `
       ${imagenes}
       <div class="titulo-producto">
@@ -97,21 +90,22 @@ function mostrarProductos(productos) {
       </div>
       <hr>
       <div class="precio-producto">
-        <p class="precio">${producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible'}</p>
+        <p class="precio">${precio_venta}</p>
       </div>
     `;
 
-    // Semáforo y stock
+    // Lógica del semáforo
     if (isUserLoggedIn) {
       html += `
         <div class="semaforo-stock">
-          ${producto.stock_actual >= producto.stock_minimo ?
-            '<span class="semaforo verde"></span> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA' :
-            '<span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
+          ${producto.stock_actual >= producto.stock_minimo
+            ? '<span class="semaforo verde"></span> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
+            : '<span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
         </div>
       `;
     }
 
+    // Información adicional para administradores
     if (isAdminUser) {
       html += `
         <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
@@ -135,16 +129,16 @@ function mostrarProductos(productos) {
     const images = tarjetaProducto.querySelectorAll('.carousel__image');
     let currentIndex = 0;
 
-    if (leftButton && rightButton && images.length > 1) {
+    if (leftButton && rightButton) {
       leftButton.addEventListener('click', () => {
         images[currentIndex].classList.add('hidden');
-        currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
+        currentIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
         images[currentIndex].classList.remove('hidden');
       });
 
       rightButton.addEventListener('click', () => {
         images[currentIndex].classList.add('hidden');
-        currentIndex = (currentIndex === images.length - 1) ? 0 : currentIndex + 1;
+        currentIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
         images[currentIndex].classList.remove('hidden');
       });
     }
