@@ -16,7 +16,11 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   timer = setTimeout(async () => {
     const busqueda = e.target.value.trim();
     const contenedorProductos = document.getElementById('contenedor-productos');
-    contenedorProductos.innerHTML = ''; // Limpiar contenedor
+    if (busqueda.trim() === '' && productosOriginales.length > 0) {
+      mostrarProductos(productosOriginales.slice(0, 20)); // Mostrar los productos iniciales
+      return;
+    }
+    
     let productos = [];
 
     if (!busqueda) {
