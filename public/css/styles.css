@@ -1851,64 +1851,39 @@ border-radius: 10px;
   background-color: #004d99;
 }
 
-/* Centrar el semáforo y el texto dentro de .semaforo-container */
+/* Contenedor del semáforo, centra el contenido */
 .semaforo-container {
   display: flex;
-  justify-content: center; /* Centra horizontalmente */
-  align-items: center;     /* Centra verticalmente */
-  text-align: center;      /* Asegura que el texto también se centre */
-}
-
-.semaforo {
-  font-size: 1.5em; /* Ajusta el tamaño del semáforo */
-  margin-right: 10px; /* Espacio entre el semáforo y el texto */
-}
-
-.texto-semaforo {
-  font-size: 0.9em; /* Ajusta el tamaño del texto */
-  font-weight: bold; /* Puedes cambiar esto si prefieres un texto más liviano */
-}
-
-.card {
-  position: relative;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
   text-align: center;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  gap: 10px; /* Espacio entre el semáforo y el texto */
 }
 
-.card .titulo-producto h3 {
-  font-size: 1.2em;
-  margin: 10px 0;
+/* Círculo para el semáforo (rojo o verde) */
+.semaforo {
+  display: inline-block;
+  width: 20px; /* Tamaño del círculo */
+  height: 20px;
+  border-radius: 50%; /* Forma circular */
+  background-color: #ccc; /* Color por defecto si no se aplica ninguna clase */
 }
 
-.card .precio-producto .precio {
-  font-size: 1.1em;
+/* Estilo del semáforo verde */
+.semaforo.verde {
+  background-color: green;
+}
+
+/* Estilo del semáforo rojo */
+.semaforo.rojo {
+  background-color: red;
+}
+
+/* Estilo del texto del semáforo */
+.texto-semaforo {
+  font-size: 0.9em;
+  font-weight: bold;
   color: #333;
-  font-weight: bold;
-}
-
-.card .categoria-producto h6 {
-  font-size: 0.85em;
-  color: #777;
-}
-
-.card .cantidad-producto {
-  margin-top: 15px;
-}
-
-.card-link {
-  color: #007bff;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.card-link:hover {
-  text-decoration: underline;
 }
 
 /*--------------------Pedido Manual---------------*/
