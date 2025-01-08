@@ -100,9 +100,15 @@
           <% if (req.session && req.session.usuario && !isAdminUser) { %> 
             <div class="semaforo-stock">
               <% if (producto.stock_actual >= producto.stock_minimo) { %>
-                <span class="semaforo verde"></span> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA
+                <div class="semaforo-container">
+                  <span class="semaforo verde"></span>
+                  <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
+                </div>
               <% } else { %>
-                <span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO
+                <div class="semaforo-container">
+                  <span class="semaforo rojo"></span>
+                  <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
+                </div>
               <% } %>
             </div>
           <% } else if (isAdminUser) { %>
@@ -117,6 +123,7 @@
         </div>
       <% }); %>
     </div>
+    
     
 <div class="paginacion">
   <% for(let i = 1; i <= Math.min(numeroDePaginas, 10); i++) { %>
