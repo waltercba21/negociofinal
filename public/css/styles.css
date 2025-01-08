@@ -1865,6 +1865,7 @@ border-radius: 10px;
 /* Círculo para el semáforo (rojo o verde) */
 .semaforo {
   display: inline-block;
+  margin-top: 20px;
   width: 30px; /* Tamaño del círculo */
   height: 30px;
   border-radius: 50%; /* Forma circular */
