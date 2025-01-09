@@ -1867,7 +1867,7 @@ border-radius: 10px;
   display: inline-block;
   margin-top: 20px;
   width: 20px; /* Tamaño del círculo */
-  height: 30px;
+  height: 20px;
   border-radius: 60%; /* Forma circular */
   background-color: #ccc; /* Color por defecto si no se aplica ninguna clase */
 }
