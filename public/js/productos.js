@@ -56,6 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   const busqueda = e.target.value;
   const contenedorProductos = document.getElementById('contenedor-productos');
+  const precio_venta = producto.precio_venta
+  ? `$${new Intl.NumberFormat('es-AR').format(Math.floor(producto.precio_venta))}`
+  : 'Precio no disponible';
+
   contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de mostrar nuevos productos
 
   fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda))
