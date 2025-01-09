@@ -1,153 +1,106 @@
-let productosOriginales = [];
-let timer;
+$(document).ready(function() {
+  var $images = $('.carousel__image');
+  var index = 0;
 
-window.onload = async () => {
-  try {
-    console.log("Cargando productos desde la API...");
-    const respuesta = await fetch('/productos/api/buscar');
-    productosOriginales = await respuesta.json();
-    console.log("Productos cargados correctamente:", productosOriginales);
-    mostrarProductos(productosOriginales.slice(0, 12)); // Mostrar los primeros 12 productos por defecto
-  } catch (error) {
-    console.error("Error al cargar los productos:", error);
+  function showImage(newIndex) {
+    $images.removeClass('active').hide();
+    $images.eq(newIndex).addClass('active').show();
+    index = newIndex;
   }
-};
 
-document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
-  clearTimeout(timer);
-  timer = setTimeout(async () => {
-    const busqueda = e.target.value;
-    const contenedorProductos = document.getElementById('contenedor-productos');
-    contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de mostrar nuevos productos
-    let productos = [];
+  $('#prevButton').on('click', function() {
+    var newIndex = (index > 0) ? index - 1 : $images.length - 1;
+    showImage(newIndex);
+  }); 
 
-    if (!busqueda.trim()) {
-      productos = productosOriginales.slice(0, 12); // Mostrar los primeros 12 productos si no hay búsqueda
-    } else {
-      const url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
-      try {
-        const respuesta = await fetch(url);
-        productos = await respuesta.json();
-      } catch (error) {
-        console.error("Error al buscar productos:", error);
-      }
-    }
-
-    mostrarProductos(productos);
-  }, 300); // Espera de 300 ms antes de procesar la búsqueda
+  $('#nextButton').on('click', function() {
+    var newIndex = (index < $images.length - 1) ? index + 1 : 0;
+    showImage(newIndex);
+  }); 
 });
 
-function mostrarProductos(productos) {
-  const contenedorProductos = document.getElementById('contenedor-productos');
-  const isUserLoggedIn = document.body.dataset.isUserLoggedIn === 'true';
-  const isAdminUser = document.body.dataset.isAdminUser === 'true';
+document.addEventListener('DOMContentLoaded', () => {
+  const botonesAgregarCarrito = document.querySelectorAll('.btn-agregar-carrito');
 
-  contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de agregar nuevos productos
+  botonesAgregarCarrito.forEach(boton => {
+    boton.addEventListener('click', () => {
+      const productoId = boton.getAttribute('data-id');
+      const cantidadInput = document.getElementById(`cantidad-${productoId}`);
+      const cantidad = parseInt(cantidadInput.value, 10);
 
-  productos.forEach((producto) => {
-    let imagenes = '';
-    if (producto.imagenes && producto.imagenes.length > 0) {
-      producto.imagenes.forEach((imagenObj, i) => {
-        const imagen = imagenObj.imagen;
-        imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen}" alt="Imagen de ${producto.nombre}">`;
-      });
-      imagenes = `
-        <div class="cover__card">
-          <div class="carousel">
-            ${imagenes}
-          </div>
-        </div>
-        <div class="carousel__buttons">
-          <button class="carousel__button carousel__button--left">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <button class="carousel__button carousel__button--right">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </div>
-      `;
-    } else {
-      imagenes = `<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">`;
-    }
-
-    const precio_venta = producto.precio_venta
-      ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
-      : 'Precio no disponible';
-
-    const tarjetaProducto = document.createElement('div');
-    tarjetaProducto.classList.add('card');
-    if (producto.calidad_original) {
-      tarjetaProducto.classList.add('calidad-original-fitam');
-    }
-    if (producto.calidad_vic) {
-      tarjetaProducto.classList.add('calidad_vic');
-    }
-
-    let html = `
-      ${imagenes}
-      <div class="titulo-producto">
-        <h3 class="nombre">${producto.nombre}</h3>
-      </div>
-      <hr>
-      <div class="precio-producto">
-        <p class="precio">${precio_venta}</p>
-      </div>
-    `;
-
-    // Lógica del semáforo
-    if (isUserLoggedIn) {
-      html += `
-        <div class="semaforo-stock">
-          ${producto.stock_actual >= producto.stock_minimo
-            ? `<div class="semaforo-container">
-                <span class="semaforo verde"></span>
-                <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
-              </div>`
-            : `<div class="semaforo-container">
-                <span class="semaforo rojo"></span>
-                <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
-              </div>`
+      if (cantidad > 0) {
+        // Enviar datos al servidor
+        fetch('/carrito/agregar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: productoId, cantidad })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert('Producto agregado al carrito con éxito.');
+          } else {
+            alert('Error al agregar el producto al carrito.');
           }
-        </div>
-      `;
-    }
-
-    // Información adicional para administradores
-    if (isAdminUser) {
-      html += `
-        <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
-          <p>Stock Disponible: ${producto.stock_actual}</p>
-        </div>
-      `;
-    }
-
-    html += `
-      <div class="cantidad-producto">
-        <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-      </div>
-    `;
-
-    tarjetaProducto.innerHTML = html;
-    contenedorProductos.appendChild(tarjetaProducto);
-
-    // Lógica del carrusel
-    const leftButton = tarjetaProducto.querySelector('.carousel__button--left');
-    const rightButton = tarjetaProducto.querySelector('.carousel__button--right');
-    const images = tarjetaProducto.querySelectorAll('.carousel__image');
-    let currentIndex = 0;
-
-    if (leftButton && rightButton) {
-      leftButton.addEventListener('click', () => {
-        images[currentIndex].classList.add('hidden');
-        currentIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
-        images[currentIndex].classList.remove('hidden');
-      });
-
-      rightButton.addEventListener('click', () => {
-        images[currentIndex].classList.add('hidden');
-        currentIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
-        images[currentIndex].classList.remove('hidden');
-      });
-    }
+        })
+        .catch(error => console.error('Error:', error));
+      } else {
+        alert('Por favor, selecciona una cantidad válida.');
+      }
+    });
   });
-}
+});
+
+document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
+  const busqueda = e.target.value;
+  const contenedorProductos = document.getElementById('contenedor-productos');
+  contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de mostrar nuevos productos
+
+  fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda))
+    .then(response => response.json())
+    .then(productos => {
+      productos.forEach((producto) => {
+        const tarjetaProducto = document.createElement('div');
+        tarjetaProducto.classList.add('card');
+        
+        // Aquí viene la parte del semáforo
+        let semaforoHtml = '';
+        if (producto.stock_actual >= producto.stock_minimo) {
+          semaforoHtml = `
+            <div class="semaforo-container">
+              <span class="semaforo verde"></span>
+              <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
+            </div>`;
+        } else {
+          semaforoHtml = `
+            <div class="semaforo-container">
+              <span class="semaforo rojo"></span>
+              <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
+            </div>`;
+        }
+
+        tarjetaProducto.innerHTML = `
+          <div class="cover__card">
+            <div class="carousel">
+              <img class="carousel__image" src="/uploads/productos/${producto.imagenes[0].imagen}" alt="Imagen de ${producto.nombre}">
+            </div>
+          </div>
+          <div class="titulo-producto">
+            <h3 class="nombre">${producto.nombre}</h3>
+          </div>
+          <div class="precio-producto">
+            <p class="precio">$${producto.precio_venta}</p>
+          </div>
+          ${semaforoHtml} <!-- Incluir el semáforo aquí -->
+          <div class="cantidad-producto">
+            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+          </div>
+        `;
+
+        contenedorProductos.appendChild(tarjetaProducto);
+      });
+    })
+    .catch(error => console.error('Error al buscar productos:', error));
+});
