@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   const busqueda = e.target.value;
   const contenedorProductos = document.getElementById('contenedor-productos');
@@ -80,15 +79,17 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         tarjetaProducto.classList.add('card');
 
         let detallesHtml = '';
-        
-        // Verificar cómo se está evaluando la condición
+
+        // Primero verificamos si el usuario es ADMIN
         if (isAdminUser) {
           console.log('Renderizando para ADMIN');
           detallesHtml = `
             <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
               <p>Stock Disponible: ${producto.stock_actual}</p>
             </div>`;
-        } else if (isUserLoggedIn) {
+        }
+        // Si el usuario no es admin, verificamos si está registrado
+        else if (isUserLoggedIn) {
           console.log('Renderizando para usuario registrado');
           if (producto.stock_actual >= producto.stock_minimo) {
             detallesHtml = `
