@@ -54,8 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-});
-document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
+});document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   const busqueda = e.target.value;
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de mostrar nuevos productos
@@ -67,12 +66,12 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     busqueda,
     isAdminUser,
     isUserLoggedIn
-  }); // Verifica los datos al inicio de la búsqueda
+  });
 
   fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda))
     .then(response => response.json())
     .then(productos => {
-      console.log('Productos cargados correctamente: ', productos); // Verifica los productos cargados
+      console.log('Productos cargados correctamente: ', productos);
 
       productos.forEach((producto) => {
         const tarjetaProducto = document.createElement('div');
@@ -80,33 +79,16 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
 
         let detallesHtml = '';
 
-        // Primero verificamos si el usuario es ADMIN
+        // Si el usuario es administrador, renderizamos de forma diferente
         if (isAdminUser) {
-          console.log('Renderizando para ADMIN');
-          detallesHtml = `
-            <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
-              <p>Stock Disponible: ${producto.stock_actual}</p>
-            </div>`;
+          detallesHtml = renderizarParaAdmin(producto);
         }
-        // Si el usuario no es admin, verificamos si está registrado
-        else if (isUserLoggedIn) {
-          console.log('Renderizando para usuario registrado');
-          if (producto.stock_actual >= producto.stock_minimo) {
-            detallesHtml = `
-              <div class="semaforo-container">
-                <span class="semaforo verde"></span>
-                <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
-              </div>`;
-          } else {
-            detallesHtml = `
-              <div class="semaforo-container">
-                <span class="semaforo rojo"></span>
-                <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
-              </div>`;
-          }
+        // Si el usuario está registrado, renderizamos con el semáforo
+        if (isUserLoggedIn && !isAdminUser) {
+          detallesHtml = renderizarParaUsuarioRegistrado(producto);
         }
 
-        console.log('Detalles HTML:', detallesHtml); // Verifica el HTML generado para el producto
+        console.log('Detalles HTML:', detallesHtml);
 
         tarjetaProducto.innerHTML = `
           <div class="cover__card">
@@ -120,7 +102,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
           <div class="precio-producto">
             <p class="precio">$${producto.precio_venta}</p>
           </div>
-          ${detallesHtml} <!-- Incluir los detalles dinámicos aquí -->
+          ${detallesHtml}
           <div class="cantidad-producto">
             <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
           </div>
@@ -131,3 +113,28 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     })
     .catch(error => console.error('Error al buscar productos:', error));
 });
+
+// Función para renderizar los detalles cuando el usuario es administrador
+function renderizarParaAdmin(producto) {
+  return `
+    <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
+      <p>Stock Disponible: ${producto.stock_actual}</p>
+    </div>`;
+}
+
+// Función para renderizar los detalles cuando el usuario está registrado
+function renderizarParaUsuarioRegistrado(producto) {
+  if (producto.stock_actual >= producto.stock_minimo) {
+    return `
+      <div class="semaforo-container">
+        <span class="semaforo verde"></span>
+        <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
+      </div>`;
+  } else {
+    return `
+      <div class="semaforo-container">
+        <span class="semaforo rojo"></span>
+        <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
+      </div>`;
+  }
+}
