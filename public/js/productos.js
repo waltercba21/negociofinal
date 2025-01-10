@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
   const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
 
-  console.log({ isAdminUser, isUserLoggedIn }); // Verifica los valores en la consola del navegador
+  console.log({ isAdminUser, isUserLoggedIn }); 
 
   botonesAgregarCarrito.forEach(boton => {
     boton.addEventListener('click', () => {
@@ -71,16 +71,13 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         const tarjetaProducto = document.createElement('div');
         tarjetaProducto.classList.add('card');
 
-        // Renderización condicional basada en el tipo de usuario
         let detallesHtml = '';
         if (isAdminUser) {
-          // Administrador: Mostrar stock real
           detallesHtml = `
             <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
               <p>Stock Disponible: ${producto.stock_actual}</p>
             </div>`;
-        } else if (isUserLoggedIn && !isAdminUser) {
-          // Usuario registrado (que no es administrador): Mostrar semáforo
+        } else if (isUserLoggedIn) {
           if (producto.stock_actual >= producto.stock_minimo) {
             detallesHtml = `
               <div class="semaforo-container">
@@ -99,7 +96,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         tarjetaProducto.innerHTML = `
           <div class="cover__card">
             <div class="carousel">
-              <img class="carousel__image" src="/uploads/productos/${producto.imagenes[0].imagen}" alt="Imagen de ${producto.nombre}">
+              <img class="carousel__image" src="/uploads/productos/${producto.imagenes[0]?.imagen || 'ruta/por/defecto.jpg'}" alt="Imagen de ${producto.nombre}">
             </div>
           </div>
           <div class="titulo-producto">
@@ -108,7 +105,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
           <div class="precio-producto">
             <p class="precio">$${producto.precio_venta}</p>
           </div>
-          ${detallesHtml} <!-- Incluir los detalles dinámicos aquí -->
+          ${detallesHtml} 
           <div class="cantidad-producto">
             <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
           </div>

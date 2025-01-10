@@ -168,53 +168,17 @@ module.exports = {
     buscar: async (req, res) => {
         try {
             const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
-    
-            // Guardar filtros en la sesión si es necesario
+            
             req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
-    
-            // Determinar límite de resultados
+            
             const limite = busqueda_nombre || categoria_id || marca_id || modelo_id ? undefined : 10;
-    
-            // Determinar si es administrador
-            const isAdminUser = req.session.usuario && req.session.usuario.rol === 'admin';
-    
-            // Obtener productos según los filtros
-            const productos = await producto.obtenerPorFiltros(
-                conexion,
-                categoria_id,
-                marca_id,
-                modelo_id,
-                busqueda_nombre,
-                limite
-            );
-    
-            // Modificar la respuesta según el rol del usuario
-            const productosModificados = productos.map((producto) => {
-                if (isAdminUser) {
-                    // Administradores: Retornar todos los datos relevantes
-                    return {
-                        ...producto,
-                        mostrarStock: true, // Indicador para mostrar stock exacto
-                        mostrarSemaforo: false, // No mostrar semáforo
-                    };
-                } else {
-                    // Usuarios regulares: No incluir stock exacto
-                    return {
-                        ...producto,
-                        mostrarStock: false, // No mostrar stock exacto
-                        mostrarSemaforo: true, // Mostrar semáforo según stock
-                    };
-                }
-            });
-    
-            // Responder con los productos modificados
-            res.json(productosModificados);
+            const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
+            
+            res.json(productos);
         } catch (error) {
-            console.error('Error en la búsqueda:', error);
             res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
         }
     },
-    
     
     
     detalle: function (req, res) {

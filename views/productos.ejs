@@ -98,25 +98,28 @@
             <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
           </div>
     
-          <% if (req.session && req.session.usuario && !isAdminUser) { %> 
-            <div class="semaforo-stock">
-              <% if (producto.stock_actual >= producto.stock_minimo) { %>
-                <div class="semaforo-container">
-                  <span class="semaforo verde"></span>
-                  <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
-                </div>
-              <% } else { %>
-                <div class="semaforo-container">
-                  <span class="semaforo rojo"></span>
-                  <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
-                </div>
-              <% } %>
-            </div>
-          <% } else if (isAdminUser) { %>
-            <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
-              <p>Stock Disponible: <%= producto.stock_actual %> </p>
-            </div>
+          <% if (req.session && req.session.usuario) { %>
+            <% if (!isAdminUser) { %> 
+              <div class="semaforo-stock">
+                <% if (producto.stock_actual >= producto.stock_minimo) { %>
+                  <div class="semaforo-container">
+                    <span class="semaforo verde"></span>
+                    <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
+                  </div>
+                <% } else { %>
+                  <div class="semaforo-container">
+                    <span class="semaforo rojo"></span>
+                    <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
+                  </div>
+                <% } %>
+              </div>
+            <% } else { %>
+              <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
+                <p>Stock Disponible: <%= producto.stock_actual %> </p>
+              </div>
+            <% } %>
           <% } %>
+          
     
           <div class="cantidad-producto">
             <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
