@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
   const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
 
-  console.log("Estado al cargar la página:", { isAdminUser, isUserLoggedIn });
+  console.log({ isAdminUser, isUserLoggedIn }); // Verifica el estado de los usuarios
 
   botonesAgregarCarrito.forEach(boton => {
     boton.addEventListener('click', () => {
@@ -64,27 +64,32 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
   const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
 
-  console.log("Búsqueda iniciada:", { busqueda, isAdminUser, isUserLoggedIn });
+  console.log('Búsqueda iniciada: ', {
+    busqueda,
+    isAdminUser,
+    isUserLoggedIn
+  }); // Verifica los datos al inicio de la búsqueda
 
   fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda))
     .then(response => response.json())
     .then(productos => {
-      console.log("Productos encontrados:", productos);
+      console.log('Productos cargados correctamente: ', productos); // Verifica los productos cargados
 
       productos.forEach((producto) => {
         const tarjetaProducto = document.createElement('div');
         tarjetaProducto.classList.add('card');
 
         let detallesHtml = '';
-
+        
+        // Verificar cómo se está evaluando la condición
         if (isAdminUser) {
-          console.log("Renderizando detalles para administrador:", producto);
+          console.log('Renderizando para ADMIN');
           detallesHtml = `
             <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
               <p>Stock Disponible: ${producto.stock_actual}</p>
             </div>`;
-        } else if (!isAdminUser && isUserLoggedIn) {
-          console.log("Renderizando detalles para usuario registrado:", producto);
+        } else if (isUserLoggedIn) {
+          console.log('Renderizando para usuario registrado');
           if (producto.stock_actual >= producto.stock_minimo) {
             detallesHtml = `
               <div class="semaforo-container">
@@ -98,10 +103,9 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
                 <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
               </div>`;
           }
-        } else {
-          console.log("Renderizando para usuarios no registrados o condiciones especiales:", producto);
         }
-        
+
+        console.log('Detalles HTML:', detallesHtml); // Verifica el HTML generado para el producto
 
         tarjetaProducto.innerHTML = `
           <div class="cover__card">
@@ -115,7 +119,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
           <div class="precio-producto">
             <p class="precio">$${producto.precio_venta}</p>
           </div>
-          ${detallesHtml} 
+          ${detallesHtml} <!-- Incluir los detalles dinámicos aquí -->
           <div class="cantidad-producto">
             <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
           </div>
