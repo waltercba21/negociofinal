@@ -18,13 +18,12 @@ $(document).ready(function() {
     showImage(newIndex);
   }); 
 });
-
 document.addEventListener('DOMContentLoaded', () => {
   const botonesAgregarCarrito = document.querySelectorAll('.btn-agregar-carrito');
   const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
   const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
 
-  console.log({ isAdminUser, isUserLoggedIn }); 
+  console.log("Estado al cargar la página:", { isAdminUser, isUserLoggedIn });
 
   botonesAgregarCarrito.forEach(boton => {
     boton.addEventListener('click', () => {
@@ -56,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   const busqueda = e.target.value;
   const contenedorProductos = document.getElementById('contenedor-productos');
@@ -64,20 +64,28 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
   const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
 
+  console.log("Búsqueda iniciada:", { busqueda, isAdminUser, isUserLoggedIn });
+
   fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda))
     .then(response => response.json())
     .then(productos => {
+      console.log("Productos encontrados:", productos);
+
       productos.forEach((producto) => {
         const tarjetaProducto = document.createElement('div');
         tarjetaProducto.classList.add('card');
 
         let detallesHtml = '';
+
         if (isAdminUser) {
+          console.log("Renderizando como administrador:", producto);
           detallesHtml = `
             <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
               <p>Stock Disponible: ${producto.stock_actual}</p>
             </div>`;
         } else if (isUserLoggedIn) {
+          console.log("Renderizando como usuario registrado:", producto);
+
           if (producto.stock_actual >= producto.stock_minimo) {
             detallesHtml = `
               <div class="semaforo-container">
@@ -91,6 +99,8 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
                 <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
               </div>`;
           }
+        } else {
+          console.log("Renderizando para un usuario no registrado:", producto);
         }
 
         tarjetaProducto.innerHTML = `
