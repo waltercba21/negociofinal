@@ -78,14 +78,13 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         let detallesHtml = '';
 
         if (isAdminUser) {
-          console.log("Renderizando como administrador:", producto);
+          console.log("Renderizando detalles para administrador:", producto);
           detallesHtml = `
             <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
               <p>Stock Disponible: ${producto.stock_actual}</p>
             </div>`;
-        } else if (isUserLoggedIn) {
-          console.log("Renderizando como usuario registrado:", producto);
-
+        } else if (!isAdminUser && isUserLoggedIn) {
+          console.log("Renderizando detalles para usuario registrado:", producto);
           if (producto.stock_actual >= producto.stock_minimo) {
             detallesHtml = `
               <div class="semaforo-container">
@@ -100,8 +99,9 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
               </div>`;
           }
         } else {
-          console.log("Renderizando para un usuario no registrado:", producto);
+          console.log("Renderizando para usuarios no registrados o condiciones especiales:", producto);
         }
+        
 
         tarjetaProducto.innerHTML = `
           <div class="cover__card">
