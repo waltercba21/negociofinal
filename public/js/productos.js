@@ -18,12 +18,9 @@ $(document).ready(function() {
     showImage(newIndex);
   }); 
 });
+
 document.addEventListener('DOMContentLoaded', () => {
   const botonesAgregarCarrito = document.querySelectorAll('.btn-agregar-carrito');
-  const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
-  const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
-
-  console.log({ isAdminUser, isUserLoggedIn }); // Verifica el estado de los usuarios
 
   botonesAgregarCarrito.forEach(boton => {
     boton.addEventListener('click', () => {
@@ -54,46 +51,40 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-});document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
+});
+
+document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   const busqueda = e.target.value;
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de mostrar nuevos productos
 
-  const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
-  const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
-
-  console.log('Búsqueda iniciada: ', {
-    busqueda,
-    isAdminUser,
-    isUserLoggedIn
-  });
-
   fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda))
     .then(response => response.json())
     .then(productos => {
-      console.log('Productos cargados correctamente: ', productos);
-
       productos.forEach((producto) => {
         const tarjetaProducto = document.createElement('div');
         tarjetaProducto.classList.add('card');
 
-        let detallesHtml = '';
-
-        // Si el usuario es administrador, renderizamos de forma diferente
-        if (isAdminUser) {
-          detallesHtml = renderizarParaAdmin(producto);
+        // Aquí viene la parte del semáforo
+        let semaforoHtml = '';
+        if (producto.stock_actual >= producto.stock_minimo) {
+          semaforoHtml = `
+            <div class="semaforo-container">
+              <span class="semaforo verde"></span>
+              <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
+            </div>`;
+        } else {
+          semaforoHtml = `
+            <div class="semaforo-container">
+              <span class="semaforo rojo"></span>
+              <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
+            </div>`;
         }
-        // Si el usuario está registrado, renderizamos con el semáforo
-        if (isUserLoggedIn && !isAdminUser) {
-          detallesHtml = renderizarParaUsuarioRegistrado(producto);
-        }
-
-        console.log('Detalles HTML:', detallesHtml);
 
         tarjetaProducto.innerHTML = `
           <div class="cover__card">
             <div class="carousel">
-              <img class="carousel__image" src="/uploads/productos/${producto.imagenes[0]?.imagen || 'ruta/por/defecto.jpg'}" alt="Imagen de ${producto.nombre}">
+              <img class="carousel__image" src="/uploads/productos/${producto.imagenes[0].imagen}" alt="Imagen de ${producto.nombre}">
             </div>
           </div>
           <div class="titulo-producto">
@@ -102,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="precio-producto">
             <p class="precio">$${producto.precio_venta}</p>
           </div>
-          ${detallesHtml}
+          ${semaforoHtml} <!-- Incluir el semáforo aquí -->
           <div class="cantidad-producto">
             <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
           </div>
@@ -113,28 +104,3 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(error => console.error('Error al buscar productos:', error));
 });
-
-// Función para renderizar los detalles cuando el usuario es administrador
-function renderizarParaAdmin(producto) {
-  return `
-    <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
-      <p>Stock Disponible: ${producto.stock_actual}</p>
-    </div>`;
-}
-
-// Función para renderizar los detalles cuando el usuario está registrado
-function renderizarParaUsuarioRegistrado(producto) {
-  if (producto.stock_actual >= producto.stock_minimo) {
-    return `
-      <div class="semaforo-container">
-        <span class="semaforo verde"></span>
-        <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
-      </div>`;
-  } else {
-    return `
-      <div class="semaforo-container">
-        <span class="semaforo rojo"></span>
-        <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
-      </div>`;
-  }
-}
