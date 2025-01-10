@@ -1,9 +1,10 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body 
-  data-is-admin-user="<%= isAdminUser %>" 
-  data-is-user-logged-in="<%= typeof req.session.usuario !== 'undefined' %>"
+  data-is-admin-user="<%= isAdminUser ? 'true' : 'false' %>" 
+  data-is-user-logged-in="<%= req.session.usuario ? 'true' : 'false' %>"
 >
+
   <main>
 
     <h2 class="titulo-principal" id="titulo-principal"> 

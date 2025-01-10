@@ -21,6 +21,10 @@ $(document).ready(function() {
 
 document.addEventListener('DOMContentLoaded', () => {
   const botonesAgregarCarrito = document.querySelectorAll('.btn-agregar-carrito');
+  const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
+  const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
+
+  console.log({ isAdminUser, isUserLoggedIn }); // Verifica los valores en la consola del navegador
 
   botonesAgregarCarrito.forEach(boton => {
     boton.addEventListener('click', () => {
@@ -75,7 +79,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
             <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
               <p>Stock Disponible: ${producto.stock_actual}</p>
             </div>`;
-        } else if (isUserLoggedIn) {
+        } else if (isUserLoggedIn && !isAdminUser) {
           // Usuario registrado (que no es administrador): Mostrar semáforo
           if (producto.stock_actual >= producto.stock_minimo) {
             detallesHtml = `
