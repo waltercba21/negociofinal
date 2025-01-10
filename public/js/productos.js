@@ -58,6 +58,9 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   const contenedorProductos = document.getElementById('contenedor-productos');
   contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de mostrar nuevos productos
 
+  const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
+  const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
+
   fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda))
     .then(response => response.json())
     .then(productos => {
@@ -65,20 +68,29 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         const tarjetaProducto = document.createElement('div');
         tarjetaProducto.classList.add('card');
 
-        // Aquí viene la parte del semáforo
-        let semaforoHtml = '';
-        if (producto.stock_actual >= producto.stock_minimo) {
-          semaforoHtml = `
-            <div class="semaforo-container">
-              <span class="semaforo verde"></span>
-              <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
+        // Renderización condicional para el administrador o usuario registrado
+        let detallesHtml = '';
+        if (isAdminUser) {
+          // Administrador: Mostrar stock real
+          detallesHtml = `
+            <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
+              <p>Stock Disponible: ${producto.stock_actual}</p>
             </div>`;
-        } else {
-          semaforoHtml = `
-            <div class="semaforo-container">
-              <span class="semaforo rojo"></span>
-              <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
-            </div>`;
+        } else if (isUserLoggedIn) {
+          // Usuario registrado: Mostrar semáforo
+          if (producto.stock_actual >= producto.stock_minimo) {
+            detallesHtml = `
+              <div class="semaforo-container">
+                <span class="semaforo verde"></span>
+                <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
+              </div>`;
+          } else {
+            detallesHtml = `
+              <div class="semaforo-container">
+                <span class="semaforo rojo"></span>
+                <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
+              </div>`;
+          }
         }
 
         tarjetaProducto.innerHTML = `
@@ -93,7 +105,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
           <div class="precio-producto">
             <p class="precio">$${producto.precio_venta}</p>
           </div>
-          ${semaforoHtml} <!-- Incluir el semáforo aquí -->
+          ${detallesHtml} <!-- Incluir los detalles dinámicos aquí -->
           <div class="cantidad-producto">
             <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
           </div>
