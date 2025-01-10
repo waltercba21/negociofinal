@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   const busqueda = e.target.value;
   const contenedorProductos = document.getElementById('contenedor-productos');
@@ -68,7 +67,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
         const tarjetaProducto = document.createElement('div');
         tarjetaProducto.classList.add('card');
 
-        // Renderización condicional para el administrador o usuario registrado
+        // Renderización condicional basada en el tipo de usuario
         let detallesHtml = '';
         if (isAdminUser) {
           // Administrador: Mostrar stock real
@@ -77,7 +76,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
               <p>Stock Disponible: ${producto.stock_actual}</p>
             </div>`;
         } else if (isUserLoggedIn) {
-          // Usuario registrado: Mostrar semáforo
+          // Usuario registrado (que no es administrador): Mostrar semáforo
           if (producto.stock_actual >= producto.stock_minimo) {
             detallesHtml = `
               <div class="semaforo-container">
