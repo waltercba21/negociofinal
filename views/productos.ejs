@@ -4,9 +4,7 @@
   data-is-admin-user="<%= isAdminUser ? 'true' : 'false' %>" 
   data-is-user-logged-in="<%= req.session.usuario ? 'true' : 'false' %>"
 >
-
   <main>
-
     <h2 class="titulo-principal" id="titulo-principal"> 
       Busca Tus Productos
     </h2>
@@ -15,108 +13,11 @@
         <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej: Escort, Optica, Faro, Agile">
       </div>
       <div class="selectores-productos">
-        <div class="form-group-crear">
-          <label for="categoria_id">Categoria</label>
-          <select id="categoria_id" name="categoria_id">
-            <option value="" selected>Selecciona una categoría</option>
-            <% categorias.forEach(function(categoria) { %>
-              <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
-            <% }); %>
-          </select>   
-        </div>
-        <div class="form-group-crear">
-          <label for="marca_id">Marca</label> 
-          <select id="marca_id" name="marca_id"> 
-            <option value="" selected>Selecciona una marca</option> 
-            <% marcas.forEach(function(marca) { %>
-              <option value="<%= marca.id %>"><%= marca.nombre %></option>
-            <% }); %>
-          </select>   
-        </div>
-        <div class="form-group-crear">
-          <label for="modelo_id">Modelo</label>
-          <select id="modelo_id" name="modelo_id">
-            <% if (modelo) { %>
-              <option value="<%= modelo.id %>" selected><%= modelo.nombre %></option>
-            <% } else { %>
-              <option value="" selected>Selecciona un modelo</option>
-            <% } %>
-            <% if (modelosPorMarca && Array.isArray(modelosPorMarca)) { %>
-              <% modelosPorMarca.forEach(function(modeloPorMarca) { %>
-                <% if (!modelo || modelo.id !== modeloPorMarca.id) { %>
-                  <option value="<%= modeloPorMarca.id %>"><%= modeloPorMarca.nombre %></option>
-                <% } %>
-              <% }); %>
-            <% } %>
-          </select>
-        </div>
+        <!-- Los selectores de categorías, marcas y modelos -->
       </div>
     </div>
-    
-    <div class="paginacion">
-      <% for(let i = 1; i <= Math.min(numeroDePaginas, 10); i++) { %>
-        <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
-      <% } %>
-    </div>
 
-    <div id="contenedor-productos" class="contenedor-productos">
-      <% productos.forEach(function(producto) { %>
-        <div class="card <%= producto.calidad_original ? 'calidad-original-fitam' : '' %> <%= producto.calidad_vic ? 'calidad_vic' : '' %>">
-  
-          <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-            <div class="cover__card">
-              <div class="carousel">
-                <% producto.imagenes.forEach(function(imagen, index) { %>
-                  <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
-                <% }); %>
-              </div>
-            </div>
-          <% } else { %>
-            <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
-          <% } %>
-        
-          <div class="titulo-producto">
-            <h3 class="nombre"><%= producto.nombre %></h3>
-          </div>
-          <hr>
-          <div class="categoria-producto">
-            <h6 class="categoria"><%= producto.categoria %></h6>
-          </div>
-          <div class="descripcion" style="display: none;">
-            <%= producto.descripcion %>
-          </div>
-          <div class="precio-producto">
-            <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
-          </div>
-        
-          <!-- Aquí se muestran los detalles según el tipo de usuario -->
-          <% if (isAdminUser) { %>
-            <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
-              <p>Stock Disponible: <%= producto.stock_actual %> </p>
-            </div>
-          <% } else if (req.session && req.session.usuario) { %>
-            <!-- Solo para usuarios registrados -->
-            <div class="semaforo-stock">
-              <% if (producto.stock_actual >= producto.stock_minimo) { %>
-                <div class="semaforo-container">
-                  <span class="semaforo verde"></span>
-                  <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
-                </div>
-              <% } else { %>
-                <div class="semaforo-container">
-                  <span class="semaforo rojo"></span>
-                  <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
-                </div>
-              <% } %>
-            </div>
-          <% } %>
-        
-          <div class="cantidad-producto">
-            <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
-          </div>
-        </div>
-      <% }); %>
-    </div>
+    <div id="contenedor-productos" class="contenedor-productos"></div>
 
     <div class="paginacion">
       <% for(let i = 1; i <= Math.min(numeroDePaginas, 10); i++) { %>
@@ -126,9 +27,89 @@
   </main>
 
   <%- include ./layouts/footer.ejs %>
+  
   <script src="/js/productos.js"></script> 
   <script src="/js/buscador.js"></script> 
   <script src="/js/selectores.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
- 
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const botonesAgregarCarrito = document.querySelectorAll('.btn-agregar-carrito');
+      const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
+      const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
+
+      document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
+        const busqueda = e.target.value;
+        const contenedorProductos = document.getElementById('contenedor-productos');
+        contenedorProductos.innerHTML = '';
+
+        fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda))
+          .then(response => response.json())
+          .then(productos => {
+            productos.forEach((producto) => {
+              const tarjetaProducto = document.createElement('div');
+              tarjetaProducto.classList.add('card');
+  
+              let detallesHtml = '';
+  
+              // Si el usuario es administrador, renderizamos de forma diferente
+              if (isAdminUser) {
+                detallesHtml = renderizarParaAdmin(producto);
+              }
+              // Si el usuario está registrado, renderizamos con el semáforo
+              if (isUserLoggedIn && !isAdminUser) {
+                detallesHtml = renderizarParaUsuarioRegistrado(producto);
+              }
+
+              tarjetaProducto.innerHTML = `
+                <div class="cover__card">
+                  <div class="carousel">
+                    <img class="carousel__image" src="/uploads/productos/${producto.imagenes[0]?.imagen || 'ruta/por/defecto.jpg'}" alt="Imagen de ${producto.nombre}">
+                  </div>
+                </div>
+                <div class="titulo-producto">
+                  <h3 class="nombre">${producto.nombre}</h3>
+                </div>
+                <div class="precio-producto">
+                  <p class="precio">$${producto.precio_venta}</p>
+                </div>
+                ${detallesHtml}
+                <div class="cantidad-producto">
+                  <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+                </div>
+              `;
+  
+              contenedorProductos.appendChild(tarjetaProducto);
+            });
+          })
+          .catch(error => console.error('Error al buscar productos:', error));
+      });
+
+      // Función para renderizar los detalles cuando el usuario es administrador
+      function renderizarParaAdmin(producto) {
+        return `
+          <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
+            <p>Stock Disponible: ${producto.stock_actual}</p>
+          </div>`;
+      }
+
+      // Función para renderizar los detalles cuando el usuario está registrado
+      function renderizarParaUsuarioRegistrado(producto) {
+        if (producto.stock_actual >= producto.stock_minimo) {
+          return `
+            <div class="semaforo-container">
+              <span class="semaforo verde"></span>
+              <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
+            </div>`;
+        } else {
+          return `
+            <div class="semaforo-container">
+              <span class="semaforo rojo"></span>
+              <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
+            </div>`;
+        }
+      }
+    });
+  </script>
 </body>
