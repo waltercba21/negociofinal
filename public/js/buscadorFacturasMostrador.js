@@ -111,18 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = '/productos/api/buscar?q=' + busqueda;
         const respuesta = await fetch(url);
         const productos = await respuesta.json();
-        console.log("Productos recibidos:", productos);
-        const limite = 5;
-        const productosLimitados = productos.slice(0, limite);
 
-        productosLimitados.forEach((producto) => {
-            console.log("Procesando producto:", producto);
+        productos.forEach((producto) => {
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
             resultado.dataset.codigo = producto.codigo;
             resultado.dataset.nombre = producto.nombre;
             resultado.dataset.precio_venta = producto.precio_venta;
             resultado.dataset.stock_actual = producto.stock_actual;
+
             if (producto.imagenes && producto.imagenes.length > 0) {
                 resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
             }
@@ -143,25 +140,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resultado.appendChild(contenedor);
 
-            resultado.addEventListener('mouseenter', function() {
+            resultado.addEventListener('mouseenter', function () {
                 const resultados = document.querySelectorAll('.resultado-busqueda');
                 resultados.forEach(r => r.classList.remove('hover-activo'));
                 this.classList.add('hover-activo');
             });
 
-            resultado.addEventListener('mouseleave', function() {
+            resultado.addEventListener('mouseleave', function () {
                 this.classList.remove('hover-activo');
             });
 
             // Asociar el evento click directamente a cada resultado
-            resultado.addEventListener('click', function() {
+            resultado.addEventListener('click', function () {
                 const codigoProducto = this.dataset.codigo;
                 const nombreProducto = this.dataset.nombre;
                 const precioVenta = this.dataset.precio_venta;
                 const stockActual = this.dataset.stock_actual;
                 const imagenProducto = this.dataset.imagen;
-
-                console.log("Producto clickeado:", codigoProducto, nombreProducto);
                 agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
             });
 
@@ -181,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultadosBusqueda.style.display = 'block';
     });
 });
+
 
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
     console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
