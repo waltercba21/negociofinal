@@ -89,8 +89,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
 document.addEventListener('DOMContentLoaded', () => {
     Swal.fire({
-        title: 'Está en la sección de Facturas',
-        text: 'Recuerde que está realizando una factura, no un presupuesto.',
+        title: 'Está en la sección de Presupuestos',
+        text: 'Recuerde que está realizando un presupuesto, no una factura.',
         icon: 'info',
         confirmButtonText: 'Entendido'
     });
@@ -150,14 +150,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.classList.remove('hover-activo');
             });
 
-            // Asociar el evento click directamente a cada resultado
             resultado.addEventListener('click', function () {
                 const codigoProducto = this.dataset.codigo;
                 const nombreProducto = this.dataset.nombre;
                 const precioVenta = this.dataset.precio_venta;
                 const stockActual = this.dataset.stock_actual;
                 const imagenProducto = this.dataset.imagen;
-                agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
+                agregarProductoATablaPresupuesto(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
             });
 
             resultadosBusqueda.appendChild(resultado);
@@ -177,16 +176,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+function agregarProductoATablaPresupuesto(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
+    const tablaPresupuesto = document.getElementById('tabla-presupuesto').getElementsByTagName('tbody')[0];
 
-function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
-    console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
-    const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-
-    // Agregar la fila con la imagen
-    const filaFactura = tablaFactura.insertRow();
+    const filaPresupuesto = tablaPresupuesto.insertRow();
 
     // Celda para la imagen
-    const cellImagen = filaFactura.insertCell(0);
+    const cellImagen = filaPresupuesto.insertCell(0);
     if (imagenProducto) {
         const imagen = document.createElement('img');
         imagen.src = imagenProducto;
@@ -195,113 +191,66 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     }
 
     // Celdas para los demás datos del producto
-    filaFactura.insertCell(1).textContent = codigoProducto;
-    filaFactura.insertCell(2).textContent = nombreProducto;
+    filaPresupuesto.insertCell(1).textContent = codigoProducto;
+    filaPresupuesto.insertCell(2).textContent = nombreProducto;
 
-    const cellPrecio = filaFactura.insertCell(3);
+    const cellPrecio = filaPresupuesto.insertCell(3);
     const inputPrecio = document.createElement('input');
     inputPrecio.type = 'text';
     inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     inputPrecio.className = 'precio-editable';
     cellPrecio.appendChild(inputPrecio);
 
-    const cellCantidad = filaFactura.insertCell(4);
+    const cellCantidad = filaPresupuesto.insertCell(4);
     const inputCantidad = document.createElement('input');
     inputCantidad.type = 'number';
     inputCantidad.min = 1;
     inputCantidad.value = 1;
     cellCantidad.appendChild(inputCantidad);
 
-    const cellStock = filaFactura.insertCell(5);
-    cellStock.textContent = stockActual;
+    filaPresupuesto.insertCell(5).textContent = stockActual;
 
-    const cellSubtotal = filaFactura.insertCell(6);
+    const cellSubtotal = filaPresupuesto.insertCell(6);
     cellSubtotal.textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
-    const cellEliminar = filaFactura.insertCell(7);
+    const cellEliminar = filaPresupuesto.insertCell(7);
     const botonEliminar = document.createElement('button');
     botonEliminar.textContent = '✖';
     botonEliminar.className = 'boton-eliminar';
-    botonEliminar.addEventListener('click', function() {
-        tablaFactura.deleteRow(filaFactura.rowIndex - 1);
-        calcularTotal();
+    botonEliminar.addEventListener('click', function () {
+        tablaPresupuesto.deleteRow(filaPresupuesto.rowIndex - 1);
+        calcularTotalPresupuesto();
     });
     cellEliminar.appendChild(botonEliminar);
 
-    inputCantidad.addEventListener('input', function() {
-        updateSubtotal(filaFactura);
+    inputCantidad.addEventListener('input', function () {
+        updateSubtotalPresupuesto(filaPresupuesto);
     });
 
-    inputPrecio.addEventListener('input', function() {
-        updateSubtotal(filaFactura, false);
+    inputPrecio.addEventListener('input', function () {
+        updateSubtotalPresupuesto(filaPresupuesto, false);
     });
 
-    calcularTotal();
+    calcularTotalPresupuesto();
 }
 
-function updateSubtotal(row, verificarStock = true) {
+function updateSubtotalPresupuesto(row, verificarStock = true) {
     const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
     const cantidad = parseInt(row.cells[4].querySelector('input').value);
-    const stockActual = parseInt(row.cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
     const subtotal = !isNaN(precio) && !isNaN(cantidad) ? precio * cantidad : 0;
-    const stockMinimo = 5;
-
-    if (verificarStock) {
-        if (cantidad > stockActual) {
-            Swal.fire({
-                title: 'ALERTA',
-                text: 'NO HAY STOCK DISPONIBLE',
-                icon: 'error',
-                confirmButtonText: 'Entendido'
-            });
-            row.cells[4].querySelector('input').value = 1;
-            return;
-        }
-
-        const stockRestante = stockActual - cantidad;
-
-        if (stockRestante <= stockMinimo) {
-            Swal.fire({
-                title: 'ALERTA',
-                text: 'LLEGANDO AL LIMITE DE STOCK',
-                icon: 'warning',
-                confirmButtonText: 'Entendido'
-            });
-        }
-    }
 
     row.cells[6].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    calcularTotal();
+    calcularTotalPresupuesto();
 }
 
-function calcularTotal() {
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+function calcularTotalPresupuesto() {
+    const filasPresupuesto = document.getElementById('tabla-presupuesto').getElementsByTagName('tbody')[0].rows;
     let total = 0;
-    for (let i = 0; i < filasFactura.length; i++) {
-        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
+    for (let i = 0; i < filasPresupuesto.length; i++) {
+        let subtotal = parseFloat(filasPresupuesto[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
         subtotal = !isNaN(subtotal) ? subtotal : 0;
         total += subtotal;
     }
 
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-    const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
-    const interesAmountInput = document.getElementById('interes-amount');
-    const totalFinalAmountInput = document.getElementById('total-final-amount');
-    let interes = 0;
-    let totalConInteres = total;
-
-    if (creditoCheckbox && creditoCheckbox.checked) {
-        interes = total * 0.20;
-        totalConInteres += interes;
-        interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    } else {
-        interesAmountInput.value = '';
-    }
-
-    totalFinalAmountInput.value = totalConInteres.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
-
-document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
-    checkbox.addEventListener('change', calcularTotal);
-});
