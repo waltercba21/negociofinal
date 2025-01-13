@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const stockActual = this.dataset.stock_actual;
                 const imagenProducto = this.dataset.imagen;
 
-                agregarProductoAPresupuesto(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
+                agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
             });
 
             resultadosBusqueda.appendChild(resultado);
@@ -173,31 +173,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function agregarProductoAPresupuesto(codigo, nombre, precio, stock, imagen) {
-    console.log("Producto agregado al presupuesto:", { codigo, nombre, precio, stock, imagen });
-    // Implementa aquí la lógica para añadir el producto al presupuesto.
-}
-
-
-function agregarProductoDesdeResultado(evento) {
-    const resultado = evento.currentTarget;
-    const codigoProducto = resultado.dataset.codigo;
-    const nombreProducto = resultado.dataset.nombre;
-    const precioVenta = resultado.dataset.precio_venta;
-    const stockActual = resultado.dataset.stock_actual;
-    const imagenProducto = resultado.dataset.imagen;
-
-    agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
-}
-
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
-    const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+    const tablaPresupuesto = document.getElementById('tabla-presupuesto').getElementsByTagName('tbody')[0];
+
+    // Verificar si el producto ya está en la tabla
+    const filasExistentes = [...tablaPresupuesto.rows];
+    const productoExistente = filasExistentes.find(row => row.cells[1]?.textContent === codigoProducto);
+
+    if (productoExistente) {
+        Swal.fire({
+            title: 'Producto ya agregado',
+            text: 'Este producto ya está en el presupuesto.',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
 
     // Agregar la fila con la imagen
-    const filaFactura = tablaFactura.insertRow();
+    const filaPresupuesto = tablaPresupuesto.insertRow();
 
     // Celda para la imagen
-    const cellImagen = filaFactura.insertCell(0);
+    const cellImagen = filaPresupuesto.insertCell(0);
     if (imagenProducto) {
         const imagen = document.createElement('img');
         imagen.src = imagenProducto;
@@ -206,93 +203,46 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     }
 
     // Celdas para los demás datos del producto
-    filaFactura.insertCell(1).textContent = codigoProducto;
-    filaFactura.insertCell(2).textContent = nombreProducto;
+    filaPresupuesto.insertCell(1).textContent = codigoProducto;
+    filaPresupuesto.insertCell(2).textContent = nombreProducto;
 
-    const cellPrecio = filaFactura.insertCell(3);
+    const cellPrecio = filaPresupuesto.insertCell(3);
     const inputPrecio = document.createElement('input');
     inputPrecio.type = 'text';
     inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     inputPrecio.className = 'precio-editable';
     cellPrecio.appendChild(inputPrecio);
 
-    const cellCantidad = filaFactura.insertCell(4);
+    const cellCantidad = filaPresupuesto.insertCell(4);
     const inputCantidad = document.createElement('input');
     inputCantidad.type = 'number';
     inputCantidad.min = 1;
     inputCantidad.value = 1;
     cellCantidad.appendChild(inputCantidad);
 
-    const cellStock = filaFactura.insertCell(5);
+    const cellStock = filaPresupuesto.insertCell(5);
     cellStock.textContent = stockActual;
 
-    const cellSubtotal = filaFactura.insertCell(6);
+    const cellSubtotal = filaPresupuesto.insertCell(6);
     cellSubtotal.textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
-    const cellEliminar = filaFactura.insertCell(7);
+    const cellEliminar = filaPresupuesto.insertCell(7);
     const botonEliminar = document.createElement('button');
     botonEliminar.textContent = '✖';
     botonEliminar.className = 'boton-eliminar';
-    botonEliminar.addEventListener('click', function() {
-        tablaFactura.deleteRow(filaFactura.rowIndex - 1);
+    botonEliminar.addEventListener('click', function () {
+        tablaPresupuesto.deleteRow(filaPresupuesto.rowIndex - 1);
         calcularTotal();
     });
     cellEliminar.appendChild(botonEliminar);
 
-    inputCantidad.addEventListener('input', function() {
-        updateSubtotal(filaFactura);
+    inputCantidad.addEventListener('input', function () {
+        updateSubtotal(filaPresupuesto);
     });
 
-    inputPrecio.addEventListener('input', function() {
-        updateSubtotal(filaFactura, false);
+    inputPrecio.addEventListener('input', function () {
+        updateSubtotal(filaPresupuesto, false);
     });
 
     calcularTotal();
-}
-
-function updateSubtotal(row, verificarStock = true) {
-    const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
-    const cantidad = parseInt(row.cells[4].querySelector('input').value);
-    const stockActual = parseInt(row.cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
-    const subtotal = !isNaN(precio) && !isNaN(cantidad) ? precio * cantidad : 0;
-    const stockMinimo = 5;
-
-    if (verificarStock) {
-        if (cantidad > stockActual) {
-            Swal.fire({
-                title: 'ALERTA',
-                text: 'NO HAY STOCK DISPONIBLE',
-                icon: 'error',
-                confirmButtonText: 'Entendido'
-            });
-            row.cells[4].querySelector('input').value = 1;
-            return;
-        }
-
-        const stockRestante = stockActual - cantidad;
-
-        if (stockRestante <= stockMinimo) {
-            Swal.fire({
-                title: 'ALERTA',
-                text: 'LLEGANDO AL LIMITE DE STOCK',
-                icon: 'warning',
-                confirmButtonText: 'Entendido'
-            });
-        }
-    }
-
-    row.cells[6].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    calcularTotal();
-}
-
-function calcularTotal() {
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    let total = 0;
-    for (let i = 0; i < filasFactura.length; i++) {
-        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
-        subtotal = !isNaN(subtotal) ? subtotal : 0;
-        total += subtotal;
-    }
-
-    document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
