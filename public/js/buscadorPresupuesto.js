@@ -107,16 +107,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = '/productos/api/buscar?q=' + busqueda;
         const respuesta = await fetch(url);
         const productos = await respuesta.json();
-        const limite = 5;
-        const productosLimitados = productos.slice(0, limite);
 
-        productosLimitados.forEach((producto) => {
+        productos.forEach((producto) => {
             const resultado = document.createElement('div');
             resultado.classList.add('resultado-busqueda');
             resultado.dataset.codigo = producto.codigo;
             resultado.dataset.nombre = producto.nombre;
             resultado.dataset.precio_venta = producto.precio_venta;
             resultado.dataset.stock_actual = producto.stock_actual;
+
             if (producto.imagenes && producto.imagenes.length > 0) {
                 resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
             }
@@ -137,24 +136,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resultado.appendChild(contenedor);
 
-            resultado.addEventListener('mouseenter', function() {
+            resultado.addEventListener('mouseenter', function () {
                 const resultados = document.querySelectorAll('.resultado-busqueda');
                 resultados.forEach(r => r.classList.remove('hover-activo'));
                 this.classList.add('hover-activo');
             });
 
-            resultado.addEventListener('mouseleave', function() {
+            resultado.addEventListener('mouseleave', function () {
                 this.classList.remove('hover-activo');
+            });
+
+            resultado.addEventListener('click', function () {
+                const codigoProducto = this.dataset.codigo;
+                const nombreProducto = this.dataset.nombre;
+                const precioVenta = this.dataset.precio_venta;
+                const stockActual = this.dataset.stock_actual;
+                const imagenProducto = this.dataset.imagen;
+
+                agregarProductoAPresupuesto(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
             });
 
             resultadosBusqueda.appendChild(resultado);
             resultadosBusqueda.style.display = 'block';
-        });
-
-        // Configurar los listeners para cada resultado de búsqueda
-        resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(resultado => {
-            resultado.removeEventListener('click', agregarProductoDesdeResultado);
-            resultado.addEventListener('click', agregarProductoDesdeResultado);
         });
     });
 
@@ -169,6 +172,12 @@ document.addEventListener('DOMContentLoaded', () => {
         resultadosBusqueda.style.display = 'block';
     });
 });
+
+function agregarProductoAPresupuesto(codigo, nombre, precio, stock, imagen) {
+    console.log("Producto agregado al presupuesto:", { codigo, nombre, precio, stock, imagen });
+    // Implementa aquí la lógica para añadir el producto al presupuesto.
+}
+
 
 function agregarProductoDesdeResultado(evento) {
     const resultado = evento.currentTarget;
