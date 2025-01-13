@@ -20,87 +20,59 @@ $(document).ready(function() {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  const botonesAgregarCarrito = document.querySelectorAll('.btn-agregar-carrito');
+  const isAdminUser = document.body.dataset.isAdminUser === 'true';
 
-  botonesAgregarCarrito.forEach(boton => {
-    boton.addEventListener('click', () => {
-      const productoId = boton.getAttribute('data-id');
-      const cantidadInput = document.getElementById(`cantidad-${productoId}`);
-      const cantidad = parseInt(cantidadInput.value, 10);
-
-      if (cantidad > 0) {
-        // Enviar datos al servidor
-        fetch('/carrito/agregar', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ id: productoId, cantidad })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert('Producto agregado al carrito con éxito.');
+  // Función para construir el semáforo solo si no es administrador
+  function construirSemaforo(producto) {
+      if (!isAdminUser) {
+          if (producto.stock_actual >= producto.stock_minimo) {
+              return `
+                  <div class="semaforo-container">
+                      <span class="semaforo verde"></span>
+                      <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
+                  </div>`;
           } else {
-            alert('Error al agregar el producto al carrito.');
+              return `
+                  <div class="semaforo-container">
+                      <span class="semaforo rojo"></span>
+                      <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
+                  </div>`;
           }
-        })
-        .catch(error => console.error('Error:', error));
-      } else {
-        alert('Por favor, selecciona una cantidad válida.');
       }
-    });
+      return '';
+  }
+
+  document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
+      const busqueda = e.target.value;
+      const contenedorProductos = document.getElementById('contenedor-productos');
+      contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de mostrar nuevos productos
+
+      fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda))
+          .then(response => response.json())
+          .then(productos => {
+              productos.forEach((producto) => {
+                  const tarjetaProducto = document.createElement('div');
+                  tarjetaProducto.classList.add('card');
+
+                  tarjetaProducto.innerHTML = `
+                      <div class="cover__card">
+                          <img class="carousel__image" src="/uploads/productos/${producto.imagenes[0].imagen}" alt="Imagen de ${producto.nombre}">
+                      </div>
+                      <div class="titulo-producto">
+                          <h3 class="nombre">${producto.nombre}</h3>
+                      </div>
+                      <div class="precio-producto">
+                          <p class="precio">$${producto.precio_venta}</p>
+                      </div>
+                      ${construirSemaforo(producto)} <!-- Agregar semáforo solo si corresponde -->
+                      <div class="cantidad-producto">
+                          <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+                      </div>
+                  `;
+
+                  contenedorProductos.appendChild(tarjetaProducto);
+              });
+          })
+          .catch(error => console.error('Error al buscar productos:', error));
   });
-});
-
-document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
-  const busqueda = e.target.value;
-  const contenedorProductos = document.getElementById('contenedor-productos');
-  contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de mostrar nuevos productos
-
-  fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda))
-    .then(response => response.json())
-    .then(productos => {
-      productos.forEach((producto) => {
-        const tarjetaProducto = document.createElement('div');
-        tarjetaProducto.classList.add('card');
-
-        // Aquí viene la parte del semáforo
-        let semaforoHtml = '';
-        if (producto.stock_actual >= producto.stock_minimo) {
-          semaforoHtml = `
-            <div class="semaforo-container">
-              <span class="semaforo verde"></span>
-              <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
-            </div>`;
-        } else {
-          semaforoHtml = `
-            <div class="semaforo-container">
-              <span class="semaforo rojo"></span>
-              <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
-            </div>`;
-        }
-
-        tarjetaProducto.innerHTML = `
-          <div class="cover__card">
-            <div class="carousel">
-              <img class="carousel__image" src="/uploads/productos/${producto.imagenes[0].imagen}" alt="Imagen de ${producto.nombre}">
-            </div>
-          </div>
-          <div class="titulo-producto">
-            <h3 class="nombre">${producto.nombre}</h3>
-          </div>
-          <div class="precio-producto">
-            <p class="precio">$${producto.precio_venta}</p>
-          </div>
-          ${semaforoHtml} <!-- Incluir el semáforo aquí -->
-          <div class="cantidad-producto">
-            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-          </div>
-        `;
-
-        contenedorProductos.appendChild(tarjetaProducto);
-      });
-    })
-    .catch(error => console.error('Error al buscar productos:', error));
 });
