@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function agregarProductoATablaPresupuesto(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
-    const tablaPresupuesto = document.getElementById('tabla-presupuesto').getElementsByTagName('tbody')[0];
+    const tablaPresupuesto = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
 
     const filaPresupuesto = tablaPresupuesto.insertRow();
 
@@ -240,7 +240,7 @@ function updateSubtotalPresupuesto(row, verificarStock = true) {
 }
 
 function calcularTotalPresupuesto() {
-    const filasPresupuesto = document.getElementById('tabla-presupuesto').getElementsByTagName('tbody')[0].rows;
+    const filasPresupuesto = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
     for (let i = 0; i < filasPresupuesto.length; i++) {
         let subtotal = parseFloat(filasPresupuesto[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
