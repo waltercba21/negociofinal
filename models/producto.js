@@ -24,18 +24,14 @@ module.exports ={
             return;
           }
         
-          const productos = {};
-          resultados.forEach(resultado => {
-            if (!productos[resultado.id]) {
-              productos[resultado.id] = {
-                ...resultado,
-                imagenes: []
-              };
-            }
-            productos[resultado.id].imagenes.push(resultado.imagen);
+          const productos = resultados.map(resultado => {
+            return {
+              ...resultado,
+              imagenes: [resultado.imagen]
+            };
           });
         
-          callback(null, Object.values(productos));
+          callback(null, productos);
         });
       },
     obtenerSiguienteID: function() {
