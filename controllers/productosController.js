@@ -69,7 +69,8 @@ module.exports = {
                 });
             });
     
-            const numeroDePaginas = Math.ceil(totalProductos / 20);
+            const productosPorPagina = 20;
+            const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
     
             let productos;
             if (categoria || marca || modelo) {
@@ -85,7 +86,7 @@ module.exports = {
                 });
             } else {
                 productos = await new Promise((resolve, reject) => {
-                    producto.obtener(conexion, pagina, (error, resultados) => {
+                    producto.obtenerPorPagina(conexion, pagina, productosPorPagina, (error, resultados) => {
                         if (error) {
                             console.error('Error al obtener productos:', error);
                             reject(error);

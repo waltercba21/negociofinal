@@ -50,9 +50,9 @@
     </div>
     
     <div class="paginacion">
-      <% for(let i = 1; i <= Math.min(numeroDePaginas, 10); i++) { %>
+      <% for(let i = 1; i <= numeroDePaginas; i++) { %>
         <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
-      <% } %>
+    <% } %>
     </div>
 
    <div id="contenedor-productos" class="contenedor-productos">
@@ -104,12 +104,7 @@
         </div>
       <% }); %>
     </div>
-    
-<div class="paginacion">
-  <% for(let i = 1; i <= Math.min(numeroDePaginas, 10); i++) { %>
-    <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
-  <% } %>
-</div>
+
 </main>
   <%- include ./layouts/footer.ejs %>
   <script src="/js/productos.js"></script> 
