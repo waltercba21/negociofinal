@@ -69,13 +69,10 @@ module.exports = {
                 });
             });
     
-            const numeroDePaginas = Math.ceil(totalProductos / 20);
+            const numeroDePaginas = Math.ceil(totalProductos / 10);
     
             let productos;
             if (categoria || marca || modelo) {
-                // En este caso, no puedes utilizar la función obtener porque no filtra por categoría, marca o modelo
-                // Debes crear una nueva función en tu modelo que permita filtrar por estos parámetros
-                // Por ejemplo, podrías crear una función obtenerPorFiltros que tenga los siguientes parámetros: conexion, categoria, marca, modelo, pagina
                 productos = await new Promise((resolve, reject) => {
                     producto.obtenerPorFiltros(conexion, categoria, marca, modelo, pagina, (error, resultados) => {
                         if (error) {
@@ -125,7 +122,7 @@ module.exports = {
                 categorias,
                 marcas,
                 modelosPorMarca,
-                numeroDePaginas,
+                numeroDePaginas: Math.min(numeroDePaginas, 10), // Muestra solo 10 páginas
                 pagina,
                 modelo: modeloSeleccionado,
                 req,

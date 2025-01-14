@@ -5,14 +5,14 @@ const path = require('path');
 module.exports ={
     
     obtener: function (conexion, pagina, callback) {
-        const offset = (pagina - 1) * 20;
+        const offset = (pagina - 1) * 10;
         const consulta = `
             SELECT productos.*, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes
             FROM productos
             LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
             GROUP BY productos.id
             ORDER BY productos.id DESC
-            LIMIT 20 OFFSET ?`;
+            LIMIT 10 OFFSET ?`;
     
         conexion.query(consulta, [offset], (error, resultados) => {
             if (error) {
