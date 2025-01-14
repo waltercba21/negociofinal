@@ -91,7 +91,7 @@ module.exports = {
         });
       }
   
-      const storedPasswordHash = datos[0].password;
+      const storedPasswordHash = datos[0].password; // Asegúrate de que este es el hash correcto
   
       bcryptjs.compare(password, storedPasswordHash, function (err, result) {
         if (err) {
@@ -109,16 +109,10 @@ module.exports = {
           });
         }
   
-        // Verificar y guardar sesión si las credenciales son correctas
+        // Configurar sesión si las credenciales son correctas
         req.session.usuario = datos[0];
-        console.log('Sesión de usuario configurada:', req.session.usuario);
-  
-        // Verificar si el correo es de un administrador
         req.session.usuario.isAdmin = adminEmails.includes(email);
-        console.log(`El usuario ${email} es admin: ${req.session.usuario.isAdmin}`);
-  
-        req.session.usuario.isAccountingAdmin = email === 'walter@autofaros.com.ar';
-        console.log(`isAccountingAdmin para ${email}: ${req.session.usuario.isAccountingAdmin}`);
+        req.session.usuario.isAccountingAdmin = email === 'gera@autofaros.com.ar';
   
         if (req.session.usuario.firstLogin === undefined) {
           req.session.usuario.firstLogin = true;
@@ -127,7 +121,8 @@ module.exports = {
         res.redirect('/');
       });
     });
-  },  
+  },
+  
   profile: async (req, res) => {
     if (req.session && req.session.usuario) {
       return res.render('profile', { usuario: req.session.usuario });

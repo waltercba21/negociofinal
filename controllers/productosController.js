@@ -51,13 +51,12 @@ module.exports = {
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
-    
-        console.log('Parametros de consulta:', { pagina, categoria, marca, modelo });
-    
+
+        // Validar que los parámetros de marca y modelo sean números
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             return res.redirect('/error');
         }
-    
+
         try {
             const totalProductos = await new Promise((resolve, reject) => {
                 producto.obtenerTotal(conexion, (error, resultados) => {
@@ -69,11 +68,9 @@ module.exports = {
                     }
                 });
             });
-    
+
             const numeroDePaginas = Math.ceil(totalProductos / 20);
-    
-            console.log('Total de productos:', totalProductos, 'Número de páginas:', numeroDePaginas);
-    
+
             let productos;
             if (categoria || marca || modelo) {
                 productos = await new Promise((resolve, reject) => {
@@ -98,44 +95,28 @@ module.exports = {
                     });
                 });
             }
-    
-            console.log('Productos obtenidos:', productos);
-    
+
             const categorias = await producto.obtenerCategorias(conexion);
             const marcas = await producto.obtenerMarcas(conexion);
             const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
             const modeloSeleccionado = modelo && modelosPorMarca ? modelosPorMarca.find(m => m.id === modelo) : null;
-    
-            console.log('Categorías:', categorias);
-            console.log('Marcas:', marcas);
-            console.log('Modelos por marca:', modelosPorMarca);
-            console.log('Modelo seleccionado:', modeloSeleccionado);
-    
+
+            // Procesar productos e imágenes
             if (productos.length) {
                 const productoIds = productos.map(producto => producto.id);
                 const todasLasImagenesPromesas = productoIds.map(id => producto.obtenerImagenesProducto(conexion, id));
                 const todasLasImagenes = (await Promise.all(todasLasImagenesPromesas)).flat();
-    
+
                 productos.forEach(producto => {
                     producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
                     producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : 'No disponible';
-                    producto.stock_actual = producto.stock_actual || 0; // Asegurar que stock_actual esté definido
-                    producto.stock_minimo = producto.stock_minimo || 0; // Asegurar que stock_minimo esté definido
-    
-                    console.log(`Producto ${producto.id}: stock_actual=${producto.stock_actual}, stock_minimo=${producto.stock_minimo}`);
-    
                     const categoriaProducto = categorias.find(cat => cat.id === producto.categoria_id);
                     if (categoriaProducto) {
                         producto.categoria = categoriaProducto.nombre;
                     }
                 });
             }
-    
-            // Verificación del rol del usuario (admin o no admin)
-            console.log('Usuario en sesión:', req.session.usuario);
-            const isAdminUser = req.session.usuario && req.session.usuario.rol === 'admin';
-            console.log('Es usuario admin:', isAdminUser);
-    
+
             res.render('productos', {
                 productos,
                 categorias,
@@ -145,7 +126,7 @@ module.exports = {
                 pagina,
                 modelo: modeloSeleccionado,
                 req,
-                isAdminUser // Enviar el valor al frontend
+                isAdminUser: req.session.usuario && req.session.usuario.rol === 'admin' // Determinar si es admin
             });
         } catch (error) {
             console.error('Error en el controlador lista:', error);
@@ -157,13 +138,10 @@ module.exports = {
                 numeroDePaginas: 1,
                 pagina,
                 modelo: null,
-                req,
-                isAdminUser: false // En caso de error, considerar al usuario como no admin
+                req
             });
         }
     },
-    
-    
     buscar: async (req, res) => {
         try {
             const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
