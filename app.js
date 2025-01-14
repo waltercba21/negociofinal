@@ -20,7 +20,14 @@ var io = require('socket.io')(server); // Y esta también
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-z
+app.use(session({
+  secret: 'tu secreto',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { 
+    maxAge: 6200000 
+  }
+}));
 app.use((req, res, next) => {
   if (req.session.usuario && Date.now() > req.session.cookie.expires) {
     res.redirect('/');
