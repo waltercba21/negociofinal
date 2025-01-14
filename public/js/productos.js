@@ -42,7 +42,6 @@ $(document).ready(function () {
         const respuesta = await fetch(url);
         productos = await respuesta.json();
       }
-  
       mostrarProductos(productos);
     }, 300);
   });
@@ -51,6 +50,10 @@ $(document).ready(function () {
     const contenedorProductos = document.getElementById("contenedor-productos");
     const isUserLoggedIn = document.body.dataset.isUserLoggedIn === "true";
     const isAdminUser = document.body.dataset.isAdminUser === "true";
+  
+    // Depuración de valores
+    console.log("isUserLoggedIn:", isUserLoggedIn);
+    console.log("isAdminUser:", isAdminUser);
   
     productos.forEach((producto) => {
       let imagenes = "";

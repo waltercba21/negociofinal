@@ -51,12 +51,11 @@ module.exports = {
         const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
-
-        // Validar que los parámetros de marca y modelo sean números
+    
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             return res.redirect('/error');
         }
-
+    
         try {
             const totalProductos = await new Promise((resolve, reject) => {
                 producto.obtenerTotal(conexion, (error, resultados) => {
@@ -68,9 +67,9 @@ module.exports = {
                     }
                 });
             });
-
+    
             const numeroDePaginas = Math.ceil(totalProductos / 20);
-
+    
             let productos;
             if (categoria || marca || modelo) {
                 productos = await new Promise((resolve, reject) => {
@@ -95,28 +94,29 @@ module.exports = {
                     });
                 });
             }
-
+    
             const categorias = await producto.obtenerCategorias(conexion);
             const marcas = await producto.obtenerMarcas(conexion);
             const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
             const modeloSeleccionado = modelo && modelosPorMarca ? modelosPorMarca.find(m => m.id === modelo) : null;
-
-            // Procesar productos e imágenes
+    
             if (productos.length) {
                 const productoIds = productos.map(producto => producto.id);
                 const todasLasImagenesPromesas = productoIds.map(id => producto.obtenerImagenesProducto(conexion, id));
                 const todasLasImagenes = (await Promise.all(todasLasImagenesPromesas)).flat();
-
+    
                 productos.forEach(producto => {
                     producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
                     producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : 'No disponible';
+                    producto.stock_actual = producto.stock_actual || 0; // Asegurar que stock_actual esté definido
+                    producto.stock_minimo = producto.stock_minimo || 0; // Asegurar que stock_minimo esté definido
                     const categoriaProducto = categorias.find(cat => cat.id === producto.categoria_id);
                     if (categoriaProducto) {
                         producto.categoria = categoriaProducto.nombre;
                     }
                 });
             }
-
+    
             res.render('productos', {
                 productos,
                 categorias,
@@ -138,10 +138,12 @@ module.exports = {
                 numeroDePaginas: 1,
                 pagina,
                 modelo: null,
-                req
+                req,
+                isAdminUser: false // En caso de error, considerar al usuario como no admin
             });
         }
     },
+    
     buscar: async (req, res) => {
         try {
             const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
