@@ -12,19 +12,11 @@
     <a class="nav-link" href="/productos">PRODUCTOS</a>
 
     <% if (isAdminUser) { %> <!-- Verifica si el usuario es admin usando la variable definida en el middleware -->
-      <% if (userLogged.isAccountingAdmin) { %>
-        <!-- Aquí puedes agregar algo específico si es accounting admin -->
-      <% } else { %>
-        <!-- Secciones visibles solo para administradores normales -->
-        <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
-        <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
-        <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
-        <a class="nav-link" href="/administracion">ADMINISTRACIÓN</a>
-      <% } %>
-    <% } %>
-
-    <% if (!isAdminUser && isLogged) { %> <!-- Verifica si no es admin pero está logueado -->
-      <!-- Aquí puedes agregar el menú para usuarios normales -->
+      <!-- Secciones visibles solo para administradores -->
+      <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
+      <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
+      <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
+      <a class="nav-link" href="/administracion">ADMINISTRACIÓN</a>
     <% } %>
 
     <a class="nav-link" href="https://wa.me/+543513820440/" target="_blank">WHATSAPP</a>

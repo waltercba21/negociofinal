@@ -120,7 +120,7 @@ module.exports = {
         res.redirect('/');
       });
     });
-  },
+  }, 
   
   profile: async (req, res) => {
     if (req.session && req.session.usuario) {
