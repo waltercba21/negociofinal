@@ -50,6 +50,7 @@ $(document).ready(function () {
   function mostrarProductos(productos) {
     const contenedorProductos = document.getElementById("contenedor-productos");
     const isUserLoggedIn = document.body.dataset.isUserLoggedIn === "true";
+    const isAdminUser = document.body.dataset.isAdminUser === "true";
   
     productos.forEach((producto) => {
       let imagenes = "";
@@ -94,7 +95,6 @@ $(document).ready(function () {
         tarjetaProducto.classList.add("calidad_vic");
       }
   
-      const isAdminUser = document.body.dataset.isAdminUser === "true";
       let html = `
         ${imagenes}
         <div class="titulo-producto">
@@ -106,7 +106,15 @@ $(document).ready(function () {
         </div>
       `;
   
-      if (isUserLoggedIn) {
+      if (isAdminUser) {
+        html += `
+          <div class="stock-producto ${
+            producto.stock_actual < producto.stock_minimo ? "bajo-stock" : "suficiente-stock"
+          }">
+            <p>Stock Disponible: ${producto.stock_actual}</p>
+          </div>
+        `;
+      } else if (isUserLoggedIn) {
         html += `
           <div class="semaforo-stock">
             ${
@@ -114,18 +122,6 @@ $(document).ready(function () {
                 ? '<span class="semaforo verde"></span> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
                 : '<span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'
             }
-          </div>
-        `;
-      }
-  
-      if (isAdminUser) {
-        html += `
-          <div class="stock-producto ${
-            producto.stock_actual < producto.stock_minimo
-              ? "bajo-stock"
-              : "suficiente-stock"
-          }">
-            <p>Stock Disponible: ${producto.stock_actual}</p>
           </div>
         `;
       }
@@ -138,23 +134,6 @@ $(document).ready(function () {
   
       tarjetaProducto.innerHTML = html;
       contenedorProductos.appendChild(tarjetaProducto);
-  
-      const leftButton = tarjetaProducto.querySelector(".carousel__button--left");
-      const rightButton = tarjetaProducto.querySelector(".carousel__button--right");
-      const images = tarjetaProducto.querySelectorAll(".carousel__image");
-      let currentIndex = 0;
-  
-      leftButton.addEventListener("click", () => {
-        images[currentIndex].classList.add("hidden");
-        currentIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
-        images[currentIndex].classList.remove("hidden");
-      });
-  
-      rightButton.addEventListener("click", () => {
-        images[currentIndex].classList.add("hidden");
-        currentIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
-        images[currentIndex].classList.remove("hidden");
-      });
     });
   }
   
