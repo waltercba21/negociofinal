@@ -108,8 +108,9 @@ module.exports = {
       
           // ...
         } catch (error) {
-          console.error('Error en el controlador lista:', error);
-        }
+            console.error('Error en el controlador lista:', error);
+            return res.status(500).send('Error interno del servidor');
+          }
       },
     buscar: async (req, res) => {
         try {
