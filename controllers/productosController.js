@@ -118,16 +118,16 @@ module.exports = {
             }
     
             res.render('productos', {
-                productos,
+                productos: productos || [], // Verificar que productos no sea undefined
                 categorias,
                 marcas,
                 modelosPorMarca,
-                numeroDePaginas: Math.min(numeroDePaginas, 10), // Muestra solo 10 páginas
+                numeroDePaginas: Math.min(numeroDePaginas, 10),
                 pagina,
                 modelo: modeloSeleccionado,
                 req,
-                isAdminUser: req.session.usuario && req.session.usuario.email && adminEmails.includes(req.session.usuario.email) // Determinar si es admin
-            });
+                isAdminUser: req.session.usuario && req.session.usuario.email && adminEmails.includes(req.session.usuario.email)
+              });
         } catch (error) {
             console.error('Error en el controlador lista:', error);
             res.render('productos', {
