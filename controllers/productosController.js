@@ -71,11 +71,12 @@ module.exports = {
     
             const productosPorPagina = 20;
             const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
+            const offset = (pagina - 1) * productosPorPagina;
     
             let productos;
             if (categoria || marca || modelo) {
                 productos = await new Promise((resolve, reject) => {
-                    producto.obtenerPorFiltros(conexion, categoria || null, marca, modelo, (error, resultados) => {
+                    producto.obtenerPorFiltros(conexion, categoria || null, marca, modelo, offset, productosPorPagina, (error, resultados) => {
                         if (error) {
                             console.error('Error al obtener productos por filtros:', error);
                             reject(error);
@@ -86,7 +87,7 @@ module.exports = {
                 });
             } else {
                 productos = await new Promise((resolve, reject) => {
-                    producto.obtenerPorPagina(conexion, pagina, productosPorPagina, (error, resultados) => {
+                    producto.obtenerPorPagina(conexion, offset, productosPorPagina, (error, resultados) => {
                         if (error) {
                             console.error('Error al obtener productos:', error);
                             reject(error);
