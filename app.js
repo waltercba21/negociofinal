@@ -25,9 +25,10 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: { 
-    maxAge: 6200000 
+    maxAge: 6200000 // Aproximadamente 1 hora y 45 minutos
   }
 }));
+
 app.use((req, res, next) => {
   if (req.session.usuario && Date.now() > req.session.cookie.expires) {
     res.redirect('/');
