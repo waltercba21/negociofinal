@@ -77,6 +77,11 @@ module.exports = {
           const numeroDePaginas = Math.ceil(totalProductos / 10);
           console.log('Número de páginas:', numeroDePaginas);
       
+          if (pagina < 1 || pagina > numeroDePaginas) {
+            console.error('Número de página inválido');
+            return res.status(400).send('Número de página inválido');
+          }
+      
           let productos;
           if (categoria || marca || modelo) {
             productos = await new Promise((resolve, reject) => {
@@ -108,9 +113,9 @@ module.exports = {
       
           // ...
         } catch (error) {
-            console.error('Error en el controlador lista:', error);
-            return res.status(500).send('Error interno del servidor');
-          }
+          console.error('Error en el controlador lista:', error);
+          return res.status(500).send('Error interno del servidor');
+        }
       },
     buscar: async (req, res) => {
         try {
