@@ -5,6 +5,9 @@ const path = require('path');
 module.exports ={
     
     obtener: function (conexion, pagina, callback) {
+        console.log('Entrando en el modelo obtener');
+        console.log('Pagina:', pagina);
+      
         const offset = (pagina - 1) * 10;
         const consulta = `
           SELECT productos.*, imagenes_producto.imagen
@@ -14,7 +17,9 @@ module.exports ={
           LIMIT 10 OFFSET ?`;
         
         conexion.query(consulta, [offset], (error, resultados) => {
+          console.log('Resultados:', resultados);
           if (error) {
+            console.error('Error al obtener productos:', error);
             callback(error);
             return;
           }
