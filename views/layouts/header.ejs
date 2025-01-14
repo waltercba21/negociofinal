@@ -1,15 +1,17 @@
 <header>
   <a href="/">
-    <img class="logo" src="/uploads/productos/logo.png"  alt="LOGO" />
+    <img class="logo" src="/uploads/productos/logo.png" alt="LOGO" />
   </a>
 
   <button class="hamburger" onclick="toggleMenu()">☰</button>
+
+  <!-- header.ejs -->
 
   <nav class="navbar">
     <a class="nav-link" href="/">INICIO</a>
     <a class="nav-link" href="/productos">PRODUCTOS</a>
 
-    <% if (userLogged.isAdmin) { %>
+    <% if (isAdminUser) { %> <!-- Verifica si el usuario es admin usando la variable definida en el middleware -->
       <% if (userLogged.isAccountingAdmin) { %>
         <!-- Aquí puedes agregar algo específico si es accounting admin -->
       <% } else { %>
@@ -21,7 +23,7 @@
       <% } %>
     <% } %>
 
-    <% if (!userLogged.isAdmin && isLogged) { %> <!-- Verifica si no es admin pero está logueado -->
+    <% if (!isAdminUser && isLogged) { %> <!-- Verifica si no es admin pero está logueado -->
       <!-- Aquí puedes agregar el menú para usuarios normales -->
     <% } %>
 
