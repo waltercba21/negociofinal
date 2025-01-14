@@ -5,31 +5,36 @@ const path = require('path');
 module.exports ={
     
     obtener: function (conexion, pagina, callback) {
+        console.log('Entrando en el modelo obtener');
+        console.log('Pagina:', pagina);
+      
         const offset = (pagina - 1) * 20;
         const consulta = `
-            SELECT productos.*, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes
-            FROM productos
-            LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
-            GROUP BY productos.id
-            ORDER BY productos.id DESC
-            LIMIT 20 OFFSET ?`;
-    
+          SELECT productos.*, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes
+          FROM productos
+          LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
+          GROUP BY productos.id
+          ORDER BY productos.id DESC
+          LIMIT 20 OFFSET ?`;
+      
         conexion.query(consulta, [offset], (error, resultados) => {
-            if (error) {
-                callback(error);
-                return;
-            }
-    
-            const productos = resultados.map(resultado => {
-                return {
-                    ...resultado,
-                    imagenes: resultado.imagenes ? resultado.imagenes.split(',') : []
-                };
-            });
-    
-            callback(null, productos);
+          console.log('Resultados:', resultados);
+          if (error) {
+            callback(error);
+            return;
+          }
+      
+          const productos = resultados.map(resultado => {
+            return {
+              ...resultado,
+              imagenes: resultado.imagenes ? resultado.imagenes.split(',') : []
+            };
+          });
+      
+          console.log('Productos obtenidos:', productos);
+          callback(null, productos);
         });
-    },    
+      },
     obtenerSiguienteID: function() {
         return new Promise((resolve, reject) => {
           conexion.query('SELECT MAX(id) AS max_id FROM presupuestos_mostrador', (error, resultado) => {
