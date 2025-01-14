@@ -1,5 +1,5 @@
 // Array de correos electrónicos de administradores
-const adminEmails = ['walter@autofaros.com.ar', 'chacho@autofaros.com.ar', 'gera@autofaros.com.ar'];
+const adminEmails = ['walter@autofaros.com.ar'];
 
 module.exports = (req, res, next) => {
   // Verificar si el usuario es el administrador
