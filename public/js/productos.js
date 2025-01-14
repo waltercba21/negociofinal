@@ -18,7 +18,23 @@ $(document).ready(function() {
     showImage(newIndex);
   }); 
 });
-
+// En productos.js
+$(document).ready(function() {
+    // Actualiza la página cuando se cambia la página
+    $('.paginacion a').on('click', function(event) {
+      event.preventDefault();
+      const pagina = $(this).text();
+      window.location.href = '/productos?pagina=' + pagina;
+    });
+  
+    // Actualiza la página cuando se filtran los productos
+    $('#categoria_id, #marca_id, #modelo_id').on('change', function() {
+      const categoria = $('#categoria_id').val();
+      const marca = $('#marca_id').val();
+      const modelo = $('#modelo_id').val();
+      window.location.href = '/productos?categoria=' + categoria + '&marca=' + marca + '&modelo=' + modelo;
+    });
+  });
 document.addEventListener('DOMContentLoaded', () => {
   const isAdminUser = document.body.dataset.isAdminUser === 'true';
 
