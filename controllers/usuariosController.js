@@ -111,8 +111,13 @@ module.exports = {
   
         // Configurar sesión si las credenciales son correctas
         req.session.usuario = datos[0];
+  
+        // Aquí estamos usando la lista adminEmails para verificar si el usuario es admin
+        console.log('Verificando si el usuario es admin...');
         req.session.usuario.isAdmin = adminEmails.includes(email);
-        req.session.usuario.isAccountingAdmin = email === 'gera@autofaros.com.ar';
+        console.log(`El usuario ${email} es admin: ${req.session.usuario.isAdmin}`);
+  
+        req.session.usuario.isAccountingAdmin = email === 'walter@autofaros.com.ar';
   
         if (req.session.usuario.firstLogin === undefined) {
           req.session.usuario.firstLogin = true;
@@ -122,6 +127,7 @@ module.exports = {
       });
     });
   },
+  
   
   profile: async (req, res) => {
     if (req.session && req.session.usuario) {
