@@ -52,6 +52,8 @@ module.exports = {
         const marca = req.query.marca !== undefined ? Number(req.query.marca) : undefined;
         const modelo = req.query.modelo !== undefined ? Number(req.query.modelo) : undefined;
     
+        console.log('Parametros de consulta:', { pagina, categoria, marca, modelo });
+    
         if ((marca !== undefined && isNaN(marca)) || (modelo !== undefined && isNaN(modelo))) {
             return res.redirect('/error');
         }
@@ -69,6 +71,8 @@ module.exports = {
             });
     
             const numeroDePaginas = Math.ceil(totalProductos / 20);
+    
+            console.log('Total de productos:', totalProductos, 'Número de páginas:', numeroDePaginas);
     
             let productos;
             if (categoria || marca || modelo) {
@@ -95,10 +99,17 @@ module.exports = {
                 });
             }
     
+            console.log('Productos obtenidos:', productos);
+    
             const categorias = await producto.obtenerCategorias(conexion);
             const marcas = await producto.obtenerMarcas(conexion);
             const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
             const modeloSeleccionado = modelo && modelosPorMarca ? modelosPorMarca.find(m => m.id === modelo) : null;
+    
+            console.log('Categorías:', categorias);
+            console.log('Marcas:', marcas);
+            console.log('Modelos por marca:', modelosPorMarca);
+            console.log('Modelo seleccionado:', modeloSeleccionado);
     
             if (productos.length) {
                 const productoIds = productos.map(producto => producto.id);
@@ -110,12 +121,20 @@ module.exports = {
                     producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : 'No disponible';
                     producto.stock_actual = producto.stock_actual || 0; // Asegurar que stock_actual esté definido
                     producto.stock_minimo = producto.stock_minimo || 0; // Asegurar que stock_minimo esté definido
+    
+                    console.log(`Producto ${producto.id}: stock_actual=${producto.stock_actual}, stock_minimo=${producto.stock_minimo}`);
+    
                     const categoriaProducto = categorias.find(cat => cat.id === producto.categoria_id);
                     if (categoriaProducto) {
                         producto.categoria = categoriaProducto.nombre;
                     }
                 });
             }
+    
+            // Verificación del rol del usuario (admin o no admin)
+            console.log('Usuario en sesión:', req.session.usuario);
+            const isAdminUser = req.session.usuario && req.session.usuario.rol === 'admin';
+            console.log('Es usuario admin:', isAdminUser);
     
             res.render('productos', {
                 productos,
@@ -126,7 +145,7 @@ module.exports = {
                 pagina,
                 modelo: modeloSeleccionado,
                 req,
-                isAdminUser: req.session.usuario && req.session.usuario.rol === 'admin' // Determinar si es admin
+                isAdminUser // Enviar el valor al frontend
             });
         } catch (error) {
             console.error('Error en el controlador lista:', error);
@@ -143,6 +162,7 @@ module.exports = {
             });
         }
     },
+    
     
     buscar: async (req, res) => {
         try {
