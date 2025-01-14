@@ -57,7 +57,6 @@
         <a href="/productos?pagina=<%= i %>" class="<% if (i == pagina) { %>pagina-actual<% } %>"><%= i %></a>
       <% } %>
     </div>
-
     <div id="contenedor-productos" class="contenedor-productos">
       <% productos.forEach(function(producto) { %>
         <div class="card 
@@ -68,55 +67,41 @@
             <div class="cover__card">
               <div class="carousel">
                 <% producto.imagenes.forEach(function(imagen, index) { %>
-                  <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
+                  <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="/uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
                 <% }); %>
               </div>
-            </div>
-            <div class="carousel__buttons">
-              <button class="carousel__button">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <button class="carousel__button">
-                <i class="fas fa-chevron-right"></i>
-              </button>
             </div>
           <% } else { %>
             <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
           <% } %>
+    
           <div class="titulo-producto">
             <h3 class="nombre"><%= producto.nombre %></h3>
-          </div>
-          <hr>
-          <div class="categoria-producto">
-            <h6 class="categoria"><%= producto.categoria %></h6>
-          </div>
-          <div class="descripcion" style="display: none;">
-            <%= producto.descripcion %>
           </div>
           <div class="precio-producto">
             <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
           </div>
     
-          <% if (req.session && req.session.usuario && !isAdminUser) { %>
-            <div class="semaforo-stock">
-                <% if (producto.stock_actual >= producto.stock_minimo) { %>
-                    <div class="semaforo-container">
-                        <span class="semaforo verde"></span>
-                        <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
-                    </div>
-                <% } else { %>
-                    <div class="semaforo-container">
-                        <span class="semaforo rojo"></span>
-                        <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
-                    </div>
-                <% } %>
-            </div>
-        <% } else if (isAdminUser) { %>
+          <!-- Mostrar información diferente según si es admin o usuario registrado -->
+          <% if (isAdminUser) { %>
             <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
-                <p>Stock Disponible: <%= producto.stock_actual %> </p>
+              <p>Stock Disponible: <%= producto.stock_actual %></p>
             </div>
-        <% } %>
-        
+          <% } else { %>
+            <div class="semaforo-stock">
+              <% if (producto.stock_actual >= producto.stock_minimo) { %>
+                <div class="semaforo-container">
+                  <span class="semaforo verde"></span>
+                  <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>
+                </div>
+              <% } else { %>
+                <div class="semaforo-container">
+                  <span class="semaforo rojo"></span>
+                  <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
     
           <div class="cantidad-producto">
             <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
@@ -124,6 +109,7 @@
         </div>
       <% }); %>
     </div>
+    
     
     
 <div class="paginacion">
