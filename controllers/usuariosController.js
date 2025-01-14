@@ -111,8 +111,7 @@ module.exports = {
   
         // Configurar sesión si las credenciales son correctas
         req.session.usuario = datos[0];
-        req.session.usuario.isAdmin = adminEmails.includes(email);
-        req.session.usuario.isAccountingAdmin = email === 'gera@autofaros.com.ar';
+        req.session.usuario.isAdminUser = adminEmails.includes(email);
   
         if (req.session.usuario.firstLogin === undefined) {
           req.session.usuario.firstLogin = true;
