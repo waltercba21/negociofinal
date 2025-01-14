@@ -7,29 +7,32 @@ module.exports ={
     obtener: function (conexion, pagina, callback) {
         const offset = (pagina - 1) * 10;
         const consulta = `
-            SELECT productos.*, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes
-            FROM productos
-            LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
-            GROUP BY productos.id
-            ORDER BY productos.id DESC
-            LIMIT 10 OFFSET ?`;
-    
+          SELECT productos.*, imagenes_producto.imagen
+          FROM productos
+          LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
+          ORDER BY productos.id DESC
+          LIMIT 10 OFFSET ?`;
+        
         conexion.query(consulta, [offset], (error, resultados) => {
-            if (error) {
-                callback(error);
-                return;
+          if (error) {
+            callback(error);
+            return;
+          }
+        
+          const productos = {};
+          resultados.forEach(resultado => {
+            if (!productos[resultado.id]) {
+              productos[resultado.id] = {
+                ...resultado,
+                imagenes: []
+              };
             }
-    
-            const productos = resultados.map(resultado => {
-                return {
-                    ...resultado,
-                    imagenes: resultado.imagenes ? resultado.imagenes.split(',') : []
-                };
-            });
-    
-            callback(null, productos);
+            productos[resultado.id].imagenes.push(resultado.imagen);
+          });
+        
+          callback(null, Object.values(productos));
         });
-    },    
+      },
     obtenerSiguienteID: function() {
         return new Promise((resolve, reject) => {
           conexion.query('SELECT MAX(id) AS max_id FROM presupuestos_mostrador', (error, resultado) => {
