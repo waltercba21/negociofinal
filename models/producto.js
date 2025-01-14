@@ -5,39 +5,31 @@ const path = require('path');
 module.exports ={
     
     obtener: function (conexion, pagina, callback) {
-        console.log('Entrando en el modelo obtener');
-        console.log('Pagina:', pagina);
-      
-        const offset = (pagina - 1) * 10;
+        const offset = (pagina - 1) * 20;
         const consulta = `
-          SELECT productos.*, imagenes_producto.imagen
-          FROM productos
-          LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
-          ORDER BY productos.id DESC
-          LIMIT 10 OFFSET ?`;
-        
+            SELECT productos.*, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes
+            FROM productos
+            LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
+            GROUP BY productos.id
+            ORDER BY productos.id DESC
+            LIMIT 20 OFFSET ?`;
+    
         conexion.query(consulta, [offset], (error, resultados) => {
-          console.log('Resultados:', resultados);
-          if (error) {
-            console.error('Error al obtener productos:', error);
-            callback(error);
-            return;
-          }
-        
-          const productos = {};
-          resultados.forEach(resultado => {
-            if (!productos[resultado.id]) {
-              productos[resultado.id] = {
-                ...resultado,
-                imagenes: []
-              };
+            if (error) {
+                callback(error);
+                return;
             }
-            productos[resultado.id].imagenes.push(resultado.imagen);
-          });
-        
-          callback(null, Object.values(productos));
+    
+            const productos = resultados.map(resultado => {
+                return {
+                    ...resultado,
+                    imagenes: resultado.imagenes ? resultado.imagenes.split(',') : []
+                };
+            });
+    
+            callback(null, productos);
         });
-      },
+    },    
     obtenerSiguienteID: function() {
         return new Promise((resolve, reject) => {
           conexion.query('SELECT MAX(id) AS max_id FROM presupuestos_mostrador', (error, resultado) => {
