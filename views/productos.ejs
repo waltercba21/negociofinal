@@ -56,8 +56,11 @@
     </div>
 
    <div id="contenedor-productos" class="contenedor-productos">
+    <% console.log('Productos:', productos); %>
+    <% console.log('isAdminUser:', isAdminUser); %>
   <% productos.forEach(function(producto) { %>
-    <div class="card 
+    <% console.log('Producto:', producto); %>
+    <div class="card">
       <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
       <%= producto.calidad_vic ? 'calidad_vic' : '' %>
     ">
