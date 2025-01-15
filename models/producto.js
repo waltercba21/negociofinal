@@ -802,7 +802,31 @@ obtenerProveedores: function(conexion) {
         });
     });
 },
-
+obtenerProveedorMasBarato : async (conexion, productoId) => {
+    try {
+      const query = `
+        SELECT 
+          pp.proveedor_id,
+          pp.precio_lista,
+          dp.descuento,
+          (pp.precio_lista * (1 - (dp.descuento / 100))) + (pp.precio_lista * 0.21) AS costo_iva
+        FROM 
+          producto_proveedor pp
+        INNER JOIN 
+          descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+        WHERE 
+          pp.producto_id = ?
+        ORDER BY 
+          costo_iva ASC
+        LIMIT 1
+      `;
+      const resultado = await conexion.query(query, [productoId]);
+      return resultado[0];
+    } catch (error) {
+      console.error(`Error al obtener el proveedor más barato para el producto con ID ${productoId}:`, error);
+      throw error;
+    }
+  },
 obtenerMarcas: function(conexion) {
     return new Promise((resolve, reject) => {
         conexion.query('SELECT * FROM marcas ORDER BY nombre ASC', function(error, resultados) {

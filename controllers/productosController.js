@@ -1225,28 +1225,17 @@ actualizarPreciosExcel: async (req, res) => {
       res.status(500).send(error.message);
     }
   },
-  seleccionarProveedorMasBarato: async function(conexion, productoId) {
+  seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
-      const proveedores = await producto.obtenerProveedoresProducto(conexion, productoId);
-      if (proveedores.length === 0) {
-        throw new Error(`No se encontraron proveedores para el producto con ID ${productoId}`);
-      }
-  
-      let proveedorMasBarato = proveedores[0];
-      proveedores.forEach(proveedor => {
-        const costoConIva = proveedor.precio_lista * (1 - (proveedor.descuento / 100));
-        if (costoConIva < proveedorMasBarato.precio_lista * (1 - (proveedorMasBarato.descuento / 100))) {
-          proveedorMasBarato = proveedor;
-        }
-      });
-  
-      const proveedorActual = await producto.obtenerProveedorMasBarato(conexion, productoId);
-      if (proveedorActual && proveedorActual.proveedor_id !== proveedorMasBarato.proveedor_id) {
+      const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
+      if (proveedorMasBarato) {
         await producto.asignarProveedorMasBarato(conexion, productoId, proveedorMasBarato.proveedor_id);
+      } else {
+        console.log(`No se encontró ningún proveedor para el producto con ID ${productoId}`);
       }
     } catch (error) {
       console.error(`Error al seleccionar el proveedor más barato para el producto con ID ${productoId}:`, error);
-      throw error; 
+      throw error;
     }
   },
 generarPedidoManual: async (req, res) => {
