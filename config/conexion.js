@@ -17,7 +17,7 @@ const getConexion = () => {
       if (error) {
         reject(error);
       } else {
-        resolve(connection);
+        resolve(connection.promise()); // Devuelve la conexión con promesas
       }
     });
   });
