@@ -4,55 +4,55 @@
   <main>
     <h2 class="titulo-principal" id="titulo-principal">Ofertas</h2>
     <div id="contenedor-productos" class="contenedor-productos">
-      <% productos.forEach(function(producto) { %>
-        <div class="card
-          <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
-          <%= producto.calidad_vic ? 'calidad_vic' : '' %>
-        ">
-          <% const imagenes = producto.imagenes ? producto.imagenes.split(',') : []; %>
-          <% if (imagenes.length > 0) { %>
-            <div class="cover__card">
-              <div class="carousel">
-                <% imagenes.forEach(function(imagen, index) { %>
-                  <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagen %>" alt="Imagen de <%= producto.nombre %>">
-                <% }); %>
+        <% for (var i = 0; i < productos.length; i++) { %>
+          <div class="card
+            <%= productos[i].calidad_original ? 'calidad-original-fitam' : '' %>
+            <%= productos[i].calidad_vic ? 'calidad_vic' : '' %>
+          ">
+            <% const imagenes = productos[i].imagenes ? productos[i].imagenes.split(',') : []; %>
+            <% if (imagenes.length > 0) { %>
+              <div class="cover__card">
+                <div class="carousel">
+                  <% for (var j = 0; j < imagenes.length; j++) { %>
+                    <img class="carousel__image <%= j !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagenes[j] %>" alt="Imagen de <%= productos[i].nombre %>">
+                  <% }; %>
+                </div>
               </div>
+              <div class="carousel__buttons">
+                <button class="carousel__button">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carousel__button">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            <% } else { %>
+              <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= productos[i].nombre %>">
+            <% }; %>
+            <div class="titulo-producto">
+              <h3 class="nombre"><%= productos[i].nombre %></h3>
             </div>
-            <div class="carousel__buttons">
-              <button class="carousel__button">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <button class="carousel__button">
-                <i class="fas fa-chevron-right"></i>
-              </button>
+            <hr>
+            <div class="categoria-producto">
+              <h6 class="categoria"><%= productos[i].categoria %></h6>
             </div>
-          <% } else { %>
-            <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
-          <% } %>
-          <div class="titulo-producto">
-            <h3 class="nombre"><%= producto.nombre %></h3>
-          </div>
-          <hr>
-          <div class="categoria-producto">
-            <h6 class="categoria"><%= producto.categoria %></h6>
-          </div>
-          <div class="descripcion" style="display: none;">
-            <%= producto.descripcion %>
-          </div>
-          <div class="precio-producto">
-            <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
-          </div>
-          <% if (isAdminUser) { %>
-            <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
-              <p>Stock Disponible:   <%= producto.stock_actual %> </p>
+            <div class="descripcion" style="display: none;">
+              <%= productos[i].descripcion %>
             </div>
-          <% } %>
-          <div class="cantidad-producto">
-            <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
+            <div class="precio-producto">
+              <p class="precio">$<%= typeof productos[i].precio_venta === 'number' ? Math.floor(productos[i].precio_venta).toLocaleString('de-DE') : productos[i].precio_venta %></p>
+            </div>
+            <% if (isAdminUser) { %>
+              <div class="stock-producto <%= productos[i].stock_actual < productos[i].stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
+                <p>Stock Disponible:   <%= productos[i].stock_actual %> </p>
+              </div>
+            <% }; %>
+            <div class="cantidad-producto">
+              <a href="/productos/<%= productos[i].id %>" class="card-link">Ver detalles</a>
+            </div>
           </div>
-        </div>
-      <% }); %>
-    </div>
+        <% }; %>
+      </div>
   </main>
   <%- include ./layouts/footer.ejs %>
   <script src="/js/productos.js"></script> 
