@@ -4,16 +4,21 @@
   <main>
     <h2 class="titulo-principal" id="titulo-principal">Ofertas</h2>
     <div id="contenedor-productos" class="contenedor-productos">
+        <% console.log('Productos:', productos); %>
+        <% console.log('Productos.length:', productos.length); %>
         <% for (var i = 0; i < productos.length; i++) { %>
+          <% console.log('Producto actual:', productos[i]); %>
           <div class="card
             <%= productos[i].calidad_original ? 'calidad-original-fitam' : '' %>
             <%= productos[i].calidad_vic ? 'calidad_vic' : '' %>
           ">
             <% const imagenes = productos[i].imagenes ? productos[i].imagenes.split(',') : []; %>
+            <% console.log('Imagenes:', imagenes); %>
             <% if (imagenes.length > 0) { %>
               <div class="cover__card">
                 <div class="carousel">
                   <% for (var j = 0; j < imagenes.length; j++) { %>
+                    <% console.log('Imagen actual:', imagenes[j]); %>
                     <img class="carousel__image <%= j !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagenes[j] %>" alt="Imagen de <%= productos[i].nombre %>">
                   <% }; %>
                 </div>
