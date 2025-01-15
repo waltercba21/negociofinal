@@ -25,6 +25,7 @@ var cargar = multerInstance.array('archivos[]', maxImagenes);
 // Rutas
 router.get('/', productosController.lista);
 router.post('/', cargar, productosController.guardar);
+router.get('/ofertas', productosController.ofertas);
 router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
 router.get('/panelControl', productosController.panelControl);
 router.get('/proveedores', productosController.proveedores);

@@ -61,6 +61,16 @@ module.exports ={
             });
         });
     },
+    obtenerOfertas: function(conexion, callback) {
+        const consulta = 'SELECT * FROM productos WHERE oferta = 1';
+        conexion.query(consulta, (error, resultados) => {
+          if (error) {
+            callback(error);
+            return;
+          }
+          callback(null, resultados);
+        });
+      },
     eliminarPresupuesto : (conexion, id) => {
         return new Promise((resolve, reject) => {
             // Primero, eliminamos los ítems asociados al presupuesto

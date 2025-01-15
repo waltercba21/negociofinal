@@ -9,27 +9,6 @@ const fs = require('fs');
 const pdfParse = require('pdf-parse');
 
     const adminEmails = ['walter@autofaros.com.ar'];
-function calcularNumeroDePaginas(conexion) {
-    return new Promise((resolve, reject) => {
-        producto.contarProductos(conexion, (error, resultado) => {
-            if (error) {
-                reject(error);
-            } else {
-                const numeroDePaginas = Math.ceil(resultado[0].total / 10);
-                resolve(numeroDePaginas);
-            }
-        });
-    });
-}
-const compararCodigos = (codigo1, codigo2) => {
-    for (let i = 0; i <= codigo1.length - 4; i++) {
-        const substring = codigo1.substring(i, i + 4);
-        if (codigo2.includes(substring)) {
-            return true;
-        }
-    }
-    return false;
-};
 
 module.exports = {
     index: (req, res) => {
@@ -144,6 +123,15 @@ module.exports = {
         });
       }
     },
+    ofertas: (req, res) => {
+        producto.obtenerOfertas(conexion, (error, productos) => {
+          if (error) {
+            return res.status(500).send('Error al obtener los productos en oferta');
+          } else {
+            res.render('ofertas', { productos });
+          }
+        });
+      },
     buscar: async (req, res) => {
         try {
             const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
