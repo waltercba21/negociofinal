@@ -1,70 +1,18 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
-<body data-is-admin-user="<%= isAdminUser %>">
+<body>
   <main>
     <h2 class="titulo-principal" id="titulo-principal">Ofertas</h2>
     <div id="contenedor-productos" class="contenedor-productos">
-        <% console.log('Productos:', productos); %>
-        <% console.log('Productos.length:', productos.length); %>
-        <% for (var i = 0; i < productos.length; i++) { %>
-          <% console.log('Producto actual:', productos[i]); %>
-          <div class="card
-            <%= productos[i].calidad_original ? 'calidad-original-fitam' : '' %>
-            <%= productos[i].calidad_vic ? 'calidad_vic' : '' %>
-          ">
-            <% const imagenes = productos[i].imagenes ? productos[i].imagenes.split(',') : []; %>
-            <% console.log('Imagenes:', imagenes); %>
-            <% if (imagenes.length > 0) { %>
-              <div class="cover__card">
-                <div class="carousel">
-                  <% for (var j = 0; j < imagenes.length; j++) { %>
-                    <% console.log('Imagen actual:', imagenes[j]); %>
-                    <img class="carousel__image <%= j !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagenes[j] %>" alt="Imagen de <%= productos[i].nombre %>">
-                  <% }; %>
-                </div>
-              </div>
-              <div class="carousel__buttons">
-                <button class="carousel__button">
-                  <i class="fas fa-chevron-left"></i>
-                </button>
-                <button class="carousel__button">
-                  <i class="fas fa-chevron-right"></i>
-                </button>
-              </div>
-            <% } else { %>
-              <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= productos[i].nombre %>">
-            <% }; %>
-            <div class="titulo-producto">
-              <h3 class="nombre"><%= productos[i].nombre %></h3>
-            </div>
-            <hr>
-            <div class="categoria-producto">
-              <h6 class="categoria"><%= productos[i].categoria %></h6>
-            </div>
-            <div class="descripcion" style="display: none;">
-              <%= productos[i].descripcion %>
-            </div>
-            <div class="precio-producto">
-              <p class="precio">$<%= typeof productos[i].precio_venta === 'number' ? Math.floor(productos[i].precio_venta).toLocaleString('de-DE') : productos[i].precio_venta %></p>
-            </div>
-            <% if (isAdminUser) { %>
-              <div class="stock-producto <%= productos[i].stock_actual < productos[i].stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
-                <p>Stock Disponible:   <%= productos[i].stock_actual %> </p>
-              </div>
-            <% }; %>
-            <div class="cantidad-producto">
-              <a href="/productos/<%= productos[i].id %>" class="card-link">Ver detalles</a>
-            </div>
+      <% for (var i = 0; i < productos.length; i++) { %>
+        <% if (productos[i].oferta) { %>
+          <div class="card">
+            <h3 class="nombre"><%= productos[i].nombre %></h3>
+            <p class="precio">$<%= productos[i].precio_venta %></p>
           </div>
         <% }; %>
-      </div>
+      <% }; %>
+    </div>
   </main>
   <%- include ./layouts/footer.ejs %>
-  <script src="/js/productos.js"></script> 
-  <script src="/js/buscador.js"></script> 
-  <script src="/js/selectores.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script>
-    console.log('Número de productos:', productos.length);
-  </script>
 </body>
