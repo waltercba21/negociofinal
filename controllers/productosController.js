@@ -1179,7 +1179,12 @@ actualizarPreciosExcel: async (req, res) => {
                       if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
                         productosActualizados.push(...productosActualizadosTemp);
                         for (const productoActualizado of productosActualizadosTemp) {
-                          await producto.seleccionarProveedorMasBarato(conexion, productoActualizado.codigo);
+                          const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoActualizado.codigo);
+                          if (proveedorMasBarato) {
+                            await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo, proveedorMasBarato.proveedor_id);
+                          } else {
+                            console.log(`No se encontró ningún proveedor para el producto con código ${productoActualizado.codigo}`);
+                          }
                         }
                       } else {
                         console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
