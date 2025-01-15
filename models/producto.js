@@ -63,10 +63,11 @@ module.exports ={
     },
     obtenerOfertas: function(conexion, callback) {
         const consulta = `
-          SELECT p.*, ip.imagen
+          SELECT p.*, GROUP_CONCAT(ip.imagen) AS imagenes
           FROM productos p
           LEFT JOIN imagenes_producto ip ON p.id = ip.producto_id
           WHERE p.oferta = 1
+          GROUP BY p.id
         `;
         conexion.query(consulta, (error, resultados) => {
           if (error) {
