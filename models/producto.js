@@ -62,7 +62,12 @@ module.exports ={
         });
     },
     obtenerOfertas: function(conexion, callback) {
-        const consulta = 'SELECT * FROM productos WHERE oferta = 1';
+        const consulta = `
+          SELECT p.*, ip.imagen
+          FROM productos p
+          LEFT JOIN imagenes_producto ip ON p.id = ip.producto_id
+          WHERE p.oferta = 1
+        `;
         conexion.query(consulta, (error, resultados) => {
           if (error) {
             callback(error);
