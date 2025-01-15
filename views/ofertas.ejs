@@ -9,11 +9,12 @@
           <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
           <%= producto.calidad_vic ? 'calidad_vic' : '' %>
         ">
-          <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+          <% const imagenes = producto.imagenes ? producto.imagenes.split(',') : []; %>
+          <% if (imagenes.length > 0) { %>
             <div class="cover__card">
               <div class="carousel">
-                <% producto.imagenes.forEach(function(imagen, index) { %>
-                  <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagen.imagen %>" alt="Imagen de <%= producto.nombre %>">
+                <% imagenes.forEach(function(imagen, index) { %>
+                  <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="../../uploads/productos/<%= imagen %>" alt="Imagen de <%= producto.nombre %>">
                 <% }); %>
               </div>
             </div>
