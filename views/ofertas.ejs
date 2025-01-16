@@ -45,8 +45,8 @@
               <%= productos[i].descripcion %>
             </div>
             <div class="precio-producto">
-              <p class="precio">$<%= typeof productos[i].precio_venta === 'number' ? Math.floor(productos[i].precio_venta).toLocaleString('de-DE') : productos[i].precio_venta %></p>
-            </div>
+                <p class="precio">$<%= typeof productos[i].precio_venta === 'number' ? Math.floor(productos[i].precio_venta).toLocaleString('es-AR') : productos[i].precio_venta %></p>
+              </div>
             <% if (isAdminUser) { %>
               <div class="stock-producto <%= productos[i].stock_actual < productos[i].stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
                 <p>Stock Disponible:   <%= productos[i].stock_actual %> </p>
