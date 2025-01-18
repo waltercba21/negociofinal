@@ -1886,7 +1886,7 @@ border-radius: 10px;
 }
 
 .card.producto-oferta .carousel__image {
-  border: 2px solid #218838; /* Borde alrededor de las imágenes */
+  border: 2px solid #218838; 
 }
 
 .card.producto-oferta hr {
