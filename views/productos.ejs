@@ -56,13 +56,11 @@
     </div>
 
    <div id="contenedor-productos" class="contenedor-productos">
-    <% console.log('Productos:', productos); %>
-    <% console.log('isAdminUser:', isAdminUser); %>
   <% productos.forEach(function(producto) { %>
-    <% console.log('Producto:', producto); %>
     <div class="card
       <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
       <%= producto.calidad_vic ? 'calidad_vic' : '' %>
+      <%= producto.oferta ? 'producto-oferta' : '' %>
     ">
           <% if (producto.imagenes && producto.imagenes.length > 0) { %>
             <div class="cover__card">

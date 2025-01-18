@@ -99,7 +99,7 @@ module.exports = {
         }
     
         res.render('productos', {
-          productos: productos || [], // Verificar que productos no sea undefined
+          productos: productos || [], 
           categorias,
           marcas,
           modelosPorMarca,

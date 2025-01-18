@@ -10,7 +10,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
     let productos = [];
 
     if (!busqueda) {
-      productos = productosOriginales.slice(0, 12); // Mostrar los primeros 12 productos si no hay búsqueda
+      productos = productosOriginales.slice(0, 12);
     } else {
       const url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
       try {

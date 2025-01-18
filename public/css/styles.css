@@ -1829,6 +1829,70 @@ border-radius: 10px;
 .card.calidad_vic hr {
   border-color: #ffffff; 
 }
+/* Estilo para productos en oferta */
+.card.producto-oferta {
+  background-color: #28a745; /* Fondo verde */
+  color: #ffffff; /* Texto blanco */
+  position: relative;
+}
+
+.card.producto-oferta .titulo-producto h3 {
+  color: #ffffff;
+}
+
+.card.producto-oferta .categoria-producto h6 {
+  color: #ffffff;
+}
+
+.card.producto-oferta .precio-producto p {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.card.producto-oferta .stock-producto p {
+  color: #ffffff;
+}
+
+.card.producto-oferta .carousel__button {
+  background-color: #218838; /* Botón de control más oscuro */
+  border: none;
+  color: #ffffff;
+}
+
+.card.producto-oferta .carousel__button:hover {
+  background-color: #1e7e34; /* Efecto hover */
+}
+
+.card.producto-oferta .card-link {
+  color: #ffffff;
+}
+
+.card.producto-oferta .card-link:hover {
+  color: #ffffff;
+}
+
+.card.producto-oferta::before {
+  content: "¡En oferta!"; /* Etiqueta en la tarjeta */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #218838; /* Fondo de la etiqueta */
+  color: #ffffff;
+  padding: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.card.producto-oferta .carousel__image {
+  border: 2px solid #218838; /* Borde alrededor de las imágenes */
+}
+
+.card.producto-oferta hr {
+  border-color: #ffffff;
+}
+
 .cantidad-producto {
   margin: 10px 0;
 }
