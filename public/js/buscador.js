@@ -1,27 +1,15 @@
 let productosOriginales = [];
 let timer;
 
-window.onload = async () => {
-  try {
-    console.log("Cargando productos desde la API...");
-    const respuesta = await fetch('/productos/api/buscar');
-    productosOriginales = await respuesta.json();
-    console.log("Productos cargados correctamente:", productosOriginales);
-    mostrarProductos(productosOriginales.slice(0, 12)); // Mostrar los primeros 12 productos por defecto
-  } catch (error) {
-    console.error("Error al cargar los productos:", error);
-  }
-};
-
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
-    const busqueda = e.target.value;
+    const busqueda = e.target.value.trim();
     const contenedorProductos = document.getElementById('contenedor-productos');
     contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de agregar nuevos productos
     let productos = [];
 
-    if (!busqueda.trim()) {
+    if (!busqueda) {
       productos = productosOriginales.slice(0, 12); // Mostrar los primeros 12 productos si no hay búsqueda
     } else {
       const url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
@@ -80,7 +68,7 @@ function mostrarProductos(productos) {
     if (producto.calidad_vic) {
       tarjetaProducto.classList.add('calidad_vic');
     }
-
+    
     let html = `
       ${imagenes}
       <div class="titulo-producto">
@@ -91,7 +79,7 @@ function mostrarProductos(productos) {
         <p class="precio">${precio_venta}</p>
       </div>
     `;
-
+    
     // Lógica del semáforo
     if (isUserLoggedIn) {
       html += `
@@ -102,7 +90,7 @@ function mostrarProductos(productos) {
         </div>
       `;
     }
-
+    
     // Información adicional para administradores
     if (isAdminUser) {
       html += `
@@ -111,34 +99,34 @@ function mostrarProductos(productos) {
         </div>
       `;
     }
-
+    
     html += `
       <div class="cantidad-producto">
         <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
       </div>
     `;
-
+    
     tarjetaProducto.innerHTML = html;
     contenedorProductos.appendChild(tarjetaProducto);
-
+    
     // Lógica del carrusel
     const leftButton = tarjetaProducto.querySelector('.carousel__button--left');
     const rightButton = tarjetaProducto.querySelector('.carousel__button--right');
     const images = tarjetaProducto.querySelectorAll('.carousel__image');
     let currentIndex = 0;
-
+    
     if (leftButton && rightButton) {
       leftButton.addEventListener('click', () => {
         images[currentIndex].classList.add('hidden');
         currentIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
         images[currentIndex].classList.remove('hidden');
       });
-
+    
       rightButton.addEventListener('click', () => {
         images[currentIndex].classList.add('hidden');
         currentIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
         images[currentIndex].classList.remove('hidden');
       });
     }
-  });
-}
+      });
+    }
