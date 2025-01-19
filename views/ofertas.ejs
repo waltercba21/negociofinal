@@ -4,13 +4,11 @@
   <main>
     <h2 class="titulo-principal" id="titulo-principal">Ofertas</h2>
     <div id="contenedor-productos" class="contenedor-productos">
-        <% console.log('Productos:', productos); %>
-        <% console.log('Productos.length:', productos.length); %>
         <% for (var i = 0; i < productos.length; i++) { %>
-          <% console.log('Producto actual:', productos[i]); %>
           <div class="card
             <%= productos[i].calidad_original ? 'calidad-original-fitam' : '' %>
             <%= productos[i].calidad_vic ? 'calidad_vic' : '' %>
+            <%= producto.oferta ? 'producto-oferta' : '' %>
           ">
             <% const imagenes = productos[i].imagenes ? productos[i].imagenes.split(',') : []; %>
             <% console.log('Imagenes:', imagenes); %>
