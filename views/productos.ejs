@@ -61,6 +61,7 @@
           <%= producto.calidad_original ? 'calidad-original-fitam' : '' %> 
           <%= producto.calidad_vic ? 'calidad_vic' : '' %> 
           <%= producto.oferta ? 'producto-oferta' : '' %>">
+          
           <% if (producto.imagenes && producto.imagenes.length > 0) { %>
             <div class="cover__card">
               <div class="carousel">
@@ -82,6 +83,7 @@
           <% } else { %>
             <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
           <% } %>
+          
           <div class="titulo-producto">
             <h3 class="nombre"><%= producto.nombre %></h3>
           </div>
@@ -106,6 +108,7 @@
         </div>
       <% }); %>
     </div>
+    
     
 
 </main>
