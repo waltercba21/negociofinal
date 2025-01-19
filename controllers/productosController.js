@@ -213,7 +213,7 @@ module.exports = {
             res.status(400).send('Error: no se cargaron archivos');
             return;
         }
-        const proveedores = req.body.proveedores;
+    
         const datosProducto = {
             nombre: req.body.nombre,
             descripcion: req.body.descripcion,
@@ -229,9 +229,11 @@ module.exports = {
             estado: req.body.estado,
             stock_minimo: req.body.stock_minimo,
             stock_actual: req.body.stock_actual,
-            calidad_original: req.body.calidad_original_fitam ? 1 : 0 , 
+            oferta: req.body.oferta === '1' ? 1 : 0, // Manejo explícito del checkbox "oferta"
+            calidad_original: req.body.calidad_original_fitam ? 1 : 0, 
             calidad_vic: req.body.calidad_vic ? 1 : 0
         };
+    
         producto.insertarProducto(conexion, datosProducto)
         .then(result => { 
             const productoId = result.insertId;
@@ -243,6 +245,7 @@ module.exports = {
                     precio_lista: req.body.precio_lista[index]
                 };
             });
+    
             const promesasProveedor = proveedores.map(proveedor => {
                 const datosProductoProveedor = {
                     producto_id: productoId,
@@ -252,9 +255,11 @@ module.exports = {
                 };
                 return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
             });
+    
             const promesasImagenes = req.files.map(file => {
                 return producto.insertarImagenProducto(conexion, { producto_id: productoId, imagen: file.filename });
             });
+    
             return Promise.all([...promesasProveedor, ...promesasImagenes]);
         })
         .then(() => {
@@ -264,6 +269,7 @@ module.exports = {
             res.status(500).send('Error: ' + error.message);
         });
     },
+    
     eliminarSeleccionados : async (req, res) => {
         const { ids } = req.body;
         try {
