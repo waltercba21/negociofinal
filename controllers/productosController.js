@@ -204,48 +204,105 @@ module.exports = {
             return res.status(500).send('Error: ' + error.message);
         });
     },
-    guardar: function(req, res) {
-        console.log(req.body); // Verifica los datos enviados desde el formulario
+    guardar: function (req, res) {
+        console.log("Inicio del controlador guardar...");
     
+        // Verificar si el campo proveedores está presente y no está vacío
+        console.log("req.body.proveedores:", req.body.proveedores);
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
-            res.status(400).send('Error: proveedor_id no puede ser nulo');
+            res.status(400).send("Error: proveedor_id no puede ser nulo");
             return;
         }
     
+        // Verificar si se recibieron archivos
+        console.log("req.files:", req.files);
         if (!req.files || req.files.length === 0) {
-            res.status(400).send('Error: no se cargaron archivos');
+            res.status(400).send("Error: no se cargaron archivos");
             return;
         }
     
+        // Preparar los datos del producto
         const datosProducto = {
-            nombre: req.body.nombre || null,
-            descripcion: req.body.descripcion || null,
-            categoria_id: req.body.categoria || null,
-            marca_id: req.body.marca || null,
-            modelo_id: req.body.modelo_id || null,
-            descuentos_proveedor_id: req.body.descuentos_proveedor_id || null,
-            costo_neto: req.body.costo_neto || null,
-            IVA: req.body.IVA || null,
-            costo_iva: req.body.costo_iva || null,
-            utilidad: req.body.utilidad || null,
-            precio_venta: req.body.precio_venta || null,
-            estado: req.body.estado || 'inactivo', // Valor por defecto si no se especifica
-            stock_minimo: req.body.stock_minimo || 0,
-            stock_actual: req.body.stock_actual || 0,
-            oferta: req.body.oferta ? 1 : 0, // Manejo del checkbox
+            nombre: req.body.nombre,
+            descripcion: req.body.descripcion,
+            categoria_id: req.body.categoria,
+            marca_id: req.body.marca,
+            modelo_id: req.body.modelo_id,
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
+            costo_neto: req.body.costo_neto,
+            IVA: req.body.IVA,
+            costo_iva: req.body.costo_iva,
+            utilidad: req.body.utilidad,
+            precio_venta: req.body.precio_venta,
+            estado: req.body.estado,
+            stock_minimo: req.body.stock_minimo,
+            stock_actual: req.body.stock_actual,
+            oferta: req.body.oferta ? 1 : 0,
             calidad_original: req.body.calidad_original_fitam ? 1 : 0,
             calidad_vic: req.body.calidad_vic ? 1 : 0,
         };
     
-        console.log(datosProducto); // Revisa los datos antes de insertarlos
+        console.log("Datos preparados para insertar en productos:", datosProducto);
     
-        producto.insertarProducto(conexion, datosProducto)
-            .then(result => {
+        // Intentar insertar el producto en la base de datos
+        producto
+            .insertarProducto(conexion, datosProducto)
+            .then((result) => {
+                console.log("Producto insertado con éxito. ID generado:", result.insertId);
                 const productoId = result.insertId;
-                // Resto del código para insertar proveedores e imágenes...
+    
+                // Manejar los proveedores asociados
+                const codigos = req.body.codigo.split(",");
+                console.log("Codigos de los productos:", codigos);
+    
+                const proveedores = req.body.proveedores.map((proveedorId, index) => {
+                    return {
+                        id: proveedorId,
+                        codigo: codigos[index],
+                        precio_lista: req.body.precio_lista[index],
+                    };
+                });
+    
+                console.log("Datos de los proveedores asociados:", proveedores);
+    
+                const promesasProveedor = proveedores.map((proveedor) => {
+                    const datosProductoProveedor = {
+                        producto_id: productoId,
+                        proveedor_id: proveedor.id,
+                        precio_lista: proveedor.precio_lista,
+                        codigo: proveedor.codigo,
+                    };
+    
+                    console.log("Datos para insertar en producto_proveedor:", datosProductoProveedor);
+                    return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
+                });
+    
+                // Manejar las imágenes asociadas
+                console.log("Archivos subidos (imágenes):", req.files);
+                const promesasImagenes = req.files.map((file) => {
+                    const datosImagen = { producto_id: productoId, imagen: file.filename };
+                    console.log("Datos para insertar en imágenes:", datosImagen);
+                    return producto.insertarImagenProducto(conexion, datosImagen);
+                });
+    
+                // Ejecutar todas las promesas y capturar errores individuales
+                return Promise.allSettled([...promesasProveedor, ...promesasImagenes]).then((results) => {
+                    results.forEach((result, index) => {
+                        if (result.status === "fulfilled") {
+                            console.log(`Operación ${index + 1} completada con éxito:`, result.value);
+                        } else {
+                            console.error(`Operación ${index + 1} falló:`, result.reason);
+                        }
+                    });
+                });
             })
-            .catch(error => {
-                res.status(500).send('Error: ' + error.message);
+            .then(() => {
+                console.log("Todas las operaciones completadas con éxito.");
+                res.redirect("/productos/panelControl");
+            })
+            .catch((error) => {
+                console.error("Error durante la ejecución:", error.message);
+                res.status(500).send("Error: " + error.message);
             });
     },    
     eliminarSeleccionados : async (req, res) => {
