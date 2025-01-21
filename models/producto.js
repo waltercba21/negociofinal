@@ -273,28 +273,17 @@ obtenerPorId: function (conexion, id, funcion) {
 }, 
 insertarProductoProveedor: function(conexion, productoProveedor) {
     return new Promise((resolve, reject) => {
-        const fila = [
-            productoProveedor.producto_id, 
-            productoProveedor.proveedor_id, 
-            productoProveedor.precio_lista, 
-            productoProveedor.codigo,
-            productoProveedor.oferta 
-        ];
+        const fila = [productoProveedor.producto_id, productoProveedor.proveedor_id, productoProveedor.precio_lista, productoProveedor.codigo];
 
-        conexion.query(
-            'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo, oferta) VALUES (?, ?, ?, ?, ?)', 
-            fila, 
-            function(error, result) {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(result);
-                }
+        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?)', fila, function(error, result) {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(result);
             }
-        );
+        });
     });
 },
-
   insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
     conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
     [proveedor_id, descuento], funcion);

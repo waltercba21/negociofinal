@@ -205,71 +205,49 @@ module.exports = {
         });
     },
     guardar: function(req, res) {
+        console.log(req.body); // Verifica los datos enviados desde el formulario
+    
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
+    
         if (!req.files || req.files.length === 0) {
             res.status(400).send('Error: no se cargaron archivos');
             return;
         }
     
         const datosProducto = {
-            nombre: req.body.nombre,
-            descripcion: req.body.descripcion,
-            categoria_id: req.body.categoria,
-            marca_id: req.body.marca,
-            modelo_id: req.body.modelo_id,
-            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
-            costo_neto: req.body.costo_neto,
-            IVA: req.body.IVA,
-            costo_iva: req.body.costo_iva,
-            utilidad: req.body.utilidad,
-            precio_venta: req.body.precio_venta,
-            estado: req.body.estado,
-            stock_minimo: req.body.stock_minimo,
-            stock_actual: req.body.stock_actual,
-            oferta: req.body.oferta === '1' ? 1 : 0, // Manejo explícito del checkbox "oferta"
-            calidad_original: req.body.calidad_original_fitam ? 1 : 0, 
-            calidad_vic: req.body.calidad_vic ? 1 : 0
+            nombre: req.body.nombre || null,
+            descripcion: req.body.descripcion || null,
+            categoria_id: req.body.categoria || null,
+            marca_id: req.body.marca || null,
+            modelo_id: req.body.modelo_id || null,
+            descuentos_proveedor_id: req.body.descuentos_proveedor_id || null,
+            costo_neto: req.body.costo_neto || null,
+            IVA: req.body.IVA || null,
+            costo_iva: req.body.costo_iva || null,
+            utilidad: req.body.utilidad || null,
+            precio_venta: req.body.precio_venta || null,
+            estado: req.body.estado || 'inactivo', // Valor por defecto si no se especifica
+            stock_minimo: req.body.stock_minimo || 0,
+            stock_actual: req.body.stock_actual || 0,
+            oferta: req.body.oferta ? 1 : 0, // Manejo del checkbox
+            calidad_original: req.body.calidad_original_fitam ? 1 : 0,
+            calidad_vic: req.body.calidad_vic ? 1 : 0,
         };
     
+        console.log(datosProducto); // Revisa los datos antes de insertarlos
+    
         producto.insertarProducto(conexion, datosProducto)
-        .then(result => { 
-            const productoId = result.insertId;
-            const codigos = req.body.codigo.split(',');
-            const proveedores = req.body.proveedores.map((proveedorId, index) => {
-                return {
-                    id: proveedorId,
-                    codigo: codigos[index],
-                    precio_lista: req.body.precio_lista[index]
-                };
+            .then(result => {
+                const productoId = result.insertId;
+                // Resto del código para insertar proveedores e imágenes...
+            })
+            .catch(error => {
+                res.status(500).send('Error: ' + error.message);
             });
-    
-            const promesasProveedor = proveedores.map(proveedor => {
-                const datosProductoProveedor = {
-                    producto_id: productoId,
-                    proveedor_id: proveedor.id,
-                    precio_lista: proveedor.precio_lista, 
-                    codigo: proveedor.codigo
-                };
-                return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
-            });
-    
-            const promesasImagenes = req.files.map(file => {
-                return producto.insertarImagenProducto(conexion, { producto_id: productoId, imagen: file.filename });
-            });
-    
-            return Promise.all([...promesasProveedor, ...promesasImagenes]);
-        })
-        .then(() => {
-            res.redirect('/productos/panelControl');
-        })
-        .catch(error => {
-            res.status(500).send('Error: ' + error.message);
-        });
-    },
-    
+    },    
     eliminarSeleccionados : async (req, res) => {
         const { ids } = req.body;
         try {
