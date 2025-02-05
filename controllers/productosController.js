@@ -136,11 +136,11 @@ module.exports = {
         try {
             let { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
     
-            // Si no se envían valores, asignar null para evitar valores vacíos en la consulta
-            busqueda_nombre = busqueda_nombre?.trim() || null;
-            categoria_id = categoria_id || null;
-            marca_id = marca_id || null;
-            modelo_id = modelo_id || null;
+            // Validar y convertir valores antes de enviarlos al modelo
+            busqueda_nombre = typeof busqueda_nombre === 'string' ? busqueda_nombre.trim() : null;
+            categoria_id = categoria_id && !isNaN(Number(categoria_id)) ? Number(categoria_id) : null;
+            marca_id = marca_id && !isNaN(Number(marca_id)) ? Number(marca_id) : null;
+            modelo_id = modelo_id && !isNaN(Number(modelo_id)) ? Number(modelo_id) : null;
     
             req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
     
@@ -155,6 +155,7 @@ module.exports = {
             res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
         }
     },
+    
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {

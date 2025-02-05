@@ -1115,38 +1115,41 @@ obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre
         `;
         const parametros = [];
 
-        // Aplicar filtros si existen
-        if (categoria) {
+        // Validar y convertir valores antes de agregarlos a la consulta
+        if (categoria && !isNaN(Number(categoria))) {
             sql += ' AND productos.categoria_id = ?';
-            parametros.push(categoria);
+            parametros.push(Number(categoria));
         }
-        if (marca) {
+        if (marca && !isNaN(Number(marca))) {
             sql += ' AND productos.marca_id = ?';
-            parametros.push(marca);
+            parametros.push(Number(marca));
         }
-        if (modelo) {
+        if (modelo && !isNaN(Number(modelo))) {
             sql += ' AND productos.modelo_id = ?';
-            parametros.push(modelo);
+            parametros.push(Number(modelo));
         }
-        if (busqueda_nombre) {
-            if (typeof busqueda_nombre === 'string' && busqueda_nombre.trim() !== '') {
-                const palabras = busqueda_nombre.trim().split(' ');
-                palabras.forEach((palabra) => {
-                    sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
-                    parametros.push(`%${palabra}%`, `%${palabra}%`);
-                });
-            }
+        if (busqueda_nombre && typeof busqueda_nombre === 'string' && busqueda_nombre.trim() !== '') {
+            const palabras = busqueda_nombre.trim().split(' ');
+            palabras.forEach((palabra) => {
+                sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
+                parametros.push(`%${palabra}%`, `%${palabra}%`);
+            });
         }
 
         sql += ' ORDER BY productos.nombre ASC';
 
-        if (limite) {
+        if (limite && !isNaN(Number(limite))) {
             sql += ' LIMIT ?';
-            parametros.push(limite);
+            parametros.push(Number(limite));
         }
+
+        // 🔹 DEBUG: Imprimir consulta antes de ejecutarla
+        console.log('SQL Final:', sql);
+        console.log('Parámetros:', parametros);
 
         conexion.query(sql, parametros, (error, productos) => {
             if (error) {
+                console.error('Error en consulta MySQL:', error);
                 return reject(error);
             }
 
@@ -1169,6 +1172,7 @@ obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre
         });
     });
 },
+
 
 
 eliminarFactura: (id) => {
