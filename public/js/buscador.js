@@ -9,9 +9,17 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
       
       console.log("Valor de búsqueda: ", busqueda);  // Debugging: Ver el valor de la búsqueda
       
-      // Si la búsqueda es la misma que la última o está vacía, no hacer otra consulta
-      if (busqueda === ultimaBusqueda || busqueda === "") {
-          console.log("Busqueda no cambia o está vacía, no se realiza la consulta.");
+      // Comparar la búsqueda actual con la última, asegurándonos de que los espacios estén correctamente eliminados
+      if (busqueda === ultimaBusqueda) {
+          console.log("La búsqueda no ha cambiado, se omite la consulta.");
+          return;
+      }
+
+      // Si la búsqueda está vacía, mostrar productos originales
+      if (busqueda === "") {
+          productos = productosOriginales.slice(0, 12);
+          contenedorProductos.innerHTML = "";
+          mostrarProductos(productos);
           return;
       }
 
@@ -24,15 +32,10 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
       let productos = [];
 
       try {
-          // Si la búsqueda está vacía, se muestran los productos originales
-          if (!busqueda) {
-              productos = productosOriginales.slice(0, 12);
-          } else {
-              const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
-              const respuesta = await fetch(url);
-              productos = await respuesta.json();
-              console.log("Productos recibidos:", productos);  // Debugging: Ver los productos recibidos
-          }
+          const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
+          const respuesta = await fetch(url);
+          productos = await respuesta.json();
+          console.log("Productos recibidos:", productos);  // Debugging: Ver los productos recibidos
 
           contenedorProductos.innerHTML = "";
           mostrarProductos(productos);
@@ -42,6 +45,7 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
       }
   }, 300);
 });
+
 
 function mostrarProductos(productos) {
     const contenedorProductos = document.getElementById("contenedor-productos");
