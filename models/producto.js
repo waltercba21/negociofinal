@@ -752,6 +752,7 @@ obtenerProductoPorCodigo: function(codigo) {
                     console.error('Error al actualizar el stock:', error);
                     reject(error);
                 } else {
+                    console.log('Stock actualizado correctamente:', resultado);
                     resolve(resultado);
                 }
             });
