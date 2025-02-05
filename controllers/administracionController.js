@@ -36,7 +36,7 @@ module.exports = {
             }
         });
     },
-    postFactura: function(req, res) {
+    postFactura: function (req, res) {
         console.log("Datos recibidos en req.body:", req.body);
         let nuevaFactura = {
             id_proveedor: req.body.id_proveedor,
@@ -47,29 +47,24 @@ module.exports = {
             condicion: req.body.condicion,
             comprobante_pago: req.file ? req.file.filename : null
         };
-        console.log("Datos de nuevaFactura:", nuevaFactura);
-        let productosFactura = [];
-        if (req.body.invoiceItems && req.body.invoiceItems.length > 0) {
-            const validItems = req.body.invoiceItems.filter(item => item.trim() !== '');
-            console.log("Productos validados en invoiceItems:", validItems);
-            if (validItems.length > 0) {
-                try {
-                    productosFactura = JSON.parse(validItems[0]);
-                    console.log("Contenido de productosFactura:", productosFactura);
     
-                } catch (error) {
-                    console.error("Error al parsear productos:", error);
-                    return res.status(400).json({ message: 'Datos de productos inválidos' });
-                }
-            } else {
-                return res.status(400).json({ message: 'No se enviaron productos válidos' });
+        let productosFactura = [];
+        if (req.body.invoiceItems) {
+            try {
+                productosFactura = JSON.parse(req.body.invoiceItems); // Parsea directamente el string JSON
+                console.log("Contenido de productosFactura:", productosFactura);
+    
+            } catch (error) {
+                console.error("Error al parsear productos:", error);
+                return res.status(400).json({ message: 'Datos de productos inválidos' });
             }
         } else {
             return res.status(400).json({ message: 'No se enviaron productos' });
         }
-        administracion.insertFactura(nuevaFactura, function(facturaID) {
+    
+        administracion.insertFactura(nuevaFactura, function (facturaID) {
             console.log("Factura creada con ID:", facturaID);
-            productosFactura.forEach(function(item) {
+            productosFactura.forEach(function (item) {
                 if (item.id && item.cantidad) {
                     let itemFactura = {
                         factura_id: facturaID,
@@ -89,7 +84,7 @@ module.exports = {
                 facturaID: facturaID
             });
         });
-    },    
+    },
     listadoFacturas : function(req, res) {
         administracion.getFacturas(function(error, facturas) {
             if (error) {
