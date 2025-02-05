@@ -1102,6 +1102,7 @@ obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor, ca
   contarPorCategoria: function(conexion, categoria, callback) {
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 }, 
+// MODELO
 obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre, limite) {
     return new Promise((resolve, reject) => {
         let sql = `
@@ -1131,12 +1132,17 @@ obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre
 
         // Búsqueda por nombre o código de producto
         if (busqueda_nombre && typeof busqueda_nombre === 'string' && busqueda_nombre.trim() !== '') {
-            const palabras = busqueda_nombre.trim().split(' ');
+            const palabras = busqueda_nombre.trim().split(/\s+/); // Dividir por cualquier espacio
+            let condiciones = [];
+
             palabras.forEach((palabra) => {
-                // Buscamos por nombre o código
-                sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
+                const likeCondition = '(productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
+                condiciones.push(likeCondition);
                 parametros.push(`%${palabra}%`, `%${palabra}%`);
             });
+
+            // Unir todas las condiciones en una sola cláusula
+            sql += ' AND (' + condiciones.join(' OR ') + ')';
         }
 
         sql += ' ORDER BY productos.nombre ASC';
@@ -1176,8 +1182,6 @@ obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre
         });
     });
 },
-
-
 eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {

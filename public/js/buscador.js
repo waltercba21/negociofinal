@@ -7,19 +7,20 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
   timer = setTimeout(async () => {
       let busqueda = e.target.value.trim().toLowerCase();
 
-      console.log("Valor de búsqueda:", busqueda);  // Debugging: Ver el valor de la búsqueda antes de cualquier comparación
+      // Debugging: Ver el valor de la búsqueda antes de cualquier comparación
+      console.log("Valor de búsqueda:", busqueda);
+
+      // Si el valor es una cadena vacía, evitar hacer la consulta
+      if (!busqueda) {
+          productos = productosOriginales.slice(0, 12);
+          contenedorProductos.innerHTML = "";
+          mostrarProductos(productos);
+          return;
+      }
 
       // Comparar la búsqueda actual con la última, asegurándonos de que los espacios estén correctamente eliminados
       if (busqueda === ultimaBusqueda) {
           console.log("La búsqueda no ha cambiado, se omite la consulta.");
-          return;
-      }
-
-      // Si la búsqueda está vacía, mostrar productos originales
-      if (busqueda === "") {
-          productos = productosOriginales.slice(0, 12);
-          contenedorProductos.innerHTML = "";
-          mostrarProductos(productos);
           return;
       }
 
@@ -35,7 +36,7 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
           const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
           const respuesta = await fetch(url);
           productos = await respuesta.json();
-          console.log("Productos recibidos:", productos);  // Debugging: Ver los productos recibidos
+          console.log("Productos recibidos:", productos);
 
           contenedorProductos.innerHTML = "";
           mostrarProductos(productos);
