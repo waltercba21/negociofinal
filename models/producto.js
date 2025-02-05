@@ -1106,7 +1106,7 @@ obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre
     return new Promise((resolve, reject) => {
         let sql = `
             SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, 
-            producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original 
+                   producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original 
             FROM productos
             LEFT JOIN categorias ON productos.categoria_id = categorias.id
             LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
@@ -1115,7 +1115,7 @@ obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre
         `;
         const parametros = [];
 
-        // Validar y convertir valores antes de agregarlos a la consulta
+        // Filtrar por categoría, marca y modelo
         if (categoria && !isNaN(Number(categoria))) {
             sql += ' AND productos.categoria_id = ?';
             parametros.push(Number(categoria));
@@ -1128,9 +1128,12 @@ obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre
             sql += ' AND productos.modelo_id = ?';
             parametros.push(Number(modelo));
         }
+
+        // Búsqueda por nombre o código de producto
         if (busqueda_nombre && typeof busqueda_nombre === 'string' && busqueda_nombre.trim() !== '') {
             const palabras = busqueda_nombre.trim().split(' ');
             palabras.forEach((palabra) => {
+                // Buscamos por nombre o código
                 sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
                 parametros.push(`%${palabra}%`, `%${palabra}%`);
             });
@@ -1138,6 +1141,7 @@ obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre
 
         sql += ' ORDER BY productos.nombre ASC';
 
+        // Agregar límite si es necesario
         if (limite && !isNaN(Number(limite))) {
             sql += ' LIMIT ?';
             parametros.push(Number(limite));
@@ -1172,7 +1176,6 @@ obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre
         });
     });
 },
-
 
 
 eliminarFactura: (id) => {

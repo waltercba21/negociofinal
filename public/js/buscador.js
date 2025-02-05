@@ -6,7 +6,7 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
       let busqueda = e.target.value.trim().toLowerCase();
-      
+
       console.log("Valor de búsqueda:", busqueda);  // Debugging: Ver el valor de la búsqueda antes de cualquier comparación
 
       // Comparar la búsqueda actual con la última, asegurándonos de que los espacios estén correctamente eliminados
