@@ -3,42 +3,38 @@ let timer;
 let ultimaBusqueda = ""; // Evita consultas repetidas innecesarias
 
 document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
-    clearTimeout(timer);
-    timer = setTimeout(async () => {
-        let busqueda = e.target.value.trim().toLowerCase();
+  clearTimeout(timer);
+  timer = setTimeout(async () => {
+      let busqueda = e.target.value.trim().toLowerCase();
 
-        // Si la búsqueda es la misma que la última, no hacer otra consulta
-        if (busqueda === ultimaBusqueda) return;
-        ultimaBusqueda = busqueda;
+      // Si la búsqueda es la misma que la última o está vacía, no hacer otra consulta
+      if (busqueda === ultimaBusqueda || busqueda === "") return;
+      ultimaBusqueda = busqueda;
 
-        const contenedorProductos = document.getElementById("contenedor-productos");
-        contenedorProductos.innerHTML = '<p class="loading">Cargando productos...</p>';
+      const contenedorProductos = document.getElementById("contenedor-productos");
+      contenedorProductos.innerHTML = '<p class="loading">Cargando productos...</p>';
 
-        let productos = [];
+      let productos = [];
 
-        if (!busqueda) {
-            productos = productosOriginales.slice(0, 12);
-        } else {
-            try {
-                const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
-                const respuesta = await fetch(url);
-                productos = await respuesta.json();
+      try {
+          if (!busqueda) {
+              productos = productosOriginales.slice(0, 12);
+          } else {
+              const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
+              const respuesta = await fetch(url);
+              productos = await respuesta.json();
+              console.log("Productos recibidos:", productos);
+          }
 
-                // Verificar si stock_actual está en los productos recibidos
-                console.log("Productos recibidos:", productos);
-
-            } catch (error) {
-                console.error("Error al buscar productos:", error);
-                contenedorProductos.innerHTML = '<p class="error">Error al cargar los productos</p>';
-                return;
-            }
-        }
-
-        // En lugar de limpiar con innerHTML, eliminamos los productos anteriores uno por uno
-        contenedorProductos.innerHTML = "";
-        mostrarProductos(productos);
-    }, 300);
+          contenedorProductos.innerHTML = "";
+          mostrarProductos(productos);
+      } catch (error) {
+          console.error("Error al buscar productos:", error);
+          contenedorProductos.innerHTML = '<p class="error">Error al cargar los productos</p>';
+      }
+  }, 300);
 });
+
 
 function mostrarProductos(productos) {
     const contenedorProductos = document.getElementById("contenedor-productos");
