@@ -34,7 +34,8 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
             }
         }
 
-        contenedorProductos.innerHTML = ""; // Limpiar antes de mostrar nuevos productos
+        // En lugar de limpiar con innerHTML, eliminamos los productos anteriores uno por uno
+        contenedorProductos.innerHTML = "";
         mostrarProductos(productos);
     }, 300);
 });
@@ -124,24 +125,29 @@ function mostrarProductos(productos) {
         tarjetaProducto.innerHTML = html;
         contenedorProductos.appendChild(tarjetaProducto);
 
-        // Lógica del carrusel de imágenes
-        const leftButton = tarjetaProducto.querySelector(".carousel__button--left");
-        const rightButton = tarjetaProducto.querySelector(".carousel__button--right");
-        const images = tarjetaProducto.querySelectorAll(".carousel__image");
-        let currentIndex = 0;
-
-        if (leftButton && rightButton) {
-            leftButton.addEventListener("click", () => {
-                images[currentIndex].classList.add("hidden");
-                currentIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
-                images[currentIndex].classList.remove("hidden");
-            });
-
-            rightButton.addEventListener("click", () => {
-                images[currentIndex].classList.add("hidden");
-                currentIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
-                images[currentIndex].classList.remove("hidden");
-            });
-        }
+        // 🔹 SOLUCIÓN: Reinicializar eventos después de renderizar los productos
+        agregarEventosCarrusel(tarjetaProducto);
     });
+}
+
+// Función para reinicializar el carrusel de imágenes después de actualizar los productos
+function agregarEventosCarrusel(tarjetaProducto) {
+    const leftButton = tarjetaProducto.querySelector(".carousel__button--left");
+    const rightButton = tarjetaProducto.querySelector(".carousel__button--right");
+    const images = tarjetaProducto.querySelectorAll(".carousel__image");
+    let currentIndex = 0;
+
+    if (leftButton && rightButton) {
+        leftButton.addEventListener("click", () => {
+            images[currentIndex].classList.add("hidden");
+            currentIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+            images[currentIndex].classList.remove("hidden");
+        });
+
+        rightButton.addEventListener("click", () => {
+            images[currentIndex].classList.add("hidden");
+            currentIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
+            images[currentIndex].classList.remove("hidden");
+        });
+    }
 }
