@@ -6,10 +6,17 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
       let busqueda = e.target.value.trim().toLowerCase();
-
+      
+      console.log("Valor de búsqueda: ", busqueda);  // Debugging: Ver el valor de la búsqueda
+      
       // Si la búsqueda es la misma que la última o está vacía, no hacer otra consulta
-      if (busqueda === ultimaBusqueda || busqueda === "") return;
+      if (busqueda === ultimaBusqueda || busqueda === "") {
+          console.log("Busqueda no cambia o está vacía, no se realiza la consulta.");
+          return;
+      }
+
       ultimaBusqueda = busqueda;
+      console.log("Nueva búsqueda: ", ultimaBusqueda);  // Debugging: Ver la nueva búsqueda
 
       const contenedorProductos = document.getElementById("contenedor-productos");
       contenedorProductos.innerHTML = '<p class="loading">Cargando productos...</p>';
@@ -17,13 +24,14 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
       let productos = [];
 
       try {
+          // Si la búsqueda está vacía, se muestran los productos originales
           if (!busqueda) {
               productos = productosOriginales.slice(0, 12);
           } else {
               const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
               const respuesta = await fetch(url);
               productos = await respuesta.json();
-              console.log("Productos recibidos:", productos);
+              console.log("Productos recibidos:", productos);  // Debugging: Ver los productos recibidos
           }
 
           contenedorProductos.innerHTML = "";
@@ -34,7 +42,6 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
       }
   }, 300);
 });
-
 
 function mostrarProductos(productos) {
     const contenedorProductos = document.getElementById("contenedor-productos");
@@ -104,7 +111,7 @@ function mostrarProductos(productos) {
 
         // Mostrar stock solo para administradores
         if (isAdminUser) {
-            console.log("Stock admin:", producto.stock_actual); // 👀 Verifica en la consola del navegador
+            console.log("Stock admin:", producto.stock_actual); // Debugging: Ver stock del producto
             html += `
                 <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
                     <p>Stock Disponible: ${producto.stock_actual !== undefined ? producto.stock_actual : "No disponible"}</p>
@@ -126,7 +133,6 @@ function mostrarProductos(productos) {
     });
 }
 
-// Función para reinicializar el carrusel de imágenes después de actualizar los productos
 function agregarEventosCarrusel(tarjetaProducto) {
     const leftButton = tarjetaProducto.querySelector(".carousel__button--left");
     const rightButton = tarjetaProducto.querySelector(".carousel__button--right");
