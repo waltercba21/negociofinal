@@ -7,8 +7,8 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
   timer = setTimeout(async () => {
       let busqueda = e.target.value.trim().toLowerCase();
       
-      console.log("Valor de búsqueda: ", busqueda);  // Debugging: Ver el valor de la búsqueda
-      
+      console.log("Valor de búsqueda:", busqueda);  // Debugging: Ver el valor de la búsqueda antes de cualquier comparación
+
       // Comparar la búsqueda actual con la última, asegurándonos de que los espacios estén correctamente eliminados
       if (busqueda === ultimaBusqueda) {
           console.log("La búsqueda no ha cambiado, se omite la consulta.");
@@ -24,7 +24,7 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
       }
 
       ultimaBusqueda = busqueda;
-      console.log("Nueva búsqueda: ", ultimaBusqueda);  // Debugging: Ver la nueva búsqueda
+      console.log("Nueva búsqueda: ", ultimaBusqueda);  // Debugging: Ver la nueva búsqueda después de la actualización
 
       const contenedorProductos = document.getElementById("contenedor-productos");
       contenedorProductos.innerHTML = '<p class="loading">Cargando productos...</p>';
