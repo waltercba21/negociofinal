@@ -900,7 +900,7 @@ presupuestoMostrador: async function(req, res) {
         res.status(500).send('Error al obtener el siguiente ID de factura.');
     }
 },
-procesarFormularioFacturas: async (req, res) => {
+procesarFormulario: async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
 
