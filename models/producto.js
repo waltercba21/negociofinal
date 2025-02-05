@@ -744,15 +744,28 @@ obtenerProductoPorCodigo: function(codigo) {
             });
         });
     }, 
-actualizarStockPresupuesto: (producto_id, cantidadVendida) => {
+    actualizarStockPresupuesto: (productoId, cantidadVendida) => {
+        return new Promise((resolve, reject) => {
+            const query = 'UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?';
+            conexion.query(query, [cantidadVendida, productoId], (error, resultado) => {
+                if (error) {
+                    console.error('Error al actualizar el stock:', error);
+                    reject(error);
+                } else {
+                    resolve(resultado);
+                }
+            });
+        });
+    },
+obtenerIdProductoPorCodigo: (codigo) => {
     return new Promise((resolve, reject) => {
-        const query = 'UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?';
-        conexion.query(query, [cantidadVendida, producto_id], (error, resultado) => {
+        const query = 'SELECT id FROM productos WHERE codigo = ?';
+        conexion.query(query, [codigo], (error, resultado) => {
             if (error) {
-                console.error('Error al actualizar el stock:', error);
+                console.error('Error al obtener el id del producto:', error);
                 reject(error);
             } else {
-                resolve(resultado);
+                resolve(resultado[0] ? resultado[0].id : null);
             }
         });
     });
@@ -1158,7 +1171,7 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
             }
         });
     });
-},
+}, 
 
 eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {

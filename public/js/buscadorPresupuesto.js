@@ -38,7 +38,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
     try {
         // Cambiar la URL a la correcta para procesar presupuestos
-        const response = await fetch('/productos/procesarFormulario', {
+        const response = await fetch('/productos/procesarFormulario', {   
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
