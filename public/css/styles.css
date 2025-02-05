@@ -2541,6 +2541,17 @@ td {
   max-width: 1500px;
   margin-bottom: 10px;
 }
+.loading {
+  text-align: center;
+  font-weight: bold;
+  color: #007bff;
+}
+.error {
+  text-align: center;
+  color: red;
+  font-weight: bold;
+}
+
 
 #entradaBusqueda {
   width: 100%;

@@ -1,37 +1,47 @@
 let productosOriginales = [];
 let timer;
+let ultimaBusqueda = ""; // Almacena la última búsqueda para evitar consultas innecesarias
 
-document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
-  clearTimeout(timer);
-  timer = setTimeout(async () => {
-    let busqueda = e.target.value.trim(); // Eliminar espacios al inicio y al final
-    if (!busqueda) {
-      mostrarProductos(productosOriginales.slice(0, 12));
-      return;
-    }
+document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+        let busqueda = e.target.value.trim().toLowerCase(); // Convertimos a minúsculas y eliminamos espacios
 
-    const contenedorProductos = document.getElementById('contenedor-productos');
-    contenedorProductos.innerHTML = ''; // Limpiar antes de agregar nuevos productos
-    let productos = [];
+        // Si la búsqueda es la misma que la última, no hacer otra consulta
+        if (busqueda === ultimaBusqueda) return;
+        ultimaBusqueda = busqueda; // Guardamos la nueva búsqueda
 
-    const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
+        const contenedorProductos = document.getElementById("contenedor-productos");
+        contenedorProductos.innerHTML = '<p class="loading">Cargando productos...</p>'; // Muestra un mensaje de carga
 
-    try {
-      const respuesta = await fetch(url);
-      productos = await respuesta.json();
+        let productos = [];
 
-      // Filtrar resultados exactos si la búsqueda contiene varias palabras
-      const palabrasClave = busqueda.toLowerCase().split(" ");
-      productos = productos.filter(producto => 
-        palabrasClave.every(palabra => producto.nombre.toLowerCase().includes(palabra))
-      );
+        // Si la búsqueda está vacía, mostrar productos originales (primeros 12)
+        if (!busqueda) {
+            mostrarProductos(productosOriginales.slice(0, 12));
+            return;
+        }
 
-    } catch (error) {
-      console.error("Error al buscar productos:", error);
-    }
+        try {
+            const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
+            const respuesta = await fetch(url);
+            productos = await respuesta.json();
 
-    mostrarProductos(productos); // Mostrar los productos encontrados
-  }, 300); // Espera de 300 ms antes de procesar la búsqueda
+            // Filtrar resultados en el frontend para mayor precisión (opcional si MySQL ya hace un buen filtrado)
+            const palabrasClave = busqueda.split(" ");
+            productos = productos.filter(producto =>
+                palabrasClave.every(palabra => producto.nombre.toLowerCase().includes(palabra))
+            );
+
+        } catch (error) {
+            console.error("Error al buscar productos:", error);
+            contenedorProductos.innerHTML = '<p class="error">Error al cargar los productos</p>';
+            return;
+        }
+
+        contenedorProductos.innerHTML = ""; // Limpiar antes de mostrar nuevos productos
+        mostrarProductos(productos); // Mostrar resultados
+    }, 300); // Espera de 300 ms antes de procesar la búsqueda
 });
 
 function mostrarProductos(productos) {

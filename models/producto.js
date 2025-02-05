@@ -1104,61 +1104,60 @@ obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor, ca
 }, 
 obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
     return new Promise((resolve, reject) => {
-        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original FROM productos'; 
-        sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
-        sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
-        sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
-        sql += ' WHERE 1=1';
-        const parametros = []; 
-        
-        // Añadir logs para cada filtro
+        let sql = `
+            SELECT 
+                p.id, p.nombre, p.precio_venta, p.stock_actual, p.stock_minimo, p.calidad_original, 
+                c.nombre AS categoria_nombre, 
+                pp.codigo, 
+                GROUP_CONCAT(ip.imagen) AS imagenes
+            FROM productos p
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            LEFT JOIN imagenes_producto ip ON p.id = ip.producto_id
+            LEFT JOIN producto_proveedor pp ON p.id = pp.producto_id
+            WHERE 1=1
+        `;
+
+        const parametros = [];
+
         if (categoria) {
-            sql += ' AND categoria_id = ?';
+            sql += ' AND p.categoria_id = ?';
             parametros.push(categoria);
         }
         if (marca) {
-            sql += ' AND marca_id = ?';
+            sql += ' AND p.marca_id = ?';
             parametros.push(marca);
         }
         if (modelo) {
-            sql += ' AND modelo_id = ?';
+            sql += ' AND p.modelo_id = ?';
             parametros.push(modelo);
         }
         if (busqueda_nombre) {
-            const palabras = busqueda_nombre.split(' ');
-            palabras.forEach(palabra => {
-                sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
-                parametros.push('%' + palabra + '%', '%' + palabra + '%');
-            });
+            sql += ` AND (MATCH(p.nombre) AGAINST(?) OR MATCH(pp.codigo) AGAINST(?))`;
+            parametros.push(busqueda_nombre, busqueda_nombre);
         }
-        
-        sql += ' ORDER BY productos.nombre ASC'; // Ordena los productos alfabéticamente
+
+        sql += ' GROUP BY p.id ORDER BY p.nombre ASC';
+
         if (limite) {
             sql += ' LIMIT ?';
             parametros.push(limite);
         }
+
         conexion.query(sql, parametros, (error, productos) => {
             if (error) {
-                reject(error);
-            } else {
-                const productosAgrupados = productos.reduce((acc, producto) => {
-                    const productoExistente = acc.find(p => p.id === producto.id);
-                    if (productoExistente) {
-                        if (producto.imagen) {
-                            productoExistente.imagenes.push({ imagen: producto.imagen });
-                        }
-                    } else {
-                        producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
-                        producto.codigo = producto.codigo || '';
-                        acc.push(producto);
-                    }
-                    return acc;
-                }, []);
-                resolve(productosAgrupados);
+                return reject(error);
             }
+
+            // Transformar las imágenes en un array
+            productos.forEach(producto => {
+                producto.imagenes = producto.imagenes ? producto.imagenes.split(',').map(img => ({ imagen: img })) : [];
+            });
+
+            resolve(productos);
         });
     });
 },
+
 
 eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {
