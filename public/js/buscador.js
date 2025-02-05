@@ -4,21 +4,30 @@ let timer;
 document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
-    const busqueda = e.target.value.trim();
+    let busqueda = e.target.value.trim(); // Eliminar espacios al inicio y al final
+    if (!busqueda) {
+      mostrarProductos(productosOriginales.slice(0, 12));
+      return;
+    }
+
     const contenedorProductos = document.getElementById('contenedor-productos');
-    contenedorProductos.innerHTML = ''; // Limpiar el contenedor antes de agregar nuevos productos
+    contenedorProductos.innerHTML = ''; // Limpiar antes de agregar nuevos productos
     let productos = [];
 
-    if (!busqueda) {
-      productos = productosOriginales.slice(0, 12);
-    } else {
-      const url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
-      try {
-        const respuesta = await fetch(url);
-        productos = await respuesta.json();
-      } catch (error) {
-        console.error("Error al buscar productos:", error);
-      }
+    const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
+
+    try {
+      const respuesta = await fetch(url);
+      productos = await respuesta.json();
+
+      // Filtrar resultados exactos si la búsqueda contiene varias palabras
+      const palabrasClave = busqueda.toLowerCase().split(" ");
+      productos = productos.filter(producto => 
+        palabrasClave.every(palabra => producto.nombre.toLowerCase().includes(palabra))
+      );
+
+    } catch (error) {
+      console.error("Error al buscar productos:", error);
     }
 
     mostrarProductos(productos); // Mostrar los productos encontrados
@@ -27,6 +36,8 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
 
 function mostrarProductos(productos) {
   const contenedorProductos = document.getElementById('contenedor-productos');
+  contenedorProductos.innerHTML = ''; // Evita la duplicación limpiando antes de agregar
+  
   const isUserLoggedIn = document.body.dataset.isUserLoggedIn === 'true';
   const isAdminUser = document.body.dataset.isAdminUser === 'true';
 
@@ -128,5 +139,5 @@ function mostrarProductos(productos) {
         images[currentIndex].classList.remove('hidden');
       });
     }
-      });
-    }
+  });
+}
