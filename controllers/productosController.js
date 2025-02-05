@@ -132,22 +132,29 @@ module.exports = {
           }
         });
       },
-    buscar: async (req, res) => {
+      buscar: async (req, res) => {
         try {
-            const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
-            
+            let { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
+    
+            // Si no se envían valores, asignar null para evitar valores vacíos en la consulta
+            busqueda_nombre = busqueda_nombre?.trim() || null;
+            categoria_id = categoria_id || null;
+            marca_id = marca_id || null;
+            modelo_id = modelo_id || null;
+    
             req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
-            
+    
+            // Definir un límite si no se realiza una búsqueda específica
             const limite = busqueda_nombre || categoria_id || marca_id || modelo_id ? undefined : 10;
+    
             const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
             
             res.json(productos);
         } catch (error) {
+            console.error('Error en búsqueda:', error);
             res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
         }
     },
-    
-    
     detalle: function (req, res) {
         const id = req.params.id;
         producto.obtenerPorId(conexion, id, function(error, producto) {

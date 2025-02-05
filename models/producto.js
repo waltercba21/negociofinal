@@ -1102,63 +1102,74 @@ obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor, ca
   contarPorCategoria: function(conexion, categoria, callback) {
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 }, 
-obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
+obtenerPorFiltros: function (conexion, categoria, marca, modelo, busqueda_nombre, limite) {
     return new Promise((resolve, reject) => {
-        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original FROM productos'; 
-        sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
-        sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
-        sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
-        sql += ' WHERE 1=1';
-        const parametros = []; 
-        
-        // Añadir logs para cada filtro
+        let sql = `
+            SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, 
+            producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original 
+            FROM productos
+            LEFT JOIN categorias ON productos.categoria_id = categorias.id
+            LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
+            LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id
+            WHERE 1=1
+        `;
+        const parametros = [];
+
+        // Aplicar filtros si existen
         if (categoria) {
-            sql += ' AND categoria_id = ?';
+            sql += ' AND productos.categoria_id = ?';
             parametros.push(categoria);
         }
         if (marca) {
-            sql += ' AND marca_id = ?';
+            sql += ' AND productos.marca_id = ?';
             parametros.push(marca);
         }
         if (modelo) {
-            sql += ' AND modelo_id = ?';
+            sql += ' AND productos.modelo_id = ?';
             parametros.push(modelo);
         }
         if (busqueda_nombre) {
-            const palabras = busqueda_nombre.split(' ');
-            palabras.forEach(palabra => {
-                sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
-                parametros.push('%' + palabra + '%', '%' + palabra + '%');
-            });
+            if (typeof busqueda_nombre === 'string' && busqueda_nombre.trim() !== '') {
+                const palabras = busqueda_nombre.trim().split(' ');
+                palabras.forEach((palabra) => {
+                    sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
+                    parametros.push(`%${palabra}%`, `%${palabra}%`);
+                });
+            }
         }
-        
-        sql += ' ORDER BY productos.nombre ASC'; // Ordena los productos alfabéticamente
+
+        sql += ' ORDER BY productos.nombre ASC';
+
         if (limite) {
             sql += ' LIMIT ?';
             parametros.push(limite);
         }
+
         conexion.query(sql, parametros, (error, productos) => {
             if (error) {
-                reject(error);
-            } else {
-                const productosAgrupados = productos.reduce((acc, producto) => {
-                    const productoExistente = acc.find(p => p.id === producto.id);
-                    if (productoExistente) {
-                        if (producto.imagen) {
-                            productoExistente.imagenes.push({ imagen: producto.imagen });
-                        }
-                    } else {
-                        producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
-                        producto.codigo = producto.codigo || '';
-                        acc.push(producto);
-                    }
-                    return acc;
-                }, []);
-                resolve(productosAgrupados);
+                return reject(error);
             }
+
+            // Agrupar productos con múltiples imágenes
+            const productosAgrupados = productos.reduce((acc, producto) => {
+                const productoExistente = acc.find((p) => p.id === producto.id);
+                if (productoExistente) {
+                    if (producto.imagen) {
+                        productoExistente.imagenes.push({ imagen: producto.imagen });
+                    }
+                } else {
+                    producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
+                    producto.codigo = producto.codigo || '';
+                    acc.push(producto);
+                }
+                return acc;
+            }, []);
+
+            resolve(productosAgrupados);
         });
     });
 },
+
 
 eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {
