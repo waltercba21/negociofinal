@@ -758,27 +758,24 @@ obtenerProductoPorCodigo: function(codigo) {
             });
         });
     },
-    obtenerProductoIdPorCodigo: (codigo, descripcion) => {
+    obtenerProductoIdPorCodigo: (codigo, nombre) => {
         return new Promise((resolve, reject) => {
             const query = `
                 SELECT p.id 
                 FROM productos p 
                 INNER JOIN producto_proveedor pp ON p.id = pp.producto_id 
-                WHERE pp.codigo = ? AND p.descripcion = ?
+                WHERE pp.codigo = ? AND p.nombre = ?
             `;
-            console.log('Consulta SQL:', query);
-            console.log('Parámetros:', [codigo, descripcion]);
-            conexion.query(query, [codigo, descripcion], (error, resultado) => {
+            conexion.query(query, [codigo, nombre], (error, resultado) => {
                 if (error) {
                     console.error('Error al obtener el ID del producto:', error);
                     reject(error);
                 } else {
-                    console.log('Resultado de la consulta:', resultado);
+                    console.log('ID del producto obtenido correctamente:', resultado);
                     if (resultado.length === 0) {
-                        console.log('No se encontró el producto con el código y descripción proporcionados.');
+                        console.log('No se encontró el producto con el código y nombre proporcionados.');
                         resolve(null);
                     } else {
-                        console.log('ID del producto obtenido correctamente:', resultado[0].id);
                         resolve(resultado[0].id);
                     }
                 }
