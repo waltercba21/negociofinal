@@ -760,7 +760,12 @@ obtenerProductoPorCodigo: function(codigo) {
     },
     obtenerProductoIdPorCodigo: (codigo, descripcion) => {
         return new Promise((resolve, reject) => {
-            const query = 'SELECT id FROM productos WHERE codigo = ? AND descripcion = ?';
+            const query = `
+                SELECT p.id 
+                FROM productos p 
+                INNER JOIN producto_proveedor pp ON p.id = pp.producto_id 
+                WHERE pp.codigo = ? AND p.descripcion = ?
+            `;
             conexion.query(query, [codigo, descripcion], (error, resultado) => {
                 if (error) {
                     console.error('Error al obtener el ID del producto:', error);
