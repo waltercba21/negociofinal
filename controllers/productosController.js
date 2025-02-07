@@ -911,7 +911,7 @@ presupuestoMostrador: async function(req, res) {
         };
         const presupuestoId = await producto.guardarPresupuesto(presupuesto);
         const items = await Promise.all(invoiceItems.map(async item => {
-            const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id);
+        const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
             // Actualizar stock del producto
             await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
             return [
@@ -960,16 +960,16 @@ procesarFormularioFacturas: async (req, res) => {
         // Procesar los items de la factura
         const items = await Promise.all(invoiceItems.map(async item => {
             console.log("Procesando item:", item);
-            const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id);
+            const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
             
             if (!producto_id) {
-                throw new Error(`Producto con ID ${item.producto_id} no encontrado.`);
+                throw new Error(`Producto con ID ${item.producto_id} y descripción ${item.descripcion} no encontrado.`);
             }
 
             await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
 
             return [
-                facturaId, // Cambia de presupuestoId a facturaId
+                facturaId, 
                 producto_id,
                 item.cantidad,
                 item.precio_unitario,

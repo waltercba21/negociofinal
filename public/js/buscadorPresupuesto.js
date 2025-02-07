@@ -48,7 +48,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 fechaPresupuesto: fechaFactura,
                 totalPresupuesto: totalFactura,
                 invoiceItems,
-                metodosPago: []  // No hay métodos de pago en presupuesto
+                metodosPago: [] 
             })
         });
 

@@ -758,19 +758,20 @@ obtenerProductoPorCodigo: function(codigo) {
             });
         });
     },
-obtenerIdProductoPorCodigo: (codigo) => {
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT id FROM productos WHERE codigo = ?';
-        conexion.query(query, [codigo], (error, resultado) => {
-            if (error) {
-                console.error('Error al obtener el id del producto:', error);
-                reject(error);
-            } else {
-                resolve(resultado[0] ? resultado[0].id : null);
-            }
+    obtenerProductoIdPorCodigo: (codigo, descripcion) => {
+        return new Promise((resolve, reject) => {
+            const query = 'SELECT id FROM productos WHERE codigo = ? AND descripcion = ?';
+            conexion.query(query, [codigo, descripcion], (error, resultado) => {
+                if (error) {
+                    console.error('Error al obtener el ID del producto:', error);
+                    reject(error);
+                } else {
+                    console.log('ID del producto obtenido correctamente:', resultado);
+                    resolve(resultado[0].id);
+                }
+            });
         });
-    });
-},
+    },
       obtenerPosicion: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
             const consulta = 'SELECT COUNT(*) AS posicion FROM productos WHERE id <= ? ORDER BY id';
