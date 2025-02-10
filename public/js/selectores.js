@@ -34,10 +34,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const categoria_id = document.getElementById('categoria_id').value;
       const marca_id = document.getElementById('marca_id').value;
       const modelo_id = document.getElementById('modelo_id').value;
-
+  
+      // Agregar validación para asegurarte de que los valores sean válidos
+      if (categoria_id === '' && marca_id === '' && modelo_id === '') {
+        contenedorProductos.innerHTML = '';
+        return;
+      }
+  
       console.log('Valores seleccionados - Categoría:', categoria_id, 'Marca:', marca_id, 'Modelo:', modelo_id);
       contenedorProductos.innerHTML = '<p>Cargando productos...</p>';
-
+  
       fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
         .then(response => {
           if (!response.ok) {
