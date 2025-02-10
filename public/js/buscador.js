@@ -51,6 +51,10 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
 function mostrarProductos(productos, isUserLoggedIn, isAdminUser) {
     const contenedorProductos = document.getElementById("contenedor-productos");
 
+    console.log("Productos:", productos);
+    console.log("isUserLoggedIn:", isUserLoggedIn);
+    console.log("isAdminUser:", isAdminUser);
+
     productos.forEach((producto) => {
         let imagenes = "";
         if (producto.imagenes && producto.imagenes.length > 0) {
@@ -102,6 +106,7 @@ function mostrarProductos(productos, isUserLoggedIn, isAdminUser) {
         `;
 
         if (isUserLoggedIn) {
+            console.log("Usuario logueado, mostrando información adicional");
             html += `
                 <div class="semaforo-stock">
                     ${producto.stock_actual >= producto.stock_minimo
@@ -111,6 +116,7 @@ function mostrarProductos(productos, isUserLoggedIn, isAdminUser) {
             `;
 
             if (!isAdminUser) {
+                console.log("Usuario no es administrador, mostrando input para agregar cantidades");
                 html += `
                     <div class="cantidad-producto">
                         <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
@@ -118,16 +124,16 @@ function mostrarProductos(productos, isUserLoggedIn, isAdminUser) {
                         <button class="agregar-carrito">Agregar al carrito</button>
                     </div>
                 `;
-            }
-
-            if (isAdminUser) {
-                console.log("Stock admin:", producto.stock_actual); // Debugging: Ver stock del producto
+            } else {
+                console.log("Usuario es administrador, mostrando información de stock");
                 html += `
                     <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
                         <p>Stock Disponible: ${producto.stock_actual !== undefined ? producto.stock_actual : "No disponible"}</p>
                     </div>
                 `;
             }
+        } else {
+            console.log("Usuario no logueado, no mostrando información adicional");
         }
     
         tarjetaProducto.innerHTML = html;
