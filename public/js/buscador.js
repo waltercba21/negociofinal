@@ -116,7 +116,7 @@ function mostrarProductos(productos) {
                     <button class="agregar-carrito">Agregar al carrito</button>
                 </div>
             `;
-        
+            
             if (isAdminUser) {
                 console.log("Stock admin:", producto.stock_actual); // Debugging: Ver stock del producto
                 html += `
