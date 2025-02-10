@@ -48,10 +48,8 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
 });
 
 
-function mostrarProductos(productos,  isUserLoggedIn, isAdminUser) {
+function mostrarProductos(productos, isUserLoggedIn, isAdminUser) {
     const contenedorProductos = document.getElementById("contenedor-productos");
-    const isUserLoggedIn = req.session.usuario !== undefined;
-    const isAdminUser = req.session.usuario && req.session.usuario.email && adminEmails.includes(req.session.usuario.email);
 
     productos.forEach((producto) => {
         let imagenes = "";
@@ -110,13 +108,18 @@ function mostrarProductos(productos,  isUserLoggedIn, isAdminUser) {
                         ? '<span class="semaforo verde"></span> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
                         : '<span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
                 </div>
-                <div class="cantidad-producto">
-                    <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-                    <input type="number" id="cantidad" value="1" min="1">
-                    <button class="agregar-carrito">Agregar al carrito</button>
-                </div>
             `;
-            
+
+            if (!isAdminUser) {
+                html += `
+                    <div class="cantidad-producto">
+                        <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+                        <input type="number" id="cantidad" value="1" min="1">
+                        <button class="agregar-carrito">Agregar al carrito</button>
+                    </div>
+                `;
+            }
+
             if (isAdminUser) {
                 console.log("Stock admin:", producto.stock_actual); // Debugging: Ver stock del producto
                 html += `
