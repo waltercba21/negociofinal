@@ -83,16 +83,12 @@ document.getElementById('formularioFacturas').addEventListener('submit', async f
     
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-
-    console.log("Filas en la tabla:", filasFactura.length); // Depuración
-
+    
     for (let i = 0; i < filasFactura.length; i++) {
         const productoId = filasFactura[i].dataset.productoId;
         const descripcion = filasFactura[i].cells[1].textContent.trim();
         const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
-
-        console.log(`Producto ${i + 1}:`, { productoId, descripcion, cantidad }); // Depuración
-
+        
         if (productoId && descripcion && !isNaN(cantidad)) {
             invoiceItems.push({
                 id: productoId,
@@ -102,22 +98,12 @@ document.getElementById('formularioFacturas').addEventListener('submit', async f
         }
     }
 
-    console.log("Contenido final de invoiceItems:", invoiceItems); // Depuración
-
-    if (invoiceItems.length === 0) {
-        Swal.fire({
-            title: 'Error',
-            text: 'Debe agregar al menos un producto a la factura',
-            icon: 'error',
-            confirmButtonText: 'Entendido'
-        });
-        return;
-    }
+    console.log("Contenido de invoiceItems antes de enviar:", invoiceItems);
 
     const formData = new FormData(this);
-    formData.append('invoiceItems', JSON.stringify(invoiceItems.filter(item => item))); 
+    formData.delete('invoiceItems'); // Eliminamos cualquier rastro previo
+    formData.append('invoiceItems', JSON.stringify(invoiceItems));
 
-    
     try {
         const response = await fetch('/administracion/facturas', {
             method: 'POST',
@@ -147,5 +133,3 @@ document.getElementById('formularioFacturas').addEventListener('submit', async f
         });
     }
 });
-
-  

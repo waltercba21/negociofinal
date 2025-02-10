@@ -50,10 +50,21 @@ module.exports = {
         };
     
         let productosFactura = [];
+        
         if (req.body.invoiceItems) {
             try {
-                productosFactura = JSON.parse(req.body.invoiceItems);
+                // Aseguramos que invoiceItems es un string JSON válido
+                const invoiceItemsRaw = Array.isArray(req.body.invoiceItems) 
+                    ? req.body.invoiceItems.find(item => item.trim().startsWith("["))  // Busca la cadena JSON válida
+                    : req.body.invoiceItems;
+    
+                if (!invoiceItemsRaw) {
+                    throw new Error("Formato inválido de invoiceItems");
+                }
+    
+                productosFactura = JSON.parse(invoiceItemsRaw);
                 console.log("Cantidad de productos recibidos:", productosFactura.length);
+    
             } catch (error) {
                 console.error("Error al parsear productos:", error);
                 return res.status(400).json({ message: 'Datos de productos inválidos' });

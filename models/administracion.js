@@ -10,12 +10,16 @@ module.exports ={
             callback(null, results);
         });
     },
-    insertFactura: function(factura, callback) {
-        pool.query('INSERT INTO facturas SET ?', factura, function(error, results) {
-            if (error) throw error;
+    insertFactura: function (factura, callback) {
+        pool.query('INSERT INTO facturas SET ?', factura, function (error, results) {
+            if (error) {
+                console.error("Error al insertar la factura:", error);
+                return callback(null);
+            }
             callback(results.insertId);
         });
     },
+    
     
     insertarItemFactura: function(itemFactura, callback) {
         console.log("Insertando item en la factura:", itemFactura); 
