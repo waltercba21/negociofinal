@@ -1,5 +1,5 @@
 const carrito = require('../models/carrito');
-const producto = require('../models/producto'); // Este modelo debe existir para obtener los productos
+const producto = require('../models/producto');
 const { validationResult } = require('express-validator');
 
 module.exports = {
@@ -55,31 +55,8 @@ module.exports = {
         });
     },
     verCarrito: (req, res) => {
-        const id_usuario = req.session.usuario.id;
-
-        carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
-            if (error) {
-                return res.status(500).send('Error al obtener el carrito');
-            }
-
-            if (carritoActivo.length === 0) {
-                return res.render('carrito', { mensaje: 'No tienes un carrito activo' });
-            }
-
-            const id_carrito = carritoActivo[0].id;
-
-            // Obtener productos del carrito
-            carrito.obtenerProductosCarrito(id_carrito, (error, productosCarrito) => {
-                if (error) {
-                    return res.status(500).send('Error al obtener los productos del carrito');
-                }
-
-                res.render('carrito', { productos: productosCarrito });
-            });
-        });
+        res.render('carrito')
     },
-
-    // Finalizar la compra
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;
 
