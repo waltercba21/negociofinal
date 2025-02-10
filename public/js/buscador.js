@@ -113,7 +113,7 @@ function mostrarProductos(productos) {
               <div class="semaforo-stock">
                 ${producto.stock_actual >= producto.stock_minimo
                   ? '<i class="fas fa-hand-point-up semaforo verde"></i> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
-                  : '<i class="fas fa-hand-point-up semaforo rojo"></i> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
+                  : '<i class="fas fa-hand-point-down semaforo rojo"></i> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
               </div>
             `;
           
