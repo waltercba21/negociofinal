@@ -30,12 +30,13 @@
         <a href="/users/profile"> 
           <p>Hola <%= userLogged.nombre %> </p> 
         </a>
+       
+        <a href="/carrito" class="carrito-icon">
+          <i class="fa-solid fa-cart-shopping"></i>
+        </a> 
         <a href="/users/logout">
           <i class="fa-solid fa-right-from-bracket"></i>
           <span>Salir</span> 
-        </a>
-        <a href="/carrito" class="carrito-icon">
-          <i class="fa-solid fa-cart-shopping"></i>
         </a>
       </div>
     <% } else { %> <!-- Si no está logueado -->
