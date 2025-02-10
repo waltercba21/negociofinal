@@ -94,6 +94,8 @@ module.exports = {
     
             // Insertamos los productos de la factura
             for (let item of productosFactura) {
+                console.log("📦 Verificando producto:", item);
+    
                 if (!item.id || !item.cantidad) {
                     console.error("⚠️ Item de factura inválido:", item);
                     return res.status(400).json({ message: "Item de factura inválido." });
@@ -109,13 +111,16 @@ module.exports = {
     
                 // Insertamos el ítem en la factura
                 await new Promise((resolve, reject) => {
-                    administracion.insertarItemFactura(itemFactura, function (error) {
-                        if (error) reject(error);
-                        else resolve();
+                    administracion.insertarItemFactura(itemFactura, function (error, results) {
+                        if (error) {
+                            console.error("❌ Error en insertarItemFactura:", error);
+                            reject(error);
+                        } else {
+                            console.log("✅ Item insertado con ID:", results.insertId);
+                            resolve();
+                        }
                     });
                 });
-    
-                console.log("✅ Item insertado correctamente:", itemFactura);
     
                 // Actualizamos el stock del producto
                 await new Promise((resolve, reject) => {
