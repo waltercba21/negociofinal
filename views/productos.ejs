@@ -97,6 +97,10 @@
           <div class="precio-producto">
             <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
           </div>
+          <% if (isLogged && !isAdminUser) { %>
+            <input type="number" id="cantidad" value="1" min="1">
+            <button class="agregar-carrito">Agregar al carrito</button>
+          <% } %>
           <% if (isAdminUser) { %>
             <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
               <p>Stock Disponible: <%= producto.stock_actual %></p>
@@ -109,8 +113,6 @@
       <% }); %>
     </div>
     
-    
-
 </main>
   <%- include ./layouts/footer.ejs %>
   <script src="/js/productos.js"></script> 
