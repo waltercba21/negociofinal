@@ -1136,19 +1136,19 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
         sql += ' WHERE 1=1';
         const parametros = []; 
         
-        // Añadir logs para cada filtro
-        if (categoria) {
-            sql += ' AND categoria_id = ?';
-            parametros.push(categoria);
-        }
-        if (marca) {
-            sql += ' AND marca_id = ?';
-            parametros.push(marca);
-        }
-        if (modelo) {
-            sql += ' AND modelo_id = ?';
-            parametros.push(modelo);
-        }
+      // Añadir logs para cada filtro
+if (categoria) {
+    sql += ' AND categoria_id = ?';
+    parametros.push(categoria);
+}
+if (marca && marca !== '' && !isNaN(parseInt(marca))) {
+    sql += ' AND marca_id = ?';
+    parametros.push(parseInt(marca));
+}
+if (modelo && modelo !== '' && !isNaN(parseInt(modelo))) {
+    sql += ' AND modelo_id = ?';
+    parametros.push(parseInt(modelo));
+}
         if (busqueda_nombre) {
             const palabras = busqueda_nombre.toString().split(' ');
             palabras.forEach(palabra => {
