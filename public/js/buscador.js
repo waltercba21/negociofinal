@@ -110,6 +110,11 @@ function mostrarProductos(productos) {
                         ? '<span class="semaforo verde"></span> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
                         : '<span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
                 </div>
+                <div class="cantidad-producto">
+                    <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+                    <input type="number" id="cantidad" value="1" min="1">
+                    <button class="agregar-carrito">Agregar al carrito</button>
+                </div>
             `;
         
             if (isAdminUser) {
@@ -120,20 +125,8 @@ function mostrarProductos(productos) {
                     </div>
                 `;
             }
-        
-            html += `
-                <div class="cantidad-producto">
-                    <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-                    <input type="number" id="cantidad" value="1" min="1">
-                    <button class="agregar-carrito">Agregar al carrito</button>
-                </div>
-            `;
         }
     
-    html += `
-        </div>
-    `;
-
         tarjetaProducto.innerHTML = html;
         contenedorProductos.appendChild(tarjetaProducto);
 
