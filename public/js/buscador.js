@@ -48,8 +48,10 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
 });
 
 
-function mostrarProductos(productos, isUserLoggedIn, isAdminUser) {
+function mostrarProductos(productos) {
     const contenedorProductos = document.getElementById("contenedor-productos");
+    const isUserLoggedIn = document.body.dataset.isUserLoggedIn === "true";
+    const isAdminUser = document.body.dataset.isAdminUser === "true";
 
     console.log("Productos:", productos);
     console.log("isUserLoggedIn:", isUserLoggedIn);
