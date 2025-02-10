@@ -13,12 +13,18 @@ module.exports ={
     insertFactura: function (factura, callback) {
         pool.query('INSERT INTO facturas SET ?', factura, function (error, results) {
             if (error) {
-                console.error("Error al insertar la factura:", error);
-                return callback(null);
+                console.error("❌ Error al insertar la factura:", error);
+                return callback(null, error);
             }
-            callback(results.insertId);
+            if (!results.insertId) {
+                console.error("⚠️ La consulta de inserción no devolvió insertId.");
+                return callback(null, new Error("Factura no insertada correctamente."));
+            }
+            console.log("✅ Factura insertada con ID:", results.insertId);
+            callback(results.insertId, null);
         });
     },
+    
     
     
     insertarItemFactura: function(itemFactura, callback) {
