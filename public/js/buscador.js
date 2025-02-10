@@ -103,7 +103,6 @@ function mostrarProductos(productos) {
             </div>
         `;
 
-        // Lógica del semáforo de stock
         if (isLogged) {
             html += `
                 <div class="semaforo-stock">
@@ -112,29 +111,24 @@ function mostrarProductos(productos) {
                         : '<span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
                 </div>
             `;
-        }
-
-        // Mostrar stock solo para administradores
-        if (isAdminUser) {
-            console.log("Stock admin:", producto.stock_actual); // Debugging: Ver stock del producto
+        
+            if (isAdminUser) {
+                console.log("Stock admin:", producto.stock_actual); // Debugging: Ver stock del producto
+                html += `
+                    <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
+                        <p>Stock Disponible: ${producto.stock_actual !== undefined ? producto.stock_actual : "No disponible"}</p>
+                    </div>
+                `;
+            }
+        
             html += `
-                <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
-                    <p>Stock Disponible: ${producto.stock_actual !== undefined ? producto.stock_actual : "No disponible"}</p>
+                <div class="cantidad-producto">
+                    <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+                    <input type="number" id="cantidad" value="1" min="1">
+                    <button class="agregar-carrito">Agregar al carrito</button>
                 </div>
             `;
         }
-
-        html += `
-        <div class="cantidad-producto">
-            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-    `;
-    
-    if (isLogged  && !isAdminUser) {
-        html += `
-            <input type="number" id="cantidad" value="1" min="1">
-            <button class="agregar-carrito">Agregar al carrito</button>
-        `;
-    }
     
     html += `
         </div>
