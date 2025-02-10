@@ -104,7 +104,7 @@ function mostrarProductos(productos) {
         `;
 
         // Lógica del semáforo de stock
-        if (isUserLoggedIn) {
+        if (isLogged) {
             html += `
                 <div class="semaforo-stock">
                     ${producto.stock_actual >= producto.stock_minimo
@@ -129,7 +129,7 @@ function mostrarProductos(productos) {
             <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
     `;
     
-    if (isUserLoggedIn && !isAdminUser) {
+    if (isLogged  && !isAdminUser) {
         html += `
             <input type="number" id="cantidad" value="1" min="1">
             <button class="agregar-carrito">Agregar al carrito</button>
