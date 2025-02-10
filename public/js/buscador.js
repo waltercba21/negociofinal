@@ -103,7 +103,7 @@ function mostrarProductos(productos) {
             </div>
         `;
 
-        if (isLogged) {
+        if (isUserLoggedIn) {
             html += `
                 <div class="semaforo-stock">
                     ${producto.stock_actual >= producto.stock_minimo
