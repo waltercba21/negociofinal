@@ -125,10 +125,20 @@ function mostrarProductos(productos) {
         }
 
         html += `
-            <div class="cantidad-producto">
-                <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-            </div>
+        <div class="cantidad-producto">
+            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+    `;
+    
+    if (isUserLoggedIn && !isAdminUser) {
+        html += `
+            <input type="number" id="cantidad" value="1" min="1">
+            <button class="agregar-carrito">Agregar al carrito</button>
         `;
+    }
+    
+    html += `
+        </div>
+    `;
 
         tarjetaProducto.innerHTML = html;
         contenedorProductos.appendChild(tarjetaProducto);

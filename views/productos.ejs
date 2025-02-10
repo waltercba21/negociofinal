@@ -98,7 +98,7 @@
             <p class="precio">$<%= typeof producto.precio_venta === 'number' ? Math.floor(producto.precio_venta).toLocaleString('de-DE') : producto.precio_venta %></p>
           </div>
           <% if (isLogged && !isAdminUser) { %>
-            <input type="number" id="cantidad" value="1" min="1">
+            <input type="number" id="cantidad" value="0" min="1">
             <button class="agregar-carrito">Agregar al carrito</button>
           <% } %>
           <% if (isAdminUser) { %>
