@@ -1136,31 +1136,31 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
         sql += ' WHERE 1=1';
         const parametros = []; 
         
-      // Añadir logs para cada filtro
-if (categoria) {
-    sql += ' AND categoria_id = ?';
-    parametros.push(categoria);
-}
-if (marca && marca !== '' && !isNaN(parseInt(marca))) {
-    sql += ' AND marca_id = ?';
-    parametros.push(parseInt(marca));
-}
-if (modelo && modelo !== '' && !isNaN(parseInt(modelo))) {
-    sql += ' AND modelo_id = ?';
-    parametros.push(parseInt(modelo));
-}
-        if (busqueda_nombre) {
-            const palabras = busqueda_nombre.toString().split(' ');
+        // Añadir logs para cada filtro
+        if (categoria) {
+            sql += ' AND categoria_id = ?';
+            parametros.push(categoria);
+        }
+        if (marca && marca !== '' && !isNaN(parseInt(marca))) {
+            sql += ' AND marca_id = ?';
+            parametros.push(parseInt(marca));
+        }
+        if (modelo && modelo !== '' && !isNaN(parseInt(modelo))) {
+            sql += ' AND modelo_id = ?';
+            parametros.push(parseInt(modelo));
+        }
+        if (busqueda_nombre && typeof busqueda_nombre === 'string') {
+            const palabras = busqueda_nombre.split(' ');
             palabras.forEach(palabra => {
-                if (palabra !== undefined && palabra !== null) {
+                if (palabra !== undefined && palabra !== null && palabra !== '') {
                     sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
-                    parametros.push('%' + palabra.toString() + '%', '%' + palabra.toString() + '%');
+                    parametros.push('%' + palabra + '%', '%' + palabra + '%');
                 }
             });
         }
         
         sql += ' ORDER BY productos.nombre ASC'; // Ordena los productos alfabéticamente
-        if (limite) {
+        if (limite && typeof limite === 'number' && limite > 0 && limite % 1 === 0) {
             sql += ' LIMIT ?';
             parametros.push(limite);
         }
@@ -1185,7 +1185,7 @@ if (modelo && modelo !== '' && !isNaN(parseInt(modelo))) {
             }
         });
     });
-}, 
+},
 
 eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {
