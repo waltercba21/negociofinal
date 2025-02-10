@@ -20,7 +20,7 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
     
     if (!busqueda.trim()) return;
 
-    const url = '/productos/api/buscar?q=' + busqueda;
+    const url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
     const respuesta = await fetch(url);
     const productos = await respuesta.json();
 
@@ -31,21 +31,38 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
         
         resultado.addEventListener('click', () => {
             resultadosBusqueda.innerHTML = '';
+
+            // Verificar si el producto ya está en la tabla
             const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+            const filas = Array.from(tablaFactura.rows);
+            const existe = filas.some(row => row.dataset.productoId === String(producto.id));
+
+            if (existe) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Este producto ya ha sido agregado',
+                    icon: 'warning',
+                    confirmButtonText: 'Entendido'
+                });
+                return;
+            }
+
+            // Crear nueva fila con producto
             const filaFactura = tablaFactura.insertRow();
             filaFactura.dataset.productoId = producto.id; 
             filaFactura.insertCell(0).textContent = producto.codigo;
             filaFactura.insertCell(1).textContent = producto.nombre;
 
-            // Columna de cantidad con input
+            // Input para cantidad
             const cellCantidad = filaFactura.insertCell(2);
             const inputCantidad = document.createElement('input');
             inputCantidad.type = 'number';
             inputCantidad.min = 1;
             inputCantidad.value = 1;
+            inputCantidad.classList.add('input-cantidad'); 
             cellCantidad.appendChild(inputCantidad);
 
-            // Columna de eliminar con botón
+            // Botón eliminar
             const cellEliminar = filaFactura.insertCell(3);
             const botonEliminar = document.createElement('button');
             botonEliminar.textContent = '✖';
@@ -55,61 +72,79 @@ document.getElementById('entradaBusqueda').addEventListener('input', async (e) =
             });
             cellEliminar.appendChild(botonEliminar);
         });
-        
+
         resultadosBusqueda.appendChild(resultado);
     });
 });
 
-  document.getElementById('formularioFacturas').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const invoiceItems = [];
-      const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-      
-      for (let i = 0; i < filasFactura.length; i++) {
-          const productoId = filasFactura[i].dataset.productoId;
-          const descripcion = filasFactura[i].cells[1].textContent.trim();
-          const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
-          
-          if (productoId && descripcion && !isNaN(cantidad)) {
-              invoiceItems.push({
-                  id: productoId,
-                  descripcion: descripcion,
-                  cantidad: cantidad
-              });
-          }
-      }
-  
-      console.log("Contenido de invoiceItems antes de enviar:", invoiceItems);
-  
-      const formData = new FormData(this);
-      formData.append('invoiceItems', JSON.stringify(invoiceItems));
-      
-      try {
-          const response = await fetch('/administracion/facturas', {
-              method: 'POST',
-              body: formData
-          });
-          const data = await response.json();
-          
-          if (response.ok) {
-              Swal.fire({
-                  title: '¡Éxito!',
-                  text: data.message,
-                  icon: 'success',
-                  confirmButtonText: 'Entendido'
-              }).then(() => {
-                  window.location.reload(); 
-              });
-          } else {
-              throw new Error(data.message);
-          }
-      } catch (error) {
-          Swal.fire({
-              title: 'Error',
-              text: error.message || 'Hubo un problema al procesar la solicitud',
-              icon: 'error',
-              confirmButtonText: 'Reintentar'
-          });
-      }
-  });
+
+document.getElementById('formularioFacturas').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    
+    const invoiceItems = [];
+    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+
+    console.log("Filas en la tabla:", filasFactura.length); // Depuración
+
+    for (let i = 0; i < filasFactura.length; i++) {
+        const productoId = filasFactura[i].dataset.productoId;
+        const descripcion = filasFactura[i].cells[1].textContent.trim();
+        const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
+
+        console.log(`Producto ${i + 1}:`, { productoId, descripcion, cantidad }); // Depuración
+
+        if (productoId && descripcion && !isNaN(cantidad)) {
+            invoiceItems.push({
+                id: productoId,
+                descripcion: descripcion,
+                cantidad: cantidad
+            });
+        }
+    }
+
+    console.log("Contenido final de invoiceItems:", invoiceItems); // Depuración
+
+    if (invoiceItems.length === 0) {
+        Swal.fire({
+            title: 'Error',
+            text: 'Debe agregar al menos un producto a la factura',
+            icon: 'error',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
+
+    const formData = new FormData(this);
+    formData.append('invoiceItems', JSON.stringify(invoiceItems));
+    
+    try {
+        const response = await fetch('/administracion/facturas', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            Swal.fire({
+                title: '¡Éxito!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonText: 'Entendido'
+            }).then(() => {
+                window.location.reload(); 
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        Swal.fire({
+            title: 'Error',
+            text: error.message || 'Hubo un problema al procesar la solicitud',
+            icon: 'error',
+            confirmButtonText: 'Reintentar'
+        });
+    }
+});
+
   
