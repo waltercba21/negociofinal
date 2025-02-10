@@ -1150,7 +1150,7 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
             parametros.push(modelo);
         }
         if (busqueda_nombre) {
-            const palabras = busqueda_nombre.split(' ');
+            const palabras = busqueda_nombre.toString().split(' ');
             palabras.forEach(palabra => {
                 sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
                 parametros.push('%' + palabra + '%', '%' + palabra + '%');
