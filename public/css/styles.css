@@ -1929,6 +1929,7 @@ border-radius: 10px;
 /* Círculo para el semáforo (rojo o verde) */
 .semaforo {
   display: inline-block;
+  font-size: 40px;
   margin-top: 20px;
   width: 20px; /* Tamaño del círculo */
   height: 20px;
@@ -1936,19 +1937,16 @@ border-radius: 10px;
   background-color: #ccc; /* Color por defecto si no se aplica ninguna clase */
 }
 
-/* Estilo del semáforo verde */
 .semaforo.verde {
-  background-color: green;
+  color: #2ecc71; /* Verde brillante */
 }
 
-/* Estilo del semáforo rojo */
 .semaforo.rojo {
-  background-color: red;
+  color: #e74c3c; /* Rojo intenso */
 }
-
 /* Estilo del texto del semáforo */
 .texto-semaforo {
-  font-size: 0.7em;
+  font-size: 0.5em;
   font-weight: bold;
   color: #333;
 }

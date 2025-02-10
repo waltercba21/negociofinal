@@ -110,22 +110,22 @@ function mostrarProductos(productos) {
         if (isUserLoggedIn) {
             console.log("Usuario logueado, mostrando información adicional");
             html += `
-                <div class="semaforo-stock">
-                    ${producto.stock_actual >= producto.stock_minimo
-                        ? '<span class="semaforo verde"></span> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
-                        : '<span class="semaforo rojo"></span> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
-                </div>
+              <div class="semaforo-stock">
+                ${producto.stock_actual >= producto.stock_minimo
+                  ? '<i class="fas fa-hand-point-up semaforo verde"></i> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
+                  : '<i class="fas fa-hand-point-up semaforo rojo"></i> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
+              </div>
             `;
-
+          
             if (!isAdminUser) {
-                console.log("Usuario no es administrador, mostrando input para agregar cantidades");
-                html += `
-                    <div class="cantidad-producto">
-                        <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-                        <input type="number" id="cantidad" value="1" min="1">
-                        <button class="agregar-carrito">Agregar al carrito</button>
-                    </div>
-                `;
+              console.log("Usuario no es administrador, mostrando input para agregar cantidades");
+              html += `
+                <div class="cantidad-producto">
+                  <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+                  <input type="number" id="cantidad" value="1" min="1">
+                  <button class="agregar-carrito">Agregar al carrito</button>
+                </div>
+              `;
             } else {
                 console.log("Usuario es administrador, mostrando información de stock");
                 html += `
