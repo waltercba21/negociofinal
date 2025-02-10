@@ -107,6 +107,7 @@ module.exports = {
           pagina,
           modelo: modeloSeleccionado,
           req,
+          isUserLoggedIn: req.session.usuario !== undefined,
           isAdminUser: req.session.usuario && req.session.usuario.email && adminEmails.includes(req.session.usuario.email)
         });
       } catch (error) {
