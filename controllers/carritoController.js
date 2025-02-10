@@ -3,7 +3,6 @@ const producto = require('../models/producto'); // Este modelo debe existir para
 const { validationResult } = require('express-validator');
 
 module.exports = {
-    // Crear un carrito para el usuario si no existe uno activo
     crearCarrito: (req, res) => {
         const id_usuario = req.session.usuario.id;
 
@@ -13,26 +12,21 @@ module.exports = {
             }
 
             if (carritoExistente.length === 0) {
-                // Si no tiene carrito activo, creamos uno nuevo
                 carrito.crearCarrito(id_usuario, (error, nuevoCarritoId) => {
                     if (error) {
                         return res.status(500).send('Error al crear el carrito');
                     }
                     console.log(`Carrito creado con ID: ${nuevoCarritoId}`);
-                    res.redirect('/carrito'); // Redirigir a la página del carrito
+                    res.redirect('/carrito'); 
                 });
             } else {
-                res.redirect('/carrito'); // Ya tiene carrito activo, lo redirigimos
+                res.redirect('/carrito');
             }
         });
     },
-
-    // Agregar producto al carrito
     agregarProductoCarrito: (req, res) => {
         const id_usuario = req.session.usuario.id;
         const { id_producto, cantidad } = req.body;
-
-        // Obtener carrito activo del usuario
         carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
             if (error) {
                 return res.status(500).send('Error al obtener carrito');
@@ -43,29 +37,23 @@ module.exports = {
             }
 
             const id_carrito = carritoActivo[0].id;
-
-            // Obtener el precio del producto
             producto.obtenerProductoConImagenes(id_producto, (error, producto) => {
                 if (error) {
                     return res.status(500).send('Error al obtener el producto');
                 }
 
                 const precio = producto[0].precio;
-
-                // Agregar producto al carrito
                 carrito.agregarProductoCarrito(id_carrito, id_producto, cantidad, precio, (error, resultado) => {
                     if (error) {
                         return res.status(500).send('Error al agregar el producto al carrito');
                     }
 
                     console.log('Producto agregado al carrito');
-                    res.redirect('/carrito'); // Redirigimos a la página del carrito
+                    res.redirect('/carrito'); 
                 });
             });
         });
     },
-
-    // Ver el carrito de compras
     verCarrito: (req, res) => {
         const id_usuario = req.session.usuario.id;
 
