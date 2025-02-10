@@ -25,8 +25,7 @@ module.exports ={
         });
     },
     
-    
-    
+
     insertarItemFactura: function(itemFactura, callback) {
         console.log("Insertando item en la factura:", itemFactura); 
         pool.query('INSERT INTO facturas_admin_items SET ?', itemFactura, function(error, results) {

@@ -65,6 +65,7 @@ module.exports = {
                 throw new Error("Formato inválido de invoiceItems.");
             }
     
+            // Aseguramos de que invoiceItemsRaw sea un JSON válido
             productosFactura = JSON.parse(invoiceItemsRaw);
             console.log("🛒 Cantidad de productos recibidos:", productosFactura.length);
     
