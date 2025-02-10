@@ -28,13 +28,17 @@
     <% if (isLogged) { %>
       <div class="logueado"> 
         <a href="/users/profile"> 
-          <p>Hola <%= userLogged.nombre %> </p> <!-- Aquí se muestra el nombre del usuario -->
+          <p>Hola <%= userLogged.nombre %> </p> 
         </a>
         <a href="/users/logout">
           <i class="fa-solid fa-right-from-bracket"></i>
-          <span>Salir</span> <!-- Aquí se añade el texto "Salir" -->
+          <span>Salir</span> 
+        </a>
+        <a href="/carrito" class="carrito-icon">
+          <i class="fa-solid fa-cart-shopping"></i>
         </a>
       </div>
+    <% } %>
     <% } else { %> <!-- Si no está logueado -->
       <a href="/users/login">Iniciar Sesión</a>
       <a class="register-link" href="/users/register">Registrarme</a>

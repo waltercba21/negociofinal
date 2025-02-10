@@ -1186,7 +1186,6 @@ obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre,
         });
     });
 },
-
 eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
