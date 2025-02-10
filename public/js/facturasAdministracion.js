@@ -115,7 +115,8 @@ document.getElementById('formularioFacturas').addEventListener('submit', async f
     }
 
     const formData = new FormData(this);
-    formData.append('invoiceItems', JSON.stringify(invoiceItems));
+    formData.append('invoiceItems', JSON.stringify(invoiceItems.filter(item => item))); 
+
     
     try {
         const response = await fetch('/administracion/facturas', {
