@@ -48,10 +48,8 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
 });
 
 
-function mostrarProductos(productos) {
+function mostrarProductos(productos, isUserLoggedIn, isAdminUser) {
     const contenedorProductos = document.getElementById("contenedor-productos");
-    const isUserLoggedIn = document.body.dataset.isUserLoggedIn === "true";
-    const isAdminUser = document.body.dataset.isAdminUser === "true";
 
     productos.forEach((producto) => {
         let imagenes = "";
