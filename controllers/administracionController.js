@@ -36,13 +36,8 @@ module.exports = {
             }
         });
     },
-    postFactura : async function (req, res) {
+    postFactura: async function (req, res) {
         console.log("📥 Datos recibidos en req.body:", req.body);
-    
-        // Verificar si existen datos obligatorios
-        if (!req.body.id_proveedor || !req.body.fecha || !req.body.numero_factura || !req.body.importe || !req.body.condicion) {
-            return res.status(400).json({ message: "Faltan datos obligatorios en la factura" });
-        }
     
         let nuevaFactura = {
             id_proveedor: req.body.id_proveedor,
@@ -56,38 +51,51 @@ module.exports = {
     
         let productosFactura = [];
     
-        // Validar y parsear los productos de la factura
-        if (req.body.invoiceItems) {
-            try {
-                const invoiceItemsRaw = typeof req.body.invoiceItems === "string"
-                    ? req.body.invoiceItems
-                    : JSON.stringify(req.body.invoiceItems);
-    
-                productosFactura = JSON.parse(invoiceItemsRaw);
-    
-                if (!Array.isArray(productosFactura) || productosFactura.length === 0) {
-                    throw new Error("Formato inválido de invoiceItems o array vacío");
-                }
-    
-                console.log("🛒 Cantidad de productos recibidos:", productosFactura.length);
-            } catch (error) {
-                console.error("❌ Error al parsear productos:", error);
-                return res.status(400).json({ message: "Datos de productos inválidos" });
+        try {
+            if (!req.body.invoiceItems) {
+                throw new Error("No se enviaron productos en la factura.");
             }
-        } else {
-            return res.status(400).json({ message: "No se enviaron productos" });
+    
+            // Aseguramos que invoiceItems es un string JSON válido
+            const invoiceItemsRaw = Array.isArray(req.body.invoiceItems) 
+                ? req.body.invoiceItems.find(item => item.trim().startsWith("["))
+                : req.body.invoiceItems;
+    
+            if (!invoiceItemsRaw) {
+                throw new Error("Formato inválido de invoiceItems.");
+            }
+    
+            productosFactura = JSON.parse(invoiceItemsRaw);
+            console.log("🛒 Cantidad de productos recibidos:", productosFactura.length);
+    
+        } catch (error) {
+            console.error("⚠️ Error al parsear productos:", error.message);
+            return res.status(400).json({ message: "Datos de productos inválidos." });
         }
     
         try {
             // Insertamos la factura y obtenemos su ID
-            let facturaID = await administracion.insertFactura(nuevaFactura);
-            console.log("📄 Factura creada con ID:", facturaID);
+            let facturaID = await new Promise((resolve, reject) => {
+                administracion.insertFactura(nuevaFactura, function (id, error) {
+                    if (error) {
+                        console.error("❌ Error al insertar factura:", error);
+                        reject(error);
+                    } else if (!id) {
+                        reject(new Error("Factura no insertada correctamente."));
+                    } else {
+                        resolve(id);
+                    }
+                });
+            });
     
-            // Iteramos sobre los productos y los insertamos en la tabla `factura_items`
+            console.log("📄 Factura creada con ID:", facturaID);
+            if (!facturaID) throw new Error("Factura no pudo ser creada.");
+    
+            // Insertamos los productos de la factura
             for (let item of productosFactura) {
                 if (!item.id || !item.cantidad) {
                     console.error("⚠️ Item de factura inválido:", item);
-                    return res.status(400).json({ message: "Item de factura inválido" });
+                    return res.status(400).json({ message: "Item de factura inválido." });
                 }
     
                 let itemFactura = {
@@ -98,25 +106,38 @@ module.exports = {
     
                 console.log("📦 Insertando item en la factura:", itemFactura);
     
-                // Insertamos el ítem de la factura
-                await administracion.insertarItemFactura(itemFactura);
+                // Insertamos el ítem en la factura
+                await new Promise((resolve, reject) => {
+                    administracion.insertarItemFactura(itemFactura, function (error) {
+                        if (error) reject(error);
+                        else resolve();
+                    });
+                });
+    
                 console.log("✅ Item insertado correctamente:", itemFactura);
     
                 // Actualizamos el stock del producto
-                await administracion.actualizarStockProducto(item.id, item.cantidad);
+                await new Promise((resolve, reject) => {
+                    administracion.actualizarStockProducto(item.id, item.cantidad, function (error) {
+                        if (error) reject(error);
+                        else resolve();
+                    });
+                });
+    
                 console.log("🔄 Stock actualizado para producto:", item.id);
             }
     
             res.json({
-                message: "✅ Factura guardada exitosamente",
+                message: "Factura guardada exitosamente",
                 facturaID: facturaID
             });
     
         } catch (error) {
-            console.error("❌ Error en la inserción de la factura o productos:", error);
-            res.status(500).json({ message: "Error interno del servidor" });
+            console.error("❌ Error en la inserción de la factura:", error);
+            res.status(500).json({ message: "Error interno del servidor." });
         }
     },
+    
     listadoFacturas : function(req, res) {
         administracion.getFacturas(function(error, facturas) {
             if (error) {
