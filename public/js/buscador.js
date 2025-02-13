@@ -100,10 +100,11 @@ function mostrarProductos(productos) {
                 // 🔹 Solo se muestra el semáforo de stock si NO es administrador
                 html += `
                   <div class="semaforo-stock">
-                    ${producto.stock_actual >= producto.stock_minimo
-                      ? '<i class="fa-solid fa-thumbs-up semaforo verde"></i> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
-                      : '<i class="fa-solid fa-thumbs-up semaforo rojo"></i></i> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
-                  </div>
+  ${producto.stock_actual >= producto.stock_minimo
+    ? '<i class="fa-solid fa-thumbs-up semaforo verde"></i> <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>'
+    : '<i class="fa-solid fa-thumbs-up semaforo rojo"></i> <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>'}
+</div>
+
                   <div class="cantidad-producto">
                     <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
                     <input type="number" id="cantidad" value="1" min="1">

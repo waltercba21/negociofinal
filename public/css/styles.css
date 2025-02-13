@@ -1950,7 +1950,7 @@ border-radius: 10px;
 }
 
 .semaforo {
-  font-size: 40px;
+  font-size: 10px;
 }
 
 .semaforo.verde {
@@ -1958,12 +1958,12 @@ border-radius: 10px;
 }
 
 .semaforo.rojo {
-  color: #e74c3c;
+  color: #dc402f;
 }
 
 /* Estilo del texto debajo del semáforo */
 .texto-semaforo {
-  font-size: 0.9em;
+  font-size: 0.3em;
   font-weight: bold;
   color: #333;
 }
