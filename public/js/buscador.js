@@ -96,16 +96,14 @@ function mostrarProductos(productos) {
         `;
 
         if (isUserLoggedIn) {
-            html += `
-              <div class="semaforo-stock">
-                ${producto.stock_actual >= producto.stock_minimo
-                  ? '<i class="fas fa-hand-point-up semaforo verde"></i> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
-                  : '<i class="fas fa-hand-point-down semaforo rojo"></i> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
-              </div>
-            `;
-
             if (!isAdminUser) {
+                // 🔹 Solo se muestra el semáforo de stock si NO es administrador
                 html += `
+                  <div class="semaforo-stock">
+                    ${producto.stock_actual >= producto.stock_minimo
+                      ? '<i class="fas fa-hand-point-up semaforo verde"></i> PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
+                      : '<i class="fas fa-hand-point-down semaforo rojo"></i> PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
+                  </div>
                   <div class="cantidad-producto">
                     <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
                     <input type="number" id="cantidad" value="1" min="1">
@@ -113,14 +111,18 @@ function mostrarProductos(productos) {
                   </div>
                 `;
             } else {
+                // 🔹 Si es administrador, mostrar solo el enlace de detalles y el stock disponible
                 html += `
-                    <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
-                        <p>Stock Disponible: ${producto.stock_actual !== undefined ? producto.stock_actual : "No disponible"}</p>
-                    </div>
+                  <div class="cantidad-producto">
+                    <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+                  </div>
+                  <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
+                      <p>Stock Disponible: ${producto.stock_actual !== undefined ? producto.stock_actual : "No disponible"}</p>
+                  </div>
                 `;
             }
         } else {
-            // 🔹 Agregar "Ver detalles" aunque el usuario no esté logueado
+            // 🔹 Si no está logueado, solo mostrar el enlace de detalles
             html += `<div class="cantidad-producto"><a href="/productos/${producto.id}" class="card-link">Ver detalles</a></div>`;
         }
 
@@ -134,6 +136,7 @@ function mostrarProductos(productos) {
         agregarEventosCarrusel(tarjetaProducto); // 🔹 Asegurar eventos después de renderizar
     });
 }
+
 
 
 function agregarEventosCarrusel(tarjetaProducto) {
