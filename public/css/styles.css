@@ -1968,6 +1968,36 @@ border-radius: 10px;
   color: #333;
 }
 
+/* Estilos del semáforo */
+.semaforo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.semaforo {
+  font-size: 40px;
+}
+
+.semaforo.verde {
+  color: #2ecc71;
+}
+
+.semaforo.rojo {
+  color: #e74c3c;
+}
+
+/* Estilo del texto debajo del semáforo */
+.texto-semaforo {
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #333;
+}
+
 
 
 /*--------------------Pedido Manual---------------*/
