@@ -1911,7 +1911,7 @@ border-radius: 10px;
 }
 
 .cantidad-producto .agregar-carrito {
-  width: 100%; /* Hace que el botón ocupe todo el ancho */
+  width: 50%; 
   padding: 8px 12px;
   background-color: #003f7d;
   color: white;
@@ -1936,7 +1936,7 @@ border-radius: 10px;
   transition: all 0.3s ease;
   text-align: center;
   display: inline-block;
-  width: 100%;
+  width: 50%;
 }
 
 
