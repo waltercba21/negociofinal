@@ -1957,7 +1957,6 @@ border-radius: 10px;
   color: #dc402f;
 }
 
-
 /* Estilos del semáforo */
 .semaforo-container {
   display: flex;
@@ -1969,20 +1968,8 @@ border-radius: 10px;
   margin-top: 10px;
 }
 
-.semaforo {
-  font-size: 40px;
-}
-
-.semaforo.verde {
-  color: #2ecc71;
-}
-
-.semaforo.rojo {
-  color: #e74c3c;
-}
-/* Estilo del texto debajo del semáforo */
 .texto-semaforo {
-  font-size: 10px;
+  font-size: 20px;
   font-weight: bold;
   color: #003f7d;
 }
