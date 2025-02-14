@@ -1892,39 +1892,40 @@ border-radius: 10px;
 .card.producto-oferta hr {
   border-color: #ffffff;
 }
+
 .cantidad-producto {
   display: flex;
-  flex-direction: column;  /* ✅ Esto hace que los elementos estén en columna */
-  align-items: center;  /* Centra los elementos horizontalmente */
+  flex-direction: column;
+  align-items: center; 
   justify-content: center;
-  gap: 10px; /* Espaciado entre elementos */
+  gap: 10px;
   margin: 10px 0;
-  width: 100%;  /* Asegura que ocupe todo el ancho del contenedor */
+  width: 100%; 
 }
 
 .cantidad-producto input {
-  width: 60px;  /* Tamaño adecuado para el input de cantidad */
-  padding: 5px;
-  text-align: center;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  width: 60px !important; 
+  padding: 5px !important;
+  text-align: center !important;
+  border: 1px solid #ccc !important;
+  border-radius: 5px !important;
 }
 
 .cantidad-producto .agregar-carrito {
-  width: 50%; 
-  padding: 8px 12px;
-  background-color: #003f7d;
-  font-weight: bold;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  border-radius: 5px;
-  text-align: center;
+  width: 50% !important;
+  padding: 8px 12px !important;
+  background-color: #003f7d !important;
+  font-weight: bold !important;
+  color: white !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.3s ease !important;
+  border-radius: 5px !important;
+  text-align: center !important;
 }
 
 .cantidad-producto .agregar-carrito:hover {
-  background-color: #004d99;
+  background-color: #004d99 !important;
 }
 
 .card-link {
