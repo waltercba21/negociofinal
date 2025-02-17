@@ -20,46 +20,51 @@ entradaBusqueda.addEventListener('input', (e) => {
       const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
       const respuesta = await fetch(url);
       const productos = await respuesta.json();
-      mostrarProductos(productos);
+
+      // Excluir productos que ya están en la tabla
+      const productosFiltrados = productos.filter(
+        (p) => !productosSeleccionados.some((sel) => sel.id === p.id)
+      );
+
+      mostrarProductos(productosFiltrados);
     }
   }, 300);
 });
 
 // Mantener abierto mientras el puntero esté en el contenedor
-contenedorProductos.addEventListener('mouseenter', () => {
-  clearTimeout(timer);
-});
-
-contenedorProductos.addEventListener('mouseleave', () => {
-  limpiarBusqueda();
-});
+contenedorProductos.addEventListener('mouseenter', () => clearTimeout(timer));
+contenedorProductos.addEventListener('mouseleave', limpiarBusqueda);
 
 function mostrarProductos(productos) {
   contenedorProductos.innerHTML = '';
+
+  if (productos.length === 0) {
+    contenedorProductos.innerHTML = '<p>No hay productos disponibles</p>';
+    return;
+  }
 
   productos.forEach((producto) => {
     const divProducto = document.createElement('div');
     divProducto.textContent = producto.nombre;
     divProducto.classList.add('producto-item');
 
-    divProducto.addEventListener('click', () => {
-      agregarProductoATabla(producto);
-    });
+    divProducto.addEventListener('click', () => agregarProductoATabla(producto));
 
     contenedorProductos.appendChild(divProducto);
   });
 }
 
 function agregarProductoATabla(producto) {
-  const existe = productosSeleccionados.some((p) => p.id === producto.id);
-  if (!existe) {
-    producto.cantidad = 1;
-    producto.precioTotal = parseFloat(producto.costo_neto) || 0;
-    productosSeleccionados.push(producto);
-    actualizarTabla();
-  } else {
-    console.log('El producto ya está en la tabla');
+  // Verificar si el producto ya está agregado
+  if (productosSeleccionados.some((p) => p.id === producto.id)) {
+    alert('Este producto ya está agregado al pedido.');
+    return;
   }
+
+  producto.cantidad = 1;
+  producto.precioTotal = parseFloat(producto.costo_neto) || 0;
+  productosSeleccionados.push(producto);
+  actualizarTabla();
 }
 
 function limpiarBusqueda() {
@@ -123,51 +128,46 @@ function actualizarTotalPedido() {
   document.getElementById('total-pedido').innerText = `$${formatearNumero(total)}`;
 }
 
-
-document.getElementById('btn-confirmar').addEventListener('click', async function() {
+document.getElementById('btn-confirmar').addEventListener('click', async function () {
   const proveedor_id = document.querySelector('.proveedores').value;
-  
-  // Asegúrate de que hay productos seleccionados
+
   if (productosSeleccionados.length === 0) {
-      alert('No hay productos seleccionados');
-      return;
+    alert('No hay productos seleccionados');
+    return;
   }
 
-  // Calcular el total del pedido
-  let total = productosSeleccionados.reduce((sum, producto) => sum + parseFloat(producto.precioTotal), 0);
+  let total = productosSeleccionados.reduce(
+    (sum, producto) => sum + parseFloat(producto.precioTotal),
+    0
+  );
 
-  // Crear el objeto con los datos del pedido
   const datosPedido = {
-      proveedor_id,
-      total,
-      productos: productosSeleccionados.map(producto => ({
-          id: producto.id,
-          cantidad: producto.cantidad,
-          costo_neto: producto.costo_neto
-      }))
+    proveedor_id,
+    total,
+    productos: productosSeleccionados.map((producto) => ({
+      id: producto.id,
+      cantidad: producto.cantidad,
+      costo_neto: producto.costo_neto,
+    })),
   };
 
   try {
-      // Enviar los datos al servidor
-      const respuesta = await fetch('/productos/guardarPedido', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(datosPedido)
-      });
+    const respuesta = await fetch('/productos/guardarPedido', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datosPedido),
+    });
 
-      if (respuesta.ok) {
-          const resultado = await respuesta.json();
-          alert('Pedido guardado con éxito');
-          generarPDF(); 
-      } else {
-          const errorData = await respuesta.json();
-          alert('Error al guardar el pedido: ' + errorData.message);
-      }
+    if (respuesta.ok) {
+      alert('Pedido guardado con éxito');
+      generarPDF();
+    } else {
+      const errorData = await respuesta.json();
+      alert('Error al guardar el pedido: ' + errorData.message);
+    }
   } catch (error) {
-      console.error('Error al guardar el pedido:', error);
-      alert('Error en la conexión con el servidor');
+    console.error('Error al guardar el pedido:', error);
+    alert('Error en la conexión con el servidor');
   }
 });
 
@@ -179,13 +179,12 @@ function generarPDF() {
   doc.text('Pedido Confirmado', 10, 10);
 
   const headers = [['Código', 'Producto', 'Costo Neto', 'Cantidad', 'Precio Total']];
-
-  const rows = productosSeleccionados.map(producto => [
-    producto.codigo, 
-    producto.nombre, 
+  const rows = productosSeleccionados.map((producto) => [
+    producto.codigo,
+    producto.nombre,
     `$${formatearNumero(parseFloat(producto.costo_neto))}`,
-    producto.cantidad, 
-    `$${formatearNumero(parseFloat(producto.precioTotal))}`
+    producto.cantidad,
+    `$${formatearNumero(parseFloat(producto.precioTotal))}`,
   ]);
 
   doc.autoTable({
@@ -194,7 +193,10 @@ function generarPDF() {
     startY: 20,
   });
 
-  let total = productosSeleccionados.reduce((sum, producto) => sum + parseFloat(producto.precioTotal), 0);
+  let total = productosSeleccionados.reduce(
+    (sum, producto) => sum + parseFloat(producto.precioTotal),
+    0
+  );
   doc.setFontSize(12);
   doc.text(`Total Pedido: $${formatearNumero(total)}`, 10, doc.previousAutoTable.finalY + 10);
 
