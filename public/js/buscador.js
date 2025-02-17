@@ -1,39 +1,3 @@
-let productosOriginales = [];
-let timer;
-let ultimaBusqueda = ""; 
- 
-document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
-  clearTimeout(timer);
-  timer = setTimeout(async () => {
-      let busqueda = e.target.value.trim().toLowerCase();
-      if (!busqueda) {
-          productos = productosOriginales.slice(0, 12);
-          contenedorProductos.innerHTML = "";
-          mostrarProductos(productos);
-          return;
-      }
-      if (busqueda === ultimaBusqueda) {
-          return;
-      }
-      ultimaBusqueda = busqueda;
-      const contenedorProductos = document.getElementById("contenedor-productos");
-      contenedorProductos.innerHTML = '<p class="loading">Cargando productos...</p>';
-      let productos = [];
-
-      try {
-          const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
-          const respuesta = await fetch(url);
-          productos = await respuesta.json();
-
-          contenedorProductos.innerHTML = "";
-          mostrarProductos(productos);
-      } catch (error) {
-          contenedorProductos.innerHTML = '<p class="error">Error al cargar los productos</p>';
-      }
-  }, 300);
-});
-
-
 function mostrarProductos(productos) {
     const contenedorProductos = document.getElementById("contenedor-productos");
     const isUserLoggedIn = document.body.dataset.isUserLoggedIn === "true";
@@ -131,17 +95,18 @@ function mostrarProductos(productos) {
     });
 }
 
-// Función para mostrar la notificación
+// Función para mostrar la notificación con SweetAlert
 function mostrarNotificacion(mensaje) {
-    const notificacion = document.createElement("div");
-    notificacion.className = "notificacion";
-    notificacion.textContent = mensaje;
-    document.body.appendChild(notificacion);
-
-    setTimeout(() => {
-        notificacion.remove();
-    }, 3000);
+    Swal.fire({
+        title: "¡Producto agregado!",
+        text: mensaje,
+        icon: "success",
+        confirmButtonText: "OK",
+        timer: 3000,
+        timerProgressBar: true
+    });
 }
+
 
 
 function agregarEventosCarrusel(tarjetaProducto) {
