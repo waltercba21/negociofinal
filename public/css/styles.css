@@ -2265,6 +2265,7 @@ border-radius: 10px;
   max-width: 50%;
   margin-bottom: 20px;
   align-items: center;
+  align-content: center;
 }
 
 .buscador-panel input[type="text"] {
