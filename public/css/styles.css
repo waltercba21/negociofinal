@@ -2264,8 +2264,15 @@ border-radius: 10px;
 .buscador-panel {
   max-width: 50%;
   margin-bottom: 20px;
-  align-items: center;
-  align-content: center;
+}
+#entradaBusqueda {
+    align-items: center;
+    width: 100%;
+    padding: 8px;
+    font-size: 12px;
+    border-radius: 5px;
+    border: 1px solid #8d8c8c;
+
 }
 
 .buscador-panel input[type="text"] {
@@ -2582,15 +2589,6 @@ td {
   text-align: center;
   color: red;
   font-weight: bold;
-}
-
-
-#entradaBusqueda {
-  width: 100%;
-  padding: 8px;
-  font-size: 12px;
-  border-radius: 5px;
-  border: 1px solid #8d8c8c;
 }
 
 #tabla-factura {
