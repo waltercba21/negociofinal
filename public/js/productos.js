@@ -1,5 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
-    let productosOriginales = [];
+window.addEventListener('load', function() {
     let timer;
     let ultimaBusqueda = "";
     const contenedorProductos = document.getElementById('contenedor-productos');
@@ -125,11 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(timer);
         timer = setTimeout(async () => {
             const busqueda = e.target.value.trim().toLowerCase();
-
-            if (!busqueda) {
-                mostrarProductos(productosOriginales.slice(0, 12));
-                return;
-            }
 
             if (busqueda === ultimaBusqueda) return;
             ultimaBusqueda = busqueda;
