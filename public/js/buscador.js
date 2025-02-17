@@ -6,42 +6,28 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
       let busqueda = e.target.value.trim().toLowerCase();
-
-      // Debugging: Ver el valor de la búsqueda antes de cualquier comparación
-      console.log("Valor de búsqueda:", busqueda);
-
-      // Si el valor es una cadena vacía, evitar hacer la consulta
       if (!busqueda) {
           productos = productosOriginales.slice(0, 12);
           contenedorProductos.innerHTML = "";
           mostrarProductos(productos);
           return;
       }
-
-      // Comparar la búsqueda actual con la última, asegurándonos de que los espacios estén correctamente eliminados
       if (busqueda === ultimaBusqueda) {
-          console.log("La búsqueda no ha cambiado, se omite la consulta.");
           return;
       }
-
       ultimaBusqueda = busqueda;
-      console.log("Nueva búsqueda: ", ultimaBusqueda);  // Debugging: Ver la nueva búsqueda después de la actualización
-
       const contenedorProductos = document.getElementById("contenedor-productos");
       contenedorProductos.innerHTML = '<p class="loading">Cargando productos...</p>';
-
       let productos = [];
 
       try {
           const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
           const respuesta = await fetch(url);
           productos = await respuesta.json();
-          console.log("Productos recibidos:", productos);
 
           contenedorProductos.innerHTML = "";
           mostrarProductos(productos);
       } catch (error) {
-          console.error("Error al buscar productos:", error);
           contenedorProductos.innerHTML = '<p class="error">Error al cargar los productos</p>';
       }
   }, 300);
@@ -53,10 +39,7 @@ function mostrarProductos(productos) {
     const isUserLoggedIn = document.body.dataset.isUserLoggedIn === "true";
     const isAdminUser = document.body.dataset.isAdminUser === "true";
 
-    console.log("isUserLoggedIn:", isUserLoggedIn);
-    console.log("isAdminUser:", isAdminUser);
-
-    contenedorProductos.innerHTML = ""; // Limpia el contenedor antes de agregar nuevos productos
+    contenedorProductos.innerHTML = "";
 
     productos.forEach((producto) => {
         let imagenes = "";
@@ -78,7 +61,6 @@ function mostrarProductos(productos) {
         } else {
             imagenes = `<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">`;
         }
-
         const precio_venta = producto.precio_venta
             ? `$${Math.floor(producto.precio_venta).toLocaleString("de-DE")}`
             : "Precio no disponible";
@@ -101,7 +83,6 @@ function mostrarProductos(productos) {
 
         if (isUserLoggedIn) {
             if (!isAdminUser) {
-                // 🔹 Solo se muestra el semáforo de stock si NO es administrador
                 html += `
                   <div class="semaforo-stock">
                     ${producto.stock_actual >= producto.stock_minimo
@@ -116,7 +97,6 @@ function mostrarProductos(productos) {
                   </div>
                 `;
             } else {
-                // 🔹 Si es administrador, mostrar solo el enlace de detalles y el stock disponible
                 html += `
                   <div class="cantidad-producto">
                     <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
@@ -127,21 +107,18 @@ function mostrarProductos(productos) {
                 `;
             }
         } else {
-            // 🔹 Si no está logueado, solo mostrar el enlace de detalles
             html += `<div class="cantidad-producto"><a href="/productos/${producto.id}" class="card-link">Ver detalles</a></div>`;
         }
 
-        html += `</div>`; // Cierre de la tarjeta
-        console.log("Tarjeta generada:", html); // Para verificar el contenido
+        html += `</div>`;
 
         const tarjetaProducto = document.createElement("div");
         tarjetaProducto.innerHTML = html;
         contenedorProductos.appendChild(tarjetaProducto);
 
-        agregarEventosCarrusel(tarjetaProducto); // 🔹 Asegurar eventos después de renderizar
+        agregarEventosCarrusel(tarjetaProducto);
     });
 }
-
 
 function agregarEventosCarrusel(tarjetaProducto) {
     const leftButton = tarjetaProducto.querySelector(".carousel__button--left");
