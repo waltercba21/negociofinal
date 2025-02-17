@@ -1,7 +1,7 @@
 let productosOriginales = [];
 let timer;
-let ultimaBusqueda = ""; // Evita consultas repetidas innecesarias
-
+let ultimaBusqueda = ""; 
+ 
 document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
