@@ -1,6 +1,42 @@
 let timer;
-let ultimaBusqueda = ""; 
- 
+let ultimaBusqueda = "";
+
+// Captura el evento de entrada en el buscador
+document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+        let busqueda = e.target.value.trim().toLowerCase();
+        if (!busqueda) {
+            // Si no hay búsqueda, limpiar y mostrar productos originales
+            productos = productosOriginales.slice(0, 12);
+            mostrarProductos(productos);
+            return;
+        }
+        if (busqueda === ultimaBusqueda) {
+            return;
+        }
+        ultimaBusqueda = busqueda;
+
+        const contenedorProductos = document.getElementById("contenedor-productos");
+        contenedorProductos.innerHTML = '<p class="loading">Cargando productos...</p>';
+
+        try {
+            // Realiza la búsqueda en el servidor
+            const respuesta = await fetch(`/productos/api/buscar?q=${encodeURIComponent(busqueda)}`);
+            if (!respuesta.ok) throw new Error("Error en la búsqueda");
+            const productos = await respuesta.json();
+
+            // Limpiar y mostrar los productos
+            contenedorProductos.innerHTML = "";
+            mostrarProductos(productos);
+        } catch (error) {
+            contenedorProductos.innerHTML = '<p class="error">Error al cargar los productos</p>';
+            console.error("Error en la búsqueda de productos:", error);
+        }
+    }, 300);
+});
+
+// Función para renderizar los productos
 function mostrarProductos(productos) {
     const contenedorProductos = document.getElementById("contenedor-productos");
     const isUserLoggedIn = document.body.dataset.isUserLoggedIn === "true";
@@ -16,18 +52,16 @@ function mostrarProductos(productos) {
             });
             imagenes = `
                 <div class="cover__card">
-                    <div class="carousel">
-                        ${imagenes}
-                    </div>
+                    <div class="carousel">${imagenes}</div>
                 </div>
                 <div class="carousel__buttons">
                     <button class="carousel__button carousel__button--left"><i class="fas fa-chevron-left"></i></button>
                     <button class="carousel__button carousel__button--right"><i class="fas fa-chevron-right"></i></button>
-                </div>
-            `;
+                </div>`;
         } else {
             imagenes = `<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">`;
         }
+
         const precio_venta = producto.precio_venta
             ? `$${Math.floor(producto.precio_venta).toLocaleString("de-DE")}`
             : "Precio no disponible";
@@ -45,24 +79,22 @@ function mostrarProductos(productos) {
                 <hr>
                 <div class="precio-producto">
                     <p class="precio">${precio_venta}</p>
-                </div>
-        `;
+                </div>`;
 
         if (isUserLoggedIn) {
             if (!isAdminUser) {
                 html += `
                   <div class="semaforo-stock">
                     ${producto.stock_actual >= producto.stock_minimo
-                      ? '<i class="fa-solid fa-thumbs-up semaforo verde"></i> <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>'
-                      : '<i class="fa-solid fa-thumbs-up semaforo rojo"></i> <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>'}
+                        ? '<i class="fa-solid fa-thumbs-up semaforo verde"></i> <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>'
+                        : '<i class="fa-solid fa-thumbs-up semaforo rojo"></i> <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>'}
                   </div>
 
                   <div class="cantidad-producto">
                     <input type="number" class="cantidad-input" value="1" min="1">
                     <button class="agregar-carrito" data-id="${producto.id}" data-nombre="${producto.nombre}">Agregar al carrito</button>
                     <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-                  </div>
-                `;
+                  </div>`;
             } else {
                 html += `
                   <div class="cantidad-producto">
@@ -70,8 +102,7 @@ function mostrarProductos(productos) {
                   </div>
                   <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
                       <p>Stock Disponible: ${producto.stock_actual !== undefined ? producto.stock_actual : "No disponible"}</p>
-                  </div>
-                `;
+                  </div>`;
             }
         } else {
             html += `<div class="cantidad-producto"><a href="/productos/${producto.id}" class="card-link">Ver detalles</a></div>`;
@@ -83,7 +114,7 @@ function mostrarProductos(productos) {
         tarjetaProducto.innerHTML = html;
         contenedorProductos.appendChild(tarjetaProducto);
 
-        // Agregar evento al botón "Agregar al carrito"
+        // Evento para agregar al carrito con SweetAlert
         const botonAgregar = tarjetaProducto.querySelector(".agregar-carrito");
         if (botonAgregar) {
             botonAgregar.addEventListener("click", () => {
