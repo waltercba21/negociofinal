@@ -91,8 +91,8 @@ function mostrarProductos(productos) {
                   </div>
 
                   <div class="cantidad-producto">
-                    <input type="number" id="cantidad" value="1" min="1">
-                    <button class="agregar-carrito">Agregar al carrito</button>
+                    <input type="number" class="cantidad-input" value="1" min="1">
+                    <button class="agregar-carrito" data-id="${producto.id}" data-nombre="${producto.nombre}">Agregar al carrito</button>
                     <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
                   </div>
                 `;
@@ -116,9 +116,33 @@ function mostrarProductos(productos) {
         tarjetaProducto.innerHTML = html;
         contenedorProductos.appendChild(tarjetaProducto);
 
+        // Agregar evento al botón "Agregar al carrito"
+        const botonAgregar = tarjetaProducto.querySelector(".agregar-carrito");
+        if (botonAgregar) {
+            botonAgregar.addEventListener("click", () => {
+                const cantidadInput = tarjetaProducto.querySelector(".cantidad-input");
+                const cantidad = parseInt(cantidadInput.value) || 1;
+                mostrarNotificacion(`${cantidad} ${producto.nombre} agregado(s) al carrito`);
+                // Aquí puedes agregar la lógica para enviar el producto al carrito
+            });
+        }
+
         agregarEventosCarrusel(tarjetaProducto);
     });
 }
+
+// Función para mostrar la notificación
+function mostrarNotificacion(mensaje) {
+    const notificacion = document.createElement("div");
+    notificacion.className = "notificacion";
+    notificacion.textContent = mensaje;
+    document.body.appendChild(notificacion);
+
+    setTimeout(() => {
+        notificacion.remove();
+    }, 3000);
+}
+
 
 function agregarEventosCarrusel(tarjetaProducto) {
     const leftButton = tarjetaProducto.querySelector(".carousel__button--left");
