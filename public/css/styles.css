@@ -2262,11 +2262,13 @@ border-radius: 10px;
 }
 
 .buscador-panel {
+  max-width: 50%;
   margin-bottom: 20px;
+  align-items: center;
 }
 
 .buscador-panel input[type="text"] {
-  width: 100%;
+  width: 50%;
   padding: 15px;
   border: none;
   border-radius: 5px;
