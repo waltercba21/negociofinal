@@ -6,27 +6,25 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
     clearTimeout(timer);
     timer = setTimeout(async () => {
         let busqueda = e.target.value.trim().toLowerCase();
-        if (!busqueda) {
-            // Si no hay búsqueda, limpiar y mostrar productos originales
-            productos = productosOriginales.slice(0, 12);
-            mostrarProductos(productos);
-            return;
-        }
-        if (busqueda === ultimaBusqueda) {
-            return;
-        }
-        ultimaBusqueda = busqueda;
-
         const contenedorProductos = document.getElementById("contenedor-productos");
+
+        if (!busqueda) {
+            // Si no hay búsqueda, mostrar los productos originales
+            mostrarProductos(productosOriginales.slice(0, 12));
+            return;
+        }
+
+        if (busqueda === ultimaBusqueda) return; // Evitar búsquedas duplicadas
+
+        ultimaBusqueda = busqueda;
         contenedorProductos.innerHTML = '<p class="loading">Cargando productos...</p>';
 
         try {
-            // Realiza la búsqueda en el servidor
             const respuesta = await fetch(`/productos/api/buscar?q=${encodeURIComponent(busqueda)}`);
             if (!respuesta.ok) throw new Error("Error en la búsqueda");
             const productos = await respuesta.json();
 
-            // Limpiar y mostrar los productos
+            // Limpiar y mostrar los productos encontrados
             contenedorProductos.innerHTML = "";
             mostrarProductos(productos);
         } catch (error) {
@@ -46,7 +44,8 @@ function mostrarProductos(productos) {
 
     productos.forEach((producto) => {
         let imagenes = "";
-        if (producto.imagenes && producto.imagenes.length > 0) {
+
+        if (producto.imagenes?.length > 0) {
             producto.imagenes.forEach((imagenObj, i) => {
                 imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagenObj.imagen}" alt="Imagen de ${producto.nombre}">`;
             });
@@ -101,7 +100,7 @@ function mostrarProductos(productos) {
                     <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
                   </div>
                   <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
-                      <p>Stock Disponible: ${producto.stock_actual !== undefined ? producto.stock_actual : "No disponible"}</p>
+                      <p>Stock Disponible: ${producto.stock_actual ?? "No disponible"}</p>
                   </div>`;
             }
         } else {
@@ -114,20 +113,28 @@ function mostrarProductos(productos) {
         tarjetaProducto.innerHTML = html;
         contenedorProductos.appendChild(tarjetaProducto);
 
-        // Evento para agregar al carrito con SweetAlert
-        const botonAgregar = tarjetaProducto.querySelector(".agregar-carrito");
-        if (botonAgregar) {
-            botonAgregar.addEventListener("click", () => {
-                const cantidadInput = tarjetaProducto.querySelector(".cantidad-input");
-                const cantidad = parseInt(cantidadInput.value) || 1;
-                mostrarNotificacion(`${cantidad} ${producto.nombre} agregado(s) al carrito`);
-                // Aquí puedes agregar la lógica para enviar el producto al carrito
-            });
-        }
-
         agregarEventosCarrusel(tarjetaProducto);
     });
 }
+
+// Delegar evento de "Agregar al carrito"
+document.getElementById("contenedor-productos").addEventListener("click", (e) => {
+    if (e.target.classList.contains("agregar-carrito")) {
+        const tarjetaProducto = e.target.closest(".card");
+        const cantidadInput = tarjetaProducto.querySelector(".cantidad-input");
+        const cantidad = parseInt(cantidadInput.value) || 1;
+        const nombreProducto = e.target.dataset.nombre;
+
+        mostrarNotificacion(`${cantidad} ${nombreProducto} agregado(s) al carrito`);
+
+        // Aquí puedes agregar la lógica para enviar el producto al carrito
+        console.log("Producto agregado:", {
+            id: e.target.dataset.id,
+            nombre: nombreProducto,
+            cantidad: cantidad,
+        });
+    }
+});
 
 // Función para mostrar la notificación con SweetAlert
 function mostrarNotificacion(mensaje) {
@@ -140,8 +147,6 @@ function mostrarNotificacion(mensaje) {
         timerProgressBar: true
     });
 }
-
-
 function agregarEventosCarrusel(tarjetaProducto) {
     const leftButton = tarjetaProducto.querySelector(".carousel__button--left");
     const rightButton = tarjetaProducto.querySelector(".carousel__button--right");
