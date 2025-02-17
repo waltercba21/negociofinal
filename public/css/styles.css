@@ -1235,6 +1235,7 @@ footer {
   display: flex;
   flex-direction: column;
   margin-bottom: 10px;
+  align-items: center;
 }
 .form-group-crear label {
   font-weight: bold;
@@ -2264,8 +2265,8 @@ border-radius: 10px;
 .buscador-panel {
   max-width: 50%;
   margin-bottom: 20px;
-  display: grid; /* Activar grid */
-  place-items: center; /* Centrar vertical y horizontal */
+  display: grid;
+  place-items: center;
 }
 
 #entradaBusqueda {
@@ -2277,15 +2278,6 @@ border-radius: 10px;
 }
 
 
-
-.buscador-panel input[type="text"] {
-  width: 50%;
-  padding: 15px;
-  border: none;
-  border-radius: 5px;
-  font-size: 1em;
-  font-weight: bold;
-}
 
 table {
   width: 100%;
