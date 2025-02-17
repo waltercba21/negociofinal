@@ -7,12 +7,14 @@ window.onload = async () => {
   productosOriginales = await respuesta.json();
 };
 
-document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
+const entradaBusqueda = document.getElementById('entradaBusqueda');
+const contenedorProductos = document.getElementById('contenedor-productos');
+
+entradaBusqueda.addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
     const busqueda = e.target.value.trim();
-    const contenedorProductos = document.getElementById('contenedor-productos');
-    contenedorProductos.innerHTML = ''; 
+    contenedorProductos.innerHTML = '';
 
     if (busqueda) {
       const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
@@ -23,18 +25,25 @@ document.getElementById('entradaBusqueda').addEventListener('input', (e) => {
   }, 300);
 });
 
-function mostrarProductos(productos) {
-  const contenedorProductos = document.getElementById('contenedor-productos');
-  contenedorProductos.innerHTML = ''; 
+// Mantener abierto mientras el puntero esté en el contenedor
+contenedorProductos.addEventListener('mouseenter', () => {
+  clearTimeout(timer);
+});
 
-  productos.forEach(producto => {
+contenedorProductos.addEventListener('mouseleave', () => {
+  limpiarBusqueda();
+});
+
+function mostrarProductos(productos) {
+  contenedorProductos.innerHTML = '';
+
+  productos.forEach((producto) => {
     const divProducto = document.createElement('div');
     divProducto.textContent = producto.nombre;
-    divProducto.classList.add('producto-item'); 
+    divProducto.classList.add('producto-item');
 
     divProducto.addEventListener('click', () => {
-      agregarProductoATabla(producto); 
-      limpiarBusqueda();                
+      agregarProductoATabla(producto);
     });
 
     contenedorProductos.appendChild(divProducto);
@@ -42,21 +51,20 @@ function mostrarProductos(productos) {
 }
 
 function agregarProductoATabla(producto) {
-  const existe = productosSeleccionados.some(p => p.id === producto.id);
+  const existe = productosSeleccionados.some((p) => p.id === producto.id);
   if (!existe) {
     producto.cantidad = 1;
-    producto.precioTotal = parseFloat(producto.costo_neto) || 0; 
+    producto.precioTotal = parseFloat(producto.costo_neto) || 0;
     productosSeleccionados.push(producto);
-
-    actualizarTabla(); 
+    actualizarTabla();
   } else {
-    console.log("El producto ya está en la tabla");
+    console.log('El producto ya está en la tabla');
   }
 }
 
 function limpiarBusqueda() {
-  document.getElementById('entradaBusqueda').value = '';
-  document.getElementById('contenedor-productos').innerHTML = ''; 
+  entradaBusqueda.value = '';
+  contenedorProductos.innerHTML = '';
 }
 
 function formatearNumero(num) {
@@ -65,7 +73,7 @@ function formatearNumero(num) {
 
 function actualizarTabla() {
   const tablaBody = document.getElementById('tabla-pedido-body');
-  tablaBody.innerHTML = ''; 
+  tablaBody.innerHTML = '';
 
   productosSeleccionados.forEach((producto, index) => {
     const precioTotal = parseFloat(producto.precioTotal) || 0;
@@ -86,7 +94,7 @@ function actualizarTabla() {
     tablaBody.appendChild(fila);
   });
 
-  actualizarTotalPedido(); 
+  actualizarTotalPedido();
 }
 
 function cambiarCantidad(index, cambio) {
@@ -94,23 +102,27 @@ function cambiarCantidad(index, cambio) {
   producto.cantidad += cambio;
 
   if (producto.cantidad < 1) {
-    productosSeleccionados.splice(index, 1); 
+    productosSeleccionados.splice(index, 1);
   } else {
-    producto.precioTotal = parseFloat(producto.costo_neto) * producto.cantidad; 
+    producto.precioTotal = parseFloat(producto.costo_neto) * producto.cantidad;
   }
 
-  actualizarTabla(); 
+  actualizarTabla();
 }
 
 function eliminarProducto(index) {
-  productosSeleccionados.splice(index, 1); 
+  productosSeleccionados.splice(index, 1);
   actualizarTabla();
 }
 
 function actualizarTotalPedido() {
-  let total = productosSeleccionados.reduce((sum, producto) => sum + (parseFloat(producto.precioTotal) || 0), 0);
+  let total = productosSeleccionados.reduce(
+    (sum, producto) => sum + (parseFloat(producto.precioTotal) || 0),
+    0
+  );
   document.getElementById('total-pedido').innerText = `$${formatearNumero(total)}`;
 }
+
 
 document.getElementById('btn-confirmar').addEventListener('click', async function() {
   const proveedor_id = document.querySelector('.proveedores').value;
@@ -148,7 +160,7 @@ document.getElementById('btn-confirmar').addEventListener('click', async functio
       if (respuesta.ok) {
           const resultado = await respuesta.json();
           alert('Pedido guardado con éxito');
-          generarPDF();  // Llamar la función para generar el PDF
+          generarPDF(); 
       } else {
           const errorData = await respuesta.json();
           alert('Error al guardar el pedido: ' + errorData.message);
