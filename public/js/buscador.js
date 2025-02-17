@@ -1,3 +1,6 @@
+let timer;
+let ultimaBusqueda = ""; 
+ 
 function mostrarProductos(productos) {
     const contenedorProductos = document.getElementById("contenedor-productos");
     const isUserLoggedIn = document.body.dataset.isUserLoggedIn === "true";
@@ -106,7 +109,6 @@ function mostrarNotificacion(mensaje) {
         timerProgressBar: true
     });
 }
-
 
 
 function agregarEventosCarrusel(tarjetaProducto) {
