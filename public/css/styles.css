@@ -2264,9 +2264,8 @@ border-radius: 10px;
 .buscador-panel {
   max-width: 50%;
   margin-bottom: 20px;
-  display: flex; /* Activar flexbox */
-  justify-content: center; /* Centrar horizontalmente */
-  align-items: center; /* Centrar verticalmente (si es necesario) */
+  display: grid; /* Activar grid */
+  place-items: center; /* Centrar vertical y horizontal */
 }
 
 #entradaBusqueda {
@@ -2276,6 +2275,7 @@ border-radius: 10px;
   border-radius: 5px;
   border: 1px solid #8d8c8c;
 }
+
 
 
 .buscador-panel input[type="text"] {
