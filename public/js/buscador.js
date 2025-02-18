@@ -9,14 +9,13 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
         const contenedorProductos = document.getElementById("contenedor-productos");
 
         if (!busqueda) {
-            // Si no hay búsqueda, mostrar los productos originales
             mostrarProductos(productosOriginales.slice(0, 12));
             return;
         }
 
         if (busqueda === ultimaBusqueda) return; // Evitar búsquedas duplicadas
-
         ultimaBusqueda = busqueda;
+
         contenedorProductos.innerHTML = '<p class="loading">Cargando productos...</p>';
 
         try {
@@ -24,7 +23,6 @@ document.getElementById("entradaBusqueda").addEventListener("input", (e) => {
             if (!respuesta.ok) throw new Error("Error en la búsqueda");
             const productos = await respuesta.json();
 
-            // Limpiar y mostrar los productos encontrados
             contenedorProductos.innerHTML = "";
             mostrarProductos(productos);
         } catch (error) {
@@ -45,6 +43,7 @@ function mostrarProductos(productos) {
     productos.forEach((producto) => {
         let imagenes = "";
 
+        // Generar el carrusel de imágenes
         if (producto.imagenes?.length > 0) {
             producto.imagenes.forEach((imagenObj, i) => {
                 imagenes += `<img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagenObj.imagen}" alt="Imagen de ${producto.nombre}">`;
@@ -61,10 +60,12 @@ function mostrarProductos(productos) {
             imagenes = `<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de ${producto.nombre}">`;
         }
 
+        // Formatear el precio
         const precio_venta = producto.precio_venta
             ? `$${Math.floor(producto.precio_venta).toLocaleString("de-DE")}`
             : "Precio no disponible";
 
+        // Iniciar la tarjeta del producto
         let html = `
             <div class="card 
                 ${producto.calidad_original ? 'calidad-original-fitam' : ''} 
@@ -80,34 +81,49 @@ function mostrarProductos(productos) {
                     <p class="precio">${precio_venta}</p>
                 </div>`;
 
+        // Si el usuario está logueado
         if (isUserLoggedIn) {
-            if (!isAdminUser) {
+            if (isAdminUser) {
+                // 🔹 Si es administrador, mostrar enlace de detalles + stock disponible
                 html += `
-                  <div class="semaforo-stock">
-                    ${producto.stock_actual >= producto.stock_minimo
-                        ? '<i class="fa-solid fa-thumbs-up semaforo verde"></i> <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>'
-                        : '<i class="fa-solid fa-thumbs-up semaforo rojo"></i> <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>'}
-                  </div>
+                    <div class="cantidad-producto">
+                        <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+                    </div>
+                    <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
+                        <p>Stock Disponible: ${producto.stock_actual !== undefined ? producto.stock_actual : "No disponible"}</p>
+                    </div>`;
+            } else {
+                // 🔹 Si es usuario normal, mostrar semáforo de stock + carrito
+                html += `
+                    <div class="semaforo-stock">
+                        ${producto.stock_actual >= producto.stock_minimo
+                            ? '<i class="fa-solid fa-thumbs-up semaforo verde"></i> <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>'
+                            : '<i class="fa-solid fa-thumbs-up semaforo rojo"></i> <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>'}
+                    </div>
 
-                  <div class="cantidad-producto">
-                    <input type="number" class="cantidad-input" value="1" min="1">
-                    <button class="agregar-carrito" data-id="${producto.id}" data-nombre="${producto.nombre}" data-precio="${producto.precio_venta}">Agregar al carrito</button>
-                    <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-                  </div>`;
+                    <div class="cantidad-producto">
+                        <input type="number" class="cantidad-input" value="1" min="1">
+                        <button class="agregar-carrito" data-id="${producto.id}" data-nombre="${producto.nombre}" data-precio="${producto.precio_venta}">Agregar al carrito</button>
+                        <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+                    </div>`;
             }
         } else {
+            // 🔹 Si no está logueado, solo mostrar enlace de detalles
             html += `<div class="cantidad-producto"><a href="/productos/${producto.id}" class="card-link">Ver detalles</a></div>`;
         }
 
-        html += `</div>`;
+        html += `</div>`; // Cerrar tarjeta de producto
 
+        // Crear y agregar la tarjeta al DOM
         const tarjetaProducto = document.createElement("div");
         tarjetaProducto.innerHTML = html;
         contenedorProductos.appendChild(tarjetaProducto);
 
+        // Asegurar eventos del carrusel
         agregarEventosCarrusel(tarjetaProducto);
     });
 }
+
 
 // Delegar evento de "Agregar al carrito"
 document.getElementById("contenedor-productos").addEventListener("click", (e) => {
