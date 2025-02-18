@@ -124,7 +124,6 @@ function mostrarProductos(productos) {
     });
 }
 
-
 function agregarEventosCarrusel(tarjetaProducto) {
     const leftButton = tarjetaProducto.querySelector(".carousel__button--left");
     const rightButton = tarjetaProducto.querySelector(".carousel__button--right");
