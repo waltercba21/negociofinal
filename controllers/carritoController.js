@@ -24,8 +24,7 @@ module.exports = {
             }
         });
     },
-
-    agregarProductoCarrito : (req, res) => {
+    agregarProductoCarrito: (req, res) => {
         try {
             console.log("📥 Datos recibidos en /carrito/agregar:", req.body);
     
@@ -104,7 +103,7 @@ module.exports = {
             console.error("❌ Error inesperado en agregarProductoCarrito:", error);
             res.status(500).send('Error interno del servidor.');
         }
-    },
+    },    
 
     verCarrito: (req, res) => {
         const id_usuario = req.session.usuario.id;
