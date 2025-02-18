@@ -5,9 +5,6 @@ const path = require('path');
 module.exports ={
     
     obtener: function (conexion, pagina, callback) {
-        console.log('Entrando en el modelo obtener');
-        console.log('Pagina:', pagina);
-      
         const offset = (pagina - 1) * 20;
         const consulta = `
           SELECT productos.*, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes
@@ -18,20 +15,16 @@ module.exports ={
           LIMIT 20 OFFSET ?`;
       
         conexion.query(consulta, [offset], (error, resultados) => {
-          console.log('Resultados:', resultados);
           if (error) {
             callback(error);
             return;
           }
-      
           const productos = resultados.map(resultado => {
             return {
               ...resultado,
               imagenes: resultado.imagenes ? resultado.imagenes.split(',') : []
             };
           });
-      
-          console.log('Productos obtenidos:', productos);
           callback(null, productos);
         });
       },
