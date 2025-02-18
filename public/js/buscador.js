@@ -91,16 +91,8 @@ function mostrarProductos(productos) {
 
                   <div class="cantidad-producto">
                     <input type="number" class="cantidad-input" value="1" min="1">
-                    <button class="agregar-carrito" data-id="${producto.id}" data-nombre="${producto.nombre}">Agregar al carrito</button>
+                    <button class="agregar-carrito" data-id="${producto.id}" data-nombre="${producto.nombre}" data-precio="${producto.precio_venta}">Agregar al carrito</button>
                     <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-                  </div>`;
-            } else {
-                html += `
-                  <div class="cantidad-producto">
-                    <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-                  </div>
-                  <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
-                      <p>Stock Disponible: ${producto.stock_actual ?? "No disponible"}</p>
                   </div>`;
             }
         } else {
@@ -124,14 +116,33 @@ document.getElementById("contenedor-productos").addEventListener("click", (e) =>
         const cantidadInput = tarjetaProducto.querySelector(".cantidad-input");
         const cantidad = parseInt(cantidadInput.value) || 1;
         const nombreProducto = e.target.dataset.nombre;
+        const idProducto = e.target.dataset.id;
+        const precioProducto = e.target.dataset.precio;
 
-        mostrarNotificacion(`${cantidad} ${nombreProducto} agregado(s) al carrito`);
-
-        // Aquí puedes agregar la lógica para enviar el producto al carrito
-        console.log("Producto agregado:", {
-            id: e.target.dataset.id,
-            nombre: nombreProducto,
-            cantidad: cantidad,
+        // Enviar la solicitud al servidor para agregar el producto al carrito
+        fetch('/carrito/agregar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id_producto: idProducto,
+                cantidad: cantidad,
+                precio: precioProducto
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            mostrarNotificacion(`${cantidad} ${nombreProducto} agregado(s) al carrito`);
+        })
+        .catch(error => {
+            console.error('Error al agregar el producto al carrito:', error);
+            Swal.fire({
+                title: "Error",
+                text: "Hubo un problema al agregar el producto al carrito.",
+                icon: "error",
+                confirmButtonText: "OK",
+            });
         });
     }
 });
@@ -147,6 +158,7 @@ function mostrarNotificacion(mensaje) {
         timerProgressBar: true
     });
 }
+
 function agregarEventosCarrusel(tarjetaProducto) {
     const leftButton = tarjetaProducto.querySelector(".carousel__button--left");
     const rightButton = tarjetaProducto.querySelector(".carousel__button--right");

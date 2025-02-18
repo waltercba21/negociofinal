@@ -3,9 +3,38 @@
 
 <body>
 <main>
-<h1> ESTE ES EL CARRITO </h1>
+    <h1>Mi Carrito de Compras</h1>
+
+    <div id="carrito-productos">
+        <% if (productos.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% productos.forEach(function(producto) { %>
+                        <tr>
+                            <td><%= producto.nombre %></td>
+                            <td><%= producto.cantidad %></td>
+                            <td><%= producto.precio %></td>
+                            <td><%= producto.total %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p>No tienes productos en tu carrito.</p>
+        <% } %>
+    </div>
+
+    <div id="finalizar-compra">
+        <a href="/carrito/finalizar" class="btn">Finalizar Compra</a>
+    </div>
 </main>
-    <%- include ./layouts/footer.ejs %>
+<%- include ./layouts/footer.ejs %>
 </body>
-
-
