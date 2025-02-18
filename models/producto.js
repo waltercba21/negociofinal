@@ -1,4 +1,5 @@
 const conexion = require('../config/conexion')
+const pool = require('../config/conexion');
 const util = require('util');
 const path = require('path');
 
@@ -1704,7 +1705,7 @@ crearPedidoItem : (pedido_id, producto_id, cantidad, precio_unitario, subtotal) 
         });
     });
 },
-obtenerProductoConImagenes : (conexion, id_producto, callback) => {
+obtenerProductoConImagenes: (id_producto, callback) => {
     const query = `
         SELECT 
             p.id AS producto_id,
@@ -1724,7 +1725,8 @@ obtenerProductoConImagenes : (conexion, id_producto, callback) => {
             p.id;
     `;
 
-    conexion.query(query, [id_producto], (error, resultados) => {
+    // Usar el pool de conexiones directamente
+    pool.query(query, [id_producto], (error, resultados) => {
         if (error) {
             callback(error, null);
         } else {

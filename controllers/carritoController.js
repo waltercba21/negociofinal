@@ -78,26 +78,27 @@ module.exports = {
                         console.error("❌ Error al obtener el producto:", error);
                         return res.status(500).send('Error al obtener el producto.');
                     }
-    
+                
                     if (!productoInfo || productoInfo.length === 0) {
                         console.warn("⚠️ Producto no encontrado.");
                         return res.status(404).send('Producto no encontrado.');
                     }
-    
-                    const precio = productoInfo[0].precio;
-                    console.log("📦 Producto obtenido:", productoInfo[0]);
-    
+                
+                    const precio = productoInfo.precio_venta;
+                    console.log("📦 Producto obtenido:", productoInfo);
+                
                     // Agregar el producto al carrito
                     carrito.agregarProductoCarrito(id_carrito, id_producto, cantidad, precio, (error, resultado) => {
                         if (error) {
                             console.error("❌ Error al agregar el producto al carrito:", error);
                             return res.status(500).send('Error al agregar el producto al carrito.');
                         }
-    
+                
                         console.log("✅ Producto agregado al carrito:", resultado);
                         res.status(200).json({ mensaje: 'Producto agregado al carrito' });
                     });
                 });
+                
             }
         } catch (error) {
             console.error("❌ Error inesperado en agregarProductoCarrito:", error);
