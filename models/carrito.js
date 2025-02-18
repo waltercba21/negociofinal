@@ -14,7 +14,7 @@ module.exports = {
 
   // Obtener el carrito activo de un usuario
   obtenerCarritoActivo: function(id_usuario, callback) {
-    const query = 'SELECT * FROM carrito WHERE id_usuario = ? AND estado = "activo"';
+    const query = 'SELECT * FROM carrito WHERE id_usuario = ?';
     conexion.query(query, [id_usuario], function (error, resultados) {
       if (error) {
         return callback(error, null);
