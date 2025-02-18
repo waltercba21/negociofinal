@@ -3,7 +3,7 @@ const conexion = require('../config/conexion');
 module.exports = {
   // Crear un carrito nuevo para un usuario
   crearCarrito: function(id_usuario, callback) {
-    const query = 'INSERT INTO carrito (id_usuario) VALUES (?)';
+    const query = 'INSERT INTO carritos (id_usuario) VALUES (?)';
     conexion.query(query, [id_usuario], function (error, resultados) {
       if (error) {
         return callback(error, null);
@@ -14,7 +14,7 @@ module.exports = {
 
   // Obtener el carrito activo de un usuario
   obtenerCarritoActivo: function(id_usuario, callback) {
-    const query = 'SELECT * FROM carrito WHERE id_usuario = ?';
+    const query = 'SELECT * FROM carritos WHERE id_usuario = ?';
     conexion.query(query, [id_usuario], function (error, resultados) {
       if (error) {
         return callback(error, null);
@@ -24,13 +24,13 @@ module.exports = {
   },
 
   // Obtener los productos dentro del carrito
-  obtenerProductosCarrito: function(id_carrito, callback) {
+  obtenerProductosCarrito: function(id_carritos, callback) {
     const query = `
       SELECT p.nombre, pc.cantidad, pc.precio, (pc.cantidad * pc.precio) AS total
       FROM productos_carrito pc
       JOIN productos p ON pc.id_producto = p.id
-      WHERE pc.id_carrito = ?`;
-    conexion.query(query, [id_carrito], function (error, resultados) {
+      WHERE pc.id_carritos = ?`;
+    conexion.query(query, [id_carritos], function (error, resultados) {
       if (error) {
         return callback(error, null);
       }
@@ -39,9 +39,9 @@ module.exports = {
   },
 
   // Agregar un producto al carrito
-  agregarProductoCarrito: function(id_carrito, id_producto, cantidad, precio, callback) {
-    const query = 'INSERT INTO productos_carrito (id_carrito, id_producto, cantidad, precio) VALUES (?, ?, ?, ?)';
-    conexion.query(query, [id_carrito, id_producto, cantidad, precio], function (error, resultados) {
+  agregarProductoCarrito: function(id_carritos, id_producto, cantidad, precio, callback) {
+    const query = 'INSERT INTO productos_carrito (id_carritos, id_producto, cantidad, precio) VALUES (?, ?, ?, ?)';
+    conexion.query(query, [id_carritos, id_producto, cantidad, precio], function (error, resultados) {
       if (error) {
         return callback(error, null);
       }
@@ -50,9 +50,9 @@ module.exports = {
   },
 
   // Finalizar compra (cambiar estado del carrito)
-  finalizarCompra: function(id_carrito, callback) {
-    const query = 'UPDATE carrito SET estado = "finalizado" WHERE id = ?';
-    conexion.query(query, [id_carrito], function (error, resultados) {
+  finalizarCompra: function(id_carritos, callback) {
+    const query = 'UPDATE carritos SET estado = "finalizado" WHERE id = ?';
+    conexion.query(query, [id_carritos], function (error, resultados) {
       if (error) {
         return callback(error, null);
       }
