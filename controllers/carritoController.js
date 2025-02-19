@@ -47,7 +47,7 @@ module.exports = {
                     return res.status(500).send('Error al obtener el carrito.');
                 }
     
-                const id_carrito = carritoActivo?.length > 0 ? carritoActivo[0].id : null;
+                let id_carrito = carritoActivo?.length > 0 ? carritoActivo[0].id : null;
     
                 // Si no hay carrito activo, crear uno
                 if (!id_carrito) {
@@ -58,8 +58,8 @@ module.exports = {
                             return res.status(500).send('Error al crear el carrito.');
                         }
                         console.log("🆕 Carrito creado con ID:", nuevoCarritoId);
-                        // Mover la llamada a agregarProducto dentro del callback
-                        agregarProducto(nuevoCarritoId);
+                        id_carrito = nuevoCarritoId;  // Asegúrate de actualizar id_carrito con el nuevo ID
+                        agregarProducto(id_carrito);  // Ahora pasa el id_carrito correcto
                     });
                 } else {
                     console.log("🛒 Carrito activo encontrado con ID:", id_carrito);
@@ -101,7 +101,6 @@ module.exports = {
     },
     
     
-
     verCarrito: (req, res) => {
         const id_usuario = req.session.usuario.id;
     

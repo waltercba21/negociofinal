@@ -20,24 +20,26 @@ module.exports = {
             callback(null, resultados.insertId);
         });
     },
-    agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
+    agregarProductoCarrito: (id_carrito, id_producto, cantidad, precio, callback) => {
       // Primero obtenemos el precio del producto
       const queryPrecio = 'SELECT precio_venta FROM productos WHERE id = ?';
       
       pool.query(queryPrecio, [id_producto], (error, resultados) => {
           if (error) {
-              return callback(error);
+              return callback(error); // Aquí es donde se dispara el error si no hay función de callback.
           }
+          
           // Verificamos si encontramos el precio
           if (resultados.length > 0) {
               const precio = resultados[0].precio_venta;  // Precio obtenido del producto
+  
               // Ahora agregamos el producto al carrito con el precio
               const query = 'INSERT INTO productos_carrito (carrito_id, producto_id, cantidad, precio) VALUES (?, ?, ?, ?)';
               pool.query(query, [id_carrito, id_producto, cantidad, precio], (error, resultados) => {
                   if (error) {
-                      return callback(error);
+                      return callback(error); // Error con la consulta
                   }
-                  callback(null, resultados);
+                  callback(null, resultados); // Retornamos el resultado de la inserción
               });
           } else {
               // Si no se encuentra el producto, regresamos un error
@@ -45,6 +47,7 @@ module.exports = {
           }
       });
   },
+  
   obtenerProductosCarrito: (id_carrito, callback) => {
     const query = `
         SELECT p.nombre, pc.cantidad, (pc.cantidad * p.precio_venta) AS total
