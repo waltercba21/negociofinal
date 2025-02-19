@@ -20,7 +20,7 @@ module.exports = {
             callback(null, resultados.insertId);
         });
     },
-    agregarProductoCarrito: (id_carrito, id_producto, cantidad, precio, callback) => {
+    agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
       // Primero obtenemos el precio del producto
       const queryPrecio = 'SELECT precio_venta FROM productos WHERE id = ?';
       
@@ -33,9 +33,9 @@ module.exports = {
           if (resultados.length > 0) {
               const precio = resultados[0].precio_venta;  // Precio obtenido del producto
   
-              // Ahora agregamos el producto al carrito con el precio
-              const query = 'INSERT INTO productos_carrito (carrito_id, producto_id, cantidad, precio) VALUES (?, ?, ?, ?)';
-              pool.query(query, [id_carrito, id_producto, cantidad, precio], (error, resultados) => {
+              // Ahora agregamos el producto al carrito sin el precio
+              const query = 'INSERT INTO productos_carrito (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)';
+              pool.query(query, [id_carrito, id_producto, cantidad], (error, resultados) => {
                   if (error) {
                       return callback(error); // Error con la consulta
                   }
@@ -47,6 +47,7 @@ module.exports = {
           }
       });
   },
+  
   
   obtenerProductosCarrito: (id_carrito, callback) => {
     const query = `

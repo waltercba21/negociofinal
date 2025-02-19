@@ -47,7 +47,7 @@ module.exports = {
                     return res.status(500).send('Error al obtener el carrito.');
                 }
     
-                let id_carrito = carritoActivo?.length > 0 ? carritoActivo[0].id : null;
+                const id_carrito = carritoActivo?.length > 0 ? carritoActivo[0].id : null;
     
                 // Si no hay carrito activo, crear uno
                 if (!id_carrito) {
@@ -58,8 +58,8 @@ module.exports = {
                             return res.status(500).send('Error al crear el carrito.');
                         }
                         console.log("🆕 Carrito creado con ID:", nuevoCarritoId);
-                        id_carrito = nuevoCarritoId;  // Asegúrate de actualizar id_carrito con el nuevo ID
-                        agregarProducto(id_carrito);  // Ahora pasa el id_carrito correcto
+                        // Mover la llamada a agregarProducto dentro del callback
+                        agregarProducto(nuevoCarritoId);
                     });
                 } else {
                     console.log("🛒 Carrito activo encontrado con ID:", id_carrito);
@@ -79,10 +79,11 @@ module.exports = {
                         return res.status(404).send('Producto no encontrado.');
                     }
     
-                    const precio = productoInfo.precio_venta;
+                    const precio = productoInfo.precio_venta; // Aquí estamos usando precio_venta
                     console.log("📦 Producto obtenido:", productoInfo);
     
-                    carrito.agregarProductoCarrito(id_carrito, id_producto, cantidad, precio, (error, resultado) => {
+                    // Aquí no insertamos precio, solo carrito_id, producto_id y cantidad
+                    carrito.agregarProductoCarrito(id_carrito, id_producto, cantidad, (error, resultado) => {
                         if (error) {
                             console.error("❌ Error al agregar el producto al carrito:", error);
                             return res.status(500).send('Error al agregar el producto al carrito.');
@@ -99,6 +100,7 @@ module.exports = {
             res.status(500).send('Error interno del servidor.');
         }
     },
+    
     
     
     verCarrito: (req, res) => {
