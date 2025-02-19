@@ -28,7 +28,6 @@ module.exports = {
         try {
             console.log("📥 Datos recibidos en /carrito/agregar:", req.body);
     
-            // Obtener el ID del usuario autenticado
             const usuario_id = req.session?.usuario?.id;
             if (!usuario_id) {
                 console.error("❌ Error: Usuario no autenticado.");
@@ -37,74 +36,70 @@ module.exports = {
     
             const { id_producto, cantidad } = req.body;
     
-            // Validar los datos recibidos
             if (!id_producto || isNaN(cantidad) || cantidad <= 0) {
                 console.error("❌ Error: Datos inválidos.", { id_producto, cantidad });
                 return res.status(400).send('Datos inválidos.');
             }
     
-            // Verificar si el usuario tiene un carrito activo
             carrito.obtenerCarritoActivo(usuario_id, (error, carritoActivo) => {
                 if (error) {
                     console.error("❌ Error al obtener el carrito activo:", error);
                     return res.status(500).send('Error al obtener el carrito.');
                 }
     
-                // Si no hay carrito activo, lo creamos
-                if (!carritoActivo || carritoActivo.length === 0) {
-                    console.warn("⚠️ No hay un carrito activo. Creando uno nuevo...");
+                const id_carrito = carritoActivo?.length > 0 ? carritoActivo[0].id : null;
     
+                // Si no hay carrito activo, crear uno
+                if (!id_carrito) {
+                    console.warn("⚠️ No hay un carrito activo. Creando uno nuevo...");
                     carrito.crearCarrito(usuario_id, (error, nuevoCarritoId) => {
                         if (error) {
                             console.error("❌ Error al crear un nuevo carrito:", error);
                             return res.status(500).send('Error al crear el carrito.');
                         }
                         console.log("🆕 Carrito creado con ID:", nuevoCarritoId);
-                        return agregarProducto(nuevoCarritoId);
+                        id_carrito = nuevoCarritoId;
+                        agregarProducto(id_carrito);
                     });
                 } else {
-                    // Usar el carrito activo
-                    const id_carrito = carritoActivo[0].id;
                     console.log("🛒 Carrito activo encontrado con ID:", id_carrito);
-                    return agregarProducto(id_carrito);
+                    agregarProducto(id_carrito);
                 }
             });
     
-            // Función para agregar el producto al carrito
             function agregarProducto(id_carrito) {
-                // Obtener el producto y su precio
                 producto.obtenerProductoConImagenes(id_producto, (error, productoInfo) => {
                     if (error) {
                         console.error("❌ Error al obtener el producto:", error);
                         return res.status(500).send('Error al obtener el producto.');
                     }
-                
+    
                     if (!productoInfo || productoInfo.length === 0) {
                         console.warn("⚠️ Producto no encontrado.");
                         return res.status(404).send('Producto no encontrado.');
                     }
-                
+    
                     const precio = productoInfo.precio_venta;
                     console.log("📦 Producto obtenido:", productoInfo);
-                
-                    // Agregar el producto al carrito
+    
                     carrito.agregarProductoCarrito(id_carrito, id_producto, cantidad, precio, (error, resultado) => {
                         if (error) {
                             console.error("❌ Error al agregar el producto al carrito:", error);
                             return res.status(500).send('Error al agregar el producto al carrito.');
                         }
-                
+    
                         console.log("✅ Producto agregado al carrito:", resultado);
                         res.status(200).json({ mensaje: 'Producto agregado al carrito' });
                     });
                 });
-                
             }
+    
         } catch (error) {
             console.error("❌ Error inesperado en agregarProductoCarrito:", error);
             res.status(500).send('Error interno del servidor.');
         }
-    },    
+    },
+    
 
     verCarrito: (req, res) => {
         const id_usuario = req.session.usuario.id;
