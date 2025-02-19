@@ -58,8 +58,8 @@ module.exports = {
                             return res.status(500).send('Error al crear el carrito.');
                         }
                         console.log("🆕 Carrito creado con ID:", nuevoCarritoId);
-                        id_carrito = nuevoCarritoId;
-                        agregarProducto(id_carrito);
+                        // Mover la llamada a agregarProducto dentro del callback
+                        agregarProducto(nuevoCarritoId);
                     });
                 } else {
                     console.log("🛒 Carrito activo encontrado con ID:", id_carrito);
@@ -99,6 +99,7 @@ module.exports = {
             res.status(500).send('Error interno del servidor.');
         }
     },
+    
     
 
     verCarrito: (req, res) => {
