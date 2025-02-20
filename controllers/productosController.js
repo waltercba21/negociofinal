@@ -20,12 +20,53 @@ module.exports = {
                     if (error) {
                         return res.status(500).send('Error al obtener las ofertas');
                     } else {
-                        res.render('index', { productos, productosOferta });
+                        let cantidadCarrito = 0;
+    
+                        // Verificar si el usuario está autenticado y tiene un carrito activo
+                        if (req.session && req.session.usuario) {
+                            const id_usuario = req.session.usuario.id;
+    
+                            // Obtener el carrito activo del usuario
+                            carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
+                                if (carritoActivo && carritoActivo.length > 0) {
+                                    const id_carrito = carritoActivo[0].id;
+    
+                                    // Obtener los productos del carrito y calcular la cantidad total
+                                    carrito.obtenerProductosCarrito(id_carrito, (error, productosCarrito) => {
+                                        if (productosCarrito) {
+                                            cantidadCarrito = productosCarrito.reduce((acc, p) => acc + p.cantidad, 0);
+                                        }
+                                        
+                                        // Renderizar la vista pasando todos los datos
+                                        res.render('index', { 
+                                            productos, 
+                                            productosOferta, 
+                                            cantidadCarrito 
+                                        });
+                                    });
+                                } else {
+                                    // Si no hay carrito activo, renderizar con cantidadCarrito 0
+                                    res.render('index', { 
+                                        productos, 
+                                        productosOferta, 
+                                        cantidadCarrito: 0 
+                                    });
+                                }
+                            });
+                        } else {
+                            // Si no está logueado, renderizar con cantidadCarrito 0
+                            res.render('index', { 
+                                productos, 
+                                productosOferta, 
+                                cantidadCarrito: 0 
+                            });
+                        }
                     }
-                }); 
+                });
             }
         });
-    },    
+    },
+    
 
     lista: async function (req, res) {
       const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
