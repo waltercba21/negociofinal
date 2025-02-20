@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Llamar a la función al cargar cualquier página
+    // Llamar a la función al cargar la página para actualizar el globo
     obtenerCantidadCarrito();
 
     // Si estamos en la vista del carrito, manejamos actualizaciones dinámicas
@@ -105,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Actualizar el total general y el globo
                 actualizarTotal();
+                obtenerCantidadCarrito(); // <-- Llamar nuevamente para actualizar el globo
             } catch (error) {
                 console.error('Error al actualizar cantidad:', error);
                 alert(`Error: ${error.message}`);
@@ -126,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (fila) fila.remove();
 
                 actualizarTotal(); // Actualiza el total y el globo
+                obtenerCantidadCarrito(); // <-- Llamar nuevamente para actualizar el globo
             } catch (error) {
                 console.error('Error al eliminar producto:', error);
                 alert(`Error: ${error.message}`);
