@@ -51,7 +51,7 @@ module.exports = {
   
   obtenerProductosCarrito: (id_carrito, callback) => {
     const query = `
-        SELECT p.nombre, pc.cantidad, (pc.cantidad * p.precio_venta) AS total
+        SELECT p.nombre, pc.cantidad, p.precio_venta, (pc.cantidad * p.precio_venta) AS total
         FROM productos_carrito pc
         JOIN productos p ON pc.producto_id = p.id
         WHERE pc.carrito_id = ?`;
@@ -63,6 +63,7 @@ module.exports = {
         callback(null, resultados);
     });
 },
+
 
 
     finalizarCompra: (id_carrito, callback) => {
