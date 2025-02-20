@@ -8,12 +8,16 @@ const adminMiddleware = require('./middleware/adminMiddleware');
 const middlewares = require('./middleware/middlewares');
 const dotenv = require('dotenv');
 dotenv.config();  
+const calcularCantidadCarrito = require('./middleware/carritoMiddleware'); // ✅ Importa el middleware
+
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var productosRouter = require('./routes/productos');
 var administracionRouter = require('./routes/administracion');
 var carritoRoutes = require('./routes/carrito');
+
+
 var app = express();
 var server = require('http').Server(app); // Agregamos esta línea
 var io = require('socket.io')(server); // Y esta también
