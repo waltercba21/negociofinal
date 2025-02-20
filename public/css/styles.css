@@ -2083,6 +2083,17 @@ border-radius: 10px;
 .btn-eliminar:hover {
   background: #c0392b;
 }
+.carrito-total td {
+  font-weight: bold;
+  text-align: right;
+}
+.carrito-total td#total-carrito {
+  font-size: 1.2em;
+  color: #007BFF; /* O el color que prefieras */
+}
+.carrito-footer {
+  display: none; /* Ocultar el pie de tabla si ya mostramos el total en el cuerpo */
+}
 
 /* Botón finalizar compra */
 .btn-finalizar {

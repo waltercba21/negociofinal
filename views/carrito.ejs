@@ -46,14 +46,13 @@
                                 </td>
                             </tr>
                         <% }) %>
-                    </tbody>
-                    <tfoot>
-                        <tr class="carrito-footer">
+                        <!-- Fila para el total -->
+                        <tr class="carrito-total">
                             <td colspan="4"></td>
                             <td><strong>Total</strong></td>
                             <td id="total-carrito">$<%= total %></td> <!-- Total acumulado -->
                         </tr>
-                    </tfoot>
+                    </tbody>
                 </table>
             <% } else { %>
                 <p class="carrito-vacio">No tienes productos en tu carrito.</p>
@@ -64,6 +63,7 @@
             <a href="/carrito/finalizar" class="btn-finalizar">Finalizar Compra</a>
         </div>
     </main>
+        
     
     
     
