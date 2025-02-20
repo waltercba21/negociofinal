@@ -10,22 +10,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Función para actualizar la cantidad
-    async function actualizarCantidad(id, accion) {
-        try {
-            const response = await fetch(`/carrito/actualizar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, accion })
-            });
+// Función para actualizar la cantidad
+async function actualizarCantidad(id, accion) {
+    try {
+        const response = await fetch(`/carrito/actualizar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, accion })
+        });
 
-            if (!response.ok) throw new Error('Error al actualizar el carrito');
+        const data = await response.json();
 
-            // Recargar la página o actualizar dinámicamente la vista
-            window.location.reload(); // Puedes optimizar esto con un cambio dinámico
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Hubo un problema al actualizar el carrito.');
-        }
+        if (!response.ok) throw new Error(data.error || 'Error desconocido al actualizar');
+
+        console.log('Cantidad actualizada:', data);
+        window.location.reload(); // O actualiza dinámicamente la vista
+    } catch (error) {
+        console.error('Error al actualizar cantidad:', error);
+        alert('Hubo un problema al actualizar el carrito.');
     }
+}
+
 });

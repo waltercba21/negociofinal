@@ -84,7 +84,7 @@ actualizarCantidad: (id, cantidad, callback) => {
     pool.query(query, [cantidad, id], callback);
 },
 
-    finalizarCompra: (id_carrito, callback) => {
+finalizarCompra: (id_carrito, callback) => {
         const query = 'UPDATE carritos SET actualizado_en = CURRENT_TIMESTAMP WHERE id = ?';
         pool.query(query, [id_carrito], (error, resultados) => {
             if (error) {

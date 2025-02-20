@@ -142,23 +142,46 @@ module.exports = {
     actualizarCantidad: (req, res) => {
         const { id, accion } = req.body;
     
-        carrito.obtenerProductoPorId(id, (error, producto) => {
-            if (error || !producto) return res.status(500).json({ error: 'Producto no encontrado' });
+        if (!id || !accion) {
+            console.error('Faltan datos en la petición:', req.body);
+            return res.status(400).json({ error: 'Faltan datos para actualizar el carrito' });
+        }
     
+        console.log(`Actualizando producto con ID: ${id}, Acción: ${accion}`);
+    
+        // Verificar si el producto existe
+        carrito.obtenerProductoPorId(id, (error, producto) => {
+            if (error) {
+                console.error('Error al obtener el producto:', error);
+                return res.status(500).json({ error: 'Error al buscar el producto' });
+            }
+            if (!producto) {
+                console.error('Producto no encontrado con ID:', id);
+                return res.status(404).json({ error: 'Producto no encontrado' });
+            }
+    
+            console.log('Producto encontrado:', producto);
+    
+            // Calcular la nueva cantidad
             let nuevaCantidad = producto.cantidad;
     
             if (accion === 'aumentar') nuevaCantidad++;
             if (accion === 'disminuir' && nuevaCantidad > 1) nuevaCantidad--;
     
+            console.log(`Nueva cantidad calculada: ${nuevaCantidad}`);
+    
+            // Actualizar la cantidad en la base de datos
             carrito.actualizarCantidad(id, nuevaCantidad, (error) => {
-                if (error) return res.status(500).json({ error: 'Error al actualizar la cantidad' });
-                res.status(200).json({ mensaje: 'Cantidad actualizada' });
+                if (error) {
+                    console.error('Error al actualizar la cantidad:', error);
+                    return res.status(500).json({ error: 'Error al actualizar la cantidad' });
+                }
+    
+                console.log(`Cantidad actualizada con éxito: ${nuevaCantidad}`);
+                res.status(200).json({ mensaje: 'Cantidad actualizada', nuevaCantidad });
             });
         });
     },
-    
-
-    // Finalizar la compra
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;
 
