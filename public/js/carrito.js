@@ -1,5 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
     const carritoContainer = document.getElementById('carrito-productos');
+    const totalCarritoElement = document.getElementById('total-carrito');
+
+    // Función para actualizar el total del carrito
+    function actualizarTotal() {
+        let total = 0;
+        const filas = document.querySelectorAll('table tbody tr');
+        
+        filas.forEach(fila => {
+            const subTotalCell = fila.querySelector('td:nth-child(5)');
+            const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim());
+            total += subTotal;
+        });
+
+        totalCarritoElement.textContent = `$${total.toFixed(2)}`;
+    }
 
     carritoContainer.addEventListener('click', (e) => {
         // Actualizar cantidad (aumentar o disminuir)
@@ -42,9 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
             cantidadSpan.textContent = cantidadActual;
 
             // Actualizar el total dinámicamente
-            const precio = parseFloat(boton.closest('tr').querySelector('td:nth-child(3)').textContent.replace('$', ''));
-            const totalCell = boton.closest('tr').querySelector('td:nth-child(4)');
+            const precio = parseFloat(boton.closest('tr').querySelector('td:nth-child(4)').textContent.replace('$', ''));
+            const totalCell = boton.closest('tr').querySelector('td:nth-child(5)');
             totalCell.textContent = `$${(cantidadActual * precio).toFixed(2)}`;
+
+            // Actualizar el total del carrito
+            actualizarTotal();
 
         } catch (error) {
             console.error('Error al actualizar cantidad:', error);
@@ -72,9 +90,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const fila = boton.closest('tr');
             fila.remove();
 
+            // Actualizar el total del carrito después de la eliminación
+            actualizarTotal();
+
         } catch (error) {
             console.error('Error al eliminar producto:', error);
             alert('Hubo un problema al eliminar el producto.');
         }
     }
+
+    // Inicializa el total al cargar la página
+    actualizarTotal();
 });

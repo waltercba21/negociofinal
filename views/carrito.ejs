@@ -14,14 +14,13 @@
                             <th>Producto</th>
                             <th>Cantidad</th>
                             <th>Precio</th>
-                            <th>Total</th>
+                            <th>Sub-Total</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <% productos.forEach(function(producto) { %>
                             <tr>
-                                <!-- Nueva celda para mostrar la imagen -->
                                 <td>
                                     <% if (producto.imagen) { %>
                                         <img src="/uploads/productos/<%= producto.imagen %>" alt="<%= producto.nombre %>" class="imagen-miniatura">
@@ -29,7 +28,6 @@
                                         <img src="/uploads/default.jpg" alt="Imagen no disponible" class="imagen-miniatura">
                                     <% } %>
                                 </td>
-                            
                                 <td><%= producto.nombre %></td>
     
                                 <td>
@@ -49,6 +47,13 @@
                             </tr>
                         <% }) %>
                     </tbody>
+                    <tfoot>
+                        <tr class="carrito-footer">
+                            <td colspan="4"></td>
+                            <td><strong>Total</strong></td>
+                            <td id="total-carrito">$<%= total %></td> <!-- Total acumulado -->
+                        </tr>
+                    </tfoot>
                 </table>
             <% } else { %>
                 <p class="carrito-vacio">No tienes productos en tu carrito.</p>
@@ -59,6 +64,7 @@
             <a href="/carrito/finalizar" class="btn-finalizar">Finalizar Compra</a>
         </div>
     </main>
+    
     
     
 <%- include ./layouts/footer.ejs %>
