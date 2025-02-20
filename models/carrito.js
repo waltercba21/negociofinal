@@ -54,7 +54,7 @@ module.exports = {
         FROM productos_carrito pc
         JOIN productos p ON pc.producto_id = p.id
         LEFT JOIN imagenes_producto ip 
-            ON pc.producto_id = ip.producto_id AND ip.posicion = 1
+            ON pc.producto_id = ip.producto_id
         WHERE pc.carrito_id = ?;
     `;
 
@@ -66,15 +66,16 @@ module.exports = {
 
         console.log('✅ Resultados de productos con imágenes:', resultados);
 
-        // Agrupar los productos y asociar solo una imagen por producto
+        // Agrupar los productos por ID y asignar solo una imagen
         const productosMap = {};
 
         resultados.forEach(p => {
             // Si el producto ya está en el map, no lo repetimos
             if (!productosMap[p.id]) {
+                // Si hay imagen, la asignamos. Si no, usamos una predeterminada.
                 productosMap[p.id] = {
                     ...p,
-                    imagen: p.imagen,
+                    imagen: p.imagen || 'default_image.jpg',  // Imagen predeterminada si no hay imagen
                     cantidad: p.cantidad,
                     total: p.total
                 };
@@ -94,6 +95,7 @@ module.exports = {
         callback(null, productosConPrecios);
     });
 },
+
 obtenerProductoPorId: (id, callback) => {
     const query = 'SELECT * FROM productos_carrito WHERE id = ?';
     pool.query(query, [id], (error, resultados) => {
