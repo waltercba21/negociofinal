@@ -1,4 +1,4 @@
-const carrito = require('../models/carrito'); // Ajusta la ruta si es necesario
+const pool = require('../config/db'); // Ajusta según tu conexión a la base de datos.
 
 const calcularCantidadCarrito = (req, res, next) => {
     if (!req.session.usuario) {
@@ -6,27 +6,22 @@ const calcularCantidadCarrito = (req, res, next) => {
         return next();
     }
 
-    const id_usuario = req.session.usuario.id;
+    const usuarioId = req.session.usuario.id;
+    const query = `
+        SELECT SUM(pc.cantidad) AS total
+        FROM productos_carrito pc
+        JOIN carritos c ON pc.carrito_id = c.id
+        WHERE c.usuario_id = ? AND c.estado = 'activo'
+    `;
 
-    carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
-        if (error || carritoActivo.length === 0) {
+    pool.query(query, [usuarioId], (error, resultados) => {
+        if (error) {
+            console.error("Error al calcular el carrito:", error);
             res.locals.cantidadProductosCarrito = 0;
-            return next();
+        } else {
+            res.locals.cantidadProductosCarrito = resultados[0].total || 0;
         }
-
-        const id_carrito = carritoActivo[0].id;
-
-        carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-            if (error) {
-                res.locals.cantidadProductosCarrito = 0;
-                return next();
-            }
-
-            // Calcula la cantidad total de productos en el carrito
-            const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
-            res.locals.cantidadProductosCarrito = cantidadTotal;
-            next();
-        });
+        next();
     });
 };
 
