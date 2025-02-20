@@ -2053,7 +2053,7 @@ border-radius: 10px;
 .btn-cantidad {
   width: 25px; /* Ancho del botón */
   height: 25px; /* Alto del botón */
-  font-size: 14px; /* Tamaño del símbolo (+ o -) */
+  font-size: 10px; /* Tamaño del símbolo (+ o -) */
   padding: 0; /* Eliminar relleno extra */
   line-height: 1; /* Ajustar altura de línea */
   text-align: center; /* Asegurar que el contenido esté centrado */
