@@ -1982,6 +1982,93 @@ border-radius: 10px;
   font-weight: bold;
   color: #003f7d;
 }
+/*-----------------ICONO CARRITO HEADER -----------*/
+.carrito-icon {
+  position: relative;
+}
+
+#cart-count {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  background-color: red;
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 50%;
+}
+
+/*-----------------CARRITO COMPRAS -----------*/
+.carrito-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Título del Carrito */
+.carrito-titulo {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 30px;
+}
+
+/* Tabla del Carrito */
+.tabla-carrito {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.tabla-carrito th,
+.tabla-carrito td {
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.tabla-carrito thead {
+  background: #007bff;
+  color: white;
+}
+
+.fila-producto:nth-child(even) {
+  background: #f2f2f2;
+}
+
+/* Producto */
+.producto-nombre {
+  text-align: left;
+}
+
+/* Carrito Vacío */
+.carrito-vacio {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #6c757d;
+  margin: 40px 0;
+}
+
+/* Botón Finalizar Compra */
+.finalizar-compra {
+  text-align: right;
+  margin-top: 20px;
+}
+
+.btn-finalizar {
+  padding: 12px 24px;
+  background: #28a745;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.btn-finalizar:hover {
+  background: #218838;
+}
 
 
 /*--------------------Pedido Manual---------------*/
@@ -3160,15 +3247,6 @@ table td img:hover {
   .card {
     width: 90%; /* Ajusta el ancho de la tarjeta */
     margin-bottom: 20px; /* Añade un margen en la parte inferior para separar las tarjetas */
-  }
-
-  /*------------------CARRITO--------------*/
-  .carrito-contenedor {
-    flex-direction: column;
-  }
-
-  .carrito-productos {
-    margin-right: 0;
   }
 
   /*------------------INDEX CONTENEDOR OFERTAS Y AGREGADOS --------------*/

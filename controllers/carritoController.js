@@ -107,27 +107,24 @@ module.exports = {
         const id_usuario = req.session.usuario.id;
     
         carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
-            if (error) {
-                return res.status(500).send('Error al obtener el carrito');
-            }
+            if (error) return res.status(500).send('Error al obtener el carrito');
     
             if (carritoActivo.length === 0) {
-                return res.render('carrito', { productos: [] }); // Si no hay carrito, renderiza vacío
+                return res.render('carrito', { productos: [], cantidadProductosCarrito: 0 });
             }
     
             const id_carrito = carritoActivo[0].id;
     
-            // Obtener los productos del carrito
             carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-                if (error) {
-                    return res.status(500).send('Error al obtener los productos del carrito');
-                }
+                if (error) return res.status(500).send('Error al obtener los productos del carrito');
     
-                // Pasar los productos a la vista
-                res.render('carrito', { productos });
+                const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
+                
+                res.render('carrito', { productos, cantidadProductosCarrito: cantidadTotal });
             });
         });
-    },    
+    },
+    
 
     // Finalizar la compra
     finalizarCompra: (req, res) => {
