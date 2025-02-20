@@ -27,7 +27,7 @@
                                         <span><%= producto.cantidad %></span>
                                         <button class="btn-cantidad aumentar" data-id="<%= producto.id %>">+</button>
                                     </div>
-                                    <% console.log('Producto ID:', producto.id); %>
+                                    
                                 </td>
                                 <td>$<%= producto.precio_venta.toFixed(2) %></td>
                                 <td>$<%= producto.total.toFixed(2) %></td>
@@ -35,6 +35,8 @@
                                     <button class="btn-eliminar" data-id="<%= producto.id %>">🗑️ Eliminar</button>
                                 </td>
                             </tr>
+                            <% console.log('Producto ID:', producto.id); %>
+
                         <% }) %>
                     </tbody>
                 </table>

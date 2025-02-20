@@ -127,16 +127,15 @@ module.exports = {
     
             // Obtener los productos del carrito
             carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-                if (error) {
-                    console.error('Error al obtener los productos del carrito:', error);
-                    return res.status(500).send('Error al obtener los productos del carrito');
-                }
-    
-                // Calcular la cantidad total de productos en el carrito
-                const cantidadTotal = productos.reduce((acc, p) => acc + (p.cantidad || 0), 0);
-    
+                if (error) return res.status(500).send('Error al obtener los productos del carrito');
+            
+                console.log('Productos cargados en el carrito:', productos);
+            
+                const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
+            
                 res.render('carrito', { productos, cantidadProductosCarrito: cantidadTotal });
             });
+            
         });
     },    
     actualizarCantidad: (req, res) => {
