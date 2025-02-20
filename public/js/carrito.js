@@ -5,10 +5,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Función para actualizar el total del carrito
     function actualizarTotal() {
         let total = 0;
-        document.querySelectorAll('table tbody tr').forEach(fila => {
+        const filas = document.querySelectorAll('table tbody tr');
+
+        // Si no hay productos, establecer el total en $0.00
+        if (filas.length === 0) {
+            totalCarritoElement.textContent = '$0.00';
+            return;
+        }
+
+        filas.forEach(fila => {
             const subTotalCell = fila.querySelector('td:nth-child(5)');
-            const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim()) || 0;
-            total += subTotal;
+            if (subTotalCell) {
+                const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim()) || 0;
+                total += subTotal;
+            }
         });
 
         totalCarritoElement.textContent = `$${total.toFixed(2)}`;
@@ -87,12 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const { mensaje } = await response.json();
             console.log('Producto eliminado:', mensaje);
 
-            // Eliminar la fila del producto
+            // Obtener la fila antes de eliminarla
             const fila = boton.closest('tr');
-            fila.remove();
 
-            // Actualizar el total del carrito
+            // Actualizar el total antes de eliminar la fila
             actualizarTotal();
+
+            // Eliminar la fila solo si existe
+            if (fila) fila.remove();
 
         } catch (error) {
             console.error('Error al eliminar producto:', error);
