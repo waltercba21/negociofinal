@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para actualizar el globo de notificación (productos únicos en el carrito)
     function actualizarGlobo(cantidad) {
+        console.log(`Actualizando globo de notificación con cantidad: ${cantidad}`);
         if (alertaCantidad) {
             if (cantidad > 0) {
                 alertaCantidad.textContent = cantidad;
@@ -15,11 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para obtener la cantidad total del carrito (desde el servidor)
     async function obtenerCantidadCarrito() {
+        console.log('Obteniendo cantidad total del carrito...');
         try {
             const response = await fetch('/carrito/cantidad');
             if (!response.ok) throw new Error('Error al obtener la cantidad');
 
-            const { cantidadCarrito } = await response.json(); // <-- Asegúrate de usar la clave correcta
+            const { cantidadCarrito } = await response.json();
+            console.log(`Cantidad obtenida del carrito: ${cantidadCarrito}`);
             actualizarGlobo(cantidadCarrito);
         } catch (error) {
             console.error('Error al obtener la cantidad del carrito:', error);
@@ -34,15 +37,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalCarritoElement = document.getElementById('total-carrito');
 
     if (carritoContainer && totalCarritoElement) {
+        console.log('Vista de carrito detectada, manejando actualización de total...');
+
         // Función para actualizar el total del carrito
         function actualizarTotal() {
+            console.log('Actualizando total del carrito...');
             let total = 0;
-            let cantidadTotal = 0;      // Suma de todas las unidades
-            let cantidadUnica = 0;      // Cantidad de productos únicos
+            let cantidadTotal = 0;
+            let cantidadUnica = 0;
 
             const filas = document.querySelectorAll('table tbody tr');
 
             if (filas.length === 0) {
+                console.log('Carrito vacío, actualizando total a $0.00');
                 totalCarritoElement.textContent = '$0.00';
                 actualizarGlobo(0);
                 return;
@@ -62,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cantidadUnica++;  // Contar cada fila como un producto único
             });
 
+            console.log(`Total del carrito calculado: $${total.toFixed(2)}, cantidad total: ${cantidadTotal}, cantidad única: ${cantidadUnica}`);
             totalCarritoElement.textContent = `$${total.toFixed(2)}`;
             actualizarGlobo(cantidadUnica);  // Actualizar el globo con productos únicos
         }
@@ -73,17 +81,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (boton.classList.contains('btn-cantidad')) {
                 const productoId = boton.getAttribute('data-id');
                 const accion = boton.classList.contains('aumentar') ? 'aumentar' : 'disminuir';
+                console.log(`Clic en botón de cantidad. Producto ID: ${productoId}, Acción: ${accion}`);
                 await actualizarCantidad(productoId, accion, boton);
             }
 
             if (boton.classList.contains('btn-eliminar')) {
                 const productoId = boton.getAttribute('data-id');
+                console.log(`Clic en botón de eliminar. Producto ID: ${productoId}`);
                 await eliminarProducto(productoId, boton);
             }
         });
 
         // Función para actualizar la cantidad de un producto
         async function actualizarCantidad(id, accion, boton) {
+            console.log(`Actualizando cantidad de producto. ID: ${id}, Acción: ${accion}`);
             try {
                 const response = await fetch('/carrito/actualizar', {
                     method: 'POST',
@@ -94,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!response.ok) throw new Error('Error al actualizar');
 
                 const { nuevaCantidad } = await response.json();
+                console.log(`Cantidad actualizada con éxito. Nueva cantidad: ${nuevaCantidad}`);
 
                 const cantidadSpan = boton.parentElement.querySelector('.cantidad-producto');
                 if (cantidadSpan) cantidadSpan.textContent = nuevaCantidad;
@@ -105,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Actualizar el total general y el globo
                 actualizarTotal();
-                obtenerCantidadCarrito(); // <-- Llamar nuevamente para actualizar el globo
+                obtenerCantidadCarrito(); // Llamar nuevamente para actualizar el globo
             } catch (error) {
                 console.error('Error al actualizar cantidad:', error);
                 alert(`Error: ${error.message}`);
@@ -114,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Función para eliminar un producto
         async function eliminarProducto(id, boton) {
+            console.log(`Eliminando producto con ID: ${id}`);
             try {
                 const response = await fetch('/carrito/eliminar', {
                     method: 'POST',
@@ -127,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (fila) fila.remove();
 
                 actualizarTotal(); // Actualiza el total y el globo
-                obtenerCantidadCarrito(); // <-- Llamar nuevamente para actualizar el globo
+                obtenerCantidadCarrito(); // Llamar nuevamente para actualizar el globo
             } catch (error) {
                 console.error('Error al eliminar producto:', error);
                 alert(`Error: ${error.message}`);
