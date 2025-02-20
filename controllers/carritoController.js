@@ -100,9 +100,6 @@ module.exports = {
             res.status(500).send('Error interno del servidor.');
         }
     },
-    
-    
-    
     verCarrito: (req, res) => {
         if (!req.session || !req.session.usuario || !req.session.usuario.id) {
             return res.status(401).send('Debes iniciar sesión para acceder al carrito');
@@ -117,49 +114,17 @@ module.exports = {
                 return res.status(500).send('Error al obtener el carrito');
             }
     
-            if (!carritoActivo || carritoActivo.length === 0) {
-                // Si no hay productos en el carrito, renderiza con cantidad y total 0
-                return res.render('carrito', { productos: [], cantidadProductosCarrito: 0, total: 0 });
-            }
+            const cantidadTotal = carritoActivo.reduce((acc, p) => acc + p.cantidad, 0);
     
-            const id_carrito = carritoActivo[0].id;
-    
-            // Obtener los productos del carrito con las imágenes
-            carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-                if (error) return res.status(500).send('Error al obtener los productos del carrito');
-    
-                // Depurar: verificar que las imágenes llegan correctamente
-                console.log('Productos cargados en el carrito:', productos);
-    
-                // Calcular la cantidad total de productos
-                const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
-    
-                // Calcular el total del carrito
-                const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
-    
-                // Obtener la cantidad de productos para mostrar en el icono del carrito
-                carrito.obtenerProductosCarrito(id_usuario, (error, productosCarrito) => {
-                    if (error) {
-                        console.error('Error al obtener la cantidad del carrito:', error);
-                        return res.status(500).send('Error al obtener la cantidad del carrito');
-                    }
-    
-                    // Calcula la cantidad total de productos en el carrito
-                    const cantidadCarrito = productosCarrito.reduce((acc, p) => acc + p.cantidad, 0);
-    
-                    // Renderiza la vista del carrito pasando el total, productos y la cantidad de productos en el carrito
-                    res.render('carrito', { 
-                        productos, 
-                        cantidadProductosCarrito: cantidadTotal, 
-                        total, 
-                        cantidadCarrito 
-                    });
-                });
+            // Ahora renderizamos la vista pasando la cantidad del carrito
+            res.render('index', { 
+                cantidadCarrito: cantidadTotal, 
+                // pasa aquí cualquier otra variable que necesites
+                isLogged: req.session.usuario !== undefined,
+                userLogged: req.session.usuario
             });
         });
-    },
-    
-    
+    },    
     actualizarCantidad: (req, res) => {
         const { id, accion } = req.body;
     
