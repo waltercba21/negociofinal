@@ -2,39 +2,50 @@
 <%- include ./layouts/header.ejs %>
 
 <body>
-<main>
-    <h1>Mi Carrito de Compras</h1>
-
-    <div id="carrito-productos">
-        <% if (productos.length > 0) { %>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% productos.forEach(function(producto) { %>
+    <main class="carrito-container">
+        <h1>🛍️ Mi Carrito de Compras</h1>
+    
+        <div id="carrito-productos">
+            <% if (productos.length > 0) { %>
+                <table class="carrito-tabla">
+                    <thead>
                         <tr>
-                            <td><%= producto.nombre %></td>
-                            <td><%= producto.cantidad %></td>
-                            <td><%= producto.precio %></td>
-                            <td><%= producto.total %></td>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Total</th>
+                            <th>Acciones</th>
                         </tr>
-                    <% }) %>
-                </tbody>
-            </table>
-        <% } else { %>
-            <p>No tienes productos en tu carrito.</p>
-        <% } %>
-    </div>
-
-    <div id="finalizar-compra">
-        <a href="/carrito/finalizar" class="btn">Finalizar Compra</a>
-    </div>
-</main>
+                    </thead>
+                    <tbody>
+                        <% productos.forEach(function(producto) { %>
+                            <tr>
+                                <td><%= producto.nombre %></td>
+                                <td>
+                                    <div class="cantidad-control">
+                                        <button class="btn-cantidad disminuir" data-id="<%= producto.id %>">−</button>
+                                        <span><%= producto.cantidad %></span>
+                                        <button class="btn-cantidad aumentar" data-id="<%= producto.id %>">+</button>
+                                    </div>
+                                </td>
+                                <td>$<%= producto.precio_venta.toFixed(2) %></td>
+                                <td>$<%= producto.total.toFixed(2) %></td>
+                                <td>
+                                    <button class="btn-eliminar" data-id="<%= producto.id %>">🗑️ Eliminar</button>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <p class="carrito-vacio">No tienes productos en tu carrito.</p>
+            <% } %>
+        </div>
+    
+        <div id="finalizar-compra">
+            <a href="/carrito/finalizar" class="btn-finalizar">Finalizar Compra</a>
+        </div>
+    </main>
+    
 <%- include ./layouts/footer.ejs %>
 </body>
