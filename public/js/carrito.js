@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Obteniendo cantidad total del carrito...');
         try {
             const response = await fetch('/carrito/cantidad');
+            console.log('Respuesta obtenida de /carrito/cantidad:', response);
+
             if (!response.ok) throw new Error('Error al obtener la cantidad');
 
             const { cantidadCarrito } = await response.json();
@@ -59,7 +61,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const subTotalCell = fila.querySelector('td:nth-child(5)');
                 const cantidadCell = fila.querySelector('.cantidad-producto');
 
-                if (!subTotalCell || !cantidadCell) return;
+                if (!subTotalCell || !cantidadCell) {
+                    console.log('Error al encontrar celdas de subtotal o cantidad en una fila');
+                    return;
+                }
 
                 const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim()) || 0;
                 const cantidad = parseInt(cantidadCell.textContent) || 0;
