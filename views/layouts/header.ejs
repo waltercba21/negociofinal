@@ -31,10 +31,11 @@
        
         <a href="/carrito" class="carrito-icon">
           <i class="fa-solid fa-cart-shopping"></i>
-          <!-- Alerta con la cantidad de productos -->
-          <% if (cantidadCarrito > 0) { %>
-            <span class="cantidad-alerta"><%= cantidadCarrito %></span>
-          <% } %>
+          <!-- Alerta con la cantidad de productos (inicia en 0 y se actualiza dinámicamente) -->
+          <span class="cantidad-alerta" style="display: none;"><%= cantidadCarrito %></span>
+      </a>
+      
+      
           
         </a> 
         <a href="/users/logout">
