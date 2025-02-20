@@ -6,29 +6,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const productoId = e.target.getAttribute('data-id');
             const accion = e.target.classList.contains('aumentar') ? 'aumentar' : 'disminuir';
 
+            console.log('ID del producto:', productoId);
+            console.log('Acción:', accion);
+
             actualizarCantidad(productoId, accion);
         }
     });
 
-// Función para actualizar la cantidad
-async function actualizarCantidad(id, accion) {
-    try {
-        const response = await fetch(`/carrito/actualizar`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, accion })
-        });
+    async function actualizarCantidad(id, accion) {
+        try {
+            if (!id) throw new Error('ID del producto no válido');
 
-        const data = await response.json();
+            const response = await fetch(`/carrito/actualizar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, accion })
+            });
 
-        if (!response.ok) throw new Error(data.error || 'Error desconocido al actualizar');
+            const data = await response.json();
 
-        console.log('Cantidad actualizada:', data);
-        window.location.reload(); // O actualiza dinámicamente la vista
-    } catch (error) {
-        console.error('Error al actualizar cantidad:', error);
-        alert('Hubo un problema al actualizar el carrito.');
+            if (!response.ok) throw new Error(data.error || 'Error desconocido al actualizar');
+
+            console.log('Cantidad actualizada:', data);
+            window.location.reload();
+        } catch (error) {
+            console.error('Error al actualizar cantidad:', error);
+            alert('Hubo un problema al actualizar el carrito.');
+        }
     }
-}
-
 });
