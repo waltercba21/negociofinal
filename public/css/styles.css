@@ -2071,17 +2071,23 @@ border-radius: 10px;
 }
 .carrito-icon {
   position: relative;
+  display: inline-block;
 }
+
 
 .cantidad-alerta {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: -8px; /* Ajusta la posición vertical según sea necesario */
+  right: -8px; /* Ajusta la posición horizontal según sea necesario */
   background-color: red;
   color: white;
   border-radius: 50%;
-  padding: 5px;
-  font-size: 10px;
+  width: 18px; /* Define un tamaño para el círculo */
+  height: 18px; /* Define un tamaño para el círculo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px; /* Ajusta el tamaño de la fuente según el espacio disponible */
   font-weight: bold;
 }
 
