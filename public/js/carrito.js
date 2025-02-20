@@ -5,29 +5,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Función para actualizar el total del carrito
     function actualizarTotal() {
         let total = 0;
-        const filas = document.querySelectorAll('table tbody tr');
-        
-        filas.forEach(fila => {
+        document.querySelectorAll('table tbody tr').forEach(fila => {
             const subTotalCell = fila.querySelector('td:nth-child(5)');
-            const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim());
+            const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim()) || 0;
             total += subTotal;
         });
 
         totalCarritoElement.textContent = `$${total.toFixed(2)}`;
     }
 
-    carritoContainer.addEventListener('click', (e) => {
+    carritoContainer.addEventListener('click', async (e) => {
+        const boton = e.target;
+
         // Actualizar cantidad (aumentar o disminuir)
-        if (e.target.classList.contains('btn-cantidad')) {
-            const productoId = e.target.getAttribute('data-id');
-            const accion = e.target.classList.contains('aumentar') ? 'aumentar' : 'disminuir';
-            actualizarCantidad(productoId, accion, e.target);
+        if (boton.classList.contains('btn-cantidad')) {
+            const productoId = boton.getAttribute('data-id');
+            const accion = boton.classList.contains('aumentar') ? 'aumentar' : 'disminuir';
+            await actualizarCantidad(productoId, accion, boton);
         }
 
         // Eliminar producto
-        if (e.target.classList.contains('btn-eliminar')) {
-            const productoId = e.target.getAttribute('data-id');
-            eliminarProducto(productoId, e.target);
+        if (boton.classList.contains('btn-eliminar')) {
+            const productoId = boton.getAttribute('data-id');
+            await eliminarProducto(productoId, boton);
         }
     });
 
@@ -42,31 +42,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ id, accion })
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Error desconocido al actualizar');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error desconocido al actualizar');
+            }
 
-            console.log('Cantidad actualizada:', data);
+            const { nuevaCantidad } = await response.json();
+            console.log('Cantidad actualizada:', nuevaCantidad);
 
-            // Actualizar cantidad en el DOM sin recargar
+            // Actualizar cantidad en el DOM
             const cantidadSpan = boton.parentElement.querySelector('span');
-            let cantidadActual = parseInt(cantidadSpan.textContent, 10);
-            
-            if (accion === 'aumentar') cantidadActual++;
-            if (accion === 'disminuir' && cantidadActual > 1) cantidadActual--;
+            cantidadSpan.textContent = nuevaCantidad;
 
-            cantidadSpan.textContent = cantidadActual;
-
-            // Actualizar el total dinámicamente
-            const precio = parseFloat(boton.closest('tr').querySelector('td:nth-child(4)').textContent.replace('$', ''));
+            // Actualizar el subtotal dinámicamente
+            const precio = parseFloat(boton.closest('tr').querySelector('td:nth-child(4)').textContent.replace('$', '')) || 0;
             const totalCell = boton.closest('tr').querySelector('td:nth-child(5)');
-            totalCell.textContent = `$${(cantidadActual * precio).toFixed(2)}`;
+            totalCell.textContent = `$${(nuevaCantidad * precio).toFixed(2)}`;
 
             // Actualizar el total del carrito
             actualizarTotal();
 
         } catch (error) {
             console.error('Error al actualizar cantidad:', error);
-            alert('Hubo un problema al actualizar el carrito.');
+            alert(`Hubo un problema al actualizar el carrito: ${error.message}`);
         }
     }
 
@@ -81,21 +79,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ id })
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Error desconocido al eliminar');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error desconocido al eliminar');
+            }
 
-            console.log('Producto eliminado:', data);
+            const { mensaje } = await response.json();
+            console.log('Producto eliminado:', mensaje);
 
-            // Eliminar la fila del producto sin recargar
+            // Eliminar la fila del producto
             const fila = boton.closest('tr');
             fila.remove();
 
-            // Actualizar el total del carrito después de la eliminación
+            // Actualizar el total del carrito
             actualizarTotal();
 
         } catch (error) {
             console.error('Error al eliminar producto:', error);
-            alert('Hubo un problema al eliminar el producto.');
+            alert(`Hubo un problema al eliminar el producto: ${error.message}`);
         }
     }
 
