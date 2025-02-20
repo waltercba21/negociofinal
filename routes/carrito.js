@@ -20,7 +20,7 @@
 
     router.post('/actualizar', carritoController.actualizarCantidad);
 
-
+    router.post('/eliminar', carritoController.eliminarProducto);
 
     // Ruta para finalizar la compra
     router.get('/finalizar', carritoController.finalizarCompra);

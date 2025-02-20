@@ -83,6 +83,11 @@ actualizarCantidad: (id, cantidad, callback) => {
     const query = 'UPDATE productos_carrito SET cantidad = ? WHERE id = ?';
     pool.query(query, [cantidad, id], callback);
 },
+eliminarProductoPorId: (id, callback) => {
+    const query = 'DELETE FROM productos_carrito WHERE id = ?';
+    pool.query(query, [id], callback);
+},
+
 
 finalizarCompra: (id_carrito, callback) => {
         const query = 'UPDATE carritos SET actualizado_en = CURRENT_TIMESTAMP WHERE id = ?';

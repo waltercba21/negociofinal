@@ -181,6 +181,23 @@ module.exports = {
             });
         });
     },
+    eliminarProducto: (req, res) => {
+        const { id } = req.body;
+    
+        if (!id) {
+            return res.status(400).json({ error: 'ID del producto no proporcionado' });
+        }
+    
+        carrito.eliminarProductoPorId(id, (error) => {
+            if (error) {
+                console.error('Error al eliminar el producto del carrito:', error);
+                return res.status(500).json({ error: 'Error al eliminar el producto' });
+            }
+    
+            res.status(200).json({ mensaje: 'Producto eliminado del carrito' });
+        });
+    },
+        
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;
 
