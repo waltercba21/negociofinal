@@ -124,6 +124,23 @@ module.exports = {
             });
         });
     },
+    actualizarCantidad: (req, res) => {
+        const { id, accion } = req.body;
+    
+        carrito.obtenerProductoPorId(id, (error, producto) => {
+            if (error || !producto) return res.status(500).json({ error: 'Producto no encontrado' });
+    
+            let nuevaCantidad = producto.cantidad;
+    
+            if (accion === 'aumentar') nuevaCantidad++;
+            if (accion === 'disminuir' && nuevaCantidad > 1) nuevaCantidad--;
+    
+            carrito.actualizarCantidad(id, nuevaCantidad, (error) => {
+                if (error) return res.status(500).json({ error: 'Error al actualizar la cantidad' });
+                res.status(200).json({ mensaje: 'Cantidad actualizada' });
+            });
+        });
+    },
     
 
     // Finalizar la compra

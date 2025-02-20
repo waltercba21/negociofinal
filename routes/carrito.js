@@ -8,6 +8,9 @@ router.get('/crear', carritoController.crearCarrito);
 // Ruta para agregar un producto al carrito
 router.post('/agregar', carritoController.agregarProductoCarrito);
 
+
+router.post('/actualizar', carritoController.actualizarCantidad);
+
 // Ruta para ver el carrito de compras
 router.get('/', carritoController.verCarrito);
 

@@ -71,8 +71,18 @@ module.exports = {
         callback(null, productos);
     });
 },
+obtenerProductoPorId: (id, callback) => {
+    const query = 'SELECT * FROM productos_carrito WHERE id = ?';
+    pool.query(query, [id], (error, resultados) => {
+        if (error) return callback(error);
+        callback(null, resultados[0]);
+    });
+},
 
-
+actualizarCantidad: (id, cantidad, callback) => {
+    const query = 'UPDATE productos_carrito SET cantidad = ? WHERE id = ?';
+    pool.query(query, [cantidad, id], callback);
+},
 
     finalizarCompra: (id_carrito, callback) => {
         const query = 'UPDATE carritos SET actualizado_en = CURRENT_TIMESTAMP WHERE id = ?';
