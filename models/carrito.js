@@ -55,17 +55,17 @@ module.exports = {
         JOIN productos p ON pc.producto_id = p.id
         LEFT JOIN imagenes_producto ip 
             ON pc.producto_id = ip.producto_id
-        WHERE pc.carrito_id = ?
-        GROUP BY pc.id; -- Agrupar por producto para traer al menos una imagen
+        WHERE pc.carrito_id = ?;
     `;
 
     pool.query(query, [id_carrito], (error, resultados) => {
         if (error) {
+            console.error('❌ Error en la consulta de productos con imágenes:', error);
             return callback(error);
         }
 
         // ✅ Depuración: Verifica qué devuelve la consulta
-        console.log('Resultados de productos con imágenes:', resultados);
+        console.log('✅ Resultados de productos con imágenes:', resultados);
 
         // Asegurar que precio_venta y total sean números
         const productos = resultados.map(p => ({
