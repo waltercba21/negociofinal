@@ -60,7 +60,15 @@ module.exports = {
         if (error) {
             return callback(error);
         }
-        callback(null, resultados);
+
+        // Asegurar que precio_venta y total sean números
+        const productos = resultados.map(p => ({
+            ...p,
+            precio_venta: parseFloat(p.precio_venta) || 0,
+            total: parseFloat(p.total) || 0
+        }));
+
+        callback(null, productos);
     });
 },
 
