@@ -118,7 +118,7 @@ module.exports = {
             }
     
             if (!carritoActivo || carritoActivo.length === 0) {
-                return res.render('carrito', { productos: [], cantidadProductosCarrito: 0 });
+                return res.render('carrito', { productos: [], cantidadProductosCarrito: 0, total: 0 });
             }
     
             const id_carrito = carritoActivo[0].id;
@@ -132,7 +132,10 @@ module.exports = {
     
                 const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
     
-                res.render('carrito', { productos, cantidadProductosCarrito: cantidadTotal });
+                // Calcular el total
+                const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
+    
+                res.render('carrito', { productos, cantidadProductosCarrito: cantidadTotal, total });
             });
         });
     },
