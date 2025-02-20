@@ -104,26 +104,41 @@ module.exports = {
     
     
     verCarrito: (req, res) => {
+        // Validar la sesión y el usuario
+        if (!req.session || !req.session.usuario || !req.session.usuario.id) {
+            return res.status(401).send('Debes iniciar sesión para acceder al carrito');
+        }
+    
         const id_usuario = req.session.usuario.id;
     
+        // Obtener el carrito activo del usuario
         carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
-            if (error) return res.status(500).send('Error al obtener el carrito');
+            if (error) {
+                console.error('Error al obtener el carrito:', error);
+                return res.status(500).send('Error al obtener el carrito');
+            }
     
-            if (carritoActivo.length === 0) {
+            // Si no hay carrito activo, renderiza una vista vacía
+            if (!carritoActivo || carritoActivo.length === 0) {
                 return res.render('carrito', { productos: [], cantidadProductosCarrito: 0 });
             }
     
             const id_carrito = carritoActivo[0].id;
     
+            // Obtener los productos del carrito
             carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-                if (error) return res.status(500).send('Error al obtener los productos del carrito');
+                if (error) {
+                    console.error('Error al obtener los productos del carrito:', error);
+                    return res.status(500).send('Error al obtener los productos del carrito');
+                }
     
-                const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
-                
+                // Calcular la cantidad total de productos en el carrito
+                const cantidadTotal = productos.reduce((acc, p) => acc + (p.cantidad || 0), 0);
+    
                 res.render('carrito', { productos, cantidadProductosCarrito: cantidadTotal });
             });
         });
-    },
+    },    
     actualizarCantidad: (req, res) => {
         const { id, accion } = req.body;
     
