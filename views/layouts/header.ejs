@@ -32,9 +32,10 @@
         <a href="/carrito" class="carrito-icon">
           <i class="fa-solid fa-cart-shopping"></i>
           <!-- Alerta con la cantidad de productos -->
-          <% if (req.session && req.session.usuario && req.session.usuario.carrito && req.session.usuario.carrito.length > 0) { %>
-            <span class="cantidad-alerta"><%= req.session.usuario.carrito.reduce((acc, p) => acc + p.cantidad, 0) %></span>
+          <% if (cantidadCarrito > 0) { %>
+            <span class="cantidad-alerta"><%= cantidadCarrito %></span>
           <% } %>
+          
         </a> 
         <a href="/users/logout">
           <i class="fa-solid fa-right-from-bracket"></i>
