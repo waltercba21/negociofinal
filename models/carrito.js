@@ -54,7 +54,7 @@ module.exports = {
         FROM productos_carrito pc
         JOIN productos p ON pc.producto_id = p.id
         LEFT JOIN imagenes_producto ip 
-            ON pc.producto_id = ip.producto_id
+            ON pc.producto_id = ip.producto_id AND ip.posicion = 1
         WHERE pc.carrito_id = ?;
     `;
 
@@ -64,17 +64,34 @@ module.exports = {
             return callback(error);
         }
 
-        // ✅ Depuración: Verifica qué devuelve la consulta
         console.log('✅ Resultados de productos con imágenes:', resultados);
 
+        // Agrupar los productos y asociar solo una imagen por producto
+        const productosMap = {};
+
+        resultados.forEach(p => {
+            // Si el producto ya está en el map, no lo repetimos
+            if (!productosMap[p.id]) {
+                productosMap[p.id] = {
+                    ...p,
+                    imagen: p.imagen,
+                    cantidad: p.cantidad,
+                    total: p.total
+                };
+            }
+        });
+
+        // Convertir el mapa de productos a un array
+        const productos = Object.values(productosMap);
+
         // Asegurar que precio_venta y total sean números
-        const productos = resultados.map(p => ({
+        const productosConPrecios = productos.map(p => ({
             ...p,
             precio_venta: parseFloat(p.precio_venta) || 0,
             total: parseFloat(p.total) || 0
         }));
 
-        callback(null, productos);
+        callback(null, productosConPrecios);
     });
 },
 obtenerProductoPorId: (id, callback) => {
