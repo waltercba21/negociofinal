@@ -2,42 +2,39 @@
 <%- include ./layouts/header.ejs %>
 
 <body>
-<main class="carrito-container">
-    <h1 class="carrito-titulo">🛍️ Mi Carrito de Compras</h1>
+<main>
+    <h1>Mi Carrito de Compras</h1>
 
-    <div id="carrito-productos" class="carrito-productos">
+    <div id="carrito-productos">
         <% if (productos.length > 0) { %>
-            <table class="tabla-carrito">
+            <table>
                 <thead>
                     <tr>
-                        <th class="columna-producto">Producto</th>
-                        <th class="columna-cantidad">Cantidad</th>
-                        <th class="columna-precio">Precio</th>
-                        <th class="columna-total">Total</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio</th>
+                        <th>Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     <% productos.forEach(function(producto) { %>
-                        <tr class="fila-producto">
-                            <td class="producto-nombre"><%= producto.nombre %></td>
-                            <td class="producto-cantidad"><%= producto.cantidad %></td>
-                            <td class="producto-precio">$<%= producto.precio.toFixed(2) %></td>
-                            <td class="producto-total">$<%= producto.total.toFixed(2) %></td>
+                        <tr>
+                            <td><%= producto.nombre %></td>
+                            <td><%= producto.cantidad %></td>
+                            <td><%= producto.precio %></td>
+                            <td><%= producto.total %></td>
                         </tr>
                     <% }) %>
                 </tbody>
             </table>
         <% } else { %>
-            <p class="carrito-vacio">🛒 No tienes productos en tu carrito.</p>
+            <p>No tienes productos en tu carrito.</p>
         <% } %>
     </div>
 
-    <% if (productos.length > 0) { %>
-      <div id="finalizar-compra" class="finalizar-compra">
-          <a href="/carrito/finalizar" class="btn-finalizar">Finalizar Compra</a>
-      </div>
-    <% } %>
-
+    <div id="finalizar-compra">
+        <a href="/carrito/finalizar" class="btn">Finalizar Compra</a>
+    </div>
 </main>
 <%- include ./layouts/footer.ejs %>
 </body>
