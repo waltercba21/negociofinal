@@ -2077,8 +2077,8 @@ border-radius: 10px;
 
 .cantidad-alerta {
   position: absolute;
-  top: -4px; /* Reduce la distancia desde la parte superior */
-  right: -4px; /* Reduce la distancia desde el borde derecho */
+  top: -6px; /* Reduce la distancia desde la parte superior */
+  right: -1px; /* Reduce la distancia desde el borde derecho */
   background-color: red;
   color: white;
   border-radius: 50%;
