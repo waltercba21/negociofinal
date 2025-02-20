@@ -101,6 +101,7 @@ module.exports = {
         }
     },
     verCarrito: (req, res) => {
+        // Verificar si el usuario está autenticado
         if (!req.session || !req.session.usuario || !req.session.usuario.id) {
             return res.status(401).send('Debes iniciar sesión para acceder al carrito');
         }
@@ -114,17 +115,47 @@ module.exports = {
                 return res.status(500).send('Error al obtener el carrito');
             }
     
-            const cantidadTotal = carritoActivo.reduce((acc, p) => acc + p.cantidad, 0);
+            if (!carritoActivo || carritoActivo.length === 0) {
+                // Si no hay productos en el carrito, renderiza con cantidad y total 0
+                return res.render('carrito', { 
+                    productos: [], 
+                    cantidadProductosCarrito: 0, 
+                    total: 0, 
+                    cantidadCarrito: 0  // Aseguramos que cantidadCarrito esté definida
+                });
+            }
     
-            // Ahora renderizamos la vista pasando la cantidad del carrito
-            res.render('index', { 
-                cantidadCarrito: cantidadTotal, 
-                // pasa aquí cualquier otra variable que necesites
-                isLogged: req.session.usuario !== undefined,
-                userLogged: req.session.usuario
+            const id_carrito = carritoActivo[0].id;
+    
+            // Obtener los productos del carrito con las imágenes
+            carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+                if (error) return res.status(500).send('Error al obtener los productos del carrito');
+    
+                // Depurar: verificar que las imágenes llegan correctamente
+                console.log('Productos cargados en el carrito:', productos);
+    
+                // Calcular la cantidad total de productos
+                const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
+    
+                // Calcular el total del carrito
+                const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
+    
+                // Obtener la cantidad total de productos en el carrito para mostrar en el icono
+                const cantidadCarrito = productos.reduce((acc, p) => acc + p.cantidad, 0);
+    
+                // Renderiza la vista del carrito pasando la información relevante
+                res.render('carrito', { 
+                    productos, 
+                    cantidadProductosCarrito: cantidadTotal, 
+                    total, 
+                    cantidadCarrito  // Se pasa la cantidad de productos al header
+                });
             });
         });
-    },    
+    },
+    
+    
+    
     actualizarCantidad: (req, res) => {
         const { id, accion } = req.body;
     
