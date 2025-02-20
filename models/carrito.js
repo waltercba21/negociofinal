@@ -51,11 +51,11 @@ module.exports = {
   
   obtenerProductosCarrito: (id_carrito, callback) => {
     const query = `
-        SELECT p.nombre, pc.cantidad, p.precio_venta, (pc.cantidad * p.precio_venta) AS total
+        SELECT pc.id, p.nombre, pc.cantidad, p.precio_venta, (pc.cantidad * p.precio_venta) AS total
         FROM productos_carrito pc
         JOIN productos p ON pc.producto_id = p.id
         WHERE pc.carrito_id = ?`;
-    
+
     pool.query(query, [id_carrito], (error, resultados) => {
         if (error) {
             return callback(error);
