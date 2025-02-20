@@ -10,6 +10,7 @@
                 <table class="carrito-tabla">
                     <thead>
                         <tr class="carrito-header">
+                            <th>Imagen</th>
                             <th>Producto</th>
                             <th>Cantidad</th>
                             <th>Precio</th>
@@ -20,24 +21,32 @@
                     <tbody>
                         <% productos.forEach(function(producto) { %>
                             <tr>
+                                <!-- Nueva celda para mostrar la imagen -->
+                                <td>
+                                    <% if (producto.imagen) { %>
+                                        <img src="/uploads/<%= producto.imagen %>" alt="<%= producto.nombre %>" class="imagen-miniatura">
+                                    <% } else { %>
+                                        <img src="/uploads/default.jpg" alt="Imagen no disponible" class="imagen-miniatura">
+                                    <% } %>
+                                </td>
+    
                                 <td><%= producto.nombre %></td>
+    
                                 <td>
                                     <div class="cantidad-control">
                                         <button class="btn-cantidad disminuir" data-id="<%= producto.id %>">−</button>
                                         <span><%= producto.cantidad %></span>
                                         <button class="btn-cantidad aumentar" data-id="<%= producto.id %>">+</button>
                                     </div>
-                                    
                                 </td>
+    
                                 <td>$<%= producto.precio_venta.toFixed(2) %></td>
                                 <td>$<%= producto.total.toFixed(2) %></td>
+    
                                 <td>
                                     <button class="btn-eliminar" data-id="<%= producto.id %>">🗑️ Eliminar</button>
                                 </td>
-                                
                             </tr>
-                            <% console.log('Producto ID:', producto.id); %>
-
                         <% }) %>
                     </tbody>
                 </table>
@@ -50,6 +59,7 @@
             <a href="/carrito/finalizar" class="btn-finalizar">Finalizar Compra</a>
         </div>
     </main>
+    
     
 <%- include ./layouts/footer.ejs %>
 <script src="/js/carrito.js"></script> 

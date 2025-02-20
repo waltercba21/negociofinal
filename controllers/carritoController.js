@@ -104,7 +104,6 @@ module.exports = {
     
     
     verCarrito: (req, res) => {
-        // Validar la sesión y el usuario
         if (!req.session || !req.session.usuario || !req.session.usuario.id) {
             return res.status(401).send('Debes iniciar sesión para acceder al carrito');
         }
@@ -118,24 +117,22 @@ module.exports = {
                 return res.status(500).send('Error al obtener el carrito');
             }
     
-            // Si no hay carrito activo, renderiza una vista vacía
             if (!carritoActivo || carritoActivo.length === 0) {
                 return res.render('carrito', { productos: [], cantidadProductosCarrito: 0 });
             }
     
             const id_carrito = carritoActivo[0].id;
     
-            // Obtener los productos del carrito
+            // Obtener los productos del carrito con las imágenes
             carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
                 if (error) return res.status(500).send('Error al obtener los productos del carrito');
-            
+    
                 console.log('Productos cargados en el carrito:', productos);
-            
+    
                 const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
-            
+    
                 res.render('carrito', { productos, cantidadProductosCarrito: cantidadTotal });
             });
-            
         });
     },    
     actualizarCantidad: (req, res) => {
@@ -197,7 +194,7 @@ module.exports = {
             res.status(200).json({ mensaje: 'Producto eliminado del carrito' });
         });
     },
-        
+
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;
 
