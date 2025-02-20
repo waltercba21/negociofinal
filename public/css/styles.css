@@ -2077,17 +2077,17 @@ border-radius: 10px;
 
 .cantidad-alerta {
   position: absolute;
-  top: -8px; /* Ajusta la posición vertical según sea necesario */
-  right: -8px; /* Ajusta la posición horizontal según sea necesario */
+  top: -4px; /* Reduce la distancia desde la parte superior */
+  right: -4px; /* Reduce la distancia desde el borde derecho */
   background-color: red;
   color: white;
   border-radius: 50%;
-  width: 18px; /* Define un tamaño para el círculo */
-  height: 18px; /* Define un tamaño para el círculo */
+  width: 18px; /* Mantiene el tamaño del círculo */
+  height: 18px; /* Mantiene el tamaño del círculo */
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 10px; /* Ajusta el tamaño de la fuente según el espacio disponible */
+  font-size: 10px; /* Ajusta el tamaño de la fuente */
   font-weight: bold;
 }
 
