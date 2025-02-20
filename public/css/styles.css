@@ -2057,6 +2057,8 @@ border-radius: 10px;
   padding: 0; /* Eliminar relleno extra */
   line-height: 1; /* Ajustar altura de línea */
   text-align: center; /* Asegurar que el contenido esté centrado */
+  color:#fff;
+  background-color: #005099;
   border-radius: 50%; /* Hacer los botones circulares */
   cursor: pointer; /* Mostrar cursor al pasar por encima */
 }
