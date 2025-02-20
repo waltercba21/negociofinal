@@ -28,6 +28,7 @@ app.use(session({
     maxAge: 6200000 
   }
 }));
+app.use(calcularCantidadCarrito);
 app.use((req, res, next) => {
   if (req.session.usuario && Date.now() > req.session.cookie.expires) {
     res.redirect('/');

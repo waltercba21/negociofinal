@@ -68,9 +68,6 @@ module.exports = {
             }
         });
     },
-    
-    
-
     lista: async function (req, res) {
       const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
       const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
