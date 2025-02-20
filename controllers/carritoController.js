@@ -134,8 +134,8 @@ module.exports = {
                 // Depurar: verificar que las imágenes llegan correctamente
                 console.log('Productos cargados en el carrito:', productos);
     
-                // Calcular la cantidad total de productos (cantidad de productos únicos)
-                const cantidadCarrito = productos.length; // Contamos solo los productos únicos
+                // Calcular la cantidad de productos únicos en el carrito (no las unidades)
+                const cantidadCarrito = productos.length; // Aquí contamos los productos únicos
     
                 // Calcular el total del carrito
                 const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
@@ -148,11 +148,12 @@ module.exports = {
                     productos, 
                     cantidadProductosCarrito: cantidadTotal, 
                     total, 
-                    cantidadCarrito,  // Se pasa la cantidad de productos al header
+                    cantidadCarrito,  // Se pasa la cantidad de productos únicos al header
                 });
             });
         });
     },
+    
     
     actualizarCantidad: (req, res) => {
         const { id, accion } = req.body;

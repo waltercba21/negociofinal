@@ -1,7 +1,6 @@
 const conexion = require('../config/conexion')
 const producto = require('../models/producto')
 const carrito = require('../models/carrito'); // Ajusta la ruta según corresponda
-
 var borrar = require('fs');
 const PDFDocument = require('pdfkit');
 const blobStream  = require('blob-stream');
@@ -33,10 +32,11 @@ module.exports = {
                                 if (carritoActivo && carritoActivo.length > 0) {
                                     const id_carrito = carritoActivo[0].id;
     
-                                    // Obtener los productos del carrito y calcular la cantidad total
+                                    // Obtener los productos del carrito
                                     carrito.obtenerProductosCarrito(id_carrito, (error, productosCarrito) => {
                                         if (productosCarrito) {
-                                            cantidadCarrito = productosCarrito.reduce((acc, p) => acc + p.cantidad, 0);
+                                            // Contamos los productos únicos en el carrito
+                                            cantidadCarrito = productosCarrito.length;
                                         }
                                         
                                         // Renderizar la vista pasando todos los datos
@@ -68,6 +68,7 @@ module.exports = {
             }
         });
     },
+    
     
 
     lista: async function (req, res) {
