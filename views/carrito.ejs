@@ -25,10 +25,12 @@
                                 <td>
                                     <% if (producto.imagen) { %>
                                         <img src="/uploads/productos/<%= producto.imagen %>" alt="<%= producto.nombre %>" class="imagen-miniatura">
+                                        <p>Ruta de la imagen: /uploads/productos/<%= producto.imagen %></p>
                                     <% } else { %>
                                         <img src="/uploads/default.jpg" alt="Imagen no disponible" class="imagen-miniatura">
                                     <% } %>
                                 </td>
+                                
                                 
                                 
     
