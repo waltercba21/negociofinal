@@ -2053,12 +2053,13 @@ border-radius: 10px;
 .btn-cantidad {
   width: 25px; /* Ancho del botón */
   height: 25px; /* Alto del botón */
-  font-size: 10px; /* Tamaño del símbolo (+ o -) */
+  font-size: 20px; /* Tamaño del símbolo (+ o -) */
   padding: 0; /* Eliminar relleno extra */
   line-height: 1; /* Ajustar altura de línea */
   text-align: center; /* Asegurar que el contenido esté centrado */
   color:#fff;
   background-color: #005099;
+  border: none;
   border-radius: 50%; /* Hacer los botones circulares */
   cursor: pointer; /* Mostrar cursor al pasar por encima */
 }
