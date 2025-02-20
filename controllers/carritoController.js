@@ -148,16 +148,12 @@ module.exports = {
                     productos, 
                     cantidadProductosCarrito: cantidadTotal, 
                     total, 
-                    cantidadCarrito, // Se pasa la cantidad de productos al header
-                    cantidadCarrito // También lo pasamos para las vistas que incluyen el header
+                    cantidadCarrito,  // Se pasa la cantidad de productos al header
                 });
             });
         });
     },
-    
-    
-    
-    
+
     actualizarCantidad: (req, res) => {
         const { id, accion } = req.body;
     
