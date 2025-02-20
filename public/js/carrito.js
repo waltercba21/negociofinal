@@ -1,138 +1,138 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const carritoContainer = document.getElementById('carrito-productos');
-    const totalCarritoElement = document.getElementById('total-carrito');
     const alertaCantidad = document.querySelector('.cantidad-alerta');
 
-    // Verifica que los elementos existen antes de proceder
-    if (!carritoContainer || !totalCarritoElement || !alertaCantidad) {
-        console.warn('Elementos del carrito no encontrados.');
-        return;
+    // Función para actualizar el globo de notificación (productos únicos en el carrito)
+    function actualizarGlobo(cantidad) {
+        if (alertaCantidad) {
+            if (cantidad > 0) {
+                alertaCantidad.textContent = cantidad;
+                alertaCantidad.style.display = 'inline-block';
+            } else {
+                alertaCantidad.style.display = 'none';
+            }
+        }
     }
 
-    // Función para actualizar el total del carrito
-    function actualizarTotal() {
-        let total = 0;
-        let cantidadTotal = 0;
+    // Función para obtener la cantidad total del carrito (desde el servidor)
+    async function obtenerCantidadCarrito() {
+        try {
+            const response = await fetch('/carrito/cantidad');
+            if (!response.ok) throw new Error('Error al obtener la cantidad');
 
-        const filas = document.querySelectorAll('table tbody tr');
+            const { cantidadCarrito } = await response.json(); // <-- Asegúrate de usar la clave correcta
+            actualizarGlobo(cantidadCarrito);
+        } catch (error) {
+            console.error('Error al obtener la cantidad del carrito:', error);
+        }
+    }
 
-        // Si no hay productos, mostrar total $0.00 y ocultar el globo
-        if (filas.length === 0) {
-            totalCarritoElement.textContent = '$0.00';
-            actualizarGlobo(0);
-            return;
+    // Llamar a la función al cargar cualquier página
+    obtenerCantidadCarrito();
+
+    // Si estamos en la vista del carrito, manejamos actualizaciones dinámicas
+    const carritoContainer = document.getElementById('carrito-productos');
+    const totalCarritoElement = document.getElementById('total-carrito');
+
+    if (carritoContainer && totalCarritoElement) {
+        // Función para actualizar el total del carrito
+        function actualizarTotal() {
+            let total = 0;
+            let cantidadTotal = 0;      // Suma de todas las unidades
+            let cantidadUnica = 0;      // Cantidad de productos únicos
+
+            const filas = document.querySelectorAll('table tbody tr');
+
+            if (filas.length === 0) {
+                totalCarritoElement.textContent = '$0.00';
+                actualizarGlobo(0);
+                return;
+            }
+
+            filas.forEach(fila => {
+                const subTotalCell = fila.querySelector('td:nth-child(5)');
+                const cantidadCell = fila.querySelector('.cantidad-producto');
+
+                if (!subTotalCell || !cantidadCell) return;
+
+                const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim()) || 0;
+                const cantidad = parseInt(cantidadCell.textContent) || 0;
+
+                total += subTotal;
+                cantidadTotal += cantidad;
+                cantidadUnica++;  // Contar cada fila como un producto único
+            });
+
+            totalCarritoElement.textContent = `$${total.toFixed(2)}`;
+            actualizarGlobo(cantidadUnica);  // Actualizar el globo con productos únicos
         }
 
-        filas.forEach(fila => {
-            const subTotalCell = fila.querySelector('td:nth-child(5)');
-            const cantidadCell = fila.querySelector('.cantidad-producto');
+        // Manejar clics en aumentar, disminuir y eliminar
+        carritoContainer.addEventListener('click', async (e) => {
+            const boton = e.target;
 
-            // Validar que las celdas existen antes de acceder
-            if (!subTotalCell || !cantidadCell) return;
+            if (boton.classList.contains('btn-cantidad')) {
+                const productoId = boton.getAttribute('data-id');
+                const accion = boton.classList.contains('aumentar') ? 'aumentar' : 'disminuir';
+                await actualizarCantidad(productoId, accion, boton);
+            }
 
-            const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim()) || 0;
-            const cantidad = parseInt(cantidadCell.textContent) || 0;
-
-            total += subTotal;
-            cantidadTotal += cantidad;
+            if (boton.classList.contains('btn-eliminar')) {
+                const productoId = boton.getAttribute('data-id');
+                await eliminarProducto(productoId, boton);
+            }
         });
 
-        totalCarritoElement.textContent = `$${total.toFixed(2)}`;
-        actualizarGlobo(cantidadTotal);
-    }
+        // Función para actualizar la cantidad de un producto
+        async function actualizarCantidad(id, accion, boton) {
+            try {
+                const response = await fetch('/carrito/actualizar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, accion })
+                });
 
-    // Función para actualizar el globo de notificación
-    function actualizarGlobo(cantidad) {
-        if (cantidad > 0) {
-            alertaCantidad.textContent = cantidad;
-            alertaCantidad.style.display = 'inline-block';
-        } else {
-            alertaCantidad.style.display = 'none';
-        }
-    }
+                if (!response.ok) throw new Error('Error al actualizar');
 
-    carritoContainer.addEventListener('click', async (e) => {
-        const boton = e.target;
+                const { nuevaCantidad } = await response.json();
 
-        if (boton.classList.contains('btn-cantidad')) {
-            const productoId = boton.getAttribute('data-id');
-            const accion = boton.classList.contains('aumentar') ? 'aumentar' : 'disminuir';
-            await actualizarCantidad(productoId, accion, boton);
-        }
+                const cantidadSpan = boton.parentElement.querySelector('.cantidad-producto');
+                if (cantidadSpan) cantidadSpan.textContent = nuevaCantidad;
 
-        if (boton.classList.contains('btn-eliminar')) {
-            const productoId = boton.getAttribute('data-id');
-            await eliminarProducto(productoId, boton);
-        }
-    });
+                // Recalcular el subtotal del producto
+                const precio = parseFloat(boton.closest('tr').querySelector('td:nth-child(4)').textContent.replace('$', '')) || 0;
+                const totalCell = boton.closest('tr').querySelector('td:nth-child(5)');
+                if (totalCell) totalCell.textContent = `$${(nuevaCantidad * precio).toFixed(2)}`;
 
-    // Función para actualizar la cantidad dinámicamente
-    async function actualizarCantidad(id, accion, boton) {
-        try {
-            if (!id) throw new Error('ID del producto no válido');
-
-            const response = await fetch(`/carrito/actualizar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, accion })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Error desconocido al actualizar');
+                // Actualizar el total general y el globo
+                actualizarTotal();
+            } catch (error) {
+                console.error('Error al actualizar cantidad:', error);
+                alert(`Error: ${error.message}`);
             }
-
-            const { nuevaCantidad } = await response.json();
-
-            // Actualizar la cantidad en el DOM
-            const cantidadSpan = boton.parentElement.querySelector('.cantidad-producto');
-            if (cantidadSpan) cantidadSpan.textContent = nuevaCantidad;
-
-            // Actualizar el subtotal
-            const precio = parseFloat(boton.closest('tr').querySelector('td:nth-child(4)').textContent.replace('$', '')) || 0;
-            const totalCell = boton.closest('tr').querySelector('td:nth-child(5)');
-            if (totalCell) totalCell.textContent = `$${(nuevaCantidad * precio).toFixed(2)}`;
-
-            // Actualizar el total del carrito y el globo
-            actualizarTotal();
-
-        } catch (error) {
-            console.error('Error al actualizar cantidad:', error);
-            alert(`Hubo un problema al actualizar el carrito: ${error.message}`);
         }
-    }
 
-    // Función para eliminar un producto dinámicamente
-    async function eliminarProducto(id, boton) {
-        try {
-            if (!id) throw new Error('ID del producto no válido');
+        // Función para eliminar un producto
+        async function eliminarProducto(id, boton) {
+            try {
+                const response = await fetch('/carrito/eliminar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
 
-            const response = await fetch(`/carrito/eliminar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
-            });
+                if (!response.ok) throw new Error('Error al eliminar');
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Error desconocido al eliminar');
+                const fila = boton.closest('tr');
+                if (fila) fila.remove();
+
+                actualizarTotal(); // Actualiza el total y el globo
+            } catch (error) {
+                console.error('Error al eliminar producto:', error);
+                alert(`Error: ${error.message}`);
             }
-
-            const { mensaje } = await response.json();
-
-            // Eliminar la fila del producto
-            const fila = boton.closest('tr');
-            if (fila) fila.remove();
-
-            // Actualizar el total del carrito y el globo
-            actualizarTotal();
-
-        } catch (error) {
-            console.error('Error al eliminar producto:', error);
-            alert(`Hubo un problema al eliminar el producto: ${error.message}`);
         }
-    }
 
-    // Inicializa el total al cargar la página
-    actualizarTotal();
+        // Inicializa el total en la vista del carrito
+        actualizarTotal();
+    }
 });
