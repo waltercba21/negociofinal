@@ -3,6 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalCarritoElement = document.getElementById('total-carrito');
     const alertaCantidad = document.querySelector('.cantidad-alerta');
 
+    // Verifica que los elementos existen antes de proceder
+    if (!carritoContainer || !totalCarritoElement || !alertaCantidad) {
+        console.warn('Elementos del carrito no encontrados.');
+        return;
+    }
+
     // Función para actualizar el total del carrito
     function actualizarTotal() {
         let total = 0;
@@ -10,9 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const filas = document.querySelectorAll('table tbody tr');
 
+        // Si no hay productos, mostrar total $0.00 y ocultar el globo
         if (filas.length === 0) {
             totalCarritoElement.textContent = '$0.00';
-            actualizarGlobo(0); // Si no hay productos, mostrar 0 en el globo
+            actualizarGlobo(0);
             return;
         }
 
@@ -20,11 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const subTotalCell = fila.querySelector('td:nth-child(5)');
             const cantidadCell = fila.querySelector('.cantidad-producto');
 
+            // Validar que las celdas existen antes de acceder
+            if (!subTotalCell || !cantidadCell) return;
+
             const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim()) || 0;
             const cantidad = parseInt(cantidadCell.textContent) || 0;
 
             total += subTotal;
-            cantidadTotal += cantidad; // Sumar la cantidad total de productos
+            cantidadTotal += cantidad;
         });
 
         totalCarritoElement.textContent = `$${total.toFixed(2)}`;
@@ -44,14 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
     carritoContainer.addEventListener('click', async (e) => {
         const boton = e.target;
 
-        // Actualizar cantidad (aumentar o disminuir)
         if (boton.classList.contains('btn-cantidad')) {
             const productoId = boton.getAttribute('data-id');
             const accion = boton.classList.contains('aumentar') ? 'aumentar' : 'disminuir';
             await actualizarCantidad(productoId, accion, boton);
         }
 
-        // Eliminar producto
         if (boton.classList.contains('btn-eliminar')) {
             const productoId = boton.getAttribute('data-id');
             await eliminarProducto(productoId, boton);
@@ -76,14 +84,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const { nuevaCantidad } = await response.json();
 
-            // Actualizar cantidad en el DOM
+            // Actualizar la cantidad en el DOM
             const cantidadSpan = boton.parentElement.querySelector('.cantidad-producto');
-            cantidadSpan.textContent = nuevaCantidad;
+            if (cantidadSpan) cantidadSpan.textContent = nuevaCantidad;
 
-            // Actualizar el subtotal dinámicamente
+            // Actualizar el subtotal
             const precio = parseFloat(boton.closest('tr').querySelector('td:nth-child(4)').textContent.replace('$', '')) || 0;
             const totalCell = boton.closest('tr').querySelector('td:nth-child(5)');
-            totalCell.textContent = `$${(nuevaCantidad * precio).toFixed(2)}`;
+            if (totalCell) totalCell.textContent = `$${(nuevaCantidad * precio).toFixed(2)}`;
 
             // Actualizar el total del carrito y el globo
             actualizarTotal();
