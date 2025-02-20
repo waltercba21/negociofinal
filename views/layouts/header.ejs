@@ -6,14 +6,12 @@
   <button class="hamburger" onclick="toggleMenu()">☰</button>
 
   <!-- header.ejs -->
-
   <nav class="navbar">
     <a class="nav-link" href="/">INICIO</a>
     <a class="nav-link" href="/productos">PRODUCTOS</a>
     <a class="nav-link" href="/productos/ofertas">OFERTAS</a>
 
     <% if (isAdminUser) { %> <!-- Verifica si el usuario es admin usando la variable definida en el middleware -->
-      <!-- Secciones visibles solo para administradores -->
       <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
       <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
       <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
@@ -33,6 +31,10 @@
        
         <a href="/carrito" class="carrito-icon">
           <i class="fa-solid fa-cart-shopping"></i>
+          <!-- Alerta con la cantidad de productos -->
+          <% if (cantidadCarrito > 0) { %>
+            <span class="cantidad-alerta"><%= cantidadCarrito %></span>
+          <% } %>
         </a> 
         <a href="/users/logout">
           <i class="fa-solid fa-right-from-bracket"></i>
@@ -44,5 +46,6 @@
       <a class="register-link" href="/users/register">Registrarme</a>
     <% } %>  
   </div>
+
   <script src="js/index.js"></script> 
 </header>

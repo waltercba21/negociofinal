@@ -1982,23 +1982,9 @@ border-radius: 10px;
   font-weight: bold;
   color: #003f7d;
 }
-/*-----------------ICONO CARRITO HEADER -----------*/
-.carrito-icon {
-  position: relative;
-}
-
-#cart-count {
-  position: absolute;
-  top: -5px;
-  right: -10px;
-  background-color: red;
-  color: white;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 50%;
-}
 
 /*--------------VISTA CARRITO DE COMPRAS----------------*/
+
 /* Contenedor principal del carrito */
 .carrito-container {
   max-width: 900px;
@@ -2083,6 +2069,22 @@ border-radius: 10px;
 .btn-eliminar:hover {
   background: #c0392b;
 }
+.carrito-icon {
+  position: relative;
+}
+
+.cantidad-alerta {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 5px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
 .carrito-total td {
   font-weight: bold;
   text-align: right;
