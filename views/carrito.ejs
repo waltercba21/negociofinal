@@ -24,7 +24,7 @@
                                 <!-- Nueva celda para mostrar la imagen -->
                                 <td>
                                     <% if (producto.imagen) { %>
-                                        <img src="/uploads/<%= producto.imagen %>" alt="<%= producto.nombre %>" class="imagen-miniatura">
+                                        <img src="/uploads/productos/<%= producto.imagen %>" alt="<%= producto.nombre %>" class="imagen-miniatura">
                                     <% } else { %>
                                         <img src="/uploads/default.jpg" alt="Imagen no disponible" class="imagen-miniatura">
                                     <% } %>
