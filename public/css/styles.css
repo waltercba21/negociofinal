@@ -2043,29 +2043,29 @@ border-radius: 10px;
   border-bottom: 1px solid #ddd;
 }
 
-/* Control de cantidad */
+/* Ajustar el tamaño de los botones de cantidad */
 .cantidad-control {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
+  display: flex; /* Alinear horizontalmente */
+  align-items: center; /* Centrar verticalmente */
+  gap: 5px; /* Espaciado entre botones y cantidad */
 }
 
-/* Botones de cantidad */
 .btn-cantidad {
-  background: #2980b9;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.3s;
+  width: 25px; /* Ancho del botón */
+  height: 25px; /* Alto del botón */
+  font-size: 14px; /* Tamaño del símbolo (+ o -) */
+  padding: 0; /* Eliminar relleno extra */
+  line-height: 1; /* Ajustar altura de línea */
+  text-align: center; /* Asegurar que el contenido esté centrado */
+  border-radius: 50%; /* Hacer los botones circulares */
+  cursor: pointer; /* Mostrar cursor al pasar por encima */
 }
 
-.btn-cantidad:hover {
-  background: #1f618d;
+.cantidad-control span {
+  min-width: 30px; /* Asegura que el número no se comprima */
+  text-align: center; /* Centrar el número */
 }
+
 
 /* Botón eliminar */
 .btn-eliminar {
