@@ -2089,7 +2089,7 @@ border-radius: 10px;
 }
 .carrito-total td#total-carrito {
   font-size: 1.2em;
-  color: #007BFF; /* O el color que prefieras */
+  color: #1F487E;
 }
 .carrito-footer {
   display: none; /* Ocultar el pie de tabla si ya mostramos el total en el cuerpo */
