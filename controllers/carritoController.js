@@ -127,6 +127,7 @@ module.exports = {
             carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
                 if (error) return res.status(500).send('Error al obtener los productos del carrito');
     
+                // Depurar: verificar que las imágenes llegan correctamente
                 console.log('Productos cargados en el carrito:', productos);
     
                 const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
@@ -134,7 +135,8 @@ module.exports = {
                 res.render('carrito', { productos, cantidadProductosCarrito: cantidadTotal });
             });
         });
-    },    
+    },
+    
     actualizarCantidad: (req, res) => {
         const { id, accion } = req.body;
     

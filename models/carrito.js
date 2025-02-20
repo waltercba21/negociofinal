@@ -53,13 +53,18 @@ module.exports = {
                (pc.cantidad * p.precio_venta) AS total, ip.imagen
         FROM productos_carrito pc
         JOIN productos p ON pc.producto_id = p.id
-        LEFT JOIN imagenes_producto ip ON pc.producto_id = ip.producto_id AND ip.posicion = 1
+        LEFT JOIN imagenes_producto ip 
+            ON pc.producto_id = ip.producto_id 
+            AND ip.posicion = 1
         WHERE pc.carrito_id = ?`;
 
     pool.query(query, [id_carrito], (error, resultados) => {
         if (error) {
             return callback(error);
         }
+
+        // Depuración: ¿qué devuelve la consulta?
+        console.log('Resultados de productos con imágenes:', resultados);
 
         // Asegurar que precio_venta y total sean números
         const productos = resultados.map(p => ({
@@ -71,6 +76,7 @@ module.exports = {
         callback(null, productos);
     });
 },
+
 obtenerProductoPorId: (id, callback) => {
     const query = 'SELECT * FROM productos_carrito WHERE id = ?';
     pool.query(query, [id], (error, resultados) => {
