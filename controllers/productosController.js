@@ -1,5 +1,7 @@
 const conexion = require('../config/conexion')
 const producto = require('../models/producto')
+const carrito = require('../models/carrito'); // Ajusta la ruta según corresponda
+
 var borrar = require('fs');
 const PDFDocument = require('pdfkit');
 const blobStream  = require('blob-stream');
