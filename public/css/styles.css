@@ -2074,22 +2074,22 @@ border-radius: 10px;
   display: inline-block;
 }
 
-
 .cantidad-alerta {
   position: absolute;
-  top: -8px; /* Reduce la distancia desde la parte superior */
-  right: -1px;
+  top: -8px; /* Mantiene la distancia desde la parte superior */
+  right: -8px; /* Ajuste para asegurar que se alinee a la derecha */
   background-color: red;
   color: white;
   border-radius: 50%;
-  width: 18px; /* Mantiene el tamaño del círculo */
-  height: 18px; /* Mantiene el tamaño del círculo */
+  width: 20px; /* Aumenta un poco el tamaño del círculo */
+  height: 20px; /* Aumenta el tamaño del círculo */
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 10px; /* Ajusta el tamaño de la fuente */
+  font-size: 12px; /* Ajusta el tamaño de la fuente para que no se vea tan pequeño */
   font-weight: bold;
 }
+
 
 .carrito-total td {
   font-weight: bold;
