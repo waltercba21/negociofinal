@@ -214,7 +214,33 @@ module.exports = {
             });
         });
     },
+    obtenerCantidadCarrito: (req, res) => {
+        const id_usuario = req.session.usuario.id;
     
+        carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
+            if (error) {
+                console.error('Error al obtener el carrito activo:', error);
+                return res.status(500).json({ error: 'Error al obtener el carrito activo' });
+            }
+    
+            if (!carritoActivo || carritoActivo.length === 0) {
+                return res.status(200).json({ cantidadTotal: 0 }); // Si no hay carrito, la cantidad es 0
+            }
+    
+            const id_carrito = carritoActivo[0].id;
+    
+            carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+                if (error) {
+                    console.error('Error al obtener los productos del carrito:', error);
+                    return res.status(500).json({ error: 'Error al obtener los productos del carrito' });
+                }
+    
+                const cantidadTotal = productos.reduce((acc, producto) => acc + producto.cantidad, 0);
+    
+                res.status(200).json({ cantidadTotal });
+            });
+        });
+    },    
     eliminarProducto: (req, res) => {
         const { id } = req.body;
     

@@ -19,6 +19,9 @@
 
 
     router.post('/actualizar', carritoController.actualizarCantidad);
+    // Ruta para obtener la cantidad total del carrito
+router.get('/cantidad', autenticarUsuario, carritoController.obtenerCantidadCarrito);
+
 
     router.post('/eliminar', carritoController.eliminarProducto);
 
