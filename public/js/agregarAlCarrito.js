@@ -95,13 +95,22 @@ async function obtenerCantidadCarrito() {
 
 // Función para actualizar el globo de notificación con la cantidad de productos
 function actualizarGlobo(cantidad) {
-    const alertaCantidad = document.querySelector('.cantidad-alerta');
-    if (alertaCantidad) {
-        if (cantidad > 0) {
-            alertaCantidad.textContent = cantidad;
-            alertaCantidad.style.display = 'inline-block';
-        } else {
-            alertaCantidad.style.display = 'none';
+    let alertaCantidad = document.querySelector('.cantidad-alerta');
+
+    if (!alertaCantidad) {
+        // Si no existe, lo creamos y lo agregamos al icono del carrito
+        const carritoIcon = document.querySelector('.carrito-icon');
+        if (carritoIcon) {
+            alertaCantidad = document.createElement('span');
+            alertaCantidad.classList.add('cantidad-alerta');
+            carritoIcon.appendChild(alertaCantidad);
         }
+    }
+
+    if (cantidad > 0) {
+        alertaCantidad.textContent = cantidad;
+        alertaCantidad.style.display = 'inline-block';
+    } else {
+        alertaCantidad.style.display = 'none';
     }
 }
