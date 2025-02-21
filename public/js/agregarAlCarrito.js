@@ -30,17 +30,10 @@ document.getElementById("contenedor-productos").addEventListener("click", (e) =>
             return; // Detener el proceso si hay datos incorrectos
         }
 
-        // Enviar la solicitud al servidor para agregar el producto al carrito
-        fetch('/carrito/agregar', {
+        fetch('/carrito/agregar', { 
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id_producto: idProducto,
-                cantidad: cantidad,
-                precio: precioProducto
-            }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_producto: idProducto, cantidad: cantidad, precio: precioProducto })
         })
         .then(response => {
             console.log("📩 Respuesta del servidor recibida:", response);
@@ -52,7 +45,9 @@ document.getElementById("contenedor-productos").addEventListener("click", (e) =>
         .then(data => {
             console.log("✅ Producto agregado con éxito:", data);
             mostrarNotificacion(`${cantidad} ${nombreProducto} agregado(s) al carrito`);
-            obtenerCantidadCarrito();  // Aquí es donde actualizamos el globo de notificación
+            
+            // Llamamos a la función para actualizar el globo
+            obtenerCantidadCarrito();
         })
         .catch(error => {
             console.error("❌ Error al agregar el producto al carrito:", error);
@@ -63,6 +58,7 @@ document.getElementById("contenedor-productos").addEventListener("click", (e) =>
                 confirmButtonText: "OK",
             });
         });
+        
     }
 });
 
@@ -79,38 +75,43 @@ function mostrarNotificacion(mensaje) {
 }
 
 // Función para obtener la cantidad total del carrito y actualizar el globo de notificación
-async function obtenerCantidadCarrito() {
-    console.log('Obteniendo cantidad total del carrito...');
-    try {
-        const response = await fetch('/carrito/cantidad');
-        if (!response.ok) throw new Error('Error al obtener la cantidad');
-
-        const { cantidadCarrito } = await response.json();
-        console.log(`Cantidad obtenida del carrito: ${cantidadCarrito}`);
-        actualizarGlobo(cantidadCarrito);  // Actualizamos el globo con la nueva cantidad
-    } catch (error) {
-        console.error('Error al obtener la cantidad del carrito:', error);
-    }
+function obtenerCantidadCarrito() {
+    console.log("📡 Solicitando cantidad total del carrito...");
+    
+    fetch('/carrito/cantidad')  // Llamamos a la ruta correcta del backend
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error del servidor: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("🛒 Cantidad total obtenida:", data);
+            if (data && data.cantidadTotal !== undefined) {
+                actualizarGloboNotificacion(data.cantidadTotal);
+            } else {
+                console.error("⚠️ Error: Respuesta inesperada del servidor", data);
+            }
+        })
+        .catch(error => {
+            console.error("❌ Error al obtener la cantidad del carrito:", error);
+        });
 }
 
+
 // Función para actualizar el globo de notificación con la cantidad de productos
-function actualizarGlobo(cantidad) {
-    let alertaCantidad = document.querySelector('.cantidad-alerta');
-
-    if (!alertaCantidad) {
-        // Si no existe, lo creamos y lo agregamos al icono del carrito
-        const carritoIcon = document.querySelector('.carrito-icon');
-        if (carritoIcon) {
-            alertaCantidad = document.createElement('span');
-            alertaCantidad.classList.add('cantidad-alerta');
-            carritoIcon.appendChild(alertaCantidad);
+function actualizarGloboNotificacion(cantidad) {
+    console.log(`🔵 Actualizando globo de notificación con cantidad: ${cantidad}`);
+    const globo = document.getElementById('carrito-notificacion');
+    
+    if (globo) {
+        if (cantidad > 0) {
+            globo.textContent = cantidad;
+            globo.style.display = 'inline-block';  // Muestra el globo
+        } else {
+            globo.style.display = 'none';  // Oculta el globo si está vacío
         }
-    }
-
-    if (cantidad > 0) {
-        alertaCantidad.textContent = cantidad;
-        alertaCantidad.style.display = 'inline-block';
     } else {
-        alertaCantidad.style.display = 'none';
+        console.error("⚠️ No se encontró el elemento de notificación del carrito.");
     }
 }
