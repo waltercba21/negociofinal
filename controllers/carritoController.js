@@ -28,24 +28,39 @@ module.exports = {
         const { id_producto, cantidad } = req.body;
         const id_usuario = req.session.usuario.id;
     
-        carrito.agregarProductoCarrito(id_usuario, id_producto, cantidad, (error) => { 
+        // Primero, obtenemos el carrito activo del usuario
+        carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
             if (error) {
-                console.error('Error al agregar producto:', error);
-                return res.status(500).json({ error: 'Error al agregar producto al carrito' });
+                console.error('Error al obtener carrito:', error);
+                return res.status(500).json({ error: 'Error al obtener carrito' });
             }
     
-            // Obtener la nueva cantidad total del carrito después de la actualización
-            carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
+            let id_carrito;
+    
+            if (!carritoActivo || carritoActivo.length === 0) {
+                // Si el usuario no tiene carrito, creamos uno nuevo
+                carrito.crearCarrito(id_usuario, (error, nuevoCarritoId) => {
+                    if (error) {
+                        console.error('Error al crear carrito:', error);
+                        return res.status(500).json({ error: 'Error al crear carrito' });
+                    }
+    
+                    id_carrito = nuevoCarritoId;
+                    agregarProducto(id_carrito);
+                });
+            } else {
+                // Si el usuario ya tiene un carrito, usamos su ID
+                id_carrito = carritoActivo[0].id;
+                agregarProducto(id_carrito);
+            }
+        });
+    
+        function agregarProducto(id_carrito) {
+            carrito.agregarProductoCarrito(id_carrito, id_producto, cantidad, (error) => {
                 if (error) {
-                    console.error('Error al obtener carrito:', error);
-                    return res.status(500).json({ error: 'Error al obtener carrito' });
+                    console.error('Error al agregar producto:', error);
+                    return res.status(500).json({ error: 'Error al agregar producto al carrito' });
                 }
-    
-                if (!carritoActivo || carritoActivo.length === 0) {
-                    return res.status(200).json({ cantidadTotal: 0 });
-                }
-    
-                const id_carrito = carritoActivo[0].id;
     
                 carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
                     if (error) {
@@ -58,8 +73,8 @@ module.exports = {
                     res.status(200).json({ cantidadTotal });
                 });
             });
-        });
-    },    
+        }
+    },
     verCarrito: (req, res) => {
         // Verificar si el usuario está autenticado
         if (!req.session || !req.session.usuario || !req.session.usuario.id) {
