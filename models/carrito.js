@@ -21,32 +21,28 @@ module.exports = {
         });
     },
     agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
-      // Primero obtenemos el precio del producto
-      const queryPrecio = 'SELECT precio_venta FROM productos WHERE id = ?';
-      
-      pool.query(queryPrecio, [id_producto], (error, resultados) => {
-          if (error) {
-              return callback(error); // Aquí es donde se dispara el error si no hay función de callback.
-          }
-          
-          // Verificamos si encontramos el precio
-          if (resultados.length > 0) {
-              const precio = resultados[0].precio_venta;  // Precio obtenido del producto
-  
-              // Ahora agregamos el producto al carrito sin el precio
-              const query = 'INSERT INTO productos_carrito (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)';
-              pool.query(query, [id_carrito, id_producto, cantidad], (error, resultados) => {
-                  if (error) {
-                      return callback(error); // Error con la consulta
-                  }
-                  callback(null, resultados); // Retornamos el resultado de la inserción
-              });
-          } else {
-              // Si no se encuentra el producto, regresamos un error
-              callback(new Error('Producto no encontrado'));
-          }
-      });
-  },
+        const queryPrecio = 'SELECT precio_venta FROM productos WHERE id = ?';
+
+        pool.query(queryPrecio, [id_producto], (error, resultados) => {
+            if (error) {
+                return callback(error);
+            }
+
+            if (resultados.length > 0) {
+                const precio = resultados[0].precio_venta;
+                const query = 'INSERT INTO productos_carrito (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)';
+
+                pool.query(query, [id_carrito, id_producto, cantidad], (error, resultados) => {
+                    if (error) {
+                        return callback(error);
+                    }
+                    callback(null, resultados);
+                });
+            } else {
+                callback(new Error('Producto no encontrado'));
+            }
+        });
+    },
   obtenerProductosCarrito: (id_carrito, callback) => {
     const query = `
         SELECT pc.id, p.nombre, pc.cantidad, p.precio_venta, 

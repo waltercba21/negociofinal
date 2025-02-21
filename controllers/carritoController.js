@@ -24,11 +24,11 @@ module.exports = {
             }
         });
     },
-    agregarProductoCarrito: (req, res) => {
-        const { id_producto, cantidad, precio } = req.body;
+    agregarProductoCarrito : (req, res) => {
+        const { id_producto, cantidad } = req.body;
         const id_usuario = req.session.usuario.id;
     
-        carrito.agregarProducto(id_usuario, id_producto, cantidad, precio, (error) => {
+        carrito.agregarProductoCarrito(id_usuario, id_producto, cantidad, (error) => { 
             if (error) {
                 console.error('Error al agregar producto:', error);
                 return res.status(500).json({ error: 'Error al agregar producto al carrito' });
