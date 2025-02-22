@@ -149,18 +149,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id })
                 });
-
+        
                 if (!response.ok) throw new Error('Error al eliminar producto');
-
+        
                 const fila = boton.closest('tr');
                 if (fila) fila.remove();
-
-                actualizarTotal(); // Actualiza el total y el globo
+        
+                recalcularTotalCarrito(); // Llamar a la función para recalcular el total localmente
                 obtenerCantidadCarrito(); // Llamar nuevamente para actualizar el globo
+        
             } catch (error) {
                 console.error('Error al eliminar producto:', error);
                 alert(`Error: ${error.message}`);
             }
         }
     }
+
 });
