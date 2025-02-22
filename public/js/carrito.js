@@ -79,6 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
             actualizarGlobo(cantidadUnica);  // Actualizar el globo con productos únicos
         }
 
+        // Llamamos a actualizarTotal() después de que el contenido de la página haya cargado
+        actualizarTotal();
+
         // Manejar clics en aumentar, disminuir y eliminar
         carritoContainer.addEventListener('click', async (e) => {
             const boton = e.target;
@@ -96,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await eliminarProducto(productoId, boton);
             }
         });
+        
         async function actualizarCantidad(id, accion, boton) {
             console.log(`Actualizando cantidad de producto. ID: ${id}, Acción: ${accion}`);
             try {
@@ -104,40 +108,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, accion })
                 });
-        
+
                 console.log('Respuesta del servidor:', response);
                 const data = await response.json();
                 console.log('Datos de respuesta:', data);
-        
+
                 if (!response.ok) throw new Error(data.error || 'Error al actualizar');
-        
+
                 // Buscar la fila y las celdas de cantidad y sub-total
                 const fila = boton.closest('tr');
                 const cantidadCell = fila ? fila.querySelector('.cantidad-control span') : null;
                 const subTotalCell = fila ? fila.querySelector('td:nth-child(5)') : null; // Sub-total es la quinta celda
-        
+
                 if (!cantidadCell || !subTotalCell) {
                     console.error('No se encontró la celda de cantidad o sub-total en la fila');
                     return;
                 }
-        
+
                 // Actualizar la cantidad en la UI
                 cantidadCell.textContent = data.nuevaCantidad;
-        
+
                 // Calcular el nuevo sub-total (precio * cantidad)
                 const precioUnitario = parseFloat(fila.querySelector('td:nth-child(4)').textContent.replace('$', '').trim());
                 const nuevaCantidad = parseInt(data.nuevaCantidad);
                 const nuevoSubTotal = precioUnitario * nuevaCantidad;
-        
+
                 // Actualizar el sub-total de la fila
                 subTotalCell.textContent = `$${nuevoSubTotal.toFixed(2)}`;
-        
+
                 // Recalcular el total del carrito
                 recalcularTotalCarrito();
-        
+
                 // Actualizar el globo de notificación si es necesario
                 actualizarGlobo(data.cantidadTotal);
-        
+
             } catch (error) {
                 console.error('Error al actualizar cantidad:', error);
             }
@@ -146,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Función para recalcular el total del carrito
         function recalcularTotalCarrito() {
             let totalCarrito = 0;
-        
+
             // Recorrer todas las filas y sumar los subtotales
             const filas = document.querySelectorAll('table tbody tr');
             filas.forEach(fila => {
@@ -156,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     totalCarrito += subTotal;
                 }
             });
-        
+
             // Actualizar el total en el carrito
             const totalCarritoElement = document.getElementById('total-carrito');
             if (totalCarritoElement) {
@@ -164,8 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 console.error('No se encontró el elemento del total del carrito');
             }
-        }
-        
+        }        
         
         // Función para eliminar un producto
         async function eliminarProducto(id, boton) {
