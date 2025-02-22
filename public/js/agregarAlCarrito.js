@@ -69,7 +69,6 @@ function mostrarNotificacion(mensaje) {
         text: mensaje,
         icon: "success",
         confirmButtonText: "OK",
-        timer: 1000,
     });
 }
 
@@ -106,18 +105,24 @@ function actualizarGloboNotificacion(cantidad) {
     if (globo) {
         if (cantidad > 0) {
             globo.textContent = cantidad;
-            globo.style.display = 'inline-block'; // Muestra el globo
-            
-            // 🔥 FORZAR REAPLICACIÓN DE ESTILOS 🔥
-            globo.offsetHeight; // Fuerza un reflow/repaint del CSS
-            globo.style.width = "20px"; 
-            globo.style.height = "20px"; 
-            globo.style.fontSize = "12px"; 
-            globo.style.textAlign = "center"; // Asegura la alineación correcta
+
+            // 🔥 En lugar de display: inline-block, usa flex para que el contenido siempre se centre
+            globo.style.display = 'flex'; 
+            globo.style.justifyContent = 'center';
+            globo.style.alignItems = 'center';
+            globo.style.minWidth = "20px"; // Asegura que el globo tenga tamaño suficiente
+            globo.style.minHeight = "20px";
+            globo.style.padding = "2px"; // Evita que los números grandes se salgan
+            globo.style.fontSize = "12px"; // Ajusta el tamaño del texto
+            globo.style.textAlign = "center";
+
+            // 🔄 Forzar reflow/repaint para asegurarse de que se aplican los estilos
+            globo.offsetHeight;
         } else {
-            globo.style.display = 'none'; // Oculta el globo si está vacío
+            globo.style.display = 'none'; // Ocultar si el carrito está vacío
         }
     } else {
         console.error("⚠️ No se encontró el elemento de notificación del carrito.");
     }
 }
+
