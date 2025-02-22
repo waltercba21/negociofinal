@@ -1985,6 +1985,39 @@ border-radius: 10px;
 
 /*--------------VISTA CARRITO DE COMPRAS----------------*/
 
+/*-BARRA DE PROGRESO -*/
+.progreso-compra {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.paso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: gray;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+
+.paso i {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+
+.paso.activo {
+  color: #007bff; /* Color azul para el paso activo */
+  font-weight: bold;
+}
+
+.flecha {
+  margin: 0 10px;
+  font-size: 18px;
+  color: gray;
+}
+
 /* Contenedor principal del carrito */
 .carrito-container {
   max-width: 900px;

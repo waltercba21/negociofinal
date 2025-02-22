@@ -4,7 +4,25 @@
 <body>
     <main class="carrito-container">
         <h1>🛍️ Mi Carrito</h1>
-    
+        
+        <!-- Barra de progreso del proceso de compra -->
+        <div class="progreso-compra">
+            <div class="paso activo">
+                <i class="fas fa-shopping-cart"></i>
+                <span>CARRITO</span>
+            </div>
+            <div class="flecha">→</div>
+            <div class="paso">
+                <i class="fas fa-truck"></i>
+                <span>ENVÍO</span>
+            </div>
+            <div class="flecha">→</div>
+            <div class="paso">
+                <i class="fas fa-check-circle"></i>
+                <span>CONFIRMACIÓN</span>
+            </div>
+        </div>
+
         <div id="carrito-productos">
             <% if (productos.length > 0) { %>
                 <table class="carrito-tabla">
@@ -29,7 +47,6 @@
                                     <% } %>
                                 </td>
                                 <td><%= producto.nombre %></td>
-    
                                 <td>
                                     <div class="cantidad-control">
                                         <button class="btn-cantidad disminuir" data-id="<%= producto.id %>">−</button>
@@ -37,20 +54,17 @@
                                         <button class="btn-cantidad aumentar" data-id="<%= producto.id %>">+</button>
                                     </div>
                                 </td>
-    
                                 <td>$<%= producto.precio_venta.toFixed(2) %></td>
                                 <td>$<%= producto.total.toFixed(2) %></td>
-    
                                 <td>
                                     <button class="btn-eliminar" data-id="<%= producto.id %>">🗑️ Eliminar</button>
                                 </td>
                             </tr>
                         <% }) %>
-                        <!-- Fila para el total -->
                         <tr class="carrito-total">
                             <td colspan="3"></td>
                             <td><strong>Total</strong></td>
-                            <td id="total-carrito">$<%= total %></td> <!-- Total acumulado -->
+                            <td id="total-carrito">$<%= total %></td>
                         </tr>
                     </tbody>
                 </table>
@@ -60,13 +74,10 @@
         </div>
     
         <div id="finalizar-compra">
-            <a href="/carrito/finalizar" class="btn-finalizar">Finalizar Compra</a>
+            <a href="/carrito/envio" class="btn-finalizar">Continuar con el Envío</a>
         </div>
     </main>
 
-    
-    
-    
-<%- include ./layouts/footer.ejs %>
-<script src="/js/carrito.js"></script> 
+    <%- include ./layouts/footer.ejs %>
+    <script src="/js/carrito.js"></script> 
 </body>
