@@ -112,30 +112,22 @@ document.addEventListener('DOMContentLoaded', () => {
         
                 if (!response.ok) throw new Error(data.error || 'Error al actualizar');
         
-                // Buscar la fila y las celdas de cantidad y sub-total
+                // Buscar la fila y el span de cantidad dentro del div.cantidad-control
                 const fila = boton.closest('tr');
-                const cantidadCell = fila ? fila.querySelector('.cantidad-producto') : null;
-                const subTotalCell = fila ? fila.querySelector('.sub-total') : null;
+                const cantidadCell = fila ? fila.querySelector('.cantidad-control span') : null;
         
-                if (!cantidadCell || !subTotalCell) {
-                    console.error('No se encontró la celda de cantidad o sub-total en la fila');
+                if (!cantidadCell) {
+                    console.error('No se encontró la celda de cantidad en la fila');
                     return;
                 }
         
                 // Actualizar la cantidad en la UI
                 cantidadCell.textContent = data.nuevaCantidad;
         
-                // Recalcular y actualizar el sub-total
-                const precioUnitario = parseFloat(fila.querySelector('td:nth-child(4)').textContent.replace('$', '').trim());
-                const nuevaCantidad = parseInt(data.nuevaCantidad);
-                const nuevoSubTotal = precioUnitario * nuevaCantidad;
-        
-                subTotalCell.textContent = `$${nuevoSubTotal.toFixed(2)}`;
-        
                 // Actualizar el total del carrito
                 const totalCarritoElement = document.getElementById('total-carrito');
                 if (totalCarritoElement) {
-                    totalCarritoElement.textContent = `$${data.totalCarrito.toFixed(2)}`;
+                    totalCarritoElement.textContent = `$${data.totalCarrito}`;
                 } else {
                     console.error('No se encontró el elemento del total del carrito');
                 }
@@ -148,10 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        
-        
-        
-
         // Función para eliminar un producto
         async function eliminarProducto(id, boton) {
             console.log(`Eliminando producto con ID: ${id}`);

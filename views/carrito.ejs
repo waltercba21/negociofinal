@@ -33,12 +33,13 @@
                                 <td>
                                     <div class="cantidad-control">
                                         <button class="btn-cantidad disminuir" data-id="<%= producto.id %>">−</button>
-                                        <span class="cantidad-producto"><%= producto.cantidad %></span> <!-- Agregar la clase cantidad-producto -->
+                                        <span><%= producto.cantidad %></span>
                                         <button class="btn-cantidad aumentar" data-id="<%= producto.id %>">+</button>
                                     </div>
                                 </td>
-                                <td><span class="sub-total"><%= (producto.precio_venta * producto.cantidad).toFixed(2) %></span></td>
-
+    
+                                <td>$<%= producto.precio_venta.toFixed(2) %></td>
+                                <td>$<%= producto.total.toFixed(2) %></td>
     
                                 <td>
                                     <button class="btn-eliminar" data-id="<%= producto.id %>">🗑️ Eliminar</button>
