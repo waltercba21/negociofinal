@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const alertaCantidad = document.querySelector('.cantidad-alerta');
 
-    // Función para actualizar el globo de notificación (productos únicos en el carrito)
     function actualizarGlobo(cantidad) {
         console.log(`Actualizando globo de notificación con cantidad: ${cantidad}`);
         if (alertaCantidad) {
@@ -19,10 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Obteniendo cantidad total del carrito...');
         try {
             const response = await fetch('/carrito/cantidad');
-            console.log('Respuesta obtenida de /carrito/cantidad:', response);
-
             if (!response.ok) throw new Error('Error al obtener la cantidad');
-
             const { cantidadCarrito } = await response.json();
             console.log(`Cantidad obtenida del carrito: ${cantidadCarrito}`);
             actualizarGlobo(cantidadCarrito);
@@ -34,55 +30,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // Llamar a la función al cargar la página para actualizar el globo
     obtenerCantidadCarrito();
 
-    // Si estamos en la vista del carrito, manejamos actualizaciones dinámicas
     const carritoContainer = document.getElementById('carrito-productos');
     const totalCarritoElement = document.getElementById('total-carrito');
 
     if (carritoContainer && totalCarritoElement) {
         console.log('Vista de carrito detectada, manejando actualización de total...');
-
+        
         // Función para actualizar el total del carrito
-        function actualizarTotal() {
+        async function actualizarTotal() {
             console.log('Actualizando total del carrito...');
             let total = 0;
             let cantidadTotal = 0;
             let cantidadUnica = 0;
 
-            const filas = document.querySelectorAll('table tbody tr');
+            // Aquí recuperamos los datos de los productos del carrito desde el servidor
+            try {
+                const response = await fetch('/carrito/productos');
+                if (!response.ok) throw new Error('Error al obtener los productos del carrito');
+                const productos = await response.json();
 
-            if (filas.length === 0) {
-                console.log('Carrito vacío, actualizando total a $0.00');
-                totalCarritoElement.textContent = '$0.00';
-                actualizarGlobo(0);
-                return;
+                // Recorrer los productos y calcular el total
+                productos.forEach(producto => {
+                    total += producto.subtotal;
+                    cantidadTotal += producto.cantidad;
+                    cantidadUnica++;  // Contamos cada producto único
+                });
+
+                console.log(`Total del carrito calculado: $${total.toFixed(2)}, cantidad total: ${cantidadTotal}, cantidad única: ${cantidadUnica}`);
+                totalCarritoElement.textContent = `$${total.toFixed(2)}`;
+                actualizarGlobo(cantidadUnica);
+            } catch (error) {
+                console.error('Error al calcular el total del carrito:', error);
             }
-
-            filas.forEach(fila => {
-                const subTotalCell = fila.querySelector('td:nth-child(5)');
-                const cantidadCell = fila.querySelector('.cantidad-producto');
-
-                if (!subTotalCell || !cantidadCell) {
-                    console.log('Error al encontrar celdas de subtotal o cantidad en una fila');
-                    return;
-                }
-
-                const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim()) || 0;
-                const cantidad = parseInt(cantidadCell.textContent) || 0;
-
-                total += subTotal;
-                cantidadTotal += cantidad;
-                cantidadUnica++;  // Contar cada fila como un producto único
-            });
-
-            console.log(`Total del carrito calculado: $${total.toFixed(2)}, cantidad total: ${cantidadTotal}, cantidad única: ${cantidadUnica}`);
-            totalCarritoElement.textContent = `$${total.toFixed(2)}`;
-            actualizarGlobo(cantidadUnica);  // Actualizar el globo con productos únicos
         }
 
-        // Llamamos a actualizarTotal() después de que el contenido de la página haya cargado
+        // Llamamos a actualizarTotal() al cargar la página para obtener el total inicial
         actualizarTotal();
 
-        // Manejar clics en aumentar, disminuir y eliminar
+        // Manejar clics en aumentar, disminuir y eliminar productos
         carritoContainer.addEventListener('click', async (e) => {
             const boton = e.target;
 
@@ -99,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await eliminarProducto(productoId, boton);
             }
         });
-        
+
         async function actualizarCantidad(id, accion, boton) {
             console.log(`Actualizando cantidad de producto. ID: ${id}, Acción: ${accion}`);
             try {
@@ -109,68 +94,53 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ id, accion })
                 });
 
-                console.log('Respuesta del servidor:', response);
-                const data = await response.json();
-                console.log('Datos de respuesta:', data);
+                if (!response.ok) throw new Error('Error al actualizar cantidad');
 
-                if (!response.ok) throw new Error(data.error || 'Error al actualizar');
+                const data = await response.json();
 
                 // Buscar la fila y las celdas de cantidad y sub-total
                 const fila = boton.closest('tr');
                 const cantidadCell = fila ? fila.querySelector('.cantidad-control span') : null;
-                const subTotalCell = fila ? fila.querySelector('td:nth-child(5)') : null; // Sub-total es la quinta celda
+                const subTotalCell = fila ? fila.querySelector('td:nth-child(5)') : null;
 
                 if (!cantidadCell || !subTotalCell) {
                     console.error('No se encontró la celda de cantidad o sub-total en la fila');
                     return;
                 }
 
-                // Actualizar la cantidad en la UI
                 cantidadCell.textContent = data.nuevaCantidad;
 
-                // Calcular el nuevo sub-total (precio * cantidad)
                 const precioUnitario = parseFloat(fila.querySelector('td:nth-child(4)').textContent.replace('$', '').trim());
                 const nuevaCantidad = parseInt(data.nuevaCantidad);
                 const nuevoSubTotal = precioUnitario * nuevaCantidad;
-
-                // Actualizar el sub-total de la fila
                 subTotalCell.textContent = `$${nuevoSubTotal.toFixed(2)}`;
 
-                // Recalcular el total del carrito
                 recalcularTotalCarrito();
-
-                // Actualizar el globo de notificación si es necesario
                 actualizarGlobo(data.cantidadTotal);
-
             } catch (error) {
                 console.error('Error al actualizar cantidad:', error);
             }
         }
-        
+
         // Función para recalcular el total del carrito
         function recalcularTotalCarrito() {
             let totalCarrito = 0;
-
-            // Recorrer todas las filas y sumar los subtotales
             const filas = document.querySelectorAll('table tbody tr');
             filas.forEach(fila => {
-                const subTotalCell = fila.querySelector('td:nth-child(5)'); // Sub-total es la quinta celda
+                const subTotalCell = fila.querySelector('td:nth-child(5)');
                 if (subTotalCell) {
                     const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim()) || 0;
                     totalCarrito += subTotal;
                 }
             });
 
-            // Actualizar el total en el carrito
-            const totalCarritoElement = document.getElementById('total-carrito');
             if (totalCarritoElement) {
                 totalCarritoElement.textContent = `$${totalCarrito.toFixed(2)}`;
             } else {
                 console.error('No se encontró el elemento del total del carrito');
             }
-        }        
-        
-        // Función para eliminar un producto
+        }
+
         async function eliminarProducto(id, boton) {
             console.log(`Eliminando producto con ID: ${id}`);
             try {
@@ -180,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ id })
                 });
 
-                if (!response.ok) throw new Error('Error al eliminar');
+                if (!response.ok) throw new Error('Error al eliminar producto');
 
                 const fila = boton.closest('tr');
                 if (fila) fila.remove();
@@ -192,8 +162,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert(`Error: ${error.message}`);
             }
         }
-
-        // Inicializa el total en la vista del carrito
-        actualizarTotal();
     }
 });
