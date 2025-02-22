@@ -76,7 +76,7 @@ module.exports = {
         }
     },
     verCarrito: (req, res) => {
-        // Verificar si el usuario está autenticado
+        // Verificar si el usuario está autenticado 
         if (!req.session || !req.session.usuario || !req.session.usuario.id) {
             return res.status(401).send('Debes iniciar sesión para acceder al carrito');
         }

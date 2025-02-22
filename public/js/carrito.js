@@ -106,28 +106,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, accion })
                 });
-
-                if (!response.ok) throw new Error('Error al actualizar');
-
-                const { nuevaCantidad } = await response.json();
-                console.log(`Cantidad actualizada con éxito. Nueva cantidad: ${nuevaCantidad}`);
-
-                const cantidadSpan = boton.parentElement.querySelector('.cantidad-producto');
-                if (cantidadSpan) cantidadSpan.textContent = nuevaCantidad;
-
-                // Recalcular el subtotal del producto
-                const precio = parseFloat(boton.closest('tr').querySelector('td:nth-child(4)').textContent.replace('$', '')) || 0;
-                const totalCell = boton.closest('tr').querySelector('td:nth-child(5)');
-                if (totalCell) totalCell.textContent = `$${(nuevaCantidad * precio).toFixed(2)}`;
-
-                // Actualizar el total general y el globo
-                actualizarTotal();
-                obtenerCantidadCarrito(); // Llamar nuevamente para actualizar el globo
+        
+                console.log('Respuesta del servidor:', response);
+                const data = await response.json();
+                console.log('Datos de respuesta:', data);
+        
+                if (!response.ok) throw new Error(data.error || 'Error al actualizar');
             } catch (error) {
                 console.error('Error al actualizar cantidad:', error);
-                alert(`Error: ${error.message}`);
             }
         }
+        
 
         // Función para eliminar un producto
         async function eliminarProducto(id, boton) {
