@@ -29,15 +29,15 @@
           <p>Hola <%= userLogged.nombre %> </p> 
         </a>
        
-        <a href="/carrito" class="carrito-icon">
-          <i class="fa-solid fa-cart-shopping"></i>
-      
-          <!-- El span siempre está presente, pero oculto si el carrito está vacío -->
-          <span id="carrito-notificacion" class="cantidad-alerta" 
-                <% if (cantidadCarrito <= 0) { %> style="display: none;" <% } %>>
-              <%= cantidadCarrito %>
-          </span>
-      </a>          
+          <a href="/carrito" class="carrito-icon">
+            <i class="fa-solid fa-cart-shopping"></i>
+        
+            <!-- El span siempre está presente, pero oculto si el carrito está vacío -->
+            <span id="carrito-notificacion" class="cantidad-alerta" 
+                  <% if (cantidadCarrito <= 0) { %> style="display: none;" <% } %>>
+                <%= cantidadCarrito %>
+            </span>
+        </a>          
         <a href="/users/logout">
           <i class="fa-solid fa-right-from-bracket"></i>
           <span>Salir</span> 

@@ -69,8 +69,7 @@ function mostrarNotificacion(mensaje) {
         text: mensaje,
         icon: "success",
         confirmButtonText: "OK",
-        timer: 3000,
-        timerProgressBar: true
+        timer: 1000,
     });
 }
 
@@ -103,13 +102,20 @@ function obtenerCantidadCarrito() {
 function actualizarGloboNotificacion(cantidad) {
     console.log(`🔵 Actualizando globo de notificación con cantidad: ${cantidad}`);
     const globo = document.getElementById('carrito-notificacion');
-    
+
     if (globo) {
         if (cantidad > 0) {
             globo.textContent = cantidad;
-            globo.style.display = 'inline-block';  // Muestra el globo
+            globo.style.display = 'inline-block'; // Muestra el globo
+            
+            // 🔥 FORZAR REAPLICACIÓN DE ESTILOS 🔥
+            globo.offsetHeight; // Fuerza un reflow/repaint del CSS
+            globo.style.width = "20px"; 
+            globo.style.height = "20px"; 
+            globo.style.fontSize = "12px"; 
+            globo.style.textAlign = "center"; // Asegura la alineación correcta
         } else {
-            globo.style.display = 'none';  // Oculta el globo si está vacío
+            globo.style.display = 'none'; // Oculta el globo si está vacío
         }
     } else {
         console.error("⚠️ No se encontró el elemento de notificación del carrito.");
