@@ -138,54 +138,65 @@ module.exports = {
     
         console.log(`Actualizando producto con ID: ${id}, Acción: ${accion}`);
     
-        // Verificar si el producto existe
+        // Verificar si el producto existe en el carrito
         carrito.obtenerProductoPorId(id, (error, producto) => {
             if (error) {
-                console.error('Error al obtener el producto:', error);
+                console.error('❌ Error al obtener el producto:', error);
                 return res.status(500).json({ error: 'Error al buscar el producto' });
             }
             if (!producto) {
-                console.error('Producto no encontrado con ID:', id);
+                console.error('⚠️ Producto no encontrado con ID:', id);
                 return res.status(404).json({ error: 'Producto no encontrado' });
             }
     
-            console.log('Producto encontrado:', producto);
+            console.log('✅ Producto encontrado:', producto);
     
             // Calcular la nueva cantidad
             let nuevaCantidad = producto.cantidad;
             if (accion === 'aumentar') nuevaCantidad++;
             if (accion === 'disminuir' && nuevaCantidad > 1) nuevaCantidad--;
     
-            console.log(`Nueva cantidad calculada: ${nuevaCantidad}`);
+            console.log(`🔢 Nueva cantidad calculada: ${nuevaCantidad}`);
     
             // Actualizar la cantidad en la base de datos
             carrito.actualizarCantidad(id, nuevaCantidad, (error) => {
                 if (error) {
-                    console.error('Error al actualizar la cantidad:', error);
+                    console.error('❌ Error al actualizar la cantidad:', error);
                     return res.status(500).json({ error: 'Error al actualizar la cantidad' });
                 }
     
-                console.log(`Cantidad actualizada con éxito: ${nuevaCantidad}`);
+                console.log(`✅ Cantidad actualizada con éxito: ${nuevaCantidad}`);
     
-                // Obtener el carrito actualizado
-                carrito.obtenerCarritoPorUsuario(req.session.usuario.id, (error, productos) => {
-                    if (error) {
-                        console.error('Error al obtener el carrito actualizado:', error);
-                        return res.status(500).json({ error: 'Error al obtener el carrito actualizado' });
+                // Obtener el carrito activo del usuario (corrección aquí)
+                carrito.obtenerCarritoActivo(req.session.usuario.id, (error, carritoActivo) => {
+                    if (error || !carritoActivo || carritoActivo.length === 0) {
+                        console.error('❌ Error al obtener el carrito activo:', error);
+                        return res.status(500).json({ error: 'Error al obtener el carrito' });
                     }
     
-                    const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
-                    console.log(`Cantidad total actualizada en el carrito: ${cantidadTotal}`);
+                    const id_carrito = carritoActivo[0].id;
     
-                    res.status(200).json({ 
-                        mensaje: 'Cantidad actualizada', 
-                        nuevaCantidad, 
-                        cantidadTotal 
+                    // Obtener los productos actualizados del carrito
+                    carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+                        if (error) {
+                            console.error('❌ Error al obtener productos del carrito:', error);
+                            return res.status(500).json({ error: 'Error al obtener productos' });
+                        }
+    
+                        const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
+                        console.log(`🛒 Cantidad total actualizada en el carrito: ${cantidadTotal}`);
+    
+                        res.status(200).json({ 
+                            mensaje: 'Cantidad actualizada', 
+                            nuevaCantidad, 
+                            cantidadTotal 
+                        });
                     });
                 });
             });
         });
     },
+    
     
     obtenerCantidadCarrito: (req, res) => {
         const id_usuario = req.session.usuario.id;
