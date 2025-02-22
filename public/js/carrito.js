@@ -112,13 +112,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
                 if (!response.ok) throw new Error(data.error || 'Error al actualizar');
         
+                // Buscar la fila y la celda de cantidad
+                const fila = boton.closest('tr');
+                const cantidadCell = fila ? fila.querySelector('.cantidad-producto') : null;
+        
+                if (!cantidadCell) {
+                    console.error('No se encontró la celda de cantidad en la fila');
+                    return;
+                }
+        
                 // Actualizar la cantidad en la UI
-                const cantidadCell = boton.closest('tr').querySelector('.cantidad-producto');
                 cantidadCell.textContent = data.nuevaCantidad;
         
                 // Actualizar el total del carrito
                 const totalCarritoElement = document.getElementById('total-carrito');
-                totalCarritoElement.textContent = `$${data.totalCarrito}`;
+                if (totalCarritoElement) {
+                    totalCarritoElement.textContent = `$${data.totalCarrito}`;
+                } else {
+                    console.error('No se encontró el elemento del total del carrito');
+                }
         
                 // Actualizar el globo de notificación si es necesario
                 actualizarGlobo(data.cantidadTotal);
@@ -127,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error al actualizar cantidad:', error);
             }
         }
+        
         
         
 
