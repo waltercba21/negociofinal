@@ -183,19 +183,31 @@ module.exports = {
                             return res.status(500).json({ error: 'Error al obtener productos' });
                         }
     
-                        const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
-                        console.log(`🛒 Cantidad total actualizada en el carrito: ${cantidadTotal}`);
+                        // Calcular el total y la cantidad total de productos
+                        let totalCarrito = 0;
+                        productos.forEach(producto => {
+                            const precioVenta = parseFloat(producto.precio_venta);
+                            const cantidad = producto.cantidad;
+                            totalCarrito += precioVenta * cantidad; // Calculando el total con el precio y la cantidad
+                        });
     
-                        res.status(200).json({ 
-                            mensaje: 'Cantidad actualizada', 
-                            nuevaCantidad, 
-                            cantidadTotal 
+                        const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
+                        console.log(`🛒 Cantidad total actualizada en el carrito: ${cantidadTotal}, Total del carrito: $${totalCarrito.toFixed(2)}`);
+    
+                        // Enviar la respuesta con los datos actualizados
+                        res.status(200).json({
+                            mensaje: 'Cantidad actualizada',
+                            nuevaCantidad,
+                            cantidadTotal,
+                            totalCarrito: totalCarrito.toFixed(2), // Enviar el total del carrito
+                            productos: productos // Incluir los productos actualizados
                         });
                     });
                 });
             });
         });
     },
+    
     
     
     obtenerCantidadCarrito: (req, res) => {
