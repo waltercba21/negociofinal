@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/carrito/cantidad');
             if (!response.ok) throw new Error('Error al obtener la cantidad');
             const { cantidadCarrito } = await response.json();
-            console.log(`Cantidad obtenida del carrito: ${cantidadCarrito}`);
-            actualizarGlobo(cantidadCarrito);
+            console.log(`Cantidad obtenida del carrito: ${cantidadUnica}`);
+            actualizarGlobo(cantidadUnica);
         } catch (error) {
             console.error('Error al obtener la cantidad del carrito:', error);
         }
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 subTotalCell.textContent = `$${nuevoSubTotal.toFixed(2)}`;
 
                 recalcularTotalCarrito();
-                actualizarGlobo(data.cantidadTotal);
+                actualizarGlobo(data.cantidadUnica);
             } catch (error) {
                 console.error('Error al actualizar cantidad:', error);
             }

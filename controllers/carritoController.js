@@ -112,7 +112,8 @@ module.exports = {
                 console.log('Productos cargados en el carrito:', productos);
     
                 // Calcular la cantidad total de productos (suma de las cantidades de cada uno)
-                const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
+                const cantidadUnica = productos.length; 
+
     
                 // Calcular el total del carrito (precio total de los productos)
                 const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
@@ -120,10 +121,11 @@ module.exports = {
                 // Renderiza la vista del carrito con la cantidad total de unidades
                 res.render('carrito', { 
                     productos, 
-                    cantidadProductosCarrito: cantidadTotal, // Suma total de unidades
+                    cantidadProductosCarrito: cantidadTotal, // Total de unidades en el carrito
                     total, 
-                    cantidadCarrito: cantidadTotal // Actualiza el globo con el total de unidades
+                    cantidadCarrito: cantidadUnica // Mostrar solo los ítems únicos en el globo
                 });
+                
             });
         });
     },
