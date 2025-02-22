@@ -130,9 +130,10 @@ module.exports = {
     actualizarCantidad: (req, res) => {
         const { id, accion } = req.body;
     
-        if (!id || !accion) {
-            console.error('Faltan datos en la petición:', req.body);
-            return res.status(400).json({ error: 'Faltan datos para actualizar el carrito' });
+        // Validar si el usuario tiene sesión activa
+        if (!req.session || !req.session.usuario || !req.session.usuario.id) {
+            console.error('Error: Sesión no iniciada o usuario no definido.');
+            return res.status(401).json({ error: 'Sesión no válida. Inicia sesión nuevamente.' });
         }
     
         console.log(`Actualizando producto con ID: ${id}, Acción: ${accion}`);
@@ -152,7 +153,6 @@ module.exports = {
     
             // Calcular la nueva cantidad
             let nuevaCantidad = producto.cantidad;
-    
             if (accion === 'aumentar') nuevaCantidad++;
             if (accion === 'disminuir' && nuevaCantidad > 1) nuevaCantidad--;
     
@@ -167,19 +167,16 @@ module.exports = {
     
                 console.log(`Cantidad actualizada con éxito: ${nuevaCantidad}`);
     
-                // Recalcular el total de productos en el carrito
+                // Obtener el carrito actualizado
                 carrito.obtenerCarritoPorUsuario(req.session.usuario.id, (error, productos) => {
                     if (error) {
                         console.error('Error al obtener el carrito actualizado:', error);
                         return res.status(500).json({ error: 'Error al obtener el carrito actualizado' });
                     }
     
-                    // Calcular la cantidad total de productos (suma de las cantidades de cada uno)
                     const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
-    
                     console.log(`Cantidad total actualizada en el carrito: ${cantidadTotal}`);
     
-                    // Responder con la cantidad actualizada y la cantidad total para el globo
                     res.status(200).json({ 
                         mensaje: 'Cantidad actualizada', 
                         nuevaCantidad, 
@@ -189,6 +186,7 @@ module.exports = {
             });
         });
     },
+    
     obtenerCantidadCarrito: (req, res) => {
         const id_usuario = req.session.usuario.id;
     
