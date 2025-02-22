@@ -97,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Función para actualizar la cantidad de un producto
         async function actualizarCantidad(id, accion, boton) {
             console.log(`Actualizando cantidad de producto. ID: ${id}, Acción: ${accion}`);
             try {
@@ -112,10 +111,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Datos de respuesta:', data);
         
                 if (!response.ok) throw new Error(data.error || 'Error al actualizar');
+        
+                // Actualizar la cantidad en la UI
+                const cantidadCell = boton.closest('tr').querySelector('.cantidad-producto');
+                cantidadCell.textContent = data.nuevaCantidad;
+        
+                // Actualizar el total del carrito
+                const totalCarritoElement = document.getElementById('total-carrito');
+                totalCarritoElement.textContent = `$${data.totalCarrito}`;
+        
+                // Actualizar el globo de notificación si es necesario
+                actualizarGlobo(data.cantidadTotal);
+        
             } catch (error) {
                 console.error('Error al actualizar cantidad:', error);
             }
         }
+        
         
 
         // Función para eliminar un producto
