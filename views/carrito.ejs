@@ -37,9 +37,8 @@
                                         <button class="btn-cantidad aumentar" data-id="<%= producto.id %>">+</button>
                                     </div>
                                 </td>
-                                
-                                <td>$<%= producto.precio_venta.toFixed(2) %></td>
-                                <td>$<%= producto.total.toFixed(2) %></td>
+                                <td><span class="sub-total"><%= (producto.precio_venta * producto.cantidad).toFixed(2) %></span></td>
+
     
                                 <td>
                                     <button class="btn-eliminar" data-id="<%= producto.id %>">🗑️ Eliminar</button>
