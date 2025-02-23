@@ -2,9 +2,9 @@
 <%- include ./layouts/header.ejs %>
 
 <body>
-    <main class="carrito-container">
-        <h1>🚚 Seleccionar Envío</h1>
-        
+    <main class="envio-container">
+        <h1>🚚 Método de Envío</h1>
+
         <div class="progreso-compra">
             <div class="paso-container">
                 <div class="paso completado">
@@ -29,30 +29,44 @@
             </div>
         </div>
 
-        <div class="envio-opciones">
+        <div class="opciones-envio">
             <label>
-                <input type="radio" name="tipo-envio" value="local" checked>
-                <i class="fas fa-store"></i> Retiro por el local
+                <input type="radio" name="tipo-envio" value="retiro" checked>
+                Retiro por el local
             </label>
-            
             <label>
                 <input type="radio" name="tipo-envio" value="delivery">
-                <i class="fas fa-motorcycle"></i> Envío Delivery
+                Envío Delivery
             </label>
-            
-            <div id="mapa-container" class="hidden">
-                <h3>📍 Ubicación de Entrega</h3>
-                <div id="mapa"></div>
-                <input type="text" id="direccion" placeholder="Dirección exacta">
-                <input type="text" id="barrio" placeholder="Barrio">
+        </div>
+
+        <div id="datos-delivery" class="hidden">
+            <h2>📍 Ingrese su dirección de entrega</h2>
+            <div id="mapa"></div>
+            <div class="datos-direccion">
+                <label>Dirección exacta:
+                    <input type="text" id="direccion" placeholder="Ingrese su dirección">
+                </label>
+                <label>Barrio:
+                    <input type="text" id="barrio" placeholder="Ingrese su barrio">
+                </label>
             </div>
         </div>
 
         <div id="continuar-pago">
-            <a href="/carrito/pago" class="btn-finalizar">Continuar con el Pago</a>
+            <a href="/carrito/pago" class="btn-continuar">Continuar al Pago</a>
         </div>
     </main>
 
     <%- include ./layouts/footer.ejs %>
     <script src="/js/envio.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&callback=inicializarMapa" async defer></script>
+    <script>
+        function inicializarMapa() {
+            var mapa = new google.maps.Map(document.getElementById("mapa"), {
+                center: { lat: -34.603722, lng: -58.381592 },
+                zoom: 12
+            });
+        }
+    </script>
 </body>
