@@ -1988,10 +1988,16 @@ border-radius: 10px;
 /*-BARRA DE PROGRESO -*/
 .progreso-compra {
   display: flex;
-  flex-direction: row;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   margin-bottom: 20px;
+}
+
+.paso-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
 }
 
 .paso {
@@ -2001,6 +2007,7 @@ border-radius: 10px;
   color: gray;
   font-size: 14px;
   transition: color 0.3s;
+  flex: 1;
 }
 
 .paso i {
@@ -2009,14 +2016,15 @@ border-radius: 10px;
 }
 
 .paso.activo {
-  color: #003f7d; /* Color azul para el paso activo */
+  color: #003f7d;
   font-weight: bold;
 }
 
-.flecha {
+.barra {
+  flex: 1;
+  height: 4px;
+  background-color: gray;
   margin: 0 10px;
-  font-size: 18px;
-  color: gray;
 }
 
 
