@@ -23,7 +23,10 @@
     // Ruta para obtener la cantidad total del carrito
     router.get('/cantidad', autenticarUsuario, carritoController.obtenerCantidadCarrito);
 
-
+    // Ruta para elegir el envio del pedido del carrito
+    router.get ('/envio', carritoController.envio);
+    
+    // Ruta para eliminar un producto del carrito
     router.post('/eliminar', carritoController.eliminarProducto);
 
     // Ruta para finalizar la compra

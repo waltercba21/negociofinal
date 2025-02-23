@@ -209,9 +209,6 @@ module.exports = {
             });
         });
     },
-    
-    
-    
     obtenerCantidadCarrito: (req, res) => {
         const id_usuario = req.session.usuario.id;
     
@@ -255,7 +252,9 @@ module.exports = {
             res.status(200).json({ mensaje: 'Producto eliminado del carrito' });
         });
     },
-
+    envio: (req,res) => {
+        res.render ('envio')
+    },
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;
 
