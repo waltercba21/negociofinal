@@ -2008,15 +2008,16 @@ border-radius: 10px;
 }
 
 .paso.activo {
-  color: #003f7d; 
+  color: #003f7d; /* Color azul para el paso activo */
   font-weight: bold;
 }
 
 .flecha {
   margin: 0 10px;
-  font-size: 20px;
+  font-size: 18px;
   color: gray;
 }
+
 
 /* Contenedor principal del carrito */
 .carrito-container {
