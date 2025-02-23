@@ -1988,6 +1988,7 @@ border-radius: 10px;
 /*-BARRA DE PROGRESO -*/
 .progreso-compra {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
