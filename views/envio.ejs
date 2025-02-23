@@ -43,15 +43,11 @@
 
         <div id="mapa-container" class="hidden">
             <h3>📍 Ubicación de Entrega</h3>
-            <div id="mapa"></div>
-            <div class="direccion-inputs">
-                <label for="direccion">Dirección exacta:</label>
-                <input type="text" id="direccion" placeholder="Ej: Av. Siempre Viva 123">
-                
-                <label for="barrio">Barrio:</label>
-                <input type="text" id="barrio" placeholder="Ej: Palermo">
-            </div>
+            <div id="mapa" style="height: 400px;"></div>
+            <input type="text" id="direccion" placeholder="Dirección exacta" readonly>
+            <input type="text" id="barrio" placeholder="Barrio" readonly>
         </div>
+        
 
         <div id="continuar-pago">
             <a href="/carrito/pago" class="btn-finalizar">Continuar con el Pago</a>
