@@ -101,33 +101,23 @@ document.addEventListener("DOMContentLoaded", function () {
         const direccion = inputDireccion.value;
         if (direccion.trim() !== "") {
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
-                .then(response => response.text())  // Cambié a .text() para obtener el texto sin parsear como JSON
+                .then(response => response.text())  // Obtener la respuesta como texto
                 .then(text => {
                     try {
-                        const data = JSON.parse(text);  // Intentamos parsear el texto a JSON
+                        // Verificamos si la respuesta empieza con "{" o "[", que indican JSON válido
+                        if (!text.trim().startsWith("{") && !text.trim().startsWith("[")) {
+                            throw new Error("Respuesta no válida de la API");
+                        }
+    
+                        const data = JSON.parse(text);  // Convertimos el texto a JSON
+    
                         if (data.length > 0) {
                             const lat = parseFloat(data[0].lat);
                             const lon = parseFloat(data[0].lon);
-
+    
                             if (esUbicacionValida(lat, lon)) {
-                                // Confirmar la dirección con SweetAlert
-                                Swal.fire({
-                                    title: '¿Confirmas esta dirección?',
-                                    text: `Dirección: ${data[0].display_name}`,
-                                    icon: 'question',
-                                    showCancelButton: true,
-                                    confirmButtonText: 'Sí, confirmar',
-                                    cancelButtonText: 'Cambiar dirección'
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        actualizarMarcador(lat, lon); // Si el usuario confirma, se actualiza el marcador
-                                    } else {
-                                        // Si el usuario decide cambiar la dirección
-                                        inputDireccion.value = '';  // Limpiar el campo de dirección
-                                    }
-                                });
+                                actualizarMarcador(lat, lon);
                             } else {
-                                // Reemplazar la alerta por SweetAlert
                                 Swal.fire({
                                     icon: 'error',
                                     title: '⛔ Dirección fuera del área de entrega',
@@ -136,7 +126,6 @@ document.addEventListener("DOMContentLoaded", function () {
                                 });
                             }
                         } else {
-                            // Reemplazar la alerta por SweetAlert
                             Swal.fire({
                                 icon: 'error',
                                 title: 'No se encontró la dirección',
@@ -146,7 +135,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     } catch (error) {
                         console.error("Error al parsear la respuesta:", error);
-                        // Reemplazar la alerta por SweetAlert
                         Swal.fire({
                             icon: 'error',
                             title: 'Error en la búsqueda',
@@ -157,7 +145,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 })
                 .catch(error => {
                     console.error("Error al buscar la dirección:", error);
-                    // Reemplazar la alerta por SweetAlert
                     Swal.fire({
                         icon: 'error',
                         title: 'Error de conexión',
@@ -167,6 +154,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
         }
     });
+    
 
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
