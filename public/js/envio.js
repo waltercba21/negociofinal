@@ -9,18 +9,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 }; // Igualdad 88, Córdoba Capital
 
-    // Definir los límites de Córdoba Capital (Ejemplo: Polígono aproximado)
-    const areaCbaCapital = [
-        [-31.372190, -64.174512], // Noreste
-        [-31.426028, -64.141308], // Sureste
-        [-31.465101, -64.204045], // Sur
-        [-31.396353, -64.244475], // Suroeste
-        [-31.364278427615925, -64.2204030946718], // Noroeste
-        [-31.372190, -64.174512] // Cierra el polígono
-    ];
-    
+    // Definir los límites de Córdoba Capital como GeoJSON
+    const areaCbaCapital = {
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[
+                [-64.174512, -31.372190], // Noreste
+                [-64.141308, -31.426028], // Sureste
+                [-64.204045, -31.465101], // Sur
+                [-64.244475, -31.396353], // Suroeste
+                [-64.2204030946718, -31.364278427615925], // Noroeste
+                [-64.174512, -31.372190]  // Cierra el polígono
+            ]]
+        }
+    };
 
     let poligonoZona = null;
+    let geojsonZona = null;
 
     function inicializarMapa() {
         if (!mapa) {
@@ -30,24 +36,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(mapa);
 
-            // Dibujar zona permitida en el mapa
-            poligonoZona = L.polygon(areaCbaCapital, {
-                color: "green",       // Contorno verde
-                fillColor: "#32CD32", // Verde lima brillante
-                fillOpacity: 0.3
-            }).addTo(mapa);
-            
-
-            mapa.on("click", function (e) {
-                if (document.querySelector("input[name='tipo-envio']:checked")?.value === "delivery") {
-                    if (esUbicacionValida(e.latlng.lat, e.latlng.lng)) {
-                        actualizarMarcador(e.latlng.lat, e.latlng.lng);
-                        obtenerDireccionDesdeCoords(e.latlng.lat, e.latlng.lng);
-                    } else {
-                        alert("⛔ La dirección está fuera del área habilitada para delivery.");
-                    }
+            // Dibujar zona permitida en el mapa como GeoJSON
+            geojsonZona = L.geoJSON(areaCbaCapital, {
+                style: {
+                    color: "green",       // Contorno verde
+                    fillColor: "#32CD32", // Verde brillante
+                    fillOpacity: 0.3
                 }
-            });
+            }).addTo(mapa);
         }
     }
 
@@ -76,7 +72,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function esUbicacionValida(lat, lng) {
-        return leafletPip.pointInLayer([lng, lat], poligonoZona).length > 0;
+        if (!geojsonZona) return false;
+        const punto = turf.point([lng, lat]); // Crear un punto
+        const poligono = turf.polygon(areaCbaCapital.geometry.coordinates); // Crear un polígono
+        return turf.booleanPointInPolygon(punto, poligono); // Verificar si está dentro
     }
 
     tipoEnvioRadios.forEach(radio => {
