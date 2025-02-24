@@ -2201,14 +2201,14 @@ border-radius: 10px;
   width: 100%;
   padding: 12px;
   font-size: 1rem;
-  border: 2px solid #42a5f5;
+  border: 2px solid #003f7d;
   border-radius: 8px;
   outline: none;
   transition: border-color 0.3s ease-in-out;
 }
 
 #direccion:focus {
-  border-color: #1e88e5;
+  border-color: #003f7d;
 }
 
 #buscar-direccion {
@@ -2216,7 +2216,7 @@ border-radius: 10px;
   font-size: 1rem;
   font-weight: bold;
   color: #fff;
-  background-color: #42a5f5;
+  background-color: #003f7d;
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -2224,7 +2224,7 @@ border-radius: 10px;
 }
 
 #buscar-direccion:hover {
-  background-color: #1e88e5;
+  background-color: #003f7d;
 }
 
 /* Estilos para el mapa */
