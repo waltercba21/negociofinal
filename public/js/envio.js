@@ -96,22 +96,31 @@ document.addEventListener("DOMContentLoaded", function () {
         const direccion = inputDireccion.value;
         if (direccion.trim() !== "") {
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length > 0) {
-                        const lat = parseFloat(data[0].lat);
-                        const lon = parseFloat(data[0].lon);
+                .then(response => response.text())  // Cambié a .text() para obtener el texto sin parsear como JSON
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);  // Intentamos parsear el texto a JSON
+                        if (data.length > 0) {
+                            const lat = parseFloat(data[0].lat);
+                            const lon = parseFloat(data[0].lon);
 
-                        if (esUbicacionValida(lat, lon)) {
-                            actualizarMarcador(lat, lon);
+                            if (esUbicacionValida(lat, lon)) {
+                                actualizarMarcador(lat, lon);
+                            } else {
+                                alert("⛔ La dirección ingresada está fuera del área habilitada.");
+                            }
                         } else {
-                            alert("⛔ La dirección ingresada está fuera del área habilitada.");
+                            alert("No se encontró la dirección. Intente con otra.");
                         }
-                    } else {
-                        alert("No se encontró la dirección. Intente con otra.");
+                    } catch (error) {
+                        console.error("Error al parsear la respuesta:", error);
+                        alert("Hubo un problema al procesar la dirección. Intente nuevamente.");
                     }
                 })
-                .catch(error => console.error("Error al buscar la dirección:", error));
+                .catch(error => {
+                    console.error("Error al buscar la dirección:", error);
+                    alert("Hubo un error en la búsqueda de la dirección.");
+                });
         }
     });
 
