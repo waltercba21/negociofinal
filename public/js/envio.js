@@ -9,9 +9,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
-    // FORZAR la ocultación inicial
+    // Ocultar inicialmente los elementos
     datosEnvio.classList.add("hidden");
     mapaContainer.classList.add("hidden");
+    datosEnvio.style.display = "none";
+    mapaContainer.style.display = "none";
 
     function inicializarMapa() {
         if (!mapa) {
@@ -34,16 +36,20 @@ document.addEventListener("DOMContentLoaded", function () {
         mapa.setView([lat, lng], 14);
     }
 
-    // Función para manejar cambios en el tipo de envío
+    // Manejar la visibilidad de los campos de envío según la opción seleccionada
     function manejarCambioEnvio() {
         const seleccionado = document.querySelector("input[name='tipo-envio']:checked");
         if (seleccionado && seleccionado.value === "delivery") {
             datosEnvio.classList.remove("hidden");
             mapaContainer.classList.remove("hidden");
+            datosEnvio.style.display = "flex";
+            mapaContainer.style.display = "block";
             inicializarMapa();
         } else {
             datosEnvio.classList.add("hidden");
             mapaContainer.classList.add("hidden");
+            datosEnvio.style.display = "none";
+            mapaContainer.style.display = "none";
         }
     }
 
@@ -56,8 +62,8 @@ document.addEventListener("DOMContentLoaded", function () {
     manejarCambioEnvio();
 
     btnBuscarDireccion.addEventListener("click", function () {
-        const direccion = inputDireccion.value;
-        if (direccion.trim() !== "") {
+        const direccion = inputDireccion.value.trim();
+        if (direccion !== "") {
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
                 .then(response => response.json())
                 .then(data => {
@@ -83,6 +89,13 @@ document.addEventListener("DOMContentLoaded", function () {
                         confirmButtonText: 'Aceptar'
                     });
                 });
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campo vacío',
+                text: 'Ingrese una dirección para buscar.',
+                confirmButtonText: 'Aceptar'
+            });
         }
     });
 });

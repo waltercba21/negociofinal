@@ -1563,8 +1563,9 @@ footer {
   background-color:#007BFF;
 }
 .hidden {
-  display: none;
+  display: none !important;
 }
+
 /*--------------PRODUCTOS--------------*/
 .contenedor-productos{
   display: grid;
