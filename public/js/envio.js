@@ -9,6 +9,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 }; // Igualdad 88, Córdoba Capital
 
+    // Definir los límites de Córdoba Capital (Ejemplo: Polígono aproximado)
+    const areaCbaCapital = [
+        [-31.3546, -64.2359], // Noroeste
+        [-31.3649, -64.1207], // Noreste
+        [-31.4896, -64.1217], // Sureste
+        [-31.5033, -64.2278], // Suroeste
+        [-31.3546, -64.2359]  // Cierra el polígono
+    ];
+
+    let poligonoZona = null;
+
     function inicializarMapa() {
         if (!mapa) {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
@@ -17,10 +28,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(mapa);
 
+            // Dibujar zona permitida en el mapa
+            poligonoZona = L.polygon(areaCbaCapital, {
+                color: "red",
+                fillColor: "#f03",
+                fillOpacity: 0.3
+            }).addTo(mapa);
+
             mapa.on("click", function (e) {
                 if (document.querySelector("input[name='tipo-envio']:checked")?.value === "delivery") {
-                    actualizarMarcador(e.latlng.lat, e.latlng.lng);
-                    obtenerDireccionDesdeCoords(e.latlng.lat, e.latlng.lng);
+                    if (esUbicacionValida(e.latlng.lat, e.latlng.lng)) {
+                        actualizarMarcador(e.latlng.lat, e.latlng.lng);
+                        obtenerDireccionDesdeCoords(e.latlng.lat, e.latlng.lng);
+                    } else {
+                        alert("⛔ La dirección está fuera del área habilitada para delivery.");
+                    }
                 }
             });
         }
@@ -30,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!mapa) return;
 
         if (marcador) {
-            marcador.setLatLng([lat, lng]); // Mueve el marcador en vez de duplicarlo
+            marcador.setLatLng([lat, lng]);
         } else {
             marcador = L.marker([lat, lng]).addTo(mapa);
         }
@@ -48,6 +70,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             })
             .catch(error => console.error("Error al obtener la dirección:", error));
+    }
+
+    function esUbicacionValida(lat, lng) {
+        return leafletPip.pointInLayer([lng, lat], poligonoZona).length > 0;
     }
 
     tipoEnvioRadios.forEach(radio => {
@@ -73,7 +99,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (data.length > 0) {
                         const lat = parseFloat(data[0].lat);
                         const lon = parseFloat(data[0].lon);
-                        actualizarMarcador(lat, lon);
+
+                        if (esUbicacionValida(lat, lon)) {
+                            actualizarMarcador(lat, lon);
+                        } else {
+                            alert("⛔ La dirección ingresada está fuera del área habilitada.");
+                        }
                     } else {
                         alert("No se encontró la dirección. Intente con otra.");
                     }
