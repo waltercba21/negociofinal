@@ -49,19 +49,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function actualizarMarcador(lat, lng) {
         if (!mapa) return;
-
+    
         if (marcador) {
             marcador.setLatLng([lat, lng]);
         } else {
-            marcador = L.marker([lat, lng], { draggable: true }).addTo(mapa);  // Hacer el marcador arrastrable
+            marcador = L.marker([lat, lng], { draggable: true }).addTo(mapa);
+            
+            // Evento cuando se suelta el marcador después de moverlo
             marcador.on('dragend', function (e) {
                 const lat = e.target.getLatLng().lat;
                 const lng = e.target.getLatLng().lng;
-                obtenerDireccionDesdeCoords(lat, lng); // Actualizar dirección al mover el marcador
+    
+                // Obtener dirección actualizada
+                obtenerDireccionDesdeCoords(lat, lng);
+    
+                // Validar si la ubicación es permitida
+                if (!esUbicacionValida(lat, lng)) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '⛔ Ubicación fuera del área de entrega',
+                        text: 'El delivery no llega a esta zona.',
+                        confirmButtonText: 'Aceptar'
+                    });
+                }
             });
         }
+    
         mapa.setView([lat, lng], 14);
     }
+    
 
     function obtenerDireccionDesdeCoords(lat, lon) {
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
