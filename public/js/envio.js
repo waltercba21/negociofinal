@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 }; // Igualdad 88, Córdoba Capital
 
     function inicializarMapa() {
-        // Crear el mapa solo si no está inicializado
         if (!mapa) {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
 
@@ -16,7 +15,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(mapa);
 
-            // Evento para agregar marcador si se selecciona "Envío Delivery"
             mapa.on("click", function (e) {
                 if (document.querySelector("input[name='tipo-envio']:checked")?.value === "delivery") {
                     if (marcador) {
@@ -24,7 +22,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                     marcador = L.marker(e.latlng).addTo(mapa);
 
-                    // Guardar coordenadas en los inputs
                     document.getElementById("direccion").value = `Lat: ${e.latlng.lat}, Lng: ${e.latlng.lng}`;
                     document.getElementById("barrio").value = "Ubicación seleccionada";
                 }
@@ -35,7 +32,6 @@ document.addEventListener("DOMContentLoaded", function () {
     function mostrarUbicacionLocal() {
         if (!mapa) return;
 
-        // Si ya existe un marcador, lo eliminamos
         if (marcador) {
             mapa.removeLayer(marcador);
         }
@@ -43,19 +39,17 @@ document.addEventListener("DOMContentLoaded", function () {
             mapa.removeLayer(marcadorLocal);
         }
 
-        // Agregar marcador en la ubicación del local
         marcadorLocal = L.marker(ubicacionLocal).addTo(mapa)
             .bindPopup("📍 Igualdad 88, Córdoba Capital, Argentina").openPopup();
 
         mapa.setView(ubicacionLocal, 14);
     }
 
-    // Evento para mostrar el mapa cuando el usuario seleccione un tipo de envío
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
-            mapaContainer.classList.remove("hidden"); // Mostrar el mapa
+            mapaContainer.classList.remove("hidden");
 
-            inicializarMapa(); // Asegurar que el mapa se inicializa solo una vez
+            inicializarMapa();
 
             if (this.value === "delivery") {
                 if (marcadorLocal) {
@@ -67,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Ocultar el mapa al inicio
+    // Al inicio, el mapa debe estar oculto y ningún input seleccionado
     mapaContainer.classList.add("hidden");
+    tipoEnvioRadios.forEach(radio => radio.checked = false);
 });
