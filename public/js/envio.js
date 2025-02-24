@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const tipoEnvioRadios = document.querySelectorAll("input[name='tipo-envio']");
     const mapaContainer = document.getElementById("mapa-container");
+    const datosEnvio = document.getElementById("datos-envio"); // Div que contiene los inputs de dirección
     let mapa;
     let marcador;
     let marcadorLocal;
@@ -48,20 +49,22 @@ document.addEventListener("DOMContentLoaded", function () {
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
             mapaContainer.classList.remove("hidden");
-
             inicializarMapa();
 
             if (this.value === "delivery") {
+                datosEnvio.classList.remove("hidden"); // Mostrar los inputs de dirección
                 if (marcadorLocal) {
                     mapa.removeLayer(marcadorLocal);
                 }
             } else {
+                datosEnvio.classList.add("hidden"); // Ocultar los inputs de dirección
                 mostrarUbicacionLocal();
             }
         });
     });
 
-    // Al inicio, el mapa debe estar oculto y ningún input seleccionado
+    // Al inicio, oculta el mapa y los inputs de dirección
     mapaContainer.classList.add("hidden");
+    datosEnvio.classList.add("hidden");
     tipoEnvioRadios.forEach(radio => radio.checked = false);
 });
