@@ -107,19 +107,43 @@ document.addEventListener("DOMContentLoaded", function () {
                             if (esUbicacionValida(lat, lon)) {
                                 actualizarMarcador(lat, lon);
                             } else {
-                                alert("⛔ La dirección ingresada está fuera del área habilitada.");
+                                // Reemplazar la alerta por SweetAlert
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '⛔ Dirección fuera del área de entrega',
+                                    text: 'La dirección ingresada está fuera del área habilitada.',
+                                    confirmButtonText: 'Aceptar'
+                                });
                             }
                         } else {
-                            alert("No se encontró la dirección. Intente con otra.");
+                            // Reemplazar la alerta por SweetAlert
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'No se encontró la dirección',
+                                text: 'Intente con otra dirección.',
+                                confirmButtonText: 'Aceptar'
+                            });
                         }
                     } catch (error) {
                         console.error("Error al parsear la respuesta:", error);
-                        alert("Hubo un problema al procesar la dirección. Intente nuevamente.");
+                        // Reemplazar la alerta por SweetAlert
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error en la búsqueda',
+                            text: 'Hubo un problema al procesar la dirección. Intente nuevamente.',
+                            confirmButtonText: 'Aceptar'
+                        });
                     }
                 })
                 .catch(error => {
                     console.error("Error al buscar la dirección:", error);
-                    alert("Hubo un error en la búsqueda de la dirección.");
+                    // Reemplazar la alerta por SweetAlert
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        text: 'Hubo un error en la búsqueda de la dirección.',
+                        confirmButtonText: 'Aceptar'
+                    });
                 });
         }
     });
