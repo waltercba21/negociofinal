@@ -32,10 +32,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Dibujar zona permitida en el mapa
             poligonoZona = L.polygon(areaCbaCapital, {
-                color: "red",
-                fillColor: "#f03",
+                color: "green",       // Contorno verde
+                fillColor: "#32CD32", // Verde lima brillante
                 fillOpacity: 0.3
             }).addTo(mapa);
+            
 
             mapa.on("click", function (e) {
                 if (document.querySelector("input[name='tipo-envio']:checked")?.value === "delivery") {
