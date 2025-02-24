@@ -11,11 +11,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Definir los límites de Córdoba Capital (Ejemplo: Polígono aproximado)
     const areaCbaCapital = [
-        [-31.3546, -64.2359], // Noroeste
-        [-31.3649, -64.1207], // Noreste
-        [-31.4896, -64.1217], // Sureste
-        [-31.5033, -64.2278], // Suroeste
-        [-31.3546, -64.2359]  // Cierra el polígono
+        [-31.364278427615925, -64.2204030946718], // Noroeste
+        [-31.372190, -64.174512], // Noreste
+        [-31.426028, -64.141308], // Sureste
+        [-31.396353, -64.244475], // Suroeste
+        [-31.465101, -64.204045]  // Cierra el polígono
     ];
 
     let poligonoZona = null;
