@@ -9,14 +9,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
-    // Inicialmente ocultar los elementos de dirección y mapa
-    mapaContainer.classList.add("hidden");
+    // FORZAR la ocultación inicial
     datosEnvio.classList.add("hidden");
+    mapaContainer.classList.add("hidden");
 
     function inicializarMapa() {
         if (!mapa) {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
-
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(mapa);
@@ -35,18 +34,26 @@ document.addEventListener("DOMContentLoaded", function () {
         mapa.setView([lat, lng], 14);
     }
 
+    // Función para manejar cambios en el tipo de envío
+    function manejarCambioEnvio() {
+        const seleccionado = document.querySelector("input[name='tipo-envio']:checked");
+        if (seleccionado && seleccionado.value === "delivery") {
+            datosEnvio.classList.remove("hidden");
+            mapaContainer.classList.remove("hidden");
+            inicializarMapa();
+        } else {
+            datosEnvio.classList.add("hidden");
+            mapaContainer.classList.add("hidden");
+        }
+    }
+
+    // Agregar eventos a los radio buttons
     tipoEnvioRadios.forEach(radio => {
-        radio.addEventListener("change", function () {
-            if (this.value === "delivery") {
-                datosEnvio.classList.remove("hidden");
-                mapaContainer.classList.remove("hidden");
-                inicializarMapa();
-            } else {
-                datosEnvio.classList.add("hidden");
-                mapaContainer.classList.add("hidden");
-            }
-        });
+        radio.addEventListener("change", manejarCambioEnvio);
     });
+
+    // Llamar a la función al cargar la página para reflejar el estado inicial
+    manejarCambioEnvio();
 
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value;
