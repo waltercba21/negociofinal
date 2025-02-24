@@ -53,7 +53,12 @@ document.addEventListener("DOMContentLoaded", function () {
         if (marcador) {
             marcador.setLatLng([lat, lng]);
         } else {
-            marcador = L.marker([lat, lng]).addTo(mapa);
+            marcador = L.marker([lat, lng], { draggable: true }).addTo(mapa);  // Hacer el marcador arrastrable
+            marcador.on('dragend', function (e) {
+                const lat = e.target.getLatLng().lat;
+                const lng = e.target.getLatLng().lng;
+                obtenerDireccionDesdeCoords(lat, lng); // Actualizar dirección al mover el marcador
+            });
         }
         mapa.setView([lat, lng], 14);
     }
@@ -105,7 +110,22 @@ document.addEventListener("DOMContentLoaded", function () {
                             const lon = parseFloat(data[0].lon);
 
                             if (esUbicacionValida(lat, lon)) {
-                                actualizarMarcador(lat, lon);
+                                // Confirmar la dirección con SweetAlert
+                                Swal.fire({
+                                    title: '¿Confirmas esta dirección?',
+                                    text: `Dirección: ${data[0].display_name}`,
+                                    icon: 'question',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Sí, confirmar',
+                                    cancelButtonText: 'Cambiar dirección'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        actualizarMarcador(lat, lon); // Si el usuario confirma, se actualiza el marcador
+                                    } else {
+                                        // Si el usuario decide cambiar la dirección
+                                        inputDireccion.value = '';  // Limpiar el campo de dirección
+                                    }
+                                });
                             } else {
                                 // Reemplazar la alerta por SweetAlert
                                 Swal.fire({
