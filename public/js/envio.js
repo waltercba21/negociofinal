@@ -103,10 +103,12 @@ document.addEventListener("DOMContentLoaded", function () {
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
                 .then(response => response.text())  // Obtener la respuesta como texto
                 .then(text => {
+                    console.log("Respuesta de la API:", text); // Depuración: ver respuesta antes de procesarla
+    
                     try {
-                        // Verificamos si la respuesta empieza con "{" o "[", que indican JSON válido
+                        // Verificar si la respuesta no es válida
                         if (!text.trim().startsWith("{") && !text.trim().startsWith("[")) {
-                            throw new Error("Respuesta no válida de la API");
+                            throw new Error("Respuesta no válida de la API: " + text);
                         }
     
                         const data = JSON.parse(text);  // Convertimos el texto a JSON
