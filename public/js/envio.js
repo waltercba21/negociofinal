@@ -4,43 +4,37 @@ document.addEventListener("DOMContentLoaded", function () {
     const datosEnvio = document.getElementById("datos-envio");
     const inputDireccion = document.getElementById("direccion");
     const btnBuscarDireccion = document.getElementById("buscar-direccion");
-    let mapa;
-    let marcador;
+    let mapa, marcador;
 
-    const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 }; // Igualdad 88, Córdoba Capital
+    const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
-    // Definir los límites de Córdoba Capital como GeoJSON
     const areaCbaCapital = {
         "type": "Feature",
         "geometry": {
             "type": "Polygon",
             "coordinates": [[
-                [-64.174512, -31.372190], // Noreste
-                [-64.141308, -31.426028], // Sureste
-                [-64.204045, -31.465101], // Sur
-                [-64.244475, -31.396353], // Suroeste
-                [-64.2204030946718, -31.364278427615925], // Noroeste
-                [-64.174512, -31.372190]  // Cierra el polígono
+                [-64.174512, -31.372190],
+                [-64.141308, -31.426028],
+                [-64.204045, -31.465101],
+                [-64.244475, -31.396353],
+                [-64.2204030946718, -31.364278427615925],
+                [-64.174512, -31.372190]
             ]]
         }
     };
-
-    let poligonoZona = null;
-    let geojsonZona = null;
 
     function inicializarMapa() {
         if (!mapa) {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
 
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution: '&copy; OpenStreetMap contributors'
             }).addTo(mapa);
 
-            // Dibujar zona permitida en el mapa como GeoJSON
-            geojsonZona = L.geoJSON(areaCbaCapital, {
+            L.geoJSON(areaCbaCapital, {
                 style: {
-                    color: "green",       // Contorno verde
-                    fillColor: "#32CD32", // Verde brillante
+                    color: "green",
+                    fillColor: "#32CD32",
                     fillOpacity: 0.3
                 }
             }).addTo(mapa);
@@ -56,30 +50,14 @@ document.addEventListener("DOMContentLoaded", function () {
             marcador = L.marker([lat, lng]).addTo(mapa);
         }
 
-        // Actualizar popup con la dirección
         marcador.bindPopup(`<b>Dirección:</b> ${direccion}`).openPopup();
-
         mapa.setView([lat, lng], 14);
     }
 
-    function obtenerDireccionDesdeCoords(lat, lon) {
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.display_name) {
-                    inputDireccion.value = data.display_name;
-                } else {
-                    inputDireccion.value = "Ubicación seleccionada";
-                }
-            })
-            .catch(error => console.error("Error al obtener la dirección:", error));
-    }
-
     function esUbicacionValida(lat, lng) {
-        if (!geojsonZona) return false;
-        const punto = turf.point([lng, lat]); // Corregido el orden de las coordenadas
-        const poligono = turf.polygon(areaCbaCapital.geometry.coordinates); // Crear un polígono
-        return turf.booleanPointInPolygon(punto, poligono); // Verificar si está dentro
+        const punto = turf.point([lng, lat]);
+        const poligono = turf.polygon(areaCbaCapital.geometry.coordinates);
+        return turf.booleanPointInPolygon(punto, poligono);
     }
 
     tipoEnvioRadios.forEach(radio => {
@@ -91,28 +69,27 @@ document.addEventListener("DOMContentLoaded", function () {
                 datosEnvio.classList.remove("hidden");
             } else {
                 datosEnvio.classList.add("hidden");
-                // Actualizamos el marcador con la dirección del local
                 actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, "Igualdad 88, Córdoba Capital");
             }
         });
     });
 
     btnBuscarDireccion.addEventListener("click", function () {
-        const direccion = inputDireccion.value;
-        if (direccion.trim() !== "") {
+        const direccion = inputDireccion.value.trim();
+        if (direccion !== "") {
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.length > 0) {
                         const lat = parseFloat(data[0].lat);
                         const lon = parseFloat(data[0].lon);
-    
+
                         if (esUbicacionValida(lat, lon)) {
                             actualizarMarcador(lat, lon, direccion);
                         } else {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Dirección fuera del área de entrega',
+                                title: '⛔ Dirección fuera del área de entrega',
                                 text: 'La dirección ingresada está fuera del área habilitada.',
                                 confirmButtonText: 'Aceptar'
                             });
