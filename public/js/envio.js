@@ -82,12 +82,16 @@ document.addEventListener("DOMContentLoaded", function () {
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value.trim();
         if (direccion !== "") {
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}`)
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.length > 0) {
-                        const lat = parseFloat(data[0].lat);
-                        const lon = parseFloat(data[0].lon);
+                    const resultadoCbaCapital = data.find(entry => 
+                        entry.address.city === "Córdoba" && entry.address.state === "Córdoba" 
+                    );
+
+                    if (resultadoCbaCapital) {
+                        const lat = parseFloat(resultadoCbaCapital.lat);
+                        const lon = parseFloat(resultadoCbaCapital.lon);
                         console.log("Coordenadas obtenidas:", lat, lon);
 
                         const dentroDeZona = esUbicacionValida(lat, lon);
@@ -104,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'No se encontró la dirección',
+                            title: 'No se encontró la dirección en Córdoba Capital',
                             text: 'Intente con otra dirección.',
                             confirmButtonText: 'Aceptar'
                         });
