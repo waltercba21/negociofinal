@@ -82,13 +82,13 @@ document.addEventListener("DOMContentLoaded", function () {
     function buscarDireccion(direccion) {
         // Mostrar el spinner al iniciar la búsqueda
         const spinner = document.getElementById("spinner");
-        spinner.style.visibility = "visible"; // Aseguramos que sea visible
+        spinner.style.display = "block";  // Aseguramos que el spinner se vea
     
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
             .then(response => response.json())
             .then(data => {
                 let resultadoCbaCapital = data.find(entry => 
-                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba" 
+                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
                 );
     
                 if (!resultadoCbaCapital) {
@@ -101,9 +101,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     );
     
                     Promise.all(promesas).then(resultados => {
-                        // Ocultar el spinner después de que todas las búsquedas hayan terminado
-                        spinner.style.visibility = "hidden"; // Ocultar el spinner
-    
                         let encontrado = false;
                         resultados.forEach(res => {
                             let match = res.find(entry => 
@@ -114,6 +111,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                 encontrado = true;
                             }
                         });
+    
+                        // Ocultar el spinner después de que todas las búsquedas hayan terminado
+                        spinner.style.display = "none";  // Ocultamos el spinner
     
                         if (encontrado) {
                             const lat = parseFloat(resultadoCbaCapital.lat);
@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     }).catch(error => {
                         // Ocultar el spinner si ocurre un error
-                        spinner.style.visibility = "hidden"; // Ocultar el spinner
+                        spinner.style.display = "none";  // Ocultamos el spinner
     
                         console.error("Error en la búsqueda de variaciones:", error);
                         Swal.fire({
@@ -170,12 +170,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
     
                     // Asegurarse de ocultar el spinner cuando la búsqueda termine
-                    spinner.style.visibility = "hidden"; // Ocultar el spinner
+                    spinner.style.display = "none";  // Ocultamos el spinner
                 }
             })
             .catch(error => {
                 // Ocultar el spinner si ocurre un error
-                spinner.style.visibility = "hidden"; // Ocultar el spinner
+                spinner.style.display = "none";  // Ocultamos el spinner
     
                 console.error("Error al buscar la dirección:", error);
                 Swal.fire({
@@ -186,6 +186,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             });
     }
+    
     
 
     btnBuscarDireccion.addEventListener("click", function () {
