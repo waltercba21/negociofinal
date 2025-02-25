@@ -2250,14 +2250,19 @@ border-radius: 10px;
 }
 
 #spinner {
-  position: fixed; /* Fijarlo en la pantalla */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999; /* Asegúrate de que el spinner esté por encima de otros elementos */
+  border: 8px solid #f3f3f3; /* Fondo gris claro */
+  border-top: 8px solid #3498db; /* El color de la rueda */
+  border-radius: 50%; /* Hacerlo circular */
+  width: 50px; /* Tamaño del spinner */
+  height: 50px; /* Tamaño del spinner */
+  animation: spin 1s linear infinite; /* Animación que gira continuamente */
+  display: none; /* Inicialmente oculto */
+  margin: auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .spinner {
