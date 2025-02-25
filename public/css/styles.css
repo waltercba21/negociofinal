@@ -2247,7 +2247,7 @@ border-radius: 10px;
   height: 50px; /* Tamaño del spinner */
   animation: spin 1s linear infinite; /* Animación que gira continuamente */
   margin: auto;
-  visibility: hidden; /* Lo ocultamos inicialmente */
+  display: none; /* Lo ocultamos inicialmente con display */
 }
 
 @keyframes spin {

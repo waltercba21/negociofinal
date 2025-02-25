@@ -201,6 +201,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
     
     
+    
 
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value.trim();
