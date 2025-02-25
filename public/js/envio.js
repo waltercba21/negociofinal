@@ -55,9 +55,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function esUbicacionValida(lat, lng) {
+        console.log("Latitud recibida:", lat, "Longitud recibida:", lng);
         const punto = turf.point([lng, lat]);
         const poligono = turf.polygon(areaCbaCapital.geometry.coordinates);
-        return turf.booleanPointInPolygon(punto, poligono);
+        const resultado = turf.booleanPointInPolygon(punto, poligono);
+        console.log("El punto está dentro del polígono:", resultado);
+        return resultado;
     }
 
     tipoEnvioRadios.forEach(radio => {
@@ -83,6 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (data.length > 0) {
                         const lat = parseFloat(data[0].lat);
                         const lon = parseFloat(data[0].lon);
+                        console.log("Coordenadas obtenidas:", lat, lon);
 
                         if (esUbicacionValida(lat, lon)) {
                             actualizarMarcador(lat, lon, direccion);
