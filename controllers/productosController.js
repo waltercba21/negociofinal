@@ -192,20 +192,56 @@ module.exports = {
     
     detalle: function (req, res) {
         const id = req.params.id;
+        
         producto.obtenerPorId(conexion, id, function(error, producto) {
-          if (error) {
-            console.log('Error al obtener producto:', error);
-            return res.status(500).send('Error al obtener el producto');
-          } else if (producto.length === 0) {
-            return res.status(404).send('Producto no encontrado');
-          } else {
+            if (error) {
+                console.log('Error al obtener producto:', error);
+                return res.status(500).send('Error al obtener el producto');
+            } 
+            
+            if (!producto || producto.length === 0) {
+                return res.status(404).send('Producto no encontrado');
+            }
+    
+            // Formatear precio para la vista
             producto[0].precio_venta = Number(producto[0].precio_venta).toLocaleString('es-ES');
-            res.render('detalle', { 
-                producto: producto[0], 
-            });
-          }
-        }); 
-      },
+    
+            let cantidadCarrito = 0;
+    
+            if (req.session && req.session.usuario) {
+                const id_usuario = req.session.usuario.id;
+    
+                carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
+                    if (carritoActivo && carritoActivo.length > 0) {
+                        const id_carrito = carritoActivo[0].id;
+    
+                        carrito.obtenerProductosCarrito(id_carrito, (error, productosCarrito) => {
+                            if (productosCarrito) {
+                                cantidadCarrito = productosCarrito.length;
+                            }
+    
+                            // Renderizar vista detalle con el producto y la cantidad en el carrito
+                            res.render('detalle', { 
+                                producto: producto[0], 
+                                cantidadCarrito
+                            });
+                        });
+                    } else {
+                        res.render('detalle', { 
+                            producto: producto[0], 
+                            cantidadCarrito: 0
+                        });
+                    }
+                });
+            } else {
+                res.render('detalle', { 
+                    producto: producto[0], 
+                    cantidadCarrito: 0
+                });
+            }
+        });
+    },
+    
       
       crear: function(req, res) {
         let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento;
