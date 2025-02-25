@@ -22,7 +22,6 @@ document.addEventListener("DOMContentLoaded", function () {
             ]]
         }
     };
-    console.log("Coordenadas del polígono:", areaCbaCapital.geometry.coordinates);
 
     function inicializarMapa() {
         if (!mapa) {
@@ -42,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    function actualizarMarcador(lat, lng, direccion) {
+    function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
         if (!mapa) return;
 
         if (marcador) {
@@ -51,7 +50,9 @@ document.addEventListener("DOMContentLoaded", function () {
             marcador = L.marker([lat, lng]).addTo(mapa);
         }
 
-        marcador.bindPopup(`<b>Dirección:</b> ${direccion}`).openPopup();
+        const mensaje = dentroDeZona ? `<b>Dirección:</b> ${direccion}` : 
+            `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
+        marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lng], 14);
     }
 
@@ -73,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 datosEnvio.classList.remove("hidden");
             } else {
                 datosEnvio.classList.add("hidden");
-                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, "Igualdad 88, Córdoba Capital");
+                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, "Igualdad 88, Córdoba Capital", true);
             }
         });
     });
@@ -89,9 +90,10 @@ document.addEventListener("DOMContentLoaded", function () {
                         const lon = parseFloat(data[0].lon);
                         console.log("Coordenadas obtenidas:", lat, lon);
 
-                        if (esUbicacionValida(lat, lon)) {
-                            actualizarMarcador(lat, lon, direccion);
-                        } else {
+                        const dentroDeZona = esUbicacionValida(lat, lon);
+                        actualizarMarcador(lat, lon, direccion, dentroDeZona);
+
+                        if (!dentroDeZona) {
                             Swal.fire({
                                 icon: 'error',
                                 title: '⛔ Dirección fuera del área de entrega',
