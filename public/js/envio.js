@@ -79,50 +79,74 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    btnBuscarDireccion.addEventListener("click", function () {
-        const direccion = inputDireccion.value.trim();
-        if (direccion !== "") {
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
-                .then(response => response.json())
-                .then(data => {
-                    const resultadoCbaCapital = data.find(entry => 
-                        entry.address.city === "Córdoba" && entry.address.state === "Córdoba" 
+    function buscarDireccion(direccion) {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
+            .then(response => response.json())
+            .then(data => {
+                let resultadoCbaCapital = data.find(entry => 
+                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba" 
+                );
+
+                if (!resultadoCbaCapital) {
+                    console.log("Reintentando con variaciones de la dirección");
+                    const variaciones = ["Av.", "Bv.", "Calle", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
+                    let promesas = variaciones.map(variante => 
+                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variante + ', Córdoba, Argentina')}&addressdetails=1`).then(res => res.json())
                     );
 
-                    if (resultadoCbaCapital) {
-                        const lat = parseFloat(resultadoCbaCapital.lat);
-                        const lon = parseFloat(resultadoCbaCapital.lon);
-                        console.log("Coordenadas obtenidas:", lat, lon);
-
-                        const dentroDeZona = esUbicacionValida(lat, lon);
-                        actualizarMarcador(lat, lon, direccion, dentroDeZona);
-
-                        if (!dentroDeZona) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: '⛔ Dirección fuera del área de entrega',
-                                text: 'La dirección ingresada está fuera del área habilitada.',
-                                confirmButtonText: 'Aceptar'
-                            });
+                    return Promise.all(promesas).then(resultados => {
+                        for (let res of resultados) {
+                            let encontrado = res.find(entry => 
+                                (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
+                            );
+                            if (encontrado) {
+                                return buscarDireccion(encontrado.display_name);
+                            }
                         }
-                    } else {
+                        throw new Error("No se encontró la dirección");
+                    });
+                }
+
+                if (resultadoCbaCapital) {
+                    const lat = parseFloat(resultadoCbaCapital.lat);
+                    const lon = parseFloat(resultadoCbaCapital.lon);
+                    console.log("Coordenadas obtenidas:", lat, lon);
+
+                    const dentroDeZona = esUbicacionValida(lat, lon);
+                    actualizarMarcador(lat, lon, direccion, dentroDeZona);
+
+                    if (!dentroDeZona) {
                         Swal.fire({
                             icon: 'error',
-                            title: 'No se encontró la dirección en Córdoba Capital',
-                            text: 'Intente con otra dirección.',
+                            title: '⛔ Dirección fuera del área de entrega',
+                            text: 'La dirección ingresada está fuera del área habilitada.',
                             confirmButtonText: 'Aceptar'
                         });
                     }
-                })
-                .catch(error => {
-                    console.error("Error al buscar la dirección:", error);
+                } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error de conexión',
-                        text: 'Hubo un error en la búsqueda de la dirección.',
+                        title: 'No se encontró la dirección en Córdoba Capital',
+                        text: 'Intente con otra dirección.',
                         confirmButtonText: 'Aceptar'
                     });
+                }
+            })
+            .catch(error => {
+                console.error("Error al buscar la dirección:", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'Hubo un error en la búsqueda de la dirección.',
+                    confirmButtonText: 'Aceptar'
                 });
+            });
+    }
+
+    btnBuscarDireccion.addEventListener("click", function () {
+        const direccion = inputDireccion.value.trim();
+        if (direccion !== "") {
+            buscarDireccion(direccion);
         }
     });
 
