@@ -2240,24 +2240,14 @@ border-radius: 10px;
   border: 2px solid #ddd;
 }
 #spinner {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#spinner {
   border: 8px solid #f3f3f3; /* Fondo gris claro */
   border-top: 8px solid #3498db; /* El color de la rueda */
   border-radius: 50%; /* Hacerlo circular */
   width: 50px; /* Tamaño del spinner */
   height: 50px; /* Tamaño del spinner */
   animation: spin 1s linear infinite; /* Animación que gira continuamente */
-  display: none; /* Inicialmente oculto */
   margin: auto;
+  visibility: hidden; /* Lo ocultamos inicialmente */
 }
 
 @keyframes spin {

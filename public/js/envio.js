@@ -81,28 +81,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function buscarDireccion(direccion) {
         // Mostrar el spinner al iniciar la búsqueda
-        document.getElementById("spinner").classList.remove("hidden");
-
+        const spinner = document.getElementById("spinner");
+        spinner.style.visibility = "visible"; // Aseguramos que sea visible
+    
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
             .then(response => response.json())
             .then(data => {
                 let resultadoCbaCapital = data.find(entry => 
                     (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba" 
                 );
-
+    
                 if (!resultadoCbaCapital) {
                     console.log("Reintentando con variaciones de la dirección");
-
+    
                     const variaciones = ["Av.", "Bv.", "Calle", "Cto.", "Río", "Avenida", "Boulevard", "Ruta", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
-
+    
                     let promesas = variaciones.map(variante => 
                         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variante + ', Córdoba, Argentina')}&addressdetails=1`).then(res => res.json())
                     );
-
+    
                     Promise.all(promesas).then(resultados => {
                         // Ocultar el spinner después de que todas las búsquedas hayan terminado
-                        document.getElementById("spinner").classList.add("hidden");
-
+                        spinner.style.visibility = "hidden"; // Ocultar el spinner
+    
                         let encontrado = false;
                         resultados.forEach(res => {
                             let match = res.find(entry => 
@@ -113,15 +114,15 @@ document.addEventListener("DOMContentLoaded", function () {
                                 encontrado = true;
                             }
                         });
-
+    
                         if (encontrado) {
                             const lat = parseFloat(resultadoCbaCapital.lat);
                             const lon = parseFloat(resultadoCbaCapital.lon);
                             console.log("Coordenadas obtenidas:", lat, lon);
-
+    
                             const dentroDeZona = esUbicacionValida(lat, lon);
                             actualizarMarcador(lat, lon, direccion, dentroDeZona);
-
+    
                             if (!dentroDeZona) {
                                 Swal.fire({
                                     icon: 'error',
@@ -140,8 +141,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     }).catch(error => {
                         // Ocultar el spinner si ocurre un error
-                        document.getElementById("spinner").classList.add("hidden");
-
+                        spinner.style.visibility = "hidden"; // Ocultar el spinner
+    
                         console.error("Error en la búsqueda de variaciones:", error);
                         Swal.fire({
                             icon: 'error',
@@ -150,15 +151,15 @@ document.addEventListener("DOMContentLoaded", function () {
                             confirmButtonText: 'Aceptar'
                         });
                     });
-
+    
                 } else {
                     const lat = parseFloat(resultadoCbaCapital.lat);
                     const lon = parseFloat(resultadoCbaCapital.lon);
                     console.log("Coordenadas obtenidas:", lat, lon);
-
+    
                     const dentroDeZona = esUbicacionValida(lat, lon);
                     actualizarMarcador(lat, lon, direccion, dentroDeZona);
-
+    
                     if (!dentroDeZona) {
                         Swal.fire({
                             icon: 'error',
@@ -167,15 +168,15 @@ document.addEventListener("DOMContentLoaded", function () {
                             confirmButtonText: 'Aceptar'
                         });
                     }
-
+    
                     // Asegurarse de ocultar el spinner cuando la búsqueda termine
-                    document.getElementById("spinner").classList.add("hidden");
+                    spinner.style.visibility = "hidden"; // Ocultar el spinner
                 }
             })
             .catch(error => {
                 // Ocultar el spinner si ocurre un error
-                document.getElementById("spinner").classList.add("hidden");
-
+                spinner.style.visibility = "hidden"; // Ocultar el spinner
+    
                 console.error("Error al buscar la dirección:", error);
                 Swal.fire({
                     icon: 'error',
@@ -185,6 +186,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             });
     }
+    
 
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value.trim();
