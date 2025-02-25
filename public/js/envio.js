@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value.trim();
         if (direccion !== "") {
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.length > 0) {
