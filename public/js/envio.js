@@ -80,13 +80,16 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function buscarDireccion(direccion) {
-        // Mostrar el spinner al iniciar la búsqueda
         const spinner = document.getElementById("spinner");
+        console.log("Mostrando el spinner");
         spinner.style.display = "block";  // Aseguramos que el spinner se vea
+    
+        console.log("Iniciando la búsqueda de la dirección:", direccion);
     
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
             .then(response => response.json())
             .then(data => {
+                console.log("Datos recibidos:", data);
                 let resultadoCbaCapital = data.find(entry => 
                     (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
                 );
@@ -95,12 +98,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     console.log("Reintentando con variaciones de la dirección");
     
                     const variaciones = ["Av.", "Bv.", "Calle", "Cto.", "Río", "Avenida", "Boulevard", "Ruta", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
+                    console.log("Variaciones de la dirección:", variaciones);
     
                     let promesas = variaciones.map(variante => 
                         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variante + ', Córdoba, Argentina')}&addressdetails=1`).then(res => res.json())
                     );
     
+                    console.log("Esperando respuestas para las variaciones...");
+    
                     Promise.all(promesas).then(resultados => {
+                        console.log("Respuestas de variaciones:", resultados);
                         let encontrado = false;
                         resultados.forEach(res => {
                             let match = res.find(entry => 
@@ -113,6 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         });
     
                         // Ocultar el spinner después de que todas las búsquedas hayan terminado
+                        console.log("Ocultando el spinner");
                         spinner.style.display = "none";  // Ocultamos el spinner
     
                         if (encontrado) {
@@ -141,9 +149,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     }).catch(error => {
                         // Ocultar el spinner si ocurre un error
+                        console.log("Error en las variaciones:", error);
                         spinner.style.display = "none";  // Ocultamos el spinner
     
-                        console.error("Error en la búsqueda de variaciones:", error);
                         Swal.fire({
                             icon: 'error',
                             title: 'Error de conexión',
@@ -170,14 +178,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
     
                     // Asegurarse de ocultar el spinner cuando la búsqueda termine
+                    console.log("Ocultando el spinner");
                     spinner.style.display = "none";  // Ocultamos el spinner
                 }
             })
             .catch(error => {
                 // Ocultar el spinner si ocurre un error
+                console.log("Error en la búsqueda:", error);
                 spinner.style.display = "none";  // Ocultamos el spinner
     
-                console.error("Error al buscar la dirección:", error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de conexión',
@@ -186,6 +195,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             });
     }
+    
     
     
 
