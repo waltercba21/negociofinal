@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function esUbicacionValida(lat, lng) {
         if (!geojsonZona) return false;
-        const punto = turf.point([lng, lat]); // Crear un punto
+        const punto = turf.point([lng, lat]); // Corregido el orden de las coordenadas
         const poligono = turf.polygon(areaCbaCapital.geometry.coordinates); // Crear un polígono
         return turf.booleanPointInPolygon(punto, poligono); // Verificar si está dentro
     }
@@ -101,48 +101,33 @@ document.addEventListener("DOMContentLoaded", function () {
         const direccion = inputDireccion.value;
         if (direccion.trim() !== "") {
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
-                .then(response => response.text())  // Cambié a .text() para obtener el texto sin parsear como JSON
-                .then(text => {
-                    try {
-                        const data = JSON.parse(text);  // Intentamos parsear el texto a JSON
-                        if (data.length > 0) {
-                            const lat = parseFloat(data[0].lat);
-                            const lon = parseFloat(data[0].lon);
-
-                            if (esUbicacionValida(lat, lon)) {
-                                actualizarMarcador(lat, lon, direccion);
-                            } else {
-                                // Reemplazar la alerta por SweetAlert
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: '⛔ Dirección fuera del área de entrega',
-                                    text: 'La dirección ingresada está fuera del área habilitada.',
-                                    confirmButtonText: 'Aceptar'
-                                });
-                            }
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+    
+                        if (esUbicacionValida(lat, lon)) {
+                            actualizarMarcador(lat, lon, direccion);
                         } else {
-                            // Reemplazar la alerta por SweetAlert
                             Swal.fire({
                                 icon: 'error',
-                                title: 'No se encontró la dirección',
-                                text: 'Intente con otra dirección.',
+                                title: 'Dirección fuera del área de entrega',
+                                text: 'La dirección ingresada está fuera del área habilitada.',
                                 confirmButtonText: 'Aceptar'
                             });
                         }
-                    } catch (error) {
-                        console.error("Error al parsear la respuesta:", error);
-                        // Reemplazar la alerta por SweetAlert
+                    } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error en la búsqueda',
-                            text: 'Hubo un problema al procesar la dirección. Intente nuevamente.',
+                            title: 'No se encontró la dirección',
+                            text: 'Intente con otra dirección.',
                             confirmButtonText: 'Aceptar'
                         });
                     }
                 })
                 .catch(error => {
                     console.error("Error al buscar la dirección:", error);
-                    // Reemplazar la alerta por SweetAlert
                     Swal.fire({
                         icon: 'error',
                         title: 'Error de conexión',
