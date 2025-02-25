@@ -89,26 +89,66 @@ document.addEventListener("DOMContentLoaded", function () {
     
                 if (!resultadoCbaCapital) {
                     console.log("Reintentando con variaciones de la dirección");
+    
                     // Agregar más variaciones para cubrir otros casos
                     const variaciones = ["Av.", "Bv.", "Calle", "Cto.", "Río", "Avenida", "Boulevard", "Ruta", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
+    
+                    // Realizar múltiples búsquedas para cada variación
                     let promesas = variaciones.map(variante => 
                         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variante + ', Córdoba, Argentina')}&addressdetails=1`).then(res => res.json())
                     );
     
-                    return Promise.all(promesas).then(resultados => {
-                        for (let res of resultados) {
-                            let encontrado = res.find(entry => 
+                    // Esperar todas las búsquedas y procesarlas
+                    Promise.all(promesas).then(resultados => {
+                        // Verificar cada respuesta
+                        let encontrado = false;
+                        resultados.forEach(res => {
+                            let match = res.find(entry => 
                                 (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
                             );
-                            if (encontrado) {
-                                return buscarDireccion(encontrado.display_name);
+                            if (match) {
+                                resultadoCbaCapital = match;
+                                encontrado = true;
                             }
-                        }
-                        throw new Error("No se encontró la dirección");
-                    });
-                }
+                        });
     
-                if (resultadoCbaCapital) {
+                        // Si se encontró una dirección, proceder
+                        if (encontrado) {
+                            const lat = parseFloat(resultadoCbaCapital.lat);
+                            const lon = parseFloat(resultadoCbaCapital.lon);
+                            console.log("Coordenadas obtenidas:", lat, lon);
+    
+                            const dentroDeZona = esUbicacionValida(lat, lon);
+                            actualizarMarcador(lat, lon, direccion, dentroDeZona);
+    
+                            if (!dentroDeZona) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '⛔ Dirección fuera del área de entrega',
+                                    text: 'La dirección ingresada está fuera del área habilitada.',
+                                    confirmButtonText: 'Aceptar'
+                                });
+                            }
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'No se encontró la dirección en Córdoba Capital',
+                                text: 'Intente con otra dirección.',
+                                confirmButtonText: 'Aceptar'
+                            });
+                        }
+                    }).catch(error => {
+                        console.error("Error en la búsqueda de variaciones:", error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de conexión',
+                            text: 'Hubo un problema al buscar la dirección. Por favor, intente nuevamente.',
+                            confirmButtonText: 'Aceptar'
+                        });
+                    });
+    
+                } else {
+                    // Si la dirección se encuentra en la búsqueda original
                     const lat = parseFloat(resultadoCbaCapital.lat);
                     const lon = parseFloat(resultadoCbaCapital.lon);
                     console.log("Coordenadas obtenidas:", lat, lon);
@@ -124,13 +164,6 @@ document.addEventListener("DOMContentLoaded", function () {
                             confirmButtonText: 'Aceptar'
                         });
                     }
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'No se encontró la dirección en Córdoba Capital',
-                        text: 'Intente con otra dirección.',
-                        confirmButtonText: 'Aceptar'
-                    });
                 }
             })
             .catch(error => {
@@ -138,7 +171,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de conexión',
-                    text: 'Hubo un error en la búsqueda de la dirección.',
+                    text: 'Hubo un error en la búsqueda de la dirección. Verifique la conexión o intente con otra dirección.',
                     confirmButtonText: 'Aceptar'
                 });
             });
