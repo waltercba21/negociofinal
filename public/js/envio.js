@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
             ]]
         }
     };
+    console.log("Coordenadas del polígono:", areaCbaCapital.geometry.coordinates);
 
     function inicializarMapa() {
         if (!mapa) {
