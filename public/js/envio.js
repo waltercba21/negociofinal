@@ -78,11 +78,16 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
-
     function buscarDireccion(direccion) {
+        // Mostrar el spinner al iniciar la búsqueda
+        document.getElementById("spinner").classList.remove("hidden");
+    
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
             .then(response => response.json())
             .then(data => {
+                // Ocultar el spinner una vez que la búsqueda termina
+                document.getElementById("spinner").classList.add("hidden");
+    
                 let resultadoCbaCapital = data.find(entry => 
                     (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba" 
                 );
@@ -167,6 +172,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             })
             .catch(error => {
+                // Ocultar el spinner si ocurre un error
+                document.getElementById("spinner").classList.add("hidden");
+    
                 console.error("Error al buscar la dirección:", error);
                 Swal.fire({
                     icon: 'error',
