@@ -84,116 +84,119 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("Mostrando el spinner");
         spinner.style.display = "block";  // Aseguramos que el spinner se vea
     
-        console.log("Iniciando la búsqueda de la dirección:", direccion);
+        // Forzar un pequeño retraso para asegurarnos de que el spinner se vea
+        setTimeout(() => {
+            console.log("Iniciando la búsqueda de la dirección:", direccion);
     
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
-            .then(response => response.json())
-            .then(data => {
-                console.log("Datos recibidos:", data);
-                let resultadoCbaCapital = data.find(entry => 
-                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
-                );
-    
-                if (!resultadoCbaCapital) {
-                    console.log("Reintentando con variaciones de la dirección");
-    
-                    const variaciones = ["Av.", "Bv.", "Calle", "Cto.", "Río", "Avenida", "Boulevard", "Ruta", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
-                    console.log("Variaciones de la dirección:", variaciones);
-    
-                    let promesas = variaciones.map(variante => 
-                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variante + ', Córdoba, Argentina')}&addressdetails=1`).then(res => res.json())
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Datos recibidos:", data);
+                    let resultadoCbaCapital = data.find(entry => 
+                        (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
                     );
     
-                    console.log("Esperando respuestas para las variaciones...");
+                    if (!resultadoCbaCapital) {
+                        console.log("Reintentando con variaciones de la dirección");
     
-                    Promise.all(promesas).then(resultados => {
-                        console.log("Respuestas de variaciones:", resultados);
-                        let encontrado = false;
-                        resultados.forEach(res => {
-                            let match = res.find(entry => 
-                                (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
-                            );
-                            if (match) {
-                                resultadoCbaCapital = match;
-                                encontrado = true;
-                            }
-                        });
+                        const variaciones = ["Av.", "Bv.", "Calle", "Cto.", "Río", "Avenida", "Boulevard", "Ruta", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
+                        console.log("Variaciones de la dirección:", variaciones);
     
-                        // Ocultar el spinner después de que todas las búsquedas hayan terminado
-                        console.log("Ocultando el spinner");
-                        spinner.style.display = "none";  // Ocultamos el spinner
+                        let promesas = variaciones.map(variante => 
+                            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variante + ', Córdoba, Argentina')}&addressdetails=1`).then(res => res.json())
+                        );
     
-                        if (encontrado) {
-                            const lat = parseFloat(resultadoCbaCapital.lat);
-                            const lon = parseFloat(resultadoCbaCapital.lon);
-                            console.log("Coordenadas obtenidas:", lat, lon);
+                        console.log("Esperando respuestas para las variaciones...");
     
-                            const dentroDeZona = esUbicacionValida(lat, lon);
-                            actualizarMarcador(lat, lon, direccion, dentroDeZona);
+                        Promise.all(promesas).then(resultados => {
+                            console.log("Respuestas de variaciones:", resultados);
+                            let encontrado = false;
+                            resultados.forEach(res => {
+                                let match = res.find(entry => 
+                                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
+                                );
+                                if (match) {
+                                    resultadoCbaCapital = match;
+                                    encontrado = true;
+                                }
+                            });
     
-                            if (!dentroDeZona) {
+                            // Ocultar el spinner después de que todas las búsquedas hayan terminado
+                            console.log("Ocultando el spinner");
+                            spinner.style.display = "none";  // Ocultamos el spinner
+    
+                            if (encontrado) {
+                                const lat = parseFloat(resultadoCbaCapital.lat);
+                                const lon = parseFloat(resultadoCbaCapital.lon);
+                                console.log("Coordenadas obtenidas:", lat, lon);
+    
+                                const dentroDeZona = esUbicacionValida(lat, lon);
+                                actualizarMarcador(lat, lon, direccion, dentroDeZona);
+    
+                                if (!dentroDeZona) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: '⛔ Dirección fuera del área de entrega',
+                                        text: 'La dirección ingresada está fuera del área habilitada.',
+                                        confirmButtonText: 'Aceptar'
+                                    });
+                                }
+                            } else {
                                 Swal.fire({
                                     icon: 'error',
-                                    title: '⛔ Dirección fuera del área de entrega',
-                                    text: 'La dirección ingresada está fuera del área habilitada.',
+                                    title: 'No se encontró la dirección en Córdoba Capital',
+                                    text: 'Intente con otra dirección.',
                                     confirmButtonText: 'Aceptar'
                                 });
                             }
-                        } else {
+                        }).catch(error => {
+                            // Ocultar el spinner si ocurre un error
+                            console.log("Error en las variaciones:", error);
+                            spinner.style.display = "none";  // Ocultamos el spinner
+    
                             Swal.fire({
                                 icon: 'error',
-                                title: 'No se encontró la dirección en Córdoba Capital',
-                                text: 'Intente con otra dirección.',
+                                title: 'Error de conexión',
+                                text: 'Hubo un problema al buscar la dirección. Por favor, intente nuevamente.',
+                                confirmButtonText: 'Aceptar'
+                            });
+                        });
+    
+                    } else {
+                        const lat = parseFloat(resultadoCbaCapital.lat);
+                        const lon = parseFloat(resultadoCbaCapital.lon);
+                        console.log("Coordenadas obtenidas:", lat, lon);
+    
+                        const dentroDeZona = esUbicacionValida(lat, lon);
+                        actualizarMarcador(lat, lon, direccion, dentroDeZona);
+    
+                        if (!dentroDeZona) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '⛔ Dirección fuera del área de entrega',
+                                text: 'La dirección ingresada está fuera del área habilitada.',
                                 confirmButtonText: 'Aceptar'
                             });
                         }
-                    }).catch(error => {
-                        // Ocultar el spinner si ocurre un error
-                        console.log("Error en las variaciones:", error);
+    
+                        // Asegurarse de ocultar el spinner cuando la búsqueda termine
+                        console.log("Ocultando el spinner");
                         spinner.style.display = "none";  // Ocultamos el spinner
-    
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error de conexión',
-                            text: 'Hubo un problema al buscar la dirección. Por favor, intente nuevamente.',
-                            confirmButtonText: 'Aceptar'
-                        });
-                    });
-    
-                } else {
-                    const lat = parseFloat(resultadoCbaCapital.lat);
-                    const lon = parseFloat(resultadoCbaCapital.lon);
-                    console.log("Coordenadas obtenidas:", lat, lon);
-    
-                    const dentroDeZona = esUbicacionValida(lat, lon);
-                    actualizarMarcador(lat, lon, direccion, dentroDeZona);
-    
-                    if (!dentroDeZona) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '⛔ Dirección fuera del área de entrega',
-                            text: 'La dirección ingresada está fuera del área habilitada.',
-                            confirmButtonText: 'Aceptar'
-                        });
                     }
-    
-                    // Asegurarse de ocultar el spinner cuando la búsqueda termine
-                    console.log("Ocultando el spinner");
+                })
+                .catch(error => {
+                    // Ocultar el spinner si ocurre un error
+                    console.log("Error en la búsqueda:", error);
                     spinner.style.display = "none";  // Ocultamos el spinner
-                }
-            })
-            .catch(error => {
-                // Ocultar el spinner si ocurre un error
-                console.log("Error en la búsqueda:", error);
-                spinner.style.display = "none";  // Ocultamos el spinner
     
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error de conexión',
-                    text: 'Hubo un error en la búsqueda de la dirección. Verifique la conexión o intente con otra dirección.',
-                    confirmButtonText: 'Aceptar'
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        text: 'Hubo un error en la búsqueda de la dirección. Verifique la conexión o intente con otra dirección.',
+                        confirmButtonText: 'Aceptar'
+                    });
                 });
-            });
+        }, 50);  // Pequeño retraso antes de iniciar la búsqueda
     }
     
     
