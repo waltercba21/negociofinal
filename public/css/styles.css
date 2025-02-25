@@ -2345,35 +2345,45 @@ border-radius: 10px;
 
 /*-------------------- DETALLE ---------------*/
 #detalle {
-  background: linear-gradient(to right, #f3f3f3, #e0e0e0); 
+  background: linear-gradient(to right, #ff7f50, #ff6347); /* Fondo degradado naranja cálido */
   font-family: 'Arial', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* Centrar la tarjeta en la pantalla */
+  margin: 0;
 }
 
 #contenedor-producto {
-  margin: 50px auto;
-  max-width: 1200px;
+  max-width: 800px; /* Tamaño máximo de la tarjeta */
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease;
+  cursor: pointer;
 }
 
 .card:hover {
-  transform: scale(1.02);
+  transform: scale(1.03);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
 .cover__card {
   position: relative;
-  height: 400px; /* Tamanio fijo para la imagen */
+  height: 350px; /* Altura ajustable */
   overflow: hidden;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 3px solid #ff6347; /* Resaltar con un borde color a juego */
 }
 
 .carousel {
@@ -2401,16 +2411,17 @@ border-radius: 10px;
 }
 
 .carousel__button {
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
+  background: rgba(255, 255, 255, 0.7);
+  color: #333;
   border: none;
-  padding: 10px;
+  padding: 12px;
   border-radius: 50%;
   cursor: pointer;
+  transition: background 0.3s ease;
 }
 
 .carousel__button:hover {
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(255, 255, 255, 1);
 }
 
 .card-content {
@@ -2418,35 +2429,45 @@ border-radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 15px;
+  justify-content: space-between;
+  text-align: center;
 }
 
 .nombre {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
-  color: #003f7d;
-  margin-bottom: 10px;
-  text-align: center;
+  color: #333;
+  margin-bottom: 15px;
+  text-transform: capitalize;
 }
 
 .categoria-producto {
-  text-align: center;
-  font-size: 16px;
-  color: #555;
+  font-size: 18px;
+  color: #ff6347;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
 
 .descripcion {
-  font-size: 14px;
+  font-size: 16px;
   color: #444;
-  text-align: justify;
   line-height: 1.5;
+  text-align: justify;
+  margin-bottom: 20px;
 }
 
 .precio-producto {
-  text-align: center;
-  font-size: 22px;
-  color: #ff7b00;
+  font-size: 26px;
+  color: #ff7f50;
   font-weight: bold;
+  letter-spacing: 1px;
 }
+
+.card-content hr {
+  margin: 10px 0;
+  border: 1px solid #ddd;
+}
+
 /*---------------PANEL DE CONTROL ---------------*/
 
 .container {
@@ -3552,7 +3573,6 @@ table td img:hover {
   }
 /*-----DETALLE PRODUCTO------*/
 /* Diseño para la vista de dispositivos pequeños */
-@media (max-width: 768px) {
   .card {
     margin: 20px;
   }
@@ -3572,5 +3592,5 @@ table td img:hover {
   .descripcion {
     font-size: 13px;
   }
-}
+
 }
