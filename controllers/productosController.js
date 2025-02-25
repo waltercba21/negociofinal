@@ -23,44 +23,40 @@ module.exports = {
                     } else {
                         let cantidadCarrito = 0;
     
-                        // Verificar si el usuario está autenticado y tiene un carrito activo
                         if (req.session && req.session.usuario) {
                             const id_usuario = req.session.usuario.id;
     
-                            // Obtener el carrito activo del usuario
                             carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
                                 if (carritoActivo && carritoActivo.length > 0) {
                                     const id_carrito = carritoActivo[0].id;
     
-                                    // Obtener los productos del carrito
                                     carrito.obtenerProductosCarrito(id_carrito, (error, productosCarrito) => {
                                         if (productosCarrito) {
-                                            // Contamos los productos únicos en el carrito
                                             cantidadCarrito = productosCarrito.length;
                                         }
-                                        
-                                        // Renderizar la vista pasando todos los datos
+    
                                         res.render('index', { 
                                             productos, 
                                             productosOferta, 
-                                            cantidadCarrito 
+                                            cantidadCarrito,
+                                            producto: null // Evita error en head.ejs
                                         });
                                     });
                                 } else {
-                                    // Si no hay carrito activo, renderizar con cantidadCarrito 0
                                     res.render('index', { 
                                         productos, 
                                         productosOferta, 
-                                        cantidadCarrito: 0 
+                                        cantidadCarrito: 0,
+                                        producto: null
                                     });
                                 }
                             });
                         } else {
-                            // Si no está logueado, renderizar con cantidadCarrito 0
                             res.render('index', { 
                                 productos, 
                                 productosOferta, 
-                                cantidadCarrito: 0 
+                                cantidadCarrito: 0,
+                                producto: null
                             });
                         }
                     }
@@ -68,6 +64,7 @@ module.exports = {
             }
         });
     },
+    
     lista: async function (req, res) {
       const pagina = req.query.pagina !== undefined ? Number(req.query.pagina) : 1;
       const categoria = req.query.categoria !== undefined ? Number(req.query.categoria) : undefined;
