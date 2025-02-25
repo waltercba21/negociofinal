@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function inicializarMapa() {
         if (!mapa) {
+            // Inicializar el mapa solo si no está inicializado
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
 
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -53,31 +54,14 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!mapa) return;
 
         if (marcador) {
+            // Si ya existe el marcador, actualizamos su posición
             marcador.setLatLng([lat, lng]);
         } else {
+            // Si no existe el marcador, lo creamos y lo agregamos
             marcador = L.marker([lat, lng]).addTo(mapa);
         }
+        // Aseguramos que el mapa se ajuste a la ubicación del marcador
         mapa.setView([lat, lng], 14);
-    }
-
-    function obtenerDireccionDesdeCoords(lat, lon) {
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.display_name) {
-                    inputDireccion.value = data.display_name;
-                } else {
-                    inputDireccion.value = "Ubicación seleccionada";
-                }
-            })
-            .catch(error => console.error("Error al obtener la dirección:", error));
-    }
-
-    function esUbicacionValida(lat, lng) {
-        if (!geojsonZona) return false;
-        const punto = turf.point([lng, lat]); // Crear un punto
-        const poligono = turf.polygon(areaCbaCapital.geometry.coordinates); // Crear un polígono
-        return turf.booleanPointInPolygon(punto, poligono); // Verificar si está dentro
     }
 
     tipoEnvioRadios.forEach(radio => {
@@ -94,57 +78,36 @@ document.addEventListener("DOMContentLoaded", function () {
                 leyendaDireccion.classList.remove("hidden"); // Mostrar leyenda sobre el mapa
                 direccionLocal.innerHTML = "Dirección del Local: IGUALDAD 88, CENTRO - CÓRDOBA";
                 leyendaDireccion.innerHTML = `<b>Dirección:</b> IGUALDAD 88, CENTRO - CÓRDOBA`;
-                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng); // Actualizar marcador
+
+                // Actualizar marcador y ajustar el mapa a la ubicación del local
+                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng);
             }
         });
     });
 
+    // Aquí puedes agregar la lógica para buscar direcciones y actualizar el marcador según la ubicación ingresada
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value;
         if (direccion.trim() !== "") {
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
-                .then(response => response.text())  // Cambié a .text() para obtener el texto sin parsear como JSON
-                .then(text => {
-                    try {
-                        const data = JSON.parse(text);  // Intentamos parsear el texto a JSON
-                        if (data.length > 0) {
-                            const lat = parseFloat(data[0].lat);
-                            const lon = parseFloat(data[0].lon);
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
 
-                            if (esUbicacionValida(lat, lon)) {
-                                actualizarMarcador(lat, lon);
-                            } else {
-                                // Reemplazar la alerta por SweetAlert
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: '⛔ Dirección fuera del área de entrega',
-                                    text: 'La dirección ingresada está fuera del área habilitada.',
-                                    confirmButtonText: 'Aceptar'
-                                });
-                            }
-                        } else {
-                            // Reemplazar la alerta por SweetAlert
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'No se encontró la dirección',
-                                text: 'Intente con otra dirección.',
-                                confirmButtonText: 'Aceptar'
-                            });
-                        }
-                    } catch (error) {
-                        console.error("Error al parsear la respuesta:", error);
-                        // Reemplazar la alerta por SweetAlert
+                        actualizarMarcador(lat, lon);
+                    } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error en la búsqueda',
-                            text: 'Hubo un problema al procesar la dirección. Intente nuevamente.',
+                            title: 'No se encontró la dirección',
+                            text: 'Intente con otra dirección.',
                             confirmButtonText: 'Aceptar'
                         });
                     }
                 })
                 .catch(error => {
                     console.error("Error al buscar la dirección:", error);
-                    // Reemplazar la alerta por SweetAlert
                     Swal.fire({
                         icon: 'error',
                         title: 'Error de conexión',
