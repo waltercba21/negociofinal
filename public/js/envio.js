@@ -95,17 +95,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (!resultadoCbaCapital) {
                     console.log("Reintentando con variaciones de la dirección");
     
-                    // Agregar más variaciones para cubrir otros casos
                     const variaciones = ["Av.", "Bv.", "Calle", "Cto.", "Río", "Avenida", "Boulevard", "Ruta", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
     
-                    // Realizar múltiples búsquedas para cada variación
                     let promesas = variaciones.map(variante => 
                         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variante + ', Córdoba, Argentina')}&addressdetails=1`).then(res => res.json())
                     );
     
-                    // Esperar todas las búsquedas y procesarlas
                     Promise.all(promesas).then(resultados => {
-                        // Verificar cada respuesta
                         let encontrado = false;
                         resultados.forEach(res => {
                             let match = res.find(entry => 
@@ -117,7 +113,6 @@ document.addEventListener("DOMContentLoaded", function () {
                             }
                         });
     
-                        // Si se encontró una dirección, proceder
                         if (encontrado) {
                             const lat = parseFloat(resultadoCbaCapital.lat);
                             const lon = parseFloat(resultadoCbaCapital.lon);
@@ -153,7 +148,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
     
                 } else {
-                    // Si la dirección se encuentra en la búsqueda original
                     const lat = parseFloat(resultadoCbaCapital.lat);
                     const lon = parseFloat(resultadoCbaCapital.lon);
                     console.log("Coordenadas obtenidas:", lat, lon);
