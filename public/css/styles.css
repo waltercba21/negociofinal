@@ -2345,17 +2345,14 @@ border-radius: 10px;
 
 /*-------------------- DETALLE ---------------*/
 #detalle {
-  background: linear-gradient(to right, #005099, #003f7d); /* Fondo degradado naranja cálido */
+  background: linear-gradient(to right, #f3f3f3, #e0e0e0); 
   font-family: 'Arial', sans-serif;
-  display: flex;
-  min-height: 100vh; /* Centrar la tarjeta en la pantalla */
-  margin: 0;
+  padding: 20px;
 }
 
 #contenedor-producto {
-  max-width: 800px; /* Tamaño máximo de la tarjeta */
-  width: 100%;
-  padding: 20px;
+  margin: 50px auto;
+  max-width: 800px;
   display: flex;
   justify-content: center;
 }
@@ -2363,7 +2360,7 @@ border-radius: 10px;
 .card {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -2374,14 +2371,14 @@ border-radius: 10px;
 
 .card:hover {
   transform: scale(1.03);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
 }
 
 .cover__card {
   position: relative;
-  height: 350px; /* Altura ajustable */
+  height: 350px;
   overflow: hidden;
-  border-bottom: 3px solid #ff6347; /* Resaltar con un borde color a juego */
+  border-bottom: 3px solid #ff6347; /* Borde de color para la imagen */
 }
 
 .carousel {
