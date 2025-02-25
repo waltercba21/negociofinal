@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const datosEnvio = document.getElementById("datos-envio");
     const inputDireccion = document.getElementById("direccion");
     const btnBuscarDireccion = document.getElementById("buscar-direccion");
+    const direccionLocal = document.getElementById("direccion-local"); // Elemento para la dirección antes del mapa
+    const leyendaDireccion = document.getElementById("leyenda-direccion"); // Elemento para la leyenda sobre el mapa
     let mapa;
     let marcador;
 
@@ -14,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "type": "Feature",
         "geometry": {
             "type": "Polygon",
-            "coordinates": [[
+            "coordinates": [[ 
                 [-64.174512, -31.372190], // Noreste
                 [-64.141308, -31.426028], // Sureste
                 [-64.204045, -31.465101], // Sur
@@ -85,9 +87,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (this.value === "delivery") {
                 datosEnvio.classList.remove("hidden");
-            } else {
-                datosEnvio.classList.add("hidden");
-                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng);
+                direccionLocal.classList.add("hidden"); // Ocultar la dirección cuando no es retiro en local
+                leyendaDireccion.classList.add("hidden"); // Ocultar leyenda en el mapa
+            } else if (this.value === "local") {
+                direccionLocal.classList.remove("hidden"); // Mostrar dirección del local
+                leyendaDireccion.classList.remove("hidden"); // Mostrar leyenda sobre el mapa
+                direccionLocal.innerHTML = "Dirección del Local: IGUALDAD 88, CENTRO - CÓRDOBA";
+                leyendaDireccion.innerHTML = `<b>Dirección:</b> IGUALDAD 88, CENTRO - CÓRDOBA`;
+                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng); // Actualizar marcador
             }
         });
     });
