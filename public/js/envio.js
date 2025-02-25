@@ -86,14 +86,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 let resultadoCbaCapital = data.find(entry => 
                     (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba" 
                 );
-
+    
                 if (!resultadoCbaCapital) {
                     console.log("Reintentando con variaciones de la dirección");
-                    const variaciones = ["Av.", "Bv.", "Calle", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
+                    // Agregar más variaciones para cubrir otros casos
+                    const variaciones = ["Av.", "Bv.", "Calle", "Cto.", "Río", "Avenida", "Boulevard", "Ruta", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
                     let promesas = variaciones.map(variante => 
                         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variante + ', Córdoba, Argentina')}&addressdetails=1`).then(res => res.json())
                     );
-
+    
                     return Promise.all(promesas).then(resultados => {
                         for (let res of resultados) {
                             let encontrado = res.find(entry => 
@@ -106,15 +107,15 @@ document.addEventListener("DOMContentLoaded", function () {
                         throw new Error("No se encontró la dirección");
                     });
                 }
-
+    
                 if (resultadoCbaCapital) {
                     const lat = parseFloat(resultadoCbaCapital.lat);
                     const lon = parseFloat(resultadoCbaCapital.lon);
                     console.log("Coordenadas obtenidas:", lat, lon);
-
+    
                     const dentroDeZona = esUbicacionValida(lat, lon);
                     actualizarMarcador(lat, lon, direccion, dentroDeZona);
-
+    
                     if (!dentroDeZona) {
                         Swal.fire({
                             icon: 'error',
@@ -142,14 +143,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             });
     }
-
+    
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value.trim();
         if (direccion !== "") {
             buscarDireccion(direccion);
         }
     });
-
+    
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
+    
 });
