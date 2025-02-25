@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("Mostrando el spinner");
         spinner.style.display = "block";  // Aseguramos que el spinner se vea
     
-        // Forzar un pequeño retraso para asegurarnos de que el spinner se vea
+        // Forzar actualización del DOM antes de hacer la búsqueda
         setTimeout(() => {
             console.log("Iniciando la búsqueda de la dirección:", direccion);
     
@@ -196,9 +196,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         confirmButtonText: 'Aceptar'
                     });
                 });
-        }, 50);  // Pequeño retraso antes de iniciar la búsqueda
+        }, 100);  // Aumentamos el retraso a 100ms para garantizar que se vea el spinner
     }
-    
     
     
     
