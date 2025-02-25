@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    function actualizarMarcador(lat, lng) {
+    function actualizarMarcador(lat, lng, direccion) {
         if (!mapa) return;
 
         if (marcador) {
@@ -55,6 +55,10 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             marcador = L.marker([lat, lng]).addTo(mapa);
         }
+
+        // Actualizar popup con la dirección
+        marcador.bindPopup(`<b>Dirección:</b> ${direccion}`).openPopup();
+
         mapa.setView([lat, lng], 14);
     }
 
@@ -87,7 +91,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 datosEnvio.classList.remove("hidden");
             } else {
                 datosEnvio.classList.add("hidden");
-                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng);
+                // Actualizamos el marcador con la dirección del local
+                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, "Igualdad 88, Córdoba Capital");
             }
         });
     });
@@ -105,7 +110,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             const lon = parseFloat(data[0].lon);
 
                             if (esUbicacionValida(lat, lon)) {
-                                actualizarMarcador(lat, lon);
+                                actualizarMarcador(lat, lon, direccion);
                             } else {
                                 // Reemplazar la alerta por SweetAlert
                                 Swal.fire({
