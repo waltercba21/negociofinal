@@ -2345,11 +2345,9 @@ border-radius: 10px;
 
 /*-------------------- DETALLE ---------------*/
 #detalle {
-  background: linear-gradient(to right, #ff7f50, #ff6347); /* Fondo degradado naranja cálido */
+  background: linear-gradient(to right, #005099, #003f7d); /* Fondo degradado naranja cálido */
   font-family: 'Arial', sans-serif;
   display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh; /* Centrar la tarjeta en la pantalla */
   margin: 0;
 }
