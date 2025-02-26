@@ -2293,6 +2293,7 @@ border-radius: 10px;
   box-shadow: 0 4px 10px rgba(255, 71, 87, 0.4);
   position: relative;
   overflow: hidden;
+  margin-top: 20px;
 }
 
 .btn-finalizar:hover {
