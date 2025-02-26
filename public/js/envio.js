@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (result.isConfirmed) {
                     // Aquí puedes proceder a guardar la dirección y continuar al paso siguiente
                     // Redirigir o mostrar la vista de "confirmar datos"
-                    window.location.href = '/confirmar-datos';  // Ajusta la ruta según corresponda
+                    window.location.href = '/confirmarDatos';  // Ajusta la ruta según corresponda
                 }
             });
         }

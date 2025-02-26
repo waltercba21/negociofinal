@@ -255,6 +255,9 @@ module.exports = {
     envio: (req,res) => {
         res.render ('envio')
     },
+    confirmarDatos: (req,res) => {
+        res.render ('confirmarDatos')
+    },
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;
 

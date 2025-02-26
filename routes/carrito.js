@@ -25,6 +25,9 @@
 
     // Ruta para elegir el envio del pedido del carrito
     router.get ('/envio', carritoController.envio);
+
+    // Ruta para continuar a la confirmacion de datos
+    router.get ('/confirmarDatos', carritoController.confirmarDatos);
     
     // Ruta para eliminar un producto del carrito
     router.post('/eliminar', carritoController.eliminarProducto);
