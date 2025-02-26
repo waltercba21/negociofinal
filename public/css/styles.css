@@ -2160,7 +2160,7 @@ border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: bold;
   padding: 15px;
   border: 2px solid #ddd;
@@ -2180,7 +2180,7 @@ border-radius: 10px;
 }
 
 .opcion-envio i {
-  font-size: 2rem;
+  font-size: 1rem;
   color: #003f7d;
 }
 
