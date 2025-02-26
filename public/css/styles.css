@@ -2281,7 +2281,7 @@ border-radius: 10px;
 
 .btn-finalizar {
   display: inline-block;
-  background: linear-gradient(135deg, #ff6b6b, #ff4757); /* Degradado rojo moderno */
+  background: linear-gradient(135deg, #f55a5a, #f83747); /* Degradado rojo moderno */
   color: white;
   font-size: 18px;
   font-weight: bold;
@@ -2297,7 +2297,8 @@ border-radius: 10px;
 }
 
 .btn-finalizar:hover {
-  background: linear-gradient(135deg, #ff4757, #ff6b6b); /* Invertimos los colores */
+  background: linear-gradient(135deg, #ff4757, #ff6b6b); 
+  color: #fff;
   transform: scale(1.05);
   box-shadow: 0 6px 15px rgba(255, 71, 87, 0.5);
 }
@@ -2314,6 +2315,7 @@ border-radius: 10px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
   z-index: 0;
+  color: #fff;
 }
 
 .btn-finalizar:hover::before {
