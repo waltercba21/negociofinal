@@ -79,122 +79,122 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    function buscarDireccion(direccion) {
-        const spinner = document.getElementById("spinner");
-    
-        if (!spinner) {
-            console.error("❌ Spinner no encontrado en el DOM.");
-            return;
-        }
-    
-        console.log("✅ Mostrando el spinner");
-        spinner.style.display = "block";  
-    
-        // 🔄 Forzamos un repintado para asegurarnos de que el spinner se muestre antes de continuar
-        requestAnimationFrame(() => {
-            console.log("🎨 Verificando visibilidad del spinner:", getComputedStyle(spinner).display);
-            
-            setTimeout(() => {
-                console.log("🔍 Iniciando la búsqueda de la dirección:", direccion);
-    
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log("📥 Datos recibidos:", data);
-    
-                        if (!Array.isArray(data) || data.length === 0) {
-                            throw new Error("⚠️ No se encontraron resultados.");
-                        }
-    
-                        let resultadoCbaCapital = data.find(entry => 
-                            (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
+function buscarDireccion(direccion) {
+    const spinner = document.getElementById("spinner");
+
+    if (!spinner) {
+        console.error("❌ Spinner no encontrado en el DOM.");
+        return;
+    }
+
+    console.log("✅ Mostrando el spinner");
+    spinner.style.display = "block";  
+
+    // 🔄 Forzamos un repintado para asegurarnos de que el spinner se muestre antes de continuar
+    requestAnimationFrame(() => {
+        console.log("🎨 Verificando visibilidad del spinner:", getComputedStyle(spinner).display);
+        
+        setTimeout(() => {
+            console.log("🔍 Iniciando la búsqueda de la dirección:", direccion);
+
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("📥 Datos recibidos:", data);
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        throw new Error("⚠️ No se encontraron resultados.");
+                    }
+
+                    let resultadoCbaCapital = data.find(entry => 
+                        (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
+                    );
+
+                    if (!resultadoCbaCapital) {
+                        console.log("🔄 Reintentando con variaciones de la dirección");
+                        const variaciones = ["Av.", "Bv.", "Calle", "Cto.", "Río", "Avenida", "Boulevard", "Ruta", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
+
+                        console.log("📌 Variaciones generadas:", variaciones);
+
+                        let promesas = variaciones.map(variante => 
+                            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variante + ', Córdoba, Argentina')}&addressdetails=1`)
+                            .then(res => res.ok ? res.json() : Promise.reject(`Error HTTP: ${res.status}`))
                         );
-    
-                        if (!resultadoCbaCapital) {
-                            console.log("🔄 Reintentando con variaciones de la dirección");
-                            const variaciones = ["Av.", "Bv.", "Calle", "Cto.", "Río", "Avenida", "Boulevard", "Ruta", ""].map(prefijo => `${prefijo} ${direccion}`.trim());
-    
-                            console.log("📌 Variaciones generadas:", variaciones);
-    
-                            let promesas = variaciones.map(variante => 
-                                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variante + ', Córdoba, Argentina')}&addressdetails=1`)
-                                .then(res => res.ok ? res.json() : Promise.reject(`Error HTTP: ${res.status}`))
-                            );
-    
-                            Promise.allSettled(promesas).then(resultados => {
-                                console.log("📬 Respuestas de variaciones recibidas:", resultados);
-    
-                                let encontrado = false;
-                                resultados.forEach(res => {
-                                    if (res.status === "fulfilled" && Array.isArray(res.value) && res.value.length > 0) {
-                                        let match = res.value.find(entry => 
-                                            (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
-                                        );
-                                        if (match) {
-                                            resultadoCbaCapital = match;
-                                            encontrado = true;
-                                        }
+
+                        Promise.allSettled(promesas).then(resultados => {
+                            console.log("📬 Respuestas de variaciones recibidas:", resultados);
+
+                            let encontrado = false;
+                            resultados.forEach(res => {
+                                if (res.status === "fulfilled" && Array.isArray(res.value) && res.value.length > 0) {
+                                    let match = res.value.find(entry => 
+                                        (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
+                                    );
+                                    if (match) {
+                                        resultadoCbaCapital = match;
+                                        encontrado = true;
                                     }
-                                });
-    
-                                if (encontrado) {
-                                    manejarResultado(resultadoCbaCapital, direccion);
-                                } else {
-                                    mostrarAlerta("No se encontró la dirección en Córdoba Capital", "Intente con otra dirección.");
                                 }
-    
-                                ocultarSpinner();
-                            }).catch(error => manejarError(error));
-    
-                        } else {
-                            manejarResultado(resultadoCbaCapital, direccion);
+                            });
+
+                            if (encontrado) {
+                                manejarResultado(resultadoCbaCapital, direccion);
+                            } else {
+                                mostrarAlerta("No se encontró la dirección en Córdoba Capital", "Intente con otra dirección.");
+                            }
+
                             ocultarSpinner();
-                        }
-                    })
-                    .catch(error => manejarError(error));
-            }, 50);  // Reducimos el tiempo para mejorar la respuesta visual
-        });
+                        }).catch(error => manejarError(error));
+
+                    } else {
+                        manejarResultado(resultadoCbaCapital, direccion);
+                        ocultarSpinner();
+                    }
+                })
+                .catch(error => manejarError(error));
+        }, 50);  // Reducimos el tiempo para mejorar la respuesta visual
+    });
+}
+
+function manejarResultado(resultado, direccion) {
+    const lat = parseFloat(resultado.lat);
+    const lon = parseFloat(resultado.lon);
+    console.log("📌 Coordenadas obtenidas:", lat, lon);
+
+    const dentroDeZona = esUbicacionValida(lat, lon);
+    actualizarMarcador(lat, lon, direccion, dentroDeZona);
+
+    if (!dentroDeZona) {
+        mostrarAlerta("⛔ Dirección fuera del área de entrega", "La dirección ingresada está fuera del área habilitada.");
     }
-    
-    function manejarResultado(resultado, direccion) {
-        const lat = parseFloat(resultado.lat);
-        const lon = parseFloat(resultado.lon);
-        console.log("📌 Coordenadas obtenidas:", lat, lon);
-    
-        const dentroDeZona = esUbicacionValida(lat, lon);
-        actualizarMarcador(lat, lon, direccion, dentroDeZona);
-    
-        if (!dentroDeZona) {
-            mostrarAlerta("⛔ Dirección fuera del área de entrega", "La dirección ingresada está fuera del área habilitada.");
-        }
+}
+
+function manejarError(error) {
+    console.error("❌ Error en la búsqueda:", error);
+    mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda de la dirección. Verifique la conexión o intente con otra dirección.");
+    ocultarSpinner();
+}
+
+function ocultarSpinner() {
+    const spinner = document.getElementById("spinner");
+    if (spinner) {
+        console.log("✅ Ocultando el spinner");
+        spinner.style.display = "none";
     }
-    
-    function manejarError(error) {
-        console.error("❌ Error en la búsqueda:", error);
-        mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda de la dirección. Verifique la conexión o intente con otra dirección.");
-        ocultarSpinner();
-    }
-    
-    function ocultarSpinner() {
-        const spinner = document.getElementById("spinner");
-        if (spinner) {
-            console.log("✅ Ocultando el spinner");
-            spinner.style.display = "none";
-        }
-    }
-    
-    function mostrarAlerta(titulo, mensaje) {
-        Swal.fire({
-            icon: 'error',
-            title: titulo,
-            text: mensaje,
-            confirmButtonText: 'Aceptar'
-        });
-    }
-    
+}
+
+function mostrarAlerta(titulo, mensaje) {
+    Swal.fire({
+        icon: 'error',
+        title: titulo,
+        text: mensaje,
+        confirmButtonText: 'Aceptar'
+    });
+}
+
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value.trim();
         if (direccion !== "") {
