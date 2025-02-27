@@ -255,7 +255,7 @@ module.exports = {
     envio: (req,res) => {
         res.render ('envio')
     },
-    guardarEnvio: (req, res) => {
+      guardarEnvio: (req, res) => {
         const { tipo_envio, direccion, ciudad, codigo_postal } = req.body;
         const id_usuario = req.session.usuario.id;
 
@@ -281,49 +281,8 @@ module.exports = {
             });
         });
     },
-    confirmarDatos: (req, res) => {
-        const usuario_id = req.session.usuario.id;
-
-        carritoModel.obtenerCarritoActivo(usuario_id, (error, carritos) => {
-            if (error) {
-                console.error("❌ Error al obtener el carrito:", error);
-                return res.status(500).send("Error interno del servidor");
-            }
-
-            if (!carritos || carritos.length === 0) {
-                console.warn("⚠️ No se encontró un carrito activo para el usuario.");
-                return res.render("confirmarDatos", { productos: [], envio: null, total: 0 });
-            }
-
-            const id_carrito = carritos[0].id;
-
-            carritoModel.obtenerProductosCarrito(id_carrito, (error, datosCarrito) => {
-                if (error) {
-                    console.error("❌ Error al obtener productos:", error);
-                    return res.status(500).send("Error al obtener productos del carrito");
-                }
-
-                // Asegurarnos de que `productos` es un array
-                const productos = Array.isArray(datosCarrito.productos) ? datosCarrito.productos : [];
-
-                carritoModel.obtenerEnvioCarrito(id_carrito, (error, envio) => {
-                    if (error) {
-                        console.error("❌ Error al obtener datos de envío:", error);
-                        return res.status(500).send("Error al obtener datos de envío");
-                    }
-
-                    // Calcular cantidad total de productos en el carrito
-                    const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
-
-                    res.render("confirmarDatos", {
-                        productos,
-                        envio,
-                        total: datosCarrito.total,
-                        cantidadTotal
-                    });
-                });
-            });
-        });
+    confirmarDatos: (req,res) => {
+        res.render ('confirmarDatos')
     },
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;
