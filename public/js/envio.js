@@ -133,41 +133,51 @@ document.addEventListener("DOMContentLoaded", function () {
     btnContinuarPago.addEventListener("click", function (event) {
         event.preventDefault();
         console.log("✅ Botón 'Continuar con el Pago' clickeado.");
-
+    
         const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked")?.value;
         if (!tipoEnvio) {
             mostrarAlerta("Seleccione un tipo de envío", "Debe elegir una opción de envío antes de continuar.");
             return;
         }
-
+    
         const direccion = inputDireccion.value.trim();
         if (tipoEnvio === "delivery" && direccion === "") {
             mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
             return;
         }
-
+    
         obtenerCarritoID(carritoId => {
             if (!carritoId) {
                 console.error("❌ No se pudo obtener el ID del carrito.");
+                mostrarAlerta("Error", "No se pudo obtener el carrito activo.");
                 return;
             }
-
+    
             const datosEnvio = {
                 carrito_id: carritoId,
                 tipo_envio: tipoEnvio,
                 direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
             };
-
+    
             console.log("📡 Enviando datos de envío al servidor:", datosEnvio);
-
-            fetch("/envio", {
+    
+            fetch("/carrito/envio", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(datosEnvio)
             })
-            .then(response => response.json())
+            .then(response => {
+                // Verifica si la respuesta es JSON
+                const contentType = response.headers.get("content-type");
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(`❌ Error HTTP ${response.status}: ${text}`); });
+                }
+                if (contentType && contentType.includes("application/json")) {
+                    return response.json();
+                } else {
+                    throw new Error("❌ La respuesta del servidor no es JSON.");
+                }
+            })
             .then(data => {
                 if (data.success) {
                     console.log("✅ Datos de envío guardados correctamente.");
@@ -180,8 +190,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         window.location.href = "/carrito/confirmarDatos";
                     });
                 } else {
-                    console.error("❌ Error al guardar los datos de envío.");
-                    mostrarAlerta("Error", "No se pudieron guardar los datos de envío. Intente de nuevo.");
+                    console.error("❌ Error en la respuesta del servidor:", data.error);
+                    mostrarAlerta("Error", data.error || "No se pudieron guardar los datos de envío.");
                 }
             })
             .catch(error => {
@@ -190,6 +200,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     });
+    
 
     function mostrarAlerta(titulo, mensaje) {
         Swal.fire({
