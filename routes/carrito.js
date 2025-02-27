@@ -14,7 +14,7 @@
     // Ruta para crear un carrito (si no existe uno activo)
     router.get('/crear', carritoController.crearCarrito);
     // Ruta para obtener el ID del carrito activo en formato JSON
-    router.get('/carrito/activo', autenticarUsuario, carritoController.obtenerCarritoID);
+    router.get('/activo', autenticarUsuario, carritoController.obtenerCarritoID);
 
     // Ruta para agregar un producto al carrito
     router.post('/agregar', carritoController.agregarProductoCarrito);
