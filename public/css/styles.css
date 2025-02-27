@@ -2175,8 +2175,8 @@ border-radius: 10px;
 }
 
 .opcion-envio:hover {
-  background-color: #e3f2fd;
-  border-color: #42a5f5;
+  background-color: #003f7d;
+  color: #fff;
 }
 
 .opcion-envio i {
