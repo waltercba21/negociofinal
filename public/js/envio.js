@@ -29,23 +29,31 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     // Inicializar Mapa con cuadrante verde
-    function inicializarMapa() {
-        if (!mapa) {
-            mapa = L.map("mapa").setView(ubicacionLocal, 14);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(mapa);
+// Modificación en la función inicializarMapa()
+function inicializarMapa() {
+    if (!mapa) {
+        mapa = L.map("mapa").setView(ubicacionLocal, 14);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(mapa);
 
-            // Agregar el área de entrega al mapa
-            L.geoJSON(areaCbaCapital, {
-                style: {
-                    color: "green",
-                    fillColor: "#32CD32",
-                    fillOpacity: 0.3
-                }
-            }).addTo(mapa);
-        }
+        // Agregar el área de entrega al mapa
+        L.geoJSON(areaCbaCapital, {
+            style: {
+                color: "green",
+                fillColor: "#32CD32",
+                fillOpacity: 0.3
+            }
+        }).addTo(mapa);
     }
+
+    // ✅ Forzar la actualización del tamaño después de un pequeño retraso
+    setTimeout(() => {
+        mapa.invalidateSize();
+        console.log("🗺️ Mapa actualizado correctamente.");
+    }, 500);
+}
+
 
     // Actualizar marcador en el mapa
     function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
