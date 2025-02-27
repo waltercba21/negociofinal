@@ -153,39 +153,73 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Evento para el botón de continuar pago
     if (btnContinuarPago) {
         btnContinuarPago.addEventListener("click", function (event) {
-            event.preventDefault();  
+            event.preventDefault();
     
             console.log("Botón continuar clickeado.");
             const direccion = inputDireccion.value.trim();
+            const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked").value;
+            
+            let datosEnvio = {
+                carrito_id: obtenerCarritoID(), 
+                tipo_envio: tipoEnvio,
+                direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
+            };
     
-            if (direccion === "") {
+            if (tipoEnvio === "delivery" && direccion === "") {
                 Swal.fire({
                     icon: 'warning',
                     title: '¡Atención!',
                     text: 'Por favor, ingrese una dirección antes de continuar.',
                     confirmButtonText: 'Aceptar'
                 });
-            } else {
-                Swal.fire({
-                    icon: 'question',
-                    title: 'Confirmar dirección',
-                    text: `¿Está seguro que desea guardar la dirección: ${direccion}?`,
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, confirmar',
-                    cancelButtonText: 'No, cambiar'
-                }).then(result => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/carrito/confirmarDatos'; 
-                    }
-                });
+                return;
             }
+    
+            Swal.fire({
+                icon: 'question',
+                title: 'Confirmar envío',
+                text: `¿Está seguro que desea guardar estos datos?\n\nTipo: ${datosEnvio.tipo_envio}\nDirección: ${datosEnvio.direccion}`,
+                showCancelButton: true,
+                confirmButtonText: 'Sí, confirmar',
+                cancelButtonText: 'No, cambiar'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    fetch("/api/guardar-envio", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(datosEnvio)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = "/carrito/confirmarDatos";
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Hubo un problema al guardar los datos. Inténtelo de nuevo.'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error al enviar los datos:", error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'No se pudo conectar con el servidor.'
+                        });
+                    });
+                }
+            });
         });
     } else {
         console.error("❌ El botón 'continuar-pago' no se encontró en el DOM.");
     }
+    
 
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");

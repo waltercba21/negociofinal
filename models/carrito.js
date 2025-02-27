@@ -108,6 +108,19 @@ eliminarProductoPorId: (id, callback) => {
     const query = 'DELETE FROM productos_carrito WHERE id = ?';
     pool.query(query, [id], callback);
 },
+guardarEnvio: (id_carrito, tipo_envio, direccion, ciudad, codigo_postal, callback) => {
+    const query = `
+        UPDATE carritos 
+        SET tipo_envio = ?, direccion_envio = ?, ciudad_envio = ?, codigo_postal = ? 
+        WHERE id = ?`;
+    
+    pool.query(query, [tipo_envio, direccion, ciudad, codigo_postal, id_carrito], (error, resultados) => {
+        if (error) {
+            return callback(error);
+        }
+        callback(null, resultados);
+    });
+},
 
 
 finalizarCompra: (id_carrito, callback) => {

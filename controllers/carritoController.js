@@ -255,6 +255,32 @@ module.exports = {
     envio: (req,res) => {
         res.render ('envio')
     },
+    guardarEnvio: (req, res) => {
+        const { tipo_envio, direccion, ciudad, codigo_postal } = req.body;
+        const id_usuario = req.session.usuario.id;
+
+        carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
+            if (error) {
+                console.error('Error al obtener carrito:', error);
+                return res.status(500).json({ error: 'Error al obtener carrito' });
+            }
+
+            if (!carritoActivo || carritoActivo.length === 0) {
+                return res.status(400).json({ error: 'No hay un carrito activo' });
+            }
+
+            const id_carrito = carritoActivo[0].id;
+
+            carrito.guardarEnvio(id_carrito, tipo_envio, direccion, ciudad, codigo_postal, (error) => {
+                if (error) {
+                    console.error('Error al guardar envío:', error);
+                    return res.status(500).json({ error: 'Error al guardar información de envío' });
+                }
+
+                res.status(200).json({ mensaje: 'Envío guardado correctamente' });
+            });
+        });
+    },
     confirmarDatos: (req,res) => {
         res.render ('confirmarDatos')
     },
