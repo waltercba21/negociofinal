@@ -9,16 +9,20 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnContinuarPago = document.getElementById("continuar-pago");
     let mapa, marcador;
 
-    // Función para obtener el carrito real desde el backend
     function obtenerCarritoID(callback) {
-        fetch("/carrito")
-            .then(response => response.json())
+        fetch("/carrito/activo")  // 🔹 Ruta corregida
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success && data.carrito_id) {
                     console.log("🛒 Carrito ID obtenido:", data.carrito_id);
                     callback(data.carrito_id);
                 } else {
-                    console.error("❌ No se encontró un carrito activo.");
+                    console.warn("⚠️ No se encontró un carrito activo.");
                     callback(null);
                 }
             })
@@ -27,6 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 callback(null);
             });
     }
+    
 
     // Ubicación predeterminada
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };

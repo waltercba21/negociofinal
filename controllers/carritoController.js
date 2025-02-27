@@ -75,6 +75,23 @@ module.exports = {
             });
         }
     },
+    obtenerCarritoID: (req, res) => {
+        const id_usuario = req.session.usuario.id;
+    
+        carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
+            if (error) {
+                console.error("❌ Error al obtener el carrito:", error);
+                return res.status(500).json({ success: false, error: "Error al obtener el carrito" });
+            }
+    
+            if (!carritos || carritos.length === 0) {
+                return res.status(404).json({ success: false, error: "No se encontró un carrito activo" });
+            }
+    
+            res.json({ success: true, carrito_id: carritos[0].id });
+        });
+    },
+    
     verCarrito: (req, res) => {
         // Verificar si el usuario está autenticado 
         if (!req.session || !req.session.usuario || !req.session.usuario.id) {
