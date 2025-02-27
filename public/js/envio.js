@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     console.log("📌 Script cargado correctamente.");
+
     const tipoEnvioRadios = document.querySelectorAll("input[name='tipo-envio']");
     const mapaContainer = document.getElementById("mapa-container");
     const datosEnvio = document.getElementById("datos-envio");
@@ -8,8 +9,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnContinuarPago = document.getElementById("continuar-pago");
     let mapa, marcador;
 
+    // Ubicación predeterminada
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
+    // Área válida para la entrega
     const areaCbaCapital = {
         "type": "Feature",
         "geometry": {
@@ -25,6 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
+    // Inicializar Mapa con cuadrante verde
     function inicializarMapa() {
         if (!mapa) {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
@@ -32,33 +36,43 @@ document.addEventListener("DOMContentLoaded", function () {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(mapa);
 
+            // Agregar el área de entrega al mapa
             L.geoJSON(areaCbaCapital, {
-                style: { color: "green", fillColor: "#32CD32", fillOpacity: 0.3 }
+                style: {
+                    color: "green",
+                    fillColor: "#32CD32",
+                    fillOpacity: 0.3
+                }
             }).addTo(mapa);
         }
     }
 
+    // Actualizar marcador en el mapa
     function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
         if (!mapa) return;
+
         if (marcador) {
             marcador.setLatLng([lat, lng]);
         } else {
             marcador = L.marker([lat, lng]).addTo(mapa);
         }
+
         const mensaje = dentroDeZona
             ? `<b>Dirección:</b> ${direccion}`
             : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
-
+        
         marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lng], 14);
     }
 
+    // Validar si la ubicación está dentro de la zona permitida
     function esUbicacionValida(lat, lng) {
         const punto = turf.point([lng, lat]);
         const poligono = turf.polygon(areaCbaCapital.geometry.coordinates);
         return turf.booleanPointInPolygon(punto, poligono);
     }
 
+    // Evento al cambiar el tipo de envío
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
             console.log(`📌 Tipo de envío seleccionado: ${this.value}`);
@@ -74,6 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    // Evento para buscar dirección
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value.trim();
         if (direccion === "") {
@@ -108,79 +123,76 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     });
 
+    // Evento para continuar con el pago
     btnContinuarPago.addEventListener("click", function (event) {
         event.preventDefault();
         console.log("✅ Botón 'Continuar con el Pago' clickeado.");
-    
+
         const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked")?.value;
         if (!tipoEnvio) {
             mostrarAlerta("Seleccione un tipo de envío", "Debe elegir una opción de envío antes de continuar.");
             return;
         }
-    
+
         const direccion = inputDireccion.value.trim();
         if (tipoEnvio === "delivery" && direccion === "") {
             mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
             return;
         }
-    
-        obtenerCarritoID(carritoId => {
-            if (!carritoId) {
-                console.error("❌ No se pudo obtener el ID del carrito.");
-                mostrarAlerta("Error", "No se pudo obtener el carrito activo.");
-                return;
+
+        // Verificar si la función obtenerCarritoID existe
+        if (typeof obtenerCarritoID !== "function") {
+            console.error("❌ La función obtenerCarritoID() no está definida.");
+            return;
+        }
+
+        const carritoId = obtenerCarritoID();
+        if (!carritoId) {
+            console.error("❌ No se pudo obtener el ID del carrito.");
+            return;
+        }
+
+        const datosEnvio = {
+            carrito_id: carritoId,
+            tipo_envio: tipoEnvio,
+            direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
+        };
+
+        console.log("📦 Datos a enviar:", datosEnvio);
+
+        Swal.fire({
+            icon: 'question',
+            title: 'Confirmar envío',
+            text: `¿Está seguro que desea guardar estos datos?\n\nTipo: ${datosEnvio.tipo_envio}\nDirección: ${datosEnvio.direccion}`,
+            showCancelButton: true,
+            confirmButtonText: 'Sí, confirmar',
+            cancelButtonText: 'No, cambiar'
+        }).then(result => {
+            if (result.isConfirmed) {
+                console.log("📡 Enviando datos al servidor...");
+                fetch("/envio", { 
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(datosEnvio)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("🔄 Respuesta del servidor recibida:", data);
+                    if (data.success) {
+                        window.location.href = "/carrito/confirmarDatos";
+                    } else {
+                        mostrarAlerta("Error", "Hubo un problema al guardar los datos.");
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ Error al enviar los datos:", error);
+                    mostrarAlerta("Error", "No se pudo conectar con el servidor.");
+                });
             }
-    
-            const datosEnvio = {
-                carrito_id: carritoId,
-                tipo_envio: tipoEnvio,
-                direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
-            };
-    
-            console.log("📡 Enviando datos de envío al servidor:", datosEnvio);
-    
-            fetch("/envio", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datosEnvio)
-            })
-            .then(response => {
-                console.log("📩 Respuesta del servidor recibida:", response);
-    
-                if (!response.ok) {
-                    return response.text().then(text => { throw new Error(`❌ Error HTTP ${response.status}: ${text}`); });
-                }
-    
-                return response.json();
-            })
-            .then(data => {
-                console.log("📩 Respuesta JSON del servidor:", data);
-    
-                if (data.success) {
-                    console.log("✅ Datos de envío guardados correctamente.");
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Envío guardado',
-                        text: 'Sus datos de envío fueron registrados correctamente.',
-                        confirmButtonText: 'Continuar'
-                    }).then(() => {
-                        console.log("🔄 Redirigiendo a confirmarDatos...");
-                        window.location.replace("/carrito/confirmarDatos");  // Forzar redirección
-                    });
-                } else {
-                    console.error("❌ Error en la respuesta del servidor:", data.error);
-                    mostrarAlerta("Error", data.error || "No se pudieron guardar los datos de envío.");
-                }
-            })
-            .catch(error => {
-                console.error("❌ Error al enviar los datos de envío:", error);
-                mostrarAlerta("Error de conexión", "No se pudo conectar con el servidor.");
-            });
         });
     });
-    
-    
 
+    // Función para mostrar alertas con SweetAlert
     function mostrarAlerta(titulo, mensaje) {
         Swal.fire({
             icon: 'error',
@@ -190,6 +202,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Ocultar elementos iniciales
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
 
