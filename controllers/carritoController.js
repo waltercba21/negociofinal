@@ -273,31 +273,35 @@ module.exports = {
         res.render ('envio')
     },
     guardarEnvio: (req, res) => {
+        console.log("📝 Datos recibidos en el servidor:", req.body); // Agregar esta línea
+    
         const { tipo_envio, direccion } = req.body;
         const id_usuario = req.session.usuario.id;
-
+    
         carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
             if (error) {
                 console.error("❌ Error al obtener carrito:", error);
                 return res.status(500).json({ error: "Error al obtener carrito" });
             }
-
+    
             if (!carritos || carritos.length === 0) {
+                console.warn("⚠️ No hay un carrito activo.");
                 return res.status(400).json({ error: "No hay un carrito activo" });
             }
-
+    
             const id_carrito = carritos[0].id;
-
+    
             carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (error) => {
                 if (error) {
                     console.error("❌ Error al guardar envío:", error);
                     return res.status(500).json({ error: "Error al guardar información de envío" });
                 }
-
-                res.status(200).json({ mensaje: "✅ Envío guardado correctamente" });
+    
+                console.log("✅ Envío guardado correctamente.");
+                res.status(200).json({ success: true, mensaje: "✅ Envío guardado correctamente" });
             });
         });
-    },
+    },    
     confirmarDatos: (req, res) => {
         if (!req.session || !req.session.usuario || !req.session.usuario.id) {
             return res.status(401).send("Debes iniciar sesión para acceder a esta página.");

@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnBuscarDireccion = document.getElementById("buscar-direccion");
     const btnContinuarPago = document.getElementById("continuar-pago");
     let mapa, marcador;
-    
+
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
     const areaCbaCapital = {
@@ -140,42 +140,44 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("📡 Enviando datos de envío al servidor:", datosEnvio);
     
             fetch("/carrito/envio", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datosEnvio)
-            })
-            .then(response => {
-                // Verifica si la respuesta es JSON
-                const contentType = response.headers.get("content-type");
-                if (!response.ok) {
-                    return response.text().then(text => { throw new Error(`❌ Error HTTP ${response.status}: ${text}`); });
-                }
-                if (contentType && contentType.includes("application/json")) {
-                    return response.json();
-                } else {
-                    throw new Error("❌ La respuesta del servidor no es JSON.");
-                }
-            })
-            .then(data => {
-                if (data.success) {
-                    console.log("✅ Datos de envío guardados correctamente.");
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Envío guardado',
-                        text: 'Sus datos de envío fueron registrados correctamente.',
-                        confirmButtonText: 'Continuar'
-                    }).then(() => {
-                        window.location.href = "/carrito/confirmarDatos";
-                    });
-                } else {
-                    console.error("❌ Error en la respuesta del servidor:", data.error);
-                    mostrarAlerta("Error", data.error || "No se pudieron guardar los datos de envío.");
-                }
-            })
-            .catch(error => {
-                console.error("❌ Error al enviar los datos de envío:", error);
-                mostrarAlerta("Error de conexión", "No se pudo conectar con el servidor.");
-            });
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datosEnvio)
+})
+.then(response => {
+    const contentType = response.headers.get("content-type");
+    if (!response.ok) {
+        return response.text().then(text => { throw new Error(`❌ Error HTTP ${response.status}: ${text}`); });
+    }
+    if (contentType && contentType.includes("application/json")) {
+        return response.json();
+    } else {
+        throw new Error("❌ La respuesta del servidor no es JSON.");
+    }
+})
+.then(data => {
+    console.log("📩 Respuesta del servidor:", data);  // Agregar este log para verificar qué responde el servidor
+
+    if (data.success) {
+        console.log("✅ Datos de envío guardados correctamente.");
+        Swal.fire({
+            icon: 'success',
+            title: 'Envío guardado',
+            text: 'Sus datos de envío fueron registrados correctamente.',
+            confirmButtonText: 'Continuar'
+        }).then(() => {
+            window.location.href = "/carrito/confirmarDatos";
+        });
+    } else {
+        console.error("❌ Error en la respuesta del servidor:", data.error);
+        mostrarAlerta("Error", data.error || "No se pudieron guardar los datos de envío.");
+    }
+})
+.catch(error => {
+    console.error("❌ Error al enviar los datos de envío:", error);
+    mostrarAlerta("Error de conexión", "No se pudo conectar con el servidor.");
+});
+
         });
     });
     
