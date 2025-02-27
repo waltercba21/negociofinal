@@ -27,11 +27,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function inicializarMapa() {
         if (!mapa) {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
-
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(mapa);
-
             L.geoJSON(areaCbaCapital, {
                 style: {
                     color: "green",
@@ -44,15 +42,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
         if (!mapa) return;
-
         if (marcador) {
             marcador.setLatLng([lat, lng]);
         } else {
             marcador = L.marker([lat, lng]).addTo(mapa);
         }
 
-        const mensaje = dentroDeZona ? `<b>Dirección:</b> ${direccion}` : 
-            `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
+        const mensaje = dentroDeZona 
+            ? `<b>Dirección:</b> ${direccion}`
+            : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
         marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lng], 14);
     }
@@ -67,7 +65,6 @@ document.addEventListener("DOMContentLoaded", function () {
         radio.addEventListener("change", function () {
             mapaContainer.classList.remove("hidden");
             inicializarMapa();
-
             if (this.value === "delivery") {
                 datosEnvio.classList.remove("hidden");
             } else {
@@ -82,42 +79,37 @@ document.addEventListener("DOMContentLoaded", function () {
         if (direccion !== "") {
             buscarDireccion(direccion);
         }
-   
+    });
 
     function buscarDireccion(direccion) {
         const spinner = document.getElementById("spinner");
-        if (!spinner) {
-            console.error("❌ Spinner no encontrado en el DOM.");
-            return;
-        }
-        spinner.style.display = "block";  
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (!Array.isArray(data) || data.length === 0) {
-                            throw new Error("⚠️ No se encontraron resultados.");
-                        }
+        if (spinner) spinner.style.display = "block";
 
-                        let resultadoCbaCapital = data.find(entry => 
-                            (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
-                        );
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
+            .then(response => response.json())
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) {
+                    mostrarAlerta("No se encontraron resultados.", "Intente con otra dirección.");
+                    return;
+                }
 
-                        if (!resultadoCbaCapital) {
-                            mostrarAlerta("No se encontró la dirección en Córdoba Capital", "Intente con otra dirección.");
-                            ocultarSpinner();
-                        } else {
-                            manejarResultado(resultadoCbaCapital, direccion);
-                            ocultarSpinner();
-                        }
-                    })
-                    .catch(error => manejarError(error));
-            }, 50);
-        });
+                let resultado = data.find(entry => 
+                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
+                );
+
+                if (!resultado) {
+                    mostrarAlerta("No se encontró la dirección en Córdoba Capital", "Intente con otra dirección.");
+                } else {
+                    manejarResultado(resultado, direccion);
+                }
+            })
+            .catch(error => {
+                console.error("Error en la búsqueda:", error);
+                mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda. Intente nuevamente.");
+            })
+            .finally(() => {
+                if (spinner) spinner.style.display = "none";
+            });
     }
 
     function manejarResultado(resultado, direccion) {
@@ -127,20 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
         actualizarMarcador(lat, lon, direccion, dentroDeZona);
 
         if (!dentroDeZona) {
-            mostrarAlerta("⛔ Dirección fuera del área de entrega", "La dirección ingresada está fuera del área habilitada.");
-        }
-    }
-
-    function manejarError(error) {
-        console.error("❌ Error en la búsqueda:", error);
-        mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda de la dirección. Verifique la conexión o intente con otra dirección.");
-        ocultarSpinner();
-    }
-
-    function ocultarSpinner() {
-        const spinner = document.getElementById("spinner");
-        if (spinner) {
-            spinner.style.display = "none";
+            mostrarAlerta("Dirección fuera del área de entrega", "La dirección ingresada está fuera del área habilitada.");
         }
     }
 
@@ -156,17 +135,25 @@ document.addEventListener("DOMContentLoaded", function () {
     if (btnContinuarPago) {
         btnContinuarPago.addEventListener("click", function (event) {
             event.preventDefault();
-    
+
             console.log("Botón continuar clickeado.");
-            const direccion = inputDireccion.value.trim();
-            const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked").value;
             
+            const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked")?.value;
+            if (!tipoEnvio) {
+                mostrarAlerta('Falta información', 'Por favor, seleccione un tipo de envío.');
+                return;
+            }
+
+            const direccion = inputDireccion.value.trim();
+            const carritoId = obtenerCarritoID();
+            console.log("Carrito ID obtenido:", carritoId);
+
             let datosEnvio = {
-                carrito_id: obtenerCarritoID(), 
+                carrito_id: carritoId, 
                 tipo_envio: tipoEnvio,
                 direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
             };
-    
+
             if (tipoEnvio === "delivery" && direccion === "") {
                 Swal.fire({
                     icon: 'warning',
@@ -176,7 +163,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
                 return;
             }
-    
+
             Swal.fire({
                 icon: 'question',
                 title: 'Confirmar envío',
@@ -186,32 +173,23 @@ document.addEventListener("DOMContentLoaded", function () {
                 cancelButtonText: 'No, cambiar'
             }).then(result => {
                 if (result.isConfirmed) {
-                    fetch("/api/guardar-envio", {
+                    fetch("/envio", { 
                         method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(datosEnvio)
                     })
                     .then(response => response.json())
                     .then(data => {
+                        console.log("Respuesta del servidor:", data);
                         if (data.success) {
                             window.location.href = "/carrito/confirmarDatos";
                         } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'Hubo un problema al guardar los datos. Inténtelo de nuevo.'
-                            });
+                            mostrarAlerta('Error', 'Hubo un problema al guardar los datos.');
                         }
                     })
                     .catch(error => {
                         console.error("Error al enviar los datos:", error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'No se pudo conectar con el servidor.'
-                        });
+                        mostrarAlerta('Error', 'No se pudo conectar con el servidor.');
                     });
                 }
             });
@@ -219,9 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.error("❌ El botón 'continuar-pago' no se encontró en el DOM.");
     }
-    
 
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
-}); 
 });
