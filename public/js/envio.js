@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
     console.log("📌 Script cargado correctamente.");
-
     const tipoEnvioRadios = document.querySelectorAll("input[name='tipo-envio']");
     const mapaContainer = document.getElementById("mapa-container");
     const datosEnvio = document.getElementById("datos-envio");
@@ -8,28 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnBuscarDireccion = document.getElementById("buscar-direccion");
     const btnContinuarPago = document.getElementById("continuar-pago");
     let mapa, marcador;
-
-    function obtenerCarritoID(callback) {
-        fetch("/carrito/activo")
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                if (data.success && data.carrito_id) {
-                    console.log("🛒 Carrito ID obtenido:", data.carrito_id);
-                    callback(data.carrito_id);
-                } else {
-                    console.warn("⚠️ No se encontró un carrito activo.");
-                    callback(null);
-                }
-            })
-            .catch(error => {
-                console.error("❌ Error al obtener el carrito:", error);
-                callback(null);
-            });
-    }
-
+    
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
     const areaCbaCapital = {
@@ -161,7 +139,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
             console.log("📡 Enviando datos de envío al servidor:", datosEnvio);
     
-            fetch("/envio", {
+            fetch("/carrito/envio", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(datosEnvio)
