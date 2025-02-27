@@ -2273,7 +2273,7 @@ border-radius: 10px;
   100% { transform: rotate(360deg); }
 }
 
-.btn-finalizar-verde {
+.btn-finalizar {
   display: inline-block;
   background: linear-gradient(135deg, #4CAF50, #8BC34A); /* Degradado verde intermedio */
   color: white;
@@ -2290,14 +2290,14 @@ border-radius: 10px;
   margin-top: 20px;
 }
 
-.btn-finalizar-verde:hover {
+.btn-finalizar:hover {
   background: linear-gradient(135deg, #66BB6A, #9CCC65); /* Degradado verde más claro al hacer hover */
   color: #fff;
   transform: scale(1.05);
   box-shadow: 0 6px 15px rgba(76, 175, 80, 0.5); /* Sombra verde más intensa al hacer hover */
 }
 
-.btn-finalizar-verde::before {
+.btn-finalizar::before {
   content: "";
   position: absolute;
   top: 50%;
@@ -2312,12 +2312,12 @@ border-radius: 10px;
   color: #fff;
 }
 
-.btn-finalizar-verde:hover::before {
+.btn-finalizar:hover::before {
   width: 0;
   height: 0;
 }
 
-.btn-finalizar-verde:active {
+.btn-finalizar:active {
   transform: scale(0.98);
 }
 
