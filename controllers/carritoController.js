@@ -255,35 +255,71 @@ module.exports = {
     envio: (req,res) => {
         res.render ('envio')
     },
-      guardarEnvio: (req, res) => {
-        const { tipo_envio, direccion, ciudad, codigo_postal } = req.body;
+    guardarEnvio: (req, res) => {
+        const { tipo_envio, direccion } = req.body;
         const id_usuario = req.session.usuario.id;
 
-        carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
+        carritoModel.obtenerCarritoActivo(id_usuario, (error, carritos) => {
             if (error) {
-                console.error('Error al obtener carrito:', error);
-                return res.status(500).json({ error: 'Error al obtener carrito' });
+                console.error("❌ Error al obtener carrito:", error);
+                return res.status(500).json({ error: "Error al obtener carrito" });
             }
 
-            if (!carritoActivo || carritoActivo.length === 0) {
-                return res.status(400).json({ error: 'No hay un carrito activo' });
+            if (!carritos || carritos.length === 0) {
+                return res.status(400).json({ error: "No hay un carrito activo" });
             }
 
-            const id_carrito = carritoActivo[0].id;
+            const id_carrito = carritos[0].id;
 
-            carrito.guardarEnvio(id_carrito, tipo_envio, direccion, ciudad, codigo_postal, (error) => {
+            carritoModel.guardarEnvio(id_carrito, tipo_envio, direccion, (error) => {
                 if (error) {
-                    console.error('Error al guardar envío:', error);
-                    return res.status(500).json({ error: 'Error al guardar información de envío' });
+                    console.error("❌ Error al guardar envío:", error);
+                    return res.status(500).json({ error: "Error al guardar información de envío" });
                 }
 
-                res.status(200).json({ mensaje: 'Envío guardado correctamente' });
+                res.status(200).json({ mensaje: "✅ Envío guardado correctamente" });
             });
         });
     },
-    confirmarDatos: (req,res) => {
-        res.render ('confirmarDatos')
+    confirmarDatos: (req, res) => {
+        const id_usuario = req.session.usuario.id;
+    
+        carritoModel.obtenerCarritoActivo(id_usuario, (error, carritos) => {
+            if (error) {
+                console.error("❌ Error al obtener el carrito:", error);
+                return res.status(500).send("Error interno del servidor");
+            }
+    
+            if (!carritos || carritos.length === 0) {
+                return res.render("confirmarDatos", { productos: [], envio: null, total: 0 });
+            }
+    
+            const id_carrito = carritos[0].id;
+    
+            carritoModel.obtenerProductosCarrito(id_carrito, (error, productos) => {
+                if (error) {
+                    console.error("❌ Error al obtener productos:", error);
+                    return res.status(500).send("Error al obtener productos");
+                }
+    
+                carritoModel.obtenerEnvioCarrito(id_carrito, (error, envio) => {
+                    if (error) {
+                        console.error("❌ Error al obtener datos de envío:", error);
+                        return res.status(500).send("Error al obtener datos de envío");
+                    }
+    
+                    const total = productos.reduce((acc, p) => acc + p.total, 0);
+    
+                    res.render("confirmarDatos", {
+                        productos,
+                        envio,
+                        total
+                    });
+                });
+            });
+        });
     },
+    
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;
 

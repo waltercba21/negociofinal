@@ -108,6 +108,29 @@ eliminarProductoPorId: (id, callback) => {
     const query = 'DELETE FROM productos_carrito WHERE id = ?';
     pool.query(query, [id], callback);
 },
+guardarEnvio: (id_carrito, tipo_envio, direccion, callback) => {
+    const query = `
+        INSERT INTO envios (carrito_id, tipo_envio, direccion) 
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE tipo_envio = VALUES(tipo_envio), 
+                                direccion = VALUES(direccion);
+    `;
+
+    pool.query(query, [id_carrito, tipo_envio, direccion], (error, resultados) => {
+        if (error) {
+            console.error("❌ Error al guardar envío:", error);
+            return callback(error);
+        }
+        callback(null, resultados);
+    });
+},
+obtenerEnvioCarrito: (id_carrito, callback) => {
+    const query = "SELECT tipo_envio, direccion FROM envios WHERE carrito_id = ?";
+    pool.query(query, [id_carrito], (error, resultados) => {
+        if (error) return callback(error);
+        callback(null, resultados.length > 0 ? resultados[0] : null);
+    });
+},
 
 
 finalizarCompra: (id_carrito, callback) => {
