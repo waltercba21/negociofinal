@@ -2254,8 +2254,6 @@ border-radius: 10px;
   color: white;
   font-family: Arial, sans-serif;
 }
-
-/* Spinner de carga (rueda) */
 .spinner {
   border: 4px solid rgba(255, 255, 255, 0.3);
   border-top: 4px solid #32CD32; /* Verde */
@@ -2265,23 +2263,19 @@ border-radius: 10px;
   animation: spin 1s linear infinite;
   margin: auto;
 }
-
-/* Estilos para la leyenda */
 #spinner-text {
   margin-top: 10px;
   font-size: 16px;
   font-weight: bold;
 }
-
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-.btn-finalizar {
+.btn-finalizar-verde {
   display: inline-block;
-  background: linear-gradient(135deg, #f55a5a, #f83747); /* Degradado rojo moderno */
+  background: linear-gradient(135deg, #4CAF50, #8BC34A); /* Degradado verde intermedio */
   color: white;
   font-size: 18px;
   font-weight: bold;
@@ -2290,20 +2284,20 @@ border-radius: 10px;
   border-radius: 10px;
   text-decoration: none;
   transition: all 0.3s ease-in-out;
-  box-shadow: 0 4px 10px rgba(255, 71, 87, 0.4);
+  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4); /* Sombra verde */
   position: relative;
   overflow: hidden;
   margin-top: 20px;
 }
 
-.btn-finalizar:hover {
-  background: linear-gradient(135deg, #ff4757, #ff6b6b); 
+.btn-finalizar-verde:hover {
+  background: linear-gradient(135deg, #66BB6A, #9CCC65); /* Degradado verde más claro al hacer hover */
   color: #fff;
   transform: scale(1.05);
-  box-shadow: 0 6px 15px rgba(255, 71, 87, 0.5);
+  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.5); /* Sombra verde más intensa al hacer hover */
 }
 
-.btn-finalizar::before {
+.btn-finalizar-verde::before {
   content: "";
   position: absolute;
   top: 50%;
@@ -2318,15 +2312,14 @@ border-radius: 10px;
   color: #fff;
 }
 
-.btn-finalizar:hover::before {
+.btn-finalizar-verde:hover::before {
   width: 0;
   height: 0;
 }
 
-.btn-finalizar:active {
+.btn-finalizar-verde:active {
   transform: scale(0.98);
 }
-
 
 /* Mensaje carrito vacío */
 .carrito-vacio {
