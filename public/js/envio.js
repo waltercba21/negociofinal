@@ -10,11 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
     let mapa, marcador;
 
     function obtenerCarritoID(callback) {
-        fetch("/carrito/activo")  // 🔹 Ruta corregida
+        fetch("/carrito/activo")
             .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 return response.json();
             })
             .then(data => {
@@ -31,12 +29,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 callback(null);
             });
     }
-    
 
-    // Ubicación predeterminada
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
-    // Área válida para la entrega
     const areaCbaCapital = {
         "type": "Feature",
         "geometry": {
@@ -60,24 +55,18 @@ document.addEventListener("DOMContentLoaded", function () {
             }).addTo(mapa);
 
             L.geoJSON(areaCbaCapital, {
-                style: {
-                    color: "green",
-                    fillColor: "#32CD32",
-                    fillOpacity: 0.3
-                }
+                style: { color: "green", fillColor: "#32CD32", fillOpacity: 0.3 }
             }).addTo(mapa);
         }
     }
 
     function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
         if (!mapa) return;
-
         if (marcador) {
             marcador.setLatLng([lat, lng]);
         } else {
             marcador = L.marker([lat, lng]).addTo(mapa);
         }
-
         const mensaje = dentroDeZona
             ? `<b>Dirección:</b> ${direccion}`
             : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
@@ -163,22 +152,41 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            Swal.fire({
-                icon: 'question',
-                title: 'Confirmar dirección y productos',
-                html: `
-                    <p>Tipo de Envío: <strong>${tipoEnvio === 'delivery' ? 'Delivery' : 'Retiro en local'}</strong></p>
-                    <p>Dirección: <strong>${direccion || 'No aplica'}</strong></p>
-                    <p>¿Está seguro que desea continuar?</p>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Sí, continuar',
-                cancelButtonText: 'No, corregir'
-            }).then(result => {
-                if (result.isConfirmed) {
-                    console.log("📡 Enviando datos al servidor...");
-                    window.location.href = "/carrito/confirmarDatos";
+            const datosEnvio = {
+                carrito_id: carritoId,
+                tipo_envio: tipoEnvio,
+                direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
+            };
+
+            console.log("📡 Enviando datos de envío al servidor:", datosEnvio);
+
+            fetch("/carrito/envio", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(datosEnvio)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log("✅ Datos de envío guardados correctamente.");
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Envío guardado',
+                        text: 'Sus datos de envío fueron registrados correctamente.',
+                        confirmButtonText: 'Continuar'
+                    }).then(() => {
+                        window.location.href = "/carrito/confirmarDatos";
+                    });
+                } else {
+                    console.error("❌ Error al guardar los datos de envío.");
+                    mostrarAlerta("Error", "No se pudieron guardar los datos de envío. Intente de nuevo.");
                 }
+            })
+            .catch(error => {
+                console.error("❌ Error al enviar los datos de envío:", error);
+                mostrarAlerta("Error de conexión", "No se pudo conectar con el servidor.");
             });
         });
     });
