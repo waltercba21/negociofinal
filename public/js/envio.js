@@ -9,6 +9,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnContinuarPago = document.getElementById("continuar-pago");
     let mapa, marcador;
 
+    // Función para obtener el carrito ID (Simulación)
+    function obtenerCarritoID() {
+        // 🔹 Aquí deberías reemplazar con la lógica real para obtener el ID del carrito desde el backend o almacenamiento local
+        const carritoID = sessionStorage.getItem("carrito_id") || "12345"; // Simulación de ID
+        console.log("🛒 Carrito ID obtenido:", carritoID);
+        return carritoID;
+    }
+
     // Ubicación predeterminada
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
@@ -28,7 +36,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    // Inicializar Mapa con cuadrante verde
     function inicializarMapa() {
         if (!mapa) {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
@@ -36,7 +43,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(mapa);
 
-            // Agregar el área de entrega al mapa
             L.geoJSON(areaCbaCapital, {
                 style: {
                     color: "green",
@@ -47,7 +53,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Actualizar marcador en el mapa
     function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
         if (!mapa) return;
 
@@ -60,19 +65,17 @@ document.addEventListener("DOMContentLoaded", function () {
         const mensaje = dentroDeZona
             ? `<b>Dirección:</b> ${direccion}`
             : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
-        
+
         marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lng], 14);
     }
 
-    // Validar si la ubicación está dentro de la zona permitida
     function esUbicacionValida(lat, lng) {
         const punto = turf.point([lng, lat]);
         const poligono = turf.polygon(areaCbaCapital.geometry.coordinates);
         return turf.booleanPointInPolygon(punto, poligono);
     }
 
-    // Evento al cambiar el tipo de envío
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
             console.log(`📌 Tipo de envío seleccionado: ${this.value}`);
@@ -88,7 +91,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Evento para buscar dirección
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value.trim();
         if (direccion === "") {
@@ -123,7 +125,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     });
 
-    // Evento para continuar con el pago
     btnContinuarPago.addEventListener("click", function (event) {
         event.preventDefault();
         console.log("✅ Botón 'Continuar con el Pago' clickeado.");
@@ -140,59 +141,27 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // Verificar si la función obtenerCarritoID existe
-        if (typeof obtenerCarritoID !== "function") {
-            console.error("❌ La función obtenerCarritoID() no está definida.");
-            return;
-        }
-
         const carritoId = obtenerCarritoID();
         if (!carritoId) {
             console.error("❌ No se pudo obtener el ID del carrito.");
             return;
         }
 
-        const datosEnvio = {
-            carrito_id: carritoId,
-            tipo_envio: tipoEnvio,
-            direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
-        };
-
-        console.log("📦 Datos a enviar:", datosEnvio);
-
         Swal.fire({
             icon: 'question',
-            title: 'Confirmar envío',
-            text: `¿Está seguro que desea guardar estos datos?\n\nTipo: ${datosEnvio.tipo_envio}\nDirección: ${datosEnvio.direccion}`,
+            title: 'Confirmar dirección',
+            text: `¿La dirección ingresada es correcta?\n\n${direccion}`,
             showCancelButton: true,
             confirmButtonText: 'Sí, confirmar',
             cancelButtonText: 'No, cambiar'
         }).then(result => {
             if (result.isConfirmed) {
                 console.log("📡 Enviando datos al servidor...");
-                fetch("/envio", { 
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(datosEnvio)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("🔄 Respuesta del servidor recibida:", data);
-                    if (data.success) {
-                        window.location.href = "/carrito/confirmarDatos";
-                    } else {
-                        mostrarAlerta("Error", "Hubo un problema al guardar los datos.");
-                    }
-                })
-                .catch(error => {
-                    console.error("❌ Error al enviar los datos:", error);
-                    mostrarAlerta("Error", "No se pudo conectar con el servidor.");
-                });
+                window.location.href = "/carrito/confirmarPedido";
             }
         });
     });
 
-    // Función para mostrar alertas con SweetAlert
     function mostrarAlerta(titulo, mensaje) {
         Swal.fire({
             icon: 'error',
@@ -202,7 +171,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Ocultar elementos iniciales
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
 
