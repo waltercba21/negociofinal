@@ -28,6 +28,7 @@
     // Ruta para elegir el envio del pedido del carrito
     router.get ('/envio', carritoController.envio);
     router.post('/envio', autenticarUsuario, carritoController.guardarEnvio);
+    router.post('/envio/actualizar', autenticarUsuario, carritoController.actualizarDireccionEnvio);
 
 
     // Ruta para continuar a la confirmacion de datos
