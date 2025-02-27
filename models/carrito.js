@@ -131,6 +131,25 @@ obtenerEnvioCarrito: (id_carrito, callback) => {
         callback(null, resultados.length > 0 ? resultados[0] : null);
     });
 },
+obtenerDireccionEnvio: (id_carrito, callback) => {
+    const query = "SELECT direccion FROM envios WHERE carrito_id = ?";
+    pool.query(query, [id_carrito], (error, resultados) => {
+        if (error) return callback(error);
+        callback(null, resultados.length > 0 ? resultados[0].direccion : null);
+    });
+},
+
+actualizarDireccionEnvio: (id_carrito, nuevaDireccion, callback) => {
+    const query = `
+        UPDATE envios 
+        SET direccion = ? 
+        WHERE carrito_id = ?
+    `;
+    pool.query(query, [nuevaDireccion, id_carrito], (error, resultados) => {
+        if (error) return callback(error);
+        callback(null, resultados);
+    });
+},
 
 
 finalizarCompra: (id_carrito, callback) => {

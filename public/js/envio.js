@@ -138,7 +138,6 @@ function inicializarMapa() {
 
     btnContinuarPago.addEventListener("click", function (event) {
         event.preventDefault();
-        console.log("✅ Botón 'Continuar con el Pago' clickeado.");
     
         const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked")?.value;
         if (!tipoEnvio) {
@@ -157,42 +156,48 @@ function inicializarMapa() {
             direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
         };
     
-        Swal.fire({
-            icon: 'question',
-            title: 'Confirmar envío',
-            text: `¿Está seguro que desea guardar estos datos?\n\nTipo: ${datosEnvio.tipo_envio}\nDirección: ${datosEnvio.direccion}`,
-            showCancelButton: true,
-            confirmButtonText: 'Sí, confirmar',
-            cancelButtonText: 'No, cambiar'
-        }).then(result => {
-            if (result.isConfirmed) {
-                console.log("📡 Enviando datos al servidor...");
-                fetch("/carrito/envio", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(datosEnvio)
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => { throw new Error(text); });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("🔄 Respuesta del servidor recibida:", data);
-                    if (data.success) {
-                        window.location.href = "/carrito/confirmarDatos";
+        fetch("/carrito/envio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datosEnvio)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.confirmarCambio) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Dirección registrada previamente',
+                    text: `Tiene la dirección "${data.direccionExistente}" predefinida. ¿Desea cambiarla por "${data.direccionNueva}"?`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, actualizar',
+                    cancelButtonText: 'No, mantener'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        fetch("/carrito/envio/actualizar", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ direccion: data.direccionNueva })
+                        })
+                        .then(response => response.json())
+                        .then(updateData => {
+                            if (updateData.success) {
+                                Swal.fire("Actualizado", "Su dirección ha sido actualizada.", "success")
+                                .then(() => window.location.href = "/carrito/confirmarDatos");
+                            }
+                        });
                     } else {
-                        mostrarAlerta("Error", "Hubo un problema al guardar los datos.");
+                        window.location.href = "/carrito/confirmarDatos";
                     }
-                })
-                .catch(error => {
-                    console.error("❌ Error al enviar los datos:", error);
-                    mostrarAlerta("Error", "No se pudo conectar con el servidor.");
                 });
+            } else if (data.success) {
+                window.location.href = "/carrito/confirmarDatos";
             }
+        })
+        .catch(error => {
+            mostrarAlerta("Error", "No se pudo conectar con el servidor.");
         });
     });
+    
     
 
     // Función para mostrar alertas con SweetAlert

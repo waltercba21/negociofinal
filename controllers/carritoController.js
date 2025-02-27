@@ -276,7 +276,6 @@ module.exports = {
         console.log("📝 Datos recibidos en el servidor:", req.body);
     
         if (!req.body || !req.body.tipo_envio) {
-            console.error("❌ Error: No se recibió el tipo de envío.");
             return res.status(400).json({ error: "Debe seleccionar un tipo de envío." });
         }
     
@@ -284,30 +283,57 @@ module.exports = {
         const id_usuario = req.session.usuario.id;
     
         carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
-            if (error) {
-                console.error("❌ Error al obtener carrito:", error);
-                return res.status(500).json({ error: "Error al obtener carrito" });
-            }
+            if (error) return res.status(500).json({ error: "Error al obtener carrito" });
     
             if (!carritos || carritos.length === 0) {
-                console.warn("⚠️ No hay un carrito activo.");
                 return res.status(400).json({ error: "No hay un carrito activo" });
             }
     
             const id_carrito = carritos[0].id;
     
-            carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (error) => {
-                if (error) {
-                    console.error("❌ Error al guardar envío:", error);
-                    return res.status(500).json({ error: "Error al guardar información de envío" });
+            // Verificar si hay una dirección previa
+            carrito.obtenerDireccionEnvio(id_carrito, (error, direccionExistente) => {
+                if (error) return res.status(500).json({ error: "Error al obtener dirección de envío" });
+    
+                if (direccionExistente && direccionExistente !== direccion) {
+                    return res.status(200).json({
+                        confirmarCambio: true,
+                        direccionExistente,
+                        direccionNueva: direccion
+                    });
                 }
     
-                console.log("✅ Envío guardado correctamente en la base de datos.");
-                res.setHeader("Content-Type", "application/json"); // <-- Agregado
-                return res.status(200).json({ success: true, mensaje: "✅ Envío guardado correctamente" });
+                // Si no hay dirección previa, guardar la nueva directamente
+                carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (error) => {
+                    if (error) return res.status(500).json({ error: "Error al guardar envío" });
+    
+                    res.status(200).json({ success: true, mensaje: "✅ Envío guardado correctamente" });
+                });
             });
         });
     },
+    
+    actualizarDireccionEnvio: (req, res) => {
+        const { direccion } = req.body;
+        const id_usuario = req.session.usuario.id;
+    
+        carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
+            if (error) return res.status(500).json({ error: "Error al obtener carrito" });
+    
+            if (!carritos || carritos.length === 0) {
+                return res.status(400).json({ error: "No hay un carrito activo" });
+            }
+    
+            const id_carrito = carritos[0].id;
+    
+            carrito.actualizarDireccionEnvio(id_carrito, direccion, (error) => {
+                if (error) return res.status(500).json({ error: "Error al actualizar dirección" });
+    
+                res.status(200).json({ success: true, mensaje: "✅ Dirección actualizada correctamente" });
+            });
+        });
+    },
+    
     
     confirmarDatos: (req, res) => {
         if (!req.session || !req.session.usuario || !req.session.usuario.id) {

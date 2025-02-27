@@ -40,7 +40,9 @@
                 <input type="radio" name="tipo-envio" value="delivery">
                 <i class="fas fa-motorcycle"></i> Envío Delivery
             </label>
-            
+            <div id="direccion-predefinida" class="hidden">
+                <p>📍 Tiene la dirección <span id="direccion-guardada"></span> predefinida para la entrega.</p>
+            </div>
             <div id="datos-envio" class="hidden">
                 <input type="text" id="direccion" placeholder="Escriba su dirección">
                 <button id="buscar-direccion">Buscar</button>
@@ -75,6 +77,17 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-pip/1.1.0/leaflet-pip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
-
+    <script>
+         document.addEventListener("DOMContentLoaded", function () {
+        fetch("/carrito/envio")
+        .then(response => response.json())
+        .then(data => {
+            if (data.direccion) {
+                document.getElementById("direccion-guardada").textContent = data.direccion;
+                document.getElementById("direccion-predefinida").classList.remove("hidden");
+            }
+        });
+    });
+    </script>
 
 </body>
