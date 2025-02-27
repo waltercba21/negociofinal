@@ -276,7 +276,7 @@ module.exports = {
         const { tipo_envio, direccion } = req.body;
         const id_usuario = req.session.usuario.id;
 
-        carritoModel.obtenerCarritoActivo(id_usuario, (error, carritos) => {
+        carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
             if (error) {
                 console.error("❌ Error al obtener carrito:", error);
                 return res.status(500).json({ error: "Error al obtener carrito" });
@@ -288,7 +288,7 @@ module.exports = {
 
             const id_carrito = carritos[0].id;
 
-            carritoModel.guardarEnvio(id_carrito, tipo_envio, direccion, (error) => {
+            carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (error) => {
                 if (error) {
                     console.error("❌ Error al guardar envío:", error);
                     return res.status(500).json({ error: "Error al guardar información de envío" });
