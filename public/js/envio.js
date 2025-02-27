@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }).then(result => {
             if (result.isConfirmed) {
                 console.log("📡 Enviando datos al servidor...");
-                window.location.href = "/confirmarDatos";
+                window.location.href = "/carrito/confirmarDatos";
             }
         });
     });
