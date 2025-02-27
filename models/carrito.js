@@ -2,10 +2,10 @@ const pool = require('../config/conexion');
 
 module.exports = {
     obtenerCarritoActivo: (usuario_id, callback) => {
-        const query = "SELECT * FROM carritos WHERE usuario_id = ? ORDER BY creado_en DESC LIMIT 1";
+        const query = 'SELECT * FROM carritos WHERE usuario_id = ?';
         pool.query(query, [usuario_id], (error, resultados) => {
             if (error) return callback(error);
-            callback(null, resultados.length > 0 ? resultados[0] : null);
+            callback(null, resultados); // Dejamos la respuesta como array (como en tu código original)
         });
     },
 
@@ -53,9 +53,7 @@ module.exports = {
         pool.query(query, [id_carrito], (error, resultados) => {
             if (error) return callback(error);
             
-            // Calcular el total
             const total = resultados.reduce((acc, p) => acc + p.total, 0);
-
             callback(null, { productos: resultados, total });
         });
     },
@@ -88,6 +86,7 @@ guardarEnvio: (id_carrito, tipo_envio, direccion, ciudad, codigo_postal, callbac
         }
         callback(null, resultados);
     });
+    
 },
 obtenerEnvioCarrito: (id_carrito, callback) => {
     const query = "SELECT tipo_envio, direccion FROM carritos WHERE id = ?";
@@ -96,6 +95,7 @@ obtenerEnvioCarrito: (id_carrito, callback) => {
         callback(null, resultados.length > 0 ? resultados[0] : null);
     });
 },
+
 
 finalizarCompra: (id_carrito, callback) => {
         const query = 'UPDATE carritos SET actualizado_en = CURRENT_TIMESTAMP WHERE id = ?';

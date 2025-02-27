@@ -285,17 +285,18 @@ module.exports = {
         const usuario_id = req.session.usuario.id;
 
         // Obtener el carrito activo del usuario
-        carritoModel.obtenerCarritoActivo(usuario_id, (error, carrito) => {
+        carritoModel.obtenerCarritoActivo(usuario_id, (error, carritos) => {
             if (error) {
                 console.error("❌ Error al obtener el carrito:", error);
                 return res.status(500).send("Error interno del servidor");
             }
 
-            if (!carrito) {
+            if (!carritos || carritos.length === 0) {
+                console.warn("⚠️ No se encontró un carrito activo para el usuario.");
                 return res.render("confirmarDatos", { productos: [], envio: null, total: 0 });
             }
 
-            const id_carrito = carrito.id;
+            const id_carrito = carritos[0].id; // Ahora no fallará porque verificamos si `carritos` existe.
 
             // Obtener productos y envío del carrito en paralelo
             carritoModel.obtenerProductosCarrito(id_carrito, (error, datosCarrito) => {
