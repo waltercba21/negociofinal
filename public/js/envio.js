@@ -23,7 +23,6 @@ document.addEventListener("DOMContentLoaded", function () {
             ]]
         }
     };
-
     function inicializarMapa() {
         if (!mapa) {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
@@ -41,7 +40,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }).addTo(mapa);
         }
     }
-
     function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
         if (!mapa) return;
 
@@ -56,13 +54,11 @@ document.addEventListener("DOMContentLoaded", function () {
         marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lng], 14);
     }
-
     function esUbicacionValida(lat, lng) {
         const punto = turf.point([lng, lat]);
         const poligono = turf.polygon(areaCbaCapital.geometry.coordinates);
         return turf.booleanPointInPolygon(punto, poligono);
     }
-
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
             mapaContainer.classList.remove("hidden");
@@ -76,14 +72,12 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
-
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value.trim();
         if (direccion !== "") {
             buscarDireccion(direccion);
         }
     });
-
     function buscarDireccion(direccion) {
         const spinner = document.getElementById("spinner");
 
@@ -91,9 +85,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("❌ Spinner no encontrado en el DOM.");
             return;
         }
-
         spinner.style.display = "block";  
-
         requestAnimationFrame(() => {
             setTimeout(() => {
                 fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
@@ -122,7 +114,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 50);
         });
     }
-
     function manejarResultado(resultado, direccion) {
         const lat = parseFloat(resultado.lat);
         const lon = parseFloat(resultado.lon);
@@ -133,20 +124,17 @@ document.addEventListener("DOMContentLoaded", function () {
             mostrarAlerta("⛔ Dirección fuera del área de entrega", "La dirección ingresada está fuera del área habilitada.");
         }
     }
-
     function manejarError(error) {
         console.error("❌ Error en la búsqueda:", error);
         mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda de la dirección. Verifique la conexión o intente con otra dirección.");
         ocultarSpinner();
     }
-
     function ocultarSpinner() {
         const spinner = document.getElementById("spinner");
         if (spinner) {
             spinner.style.display = "none";
         }
     }
-
     function mostrarAlerta(titulo, mensaje) {
         Swal.fire({
             icon: 'error',
@@ -155,8 +143,8 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmButtonText: 'Aceptar'
         });
     }
-
     btnContinuarPago.addEventListener("click", function () {
+        console.log("Botón continuar clickeado.");
         const direccion = inputDireccion.value.trim();
         if (direccion === "") {
             Swal.fire({
@@ -175,14 +163,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 cancelButtonText: 'No, cambiar'
             }).then(result => {
                 if (result.isConfirmed) {
-                    // Aquí puedes proceder a guardar la dirección y continuar al paso siguiente
-                    // Redirigir o mostrar la vista de "confirmar datos"
-                    window.location.href = '/confirmarDatos';  // Ajusta la ruta según corresponda
+                    window.location.href = '/confirmarDatos'; 
                 }
             });
         }
     });
-
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
 });
