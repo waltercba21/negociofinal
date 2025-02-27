@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }).then(result => {
             if (result.isConfirmed) {
                 console.log("📡 Enviando datos al servidor...");
-                fetch("/carrito/envio", { // <-- Corrección en la URL
+                fetch("/carrito/envio", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(datosEnvio)
