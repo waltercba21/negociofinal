@@ -143,31 +143,40 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmButtonText: 'Aceptar'
         });
     }
-    btnContinuarPago.addEventListener("click", function () {
-        console.log("Botón continuar clickeado.");
-        const direccion = inputDireccion.value.trim();
-        if (direccion === "") {
-            Swal.fire({
-                icon: 'warning',
-                title: '¡Atención!',
-                text: 'Por favor, ingrese una dirección antes de continuar.',
-                confirmButtonText: 'Aceptar'
-            });
-        } else {
-            Swal.fire({
-                icon: 'question',
-                title: 'Confirmar dirección',
-                text: `¿Está seguro que desea guardar la dirección: ${direccion}?`,
-                showCancelButton: true,
-                confirmButtonText: 'Sí, confirmar',
-                cancelButtonText: 'No, cambiar'
-            }).then(result => {
-                if (result.isConfirmed) {
-                    window.location.href = '/confirmarDatos'; 
-                }
-            });
-        }
+    document.addEventListener("DOMContentLoaded", function () {
+        const inputDireccion = document.getElementById("direccion");
+        const btnContinuarPago = document.getElementById("continuar-pago");
+    
+        btnContinuarPago.addEventListener("click", function (event) {
+            event.preventDefault();  // Evita cualquier redirección inesperada
+    
+            console.log("Botón continuar clickeado.");
+            const direccion = inputDireccion.value.trim();
+    
+            if (direccion === "") {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '¡Atención!',
+                    text: 'Por favor, ingrese una dirección antes de continuar.',
+                    confirmButtonText: 'Aceptar'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'question',
+                    title: 'Confirmar dirección',
+                    text: `¿Está seguro que desea guardar la dirección: ${direccion}?`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, confirmar',
+                    cancelButtonText: 'No, cambiar'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/carrito/confirmarDatos'; 
+                    }
+                });
+            }
+        });
     });
+    
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
 });
