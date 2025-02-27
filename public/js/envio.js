@@ -140,20 +140,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // Verificar si la función obtenerCarritoID existe
-        if (typeof obtenerCarritoID !== "function") {
-            console.error("❌ La función obtenerCarritoID() no está definida.");
-            return;
-        }
-
-        const carritoId = obtenerCarritoID();
-        if (!carritoId) {
-            console.error("❌ No se pudo obtener el ID del carrito.");
-            return;
-        }
-
         const datosEnvio = {
-            carrito_id: carritoId,
             tipo_envio: tipoEnvio,
             direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
         };
