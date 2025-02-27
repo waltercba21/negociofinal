@@ -76,17 +76,22 @@ document.addEventListener("DOMContentLoaded", function () {
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
             console.log(`📌 Tipo de envío seleccionado: ${this.value}`);
+            if (!mapa) {
+                inicializarMapa();  // Asegurarse de que el mapa se inicializa
+            }
+    
             mapaContainer.classList.remove("hidden");
-            inicializarMapa();
-
+    
             if (this.value === "delivery") {
                 datosEnvio.classList.remove("hidden");
+                inputDireccion.value = ""; // Reiniciar el input de dirección si se cambia
             } else {
                 datosEnvio.classList.add("hidden");
                 actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, "Retiro en local", true);
             }
         });
     });
+    
 
     // Evento para buscar dirección
     btnBuscarDireccion.addEventListener("click", function () {
@@ -123,30 +128,27 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     });
 
-    // Evento para continuar con el pago
     btnContinuarPago.addEventListener("click", function (event) {
         event.preventDefault();
         console.log("✅ Botón 'Continuar con el Pago' clickeado.");
-
+    
         const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked")?.value;
         if (!tipoEnvio) {
             mostrarAlerta("Seleccione un tipo de envío", "Debe elegir una opción de envío antes de continuar.");
             return;
         }
-
+    
         const direccion = inputDireccion.value.trim();
         if (tipoEnvio === "delivery" && direccion === "") {
             mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
             return;
         }
-
+    
         const datosEnvio = {
             tipo_envio: tipoEnvio,
             direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
         };
-
-        console.log("📦 Datos a enviar:", datosEnvio);
-
+    
         Swal.fire({
             icon: 'question',
             title: 'Confirmar envío',
@@ -157,12 +159,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }).then(result => {
             if (result.isConfirmed) {
                 console.log("📡 Enviando datos al servidor...");
-                fetch("/envio", { 
+                fetch("/carrito/envio", { // <-- Corrección en la URL
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(datosEnvio)
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text); });
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     console.log("🔄 Respuesta del servidor recibida:", data);
                     if (data.success) {
@@ -178,6 +185,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+    
 
     // Función para mostrar alertas con SweetAlert
     function mostrarAlerta(titulo, mensaje) {

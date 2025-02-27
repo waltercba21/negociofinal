@@ -275,26 +275,14 @@ module.exports = {
     guardarEnvio: (req, res) => {
         console.log("📝 Datos recibidos en el servidor:", req.body);
     
-        // Validar si `req.body` contiene los datos esperados
         if (!req.body || !req.body.tipo_envio) {
             console.error("❌ Error: No se recibió el tipo de envío.");
             return res.status(400).json({ error: "Debe seleccionar un tipo de envío." });
         }
     
         const { tipo_envio, direccion } = req.body;
-        console.log(`📌 Tipo de envío recibido: ${tipo_envio}`);
-        console.log(`📌 Dirección recibida: ${direccion || 'No se proporcionó dirección'}`);
-    
-        // Validar si el usuario está autenticado
-        if (!req.session || !req.session.usuario || !req.session.usuario.id) {
-            console.error("❌ Error: Usuario no autenticado.");
-            return res.status(401).json({ error: "Usuario no autenticado" });
-        }
-    
         const id_usuario = req.session.usuario.id;
-        console.log(`👤 Usuario autenticado: ID ${id_usuario}`);
     
-        // Obtener el carrito activo
         carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
             if (error) {
                 console.error("❌ Error al obtener carrito:", error);
@@ -307,9 +295,7 @@ module.exports = {
             }
     
             const id_carrito = carritos[0].id;
-            console.log(`🛒 Carrito activo encontrado: ID ${id_carrito}`);
     
-            // Guardar los datos del envío
             carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (error) => {
                 if (error) {
                     console.error("❌ Error al guardar envío:", error);
@@ -317,10 +303,12 @@ module.exports = {
                 }
     
                 console.log("✅ Envío guardado correctamente en la base de datos.");
+                res.setHeader("Content-Type", "application/json"); // <-- Agregado
                 return res.status(200).json({ success: true, mensaje: "✅ Envío guardado correctamente" });
             });
         });
-    },    
+    },
+    
     confirmarDatos: (req, res) => {
         if (!req.session || !req.session.usuario || !req.session.usuario.id) {
             return res.status(401).send("Debes iniciar sesión para acceder a esta página.");
