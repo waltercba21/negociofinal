@@ -33,7 +33,7 @@
                         <tr class="carrito-total">
                             <td colspan="3"></td>
                             <td><strong>Total</strong></td>
-                            <td id="total-carrito">$<%= total.toFixed(2) %></td>
+                            <td id="total-carrito">$<%= total %></td>
                         </tr>
                     </tbody>
                 </table>
@@ -49,11 +49,12 @@
                         <p><strong>Dirección:</strong> <%= envio.direccion %></p>
                     <% } %>
                 </div>
+            <% } else { %>
+                <p>No se ha seleccionado un método de envío.</p>
             <% } %>
         
             <button id="confirmar-pedido" class="btn-finalizar">Confirmar Pedido</button>
         </div>
-        
         
     </main>
 

@@ -282,43 +282,59 @@ module.exports = {
         });
     },
     confirmarDatos: (req, res) => {
+        if (!req.session || !req.session.usuario || !req.session.usuario.id) {
+            return res.status(401).send("Debes iniciar sesión para acceder a esta página.");
+        }
+    
         const id_usuario = req.session.usuario.id;
     
-        carritoModel.obtenerCarritoActivo(id_usuario, (error, carritos) => {
+        carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
             if (error) {
                 console.error("❌ Error al obtener el carrito:", error);
-                return res.status(500).send("Error interno del servidor");
+                return res.status(500).send("Error al obtener el carrito");
             }
     
             if (!carritos || carritos.length === 0) {
-                return res.render("confirmarDatos", { productos: [], envio: null, total: 0 });
+                console.warn("⚠️ No hay un carrito activo para este usuario.");
+                return res.render("confirmarDatos", { 
+                    productos: [], 
+                    envio: null, 
+                    total: 0, 
+                    cantidadProductosCarrito: 0 
+                });
             }
     
             const id_carrito = carritos[0].id;
     
-            carritoModel.obtenerProductosCarrito(id_carrito, (error, productos) => {
+            carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
                 if (error) {
-                    console.error("❌ Error al obtener productos:", error);
-                    return res.status(500).send("Error al obtener productos");
+                    console.error("❌ Error al obtener productos del carrito:", error);
+                    return res.status(500).send("Error al obtener productos del carrito");
                 }
     
-                carritoModel.obtenerEnvioCarrito(id_carrito, (error, envio) => {
+                const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
+                const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0); 
+    
+                carrito.obtenerEnvioCarrito(id_carrito, (error, envio) => {
                     if (error) {
                         console.error("❌ Error al obtener datos de envío:", error);
                         return res.status(500).send("Error al obtener datos de envío");
                     }
     
-                    const total = productos.reduce((acc, p) => acc + p.total, 0);
+                    console.log("✅ Confirmar Datos - Productos:", productos);
+                    console.log("✅ Confirmar Datos - Envío:", envio);
     
                     res.render("confirmarDatos", {
-                        productos,
-                        envio,
-                        total
+                        productos, 
+                        envio, 
+                        total, 
+                        cantidadProductosCarrito: cantidadTotal
                     });
                 });
             });
         });
     },
+    
     
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;
