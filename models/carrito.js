@@ -50,6 +50,7 @@ module.exports = {
             LEFT JOIN imagenes_producto ip ON pc.producto_id = ip.producto_id
             WHERE pc.carrito_id = ?;
         `;
+
         pool.query(query, [id_carrito], (error, resultados) => {
             if (error) return callback(error);
 
@@ -58,8 +59,10 @@ module.exports = {
                 return callback(null, { productos: [], total: 0 });
             }
 
-            const total = resultados.reduce((acc, p) => acc + p.total, 0);
-            callback(null, { productos: resultados, total });
+            const productos = Array.isArray(resultados) ? resultados : [];
+            const total = productos.reduce((acc, p) => acc + (p.total || 0), 0);
+
+            callback(null, { productos, total });
         });
     },
 
