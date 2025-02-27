@@ -5,7 +5,7 @@ module.exports = {
         const query = 'SELECT * FROM carritos WHERE usuario_id = ?';
         pool.query(query, [usuario_id], (error, resultados) => {
             if (error) return callback(error);
-            callback(null, resultados); // Dejamos la respuesta como array (como en tu código original)
+            callback(null, resultados.length > 0 ? resultados : []); // Si no hay carrito, devuelve un array vacío
         });
     },
 
@@ -52,7 +52,12 @@ module.exports = {
         `;
         pool.query(query, [id_carrito], (error, resultados) => {
             if (error) return callback(error);
-            
+
+            if (!Array.isArray(resultados)) {
+                console.error("❌ obtenerProductosCarrito NO devolvió un array.");
+                return callback(null, { productos: [], total: 0 });
+            }
+
             const total = resultados.reduce((acc, p) => acc + p.total, 0);
             callback(null, { productos: resultados, total });
         });

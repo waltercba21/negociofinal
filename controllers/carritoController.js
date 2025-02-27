@@ -284,7 +284,6 @@ module.exports = {
     confirmarDatos: (req, res) => {
         const usuario_id = req.session.usuario.id;
 
-        // Obtener el carrito activo del usuario
         carritoModel.obtenerCarritoActivo(usuario_id, (error, carritos) => {
             if (error) {
                 console.error("❌ Error al obtener el carrito:", error);
@@ -296,14 +295,16 @@ module.exports = {
                 return res.render("confirmarDatos", { productos: [], envio: null, total: 0 });
             }
 
-            const id_carrito = carritos[0].id; // Ahora no fallará porque verificamos si `carritos` existe.
+            const id_carrito = carritos[0].id;
 
-            // Obtener productos y envío del carrito en paralelo
             carritoModel.obtenerProductosCarrito(id_carrito, (error, datosCarrito) => {
                 if (error) {
                     console.error("❌ Error al obtener productos:", error);
                     return res.status(500).send("Error al obtener productos del carrito");
                 }
+
+                // Asegurarnos de que `productos` es un array
+                const productos = Array.isArray(datosCarrito.productos) ? datosCarrito.productos : [];
 
                 carritoModel.obtenerEnvioCarrito(id_carrito, (error, envio) => {
                     if (error) {
@@ -311,11 +312,14 @@ module.exports = {
                         return res.status(500).send("Error al obtener datos de envío");
                     }
 
-                    // Renderizar la vista con los datos obtenidos
+                    // Calcular cantidad total de productos en el carrito
+                    const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
+
                     res.render("confirmarDatos", {
-                        productos: datosCarrito.productos,
-                        envio: envio,
-                        total: datosCarrito.total
+                        productos,
+                        envio,
+                        total: datosCarrito.total,
+                        cantidadTotal
                     });
                 });
             });
