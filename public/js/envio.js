@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const datosEnvio = document.getElementById("datos-envio");
     const inputDireccion = document.getElementById("direccion");
     const btnBuscarDireccion = document.getElementById("buscar-direccion");
-    const btnContinuarPago = document.getElementById("continuar-pago");  // Asegúrate de tener este botón en tu HTML
+    const btnContinuarPago = document.getElementById("continuar-pago");  
     let mapa, marcador;
 
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", function () {
             ]]
         }
     };
+
     function inicializarMapa() {
         if (!mapa) {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
@@ -40,6 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }).addTo(mapa);
         }
     }
+
     function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
         if (!mapa) return;
 
@@ -54,11 +56,13 @@ document.addEventListener("DOMContentLoaded", function () {
         marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lng], 14);
     }
+
     function esUbicacionValida(lat, lng) {
         const punto = turf.point([lng, lat]);
         const poligono = turf.polygon(areaCbaCapital.geometry.coordinates);
         return turf.booleanPointInPolygon(punto, poligono);
     }
+
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
             mapaContainer.classList.remove("hidden");
@@ -72,15 +76,16 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
     btnBuscarDireccion.addEventListener("click", function () {
         const direccion = inputDireccion.value.trim();
         if (direccion !== "") {
             buscarDireccion(direccion);
         }
     });
+
     function buscarDireccion(direccion) {
         const spinner = document.getElementById("spinner");
-
         if (!spinner) {
             console.error("❌ Spinner no encontrado en el DOM.");
             return;
@@ -114,6 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 50);
         });
     }
+
     function manejarResultado(resultado, direccion) {
         const lat = parseFloat(resultado.lat);
         const lon = parseFloat(resultado.lon);
@@ -124,17 +130,20 @@ document.addEventListener("DOMContentLoaded", function () {
             mostrarAlerta("⛔ Dirección fuera del área de entrega", "La dirección ingresada está fuera del área habilitada.");
         }
     }
+
     function manejarError(error) {
         console.error("❌ Error en la búsqueda:", error);
         mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda de la dirección. Verifique la conexión o intente con otra dirección.");
         ocultarSpinner();
     }
+
     function ocultarSpinner() {
         const spinner = document.getElementById("spinner");
         if (spinner) {
             spinner.style.display = "none";
         }
     }
+
     function mostrarAlerta(titulo, mensaje) {
         Swal.fire({
             icon: 'error',
@@ -143,12 +152,11 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmButtonText: 'Aceptar'
         });
     }
-    document.addEventListener("DOMContentLoaded", function () {
-        const inputDireccion = document.getElementById("direccion");
-        const btnContinuarPago = document.getElementById("continuar-pago");
-    
+
+    // Evento para el botón de continuar pago
+    if (btnContinuarPago) {
         btnContinuarPago.addEventListener("click", function (event) {
-            event.preventDefault();  // Evita cualquier redirección inesperada
+            event.preventDefault();  
     
             console.log("Botón continuar clickeado.");
             const direccion = inputDireccion.value.trim();
@@ -175,8 +183,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             }
         });
-    });
-    
+    } else {
+        console.error("❌ El botón 'continuar-pago' no se encontró en el DOM.");
+    }
+
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
 });
