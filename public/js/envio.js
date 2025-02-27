@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
             console.log("📡 Enviando datos de envío al servidor:", datosEnvio);
     
-            fetch("/carrito/envio", {
+            fetch("/envio", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(datosEnvio)
