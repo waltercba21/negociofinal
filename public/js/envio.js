@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (direccion !== "") {
             buscarDireccion(direccion);
         }
-    });
+   
 
     function buscarDireccion(direccion) {
         const spinner = document.getElementById("spinner");
@@ -223,4 +223,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
+}); 
 });
