@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Función para obtener el carrito real desde el backend
     function obtenerCarritoID(callback) {
-        fetch("/api/carrito/activo")
+        fetch("/carrito")
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.carrito_id) {
