@@ -9,12 +9,23 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnContinuarPago = document.getElementById("continuar-pago");
     let mapa, marcador;
 
-    // Función para obtener el carrito ID (Simulación)
-    function obtenerCarritoID() {
-        // 🔹 Aquí deberías reemplazar con la lógica real para obtener el ID del carrito desde el backend o almacenamiento local
-        const carritoID = sessionStorage.getItem("carrito_id") || "12345"; // Simulación de ID
-        console.log("🛒 Carrito ID obtenido:", carritoID);
-        return carritoID;
+    // Función para obtener el carrito real desde el backend
+    function obtenerCarritoID(callback) {
+        fetch("/api/carrito/activo")
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.carrito_id) {
+                    console.log("🛒 Carrito ID obtenido:", data.carrito_id);
+                    callback(data.carrito_id);
+                } else {
+                    console.error("❌ No se encontró un carrito activo.");
+                    callback(null);
+                }
+            })
+            .catch(error => {
+                console.error("❌ Error al obtener el carrito:", error);
+                callback(null);
+            });
     }
 
     // Ubicación predeterminada
@@ -141,24 +152,29 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const carritoId = obtenerCarritoID();
-        if (!carritoId) {
-            console.error("❌ No se pudo obtener el ID del carrito.");
-            return;
-        }
-
-        Swal.fire({
-            icon: 'question',
-            title: 'Confirmar dirección',
-            text: `¿La dirección ingresada es correcta?\n\n${direccion}`,
-            showCancelButton: true,
-            confirmButtonText: 'Sí, confirmar',
-            cancelButtonText: 'No, cambiar'
-        }).then(result => {
-            if (result.isConfirmed) {
-                console.log("📡 Enviando datos al servidor...");
-                window.location.href = "/carrito/confirmarDatos";
+        obtenerCarritoID(carritoId => {
+            if (!carritoId) {
+                console.error("❌ No se pudo obtener el ID del carrito.");
+                return;
             }
+
+            Swal.fire({
+                icon: 'question',
+                title: 'Confirmar dirección y productos',
+                html: `
+                    <p>Tipo de Envío: <strong>${tipoEnvio === 'delivery' ? 'Delivery' : 'Retiro en local'}</strong></p>
+                    <p>Dirección: <strong>${direccion || 'No aplica'}</strong></p>
+                    <p>¿Está seguro que desea continuar?</p>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Sí, continuar',
+                cancelButtonText: 'No, corregir'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    console.log("📡 Enviando datos al servidor...");
+                    window.location.href = "/carrito/confirmarDatos";
+                }
+            });
         });
     });
 

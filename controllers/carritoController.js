@@ -281,8 +281,44 @@ module.exports = {
             });
         });
     },
-    confirmarDatos: (req,res) => {
-        res.render ('confirmarDatos')
+    confirmarDatos: (req, res) => {
+        const usuario_id = req.session.usuario.id;
+
+        // Obtener el carrito activo del usuario
+        carritoModel.obtenerCarritoActivo(usuario_id, (error, carrito) => {
+            if (error) {
+                console.error("❌ Error al obtener el carrito:", error);
+                return res.status(500).send("Error interno del servidor");
+            }
+
+            if (!carrito) {
+                return res.render("confirmarDatos", { productos: [], envio: null, total: 0 });
+            }
+
+            const id_carrito = carrito.id;
+
+            // Obtener productos y envío del carrito en paralelo
+            carritoModel.obtenerProductosCarrito(id_carrito, (error, datosCarrito) => {
+                if (error) {
+                    console.error("❌ Error al obtener productos:", error);
+                    return res.status(500).send("Error al obtener productos del carrito");
+                }
+
+                carritoModel.obtenerEnvioCarrito(id_carrito, (error, envio) => {
+                    if (error) {
+                        console.error("❌ Error al obtener datos de envío:", error);
+                        return res.status(500).send("Error al obtener datos de envío");
+                    }
+
+                    // Renderizar la vista con los datos obtenidos
+                    res.render("confirmarDatos", {
+                        productos: datosCarrito.productos,
+                        envio: envio,
+                        total: datosCarrito.total
+                    });
+                });
+            });
+        });
     },
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;

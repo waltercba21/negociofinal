@@ -2,12 +2,10 @@ const pool = require('../config/conexion');
 
 module.exports = {
     obtenerCarritoActivo: (usuario_id, callback) => {
-        const query = 'SELECT * FROM carritos WHERE usuario_id = ?';
+        const query = "SELECT * FROM carritos WHERE usuario_id = ? ORDER BY creado_en DESC LIMIT 1";
         pool.query(query, [usuario_id], (error, resultados) => {
-            if (error) {
-                return callback(error);
-            }
-            callback(null, resultados);
+            if (error) return callback(error);
+            callback(null, resultados.length > 0 ? resultados[0] : null);
         });
     },
 
@@ -43,54 +41,24 @@ module.exports = {
             }
         });
     },
-  obtenerProductosCarrito: (id_carrito, callback) => {
-    const query = `
-        SELECT pc.id, p.nombre, pc.cantidad, p.precio_venta, 
-               (pc.cantidad * p.precio_venta) AS total, ip.imagen
-        FROM productos_carrito pc
-        JOIN productos p ON pc.producto_id = p.id
-        LEFT JOIN imagenes_producto ip 
-            ON pc.producto_id = ip.producto_id
-        WHERE pc.carrito_id = ?;
-    `;
+    obtenerProductosCarrito: (id_carrito, callback) => {
+        const query = `
+            SELECT pc.id, p.nombre, pc.cantidad, p.precio_venta, 
+                   (pc.cantidad * p.precio_venta) AS total, ip.imagen
+            FROM productos_carrito pc
+            JOIN productos p ON pc.producto_id = p.id
+            LEFT JOIN imagenes_producto ip ON pc.producto_id = ip.producto_id
+            WHERE pc.carrito_id = ?;
+        `;
+        pool.query(query, [id_carrito], (error, resultados) => {
+            if (error) return callback(error);
+            
+            // Calcular el total
+            const total = resultados.reduce((acc, p) => acc + p.total, 0);
 
-    pool.query(query, [id_carrito], (error, resultados) => {
-        if (error) {
-            console.error('❌ Error en la consulta de productos con imágenes:', error);
-            return callback(error);
-        }
-
-        console.log('✅ Resultados de productos con imágenes:', resultados);
-
-        // Agrupar los productos por ID y asignar solo una imagen
-        const productosMap = {};
-
-        resultados.forEach(p => {
-            // Si el producto ya está en el map, no lo repetimos
-            if (!productosMap[p.id]) {
-                // Si hay imagen, la asignamos. Si no, usamos una predeterminada.
-                productosMap[p.id] = {
-                    ...p,
-                    imagen: p.imagen || 'default_image.jpg',  // Imagen predeterminada si no hay imagen
-                    cantidad: p.cantidad,
-                    total: p.total
-                };
-            }
+            callback(null, { productos: resultados, total });
         });
-
-        // Convertir el mapa de productos a un array
-        const productos = Object.values(productosMap);
-
-        // Asegurar que precio_venta y total sean números
-        const productosConPrecios = productos.map(p => ({
-            ...p,
-            precio_venta: parseFloat(p.precio_venta) || 0,
-            total: parseFloat(p.total) || 0
-        }));
-
-        callback(null, productosConPrecios);
-    });
-},
+    },
 
 obtenerProductoPorId: (id, callback) => {
     const query = 'SELECT * FROM productos_carrito WHERE id = ?';
@@ -121,7 +89,13 @@ guardarEnvio: (id_carrito, tipo_envio, direccion, ciudad, codigo_postal, callbac
         callback(null, resultados);
     });
 },
-
+obtenerEnvioCarrito: (id_carrito, callback) => {
+    const query = "SELECT tipo_envio, direccion FROM carritos WHERE id = ?";
+    pool.query(query, [id_carrito], (error, resultados) => {
+        if (error) return callback(error);
+        callback(null, resultados.length > 0 ? resultados[0] : null);
+    });
+},
 
 finalizarCompra: (id_carrito, callback) => {
         const query = 'UPDATE carritos SET actualizado_en = CURRENT_TIMESTAMP WHERE id = ?';
