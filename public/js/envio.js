@@ -14,36 +14,12 @@ document.addEventListener("DOMContentLoaded", function () {
     // Ubicación predeterminada (Córdoba Capital)
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
-    // Área válida para la entrega
-    const areaCbaCapital = {
-        "type": "Feature",
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [[
-                [-64.174512, -31.372190],
-                [-64.141308, -31.426028],
-                [-64.204045, -31.465101],
-                [-64.244475, -31.396353],
-                [-64.220403, -31.364278],
-                [-64.174512, -31.372190]
-            ]]
-        }
-    };
-
     function inicializarMapa() {
+        console.log("🗺️ Inicializando mapa...");
         if (!mapa) {
-            console.log("🗺️ Inicializando mapa...");
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(mapa);
-
-            L.geoJSON(areaCbaCapital, {
-                style: {
-                    color: "green",
-                    fillColor: "#32CD32",
-                    fillOpacity: 0.3
-                }
             }).addTo(mapa);
         }
         setTimeout(() => {
@@ -63,28 +39,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
         marcador.bindPopup(`<b>Dirección:</b> ${direccion}`).openPopup();
         mapa.setView([lat, lon], 14);
+        console.log("📌 Marcador actualizado en:", lat, lon);
     }
 
     function limpiarDireccion(direccion) {
         return direccion.replace(/\b(AV|AV\.|BV|BV\.|CALLE|C\.|AVENIDA|BOULEVARD|PJE|PASAJE|DIAG|DIAGONAL|CAMINO|CIRCUNVALACION|AUTOPISTA|ROTONDA|RUTA)\s+/gi, '').trim();
     }
 
-    // Evento al cambiar el tipo de envío (mostrar/ocultar dirección y mapa)
+    // Evento al cambiar el tipo de envío
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
             console.log(`📌 Tipo de envío seleccionado: ${this.value}`);
 
-            // Inicializar el mapa si aún no está creado
             if (!mapa) {
                 inicializarMapa();
             }
 
-            // Mostrar el mapa
             mapaContainer.classList.remove("hidden");
 
             if (this.value === "delivery") {
                 datosEnvio.classList.remove("hidden");
-                inputDireccion.value = ""; // Limpiar campo de dirección
+                inputDireccion.value = "";
                 console.log("📦 Modo Delivery activado: ingresando dirección.");
             } else {
                 datosEnvio.classList.add("hidden");
@@ -104,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function () {
         direccion = limpiarDireccion(direccion);
         console.log("🔍 Dirección buscada después de limpiar:", direccion);
 
-        spinner.classList.remove("hidden"); // Mostrar spinner
+        spinner.classList.remove("hidden");
 
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
             .then(response => {
@@ -112,6 +87,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 return response.json();
             })
             .then(data => {
+                console.log("🔎 Respuesta de OpenStreetMap:", data);
+
                 if (!Array.isArray(data) || data.length === 0) {
                     throw new Error("⚠️ No se encontraron resultados.");
                 }
@@ -130,7 +107,7 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(error => manejarError(error))
             .finally(() => {
-                spinner.classList.add("hidden"); // Ocultar spinner después de la búsqueda
+                spinner.classList.add("hidden");
             });
     });
 
@@ -155,6 +132,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Ocultar elementos al inicio
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
     spinner.classList.add("hidden");
