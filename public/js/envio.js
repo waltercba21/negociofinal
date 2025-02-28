@@ -115,36 +115,43 @@ function inicializarMapa() {
         console.log("🔍 Dirección buscada después de limpiar:", direccion);
     
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                return response.json();
+            })
             .then(data => {
                 if (!Array.isArray(data) || data.length === 0) {
-                    mostrarAlerta("No se encontraron resultados.", "Intente con otra dirección.");
-                    return;
+                    throw new Error("⚠️ No se encontraron resultados.");
                 }
     
                 // Filtrar solo direcciones dentro de Córdoba Capital
-                const resultado = data.find(entry => 
-                    entry.address.state === "Córdoba" &&
+                let resultadoCbaCapital = data.find(entry => 
                     (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") &&
-                    (entry.address.county === "Capital" || entry.address.municipality === "Córdoba" || entry.address.village === "Córdoba")
+                    entry.address.state === "Córdoba"
                 );
     
-                if (!resultado) {
-                    mostrarAlerta("Dirección fuera de Córdoba Capital", "Ingrese una dirección válida dentro de Córdoba Capital.");
-                    return;
+                if (!resultadoCbaCapital) {
+                    mostrarAlerta("No se encontró la dirección en Córdoba Capital", "Intente con otra dirección.");
+                } else {
+                    manejarResultado(resultadoCbaCapital, direccion);
                 }
-    
-                // Mostrar marcador en la ubicación encontrada
-                const lat = parseFloat(resultado.lat);
-                const lon = parseFloat(resultado.lon);
-                actualizarMarcador(lat, lon, resultado.display_name, true);
-                console.log("📌 Dirección validada:", resultado.display_name);
             })
-            .catch(error => {
-                console.error("❌ Error en la búsqueda de dirección:", error);
-                mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda. Intente nuevamente.");
-            });
+            .catch(error => manejarError(error));
     });
+    
+    // ✅ Función para manejar el resultado correcto y actualizar el marcador
+    function manejarResultado(resultado, direccion) {
+        const lat = parseFloat(resultado.lat);
+        const lon = parseFloat(resultado.lon);
+        actualizarMarcador(lat, lon, resultado.display_name, true);
+        console.log("📌 Dirección validada:", resultado.display_name);
+    }
+    
+    // ✅ Función para manejar errores en la búsqueda
+    function manejarError(error) {
+        console.error("❌ Error en la búsqueda de dirección:", error);
+        mostrarAlerta("Error en la búsqueda", error.message || "Hubo un problema. Intente nuevamente.");
+    }
     
     // ✅ Función para actualizar el marcador en el mapa
     function actualizarMarcador(lat, lon, direccion, dentroDeZona) {
@@ -163,6 +170,7 @@ function inicializarMapa() {
         marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lon], 14);
     }
+    
     
     
     btnContinuarPago.addEventListener("click", function (event) {
