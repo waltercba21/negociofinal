@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let mapa, marcador;
 
-    // Ubicación predeterminada
+    // Ubicación predeterminada (Córdoba Capital)
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
     // Área válida para la entrega
@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function inicializarMapa() {
         if (!mapa) {
+            console.log("🗺️ Inicializando mapa...");
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: '&copy; OpenStreetMap contributors'
@@ -51,22 +52,47 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 500);
     }
 
-    function actualizarMarcador(lat, lng, direccion) {
+    function actualizarMarcador(lat, lon, direccion) {
         if (!mapa) return;
 
         if (marcador) {
-            marcador.setLatLng([lat, lng]);
+            marcador.setLatLng([lat, lon]);
         } else {
-            marcador = L.marker([lat, lng]).addTo(mapa);
+            marcador = L.marker([lat, lon]).addTo(mapa);
         }
 
         marcador.bindPopup(`<b>Dirección:</b> ${direccion}`).openPopup();
-        mapa.setView([lat, lng], 14);
+        mapa.setView([lat, lon], 14);
     }
 
     function limpiarDireccion(direccion) {
         return direccion.replace(/\b(AV|AV\.|BV|BV\.|CALLE|C\.|AVENIDA|BOULEVARD|PJE|PASAJE|DIAG|DIAGONAL|CAMINO|CIRCUNVALACION|AUTOPISTA|ROTONDA|RUTA)\s+/gi, '').trim();
     }
+
+    // Evento al cambiar el tipo de envío (mostrar/ocultar dirección y mapa)
+    tipoEnvioRadios.forEach(radio => {
+        radio.addEventListener("change", function () {
+            console.log(`📌 Tipo de envío seleccionado: ${this.value}`);
+
+            // Inicializar el mapa si aún no está creado
+            if (!mapa) {
+                inicializarMapa();
+            }
+
+            // Mostrar el mapa
+            mapaContainer.classList.remove("hidden");
+
+            if (this.value === "delivery") {
+                datosEnvio.classList.remove("hidden");
+                inputDireccion.value = ""; // Limpiar campo de dirección
+                console.log("📦 Modo Delivery activado: ingresando dirección.");
+            } else {
+                datosEnvio.classList.add("hidden");
+                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, "Retiro en local");
+                console.log("🏬 Modo Retiro en local activado.");
+            }
+        });
+    });
 
     btnBuscarDireccion.addEventListener("click", function () {
         let direccion = inputDireccion.value.trim();
@@ -99,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (!resultado) {
                     mostrarAlerta("No se encontró la dirección en Córdoba Capital", "Intente con otra dirección.");
                 } else {
-                    manejarResultado(resultado, direccion);
+                    manejarResultado(resultado);
                 }
             })
             .catch(error => manejarError(error))
@@ -108,7 +134,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     });
 
-    function manejarResultado(resultado, direccion) {
+    function manejarResultado(resultado) {
         const lat = parseFloat(resultado.lat);
         const lon = parseFloat(resultado.lon);
         console.log("📌 Dirección validada:", resultado.display_name);
@@ -119,42 +145,6 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("❌ Error en la búsqueda de dirección:", error);
         mostrarAlerta("Error en la búsqueda", error.message || "Hubo un problema. Intente nuevamente.");
     }
-
-    btnContinuarPago.addEventListener("click", function (event) {
-        event.preventDefault();
-
-        const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked")?.value;
-        if (!tipoEnvio) {
-            mostrarAlerta("Seleccione un tipo de envío", "Debe elegir una opción de envío antes de continuar.");
-            return;
-        }
-
-        const direccion = inputDireccion.value.trim();
-        if (tipoEnvio === "delivery" && direccion === "") {
-            mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
-            return;
-        }
-
-        const datosEnvio = {
-            tipo_envio: tipoEnvio,
-            direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
-        };
-
-        fetch("/carrito/envio", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datosEnvio)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.href = "/carrito/confirmarDatos";
-            }
-        })
-        .catch(error => {
-            mostrarAlerta("Error", "No se pudo conectar con el servidor.");
-        });
-    });
 
     function mostrarAlerta(titulo, mensaje) {
         Swal.fire({
