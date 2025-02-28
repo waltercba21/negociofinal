@@ -9,7 +9,7 @@ const middlewares = require('./middleware/middlewares');
 const dotenv = require('dotenv');
 dotenv.config();  
 const calcularCantidadCarrito = require('./middleware/carritoMiddleware');
-
+const mercadopago = require('mercadopago');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var productosRouter = require('./routes/productos');
@@ -20,6 +20,9 @@ var app = express();
 var server = require('http').Server(app); 
 var io = require('socket.io')(server); 
 
+mercadopago.configure({
+  access_token: process.env.MP_ACCESS_TOKEN 
+});
 // Configuración de vistas y motor de plantillas
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');

@@ -388,6 +388,62 @@ module.exports = {
             });
         });
     },
+    procesarPago: async (req, res) => {
+        const id_usuario = req.session.usuario.id;
+
+        try {
+            carrito.obtenerCarritoActivo(id_usuario, async (error, carritos) => {
+                if (error) return res.status(500).json({ error: "Error al obtener carrito" });
+
+                if (!carritos || carritos.length === 0) {
+                    return res.status(400).json({ error: "No hay un carrito activo" });
+                }
+
+                const id_carrito = carritos[0].id;
+
+                carrito.obtenerProductosCarrito(id_carrito, async (error, productos) => {
+                    if (error) return res.status(500).json({ error: "Error al obtener productos" });
+
+                    // Crear los ítems para Mercado Pago
+                    const items = productos.map(prod => ({
+                        title: prod.nombre,
+                        unit_price: parseFloat(prod.precio_venta),
+                        quantity: prod.cantidad,
+                        currency_id: 'ARS'
+                    }));
+
+                    // Crear la preferencia para Mercado Pago
+                    let preference = {
+                        items: items,
+                        payment_methods: {
+                            excluded_payment_methods: [], // Permitir todos los métodos de pago
+                            excluded_payment_types: [{ id: "ticket" }], // Excluir pagos en efectivo
+                            installments: 3 // Permitir hasta 3 cuotas
+                        },
+                        back_urls: {
+                            success: "http://localhost:3000/carrito/pago/exito",
+                            failure: "http://localhost:3000/carrito/pago/error",
+                            pending: "http://localhost:3000/carrito/pago/pendiente"
+                        },
+                        auto_return: "approved"
+                    };
+
+                    // Crear preferencia en Mercado Pago
+                    mercadopago.preferences.create(preference)
+                        .then(response => {
+                            res.json({ preferenceId: response.body.id });
+                        })
+                        .catch(error => {
+                            console.error("❌ Error al crear la preferencia de pago:", error);
+                            res.status(500).json({ error: "Error al procesar el pago" });
+                        });
+                });
+            });
+        } catch (error) {
+            console.error("❌ Error en el procesamiento de pago:", error);
+            res.status(500).json({ error: "Error interno del servidor" });
+        }
+    },
     
     
     finalizarCompra: (req, res) => {
