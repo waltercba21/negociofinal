@@ -2281,6 +2281,7 @@ border-radius: 10px;
   font-weight: bold;
   text-align: center;
   padding: 12px 24px;
+  border: none;
   border-radius: 10px;
   text-decoration: none;
   transition: all 0.3s ease-in-out;
