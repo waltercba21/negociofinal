@@ -9,10 +9,26 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnContinuarPago = document.getElementById("continuar-pago");
     const spinner = document.getElementById("spinner");
 
-    let mapa, marcador;
+    let mapa, marcador, areaEntrega;
 
-    // Ubicación predeterminada (Córdoba Capital)
+    // 📌 Ubicación predeterminada (Córdoba Capital - Tienda)
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
+
+    // 📌 Área válida para la entrega (Cuadrante Delivery)
+    const areaCbaCapital = {
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[
+                [-64.174512, -31.372190],
+                [-64.141308, -31.426028],
+                [-64.204045, -31.465101],
+                [-64.244475, -31.396353],
+                [-64.220403, -31.364278],
+                [-64.174512, -31.372190]
+            ]]
+        }
+    };
 
     function inicializarMapa() {
         console.log("🗺️ Inicializando mapa...");
@@ -20,6 +36,15 @@ document.addEventListener("DOMContentLoaded", function () {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(mapa);
+
+            // 📌 Agregar el área de cobertura de Delivery
+            areaEntrega = L.geoJSON(areaCbaCapital, {
+                style: {
+                    color: "red",
+                    fillColor: "#FF5733",
+                    fillOpacity: 0.3
+                }
             }).addTo(mapa);
         }
         setTimeout(() => {
@@ -29,7 +54,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function actualizarMarcador(lat, lon, direccion) {
-        if (!mapa) return;
+        console.log(`📍 Actualizando marcador: Lat ${lat}, Lng ${lon}, Dirección: ${direccion}`);
+        if (!mapa) {
+            console.error("❌ El mapa no está inicializado.");
+            return;
+        }
 
         if (marcador) {
             marcador.setLatLng([lat, lon]);
@@ -37,16 +66,22 @@ document.addEventListener("DOMContentLoaded", function () {
             marcador = L.marker([lat, lon]).addTo(mapa);
         }
 
-        marcador.bindPopup(`<b>Dirección:</b> ${direccion}`).openPopup();
+        const mensaje = `<b>Dirección:</b> ${direccion}`;
+        marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lon], 14);
-        console.log("📌 Marcador actualizado en:", lat, lon);
     }
 
     function limpiarDireccion(direccion) {
         return direccion.replace(/\b(AV|AV\.|BV|BV\.|CALLE|C\.|AVENIDA|BOULEVARD|PJE|PASAJE|DIAG|DIAGONAL|CAMINO|CIRCUNVALACION|AUTOPISTA|ROTONDA|RUTA)\s+/gi, '').trim();
     }
 
-    // Evento al cambiar el tipo de envío
+    function esUbicacionDentroDeZona(lat, lon) {
+        const punto = turf.point([lon, lat]);
+        const poligono = turf.polygon(areaCbaCapital.geometry.coordinates);
+        return turf.booleanPointInPolygon(punto, poligono);
+    }
+
+    // 📌 Evento al cambiar el tipo de envío
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
             console.log(`📌 Tipo de envío seleccionado: ${this.value}`);
@@ -60,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (this.value === "delivery") {
                 datosEnvio.classList.remove("hidden");
                 inputDireccion.value = "";
-                console.log("📦 Modo Delivery activado: ingresando dirección.");
+                console.log("📦 Modo Delivery activado.");
             } else {
                 datosEnvio.classList.add("hidden");
                 actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, "Retiro en local");
@@ -69,6 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    // 📌 Evento para buscar dirección
     btnBuscarDireccion.addEventListener("click", function () {
         let direccion = inputDireccion.value.trim();
         if (direccion === "") {
@@ -115,6 +151,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const lat = parseFloat(resultado.lat);
         const lon = parseFloat(resultado.lon);
         console.log("📌 Dirección validada:", resultado.display_name);
+
+        const dentroDeZona = esUbicacionDentroDeZona(lat, lon);
+        if (!dentroDeZona) {
+            mostrarAlerta("⚠️ Ubicación fuera del área de entrega", "Ingrese una dirección dentro de la zona de cobertura.");
+            return;
+        }
+
         actualizarMarcador(lat, lon, resultado.display_name);
     }
 
@@ -132,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Ocultar elementos al inicio
+    // 📌 Ocultar elementos al inicio
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
     spinner.classList.add("hidden");
