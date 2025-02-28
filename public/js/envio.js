@@ -100,17 +100,21 @@ function inicializarMapa() {
         });
     });
     
-
+    function limpiarDireccion(direccion) {
+        return direccion.replace(/\b(AV|AV\.|BV|BV\.|CALLE|C\.|AVENIDA|BOULEVARD|PJE|PASAJE|DIAG|DIAGONAL)\s+/gi, '').trim();
+    }
+    
     // Evento para buscar dirección
     btnBuscarDireccion.addEventListener("click", function () {
-        const direccion = inputDireccion.value.trim();
+        let direccion = inputDireccion.value.trim();
         if (direccion === "") {
             mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
             return;
         }
-
-        console.log("🔍 Buscando dirección:", direccion);
-
+    
+        direccion = limpiarDireccion(direccion); // Limpiar la dirección antes de la búsqueda
+        console.log("🔍 Dirección buscada después de limpiar:", direccion);
+    
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
             .then(response => response.json())
             .then(data => {
@@ -118,16 +122,19 @@ function inicializarMapa() {
                     mostrarAlerta("No se encontraron resultados.", "Intente con otra dirección.");
                     return;
                 }
-
+    
+                // Filtrar solo direcciones que estén en Córdoba Capital
                 const resultado = data.find(entry => 
-                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
+                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") &&
+                    entry.address.state === "Córdoba" &&
+                    (!entry.address.county || entry.address.county.includes("Capital"))
                 );
-
+    
                 if (!resultado) {
                     mostrarAlerta("Dirección fuera de Córdoba Capital", "Ingrese una dirección válida dentro de Córdoba Capital.");
                 } else {
                     actualizarMarcador(parseFloat(resultado.lat), parseFloat(resultado.lon), direccion, esUbicacionValida(resultado.lat, resultado.lon));
-                    console.log("📌 Dirección validada:", direccion);
+                    console.log("📌 Dirección validada:", resultado.display_name);
                 }
             })
             .catch(error => {
@@ -135,6 +142,7 @@ function inicializarMapa() {
                 mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda. Intente nuevamente.");
             });
     });
+    
 
     btnContinuarPago.addEventListener("click", function (event) {
         event.preventDefault();
