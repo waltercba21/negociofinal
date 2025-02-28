@@ -101,7 +101,7 @@ function inicializarMapa() {
     });
     
     function limpiarDireccion(direccion) {
-        return direccion.replace(/\b(AV|AV\.|BV|BV\.|CALLE|C\.|AVENIDA|BOULEVARD|PJE|PASAJE|DIAG|DIAGONAL)\s+/gi, '').trim();
+        return direccion.replace(/\b(AV|AV\.|BV|BV\.|CALLE|C\.|AVENIDA|BOULEVARD|PJE|PASAJE|DIAG|DIAGONAL|CAMINO|CIRCUNVALACION|AUTOPISTA|ROTONDA|RUTA)\s+/gi, '').trim();
     }
     
     // Evento para buscar dirección
@@ -123,25 +123,48 @@ function inicializarMapa() {
                     return;
                 }
     
-                // Filtrar solo direcciones que estén en Córdoba Capital
-                const resultado = data.find(entry => 
+                let resultado = data.find(entry => 
                     (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") &&
                     entry.address.state === "Córdoba" &&
                     (!entry.address.county || entry.address.county.includes("Capital"))
                 );
     
+                // Si no encuentra una dirección en Córdoba Capital, usa la primera opción disponible
                 if (!resultado) {
-                    mostrarAlerta("Dirección fuera de Córdoba Capital", "Ingrese una dirección válida dentro de Córdoba Capital.");
-                } else {
-                    actualizarMarcador(parseFloat(resultado.lat), parseFloat(resultado.lon), direccion, esUbicacionValida(resultado.lat, resultado.lon));
-                    console.log("📌 Dirección validada:", resultado.display_name);
+                    resultado = data[0];
+                    mostrarAlerta("Dirección fuera de Córdoba Capital", "Se ubicó en el punto más cercano encontrado.");
                 }
+    
+                // Mostrar marcador en la ubicación encontrada
+                const lat = parseFloat(resultado.lat);
+                const lon = parseFloat(resultado.lon);
+                actualizarMarcador(lat, lon, resultado.display_name, esUbicacionValida(lat, lon));
+                console.log("📌 Dirección validada:", resultado.display_name);
             })
             .catch(error => {
                 console.error("❌ Error en la búsqueda de dirección:", error);
                 mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda. Intente nuevamente.");
             });
     });
+    
+    // ✅ Función para actualizar el marcador en el mapa
+    function actualizarMarcador(lat, lon, direccion, dentroDeZona) {
+        if (!mapa) return;
+    
+        if (marcador) {
+            marcador.setLatLng([lat, lon]);
+        } else {
+            marcador = L.marker([lat, lon]).addTo(mapa);
+        }
+    
+        const mensaje = dentroDeZona
+            ? `<b>Dirección:</b> ${direccion}`
+            : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
+    
+        marcador.bindPopup(mensaje).openPopup();
+        mapa.setView([lat, lon], 14);
+    }
+    
     
 
     btnContinuarPago.addEventListener("click", function (event) {
