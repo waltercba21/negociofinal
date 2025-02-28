@@ -99,7 +99,6 @@ function inicializarMapa() {
             }
         });
     });
-    
     function limpiarDireccion(direccion) {
         return direccion.replace(/\b(AV|AV\.|BV|BV\.|CALLE|C\.|AVENIDA|BOULEVARD|PJE|PASAJE|DIAG|DIAGONAL|CAMINO|CIRCUNVALACION|AUTOPISTA|ROTONDA|RUTA)\s+/gi, '').trim();
     }
@@ -123,22 +122,30 @@ function inicializarMapa() {
                     return;
                 }
     
-                // FILTRAR SOLO DIRECCIONES DENTRO DE CÓRDOBA CAPITAL
-                const resultado = data.find(entry => 
+                // Ordenar resultados para priorizar los de Córdoba Capital
+                data.sort((a, b) => {
+                    let aCapital = a.address.county && a.address.county.includes("Capital");
+                    let bCapital = b.address.county && b.address.county.includes("Capital");
+                    return bCapital - aCapital; // Priorizar Córdoba Capital
+                });
+    
+                // Filtrar direcciones estrictamente en Córdoba Capital
+                let resultado = data.find(entry => 
                     (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") &&
                     entry.address.state === "Córdoba" &&
                     (entry.address.county && entry.address.county.includes("Capital"))
                 );
     
+                // Si no hay resultado exacto en Córdoba Capital, tomar el primer resultado disponible
                 if (!resultado) {
-                    mostrarAlerta("Dirección fuera de Córdoba Capital", "Ingrese una dirección válida dentro de Córdoba Capital.");
-                    return;
+                    resultado = data[0];
+                    mostrarAlerta("Dirección fuera de Córdoba Capital", "Marcando el punto más cercano disponible.");
                 }
     
                 // Mostrar marcador en la ubicación encontrada
                 const lat = parseFloat(resultado.lat);
                 const lon = parseFloat(resultado.lon);
-                actualizarMarcador(lat, lon, resultado.display_name, esUbicacionValida(lat, lon));
+                actualizarMarcador(lat, lon, resultado.display_name, true);
                 console.log("📌 Dirección validada:", resultado.display_name);
             })
             .catch(error => {
@@ -159,14 +166,12 @@ function inicializarMapa() {
     
         const mensaje = dentroDeZona
             ? `<b>Dirección:</b> ${direccion}`
-            : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
+            : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⚠️ Posible ubicación incorrecta</span>`;
     
         marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lon], 14);
     }
     
-    
-
     btnContinuarPago.addEventListener("click", function (event) {
         event.preventDefault();
     
