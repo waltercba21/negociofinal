@@ -123,16 +123,16 @@ function inicializarMapa() {
                     return;
                 }
     
-                let resultado = data.find(entry => 
+                // FILTRAR SOLO DIRECCIONES DENTRO DE CÓRDOBA CAPITAL
+                const resultado = data.find(entry => 
                     (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") &&
                     entry.address.state === "Córdoba" &&
-                    (!entry.address.county || entry.address.county.includes("Capital"))
+                    (entry.address.county && entry.address.county.includes("Capital"))
                 );
     
-                // Si no encuentra una dirección en Córdoba Capital, usa la primera opción disponible
                 if (!resultado) {
-                    resultado = data[0];
-                    mostrarAlerta("Dirección fuera de Córdoba Capital", "Se ubicó en el punto más cercano encontrado.");
+                    mostrarAlerta("Dirección fuera de Córdoba Capital", "Ingrese una dirección válida dentro de Córdoba Capital.");
+                    return;
                 }
     
                 // Mostrar marcador en la ubicación encontrada
