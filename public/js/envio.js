@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    console.log("📌 Script cargado correctamente.");
+    console.log("📌 Script de envío cargado correctamente.");
 
     const tipoEnvioRadios = document.querySelectorAll("input[name='tipo-envio']");
     const mapaContainer = document.getElementById("mapa-container");
@@ -8,13 +8,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnBuscarDireccion = document.getElementById("buscar-direccion");
     const btnContinuarPago = document.getElementById("continuar-pago");
     const spinner = document.getElementById("spinner");
+    let mapa, marcador;
 
-    let mapa, marcador, areaEntrega;
-
-    // 📌 Ubicación predeterminada (Córdoba Capital - Tienda)
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
-    // 📌 Área válida para la entrega (Cuadrante Delivery)
     const areaCbaCapital = {
         "type": "Feature",
         "geometry": {
@@ -31,140 +28,158 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     function inicializarMapa() {
-        console.log("🗺️ Inicializando mapa...");
         if (!mapa) {
             mapa = L.map("mapa").setView(ubicacionLocal, 14);
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(mapa);
 
-            // 📌 Agregar el área de cobertura de Delivery
-            areaEntrega = L.geoJSON(areaCbaCapital, {
+            L.geoJSON(areaCbaCapital, {
                 style: {
-                    color: "red",
-                    fillColor: "#FF5733",
+                    color: "green",
+                    fillColor: "#32CD32",
                     fillOpacity: 0.3
                 }
             }).addTo(mapa);
         }
-        setTimeout(() => {
-            mapa.invalidateSize();
-            console.log("🗺️ Mapa actualizado correctamente.");
-        }, 500);
     }
 
-    function actualizarMarcador(lat, lon, direccion) {
-        console.log(`📍 Intentando actualizar marcador: Lat ${lat}, Lng ${lon}, Dirección: ${direccion}`);
-        if (!mapa) {
-            console.error("❌ El mapa no está inicializado.");
-            return;
-        }
+    function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
+        if (!mapa) return;
 
         if (marcador) {
-            marcador.setLatLng([lat, lon]);
+            marcador.setLatLng([lat, lng]);
         } else {
-            marcador = L.marker([lat, lon]).addTo(mapa);
+            marcador = L.marker([lat, lng]).addTo(mapa);
         }
 
-        marcador.bindPopup(`<b>Dirección:</b> ${direccion}`).openPopup();
-        mapa.setView([lat, lon], 14);
+        const mensaje = dentroDeZona 
+            ? `<b>Dirección:</b> ${direccion}`
+            : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
+        
+        marcador.bindPopup(mensaje).openPopup();
+        mapa.setView([lat, lng], 14);
     }
 
-    function limpiarDireccion(direccion) {
-        return direccion.replace(/\b(AV|AV\.|BV|BV\.|CALLE|C\.|AVENIDA|BOULEVARD|PJE|PASAJE|DIAG|DIAGONAL|CAMINO|CIRCUNVALACION|AUTOPISTA|ROTONDA|RUTA)\s+/gi, '').trim();
-    }
-
-    function esUbicacionDentroDeZona(lat, lon) {
-        const punto = turf.point([lon, lat]);
+    function esUbicacionValida(lat, lng) {
+        const punto = turf.point([lng, lat]);
         const poligono = turf.polygon(areaCbaCapital.geometry.coordinates);
-        const dentro = turf.booleanPointInPolygon(punto, poligono);
-        console.log(`📌 Verificación de zona: Lat ${lat}, Lon ${lon}, Dentro del área: ${dentro}`);
-        return dentro;
+        return turf.booleanPointInPolygon(punto, poligono);
     }
 
-    // 📌 Evento al cambiar el tipo de envío
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
             console.log(`📌 Tipo de envío seleccionado: ${this.value}`);
-
-            if (!mapa) {
-                inicializarMapa();
-            }
-
             mapaContainer.classList.remove("hidden");
+            inicializarMapa();
 
             if (this.value === "delivery") {
                 datosEnvio.classList.remove("hidden");
-                inputDireccion.value = "";
-                console.log("📦 Modo Delivery activado.");
             } else {
                 datosEnvio.classList.add("hidden");
-                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, "Retiro en local");
-                console.log("🏬 Modo Retiro en local activado.");
+                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, "Retiro en local", true);
             }
         });
     });
 
-    // 📌 Evento para buscar dirección
-    btnBuscarDireccion.addEventListener("click", function () {
-        let direccion = inputDireccion.value.trim();
-        if (direccion === "") {
-            mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
-            return;
-        }
+    if (btnBuscarDireccion) {
+        btnBuscarDireccion.addEventListener("click", function () {
+            const direccion = inputDireccion.value.trim();
+            if (direccion === "") {
+                mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
+                return;
+            }
 
-        direccion = limpiarDireccion(direccion);
-        console.log("🔍 Dirección buscada después de limpiar:", direccion);
+            console.log("🔍 Buscando dirección:", direccion);
+            spinner.style.display = "block";
 
-        spinner.classList.remove("hidden");
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    spinner.style.display = "none";
 
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}&addressdetails=1`)
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                console.log("🔎 Respuesta de OpenStreetMap:", data);
+                    if (!Array.isArray(data) || data.length === 0) {
+                        mostrarAlerta("No se encontraron resultados.", "Intente con otra dirección.");
+                        return;
+                    }
 
-                if (!Array.isArray(data) || data.length === 0) {
-                    throw new Error("⚠️ No se encontraron resultados.");
-                }
+                    const resultado = data.find(entry => 
+                        (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
+                    );
 
-                let resultado = data.find(entry =>
-                    entry.address.state === "Córdoba" &&
-                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") &&
-                    (entry.address.county === "Capital" || entry.address.municipality === "Córdoba")
-                );
-
-                if (!resultado) {
-                    mostrarAlerta("No se encontró la dirección en Córdoba Capital", "Intente con otra dirección.");
-                } else {
-                    manejarResultado(resultado);
-                }
-            })
-            .catch(error => manejarError(error))
-            .finally(() => {
-                spinner.classList.add("hidden");
-            });
-    });
-
-    function manejarResultado(resultado) {
-        const lat = parseFloat(resultado.lat);
-        const lon = parseFloat(resultado.lon);
-        console.log("📌 Dirección validada:", resultado.display_name);
-
-        const dentroDeZona = esUbicacionDentroDeZona(lat, lon);
-        if (!dentroDeZona) {
-            mostrarAlerta("⚠️ Ubicación fuera del área de entrega", "Ingrese una dirección dentro de la zona de cobertura.");
-            return;
-        }
-
-        actualizarMarcador(lat, lon, resultado.display_name);
+                    if (!resultado) {
+                        mostrarAlerta("Dirección fuera de Córdoba Capital", "Ingrese una dirección válida dentro de Córdoba Capital.");
+                    } else {
+                        actualizarMarcador(parseFloat(resultado.lat), parseFloat(resultado.lon), direccion, esUbicacionValida(resultado.lat, resultado.lon));
+                        console.log("📌 Dirección validada:", direccion);
+                    }
+                })
+                .catch(error => {
+                    spinner.style.display = "none";
+                    console.error("❌ Error en la búsqueda de dirección:", error);
+                    mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda. Intente nuevamente.");
+                });
+        });
     }
 
-    function manejarError(error) {
-        console.error("❌ Error en la búsqueda de dirección:", error);
-        mostrarAlerta("Error en la búsqueda", error.message || "Hubo un problema. Intente nuevamente.");
+    if (btnContinuarPago) {
+        btnContinuarPago.addEventListener("click", function (event) {
+            event.preventDefault();
+            console.log("✅ Botón 'Continuar con el Pago' clickeado.");
+
+            const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked")?.value;
+            if (!tipoEnvio) {
+                mostrarAlerta("Seleccione un tipo de envío", "Debe elegir una opción de envío antes de continuar.");
+                return;
+            }
+
+            const direccion = inputDireccion.value.trim();
+            if (tipoEnvio === "delivery" && direccion === "") {
+                mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
+                return;
+            }
+
+            const datosEnvio = {
+                tipo_envio: tipoEnvio,
+                direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
+            };
+
+            console.log("📦 Datos a enviar:", datosEnvio);
+
+            Swal.fire({
+                icon: 'question',
+                title: 'Confirmar envío',
+                text: `¿Está seguro que desea guardar estos datos?\n\nTipo: ${datosEnvio.tipo_envio}\nDirección: ${datosEnvio.direccion}`,
+                showCancelButton: true,
+                confirmButtonText: 'Sí, confirmar',
+                cancelButtonText: 'No, cambiar'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    console.log("📡 Enviando datos al servidor...");
+                    fetch("/envio", { 
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(datosEnvio)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("🔄 Respuesta del servidor recibida:", data);
+                        if (data.success) {
+                            window.location.href = "/carrito/confirmarDatos";
+                        } else {
+                            mostrarAlerta("Error", "Hubo un problema al guardar los datos.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("❌ Error al enviar los datos:", error);
+                        mostrarAlerta("Error", "No se pudo conectar con el servidor.");
+                    });
+                }
+            });
+        });
     }
 
     function mostrarAlerta(titulo, mensaje) {
@@ -176,10 +191,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 📌 Ocultar elementos al inicio
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
-    spinner.classList.add("hidden");
-
-    console.log("✅ Inicialización del script completada.");
 });
