@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function actualizarMarcador(lat, lon, direccion) {
-        console.log(`📍 Actualizando marcador: Lat ${lat}, Lng ${lon}, Dirección: ${direccion}`);
+        console.log(`📍 Intentando actualizar marcador: Lat ${lat}, Lng ${lon}, Dirección: ${direccion}`);
         if (!mapa) {
             console.error("❌ El mapa no está inicializado.");
             return;
@@ -66,8 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
             marcador = L.marker([lat, lon]).addTo(mapa);
         }
 
-        const mensaje = `<b>Dirección:</b> ${direccion}`;
-        marcador.bindPopup(mensaje).openPopup();
+        marcador.bindPopup(`<b>Dirección:</b> ${direccion}`).openPopup();
         mapa.setView([lat, lon], 14);
     }
 
@@ -78,7 +77,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function esUbicacionDentroDeZona(lat, lon) {
         const punto = turf.point([lon, lat]);
         const poligono = turf.polygon(areaCbaCapital.geometry.coordinates);
-        return turf.booleanPointInPolygon(punto, poligono);
+        const dentro = turf.booleanPointInPolygon(punto, poligono);
+        console.log(`📌 Verificación de zona: Lat ${lat}, Lon ${lon}, Dentro del área: ${dentro}`);
+        return dentro;
     }
 
     // 📌 Evento al cambiar el tipo de envío
