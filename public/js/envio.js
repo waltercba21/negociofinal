@@ -122,24 +122,16 @@ function inicializarMapa() {
                     return;
                 }
     
-                // Ordenar resultados para priorizar los de Córdoba Capital
-                data.sort((a, b) => {
-                    let aCapital = a.address.county && a.address.county.includes("Capital");
-                    let bCapital = b.address.county && b.address.county.includes("Capital");
-                    return bCapital - aCapital; // Priorizar Córdoba Capital
-                });
-    
-                // Filtrar direcciones estrictamente en Córdoba Capital
-                let resultado = data.find(entry => 
-                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") &&
+                // Filtrar solo direcciones dentro de Córdoba Capital
+                const resultado = data.find(entry => 
                     entry.address.state === "Córdoba" &&
-                    (entry.address.county && entry.address.county.includes("Capital"))
+                    (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") &&
+                    (entry.address.county === "Capital" || entry.address.municipality === "Córdoba" || entry.address.village === "Córdoba")
                 );
     
-                // Si no hay resultado exacto en Córdoba Capital, tomar el primer resultado disponible
                 if (!resultado) {
-                    resultado = data[0];
-                    mostrarAlerta("Dirección fuera de Córdoba Capital", "Marcando el punto más cercano disponible.");
+                    mostrarAlerta("Dirección fuera de Córdoba Capital", "Ingrese una dirección válida dentro de Córdoba Capital.");
+                    return;
                 }
     
                 // Mostrar marcador en la ubicación encontrada
@@ -171,6 +163,7 @@ function inicializarMapa() {
         marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lon], 14);
     }
+    
     
     btnContinuarPago.addEventListener("click", function (event) {
         event.preventDefault();
