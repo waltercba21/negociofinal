@@ -66,112 +66,106 @@ module.exports = {
     },
     lista: async function (req, res) {
         try {
-          const pagina = req.query.pagina ? Number(req.query.pagina) : 1;
-          const categoria = req.query.categoria ? Number(req.query.categoria) : undefined;
-          const marca = req.query.marca ? Number(req.query.marca) : undefined;
-          const modelo = req.query.modelo ? Number(req.query.modelo) : undefined;
-      
-          console.log("Consulta recibida con parámetros:", { pagina, categoria, marca, modelo });
-      
-          // Validaciones
-          if ((marca && isNaN(marca)) || (modelo && isNaN(modelo)) || (categoria && isNaN(categoria))) {
-            console.log("Error: Algún parámetro no es un número válido.");
-            return res.status(400).send("Parámetros inválidos.");
-          }
-      
-          // Obtener total de productos
-          const totalProductos = await new Promise((resolve, reject) => {
-            producto.obtenerTotal(conexion, (error, resultados) => {
-              if (error) {
-                console.error("Error al obtener el total de productos:", error);
-                return reject(error);
-              }
-              resolve(resultados[0]?.total || 0);
+            const pagina = req.query.pagina ? Number(req.query.pagina) : 1;
+            const categoria = req.query.categoria ? Number(req.query.categoria) : undefined;
+            const marca = req.query.marca ? Number(req.query.marca) : undefined;
+            const modelo = req.query.modelo ? Number(req.query.modelo) : undefined;
+            const productosPorPagina = 10;
+
+            console.log("Consulta recibida con parámetros:", { pagina, categoria, marca, modelo });
+
+            if ((marca && isNaN(marca)) || (modelo && isNaN(modelo)) || (categoria && isNaN(categoria))) {
+                console.log("Error: Algún parámetro no es un número válido.");
+                return res.status(400).send("Parámetros inválidos.");
+            }
+
+            // Obtener total de productos con filtros aplicados
+            const totalProductos = await new Promise((resolve, reject) => {
+                producto.obtenerTotal(conexion, (error, resultados) => {
+                    if (error) {
+                        console.error("Error al obtener el total de productos:", error);
+                        return reject(error);
+                    }
+                    resolve(resultados[0]?.total || 0);
+                });
             });
-          });
-      
-          const numeroDePaginas = Math.ceil(totalProductos / 10);
-      
-          let productos = [];
-          if (categoria || marca || modelo) {
+
+            const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
+            let productos = [];
+
+            // Obtener productos filtrados por categoría, marca o modelo
             productos = await new Promise((resolve, reject) => {
-              producto.obtenerPorFiltros(conexion, categoria, marca, modelo, pagina, (error, resultados) => {
-                if (error) {
-                  console.error("Error al obtener productos por filtros:", error);
-                  return reject(error);
-                }
-                resolve(resultados);
-              });
+                producto.obtenerPorFiltros(conexion, categoria, marca, modelo, pagina, (error, resultados) => {
+                    if (error) {
+                        console.error("Error al obtener productos por filtros:", error);
+                        return reject(error);
+                    }
+                    resolve(resultados);
+                });
             });
-          } else {
-            productos = await new Promise((resolve, reject) => {
-              producto.obtener(conexion, pagina, (error, resultados) => {
-                if (error) {
-                  console.error("Error al obtener productos:", error);
-                  return reject(error);
-                }
-                resolve(resultados);
-              });
+
+            console.log(`Productos encontrados: ${productos.length}`);
+
+            // Obtener categorías y marcas para los filtros en la vista
+            const [categorias, marcas] = await Promise.all([
+                producto.obtenerCategorias(conexion),
+                producto.obtenerMarcas(conexion),
+            ]);
+
+            // Obtener modelos de la marca seleccionada (si aplica)
+            const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
+            const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
+
+            // Asignar imágenes a los productos en una sola consulta
+            if (productos.length) {
+                const productoIds = productos.map(p => p.id);
+                const todasLasImagenes = await producto.obtenerImagenesPorProductos(conexion, productoIds);
+
+                productos.forEach(producto => {
+                    producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
+                    producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
+
+                    // Asignar nombre de la categoría al producto
+                    const categoriaProducto = categorias.find(cat => cat.id === producto.categoria_id);
+                    if (categoriaProducto) {
+                        producto.categoria = categoriaProducto.nombre;
+                    }
+                });
+            }
+
+            // Obtener nombre de la categoría seleccionada para mostrar en la vista
+            const categoriaSeleccionada = categorias.find(cat => cat.id === categoria);
+
+            // Renderizar la vista de productos con los datos obtenidos
+            res.render("productos", {
+                productos,
+                categorias,
+                marcas,
+                modelosPorMarca,
+                categoriaSeleccionada: categoriaSeleccionada ? categoriaSeleccionada.nombre : null,
+                numeroDePaginas: Math.min(numeroDePaginas, 10),
+                pagina,
+                modelo: modeloSeleccionado,
+                req,
+                isUserLoggedIn: !!req.session.usuario,
+                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario.email),
             });
-          }
-      
-          console.log(`Productos encontrados: ${productos.length}`);
-      
-          // Obtener categorías y marcas
-          const [categorias, marcas] = await Promise.all([
-            producto.obtenerCategorias(conexion),
-            producto.obtenerMarcas(conexion),
-          ]);
-      
-          // Obtener modelos por marca si hay una seleccionada
-          const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
-          const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
-      
-          // Asignar imágenes a productos en una sola consulta para mayor eficiencia
-          if (productos.length) {
-            const productoIds = productos.map(p => p.id);
-            const todasLasImagenes = await producto.obtenerImagenesPorProductos(conexion, productoIds);
-      
-            productos.forEach(producto => {
-              producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
-              producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
-              
-              // Asignar nombre de categoría
-              const categoriaProducto = categorias.find(cat => cat.id === producto.categoria_id);
-              if (categoriaProducto) {
-                producto.categoria = categoriaProducto.nombre;
-              }
-            });
-          }
-      
-          // Renderizar la vista con los datos obtenidos
-          res.render("productos", {
-            productos,
-            categorias,
-            marcas,
-            modelosPorMarca,
-            numeroDePaginas: Math.min(numeroDePaginas, 10),
-            pagina,
-            modelo: modeloSeleccionado,
-            req,
-            isUserLoggedIn: !!req.session.usuario,
-            isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario.email),
-          });
-      
+
         } catch (error) {
-          console.error("Error en el controlador lista:", error);
-          res.status(500).render("productos", {
-            productos: [],
-            categorias: [],
-            marcas: [],
-            modelosPorMarca: [],
-            numeroDePaginas: 1,
-            pagina: 1,
-            modelo: null,
-            req,
-          });
+            console.error("Error en el controlador lista:", error);
+            res.status(500).render("productos", {
+                productos: [],
+                categorias: [],
+                marcas: [],
+                modelosPorMarca: [],
+                categoriaSeleccionada: null,
+                numeroDePaginas: 1,
+                pagina: 1,
+                modelo: null,
+                req,
+            });
         }
-      },      
+    },
     ofertas: (req, res) => {
         producto.obtenerOfertas(conexion, (error, productos) => {
           if (error) {

@@ -913,7 +913,8 @@ contarPorProveedor: function(conexion, proveedor, callback) {
           callback(null, resultado);
       }
   });
-},obtenerCategorias: function(conexion) {
+},
+obtenerCategorias: function(conexion) {
     return new Promise((resolve, reject) => {
         let query = 'SELECT * FROM categorias ORDER BY nombre ASC';
 
