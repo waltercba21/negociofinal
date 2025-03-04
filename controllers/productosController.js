@@ -134,9 +134,10 @@ module.exports = {
                 numeroDePaginas: Math.min(numeroDePaginas, 10),
                 pagina,
                 req,
-                isUserLoggedIn: !!req.session.usuario,
-                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario.email),
+                isUserLoggedIn: !!req.session.usuario,  // ✅ Asegurar que siempre se defina
+                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),  // ✅ Asegurar que siempre se defina
             });
+            
 
         } catch (error) {
             console.error("Error en el controlador lista:", error);
@@ -147,8 +148,11 @@ module.exports = {
                 numeroDePaginas: 1,
                 pagina: 1,
                 req,
+                isUserLoggedIn: !!req.session.usuario,  // ✅ Agregado aquí también
+                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),  // ✅ Agregado aquí también
             });
         }
+        
     },
     ofertas: (req, res) => {
         producto.obtenerOfertas(conexion, (error, productos) => {
