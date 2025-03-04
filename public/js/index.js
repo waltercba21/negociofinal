@@ -90,8 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const flechaDerechaOfertas = document.querySelector('.flecha-derecha-ofertas');
 
   let indexOfertas = 0;
-  const tarjetasPorPaginaOfertas = 3; // Número de tarjetas a mostrar en una vista
-
+  const tarjetasPorPaginaOfertas = 3;
   function actualizarCarruselOfertas() {
     const tarjetaAncho = tarjetasOfertas[0].offsetWidth;
     const espacioEntreTarjetas = parseFloat(getComputedStyle(tarjetasOfertas[0]).marginRight);
