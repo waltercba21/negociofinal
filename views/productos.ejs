@@ -1,5 +1,6 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
+
 <body data-is-admin-user="<%= isAdminUser %>" data-is-user-logged-in="<%= isUserLoggedIn %>">
 
   <main>
@@ -7,13 +8,15 @@
     <h2 class="titulo-principal" id="titulo-principal"> 
       Busca Tus Productos
     </h2>
+    
     <div class="contenedor-busqueda">
       <div class="buscador">
         <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej: Escort, Optica, Faro, Agile">
       </div>
+
       <div class="selectores-productos">
         <div class="form-group-crear">
-          <label for="categoria_id">Categoria</label>
+          <label for="categoria_id">Categoría</label>
           <select id="categoria_id" name="categoria_id">
             <option value="" selected>Selecciona una categoría</option>
             <% categorias.forEach(function(categoria) { %>
@@ -21,6 +24,7 @@
             <% }); %>
           </select>   
         </div>
+
         <div class="form-group-crear">
           <label for="marca_id">Marca</label> 
           <select id="marca_id" name="marca_id"> 
@@ -30,6 +34,7 @@
             <% }); %>
           </select>   
         </div>
+
         <div class="form-group-crear">
           <label for="modelo_id">Modelo</label>
           <select id="modelo_id" name="modelo_id">
@@ -38,6 +43,7 @@
             <% } else { %>
               <option value="" selected>Selecciona un modelo</option>
             <% } %>
+
             <% if (modelosPorMarca && Array.isArray(modelosPorMarca)) { %>
               <% modelosPorMarca.forEach(function(modeloPorMarca) { %>
                 <% if (!modelo || modelo.id !== modeloPorMarca.id) { %>
@@ -49,15 +55,47 @@
         </div>
       </div>
     </div>
+
     <div id="contenedor-productos" class="contenedor-productos">
-      <p>No hay productos para mostrar</p>
+      <% if (productos && productos.length > 0) { %>
+        <% productos.forEach(function(producto) { %>
+          <div class="card card-producto">
+            <div class="cover-card">
+              <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+                <img src="/uploads/productos/<%= producto.imagenes[0].imagen %>" alt="<%= producto.nombre %>">
+              <% } else { %>
+                <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
+              <% } %>
+            </div>
+
+            <div class="titulo-producto">
+              <h3 class="nombre"><%= producto.nombre %></h3>
+            </div>
+
+            <hr>
+
+            <div class="categoria-producto">
+              <h5 class="categoria"><%= producto.categoria_nombre || "Sin categoría" %></h5>
+            </div>
+
+            <div class="precio-producto">
+              <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %></p>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <p>No hay productos para mostrar.</p>
+      <% } %>
     </div>
     
-</main>
+  </main>
+
   <%- include ./layouts/footer.ejs %>
   <script src="/js/buscador.js"></script> 
   <script src="/js/selectores.js"></script>
   <script src="/js/agregarAlCarrito.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
 </body>
+</html>
