@@ -982,15 +982,21 @@ obtenerProductos: function(conexion, saltar, productosPorPagina, callback) {
   });
 },
 obtenerProductosPorCategoria: function(conexion, categoriaId, callback) {
-    var query = "SELECT * FROM productos WHERE categoria_id = ? ORDER BY id DESC";
+    let query = `
+        SELECT * FROM productos
+        WHERE categoria_id = ?
+        ORDER BY id DESC
+    `;
+    
     conexion.query(query, [categoriaId], function(error, resultados) {
         if (error) {
-            callback(error, null);
-        } else {
-            callback(null, resultados);
+            console.error('❌ Error en obtenerProductosPorCategoria:', error);
+            return callback(error, null);
         }
+        callback(null, resultados);
     });
 },
+
 
 contarProductos: function(conexion, callback) {
   var query = "SELECT COUNT(*) as total FROM productos";

@@ -72,10 +72,10 @@ module.exports = {
             const modelo = req.query.modelo ? Number(req.query.modelo) : undefined;
             const productosPorPagina = 10;
 
-            console.log("Consulta recibida con parámetros:", { pagina, categoria, marca, modelo });
+            console.log("\n🔎 Consulta recibida con parámetros:", { pagina, categoria, marca, modelo });
 
             if ((marca && isNaN(marca)) || (modelo && isNaN(modelo)) || (categoria && isNaN(categoria))) {
-                console.log("Error: Algún parámetro no es un número válido.");
+                console.log("❌ Error: Algún parámetro no es un número válido.");
                 return res.status(400).send("Parámetros inválidos.");
             }
 
@@ -83,24 +83,30 @@ module.exports = {
 
             // **✅ Filtrar solo por categoría si no hay marca ni modelo**
             if (categoria && !marca && !modelo) {
-                console.log("Filtrando SOLO por categoría:", categoria);
+                console.log(`📌 Filtrando SOLO por categoría ID: ${categoria}`);
+
                 productos = await new Promise((resolve, reject) => {
                     producto.obtenerProductosPorCategoria(conexion, categoria, (error, resultados) => {
                         if (error) {
-                            console.error("Error al obtener productos por categoría:", error);
+                            console.error("❌ Error al obtener productos por categoría:", error);
                             return reject(error);
                         }
+                        console.log(`✅ Productos encontrados para categoría ${categoria}:`, resultados.length);
                         resolve(resultados);
                     });
                 });
+
             } else {
                 // **✅ Filtrar con marca y modelo si están presentes**
+                console.log(`📌 Filtrando con marca: ${marca}, modelo: ${modelo}`);
+
                 productos = await new Promise((resolve, reject) => {
                     producto.obtenerPorFiltros(conexion, categoria, marca, modelo, pagina, (error, resultados) => {
                         if (error) {
-                            console.error("Error al obtener productos por filtros:", error);
+                            console.error("❌ Error al obtener productos por filtros:", error);
                             return reject(error);
                         }
+                        console.log(`✅ Productos encontrados con filtros:`, resultados.length);
                         resolve(resultados);
                     });
                 });
@@ -124,11 +130,6 @@ module.exports = {
                 });
             }
 
-            // **📌 Paginar los resultados**
-            const totalProductos = productos.length;
-            const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
-            productos = productos.slice((pagina - 1) * productosPorPagina, pagina * productosPorPagina);
-
             // **📌 Obtener categorías y marcas para la vista**
             const [categorias, marcas] = await Promise.all([
                 producto.obtenerCategorias(conexion),
@@ -143,12 +144,17 @@ module.exports = {
             const productoIds = productos.map(p => p.id);
 
             if (productoIds.length > 0) {
+                console.log("📌 Buscando imágenes para productos:", productoIds);
+
                 const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
+
                 productos.forEach(producto => {
                     producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
                     producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
                 });
             }
+
+            console.log(`✅ Enviando ${productos.length} productos a la vista.`);
 
             // **✅ Renderizar la vista de productos**
             res.render("productos", {
@@ -157,7 +163,7 @@ module.exports = {
                 marcas,
                 modelosPorMarca,
                 categoriaSeleccionada: categoria ? categorias.find(cat => cat.id === categoria)?.nombre : "Todos",
-                numeroDePaginas: Math.min(numeroDePaginas, 10),
+                numeroDePaginas: 1,
                 pagina,
                 modelo: modeloSeleccionado,
                 req,
@@ -166,7 +172,7 @@ module.exports = {
             });
 
         } catch (error) {
-            console.error("Error en el controlador lista:", error);
+            console.error("❌ Error en el controlador lista:", error);
             res.status(500).render("productos", {
                 productos: [],
                 categorias: [],
