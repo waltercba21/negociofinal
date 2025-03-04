@@ -124,7 +124,7 @@ module.exports = {
             // **📌 Obtener imágenes para los productos**
             if (productos.length) {
                 const productoIds = productos.map(p => p.id);
-                const todasLasImagenes = await producto.obtenerImagenesPorProductos(conexion, productoIds);
+                const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
 
                 productos.forEach(producto => {
                     producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
