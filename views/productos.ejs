@@ -8,7 +8,7 @@
     <h2 class="titulo-principal" id="titulo-principal"> 
       Busca Tus Productos
     </h2>
-    
+
     <div class="contenedor-busqueda">
       <div class="buscador">
         <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej: Escort, Optica, Faro, Agile">
@@ -59,10 +59,22 @@
     <div id="contenedor-productos" class="contenedor-productos">
       <% if (productos && productos.length > 0) { %>
         <% productos.forEach(function(producto) { %>
-          <div class="card card-producto">
+          <div class="card 
+            ${producto.calidad_original ? 'calidad-original-fitam' : ''} 
+            ${producto.calidad_vic ? 'calidad_vic' : ''} 
+            ${producto.oferta ? 'producto-oferta' : ''}">
+
             <div class="cover-card">
               <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-                <img src="/uploads/productos/<%= producto.imagenes[0].imagen %>" alt="<%= producto.nombre %>">
+                <div class="carousel">
+                  <% producto.imagenes.forEach(function(imagen, i) { %>
+                    <img class="carousel__image <%= i !== 0 ? 'hidden' : '' %>" src="/uploads/productos/<%= imagen.imagen %>" alt="<%= producto.nombre %>">
+                  <% }); %>
+                </div>
+                <div class="carousel__buttons">
+                  <button class="carousel__button carousel__button--left"><i class="fas fa-chevron-left"></i></button>
+                  <button class="carousel__button carousel__button--right"><i class="fas fa-chevron-right"></i></button>
+                </div>
               <% } else { %>
                 <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
               <% } %>
@@ -81,19 +93,52 @@
             <div class="precio-producto">
               <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %></p>
             </div>
+
+            <% if (isUserLoggedIn) { %>
+              <% if (isAdminUser) { %>
+                <div class="cantidad-producto">
+                  <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
+                </div>
+                <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
+                  <p>Stock Disponible: <%= producto.stock_actual !== undefined ? producto.stock_actual : "No disponible" %></p>
+                </div>
+              <% } else { %>
+                <div class="semaforo-stock">
+                  <i class="fa-solid fa-thumbs-up semaforo <%= producto.stock_actual >= producto.stock_minimo ? 'verde' : 'rojo' %>"></i>
+                  <span class="texto-semaforo">
+                    <%= producto.stock_actual >= producto.stock_minimo ? "PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA" : "PRODUCTO PENDIENTE DE INGRESO O A PEDIDO" %>
+                  </span>
+                </div>
+                <div class="cantidad-producto">
+                  <input type="number" class="cantidad-input" value="1" min="1">
+                  <button class="agregar-carrito" data-id="<%= producto.id %>" data-nombre="<%= producto.nombre %>" data-precio="<%= producto.precio_venta %>">Agregar al carrito</button>
+                  <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
+                </div>
+              <% } %>
+            <% } else { %>
+              <div class="cantidad-producto">
+                <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
+              </div>
+            <% } %>
+
           </div>
         <% }); %>
       <% } else { %>
         <p>No hay productos para mostrar.</p>
       <% } %>
     </div>
-    
+
   </main>
 
   <%- include ./layouts/footer.ejs %>
   <script src="/js/buscador.js"></script> 
   <script src="/js/selectores.js"></script>
   <script src="/js/agregarAlCarrito.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      agregarEventosCarrusel(document.getElementById("contenedor-productos"));
+    });
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
