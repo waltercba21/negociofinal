@@ -1545,13 +1545,19 @@ retornarDatosId: function(conexion, id) {
         });
     });
 },
-obtenerImagenesProducto: function(conexion, id) {
+obtenerImagenesProducto: function(conexion, ids) {
     return new Promise((resolve, reject) => {
-        conexion.query(`
+        if (!ids || ids.length === 0) {
+            return resolve([]); // Si no hay productos, devolvemos una lista vacía
+        }
+
+        let query = `
             SELECT imagen, producto_id
             FROM imagenes_producto
-            WHERE producto_id = ?
-        `, [id], function(error, resultados) {
+            WHERE producto_id IN (${ids.map(() => '?').join(', ')})
+        `;
+
+        conexion.query(query, ids, function(error, resultados) {
             if (error) {
                 console.error('Error al obtener las imágenes del producto:', error);
                 reject(error);
@@ -1561,6 +1567,7 @@ obtenerImagenesProducto: function(conexion, id) {
         });
     });
 },
+
   obtenerProveedoresProducto: function(conexion, id) {
     return new Promise((resolve, reject) => {
         conexion.query(`
