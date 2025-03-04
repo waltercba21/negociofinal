@@ -111,9 +111,15 @@ module.exports = {
             const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
             productos = productos.slice((pagina - 1) * productosPorPagina, pagina * productosPorPagina);
 
-            // **📌 Obtener categorías para mostrar en la vista**
-            const categorias = await producto.obtenerCategorias(conexion);
-            const categoriaSeleccionada = categorias.find(cat => cat.id === categoria);
+            // **📌 Obtener categorías y marcas para la vista**
+            const [categorias, marcas] = await Promise.all([
+                producto.obtenerCategorias(conexion),
+                producto.obtenerMarcas(conexion),
+            ]);
+
+            // **📌 Obtener modelos de la marca seleccionada (si aplica)**
+            const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
+            const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
 
             // **📌 Obtener imágenes para los productos**
             if (productos.length) {
@@ -126,33 +132,40 @@ module.exports = {
                 });
             }
 
+            // **📌 Obtener nombre de la categoría seleccionada**
+            const categoriaSeleccionada = categorias.find(cat => cat.id === categoria);
+
             // **✅ Renderizar la vista de productos**
             res.render("productos", {
                 productos,
                 categorias,
+                marcas,  // ✅ Agregado para evitar ReferenceError en la vista
+                modelosPorMarca, // ✅ Agregado para evitar futuros errores
                 categoriaSeleccionada: categoriaSeleccionada ? categoriaSeleccionada.nombre : "Todos",
                 numeroDePaginas: Math.min(numeroDePaginas, 10),
                 pagina,
+                modelo: modeloSeleccionado,
                 req,
                 isUserLoggedIn: !!req.session.usuario,  // ✅ Asegurar que siempre se defina
                 isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),  // ✅ Asegurar que siempre se defina
             });
-            
 
         } catch (error) {
             console.error("Error en el controlador lista:", error);
             res.status(500).render("productos", {
                 productos: [],
                 categorias: [],
+                marcas: [],  // ✅ Agregado para evitar ReferenceError en la vista
+                modelosPorMarca: [],
                 categoriaSeleccionada: "Todos",
                 numeroDePaginas: 1,
                 pagina: 1,
+                modelo: null,
                 req,
-                isUserLoggedIn: !!req.session.usuario,  // ✅ Agregado aquí también
-                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),  // ✅ Agregado aquí también
+                isUserLoggedIn: !!req.session.usuario,  // ✅ Asegurar que siempre se defina
+                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),  // ✅ Asegurar que siempre se defina
             });
         }
-        
     },
     ofertas: (req, res) => {
         producto.obtenerOfertas(conexion, (error, productos) => {
