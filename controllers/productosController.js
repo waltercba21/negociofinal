@@ -106,6 +106,24 @@ module.exports = {
                 });
             }
 
+            // **📌 Si no hay productos, evitar errores posteriores**
+            if (!productos || productos.length === 0) {
+                console.log("⚠ No se encontraron productos con los filtros aplicados.");
+                return res.render("productos", {
+                    productos: [],
+                    categorias: [],
+                    marcas: [],
+                    modelosPorMarca: [],
+                    categoriaSeleccionada: "Todos",
+                    numeroDePaginas: 1,
+                    pagina: 1,
+                    modelo: null,
+                    req,
+                    isUserLoggedIn: !!req.session.usuario,
+                    isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
+                });
+            }
+
             // **📌 Paginar los resultados**
             const totalProductos = productos.length;
             const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
@@ -122,32 +140,29 @@ module.exports = {
             const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
 
             // **📌 Obtener imágenes para los productos**
-            if (productos.length) {
-                const productoIds = productos.map(p => p.id);
-                const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
+            const productoIds = productos.map(p => p.id);
 
+            if (productoIds.length > 0) {
+                const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
                 productos.forEach(producto => {
                     producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
                     producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
                 });
             }
 
-            // **📌 Obtener nombre de la categoría seleccionada**
-            const categoriaSeleccionada = categorias.find(cat => cat.id === categoria);
-
             // **✅ Renderizar la vista de productos**
             res.render("productos", {
                 productos,
                 categorias,
-                marcas,  // ✅ Agregado para evitar ReferenceError en la vista
-                modelosPorMarca, // ✅ Agregado para evitar futuros errores
-                categoriaSeleccionada: categoriaSeleccionada ? categoriaSeleccionada.nombre : "Todos",
+                marcas,
+                modelosPorMarca,
+                categoriaSeleccionada: categoria ? categorias.find(cat => cat.id === categoria)?.nombre : "Todos",
                 numeroDePaginas: Math.min(numeroDePaginas, 10),
                 pagina,
                 modelo: modeloSeleccionado,
                 req,
-                isUserLoggedIn: !!req.session.usuario,  // ✅ Asegurar que siempre se defina
-                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),  // ✅ Asegurar que siempre se defina
+                isUserLoggedIn: !!req.session.usuario,
+                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
             });
 
         } catch (error) {
@@ -155,15 +170,15 @@ module.exports = {
             res.status(500).render("productos", {
                 productos: [],
                 categorias: [],
-                marcas: [],  // ✅ Agregado para evitar ReferenceError en la vista
+                marcas: [],
                 modelosPorMarca: [],
                 categoriaSeleccionada: "Todos",
                 numeroDePaginas: 1,
                 pagina: 1,
                 modelo: null,
                 req,
-                isUserLoggedIn: !!req.session.usuario,  // ✅ Asegurar que siempre se defina
-                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),  // ✅ Asegurar que siempre se defina
+                isUserLoggedIn: !!req.session.usuario,
+                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
             });
         }
     },

@@ -1551,10 +1551,11 @@ obtenerImagenesProducto: function(conexion, ids) {
             return resolve([]); // Si no hay productos, devolvemos una lista vacía
         }
 
+        let placeholders = ids.map(() => '?').join(', '); // Generar los placeholders correctos
         let query = `
             SELECT imagen, producto_id
             FROM imagenes_producto
-            WHERE producto_id IN (${ids.map(() => '?').join(', ')})
+            WHERE producto_id IN (${placeholders})
         `;
 
         conexion.query(query, ids, function(error, resultados) {
