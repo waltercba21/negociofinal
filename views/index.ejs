@@ -1,20 +1,105 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
-
-<body class="body-index">  
-  <main>
-
-    <div class="contenedor-principal-productos">
-      <div class="ultimos-productos contenedor">
-        <h2>ÚLTIMOS AGREGADOS</h2>
-        
-        <% if (productos && productos.length > 0) { %>
+  <body class="body-index">  
+    <main>
+      <div class="peliculas-recomendadas contenedor">
+          <div class="contenedor-principal">
+              <button role="button" id="flecha-izquierda" class="flecha-izquierda"><i class="fa-solid fa-angle-left"></i></button>
+              <div class="contenedor-carrousel">
+                  <div class="carrousel">
+                      <div class="pelicula">
+                          <a href="/productos?categoria=31"><img class="imagen-carrusel" data-categoria="31" src="uploads/productos/faros-led1.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>FAROS AUXILIARES LED</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=30"><img class="imagen-carrusel" data-categoria="30" src="uploads/productos/faro-trasero-led1.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>FAROS TRASEROS LED</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=25"><img class="imagen-carrusel" data-categoria="25" src="uploads/productos/opticas-led1.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>OPTICAS LED</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=28"><img class="imagen-carrusel" data-categoria="28" src="uploads/productos/lamparas-led1.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>LAMPARAS LED</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=2"><img class="imagen-carrusel" data-categoria="2" src="uploads/productos/lamparas1.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>LAMPARAS</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=15"><img class="imagen-carrusel" data-categoria="15" src="uploads/productos/16.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>FAROS AUXILIARES</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=16"><img class="imagen-carrusel" data-categoria="16" src="uploads/productos/14.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>BARRAS LED</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=5"><img class="imagen-carrusel" data-categoria="5" src="uploads/productos/10.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>FAROS LED</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=12"><img class="imagen-carrusel" data-categoria="12" src="uploads/productos/3.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>LINEA UNIVERSAL</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=13"><img class="imagen-carrusel" data-categoria="13" src="uploads/productos/2.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>LINEA CAMIONES</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=9"><img class="imagen-carrusel" data-categoria="9" src="uploads/productos/5.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>ESPEJOS UNIVERSALES</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=14"><img class="imagen-carrusel" data-categoria="14" src="uploads/productos/6.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>VIDRIOS DE ESPEJOS</p>
+                          </div>
+                      </div>
+                      <div class="pelicula">
+                          <a href="/productos?categoria=11"><img class="imagen-carrusel" data-categoria="11" src="uploads/productos/4.webp" alt=""></a>
+                          <div class="tarjeta-texto">
+                              <p>VIDRIOS DE OPTICAS</p>
+                          </div>
+                      </div>
+                  </div>
+                  <button role="button" id="flecha-derecha" class="flecha-derecha"><i class="fa-solid fa-angle-right"></i></button>
+              </div>
+          </div>
+      </div>
+  
+      <div class="contenedor-principal-productos">
+        <div class="ultimos-productos contenedor">
+          <h2>ÚLTIMOS AGREGADOS</h2>
           <div class="contenedor-productos">
             <% productos.forEach(function(producto) { %>
               <div class="card card-ultimos">
                 <div class="cover__card">
-                  <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-                    <img src="/uploads/productos/<%= producto.imagenes[0].imagen %>" alt="<%= producto.nombre %>">
+                  <% if (producto.imagen && producto.imagen.length > 0) { %>
+                    <img src="../../uploads/productos/<%= producto.imagen %>" alt="<%= producto.nombre %>">
                   <% } else { %>
                     <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
                   <% } %>
@@ -24,33 +109,27 @@
                 </div>
                 <hr>
                 <div class="categoria-producto">
-                  <h5 class="categoria"><%= producto.categoria_nombre || "Sin categoría" %></h5>
+                  <h5 class="categoria"><%= producto.categoria_nombre %></h5>
                 </div>
                 <div class="precio-producto">
-                  <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %></p>
+                  <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %></p>
                 </div>
               </div>
             <% }); %>
           </div>
-        <% } else { %>
-          <p>No se encontraron productos en esta categoría.</p>
-        <% } %>
-
-      </div>
-  
-      <div class="ofertas-productos contenedor-ofertas">
-        <h2>OFERTAS</h2>
-
-        <% if (productosOferta && productosOferta.length > 0) { %>
+        </div>
+    
+        <div class="ofertas-productos contenedor-ofertas">
+          <h2>OFERTAS</h2>
           <div class="contenedor-carrousel-ofertas">
             <button class="flecha-izquierda-ofertas"><i class="fas fa-chevron-left"></i></button>
             <div class="contenedor-productos-ofertas">
               <% productosOferta.forEach(function(oferta) { %>
                 <div class="card-oferta">
-                  <% if (oferta.imagenes && oferta.imagenes.length > 0) { %>
+                  <% if (oferta.imagenes.length > 0) { %>
                     <div class="cover-card-oferta">
                       <% oferta.imagenes.forEach(function(imagen) { %>
-                        <img src="/uploads/productos/<%= imagen.imagen %>" alt="<%= oferta.nombre %>">
+                        <img src="../../uploads/productos/<%= imagen %>" alt="<%= oferta.nombre %>">
                       <% }); %>
                     </div>
                   <% } else { %>
@@ -63,26 +142,21 @@
                   </div>
                   <hr>
                   <div class="categoria-producto-oferta">
-                    <h5 class="categoria-oferta"><%= oferta.categoria_nombre || "Sin categoría" %></h5>
+                    <h5 class="categoria-oferta"><%= oferta.categoria_nombre %></h5>
                   </div>
                   <div class="precio-producto-oferta">
-                    <p class="precio-oferta"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta || 0) %></p>
+                    <p class="precio-oferta"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %></p>
                   </div>
                 </div>
               <% }); %>
             </div>
             <button class="flecha-derecha-ofertas"><i class="fas fa-chevron-right"></i></button>
           </div>
-        <% } else { %>
-          <p>No hay ofertas disponibles.</p>
-        <% } %>
-
-      </div>
-    </div>
-
-  </main>
-
-  <%- include ./layouts/footer.ejs %>
-  <script src="js/index.js"></script> 
+        </div>
+          </div>
+      </main>
+    
+    <%- include ./layouts/footer.ejs %>
+    <script src="js/index.js"></script> 
 </body>
 </html>
