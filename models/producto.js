@@ -996,6 +996,22 @@ obtenerProductosPorCategoria: function(conexion, categoriaId, callback) {
         callback(null, resultados);
     });
 },
+obtenerTodosPaginados: function(conexion, pagina, productosPorPagina, callback) {
+    const offset = (pagina - 1) * productosPorPagina;
+    let query = `
+        SELECT * FROM productos 
+        ORDER BY id DESC 
+        LIMIT ? OFFSET ?
+    `;
+
+    conexion.query(query, [productosPorPagina, offset], function(error, resultados) {
+        if (error) {
+            console.error("❌ Error al obtener todos los productos paginados:", error);
+            return callback(error, null);
+        }
+        callback(null, resultados);
+    });
+},
 
 
 contarProductos: function(conexion, callback) {
