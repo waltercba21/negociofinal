@@ -485,9 +485,9 @@ module.exports = {
             let preference = {
                 items: items,
                 back_urls: {
-                    success: "https://www.autofaros.com.ar/pago-exito",
-                    failure: "https://www.autofaros.com.ar/pago-error",
-                    pending: "https://www.autofaros.com.ar/pago-pendiente"
+                    success: "https://www.autofaros.com.ar/carrito/pago-exito",
+                    failure: "https://www.autofaros.com.ar/carrito/pago-error",
+                    pending: "https://www.autofaros.com.ar/carrito/pago-pendiente"
                 },
                 auto_return: "approved"
             };
