@@ -430,67 +430,80 @@ module.exports = {
         }
     },
     procesarPago: async (req, res) => {
-        const id_usuario = req.session.usuario.id;
-
         try {
-            carrito.obtenerCarritoActivo(id_usuario, async (error, carritos) => {
-                if (error) {
-                    console.error("❌ Error al obtener el carrito:", error);
-                    return res.status(500).json({ error: "Error al obtener carrito" });
-                }
-
-                if (!carritos || carritos.length === 0) {
-                    console.warn("⚠️ No hay un carrito activo.");
-                    return res.status(400).json({ error: "No hay un carrito activo" });
-                }
-
-                const id_carrito = carritos[0].id;
-
-                carrito.obtenerProductosCarrito(id_carrito, async (error, productos) => {
-                    if (error) {
-                        console.error("❌ Error al obtener productos:", error);
-                        return res.status(500).json({ error: "Error al obtener productos" });
-                    }
-
-                    if (!productos || productos.length === 0) {
-                        console.warn("⚠️ El carrito está vacío.");
-                        return res.status(400).json({ error: "No hay productos en el carrito" });
-                    }
-
-                    const items = productos.map(prod => ({
-                        title: prod.nombre,
-                        unit_price: parseFloat(prod.precio_venta),
-                        quantity: prod.cantidad,
-                        currency_id: 'ARS'
-                    }));
-
-                    let preference = {
-                        items: items,
-                        back_urls: {
-                            success: "http://localhost:3000/carrito/pago/exito",
-                            failure: "http://localhost:3000/carrito/pago/error",
-                            pending: "http://localhost:3000/carrito/pago/pendiente"
-                        },
-                        auto_return: "approved"
-                    };
-
-                    mercadopago.preferences.create(preference)
-                        .then(response => {
-                            console.log("✅ Preferencia creada con ID:", response.body.id);
-                            res.json({ preferenceId: response.body.id });
-                        })
-                        .catch(error => {
-                            console.error("❌ Error al crear la preferencia:", error);
-                            res.status(500).json({ error: "Error al procesar el pago" });
-                        });
+            const id_usuario = req.session.usuario.id;
+    
+            // Obtener carrito activo del usuario
+            const carritos = await new Promise((resolve, reject) => {
+                carrito.obtenerCarritoActivo(id_usuario, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
                 });
             });
-        } catch (error) {
-            console.error("❌ Error inesperado en el servidor:", error);
-            res.status(500).json({ error: "Error interno del servidor" });
-        }
-    },
     
+            if (!carritos || carritos.length === 0) {
+                console.warn("⚠️ No hay un carrito activo.");
+                return res.status(400).json({ error: "No hay un carrito activo" });
+            }
+    
+            const id_carrito = carritos[0].id;
+    
+            // Obtener productos en el carrito
+            const productos = await new Promise((resolve, reject) => {
+                carrito.obtenerProductosCarrito(id_carrito, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                });
+            });
+    
+            if (!productos || productos.length === 0) {
+                console.warn("⚠️ El carrito está vacío.");
+                return res.status(400).json({ error: "No hay productos en el carrito" });
+            }
+    
+            // Construir los items de la preferencia
+            const items = productos.map(prod => ({
+                title: prod.nombre,
+                unit_price: parseFloat(prod.precio_venta),
+                quantity: prod.cantidad,
+                currency_id: 'ARS'
+            }));
+    
+            // Verificar que el token de acceso esté disponible
+            if (!process.env.MP_ACCESS_TOKEN) {
+                console.error("❌ Error: MP_ACCESS_TOKEN no está configurado.");
+                return res.status(500).json({ error: "Error interno del servidor" });
+            }
+    
+            // Configurar Mercado Pago
+            const mercadopago = require('mercadopago');
+            mercadopago.configure({
+                access_token: process.env.MP_ACCESS_TOKEN
+            });
+    
+            // Crear preferencia de Mercado Pago
+            const preference = {
+                items,
+                back_urls: {
+                    success: "http://localhost:3000/carrito/pago/exito",
+                    failure: "http://localhost:3000/carrito/pago/error",
+                    pending: "http://localhost:3000/carrito/pago/pendiente"
+                },
+                auto_return: "approved"
+            };
+    
+            console.log("🔍 Enviando preferencia a Mercado Pago:", JSON.stringify(preference, null, 2));
+    
+            const response = await mercadopago.preferences.create(preference);
+            
+            console.log("✅ Preferencia creada con ID:", response.body.id);
+            res.json({ preferenceId: response.body.id });
+    
+        } catch (error) {
+            console.error("❌ Error en `procesarPago`:", error);
+            res.status(500).json({ error: "Error al procesar el pago" });
+        }
+    },    
     
     finalizarCompra: (req, res) => {
         const id_usuario = req.session.usuario.id;

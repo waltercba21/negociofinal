@@ -2,9 +2,10 @@
 <%- include('./layouts/header.ejs') %>
 
 <body>
-    <h2>⌛ Pago Pendiente</h2>
-    <p><%= mensaje %></p>
-    <a href="/">Volver al inicio</a>
+    <main class="carrito-container">
+        <h1>⚠️ Pago en Revisión</h1>
+        <p><%= mensaje %></p>
+        <a href="/" class="btn-finalizar">Volver al Inicio</a>
+    </main>
+    <%- include('./layouts/footer.ejs') %>
 </body>
-
-<%- include('./layouts/footer.ejs') %>
