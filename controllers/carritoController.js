@@ -550,7 +550,7 @@ module.exports = {
             });
     
             console.log("✅ Compra finalizada: Carrito vaciado y estado actualizado a", nuevoEstado);
-            res.redirect("https://www.autofaros.com.ar/pago-exito");
+            res.redirect("https://www.autofaros.com.ar/carrito/pago-exito");
     
         } catch (error) {
             console.error("❌ Error en `finalizarCompra`:", error);
