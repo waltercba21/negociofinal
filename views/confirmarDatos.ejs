@@ -40,6 +40,18 @@
             <% } else { %>
                 <p>No hay productos en tu carrito.</p>
             <% } %>
+            <% if (envio) { %>
+                <div class="datos-envio">
+                    <h3>Datos de Envío</h3>
+                    <p><strong>Tipo de Envío:</strong> <%= envio.tipo_envio === 'delivery' ? 'Delivery a domicilio' : 'Retiro en local' %></p>
+                    <% if (envio.tipo_envio === 'delivery') { %>
+                        <p><strong>Dirección:</strong> <%= envio.direccion %></p>
+                    <% } %>
+                </div>
+            <% } else { %>
+                <p>No se ha seleccionado un método de envío.</p>
+            <% } %>
+            
 
             <div id="wallet_container"></div> <!-- Aquí se mostrará el botón de Mercado Pago -->
         </div>
