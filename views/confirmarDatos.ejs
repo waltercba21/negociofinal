@@ -12,7 +12,7 @@
                         <span>CARRITO</span>
                     </div>
                     <div class="barra"></div>
-                    <div class="paso ">
+                    <div class="paso">
                         <i class="fas fa-truck"></i>
                         <span>ENVÍO</span>
                     </div>
@@ -29,6 +29,7 @@
                     </div>
                 </div>
             </div>
+
             <% if (productos.length > 0) { %>
                 <table class="carrito-tabla">
                     <thead>
@@ -63,6 +64,7 @@
             <% } else { %>
                 <p>No hay productos en tu carrito.</p>
             <% } %>
+
             <% if (envio) { %>
                 <div class="datos-envio">
                     <h3>Datos de Envío</h3>
@@ -74,7 +76,12 @@
             <% } else { %>
                 <p>No se ha seleccionado un método de envío.</p>
             <% } %>
-            
+
+            <!-- Botón para ir a la vista de pago -->
+            <div class="boton-pago-container">
+                <a href="/carrito/pago" class="btn-finalizar">Ir a Pagar</a>
+            </div>
+
         </div>
     </main>
 
