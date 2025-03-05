@@ -482,16 +482,16 @@ module.exports = {
             });
     
             // Crear preferencia de Mercado Pago
-            const preference = {
-                items,
+            let preference = {
+                items: items,
                 back_urls: {
-                    success: "http://localhost:3000/carrito/pago/exito",
-                    failure: "http://localhost:3000/carrito/pago/error",
-                    pending: "http://localhost:3000/carrito/pago/pendiente"
+                    success: "https://www.autofaros.com.ar/pago-exito",
+                    failure: "https://www.autofaros.com.ar/pago-error",
+                    pending: "https://www.autofaros.com.ar/pago-pendiente"
                 },
                 auto_return: "approved"
             };
-    
+            
             console.log("🔍 Enviando preferencia a Mercado Pago:", JSON.stringify(preference, null, 2));
     
             const response = await mercadopago.preferences.create(preference);

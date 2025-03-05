@@ -43,17 +43,18 @@
     router.get('/pago', autenticarUsuario, carritoController.vistaPago)
     router.post('/pago', autenticarUsuario, carritoController.procesarPago);
 
-    router.get('/pago/exito', (req, res) => {
+    router.get('/pago-exito', (req, res) => {
         res.render('pagoExito', { mensaje: "¡Pago exitoso! Gracias por tu compra." });
     });
     
-    router.get('/pago/error', (req, res) => {
+    router.get('/pago-error', (req, res) => {
         res.render('pagoError', { mensaje: "Hubo un error en el pago. Intenta nuevamente." });
     });
     
-    router.get('/pago/pendiente', (req, res) => {
+    router.get('/pago-pendiente', (req, res) => {
         res.render('pagoPendiente', { mensaje: "Tu pago está pendiente de aprobación." });
     });
+    
     
 
     module.exports = router;
