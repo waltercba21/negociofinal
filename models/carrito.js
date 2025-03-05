@@ -149,6 +149,7 @@ actualizarDireccionEnvio: (id_carrito, nuevaDireccion, callback) => {
         if (error) return callback(error);
         callback(null, resultados);
     });
+
 },
 
 
@@ -161,4 +162,13 @@ finalizarCompra: (id_carrito, callback) => {
             callback(null, resultados);
         });
     },
+actualizarEstado: (id_carrito, nuevoEstado, callback) => {
+        const query = "UPDATE carritos SET estado = ? WHERE id = ?";
+        pool.query(query, [nuevoEstado, id_carrito], callback);
+    },
+
+vaciarCarrito: (id_carrito, callback) => {
+        const query = "DELETE FROM productos_carrito WHERE carrito_id = ?";
+        pool.query(query, [id_carrito], callback);
+    }
 };
