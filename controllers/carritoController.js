@@ -393,6 +393,42 @@ module.exports = {
             });
         });
     },
+    vistaPago: async (req, res) => {
+        const id_usuario = req.session.usuario.id;
+    
+        try {
+            carrito.obtenerCarritoActivo(id_usuario, async (error, carritos) => {
+                if (error) {
+                    console.error("❌ Error al obtener el carrito:", error);
+                    return res.status(500).send("Error al obtener el carrito");
+                }
+    
+                if (!carritos || carritos.length === 0) {
+                    console.warn("⚠️ No hay un carrito activo.");
+                    return res.redirect('/carrito'); // Redirigir al carrito si no hay productos
+                }
+    
+                const id_carrito = carritos[0].id;
+    
+                carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+                    if (error) {
+                        console.error("❌ Error al obtener productos:", error);
+                        return res.status(500).send("Error al obtener productos");
+                    }
+    
+                    const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
+    
+                    res.render('pago', {
+                        productos,
+                        total
+                    });
+                });
+            });
+        } catch (error) {
+            console.error("❌ Error inesperado en el servidor:", error);
+            res.status(500).send("Error interno del servidor");
+        }
+    },
     procesarPago: async (req, res) => {
         const id_usuario = req.session.usuario.id;
 

@@ -40,6 +40,7 @@
     // Ruta para finalizar la compra
     router.get('/finalizar', carritoController.finalizarCompra);
 
+    router.get('/pago', autenticarUsuario, carritoController.vistaPago)
     router.post('/pago', autenticarUsuario, carritoController.procesarPago);
 
     router.get('/pago/exito', (req, res) => {
