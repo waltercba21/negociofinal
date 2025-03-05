@@ -3,9 +3,51 @@
 
 <body>
     <main class="carrito-container">
-        <h1>🎉 Pago Exitoso</h1>
-        <p><%= mensaje %></p>
-        <a href="/" class="btn-finalizar">Volver al Inicio</a>
+        <h1>🛍️ Mi Carrito</h1>
+
+        <% if (productos.length > 0) { %>
+            <table class="carrito-tabla">
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio</th>
+                        <th>Sub-Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% productos.forEach(function(producto) { %>
+                        <tr>
+                            <td><img src="/uploads/productos/<%= producto.imagen || 'default.jpg' %>" class="imagen-miniatura"></td>
+                            <td><%= producto.nombre %></td>
+                            <td><%= producto.cantidad %></td>
+                            <td>$<%= producto.precio_venta.toFixed(2) %></td>
+                            <td>$<%= producto.total.toFixed(2) %></td>
+                        </tr>
+                    <% }) %>
+                    <tr class="carrito-total">
+                        <td colspan="3"></td>
+                        <td><strong>Total</strong></td>
+                        <td>$<%= total %></td>
+                    </tr>
+                </tbody>
+            </table>
+        <% } else if (estadoCarrito) { %>
+            <div class="estado-pedido">
+                <h2>📦 Tu pedido está en proceso</h2>
+                <p>Estado actual: <strong><%= estadoCarrito %></strong></p>
+                <% if (estadoCarrito === "preparación") { %>
+                    <p>🛒 Puedes pasar a retirarlo en nuestro local.</p>
+                <% } else if (estadoCarrito === "listo para entrega") { %>
+                    <p>🚚 En breve recibirás tu pedido en tu domicilio.</p>
+                <% } %>
+            </div>
+        <% } else { %>
+            <p class="carrito-vacio">No tienes productos en tu carrito.</p>
+        <% } %>
+
     </main>
+
     <%- include('./layouts/footer.ejs') %>
 </body>
