@@ -5,7 +5,30 @@
     <main class="carrito-container">
         <div id="confirmar-datos">
             <h2>Confirmar Datos</h2>
-
+            <div class="progreso-compra">
+                <div class="paso-container">
+                    <div class="paso completado">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>CARRITO</span>
+                    </div>
+                    <div class="barra activa"></div>
+                    <div class="paso activo">
+                        <i class="fas fa-truck"></i>
+                        <span>ENVÍO</span>
+                    </div>
+                    <div class="barra"></div>
+                    <div class="paso">
+                        <i class="fas fa-check-circle"></i>
+                        <span>CONFIRMAR DATOS</span>
+                    <div class="barra"></div>
+                    </div>
+                    <div class="barra"></div>
+                    <div class="paso">
+                        <i class="fas fa-credit-card"></i>
+                        <span>PAGO</span>
+                    </div>
+                </div>
+            </div>
             <% if (productos.length > 0) { %>
                 <table class="carrito-tabla">
                     <thead>
@@ -52,35 +75,8 @@
                 <p>No se ha seleccionado un método de envío.</p>
             <% } %>
             
-
-            <div id="wallet_container"></div> <!-- Aquí se mostrará el botón de Mercado Pago -->
         </div>
     </main>
 
     <%- include('./layouts/footer.ejs') %>
-
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
-    <script>
-        // Obtener la preferencia de pago desde el backend
-        fetch('/carrito/pago', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                if (data.preferenceId) {
-                    const mp = new MercadoPago('<%= process.env.MP_PUBLIC_KEY %>', { locale: 'es-AR' });
-
-                    // Crear el botón de pago en la vista
-                    mp.bricks().create("wallet", "wallet_container", {
-                        initialization: {
-                            preferenceId: data.preferenceId
-                        }
-                    });
-                } else {
-                    alert('Error al generar la preferencia de pago.');
-                }
-            })
-            .catch(error => {
-                console.error("Error al obtener la preferencia:", error);
-                alert('Hubo un error al procesar el pago.');
-            });
-    </script>
 </body>
