@@ -71,20 +71,20 @@ module.exports = {
             const marca = req.query.marca ? Number(req.query.marca) : undefined;
             const modelo = req.query.modelo ? Number(req.query.modelo) : undefined;
             const productosPorPagina = 10;
-
+    
             console.log("\n🔎 Consulta recibida con parámetros:", { pagina, categoria, marca, modelo });
-
+    
             if ((marca && isNaN(marca)) || (modelo && isNaN(modelo)) || (categoria && isNaN(categoria))) {
                 console.log("❌ Error: Algún parámetro no es un número válido.");
                 return res.status(400).send("Parámetros inválidos.");
             }
-
+    
             let productos = [];
-
-            // **✅ Filtrar solo por categoría si no hay marca ni modelo**
+    
+            // **📌 Caso 1: Filtrar solo por categoría**
             if (categoria && !marca && !modelo) {
                 console.log(`📌 Filtrando SOLO por categoría ID: ${categoria}`);
-
+    
                 productos = await new Promise((resolve, reject) => {
                     producto.obtenerProductosPorCategoria(conexion, categoria, (error, resultados) => {
                         if (error) {
@@ -95,11 +95,11 @@ module.exports = {
                         resolve(resultados);
                     });
                 });
-
-            } else {
-                // **✅ Filtrar con marca y modelo si están presentes**
+    
+            // **📌 Caso 2: Obtener productos con filtros avanzados**
+            } else if (marca || modelo) {
                 console.log(`📌 Filtrando con marca: ${marca}, modelo: ${modelo}`);
-
+    
                 productos = await new Promise((resolve, reject) => {
                     producto.obtenerPorFiltros(conexion, categoria, marca, modelo, pagina, (error, resultados) => {
                         if (error) {
@@ -110,8 +110,23 @@ module.exports = {
                         resolve(resultados);
                     });
                 });
+    
+            // **📌 Caso 3: No hay filtros → Mostrar todos los productos paginados**
+            } else {
+                console.log("📌 No hay filtros. Mostrando todos los productos paginados.");
+    
+                productos = await new Promise((resolve, reject) => {
+                    producto.obtenerTodosPaginados(conexion, pagina, productosPorPagina, (error, resultados) => {
+                        if (error) {
+                            console.error("❌ Error al obtener todos los productos:", error);
+                            return reject(error);
+                        }
+                        console.log(`✅ Productos obtenidos sin filtros:`, resultados.length);
+                        resolve(resultados);
+                    });
+                });
             }
-
+    
             // **📌 Si no hay productos, evitar errores posteriores**
             if (!productos || productos.length === 0) {
                 console.log("⚠ No se encontraron productos con los filtros aplicados.");
@@ -129,33 +144,33 @@ module.exports = {
                     isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
                 });
             }
-
+    
             // **📌 Obtener categorías y marcas para la vista**
             const [categorias, marcas] = await Promise.all([
                 producto.obtenerCategorias(conexion),
                 producto.obtenerMarcas(conexion),
             ]);
-
+    
             // **📌 Obtener modelos de la marca seleccionada (si aplica)**
             const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
             const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
-
+    
             // **📌 Obtener imágenes para los productos**
             const productoIds = productos.map(p => p.id);
-
+    
             if (productoIds.length > 0) {
                 console.log("📌 Buscando imágenes para productos:", productoIds);
-
+    
                 const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
-
+    
                 productos.forEach(producto => {
                     producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
                     producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
                 });
             }
-
+    
             console.log(`✅ Enviando ${productos.length} productos a la vista.`);
-
+    
             // **✅ Renderizar la vista de productos**
             res.render("productos", {
                 productos,
@@ -170,7 +185,7 @@ module.exports = {
                 isUserLoggedIn: !!req.session.usuario,
                 isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
             });
-
+    
         } catch (error) {
             console.error("❌ Error en el controlador lista:", error);
             res.status(500).render("productos", {
@@ -188,6 +203,7 @@ module.exports = {
             });
         }
     },
+    
     ofertas: (req, res) => {
         producto.obtenerOfertas(conexion, (error, productos) => {
           if (error) {
