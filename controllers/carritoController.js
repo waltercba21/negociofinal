@@ -508,22 +508,29 @@ module.exports = {
         try {
             const id_usuario = req.session.usuario.id;
     
+            console.log("📌 Iniciando proceso de finalización de compra para usuario:", id_usuario);
+    
             // Obtener carrito activo del usuario
             const carritos = await new Promise((resolve, reject) => {
                 carrito.obtenerCarritoActivo(id_usuario, (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
+                    if (error) {
+                        console.error("❌ Error al obtener el carrito:", error);
+                        reject(error);
+                    } else {
+                        resolve(result);
+                    }
                 });
             });
     
             if (!carritos || carritos.length === 0) {
-                console.warn("⚠️ No hay un carrito activo.");
-                return res.redirect("/carrito");
+                console.warn("⚠️ No se encontró un carrito activo para este usuario.");
+                return res.redirect("/carrito"); // Redirige al carrito si no hay productos
             }
     
             const id_carrito = carritos[0].id;
+            console.log("🛒 Carrito activo encontrado con ID:", id_carrito);
     
-            // Obtener tipo de envío para actualizar estado del pedido
+            // Obtener tipo de envío
             const tipoEnvio = carritos[0].tipo_envio;
             let nuevoEstado = "pendiente"; // Estado por defecto
     
@@ -533,28 +540,39 @@ module.exports = {
                 nuevoEstado = "listo para entrega"; // Pedido será enviado
             }
     
-            // Actualizar el estado del carrito
+            // Actualizar estado del carrito
             await new Promise((resolve, reject) => {
                 carrito.actualizarEstado(id_carrito, nuevoEstado, (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
+                    if (error) {
+                        console.error("❌ Error al actualizar el estado del carrito:", error);
+                        reject(error);
+                    } else {
+                        console.log("✅ Estado del carrito actualizado a:", nuevoEstado);
+                        resolve(result);
+                    }
                 });
             });
     
             // Vaciar el carrito después de la compra
             await new Promise((resolve, reject) => {
                 carrito.vaciarCarrito(id_carrito, (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
+                    if (error) {
+                        console.error("❌ Error al vaciar el carrito:", error);
+                        reject(error);
+                    } else {
+                        console.log("✅ Carrito vaciado correctamente.");
+                        resolve(result);
+                    }
                 });
             });
     
-            console.log("✅ Compra finalizada: Carrito vaciado y estado actualizado a", nuevoEstado);
-            res.redirect("https://www.autofaros.com.ar/carrito/pago-exito");
+            console.log("✅ Redirigiendo a la vista de pago exitoso...");
+            res.redirect("/carrito/pago-exito");
     
         } catch (error) {
             console.error("❌ Error en `finalizarCompra`:", error);
             res.status(500).json({ error: "Error al finalizar la compra" });
         }
     },
+    
 };
