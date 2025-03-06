@@ -554,32 +554,34 @@ module.exports = {
                 });
             });
     
-            // Vaciar el carrito después de la compra
-            await new Promise((resolve, reject) => {
-                carrito.vaciarCarrito(id_carrito, (error, result) => {
-                    if (error) {
-                        console.error("❌ Error al vaciar el carrito:", error);
-                        reject(error);
-                    } else {
-                        console.log("✅ Carrito vaciado correctamente.");
-                        resolve(result);
-                    }
+            // **Esperar un pequeño retraso antes de vaciar el carrito**
+            setTimeout(async () => {
+                await new Promise((resolve, reject) => {
+                    carrito.vaciarCarrito(id_carrito, (error, result) => {
+                        if (error) {
+                            console.error("❌ Error al vaciar el carrito:", error);
+                            reject(error);
+                        } else {
+                            console.log("✅ Carrito vaciado correctamente.");
+                            resolve(result);
+                        }
+                    });
                 });
-            });
     
-            console.log("✅ Redirigiendo a la vista de pago exitoso...");
-            res.redirect("/carrito/pago-exito");
+                console.log("✅ Redirigiendo a la vista de pago exitoso...");
+                res.redirect("/carrito/pago-exito");
+            }, 500);
     
         } catch (error) {
             console.error("❌ Error en `finalizarCompra`:", error);
             res.status(500).json({ error: "Error al finalizar la compra" });
         }
-    },
+    },    
     vistaPagoExitoso: async (req, res) => {
         try {
             const id_usuario = req.session.usuario.id;
     
-            // Obtener carrito activo
+            // Obtener carrito activo con su estado
             const carritos = await new Promise((resolve, reject) => {
                 carrito.obtenerCarritoActivo(id_usuario, (error, result) => {
                     if (error) reject(error);
@@ -592,7 +594,7 @@ module.exports = {
             }
     
             const id_carrito = carritos[0].id;
-            const estadoCarrito = carritos[0].estado || "pendiente"; // Estado por defecto
+            const estadoCarrito = carritos[0].estado || "pendiente"; // Estado del carrito
     
             // Obtener productos del carrito
             const productos = await new Promise((resolve, reject) => {
@@ -610,5 +612,6 @@ module.exports = {
             res.status(500).send("Error al cargar la página de pago exitoso.");
         }
     }
+    
     
 };

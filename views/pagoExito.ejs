@@ -33,7 +33,9 @@
                     </tr>
                 </tbody>
             </table>
-        <% } else if (estadoCarrito) { %>
+        <% } %>
+
+        <% if (estadoCarrito) { %>
             <div class="estado-pedido">
                 <h2>📦 Tu pedido está en proceso</h2>
                 <p>Estado actual: <strong><%= estadoCarrito %></strong></p>
