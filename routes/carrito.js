@@ -43,11 +43,7 @@
     router.get('/pago', autenticarUsuario, carritoController.vistaPago)
     router.post('/pago', autenticarUsuario, carritoController.procesarPago);
 
-    router.get('/pago-exito', autenticarUsuario, (req, res) => {
-        res.render('pagoExito'); // Asegura que la vista existe
-    });
-    
-
+    router.get('/pago-exito', autenticarUsuario, carritoController.vistaPagoExitoso);
     
     router.get('/pago-error', (req, res) => {
         res.render('pagoError', { mensaje: "Hubo un error en el pago. Intenta nuevamente." });

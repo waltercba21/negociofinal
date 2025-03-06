@@ -575,5 +575,40 @@ module.exports = {
             res.status(500).json({ error: "Error al finalizar la compra" });
         }
     },
+    vistaPagoExitoso: async (req, res) => {
+        try {
+            const id_usuario = req.session.usuario.id;
+    
+            // Obtener carrito activo
+            const carritos = await new Promise((resolve, reject) => {
+                carrito.obtenerCarritoActivo(id_usuario, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                });
+            });
+    
+            if (!carritos || carritos.length === 0) {
+                return res.render('pagoExito', { productos: [], estadoCarrito: null, total: 0 });
+            }
+    
+            const id_carrito = carritos[0].id;
+            const estadoCarrito = carritos[0].estado || "pendiente"; // Estado por defecto
+    
+            // Obtener productos del carrito
+            const productos = await new Promise((resolve, reject) => {
+                carrito.obtenerProductosCarrito(id_carrito, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                });
+            });
+    
+            const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
+    
+            res.render('pagoExito', { productos, estadoCarrito, total });
+        } catch (error) {
+            console.error("❌ Error al cargar la vista de pago exitoso:", error);
+            res.status(500).send("Error al cargar la página de pago exitoso.");
+        }
+    }
     
 };
