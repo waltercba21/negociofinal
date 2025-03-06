@@ -171,7 +171,7 @@ actualizarEstado: (id_carrito, nuevoEstado, callback) => {
         console.log(`🛒 Intentando vaciar el carrito con ID: ${id_carrito}`);
     
         const query = "DELETE FROM productos_carrito WHERE carrito_id = ?";
-    
+        
         pool.query(query, [id_carrito], (error, resultados) => {
             if (error) {
                 console.error("❌ Error al vaciar el carrito:", error);
@@ -179,8 +179,13 @@ actualizarEstado: (id_carrito, nuevoEstado, callback) => {
             }
     
             console.log(`✅ Productos eliminados del carrito: ${resultados.affectedRows}`);
+    
+            if (resultados.affectedRows === 0) {
+                console.warn("⚠️ Ningún producto fue eliminado. Puede que el carrito ya estuviera vacío o que el ID sea incorrecto.");
+            }
+    
             callback(null, resultados);
         });
-    }
+    }    
     
 };

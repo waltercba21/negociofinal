@@ -541,7 +541,7 @@ module.exports = {
                 nuevoEstado = "listo para entrega"; // Pedido será enviado
             }
     
-            // Actualizar estado del carrito antes de vaciarlo
+            // Actualizar estado del carrito
             await new Promise((resolve, reject) => {
                 carrito.actualizarEstado(id_carrito, nuevoEstado, (error, result) => {
                     if (error) {
@@ -554,7 +554,7 @@ module.exports = {
                 });
             });
     
-            // Asegurar que el carrito se vacíe completamente
+            // **Asegurar que el carrito se vacíe completamente antes de redirigir**
             const vaciadoExitoso = await new Promise((resolve, reject) => {
                 carrito.vaciarCarrito(id_carrito, (error, result) => {
                     if (error) {
@@ -592,7 +592,7 @@ module.exports = {
             console.error("❌ Error en `finalizarCompra`:", error);
             res.status(500).json({ error: "Error al finalizar la compra" });
         }
-    },       
+    },    
     vistaPagoExitoso: async (req, res) => {
         try {
             const id_usuario = req.session.usuario.id;
