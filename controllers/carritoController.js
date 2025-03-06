@@ -509,13 +509,13 @@ module.exports = {
         try {
             const id_usuario = req.session.usuario.id;
     
-            console.log("📌 Iniciando proceso de finalización de compra para usuario:", id_usuario);
+            console.log("📌 [DEBUG] Iniciando proceso de finalización de compra para usuario:", id_usuario);
     
             // Obtener carrito activo del usuario
             const carritos = await new Promise((resolve, reject) => {
                 carrito.obtenerCarritoActivo(id_usuario, (error, result) => {
                     if (error) {
-                        console.error("❌ Error al obtener el carrito:", error);
+                        console.error("❌ [ERROR] No se pudo obtener el carrito:", error);
                         reject(error);
                     } else {
                         resolve(result);
@@ -524,72 +524,70 @@ module.exports = {
             });
     
             if (!carritos || carritos.length === 0) {
-                console.warn("⚠️ No se encontró un carrito activo para este usuario.");
-                return res.redirect("/carrito"); // Redirige al carrito si no hay productos
+                console.warn("⚠️ [WARN] No hay un carrito activo para este usuario.");
+                return res.redirect("/carrito");
             }
     
             const id_carrito = carritos[0].id;
-            console.log("🛒 Carrito activo encontrado con ID:", id_carrito);
+            console.log("🛒 [DEBUG] Carrito activo encontrado con ID:", id_carrito);
     
             // Obtener tipo de envío
             const tipoEnvio = carritos[0].tipo_envio;
-            let nuevoEstado = "pendiente"; // Estado por defecto
+            let nuevoEstado = "pendiente";
     
             if (tipoEnvio === "local") {
-                nuevoEstado = "preparación"; // Pedido listo para retiro
+                nuevoEstado = "preparación";
             } else if (tipoEnvio === "delivery") {
-                nuevoEstado = "listo para entrega"; // Pedido será enviado
+                nuevoEstado = "listo para entrega";
             }
     
             // Actualizar estado del carrito
             await new Promise((resolve, reject) => {
                 carrito.actualizarEstado(id_carrito, nuevoEstado, (error, result) => {
                     if (error) {
-                        console.error("❌ Error al actualizar el estado del carrito:", error);
+                        console.error("❌ [ERROR] No se pudo actualizar el estado del carrito:", error);
                         reject(error);
                     } else {
-                        console.log("✅ Estado del carrito actualizado a:", nuevoEstado);
+                        console.log("✅ [INFO] Estado del carrito actualizado a:", nuevoEstado);
                         resolve(result);
                     }
                 });
             });
     
-            // **Asegurar que el carrito se vacíe completamente antes de redirigir**
+            // **Forzar eliminación de productos antes de redirigir**
+            console.log("🛒 [DEBUG] Llamando a `vaciarCarrito`...");
             const vaciadoExitoso = await new Promise((resolve, reject) => {
                 carrito.vaciarCarrito(id_carrito, (error, result) => {
                     if (error) {
-                        console.error("❌ Error al vaciar el carrito:", error);
+                        console.error("❌ [ERROR] Fallo al vaciar el carrito:", error);
                         reject(error);
-                    } else if (result.affectedRows > 0) {
-                        console.log(`✅ Productos eliminados del carrito: ${result.affectedRows}`);
-                        resolve(true);
                     } else {
-                        console.warn("⚠️ No se encontraron productos en el carrito para eliminar.");
-                        resolve(false);
+                        console.log("✅ [INFO] Productos eliminados del carrito:", result.affectedRows);
+                        resolve(result.affectedRows > 0);
                     }
                 });
             });
     
             if (!vaciadoExitoso) {
-                console.warn("⚠️ Intentando vaciar el carrito de nuevo...");
+                console.warn("⚠️ [WARN] Intentando vaciar el carrito de nuevo...");
                 await new Promise((resolve, reject) => {
                     carrito.vaciarCarrito(id_carrito, (error, result) => {
                         if (error) {
-                            console.error("❌ Segundo intento fallido al vaciar el carrito:", error);
+                            console.error("❌ [ERROR] Segundo intento fallido al vaciar el carrito:", error);
                             reject(error);
                         } else {
-                            console.log("✅ Carrito vaciado correctamente en segundo intento.");
+                            console.log("✅ [INFO] Carrito vaciado correctamente en segundo intento.");
                             resolve(result);
                         }
                     });
                 });
             }
     
-            console.log("✅ Redirigiendo a la vista de pago exitoso...");
+            console.log("✅ [INFO] Redirigiendo a la vista de pago exitoso...");
             res.redirect("/carrito/pago-exito");
     
         } catch (error) {
-            console.error("❌ Error en `finalizarCompra`:", error);
+            console.error("❌ [ERROR] en `finalizarCompra`:", error);
             res.status(500).json({ error: "Error al finalizar la compra" });
         }
     },    

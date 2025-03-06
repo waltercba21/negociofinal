@@ -168,24 +168,29 @@ actualizarEstado: (id_carrito, nuevoEstado, callback) => {
     },
 
     vaciarCarrito: (id_carrito, callback) => {
-        console.log(`🛒 Intentando vaciar el carrito con ID: ${id_carrito}`);
+        console.log(`🛒 [DEBUG] Intentando vaciar el carrito con ID: ${id_carrito}`);
+    
+        if (!id_carrito) {
+            console.error("❌ [ERROR] No se proporcionó un ID de carrito válido.");
+            return callback(new Error("ID de carrito no válido."));
+        }
     
         const query = "DELETE FROM productos_carrito WHERE carrito_id = ?";
         
         pool.query(query, [id_carrito], (error, resultados) => {
             if (error) {
-                console.error("❌ Error al vaciar el carrito:", error);
+                console.error("❌ [ERROR] Fallo al vaciar el carrito:", error);
                 return callback(error);
             }
     
-            console.log(`✅ Productos eliminados del carrito: ${resultados.affectedRows}`);
+            console.log(`✅ [INFO] Productos eliminados del carrito: ${resultados.affectedRows}`);
     
             if (resultados.affectedRows === 0) {
-                console.warn("⚠️ Ningún producto fue eliminado. Puede que el carrito ya estuviera vacío o que el ID sea incorrecto.");
+                console.warn("⚠️ [WARN] No se eliminaron productos. Puede que el carrito ya esté vacío o que el ID sea incorrecto.");
             }
     
             callback(null, resultados);
         });
-    }    
+    },    
     
 };
