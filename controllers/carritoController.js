@@ -541,7 +541,7 @@ module.exports = {
                 nuevoEstado = "listo para entrega"; // Pedido será enviado
             }
     
-            // Actualizar estado del carrito
+            // Actualizar estado del carrito antes de vaciarlo
             await new Promise((resolve, reject) => {
                 carrito.actualizarEstado(id_carrito, nuevoEstado, (error, result) => {
                     if (error) {
@@ -554,29 +554,45 @@ module.exports = {
                 });
             });
     
-            // **Esperar un pequeño retraso antes de vaciar el carrito**
-            setTimeout(async () => {
+            // Asegurar que el carrito se vacíe completamente
+            const vaciadoExitoso = await new Promise((resolve, reject) => {
+                carrito.vaciarCarrito(id_carrito, (error, result) => {
+                    if (error) {
+                        console.error("❌ Error al vaciar el carrito:", error);
+                        reject(error);
+                    } else if (result.affectedRows > 0) {
+                        console.log(`✅ Productos eliminados del carrito: ${result.affectedRows}`);
+                        resolve(true);
+                    } else {
+                        console.warn("⚠️ No se encontraron productos en el carrito para eliminar.");
+                        resolve(false);
+                    }
+                });
+            });
+    
+            if (!vaciadoExitoso) {
+                console.warn("⚠️ Intentando vaciar el carrito de nuevo...");
                 await new Promise((resolve, reject) => {
                     carrito.vaciarCarrito(id_carrito, (error, result) => {
                         if (error) {
-                            console.error("❌ Error al vaciar el carrito:", error);
+                            console.error("❌ Segundo intento fallido al vaciar el carrito:", error);
                             reject(error);
                         } else {
-                            console.log("✅ Carrito vaciado correctamente.");
+                            console.log("✅ Carrito vaciado correctamente en segundo intento.");
                             resolve(result);
                         }
                     });
                 });
+            }
     
-                console.log("✅ Redirigiendo a la vista de pago exitoso...");
-                res.redirect("/carrito/pago-exito");
-            }, 500);
+            console.log("✅ Redirigiendo a la vista de pago exitoso...");
+            res.redirect("/carrito/pago-exito");
     
         } catch (error) {
             console.error("❌ Error en `finalizarCompra`:", error);
             res.status(500).json({ error: "Error al finalizar la compra" });
         }
-    },    
+    },       
     vistaPagoExitoso: async (req, res) => {
         try {
             const id_usuario = req.session.usuario.id;
