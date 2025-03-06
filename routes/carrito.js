@@ -43,7 +43,10 @@
     router.get('/pago', autenticarUsuario, carritoController.vistaPago)
     router.post('/pago', autenticarUsuario, carritoController.procesarPago);
 
-    router.get('/pago-exito', autenticarUsuario, carritoController.finalizarCompra);
+    router.get('/pago-exito', autenticarUsuario, (req, res) => {
+        res.render('pagoExito'); // Asegura que la vista existe
+    });
+    
 
     
     router.get('/pago-error', (req, res) => {
