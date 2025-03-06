@@ -1,6 +1,7 @@
 const carrito = require('../models/carrito');
 const mercadopago = require('mercadopago');
 const producto = require('../models/producto');
+const { io } = require('../app');
 
 mercadopago.configure({
     access_token: process.env.MP_ACCESS_TOKEN

@@ -11,11 +11,14 @@
     <a class="nav-link" href="/productos">PRODUCTOS</a>
     <a class="nav-link" href="/productos/ofertas">OFERTAS</a>
 
-    <% if (isAdminUser) { %> <!-- Verifica si el usuario es admin usando la variable definida en el middleware -->
+    <% if (isAdminUser) { %>
       <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
       <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
       <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
-      <a class="nav-link" href="/administracion">ADMINISTRACIÓN</a>
+      <a class="nav-link" href="/administracion" id="admin-btn">
+        ADMINISTRACIÓN 
+        <span id="pedido-notificacion" class="cantidad-alerta" style="display: none;">!</span>
+      </a>
     <% } %>
 
     <a class="nav-link" href="https://wa.me/+543513820440/" target="_blank">WHATSAPP</a>
@@ -29,25 +32,39 @@
           <p>Hola <%= userLogged.nombre %> </p> 
         </a>
        
-          <a href="/carrito" class="carrito-icon">
-            <i class="fa-solid fa-cart-shopping"></i>
-        
-            <!-- El span siempre está presente, pero oculto si el carrito está vacío -->
-            <span id="carrito-notificacion" class="cantidad-alerta" 
-                  <% if (cantidadCarrito <= 0) { %> style="display: none;" <% } %>>
-                <%= cantidadCarrito %>
-            </span>
+        <a href="/carrito" class="carrito-icon">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span id="carrito-notificacion" class="cantidad-alerta" 
+                <% if (cantidadCarrito <= 0) { %> style="display: none;" <% } %>>
+              <%= cantidadCarrito %>
+          </span>
         </a>          
         <a href="/users/logout">
           <i class="fa-solid fa-right-from-bracket"></i>
           <span>Salir</span> 
         </a>
       </div>
-    <% } else { %> <!-- Si no está logueado -->
+    <% } else { %>
       <a href="/users/login">Iniciar Sesión</a>
       <a class="register-link" href="/users/register">Registrarme</a>
     <% } %>  
   </div>
 
-  <script src="js/index.js"></script> 
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    
+    socket.on('nuevoPedido', () => {
+        console.log("🔔 Notificación de nuevo pedido recibida.");
+        const notificacion = document.getElementById("pedido-notificacion");
+        if (notificacion) {
+            notificacion.style.display = "inline-block"; // Muestra la alerta en el botón de administración
+        }
+    });
+
+    // Si el admin entra a la vista de administración, oculta la notificación
+    document.getElementById("admin-btn")?.addEventListener("click", () => {
+        document.getElementById("pedido-notificacion").style.display = "none";
+    });
+  </script>
 </header>
