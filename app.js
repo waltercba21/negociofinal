@@ -18,10 +18,13 @@ mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN
 });
 
-// Inicializar Express y Servidor HTTP para WebSockets
+// Inicializar Express
 var app = express();
 var server = http.createServer(app);
 var io = socketIo(server);
+
+// Exportar `app` y `io` correctamente
+module.exports = { app, io };
 
 // Configuración de vistas y motor de plantillas
 app.set('views', path.join(__dirname, 'views'));
@@ -104,6 +107,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Servidor ejecutándose en http://localhost:${PORT}`);
 });
-
-// Exportar la app y el servidor de sockets
-module.exports = { app, io };
