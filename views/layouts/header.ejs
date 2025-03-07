@@ -39,14 +39,17 @@
         <a href="/users/profile"> 
           <p>Hola <%= userLogged.nombre %> </p> 
         </a>
-       
-        <a href="/carrito" class="carrito-icon">
-          <i class="fa-solid fa-cart-shopping"></i>
-          <span id="carrito-notificacion" class="cantidad-alerta" 
-                <% if (cantidadCarrito <= 0) { %> style="display: none;" <% } %>>
-              <%= cantidadCarrito %>
-          </span>
-        </a>          
+
+        <% if (!isAdminUser) { %>  <!-- ✅ Solo se muestra si NO es administrador -->
+          <a href="/carrito" class="carrito-icon">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span id="carrito-notificacion" class="cantidad-alerta" 
+                  <% if (cantidadCarrito <= 0) { %> style="display: none;" <% } %>>
+                <%= cantidadCarrito %>
+            </span>
+          </a>
+        <% } %>          
+      
         <a href="/users/logout">
           <i class="fa-solid fa-right-from-bracket"></i>
           <span>Salir</span> 
@@ -56,7 +59,8 @@
       <a href="/users/login">Iniciar Sesión</a>
       <a class="register-link" href="/users/register">Registrarme</a>
     <% } %>  
-  </div>
+</div>
+
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
