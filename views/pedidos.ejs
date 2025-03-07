@@ -1,0 +1,58 @@
+<%- include('../layouts/head.ejs') %>
+<%- include('../layouts/header.ejs') %>
+
+<body>
+  <main class="admin-container">
+    <h1>📦 Pedidos Pendientes</h1>
+
+    <table class="pedidos-tabla">
+      <thead>
+        <tr>
+          <th>ID Pedido</th>
+          <th>Cliente</th>
+          <th>Total</th>
+          <th>Tipo de Envío</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-pedidos"></tbody>
+    </table>
+  </main>
+
+  <script>
+    async function obtenerPedidos() {
+        try {
+            const response = await fetch('/carrito/pedidos');
+            const pedidos = await response.json();
+            document.getElementById('tabla-pedidos').innerHTML = pedidos.map(pedido => `
+                <tr>
+                    <td>${pedido.id_pedido}</td>
+                    <td>${pedido.cliente}</td>
+                    <td>$${pedido.total}</td>
+                    <td>${pedido.tipo_envio}</td>
+                    <td>${pedido.estado}</td>
+                    <td>
+                        <button onclick="marcarPreparado(${pedido.id_pedido})">🛠 Preparar</button>
+                        <button onclick="finalizarPedido(${pedido.id_pedido})">✅ Finalizar</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error("❌ Error al cargar pedidos:", error);
+        }
+    }
+
+    async function marcarPreparado(id) {
+        await fetch(`/carrito/pedidos/marcar-preparado/${id}`, { method: 'POST' });
+        obtenerPedidos();
+    }
+
+    async function finalizarPedido(id) {
+        await fetch(`/carrito/pedidos/finalizar/${id}`, { method: 'POST' });
+        obtenerPedidos();
+    }
+
+    obtenerPedidos();
+  </script>
+</body>

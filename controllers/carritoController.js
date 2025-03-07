@@ -533,12 +533,12 @@ module.exports = {
     
             // Obtener tipo de envío
             const tipoEnvio = carritos[0].tipo_envio;
-            let nuevoEstado = "pendiente";
+            let nuevoEstado = "pendiente"; // Estado por defecto
     
             if (tipoEnvio === "local") {
-                nuevoEstado = "preparación";
+                nuevoEstado = "preparación"; // Pedido listo para retiro
             } else if (tipoEnvio === "delivery") {
-                nuevoEstado = "listo para entrega";
+                nuevoEstado = "listo para entrega"; // Pedido será enviado
             }
     
             // Actualizar estado del carrito
@@ -553,6 +553,32 @@ module.exports = {
                     }
                 });
             });
+    
+            // Obtener detalles del pedido para la notificación
+            const productosPedido = await new Promise((resolve, reject) => {
+                carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+                    if (error) {
+                        console.error("❌ [ERROR] No se pudieron obtener los productos del pedido:", error);
+                        reject(error);
+                    } else {
+                        resolve(productos);
+                    }
+                });
+            });
+    
+            // Calcular el total del pedido
+            const totalPedido = productosPedido.reduce((acc, p) => acc + p.total, 0).toFixed(2);
+    
+            // 🔔 Emitir notificación en tiempo real a los administradores
+            io.emit('nuevoPedido', {
+                mensaje: `📦 Nuevo pedido recibido (${id_carrito})`,
+                id_carrito,
+                usuario: id_usuario,
+                estado: nuevoEstado,
+                total: `$${totalPedido}`
+            });
+    
+            console.log("🔔 [INFO] Notificación enviada a los administradores sobre el nuevo pedido.");
     
             // **Forzar eliminación de productos antes de redirigir**
             console.log("🛒 [DEBUG] Llamando a `vaciarCarrito`...");
@@ -590,7 +616,8 @@ module.exports = {
             console.error("❌ [ERROR] en `finalizarCompra`:", error);
             res.status(500).json({ error: "Error al finalizar la compra" });
         }
-    },    
+    },
+    
     vistaPagoExitoso: async (req, res) => {
         try {
             const id_usuario = req.session.usuario.id;
@@ -625,7 +652,46 @@ module.exports = {
             console.error("❌ Error al cargar la vista de pago exitoso:", error);
             res.status(500).send("Error al cargar la página de pago exitoso.");
         }
-    }
+    },
+    obtenerPedidosPendientes: (req, res) => {
+        carrito.obtenerCantidadPedidosPendientes((error, cantidad) => {
+            if (error) {
+                return res.status(500).json({ error: "Error al obtener pedidos pendientes" });
+            }
+            res.json({ cantidad });
+        });
+    },    
+    obtenerPedidos: (req, res) => {
+        carrito.obtenerPedidos((error, pedidos) => {
+            if (error) {
+                return res.status(500).json({ error: "Error al obtener los pedidos" });
+            }
+            res.json(pedidos);
+        });
+    },
+    marcarPedidoComoPreparado: (req, res) => {
+        const id_pedido = req.params.id;
+    
+        carrito.actualizarEstado(id_pedido, "preparación", (error) => {
+            if (error) {
+                return res.status(500).json({ error: "Error al actualizar el pedido a 'preparación'" });
+            }
+            io.emit('pedidoActualizado', { id_pedido, estado: "preparación" });
+            res.json({ mensaje: "Pedido marcado como en preparación" });
+        });
+    },
+    
+    marcarPedidoComoFinalizado: (req, res) => {
+        const id_pedido = req.params.id;
+    
+        carrito.actualizarEstado(id_pedido, "finalizado", (error) => {
+            if (error) {
+                return res.status(500).json({ error: "Error al actualizar el pedido a 'finalizado'" });
+            }
+            io.emit('pedidoActualizado', { id_pedido, estado: "finalizado" });
+            res.json({ mensaje: "Pedido marcado como finalizado" });
+        });
+    },
     
     
 };
