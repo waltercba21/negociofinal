@@ -1,5 +1,5 @@
-<%- include('../layouts/head.ejs') %>
-<%- include('../layouts/header.ejs') %>
+<%- include ./layouts/head.ejs %>
+<%- include ./layouts/header.ejs %>
 
 <body>
   <main class="admin-container">
@@ -19,7 +19,7 @@
       <tbody id="tabla-pedidos"></tbody>
     </table>
   </main>
-
+  <%- include ./layouts/footer.ejs %>
   <script>
     async function obtenerPedidos() {
         try {
