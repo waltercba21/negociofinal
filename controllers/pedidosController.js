@@ -4,14 +4,16 @@ const { io } = require('../app');
 module.exports = {
     obtenerPedidos: (req, res) => {
         const estado = req.query.estado || null;
-
+    
         pedidos.obtenerPedidos(estado, (error, pedidos) => {
             if (error) {
                 return res.status(500).json({ error: "Error al obtener los pedidos" });
             }
-            res.render("pedidos", { pedidos });  // Renderiza la vista con la lista de pedidos
+            console.log("✅ Renderizando pedidos.ejs con pedidos:", pedidos); // Debug
+            res.render("pedidos", { pedidos });  // ✅ Cambio en la ruta de la vista
         });
     },
+    
 
     obtenerPedidosPendientes: (req, res) => {
         pedidos.obtenerCantidadPedidosPendientes((error, cantidad) => {
