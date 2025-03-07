@@ -52,9 +52,5 @@
     router.get('/pago-pendiente', (req, res) => {
         res.render('pagoPendiente', { mensaje: "Tu pago está pendiente de aprobación." });
     });
-    router.get('/pedidos/cantidad', carritoController.obtenerPedidosPendientes);  // 🔹 Devuelve la cantidad de pedidos pendientes (para el header)
-    router.get('/pedidos', carritoController.obtenerPedidos);  // 🔹 Devuelve la lista de pedidos con opción de filtrado
-    router.post('/pedidos/marcar-preparado/:id', carritoController.marcarPedidoComoPreparado);  // 🔹 Cambia estado a "preparación"
-    router.post('/pedidos/finalizar/:id', carritoController.marcarPedidoComoFinalizado);  // 🔹 Cambia estado a "finalizado"
     
     module.exports = router;
