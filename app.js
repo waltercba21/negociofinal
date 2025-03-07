@@ -63,7 +63,8 @@ app.use(bodyParser.json({ limit: '50mb' }));
 // Servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/socket.io', express.static(path.join(__dirname, 'node_modules/socket.io/client-dist')));  // ✅ Carga `socket.io.js` correctamente
+app.use('/socket.io', express.static(path.join(__dirname, 'node_modules/socket.io/client-dist')));
+  // ✅ Carga `socket.io.js` correctamente
 
 // Middleware de autenticación y globales
 app.use(adminMiddleware);
