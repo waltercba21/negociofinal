@@ -10,18 +10,21 @@ const dotenv = require('dotenv');
 dotenv.config();
 const calcularCantidadCarrito = require('./middleware/carritoMiddleware');
 const mercadopago = require('mercadopago');
-const http = require('http');  // ✅ Necesario para `socket.io`
-const socketIo = require('socket.io');  // ✅ Importación correcta de `socket.io`
+var indexRouter = require('./routes/index');
+var usersRouter = require('./routes/users');
+var productosRouter = require('./routes/productos');
+var administracionRouter = require('./routes/administracion');
+var carritoRoutes = require('./routes/carrito');
+
+// **Corrección de socket.io**
+var app = express();
+var server = require('http').Server(app);
+var io = require('socket.io')(server, { cors: { origin: "*" } });  // ✅ Permite conexiones de cualquier origen
 
 // Configuración de Mercado Pago
 mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN
 });
-
-// Inicializar Express
-var app = express();
-var server = http.createServer(app);  // ✅ Se usa `http.Server` para `socket.io`
-var io = socketIo(server);  // ✅ Configuración correcta de `socket.io`
 
 // Configuración de vistas y motor de plantillas
 app.set('views', path.join(__dirname, 'views'));
@@ -60,7 +63,7 @@ app.use(bodyParser.json({ limit: '50mb' }));
 // Servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/socket.io', express.static(path.join(__dirname, 'node_modules/socket.io/client-dist'))); // ✅ Carga `socket.io.js` correctamente
+app.use('/socket.io', express.static(path.join(__dirname, 'node_modules/socket.io/client-dist')));  // ✅ Carga `socket.io.js` correctamente
 
 // Middleware de autenticación y globales
 app.use(adminMiddleware);
@@ -75,12 +78,6 @@ app.use((req, res, next) => {
 });
 
 // Definición de rutas
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var productosRouter = require('./routes/productos');
-var administracionRouter = require('./routes/administracion');
-var carritoRoutes = require('./routes/carrito');
-
 app.use('/', indexRouter);
 console.log("Router montado correctamente");
 app.use('/users', usersRouter);
@@ -88,7 +85,7 @@ app.use('/productos', productosRouter);
 app.use('/administracion', administracionRouter);
 app.use('/carrito', carritoRoutes);
 
-// Configuración de WebSockets (Solo agregamos Logs, no cambiamos lógica)
+// **Configuración de WebSockets**
 io.on('connection', (socket) => {
   console.log('🔌 Un cliente se ha conectado al WebSocket');
 
@@ -97,11 +94,5 @@ io.on('connection', (socket) => {
   });
 });
 
-// Escuchar en el puerto
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`🚀 Servidor ejecutándose en http://localhost:${PORT}`);
-});
-
 // Exportar la app y el servidor de sockets
-module.exports = { app, io };
+module.exports = { app, io, server };
