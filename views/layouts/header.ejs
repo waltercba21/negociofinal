@@ -8,9 +8,14 @@
   <nav class="navbar">
     <a class="nav-link" href="/">INICIO</a>
     <a class="nav-link" href="/productos">PRODUCTOS</a>
-    <a class="nav-link" href="/productos/ofertas">OFERTAS</a>
 
-    <% if (isAdminUser) { %>
+    <% if (!isAdminUser) { %>  <!-- ✅ Solo se muestra si NO es administrador -->
+      <a class="nav-link" href="/productos/ofertas">OFERTAS</a>
+      <a class="nav-link" href="https://wa.me/+543513820440/" target="_blank">WHATSAPP</a>
+      <a class="nav-link" href="#" onclick="abrirMapa(); return false;">UBICACIÓN</a>
+    <% } %>
+
+    <% if (isAdminUser) { %>  <!-- ✅ Solo se muestra para Administradores -->
       <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
       <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
       <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
@@ -21,16 +26,11 @@
       </a>
 
       <!-- ✅ Botón para Pedidos con notificación -->
-      <!-- ✅ Botón para Pedidos con notificación -->
-<a class="nav-link pedidos-icon" href="/pedidos" id="pedidos-btn">
-  PEDIDOS
-  <span id="pedido-notificacion" class="pedido-alerta" style="display: none;">0</span>
-</a>
-
+      <a class="nav-link pedidos-icon" href="/pedidos" id="pedidos-btn">
+        PEDIDOS
+        <span id="pedido-notificacion" class="pedido-alerta" style="display: none;">0</span>
+      </a>
     <% } %>
-
-    <a class="nav-link" href="https://wa.me/+543513820440/" target="_blank">WHATSAPP</a>
-    <a class="nav-link" href="#" onclick="abrirMapa(); return false;">UBICACIÓN</a>
   </nav>
 
   <div class="icons">
@@ -57,40 +57,39 @@
       <a class="register-link" href="/users/register">Registrarme</a>
     <% } %>  
   </div>
+
   <script src="/socket.io/socket.io.js"></script>
-<script>
-    const socket = io();
+  <script>
+      const socket = io();
 
-    socket.on('connect', () => {
-        console.log("✅ Conectado a WebSocket correctamente.");
-    });
+      socket.on('connect', () => {
+          console.log("✅ Conectado a WebSocket correctamente.");
+      });
 
-    socket.on('actualizarNotificacion', (data) => {
-        console.log("🔔 Notificación recibida vía WebSocket:", data);
-        actualizarPedidosPendientes();
-    });
+      socket.on('actualizarNotificacion', (data) => {
+          console.log("🔔 Notificación recibida vía WebSocket:", data);
+          actualizarPedidosPendientes();
+      });
 
-    async function actualizarPedidosPendientes() {
-        try {
-            console.log("📢 Solicitando pedidos pendientes...");
-            const response = await fetch('/pedidos/cantidad');  
-            const data = await response.json();
-            console.log("🔍 Pedidos pendientes recibidos en el frontend:", data);
+      async function actualizarPedidosPendientes() {
+          try {
+              console.log("📢 Solicitando pedidos pendientes...");
+              const response = await fetch('/pedidos/cantidad');  
+              const data = await response.json();
+              console.log("🔍 Pedidos pendientes recibidos en el frontend:", data);
 
-            const notificacion = document.getElementById("pedido-notificacion");
-            if (data.cantidad > 0) {
-                notificacion.textContent = data.cantidad;
-                notificacion.style.display = "inline-block";
-            } else {
-                notificacion.style.display = "none";
-            }
-        } catch (error) {
-            console.error("❌ Error al obtener pedidos pendientes:", error);
-        }
-    }
+              const notificacion = document.getElementById("pedido-notificacion");
+              if (data.cantidad > 0) {
+                  notificacion.textContent = data.cantidad;
+                  notificacion.style.display = "flex";
+              } else {
+                  notificacion.style.display = "none";
+              }
+          } catch (error) {
+              console.error("❌ Error al obtener pedidos pendientes:", error);
+          }
+      }
 
-    actualizarPedidosPendientes();
-</script>
-
-
+      actualizarPedidosPendientes();
+  </script>
 </header>
