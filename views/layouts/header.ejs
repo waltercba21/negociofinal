@@ -60,16 +60,16 @@
   <script>
     async function actualizarPedidosPendientes() {
         try {
-            const response = await fetch('/pedidos/cantidad');
+            const response = await fetch('/pedidos/cantidad');  // ✅ Verifica que usa la ruta correcta
             const data = await response.json();
+            console.log("🔍 Pedidos pendientes recibidos en el frontend:", data);  // ✅ Log para verificar
 
-            console.log("🔍 Pedidos pendientes recibidos en el frontend:", data); // Debug
-
+            const notificacion = document.getElementById("pedido-notificacion");
             if (data.cantidad > 0) {
-                pedidoNotificacion.textContent = data.cantidad;
-                pedidoNotificacion.style.display = "inline-block";
+                notificacion.textContent = data.cantidad;
+                notificacion.style.display = "inline-block";
             } else {
-                pedidoNotificacion.style.display = "none";
+                notificacion.style.display = "none";
             }
         } catch (error) {
             console.error("❌ Error al obtener pedidos pendientes:", error);

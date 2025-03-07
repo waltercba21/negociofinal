@@ -40,10 +40,11 @@ module.exports = {
                 console.error("❌ Error en la consulta de pedidos pendientes:", error);
                 return callback(error, null);
             }
-            console.log("✅ Cantidad de pedidos pendientes obtenida:", resultados[0].cantidad); // Debug
+            console.log("✅ Pedidos pendientes encontrados:", resultados[0].cantidad);  // ✅ Agrega un log
             callback(null, resultados[0].cantidad);
         });
     },
+    
     
 
     actualizarEstadoPedido: (id_pedido, nuevoEstado, callback) => {
