@@ -11,10 +11,11 @@ module.exports = {
                 console.error("❌ Error al obtener pedidos:", error);
                 return res.status(500).json({ error: "Error al obtener los pedidos" });
             }
-            console.log("✅ Pedidos obtenidos:", pedidos);
-            res.render("pedidos", { pedidos });
+            console.log("✅ Enviando pedidos a la vista:", pedidos);
+            res.render("pedidos", { pedidos });  // ✅ Renderiza correctamente la vista
         });
     },
+    
     obtenerPedidosPendientes: (req, res) => {
         pedidos.obtenerCantidadPedidosPendientes((error, cantidad) => {
             if (error) {

@@ -16,34 +16,57 @@
           <th>Acciones</th>
         </tr>
       </thead>
-      <tbody id="tabla-pedidos"></tbody>
+      <tbody>
+        <% if (typeof pedidos !== "undefined" && pedidos.length > 0) { %>
+          <% pedidos.forEach(function(pedido) { %>
+            <tr>
+              <td><%= pedido.id_pedido %></td>
+              <td><%= pedido.cliente %></td>
+              <td>$<%= pedido.total %></td>
+              <td><%= pedido.tipo_envio %></td>
+              <td><%= pedido.estado %></td>
+              <td>
+                <button onclick="marcarPreparado('<%= pedido.id_pedido %>')">🛠 Preparar</button>
+                <button onclick="finalizarPedido('<%= pedido.id_pedido %>')">✅ Finalizar</button>
+            </td>
+            
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="6">❌ No hay pedidos pendientes.</td></tr>
+        <% } %>
+      </tbody>
     </table>
   </main>
-  <%- include('./layouts/footer.ejs') %>
 
+  <%- include('./layouts/footer.ejs') %>
   <script>
     async function obtenerPedidos() {
         try {
-            const response = await fetch('/pedidos');  // ✅ Ruta corregida
+            const response = await fetch('/pedidos');  
             const pedidos = await response.json();
-            console.log("🔍 Pedidos obtenidos en el frontend:", pedidos);  // ✅ Agrega un log para verificar
+            console.log("🔍 Pedidos obtenidos en el frontend:", pedidos); 
 
             if (pedidos.length > 0) {
-                document.getElementById('tabla-pedidos').innerHTML = pedidos.map(pedido => `
-                    <tr>
-                        <td>${pedido.id_pedido}</td>
-                        <td>${pedido.cliente}</td>
-                        <td>$${pedido.total}</td>
-                        <td>${pedido.tipo_envio}</td>
-                        <td>${pedido.estado}</td>
-                        <td>
-                            <button onclick="marcarPreparado(${pedido.id_pedido})">🛠 Preparar</button>
-                            <button onclick="finalizarPedido(${pedido.id_pedido})">✅ Finalizar</button>
-                        </td>
-                    </tr>
-                `).join('');
+                let pedidosHTML = "";
+                pedidos.forEach(pedido => {
+                    pedidosHTML += `
+                        <tr>
+                            <td>${pedido.id_pedido}</td>
+                            <td>${pedido.cliente}</td>
+                            <td>$${pedido.total}</td>
+                            <td>${pedido.tipo_envio}</td>
+                            <td>${pedido.estado}</td>
+                            <td>
+                                <button onclick="marcarPreparado(${pedido.id_pedido})">🛠 Preparar</button>
+                                <button onclick="finalizarPedido(${pedido.id_pedido})">✅ Finalizar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                document.querySelector("tbody").innerHTML = pedidosHTML;
             } else {
-                document.getElementById('tabla-pedidos').innerHTML = "<tr><td colspan='6'>No hay pedidos pendientes.</td></tr>";
+                document.querySelector("tbody").innerHTML = "<tr><td colspan='6'>No hay pedidos pendientes.</td></tr>";
             }
         } catch (error) {
             console.error("❌ Error al cargar pedidos:", error);

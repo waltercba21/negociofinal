@@ -9,27 +9,21 @@ module.exports = {
             JOIN usuarios u ON c.usuario_id = u.id
             LEFT JOIN productos_carrito pc ON c.id = pc.carrito_id
             LEFT JOIN productos p ON pc.producto_id = p.id
+            WHERE c.estado IN ('pendiente', 'preparación', 'listo para entrega')  -- ✅ Filtro correcto
+            GROUP BY c.id, u.nombre, c.estado, c.tipo_envio
+            ORDER BY c.creado_en DESC;
         `;
     
-        let filtros = ["c.estado IN ('pendiente', 'preparación', 'listo para entrega')"];
-        let valores = [];
-    
-        if (estado) {
-            filtros = [`c.estado = ?`];
-            valores.push(estado);
-        }
-    
-        query += ` WHERE ${filtros.join(" AND ")} GROUP BY c.id, u.nombre, c.estado, c.tipo_envio ORDER BY c.creado_en DESC`;
-    
-        pool.query(query, valores, (error, resultados) => {
+        pool.query(query, (error, resultados) => {
             if (error) {
                 console.error("❌ Error al obtener pedidos:", error);
                 return callback(error, null);
             }
-            console.log("✅ Pedidos obtenidos:", resultados); // Debug
+            console.log("✅ Pedidos obtenidos en la BD:", resultados);
             callback(null, resultados);
         });
     },
+    
     obtenerCantidadPedidosPendientes: (callback) => {
         const query = "SELECT COUNT(*) AS cantidad FROM carritos WHERE estado IN ('pendiente', 'preparación')";
     
