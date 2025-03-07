@@ -58,30 +58,30 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-      const socket = io();
-      const pedidoNotificacion = document.getElementById("pedido-notificacion");
+    async function actualizarPedidosPendientes() {
+        try {
+            const response = await fetch('/pedidos/cantidad');
+            const data = await response.json();
 
-      async function actualizarPedidosPendientes() {
-          try {
-              const response = await fetch('/pedidos/cantidad');
-              const data = await response.json();
+            console.log("🔍 Pedidos pendientes recibidos en el frontend:", data); // Debug
 
-              if (data.cantidad > 0) {
-                  pedidoNotificacion.textContent = data.cantidad;
-                  pedidoNotificacion.style.display = "inline-block";
-              } else {
-                  pedidoNotificacion.style.display = "none";
-              }
-          } catch (error) {
-              console.error("❌ Error al obtener pedidos pendientes:", error);
-          }
-      }
+            if (data.cantidad > 0) {
+                pedidoNotificacion.textContent = data.cantidad;
+                pedidoNotificacion.style.display = "inline-block";
+            } else {
+                pedidoNotificacion.style.display = "none";
+            }
+        } catch (error) {
+            console.error("❌ Error al obtener pedidos pendientes:", error);
+        }
+    }
 
-      socket.on('nuevoPedido', () => {
-          console.log("🔔 Nuevo pedido recibido.");
-          actualizarPedidosPendientes();
-      });
+    socket.on('nuevoPedido', () => {
+        console.log("🔔 Nuevo pedido recibido.");
+        actualizarPedidosPendientes();
+    });
 
-      actualizarPedidosPendientes();
-  </script>
+    actualizarPedidosPendientes();
+</script>
+
 </header>
