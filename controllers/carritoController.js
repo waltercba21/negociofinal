@@ -664,11 +664,12 @@ module.exports = {
     obtenerPedidos: (req, res) => {
         carrito.obtenerPedidos((error, pedidos) => {
             if (error) {
-                return res.status(500).json({ error: "Error al obtener los pedidos" });
+                return res.status(500).render("error", { mensaje: "Error al obtener los pedidos" });
             }
-            res.json(pedidos);
+            res.render("carrito/pedidos", { pedidos });
         });
     },
+    
     marcarPedidoComoPreparado: (req, res) => {
         const id_pedido = req.params.id;
     
