@@ -55,33 +55,36 @@
       <a class="register-link" href="/users/register">Registrarme</a>
     <% } %>  
   </div>
-
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    async function actualizarPedidosPendientes() {
-        try {
-            const response = await fetch('/pedidos/cantidad');  // ✅ Verifica que usa la ruta correcta
-            const data = await response.json();
-            console.log("🔍 Pedidos pendientes recibidos en el frontend:", data);  // ✅ Log para verificar
-
-            const notificacion = document.getElementById("pedido-notificacion");
-            if (data.cantidad > 0) {
-                notificacion.textContent = data.cantidad;
-                notificacion.style.display = "inline-block";
-            } else {
-                notificacion.style.display = "none";
-            }
-        } catch (error) {
-            console.error("❌ Error al obtener pedidos pendientes:", error);
-        }
-    }
-
-    socket.on('nuevoPedido', () => {
-        console.log("🔔 Nuevo pedido recibido.");
-        actualizarPedidosPendientes();
-    });
-
-    actualizarPedidosPendientes();
-</script>
+      const socket = io();
+  
+      async function actualizarPedidosPendientes() {
+          try {
+              console.log("📢 Solicitando pedidos pendientes...");
+              const response = await fetch('/pedidos/cantidad');  
+              const data = await response.json();
+              console.log("🔍 Pedidos pendientes recibidos en el frontend:", data);
+  
+              const notificacion = document.getElementById("pedido-notificacion");
+              if (data.cantidad > 0) {
+                  notificacion.textContent = data.cantidad;
+                  notificacion.style.display = "inline-block";
+              } else {
+                  notificacion.style.display = "none";
+              }
+          } catch (error) {
+              console.error("❌ Error al obtener pedidos pendientes:", error);
+          }
+      }
+  
+      socket.on('nuevoPedido', (data) => {
+          console.log("🔔 Nuevo pedido recibido vía Socket.io:", data);
+          actualizarPedidosPendientes();
+      });
+  
+      actualizarPedidosPendientes();
+  </script>
+  
 
 </header>

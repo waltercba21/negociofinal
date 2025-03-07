@@ -88,12 +88,17 @@ app.use('/pedidos', pedidosRoutes);
 
 // **Configuración de WebSockets**
 io.on('connection', (socket) => {
-  console.log('🔌 Un cliente se ha conectado al WebSocket');
+  console.log("🔌 Un cliente se ha conectado al WebSocket");
 
   socket.on('disconnect', () => {
-    console.log('❌ Cliente desconectado');
+    console.log("❌ Cliente desconectado");
+  });
+
+  socket.on('nuevoPedido', (data) => {
+    console.log("🔔 Evento 'nuevoPedido' recibido en el servidor:", data);
   });
 });
+
 
 // Exportar la app y el servidor de sockets
 module.exports = { app, io, server };

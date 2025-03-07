@@ -30,8 +30,6 @@ module.exports = {
             callback(null, resultados);
         });
     },
-    
-
     obtenerCantidadPedidosPendientes: (callback) => {
         const query = "SELECT COUNT(*) AS cantidad FROM carritos WHERE estado IN ('pendiente', 'preparación')";
     
@@ -40,13 +38,10 @@ module.exports = {
                 console.error("❌ Error en la consulta de pedidos pendientes:", error);
                 return callback(error, null);
             }
-            console.log("✅ Pedidos pendientes encontrados:", resultados[0].cantidad);  // ✅ Agrega un log
+            console.log("✅ Pedidos pendientes encontrados en la BD:", resultados[0].cantidad);
             callback(null, resultados[0].cantidad);
         });
     },
-    
-    
-
     actualizarEstadoPedido: (id_pedido, nuevoEstado, callback) => {
         const query = "UPDATE carritos SET estado = ? WHERE id = ?";
         pool.query(query, [nuevoEstado, id_pedido], (error, resultados) => {
