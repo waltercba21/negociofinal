@@ -140,6 +140,29 @@ header .icons p {
   font-size: 15px;
   align-items: flex-start;
 }
+/* ✅ Estilos específicos para la notificación de pedidos */
+.pedidos-icon {
+  position: relative;
+  display: inline-block;
+}
+
+.pedido-alerta {
+  position: absolute;
+  top: -5px; /* Ajusta la posición para centrarlo mejor */
+  right: -10px; /* Asegura que se mantenga alineado correctamente */
+  background-color: #d90429;
+  color: white;
+  border-radius: 50%;
+  width: 22px; /* Ajuste del tamaño del círculo */
+  height: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px; /* Ajuste del tamaño del número */
+  font-weight: bold;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
 /* ---------------------------------------FOOTER ------------------------------------------- */
 footer {
   background-color: #fff;
