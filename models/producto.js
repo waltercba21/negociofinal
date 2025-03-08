@@ -326,8 +326,7 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
         });
       });
     });
-  },
-  
+  }, 
   actualizar: function (conexion, datos, archivo) { 
     return new Promise((resolve, reject) => {
         let query = "UPDATE productos SET ";
@@ -414,12 +413,19 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
             params.push(datos.calidad_original);
             first = false;
         }
-        // Campo VIC
         if (typeof datos.calidad_vic !== 'undefined') {
             query += first ? "calidad_vic=?" : ", calidad_vic=?";
             params.push(datos.calidad_vic);
             first = false;
         }
+
+        // 🔥🔥🔥 AÑADIR ACTUALIZACIÓN DEL CAMPO OFERTA 🔥🔥🔥
+        if (typeof datos.oferta !== 'undefined') {
+            query += first ? "oferta=?" : ", oferta=?";
+            params.push(datos.oferta);
+            first = false;
+        }
+
         if (!datos.id) {
             reject(new Error('Los datos del producto deben incluir un ID'));
         }
@@ -435,6 +441,7 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
         });
     });
 },
+
 actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
     return new Promise((resolve, reject) => {
         const querySelect = 'SELECT * FROM producto_proveedor WHERE producto_id = ? AND proveedor_id = ?';
