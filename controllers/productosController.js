@@ -12,57 +12,69 @@ const pdfParse = require('pdf-parse');
     const adminEmails = ['walter@autofaros.com.ar'];
 
 module.exports = {
-    index: (req, res) => {
-        producto.obtenerUltimos(conexion, 3, (error, productos) => {
-            if (error) {
-                return res.status(500).send('Error al obtener los productos');
-            } else {
-                producto.obtenerProductosOferta(conexion, (error, productosOferta) => {
-                    if (error) {
-                        return res.status(500).send('Error al obtener las ofertas');
-                    } else {
-                        let cantidadCarrito = 0;
+    index : async (req, res) => {
+        try {
+            // Obtener los últimos 3 productos y los productos en oferta en paralelo
+            const [productos, productosOferta] = await Promise.all([
+                new Promise((resolve, reject) => {
+                    producto.obtenerUltimos(conexion, 3, (error, resultado) => {
+                        if (error) reject(error);
+                        else resolve(resultado);
+                    });
+                }),
+                new Promise((resolve, reject) => {
+                    producto.obtenerProductosOferta(conexion, (error, resultado) => {
+                        if (error) reject(error);
+                        else resolve(resultado);
+                    });
+                })
+            ]);
     
-                        if (req.session && req.session.usuario) {
-                            const id_usuario = req.session.usuario.id;
+            console.log("✅ Productos en oferta obtenidos:", productosOferta); // Verificar que se están obteniendo
     
-                            carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
-                                if (carritoActivo && carritoActivo.length > 0) {
-                                    const id_carrito = carritoActivo[0].id;
+            let cantidadCarrito = 0;
     
-                                    carrito.obtenerProductosCarrito(id_carrito, (error, productosCarrito) => {
-                                        if (productosCarrito) {
-                                            cantidadCarrito = productosCarrito.length;
-                                        }
+            // Si el usuario está autenticado, obtenemos la cantidad de productos en el carrito
+            if (req.session?.usuario) {
+                const id_usuario = req.session.usuario.id;
     
-                                        res.render('index', { 
-                                            productos, 
-                                            productosOferta, 
-                                            cantidadCarrito,
-                                            producto: null // Evita error en head.ejs
-                                        });
-                                    });
-                                } else {
-                                    res.render('index', { 
-                                        productos, 
-                                        productosOferta, 
-                                        cantidadCarrito: 0,
-                                        producto: null
-                                    });
-                                }
+                try {
+                    const carritoActivo = await new Promise((resolve, reject) => {
+                        carrito.obtenerCarritoActivo(id_usuario, (error, resultado) => {
+                            if (error) reject(error);
+                            else resolve(resultado);
+                        });
+                    });
+    
+                    if (carritoActivo && carritoActivo.length > 0) {
+                        const id_carrito = carritoActivo[0].id;
+    
+                        const productosCarrito = await new Promise((resolve, reject) => {
+                            carrito.obtenerProductosCarrito(id_carrito, (error, resultado) => {
+                                if (error) reject(error);
+                                else resolve(resultado);
                             });
-                        } else {
-                            res.render('index', { 
-                                productos, 
-                                productosOferta, 
-                                cantidadCarrito: 0,
-                                producto: null
-                            });
-                        }
+                        });
+    
+                        cantidadCarrito = productosCarrito.length;
                     }
-                });
+                } catch (error) {
+                    console.error("❌ Error al obtener el carrito:", error);
+                }
             }
-        });
+    
+            // Renderizar la vista con los datos obtenidos
+            res.render('index', {
+                productos,
+                productosOferta,
+                cantidadCarrito,
+                producto: null // Evita error en head.ejs
+            });
+    
+        } catch (error) {
+            console.error("❌ Error en index:", error);
+            return res.status(500).send("Error interno del servidor");
+        }
     },
     lista: async function (req, res) {
         try {
