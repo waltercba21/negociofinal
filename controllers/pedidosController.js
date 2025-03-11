@@ -4,7 +4,7 @@ module.exports = {
     obtenerPedidos: (req, res) => {
         const estado = req.query.estado || null;
         console.log(`📢 Solicitando pedidos con estado: ${estado}`);
-    
+
         pedidos.obtenerPedidos(estado, (error, pedidos) => {
             if (error) {
                 console.error("❌ Error al obtener pedidos:", error);
@@ -14,7 +14,7 @@ module.exports = {
             res.render("pedidos", { pedidos });
         });
     },
-    
+
     obtenerPedidosPendientes: (req, res) => {
         pedidos.obtenerCantidadPedidosPendientes((error, cantidad) => {
             if (error) {
@@ -35,13 +35,13 @@ module.exports = {
             }
 
             console.log("✅ Pedido actualizado a 'preparación'. Enviando evento Socket.io...");
-            const io = req.app.get('io');  // 🔹 Obtener `io` desde `app`
-            io.emit('nuevoPedido', { id_pedido, estado: "preparación" });
+            const io = req.app.get("io");  // Obtener `io` correctamente
+            io.emit("nuevoPedido", { id_pedido, estado: "preparación" });
 
             res.json({ mensaje: "Pedido marcado como en preparación" });
         });
     },
-    
+
     marcarPedidoComoFinalizado: (req, res) => {
         const id_pedido = req.params.id;
         console.log(`📢 Marcando pedido ${id_pedido} como "finalizado"`);
@@ -53,8 +53,8 @@ module.exports = {
             }
 
             console.log("✅ Pedido actualizado a 'finalizado'. Enviando evento Socket.io...");
-            const io = req.app.get('io');  // 🔹 Obtener `io` desde `app`
-            io.emit('nuevoPedido', { id_pedido, estado: "finalizado" });
+            const io = req.app.get("io");  // Obtener `io` correctamente
+            io.emit("nuevoPedido", { id_pedido, estado: "finalizado" });
 
             res.json({ mensaje: "Pedido marcado como finalizado" });
         });

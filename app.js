@@ -18,13 +18,12 @@ var administracionRouter = require('./routes/administracion');
 var carritoRoutes = require('./routes/carrito');
 var pedidosRoutes = require('./routes/pedidos');
 
-// **Corrección de socket.io**
 var app = express();
-var server = require('http').Server(app);
+var server = require('http').createServer(app);
 var io = require('socket.io')(server, { cors: { origin: "*" } });  
 
-// **Guardar `io` globalmente en `app` para evitar importación circular**
-app.set('io', io);
+// 🔹 **Asociar `socket.io` correctamente con Express**
+app.set("io", io);  
 
 // Configuración de Mercado Pago
 mercadopago.configure({
@@ -81,7 +80,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Definición de rutas
+// **Definir rutas DESPUÉS de configurar socket.io**
 app.use('/', indexRouter);
 console.log("Router montado correctamente");
 app.use('/users', usersRouter);
@@ -91,17 +90,23 @@ app.use('/carrito', carritoRoutes);
 app.use('/pedidos', pedidosRoutes);
 
 // **Configuración de WebSockets**
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   console.log("🔌 Un cliente se ha conectado al WebSocket");
 
-  socket.on('disconnect', () => {
+  socket.on("disconnect", () => {
     console.log("❌ Cliente desconectado");
   });
 
-  socket.on('nuevoPedido', (data) => {
+  socket.on("nuevoPedido", (data) => {
     console.log("🔔 Evento 'nuevoPedido' recibido en el servidor:", data);
   });
 });
 
-// Exportar solo `app` y `server`, `io` ahora está en `app`
+// Iniciar el servidor
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log("🛜 WebSocket corriendo en el mismo servidor");
+});
+
 module.exports = { app, server };
