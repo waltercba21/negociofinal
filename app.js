@@ -11,6 +11,7 @@ dotenv.config();
 const calcularCantidadCarrito = require('./middleware/carritoMiddleware');
 const mercadopago = require('mercadopago');
 
+// **Cargar módulos de rutas después de inicializar el servidor**
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var productosRouter = require('./routes/productos');
@@ -18,57 +19,49 @@ var administracionRouter = require('./routes/administracion');
 var carritoRoutes = require('./routes/carrito');
 var pedidosRoutes = require('./routes/pedidos');
 
+// **Crear la aplicación Express**
 var app = express();
 var server = require('http').createServer(app);
-var io = require('socket.io')(server, { cors: { origin: "*" } });  
+var io = require('socket.io')(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
-// 🔹 **Asociar `socket.io` correctamente con Express**
-app.set("io", io);  
+// **Asignar `socket.io` globalmente en la aplicación**
+app.set("io", io);
 
 // Configuración de Mercado Pago
 mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN
 });
 
-// Configuración de vistas y motor de plantillas
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-
-// Configuración de sesiones
+// **Middleware para sesiones**
 app.use(session({
-  secret: 'tu secreto',
+  secret: 'tu_secreto',
   resave: false,
   saveUninitialized: true,
   cookie: { maxAge: 6200000 }
 }));
 
-// Middleware para calcular la cantidad en el carrito
-app.use(calcularCantidadCarrito);
-
-// Middleware para manejar sesiones expiradas
-app.use((req, res, next) => {
-  if (req.session.usuario && Date.now() > req.session.cookie.expires) {
-    res.redirect('/');
-    return;
-  }
-  next();
-});
-
-// Logger de solicitudes
+// **Middleware estándar**
 app.use(logger('dev'));
-
-// Configuración de parseo de JSON y formularios
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: false }));
 app.use(bodyParser.json({ limit: '50mb' }));
 
-// Servir archivos estáticos
+// **Configurar archivos estáticos**
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Middleware de autenticación y globales
+// **Configurar el motor de vistas**
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+// **Middleware de autenticación y globales**
 app.use(adminMiddleware);
 app.use(middlewares.setGlobalVariables);
 
@@ -80,29 +73,33 @@ app.use((req, res, next) => {
   next();
 });
 
-// **Definir rutas DESPUÉS de configurar socket.io**
+// **Definir rutas**
 app.use('/', indexRouter);
-console.log("Router montado correctamente");
 app.use('/users', usersRouter);
 app.use('/productos', productosRouter);
 app.use('/administracion', administracionRouter);
 app.use('/carrito', carritoRoutes);
 app.use('/pedidos', pedidosRoutes);
 
-// **Configuración de WebSockets**
-io.on("connection", (socket) => {
-  console.log("🔌 Un cliente se ha conectado al WebSocket");
-
-  socket.on("disconnect", () => {
-    console.log("❌ Cliente desconectado");
-  });
-
-  socket.on("nuevoPedido", (data) => {
-    console.log("🔔 Evento 'nuevoPedido' recibido en el servidor:", data);
-  });
+// **Ruta de prueba para verificar `socket.io`**
+app.get('/socket-test', (req, res) => {
+    res.send("✅ WebSockets está funcionando correctamente en el servidor.");
 });
 
-// Iniciar el servidor
+// **Configuración de WebSockets**
+io.on("connection", (socket) => {
+    console.log("🔌 Un cliente se ha conectado al WebSocket");
+
+    socket.on("disconnect", () => {
+        console.log("❌ Cliente desconectado");
+    });
+
+    socket.on("nuevoPedido", (data) => {
+        console.log("🔔 Evento 'nuevoPedido' recibido en el servidor:", data);
+    });
+});
+
+// **Iniciar el servidor**
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
