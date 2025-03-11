@@ -48,7 +48,22 @@
         <% } else { %>
             <p class="carrito-vacio">No tienes productos en tu carrito.</p>
         <% } %>
+        <button id="descargar-comprobante" class="btn-finalizar">📄 Descargar Comprobante</button>
 
+        <script>
+            document.getElementById("descargar-comprobante").addEventListener("click", async function () {
+                const response = await fetch("/carrito/comprobante");
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "comprobante_autofaros.pdf";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        </script>
+        
     </main>
 
     <%- include('./layouts/footer.ejs') %>

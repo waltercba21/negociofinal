@@ -52,5 +52,6 @@
     router.get('/pago-pendiente', (req, res) => {
         res.render('pagoPendiente', { mensaje: "Tu pago está pendiente de aprobación." });
     });
-    
+    router.get("/comprobante", autenticarUsuario, carritoController.generarComprobante);
+
     module.exports = router;
