@@ -4,8 +4,6 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var logger = require('morgan');
 const session = require('express-session');
-const adminMiddleware = require('./middleware/adminMiddleware');
-const middlewares = require('./middleware/middlewares');
 const dotenv = require('dotenv');
 dotenv.config();
 const calcularCantidadCarrito = require('./middleware/carritoMiddleware');
@@ -25,14 +23,21 @@ var server = require('http').createServer(app);
 var io = require('socket.io')(server, {
     cors: {
         origin: "*",
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST"],
+        transports: ["websocket", "polling"], // ✅ Permitir WebSockets y Polling
+        credentials: true
     }
+});
+
+// **Forzar WebSockets cuando sea posible**
+io.engine.on("connection_error", (err) => {
+    console.error("⚠️ Error de conexión en socket.io:", err.message);
 });
 
 // **Asignar `socket.io` globalmente en la aplicación**
 app.set("io", io);
 
-// Configuración de Mercado Pago
+// **Configuración de Mercado Pago**
 mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN
 });
@@ -62,10 +67,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 // **Middleware de autenticación y globales**
-app.use(adminMiddleware);
-app.use(middlewares.setGlobalVariables);
-
-// **Middleware para evitar errores de "producto is not defined" en todas las vistas**
+app.use(calcularCantidadCarrito);
 app.use((req, res, next) => {
   res.locals.producto = null;
   res.locals.isLogged = req.session.usuario !== undefined;
@@ -88,14 +90,14 @@ app.get('/socket-test', (req, res) => {
 
 // **Configuración de WebSockets**
 io.on("connection", (socket) => {
-    console.log("🔌 Un cliente se ha conectado al WebSocket");
+    console.log("🔌 Cliente conectado a WebSockets.");
 
     socket.on("disconnect", () => {
-        console.log("❌ Cliente desconectado");
+        console.log("❌ Cliente desconectado.");
     });
 
     socket.on("nuevoPedido", (data) => {
-        console.log("🔔 Evento 'nuevoPedido' recibido en el servidor:", data);
+        console.log("🔔 Evento 'nuevoPedido' recibido:", data);
     });
 });
 
