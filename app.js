@@ -26,6 +26,10 @@ mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN
 });
 
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+});
 // Configuración de vistas y motor de plantillas
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
