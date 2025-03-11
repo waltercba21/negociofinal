@@ -24,14 +24,10 @@ var io = require('socket.io')(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"],
-        transports: ["websocket", "polling"], // ✅ Permitir WebSockets y Polling
+        allowedHeaders: ["my-custom-header"],
         credentials: true
-    }
-});
-
-// **Forzar WebSockets cuando sea posible**
-io.engine.on("connection_error", (err) => {
-    console.error("⚠️ Error de conexión en socket.io:", err.message);
+    },
+    transports: ["websocket", "polling"]  // **Permitir WebSocket y Polling**
 });
 
 // **Asignar `socket.io` globalmente en la aplicación**
@@ -90,14 +86,14 @@ app.get('/socket-test', (req, res) => {
 
 // **Configuración de WebSockets**
 io.on("connection", (socket) => {
-    console.log("🔌 Cliente conectado a WebSockets.");
+    console.log("🔌 Un cliente se ha conectado al WebSocket");
 
     socket.on("disconnect", () => {
-        console.log("❌ Cliente desconectado.");
+        console.log("❌ Cliente desconectado");
     });
 
     socket.on("nuevoPedido", (data) => {
-        console.log("🔔 Evento 'nuevoPedido' recibido:", data);
+        console.log("🔔 Evento 'nuevoPedido' recibido en el servidor:", data);
     });
 });
 
