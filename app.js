@@ -10,16 +10,21 @@ const dotenv = require('dotenv');
 dotenv.config();
 const calcularCantidadCarrito = require('./middleware/carritoMiddleware');
 const mercadopago = require('mercadopago');
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var productosRouter = require('./routes/productos');
 var administracionRouter = require('./routes/administracion');
 var carritoRoutes = require('./routes/carrito');
 var pedidosRoutes = require('./routes/pedidos');
+
 // **Corrección de socket.io**
 var app = express();
 var server = require('http').Server(app);
-var io = require('socket.io')(server, { cors: { origin: "*" } });  // ✅ Permite conexiones de cualquier origen
+var io = require('socket.io')(server, { cors: { origin: "*" } });  
+
+// **Guardar `io` globalmente en `app` para evitar importación circular**
+app.set('io', io);
 
 // Configuración de Mercado Pago
 mercadopago.configure({
@@ -63,7 +68,6 @@ app.use(bodyParser.json({ limit: '50mb' }));
 // Servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-  // ✅ Carga `socket.io.js` correctamente
 
 // Middleware de autenticación y globales
 app.use(adminMiddleware);
@@ -99,6 +103,5 @@ io.on('connection', (socket) => {
   });
 });
 
-
-// Exportar la app y el servidor de sockets
-module.exports = { app, io, server };
+// Exportar solo `app` y `server`, `io` ahora está en `app`
+module.exports = { app, server };

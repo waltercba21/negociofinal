@@ -1,5 +1,4 @@
 const pedidos = require('../models/pedidos');
-const { io } = require('../app');
 
 module.exports = {
     obtenerPedidos: (req, res) => {
@@ -12,7 +11,7 @@ module.exports = {
                 return res.status(500).json({ error: "Error al obtener los pedidos" });
             }
             console.log("✅ Enviando pedidos a la vista:", pedidos);
-            res.render("pedidos", { pedidos });  // ✅ Renderiza correctamente la vista
+            res.render("pedidos", { pedidos });
         });
     },
     
@@ -28,14 +27,17 @@ module.exports = {
     marcarPedidoComoPreparado: (req, res) => {
         const id_pedido = req.params.id;
         console.log(`📢 Marcando pedido ${id_pedido} como "preparación"`);
-    
+
         pedidos.actualizarEstadoPedido(id_pedido, "preparación", (error) => {
             if (error) {
                 console.error("❌ Error al actualizar el pedido a 'preparación':", error);
                 return res.status(500).json({ error: "Error al actualizar el pedido a 'preparación'" });
             }
+
             console.log("✅ Pedido actualizado a 'preparación'. Enviando evento Socket.io...");
+            const io = req.app.get('io');  // 🔹 Obtener `io` desde `app`
             io.emit('nuevoPedido', { id_pedido, estado: "preparación" });
+
             res.json({ mensaje: "Pedido marcado como en preparación" });
         });
     },
@@ -43,14 +45,17 @@ module.exports = {
     marcarPedidoComoFinalizado: (req, res) => {
         const id_pedido = req.params.id;
         console.log(`📢 Marcando pedido ${id_pedido} como "finalizado"`);
-    
+
         pedidos.actualizarEstadoPedido(id_pedido, "finalizado", (error) => {
             if (error) {
                 console.error("❌ Error al actualizar el pedido a 'finalizado':", error);
                 return res.status(500).json({ error: "Error al actualizar el pedido a 'finalizado'" });
             }
+
             console.log("✅ Pedido actualizado a 'finalizado'. Enviando evento Socket.io...");
+            const io = req.app.get('io');  // 🔹 Obtener `io` desde `app`
             io.emit('nuevoPedido', { id_pedido, estado: "finalizado" });
+
             res.json({ mensaje: "Pedido marcado como finalizado" });
         });
     },
