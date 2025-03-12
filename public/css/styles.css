@@ -3008,19 +3008,19 @@ td {
   border-radius: 5px;
 }
 .boton-eliminar-factura {
-  background: none;
-  border: none;
-  cursor: pointer;
+  background-color: #b30000 !important;
+  border: none !important;
+  cursor: pointer !important;
   color: #fff !important;
-  font-size: 18px;
-  transition: color 0.3s ease-in-out;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  padding: 5px;
-  margin-bottom: 20px;
+  font-size: 18px !important;
+  transition: color 0.3s ease-in-out !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 5px !important;
+  margin-bottom: 20px !important;
 }
 
 .boton-eliminar-factura:hover {
