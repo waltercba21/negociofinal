@@ -2989,6 +2989,7 @@ td {
   padding: 5px;
 }
 .resultado-contenedor{
+  height: 20px;
   margin-bottom: 15px;;
 }
 .resultado-busqueda:hover {
