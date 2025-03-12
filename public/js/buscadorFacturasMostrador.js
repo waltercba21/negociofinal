@@ -272,26 +272,26 @@ function updateSubtotal(row, verificarStock = true) {
     const subtotal = precio * cantidad;
     row.cells[6].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
-    // 🔥 Validar stock antes de permitir facturación
-    if (verificarStock) {
+    // 🔥 Validar stock SOLO cuando se modifica la cantidad, NO cuando se cambia el precio
+    if (verificarStock && document.activeElement === inputCantidad) {
         if (cantidad > stockActual) {
             Swal.fire({
                 title: 'ALERTA',
-                text: 'NO HAY STOCK DISPONIBLE',
+                text: 'NO HAY STOCK DISPONIBLE. Solo hay ' + stockActual + ' unidades en stock.',
                 icon: 'error',
                 confirmButtonText: 'Entendido'
             });
-            inputCantidad.value = 1; // Restablecer cantidad a 1 si no hay stock suficiente
-            return;
+            inputCantidad.value = stockActual > 0 ? stockActual : 1; // Si hay stock disponible, usa el máximo, si no, 1
+            cantidad = parseInt(inputCantidad.value); // Actualizamos la cantidad
         }
 
         const stockRestante = stockActual - cantidad;
         const stockMinimo = 5;
 
-        if (stockRestante <= stockMinimo) {
+        if (stockRestante <= stockMinimo && stockRestante >= 0) {
             Swal.fire({
                 title: 'ALERTA',
-                text: 'LLEGANDO AL LIMITE DE STOCK',
+                text: 'LLEGANDO AL LIMITE DE STOCK. Quedan ' + stockRestante + ' unidades disponibles.',
                 icon: 'warning',
                 confirmButtonText: 'Entendido'
             });
@@ -345,7 +345,7 @@ document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
 
     if (inputPrecio) {
         inputPrecio.addEventListener('input', function () {
-            updateSubtotal(row);
+            updateSubtotal(row, false); // 🔥 Evita la validación de stock cuando se cambia el precio
         });
     }
 });
