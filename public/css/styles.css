@@ -2991,7 +2991,7 @@ td {
   background: none;
   border: none;
   cursor: pointer;
-  color: #d90429 !important; /* Color rojo */
+  color: #fff !important;
   font-size: 18px;
   transition: color 0.3s ease-in-out;
   display: inline-flex;
@@ -3003,7 +3003,7 @@ td {
 }
 
 .boton-eliminar-factura:hover {
-  color: #a8001a !important; /* Color rojo más oscuro al pasar el mouse */
+  color: #fff !important; /* Color rojo más oscuro al pasar el mouse */
 }
 
 .boton-eliminar-factura i {
