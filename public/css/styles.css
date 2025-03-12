@@ -2977,7 +2977,7 @@ td {
   width: 80px; 
   height: 30px;
   text-align: center;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 /* 🔹 Ajustar tamaño y evitar recorte de imágenes */
@@ -3008,7 +3008,7 @@ td {
 }
 
 .boton-eliminar-factura i {
-  font-size: 16px !important;
+  font-size: 12px !important;
 }
 
 
@@ -3037,28 +3037,28 @@ td {
   width: 40px;
   height: 40px;
   margin-right: 20px;
-  object-fit: contain; /* Ajusta la imagen sin recortar */
-  flex-shrink: 0; /* Evita que se reduzca */
+  object-fit: contain; 
+  flex-shrink: 0; 
 }
 
 .resultado-busqueda {
   display: flex;
-  align-items: center;  /* Alinea verticalmente imagen y texto */
-  gap: 10px;  /* Espaciado entre imagen y nombre */
+  align-items: center;
+  gap: 10px;
   padding: 8px;
   font-size: 12px;
-  min-height: 50px; /* Mantiene el tamaño uniforme */
+  min-height: 50px;
   cursor: pointer;
   transition: background-color 0.3s ease-in-out;
 }
 
 .resultado-contenedor {
   display: flex;
-  align-items: center;  /* Asegura que el texto y la imagen estén alineados */
+  align-items: center;
   justify-content: flex-start;
-  height: 100%;  /* Coincide con .resultado-busqueda */
-  flex: 1;  /* Hace que el texto ocupe el espacio restante */
-  overflow: hidden; /* Evita desbordamientos */
+  height: 100%; 
+  flex: 1; 
+  overflow: hidden; 
   white-space: nowrap;
   text-overflow: ellipsis;
 }
