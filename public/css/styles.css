@@ -2987,6 +2987,23 @@ td {
   object-fit: contain; 
   border-radius: 5px;
 }
+/* 🔹 Ajuste del botón de eliminar */
+.boton-eliminar {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #d90429;
+  font-size: 18px;
+  transition: color 0.3s ease-in-out;
+}
+
+.boton-eliminar:hover {
+  color: #a8001a;
+}
+
+.boton-eliminar i {
+  font-size: 18px;
+}
 
 
 #guardarFactura,
