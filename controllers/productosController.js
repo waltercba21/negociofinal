@@ -231,7 +231,7 @@ module.exports = {
             
             req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
             
-            const limite = req.query.limite ? parseInt(req.query.limite) : 10;
+            const limite = req.query.limite ? parseInt(req.query.limite) : 100;
 
             const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
             
