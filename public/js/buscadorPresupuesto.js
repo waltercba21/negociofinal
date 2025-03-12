@@ -37,7 +37,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     if (invoiceItems.length === 0) {
         Swal.fire({
             title: 'Error',
-            text: 'Debe agregar al menos un producto válido al presupuesto antes de enviarla.',
+            text: 'Debe agregar al menos un producto válido al presupuesto antes de enviarlo.',
             icon: 'error',
             confirmButtonText: 'Entendido'
         });
@@ -55,8 +55,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
-    const metodosPago = Array.from(metodosPagoSeleccionados).map(input => input.value);
-
     try {
         const response = await fetch('/productos/procesarFormulario', {
             method: 'POST',
@@ -67,8 +65,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: fechaFactura,
                 totalPresupuesto: totalFactura,
-                invoiceItems,
-                metodosPago: metodosPago.join(', ')
+                invoiceItems
             })
         });
 
@@ -81,7 +78,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 confirmButtonText: 'Entendido'
             }).then(() => {
                 Swal.fire({
-                    title: 'Nueva Factura',
+                    title: 'Nuevo Presupuesto',
                     text: 'Está por realizar un nuevo presupuesto. Complete los datos.',
                     icon: 'info',
                     confirmButtonText: 'Entendido'
@@ -102,6 +99,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
