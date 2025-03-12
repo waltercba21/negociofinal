@@ -2942,30 +2942,50 @@ td {
 
 /* 🔹 Ajustar altura de las filas de la tabla */
 #tabla-factura tbody tr {
-  height: 40px; /* Ajustar la altura de las filas dinámicas */
+  height: 50px; /* Ajustar la altura de las filas dinámicas */
 }
 
 /* 🔹 Ajustar tamaño de las celdas */
 #tabla-factura td, #tabla-factura th {
-  padding: 5px; /* Reducir el espacio interno */
-  text-align: center; /* Centrar contenido */
-  vertical-align: middle; /* Centrar contenido verticalmente */
+  padding: 5px;
+  font-size: 14px;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+  overflow: hidden; /* Evita que el contenido desborde */
+  text-overflow: ellipsis; /* Agrega "..." si el texto es demasiado largo */
 }
-
+/* 🔹 Ajustar el ancho de cada columna */
+#tabla-factura th:nth-child(1), 
+#tabla-factura td:nth-child(1) { width: 60px; } /* Imagen */
+#tabla-factura th:nth-child(2), 
+#tabla-factura td:nth-child(2) { width: 100px; } /* Código */
+#tabla-factura th:nth-child(3), 
+#tabla-factura td:nth-child(3) { width: 250px; } /* Descripción */
+#tabla-factura th:nth-child(4), 
+#tabla-factura td:nth-child(4) { width: 100px; } /* Precio */
+#tabla-factura th:nth-child(5), 
+#tabla-factura td:nth-child(5) { width: 80px; } /* Cantidad */
+#tabla-factura th:nth-child(6), 
+#tabla-factura td:nth-child(6) { width: 100px; } /* Stock */
+#tabla-factura th:nth-child(7), 
+#tabla-factura td:nth-child(7) { width: 120px; } /* Subtotal */
+#tabla-factura th:nth-child(8), 
+#tabla-factura td:nth-child(8) { width: 50px; } /* Eliminar */
 /* 🔹 Ajustar tamaño de inputs en la tabla */
 #tabla-factura input {
   width: 80px; /* Ajustar ancho de los inputs */
-  height: 25px; /* Reducir altura de los inputs */
+  height: 30px; /* Reducir altura de los inputs */
   text-align: center;
   font-size: 14px;
 }
 
 /* 🔹 Ajustar tamaño y evitar recorte de imágenes */
 .miniatura-tabla {
-  width: 35px; /* Tamaño adecuado para la imagen */
-  height: 35px;
-  object-fit: contain; /* Asegura que la imagen se vea completa sin recortarse */
-  border-radius: 5px; /* Opcional: Bordes redondeados */
+  width: 50px; 
+  height: 50px;
+  object-fit: contain; 
+  border-radius: 5px;
 }
 
 
