@@ -15,6 +15,7 @@ pool.getConnection((error, connection) => {
     if (error) {
         console.error('Error de conexion:', error);
     } else {
+        console.log('Conexion establecida a la base de datos');
         connection.release();
     }
 });

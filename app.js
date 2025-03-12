@@ -19,7 +19,7 @@ var pedidosRoutes = require('./routes/pedidos');
 // **Corrección de socket.io**
 var app = express();
 var server = require('http').Server(app);
-var io = require('socket.io')(server, { cors: { origin: "*" } });
+var io = require('socket.io')(server, { cors: { origin: "*" } });  // ✅ Permite conexiones de cualquier origen
 
 // Configuración de Mercado Pago
 mercadopago.configure({
@@ -27,7 +27,8 @@ mercadopago.configure({
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {;
+server.listen(PORT, () => {
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
 });
 // Configuración de vistas y motor de plantillas
 app.set('views', path.join(__dirname, 'views'));
@@ -82,6 +83,7 @@ app.use((req, res, next) => {
 
 // Definición de rutas
 app.use('/', indexRouter);
+console.log("Router montado correctamente");
 app.use('/users', usersRouter);
 app.use('/productos', productosRouter);
 app.use('/administracion', administracionRouter);
@@ -90,9 +92,14 @@ app.use('/pedidos', pedidosRoutes);
 
 // **Configuración de WebSockets**
 io.on('connection', (socket) => {
+  console.log("🔌 Un cliente se ha conectado al WebSocket");
+
   socket.on('disconnect', () => {
+    console.log("❌ Cliente desconectado");
   });
+
   socket.on('nuevoPedido', (data) => {
+    console.log("🔔 Evento 'nuevoPedido' recibido en el servidor:", data);
   });
 });
 
