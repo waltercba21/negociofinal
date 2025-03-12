@@ -263,6 +263,7 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     const botonEliminar = filaDisponible.cells[7].querySelector("button");
     if (botonEliminar) {
         botonEliminar.style.display = "block";
+        botonEliminar.innerHTML = '<i class="fas fa-trash"></i>'; // Agregar el icono
         botonEliminar.addEventListener("click", function () {
             filaDisponible.cells[1].textContent = "";
             filaDisponible.cells[2].textContent = "";
