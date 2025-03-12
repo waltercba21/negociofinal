@@ -7,8 +7,23 @@ document.getElementById('invoice-form').addEventListener('keydown', function(e) 
 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
+
+    // Validar que al menos un método de pago esté seleccionado
+    const metodosPagoSeleccionados = document.querySelectorAll('input[name="metodosPago"]:checked');
+    
+    if (metodosPagoSeleccionados.length === 0) {
+        Swal.fire({
+            title: 'Error',
+            text: 'Debe seleccionar al menos un método de pago antes de continuar.',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+        return; // Evita que se envíe el formulario
+    }
+
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+    
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[1].textContent.trim();
         const descripcion = filasFactura[i].cells[2].textContent.trim();
@@ -18,6 +33,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
         let subtotal = precio_unitario * cantidad;
+        
         invoiceItems.push({
             producto_id: codigo,
             descripcion,
@@ -26,6 +42,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             subtotal
         });
     }
+
     const totalFacturaElement = document.getElementById('total-amount');
     let totalFactura = '0';
     if (totalFacturaElement) {
@@ -33,13 +50,11 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     } else {
         console.error('No se encontró el elemento total-amount.');
     }
+
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
-    const metodosPago = [];
-    document.querySelectorAll('input[name="metodosPago"]:checked').forEach(function(checkbox) {
-        metodosPago.push(checkbox.value);
-    });
+    const metodosPago = Array.from(metodosPagoSeleccionados).map(input => input.value);
 
     try {
         const response = await fetch('/productos/procesarFormularioFacturas', {
@@ -86,6 +101,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 document.addEventListener('DOMContentLoaded', () => {
     Swal.fire({
