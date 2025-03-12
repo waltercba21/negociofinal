@@ -49,7 +49,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     if (invoiceItems.length === 0) {
         Swal.fire({
             title: 'Error',
-            text: 'Debe agregar al menos un producto válido a la factura antes de enviarla.',
+            text: 'Debe agregar al menos un producto válido al presupuesto antes de enviarla.',
             icon: 'error',
             confirmButtonText: 'Entendido'
         });
@@ -94,7 +94,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             }).then(() => {
                 Swal.fire({
                     title: 'Nueva Factura',
-                    text: 'Está por realizar una nueva factura. Complete los datos.',
+                    text: 'Está por realizar un nuevo presupuesto. Complete los datos.',
                     icon: 'info',
                     confirmButtonText: 'Entendido'
                 }).then(() => {
@@ -118,8 +118,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
 document.addEventListener('DOMContentLoaded', () => {
     Swal.fire({
-        title: 'Está en la sección de Facturas',
-        text: 'Recuerde que está realizando una factura, no un presupuesto.',
+        title: 'Está en la sección de Presupuesto',
+        text: 'Recuerde que está realizando una presupuesto, no una factura.',
         icon: 'info',
         confirmButtonText: 'Entendido'
     });
