@@ -2976,6 +2976,7 @@ td {
 .miniatura {
   width: 40px;
   height: 40px;
+  margin-right: 20px;
   object-fit: contain; /* Ajusta la imagen sin recortar */
   flex-shrink: 0; /* Evita que se reduzca */
 }
