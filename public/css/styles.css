@@ -947,16 +947,15 @@ footer {
 }
 #invoice-total {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 5px; 
   width: 100%;
 }
 #invoice-total input {
-  width: 150px; /* Ancho uniforme */
-  height: 30px; /* Altura uniforme */
-  font-size: 14px; /* Tamaño de letra consistente */
+  width: 150px; 
+  font-size: 14px; 
   text-align: center;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -979,9 +978,7 @@ footer {
   max-width: 250px;
   align-items: center;
 }
-#invoice-total {
-  width: 50%; 
-}
+
 .botones-contenedor {
   display: flex;
   justify-content: center; 
