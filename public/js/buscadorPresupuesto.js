@@ -8,7 +8,7 @@ document.getElementById('presupuesto-form').addEventListener('keydown', function
 document.getElementById('presupuesto-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     const presupuestoItems = [];
-    const filasPresupuesto = document.getElementById('tabla-presupuesto').getElementsByTagName('tbody')[0].rows;
+    const filasPresupuesto = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     
     for (let i = 0; i < filasPresupuesto.length; i++) {
         const codigo = filasPresupuesto[i].cells[1].textContent.trim();
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resultado.appendChild(contenedor);
             resultado.addEventListener('click', function () {
-                agregarProductoATablaPresupuesto(this.dataset.codigo, this.dataset.nombre, this.dataset.precio_venta, this.dataset.stock_actual, this.dataset.imagen);
+                agregarProductoATabla(this.dataset.codigo, this.dataset.nombre, this.dataset.precio_venta, this.dataset.stock_actual, this.dataset.imagen);
             });
 
             resultadosBusqueda.appendChild(resultado);
