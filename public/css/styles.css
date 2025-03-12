@@ -2987,22 +2987,27 @@ td {
   object-fit: contain; 
   border-radius: 5px;
 }
-/* 🔹 Estilos exclusivos para el botón de eliminar en facturación */
 .boton-eliminar-factura {
   background: none;
   border: none;
   cursor: pointer;
-  color: #d90429;
+  color: #d90429 !important; /* Color rojo */
   font-size: 18px;
   transition: color 0.3s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; /* Tamaño uniforme */
+  height: 40px;
+  padding: 5px;
 }
 
 .boton-eliminar-factura:hover {
-  color: #a8001a;
+  color: #a8001a !important; /* Color rojo más oscuro al pasar el mouse */
 }
 
 .boton-eliminar-factura i {
-  font-size: 18px;
+  font-size: 18px !important;
 }
 
 
