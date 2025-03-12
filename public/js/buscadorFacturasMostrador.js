@@ -259,29 +259,31 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     filaDisponible.cells[5].textContent = stockActual;
     filaDisponible.cells[6].textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
-// Activar el botón de eliminar con icono de cesto de basura
-const botonEliminar = filaDisponible.cells[7].querySelector("button");
-if (botonEliminar) {
-    botonEliminar.style.display = "inline-flex";
-    botonEliminar.classList.add("boton-eliminar-factura"); // Agregar la clase exclusiva
-    botonEliminar.innerHTML = '<i class="fas fa-trash"></i>'; // Asegurar que el icono se renderiza correctamente
+    // 🔥 Llamar a calcularTotal() inmediatamente para mostrar el precio final
+    calcularTotal();
 
-    botonEliminar.addEventListener("click", function () {
-        filaDisponible.cells[1].textContent = "";
-        filaDisponible.cells[2].textContent = "";
-        if (inputPrecio) inputPrecio.value = "";
-        if (inputCantidad) inputCantidad.value = "";
-        filaDisponible.cells[5].textContent = "";
-        filaDisponible.cells[6].textContent = "";
-        imgElement.style.display = "none";
-        botonEliminar.style.display = "none";
-        calcularTotal();
-    });
+    // Activar el botón de eliminar
+    const botonEliminar = filaDisponible.cells[7].querySelector("button");
+    if (botonEliminar) {
+        botonEliminar.style.display = "block";
+        botonEliminar.classList.add("boton-eliminar-factura");
+        botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
+        botonEliminar.addEventListener("click", function () {
+            filaDisponible.cells[1].textContent = "";
+            filaDisponible.cells[2].textContent = "";
+            if (inputPrecio) inputPrecio.value = "";
+            if (inputCantidad) inputCantidad.value = "";
+            filaDisponible.cells[5].textContent = "";
+            filaDisponible.cells[6].textContent = "";
+            imgElement.style.display = "none";
+            botonEliminar.style.display = "none";
+            calcularTotal();
+        });
+    }
+
+    console.log("Producto agregado correctamente a la tabla.");
 }
 
-console.log("Producto agregado correctamente a la tabla.");
-
-}
 
 
 function updateSubtotal(row, verificarStock = true) {

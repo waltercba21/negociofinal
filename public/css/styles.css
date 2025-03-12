@@ -947,16 +947,39 @@ footer {
 }
 #invoice-total {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 5px; 
+  width: 100%;
+}
+#invoice-total input {
+  width: 150px; /* Ancho uniforme */
+  height: 30px; /* Altura uniforme */
+  font-size: 14px; /* Tamaño de letra consistente */
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 #invoice-total label {
-  color: #003f7d; 
+  font-size: 14px;
   font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 250px;
 }
-
-#invoice-total #total-amount {
+/* 🔹 Ajustar el contenedor del interés */
+#invoice-interes {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 250px;
+  align-items: center;
+}
+#invoice-total {
   width: 50%; 
 }
 .botones-contenedor {
