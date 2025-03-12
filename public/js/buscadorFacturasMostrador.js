@@ -344,26 +344,21 @@ function calcularTotal() {
         total += subtotal;
     }
 
-    document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-    // 🔥 Aplicar interés si el pago es con CREDITO
     const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
     const interesAmountInput = document.getElementById('interes-amount');
-    const totalFinalAmountInput = document.getElementById('total-final-amount');
+    const totalAmountInput = document.getElementById('total-amount'); // 🔥 Este es el que se modificará directamente
 
     let interes = 0;
-    let totalConInteres = total;
 
     if (creditoCheckbox && creditoCheckbox.checked) {
         interes = total * 0.15; // Interés del 15%
-        totalConInteres += interes;
-        interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    } else {
-        interesAmountInput.value = '';
+        total += interes; // 🔥 Se aplica el interés directamente al total
     }
 
-    totalFinalAmountInput.value = totalConInteres.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    totalAmountInput.value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
+
 
 // 🔥 Asociar eventos a los inputs de cantidad y precio para actualizar dinámicamente
 document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
