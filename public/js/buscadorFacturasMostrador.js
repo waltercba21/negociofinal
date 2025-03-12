@@ -10,7 +10,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
     // Validar que al menos un método de pago esté seleccionado
     const metodosPagoSeleccionados = document.querySelectorAll('input[name="metodosPago"]:checked');
-    
     if (metodosPagoSeleccionados.length === 0) {
         Swal.fire({
             title: 'Error',
@@ -18,7 +17,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             icon: 'warning',
             confirmButtonText: 'Entendido'
         });
-        return; // Evita que se envíe el formulario
+        return;
     }
 
     const invoiceItems = [];
@@ -33,14 +32,28 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
         let subtotal = precio_unitario * cantidad;
-        
-        invoiceItems.push({
-            producto_id: codigo,
-            descripcion,
-            precio_unitario,
-            cantidad,
-            subtotal
+
+        // 🔥🔥🔥 Solo agregar productos que tienen un código y una descripción válida
+        if (codigo !== '' && descripcion !== '' && cantidad > 0 && precio_unitario > 0) {
+            invoiceItems.push({
+                producto_id: codigo,
+                descripcion,
+                precio_unitario,
+                cantidad,
+                subtotal
+            });
+        }
+    }
+
+    // 🔥🔥🔥 Validar que al menos un producto válido fue agregado
+    if (invoiceItems.length === 0) {
+        Swal.fire({
+            title: 'Error',
+            text: 'Debe agregar al menos un producto válido a la factura antes de enviarla.',
+            icon: 'error',
+            confirmButtonText: 'Entendido'
         });
+        return;
     }
 
     const totalFacturaElement = document.getElementById('total-amount');
