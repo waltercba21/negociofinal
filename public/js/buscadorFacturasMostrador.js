@@ -108,7 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const url = '/productos/api/buscar?q=' + busqueda;
+        const url = '/productos/api/buscar?q=' + busqueda + '&limite=5';
+
         const respuesta = await fetch(url);
         const productos = await respuesta.json();
 
@@ -177,67 +178,55 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
-    console.log("Agregando producto a tabla:", codigoProducto, nombreProducto);
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+    const filas = tablaFactura.rows;
 
-    // Agregar la fila con la imagen
-    const filaFactura = tablaFactura.insertRow();
-
-    // Celda para la imagen
-    const cellImagen = filaFactura.insertCell(0);
-    if (imagenProducto) {
-        const imagen = document.createElement('img');
-        imagen.src = imagenProducto;
-        imagen.classList.add('miniatura-tabla');
-        cellImagen.appendChild(imagen);
+    // Buscar la primera fila vacía disponible
+    let filaDisponible = null;
+    for (let i = 0; i < filas.length; i++) {
+        if (!filas[i].cells[1].textContent.trim()) {
+            filaDisponible = filas[i];
+            break;
+        }
     }
 
-    // Celdas para los demás datos del producto
-    filaFactura.insertCell(1).textContent = codigoProducto;
-    filaFactura.insertCell(2).textContent = nombreProducto;
+    // Si no hay filas vacías, no se agrega más
+    if (!filaDisponible) {
+        Swal.fire("Límite alcanzado", "Solo se pueden agregar hasta 10 productos.", "warning");
+        return;
+    }
 
-    const cellPrecio = filaFactura.insertCell(3);
-    const inputPrecio = document.createElement('input');
-    inputPrecio.type = 'text';
-    inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    inputPrecio.className = 'precio-editable';
-    cellPrecio.appendChild(inputPrecio);
+    // Agregar datos a la fila encontrada
+    const cellImagen = filaDisponible.cells[0];
+    const imgElement = cellImagen.querySelector("img");
+    if (imagenProducto && imgElement) {
+        imgElement.src = imagenProducto;
+        imgElement.style.display = "block";
+    }
 
-    const cellCantidad = filaFactura.insertCell(4);
-    const inputCantidad = document.createElement('input');
-    inputCantidad.type = 'number';
-    inputCantidad.min = 1;
-    inputCantidad.value = 1;
-    cellCantidad.appendChild(inputCantidad);
+    filaDisponible.cells[1].textContent = codigoProducto;
+    filaDisponible.cells[2].textContent = nombreProducto;
+    filaDisponible.cells[3].querySelector("input").value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    filaDisponible.cells[4].querySelector("input").value = 1;
+    filaDisponible.cells[5].textContent = stockActual;
+    filaDisponible.cells[6].textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
-    const cellStock = filaFactura.insertCell(5);
-    cellStock.textContent = stockActual;
-
-    const cellSubtotal = filaFactura.insertCell(6);
-    cellSubtotal.textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-    const cellEliminar = filaFactura.insertCell(7);
-    const botonEliminar = document.createElement('button');
-    botonEliminar.textContent = '✖';
-    botonEliminar.className = 'boton-eliminar';
-    botonEliminar.addEventListener('click', function() {
-        tablaFactura.deleteRow(filaFactura.rowIndex - 1);
-        calcularTotal();
+    // Activar el botón de eliminar
+    const botonEliminar = filaDisponible.cells[7].querySelector("button");
+    botonEliminar.style.display = "block";
+    botonEliminar.addEventListener("click", function () {
+        filaDisponible.cells[1].textContent = "";
+        filaDisponible.cells[2].textContent = "";
+        filaDisponible.cells[3].querySelector("input").value = "";
+        filaDisponible.cells[4].querySelector("input").value = "";
+        filaDisponible.cells[5].textContent = "";
+        filaDisponible.cells[6].textContent = "";
+        imgElement.style.display = "none";
+        botonEliminar.style.display = "none";
     });
-    cellEliminar.appendChild(botonEliminar);
-
-    inputCantidad.addEventListener('input', function() {
-        updateSubtotal(filaFactura);
-    });
-
-    inputPrecio.addEventListener('input', function() {
-        updateSubtotal(filaFactura, false);
-    });
-
-    calcularTotal();
 }
+
 
 function updateSubtotal(row, verificarStock = true) {
     const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));

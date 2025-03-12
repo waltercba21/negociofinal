@@ -60,7 +60,20 @@
                   </tr>
               </thead>
               <tbody>
-              </tbody>
+                <% for(let i = 0; i < 10; i++) { %>
+                    <tr>
+                        <td><img src="" class="miniatura-tabla" style="display: none;"></td>
+                        <td></td> <!-- Código -->
+                        <td></td> <!-- Descripción -->
+                        <td><input type="text" class="precio-editable" disabled></td>
+                        <td><input type="number" min="1" value="1" disabled></td>
+                        <td></td> <!-- Stock -->
+                        <td></td> <!-- Subtotal -->
+                        <td><button class="boton-eliminar" style="display: none;">✖</button></td>
+                    </tr>
+                <% } %>
+            </tbody>
+            
           </table>
       </div>
         <div id="invoice-total">
