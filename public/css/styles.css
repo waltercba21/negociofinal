@@ -2942,7 +2942,7 @@ td {
 
 /* 🔹 Ajustar altura de las filas de la tabla */
 #tabla-factura tbody tr {
-  height: 50px; /* Ajustar la altura de las filas dinámicas */
+  height: 40px; 
 }
 
 /* 🔹 Ajustar tamaño de las celdas */
