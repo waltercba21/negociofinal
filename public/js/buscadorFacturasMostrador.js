@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
     let timeoutId;
 
-    entradaBusqueda.addEventListener('input', async (e) => {
+    entradaBusqueda.addEventListener('keyup', async (e) => {
         const busqueda = e.target.value;
         resultadosBusqueda.innerHTML = '';
 
