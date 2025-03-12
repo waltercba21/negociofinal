@@ -882,7 +882,7 @@ footer {
 
 #resultadosBusqueda {
   width: 90%;
-  font-size: 14px;
+  font-size: 10px;
   max-height: 200px;
   overflow-y: auto;
   overflow-x: auto;
@@ -2985,6 +2985,8 @@ td {
 
 .resultado-busqueda {
   transition: background-color 1s ease;
+  font-size: 12px;
+  padding: 5px;
 }
 .resultado-contenedor{
   margin-bottom: 15px;;
