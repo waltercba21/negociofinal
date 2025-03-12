@@ -348,7 +348,7 @@ function calcularTotal() {
 
     const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
     const interesAmountInput = document.getElementById('interes-amount');
-    const totalAmountInput = document.getElementById('total-amount'); // 🔥 Este es el que se modificará directamente
+    const totalAmountInput = document.getElementById('total-amount');
 
     let interes = 0;
 
