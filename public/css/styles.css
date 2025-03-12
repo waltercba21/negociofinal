@@ -2976,26 +2976,30 @@ td {
 .miniatura {
   width: 40px;
   height: 40px;
-  object-fit: contain; /* Evita que la imagen se recorte */
-  flex-shrink: 0; /* Evita que se reduzca con flexbox */
+  object-fit: contain; /* Ajusta la imagen sin recortar */
+  flex-shrink: 0; /* Evita que se reduzca */
 }
 
 .resultado-busqueda {
   display: flex;
-  align-items: center;  /* Centra verticalmente los elementos */
-  gap: 10px;  /* Espaciado entre la imagen y el texto */
+  align-items: center;  /* Alinea verticalmente imagen y texto */
+  gap: 10px;  /* Espaciado entre imagen y nombre */
   padding: 8px;
   font-size: 12px;
-  min-height: 50px; /* Asegura una altura uniforme */
+  min-height: 50px; /* Mantiene el tamaño uniforme */
   cursor: pointer;
   transition: background-color 0.3s ease-in-out;
 }
 
 .resultado-contenedor {
   display: flex;
-  flex-direction: column;
-  justify-content: center; /* Asegura que el texto se alinee verticalmente */
-  height: 50px; /* Coincide con la altura de .resultado-busqueda */
+  align-items: center;  /* Asegura que el texto y la imagen estén alineados */
+  justify-content: flex-start;
+  height: 100%;  /* Coincide con .resultado-busqueda */
+  flex: 1;  /* Hace que el texto ocupe el espacio restante */
+  overflow: hidden; /* Evita desbordamientos */
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .resultado-busqueda:hover {
