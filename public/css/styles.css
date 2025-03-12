@@ -834,9 +834,7 @@ footer {
 }
 
 /*-----------------------------PRESUPUESTO MOSTRADOR--------------------------*/
-.resultado-busqueda {
-  cursor: pointer;
-}
+
 #invoice-form {
   width: 80%;
   margin: auto;
@@ -2978,29 +2976,39 @@ td {
 .miniatura {
   width: 40px;
   height: 40px;
-  object-fit: cover;
-  margin: 20px;
-  transition: transform 1s ease; 
+  object-fit: contain; /* Evita que la imagen se recorte */
+  flex-shrink: 0; /* Evita que se reduzca con flexbox */
 }
 
 .resultado-busqueda {
-  transition: background-color 1s ease;
-  font-size: 10px;
-  padding: 5px;
+  display: flex;
+  align-items: center;  /* Centra verticalmente los elementos */
+  gap: 10px;  /* Espaciado entre la imagen y el texto */
+  padding: 8px;
+  font-size: 12px;
+  min-height: 50px; /* Asegura una altura uniforme */
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
 }
-.resultado-contenedor{
-  height: 20px;
-  margin-bottom: 15px;;
+
+.resultado-contenedor {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Asegura que el texto se alinee verticalmente */
+  height: 50px; /* Coincide con la altura de .resultado-busqueda */
 }
+
 .resultado-busqueda:hover {
   background-color: #d90429;
   color: #fff;
   cursor: pointer;
+  margin-bottom: 0px !important; /* Elimina cualquier margen extra */
 }
+
 
 .miniatura-tabla {
   width: 50px;
-  height: 50px;
+  height: 20px;
   object-fit: cover;
 }
 
