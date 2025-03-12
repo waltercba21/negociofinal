@@ -2948,12 +2948,12 @@ td {
 /* 🔹 Ajustar tamaño de las celdas */
 #tabla-factura td, #tabla-factura th {
   padding: 5px;
-  font-size: 14px;
+  font-size: 12px;
   text-align: center;
   vertical-align: middle;
-  white-space: nowrap; /* Evita que el texto se divida en varias líneas */
-  overflow: hidden; /* Evita que el contenido desborde */
-  text-overflow: ellipsis; /* Agrega "..." si el texto es demasiado largo */
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis; 
 }
 /* 🔹 Ajustar el ancho de cada columna */
 #tabla-factura th:nth-child(1), 
@@ -2974,8 +2974,8 @@ td {
 #tabla-factura td:nth-child(8) { width: 50px; } /* Eliminar */
 /* 🔹 Ajustar tamaño de inputs en la tabla */
 #tabla-factura input {
-  width: 80px; /* Ajustar ancho de los inputs */
-  height: 30px; /* Reducir altura de los inputs */
+  width: 80px; 
+  height: 30px;
   text-align: center;
   font-size: 14px;
 }
@@ -2997,17 +2997,18 @@ td {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px; /* Tamaño uniforme */
+  width: 40px;
   height: 40px;
   padding: 5px;
+  margin-bottom: 20px;
 }
 
 .boton-eliminar-factura:hover {
-  color: #fff !important; /* Color rojo más oscuro al pasar el mouse */
+  color: #fff !important; 
 }
 
 .boton-eliminar-factura i {
-  font-size: 18px !important;
+  font-size: 16px !important;
 }
 
 
