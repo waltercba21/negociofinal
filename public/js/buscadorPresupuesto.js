@@ -8,18 +8,6 @@ document.getElementById('invoice-form').addEventListener('keydown', function(e) 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // Validar que al menos un método de pago esté seleccionado
-    const metodosPagoSeleccionados = document.querySelectorAll('input[name="metodosPago"]:checked');
-    if (metodosPagoSeleccionados.length === 0) {
-        Swal.fire({
-            title: 'Error',
-            text: 'Debe seleccionar al menos un método de pago antes de continuar.',
-            icon: 'warning',
-            confirmButtonText: 'Entendido'
-        });
-        return;
-    }
-
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     
