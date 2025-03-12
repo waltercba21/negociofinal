@@ -153,11 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Asociar el evento click directamente a cada resultado
             resultado.addEventListener('click', function () {
+                console.log("Producto seleccionado:", this.dataset);
                 const codigoProducto = this.dataset.codigo;
                 const nombreProducto = this.dataset.nombre;
                 const precioVenta = this.dataset.precio_venta;
                 const stockActual = this.dataset.stock_actual;
                 const imagenProducto = this.dataset.imagen;
+                console.log(`Intentando agregar producto: ${codigoProducto}, ${nombreProducto}`);
                 agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
             });
 
@@ -182,8 +184,9 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
     const filas = tablaFactura.rows;
 
-    // Buscar la primera fila vacía disponible
     let filaDisponible = null;
+
+    // Buscar la primera fila vacía disponible
     for (let i = 0; i < filas.length; i++) {
         if (!filas[i].cells[1].textContent.trim()) {
             filaDisponible = filas[i];
@@ -197,6 +200,8 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
         return;
     }
 
+    console.log("Fila disponible encontrada:", filaDisponible);
+
     // Agregar datos a la fila encontrada
     const cellImagen = filaDisponible.cells[0];
     const imgElement = cellImagen.querySelector("img");
@@ -207,24 +212,45 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
 
     filaDisponible.cells[1].textContent = codigoProducto;
     filaDisponible.cells[2].textContent = nombreProducto;
-    filaDisponible.cells[3].querySelector("input").value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    filaDisponible.cells[4].querySelector("input").value = 1;
+
+    const inputPrecio = filaDisponible.cells[3].querySelector("input");
+    if (inputPrecio) {
+        inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+        inputPrecio.disabled = false;  // Habilitar edición si es necesario
+    } else {
+        console.error("No se encontró input en la celda de precio.");
+    }
+
+    const inputCantidad = filaDisponible.cells[4].querySelector("input");
+    if (inputCantidad) {
+        inputCantidad.value = 1;
+        inputCantidad.disabled = false;
+    } else {
+        console.error("No se encontró input en la celda de cantidad.");
+    }
+
     filaDisponible.cells[5].textContent = stockActual;
     filaDisponible.cells[6].textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
     // Activar el botón de eliminar
     const botonEliminar = filaDisponible.cells[7].querySelector("button");
-    botonEliminar.style.display = "block";
-    botonEliminar.addEventListener("click", function () {
-        filaDisponible.cells[1].textContent = "";
-        filaDisponible.cells[2].textContent = "";
-        filaDisponible.cells[3].querySelector("input").value = "";
-        filaDisponible.cells[4].querySelector("input").value = "";
-        filaDisponible.cells[5].textContent = "";
-        filaDisponible.cells[6].textContent = "";
-        imgElement.style.display = "none";
-        botonEliminar.style.display = "none";
-    });
+    if (botonEliminar) {
+        botonEliminar.style.display = "block";
+        botonEliminar.addEventListener("click", function () {
+            filaDisponible.cells[1].textContent = "";
+            filaDisponible.cells[2].textContent = "";
+            if (inputPrecio) inputPrecio.value = "";
+            if (inputCantidad) inputCantidad.value = "";
+            filaDisponible.cells[5].textContent = "";
+            filaDisponible.cells[6].textContent = "";
+            imgElement.style.display = "none";
+            botonEliminar.style.display = "none";
+        });
+    } else {
+        console.error("No se encontró el botón de eliminar.");
+    }
+
+    console.log("Producto agregado correctamente a la tabla.");
 }
 
 
