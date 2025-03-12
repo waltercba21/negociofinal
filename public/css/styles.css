@@ -2985,7 +2985,7 @@ td {
 
 .resultado-busqueda {
   transition: background-color 1s ease;
-  font-size: 12px;
+  font-size: 10px;
   padding: 5px;
 }
 .resultado-contenedor{
