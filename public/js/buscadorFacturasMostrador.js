@@ -194,7 +194,6 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
         }
     }
 
-    // Si no hay filas vacías, no se agrega más
     if (!filaDisponible) {
         Swal.fire("Límite alcanzado", "Solo se pueden agregar hasta 10 productos.", "warning");
         return;
@@ -216,17 +215,16 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     const inputPrecio = filaDisponible.cells[3].querySelector("input");
     if (inputPrecio) {
         inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-        inputPrecio.disabled = false;  // Habilitar edición si es necesario
-    } else {
-        console.error("No se encontró input en la celda de precio.");
+        inputPrecio.disabled = false;
     }
 
     const inputCantidad = filaDisponible.cells[4].querySelector("input");
     if (inputCantidad) {
         inputCantidad.value = 1;
         inputCantidad.disabled = false;
-    } else {
-        console.error("No se encontró input en la celda de cantidad.");
+        inputCantidad.addEventListener('input', function () {
+            updateSubtotal(filaDisponible);
+        });
     }
 
     filaDisponible.cells[5].textContent = stockActual;
@@ -245,9 +243,8 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
             filaDisponible.cells[6].textContent = "";
             imgElement.style.display = "none";
             botonEliminar.style.display = "none";
+            calcularTotal();
         });
-    } else {
-        console.error("No se encontró el botón de eliminar.");
     }
 
     console.log("Producto agregado correctamente a la tabla.");
@@ -255,12 +252,27 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
 
 
 function updateSubtotal(row, verificarStock = true) {
-    const precio = parseFloat(row.cells[3].querySelector('input').value.replace(/\$|\./g, '').replace(',', '.'));
-    const cantidad = parseInt(row.cells[4].querySelector('input').value);
-    const stockActual = parseInt(row.cells[5].textContent.replace(/\$|\./g, '').replace(',', '.'));
-    const subtotal = !isNaN(precio) && !isNaN(cantidad) ? precio * cantidad : 0;
-    const stockMinimo = 5;
+    const inputPrecio = row.cells[3].querySelector('input');
+    const inputCantidad = row.cells[4].querySelector('input');
+    const stockActualCell = row.cells[5];
 
+    if (!inputPrecio || !inputCantidad || !stockActualCell) {
+        console.error("Error: No se encontraron los elementos necesarios en la fila.");
+        return;
+    }
+
+    let precio = parseFloat(inputPrecio.value.replace(/\$|\./g, '').replace(',', '.'));
+    let cantidad = parseInt(inputCantidad.value);
+    let stockActual = parseInt(stockActualCell.textContent.replace(/\$|\./g, '').replace(',', '.'));
+
+    precio = !isNaN(precio) ? precio : 0;
+    cantidad = !isNaN(cantidad) ? cantidad : 1;
+    stockActual = !isNaN(stockActual) ? stockActual : 0;
+
+    const subtotal = precio * cantidad;
+    row.cells[6].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+
+    // 🔥 Validar stock antes de permitir facturación
     if (verificarStock) {
         if (cantidad > stockActual) {
             Swal.fire({
@@ -269,11 +281,12 @@ function updateSubtotal(row, verificarStock = true) {
                 icon: 'error',
                 confirmButtonText: 'Entendido'
             });
-            row.cells[4].querySelector('input').value = 1;
+            inputCantidad.value = 1; // Restablecer cantidad a 1 si no hay stock suficiente
             return;
         }
 
         const stockRestante = stockActual - cantidad;
+        const stockMinimo = 5;
 
         if (stockRestante <= stockMinimo) {
             Swal.fire({
@@ -285,13 +298,13 @@ function updateSubtotal(row, verificarStock = true) {
         }
     }
 
-    row.cells[6].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    calcularTotal();
+    calcularTotal(); // Recalcular total después de actualizar el subtotal
 }
 
 function calcularTotal() {
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
+
     for (let i = 0; i < filasFactura.length; i++) {
         let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
         subtotal = !isNaN(subtotal) ? subtotal : 0;
@@ -300,14 +313,16 @@ function calcularTotal() {
 
     document.getElementById('total-amount').value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
+    // 🔥 Aplicar interés si el pago es con CREDITO
     const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
     const interesAmountInput = document.getElementById('interes-amount');
     const totalFinalAmountInput = document.getElementById('total-final-amount');
+
     let interes = 0;
     let totalConInteres = total;
 
     if (creditoCheckbox && creditoCheckbox.checked) {
-        interes = total * 0.20;
+        interes = total * 0.15; // Interés del 15%
         totalConInteres += interes;
         interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     } else {
@@ -317,6 +332,25 @@ function calcularTotal() {
     totalFinalAmountInput.value = totalConInteres.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
 
+// 🔥 Asociar eventos a los inputs de cantidad y precio para actualizar dinámicamente
+document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
+    const inputCantidad = row.cells[4].querySelector('input');
+    const inputPrecio = row.cells[3].querySelector('input');
+
+    if (inputCantidad) {
+        inputCantidad.addEventListener('input', function () {
+            updateSubtotal(row);
+        });
+    }
+
+    if (inputPrecio) {
+        inputPrecio.addEventListener('input', function () {
+            updateSubtotal(row);
+        });
+    }
+});
+
+// 🔥 Actualizar el total cuando se cambian los métodos de pago
 document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
     checkbox.addEventListener('change', calcularTotal);
 });
