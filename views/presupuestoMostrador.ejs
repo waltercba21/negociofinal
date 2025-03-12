@@ -4,11 +4,11 @@
    <main>
     <div class="button-container-presupuesto">
       <button class="btn-primary-presupuestos" onclick="window.location.href='/productos/listadoPresupuestos'">Listado de Presupuestos</button>
-  </div>
-    <form id="invoice-form" action="/productos/procesarFormulario" method="POST">
-      <div id="invoice">
+    </div>
+    <form id="presupuesto-form" action="/productos/procesarFormulario" method="POST">
+      <div id="presupuesto">
         <h2>Presupuesto</h2>
-        <div id="invoice-details">
+        <div id="presupuesto-details">
           <div class="input-container">
             <label for="nombre-cliente">Nombre del cliente:</label>
             <input type="text" id="nombre-cliente" name="nombreCliente">
@@ -26,8 +26,8 @@
           <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
           <div id="resultadosBusqueda"></div>
         </div>
-        <div id="invoice-items">
-          <table id="tabla-factura">
+        <div id="presupuesto-items">
+          <table id="tabla-presupuesto">
             <thead>
                 <tr>
                     <th>Imagen</th>
@@ -50,18 +50,20 @@
                       <td><input type="number" min="1" value="1" disabled></td>
                       <td></td> <!-- Stock -->
                       <td></td> <!-- Subtotal -->
-                      <td><button class="boton-eliminar" style="display: none;">✖</button></td>
+                      <td>
+                        <button class="boton-eliminar-presupuesto" style="display: none;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                      </td>
                   </tr>
               <% } %>
           </tbody>
-          
         </table>
-          
         </div>
-        <div id="invoice-total">
+        <div id="presupuesto-total">
          <label>Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
         </div>
-        <input type="hidden" id="invoiceItems" name="invoiceItems">
+        <input type="hidden" id="presupuestoItems" name="presupuestoItems">
         <div class="botones-contenedor">
           <button type="submit">Guardar Presupuesto</button>
         </div>
@@ -72,4 +74,3 @@
    <script src="/js/buscadorPresupuesto.js"></script> 
    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
-  
