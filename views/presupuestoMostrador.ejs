@@ -4,10 +4,10 @@
    <main>
     <div class="button-container-presupuesto">
       <button class="btn-primary-presupuestos" onclick="window.location.href='/productos/listadoPresupuestos'">Listado de Presupuestos</button>
-  </div>
+    </div>
     <form id="invoice-form" action="/productos/procesarFormulario" method="POST">
       <div id="invoice">
-        <h2>Presupuesto</h2>
+        <h2>Presupuestos</h2>
         <div id="invoice-details">
           <div class="input-container">
             <label for="nombre-cliente">Nombre del cliente:</label>
@@ -19,32 +19,49 @@
           </div>
           <div class="input-container">
             <label for="numero-presupuesto">N° Presupuesto</label>
-            <p><%= idPresupuesto %></p>
+            <p><%= idPresupuesto%></p>
           </div>
         </div>
+
         <div class="buscador">
           <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
           <div id="resultadosBusqueda"></div>
         </div>
         <div id="invoice-items">
           <table id="tabla-factura">
-            <thead>
-                <tr>
-                    <th>Imagen</th>
-                    <th>Código</th>
-                    <th>Descripción</th>
-                    <th>Precio Unitario</th>
-                    <th>Cantidad</th>
-                    <th>Stock Actual</th>
-                    <th>Subtotal</th>
-                    <th>Eliminar</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
-          
-        </div>
+              <thead>
+                  <tr>
+                      <th>Imagen</th>
+                      <th>Código</th>
+                      <th>Descripción</th>
+                      <th>Precio Unitario</th>
+                      <th>Cantidad</th>
+                      <th>Stock Actual</th>
+                      <th>Subtotal</th>
+                      <th>Eliminar</th>
+                  </tr>
+              </thead>
+              <tbody>
+                <% for(let i = 0; i < 10; i++) { %>
+                    <tr>
+                        <td><img src="" class="miniatura-tabla" style="display: none;"></td>
+                        <td></td> <!-- Código -->
+                        <td></td> <!-- Descripción -->
+                        <td><input type="text" class="precio-editable" disabled></td>
+                        <td><input type="number" min="1" value="0" disabled></td>
+                        <td></td> <!-- Stock -->
+                        <td></td> <!-- Subtotal -->
+                        <td>
+                            <button class="boton-eliminar-factura" style="display: none;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+            
+          </table>
+      </div>
         <div id="invoice-total">
          <label>Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
         </div>
@@ -54,9 +71,8 @@
         </div>
       </div>
     </form>
-   </main> 
+   </main>
    <%- include ./layouts/footer.ejs %>
-   <script src="/js/buscadorPresupuesto.js"></script> 
+   <script src="/js/buscadorFacturasMostrador.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
-  
