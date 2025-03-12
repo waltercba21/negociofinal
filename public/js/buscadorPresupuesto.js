@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const url = '/productos/api/buscar?q=' + busqueda + '&limite=5';
+        const url = '/productos/api/buscar?q=' + busqueda;
         const respuesta = await fetch(url);
         const productos = await respuesta.json();
 
