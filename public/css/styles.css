@@ -2940,17 +2940,34 @@ td {
   font-weight: bold;
 }
 
-#tabla-factura {
-  width: 100%;
-  margin-top: 10px;
+/* 🔹 Ajustar altura de las filas de la tabla */
+#tabla-factura tbody tr {
+  height: 40px; /* Ajustar la altura de las filas dinámicas */
 }
 
-#tabla-factura th,
-#tabla-factura td {
-  padding: 10px;
-  text-align: center;
-  border: 1px solid #8d8c8c;
+/* 🔹 Ajustar tamaño de las celdas */
+#tabla-factura td, #tabla-factura th {
+  padding: 5px; /* Reducir el espacio interno */
+  text-align: center; /* Centrar contenido */
+  vertical-align: middle; /* Centrar contenido verticalmente */
 }
+
+/* 🔹 Ajustar tamaño de inputs en la tabla */
+#tabla-factura input {
+  width: 80px; /* Ajustar ancho de los inputs */
+  height: 25px; /* Reducir altura de los inputs */
+  text-align: center;
+  font-size: 14px;
+}
+
+/* 🔹 Ajustar tamaño y evitar recorte de imágenes */
+.miniatura-tabla {
+  width: 35px; /* Tamaño adecuado para la imagen */
+  height: 35px;
+  object-fit: contain; /* Asegura que la imagen se vea completa sin recortarse */
+  border-radius: 5px; /* Opcional: Bordes redondeados */
+}
+
 
 #guardarFactura,
 #cerrarFormulario {
@@ -3010,12 +3027,6 @@ td {
   margin-bottom: 0px !important; /* Elimina cualquier margen extra */
 }
 
-
-.miniatura-tabla {
-  width: 50px;
-  height: 20px;
-  object-fit: cover;
-}
 
 /*------------------Listado de Facturas------------------*/
 .form-container {
