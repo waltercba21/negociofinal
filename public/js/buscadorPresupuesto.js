@@ -210,8 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
-    const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-    const filas = tablaFactura.rows;
+    const tablaPresupuesto = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+    const filas = tablaPresupuesto.rows;
 
     let filaDisponible = null;
 
@@ -336,29 +336,21 @@ function updateSubtotal(row, verificarStock = true) {
     calcularTotal(); // Recalcular total después de actualizar el subtotal
 }
 
+
 function calcularTotal() {
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+    const filasPresupuesto = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
 
-    for (let i = 0; i < filasFactura.length; i++) {
-        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
+    for (let i = 0; i < filasPresupuesto.length; i++) {
+        let subtotal = parseFloat(filasPresupuesto[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
         subtotal = !isNaN(subtotal) ? subtotal : 0;
         total += subtotal;
     }
 
-    const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
-    const interesAmountInput = document.getElementById('interes-amount');
     const totalAmountInput = document.getElementById('total-amount');
-
-    let interes = 0;
-
-    if (creditoCheckbox && creditoCheckbox.checked) {
-        interes = total * 0.15; // Interés del 15%
-        total += interes; // 🔥 Se aplica el interés directamente al total
-    }
-
-    interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     totalAmountInput.value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+
+    console.log("Total actualizado:", totalAmountInput.value);
 }
 
 
