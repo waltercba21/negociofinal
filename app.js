@@ -83,7 +83,6 @@ app.use((req, res, next) => {
 
 // Definición de rutas
 app.use('/', indexRouter);
-console.log("Router montado correctamente");
 app.use('/users', usersRouter);
 app.use('/productos', productosRouter);
 app.use('/administracion', administracionRouter);
@@ -92,14 +91,9 @@ app.use('/pedidos', pedidosRoutes);
 
 // **Configuración de WebSockets**
 io.on('connection', (socket) => {
-  console.log("🔌 Un cliente se ha conectado al WebSocket");
-
   socket.on('disconnect', () => {
-    console.log("❌ Cliente desconectado");
   });
-
   socket.on('nuevoPedido', (data) => {
-    console.log("🔔 Evento 'nuevoPedido' recibido en el servidor:", data);
   });
 });
 
