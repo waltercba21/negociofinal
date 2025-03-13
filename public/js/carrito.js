@@ -4,14 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // Variables globales
     const contenedorCarrito = document.getElementById("contenedor-carrito");
     const mensajeCarritoVacio = document.getElementById("mensaje-carrito-vacio");
-    const totalCarritoElement = document.getElementById("total-carrito");
-    const botonContinuarEnvio = document.getElementById("boton-continuar-envio");
+    const botonContinuarEnvio = document.getElementById("continuar-envio");
 
     function verificarCarritoVacio() {
+        console.log("🔍 Verificando si el carrito está vacío...");
         const filasProductos = document.querySelectorAll(".carrito-tabla tbody tr").length;
 
         if (filasProductos === 0) {
-            console.log("🛒 El carrito está vacío, ocultando elementos.");
+            console.log("🛒 El carrito está vacío.");
 
             // Ocultar el contenedor del carrito
             if (contenedorCarrito) contenedorCarrito.style.display = "none";
@@ -19,16 +19,10 @@ document.addEventListener("DOMContentLoaded", () => {
             // Ocultar el botón de continuar
             if (botonContinuarEnvio) botonContinuarEnvio.style.display = "none";
 
-            // Ocultar el total del carrito
-            if (totalCarritoElement) {
-                totalCarritoElement.textContent = "$0.00";
-                totalCarritoElement.closest("tr").style.display = "none"; // Oculta la fila del total
-            }
-
             // Mostrar el mensaje de carrito vacío
             if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "block";
         } else {
-            console.log("✅ Hay productos en el carrito, mostrando elementos.");
+            console.log("✅ Hay productos en el carrito.");
 
             // Mostrar el contenedor del carrito
             if (contenedorCarrito) contenedorCarrito.style.display = "block";
@@ -36,17 +30,14 @@ document.addEventListener("DOMContentLoaded", () => {
             // Mostrar el botón de continuar
             if (botonContinuarEnvio) botonContinuarEnvio.style.display = "block";
 
-            // Mostrar el total del carrito
-            if (totalCarritoElement) {
-                totalCarritoElement.closest("tr").style.display = "table-row";
-            }
-
             // Ocultar el mensaje de carrito vacío
             if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "none";
         }
     }
 
     async function eliminarProducto(id, boton) {
+        console.log(`🗑 Eliminando producto con ID: ${id}`);
+
         Swal.fire({
             title: "¿Eliminar producto?",
             text: "Este producto será eliminado del carrito.",
@@ -70,13 +61,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const fila = boton.closest("tr");
                 if (fila) fila.remove();
+                console.log(`✅ Producto eliminado con éxito.`);
 
                 // Esperar a que el DOM se actualice antes de verificar si está vacío
                 setTimeout(() => {
                     verificarCarritoVacio();
                 }, 100);
-
-                Swal.fire("Eliminado", "El producto ha sido eliminado.", "success");
             } catch (error) {
                 console.error("❌ Error al eliminar producto:", error);
                 Swal.fire("Error", "No se pudo eliminar el producto.", "error");
@@ -84,7 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Manejo de eventos para eliminar productos
     document.addEventListener("click", (e) => {
         if (e.target.closest(".btn-eliminar")) {
             const boton = e.target.closest(".btn-eliminar");
@@ -93,14 +82,5 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Evento para continuar con el envío
-    const btnContinuarEnvio = document.getElementById("continuar-envio");
-    if (btnContinuarEnvio) {
-        btnContinuarEnvio.addEventListener("click", () => {
-            console.log("🔄 Redirigiendo a la vista de Envío...");
-            window.location.href = "/carrito/envio";
-        });
-    }
-
-    verificarCarritoVacio(); // Verificación inicial al cargar la página
+    verificarCarritoVacio();
 });
