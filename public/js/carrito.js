@@ -178,3 +178,45 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+document.addEventListener("DOMContentLoaded", () => {
+    const carritoContainer = document.querySelector(".carrito-tabla tbody");
+
+    if (carritoContainer) {
+        carritoContainer.addEventListener("click", async (e) => {
+            if (e.target.closest(".btn-eliminar")) {
+                const btn = e.target.closest(".btn-eliminar");
+                const productoId = btn.getAttribute("data-id");
+
+                Swal.fire({
+                    title: "¿Estás seguro?",
+                    text: "Este producto será eliminado del carrito",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d33",
+                    cancelButtonColor: "#3085d6",
+                    confirmButtonText: "Sí, eliminar",
+                    cancelButtonText: "Cancelar"
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const response = await fetch("/carrito/eliminar", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ id: productoId }),
+                            });
+
+                            if (!response.ok) throw new Error("Error al eliminar el producto");
+
+                            btn.closest("tr").remove(); // Elimina la fila del producto en la tabla
+                            
+                            Swal.fire("Eliminado", "El producto ha sido eliminado.", "success");
+                        } catch (error) {
+                            console.error("Error al eliminar producto:", error);
+                            Swal.fire("Error", "No se pudo eliminar el producto.", "error");
+                        }
+                    }
+                });
+            }
+        });
+    }
+});

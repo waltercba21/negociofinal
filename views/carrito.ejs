@@ -43,6 +43,7 @@
                         <th>Cantidad</th>
                         <th>Precio</th>
                         <th>Sub-Total</th>
+                        <th>Eliminar</th> <!-- Nueva columna para el icono de eliminar -->
                     </tr>
                 </thead>
                 <tbody>
@@ -53,15 +54,21 @@
                             <td><%= producto.cantidad %></td>
                             <td>$<%= producto.precio_venta.toFixed(2) %></td>
                             <td>$<%= producto.total.toFixed(2) %></td>
+                            <td>
+                                <button class="btn-eliminar" data-id="<%= producto.id %>">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
                         </tr>
                     <% }) %>
                     <tr class="carrito-total">
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                         <td><strong>Total</strong></td>
                         <td>$<%= total %></td>
                     </tr>
                 </tbody>
             </table>
+            
         <% } %>
         <div> 
             <button id="continuar-envio" class="btn-finalizar">Continuar con el Envío</button>
