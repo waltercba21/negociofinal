@@ -689,17 +689,12 @@ module.exports = {
     },
     generarComprobante: async (req, res) => {
         try {
-            console.log("📝 Iniciando la generación del comprobante...");
-            
-            if (!carrito || typeof carrito.obtenerUltimoPedido !== 'function') {
-                console.error("❌ Error crítico: 'carrito' no está definido o 'obtenerUltimoPedido' no es una función.");
-                throw new Error("❌ Error crítico: 'carrito' no está definido o 'obtenerUltimoPedido' no es una función.");
-            }
+            console.log("📄 Generando PDF del comprobante...");
     
             const id_usuario = req.session.usuario.id;
             console.log(`📌 Usuario autenticado, ID: ${id_usuario}`);
     
-            // Obtener el último carrito finalizado del usuario
+            // Obtener el último carrito del usuario
             const carritos = await new Promise((resolve, reject) => {
                 carrito.obtenerUltimoPedido(id_usuario, (error, carrito) => {
                     if (error) {
@@ -732,12 +727,13 @@ module.exports = {
                 });
             });
     
-            // Generar el PDF del comprobante
-            console.log("📄 Generando PDF del comprobante...");
+            console.log("📄 Generando PDF en memoria...");
             const doc = new PDFDocument();
-            const filePath = path.join(__dirname, `../public/comprobantes/comprobante_${carritoData.id_carrito}.pdf`);
-            const stream = fs.createWriteStream(filePath);
-            doc.pipe(stream);
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", `attachment; filename=comprobante_${carritoData.id_carrito}.pdf`);
+    
+            // Enviar el PDF directamente como respuesta
+            doc.pipe(res);
     
             doc.fontSize(20).text("AUTOFAROS", { align: "center" });
             doc.fontSize(14).text("COMPROBANTE DE RETIRO", { align: "center" });
@@ -762,13 +758,8 @@ module.exports = {
             doc.text(`Total: $${totalCompra}`, { bold: true });
     
             doc.end();
-            stream.on("finish", () => {
-                console.log("✅ Comprobante generado correctamente:", filePath);
-                res.download(filePath, `comprobante_${carritoData.id_carrito}.pdf`, () => {
-                    fs.unlinkSync(filePath);
-                    console.log("🗑️ Archivo de comprobante eliminado después de la descarga.");
-                });
-            });
+            console.log("✅ PDF generado y enviado al usuario.");
+    
         } catch (error) {
             console.error("❌ Error al generar el comprobante:", error);
             res.status(500).json({ error: "Error al generar el comprobante" });
