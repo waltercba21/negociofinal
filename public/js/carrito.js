@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const alertaCantidad = document.querySelector('.cantidad-alerta');
-
+    const btnContinuarEnvio = document.getElementById("continuar-envio");
+    
     function actualizarGlobo(cantidad) {
         console.log(`Actualizando globo de notificación con cantidad: ${cantidad}`);
         if (alertaCantidad) {
@@ -10,8 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 alertaCantidad.style.display = 'none';
             }
-        }
-    }
+        } 
+    } 
 
     // Función para obtener la cantidad total del carrito (desde el servidor)
     async function obtenerCantidadCarrito() {
@@ -164,5 +165,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+    document.addEventListener("DOMContentLoaded", () => {
+        const btnContinuarEnvio = document.getElementById("continuar-envio");
+    
+        if (btnContinuarEnvio) {
+            btnContinuarEnvio.addEventListener("click", () => {
+                console.log("🔄 Redirigiendo a la vista de Envío...");
+                window.location.href = "/carrito/envio";
+            });
+        }
+    });
+    
 
 });
