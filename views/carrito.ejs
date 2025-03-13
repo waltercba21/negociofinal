@@ -57,11 +57,6 @@
                             </td>
                         </tr>
                     <% }) %>
-                    <tr class="carrito-total">
-                        <td colspan="4"></td>
-                        <td><strong>Total</strong></td>
-                        <td id="total-carrito">$<%= total %></td>
-                    </tr>
                 </tbody>
             </table>
 
@@ -70,7 +65,7 @@
         </div>
 
         <!-- Mensaje de carrito vacío -->
-        <div id="mensaje-carrito-vacio" <%= productos.length > 0 ? 'style="display:none;"' : '' %>>
+        <div id="mensaje-carrito-vacio" style="display: none;">
             <p style="text-align: center; font-size: 1.2rem; color: #888;">
                 🛒 CARRITO DE COMPRAS VACÍO
             </p>

@@ -20,7 +20,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (botonContinuarEnvio) botonContinuarEnvio.style.display = "none";
 
             // Ocultar el total del carrito
-            if (totalCarritoElement) totalCarritoElement.textContent = "$0.00";
+            if (totalCarritoElement) {
+                totalCarritoElement.textContent = "$0.00";
+                totalCarritoElement.closest("tr").style.display = "none"; // Oculta la fila del total
+            }
 
             // Mostrar el mensaje de carrito vacío
             if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "block";
@@ -32,6 +35,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Mostrar el botón de continuar
             if (botonContinuarEnvio) botonContinuarEnvio.style.display = "block";
+
+            // Mostrar el total del carrito
+            if (totalCarritoElement) {
+                totalCarritoElement.closest("tr").style.display = "table-row";
+            }
 
             // Ocultar el mensaje de carrito vacío
             if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "none";
