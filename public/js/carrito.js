@@ -5,23 +5,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const contenedorCarrito = document.getElementById("contenedor-carrito");
     const mensajeCarritoVacio = document.getElementById("mensaje-carrito-vacio");
     const totalCarritoElement = document.getElementById("total-carrito");
+    const botonContinuarEnvio = document.getElementById("boton-continuar-envio");
 
-    // Función para verificar si el carrito está vacío
     function verificarCarritoVacio() {
         const filasProductos = document.querySelectorAll(".carrito-tabla tbody tr").length;
 
         if (filasProductos === 0) {
-            console.log("🛒 El carrito está vacío, ocultando la tabla y mostrando el mensaje.");
+            console.log("🛒 El carrito está vacío, ocultando la tabla y el botón de continuar.");
 
             // Ocultar el contenedor del carrito
             if (contenedorCarrito) contenedorCarrito.style.display = "none";
+
+            // Ocultar el botón de continuar
+            if (botonContinuarEnvio) botonContinuarEnvio.style.display = "none";
 
             // Mostrar el mensaje de carrito vacío
             if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "block";
         }
     }
 
-    // Función para eliminar un producto
     async function eliminarProducto(id, boton) {
         Swal.fire({
             title: "¿Eliminar producto?",
@@ -68,6 +70,15 @@ document.addEventListener("DOMContentLoaded", () => {
             eliminarProducto(productoId, boton);
         }
     });
+
+    // Evento para continuar con el envío
+    const btnContinuarEnvio = document.getElementById("continuar-envio");
+    if (btnContinuarEnvio) {
+        btnContinuarEnvio.addEventListener("click", () => {
+            console.log("🔄 Redirigiendo a la vista de Envío...");
+            window.location.href = "/carrito/envio";
+        });
+    }
 
     verificarCarritoVacio(); // Verificación inicial al cargar la página
 });
