@@ -164,16 +164,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-    document.addEventListener("DOMContentLoaded", () => {
-        const btnContinuarEnvio = document.getElementById("continuar-envio");
     
-        if (btnContinuarEnvio) {
-            btnContinuarEnvio.addEventListener("click", () => {
-                console.log("🔄 Redirigiendo a la vista de Envío...");
-                window.location.href = "/carrito/envio";
-            });
-        }
-    });
     
 
+});
+document.addEventListener("DOMContentLoaded", () => {
+    const btnContinuarEnvio = document.getElementById("continuar-envio");
+
+    if (btnContinuarEnvio) {
+        btnContinuarEnvio.addEventListener("click", () => {
+            console.log("🔄 Redirigiendo a la vista de Envío...");
+            window.location.href = "/carrito/envio";
+        });
+    }
 });
