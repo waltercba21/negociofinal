@@ -4,15 +4,17 @@
 <body>
     <main class="carrito-container">
         <h1>🛍️ Mi Carrito</h1>
+
         <div class="progreso-compra">
 
-            <div class="barra activa">
-                <div class="paso activo">
+            <div class="paso-container">
+
+                <div class="paso completado">
                     <i class="fas fa-shopping-cart"></i>
                     <span>CARRITO</span>
                 </div>
-                <div class="barra"></div>
-                <div class="paso">
+                <div class="barra activa"></div>
+                <div class="paso activo">
                     <i class="fas fa-truck"></i>
                     <span>ENVÍO</span>
                 </div>
@@ -27,8 +29,11 @@
                     <i class="fas fa-credit-card"></i>
                     <span>PAGO</span>
                 </div>
+                
             </div>
+
         </div>
+
         <% if (productos.length > 0) { %>
             <table class="carrito-tabla">
                 <thead>
@@ -61,7 +66,7 @@
         <div> 
             <button id="continuar-envio" class="btn-finalizar">Continuar con el Envío</button>
         </div>
-        
+
         <% if (typeof estadoCarrito !== 'undefined' && estadoCarrito) { %>
             <div class="estado-pedido">
                 <h2>📦 Tu pedido está en proceso</h2>
