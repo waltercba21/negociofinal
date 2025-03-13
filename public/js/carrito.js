@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (!response.ok) throw new Error("Error al eliminar el producto");
 
-                boton.closest("tr").remove(); // Elimina la fila de la tabla
+                boton.closest("tr").remove(); 
                 actualizarTotalCarrito();
                 actualizarGlobo();
                 
