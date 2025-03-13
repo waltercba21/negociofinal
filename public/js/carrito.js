@@ -1,223 +1,146 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const alertaCantidad = document.querySelector('.cantidad-alerta');
-    
-    function actualizarGlobo(cantidad) {
-        console.log(`Actualizando globo de notificación con cantidad: ${cantidad}`);
-        if (alertaCantidad) {
-            if (cantidad > 0) {
-                alertaCantidad.textContent = cantidad;
-                alertaCantidad.style.display = 'inline-block';
-            } else {
-                alertaCantidad.style.display = 'none';
-            }
-        } 
-    } 
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ carrito.js cargado correctamente.");
 
-    // Función para obtener la cantidad total del carrito (desde el servidor)
-    async function obtenerCantidadCarrito() {
-        console.log('Obteniendo cantidad total del carrito...');
+    // Variables globales
+    const carritoContainer = document.querySelector(".carrito-tabla tbody");
+    const totalCarritoElement = document.getElementById("total-carrito");
+    const alertaCantidad = document.querySelector(".cantidad-alerta");
+
+    // 🔹 Función para actualizar el contador del carrito en el header
+    async function actualizarGlobo() {
         try {
-            const response = await fetch('/carrito/cantidad');
-            if (!response.ok) throw new Error('Error al obtener la cantidad');
-            const { cantidadCarrito } = await response.json();
-            console.log(`Cantidad obtenida del carrito: ${cantidadUnica}`);
-            actualizarGlobo(cantidadUnica);
+            const response = await fetch("/carrito/cantidad");
+            if (!response.ok) throw new Error("Error al obtener la cantidad del carrito");
+
+            const { cantidadTotal } = await response.json();
+            if (alertaCantidad) {
+                alertaCantidad.textContent = cantidadTotal > 0 ? cantidadTotal : "";
+                alertaCantidad.style.display = cantidadTotal > 0 ? "inline-block" : "none";
+            }
         } catch (error) {
-            console.error('Error al obtener la cantidad del carrito:', error);
+            console.error("❌ Error al actualizar el globo del carrito:", error);
         }
     }
 
-    // Llamar a la función al cargar la página para actualizar el globo
-    obtenerCantidadCarrito();
-
-    const carritoContainer = document.getElementById('carrito-productos');
-    const totalCarritoElement = document.getElementById('total-carrito');
-
-    if (carritoContainer && totalCarritoElement) {
-        console.log('Vista de carrito detectada, manejando actualización de total...');
-        
-        // Función para actualizar el total del carrito
-        async function actualizarTotal() {
-            console.log('Actualizando total del carrito...');
-            let total = 0;
-            let cantidadTotal = 0;
-            let cantidadUnica = 0;
-
-            // Aquí recuperamos los datos de los productos del carrito desde el servidor
-            try {
-                const response = await fetch('/carrito/productos');
-                if (!response.ok) throw new Error('Error al obtener los productos del carrito');
-                const productos = await response.json();
-
-                // Recorrer los productos y calcular el total
-                productos.forEach(producto => {
-                    total += producto.subtotal;
-                    cantidadTotal += producto.cantidad;
-                    cantidadUnica++;  // Contamos cada producto único
-                });
-
-                console.log(`Total del carrito calculado: $${total.toFixed(2)}, cantidad total: ${cantidadTotal}, cantidad única: ${cantidadUnica}`);
-                totalCarritoElement.textContent = `$${total.toFixed(2)}`;
-                actualizarGlobo(cantidadUnica);
-            } catch (error) {
-                console.error('Error al calcular el total del carrito:', error);
-            }
-        }
-
-        // Llamamos a actualizarTotal() al cargar la página para obtener el total inicial
-        actualizarTotal();
-
-        // Manejar clics en aumentar, disminuir y eliminar productos
-        carritoContainer.addEventListener('click', async (e) => {
-            const boton = e.target;
-
-            if (boton.classList.contains('btn-cantidad')) {
-                const productoId = boton.getAttribute('data-id');
-                const accion = boton.classList.contains('aumentar') ? 'aumentar' : 'disminuir';
-                console.log(`Clic en botón de cantidad. Producto ID: ${productoId}, Acción: ${accion}`);
-                await actualizarCantidad(productoId, accion, boton);
-            }
-
-            if (boton.classList.contains('btn-eliminar')) {
-                const productoId = boton.getAttribute('data-id');
-                console.log(`Clic en botón de eliminar. Producto ID: ${productoId}`);
-                await eliminarProducto(productoId, boton);
+    // 🔹 Función para actualizar el total del carrito
+    async function actualizarTotalCarrito() {
+        let totalCarrito = 0;
+        document.querySelectorAll(".carrito-tabla tbody tr").forEach(fila => {
+            const subTotalCell = fila.querySelector("td:nth-child(5)");
+            if (subTotalCell) {
+                totalCarrito += parseFloat(subTotalCell.textContent.replace("$", "").trim()) || 0;
             }
         });
 
-        async function actualizarCantidad(id, accion, boton) {
-            console.log(`Actualizando cantidad de producto. ID: ${id}, Acción: ${accion}`);
-            try {
-                const response = await fetch('/carrito/actualizar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, accion })
-                });
-
-                if (!response.ok) throw new Error('Error al actualizar cantidad');
-
-                const data = await response.json();
-
-                // Buscar la fila y las celdas de cantidad y sub-total
-                const fila = boton.closest('tr');
-                const cantidadCell = fila ? fila.querySelector('.cantidad-control span') : null;
-                const subTotalCell = fila ? fila.querySelector('td:nth-child(5)') : null;
-
-                if (!cantidadCell || !subTotalCell) {
-                    console.error('No se encontró la celda de cantidad o sub-total en la fila');
-                    return;
-                }
-
-                cantidadCell.textContent = data.nuevaCantidad;
-
-                const precioUnitario = parseFloat(fila.querySelector('td:nth-child(4)').textContent.replace('$', '').trim());
-                const nuevaCantidad = parseInt(data.nuevaCantidad);
-                const nuevoSubTotal = precioUnitario * nuevaCantidad;
-                subTotalCell.textContent = `$${nuevoSubTotal.toFixed(2)}`;
-
-                recalcularTotalCarrito();
-                actualizarGlobo(data.cantidadUnica);
-            } catch (error) {
-                console.error('Error al actualizar cantidad:', error);
-            }
-        }
-
-        // Función para recalcular el total del carrito
-        function recalcularTotalCarrito() {
-            let totalCarrito = 0;
-            const filas = document.querySelectorAll('table tbody tr');
-            filas.forEach(fila => {
-                const subTotalCell = fila.querySelector('td:nth-child(5)');
-                if (subTotalCell) {
-                    const subTotal = parseFloat(subTotalCell.textContent.replace('$', '').trim()) || 0;
-                    totalCarrito += subTotal;
-                }
-            });
-
-            if (totalCarritoElement) {
-                totalCarritoElement.textContent = `$${totalCarrito.toFixed(2)}`;
-            } else {
-                console.error('No se encontró el elemento del total del carrito');
-            }
-        }
-
-        async function eliminarProducto(id, boton) {
-            console.log(`Eliminando producto con ID: ${id}`);
-            try {
-                const response = await fetch('/carrito/eliminar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id })
-                });
-        
-                if (!response.ok) throw new Error('Error al eliminar producto');
-        
-                const fila = boton.closest('tr');
-                if (fila) fila.remove();
-        
-                recalcularTotalCarrito(); // Llamar a la función para recalcular el total localmente
-                obtenerCantidadCarrito(); // Llamar nuevamente para actualizar el globo
-        
-            } catch (error) {
-                console.error('Error al eliminar producto:', error);
-                alert(`Error: ${error.message}`);
-            }
+        if (totalCarritoElement) {
+            totalCarritoElement.textContent = `$${totalCarrito.toFixed(2)}`;
+        } else {
+            console.error("❌ No se encontró el elemento del total del carrito.");
         }
     }
-    
-    
 
-});
-document.addEventListener("DOMContentLoaded", () => {
+    // 🔹 Función para actualizar la cantidad de un producto en el carrito
+    async function actualizarCantidad(id, accion, boton) {
+        try {
+            const response = await fetch("/carrito/actualizar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, accion })
+            });
+
+            if (!response.ok) throw new Error("Error al actualizar la cantidad");
+
+            const data = await response.json();
+            const fila = boton.closest("tr");
+            if (!fila) return;
+
+            const cantidadCell = fila.querySelector(".cantidad-control span");
+            const subTotalCell = fila.querySelector("td:nth-child(5)");
+
+            if (!cantidadCell || !subTotalCell) {
+                console.error("❌ No se encontró la celda de cantidad o subtotal.");
+                return;
+            }
+
+            cantidadCell.textContent = data.nuevaCantidad;
+
+            const precioUnitario = parseFloat(fila.querySelector("td:nth-child(4)").textContent.replace("$", "").trim());
+            subTotalCell.textContent = `$${(precioUnitario * data.nuevaCantidad).toFixed(2)}`;
+
+            actualizarTotalCarrito();
+            actualizarGlobo();
+        } catch (error) {
+            console.error("❌ Error al actualizar cantidad:", error);
+            Swal.fire("Error", "No se pudo actualizar la cantidad.", "error");
+        }
+    }
+
+    // 🔹 Función para eliminar un producto del carrito
+    async function eliminarProducto(id, boton) {
+        Swal.fire({
+            title: "¿Eliminar producto?",
+            text: "Este producto será eliminado del carrito.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6"
+        }).then(async (result) => {
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch("/carrito/eliminar", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id })
+                });
+
+                if (!response.ok) throw new Error("Error al eliminar el producto");
+
+                boton.closest("tr").remove(); // Elimina la fila de la tabla
+                actualizarTotalCarrito();
+                actualizarGlobo();
+                
+                Swal.fire("Eliminado", "El producto ha sido eliminado.", "success");
+            } catch (error) {
+                console.error("❌ Error al eliminar producto:", error);
+                Swal.fire("Error", "No se pudo eliminar el producto.", "error");
+            }
+        });
+    }
+
+    // 🔹 Manejo de eventos en la tabla del carrito
+    if (carritoContainer) {
+        carritoContainer.addEventListener("click", async (e) => {
+            const boton = e.target.closest(".btn-eliminar, .btn-cantidad");
+            if (!boton) return;
+
+            const productoId = boton.getAttribute("data-id");
+
+            if (boton.classList.contains("btn-cantidad")) {
+                const accion = boton.classList.contains("aumentar") ? "aumentar" : "disminuir";
+                await actualizarCantidad(productoId, accion, boton);
+            }
+
+            if (boton.classList.contains("btn-eliminar")) {
+                await eliminarProducto(productoId, boton);
+            }
+        });
+    } else {
+        console.warn("⚠️ No se encontró el contenedor del carrito.");
+    }
+
+    // 🔹 Evento para redirigir a la página de envíos
     const btnContinuarEnvio = document.getElementById("continuar-envio");
-
     if (btnContinuarEnvio) {
         btnContinuarEnvio.addEventListener("click", () => {
             console.log("🔄 Redirigiendo a la vista de Envío...");
             window.location.href = "/carrito/envio";
         });
     }
-});
 
-document.addEventListener("DOMContentLoaded", () => {
-    const carritoContainer = document.querySelector(".carrito-tabla tbody");
-
-    if (carritoContainer) {
-        carritoContainer.addEventListener("click", async (e) => {
-            if (e.target.closest(".btn-eliminar")) {
-                const btn = e.target.closest(".btn-eliminar");
-                const productoId = btn.getAttribute("data-id");
-
-                Swal.fire({
-                    title: "¿Estás seguro?",
-                    text: "Este producto será eliminado del carrito",
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#d33",
-                    cancelButtonColor: "#3085d6",
-                    confirmButtonText: "Sí, eliminar",
-                    cancelButtonText: "Cancelar"
-                }).then(async (result) => {
-                    if (result.isConfirmed) {
-                        try {
-                            const response = await fetch("/carrito/eliminar", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ id: productoId }),
-                            });
-
-                            if (!response.ok) throw new Error("Error al eliminar el producto");
-
-                            btn.closest("tr").remove(); // Elimina la fila del producto en la tabla
-                            
-                            Swal.fire("Eliminado", "El producto ha sido eliminado.", "success");
-                        } catch (error) {
-                            console.error("Error al eliminar producto:", error);
-                            Swal.fire("Error", "No se pudo eliminar el producto.", "error");
-                        }
-                    }
-                });
-            }
-        });
-    }
+    // 🔹 Inicializar datos al cargar la página
+    actualizarGlobo();
+    actualizarTotalCarrito();
 });
