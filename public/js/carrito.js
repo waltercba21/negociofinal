@@ -38,6 +38,46 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    async function eliminarProducto(id, boton) {
+        console.log(`🗑 Eliminando producto con ID: ${id}`);
+
+        Swal.fire({
+            title: "¿Eliminar producto?",
+            text: "Este producto será eliminado del carrito.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6"
+        }).then(async (result) => {
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch("/carrito/eliminar", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id })
+                });
+
+                if (!response.ok) throw new Error("Error al eliminar el producto");
+
+                const fila = boton.closest("tr");
+                if (fila) fila.remove();
+                console.log(`✅ Producto eliminado con éxito.`);
+
+                // Esperar a que el DOM se actualice antes de verificar si está vacío
+                setTimeout(() => {
+                    actualizarTotalCarrito();
+                    verificarCarritoVacio();
+                }, 100);
+            } catch (error) {
+                console.error("❌ Error al eliminar producto:", error);
+                Swal.fire("Error", "No se pudo eliminar el producto.", "error");
+            }
+        });
+    }
+
     async function actualizarCantidad(id, accion) {
         console.log(`🔄 Actualizando cantidad del producto ${id}, acción: ${accion}`);
 
@@ -76,6 +116,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     document.addEventListener("click", (e) => {
+        if (e.target.closest(".btn-eliminar")) {
+            const boton = e.target.closest(".btn-eliminar");
+            const productoId = boton.getAttribute("data-id");
+            eliminarProducto(productoId, boton);
+        }
+
         if (e.target.closest(".btn-cantidad")) {
             const boton = e.target.closest(".btn-cantidad");
             const productoId = boton.getAttribute("data-id");
