@@ -2,79 +2,26 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ carrito.js cargado correctamente.");
 
     // Variables globales
-    const carritoContainer = document.querySelector(".carrito-tabla tbody");
+    const contenedorCarrito = document.getElementById("contenedor-carrito");
+    const mensajeCarritoVacio = document.getElementById("mensaje-carrito-vacio");
     const totalCarritoElement = document.getElementById("total-carrito");
-    const alertaCantidad = document.querySelector(".cantidad-alerta");
 
-    // 🔹 Función para actualizar el contador del carrito en el header
-    async function actualizarGlobo() {
-        try {
-            const response = await fetch("/carrito/cantidad");
-            if (!response.ok) throw new Error("Error al obtener la cantidad del carrito");
+    // Función para verificar si el carrito está vacío
+    function verificarCarritoVacio() {
+        const filasProductos = document.querySelectorAll(".carrito-tabla tbody tr").length;
 
-            const { cantidadTotal } = await response.json();
-            if (alertaCantidad) {
-                alertaCantidad.textContent = cantidadTotal > 0 ? cantidadTotal : "";
-                alertaCantidad.style.display = cantidadTotal > 0 ? "inline-block" : "none";
-            }
-        } catch (error) {
-            console.error("❌ Error al actualizar el globo del carrito:", error);
+        if (filasProductos === 0) {
+            console.log("🛒 El carrito está vacío, ocultando la tabla y mostrando el mensaje.");
+
+            // Ocultar el contenedor del carrito
+            if (contenedorCarrito) contenedorCarrito.style.display = "none";
+
+            // Mostrar el mensaje de carrito vacío
+            if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "block";
         }
     }
 
-    // 🔹 Función para actualizar el total del carrito
-    async function actualizarTotalCarrito() {
-        let totalCarrito = 0;
-        document.querySelectorAll(".carrito-tabla tbody tr").forEach(fila => {
-            const subTotalCell = fila.querySelector("td:nth-child(5)");
-            if (subTotalCell) {
-                totalCarrito += parseFloat(subTotalCell.textContent.replace("$", "").trim()) || 0;
-            }
-        });
-
-        if (totalCarritoElement) {
-            totalCarritoElement.textContent = `$${totalCarrito.toFixed(2)}`;
-        } else {
-            console.error("❌ No se encontró el elemento del total del carrito.");
-        }
-    }
-
-    // 🔹 Función para actualizar la cantidad de un producto en el carrito
-    async function actualizarCantidad(id, accion, boton) {
-        try {
-            const response = await fetch("/carrito/actualizar", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, accion })
-            });
-
-            if (!response.ok) throw new Error("Error al actualizar la cantidad");
-
-            const data = await response.json();
-            const fila = boton.closest("tr");
-            if (!fila) return;
-
-            const cantidadCell = fila.querySelector(".cantidad-control span");
-            const subTotalCell = fila.querySelector("td:nth-child(5)");
-
-            if (!cantidadCell || !subTotalCell) {
-                console.error("❌ No se encontró la celda de cantidad o subtotal.");
-                return;
-            }
-
-            cantidadCell.textContent = data.nuevaCantidad;
-
-            const precioUnitario = parseFloat(fila.querySelector("td:nth-child(4)").textContent.replace("$", "").trim());
-            subTotalCell.textContent = `$${(precioUnitario * data.nuevaCantidad).toFixed(2)}`;
-
-            actualizarTotalCarrito();
-            actualizarGlobo();
-        } catch (error) {
-            console.error("❌ Error al actualizar cantidad:", error);
-            Swal.fire("Error", "No se pudo actualizar la cantidad.", "error");
-        }
-    }
-
+    // Función para eliminar un producto
     async function eliminarProducto(id, boton) {
         Swal.fire({
             title: "¿Eliminar producto?",
@@ -87,27 +34,24 @@ document.addEventListener("DOMContentLoaded", () => {
             cancelButtonColor: "#3085d6"
         }).then(async (result) => {
             if (!result.isConfirmed) return;
-    
+
             try {
                 const response = await fetch("/carrito/eliminar", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ id })
                 });
-    
+
                 if (!response.ok) throw new Error("Error al eliminar el producto");
-    
+
                 const fila = boton.closest("tr");
-                if (fila) fila.remove(); // Elimina la fila del producto de la tabla
-    
-                actualizarTotalCarrito();
-                actualizarGlobo();
-    
-                // Esperar un momento antes de verificar si el carrito está vacío
+                if (fila) fila.remove();
+
+                // Esperar a que el DOM se actualice antes de verificar si está vacío
                 setTimeout(() => {
                     verificarCarritoVacio();
-                }, 200); 
-    
+                }, 100);
+
                 Swal.fire("Eliminado", "El producto ha sido eliminado.", "success");
             } catch (error) {
                 console.error("❌ Error al eliminar producto:", error);
@@ -115,63 +59,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-    
-    function verificarCarritoVacio() {
-        const carritoTabla = document.querySelector(".carrito-tabla");
-        const carritoTotal = document.querySelector(".carrito-total");
-        const carritoVacioMensaje = document.getElementById("mensaje-carrito-vacio");
-    
-        // Si ya no quedan productos en la tabla, mostramos el mensaje
-        if (!document.querySelector(".carrito-tabla tbody") || document.querySelectorAll(".carrito-tabla tbody tr").length === 0) {
-            console.log("🛒 El carrito está vacío, mostrando mensaje...");
-    
-            // Ocultar la tabla y el total
-            if (carritoTabla) carritoTabla.style.display = "none";
-            if (carritoTotal) carritoTotal.style.display = "none";
-    
-            // Mostrar el mensaje de carrito vacío
-            if (carritoVacioMensaje) {
-                carritoVacioMensaje.style.display = "block";
-            } else {
-                console.warn("⚠️ No se encontró el mensaje de carrito vacío en el DOM.");
-            }
-        }
-    }
-    
-    
 
-    // 🔹 Manejo de eventos en la tabla del carrito
-    if (carritoContainer) {
-        carritoContainer.addEventListener("click", async (e) => {
-            const boton = e.target.closest(".btn-eliminar, .btn-cantidad");
-            if (!boton) return;
-
+    // Manejo de eventos para eliminar productos
+    document.addEventListener("click", (e) => {
+        if (e.target.closest(".btn-eliminar")) {
+            const boton = e.target.closest(".btn-eliminar");
             const productoId = boton.getAttribute("data-id");
+            eliminarProducto(productoId, boton);
+        }
+    });
 
-            if (boton.classList.contains("btn-cantidad")) {
-                const accion = boton.classList.contains("aumentar") ? "aumentar" : "disminuir";
-                await actualizarCantidad(productoId, accion, boton);
-            }
-
-            if (boton.classList.contains("btn-eliminar")) {
-                await eliminarProducto(productoId, boton);
-            }
-        });
-    } else {
-        console.warn("⚠️ No se encontró el contenedor del carrito.");
-    }
-
-    // 🔹 Evento para redirigir a la página de envíos
-    const btnContinuarEnvio = document.getElementById("continuar-envio");
-    if (btnContinuarEnvio) {
-        btnContinuarEnvio.addEventListener("click", () => {
-            console.log("🔄 Redirigiendo a la vista de Envío...");
-            window.location.href = "/carrito/envio";
-        });
-    }
-    
-
-    // 🔹 Inicializar datos al cargar la página
-    actualizarGlobo();
-    actualizarTotalCarrito();
+    verificarCarritoVacio(); // Verificación inicial al cargar la página
 });

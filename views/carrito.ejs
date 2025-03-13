@@ -6,9 +6,7 @@
         <h1>🛍️ Mi Carrito</h1>
 
         <div class="progreso-compra">
-
             <div class="paso-container">
-
                 <div class="paso activo">
                     <i class="fas fa-shopping-cart"></i>
                     <span>CARRITO</span>
@@ -22,19 +20,17 @@
                 <div class="paso">
                     <i class="fas fa-check-circle"></i>
                     <span>CONFIRMAR DATOS</span>
-                <div class="barra"></div>
                 </div>
                 <div class="barra"></div>
                 <div class="paso">
                     <i class="fas fa-credit-card"></i>
                     <span>PAGO</span>
                 </div>
-                
             </div>
-
         </div>
 
-        <% if (productos.length > 0) { %>
+        <!-- Contenedor del carrito -->
+        <div id="contenedor-carrito" <%= productos.length === 0 ? 'style="display:none;"' : '' %>>
             <table class="carrito-tabla">
                 <thead>
                     <tr>
@@ -43,7 +39,7 @@
                         <th>Cantidad</th>
                         <th>Precio</th>
                         <th>Sub-Total</th>
-                        <th>Eliminar</th> <!-- Nueva columna para el icono de eliminar -->
+                        <th>Eliminar</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -64,46 +60,20 @@
                     <tr class="carrito-total">
                         <td colspan="4"></td>
                         <td><strong>Total</strong></td>
-                        <td>$<%= total %></td>
+                        <td id="total-carrito">$<%= total %></td>
                     </tr>
                 </tbody>
             </table>
-            
-        <% } %>
-        <p class="carrito-vacio" style="display: none; text-align: center; font-size: 1.2rem; color: #888;">
-            🛒 CARRITO DE COMPRAS VACÍO
-        </p>
-        
-        <div> 
-            <button id="continuar-envio" class="btn-finalizar">Continuar con el Envío</button>
         </div>
 
-        <% if (typeof estadoCarrito !== 'undefined' && estadoCarrito) { %>
-            <div class="estado-pedido">
-                <h2>📦 Tu pedido está en proceso</h2>
-                <p>Estado actual: <strong><%= estadoCarrito %></strong></p>
-                
-                <% if (estadoCarrito === "preparación") { %>
-                    <p>🛒 Puedes pasar a retirarlo en nuestro local.</p>
-                <% } else if (estadoCarrito === "listo para entrega") { %>
-                    <p>🚚 En breve recibirás tu pedido en tu domicilio.</p>
-                <% } else { %>
-                    <p>⌛ Estamos procesando tu pedido.</p>
-                <% } %>
-        
-            </div>
-        <% } else { %>
-            <p class="carrito-vacio">No tienes productos en tu carrito.</p>
-        <% } %>
-        
+        <!-- Mensaje de carrito vacío -->
+        <div id="mensaje-carrito-vacio" <%= productos.length > 0 ? 'style="display:none;"' : '' %>>
+            <p style="text-align: center; font-size: 1.2rem; color: #888;">
+                🛒 CARRITO DE COMPRAS VACÍO
+            </p>
+        </div>
 
-        <% if (typeof comprobante !== 'undefined' && comprobante) { %>
-            <div class="comprobante-container">
-                <a href="/comprobantes/<%= comprobante %>" download class="btn-finalizar">📄 Descargar Comprobante</a>
-            </div>
-        <% } %>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="/js/carrito.js"></script>
     </main>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="/js/carrito.js"></script> 
-    <%- include('./layouts/footer.ejs') %>
 </body>
