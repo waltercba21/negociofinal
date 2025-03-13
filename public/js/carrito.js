@@ -97,13 +97,16 @@ document.addEventListener("DOMContentLoaded", () => {
     
                 if (!response.ok) throw new Error("Error al eliminar el producto");
     
-                boton.closest("tr").remove(); // Elimina la fila del producto
+                const fila = boton.closest("tr");
+                if (fila) fila.remove(); // Elimina la fila del producto de la tabla
+    
                 actualizarTotalCarrito();
                 actualizarGlobo();
     
+                // Esperar un momento antes de verificar si el carrito está vacío
                 setTimeout(() => {
-                    verificarCarritoVacio(); // Verificar si el carrito quedó vacío
-                }, 200); // Esperamos 200ms para asegurar que el DOM se actualice
+                    verificarCarritoVacio();
+                }, 200); 
     
                 Swal.fire("Eliminado", "El producto ha sido eliminado.", "success");
             } catch (error) {
@@ -113,35 +116,28 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
-    
     function verificarCarritoVacio() {
-        const carritoContainer = document.querySelector(".carrito-tabla tbody");
         const carritoTabla = document.querySelector(".carrito-tabla");
         const carritoTotal = document.querySelector(".carrito-total");
-        const carritoVacioMensaje = document.querySelector(".carrito-vacio");
+        const carritoVacioMensaje = document.getElementById("mensaje-carrito-vacio");
     
-        if (carritoContainer && carritoContainer.children.length > 0) {
-            console.log("🛒 Aún hay productos en el carrito.");
-            return; // Si hay productos, no hacemos nada
-        }
+        // Si ya no quedan productos en la tabla, mostramos el mensaje
+        if (!document.querySelector(".carrito-tabla tbody") || document.querySelectorAll(".carrito-tabla tbody tr").length === 0) {
+            console.log("🛒 El carrito está vacío, mostrando mensaje...");
     
-        console.log("🛒 El carrito está vacío, mostrando mensaje...");
+            // Ocultar la tabla y el total
+            if (carritoTabla) carritoTabla.style.display = "none";
+            if (carritoTotal) carritoTotal.style.display = "none";
     
-        // Elimina la tabla y el total si existen
-        if (carritoTabla) {
-            carritoTabla.style.display = "none"; // En lugar de eliminar, ocultamos
-        }
-        if (carritoTotal) {
-            carritoTotal.style.display = "none"; // Ocultamos el total
-        }
-    
-        // Mostrar el mensaje de carrito vacío
-        if (carritoVacioMensaje) {
-            carritoVacioMensaje.style.display = "block";
-        } else {
-            console.warn("⚠️ No se encontró el mensaje de carrito vacío en el DOM.");
+            // Mostrar el mensaje de carrito vacío
+            if (carritoVacioMensaje) {
+                carritoVacioMensaje.style.display = "block";
+            } else {
+                console.warn("⚠️ No se encontró el mensaje de carrito vacío en el DOM.");
+            }
         }
     }
+    
     
 
     // 🔹 Manejo de eventos en la tabla del carrito
