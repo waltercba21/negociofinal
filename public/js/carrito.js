@@ -97,11 +97,13 @@ document.addEventListener("DOMContentLoaded", () => {
     
                 if (!response.ok) throw new Error("Error al eliminar el producto");
     
-                boton.closest("tr").remove(); // Elimina la fila del producto de la tabla
+                boton.closest("tr").remove(); // Elimina la fila del producto
                 actualizarTotalCarrito();
                 actualizarGlobo();
     
-                setTimeout(verificarCarritoVacio, 100); // Espera un pequeño tiempo para actualizar el DOM
+                setTimeout(() => {
+                    verificarCarritoVacio(); // Verificar si el carrito quedó vacío
+                }, 200); // Esperamos 200ms para asegurar que el DOM se actualice
     
                 Swal.fire("Eliminado", "El producto ha sido eliminado.", "success");
             } catch (error) {
@@ -111,28 +113,36 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
-        function verificarCarritoVacio() {
+    
+    function verificarCarritoVacio() {
         const carritoContainer = document.querySelector(".carrito-tabla tbody");
         const carritoTabla = document.querySelector(".carrito-tabla");
         const carritoTotal = document.querySelector(".carrito-total");
         const carritoVacioMensaje = document.querySelector(".carrito-vacio");
     
-        // Verifica si el carrito está vacío (ya no hay filas en la tabla)
-        if (!carritoContainer || carritoContainer.children.length === 0) {
-            console.log("🛒 El carrito está vacío, mostrando mensaje...");
+        if (carritoContainer && carritoContainer.children.length > 0) {
+            console.log("🛒 Aún hay productos en el carrito.");
+            return; // Si hay productos, no hacemos nada
+        }
     
-            // Elimina la tabla y el total si existen
-            if (carritoTabla) carritoTabla.remove();
-            if (carritoTotal) carritoTotal.remove();
+        console.log("🛒 El carrito está vacío, mostrando mensaje...");
     
-            // Asegura que el mensaje de "Carrito vacío" se haga visible
-            if (carritoVacioMensaje) {
-                carritoVacioMensaje.style.display = "block";
-            } else {
-                console.warn("⚠️ No se encontró el mensaje de carrito vacío en el DOM.");
-            }
+        // Elimina la tabla y el total si existen
+        if (carritoTabla) {
+            carritoTabla.style.display = "none"; // En lugar de eliminar, ocultamos
+        }
+        if (carritoTotal) {
+            carritoTotal.style.display = "none"; // Ocultamos el total
+        }
+    
+        // Mostrar el mensaje de carrito vacío
+        if (carritoVacioMensaje) {
+            carritoVacioMensaje.style.display = "block";
+        } else {
+            console.warn("⚠️ No se encontró el mensaje de carrito vacío en el DOM.");
         }
     }
+    
 
     // 🔹 Manejo de eventos en la tabla del carrito
     if (carritoContainer) {
