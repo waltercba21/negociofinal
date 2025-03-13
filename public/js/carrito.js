@@ -178,6 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
 document.addEventListener("DOMContentLoaded", () => {
     const carritoContainer = document.querySelector(".carrito-tabla tbody");
 
