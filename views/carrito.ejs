@@ -35,19 +35,24 @@
             </table>
         <% } %>
 
-        <% if (estadoCarrito) { %>
+        <% if (typeof estadoCarrito !== 'undefined' && estadoCarrito) { %>
             <div class="estado-pedido">
                 <h2>📦 Tu pedido está en proceso</h2>
                 <p>Estado actual: <strong><%= estadoCarrito %></strong></p>
+                
                 <% if (estadoCarrito === "preparación") { %>
                     <p>🛒 Puedes pasar a retirarlo en nuestro local.</p>
                 <% } else if (estadoCarrito === "listo para entrega") { %>
                     <p>🚚 En breve recibirás tu pedido en tu domicilio.</p>
+                <% } else { %>
+                    <p>⌛ Estamos procesando tu pedido.</p>
                 <% } %>
+        
             </div>
         <% } else { %>
             <p class="carrito-vacio">No tienes productos en tu carrito.</p>
         <% } %>
+        
 
         <% if (typeof comprobante !== 'undefined' && comprobante) { %>
             <div class="comprobante-container">

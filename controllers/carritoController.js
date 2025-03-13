@@ -97,16 +97,13 @@ module.exports = {
             res.json({ success: true, carrito_id: carritos[0].id });
         });
     },
-    
     verCarrito: (req, res) => {
-        // Verificar si el usuario está autenticado 
         if (!req.session || !req.session.usuario || !req.session.usuario.id) {
             return res.status(401).send('Debes iniciar sesión para acceder al carrito');
         }
     
         const id_usuario = req.session.usuario.id;
     
-        // Obtener el carrito activo del usuario
         carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
             if (error) {
                 console.error('Error al obtener el carrito:', error);
@@ -114,18 +111,18 @@ module.exports = {
             }
     
             if (!carritoActivo || carritoActivo.length === 0) {
-                // Si no hay productos en el carrito, renderiza con cantidad y total 0
                 return res.render('carrito', { 
                     productos: [], 
                     cantidadProductosCarrito: 0, 
                     total: 0, 
-                    cantidadCarrito: 0 // Aseguramos que cantidadCarrito esté definida
+                    cantidadCarrito: 0,
+                    estadoCarrito: null // Agregar estadoCarrito como null para evitar errores en la vista
                 });
             }
     
             const id_carrito = carritoActivo[0].id;
+            const estadoCarrito = carritoActivo[0].estado; // Extraer el estado del carrito
     
-            // Obtener los productos del carrito con las imágenes
             carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
                 if (error) {
                     console.error('Error al obtener los productos del carrito:', error);
@@ -134,24 +131,20 @@ module.exports = {
     
                 console.log('Productos cargados en el carrito:', productos);
                 const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0); 
-                // Calcular la cantidad total de productos (suma de las cantidades de cada uno)
                 const cantidadUnica = productos.length; 
-
     
-                // Calcular el total del carrito (precio total de los productos)
                 const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
     
-                // Renderiza la vista del carrito con la cantidad total de unidades
                 res.render('carrito', { 
                     productos, 
-                    cantidadProductosCarrito: cantidadTotal, // ✅ Total de unidades en el carrito
+                    cantidadProductosCarrito: cantidadTotal,
                     total, 
-                    cantidadCarrito: cantidadUnica // ✅ Ítems únicos para la notificación
+                    cantidadCarrito: cantidadUnica,
+                    estadoCarrito 
                 });
-                
             });
         });
-    },
+    },    
     actualizarCantidad: (req, res) => {
         const { id, accion } = req.body;
     

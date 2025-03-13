@@ -2,7 +2,7 @@ const pool = require('../config/conexion');
 
 module.exports = {
     obtenerCarritoActivo: (usuario_id, callback) => {
-        const query = 'SELECT * FROM carritos WHERE usuario_id = ?';
+        const query = 'SELECT id, estado FROM carritos WHERE usuario_id = ?';
         pool.query(query, [usuario_id], (error, resultados) => {
             if (error) {
                 return callback(error);
@@ -10,7 +10,6 @@ module.exports = {
             callback(null, resultados);
         });
     },
-
     crearCarrito: (usuario_id, callback) => {
         const query = 'INSERT INTO carritos (usuario_id) VALUES (?)';
         pool.query(query, [usuario_id], (error, resultados) => {
