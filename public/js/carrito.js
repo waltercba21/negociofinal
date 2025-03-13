@@ -13,24 +13,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (filasProductos === 0) {
             console.log("🛒 El carrito está vacío.");
 
-            // Ocultar el contenedor del carrito
             if (contenedorCarrito) contenedorCarrito.style.display = "none";
-
-            // Ocultar el botón de continuar
             if (botonContinuarEnvio) botonContinuarEnvio.style.display = "none";
-
-            // Mostrar el mensaje de carrito vacío
             if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "block";
         } else {
             console.log("✅ Hay productos en el carrito.");
-
-            // Mostrar el contenedor del carrito
             if (contenedorCarrito) contenedorCarrito.style.display = "block";
-
-            // Mostrar el botón de continuar
             if (botonContinuarEnvio) botonContinuarEnvio.style.display = "block";
-
-            // Ocultar el mensaje de carrito vacío
             if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "none";
         }
     }
@@ -63,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (fila) fila.remove();
                 console.log(`✅ Producto eliminado con éxito.`);
 
-                // Esperar a que el DOM se actualice antes de verificar si está vacío
                 setTimeout(() => {
                     verificarCarritoVacio();
                 }, 100);
@@ -74,13 +62,62 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    async function actualizarCantidad(id, accion) {
+        console.log(`🔄 Actualizando cantidad del producto ${id}, acción: ${accion}`);
+
+        try {
+            const response = await fetch("/carrito/actualizar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, accion })
+            });
+
+            if (!response.ok) throw new Error("Error al actualizar la cantidad");
+
+            const data = await response.json();
+            const fila = document.querySelector(`.btn-cantidad[data-id="${id}"]`).closest("tr");
+
+            if (!fila) return;
+
+            const cantidadCell = fila.querySelector(".cantidad");
+            const subTotalCell = fila.querySelector(".subtotal");
+
+            if (!cantidadCell || !subTotalCell) {
+                console.error("❌ No se encontraron las celdas de cantidad o subtotal.");
+                return;
+            }
+
+            cantidadCell.textContent = data.nuevaCantidad;
+
+            const precioUnitario = parseFloat(fila.querySelector(".precio").textContent.replace("$", "").trim());
+            subTotalCell.textContent = `$${(precioUnitario * data.nuevaCantidad).toFixed(2)}`;
+        } catch (error) {
+            console.error("❌ Error al actualizar cantidad:", error);
+            Swal.fire("Error", "No se pudo actualizar la cantidad.", "error");
+        }
+    }
+
     document.addEventListener("click", (e) => {
         if (e.target.closest(".btn-eliminar")) {
             const boton = e.target.closest(".btn-eliminar");
             const productoId = boton.getAttribute("data-id");
             eliminarProducto(productoId, boton);
         }
+
+        if (e.target.closest(".btn-cantidad")) {
+            const boton = e.target.closest(".btn-cantidad");
+            const productoId = boton.getAttribute("data-id");
+            const accion = boton.classList.contains("aumentar") ? "aumentar" : "disminuir";
+            actualizarCantidad(productoId, accion);
+        }
     });
+
+    if (botonContinuarEnvio) {
+        botonContinuarEnvio.addEventListener("click", () => {
+            console.log("🔄 Redirigiendo a la vista de Envío...");
+            window.location.href = "/carrito/envio";
+        });
+    }
 
     verificarCarritoVacio();
 });
