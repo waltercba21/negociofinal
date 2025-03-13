@@ -28,6 +28,8 @@
                 </div>
             </div>
         </div>
+
+        <!-- Contenedor del carrito -->
         <div id="contenedor-carrito" <%= productos.length === 0 ? 'style="display:none;"' : '' %>>
             <table class="carrito-tabla">
                 <thead>
@@ -62,15 +64,21 @@
                 </tbody>
             </table>
 
+            <!-- Contenedor del total -->
+            <div class="total-container">
+                <label><strong>Total del pedido:</strong></label>
+                <input type="text" id="total-carrito" value="$<%= total %>" readonly>
+            </div>
+
             <button id="continuar-envio" class="btn-finalizar">Continuar con el Envío</button>
         </div>
 
+        <!-- Mensaje de carrito vacío -->
         <div id="mensaje-carrito-vacio" style="display: none;">
             <p style="text-align: center; font-size: 1.2rem; color: #888;">
                 🛒 CARRITO DE COMPRAS VACÍO
             </p>
         </div>
-
 
         <!-- Cargar SweetAlert2 antes que carrito.js -->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
