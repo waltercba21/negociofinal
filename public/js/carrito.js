@@ -80,18 +80,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const carritoTotal = document.querySelector(".carrito-total");
         const carritoVacioMensaje = document.querySelector(".carrito-vacio");
     
-        // Verifica si solo queda la fila de "Total" o si no hay filas en la tabla
+        // Verificar si ya no quedan filas en la tabla (productos)
         if (!carritoContainer || carritoContainer.children.length === 0) {
             console.log("🛒 El carrito está vacío, mostrando mensaje...");
-            if (carritoTabla) carritoTabla.remove(); // Eliminar la tabla
-            if (carritoTotal) carritoTotal.remove(); // Eliminar el total
+    
+            // Eliminar la tabla y el total
+            if (carritoTabla) carritoTabla.remove();
+            if (carritoTotal) carritoTotal.remove();
+    
+            // Mostrar el mensaje de carrito vacío
             if (carritoVacioMensaje) {
-                carritoVacioMensaje.style.display = "block"; // Mostrar el mensaje de carrito vacío
+                carritoVacioMensaje.style.display = "block";
             } else {
                 console.warn("⚠️ No se encontró el mensaje de carrito vacío en el DOM.");
             }
         }
     }
+    
     async function eliminarProducto(id, boton) {
         Swal.fire({
             title: "¿Eliminar producto?",
@@ -114,10 +119,10 @@ document.addEventListener("DOMContentLoaded", () => {
     
                 if (!response.ok) throw new Error("Error al eliminar el producto");
     
-                boton.closest("tr").remove(); // Eliminar fila del producto
+                boton.closest("tr").remove(); // Eliminar la fila del producto
                 actualizarTotalCarrito();
                 actualizarGlobo();
-                verificarCarritoVacio(); // Comprobar si el carrito está vacío
+                verificarCarritoVacio(); // Comprobar si el carrito quedó vacío
     
                 Swal.fire("Eliminado", "El producto ha sido eliminado.", "success");
             } catch (error) {
@@ -126,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+    
 
     // 🔹 Manejo de eventos en la tabla del carrito
     if (carritoContainer) {
