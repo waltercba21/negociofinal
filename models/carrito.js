@@ -192,6 +192,8 @@ actualizarEstado: (id_carrito, nuevoEstado, callback) => {
         });
     },    
     obtenerUltimoPedido: (usuario_id, callback) => {
+        console.log(`🔍 Buscando el último carrito para el usuario: ${usuario_id}`);
+
         const query = `
             SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra
             FROM carritos
@@ -199,22 +201,22 @@ actualizarEstado: (id_carrito, nuevoEstado, callback) => {
             ORDER BY actualizado_en DESC
             LIMIT 1;
         `;
-    
+
         pool.query(query, [usuario_id], (error, resultados) => {
             if (error) {
                 console.error("❌ Error al obtener el último carrito:", error);
                 return callback(error);
             }
-    
+
             if (resultados.length === 0) {
                 console.warn("⚠️ No se encontró un carrito finalizado para el usuario:", usuario_id);
                 return callback(null, []);
             }
-    
+
             console.log("✅ Último carrito obtenido:", resultados[0]);
             callback(null, resultados);
         });
-    },
+    }
     
     
     

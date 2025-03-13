@@ -1,7 +1,12 @@
-const carrito = require('../models/carrito');
+const carrito = require('../models/carrito'); // ✅ Esta línea debe estar al inicio del archivo
 const mercadopago = require('mercadopago');
 const producto = require('../models/producto');
 const { io } = require('../app');
+const fs = require('fs');
+const path = require('path');
+const PDFDocument = require('pdfkit');
+
+console.log("✅ Módulo 'carrito' cargado correctamente.");
 
 mercadopago.configure({
     access_token: process.env.MP_ACCESS_TOKEN
@@ -684,21 +689,31 @@ module.exports = {
     },
     generarComprobante: async (req, res) => {
         try {
+            console.log("📝 Iniciando la generación del comprobante...");
+            
             if (!carrito || typeof carrito.obtenerUltimoPedido !== 'function') {
+                console.error("❌ Error crítico: 'carrito' no está definido o 'obtenerUltimoPedido' no es una función.");
                 throw new Error("❌ Error crítico: 'carrito' no está definido o 'obtenerUltimoPedido' no es una función.");
             }
     
             const id_usuario = req.session.usuario.id;
+            console.log(`📌 Usuario autenticado, ID: ${id_usuario}`);
     
             // Obtener el último carrito finalizado del usuario
             const carritos = await new Promise((resolve, reject) => {
                 carrito.obtenerUltimoPedido(id_usuario, (error, carrito) => {
-                    if (error) reject(error);
-                    else resolve(carrito);
+                    if (error) {
+                        console.error("❌ Error al obtener el último carrito:", error);
+                        reject(error);
+                    } else {
+                        console.log("✅ Último carrito obtenido correctamente:", carrito);
+                        resolve(carrito);
+                    }
                 });
             });
     
             if (!carritos || carritos.length === 0) {
+                console.warn("⚠️ No se encontró un carrito finalizado para este usuario.");
                 return res.status(404).json({ error: "No se encontró un pedido reciente." });
             }
     
@@ -707,12 +722,18 @@ module.exports = {
             // Obtener los productos del carrito
             const productos = await new Promise((resolve, reject) => {
                 carrito.obtenerProductosCarrito(carritoData.id_carrito, (error, productos) => {
-                    if (error) reject(error);
-                    else resolve(productos);
+                    if (error) {
+                        console.error("❌ Error al obtener los productos del carrito:", error);
+                        reject(error);
+                    } else {
+                        console.log("✅ Productos obtenidos:", productos);
+                        resolve(productos);
+                    }
                 });
             });
     
             // Generar el PDF del comprobante
+            console.log("📄 Generando PDF del comprobante...");
             const doc = new PDFDocument();
             const filePath = path.join(__dirname, `../public/comprobantes/comprobante_${carritoData.id_carrito}.pdf`);
             const stream = fs.createWriteStream(filePath);
@@ -742,8 +763,10 @@ module.exports = {
     
             doc.end();
             stream.on("finish", () => {
+                console.log("✅ Comprobante generado correctamente:", filePath);
                 res.download(filePath, `comprobante_${carritoData.id_carrito}.pdf`, () => {
                     fs.unlinkSync(filePath);
+                    console.log("🗑️ Archivo de comprobante eliminado después de la descarga.");
                 });
             });
         } catch (error) {
@@ -751,7 +774,5 @@ module.exports = {
             res.status(500).json({ error: "Error al generar el comprobante" });
         }
     }
-    
-    
     
 };
