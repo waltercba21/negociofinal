@@ -682,25 +682,27 @@ module.exports = {
             res.json({ mensaje: "Pedido marcado como finalizado" });
         });
     },
-    generarComprobante : async (req, res) => {
+    generarComprobante: async (req, res) => {
         try {
             const id_usuario = req.session.usuario.id;
     
-            // Obtener el último pedido del usuario
-            const pedidos = await new Promise((resolve, reject) => {
-                carrito.obtenerUltimoPedido(id_usuario, (error, pedido) => {
+            // Obtener el último carrito finalizado del usuario
+            const carritos = await new Promise((resolve, reject) => {
+                carrito.obtenerUltimoPedido(id_usuario, (error, carrito) => {
                     if (error) reject(error);
-                    else resolve(pedido);
+                    else resolve(carrito);
                 });
             });
     
-            if (!pedidos || pedidos.length === 0) {
+            if (!carritos || carritos.length === 0) {
                 return res.status(404).json({ error: "No se encontró un pedido reciente." });
             }
     
-            const pedido = pedidos[0];
+            const carrito = carritos[0];
+    
+            // Obtener los productos del carrito
             const productos = await new Promise((resolve, reject) => {
-                carrito.obtenerProductosCarrito(pedido.id_pedido, (error, productos) => {
+                carrito.obtenerProductosCarrito(carrito.id_carrito, (error, productos) => {
                     if (error) reject(error);
                     else resolve(productos);
                 });
@@ -708,7 +710,7 @@ module.exports = {
     
             // Crear el documento PDF
             const doc = new PDFDocument();
-            const filePath = path.join(__dirname, `../public/comprobantes/comprobante_${pedido.id_pedido}.pdf`);
+            const filePath = path.join(__dirname, `../public/comprobantes/comprobante_${carrito.id_carrito}.pdf`);
             const stream = fs.createWriteStream(filePath);
             doc.pipe(stream);
     
@@ -717,9 +719,13 @@ module.exports = {
             doc.fontSize(14).text("COMPROBANTE DE RETIRO", { align: "center" });
             doc.fontSize(10).text("NO VÁLIDO COMO FACTURA", { align: "center" });
     
-            doc.moveDown().fontSize(12).text(`Fecha: ${new Date().toLocaleDateString()}`);
-            doc.text(`Número de Pedido: ${pedido.id_pedido}`);
-            doc.text(`Estado: ${pedido.estado}`);
+            doc.moveDown().fontSize(12).text(`Fecha: ${new Date(carrito.fecha_compra).toLocaleDateString()}`);
+            doc.text(`Número de Pedido: ${carrito.id_carrito}`);
+            doc.text(`Estado: ${carrito.estado}`);
+            doc.text(`Tipo de Envío: ${carrito.tipo_envio}`);
+            if (carrito.direccion) {
+                doc.text(`Dirección de Envío: ${carrito.direccion}`);
+            }
             doc.moveDown();
     
             // Detalle de productos
@@ -728,19 +734,21 @@ module.exports = {
                 doc.text(`${index + 1}. ${producto.nombre} - ${producto.cantidad} x $${producto.precio_venta} = $${producto.total}`);
             });
     
+            const totalCompra = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
             doc.moveDown();
-            doc.text(`Total: $${pedido.total}`, { bold: true });
+            doc.text(`Total: $${totalCompra}`, { bold: true });
     
             doc.end();
             stream.on("finish", () => {
-                res.download(filePath, `comprobante_${pedido.id_pedido}.pdf`, () => {
+                res.download(filePath, `comprobante_${carrito.id_carrito}.pdf`, () => {
                     fs.unlinkSync(filePath); // Elimina el archivo tras la descarga
                 });
             });
         } catch (error) {
-            console.error("Error al generar el comprobante:", error);
+            console.error("❌ Error al generar el comprobante:", error);
             res.status(500).json({ error: "Error al generar el comprobante" });
         }
     }
+    
     
 };
