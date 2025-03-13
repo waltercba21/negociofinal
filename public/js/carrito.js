@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     const alertaCantidad = document.querySelector('.cantidad-alerta');
-    const btnContinuarEnvio = document.getElementById("continuar-envio");
     
     function actualizarGlobo(cantidad) {
         console.log(`Actualizando globo de notificación con cantidad: ${cantidad}`);
