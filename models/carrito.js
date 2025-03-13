@@ -193,28 +193,29 @@ actualizarEstado: (id_carrito, nuevoEstado, callback) => {
     },    
     obtenerUltimoPedido: (usuario_id, callback) => {
         const query = `
-            SELECT id AS id_pedido, estado, total
-            FROM pedidos
+            SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra
+            FROM carritos
             WHERE usuario_id = ?
-            ORDER BY creado_en DESC
+            ORDER BY actualizado_en DESC
             LIMIT 1;
         `;
     
         pool.query(query, [usuario_id], (error, resultados) => {
             if (error) {
-                console.error("❌ Error al obtener el último pedido:", error);
+                console.error("❌ Error al obtener el último carrito:", error);
                 return callback(error);
             }
     
             if (resultados.length === 0) {
-                console.warn("⚠️ No se encontró un pedido reciente para el usuario:", usuario_id);
+                console.warn("⚠️ No se encontró un carrito finalizado para el usuario:", usuario_id);
                 return callback(null, []);
             }
     
-            console.log("✅ Último pedido obtenido:", resultados[0]);
+            console.log("✅ Último carrito obtenido:", resultados[0]);
             callback(null, resultados);
         });
     },
+    
     
     
 };
