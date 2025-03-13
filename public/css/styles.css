@@ -2224,7 +2224,7 @@ border-radius: 10px;
   font-size: 1rem;
   color: #003f7d;
 }
-.opcion-envio i:hover{
+.opcion-envio i :hover{
   color: #fff;
 }
 
