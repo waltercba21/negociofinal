@@ -74,8 +74,24 @@ document.addEventListener("DOMContentLoaded", () => {
             Swal.fire("Error", "No se pudo actualizar la cantidad.", "error");
         }
     }
-
-    // 🔹 Función para eliminar un producto del carrito
+    function verificarCarritoVacio() {
+        const carritoContainer = document.querySelector(".carrito-tabla tbody");
+        const carritoTabla = document.querySelector(".carrito-tabla");
+        const carritoTotal = document.querySelector(".carrito-total");
+        const carritoVacioMensaje = document.querySelector(".carrito-vacio");
+    
+        // Verifica si solo queda la fila de "Total" o si no hay filas en la tabla
+        if (!carritoContainer || carritoContainer.children.length === 0) {
+            console.log("🛒 El carrito está vacío, mostrando mensaje...");
+            if (carritoTabla) carritoTabla.remove(); // Eliminar la tabla
+            if (carritoTotal) carritoTotal.remove(); // Eliminar el total
+            if (carritoVacioMensaje) {
+                carritoVacioMensaje.style.display = "block"; // Mostrar el mensaje de carrito vacío
+            } else {
+                console.warn("⚠️ No se encontró el mensaje de carrito vacío en el DOM.");
+            }
+        }
+    }
     async function eliminarProducto(id, boton) {
         Swal.fire({
             title: "¿Eliminar producto?",
@@ -88,20 +104,21 @@ document.addEventListener("DOMContentLoaded", () => {
             cancelButtonColor: "#3085d6"
         }).then(async (result) => {
             if (!result.isConfirmed) return;
-
+    
             try {
                 const response = await fetch("/carrito/eliminar", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ id })
                 });
-
+    
                 if (!response.ok) throw new Error("Error al eliminar el producto");
-
-                boton.closest("tr").remove(); 
+    
+                boton.closest("tr").remove(); // Eliminar fila del producto
                 actualizarTotalCarrito();
                 actualizarGlobo();
-                
+                verificarCarritoVacio(); // Comprobar si el carrito está vacío
+    
                 Swal.fire("Eliminado", "El producto ha sido eliminado.", "success");
             } catch (error) {
                 console.error("❌ Error al eliminar producto:", error);
@@ -139,6 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = "/carrito/envio";
         });
     }
+    
 
     // 🔹 Inicializar datos al cargar la página
     actualizarGlobo();
