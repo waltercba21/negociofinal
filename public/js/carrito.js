@@ -19,6 +19,9 @@ document.addEventListener("DOMContentLoaded", () => {
             // Ocultar el botón de continuar
             if (botonContinuarEnvio) botonContinuarEnvio.style.display = "none";
 
+            // Ocultar el total del carrito
+            if (totalCarritoElement) totalCarritoElement.style.display = "none";
+
             // Mostrar el mensaje de carrito vacío
             if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "block";
         }
