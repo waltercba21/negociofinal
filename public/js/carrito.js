@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const filasProductos = document.querySelectorAll(".carrito-tabla tbody tr").length;
 
         if (filasProductos === 0) {
-            console.log("🛒 El carrito está vacío, ocultando la tabla y el botón de continuar.");
+            console.log("🛒 El carrito está vacío, ocultando elementos.");
 
             // Ocultar el contenedor del carrito
             if (contenedorCarrito) contenedorCarrito.style.display = "none";
@@ -20,10 +20,21 @@ document.addEventListener("DOMContentLoaded", () => {
             if (botonContinuarEnvio) botonContinuarEnvio.style.display = "none";
 
             // Ocultar el total del carrito
-            if (totalCarritoElement) totalCarritoElement.style.display = "none";
+            if (totalCarritoElement) totalCarritoElement.textContent = "$0.00";
 
             // Mostrar el mensaje de carrito vacío
             if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "block";
+        } else {
+            console.log("✅ Hay productos en el carrito, mostrando elementos.");
+
+            // Mostrar el contenedor del carrito
+            if (contenedorCarrito) contenedorCarrito.style.display = "block";
+
+            // Mostrar el botón de continuar
+            if (botonContinuarEnvio) botonContinuarEnvio.style.display = "block";
+
+            // Ocultar el mensaje de carrito vacío
+            if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "none";
         }
     }
 
