@@ -684,6 +684,10 @@ module.exports = {
     },
     generarComprobante: async (req, res) => {
         try {
+            if (!carrito || typeof carrito.obtenerUltimoPedido !== 'function') {
+                throw new Error("❌ Error crítico: 'carrito' no está definido o 'obtenerUltimoPedido' no es una función.");
+            }
+    
             const id_usuario = req.session.usuario.id;
     
             // Obtener el último carrito finalizado del usuario
@@ -698,37 +702,35 @@ module.exports = {
                 return res.status(404).json({ error: "No se encontró un pedido reciente." });
             }
     
-            const carrito = carritos[0];
+            const carritoData = carritos[0];
     
             // Obtener los productos del carrito
             const productos = await new Promise((resolve, reject) => {
-                carrito.obtenerProductosCarrito(carrito.id_carrito, (error, productos) => {
+                carrito.obtenerProductosCarrito(carritoData.id_carrito, (error, productos) => {
                     if (error) reject(error);
                     else resolve(productos);
                 });
             });
     
-            // Crear el documento PDF
+            // Generar el PDF del comprobante
             const doc = new PDFDocument();
-            const filePath = path.join(__dirname, `../public/comprobantes/comprobante_${carrito.id_carrito}.pdf`);
+            const filePath = path.join(__dirname, `../public/comprobantes/comprobante_${carritoData.id_carrito}.pdf`);
             const stream = fs.createWriteStream(filePath);
             doc.pipe(stream);
     
-            // Encabezado
             doc.fontSize(20).text("AUTOFAROS", { align: "center" });
             doc.fontSize(14).text("COMPROBANTE DE RETIRO", { align: "center" });
             doc.fontSize(10).text("NO VÁLIDO COMO FACTURA", { align: "center" });
     
-            doc.moveDown().fontSize(12).text(`Fecha: ${new Date(carrito.fecha_compra).toLocaleDateString()}`);
-            doc.text(`Número de Pedido: ${carrito.id_carrito}`);
-            doc.text(`Estado: ${carrito.estado}`);
-            doc.text(`Tipo de Envío: ${carrito.tipo_envio}`);
-            if (carrito.direccion) {
-                doc.text(`Dirección de Envío: ${carrito.direccion}`);
+            doc.moveDown().fontSize(12).text(`Fecha: ${new Date(carritoData.fecha_compra).toLocaleDateString()}`);
+            doc.text(`Número de Pedido: ${carritoData.id_carrito}`);
+            doc.text(`Estado: ${carritoData.estado}`);
+            doc.text(`Tipo de Envío: ${carritoData.tipo_envio}`);
+            if (carritoData.direccion) {
+                doc.text(`Dirección de Envío: ${carritoData.direccion}`);
             }
             doc.moveDown();
     
-            // Detalle de productos
             doc.fontSize(12).text("Productos comprados:", { underline: true });
             productos.forEach((producto, index) => {
                 doc.text(`${index + 1}. ${producto.nombre} - ${producto.cantidad} x $${producto.precio_venta} = $${producto.total}`);
@@ -740,8 +742,8 @@ module.exports = {
     
             doc.end();
             stream.on("finish", () => {
-                res.download(filePath, `comprobante_${carrito.id_carrito}.pdf`, () => {
-                    fs.unlinkSync(filePath); // Elimina el archivo tras la descarga
+                res.download(filePath, `comprobante_${carritoData.id_carrito}.pdf`, () => {
+                    fs.unlinkSync(filePath);
                 });
             });
         } catch (error) {
@@ -749,6 +751,7 @@ module.exports = {
             res.status(500).json({ error: "Error al generar el comprobante" });
         }
     }
+    
     
     
 };
