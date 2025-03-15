@@ -55,13 +55,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
         return;
     }
-        // 🔥 Establecer la fecha actual en el input de fecha
-        const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
-        if (fechaPresupuestoInput) {
-            const today = new Date();
-            const formattedDate = today.toISOString().split('T')[0];
-            fechaPresupuestoInput.value = formattedDate;
-        }
     
     const totalFacturaElement = document.getElementById('total-amount');
     let totalFactura = '0';
@@ -130,7 +123,14 @@ document.addEventListener('DOMContentLoaded', () => {
         icon: 'info',
         confirmButtonText: 'Entendido'
     });
-
+            // 🔥 Establecer la fecha actual en el input de fecha
+            const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
+            if (fechaPresupuestoInput) {
+                const today = new Date();
+                const formattedDate = today.toISOString().split('T')[0];
+                fechaPresupuestoInput.value = formattedDate;
+            }
+        
     const entradaBusqueda = document.getElementById('entradaBusqueda');
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
     let timeoutId;
