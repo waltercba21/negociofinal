@@ -194,32 +194,30 @@ guardarPresupuesto : (presupuesto) => {
                 INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
                 WHERE pp.codigo = ?
             `;
-    
             const params = [codigo];
     
-            // Si se proporciona un nombre, lo añadimos a la consulta
+            // Si se proporciona un nombre, lo incluimos en la consulta
             if (nombre) {
-                query += " AND p.nombre = ?";
-                params.push(nombre);
+                query += " AND p.nombre LIKE ?";
+                params.push(`%${nombre}%`); // Busqueda parcial para evitar errores por espacios u otros caracteres
             }
     
             conexion.query(query, params, (error, resultados) => {
                 if (error) {
-                    console.error('❌ Error al obtener el ID del producto:', error);
+                    console.error('❌ Error en la consulta SQL:', error);
                     reject(error);
                 } else {
                     if (resultados.length > 0) {
                         console.log(`✅ Producto encontrado: ${JSON.stringify(resultados[0])}`);
                         resolve(resultados[0].id);
                     } else {
-                        console.warn(`⚠️ Producto con código ${codigo} ${nombre ? `y nombre ${nombre}` : ''} no encontrado.`);
-                        resolve(null); // Se retorna null en lugar de lanzar un error
+                        console.warn(`⚠️ Producto con código ${codigo} y nombre ${nombre} no encontrado.`);
+                        resolve(null);
                     }
                 }
             });
         });
-    },
-    
+    },    
      obtenerItemsPresupuesto : (presupuestoId) => {
         return new Promise((resolve, reject) => {
           const query = `
