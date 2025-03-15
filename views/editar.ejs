@@ -37,7 +37,8 @@
                             <div class="form-group-crear">
                                 <label for="oferta">Oferta</label>
                                 <input type="hidden" name="oferta" value="0">
-                                <input id="oferta" type="checkbox" name="oferta" value="1" <%= producto && producto.oferta ? 'checked' : '' %>>
+                                <input id="oferta" type="checkbox" name="oferta" value="1" <%= producto && producto.oferta == 1 ? 'checked' : '' %>>
+
                             </div>
                             
                                                    

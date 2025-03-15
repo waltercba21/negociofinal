@@ -1031,6 +1031,8 @@ presupuestoMostrador: async function(req, res) {
     }
 },
   procesarFormulario: async (req, res) => {
+    console.log("🔍 Datos recibidos en el servidor:", req.body);
+
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
         const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');

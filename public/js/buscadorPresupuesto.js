@@ -8,6 +8,9 @@ document.getElementById('invoice-form').addEventListener('keydown', function(e) 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
+    const submitButton = document.querySelector("button[type='submit']");
+    submitButton.disabled = true; // 🔒 Evita múltiples clics
+
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     
@@ -21,7 +24,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         cantidad = !isNaN(cantidad) ? cantidad : 1;
         let subtotal = precio_unitario * cantidad;
 
-        // 🔥🔥🔥 Solo agregar productos que tienen un código y una descripción válida
         if (codigo !== '' && descripcion !== '' && cantidad > 0 && precio_unitario > 0) {
             invoiceItems.push({
                 producto_id: codigo,
@@ -33,7 +35,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         }
     }
 
-    // 🔥🔥🔥 Validar que al menos un producto válido fue agregado
     if (invoiceItems.length === 0) {
         Swal.fire({
             title: 'Error',
@@ -41,8 +42,11 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             icon: 'error',
             confirmButtonText: 'Entendido'
         });
+        submitButton.disabled = false;
         return;
     }
+
+    console.log("Productos enviados en la solicitud:", invoiceItems);
 
     const totalFacturaElement = document.getElementById('total-amount');
     let totalFactura = '0';
@@ -77,14 +81,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 icon: 'success',
                 confirmButtonText: 'Entendido'
             }).then(() => {
-                Swal.fire({
-                    title: 'Nuevo Presupuesto',
-                    text: 'Está por realizar un nuevo presupuesto. Complete los datos.',
-                    icon: 'info',
-                    confirmButtonText: 'Entendido'
-                }).then(() => {
-                    window.location.reload();
-                });
+                window.location.reload();
             });
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
@@ -98,267 +95,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             confirmButtonText: 'Entendido'
         });
     }
-});
 
-
-
-document.addEventListener('DOMContentLoaded', () => {
-    Swal.fire({
-        title: 'Está en la sección de Presupuesto',
-        text: 'Recuerde que está realizando una presupuesto, no una factura.',
-        icon: 'info',
-        confirmButtonText: 'Entendido'
-    });
-
-    const entradaBusqueda = document.getElementById('entradaBusqueda');
-    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-    let timeoutId;
-
-    entradaBusqueda.addEventListener('keyup', async (e) => {
-        const busqueda = e.target.value;
-        resultadosBusqueda.innerHTML = '';
-
-        if (!busqueda.trim()) {
-            resultadosBusqueda.style.display = 'none';
-            return;
-        }
-
-        const url = '/productos/api/buscar?q=' + busqueda;
-
-        const respuesta = await fetch(url);
-        const productos = await respuesta.json();
-
-        productos.forEach((producto) => {
-            const resultado = document.createElement('div');
-            resultado.classList.add('resultado-busqueda');
-            resultado.dataset.codigo = producto.codigo;
-            resultado.dataset.nombre = producto.nombre;
-            resultado.dataset.precio_venta = producto.precio_venta;
-            resultado.dataset.stock_actual = producto.stock_actual;
-
-            if (producto.imagenes && producto.imagenes.length > 0) {
-                resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
-            }
-
-            const contenedor = document.createElement('div');
-            contenedor.classList.add('resultado-contenedor');
-
-            if (producto.imagenes && producto.imagenes.length > 0) {
-                const imagen = document.createElement('img');
-                imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
-                imagen.classList.add('miniatura');
-                contenedor.appendChild(imagen);
-            }
-
-            const nombreProducto = document.createElement('span');
-            nombreProducto.textContent = producto.nombre;
-            contenedor.appendChild(nombreProducto);
-
-            resultado.appendChild(contenedor);
-
-            resultado.addEventListener('mouseenter', function () {
-                const resultados = document.querySelectorAll('.resultado-busqueda');
-                resultados.forEach(r => r.classList.remove('hover-activo'));
-                this.classList.add('hover-activo');
-            });
-
-            resultado.addEventListener('mouseleave', function () {
-                this.classList.remove('hover-activo');
-            });
-
-            // Asociar el evento click directamente a cada resultado
-            resultado.addEventListener('click', function () {
-                console.log("Producto seleccionado:", this.dataset);
-                const codigoProducto = this.dataset.codigo;
-                const nombreProducto = this.dataset.nombre;
-                const precioVenta = this.dataset.precio_venta;
-                const stockActual = this.dataset.stock_actual;
-                const imagenProducto = this.dataset.imagen;
-                console.log(`Intentando agregar producto: ${codigoProducto}, ${nombreProducto}`);
-                agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
-            });
-
-            resultadosBusqueda.appendChild(resultado);
-            resultadosBusqueda.style.display = 'block';
-        });
-    });
-
-    resultadosBusqueda.addEventListener('mouseleave', () => {
-        timeoutId = setTimeout(() => {
-            resultadosBusqueda.style.display = 'none';
-        }, 300);
-    });
-
-    resultadosBusqueda.addEventListener('mouseenter', () => {
-        clearTimeout(timeoutId);
-        resultadosBusqueda.style.display = 'block';
-    });
-});
-
-function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
-    const tablaPresupuesto = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-    const filas = tablaPresupuesto.rows;
-
-    let filaDisponible = null;
-
-    // Buscar la primera fila vacía disponible
-    for (let i = 0; i < filas.length; i++) {
-        if (!filas[i].cells[1].textContent.trim()) {
-            filaDisponible = filas[i];
-            break;
-        }
-    }
-
-    if (!filaDisponible) {
-        Swal.fire("Límite alcanzado", "Solo se pueden agregar hasta 10 productos.", "warning");
-        return;
-    }
-
-    console.log("Fila disponible encontrada:", filaDisponible);
-
-    // Agregar datos a la fila encontrada
-    const cellImagen = filaDisponible.cells[0];
-    const imgElement = cellImagen.querySelector("img");
-    if (imagenProducto && imgElement) {
-        imgElement.src = imagenProducto;
-        imgElement.style.display = "block";
-    }
-
-    filaDisponible.cells[1].textContent = codigoProducto;
-    filaDisponible.cells[2].textContent = nombreProducto;
-
-    const inputPrecio = filaDisponible.cells[3].querySelector("input");
-    if (inputPrecio) {
-        inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-        inputPrecio.disabled = false;
-    }
-
-    const inputCantidad = filaDisponible.cells[4].querySelector("input");
-    if (inputCantidad) {
-        inputCantidad.value = 1;
-        inputCantidad.disabled = false;
-        inputCantidad.addEventListener('input', function () {
-            updateSubtotal(filaDisponible);
-        });
-    }
-
-    filaDisponible.cells[5].textContent = stockActual;
-    filaDisponible.cells[6].textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-    // 🔥 Llamar a calcularTotal() inmediatamente para mostrar el precio final
-    calcularTotal();
-
-    // Activar el botón de eliminar
-    const botonEliminar = filaDisponible.cells[7].querySelector("button");
-    if (botonEliminar) {
-        botonEliminar.style.display = "block";
-        botonEliminar.classList.add("boton-eliminar-factura");
-        botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
-        botonEliminar.addEventListener("click", function () {
-            filaDisponible.cells[1].textContent = "";
-            filaDisponible.cells[2].textContent = "";
-            if (inputPrecio) inputPrecio.value = "";
-            if (inputCantidad) inputCantidad.value = "";
-            filaDisponible.cells[5].textContent = "";
-            filaDisponible.cells[6].textContent = "";
-            imgElement.style.display = "none";
-            botonEliminar.style.display = "none";
-            calcularTotal();
-        });
-    }
-
-    console.log("Producto agregado correctamente a la tabla.");
-}
-
-
-
-function updateSubtotal(row, verificarStock = true) {
-    const inputPrecio = row.cells[3].querySelector('input');
-    const inputCantidad = row.cells[4].querySelector('input');
-    const stockActualCell = row.cells[5];
-
-    if (!inputPrecio || !inputCantidad || !stockActualCell) {
-        console.error("Error: No se encontraron los elementos necesarios en la fila.");
-        return;
-    }
-
-    let precio = parseFloat(inputPrecio.value.replace(/\$|\./g, '').replace(',', '.'));
-    let cantidad = parseInt(inputCantidad.value);
-    let stockActual = parseInt(stockActualCell.textContent.replace(/\$|\./g, '').replace(',', '.'));
-
-    precio = !isNaN(precio) ? precio : 0;
-    cantidad = !isNaN(cantidad) ? cantidad : 1;
-    stockActual = !isNaN(stockActual) ? stockActual : 0;
-
-    const subtotal = precio * cantidad;
-    row.cells[6].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-    // 🔥 Validar stock SOLO cuando se modifica la cantidad, NO cuando se cambia el precio
-    if (verificarStock && document.activeElement === inputCantidad) {
-        if (cantidad > stockActual) {
-            Swal.fire({
-                title: 'ALERTA',
-                text: 'NO HAY STOCK DISPONIBLE. Solo hay ' + stockActual + ' unidades en stock.',
-                icon: 'error',
-                confirmButtonText: 'Entendido'
-            });
-            inputCantidad.value = stockActual > 0 ? stockActual : 1; // Si hay stock disponible, usa el máximo, si no, 1
-            cantidad = parseInt(inputCantidad.value); // Actualizamos la cantidad
-        }
-
-        const stockRestante = stockActual - cantidad;
-        const stockMinimo = 5;
-
-        if (stockRestante <= stockMinimo && stockRestante >= 0) {
-            Swal.fire({
-                title: 'ALERTA',
-                text: 'LLEGANDO AL LIMITE DE STOCK. Quedan ' + stockRestante + ' unidades disponibles.',
-                icon: 'warning',
-                confirmButtonText: 'Entendido'
-            });
-        }
-    }
-
-    calcularTotal(); // Recalcular total después de actualizar el subtotal
-}
-
-
-function calcularTotal() {
-    const filasPresupuesto = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    let total = 0;
-
-    for (let i = 0; i < filasPresupuesto.length; i++) {
-        let subtotal = parseFloat(filasPresupuesto[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
-        subtotal = !isNaN(subtotal) ? subtotal : 0;
-        total += subtotal;
-    }
-
-    const totalAmountInput = document.getElementById('total-amount');
-    totalAmountInput.value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-    console.log("Total actualizado:", totalAmountInput.value);
-}
-
-
-// 🔥 Asociar eventos a los inputs de cantidad y precio para actualizar dinámicamente
-document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
-    const inputCantidad = row.cells[4].querySelector('input');
-    const inputPrecio = row.cells[3].querySelector('input');
-
-    if (inputCantidad) {
-        inputCantidad.addEventListener('input', function () {
-            updateSubtotal(row);
-        });
-    }
-
-    if (inputPrecio) {
-        inputPrecio.addEventListener('input', function () {
-            updateSubtotal(row, false); // 🔥 Evita la validación de stock cuando se cambia el precio
-        });
-    }
-});
-
-// 🔥 Actualizar el total cuando se cambian los métodos de pago
-document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
-    checkbox.addEventListener('change', calcularTotal);
+    submitButton.disabled = false; // 🔓 Rehabilitar el botón en caso de error
 });
