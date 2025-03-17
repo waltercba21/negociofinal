@@ -729,7 +729,7 @@ modificarPorProveedor: async function (req, res) {
 actualizarPorProveedor: function (req, res) {
     console.log("📌 Datos recibidos en el servidor (req.body):", req.body);
 
-    let proveedorId = req.body.proveedor ? Number(req.body.proveedor) : null;
+    let proveedorId = req.body.proveedor && req.body.proveedor !== '' ? Number(req.body.proveedor) : null;
     let porcentajeCambio = req.body.porcentaje ? Number(req.body.porcentaje) / 100 : null;
     let tipoCambio = req.body.tipoCambio;
 
