@@ -720,24 +720,35 @@ modificarPorProveedor: async function (req, res) {
         res.status(500).send('Hubo un error al obtener los datos');
     }
 },
-actualizarPorProveedor: function(req, res) {
+actualizarPorProveedor: function (req, res) {
     let proveedorId = req.body.proveedor;
     let porcentajeCambio = Number(req.body.porcentaje) / 100;
     let tipoCambio = req.body.tipoCambio;
+
+    console.log(`📌 Recibida solicitud para actualizar precios del proveedor ID: ${proveedorId}`);
+    console.log(`📌 Tipo de cambio: ${tipoCambio}, Porcentaje: ${porcentajeCambio * 100}%`);
+
+    if (!proveedorId || isNaN(porcentajeCambio)) {
+        console.error("❌ Error: proveedorId o porcentajeCambio no válido.");
+        return res.status(400).send("Parámetros inválidos.");
+    }
 
     if (tipoCambio === 'descuento') {
         porcentajeCambio = -porcentajeCambio;
     }
 
-    producto.actualizarPreciosPorProveedor(proveedorId, porcentajeCambio, function(err) {
+    producto.actualizarPreciosPorProveedor(proveedorId, porcentajeCambio, function (err, affectedRows) {
         if (err) {
-            console.error(err);
-            res.redirect('/productos/modificarPorProveedor?error=Hubo un error al actualizar los precios');
-        } else {
-            res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedorId);
+            console.error(`❌ Error al actualizar precios: ${err}`);
+            return res.redirect(`/productos/modificarPorProveedor?proveedor=${proveedorId}&error=Hubo un error`);
         }
+
+        console.log(`✅ Precios actualizados para el proveedor ID: ${proveedorId}, Filas afectadas: ${affectedRows}`);
+
+        res.redirect(`/productos/modificarPorProveedor?proveedor=${proveedorId}&success=Precios actualizados`);
     });
 },
+
 actualizarPrecio: function(req, res) {
     let idProducto = req.body.id;
     let nuevoPrecio = req.body.precio_venta;

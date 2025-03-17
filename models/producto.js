@@ -533,34 +533,39 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
       }
     );
   },
-actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
-        proveedorId = Number(proveedorId);
-        porcentajeCambio = Number(porcentajeCambio);
-    
-        // Agrega ROUND() a tu consulta para redondear el precio
-        let query = "UPDATE producto_proveedor SET precio_lista = precio_lista * (1 + ?) WHERE proveedor_id = ?";
-        let params = [porcentajeCambio, proveedorId];
-    
-        conexion.getConnection((err, conexion) => {
-            if (err) {
-                console.error('Error al obtener la conexión:', err);
-                callback(err);
-            } else {
-                conexion.query(query, params, function (error, results) {
-                    conexion.release();
-                    if (error) {
-                        console.error('Error al ejecutar la consulta:', error);
-                        callback(error);
-                    } else {
-                        callback(null);
-                    }
-                });
+  actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
+    proveedorId = Number(proveedorId);
+    porcentajeCambio = Number(porcentajeCambio);
+
+    if (isNaN(proveedorId) || isNaN(porcentajeCambio)) {
+        console.error("❌ Error: proveedorId o porcentajeCambio no válido.");
+        return callback(new Error("Datos inválidos"));
+    }
+
+    let query = "UPDATE producto_proveedor SET precio_lista = precio_lista * (1 + ?) WHERE proveedor_id = ?";
+    let params = [porcentajeCambio, proveedorId];
+
+    conexion.getConnection((err, conexion) => {
+        if (err) {
+            console.error('❌ Error al obtener la conexión:', err);
+            return callback(err);
+        }
+
+        conexion.query(query, params, function (error, results) {
+            conexion.release();
+            if (error) {
+                console.error('❌ Error en la consulta:', error);
+                return callback(error);
             }
+
+            console.log(`✅ ${results.affectedRows} productos actualizados para el proveedor ${proveedorId}`);
+            callback(null, results.affectedRows);
         });
-    },
-    
+    });
+},
+
     actualizarPrecio: function (idProducto, nuevoPrecio, callback) {
-        let query = "UPDATE productos SET precio_venta = ? WHERE id = ?";
+        let query = "UPDATE producto_proveedor SET precio_venta = ? WHERE id = ?";
         let params = [nuevoPrecio, idProducto];
     
         conexion.getConnection((err, conexion) => {
