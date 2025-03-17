@@ -63,7 +63,7 @@ router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
 router.post('/actualizarPrecio', productosController.actualizarPrecio);
-router.get('/api/buscar', productosController.buscar);
+router.get('/api/buscar', productosController.buscar); 
 router.get('/:id', productosController.detalle);
 router.post('/generarPresupuestoPDF', productosController.generarPresupuestoPDF);
 router.post('/actualizarPreciosExcel', cargar, productosController.actualizarPreciosExcel);

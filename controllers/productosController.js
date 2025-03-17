@@ -711,7 +711,7 @@ modificarPorProveedor: async function (req, res) {
 
         if (req.query.proveedor) {
             proveedor = proveedores.find(p => p.id == req.query.proveedor);
-            productos = await producto.obtenerProductosPorProveedor(conexion, req.query.proveedor);
+            productos = await producto.obtenerProductosPorProveedorYCategoría(conexion, req.query.proveedor);
         }
 
         res.render('modificarPorProveedor', { proveedores: proveedores, productos: productos, proveedor: proveedor });
@@ -720,17 +720,19 @@ modificarPorProveedor: async function (req, res) {
         res.status(500).send('Hubo un error al obtener los datos');
     }
 },
-actualizarPorProveedor : function(req, res) {
+actualizarPorProveedor: function(req, res) {
     let proveedorId = req.body.proveedor;
     let porcentajeCambio = Number(req.body.porcentaje) / 100;
     let tipoCambio = req.body.tipoCambio;
+
     if (tipoCambio === 'descuento') {
         porcentajeCambio = -porcentajeCambio;
     }
-    producto.actualizarPreciosPorProveedor( proveedorId, porcentajeCambio, function(err) {
+
+    producto.actualizarPreciosPorProveedor(proveedorId, porcentajeCambio, function(err) {
         if (err) {
             console.error(err);
-            res.redirect('/productos/panelControl?error=Hubo un error al actualizar los precios');
+            res.redirect('/productos/modificarPorProveedor?error=Hubo un error al actualizar los precios');
         } else {
             res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedorId);
         }
@@ -1064,7 +1066,7 @@ presupuestoMostrador: async function(req, res) {
 procesarFormularioFacturas: async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
-
+ 
         // Registrar los datos recibidos
         console.log("Datos recibidos:", { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago });
 

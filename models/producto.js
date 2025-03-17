@@ -538,7 +538,7 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         porcentajeCambio = Number(porcentajeCambio);
     
         // Agrega ROUND() a tu consulta para redondear el precio
-        let query = "UPDATE productos SET precio_venta = ROUND((precio_venta + precio_venta * ?) / 100) * 100 WHERE proveedor_id = ?";
+        let query = "UPDATE producto_proveedor SET precio_lista = precio_lista * (1 + ?) WHERE proveedor_id = ?";
         let params = [porcentajeCambio, proveedorId];
     
         conexion.getConnection((err, conexion) => {
