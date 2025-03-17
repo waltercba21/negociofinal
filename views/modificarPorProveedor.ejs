@@ -25,7 +25,29 @@
       <button type="submit" class="btn btn-primary modificar-btn">OK</button>
   </form>
   
+  
+  <br/>
+  
+  <!-- Formulario POST para modificar precios por proveedor -->
+  <form method="post" action="/productos/actualizarPorProveedor" class="modificar-form">
+    <% if (proveedor && proveedor.id) { %>
+        <input type="hidden" name="proveedor" id="proveedorHidden" value="<%= proveedor.id %>">
+    <% } else { %>
+        <input type="hidden" name="proveedor" id="proveedorHidden">
+    <% } %>
 
+    <label for="porcentaje" class="modificar-label">Porcentaje de cambio:</label>
+    <input type="number" id="porcentaje" name="porcentaje" min="0" max="100" step="0.01" required style="text-align: right;" class="modificar-input">
+    <span class="modificar-span">%</span>
+
+    <label for="tipoCambio" class="modificar-label">Tipo de cambio:</label>
+    <select name="tipoCambio" id="tipoCambio" class="modificar-select">
+        <option value="aumento">Aumento</option>
+        <option value="descuento">Descuento</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary modificar-btn">OK</button>
+</form>
     <br/>
     <br/>
     <table class="table table-light modificar-table">
