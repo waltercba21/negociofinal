@@ -537,6 +537,8 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
     proveedorId = Number(proveedorId);
     porcentajeCambio = Number(porcentajeCambio);
 
+    console.log(`📌 Ejecutando actualización en MySQL para proveedor ID: ${proveedorId}, Porcentaje: ${porcentajeCambio * 100}%`);
+
     if (isNaN(proveedorId) || isNaN(porcentajeCambio)) {
         console.error("❌ Error: proveedorId o porcentajeCambio no válido.");
         return callback(new Error("Datos inválidos"));
@@ -563,7 +565,6 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
         });
     });
 },
-
     actualizarPrecio: function (idProducto, nuevoPrecio, callback) {
         let query = "UPDATE producto_proveedor SET precio_venta = ? WHERE id = ?";
         let params = [nuevoPrecio, idProducto];

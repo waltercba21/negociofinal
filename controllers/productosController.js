@@ -727,16 +727,24 @@ modificarPorProveedor: async function (req, res) {
     }
 },
 actualizarPorProveedor: function (req, res) {
-    let proveedorId = req.body.proveedor;
-    let porcentajeCambio = Number(req.body.porcentaje) / 100;
+    console.log("📌 Datos recibidos en el servidor (req.body):", req.body);
+
+    let proveedorId = req.body.proveedor ? Number(req.body.proveedor) : null;
+    let porcentajeCambio = req.body.porcentaje ? Number(req.body.porcentaje) / 100 : null;
     let tipoCambio = req.body.tipoCambio;
 
-    console.log(`📌 Recibida solicitud para actualizar precios del proveedor ID: ${proveedorId}`);
-    console.log(`📌 Tipo de cambio: ${tipoCambio}, Porcentaje: ${porcentajeCambio * 100}%`);
+    console.log(`📌 proveedorId recibido: ${proveedorId}`);
+    console.log(`📌 porcentajeCambio recibido: ${porcentajeCambio}`);
+    console.log(`📌 tipoCambio recibido: ${tipoCambio}`);
 
-    if (!proveedorId || isNaN(porcentajeCambio)) {
-        console.error("❌ Error: proveedorId o porcentajeCambio no válido.");
-        return res.status(400).send("Parámetros inválidos.");
+    if (!proveedorId || isNaN(proveedorId)) {
+        console.error("❌ Error: No se recibió un proveedor válido.");
+        return res.status(400).send("Error: No se recibió un proveedor válido.");
+    }
+
+    if (!porcentajeCambio || isNaN(porcentajeCambio)) {
+        console.error("❌ Error: El porcentaje de cambio no es válido.");
+        return res.status(400).send("Error: El porcentaje de cambio no es válido.");
     }
 
     if (tipoCambio === 'descuento') {
@@ -754,6 +762,7 @@ actualizarPorProveedor: function (req, res) {
         res.redirect(`/productos/modificarPorProveedor?proveedor=${proveedorId}&success=Precios actualizados`);
     });
 },
+
 
 actualizarPrecio: function(req, res) {
     let idProducto = req.body.id;
