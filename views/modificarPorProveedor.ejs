@@ -10,13 +10,14 @@
       <select name="proveedor" id="proveedor" class="modificar-select">
           <option value="">-- Seleccione --</option>
           <% proveedores.forEach(function(proveedor) { %>
-              <option value="<%= proveedor.id %>" <%= proveedor.id == (req.query.proveedor || '') ? 'selected' : '' %>>
+              <option value="<%= proveedor.id %>" <%= proveedor.id == (proveedorSeleccionado || '') ? 'selected' : '' %>>
                   <%= proveedor.nombre %>
               </option>
           <% }); %>
       </select>  
       <input type="submit" value="Ver productos" class="modificar-input">
   </form>
+  
   
   <br/>
   

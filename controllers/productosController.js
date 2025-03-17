@@ -707,14 +707,20 @@ modificarPorProveedor: async function (req, res) {
     try {
         let proveedores = await producto.obtenerProveedores(conexion);
         let productos = [];
+        let proveedorSeleccionado = req.query.proveedor ? req.query.proveedor : null;
         let proveedor = {};
 
-        if (req.query.proveedor) {
-            proveedor = proveedores.find(p => p.id == req.query.proveedor);
-            productos = await producto.obtenerProductosPorProveedorYCategoría(conexion, req.query.proveedor);
+        if (proveedorSeleccionado) {
+            proveedor = proveedores.find(p => p.id == proveedorSeleccionado) || {};
+            productos = await producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorSeleccionado);
         }
 
-        res.render('modificarPorProveedor', { proveedores: proveedores, productos: productos, proveedor: proveedor });
+        res.render('modificarPorProveedor', { 
+            proveedores, 
+            productos, 
+            proveedor, 
+            proveedorSeleccionado  // 👉 Enviamos esta variable a la vista
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send('Hubo un error al obtener los datos');
