@@ -533,7 +533,7 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
       }
     );
   },
-  actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
+actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
     proveedorId = Number(proveedorId);
     porcentajeCambio = Number(porcentajeCambio);
 
@@ -550,9 +550,9 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
         JOIN productos p ON pp.producto_id = p.id
         SET 
             pp.precio_lista = ROUND(pp.precio_lista * (1 + ?), 2),
-            p.costo_neto = ROUND(pp.precio_lista - (pp.precio_lista * (dp.descuento / 100)), 2),
-            p.costo_iva = ROUND((pp.precio_lista - (pp.precio_lista * (dp.descuento / 100))) * 1.21, 2),
-            p.precio_venta = ROUND(((pp.precio_lista - (pp.precio_lista * (dp.descuento / 100))) * 1.21) + p.utilidad, 2)
+            p.costo_neto = ROUND(pp.precio_lista - (pp.precio_lista * (IFNULL(dp.descuento, 0) / 100)), 2),
+            p.costo_iva = ROUND((pp.precio_lista - (pp.precio_lista * (IFNULL(dp.descuento, 0) / 100))) * 1.21, 2),
+            p.precio_venta = ROUND(((pp.precio_lista - (pp.precio_lista * (IFNULL(dp.descuento, 0) / 100))) * 1.21) + (p.utilidad * ((pp.precio_lista - (pp.precio_lista * (IFNULL(dp.descuento, 0) / 100))) * 1.21) / 100), 2)
         WHERE pp.proveedor_id = ?;
     `;
 
@@ -576,6 +576,7 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
         });
     });
 },
+
     actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
         return new Promise((resolve, reject) => {
             if (typeof codigo !== 'string') {
