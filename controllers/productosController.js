@@ -762,8 +762,6 @@ actualizarPorProveedor: function (req, res) {
         res.redirect(`/productos/modificarPorProveedor?proveedor=${proveedorId}&success=Precios actualizados`);
     });
 },
-
-
 actualizarPrecio: function(req, res) {
     let idProducto = req.body.id;
     let nuevoPrecio = req.body.precio_venta;

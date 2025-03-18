@@ -537,14 +537,25 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
     proveedorId = Number(proveedorId);
     porcentajeCambio = Number(porcentajeCambio);
 
-    console.log(`📌 Ejecutando actualización en MySQL para proveedor ID: ${proveedorId}, Porcentaje: ${porcentajeCambio * 100}%`);
+    console.log(`📌 Actualizando precios para proveedor ID: ${proveedorId}, Incremento: ${porcentajeCambio * 100}%`);
 
     if (isNaN(proveedorId) || isNaN(porcentajeCambio)) {
         console.error("❌ Error: proveedorId o porcentajeCambio no válido.");
         return callback(new Error("Datos inválidos"));
     }
 
-    let query = "UPDATE producto_proveedor SET precio_lista = precio_lista * (1 + ?) WHERE proveedor_id = ?";
+    let query = `
+        UPDATE producto_proveedor pp
+        JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+        JOIN productos p ON pp.producto_id = p.id
+        SET 
+            pp.precio_lista = ROUND(pp.precio_lista * (1 + ?), 2),
+            p.costo_neto = ROUND(pp.precio_lista - (pp.precio_lista * (dp.descuento / 100)), 2),
+            p.costo_iva = ROUND((pp.precio_lista - (pp.precio_lista * (dp.descuento / 100))) * 1.21, 2),
+            p.precio_venta = ROUND(((pp.precio_lista - (pp.precio_lista * (dp.descuento / 100))) * 1.21) + p.utilidad, 2)
+        WHERE pp.proveedor_id = ?;
+    `;
+
     let params = [porcentajeCambio, proveedorId];
 
     conexion.getConnection((err, conexion) => {
@@ -565,27 +576,6 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
         });
     });
 },
-    actualizarPrecio: function (idProducto, nuevoPrecio, callback) {
-        let query = "UPDATE producto_proveedor SET precio_venta = ? WHERE id = ?";
-        let params = [nuevoPrecio, idProducto];
-    
-        conexion.getConnection((err, conexion) => {
-            if (err) {
-                console.error('Error al obtener la conexión:', err);
-                callback(err);
-            } else {
-                conexion.query(query, params, function (error, results) {
-                    conexion.release();
-                    if (error) {
-                        console.error('Error al ejecutar la consulta:', error);
-                        callback(error);
-                    } else {
-                        callback(null);
-                    }
-                });
-            }
-        });
-    }, 
     actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
         return new Promise((resolve, reject) => {
             if (typeof codigo !== 'string') {
