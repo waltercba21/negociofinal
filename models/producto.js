@@ -533,7 +533,7 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
       }
     );
   },
-actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
+  actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
     proveedorId = Number(proveedorId);
     porcentajeCambio = Number(porcentajeCambio);
 
@@ -546,13 +546,21 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
 
     let query = `
         UPDATE producto_proveedor pp
-        JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
         JOIN productos p ON pp.producto_id = p.id
+        LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
         SET 
+            -- 1️⃣ Actualizamos el precio de lista
             pp.precio_lista = ROUND(pp.precio_lista * (1 + ?), 2),
+
+            -- 2️⃣ Calculamos el costo neto restando el descuento
             p.costo_neto = ROUND(pp.precio_lista - (pp.precio_lista * (IFNULL(dp.descuento, 0) / 100)), 2),
-            p.costo_iva = ROUND((pp.precio_lista - (pp.precio_lista * (IFNULL(dp.descuento, 0) / 100))) * 1.21, 2),
-            p.precio_venta = ROUND(((pp.precio_lista - (pp.precio_lista * (IFNULL(dp.descuento, 0) / 100))) * 1.21) + (p.utilidad * ((pp.precio_lista - (pp.precio_lista * (IFNULL(dp.descuento, 0) / 100))) * 1.21) / 100), 2)
+
+            -- 3️⃣ Calculamos el costo con IVA
+            p.costo_iva = ROUND(p.costo_neto * 1.21, 2),
+
+            -- 4️⃣ Calculamos el precio de venta sumando la utilidad
+            p.precio_venta = ROUND(p.costo_iva + (p.costo_iva * (p.utilidad / 100)), 2)
+
         WHERE pp.proveedor_id = ?;
     `;
 
@@ -567,15 +575,33 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         conexion.query(query, params, function (error, results) {
             conexion.release();
             if (error) {
-                console.error('❌ Error en la consulta:', error);
+                console.error('❌ Error en la consulta SQL:', error);
                 return callback(error);
             }
 
             console.log(`✅ ${results.affectedRows} productos actualizados para el proveedor ${proveedorId}`);
+
+            // Verificación de precios después de la actualización
+            conexion.query(`
+                SELECT p.id, p.nombre, pp.precio_lista, dp.descuento, p.costo_neto, p.costo_iva, p.utilidad, p.precio_venta
+                FROM productos p
+                JOIN producto_proveedor pp ON p.id = pp.producto_id
+                LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+                WHERE pp.proveedor_id = ?;
+            `, [proveedorId], function (err, rows) {
+                if (err) {
+                    console.error('❌ Error al verificar los precios después de la actualización:', err);
+                } else {
+                    console.log('🔍 Verificación de precios después de la actualización:');
+                    console.table(rows);
+                }
+            });
+
             callback(null, results.affectedRows);
         });
     });
 },
+
 
     actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
         return new Promise((resolve, reject) => {
