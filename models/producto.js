@@ -581,6 +581,69 @@ actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback
         });
     });
 },
+actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, porcentaje, callback) {
+    try {
+        console.log(`🔧 Iniciando actualización completa para proveedor ID: ${proveedorId} con ${porcentaje * 100}%`);
+
+        // 1. Obtener todos los productos del proveedor
+        const queryProductos = `
+            SELECT p.id, p.utilidad, pp.precio_lista, dp.descuento, pp.producto_id
+            FROM producto_proveedor pp
+            JOIN productos p ON p.id = pp.producto_id
+            LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+            WHERE pp.proveedor_id = ?
+        `;
+        const [productos] = await conexion.promise().query(queryProductos, [proveedorId]);
+
+        if (productos.length === 0) {
+            return callback(null, 0);
+        }
+
+        let actualizados = 0;
+
+        for (const prod of productos) {
+            const nuevaLista = +(prod.precio_lista * (1 + porcentaje)).toFixed(2);
+            const descuento = prod.descuento || 0;
+            const utilidad = prod.utilidad || 0;
+
+            const costo_neto = +(nuevaLista * (1 - descuento / 100)).toFixed(2);
+            const costo_iva = +(costo_neto * 1.21).toFixed(2);
+            const precio_venta = +(costo_iva * (1 + utilidad / 100)).toFixed(2);
+
+            console.log(`➡ Producto ${prod.id}:`);
+            console.log(`   Nueva lista: ${nuevaLista}`);
+            console.log(`   Descuento: ${descuento}%`);
+            console.log(`   Costo neto: ${costo_neto}`);
+            console.log(`   Costo IVA: ${costo_iva}`);
+            console.log(`   Utilidad: ${utilidad}%`);
+            console.log(`   Precio final: ${precio_venta}`);
+
+            const updateQuery = `
+                UPDATE producto_proveedor SET precio_lista = ? 
+                WHERE producto_id = ? AND proveedor_id = ?;
+            `;
+            await conexion.promise().query(updateQuery, [nuevaLista, prod.producto_id, proveedorId]);
+
+            const updateProducto = `
+                UPDATE productos SET 
+                    costo_neto = ?, 
+                    costo_iva = ?, 
+                    precio_venta = ?
+                WHERE id = ?;
+            `;
+            await conexion.promise().query(updateProducto, [costo_neto, costo_iva, precio_venta, prod.id]);
+
+            actualizados++;
+        }
+
+        console.log(`✅ ${actualizados} productos actualizados correctamente.`);
+        return callback(null, actualizados);
+    } catch (err) {
+        console.error('❌ Error al actualizar precios por proveedor con cálculo:', err);
+        return callback(err);
+    }
+},
+
     actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
         return new Promise((resolve, reject) => {
             if (typeof codigo !== 'string') {

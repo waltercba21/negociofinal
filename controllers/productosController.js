@@ -727,41 +727,38 @@ modificarPorProveedor: async function (req, res) {
     }
 },
 actualizarPorProveedor: function (req, res) {
-    console.log("📌 Datos recibidos en el servidor (req.body):", req.body);
+    console.log("📌 Datos recibidos:", req.body);
 
-    let proveedorId = req.body.proveedor && req.body.proveedor !== '' ? Number(req.body.proveedor) : null;
-    let porcentajeCambio = req.body.porcentaje ? Number(req.body.porcentaje) / 100 : null;
-    let tipoCambio = req.body.tipoCambio;
+    const proveedorId = req.body.proveedor && req.body.proveedor !== '' ? Number(req.body.proveedor) : null;
+    const tipoCambio = req.body.tipoCambio;
+    let porcentaje = req.body.porcentaje ? Number(req.body.porcentaje) / 100 : null;
 
-    console.log(`📌 proveedorId recibido: ${proveedorId}`);
-    console.log(`📌 porcentajeCambio recibido: ${porcentajeCambio}`);
-    console.log(`📌 tipoCambio recibido: ${tipoCambio}`);
+    if (tipoCambio === 'descuento') porcentaje = -porcentaje;
 
-    if (!proveedorId || isNaN(proveedorId)) {
-        console.error("❌ Error: No se recibió un proveedor válido.");
-        return res.status(400).send("Error: No se recibió un proveedor válido.");
+    if (!proveedorId || isNaN(porcentaje)) {
+        console.error("❌ Parámetros inválidos");
+        return res.status(400).send("Error en los datos");
     }
 
-    if (!porcentajeCambio || isNaN(porcentajeCambio)) {
-        console.error("❌ Error: El porcentaje de cambio no es válido.");
-        return res.status(400).send("Error: El porcentaje de cambio no es válido.");
-    }
-
-    if (tipoCambio === 'descuento') {
-        porcentajeCambio = -porcentajeCambio;
-    }
-
-    producto.actualizarPreciosPorProveedor(proveedorId, porcentajeCambio, function (err, affectedRows) {
+    conexion.getConnection((err, conn) => {
         if (err) {
-            console.error(`❌ Error al actualizar precios: ${err}`);
-            return res.redirect(`/productos/modificarPorProveedor?proveedor=${proveedorId}&error=Hubo un error`);
+            console.error('❌ Error de conexión:', err);
+            return res.status(500).send("Error de conexión");
         }
 
-        console.log(`✅ Precios actualizados para el proveedor ID: ${proveedorId}, Filas afectadas: ${affectedRows}`);
+        producto.actualizarPreciosPorProveedorConCalculo(conn, proveedorId, porcentaje, (error, count) => {
+            conn.release();
 
-        res.redirect(`/productos/modificarPorProveedor?proveedor=${proveedorId}&success=Precios actualizados`);
+            if (error) {
+                console.error("❌ Error al actualizar:", error);
+                return res.redirect(`/productos/modificarPorProveedor?proveedor=${proveedorId}&error=Hubo un error`);
+            }
+
+            res.redirect(`/productos/modificarPorProveedor?proveedor=${proveedorId}&success=${count} productos actualizados`);
+        });
     });
 },
+
 actualizarPrecio: function(req, res) {
     let idProducto = req.body.id;
     let nuevoPrecio = req.body.precio_venta;
