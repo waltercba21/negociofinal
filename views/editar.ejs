@@ -116,7 +116,7 @@
                                     </div>
                                     <div class="form-group-crear">
                                         <label for="costo_iva">Costo Neto Con IVA</label>
-                                        <input class="costo_iva form-control" type="number" name="costo_iva[]" value="<%= productoProveedor.costo_iva %>">
+                                        <input class="costo_iva form-control" type="number" name="costo_iva[]" step="0.01" value="<%= typeof productoProveedor.costo_iva === 'number' ? productoProveedor.costo_iva.toFixed(2) : parseFloat(productoProveedor.costo_iva).toFixed(2) %>">
                                     </div>
                                     <div class="form-group-crear">
                                         <button class="eliminar-proveedor" type="button" data-proveedor-id="<%= productoProveedor.proveedor_id %>">Eliminar proveedor</button>
