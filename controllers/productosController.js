@@ -478,6 +478,12 @@ module.exports = {
                     producto.obtenerDescuentosProveedor(conexion),
                     producto.obtenerStock(conexion, req.params.id) 
                 ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult, stockResult]) => {
+                    console.log('🔁 GET /productos/editar/:id');
+                    console.log('🧩 req.query.pagina:', req.query.pagina);
+                    console.log('🧩 req.query.busqueda:', req.query.busqueda);
+                    console.log('📦 productoResult.paginaActual:', productoResult.paginaActual);
+                    console.log('📦 productoResult.busqueda:', productoResult.busqueda);
+
                     res.render('editar', {
                         producto: productoResult,
                         productoProveedores: productoProveedoresResult,
@@ -568,7 +574,7 @@ module.exports = {
             .then(() => {
                 const pagina = req.body.pagina || 1;
                 const busqueda = req.body.busqueda || '';
-                console.log('📥 Recibido en actualizar:', { pagina, busqueda });
+                console.log('📥 Redireccionando a:', `/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
                 res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
                 
             })

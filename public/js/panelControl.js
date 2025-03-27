@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const deleteSelectedButton = document.getElementById('delete-selected');
   const inputBusqueda = document.getElementById('entradaBusqueda');
 
-  console.log('🔎 Valor de "busqueda" desde la URL:', searchValue);
+  console.log('🔎 Valor de \"busqueda\" desde la URL:', searchValue);
+
 
   if (searchValue) {
     inputBusqueda.value = searchValue;
