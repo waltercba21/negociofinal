@@ -144,8 +144,13 @@
                     <td> <%= producto.categoria %></td>
                     <td><%= producto.nombre %></td> 
                     <td>
-                        <img class="img-thumbnail" width='150' src="/uploads/productos/<%= producto.imagenes[0] %>" alt="">
-                    </td>
+                        <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+                          <img class="img-thumbnail" width='150' src="/uploads/productos/<%= producto.imagenes[0] %>" alt="Imagen de <%= producto.nombre %>">
+                        <% } else { %>
+                          <span>(Sin imagen)</span>
+                        <% } %>
+                      </td>
+                      
                     <td>$<%= parseInt(producto.precio_venta) %></td>
                     <td>
                         <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
