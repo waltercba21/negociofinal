@@ -117,13 +117,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
       productos.forEach((producto) => {
         let imagenURL = '/ruta/valida/a/imagen/por/defecto.jpg';
-        if (producto.imagenes && producto.imagenes.length > 0) {
-          if (typeof producto.imagenes[0] === 'string') {
-            imagenURL = `/uploads/productos/${producto.imagenes[0]}`;
-          } else if (typeof producto.imagenes[0].imagen === 'string') {
-            imagenURL = `/uploads/productos/${producto.imagenes[0].imagen}`;
-          }
-        }
+
+try {
+  if (producto.imagenes && producto.imagenes.length > 0) {
+    const primera = producto.imagenes[0];
+    if (typeof primera === 'string') {
+      imagenURL = `/uploads/productos/${primera}`;
+    } else if (primera && typeof primera.imagen === 'string') {
+      imagenURL = `/uploads/productos/${primera.imagen}`;
+    }
+  }
+} catch (err) {
+  console.warn('⚠️ No se pudo procesar imagen para producto:', producto.id, err);
+}
+
 
         const precio_venta = producto.precio_venta
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
