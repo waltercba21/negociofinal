@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const checkAll = document.getElementById('check-all');
   const deleteSelectedButton = document.getElementById('delete-selected');
   const inputBusqueda = document.getElementById('entradaBusqueda');
+  const action = `/productos/editar/${producto.id}?pagina=1${busqueda ? `&busqueda=${encodeURIComponent(busqueda)}` : ''}`;
 
   console.log('🔎 Valor de "busqueda" desde la URL:', searchValue);
 
@@ -127,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <td>${precio_venta}</td>
           <td>
             <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-              <form class="form-inline" method="get" action="/productos/editar/${producto.id}?pagina=1&busqueda=${encodeURIComponent(busqueda)}">
+              <form class="form-inline" method="get" action="${action}">
                 <button class="btn btn-warning" type="submit">Editar</button>
               </form>
             </div>
