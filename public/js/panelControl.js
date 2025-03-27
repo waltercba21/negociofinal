@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const checkAll = document.getElementById('check-all');
   const deleteSelectedButton = document.getElementById('delete-selected');
   const inputBusqueda = document.getElementById('entradaBusqueda');
-  const action = `/productos/editar/${producto.id}?pagina=1${busqueda ? `&busqueda=${encodeURIComponent(busqueda)}` : ''}`;
 
   console.log('🔎 Valor de "busqueda" desde la URL:', searchValue);
 
@@ -118,6 +117,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const precio_venta = producto.precio_venta
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
           : 'Precio no disponible';
+
+        const action = `/productos/editar/${producto.id}?pagina=1${busqueda ? `&busqueda=${encodeURIComponent(busqueda)}` : ''}`;
 
         const filaProducto = document.createElement('tr');
         filaProducto.innerHTML = `
