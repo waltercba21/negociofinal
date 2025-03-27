@@ -149,7 +149,8 @@
                     <td>$<%= parseInt(producto.precio_venta) %></td>
                     <td>
                         <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-                            <form class="form-inline" method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %>">
+                            <form class="form-inline" method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>">
+
                                 <button class="btn btn-warning" type="submit">Editar</button>
                             </form>
                         </div> 

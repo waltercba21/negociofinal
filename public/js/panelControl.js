@@ -1,8 +1,14 @@
 document.addEventListener('DOMContentLoaded', function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchValue = urlParams.get('busqueda');
   var contenedorProductos = document.getElementById('contenedor-productos');
   var checkAll = document.getElementById('check-all');
   var deleteSelectedButton = document.getElementById('delete-selected');
 
+  if (searchValue) {
+    document.getElementById('entradaBusqueda').value = searchValue;
+    document.getElementById('entradaBusqueda').dispatchEvent(new Event('input'));
+  }
   // Evento para seleccionar/deseleccionar todos los checkboxes
   checkAll.addEventListener('change', function (event) {
     var checks = document.querySelectorAll('.product-check');

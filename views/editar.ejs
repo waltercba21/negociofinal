@@ -9,6 +9,8 @@
                 <div class="card-body">
                     <form class="form-crear" method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data">
                         <input type="hidden" name="pagina" value="<%= producto.paginaActual %>">
+                        <input type="hidden" name="busqueda" value="<%= producto.busqueda %>">
+
                         <div class="caracteristicas">
                             <input type="hidden" name="id" value="<%= producto.id %>">
                             <input type="hidden" name="paginaActual" value="<%= producto.paginaActual %>">

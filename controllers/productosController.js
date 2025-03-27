@@ -462,6 +462,7 @@ module.exports = {
             productoResult.calidad_original_fitam = result.calidad_original_fitam;
             productoResult.calidad_vic = result.calidad_vic; 
             productoResult.paginaActual = req.query.pagina;
+            productoResult.busqueda = req.query.busqueda;   
 
             producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
                 productoProveedoresResult.forEach(productoProveedorResult => {
@@ -561,7 +562,10 @@ module.exports = {
                 return producto.obtenerPosicion(conexion, datosProducto.id);
             })
             .then(() => {
-                res.redirect('/productos/panelControl?pagina=' + req.session.paginaActual);
+                const pagina = req.body.pagina || 1;
+                const busqueda = req.body.busqueda || '';
+                res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
+                
             })
             .catch(error => {
                 res.status(500).send('Error: ' + error.message);
@@ -614,8 +618,8 @@ module.exports = {
                 categoriaSeleccionada: categoriaSeleccionada,
                 numeroDePaginas: numeroDePaginas,
                 productos: productos,
-                paginaActual: paginaActual,
-                busqueda: busqueda 
+                paginaActual: req.query.pagina || 1,
+                busquedaActual: req.query.busqueda || '',
             });
         } catch (error) {
             return res.status(500).send('Error: ' + error.message);
