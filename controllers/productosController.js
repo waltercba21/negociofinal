@@ -604,7 +604,7 @@ module.exports = {
             const saltar = (paginaActual - 1) * productosPorPagina;
             let productos;
             if (busqueda) {
-                productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda);
+                productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda, 1000);
             } else {
                 productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
             }
