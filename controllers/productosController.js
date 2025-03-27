@@ -564,6 +564,7 @@ module.exports = {
             .then(() => {
                 const pagina = req.body.pagina || 1;
                 const busqueda = req.body.busqueda || '';
+                console.log('📥 Recibido en actualizar:', { pagina, busqueda });
                 res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
                 
             })
