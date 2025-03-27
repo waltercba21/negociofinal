@@ -1202,65 +1202,72 @@ obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor, ca
   contarPorCategoria: function(conexion, categoria, callback) {
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 }, 
-obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
+obtenerPorFiltros : function (conexion, categoria_id, marca_id, modelo_id, nombre, limite = 20) {
     return new Promise((resolve, reject) => {
-        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original FROM productos'; 
-        sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
-        sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
-        sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
-        sql += ' WHERE 1=1';
-        const parametros = []; 
-        
-        // Añadir logs para cada filtro
-        if (categoria) {
-            sql += ' AND categoria_id = ?';
-            parametros.push(categoria);
+      let sql = `
+        SELECT p.id, p.nombre, p.descripcion, p.utilidad, p.precio_venta, p.estado, 
+               p.stock_minimo, p.stock_actual, p.oferta, p.calidad_original, p.calidad_vic,
+               p.categoria_id, c.nombre AS categoria_nombre,
+               m.nombre AS marca_nombre,
+               mo.nombre AS modelo_nombre,
+               ip.imagen,
+               pp.codigo
+        FROM productos p
+        LEFT JOIN categorias c ON p.categoria_id = c.id
+        LEFT JOIN marcas m ON p.marca_id = m.id
+        LEFT JOIN modelos mo ON p.modelo_id = mo.id
+        LEFT JOIN imagenes_producto ip ON p.id = ip.producto_id
+        LEFT JOIN producto_proveedor pp ON p.id = pp.producto_id
+        WHERE 1 = 1
+      `;
+  
+      const params = [];
+  
+      if (categoria_id) {
+        sql += ' AND p.categoria_id = ?';
+        params.push(categoria_id);
+      }
+      if (marca_id) {
+        sql += ' AND p.marca_id = ?';
+        params.push(marca_id);
+      }
+      if (modelo_id) {
+        sql += ' AND p.modelo_id = ?';
+        params.push(modelo_id);
+      }
+      if (nombre) {
+        sql += ' AND p.nombre LIKE ?';
+        params.push(`%${nombre}%`);
+      }
+  
+      sql += ' ORDER BY p.id DESC LIMIT ?';
+      params.push(limite);
+  
+      conexion.query(sql, params, (error, results) => {
+        if (error) {
+          return reject(error);
         }
-        if (marca && marca !== '' && !isNaN(parseInt(marca))) {
-            sql += ' AND marca_id = ?';
-            parametros.push(parseInt(marca));
-        }
-        if (modelo && modelo !== '' && !isNaN(parseInt(modelo))) {
-            sql += ' AND modelo_id = ?';
-            parametros.push(parseInt(modelo));
-        }
-        if (busqueda_nombre && typeof busqueda_nombre === 'string') {
-            const palabras = busqueda_nombre.split(' ');
-            palabras.forEach(palabra => {
-                if (palabra !== undefined && palabra !== null && palabra !== '') {
-                    sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
-                    parametros.push('%' + palabra + '%', '%' + palabra + '%');
-                }
-            });
-        }
-        
-        sql += ' ORDER BY productos.nombre ASC'; // Ordena los productos alfabéticamente
-        if (limite && typeof limite === 'number' && limite > 0 && limite % 1 === 0) {
-            sql += ' LIMIT ?';
-            parametros.push(limite);
-        }
-        conexion.query(sql, parametros, (error, productos) => {
-            if (error) {
-                reject(error);
-            } else {
-                const productosAgrupados = productos.reduce((acc, producto) => {
-                    const productoExistente = acc.find(p => p.id === producto.id);
-                    if (productoExistente) {
-                        if (producto.imagen) {
-                            productoExistente.imagenes.push({ imagen: producto.imagen });
-                        }
-                    } else {
-                        producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
-                        producto.codigo = producto.codigo || '';
-                        acc.push(producto);
-                    }
-                    return acc;
-                }, []);
-                resolve(productosAgrupados);
+  
+        // Agrupar por producto
+        const productosAgrupados = results.reduce((acc, producto) => {
+          let existente = acc.find(p => p.id === producto.id);
+          if (existente) {
+            if (producto.imagen && !existente.imagenes.includes(producto.imagen)) {
+              existente.imagenes.push(producto.imagen);
             }
-        });
+          } else {
+            producto.imagenes = producto.imagen ? [producto.imagen] : [];
+            delete producto.imagen; // ya lo pasamos al array
+            existente = producto;
+            acc.push(existente);
+          }
+          return acc;
+        }, []);
+  
+        resolve(productosAgrupados);
+      });
     });
-},
+  },
 eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
