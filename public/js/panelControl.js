@@ -119,7 +119,9 @@ document.addEventListener('DOMContentLoaded', function () {
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
           : 'Precio no disponible';
 
-        const action = `/productos/editar/${producto.id}?pagina=1${busqueda ? `&busqueda=${encodeURIComponent(busqueda)}` : ''}`;
+          const pagina = 1;
+          const action = `/productos/editar/${producto.id}?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda || '')}`;
+          
 
         const filaProducto = document.createElement('tr');
         filaProducto.innerHTML = `
