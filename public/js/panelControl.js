@@ -111,9 +111,14 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       productos.forEach((producto) => {
-        const imagen = producto.imagenes && producto.imagenes.length > 0
-          ? `/uploads/productos/${producto.imagenes[0].imagen}`
-          : '/ruta/valida/a/imagen/por/defecto.jpg';
+        let imagenURL = '/ruta/valida/a/imagen/por/defecto.jpg';
+if (producto.imagenes && producto.imagenes.length > 0) {
+  if (typeof producto.imagenes[0] === 'string') {
+    imagenURL = `/uploads/productos/${producto.imagenes[0]}`;
+  } else if (typeof producto.imagenes[0].imagen === 'string') {
+    imagenURL = `/uploads/productos/${producto.imagenes[0].imagen}`;
+  }
+}
 
         const precio_venta = producto.precio_venta
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
@@ -127,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <td><input type="checkbox" class="product-check" value="${producto.id}"></td>
           <td>${producto.categoria_nombre}</td>
           <td>${producto.nombre}</td>
-          <td><img class="img-thumbnail" width='150' src="${imagen}" alt="Imagen de ${producto.nombre}"></td>
+          <td><img class="img-thumbnail" width="150" src="${imagenURL}" alt="Imagen de ${producto.nombre}"></td>
           <td>${precio_venta}</td>
           <td>
             <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
