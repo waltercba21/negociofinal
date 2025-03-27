@@ -6,12 +6,13 @@ document.addEventListener('DOMContentLoaded', function () {
   const deleteSelectedButton = document.getElementById('delete-selected');
   const inputBusqueda = document.getElementById('entradaBusqueda');
 
+  console.log('🔎 Valor de "busqueda" desde la URL:', searchValue);
+
   if (searchValue) {
     inputBusqueda.value = searchValue;
     inputBusqueda.dispatchEvent(new Event('input'));
   }
 
-  // ✅ Seleccionar/deseleccionar todos los checkboxes
   checkAll.addEventListener('change', function (event) {
     const checks = document.querySelectorAll('.product-check');
     for (let i = 0; i < checks.length; i++) {
@@ -19,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // ✅ Control del checkbox individual → checkbox general
   contenedorProductos.addEventListener('change', function (event) {
     if (event.target.matches('.product-check')) {
       const checks = document.querySelectorAll('.product-check');
@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // ✅ Eliminar productos seleccionados
   deleteSelectedButton.addEventListener('click', function () {
     const checks = document.querySelectorAll('.product-check');
     const ids = [];
@@ -58,21 +57,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (result.isConfirmed) {
           fetch('/productos/eliminarSeleccionados', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ ids }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids })
           })
             .then((response) => response.json())
             .then((data) => {
               if (data.success) {
-                Swal.fire(
-                  '¡Eliminado!',
-                  'Los productos seleccionados han sido eliminados.',
-                  'success'
-                ).then(() => {
-                  location.reload();
-                });
+                Swal.fire('¡Eliminado!', 'Los productos seleccionados han sido eliminados.', 'success')
+                  .then(() => location.reload());
               } else {
                 Swal.fire('Error', 'Hubo un error al eliminar los productos.', 'error');
               }
@@ -88,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // ✅ Buscador dinámico
   let timer;
   inputBusqueda.addEventListener('input', (e) => {
     clearTimeout(timer);
@@ -97,15 +88,19 @@ document.addEventListener('DOMContentLoaded', function () {
       contenedorProductos.innerHTML = '';
       let productos = [];
 
+      console.log('🧠 Disparando búsqueda por:', busqueda);
+
       if (!busqueda) {
         productos = productosOriginales.slice(0, 12);
+        console.log('📄 Sin búsqueda: mostrando productos originales. Total:', productos.length);
       } else {
         const url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
         try {
           const respuesta = await fetch(url);
           productos = await respuesta.json();
+          console.log('✅ Productos encontrados por API:', productos.length);
         } catch (err) {
-          console.error('Error al buscar productos:', err);
+          console.error('❌ Error al buscar productos:', err);
         }
       }
 
