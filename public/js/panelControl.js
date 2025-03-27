@@ -6,15 +6,13 @@ document.addEventListener('DOMContentLoaded', function () {
   const deleteSelectedButton = document.getElementById('delete-selected');
   const inputBusqueda = document.getElementById('entradaBusqueda');
 
-  console.log('🔎 Valor de \"busqueda\" desde la URL:', searchValue);
-
+  console.log('🔎 Valor de "busqueda" desde la URL:', searchValue);
 
   if (searchValue) {
     inputBusqueda.value = searchValue;
     inputBusqueda.dispatchEvent(new Event('input'));
     history.replaceState(null, '', `${window.location.pathname}?busqueda=${encodeURIComponent(searchValue)}`);
   }
-  
 
   checkAll.addEventListener('change', function (event) {
     const checks = document.querySelectorAll('.product-check');
@@ -74,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch((error) => {
               Swal.fire('Error', 'Hubo un error al procesar la solicitud.', 'error');
-              console.error('Error:', error);
+              console.error('❌ Error:', error);
             });
         }
       });
@@ -121,9 +119,8 @@ document.addEventListener('DOMContentLoaded', function () {
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
           : 'Precio no disponible';
 
-          const pagina = 1;
-          const action = `/productos/editar/${producto.id}?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda || '')}`;
-          
+        const pagina = 1;
+        const action = `/productos/editar/${producto.id}?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda || '')}`;
 
         const filaProducto = document.createElement('tr');
         filaProducto.innerHTML = `
@@ -134,9 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <td>${precio_venta}</td>
           <td>
             <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-              <form class="form-inline" method="get" action="${action}">
-                <button class="btn btn-warning" type="submit">Editar</button>
-              </form>
+              <a href="${action}" class="btn btn-warning">Editar</a>
             </div>
           </td>
         `;
