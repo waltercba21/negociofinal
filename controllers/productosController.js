@@ -613,8 +613,14 @@ module.exports = {
     
             req.session.paginaActual = paginaActual;
     
-            const busqueda = req.query.busqueda || req.session.busqueda || '';
-            req.session.busqueda = busqueda;
+            let busqueda = '';
+            if (req.query.busqueda) {
+              busqueda = req.query.busqueda.trim();
+              req.session.busqueda = busqueda;
+            } else {
+              req.session.busqueda = null;
+            }
+            
     
             const productosPorPagina = 30;
             const saltar = (paginaActual - 1) * productosPorPagina;
