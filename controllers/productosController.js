@@ -600,67 +600,78 @@ module.exports = {
     },
     panelControl: async (req, res) => {
         try {
-            let proveedores = await producto.obtenerProveedores(conexion);
-            let categorias = await producto.obtenerCategorias(conexion);
-    
-            const proveedorSeleccionado = req.query.proveedor || req.session.proveedorSeleccionado || null;
-            const categoriaSeleccionada = req.query.categoria || req.session.categoriaSeleccionada || null;
-            let paginaActual = req.query.pagina ? Number(req.query.pagina) : (req.session.paginaActual || 1);
-    
-            if (isNaN(paginaActual) || paginaActual < 1) {
-                paginaActual = 1;
+          let proveedores = await producto.obtenerProveedores(conexion);
+          let categorias = await producto.obtenerCategorias(conexion);
+      
+          const proveedorSeleccionado = req.query.proveedor || req.session.proveedorSeleccionado || null;
+          const categoriaSeleccionada = req.query.categoria || req.session.categoriaSeleccionada || null;
+          let paginaActual = req.query.pagina ? Number(req.query.pagina) : (req.session.paginaActual || 1);
+      
+          if (isNaN(paginaActual) || paginaActual < 1) {
+            paginaActual = 1;
+          }
+      
+          req.session.paginaActual = paginaActual;
+      
+          let busqueda = '';
+          if (req.query.busqueda) {
+            busqueda = req.query.busqueda.trim();
+            req.session.busqueda = busqueda;
+          } else {
+            req.session.busqueda = null;
+          }
+      
+          const productosPorPagina = 30;
+          const saltar = (paginaActual - 1) * productosPorPagina;
+      
+          let productos;
+          if (busqueda) {
+            productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda, 1000);
+      
+            const productoIds = productos.map(p => p.id);
+            if (productoIds.length > 0) {
+              const imagenesPorProducto = await producto.obtenerImagenesProducto(conexion, productoIds);
+      
+              productos = productos.map(producto => ({
+                ...producto,
+                imagenes: imagenesPorProducto
+                  .filter(img => img.producto_id === producto.id)
+                  .map(img => img.imagen),
+                categoria: producto.categoria || producto.categoria_nombre || 'Sin categoría'
+              }));
             }
-    
-            req.session.paginaActual = paginaActual;
-    
-            let busqueda = '';
-            if (req.query.busqueda) {
-              busqueda = req.query.busqueda.trim();
-              req.session.busqueda = busqueda;
-            } else {
-              req.session.busqueda = null;
-            }
-            
-    
-            const productosPorPagina = 30;
-            const saltar = (paginaActual - 1) * productosPorPagina;
-    
-            let productos;
-            if (busqueda) {
-                productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda, 1000);
-            } else {
-                productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
-            }
-    
-            // ✅ Normalizar productos: aseguramos 'categoria' e 'imagenes[]'
-            productos = productos.map(p => ({
-                ...p,
-                categoria: p.categoria || p.categoria_nombre || 'Sin categoría',
-                imagenes: Array.isArray(p.imagenes)
-                    ? p.imagenes
-                    : (p.imagen ? [p.imagen] : [])
+          } else {
+            productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
+      
+            productos = productos.map(producto => ({
+              ...producto,
+              categoria: producto.categoria || producto.categoria_nombre || 'Sin categoría',
+              imagenes: Array.isArray(producto.imagenes)
+                ? producto.imagenes
+                : (producto.imagen ? [producto.imagen] : [])
             }));
-    
-            let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
-    
-            req.session.proveedorSeleccionado = proveedorSeleccionado;
-            req.session.categoriaSeleccionada = categoriaSeleccionada;
-    
-            res.render('panelControl', {
-                proveedores: proveedores,
-                proveedorSeleccionado: proveedorSeleccionado,
-                categorias: categorias,
-                categoriaSeleccionada: categoriaSeleccionada,
-                numeroDePaginas: numeroDePaginas,
-                productos: productos,
-                paginaActual: paginaActual,
-                busquedaActual: busqueda,
-            });
+          }
+      
+          let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
+      
+          req.session.proveedorSeleccionado = proveedorSeleccionado;
+          req.session.categoriaSeleccionada = categoriaSeleccionada;
+      
+          res.render('panelControl', {
+            proveedores: proveedores,
+            proveedorSeleccionado: proveedorSeleccionado,
+            categorias: categorias,
+            categoriaSeleccionada: categoriaSeleccionada,
+            numeroDePaginas: numeroDePaginas,
+            productos: productos,
+            paginaActual: paginaActual,
+            busquedaActual: busqueda,
+          });
         } catch (error) {
-            console.error('❌ Error en panelControl:', error);
-            return res.status(500).send('Error: ' + error.message);
+          console.error('❌ Error en panelControl:', error);
+          return res.status(500).send('Error: ' + error.message);
         }
-    },
+      },      
     
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
