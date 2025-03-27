@@ -1,3 +1,5 @@
+// panelControl.js completo y robusto
+
 document.addEventListener('DOMContentLoaded', function () {
   const urlParams = new URLSearchParams(window.location.search);
   const searchValue = urlParams.get('busqueda');
@@ -116,22 +118,23 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       productos.forEach((producto) => {
+        console.log('🧪 Producto recibido:', producto);
+
         let imagenURL = '/ruta/valida/a/imagen/por/defecto.jpg';
+        try {
+          if (producto.imagenes && producto.imagenes.length > 0) {
+            const primera = producto.imagenes[0];
+            if (typeof primera === 'string') {
+              imagenURL = `/uploads/productos/${primera}`;
+            } else if (primera && typeof primera.imagen === 'string') {
+              imagenURL = `/uploads/productos/${primera.imagen}`;
+            }
+          }
+        } catch (err) {
+          console.warn('⚠️ No se pudo procesar imagen para producto:', producto.id, err);
+        }
 
-try {
-  if (producto.imagenes && producto.imagenes.length > 0) {
-    const primera = producto.imagenes[0];
-    if (typeof primera === 'string') {
-      imagenURL = `/uploads/productos/${primera}`;
-    } else if (primera && typeof primera.imagen === 'string') {
-      imagenURL = `/uploads/productos/${primera.imagen}`;
-    }
-  }
-} catch (err) {
-  console.warn('⚠️ No se pudo procesar imagen para producto:', producto.id, err);
-}
-
-
+        const categoria = producto.categoria_nombre || 'Sin categoría';
         const precio_venta = producto.precio_venta
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
           : 'Precio no disponible';
@@ -142,7 +145,7 @@ try {
         const filaProducto = document.createElement('tr');
         filaProducto.innerHTML = `
           <td><input type="checkbox" class="product-check" value="${producto.id}"></td>
-          <td>${producto.categoria_nombre}</td>
+          <td>${categoria}</td>
           <td>${producto.nombre}</td>
           <td><img class="img-thumbnail" width="150" src="${imagenURL}" alt="Imagen de ${producto.nombre}"></td>
           <td>${precio_venta}</td>
