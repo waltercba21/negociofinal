@@ -11,7 +11,6 @@
                         <input type="hidden" name="pagina" value="<%= producto.paginaActual %>">
                         <input type="hidden" name="busqueda" value="<%= producto.busqueda || '' %>">
 
-
                         <div class="caracteristicas">
                             <input type="hidden" name="id" value="<%= producto.id %>">
                             <input type="hidden" name="paginaActual" value="<%= producto.paginaActual %>">
@@ -167,4 +166,8 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.10.2/Sortable.min.js"></script>
     <script src="/js/editar.js"></script>
+    <script>
+        console.log("🔧 Campo oculto busqueda en editar.ejs:", "<%= producto.busqueda || '' %>");
+      </script>
+      
 </body>

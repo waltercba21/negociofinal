@@ -505,6 +505,10 @@ module.exports = {
         });
     },    
     actualizar: function(req, res) {
+        console.log("📩 POST recibido en actualizar");
+        console.log("➡️ req.body.pagina:", req.body.pagina);
+        console.log("➡️ req.body.busqueda:", req.body.busqueda);
+
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
