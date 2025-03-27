@@ -84,7 +84,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                     icon: 'info',
                     confirmButtonText: 'Entendido'
                 }).then(() => {
-                    window.location.reload();
+                    window.location.href = '/productos';
                 });
             });
         } else {
