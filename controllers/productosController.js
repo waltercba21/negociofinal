@@ -598,47 +598,64 @@ module.exports = {
         let proveedores = await producto.obtenerProveedores(conexion);
         res.render('proveedores', { proveedores: proveedores });
     },
-    panelControl: async function (req, res) {
+    panelControl: async (req, res) => {
         try {
-          const pagina = parseInt(req.query.pagina) || 1;
-          const productosPorPagina = 12;
-          const busqueda = req.query.busqueda ? req.query.busqueda.trim() : '';
-          const categoriaSeleccionada = req.query.categoria || null;
-      
-          const saltar = (pagina - 1) * productosPorPagina;
-      
-          let productos;
-          if (busqueda) {
-            productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda, 1000);
-          } else {
-            productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
-          }
-      
-          // ✅ Normalizamos los campos esperados por panelControl.ejs
-          productos = productos.map(p => ({
-            ...p,
-            categoria: p.categoria || p.categoria_nombre || 'Sin categoría',
-            imagenes: Array.isArray(p.imagenes)
-              ? p.imagenes
-              : (p.imagen ? [p.imagen] : [])
-          }));
-      
-          const totalProductos = await producto.contarTotal(conexion, categoriaSeleccionada);
-          const totalPaginas = Math.ceil(totalProductos / productosPorPagina);
-      
-          res.render('panelControl', {
-            productos,
-            paginaActual: pagina,
-            totalPaginas,
-            busquedaActual: busqueda,
-            categoriaSeleccionada
-          });
+            let proveedores = await producto.obtenerProveedores(conexion);
+            let categorias = await producto.obtenerCategorias(conexion);
+    
+            const proveedorSeleccionado = req.query.proveedor || req.session.proveedorSeleccionado || null;
+            const categoriaSeleccionada = req.query.categoria || req.session.categoriaSeleccionada || null;
+            let paginaActual = req.query.pagina ? Number(req.query.pagina) : (req.session.paginaActual || 1);
+    
+            if (isNaN(paginaActual) || paginaActual < 1) {
+                paginaActual = 1;
+            }
+    
+            req.session.paginaActual = paginaActual;
+    
+            const busqueda = req.query.busqueda || req.session.busqueda || '';
+            req.session.busqueda = busqueda;
+    
+            const productosPorPagina = 30;
+            const saltar = (paginaActual - 1) * productosPorPagina;
+    
+            let productos;
+            if (busqueda) {
+                productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda, 1000);
+            } else {
+                productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
+            }
+    
+            // ✅ Normalizar productos: aseguramos 'categoria' e 'imagenes[]'
+            productos = productos.map(p => ({
+                ...p,
+                categoria: p.categoria || p.categoria_nombre || 'Sin categoría',
+                imagenes: Array.isArray(p.imagenes)
+                    ? p.imagenes
+                    : (p.imagen ? [p.imagen] : [])
+            }));
+    
+            let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
+    
+            req.session.proveedorSeleccionado = proveedorSeleccionado;
+            req.session.categoriaSeleccionada = categoriaSeleccionada;
+    
+            res.render('panelControl', {
+                proveedores: proveedores,
+                proveedorSeleccionado: proveedorSeleccionado,
+                categorias: categorias,
+                categoriaSeleccionada: categoriaSeleccionada,
+                numeroDePaginas: numeroDePaginas,
+                productos: productos,
+                paginaActual: paginaActual,
+                busquedaActual: busqueda,
+            });
         } catch (error) {
-          console.error('❌ Error al cargar panel de control:', error);
-          res.status(500).send('Error al cargar panel de control.');
+            console.error('❌ Error en panelControl:', error);
+            return res.status(500).send('Error: ' + error.message);
         }
-      },
-      
+    },
+    
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {
