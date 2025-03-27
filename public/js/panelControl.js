@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (searchValue) {
     inputBusqueda.value = searchValue;
+    console.log('📦 productosOriginales:', typeof productosOriginales, productosOriginales?.length);
     inputBusqueda.dispatchEvent(new Event('input'));
     history.replaceState(null, '', `${window.location.pathname}?busqueda=${encodeURIComponent(searchValue)}`);
   }
@@ -92,8 +93,12 @@ document.addEventListener('DOMContentLoaded', function () {
       console.log('🧠 Disparando búsqueda por:', busqueda);
 
       if (!busqueda) {
-        productos = productosOriginales.slice(0, 12);
-        console.log('📄 Sin búsqueda: mostrando productos originales. Total:', productos.length);
+        console.log('📄 Sin búsqueda: mostrando productos originales.');
+        if (typeof productosOriginales !== 'undefined') {
+          productos = productosOriginales.slice(0, 12);
+        } else {
+          productos = [];
+        }
       } else {
         const url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
         try {
@@ -112,13 +117,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
       productos.forEach((producto) => {
         let imagenURL = '/ruta/valida/a/imagen/por/defecto.jpg';
-if (producto.imagenes && producto.imagenes.length > 0) {
-  if (typeof producto.imagenes[0] === 'string') {
-    imagenURL = `/uploads/productos/${producto.imagenes[0]}`;
-  } else if (typeof producto.imagenes[0].imagen === 'string') {
-    imagenURL = `/uploads/productos/${producto.imagenes[0].imagen}`;
-  }
-}
+        if (producto.imagenes && producto.imagenes.length > 0) {
+          if (typeof producto.imagenes[0] === 'string') {
+            imagenURL = `/uploads/productos/${producto.imagenes[0]}`;
+          } else if (typeof producto.imagenes[0].imagen === 'string') {
+            imagenURL = `/uploads/productos/${producto.imagenes[0].imagen}`;
+          }
+        }
 
         const precio_venta = producto.precio_venta
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
