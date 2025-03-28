@@ -643,100 +643,100 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
         return callback(err);
     }
 },
-
-    actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
-        return new Promise((resolve, reject) => {
-            if (typeof codigo !== 'string') {
-                console.error(`El código del producto no es una cadena: ${codigo}`);
-                resolve(null);
-                return;
-            }
-            const sql = `SELECT pp.*, p.utilidad, p.precio_venta, p.nombre, dp.descuento 
-                         FROM producto_proveedor pp 
-                         JOIN productos p ON pp.producto_id = p.id 
-                         JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id 
-                         WHERE pp.codigo = ? AND pp.proveedor_id = ?`; // Asegúrate de filtrar por proveedor
-    
-            conexion.getConnection((err, conexion) => {
-                if (err) {
-                    console.error('Error al obtener la conexión:', err);
-                    resolve(null);
-                    return;
+actualizarPreciosExcel: async (req, res) => {
+    try {
+      const proveedor_id = req.body.proveedor;
+      const file = req.files[0];
+      let productosActualizados = [];
+  
+      if (!proveedor_id || !file) {
+        return res.status(400).send('Proveedor y archivo son requeridos.');
+      }
+  
+      if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        const workbook = xlsx.readFile(file.path);
+        const sheet_name_list = workbook.SheetNames;
+        const promises = [];
+  
+        for (const sheet_name of sheet_name_list) {
+          const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+          for (const row of data) {
+            const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
+            const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
+  
+            if (codigoColumn && precioColumn) {
+              let codigoRaw = row[codigoColumn];
+              let precioRaw = row[precioColumn];
+  
+              let codigo = codigoRaw.toString().trim();
+  
+              if (typeof precioRaw === 'number') {
+                precioRaw = precioRaw.toString();
+              }
+  
+              if (typeof precioRaw === 'string') {
+                const precio = parseFloat(precioRaw.replace(',', '.'));
+  
+                if (isNaN(precio) || precio <= 0) {
+                  console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
+                  continue;
                 }
-    
-                // Cambiar los parámetros de la consulta
-                conexion.query(sql, [codigo, proveedor_id], (error, results) => {
-                    if (error) {
-                        console.error(`Error al ejecutar la consulta SQL para el código ${codigo}:`, error);
-                        conexion.release();
-                        resolve(null);
-                        return;
-                    }
-    
-                    if (results.length === 0) {
-                        conexion.release();
-                        resolve(null);
-                        return;
-                    }
-    
-                    const updatePromises = results.map(producto => {
-                        let descuento = producto.descuento;
-                        let costo_neto = precio_lista - (precio_lista * descuento / 100);
-                        let IVA = 21; 
-                        let costo_iva = costo_neto + (costo_neto * IVA / 100);
-                        let utilidad = producto.utilidad;
-    
-                        if (isNaN(costo_iva) || isNaN(utilidad)) {
-                            console.error('Costo con IVA o utilidad no es un número válido');
-                            return Promise.resolve(null);
+  
+                promises.push(
+                  producto.actualizarPreciosPDF(precio, codigo, proveedor_id)
+                    .then(async productosActualizadosTemp => {
+                      if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
+                        productosActualizados.push(...productosActualizadosTemp);
+                        for (const productoActualizado of productosActualizadosTemp) {
+                          const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoActualizado.codigo);
+                          if (proveedorMasBarato) {
+                            await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo, proveedorMasBarato.proveedor_id);
+                          } else {
+                            console.log(`No se encontró ningún proveedor para el producto con código ${productoActualizado.codigo}`);
+                          }
                         }
-    
-                        let precio_venta = costo_iva + (costo_iva * utilidad / 100);
-                        precio_venta = Math.ceil(precio_venta / 10) * 10;
-    
-                        const sqlUpdateProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ? AND codigo = ? AND proveedor_id = ?'; // Asegúrate de actualizar por proveedor
-                        const sqlUpdateProductos = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
-    
-                        return new Promise((resolveUpdate, rejectUpdate) => {
-                            conexion.query(sqlUpdateProductoProveedor, [precio_lista, producto.producto_id, codigo, producto.proveedor_id], (errorUpdatePP, resultsUpdatePP) => {
-                                if (errorUpdatePP) {
-                                    console.error('Error en la consulta SQL de actualización en producto_proveedor:', errorUpdatePP);
-                                    resolveUpdate(null);
-                                    return;
-                                }
-    
-                                conexion.query(sqlUpdateProductos, [precio_venta, producto.producto_id], (errorUpdateProd, resultsUpdateProd) => {
-                                    if (errorUpdateProd) {
-                                        console.error('Error en la consulta SQL de actualización en productos:', errorUpdateProd);
-                                        resolveUpdate(null);
-                                    } else {
-                                        resolveUpdate({
-                                            codigo: codigo,
-                                            nombre: producto.nombre, // Aquí se incluye el nombre del producto
-                                            producto_id: producto.producto_id,
-                                            precio_lista_antiguo: producto.precio_lista,
-                                            precio_lista_nuevo: precio_lista,
-                                            precio_venta: precio_venta
-                                        });
-                                    }
-                                });
-                            });
-                        });
-                    });
-    
-                    Promise.all(updatePromises).then(updatedProducts => {
-                        conexion.release();
-                        resolve(updatedProducts.filter(producto => producto !== null));
-                    }).catch(err => {
-                        console.error('Error al actualizar los productos:', err);
-                        conexion.release();
-                        resolve(null);
-                    });
-                });
-            });
-        });
-    },    
-    
+                      } else {
+                        console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
+                        return { noExiste: true, codigo: codigo };
+                      }
+                    })
+                    .catch(error => {
+                      console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
+                      return { error: true, message: `Error al actualizar el producto con el código ${codigo}: ${error.message}` };
+                    })
+                );
+              } else {
+                console.error(`Tipo de dato no esperado para el precio en el código ${codigo}: ${typeof precioRaw}`);
+              }
+            } else {
+              console.error(`No se encontraron las columnas de código o precio en la fila: ${JSON.stringify(row)}`);
+            }
+          }
+        }
+  
+        const resultados = await Promise.all(promises);
+        const errores = resultados.filter(resultado => resultado && resultado.error);
+        const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
+  
+        if (errores.length > 0) {
+          console.log("Errores al actualizar algunos productos:", errores);
+        }
+        if (noEncontrados.length > 0) {
+          noEncontrados.forEach(item => {
+            console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
+          });
+        }
+  
+        fs.unlinkSync(file.path);
+        res.render('productosActualizados', { productos: productosActualizados });
+      } else {
+        res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
+      }
+    } catch (error) {
+      console.log("Error durante el procesamiento de archivos", error);
+      res.status(500).send(error.message);
+    }
+  },  
 obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
