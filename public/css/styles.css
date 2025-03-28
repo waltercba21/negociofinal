@@ -2372,19 +2372,103 @@ border-radius: 10px;
   color: #7f8c8d;
 }
 
+/* ----- Pedido Manual - Estilos Modernos ----- */
 
-/*--------------------Pedido Manual---------------*/
-.producto-item {
+.pedido-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 1rem;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.titulo-pedido {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #343a40;
+}
+
+.grupo-form {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.select-pedido {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #ced4da;
+  font-size: 1rem;
+}
+
+.buscador-pedido {
+  margin-bottom: 1rem;
+}
+
+.input-busqueda {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #ced4da;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.tabla-contenedor {
+  overflow-x: auto;
+  margin-top: 1rem;
+  background-color: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 8px rgba(0,0,0,0.05);
+}
+
+.tabla-pedido {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.tabla-pedido thead {
+  background-color: #343a40;
+  color: white;
+}
+
+.tabla-pedido th,
+.tabla-pedido td {
+  padding: 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.total-pedido-num {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #28a745;
+}
+
+.boton-confirmar-pedido {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.btn-confirmar {
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 0.75rem;
   cursor: pointer;
-  padding: 8px;
-  border: 1px solid #ccc;
-  margin: 5px 0;
-  border-radius: 4px;
+  transition: background-color 0.3s ease;
 }
 
-.producto-item:hover {
-  background-color: #f0f0f0;
+.btn-confirmar:hover {
+  background-color: #0056b3;
 }
+
 /*--------------------DETALLE FACTURA --------------------*/
 /* Estilo general para la vista de factura */
 .factura-main {

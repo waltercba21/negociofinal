@@ -1,54 +1,56 @@
+<!-- Vista estilizada de Pedido Manual -->
 <%- include('./layouts/head.ejs') %>
 <%- include('./layouts/header.ejs') %>
 <body>
-    <main>
-        <div class="form-group-crear">
-            <label for="proveedores">Proveedores: <span class="nombre_proveedor"></span></label>
-            <select class="proveedores" name="proveedores[]">
-                <option selected disabled>Seleccione un proveedor</option>
-                <% proveedores.forEach(function(proveedor) { %>
-                    <option value="<%= proveedor.id %>"><%= proveedor.nombre %> (Descuento: <%= proveedor.descuento || 0 %>%)</option>
-                <% }); %>
-            </select>
-        </div>
-        
-        <div class="buscador-panel">
-            <input type="text" id="entradaBusqueda" placeholder="¿Qué estás buscando?" autocomplete="off">
-        </div>
-        
-        
-        <div id="contenedor-productos"></div> <!-- Mostrar el listado de productos buscados aquí -->
-        
-        <!-- Tabla donde se agregan los productos seleccionados -->
-        <table id="tabla-pedido">
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Precio Unitario</th>
-                    <th>Cantidad</th>
-                    <th>Precio Total</th>
-                    <th>Acciones</th> <!-- Nueva columna para el botón de eliminar -->
-                </tr>
-            </thead>
-            <tbody id="tabla-pedido-body">
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="5">Total del pedido:</td>
-                    <td id="total-pedido">0</td>
-                </tr>
-            </tfoot>
-        </table>
-        
-        <div style="text-align: right; margin-top: 10px; margin-right: 20px;">
-            <button id="btn-confirmar" class="btn btn-success">CONFIRMAR</button>
-        </div>
-    </main>
+  <main class="pedido-container">
+    <h2 class="titulo-pedido">Nuevo Pedido a Proveedor</h2>
 
-    <%- include('./layouts/footer.ejs') %>
-    <!-- Scripts necesarios -->
-    <script src="/js/buscadorPedidoManual.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <div class="grupo-form">
+      <label for="proveedores">Proveedor:</label>
+      <select class="proveedores select-pedido" name="proveedores[]">
+        <option selected disabled>Seleccione un proveedor</option>
+        <% proveedores.forEach(function(proveedor) { %>
+          <option value="<%= proveedor.id %>"><%= proveedor.nombre %> (Desc: <%= proveedor.descuento || 0 %>%)</option>
+        <% }); %>
+      </select>
+    </div>
+
+    <div class="buscador-pedido">
+      <input type="text" id="entradaBusqueda" class="input-busqueda" placeholder="¿Qué estás buscando?" autocomplete="off">
+    </div>
+
+    <div id="contenedor-productos"></div>
+
+    <div class="tabla-contenedor">
+      <table id="tabla-pedido" class="tabla-pedido">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Precio Unitario</th>
+            <th>Cantidad</th>
+            <th>Total</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-pedido-body"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5" class="text-right">Total del pedido:</td>
+            <td id="total-pedido" class="total-pedido-num">$0</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="boton-confirmar-pedido">
+      <button id="btn-confirmar" class="btn-confirmar">CONFIRMAR</button>
+    </div>
+  </main>
+
+  <%- include('./layouts/footer.ejs') %>
+  <script src="/js/buscadorPedidoManual.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 </body>
