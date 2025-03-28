@@ -87,23 +87,17 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const data = await response.json();
         if (response.ok) {
             Swal.fire({
-                title: '¡Éxito!',
+                title: '¡Factura guardada!',
                 text: data.message,
                 icon: 'success',
-                confirmButtonText: 'Entendido'
+                confirmButtonText: 'Ir a productos'
             }).then(() => {
-                Swal.fire({
-                    title: 'Nueva Factura',
-                    text: 'Está por realizar una nueva factura. Complete los datos.',
-                    icon: 'info',
-                    confirmButtonText: 'Entendido'
-                }).then(() => {
-                    window.location.href = '/productos';
-                });
+                window.location.href = '/productos';
             });
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
         }
+        
     } catch (error) {
         console.error('Error al enviar el formulario:', error);
         Swal.fire({

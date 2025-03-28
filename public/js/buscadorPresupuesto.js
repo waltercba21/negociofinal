@@ -69,23 +69,17 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 invoiceItems
             })
         });
-
+    
         const data = await response.json();
+    
         if (response.ok) {
             Swal.fire({
-                title: '¡Éxito!',
+                title: '¡Presupuesto guardado!',
                 text: data.message,
                 icon: 'success',
-                confirmButtonText: 'Entendido'
+                confirmButtonText: 'Ir a productos'
             }).then(() => {
-                Swal.fire({
-                    title: 'Nuevo Presupuesto',
-                    text: 'Está por realizar un nuevo presupuesto. Complete los datos.',
-                    icon: 'info',
-                    confirmButtonText: 'Entendido'
-                }).then(() => {
-                    window.location.href = '/productos';
-                });
+                window.location.href = '/productos';
             });
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
@@ -100,6 +94,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 
 
