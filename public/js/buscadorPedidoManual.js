@@ -73,8 +73,10 @@ function limpiarBusqueda() {
 }
 
 function formatearNumero(num) {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const entero = Math.round(num); // redondea al entero más cercano
+  return entero.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+
 
 function actualizarTabla() {
   const tablaBody = document.getElementById('tabla-pedido-body');
