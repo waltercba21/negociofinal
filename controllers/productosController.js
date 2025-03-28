@@ -1386,9 +1386,15 @@ actualizarPreciosExcel: async (req, res) => {
   
         for (const sheet_name of sheet_name_list) {
           const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+  
           for (const row of data) {
-            const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('código') || key.toLowerCase().includes('codigo'));
-            const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
+            const codigoColumn = Object.keys(row).find(key =>
+              key.toLowerCase().replace(/\s/g, '').includes('codigo')
+            );
+  
+            const precioColumn = Object.keys(row).find(key =>
+              key.toLowerCase().replace(/\s/g, '').includes('precio')
+            );
   
             if (codigoColumn && precioColumn) {
               let codigoRaw = row[codigoColumn];
@@ -1462,7 +1468,8 @@ actualizarPreciosExcel: async (req, res) => {
       console.log("Error durante el procesamiento de archivos", error);
       res.status(500).send(error.message);
     }
-  },  
+  },
+  
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
