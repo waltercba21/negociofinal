@@ -2372,7 +2372,7 @@ border-radius: 10px;
   color: #7f8c8d;
 }
 
-/* ----- Pedido Manual - Estilos Modernos ----- */
+/* ----- Pedido Manual ----- */
 
 .pedido-container {
   max-width: 900px;
@@ -2468,29 +2468,51 @@ border-radius: 10px;
 .btn-confirmar:hover {
   background-color: #0056b3;
 }
-.resultado-busqueda {
+/* ----- Resultados de búsqueda en Pedido Manual ----- */
+
+#contenedor-productos {
+  position: absolute;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 20;
   background-color: #ffffff;
-  padding: 0.75rem;
-  margin-bottom: 4px;
-  border: 1px solid #dee2e6;
+  border: 1px solid #ccc;
   border-radius: 0.5rem;
-  transition: background-color 0.3s ease;
-  cursor: pointer; /* Manito */
+  margin-top: 0.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo de cada producto sugerido */
+.producto-sugerido {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
 }
 
-.resultado-busqueda:hover,
-.resultado-busqueda.hover-activo {
-  background-color: #e9f5ff;
+/* Cambia de color al hacer hover */
+.producto-sugerido:hover {
+  background-color: #e6f0ff;
 }
 
-.resultado-busqueda img.miniatura {
-  width: 60px;
+/* Imagen miniatura en el listado de resultados */
+.producto-sugerido img {
+  width: 48px;
   height: auto;
   border-radius: 0.25rem;
+  margin-right: 1rem;
 }
+
+/* Nombre o info del producto */
+.producto-sugerido span {
+  font-weight: 500;
+  font-size: 1rem;
+  color: #333;
+}
+
 
 /*--------------------DETALLE FACTURA --------------------*/
 /* Estilo general para la vista de factura */

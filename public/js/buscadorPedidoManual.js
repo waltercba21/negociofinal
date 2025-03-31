@@ -45,14 +45,18 @@ function mostrarProductos(productos) {
 
   productos.forEach((producto) => {
     const divProducto = document.createElement('div');
-    divProducto.textContent = producto.nombre;
-    divProducto.classList.add('producto-item');
+    divProducto.classList.add('producto-sugerido'); // Cambiamos la clase
+
+    divProducto.innerHTML = `
+      <img src="${producto.imagenes && producto.imagenes.length > 0 ? `/uploads/productos/${producto.imagenes[0].imagen || producto.imagenes[0]}` : '/ruta/imagen-defecto.jpg'}" alt="${producto.nombre}">
+      <span>${producto.nombre}</span>
+    `;
 
     divProducto.addEventListener('click', () => agregarProductoATabla(producto));
-
     contenedorProductos.appendChild(divProducto);
   });
 }
+
 
 function agregarProductoATabla(producto) {
   // Verificar si el producto ya está agregado
