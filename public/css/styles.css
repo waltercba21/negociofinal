@@ -2468,6 +2468,29 @@ border-radius: 10px;
 .btn-confirmar:hover {
   background-color: #0056b3;
 }
+.resultado-busqueda {
+  background-color: #ffffff;
+  padding: 0.75rem;
+  margin-bottom: 4px;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  transition: background-color 0.3s ease;
+  cursor: pointer; /* Manito */
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.resultado-busqueda:hover,
+.resultado-busqueda.hover-activo {
+  background-color: #e9f5ff;
+}
+
+.resultado-busqueda img.miniatura {
+  width: 60px;
+  height: auto;
+  border-radius: 0.25rem;
+}
 
 /*--------------------DETALLE FACTURA --------------------*/
 /* Estilo general para la vista de factura */
