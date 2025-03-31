@@ -94,11 +94,14 @@ function actualizarTabla() {
       <td>${producto.codigo}</td>
       <td>${producto.nombre}</td>
       <td>$${formatearNumero(parseFloat(producto.costo_neto))}</td>
-      <td>
-        <button onclick="cambiarCantidad(${index}, -1)">-</button>
-        ${producto.cantidad}
-        <button onclick="cambiarCantidad(${index}, 1)">+</button>
-      </td>
+     <td>
+  <div class="cantidad-controles">
+    <button class="btn-cantidad btn-menos" onclick="cambiarCantidad(${index}, -1)">−</button>
+    <span class="cantidad-numero">${producto.cantidad}</span>
+    <button class="btn-cantidad btn-mas" onclick="cambiarCantidad(${index}, 1)">+</button>
+  </div>
+</td>
+
       <td>$<span id="precio-total-${producto.id}">${formatearNumero(precioTotal)}</span></td>
       <td><button onclick="eliminarProducto(${index})" class="btn btn-danger">Eliminar</button></td>
     `;
