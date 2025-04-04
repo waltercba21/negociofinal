@@ -43,20 +43,13 @@
   <div class="descripcion" style="display: none;">
     <%= productos[i].descripcion %>
   </div>
-  <% if (producto && producto.precio_venta != null) { %>
-    <div class="precio-producto">
-      <p class="precio">
-        $<%= Number(producto.precio_venta).toLocaleString('es-AR') %>
-      </p>
-    </div>
-  <% } else { %>
-    <div class="precio-producto">
-      <p class="precio">Precio no disponible</p>
-    </div>
-  <% } %>
-  
-  
-  
+  <div class="precio-producto">
+    <p class="precio">
+      $<%= typeof productos[i].precio_venta === 'number' ? 
+        Math.floor(productos[i].precio_venta).toLocaleString('es-AR') : 
+        productos[i].precio_venta %>
+    </p>
+  </div>
   <% if (isAdminUser) { %>
     <div class="stock-producto <%= productos[i].stock_actual < productos[i].stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
       <p>Stock Disponible: <%= productos[i].stock_actual %></p>
