@@ -43,13 +43,18 @@
   <div class="descripcion" style="display: none;">
     <%= productos[i].descripcion %>
   </div>
-  <div class="precio-producto">
-    <p class="precio">
-      $<%= typeof producto.precio_venta === 'number' 
-            ? producto.precio_venta.toLocaleString('es-AR') 
-            : producto.precio_venta %>
-    </p>
-  </div>
+  <% if (producto && producto.precio_venta != null) { %>
+    <div class="precio-producto">
+      <p class="precio">
+        $<%= Number(producto.precio_venta).toLocaleString('es-AR') %>
+      </p>
+    </div>
+  <% } else { %>
+    <div class="precio-producto">
+      <p class="precio">Precio no disponible</p>
+    </div>
+  <% } %>
+  
   
   
   <% if (isAdminUser) { %>
