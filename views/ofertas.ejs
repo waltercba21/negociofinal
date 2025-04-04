@@ -45,11 +45,12 @@
   </div>
   <div class="precio-producto">
     <p class="precio">
-      $<%= typeof productos[i].precio_venta === 'number' ? 
-        Math.floor(productos[i].precio_venta).toLocaleString('es-AR') : 
-        productos[i].precio_venta %>
+      $<%= typeof productos[i].precio_venta === 'number' 
+        ? productos[i].precio_venta.toLocaleString('es-AR', { maximumFractionDigits: 0 }) 
+        : productos[i].precio_venta %>
     </p>
   </div>
+  
   <% if (isAdminUser) { %>
     <div class="stock-producto <%= productos[i].stock_actual < productos[i].stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
       <p>Stock Disponible: <%= productos[i].stock_actual %></p>
