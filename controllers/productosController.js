@@ -514,11 +514,12 @@ module.exports = {
         console.log("📩 POST recibido en actualizar");
         console.log("➡️ req.body.pagina:", req.body.pagina);
         console.log("➡️ req.body.busqueda:", req.body.busqueda);
-
+    
         if (!req.body.proveedores || req.body.proveedores.length === 0) {
             res.status(400).send('Error: proveedor_id no puede ser nulo');
             return;
         }
+    
         let datosProducto = {
             id: req.body.id,
             nombre: req.body.nombre,
@@ -540,6 +541,17 @@ module.exports = {
             calidad_original: req.body.calidad_original ? 1 : 0, 
             calidad_vic: req.body.calidad_vic ? 1 : 0 
         };
+    
+        // 🔄 Aplicar redondeo al precio de venta
+        if (datosProducto.precio_venta) {
+            const redondearPrecioVenta = (precio) => {
+                const valor = Number(precio);
+                const resto = valor % 100;
+                return resto < 50 ? valor - resto : valor + (100 - resto);
+            };
+            datosProducto.precio_venta = redondearPrecioVenta(datosProducto.precio_venta);
+        }
+    
         producto.actualizar(conexion, datosProducto)
             .then(() => {
                 if (req.files) {
@@ -576,12 +588,12 @@ module.exports = {
                 const busqueda = req.body.busqueda || '';
                 console.log('📥 Redireccionando a:', `/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
                 res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
-                
             })
             .catch(error => {
                 res.status(500).send('Error: ' + error.message);
             });
-    },    
+    },
+    
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
