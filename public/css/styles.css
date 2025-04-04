@@ -1994,6 +1994,9 @@ border-radius: 10px;
 .fa-thumbs-up{
   font-size: 30px;
 }
+.fa-thumbs-down{
+  font-size: 30px;
+}
 
 .fa-thumbs-up.verde {
   color: #2ecc71;
