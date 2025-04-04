@@ -1920,16 +1920,11 @@ border-radius: 10px;
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #218838; /* Fondo de la etiqueta */
   color: #ffffff;
   padding: 5px;
   font-size: 14px;
   font-weight: bold;
   text-align: center;
-}
-
-.card.producto-oferta .carousel__image {
-  border: 2px solid #218838; 
 }
 
 .card.producto-oferta hr {
