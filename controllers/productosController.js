@@ -537,7 +537,7 @@ module.exports = {
             costo_neto: req.body.costo_neto[0],
             IVA: req.body.IVA[0],
             costo_iva: req.body.costo_iva[0],
-            oferta: req.body.oferta ? 1 : 0,
+            oferta: Array.isArray(req.body.oferta) ? req.body.oferta.includes('1') ? 1 : 0 : Number(req.body.oferta) || 0,
             calidad_original: req.body.calidad_original ? 1 : 0, 
             calidad_vic: req.body.calidad_vic ? 1 : 0 
         };
