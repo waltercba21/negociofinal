@@ -145,3 +145,20 @@ function agregarEventosCarrusel(tarjetaProducto) {
         });
     }
 }
+document.querySelectorAll('.flecha-izquierda, .flecha-derecha').forEach(boton => {
+    boton.addEventListener('click', function () {
+        const card = this.closest('.card-producto');
+        const imagen = card.querySelector('.imagen-producto');
+        const imagenes = JSON.parse(card.dataset.imagenes);
+        let indice = parseInt(card.dataset.indiceImagen);
+
+        if (this.classList.contains('flecha-izquierda')) {
+            indice = (indice - 1 + imagenes.length) % imagenes.length;
+        } else {
+            indice = (indice + 1) % imagenes.length;
+        }
+
+        card.dataset.indiceImagen = indice;
+        imagen.src = `/uploads/productos/${imagenes[indice]}`;
+    });
+});
