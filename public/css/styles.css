@@ -1531,7 +1531,8 @@ footer {
   color: #fff;
   border-color: #333; 
 }
-/*---------------------------Todos los Productos -------------------------------*/
+
+/*--------------------------- Productos ------------------------------*/
 /*--------------------------- Titulo ------------------------------*/
 .titulo-principal {
   text-align: center;
@@ -1580,6 +1581,7 @@ footer {
   justify-items: center;
   margin: 20px;
 }
+
 /*------------------ CARD GENERAL -----------------*/
 .card {
   position: relative;
@@ -1590,7 +1592,7 @@ footer {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   width: 250px;
-  height: 350px;
+  height: 360px;
 }
 
 .card:hover {
@@ -1598,7 +1600,7 @@ footer {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
 }
 
-/*------------------ CARRUSEL IMG -----------------*/
+/*------------------ CARRUSEL -----------------*/
 .carousel-container {
   display: flex;
   justify-content: space-between;
@@ -1607,37 +1609,40 @@ footer {
   position: relative;
 }
 
-/*------------- Contenedor de imagenes ------------ */
 .cover__card {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 140px; /* más chico para no tapar leyendas */
+  height: 150px;
   overflow: hidden;
   border-radius: 10px;
   position: relative;
 }
+
 .carousel {
-  width: 100%;
-  height: 100%;
-  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
+/* Imagenes del carrusel */
 .carousel__image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;  /* ADAPTA la imagen al contenedor */
+  width: 100%;
+  height: 100%;
+  object-fit: contain; 
+  padding: 5px;
 }
 
+/* Ocultar las imágenes no activas */
 .hidden {
   display: none !important;
 }
 
-/*------------------ BOTONES FLECHA -----------------*/
+/*------------------ BOTONES FLECHAS -----------------*/
 .carousel__buttons {
   display: flex;
   justify-content: space-between;
@@ -1648,6 +1653,7 @@ footer {
   padding: 0 5px;
   z-index: 2;
 }
+
 .carousel__button {
   background: #003f7d;
   border: none;
@@ -1667,7 +1673,8 @@ footer {
 .carousel__button:hover {
   transform: scale(1.2);
 }
-/*------------------ DATOS PRODUCTO -----------------*/
+
+/*------------------ INFORMACIÓN PRODUCTO -----------------*/
 .titulo-producto h3,
 .categoria-producto h6 {
   margin: 0;
@@ -1686,7 +1693,7 @@ footer {
   text-align: center;
 }
 
-/*------------------ SEMAFORO STOCK -----------------*/
+/*------------------ SEMÁFORO STOCK -----------------*/
 .semaforo-stock {
   display: flex;
   flex-direction: column;
@@ -1756,7 +1763,7 @@ footer {
   margin-top: 5px;
 }
 
-/*------------------ ESTILOS SEGUN PRODUCTO -----------------*/
+/*------------------ ESTILOS SEGÚN PRODUCTO -----------------*/
 /* FITAM */
 .card.calidad-original-fitam {
   background-color: #003f7d;
@@ -1795,14 +1802,6 @@ footer {
 .card.producto-oferta .texto-semaforo {
   color: #fff;
 }
-
-/*------------------ HOVER CARD -----------------*/
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
-}
-
-
 
 /*--------------VISTA CARRITO DE COMPRAS----------------*/
 
