@@ -1640,13 +1640,14 @@ footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 30px 20px;
   background-color: #ffffff;
   border-radius: 15px;
   padding: 5px;
+  margin: 30px 20px;
   width: 100%;
 }
 
+/* Fila horizontal */
 .carousel-container {
   display: flex;
   justify-content: center;
@@ -1654,6 +1655,7 @@ footer {
   gap: 8px;
 }
 
+/* Rectángulo fijo para imagen */
 .carousel-wrapper {
   width: 160px;
   height: 140px;
@@ -1666,11 +1668,11 @@ footer {
 }
 
 .carousel {
-  width: 100%;
-  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
+  height: 100%;
 }
 
 .carousel__image {
@@ -1683,7 +1685,7 @@ footer {
   display: none !important;
 }
 
-/* FLECHAS */
+/* Flechas */
 .carousel__button {
   background: #003f7d;
   border: none;
@@ -1792,6 +1794,7 @@ footer {
   display: inline-block;
   margin-top: 5px;
 }
+
 
 
 /*--------------VISTA CARRITO DE COMPRAS----------------*/
