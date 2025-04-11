@@ -1803,6 +1803,7 @@ footer {
   font-weight: bold;
   display: inline-block;
   margin-top: 5px;
+  font-size: 12px;
 }
 /* ESTILO STOCK ADMIN */
 .stock-producto {
