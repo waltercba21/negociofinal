@@ -1638,10 +1638,8 @@ footer {
 .carousel__image {
   width: 100%;
   height: 100%;
-  object-fit: contain; 
-  padding: 5px;
+  object-fit: contain; /* ESTO ES CLAVE */
 }
-
 /* Ocultar las imágenes no activas */
 .hidden {
   display: none !important;
