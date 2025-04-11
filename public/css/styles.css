@@ -1532,7 +1532,7 @@ footer {
   border-color: #333; 
 }
 
-/*--------------------------- Productos ------------------------------*/
+/* --------------------------- Productos ------------------------------ */
 
 /* Titulo */
 .titulo-principal {
@@ -1583,7 +1583,7 @@ footer {
   margin: 20px;
 }
 
-/* CARD GENERAL */
+/* CARD */
 .card {
   position: relative;
   padding: 10px;
@@ -1593,7 +1593,7 @@ footer {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   width: 250px;
-  height: 360px;
+  height: 370px;
 }
 
 .card:hover {
@@ -1601,7 +1601,41 @@ footer {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
 }
 
-/* Contenedor de Imagenes + Flechas */
+/* LEYENDAS SEGUN CALIDAD */
+.card::before {
+  content: attr(data-label);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  padding: 5px;
+  font-size: 13px;
+  animation: agrandar 2s infinite alternate;
+}
+
+.card.calidad-original-fitam::before {
+  background-color: #003f7d;
+  color: white;
+}
+
+.card.calidad_vic::before {
+  background-color: #b30000;
+  color: white;
+}
+
+.card.producto-oferta::before {
+  background-color: #28a745;
+  color: white;
+}
+
+@keyframes agrandar {
+  0% {font-size: 12px;}
+  100% {font-size: 16px;}
+}
+
+/* CONTENEDOR IMAGENES + FLECHAS */
 .cover-card {
   display: flex;
   justify-content: center;
@@ -1613,17 +1647,13 @@ footer {
   width: 100%;
 }
 
-/* Contenedor en fila */
 .carousel-container {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  width: 100%;
-  gap: 5px;
+  gap: 8px;
 }
 
-/* Tamaño fijo del contenedor */
 .carousel-wrapper {
   width: 160px;
   height: 140px;
@@ -1636,26 +1666,24 @@ footer {
 }
 
 .carousel {
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
-  position: relative;
 }
 
 .carousel__image {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
 }
 
-/* Ocultar las imagenes que no esten activas */
 .hidden {
   display: none !important;
 }
 
-/* Flechas */
+/* FLECHAS */
 .carousel__button {
   background: #003f7d;
   border: none;
@@ -1676,7 +1704,7 @@ footer {
   transform: scale(1.2);
 }
 
-/* Datos Producto */
+/* INFORMACION PRODUCTO */
 .titulo-producto h3,
 .categoria-producto h6 {
   margin: 0;
@@ -1695,7 +1723,7 @@ footer {
   text-align: center;
 }
 
-/* Semaforo Stock */
+/* SEMAFORO STOCK */
 .semaforo-stock {
   display: flex;
   flex-direction: column;
@@ -1723,7 +1751,7 @@ footer {
   text-align: center;
 }
 
-/* Input y Botones */
+/* INPUT y BOTONES */
 .cantidad-producto {
   display: flex;
   flex-direction: column;
@@ -1763,43 +1791,6 @@ footer {
   font-weight: bold;
   display: inline-block;
   margin-top: 5px;
-}
-
-/* Colores segun Producto */
-.card.calidad-original-fitam {
-  background-color: #003f7d;
-  color: #fff;
-}
-
-.card.calidad-original-fitam h3,
-.card.calidad-original-fitam h6,
-.card.calidad-original-fitam p,
-.card.calidad-original-fitam .texto-semaforo {
-  color: #fff;
-}
-
-.card.calidad_vic {
-  background-color: #b30000;
-  color: #fff;
-}
-
-.card.calidad_vic h3,
-.card.calidad_vic h6,
-.card.calidad_vic p,
-.card.calidad_vic .texto-semaforo {
-  color: #fff;
-}
-
-.card.producto-oferta {
-  background-color: #28a745;
-  color: #fff;
-}
-
-.card.producto-oferta h3,
-.card.producto-oferta h6,
-.card.producto-oferta p,
-.card.producto-oferta .texto-semaforo {
-  color: #fff;
 }
 
 
