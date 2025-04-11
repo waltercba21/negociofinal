@@ -1532,183 +1532,106 @@ footer {
   border-color: #333; 
 }
 /*---------------------------Todos los Productos -------------------------------*/
-.titulo-principal {
-  text-align: center;
-  color: #1F487E;
-  font-size: 28px;
-  font-weight: bold;
-  padding: 70px 0 10px 0;
-}
-.contenedor-busqueda {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 20px; 
-}
-.buscador {
-  display: flex;
-  justify-content: center; 
-  margin: 20px 0;
-}
-.buscador input {
-  border-radius: 10px;
-  border: none;
-  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
-  transition: box-shadow 0.3s ease-in-out;
-  cursor: pointer;
-  font-weight: bold;
-  width: 50%; 
-  height: 40px; 
-  text-align: center;
-} 
-.buscador input:focus {
-  box-shadow: 0 0 2px #719ECE;
-  outline: none; 
-}
-.buscador input:valid {
-  animation: input-glow 3s infinite;
-}
-@keyframes input-glow {
-  0%, 100% {
-    box-shadow: 0 0 4px #1F487E;
-  }
-  50% {
-    box-shadow: 0 0 8px #1F487E, 0 0 8px #1F487E;
-  }
-}
-.selectores-productos {
-  flex: 2;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-around;
-  gap: 10px; 
-  margin-top: 20px;
-}
-.selectores-productos label {
-  color: #003f7d;
-  font-weight: bold;
-}
-.selectores-productos select {
-  min-width: 200px;
-  color: #b80220;
-  font-weight: bold;
-  border-radius: 5px;
-  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
-  border: none;
-}
-#categoria_id option, #id_marca option, #modelo_id option {
-  font-weight: bold;
-}
-#categoria_id option:hover, #id_marca option:hover, #modelo_id option:hover {
-  background-color:#007BFF;
-}
-.hidden {
-  display: none !important;
-}
-
-/* GRID - 4 columnas */
+/*------------------ GRID PRODUCTOS -----------------*/
 .contenedor-productos {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 15px;
   justify-items: center;
   margin: 20px;
 }
 
-/* TARJETAS */
+/*------------------ CARD GENERAL -----------------*/
 .card {
   position: relative;
-  padding: 10px;
-  background: #ffffff;
+  width: 230px;
+  height: 340px;
+  background-color: #ffffff;
   border-radius: 15px;
   overflow: hidden;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-  width: 250px;
-  height: 340px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-/* IMAGENES */
-.cover__card,
-.carousel,
-.carousel__image {
+/*------------------ CARRUSEL IMG -----------------*/
+.carousel-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 200px;
+  position: relative;
+}
+
+.carousel {
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 220px;
-  border-radius: 10px;
   overflow: hidden;
 }
 
-.carousel img,
 .carousel__image {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-/* CAROUSEL FLECHAS */
-.carousel-container {
+/*------------------ BOTONES FLECHA -----------------*/
+.carousel__button {
+  background-color: #003f7d;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  cursor: pointer;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  width: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-/* BOTONES FLECHA */
-.carousel__buttons {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 0 5px;
+.carousel__button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* PRECIOS */
+/*------------------ TITULO, CATEGORIA Y PRECIO -----------------*/
+.titulo-producto h3,
+.categoria-producto h6 {
+  margin: 0;
+  padding: 2px 5px;
+  font-size: 12px;
+  text-align: center;
+  font-weight: bold;
+  color: #1f487e;
+}
+
 .precio-producto p {
+  margin: 5px 0;
   font-size: 18px;
   font-weight: bold;
   color: #d90429;
   text-align: center;
-  margin: 10px 0 0;
 }
 
-/* TITULOS */
-.titulo-producto h3.nombre {
-  font-size: 13px;
-  color: #1F487E;
-  text-align: center;
-  min-height: 40px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: normal;
-}
-
-/* CATEGORIA */
-.categoria-producto h6.categoria {
-  font-size: 11px;
-  font-weight: bold;
-  color: #1F487E;
-  text-align: center;
-}
-
-/* SEMAFORO */
+/*------------------ SEMAFORO STOCK -----------------*/
 .semaforo-stock {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  margin-top: 5px;
+  margin: 5px 0;
 }
 
-.fa-thumbs-up, .fa-thumbs-down {
-  font-size: 24px;
+.fa-thumbs-up,
+.fa-thumbs-down {
+  font-size: 22px;
 }
 
 .fa-thumbs-up.verde {
@@ -1721,22 +1644,21 @@ footer {
 
 .texto-semaforo {
   font-size: 11px;
-  text-align: center;
   font-weight: bold;
-  color: #1F487E;
+  color: #1f487e;
+  text-align: center;
 }
 
-/* ESTILO ESPECIAL SEGUN TARJETA */
-
+/*------------------ ESTILOS SEGUN PRODUCTO -----------------*/
 /* FITAM */
 .card.calidad-original-fitam {
   background-color: #003f7d;
   color: #fff;
 }
 
-.card.calidad-original-fitam .titulo-producto h3,
-.card.calidad-original-fitam .categoria-producto h6,
-.card.calidad-original-fitam .precio-producto p,
+.card.calidad-original-fitam h3,
+.card.calidad-original-fitam h6,
+.card.calidad-original-fitam p,
 .card.calidad-original-fitam .texto-semaforo {
   color: #fff;
 }
@@ -1747,9 +1669,9 @@ footer {
   color: #fff;
 }
 
-.card.calidad_vic .titulo-producto h3,
-.card.calidad_vic .categoria-producto h6,
-.card.calidad_vic .precio-producto p,
+.card.calidad_vic h3,
+.card.calidad_vic h6,
+.card.calidad_vic p,
 .card.calidad_vic .texto-semaforo {
   color: #fff;
 }
@@ -1760,12 +1682,61 @@ footer {
   color: #fff;
 }
 
-.card.producto-oferta .titulo-producto h3,
-.card.producto-oferta .categoria-producto h6,
-.card.producto-oferta .precio-producto p,
+.card.producto-oferta h3,
+.card.producto-oferta h6,
+.card.producto-oferta p,
 .card.producto-oferta .texto-semaforo {
   color: #fff;
 }
+
+/*------------------ INPUT Y BOTONES -----------------*/
+.cantidad-producto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.cantidad-producto input {
+  width: 60px;
+  padding: 3px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.cantidad-producto .agregar-carrito {
+  padding: 5px 10px;
+  background-color: #003f7d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cantidad-producto .agregar-carrito:hover {
+  background-color: #004d99;
+}
+
+.card-link {
+  text-decoration: none;
+  padding: 5px 10px;
+  background-color: #1f487e;
+  color: white;
+  border-radius: 5px;
+  font-weight: bold;
+  display: inline-block;
+  margin-top: 5px;
+}
+
+/*------------------ HOVER CARD -----------------*/
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+}
+
 
 
 /*--------------VISTA CARRITO DE COMPRAS----------------*/
