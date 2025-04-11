@@ -1533,7 +1533,8 @@ footer {
 }
 
 /*--------------------------- Productos ------------------------------*/
-/*--------------------------- Titulo ------------------------------*/
+
+/* Titulo */
 .titulo-principal {
   text-align: center;
   color: #1F487E;
@@ -1542,7 +1543,7 @@ footer {
   padding: 70px 0 10px 0;
 }
 
-/*--------------------------- Buscador ------------------------------*/
+/* Buscador */
 .contenedor-busqueda {
   display: flex;
   flex-direction: column;
@@ -1573,7 +1574,7 @@ footer {
   outline: none;
 }
 
-/*--------------------------- GRID 4 TARJETAS ------------------------------*/
+/* GRID 4 TARJETAS */
 .contenedor-productos {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1582,7 +1583,7 @@ footer {
   margin: 20px;
 }
 
-/*------------------ CARD GENERAL -----------------*/
+/* CARD GENERAL */
 .card {
   position: relative;
   padding: 10px;
@@ -1600,29 +1601,24 @@ footer {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
 }
 
-/*------------------ CARRUSEL -----------------*/
-.carousel-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 5px;
-}
-
+/* Carrusel Imagenes */
 .cover-card {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
+  margin: 30px 20px;
 }
+
 .carousel-wrapper {
-  width: 160px; /* TAMAÑO FIJO */
-  height: 140px; /* TAMAÑO FIJO */
+  width: 160px;
+  height: 140px;
+  overflow: hidden;
+  border-radius: 10px;
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
-  border-radius: 10px;
 }
 
 .carousel {
@@ -1634,18 +1630,17 @@ footer {
   position: relative;
 }
 
-/* Imagenes del carrusel */
 .carousel__image {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* ESTO ES CLAVE */
+  object-fit: contain;
 }
-/* Ocultar las imágenes no activas */
+
 .hidden {
   display: none !important;
 }
 
-/*------------------ BOTONES FLECHAS -----------------*/
+/* Botones Carrusel */
 .carousel__buttons {
   display: flex;
   justify-content: space-between;
@@ -1677,7 +1672,7 @@ footer {
   transform: scale(1.2);
 }
 
-/*------------------ INFORMACIÓN PRODUCTO -----------------*/
+/* Informacion Producto */
 .titulo-producto h3,
 .categoria-producto h6 {
   margin: 0;
@@ -1696,7 +1691,7 @@ footer {
   text-align: center;
 }
 
-/*------------------ SEMÁFORO STOCK -----------------*/
+/* Semaforo Stock */
 .semaforo-stock {
   display: flex;
   flex-direction: column;
@@ -1724,7 +1719,7 @@ footer {
   text-align: center;
 }
 
-/*------------------ INPUT Y BOTONES -----------------*/
+/* Input y Botones */
 .cantidad-producto {
   display: flex;
   flex-direction: column;
@@ -1766,7 +1761,8 @@ footer {
   margin-top: 5px;
 }
 
-/*------------------ ESTILOS SEGÚN PRODUCTO -----------------*/
+/* ESTILOS SEGUN PRODUCTO */
+
 /* FITAM */
 .card.calidad-original-fitam {
   background-color: #003f7d;
@@ -1805,6 +1801,7 @@ footer {
 .card.producto-oferta .texto-semaforo {
   color: #fff;
 }
+
 
 /*--------------VISTA CARRITO DE COMPRAS----------------*/
 
