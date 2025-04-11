@@ -1804,6 +1804,30 @@ footer {
   display: inline-block;
   margin-top: 5px;
 }
+/* ESTILO STOCK ADMIN */
+.stock-producto {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.stock-producto p {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+}
+
+.stock-producto.suficiente-stock p {
+  background-color: #28a745; /* Verde */
+}
+
+.stock-producto.bajo-stock p {
+  background-color: #b30000; /* Rojo */
+}
 
 
 /*--------------VISTA CARRITO DE COMPRAS----------------*/
