@@ -240,12 +240,10 @@ module.exports = {
             res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
         }
     },
-    
-    
     detalle: function (req, res) {
         const id = req.params.id;
       
-        producto.obtenerPorId(conexion, id, function(error, producto) {
+        producto.obtenerPorId(conexion, id, async function(error, producto) {
           if (error) {
             console.log('Error al obtener producto:', error);
             return res.status(500).send('Error al obtener el producto');
@@ -257,9 +255,13 @@ module.exports = {
       
           producto[0].precio_venta = Number(producto[0].precio_venta).toLocaleString('es-ES');
       
+          // 🔥 NUEVO: obtener las imágenes del producto
+          const imagenes = await producto.obtenerImagenesProducto(conexion, [producto[0].id]);
+          producto[0].imagenes = imagenes || [];
+      
           let cantidadCarrito = 0;
-          const isUserLoggedIn = !!req.session.usuario; // true o false
-          const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin'; // segun tu sistema de roles
+          const isUserLoggedIn = !!req.session.usuario;
+          const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin';
       
           if (isUserLoggedIn) {
             const id_usuario = req.session.usuario.id;
@@ -299,9 +301,6 @@ module.exports = {
           }
         });
       },
-      
-    
-      
       crear: function(req, res) {
         let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento;
         producto.obtenerCategorias(conexion).then(result => {
