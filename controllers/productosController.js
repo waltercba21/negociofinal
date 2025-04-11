@@ -244,55 +244,62 @@ module.exports = {
     
     detalle: function (req, res) {
         const id = req.params.id;
-        
+      
         producto.obtenerPorId(conexion, id, function(error, producto) {
-            if (error) {
-                console.log('Error al obtener producto:', error);
-                return res.status(500).send('Error al obtener el producto');
-            } 
-            
-            if (!producto || producto.length === 0) {
-                return res.status(404).send('Producto no encontrado');
-            }
-    
-            // Formatear precio para la vista
-            producto[0].precio_venta = Number(producto[0].precio_venta).toLocaleString('es-ES');
-    
-            let cantidadCarrito = 0;
-    
-            if (req.session && req.session.usuario) {
-                const id_usuario = req.session.usuario.id;
-    
-                carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
-                    if (carritoActivo && carritoActivo.length > 0) {
-                        const id_carrito = carritoActivo[0].id;
-    
-                        carrito.obtenerProductosCarrito(id_carrito, (error, productosCarrito) => {
-                            if (productosCarrito) {
-                                cantidadCarrito = productosCarrito.length;
-                            }
-    
-                            // Renderizar vista detalle con el producto y la cantidad en el carrito
-                            res.render('detalle', { 
-                                producto: producto[0], 
-                                cantidadCarrito
-                            });
-                        });
-                    } else {
-                        res.render('detalle', { 
-                            producto: producto[0], 
-                            cantidadCarrito: 0
-                        });
-                    }
-                });
-            } else {
-                res.render('detalle', { 
+          if (error) {
+            console.log('Error al obtener producto:', error);
+            return res.status(500).send('Error al obtener el producto');
+          } 
+          
+          if (!producto || producto.length === 0) {
+            return res.status(404).send('Producto no encontrado');
+          }
+      
+          producto[0].precio_venta = Number(producto[0].precio_venta).toLocaleString('es-ES');
+      
+          let cantidadCarrito = 0;
+          const isUserLoggedIn = !!req.session.usuario; // true o false
+          const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin'; // segun tu sistema de roles
+      
+          if (isUserLoggedIn) {
+            const id_usuario = req.session.usuario.id;
+      
+            carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
+              if (carritoActivo && carritoActivo.length > 0) {
+                const id_carrito = carritoActivo[0].id;
+      
+                carrito.obtenerProductosCarrito(id_carrito, (error, productosCarrito) => {
+                  if (productosCarrito) {
+                    cantidadCarrito = productosCarrito.length;
+                  }
+      
+                  res.render('detalle', { 
                     producto: producto[0], 
-                    cantidadCarrito: 0
+                    cantidadCarrito,
+                    isUserLoggedIn,
+                    isAdminUser
+                  });
                 });
-            }
+              } else {
+                res.render('detalle', { 
+                  producto: producto[0], 
+                  cantidadCarrito: 0,
+                  isUserLoggedIn,
+                  isAdminUser
+                });
+              }
+            });
+          } else {
+            res.render('detalle', { 
+              producto: producto[0], 
+              cantidadCarrito: 0,
+              isUserLoggedIn,
+              isAdminUser
+            });
+          }
         });
-    },
+      },
+      
     
       
       crear: function(req, res) {
