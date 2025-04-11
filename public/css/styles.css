@@ -1655,6 +1655,7 @@ footer {
   justify-content: center;
   align-items: center;
   gap: 8px;
+  margin-right: 40px;
 }
 
 .carousel-wrapper {
@@ -1719,13 +1720,10 @@ footer {
   max-height: 32px;
   overflow: hidden;
   display: -webkit-box;
-  display: box; /* estándar */
-  -webkit-line-clamp: 2; /* navegadores WebKit */
-  line-clamp: 2; /* estándar */
+  -webkit-line-clamp: 2; /* para navegadores actuales */
+  line-clamp: 2;         /* sugerido por VSCode */
   -webkit-box-orient: vertical;
-  box-orient: vertical; /* estándar */
 }
-
 
 .categoria-producto,
 .precio-producto,
