@@ -1580,7 +1580,6 @@ footer {
   justify-items: center;
   margin: 20px;
 }
-
 /*------------------ CARD GENERAL -----------------*/
 .card {
   position: relative;
@@ -1592,6 +1591,11 @@ footer {
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   width: 250px;
   height: 350px;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
 }
 
 /*------------------ CARRUSEL IMG -----------------*/
@@ -1609,29 +1613,26 @@ footer {
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 160px;
+  height: 140px; /* más chico para no tapar leyendas */
   overflow: hidden;
   border-radius: 10px;
   position: relative;
 }
 .carousel {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   width: 100%;
   height: 100%;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Imagen individual dentro del carrusel */
 .carousel__image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;  /* ADAPTA la imagen al contenedor */
 }
 
-
-/* Ocultar imagenes que no se muestran */
 .hidden {
   display: none !important;
 }
@@ -1662,11 +1663,11 @@ footer {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
+
 .carousel__button:hover {
   transform: scale(1.2);
 }
-
-/*------------------ TITULO, CATEGORIA Y PRECIO -----------------*/
+/*------------------ DATOS PRODUCTO -----------------*/
 .titulo-producto h3,
 .categoria-producto h6 {
   margin: 0;
@@ -1713,46 +1714,6 @@ footer {
   text-align: center;
 }
 
-/*------------------ ESTILOS SEGUN PRODUCTO -----------------*/
-/* FITAM */
-.card.calidad-original-fitam {
-  background-color: #003f7d;
-  color: #fff;
-}
-
-.card.calidad-original-fitam h3,
-.card.calidad-original-fitam h6,
-.card.calidad-original-fitam p,
-.card.calidad-original-fitam .texto-semaforo {
-  color: #fff;
-}
-
-/* VIC */
-.card.calidad_vic {
-  background-color: #b30000;
-  color: #fff;
-}
-
-.card.calidad_vic h3,
-.card.calidad_vic h6,
-.card.calidad_vic p,
-.card.calidad_vic .texto-semaforo {
-  color: #fff;
-}
-
-/* OFERTA */
-.card.producto-oferta {
-  background-color: #28a745;
-  color: #fff;
-}
-
-.card.producto-oferta h3,
-.card.producto-oferta h6,
-.card.producto-oferta p,
-.card.producto-oferta .texto-semaforo {
-  color: #fff;
-}
-
 /*------------------ INPUT Y BOTONES -----------------*/
 .cantidad-producto {
   display: flex;
@@ -1793,6 +1754,46 @@ footer {
   font-weight: bold;
   display: inline-block;
   margin-top: 5px;
+}
+
+/*------------------ ESTILOS SEGUN PRODUCTO -----------------*/
+/* FITAM */
+.card.calidad-original-fitam {
+  background-color: #003f7d;
+  color: #fff;
+}
+
+.card.calidad-original-fitam h3,
+.card.calidad-original-fitam h6,
+.card.calidad-original-fitam p,
+.card.calidad-original-fitam .texto-semaforo {
+  color: #fff;
+}
+
+/* VIC */
+.card.calidad_vic {
+  background-color: #b30000;
+  color: #fff;
+}
+
+.card.calidad_vic h3,
+.card.calidad_vic h6,
+.card.calidad_vic p,
+.card.calidad_vic .texto-semaforo {
+  color: #fff;
+}
+
+/* OFERTA */
+.card.producto-oferta {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.card.producto-oferta h3,
+.card.producto-oferta h6,
+.card.producto-oferta p,
+.card.producto-oferta .texto-semaforo {
+  color: #fff;
 }
 
 /*------------------ HOVER CARD -----------------*/
