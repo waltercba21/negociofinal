@@ -2405,17 +2405,20 @@ footer {
 }
 
 /*-------------------- DETALLE ---------------*/
-#detalle {
-  background: linear-gradient(to right, #f3f3f3, #e0e0e0); 
-  font-family: 'Arial', sans-serif;
-  padding: 20px;
-}
-
-#contenedor-producto {
-  margin: 50px auto;
-  max-width: 800px;
+.detalle-container {
   display: flex;
   justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  background: linear-gradient(135deg, #e9f0f7, #ffffff);
+  background-size: 400% 400%;
+  animation: fondoMovimiento 10s ease infinite;
+}
+
+@keyframes fondoMovimiento {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /*---------------PANEL DE CONTROL ---------------*/

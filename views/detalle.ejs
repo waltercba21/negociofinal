@@ -1,44 +1,74 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
-<body id="detalle">
-    <script>
-        var categoria = '<%= producto.categoria_nombre.toLowerCase() %>';
-        categoria = categoria.replace(/ /g, '_');
-        document.body.classList.add(categoria);
-      </script>
-   <div id="contenedor-producto" class="contenedor-producto">
-    <div class="card">
-      <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-        <div class="cover__card">
-          <div class="carousel">
-            <% producto.imagenes.forEach(function(imagen, index) { %>
-              <img class="carousel__image <%= index !== 0 ? 'hidden' : '' %>" src="/uploads/productos/<%= imagen %>" alt="Imagen de <%= producto.nombre %>">
-            <% }); %>
+
+<body data-is-admin-user="<%= isAdminUser %>" data-is-user-logged-in="<%= isUserLoggedIn %>">
+
+<main class="detalle-container">
+
+  <div class="card 
+      <%= producto.calidad_original ? 'calidad-original-fitam' : '' %> 
+      <%= producto.calidad_vic ? 'calidad_vic' : '' %> 
+      <%= producto.oferta ? 'producto-oferta' : '' %>"
+      data-label="<%= producto.oferta ? 'OFERTA' : producto.calidad_original ? 'CALIDAD FITAM' : producto.calidad_vic ? 'CALIDAD VIC' : '' %>">
+
+      <div class="cover-card">
+        <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+          <div class="carousel-container">
+            <button class="carousel__button" onclick="moverCarruselDetalle(-1)">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <div class="carousel-wrapper">
+              <div class="carousel" id="carousel-detalle">
+                <% producto.imagenes.forEach((imagen, i) => { %>
+                  <img class="carousel__image <%= i !== 0 ? 'hidden' : '' %>" src="/uploads/productos/<%= imagen.imagen %>" alt="<%= producto.nombre %>">
+                <% }) %>
+              </div>
+            </div>
+
+            <button class="carousel__button" onclick="moverCarruselDetalle(1)">
+              <i class="fas fa-chevron-right"></i>
+            </button>
           </div>
-        </div>
-        <div class="carousel__buttons">
-          <button class="carousel__button">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <button class="carousel__button">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </div>
-      <% } else { %>
-        <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen de <%= producto.nombre %>">
-      <% } %>
+        <% } %>
+      </div>
+
       <div class="titulo-producto">
         <h3 class="nombre"><%= producto.nombre %></h3>
-      </div> 
+      </div>
+
       <hr>
+
       <div class="categoria-producto">
-        <h6 class="categoria"><%= producto.categoria_nombre %></h6>
+        <h6 class="categoria"><%= producto.categoria_nombre || "Sin categoría" %></h6>
       </div>
+
       <div class="precio-producto">
-        <p class="precio">$<%= producto.precio_venta %></p>
+        <p class="precio">$<%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %></p>
       </div>
-    </div>  
+
+      <% if (isUserLoggedIn) { %>
+        <% if (isAdminUser) { %>
+          <div class="stock-producto <%= producto.stock_actual >= producto.stock_minimo ? 'suficiente-stock' : 'bajo-stock' %>">
+            <p>Stock Disponible: <%= producto.stock_actual %></p>
+          </div>
+        <% } else { %>
+          <div class="semaforo-stock">
+            <i class="fa-solid fa-thumbs-<%= producto.stock_actual >= producto.stock_minimo ? 'up verde' : 'down rojo' %>"></i>
+            <span class="texto-semaforo">
+              <%= producto.stock_actual >= producto.stock_minimo ? "PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA" : "PRODUCTO PENDIENTE DE INGRESO O A PEDIDO" %>
+            </span>
+          </div>
+        <% } %>
+      <% } %>
+
   </div>
-      <%- include ./layouts/footer.ejs %>
-      <script src="/js/productos.js"></script> 
+
+</main>
+
+<%- include ./layouts/footer.ejs %>
+
+<script src="/js/detalle.js"></script>
+
 </body>
+</html>
