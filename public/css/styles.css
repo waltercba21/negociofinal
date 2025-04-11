@@ -1607,466 +1607,164 @@ footer {
   display: none !important;
 }
 
-/*--------------PRODUCTOS--------------*/
-.contenedor-productos{
+/* GRID - 4 columnas */
+.contenedor-productos {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-gap: 20px; 
-  justify-items: center; 
-  margin:30px;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 15px;
+  justify-items: center;
+  margin: 20px;
 }
-.cantidad-producto {
-  display: flex;
-  justify-content: center;
-}
-.card-link {
-  display: inline-block;
-  margin: 5px 0; 
-  padding: 5px 10px;
-  background-color: #1F487E;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  text-decoration: none;
-}
-.card-link:hover {
-  background-color: #6a8bae;
-}
+
+/* TARJETAS */
 .card {
   position: relative;
   padding: 10px;
   background: #ffffff;
-  border-radius: 20px;
+  border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-  transform-origin: center center;
-  width: 350px; 
+  width: 250px;
   height: 340px;
 }
-.cover__card, .carousel {
-  display: flex; 
+
+/* IMAGENES */
+.cover__card,
+.carousel,
+.carousel__image {
+  display: flex;
   justify-content: center;
-  align-items: center; 
+  align-items: center;
   width: 100%;
-  height: 100%;
-  border-radius: 14px;
+  height: 220px;
+  border-radius: 10px;
   overflow: hidden;
 }
-.carousel {
-  position: relative;
-  height: 300px;
-  margin-bottom: 15px; 
+
+.carousel img,
+.carousel__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
+
+/* CAROUSEL FLECHAS */
+.carousel-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* BOTONES FLECHA */
 .carousel__buttons {
-  position: relative;
   display: flex;
   justify-content: space-between;
   width: 100%;
-  padding: 5px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 5px;
 }
-.carousel__button {
-  background: #003f7d;
-  border: none;
-  border-radius: 50%; 
-  font-size: 1.5em; 
-  cursor: pointer;
-  width: 30px; 
-  height: 30px; 
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; 
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
-}
-.carousel__button:hover {
-  transform: scale(1.1); 
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); 
-}
-.cover__card img, .carousel__image {
-  width: 100%; 
-  height: 90%;
-  border-radius: 14px;
-  object-fit: contain; 
-}
-.titulo-producto h3.nombre {
-  font-size: 14px;
+
+/* PRECIOS */
+.precio-producto p {
+  font-size: 18px;
   font-weight: bold;
+  color: #d90429;
+  text-align: center;
+  margin: 10px 0 0;
+}
+
+/* TITULOS */
+.titulo-producto h3.nombre {
+  font-size: 13px;
   color: #1F487E;
   text-align: center;
+  min-height: 40px;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: normal;
-  min-height: 50px; 
 }
+
+/* CATEGORIA */
 .categoria-producto h6.categoria {
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: bold;
   color: #1F487E;
-  font-weight: bold;
   text-align: center;
 }
 
-.precio-producto {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.precio-producto p{
-  font-size: 20px; 
-  font-weight:bold;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #d90429;
-  margin-top: 15px; 
-}
-.stock-producto {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 10px;
-  
-}
-.stock-producto p {
-  font-weight: bold;
-  font-size: 16px;
-  padding: 10px;
-border-radius: 10px;
-}
-.stock-producto.bajo-stock {
-  animation: stock-bajo 3s infinite;
-}
-@keyframes stock-bajo {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.stock-producto.bajo-stock p {
-  color: #fff;
-  background-color: #b30000;
-}
-.stock-producto.suficiente-stock p {
-  color: #fff;
-  background-color: #09c41c;
-}
-.card.calidad-original-fitam {
-  background-color: #003f7d;
-  color: #ffffff; 
-  position: relative;
-}
-.card.calidad-original-fitam .titulo-producto h3 {
-  color: #ffffff; 
-}
-.card.calidad-original-fitam .categoria-producto h6 {
-  color: #ffffff; 
-}
-.card.calidad-original-fitam .precio-producto p {
-  color: #ffffff; 
-}
-.card.calidad-original-fitam .stock-producto p {
-  color: #ffffff 
-}
-.card.calidad-original-fitam .carousel__button {
-  background-color: #005099; 
-  border: none;
-  color: #ffffff;
-}
-.card.calidad-original-fitam .carousel__button:hover {
-  background-color: #0077b6;
-}
-.card.calidad-original-fitam .card-link {
-  color: #ffffff;
-}
-.card.calidad-original-fitam .card-link:hover {
-  color: #ffffff; 
-}
-.card.calidad-original-fitam::before {
-  content: "Calidad Original Fitam";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background-color: #003f7d; 
-  color: #ffffff;
-  padding: 5px;
-  font-size: 14px;
-  font-weight: bold;
-  text-align: center;
-}
-.card.calidad-original-fitam .carousel__image {
-  border: 2px solid #003f7d; 
-}
-.card.calidad-original-fitam hr {
-  border-color: #ffffff;
-} 
-.card.calidad_vic {
-  background-color: #b30000; /* Color de fondo rojo */
-  color: #ffffff; 
-  position: relative;
-}
-
-.card.calidad_vic .titulo-producto h3 {
-  color: #ffffff; 
-}
-
-.card.calidad_vic .categoria-producto h6 {
-  color: #ffffff; 
-}
-
-.card.calidad_vic .precio-producto p {
-  color: #ffffff; 
-}
-
-.card.calidad_vic .stock-producto p {
-  color: #ffffff; 
-}
-
-.card.calidad_vic .carousel__button {
-  background-color: #b60000; 
-  border: none;
-  color: #ffffff;
-}
-
-.card.calidad_vic .carousel__button:hover {
-  background-color: #b60000;
-}
-
-.card.calidad_vic .card-link {
-  color: #ffffff;
-}
-
-.card.calidad_vic .card-link:hover {
-  color: #ffffff; 
-}
-
-.card.calidad_vic::before {
-  content: "Calidad VIC"; 
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background-color: #b30000;
-  color: #ffffff;
-  padding: 5px;
-  font-size: 14px;
-  font-weight: bold;
-  text-align: center;
-}
-
-.card.calidad_vic .carousel__image {
-  border: 2px solid #b30000;
-}
-
-.card.calidad_vic hr {
-  border-color: #ffffff; 
-}
-/* Estilo para productos en oferta */
-.card.producto-oferta {
-  background-color: #28a745; /* Fondo verde */
-  color: #ffffff; /* Texto blanco */
-  position: relative;
-}
-
-.card.producto-oferta .titulo-producto h3 {
-  color: #ffffff;
-}
-
-.card.producto-oferta .categoria-producto h6 {
-  color: #ffffff;
-}
-
-.card.producto-oferta .precio-producto p {
-  color: #ffffff;
-  font-weight: bold;
-}
-
-.card.producto-oferta .stock-producto p {
-  color: #ffffff;
-}
-
-.card.producto-oferta .carousel__button {
-  background-color: #218838; /* Botón de control más oscuro */
-  border: none;
-  color: #ffffff;
-}
-
-.card.producto-oferta .carousel__button:hover {
-  background-color: #1e7e34; /* Efecto hover */
-}
-
-.card.producto-oferta .card-link {
-  color: #ffffff;
-}
-
-.card.producto-oferta .card-link:hover {
-  color: #ffffff;
-}
-
-.card.producto-oferta::before {
-  content: "¡En oferta!"; /* Etiqueta en la tarjeta */
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  color: #ffffff;
-  padding: 5px;
-  font-size: 14px;
-  font-weight: bold;
-  text-align: center;
-}
-
-.card.producto-oferta hr {
-  border-color: #ffffff;
-}
-
-.cantidad-producto {
-  display: flex;
-  flex-direction: column;
-  align-items: center; 
-  justify-content: center;
-  gap: 10px;
-  margin: 10px 0;
-  width: 100%; 
-}
-
-.cantidad-producto input {
-  width: 60px !important; 
-  padding: 5px !important;
-  text-align: center !important;
-  border: 1px solid #ccc !important;
-  border-radius: 5px !important;
-}
-
-.cantidad-producto .agregar-carrito {
-  width: 50% !important;
-  padding: 8px 12px !important;
-  background-color: #003f7d !important;
-  font-weight: bold !important;
-  color: white !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: background-color 0.3s ease !important;
-  border-radius: 5px !important;
-  text-align: center !important;
-}
-
-.cantidad-producto .agregar-carrito:hover {
-  background-color: #004d99 !important;
-}
-
-.card-link {
-  text-decoration: none;
-  color: #fff;
-  font-weight: bold;
-  padding: 8px 12px;
-  border: 2px solid #003f7d;
-  border-radius: 5px;
-  transition: all 0.3s ease;
-  text-align: center;
-  display: inline-block;
-  width: 50%;
-}
-
-
-/* Estilos del semáforo */
-.semaforo-stock{
+/* SEMAFORO */
+.semaforo-stock {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  gap: 5px;
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
-.fa-thumbs-up{
-  font-size: 30px;
-}
-.fa-thumbs-down{
-  font-size: 30px;
+.fa-thumbs-up, .fa-thumbs-down {
+  font-size: 24px;
 }
 
 .fa-thumbs-up.verde {
   color: #2ecc71;
 }
- 
+
 .fa-thumbs-down.rojo {
   color: #dc402f;
 }
 
-/* Estilos del semáforo */
-.semaforo-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 5px;
-  margin-top: 10px;
-}
-
 .texto-semaforo {
-  font-size: 12px;
+  font-size: 11px;
+  text-align: center;
   font-weight: bold;
-  color: #003f7d;
-}
-.carousel-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  height: 300px;
-  position: relative;
+  color: #1F487E;
 }
 
-.carousel {
-  width: 100%;
-  max-width: 200px;  /* Ajustá esto según el tamaño de tus imágenes */
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* ESTILO ESPECIAL SEGUN TARJETA */
 
-.carousel__image {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-}
-
-.carousel__button {
-  background: #003f7d;
-  border: none;
-  border-radius: 50%;
-  font-size: 1.5em;
-  cursor: pointer;
-  width: 30px;
-  height: 30px;
+/* FITAM */
+.card.calidad-original-fitam {
+  background-color: #003f7d;
   color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-.carousel__button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+.card.calidad-original-fitam .titulo-producto h3,
+.card.calidad-original-fitam .categoria-producto h6,
+.card.calidad-original-fitam .precio-producto p,
+.card.calidad-original-fitam .texto-semaforo {
+  color: #fff;
+}
+
+/* VIC */
+.card.calidad_vic {
+  background-color: #b30000;
+  color: #fff;
+}
+
+.card.calidad_vic .titulo-producto h3,
+.card.calidad_vic .categoria-producto h6,
+.card.calidad_vic .precio-producto p,
+.card.calidad_vic .texto-semaforo {
+  color: #fff;
+}
+
+/* OFERTA */
+.card.producto-oferta {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.card.producto-oferta .titulo-producto h3,
+.card.producto-oferta .categoria-producto h6,
+.card.producto-oferta .precio-producto p,
+.card.producto-oferta .texto-semaforo {
+  color: #fff;
 }
 
 
