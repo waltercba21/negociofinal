@@ -65,7 +65,9 @@ function mostrarProductos(productos) {
     if (isUserLoggedIn) {
       if (isAdminUser) {
         botonesAccion = `
-          <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+          <div class="cantidad-producto">
+            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+          </div>
           <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock'}">
             <p>Stock Disponible: ${producto.stock_actual}</p>
           </div>
@@ -93,6 +95,7 @@ function mostrarProductos(productos) {
         `;
       }
     }
+    
 
     card.setAttribute('data-label', label);
 
