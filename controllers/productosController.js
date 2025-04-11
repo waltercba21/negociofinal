@@ -256,7 +256,7 @@ module.exports = {
           producto[0].precio_venta = Number(producto[0].precio_venta).toLocaleString('es-ES');
       
           // 🔥 NUEVO: obtener las imágenes del producto
-          const imagenes = await producto.obtenerImagenesProducto(conexion, [producto[0].id]);
+          const imagenes = await producto.obtenerPorFiltros(conexion, [producto[0].id]);
           producto[0].imagenes = imagenes || [];
       
           let cantidadCarrito = 0;
