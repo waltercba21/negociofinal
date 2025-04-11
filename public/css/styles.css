@@ -1592,8 +1592,11 @@ footer {
   overflow: hidden;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-  width: 250px;
-  height: 370px;
+  width: 270px;
+  height: 380px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .card:hover {
@@ -1635,7 +1638,7 @@ footer {
   100% {font-size: 16px;}
 }
 
-/* CONTENEDOR IMAGENES + FLECHAS */
+/* Contenedor Imagenes + Flechas */
 .cover-card {
   display: flex;
   justify-content: center;
@@ -1647,16 +1650,13 @@ footer {
   width: 100%;
 }
 
-/* Fila horizontal */
 .carousel-container {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
-  margin-right: 40px;
 }
 
-/* Rectángulo fijo para imagen */
 .carousel-wrapper {
   width: 160px;
   height: 140px;
@@ -1669,11 +1669,11 @@ footer {
 }
 
 .carousel {
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
 }
 
 .carousel__image {
@@ -1708,12 +1708,39 @@ footer {
 }
 
 /* INFORMACION PRODUCTO */
-.titulo-producto h3,
-.categoria-producto h6 {
+.titulo-producto h3 {
   margin: 0;
   padding: 2px 5px;
   font-size: 12px;
   text-align: center;
+  font-weight: bold;
+  color: #1f487e;
+  line-height: 15px;
+  max-height: 32px;
+  overflow: hidden;
+  display: -webkit-box;
+  display: box; /* estándar */
+  -webkit-line-clamp: 2; /* navegadores WebKit */
+  line-clamp: 2; /* estándar */
+  -webkit-box-orient: vertical;
+  box-orient: vertical; /* estándar */
+}
+
+
+.categoria-producto,
+.precio-producto,
+.cantidad-producto,
+.semaforo-stock {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  flex-direction: column;
+}
+
+.categoria-producto h6 {
+  margin: 0;
+  font-size: 12px;
   font-weight: bold;
   color: #1f487e;
 }
@@ -1723,17 +1750,9 @@ footer {
   font-size: 18px;
   font-weight: bold;
   color: #d90429;
-  text-align: center;
 }
 
-/* SEMAFORO STOCK */
-.semaforo-stock {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 5px 0;
-}
-
+/* Semaforo Stock */
 .fa-thumbs-up,
 .fa-thumbs-down {
   font-size: 22px;
@@ -1754,14 +1773,7 @@ footer {
   text-align: center;
 }
 
-/* INPUT y BOTONES */
-.cantidad-producto {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-}
-
+/* INPUT Y BOTONES */
 .cantidad-producto input {
   width: 60px;
   padding: 3px;
@@ -1795,7 +1807,6 @@ footer {
   display: inline-block;
   margin-top: 5px;
 }
-
 
 
 /*--------------VISTA CARRITO DE COMPRAS----------------*/
