@@ -255,7 +255,8 @@ module.exports = {
             return res.status(404).send('Producto no encontrado');
           }
       
-          productoData[0].precio_venta = Number(productoData[0].precio_venta).toLocaleString('es-ES');
+          productoData[0].precio_venta = parseFloat(productoData[0].precio_venta);
+
       
           const imagenes = await producto.obtenerImagenesProducto(conexion, [productoData[0].id]);
           productoData[0].imagenes = imagenes || [];

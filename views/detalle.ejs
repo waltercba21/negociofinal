@@ -44,7 +44,10 @@
       </div>
 
       <div class="precio-producto">
-        <p class="precio">$<%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %></p>
+        <p class="precio">
+          <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %>
+        </p>
+        
       </div>
 
       <% if (isUserLoggedIn) { %>
