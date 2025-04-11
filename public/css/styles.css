@@ -1717,13 +1717,12 @@ footer {
   font-weight: bold;
   color: #1f487e;
   line-height: 15px;
-  max-height: 32px;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2; /* para navegadores actuales */
-  line-clamp: 2;         /* sugerido por VSCode */
-  -webkit-box-orient: vertical;
+  word-break: break-word;  /* Rompe palabra larga */
+  white-space: normal;     /* Permite salto de línea */
+  max-height: 32px;        /* Limita altura si querés */
+  overflow: hidden;        /* Oculta desborde vertical */
 }
+
 
 .categoria-producto,
 .precio-producto,
