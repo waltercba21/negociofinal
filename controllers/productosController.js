@@ -240,69 +240,65 @@ module.exports = {
             res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
         }
     },
-    detalle: function (req, res) {
+    detalle: async function (req, res) {
         const id = req.params.id;
       
-        producto.obtenerPorId(conexion, id, async function(error, producto) {
-          if (error) {
-            console.log('Error al obtener producto:', error);
-            return res.status(500).send('Error al obtener el producto');
-          } 
-          
-          if (!producto || producto.length === 0) {
+        try {
+          const productoData = await new Promise((resolve, reject) => {
+            producto.obtenerPorId(conexion, id, (error, resultado) => {
+              if (error) return reject(error);
+              resolve(resultado);
+            });
+          });
+      
+          if (!productoData || productoData.length === 0) {
             return res.status(404).send('Producto no encontrado');
           }
       
-          producto[0].precio_venta = Number(producto[0].precio_venta).toLocaleString('es-ES');
+          productoData[0].precio_venta = Number(productoData[0].precio_venta).toLocaleString('es-ES');
       
-          // 🔥 NUEVO: obtener las imágenes del producto
-          const imagenes = await producto.obtenerImagenesProducto(conexion, [producto[0].id]);
-          producto[0].imagenes = imagenes || [];
+          const imagenes = await producto.obtenerImagenesProducto(conexion, [productoData[0].id]);
+          productoData[0].imagenes = imagenes || [];
       
-          let cantidadCarrito = 0;
           const isUserLoggedIn = !!req.session.usuario;
           const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin';
       
+          let cantidadCarrito = 0;
+      
           if (isUserLoggedIn) {
             const id_usuario = req.session.usuario.id;
-      
-            carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
-              if (carritoActivo && carritoActivo.length > 0) {
-                const id_carrito = carritoActivo[0].id;
-      
-                carrito.obtenerProductosCarrito(id_carrito, (error, productosCarrito) => {
-                  if (productosCarrito) {
-                    cantidadCarrito = productosCarrito.length;
-                  }
-      
-                  res.render('detalle', { 
-                    producto: producto[0], 
-                    cantidadCarrito,
-                    isUserLoggedIn,
-                    isAdminUser
-                  });
-                });
-              } else {
-                res.render('detalle', { 
-                  producto: producto[0], 
-                  cantidadCarrito: 0,
-                  isUserLoggedIn,
-                  isAdminUser,
-                  obtenerImagenesProducto,
-                });
-              }
+            const carritoActivo = await new Promise((resolve, reject) => {
+              carrito.obtenerCarritoActivo(id_usuario, (error, resultado) => {
+                if (error) return reject(error);
+                resolve(resultado);
+              });
             });
-          } else {
-            res.render('detalle', { 
-              producto: producto[0], 
-              cantidadCarrito: 0,
-              isUserLoggedIn,
-              isAdminUser,
-              obtenerImagenesProducto,
-            });
+      
+            if (carritoActivo && carritoActivo.length > 0) {
+              const id_carrito = carritoActivo[0].id;
+              const productosCarrito = await new Promise((resolve, reject) => {
+                carrito.obtenerProductosCarrito(id_carrito, (error, resultado) => {
+                  if (error) return reject(error);
+                  resolve(resultado);
+                });
+              });
+      
+              cantidadCarrito = productosCarrito.length;
+            }
           }
-        });
-      },
+      
+          res.render('detalle', {
+            producto: productoData[0],
+            cantidadCarrito,
+            isUserLoggedIn,
+            isAdminUser
+          });
+      
+        } catch (error) {
+          console.log('Error en detalle:', error);
+          return res.status(500).send('Error interno del servidor');
+        }
+      },      
       crear: function(req, res) {
         let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento;
         producto.obtenerCategorias(conexion).then(result => {
