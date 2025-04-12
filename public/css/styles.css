@@ -1772,11 +1772,12 @@ footer {
 
 /* INPUT Y BOTONES */
 .cantidad-producto input {
-  width: 60px;
+  width: 30px;
   padding: 3px;
   text-align: center;
   border: 1px solid #ccc;
   border-radius: 5px;
+  font-size: 12px;
 }
 
 .cantidad-producto .agregar-carrito {
