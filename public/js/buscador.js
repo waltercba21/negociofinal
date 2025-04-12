@@ -43,7 +43,6 @@ function mostrarProductos(productos) {
       ${producto.calidad_vic ? 'calidad_vic' : ''} 
       ${producto.oferta ? 'producto-oferta' : ''}
     `;
-
     card.setAttribute('data-label', producto.oferta ? 'OFERTA' : producto.calidad_original ? 'CALIDAD FITAM' : producto.calidad_vic ? 'CALIDAD VIC' : '');
 
     let imagenesHTML = '';
@@ -53,18 +52,20 @@ function mostrarProductos(productos) {
       `;
     });
 
-    let botonesAccion = '';
+    let stockInfo = '';
 
     if (isUserLoggedIn) {
       if (isAdminUser) {
-        botonesAccion = `
+        stockInfo = `
           <div class="stock-producto ${producto.stock_actual >= producto.stock_minimo ? 'suficiente-stock' : 'bajo-stock'}">
             <p>Stock Disponible: ${producto.stock_actual}</p>
           </div>
-          <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+          <div class="cantidad-producto">
+            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+          </div>
         `;
       } else {
-        botonesAccion = `
+        stockInfo = `
           <div class="semaforo-stock">
             <i class="fa-solid fa-thumbs-${producto.stock_actual >= producto.stock_minimo ? 'up verde' : 'down rojo'}"></i>
             <span class="texto-semaforo">
@@ -72,7 +73,9 @@ function mostrarProductos(productos) {
             </span>
           </div>
           <div class="cantidad-producto">
-            <input type="number" class="cantidad-input" value="0" min="0" oninput="validarCantidad(this, ${producto.stock_actual})">
+            <input type="number" class="cantidad-input" value="0" min="0" 
+              data-stock="${producto.stock_actual}" 
+              oninput="validarCantidad(this)">
             <button class="agregar-carrito" 
               data-id="${producto.id}" 
               data-nombre="${producto.nombre}" 
@@ -90,7 +93,7 @@ function mostrarProductos(productos) {
     card.innerHTML = `
       <div class="cover-card">
         <div class="carousel-container">
-          <button class="carousel__button" onclick="moverCarrusel(${index}, -1)">
+          <button class="carousel__button carousel__button--left" onclick="moverCarrusel('${index}', -1)">
             <i class="fas fa-chevron-left"></i>
           </button>
           <div class="carousel-wrapper">
@@ -98,7 +101,7 @@ function mostrarProductos(productos) {
               ${imagenesHTML}
             </div>
           </div>
-          <button class="carousel__button" onclick="moverCarrusel(${index}, 1)">
+          <button class="carousel__button carousel__button--right" onclick="moverCarrusel('${index}', 1)">
             <i class="fas fa-chevron-right"></i>
           </button>
         </div>
@@ -108,7 +111,7 @@ function mostrarProductos(productos) {
       <hr>
       <div class="categoria-producto"><h6 class="categoria">${producto.categoria_nombre || 'Sin categoría'}</h6></div>
       <div class="precio-producto"><p class="precio">$${formatearNumero(producto.precio_venta || 0)}</p></div>
-      ${botonesAccion}
+      ${stockInfo}
     `;
 
     contenedorProductos.appendChild(card);
@@ -126,16 +129,19 @@ function moverCarrusel(index, direccion) {
 }
 
 function formatearNumero(num) {
-  return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-function validarCantidad(input, stockActual) {
-  if (parseInt(input.value) > stockActual) {
+function validarCantidad(input) {
+  const stock = parseInt(input.getAttribute('data-stock'));
+  let cantidad = parseInt(input.value);
+
+  if (cantidad > stock) {
     Swal.fire({
       icon: 'warning',
-      title: 'Atención',
-      text: 'Cantidades no disponibles, si deseas más unidades comunicate con nosotros 3513820440'
+      title: 'Cantidades no disponibles',
+      text: 'Si deseas más unidades comunicate con nosotros 3513820440',
     });
-    input.value = stockActual;
+    input.value = stock;
   }
 }
