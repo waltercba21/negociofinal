@@ -217,14 +217,22 @@ module.exports = {
     },
     
     ofertas: (req, res) => {
+        const isUserLoggedIn = !!req.session.usuario;
+        const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin';
+      
         producto.obtenerOfertas(conexion, (error, productos) => {
           if (error) {
             return res.status(500).send('Error al obtener los productos en oferta');
           } else {
-            res.render('ofertas', { productos });
+            res.render('ofertas', { 
+              productos,
+              isUserLoggedIn,
+              isAdminUser
+            });
           }
         });
       },
+      
     buscar: async (req, res) => {
         try {
             const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
