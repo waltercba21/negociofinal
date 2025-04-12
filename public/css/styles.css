@@ -1788,6 +1788,8 @@ footer {
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-size: 12px;
+  margin-top: 20px;
 }
 
 .cantidad-producto .agregar-carrito:hover {
