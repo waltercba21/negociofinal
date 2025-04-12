@@ -81,7 +81,8 @@ function mostrarProductos(productos) {
             </span>
           </div>
           <div class="cantidad-producto">
-            <input type="number" class="cantidad-input" value="0" min="0">
+            <input type="number" class="cantidad-input" value="0" min="0" 
+              oninput="validarCantidad(this, ${producto.stock_actual})">
             <button class="agregar-carrito" 
               data-id="${producto.id}" 
               data-nombre="${producto.nombre}" 
@@ -95,7 +96,6 @@ function mostrarProductos(productos) {
         `;
       }
     }
-    
 
     card.setAttribute('data-label', label);
 
@@ -139,4 +139,16 @@ function moverCarrusel(index, direccion) {
 
 function formatearNumero(num) {
   return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// NUEVO: Validar cantidad contra stock
+function validarCantidad(input, stock) {
+  if (parseInt(input.value) > stock) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Cantidades no disponibles',
+      text: 'Si deseas más unidades comunicate con nosotros 3513820440',
+    });
+    input.value = stock;
+  }
 }
