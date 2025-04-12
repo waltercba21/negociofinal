@@ -42,7 +42,7 @@
           </div>
 
           <div class="precio-producto">
-            <p class="precio">$<%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %></p>
+            <p class="precio">$<%= Number(producto.precio_venta).toLocaleString('es-CL') %></p>
           </div>
 
           <% if (isUserLoggedIn) { %>
