@@ -215,22 +215,59 @@ module.exports = {
             });
         }
     },
-    
-    ofertas: (req, res) => {
-        const isUserLoggedIn = !!req.session.usuario;
-        const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin';
+    ofertas: async function (req, res) {
+        try {
+          const isUserLoggedIn = !!req.session.usuario;
+          const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin';
       
-        producto.obtenerOfertas(conexion, (error, productos) => {
-          if (error) {
-            return res.status(500).send('Error al obtener los productos en oferta');
-          } else {
-            res.render('ofertas', { 
-              productos,
+          // Obtener todos los productos en oferta
+          const productos = await new Promise((resolve, reject) => {
+            producto.obtenerOfertas(conexion, (error, resultados) => {
+              if (error) {
+                console.error("❌ Error al obtener productos en oferta:", error);
+                return reject(error);
+              }
+              resolve(resultados);
+            });
+          });
+      
+          if (!productos || productos.length === 0) {
+            console.log("⚠ No se encontraron productos en oferta.");
+            return res.render("ofertas", {
+              productos: [],
               isUserLoggedIn,
-              isAdminUser
+              isAdminUser,
             });
           }
-        });
+      
+          // Obtener las imágenes de los productos en oferta
+          const productoIds = productos.map(p => p.id);
+      
+          if (productoIds.length > 0) {
+            const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
+      
+            productos.forEach(producto => {
+              producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
+              producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
+            });
+          }
+      
+          console.log(`✅ Enviando ${productos.length} productos en oferta.`);
+      
+          res.render("ofertas", {
+            productos,
+            isUserLoggedIn,
+            isAdminUser,
+          });
+      
+        } catch (error) {
+          console.error("❌ Error en el controlador ofertas:", error);
+          res.status(500).render("ofertas", {
+            productos: [],
+            isUserLoggedIn: !!req.session.usuario,
+            isAdminUser: req.session.usuario && req.session.usuario.rol === 'admin',
+          });
+        }
       },
       
     buscar: async (req, res) => {
