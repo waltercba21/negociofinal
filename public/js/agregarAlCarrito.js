@@ -18,17 +18,34 @@ document.getElementById("contenedor-productos").addEventListener("click", (e) =>
             precioProducto
         });
 
-        // Validar que los datos esenciales estén presentes
-        if (!idProducto || !precioProducto || isNaN(cantidad) || cantidad <= 0) {
-            console.error("❌ Error: Datos incompletos o inválidos");
-            Swal.fire({
-                title: "Error",
-                text: "Datos del producto incorrectos.",
-                icon: "error",
-                confirmButtonText: "OK",
-            });
-            return; // Detener el proceso si hay datos incorrectos
-        }
+       // Validar que los datos esenciales estén presentes
+if (!idProducto || !precioProducto || isNaN(cantidad) || cantidad <= 0) {
+    console.error("❌ Error: Datos incompletos o inválidos");
+
+    Swal.fire({
+        title: "Cantidad inválida",
+        text: "Debes ingresar una cantidad mayor a 0 para continuar.",
+        icon: "error",
+        confirmButtonText: "OK",
+    });
+
+    return; // ❌ Detener el proceso si la cantidad es incorrecta
+}
+
+// Validar que la cantidad no supere el stock (si está disponible en el dataset)
+const stockDisponible = parseInt(e.target.dataset.stock);
+if (!isNaN(stockDisponible) && cantidad > stockDisponible) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Cantidades no disponibles',
+        text: 'Si deseas más unidades comunicate con nosotros 3513820440',
+    });
+
+    const inputCantidad = tarjetaProducto.querySelector(".cantidad-input");
+    if (inputCantidad) inputCantidad.value = stockDisponible;
+    return;
+}
+
 
         fetch('/carrito/agregar', { 
             method: 'POST',

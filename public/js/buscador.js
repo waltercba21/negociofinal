@@ -73,10 +73,8 @@ function mostrarProductos(productos) {
             </span>
           </div>
           <div class="cantidad-producto">
-            <input type="number" class="cantidad-input" value="0" min="0" 
-              data-stock="${producto.stock_actual}" 
-              id="input-cantidad-${producto.id}">
-            <button class="agregar-carrito" 
+            <input type="number" class="cantidad-input" value="0" min="0" id="input-cantidad-${producto.id}">
+            <button class="agregar-carrito"
               data-id="${producto.id}" 
               data-nombre="${producto.nombre}" 
               data-precio="${producto.precio_venta}" 
@@ -116,7 +114,7 @@ function mostrarProductos(productos) {
 
     contenedorProductos.appendChild(card);
 
-    // 🧠 Validaciones de cantidad al presionar el botón
+    // 💡 Solo usuarios comunes: validar el input antes de agregar al carrito
     if (!isAdminUser && isUserLoggedIn) {
       const botonAgregar = card.querySelector('.agregar-carrito');
       const inputCantidad = card.querySelector('.cantidad-input');
@@ -127,7 +125,6 @@ function mostrarProductos(productos) {
 
         const cantidad = parseInt(inputCantidad.value);
 
-        // ⛔ No permitir cantidad vacía o cero
         if (!inputCantidad.value || isNaN(cantidad) || cantidad <= 0) {
           Swal.fire({
             icon: 'error',
@@ -137,7 +134,6 @@ function mostrarProductos(productos) {
           return;
         }
 
-        // ⛔ No permitir cantidad mayor al stock
         if (cantidad > stockDisponible) {
           Swal.fire({
             icon: 'warning',
@@ -148,8 +144,17 @@ function mostrarProductos(productos) {
           return;
         }
 
-        // ✅ Aquí va tu lógica de agregar al carrito real
-        // agregarAlCarrito(producto.id, cantidad);
+        // ✅ Si pasa las validaciones, activamos evento personalizado
+        const eventoAgregar = new CustomEvent("agregarAlCarritoDesdeBuscador", {
+          detail: {
+            id: producto.id,
+            nombre: producto.nombre,
+            precio: producto.precio_venta,
+            cantidad: cantidad
+          }
+        });
+
+        document.dispatchEvent(eventoAgregar);
       });
     }
   });
