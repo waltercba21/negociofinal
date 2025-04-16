@@ -117,15 +117,17 @@ function mostrarProductos(productos) {
     contenedorProductos.appendChild(card);
 
     // 🔒 Validaciones para botón "Agregar al carrito"
-    if (!isAdminUser) {
+    if (!isAdminUser && isUserLoggedIn) {
       const botonAgregar = card.querySelector('.agregar-carrito');
       const inputCantidad = card.querySelector('.cantidad-input');
       const stockDisponible = parseInt(producto.stock_actual);
-
-      botonAgregar.addEventListener('click', () => {
+    
+      botonAgregar.addEventListener('click', (e) => {
+        e.preventDefault(); // previene cualquier comportamiento inesperado
+    
         const cantidad = parseInt(inputCantidad.value);
-
-        if (cantidad <= 0) {
+    
+        if (isNaN(cantidad) || cantidad <= 0) {
           Swal.fire({
             icon: 'error',
             title: 'Cantidad inválida',
@@ -133,7 +135,7 @@ function mostrarProductos(productos) {
           });
           return;
         }
-
+    
         if (cantidad > stockDisponible) {
           Swal.fire({
             icon: 'warning',
@@ -143,12 +145,12 @@ function mostrarProductos(productos) {
           inputCantidad.value = stockDisponible;
           return;
         }
-
-        // Aquí iría el código real para agregar al carrito si pasa las validaciones
-        // Por ejemplo:
+    
+        // Aquí va tu función real de agregar al carrito
         // agregarAlCarrito(producto.id, cantidad);
       });
     }
+    
   });
 }
 
