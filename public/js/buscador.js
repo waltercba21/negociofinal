@@ -75,7 +75,7 @@ function mostrarProductos(productos) {
           <div class="cantidad-producto">
             <input type="number" class="cantidad-input" value="0" min="0" 
               data-stock="${producto.stock_actual}" 
-              oninput="validarCantidad(this)">
+              id="input-cantidad-${producto.id}">
             <button class="agregar-carrito" 
               data-id="${producto.id}" 
               data-nombre="${producto.nombre}" 
@@ -115,6 +115,40 @@ function mostrarProductos(productos) {
     `;
 
     contenedorProductos.appendChild(card);
+
+    // 🔒 Validaciones para botón "Agregar al carrito"
+    if (!isAdminUser) {
+      const botonAgregar = card.querySelector('.agregar-carrito');
+      const inputCantidad = card.querySelector('.cantidad-input');
+      const stockDisponible = parseInt(producto.stock_actual);
+
+      botonAgregar.addEventListener('click', () => {
+        const cantidad = parseInt(inputCantidad.value);
+
+        if (cantidad <= 0) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Cantidad inválida',
+            text: 'Debes ingresar una cantidad mayor a 0 para continuar.',
+          });
+          return;
+        }
+
+        if (cantidad > stockDisponible) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Cantidades no disponibles',
+            text: 'Si deseas más unidades comunicate con nosotros 3513820440',
+          });
+          inputCantidad.value = stockDisponible;
+          return;
+        }
+
+        // Aquí iría el código real para agregar al carrito si pasa las validaciones
+        // Por ejemplo:
+        // agregarAlCarrito(producto.id, cantidad);
+      });
+    }
   });
 }
 
@@ -130,18 +164,4 @@ function moverCarrusel(index, direccion) {
 
 function formatearNumero(num) {
   return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
-
-function validarCantidad(input) {
-  const stock = parseInt(input.getAttribute('data-stock'));
-  let cantidad = parseInt(input.value);
-
-  if (cantidad > stock) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Cantidades no disponibles',
-      text: 'Si deseas más unidades comunicate con nosotros 3513820440',
-    });
-    input.value = stock;
-  }
 }
