@@ -116,42 +116,43 @@ function mostrarProductos(productos) {
 
     contenedorProductos.appendChild(card);
 
-    // 🧠 VALIDACIONES: Solo para usuarios comunes
-    if (!isAdminUser && isUserLoggedIn) {
-      const botonAgregar = card.querySelector('.agregar-carrito');
-      const inputCantidad = card.querySelector('.cantidad-input');
-      const stockDisponible = parseInt(producto.stock_actual);
+// ⛔️ Validaciones para evitar agregar productos sin cantidad válida
+if (!isAdminUser && isUserLoggedIn) {
+  const botonAgregar = card.querySelector('.agregar-carrito');
+  const inputCantidad = card.querySelector('.cantidad-input');
+  const stockDisponible = parseInt(producto.stock_actual);
 
-      botonAgregar.addEventListener('click', (e) => {
-        e.preventDefault();
+  botonAgregar.addEventListener('click', (e) => {
+    e.preventDefault();
 
-        const cantidad = parseInt(inputCantidad.value);
+    const cantidad = parseInt(inputCantidad.value);
 
-        // 🚫 Cantidad vacía o cero
-        if (isNaN(cantidad) || cantidad <= 0) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Cantidad inválida',
-            text: 'Debes ingresar una cantidad mayor a 0 para continuar.',
-          });
-          return;
-        }
-
-        // ⚠️ Cantidad mayor al stock
-        if (cantidad > stockDisponible) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Cantidades no disponibles',
-            text: 'Si deseas más unidades comunicate con nosotros 3513820440',
-          });
-          inputCantidad.value = stockDisponible;
-          return;
-        }
-
-        // ✅ Aquí iría tu función real de agregar al carrito
-        // agregarAlCarrito(producto.id, cantidad);
+    // 🚫 Si el campo está vacío, no es número o menor o igual a cero
+    if (!inputCantidad.value || isNaN(cantidad) || cantidad <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Cantidad inválida',
+        text: 'Debes ingresar una cantidad mayor a 0 para continuar.',
       });
+      return;
     }
+
+    // ⚠️ Si la cantidad supera el stock disponible
+    if (cantidad > stockDisponible) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cantidades no disponibles',
+        text: 'Si deseas más unidades comunicate con nosotros 3513820440',
+      });
+      inputCantidad.value = stockDisponible;
+      return;
+    }
+
+    // ✅ Aquí iría tu función real de agregar al carrito (solo si pasa todas las validaciones)
+    // agregarAlCarrito(producto.id, cantidad);
+  });
+}
+
   });
 }
 
