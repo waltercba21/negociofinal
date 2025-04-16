@@ -116,17 +116,18 @@ function mostrarProductos(productos) {
 
     contenedorProductos.appendChild(card);
 
-    // 🔒 Validaciones para botón "Agregar al carrito"
+    // 🧠 VALIDACIONES: Solo para usuarios comunes
     if (!isAdminUser && isUserLoggedIn) {
       const botonAgregar = card.querySelector('.agregar-carrito');
       const inputCantidad = card.querySelector('.cantidad-input');
       const stockDisponible = parseInt(producto.stock_actual);
-    
+
       botonAgregar.addEventListener('click', (e) => {
-        e.preventDefault(); // previene cualquier comportamiento inesperado
-    
+        e.preventDefault();
+
         const cantidad = parseInt(inputCantidad.value);
-    
+
+        // 🚫 Cantidad vacía o cero
         if (isNaN(cantidad) || cantidad <= 0) {
           Swal.fire({
             icon: 'error',
@@ -135,7 +136,8 @@ function mostrarProductos(productos) {
           });
           return;
         }
-    
+
+        // ⚠️ Cantidad mayor al stock
         if (cantidad > stockDisponible) {
           Swal.fire({
             icon: 'warning',
@@ -145,12 +147,11 @@ function mostrarProductos(productos) {
           inputCantidad.value = stockDisponible;
           return;
         }
-    
-        // Aquí va tu función real de agregar al carrito
+
+        // ✅ Aquí iría tu función real de agregar al carrito
         // agregarAlCarrito(producto.id, cantidad);
       });
     }
-    
   });
 }
 
