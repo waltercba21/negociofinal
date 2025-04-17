@@ -422,17 +422,16 @@ footer {
 
 /*--------------- Últimos Agregados --------------------*/
 .contenedor-ultimos {
-    flex: 1;
-    max-width: 48%;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-    padding: 10px;
-    position: relative;
-    margin-right: 20px;
-  
+  flex: 1;
+  max-width: 48%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  padding: 10px;
+  position: relative;
+  margin-right: 20px;
 }
 
 .contenedor-productos-ultimos {
@@ -453,6 +452,9 @@ footer {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .cover-card-ultimo {
@@ -469,7 +471,8 @@ footer {
   max-height: 100%;
   object-fit: contain;
 }
-/* Título centrado principal */
+
+/* Título general de sección */
 .titulo-ultimos {
   text-align: center;
   color: #003f7d;
@@ -478,7 +481,7 @@ footer {
   margin-bottom: 15px;
 }
 
-/* Nombre dentro de la tarjeta más chico y bien alineado */
+/* Nombre del producto en la tarjeta */
 .titulo-producto-ultimo {
   display: flex;
   justify-content: center;
@@ -489,23 +492,46 @@ footer {
 }
 
 .nombre-ultimo {
-  font-size: 12px;
+  font-size: 13px; /* un punto más grande */
   font-weight: bold;
   color: #003f7d;
   line-height: 1.2;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+  line-clamp: 3; /* estándar para compatibilidad */
   overflow: hidden;
   text-overflow: ellipsis;
   height: 3.6em;
 }
 
-
-.precio-producto-ultimo p {
-  color: #d90429;
+/* Categoría más pequeña y en negrita */
+.categoria-producto-ultimo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
+.categoria-ultimo {
+  font-size: 10px;
+  font-weight: bold;
+  color: #1f487e;
+  margin: 4px 0;
+}
+
+/* Precio centrado y destacado */
+.precio-producto-ultimo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.precio-ultimo {
+  font-weight: bold;
+  font-size: 14px;
+  color: #d90429;
+  margin: 0;
+}
 
 /* ----------Ofertas productos---------- */
 
