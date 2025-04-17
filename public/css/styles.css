@@ -3677,4 +3677,25 @@ table td img:hover {
   .flecha-izquierda-ofertas, .flecha-derecha-ofertas {
     display: none; /* Ocultamos en mobile */
   }
+
+  /*-----CONTENEDOR ULTIMOS AGREGRADOS------*/
+  .contenedor-ultimos {
+    max-width: 100%;
+    margin-right: 0;
+  }
+
+  .contenedor-productos-ultimos {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 20px;
+    padding-bottom: 10px;
+  }
+
+  .card-ultimo {
+    scroll-snap-align: center;
+    min-width: 140px;
+    max-width: 160px;
+  }
 }
