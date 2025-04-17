@@ -375,11 +375,11 @@ module.exports = {
                 marcas: marcas,
                 modelos: modelos, 
                 proveedores: proveedores,
-                producto: {}, 
                 preciosConDescuento: preciosConDescuento,
                 utilidad: req.body.utilidad,
                 descuentosProveedor: descuentoProveedor 
-            });
+              });
+              
         }).catch(error => {
             return res.status(500).send('Error: ' + error.message);
         });
