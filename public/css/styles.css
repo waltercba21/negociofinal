@@ -433,6 +433,7 @@ footer {
   position: relative;
   margin-right: 20px;
   background-color: #fff;
+  overflow: hidden;
 }
 
 .titulo-ultimos {
@@ -443,7 +444,6 @@ footer {
   margin-bottom: 15px;
 }
 
-/* Desktop (default): grid flex-wrap */
 .contenedor-productos-ultimos {
   display: flex;
   flex-wrap: wrap;
@@ -3690,16 +3690,17 @@ table td img:hover {
 
   .contenedor-productos-ultimos {
     flex-wrap: nowrap;
-    overflow-x: auto;
+    overflow-x: hidden;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    gap: 20px;
-    padding-bottom: 10px;
+    gap: 0;
   }
 
   .card-ultimo {
     scroll-snap-align: center;
-    min-width: 140px;
-    max-width: 160px;
+    min-width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 10px;
   }
 }
