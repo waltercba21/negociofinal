@@ -220,30 +220,40 @@ module.exports = {
           const isUserLoggedIn = !!req.session.usuario;
           const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin';
       
-          const pagina = parseInt(req.query.pagina) || 1;
+          const paginaSolicitada = parseInt(req.query.pagina) || 1;
           const productosPorPagina = 20;
       
+          // 🔍 Obtener todos los productos en oferta
           const todosLosProductos = await new Promise((resolve, reject) => {
             producto.obtenerOfertas(conexion, (error, resultados) => {
-              if (error) return reject(error);
+              if (error) {
+                console.error("❌ Error al obtener productos en oferta:", error);
+                return reject(error);
+              }
               resolve(resultados);
             });
           });
       
           const totalProductos = todosLosProductos.length;
           const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
+          const pagina = Math.min(Math.max(paginaSolicitada, 1), numeroDePaginas || 1); // previene páginas inválidas
       
           const inicio = (pagina - 1) * productosPorPagina;
           const productosPagina = todosLosProductos.slice(inicio, inicio + productosPorPagina);
       
+          // 🔄 Cargar imágenes para los productos de esta página
           const productoIds = productosPagina.map(p => p.id);
           if (productoIds.length > 0) {
             const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
             productosPagina.forEach(producto => {
               producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
-              producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
+              producto.precio_venta = producto.precio_venta
+                ? Math.round(parseFloat(producto.precio_venta))
+                : "No disponible";
             });
           }
+      
+          console.log(`✅ Mostrando página ${pagina} de ofertas con ${productosPagina.length} productos`);
       
           res.render("ofertas", {
             productos: productosPagina,
@@ -263,7 +273,7 @@ module.exports = {
             numeroDePaginas: 1
           });
         }
-      },      
+      },
       
     buscar: async (req, res) => {
         try {
