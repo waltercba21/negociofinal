@@ -421,90 +421,59 @@ footer {
 }
 
 /* ------------Últimos productos cargados---------- */
-.ultimos-productos {
-  flex: 1;
-  max-width: 48%;
+/*--------------- Últimos Agregados --------------------*/
+.contenedor-ultimos {
+  margin-top: 50px;
+}
+
+.contenedor-productos-ultimos {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 1px solid #ddd;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-  padding: 10px;
-  border-radius: 20px;
-  margin-left: 20px;
-}
-.ultimos-productos h2 {
-  text-align: center;
-  color: #003f7d;
-  font-weight: bold;
-  font-size: 20px;
-}
-.card-ultimos {
-  width: 100%;
-  max-width: 150px;
-  margin: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  transition: 0.3s;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-.card-ultimos:hover {
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-}
-.card-ultimos .cover__card {
-  width: 100%;
-  height: 100px;
-  overflow: hidden;
-}
-.card-ultimos .cover__card img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-.titulo-producto {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   justify-content: center;
-  flex-direction: column;
-  margin-top: 15px;
-}
-.titulo-producto h3 {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: bold;
-  font-size: 10px;
-  max-width: 100%;
+  gap: 40px;
   margin: 0 auto;
 }
-.precio-producto {
-  flex-grow: 1;
+
+.card-ultimo {
+  width: 220px;
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+  padding: 10px;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
   flex-direction: column;
+  align-items: center;
 }
-.precio-producto p {
-  margin: 0;
-  text-align: center;
-  width: 90%;
-}
-.categoria-producto {
-  flex-grow: 1;
+
+.cover-card-ultimo {
+  width: 100%;
+  height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
+  overflow: hidden;
 }
-.categoria-producto h5 {
-  color: #003f7d;
-  font-size: 12px;
-  font-weight: bold;
+
+.cover-card-ultimo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.titulo-producto-ultimo h3,
+.categoria-producto-ultimo h5,
+.precio-producto-ultimo p {
   text-align: center;
-  width: 100%;
+  margin: 5px 0;
+  color: #1f487e;
+  font-weight: bold;
+  font-size: 14px;
 }
+
+.precio-producto-ultimo p {
+  color: #d90429;
+}
+
 
 /* ----------Ofertas productos---------- */
 
