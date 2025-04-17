@@ -2558,6 +2558,7 @@ footer {
 
 .paginador {
   padding: 8px 14px;
+  background-color: #888;
   color: white;
   border-radius: 5px;
   text-decoration: none;
