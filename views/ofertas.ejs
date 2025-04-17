@@ -5,7 +5,14 @@
 
 <main>
   <h2 class="titulo-principal">Ofertas Disponibles</h2>
-
+  <div class="paginacion">
+    <% if (numeroDePaginas > 1) { %>
+      <% for (let i = 1; i <= numeroDePaginas; i++) { %>
+        <a href="/productos/ofertas?pagina=<%= i %>" class="paginador <%= i === pagina ? 'activo' : '' %>"><%= i %></a>
+      <% } %>
+    <% } %>
+  </div>
+  
   <div class="contenedor-productos">
     <% if (productos.length > 0) { %>
       <% productos.forEach((producto, index) => { %>
@@ -83,6 +90,14 @@
       <p>No hay productos en oferta.</p>
     <% } %>
   </div>
+  <div class="paginacion">
+    <% if (numeroDePaginas > 1) { %>
+      <% for (let i = 1; i <= numeroDePaginas; i++) { %>
+        <a href="/productos/ofertas?pagina=<%= i %>" class="paginador <%= i === pagina ? 'activo' : '' %>"><%= i %></a>
+      <% } %>
+    <% } %>
+  </div>
+  
 </main>
 
 <%- include ./layouts/footer.ejs %>

@@ -220,44 +220,37 @@ module.exports = {
           const isUserLoggedIn = !!req.session.usuario;
           const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin';
       
-          // Obtener todos los productos en oferta
-          const productos = await new Promise((resolve, reject) => {
+          const pagina = parseInt(req.query.pagina) || 1;
+          const productosPorPagina = 20;
+      
+          const todosLosProductos = await new Promise((resolve, reject) => {
             producto.obtenerOfertas(conexion, (error, resultados) => {
-              if (error) {
-                console.error("❌ Error al obtener productos en oferta:", error);
-                return reject(error);
-              }
+              if (error) return reject(error);
               resolve(resultados);
             });
           });
       
-          if (!productos || productos.length === 0) {
-            console.log("⚠ No se encontraron productos en oferta.");
-            return res.render("ofertas", {
-              productos: [],
-              isUserLoggedIn,
-              isAdminUser,
-            });
-          }
+          const totalProductos = todosLosProductos.length;
+          const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
       
-          // Obtener las imágenes de los productos en oferta
-          const productoIds = productos.map(p => p.id);
+          const inicio = (pagina - 1) * productosPorPagina;
+          const productosPagina = todosLosProductos.slice(inicio, inicio + productosPorPagina);
       
+          const productoIds = productosPagina.map(p => p.id);
           if (productoIds.length > 0) {
             const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
-      
-            productos.forEach(producto => {
+            productosPagina.forEach(producto => {
               producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
               producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
             });
           }
       
-          console.log(`✅ Enviando ${productos.length} productos en oferta.`);
-      
           res.render("ofertas", {
-            productos,
+            productos: productosPagina,
             isUserLoggedIn,
             isAdminUser,
+            pagina,
+            numeroDePaginas
           });
       
         } catch (error) {
@@ -266,9 +259,11 @@ module.exports = {
             productos: [],
             isUserLoggedIn: !!req.session.usuario,
             isAdminUser: req.session.usuario && req.session.usuario.rol === 'admin',
+            pagina: 1,
+            numeroDePaginas: 1
           });
         }
-      },
+      },      
       
     buscar: async (req, res) => {
         try {
