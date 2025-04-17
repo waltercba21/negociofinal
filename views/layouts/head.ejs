@@ -4,12 +4,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><%= (typeof producto !== 'undefined' && producto) ? producto.nombre : 'AUTOFAROS' %></title>
 
- <!-- Open Graph -->
- <meta property="og:title" content="<%= producto ? producto.nombre : 'AUTOFAROS' %>" />
- <meta property="og:description" content="<%= producto ? producto.descripcion : 'Descripción del sitio' %>" />
- <meta property="og:image" content="<%= (producto && producto.imagenes && producto.imagenes.length > 0) ? 'https://www.autofaros.com.ar/uploads/productos/' + producto.imagenes[0] : 'https://www.autofaros.com.ar/ruta/a/imagen/por/defecto.jpg' %>" />
- <meta property="og:url" content="<%= producto ? 'https://www.autofaros.com.ar/productos/' + producto.id : 'https://www.autofaros.com.ar' %>" />
- 
+<!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+<meta property="og:type" content="product" />
+<meta property="og:title" content="<%= producto ? producto.nombre : 'AUTOFAROS' %>" />
+<meta property="og:description" content="<%= producto ? producto.descripcion || 'Repuestos de iluminación para tu auto al mejor precio' : 'AUTOFAROS - Iluminación automotriz' %>" />
+<meta property="og:image" content="<%= (producto && producto.imagenes && producto.imagenes.length > 0) ? 'https://www.autofaros.com.ar/uploads/productos/' + producto.imagenes[0].imagen : 'https://www.autofaros.com.ar/images/default-share.jpg' %>" />
+<meta property="og:url" content="<%= producto ? 'https://www.autofaros.com.ar/productos/' + producto.id : 'https://www.autofaros.com.ar' %>" />
+
+<!-- Twitter Card (recomendado) -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="<%= producto ? producto.nombre : 'AUTOFAROS' %>" />
+<meta name="twitter:description" content="<%= producto ? producto.descripcion || 'Repuestos de iluminación para tu auto al mejor precio' : 'AUTOFAROS - Iluminación automotriz' %>" />
+<meta name="twitter:image" content="<%= (producto && producto.imagenes && producto.imagenes.length > 0) ? 'https://www.autofaros.com.ar/uploads/productos/' + producto.imagenes[0].imagen : 'https://www.autofaros.com.ar/images/default-share.jpg' %>" />
+
  <!-- Favicon -->
  <link rel="icon" type="image/ico" href="/images/favicon.ico" sizes="150x150" />
 
