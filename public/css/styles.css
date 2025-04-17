@@ -422,7 +422,17 @@ footer {
 
 /*--------------- Últimos Agregados --------------------*/
 .contenedor-ultimos {
-  margin-top: 50px;
+    flex: 1;
+    max-width: 48%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    padding: 10px;
+    position: relative;
+    margin-right: 20px;
+  
 }
 
 .contenedor-productos-ultimos {
