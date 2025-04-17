@@ -3684,22 +3684,22 @@ table td img:hover {
   }
 
   /*-----CONTENEDOR ULTIMOS AGREGRADOS------*/
+  .contenedor-ultimos {
+    max-width: 100%;
+    margin-right: 0;
+  }
+
   .contenedor-productos-ultimos {
     flex-wrap: nowrap;
-    overflow: hidden;
-    width: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 10px;
   }
 
   .card-ultimo {
-    min-width: 100%;
-    flex: 0 0 100%;
-    max-width: 100%;
-    margin: 0;
-  }
-
-  .contenedor-ultimos {
-    padding: 10px;
-    max-width: 100%;
-    margin: 0 auto;
+    flex: 0 0 80%;
+    max-width: 80%;
+    scroll-snap-align: start;
   }
 }
