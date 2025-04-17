@@ -2572,29 +2572,39 @@ footer {
 .paginacion {
   display: flex;
   justify-content: center;
-  align-items: center;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-top: 30px;
+  flex-wrap: wrap;
 }
 
-.paginacion a {
-  margin: 0 5px;
-  padding: 10px 15px;
-  background-color: #fff;
-  border: none;
+.paginador {
+  padding: 8px 14px;
+  background-color: #1f487e;
+  color: white;
   border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease-in-out;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
 }
 
-.paginacion a:hover {
-  background-color: #ddd;
+.paginador:hover {
+  background-color: #003f7d;
 }
 
-.paginacion .active {
-  background-color: #004d99;
-  color: #fff;
-  padding: 10px 15px;
-  border-radius: 5px;
+.paginador.activo {
+  background-color: #003f7d;
+  box-shadow: 0 0 5px #000;
+}
+
+.paginador.deshabilitado {
+  background-color: #ccc;
+  color: #666;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.paginador.flecha {
+  font-size: 14px;
 }
 
 .buscador-panel {
