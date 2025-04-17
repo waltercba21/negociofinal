@@ -469,28 +469,38 @@ footer {
   max-height: 100%;
   object-fit: contain;
 }
-
-.titulo-producto-ultimo h2{
-  font-size: 12px;
+/* Título centrado principal */
+.titulo-ultimos {
+  text-align: center;
   color: #003f7d;
   font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+/* Nombre dentro de la tarjeta más chico y bien alineado */
+.titulo-producto-ultimo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 5px;
+  text-align: center;
+}
+
+.nombre-ultimo {
+  font-size: 12px;
+  font-weight: bold;
+  color: #003f7d;
+  line-height: 1.2;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: 3.6em; 
-  line-clamp: 3; 
+  height: 3.6em;
 }
 
-.categoria-producto-ultimo h5,
-.precio-producto-ultimo p {
-  text-align: center;
-  margin: 5px 0;
-  color: #1f487e;
-  font-weight: bold;
-  font-size: 14px;
-}
 
 .precio-producto-ultimo p {
   color: #d90429;
