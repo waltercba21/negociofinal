@@ -3687,19 +3687,19 @@ table td img:hover {
   .contenedor-productos-ultimos {
     flex-wrap: nowrap;
     overflow: hidden;
-    scroll-behavior: smooth;
-    transition: transform 0.5s ease-in-out;
     width: 100%;
   }
 
   .card-ultimo {
+    min-width: 100%;
     flex: 0 0 100%;
     max-width: 100%;
     margin: 0;
-    padding: 10px;
   }
 
-  .cover-card-ultimo {
-    height: 180px;
+  .contenedor-ultimos {
+    padding: 10px;
+    max-width: 100%;
+    margin: 0 auto;
   }
 }
