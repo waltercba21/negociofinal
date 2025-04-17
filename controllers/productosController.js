@@ -378,7 +378,7 @@ module.exports = {
                 preciosConDescuento,
                 utilidad: req.body.utilidad,
                 descuentoProveedor,
-                producto: {} 
+                producto: { oferta: 0 } 
               });
         }).catch(error => {
             return res.status(500).send('Error: ' + error.message);
