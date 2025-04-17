@@ -421,6 +421,7 @@ footer {
 }
 
 /*--------------- Últimos Agregados --------------------*/
+/*--------------- Últimos Agregados --------------------*/
 .contenedor-ultimos {
   flex: 1;
   max-width: 48%;
@@ -444,29 +445,26 @@ footer {
   margin-bottom: 15px;
 }
 
-/* Versión desktop */
+/* Contenedor del carrusel horizontal */
 .contenedor-productos-ultimos {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 40px;
-  margin: 0 auto;
-  transition: transform 0.3s ease;
+  transition: transform 0.6s ease;
+  width: 300%; /* 3 tarjetas una al lado de otra */
 }
 
+/* Cada tarjeta ocupa 100% del contenedor padre */
 .card-ultimo {
-  flex: 0 0 auto;
-  width: 100%;
-  max-width: 150px;
-  margin: 10px;
+  flex: 0 0 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 10px;
+  margin: 0 5px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: #fff;
-  border-radius: 10px;
-  overflow: hidden;
+  transition: 0.3s;
 }
 
 .card-ultimo:hover {
@@ -474,6 +472,7 @@ footer {
   box-shadow: 0 6px 12px rgba(0,0,0,0.3);
 }
 
+/* Imagen del producto */
 .cover-card-ultimo {
   width: 100%;
   height: 160px;
@@ -489,6 +488,7 @@ footer {
   object-fit: contain;
 }
 
+/* Nombre del producto */
 .titulo-producto-ultimo {
   display: flex;
   justify-content: center;
@@ -506,12 +506,12 @@ footer {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  line-clamp: 3;
   overflow: hidden;
   text-overflow: ellipsis;
   height: 3.6em;
 }
 
+/* Categoría */
 .categoria-producto-ultimo {
   display: flex;
   justify-content: center;
@@ -525,6 +525,7 @@ footer {
   margin: 4px 0;
 }
 
+/* Precio */
 .precio-producto-ultimo {
   display: flex;
   justify-content: center;
@@ -537,7 +538,6 @@ footer {
   color: #d90429;
   margin: 0;
 }
-
 /* ----------Ofertas productos (Actualizado para coherencia visual) ---------- */
 
 .contenedor-ofertas {
