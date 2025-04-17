@@ -3690,17 +3690,15 @@ table td img:hover {
 
   .contenedor-productos-ultimos {
     flex-wrap: nowrap;
-    overflow-x: hidden;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
     gap: 0;
+    width: 100%;
   }
 
   .card-ultimo {
-    scroll-snap-align: center;
-    min-width: 100%;
+    flex: 0 0 100%;
     max-width: 100%;
-    margin: 0;
+    scroll-snap-align: center;
     padding: 10px;
   }
 }
