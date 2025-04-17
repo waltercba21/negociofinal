@@ -8,9 +8,9 @@
   <% if (numeroDePaginas > 1) { %>
     <div class="paginacion">
       <% if (pagina > 1) { %>
-        <a href="/productos/ofertas?pagina=<%= pagina - 1 %>" class="paginador flecha">← Anterior</a>
+        <a href="/productos/ofertas?pagina=<%= pagina - 1 %>" class="paginador flecha">Anterior</a>
       <% } else { %>
-        <span class="paginador flecha deshabilitado">← Anterior</span>
+        <span class="paginador flecha deshabilitado">Anterior</span>
       <% } %>
   
       <% for (let i = 1; i <= numeroDePaginas; i++) { %>
@@ -18,7 +18,7 @@
       <% } %>
   
       <% if (pagina < numeroDePaginas) { %>
-        <a href="/productos/ofertas?pagina=<%= pagina + 1 %>" class="paginador flecha">Siguiente →</a>
+        <a href="/productos/ofertas?pagina=<%= pagina + 1 %>" class="paginador flecha">Siguiente</a>
       <% } else { %>
         <span class="paginador flecha deshabilitado">Siguiente →</span>
       <% } %>
@@ -106,7 +106,7 @@
   <% if (numeroDePaginas > 1) { %>
     <div class="paginacion">
       <% if (pagina > 1) { %>
-        <a href="/productos/ofertas?pagina=<%= pagina - 1 %>" class="paginador flecha">← Anterior</a>
+        <a href="/productos/ofertas?pagina=<%= pagina - 1 %>" class="paginador flecha">Anterior</a>
       <% } else { %>
         <span class="paginador flecha deshabilitado">← Anterior</span>
       <% } %>
@@ -116,7 +116,7 @@
       <% } %>
   
       <% if (pagina < numeroDePaginas) { %>
-        <a href="/productos/ofertas?pagina=<%= pagina + 1 %>" class="paginador flecha">Siguiente →</a>
+        <a href="/productos/ofertas?pagina=<%= pagina + 1 %>" class="paginador flecha">Siguiente</a>
       <% } else { %>
         <span class="paginador flecha deshabilitado">Siguiente →</span>
       <% } %>
