@@ -93,40 +93,40 @@
   
       <div class="contenedor-principal-productos">
         
-<!-- Contenedor de Últimos Agregados -->
-<div class="ultimos-productos contenedor-ultimos">
-  <h2>Últimos Agregados</h2>
-  <div class="contenedor-productos-ultimos">
-    <% productos.forEach(function(producto) { %>
-      <div class="card-ultimo">
-
-        <div class="cover-card-ultimo">
-          <% if (producto.imagen && producto.imagen.length > 0) { %>
-            <img src="../../uploads/productos/<%= producto.imagen[0] %>" alt="<%= producto.nombre %>">
-          <% } else { %>
-            <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
-          <% } %>
+        <div class="ultimos-productos contenedor-ultimos">
+          <h2>ÚLTIMOS AGREGADOS</h2>
+        
+          <div class="contenedor-productos-ultimos">
+            <% productos.forEach(function(producto) { %>
+              <div class="card-ultimo">
+                <div class="cover-card-ultimo">
+                  <% if (producto.imagen && producto.imagen.length > 0) { %>
+                    <img src="../../uploads/productos/<%= producto.imagen[0] %>" alt="<%= producto.nombre %>">
+                  <% } else { %>
+                    <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
+                  <% } %>
+                </div>
+        
+                <div class="titulo-producto-ultimo">
+                  <h3 class="nombre-ultimo"><%= producto.nombre %></h3>
+                </div>
+        
+                <hr>
+        
+                <div class="categoria-producto-ultimo">
+                  <h5 class="categoria-ultimo"><%= producto.categoria_nombre %></h5>
+                </div>
+        
+                <div class="precio-producto-ultimo">
+                  <p class="precio-ultimo">
+                    <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %>
+                  </p>
+                </div>
+              </div>
+            <% }); %>
+          </div>
         </div>
-
-        <div class="titulo-producto-ultimo">
-          <h3 class="nombre-ultimo"><%= producto.nombre %></h3>
-        </div>
-
-        <hr>
-
-        <div class="categoria-producto-ultimo">
-          <h5 class="categoria-ultimo"><%= producto.categoria_nombre %></h5>
-        </div>
-
-        <div class="precio-producto-ultimo">
-          <p class="precio-ultimo">
-            <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %>
-          </p>
-        </div>
-      </div>
-    <% }); %>
-  </div>
-</div>
+        
 
 
     
