@@ -371,15 +371,15 @@ module.exports = {
             descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
         }).then(() => {
             res.render('crear', {
-                categorias: categorias,
-                marcas: marcas,
-                modelos: modelos, 
-                proveedores: proveedores,
-                preciosConDescuento: preciosConDescuento,
+                categorias,
+                marcas,
+                modelos,
+                proveedores,
+                preciosConDescuento,
                 utilidad: req.body.utilidad,
-                descuentosProveedor: descuentoProveedor 
+                descuentoProveedor,
+                producto: {} 
               });
-              
         }).catch(error => {
             return res.status(500).send('Error: ' + error.message);
         });
