@@ -1511,27 +1511,6 @@ footer {
   border-radius: 5px; 
 }
 
-/*-------------------------PAGINACIÓN---------------*/
-.paginacion {
-  display: flex;
-  justify-content: center;
-  gap: 10px; 
-  padding: 20px 0; 
-}
-
-.paginacion a {
-  text-decoration: none; 
-  color: #333; 
-  padding: 5px 10px;
-  border: 1px solid #333; 
-  border-radius: 5px; 
-}
-.paginacion a.pagina-actual {
-  background-color: #333; 
-  color: #fff;
-  border-color: #333; 
-}
-
 /* --------------------------- Productos ------------------------------ */
 
 /* Titulo */
@@ -2579,7 +2558,6 @@ footer {
 
 .paginador {
   padding: 8px 14px;
-  background-color: #1f487e;
   color: white;
   border-radius: 5px;
   text-decoration: none;
@@ -2687,10 +2665,6 @@ td {
   transition: transform 0.3s ease-in-out;
 }
 
-.paginacion a:active {
-  transform: scale(0.95);
-  transition: transform 0.3s ease-in-out;
-}
 /*---------------PROFILE---------------*/
 .user-card {
   background-color: #fff;
