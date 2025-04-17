@@ -12,70 +12,83 @@ const pdfParse = require('pdf-parse');
     const adminEmails = ['walter@autofaros.com.ar'];
 
 module.exports = {
-    index : async (req, res) => {
+    index: async (req, res) => {
         try {
-            // Obtener los últimos 3 productos y los productos en oferta en paralelo
-            const [productos, productosOferta] = await Promise.all([
-                new Promise((resolve, reject) => {
-                    producto.obtenerUltimos(conexion, 3, (error, resultado) => {
-                        if (error) reject(error);
-                        else resolve(resultado);
-                    });
-                }),
-                new Promise((resolve, reject) => {
-                    producto.obtenerProductosOferta(conexion, (error, resultado) => {
-                        if (error) reject(error);
-                        else resolve(resultado);
-                    });
-                })
-            ]);
-    
-            console.log("✅ Productos en oferta obtenidos:", productosOferta); // Verificar que se están obteniendo
-    
-            let cantidadCarrito = 0;
-    
-            // Si el usuario está autenticado, obtenemos la cantidad de productos en el carrito
-            if (req.session?.usuario) {
-                const id_usuario = req.session.usuario.id;
-    
-                try {
-                    const carritoActivo = await new Promise((resolve, reject) => {
-                        carrito.obtenerCarritoActivo(id_usuario, (error, resultado) => {
-                            if (error) reject(error);
-                            else resolve(resultado);
-                        });
-                    });
-    
-                    if (carritoActivo && carritoActivo.length > 0) {
-                        const id_carrito = carritoActivo[0].id;
-    
-                        const productosCarrito = await new Promise((resolve, reject) => {
-                            carrito.obtenerProductosCarrito(id_carrito, (error, resultado) => {
-                                if (error) reject(error);
-                                else resolve(resultado);
-                            });
-                        });
-    
-                        cantidadCarrito = productosCarrito.length;
-                    }
-                } catch (error) {
-                    console.error("❌ Error al obtener el carrito:", error);
-                }
+          // Obtener últimos 3 productos y últimas 12 ofertas en paralelo
+          const [productos, productosOfertaRaw] = await Promise.all([
+            new Promise((resolve, reject) => {
+              producto.obtenerUltimos(conexion, 3, (error, resultado) => {
+                if (error) reject(error);
+                else resolve(resultado);
+              });
+            }),
+            new Promise((resolve, reject) => {
+              producto.obtenerUltimasOfertas(conexion, 12, (error, resultado) => {
+                if (error) reject(error);
+                else resolve(resultado);
+              });
+            })
+          ]);
+      
+          // Obtener imágenes de productos en oferta
+          const productoIds = productosOfertaRaw.map(p => p.id);
+          const imagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
+      
+          // Asociar imágenes a cada producto de oferta
+          const productosOferta = productosOfertaRaw.map(producto => {
+            const imgs = imagenes
+              .filter(img => img.producto_id === producto.id)
+              .map(img => img.imagen);
+            return {
+              ...producto,
+              imagenes: imgs
+            };
+          });
+      
+          let cantidadCarrito = 0;
+      
+          // Si el usuario está logueado, obtener cantidad de productos en el carrito
+          if (req.session?.usuario) {
+            const id_usuario = req.session.usuario.id;
+      
+            try {
+              const carritoActivo = await new Promise((resolve, reject) => {
+                carrito.obtenerCarritoActivo(id_usuario, (error, resultado) => {
+                  if (error) reject(error);
+                  else resolve(resultado);
+                });
+              });
+      
+              if (carritoActivo && carritoActivo.length > 0) {
+                const id_carrito = carritoActivo[0].id;
+      
+                const productosCarrito = await new Promise((resolve, reject) => {
+                  carrito.obtenerProductosCarrito(id_carrito, (error, resultado) => {
+                    if (error) reject(error);
+                    else resolve(resultado);
+                  });
+                });
+      
+                cantidadCarrito = productosCarrito.length;
+              }
+            } catch (error) {
+              console.error("❌ Error al obtener el carrito:", error);
             }
-    
-            // Renderizar la vista con los datos obtenidos
-            res.render('index', {
-                productos,
-                productosOferta,
-                cantidadCarrito,
-                producto: null // Evita error en head.ejs
-            });
-    
+          }
+      
+          // Renderizar vista con todos los datos
+          res.render('index', {
+            productos,
+            productosOferta,
+            cantidadCarrito,
+            producto: null // para evitar error en head.ejs
+          });
+      
         } catch (error) {
-            console.error("❌ Error en index:", error);
-            return res.status(500).send("Error interno del servidor");
+          console.error("❌ Error en index:", error);
+          return res.status(500).send("Error interno del servidor");
         }
-    },
+      },      
     lista: async function (req, res) {
         try {
             const pagina = req.query.pagina ? Number(req.query.pagina) : 1;

@@ -3609,4 +3609,22 @@ table td img:hover {
     font-size: 13px;
   }
 
+
+/*-----CONTENEDOR OFERTAS------*/
+  .contenedor-productos-ofertas {
+    flex-wrap: nowrap;
+    overflow-x: scroll;
+    gap: 20px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .card-oferta {
+    min-width: 250px;
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+  }
+
+  .flecha-izquierda-ofertas, .flecha-derecha-ofertas {
+    display: none; /* Ocultamos en mobile */
+  }
 }

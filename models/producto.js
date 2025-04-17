@@ -55,22 +55,17 @@ module.exports ={
             });
         });
     },
-    obtenerOfertas: function(conexion, callback) {
-        const consulta = `
-          SELECT p.*, GROUP_CONCAT(ip.imagen) AS imagenes
+    obtenerUltimasOfertas: function(conexion, limite, callback) {
+        const sql = `
+          SELECT p.*, c.nombre AS categoria_nombre
           FROM productos p
-          LEFT JOIN imagenes_producto ip ON p.id = ip.producto_id
+          LEFT JOIN categorias c ON p.categoria_id = c.id
           WHERE p.oferta = 1
-          GROUP BY p.id
+          ORDER BY p.id DESC
+          LIMIT ?
         `;
-        conexion.query(consulta, (error, resultados) => {
-          if (error) {
-            callback(error);
-            return;
-          }
-          callback(null, resultados);
-        });
-      },
+        conexion.query(sql, [limite], callback);
+      },      
     eliminarPresupuesto : (conexion, id) => {
         return new Promise((resolve, reject) => {
             // Primero, eliminamos los ítems asociados al presupuesto
