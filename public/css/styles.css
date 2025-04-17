@@ -2568,10 +2568,12 @@ footer {
 
 .paginador:hover {
   background-color: #003f7d;
+  color: #ccc;
 }
 
 .paginador.activo {
   background-color: #003f7d;
+  color: #ccc;
   box-shadow: 0 0 5px #000;
 }
 
