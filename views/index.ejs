@@ -93,32 +93,41 @@
   
       <div class="contenedor-principal-productos">
         
-        <div class="ultimos-productos contenedor">
-          <h2>ÚLTIMOS AGREGADOS</h2>
-          <div class="contenedor-productos">
-            <% productos.forEach(function(producto) { %>
-              <div class="card card-ultimos">
-                <div class="cover__card">
-                  <% if (producto.imagen && producto.imagen.length > 0) { %>
-                    <img src="../../uploads/productos/<%= producto.imagen %>" alt="<%= producto.nombre %>">
-                  <% } else { %>
-                    <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
-                  <% } %>
-                </div>
-                <div class="titulo-producto">
-                  <h3 class="nombre"><%= producto.nombre %></h3>
-                </div>
-                <hr>
-                <div class="categoria-producto">
-                  <h5 class="categoria"><%= producto.categoria_nombre %></h5>
-                </div>
-                <div class="precio-producto">
-                  <p class="precio"><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %></p>
-                </div>
-              </div>
-            <% }); %>
-          </div>
+        <!-- Contenedor de Últimos Agregados con estilos armonizados -->
+<div class="ultimos-productos contenedor-ofertas">
+  <h2>Últimos Agregados</h2>
+  <div class="contenedor-productos-ofertas">
+    <% productos.forEach(function(producto) { %>
+      <div class="card-oferta">
+
+        <div class="cover-card-oferta">
+          <% if (producto.imagen && producto.imagen.length > 0) { %>
+            <img src="../../uploads/productos/<%= producto.imagen[0] %>" alt="<%= producto.nombre %>">
+          <% } else { %>
+            <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
+          <% } %>
         </div>
+
+        <div class="titulo-producto-oferta">
+          <h3 class="nombre-oferta"><%= producto.nombre %></h3>
+        </div>
+
+        <hr>
+
+        <div class="categoria-producto-oferta">
+          <h5 class="categoria-oferta"><%= producto.categoria_nombre %></h5>
+        </div>
+
+        <div class="precio-producto-oferta">
+          <p class="precio-oferta">
+            <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %>
+          </p>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+</div>
+
     
         <div class="ofertas-productos contenedor-ofertas">
          
