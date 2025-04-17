@@ -444,6 +444,7 @@ footer {
   margin-bottom: 15px;
 }
 
+/* Versión desktop */
 .contenedor-productos-ultimos {
   display: flex;
   flex-wrap: wrap;
@@ -3683,14 +3684,7 @@ table td img:hover {
   }
 
   /*-----CONTENEDOR ULTIMOS AGREGRADOS------*/
-  .contenedor-ultimos {
-    max-width: 100%;
-    margin: 20px auto;
-    padding: 10px;
-  }
-
   .contenedor-productos-ultimos {
-    display: flex;
     flex-wrap: nowrap;
     overflow: hidden;
     scroll-behavior: smooth;
@@ -3701,15 +3695,11 @@ table td img:hover {
   .card-ultimo {
     flex: 0 0 100%;
     max-width: 100%;
+    margin: 0;
+    padding: 10px;
   }
 
   .cover-card-ultimo {
     height: 180px;
-  }
-
-  .cover-card-ultimo img {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
   }
 }
