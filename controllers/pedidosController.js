@@ -2,17 +2,18 @@ const pedidos = require('../models/pedidos');
 
 module.exports = {
     obtenerPedidos: (req, res) => {
-        console.log(`📢 Solicitando pedidos con estado: ${estado}`);
-
+        console.log("📢 Solicitando todos los pedidos (sin filtro de estado)");
+    
         pedidos.obtenerPedidos((error, pedidos) => {
             if (error) {
                 console.error("❌ Error al obtener pedidos:", error);
                 return res.status(500).json({ error: "Error al obtener los pedidos" });
             }
-            console.log("✅ Enviando pedidos a la vista:", pedidos);
+            console.log("✅ Enviando todos los pedidos a la vista:", pedidos);
             res.render("pedidos", { pedidos });
         });
     },
+    
 
     obtenerPedidosPendientes: (req, res) => {
         pedidos.obtenerCantidadPedidosPendientes((error, cantidad) => {
