@@ -26,12 +26,13 @@ module.exports = {
     obtenerDetallePedido: (id_carrito, callback) => {
         const query = `
             SELECT u.nombre AS cliente, c.creado_en AS fecha,
-                   p.codigo, p.nombre AS nombre_producto, pc.cantidad, p.precio_venta,
+                   pp.codigo, p.nombre AS nombre_producto, pc.cantidad, p.precio_venta,
                    (pc.cantidad * p.precio_venta) AS subtotal
             FROM carritos c
             JOIN usuarios u ON c.usuario_id = u.id
             JOIN productos_carrito pc ON c.id = pc.carrito_id
             JOIN productos p ON pc.producto_id = p.id
+            LEFT JOIN producto_proveedor pp ON pp.producto_id = p.id
             WHERE c.id = ?
         `;
     
@@ -42,10 +43,9 @@ module.exports = {
             }
     
             if (resultados.length === 0) {
-                return callback(null, null); // Pedido no encontrado
+                return callback(null, null);
             }
     
-            // Procesar datos para el controlador
             const cliente = resultados[0].cliente;
             const fecha = resultados[0].fecha;
             let total = 0;
@@ -53,7 +53,7 @@ module.exports = {
             const productos = resultados.map(r => {
                 total += r.subtotal;
                 return {
-                    codigo: r.codigo,
+                    codigo: r.codigo || 'SIN CÓDIGO',
                     nombre: r.nombre_producto,
                     cantidad: r.cantidad,
                     precio_unitario: r.precio_venta,
