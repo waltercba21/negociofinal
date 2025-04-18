@@ -2,10 +2,9 @@ const pedidos = require('../models/pedidos');
 
 module.exports = {
     obtenerPedidos: (req, res) => {
-        const estado = req.query.estado || null;
         console.log(`📢 Solicitando pedidos con estado: ${estado}`);
 
-        pedidos.obtenerPedidos(estado, (error, pedidos) => {
+        pedidos.obtenerPedidos((error, pedidos) => {
             if (error) {
                 console.error("❌ Error al obtener pedidos:", error);
                 return res.status(500).json({ error: "Error al obtener los pedidos" });

@@ -1,7 +1,7 @@
 const pool = require('../config/conexion');
 
 module.exports = {
-    obtenerPedidos: (estado, callback) => {
+    obtenerPedidos: (callback) => {
         let query = `
             SELECT c.id AS id_pedido, u.nombre AS cliente, c.estado, c.tipo_envio, 
                    COALESCE(SUM(pc.cantidad * p.precio_venta), 0) AS total,
@@ -10,8 +10,7 @@ module.exports = {
             JOIN usuarios u ON c.usuario_id = u.id
             LEFT JOIN productos_carrito pc ON c.id = pc.carrito_id
             LEFT JOIN productos p ON pc.producto_id = p.id
-            WHERE c.estado IN ('pendiente', 'preparación', 'listo para entrega')  -- ✅ Filtro correcto
-            GROUP BY c.id, u.nombre, c.estado, c.tipo_envio
+            GROUP BY c.id, u.nombre, c.estado, c.tipo_envio, c.creado_en
             ORDER BY c.creado_en DESC;
         `;
     
@@ -20,10 +19,11 @@ module.exports = {
                 console.error("❌ Error al obtener pedidos:", error);
                 return callback(error, null);
             }
-            console.log("✅ Pedidos obtenidos en la BD:", resultados);
+            console.log("✅ Todos los pedidos obtenidos:", resultados);
             callback(null, resultados);
         });
     },
+    
     
     obtenerCantidadPedidosPendientes: (callback) => {
         const query = "SELECT COUNT(*) AS cantidad FROM carritos WHERE estado IN ('pendiente', 'preparación')";
