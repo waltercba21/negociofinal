@@ -16,5 +16,6 @@ router.post('/finalizar/:id', pedidosController.marcarPedidoComoFinalizado);
 
 router.get('/:id/detalle', pedidosController.obtenerDetallePedido);
 
+router.get('/:id/pdf-preparacion', pedidosController.generarPDFPreparacion);
 
 module.exports = router;

@@ -26,10 +26,9 @@
                 <td><%= pedido.cliente %></td>
                 <td><%= pedido.estado %></td>
                 <td>
-                  <button class="btn-preparar" data-carrito-id="<%= pedido.id_pedido %>">🛠 Ver Detalle</button>
-                  <button onclick='marcarPreparado("<%= pedido.id_pedido %>")'>🧪 Marcar Preparado</button>
-                  <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
-
+                    <button class="btn-preparar" data-carrito-id="<%= pedido.id_pedido %>">🛠 Ver Detalle</button>
+                    <button onclick='prepararPedido("<%= pedido.id_pedido %>")'>📦 Preparar Pedido</button>
+                    <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
                 </td>
               </tr>
             <% }) %>
@@ -70,33 +69,31 @@
   </main>
 
   <%- include('./layouts/footer.ejs') %>
-
   <script>
     // Modal emergente
     function cerrarModal() {
       document.getElementById("modal-preparar").style.display = "none";
     }
-
+  
     function asignarEventosModal() {
       const modal = document.getElementById('modal-preparar');
       const cuerpoTabla = document.querySelector('#detalle-productos');
       const nombreCliente = document.getElementById('nombre-cliente');
       const fechaPedido = document.getElementById('fecha-pedido');
       const totalFinal = document.getElementById('total-final');
-
+  
       document.querySelectorAll('.btn-preparar').forEach(btn => {
         btn.addEventListener('click', async () => {
           const carritoId = btn.dataset.carritoId;
           try {
             const response = await fetch(`/pedidos/${carritoId}/detalle`);
-
             const data = await response.json();
-
+  
             cuerpoTabla.innerHTML = '';
             nombreCliente.textContent = data.cliente;
             fechaPedido.textContent = data.fecha;
             totalFinal.textContent = `$${Number(data.total).toLocaleString('es-AR')}`;
-
+  
             data.productos.forEach(producto => {
               const fila = document.createElement('tr');
               fila.innerHTML = `
@@ -108,7 +105,7 @@
               `;
               cuerpoTabla.appendChild(fila);
             });
-
+  
             modal.style.display = 'block';
           } catch (err) {
             console.error('❌ Error al obtener detalle del pedido:', err);
@@ -117,28 +114,38 @@
         });
       });
     }
-
-    // Activar eventos una vez que carga la página
-    document.addEventListener('DOMContentLoaded', () => {
-      asignarEventosModal();
-    });
-
-    function marcarPreparado(id) {
+  
+    // Al hacer clic en "📦 Preparar Pedido"
+    function prepararPedido(id) {
       fetch(`/pedidos/marcar-preparado/${id}`, { method: 'POST' })
         .then(res => res.json())
         .then(data => {
           alert(data.mensaje);
-          location.reload();
-        }).catch(err => console.error(err));
+          const ventanaPDF = window.open(`/pedidos/${id}/pdf-preparacion`, '_blank');
+        if (ventanaPDF) {
+          ventanaPDF.onload = () => {
+            ventanaPDF.print();
+          };
+        }
+          setTimeout(() => location.reload(), 2000);
+        })
+        .catch(err => console.error('❌ Error al preparar pedido:', err));
     }
-
+  
     function finalizarPedido(id) {
       fetch(`/pedidos/finalizar/${id}`, { method: 'POST' })
         .then(res => res.json())
         .then(data => {
           alert(data.mensaje);
           location.reload();
-        }).catch(err => console.error(err));
+        })
+        .catch(err => console.error(err));
     }
+  
+    // Activar los eventos del modal una vez cargada la página
+    document.addEventListener('DOMContentLoaded', () => {
+      asignarEventosModal();
+    });
   </script>
+  
 </body>

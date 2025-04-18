@@ -26,13 +26,23 @@ module.exports = {
     obtenerDetallePedido: (id_carrito, callback) => {
         const query = `
             SELECT u.nombre AS cliente, c.creado_en AS fecha,
-                   pp.codigo, p.nombre AS nombre_producto, pc.cantidad, p.precio_venta,
+                   pp_min.codigo, p.nombre AS nombre_producto, pc.cantidad, p.precio_venta,
                    (pc.cantidad * p.precio_venta) AS subtotal
             FROM carritos c
             JOIN usuarios u ON c.usuario_id = u.id
             JOIN productos_carrito pc ON c.id = pc.carrito_id
             JOIN productos p ON pc.producto_id = p.id
-            LEFT JOIN producto_proveedor pp ON pp.producto_id = p.id
+            LEFT JOIN (
+                SELECT pp1.producto_id, pp1.codigo
+                FROM producto_proveedor pp1
+                INNER JOIN (
+                    SELECT producto_id, MIN(precio_lista) AS precio_minimo
+                    FROM producto_proveedor
+                    GROUP BY producto_id
+                ) AS pp2
+                ON pp1.producto_id = pp2.producto_id AND pp1.precio_lista = pp2.precio_minimo
+            ) AS pp_min
+            ON pp_min.producto_id = p.id
             WHERE c.id = ?
         `;
     
