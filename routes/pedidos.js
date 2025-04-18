@@ -14,4 +14,7 @@ router.post('/marcar-preparado/:id', pedidosController.marcarPedidoComoPreparado
 // Ruta para cambiar el estado a "finalizado"
 router.post('/finalizar/:id', pedidosController.marcarPedidoComoFinalizado);
 
+router.get('/:id/detalle', pedidosController.obtenerDetallePedido);
+
+
 module.exports = router;

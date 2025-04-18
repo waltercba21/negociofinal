@@ -14,7 +14,6 @@ module.exports = {
         });
     },
     
-
     obtenerPedidosPendientes: (req, res) => {
         pedidos.obtenerCantidadPedidosPendientes((error, cantidad) => {
             if (error) {
