@@ -58,4 +58,25 @@ module.exports = {
             res.json({ mensaje: "Pedido marcado como finalizado" });
         });
     },
+    obtenerDetallePedido: (req, res) => {
+        const id_carrito = req.params.id;
+        console.log(`🔍 Obteniendo detalle desde el controlador para carrito ID: ${id_carrito}`);
+    
+        pedidos.obtenerDetallePedido(id_carrito, (error, detalle) => {
+            if (error) {
+                console.error("❌ Error al obtener detalle desde el modelo:", error);
+                return res.status(500).json({ error: "Error al obtener el detalle del pedido" });
+            }
+    
+            if (!detalle) {
+                return res.status(404).json({ error: "Pedido no encontrado" });
+            }
+    
+            // Formatear la fecha en el controlador
+            detalle.fecha = new Date(detalle.fecha).toLocaleDateString('es-AR');
+    
+            res.json(detalle);
+        });
+    }
+    
 };

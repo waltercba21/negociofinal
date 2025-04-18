@@ -23,11 +23,7 @@ module.exports = {
             callback(null, resultados);
         });
     },
-    obtenerDetallePedido: (req, res) => {
-        const carritoId = req.params.id;
-        console.log(`🔍 Solicitando detalle para carrito ID: ${carritoId}`);
-    
-        const pool = require('../config/conexion');
+    obtenerDetallePedido: (id_carrito, callback) => {
         const query = `
             SELECT u.nombre AS cliente, c.creado_en AS fecha,
                    p.codigo, p.nombre AS nombre_producto, pc.cantidad, p.precio_venta,
@@ -39,16 +35,17 @@ module.exports = {
             WHERE c.id = ?
         `;
     
-        pool.query(query, [carritoId], (error, resultados) => {
+        pool.query(query, [id_carrito], (error, resultados) => {
             if (error) {
-                console.error("❌ Error al obtener el detalle del pedido:", error);
-                return res.status(500).json({ error: "Error al obtener el detalle del pedido" });
+                console.error("❌ Error en modelo al obtener detalle del pedido:", error);
+                return callback(error, null);
             }
     
             if (resultados.length === 0) {
-                return res.status(404).json({ error: "Pedido no encontrado" });
+                return callback(null, null); // Pedido no encontrado
             }
     
+            // Procesar datos para el controlador
             const cliente = resultados[0].cliente;
             const fecha = resultados[0].fecha;
             let total = 0;
@@ -64,12 +61,14 @@ module.exports = {
                 };
             });
     
-            res.json({
+            const detalle = {
                 cliente,
-                fecha: new Date(fecha).toLocaleDateString('es-AR'),
+                fecha,
                 total,
                 productos
-            });
+            };
+    
+            callback(null, detalle);
         });
     },    
     obtenerCantidadPedidosPendientes: (callback) => {
