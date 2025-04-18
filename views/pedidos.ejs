@@ -5,7 +5,7 @@
   <main class="admin-container">
     <div class="pedidos-admin">
       <h2 class="titulo-pedidos">Pedidos Recibidos</h2>
-    
+
       <!-- Tabla de pedidos -->
       <table class="tabla-pedidos">
         <thead>
@@ -17,118 +17,127 @@
             <th>Acciones</th>
           </tr>
         </thead>
-        <tbody id="tabla-pedidos-body">
-          <!-- Aquí se insertarán los pedidos dinámicamente con datos reales -->
+        <tbody>
+          <% if (pedidos.length > 0) { %>
+            <% pedidos.forEach(pedido => { %>
+              <tr>
+                <td><%= pedido.id_pedido %></td>
+                <td><%= pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-AR') : '' %></td>
+                <td><%= pedido.cliente %></td>
+                <td><%= pedido.estado %></td>
+                <td>
+                  <button class="btn-preparar" data-carrito-id="<%= pedido.id_pedido %>">🛠 Ver Detalle</button>
+                  <button onclick='marcarPreparado("<%= pedido.id_pedido %>")'>🧪 Marcar Preparado</button>
+                  <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
+
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="6">No hay pedidos pendientes.</td></tr>
+          <% } %>
         </tbody>
       </table>
     </div>
-    
+
     <!-- MODAL EMERGENTE -->
     <div id="modal-preparar" class="modal">
       <div class="modal-contenido">
         <span class="cerrar-modal" onclick="cerrarModal()">&times;</span>
         <h3>Orden de Venta</h3>
-    
-        <div id="detalle-orden">
-          <!-- Aquí se cargará la orden con JS -->
-        </div>
+
+        <p><strong>Cliente:</strong> <span id="nombre-cliente"></span></p>
+        <p><strong>Fecha:</strong> <span id="fecha-pedido"></span></p>
+
+        <table class="tabla-detalle">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio Unitario</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="detalle-productos">
+            <!-- Se insertan con JS -->
+          </tbody>
+        </table>
+
+        <p class="total-final">Total: <span id="total-final"></span></p>
       </div>
     </div>
-    
   </main>
 
   <%- include('./layouts/footer.ejs') %>
+
   <script>
-  async function obtenerPedidos() {
-    try {
-        const response = await fetch('/pedidos');  
-        const pedidos = await response.json();
-        console.log("🔍 Pedidos obtenidos en el frontend:", pedidos); 
-
-        if (pedidos.length > 0) {
-            let pedidosHTML = "";
-            pedidos.forEach(pedido => {
-                pedidosHTML += `
-                    <tr>
-                        <td>${pedido.id_pedido}</td>
-                        <td>${pedido.cliente}</td>
-                        <td>$${pedido.total}</td>
-                        <td>${pedido.tipo_envio}</td>
-                        <td>${pedido.estado}</td>
-                        <td>
-                            <button class="btn-preparar" data-carrito-id="${pedido.id_carrito}">🛠 Ver Detalle</button>
-                            <button onclick="marcarPreparado(${pedido.id_pedido})">🧪 Marcar Preparado</button>
-                            <button onclick="finalizarPedido(${pedido.id_pedido})">✅ Finalizar</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            document.querySelector("tbody").innerHTML = pedidosHTML;
-
-            // Reasignar los eventos de los botones del modal
-            asignarEventosModal(); // <- Función que verás abajo
-
-        } else {
-            document.querySelector("tbody").innerHTML = "<tr><td colspan='6'>No hay pedidos pendientes.</td></tr>";
-        }
-    } catch (error) {
-        console.error("❌ Error al cargar pedidos:", error);
+    // Modal emergente
+    function cerrarModal() {
+      document.getElementById("modal-preparar").style.display = "none";
     }
-}
-function asignarEventosModal() {
-  const modal = document.getElementById('modal-preparar');
-  const overlay = document.querySelector('.modal-overlay');
-  const cerrarBtn = document.getElementById('cerrar-modal');
-  const cuerpoTabla = document.querySelector('#detalle-productos tbody');
-  const nombreCliente = document.getElementById('nombre-cliente');
-  const fechaPedido = document.getElementById('fecha-pedido');
-  const totalFinal = document.getElementById('total-final');
 
-  document.querySelectorAll('.btn-preparar').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const carritoId = btn.dataset.carritoId;
+    function asignarEventosModal() {
+      const modal = document.getElementById('modal-preparar');
+      const cuerpoTabla = document.querySelector('#detalle-productos');
+      const nombreCliente = document.getElementById('nombre-cliente');
+      const fechaPedido = document.getElementById('fecha-pedido');
+      const totalFinal = document.getElementById('total-final');
 
-      try {
-        const response = await fetch(`/admin/pedidos/${carritoId}/detalle`);
-        const data = await response.json();
+      document.querySelectorAll('.btn-preparar').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const carritoId = btn.dataset.carritoId;
+          try {
+            const response = await fetch(`/admin/pedidos/${carritoId}/detalle`);
+            const data = await response.json();
 
-        cuerpoTabla.innerHTML = '';
-        nombreCliente.textContent = data.cliente;
-        fechaPedido.textContent = data.fecha;
-        totalFinal.textContent = `$${Number(data.total).toLocaleString('es-AR')}`;
+            cuerpoTabla.innerHTML = '';
+            nombreCliente.textContent = data.cliente;
+            fechaPedido.textContent = data.fecha;
+            totalFinal.textContent = `$${Number(data.total).toLocaleString('es-AR')}`;
 
-        data.productos.forEach(producto => {
-          const fila = document.createElement('tr');
-          fila.innerHTML = `
-            <td>${producto.codigo}</td>
-            <td>${producto.nombre}</td>
-            <td>${producto.cantidad}</td>
-            <td>$${Number(producto.precio_unitario).toLocaleString('es-AR')}</td>
-            <td>$${Number(producto.subtotal).toLocaleString('es-AR')}</td>
-          `;
-          cuerpoTabla.appendChild(fila);
+            data.productos.forEach(producto => {
+              const fila = document.createElement('tr');
+              fila.innerHTML = `
+                <td>${producto.codigo}</td>
+                <td>${producto.nombre}</td>
+                <td>${producto.cantidad}</td>
+                <td>$${Number(producto.precio_unitario).toLocaleString('es-AR')}</td>
+                <td>$${Number(producto.subtotal).toLocaleString('es-AR')}</td>
+              `;
+              cuerpoTabla.appendChild(fila);
+            });
+
+            modal.style.display = 'block';
+          } catch (err) {
+            console.error('❌ Error al obtener detalle del pedido:', err);
+            alert('Hubo un problema al cargar los datos del pedido.');
+          }
         });
+      });
+    }
 
-        modal.style.display = 'block';
-        overlay.style.display = 'block';
-
-      } catch (err) {
-        console.error('❌ Error al obtener detalle del pedido:', err);
-        alert('Hubo un problema al cargar los datos del pedido.');
-      }
+    // Activar eventos una vez que carga la página
+    document.addEventListener('DOMContentLoaded', () => {
+      asignarEventosModal();
     });
-  });
 
-  cerrarBtn.addEventListener('click', () => {
-    modal.style.display = 'none';
-    overlay.style.display = 'none';
-  });
+    function marcarPreparado(id) {
+      fetch(`/pedidos/marcar-preparado/${id}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.mensaje);
+          location.reload();
+        }).catch(err => console.error(err));
+    }
 
-  overlay.addEventListener('click', () => {
-    modal.style.display = 'none';
-    overlay.style.display = 'none';
-  });
-}
-
+    function finalizarPedido(id) {
+      fetch(`/pedidos/finalizar/${id}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.mensaje);
+          location.reload();
+        }).catch(err => console.error(err));
+    }
   </script>
 </body>
