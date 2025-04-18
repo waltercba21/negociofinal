@@ -4,7 +4,7 @@ module.exports = {
     obtenerPedidos: (estado, callback) => {
         let query = `
             SELECT c.id AS id_pedido, u.nombre AS cliente, c.estado, c.tipo_envio, 
-                   COALESCE(SUM(pc.cantidad * p.precio_venta), 0) AS total
+                   COALESCE(SUM(pc.cantidad * p.precio_venta), 0) AS total,
                    c.creado_en AS fecha
             FROM carritos c
             JOIN usuarios u ON c.usuario_id = u.id
