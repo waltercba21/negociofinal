@@ -88,7 +88,8 @@
         btn.addEventListener('click', async () => {
           const carritoId = btn.dataset.carritoId;
           try {
-            const response = await fetch(`/admin/pedidos/${carritoId}/detalle`);
+            const response = await fetch(`/pedidos/${carritoId}/detalle`);
+
             const data = await response.json();
 
             cuerpoTabla.innerHTML = '';
