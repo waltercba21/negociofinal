@@ -162,7 +162,89 @@ header .icons p {
   font-weight: bold;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 }
+.pedidos-admin {
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  margin-top: 30px;
+}
 
+.titulo-pedidos {
+  text-align: center;
+  color: #003f7d;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.tabla-pedidos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla-pedidos th,
+.tabla-pedidos td {
+  padding: 12px;
+  border-bottom: 1px solid #ccc;
+  text-align: center;
+}
+
+.tabla-pedidos th {
+  background-color: #003f7d;
+  color: white;
+}
+
+.tabla-pedidos tr:hover {
+  background-color: #f1f1f1;
+}
+
+.tabla-pedidos button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* MODAL */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-contenido {
+  background-color: #fff;
+  margin: 5% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 700px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.cerrar-modal {
+  float: right;
+  font-size: 28px;
+  cursor: pointer;
+  color: #333;
+}
+
+.cerrar-modal:hover {
+  color: red;
+}
+
+#detalle-orden {
+  margin-top: 20px;
+  font-size: 14px;
+}
 /* ---------------------------------------FOOTER ------------------------------------------- */
 footer {
   background-color: #fff;
