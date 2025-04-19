@@ -100,7 +100,7 @@ module.exports = {
           doc.pipe(stream);
       
           // 🧾 ENCABEZADO
-          doc.font("Arial", 14).font("Helvetica-Bold").text("ORDEN DE PREPARACION DE PEDIDO", { align: "center" });
+          doc.font("Helvetica-Bold").fontSize(14).text("ORDEN DE PREPARACION DE PEDIDO", { align: "center" });
           doc.moveDown();
           doc.font("Helvetica").fontSize(11);
           doc.text(`Cliente: ${detalle.cliente}`);
