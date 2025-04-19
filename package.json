@@ -34,6 +34,7 @@
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.14.0",
     "pdfmake": "^0.2.10",
+    "puppeteer": "^24.6.1",
     "roboto-font": "^0.1.0",
     "socket.io": "^4.7.5",
     "stream-buffers": "^3.0.2",
