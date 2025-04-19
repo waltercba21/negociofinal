@@ -1,5 +1,5 @@
 const pedidos = require('../models/pedidos');
-const puppeteer = require('puppeteer');
+const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 
@@ -81,82 +81,102 @@ module.exports = {
             res.json(detalle);
         });
     },
-    generarPDFPreparacion: async (req, res) => {
+    generarPDFPreparacion: (req, res) => {
         const id_carrito = req.params.id;
       
-        pedidos.obtenerDetallePedido(id_carrito, async (error, detalle) => {
+        pedidos.obtenerDetallePedido(id_carrito, (error, detalle) => {
           if (error || !detalle) {
             console.error("❌ No se pudo generar el PDF:", error);
             return res.status(500).send("Error al generar PDF");
           }
       
-          const htmlContent = `
-            <html>
-              <head>
-                <style>
-                  body { font-family: Arial, sans-serif; font-size: 12px; padding: 40px; }
-                  h1 { text-align: center; }
-                  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                  th, td { border: 1px solid #000; padding: 5px; text-align: left; }
-                  .right { text-align: right; }
-                  .center { text-align: center; }
-                  .footer { margin-top: 30px; }
-                </style>
-              </head>
-              <body>
-                <h1>ORDEN DE PREPARACION DE PEDIDO</h1>
-                <p><strong>Cliente:</strong> ${detalle.cliente}</p>
-                <p><strong>Teléfono:</strong> ${detalle.telefono || '---'}</p>
-                <p><strong>Fecha:</strong> ${detalle.fecha}</p>
-      
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Código</th>
-                      <th>Producto</th>
-                      <th class="center">Cant.</th>
-                      <th class="right">P. Unitario</th>
-                      <th class="right">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${detalle.productos.map(prod => `
-                      <tr>
-                        <td>${prod.codigo}</td>
-                        <td>${prod.nombre}</td>
-                        <td class="center">${prod.cantidad}</td>
-                        <td class="right">$${prod.precio_unitario.toLocaleString('es-AR')}</td>
-                        <td class="right">$${prod.subtotal.toLocaleString('es-AR')}</td>
-                      </tr>
-                    `).join('')}
-                    <tr>
-                      <td colspan="4" class="right"><strong>TOTAL:</strong></td>
-                      <td class="right"><strong>$${detalle.total.toLocaleString('es-AR')}</strong></td>
-                    </tr>
-                  </tbody>
-                </table>
-      
-                <div class="footer">
-                  <p>El producto se entrega en perfectas condiciones y fue revisado previamente.</p>
-                  <p>Firma del cliente: ______________________</p>
-                  <p>Aclaración: ______________________</p>
-                  <p>DNI: __________________</p>
-                </div>
-              </body>
-            </html>
-          `;
-      
           const filePath = path.join(__dirname, `../temp/preparacion_${id_carrito}.pdf`);
-          const browser = await puppeteer.launch({ headless: true });
-          const page = await browser.newPage();
-          await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-          await page.pdf({ path: filePath, format: 'A4', printBackground: true });
-          await browser.close();
+          const doc = new PDFDocument({ margin: 40 });
       
-          res.download(filePath, `pedido_${id_carrito}.pdf`, (err) => {
-            if (err) console.error("❌ Error al enviar el PDF:", err);
-            fs.unlink(filePath, () => {});
+          const dir = path.dirname(filePath);
+          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      
+          const stream = fs.createWriteStream(filePath);
+          doc.pipe(stream);
+      
+          // ENCABEZADO
+          doc.font("Helvetica-Bold").fontSize(14).text("ORDEN DE PREPARACION DE PEDIDO", { align: "center" });
+          doc.moveDown();
+          doc.font("Helvetica").fontSize(11);
+          doc.text(`Cliente: ${detalle.cliente}`);
+          doc.text(`Teléfono: ${detalle.telefono || '---'}`);
+          doc.text(`Fecha: ${detalle.fecha}`);
+          doc.moveDown(1);
+      
+          // CONFIGURACIÓN DE COLUMNAS
+          const col_codigo = 35;
+          const col_producto = 75;
+          const col_cantidad = 20;
+          const col_unitario = 30;
+          const col_subtotal = 30;
+      
+          // ENCABEZADO DE TABLA
+          doc.font("Helvetica-Bold").fontSize(9);
+          doc.cell = undefined; // prevenir conflictos si cell fue definido por otro script
+          doc.cell?.(col_codigo, 7, "Código", 1, 0);
+          doc.cell?.(col_producto, 7, "Producto", 1, 0);
+          doc.cell?.(col_cantidad, 7, "Cant.", 1, 0, "C");
+          doc.cell?.(col_unitario, 7, "P. Unitario", 1, 0, "R");
+          doc.cell?.(col_subtotal, 7, "Subtotal", 1, 1, "R");
+      
+          doc.set_font = doc.set_font || doc.font; // compatibilidad
+      
+          // CUERPO DE TABLA
+          doc.font("Helvetica").fontSize(8);
+          detalle.productos.forEach(prod => {
+            const y_start = doc.y;
+            const x_start = doc.x;
+      
+            const nombre_lines = doc.splitTextToSize?.(prod.nombre, col_producto) ?? [prod.nombre];
+            const row_height = Math.max(nombre_lines.length * 4, 7);
+            doc.set_y(y_start);
+      
+            // Código
+            doc.cell?.(col_codigo, row_height, prod.codigo, 1, 0);
+            
+            // Producto
+            const x = doc.x;
+            const y = doc.y;
+            doc.multi_cell(col_producto, 4, prod.nombre, 1, "L");
+            doc.set_xy(x_start + col_codigo + col_producto, y_start);
+      
+            // Cantidad
+            doc.cell?.(col_cantidad, row_height, String(prod.cantidad), 1, 0, "C");
+      
+            // Precio unitario
+            doc.cell?.(col_unitario, row_height, `$${prod.precio_unitario.toLocaleString('es-AR')}`, 1, 0, "R");
+      
+            // Subtotal
+            doc.cell?.(col_subtotal, row_height, `$${prod.subtotal.toLocaleString('es-AR')}`, 1, 1, "R");
+          });
+      
+          // TOTAL
+          doc.font("Helvetica-Bold").fontSize(9);
+          doc.cell?.(col_codigo + col_producto + col_cantidad + col_unitario, 7, "TOTAL:", 1, 0, "R");
+          doc.cell?.(col_subtotal, 7, `$${detalle.total.toLocaleString('es-AR')}`, 1, 1, "R");
+      
+          // PIE DE FIRMA
+          doc.moveDown(2);
+          doc.font("Helvetica").fontSize(8);
+          doc.text("El producto se entrega en perfectas condiciones y fue revisado previamente.");
+          doc.moveDown(1);
+          doc.text("Firma del cliente: ______________________");
+          doc.text("Aclaración: ______________________");
+          doc.text("DNI: __________________");
+      
+          doc.end();
+      
+          stream.on('finish', () => {
+            res.download(filePath, `pedido_${id_carrito}.pdf`, (err) => {
+              if (err) console.error("❌ Error al enviar el PDF:", err);
+              fs.unlink(filePath, () => {});
+            });
           });
         });
-      }
+      },
 };
