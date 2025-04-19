@@ -19,7 +19,7 @@ var pedidosRoutes = require('./routes/pedidos');
 // **Corrección de socket.io**
 var app = express();
 var server = require('http').Server(app);
-var io = require('socket.io')(server, { cors: { origin: "*" } });  // ✅ Permite conexiones de cualquier origen
+var io = require('socket.io')(server, { cors: { origin: "*" } });
 app.set('io', io);
 // Configuración de Mercado Pago
 mercadopago.configure({

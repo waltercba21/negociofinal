@@ -109,43 +109,70 @@
             modal.style.display = 'block';
           } catch (err) {
             console.error('❌ Error al obtener detalle del pedido:', err);
-            alert('Hubo un problema al cargar los datos del pedido.');
+            Swal.fire('Error', 'Hubo un problema al cargar los datos del pedido.', 'error');
           }
         });
       });
     }
   
-    // Al hacer clic en "📦 Preparar Pedido"
+    // Botón 📦 Preparar Pedido
     function prepararPedido(id) {
       fetch(`/pedidos/marcar-preparado/${id}`, { method: 'POST' })
         .then(res => res.json())
         .then(data => {
-          alert(data.mensaje);
+          Swal.fire('Preparación iniciada', data.mensaje, 'info');
           const ventanaPDF = window.open(`/pedidos/${id}/pdf-preparacion`, '_blank');
-        if (ventanaPDF) {
-          ventanaPDF.onload = () => {
-            ventanaPDF.print();
-          };
-        }
-          setTimeout(() => location.reload(), 2000);
+          if (ventanaPDF) {
+            ventanaPDF.onload = () => {
+              ventanaPDF.print();
+            };
+          }
+          setTimeout(() => location.reload(), 2500);
         })
-        .catch(err => console.error('❌ Error al preparar pedido:', err));
+        .catch(err => {
+          console.error('❌ Error al preparar pedido:', err);
+          Swal.fire('Error', 'No se pudo marcar como en preparación.', 'error');
+        });
     }
   
+    // Botón ✅ Finalizar Pedido
     function finalizarPedido(id) {
       fetch(`/pedidos/finalizar/${id}`, { method: 'POST' })
         .then(res => res.json())
         .then(data => {
-          alert(data.mensaje);
-          location.reload();
+          Swal.fire('Pedido Finalizado', data.mensaje, 'success');
+          setTimeout(() => location.reload(), 1500);
         })
-        .catch(err => console.error(err));
+        .catch(err => {
+          console.error(err);
+          Swal.fire('Error', 'No se pudo finalizar el pedido.', 'error');
+        });
     }
   
-    // Activar los eventos del modal una vez cargada la página
+    // Escuchar evento nuevoPedido en tiempo real (desde el backend via socket.io)
+    const socket = io();
+    socket.on("nuevoPedido", (data) => {
+      Swal.fire({
+        title: '📦 Nuevo pedido recibido',
+        text: `Pedido #${data.id_pedido} fue marcado como "${data.estado}"`,
+        icon: data.estado === "finalizado" ? 'success' : 'info',
+        confirmButtonText: 'Ver pedidos',
+        showCancelButton: true,
+        cancelButtonText: 'Cerrar',
+        timer: 7000,
+        timerProgressBar: true
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = '/pedidos';
+        }
+      });
+    });
+  
+    // Al iniciar
     document.addEventListener('DOMContentLoaded', () => {
       asignarEventosModal();
     });
   </script>
+  
   
 </body>
