@@ -108,7 +108,7 @@ module.exports = {
           doc.text(`Fecha: ${detalle.fecha}`);
           doc.moveDown(1);
       
-          // 📊 TABLA
+          // 📊 ENCABEZADO DE TABLA
           const col_codigo = 35;
           const col_producto = 75;
           const col_cantidad = 20;
@@ -116,39 +116,38 @@ module.exports = {
           const col_subtotal = 30;
           const x_start = doc.x;
       
-          doc.font("Helvetica-Bold", 9);
-          doc.cell = (w, h, txt, opts = {}) => doc.cell(w, h, txt, opts.border || 1, opts.align || "L");
+          doc.font("Helvetica-Bold").fontSize(9);
+          doc.text("Código", x_start, doc.y, { width: col_codigo });
+          doc.text("Producto", x_start + col_codigo, doc.y, { width: col_producto });
+          doc.text("Cant.", x_start + col_codigo + col_producto, doc.y, { width: col_cantidad, align: "center" });
+          doc.text("P. Unitario", x_start + col_codigo + col_producto + col_cantidad, doc.y, { width: col_unitario, align: "right" });
+          doc.text("Subtotal", x_start + col_codigo + col_producto + col_cantidad + col_unitario, doc.y, { width: col_subtotal, align: "right" });
+          doc.moveDown(0.5);
       
-          doc.cell(col_codigo, 7, "Código", { align: "L" });
-          doc.cell(col_producto, 7, "Producto", { align: "L" });
-          doc.cell(col_cantidad, 7, "Cant.", { align: "C" });
-          doc.cell(col_unitario, 7, "P. Unitario", { align: "R" });
-          doc.cell(col_subtotal, 7, "Subtotal", { align: "R" });
-          doc.moveDown(0.3);
-      
-          doc.font("Helvetica", 8);
+          // 📦 DETALLE DE PRODUCTOS
+          doc.font("Helvetica").fontSize(8);
           detalle.productos.forEach(prod => {
             const y = doc.y;
             const nombre_lines = doc.splitTextToSize(prod.nombre, col_producto);
             const row_height = nombre_lines.length * 4.5;
       
-            doc.y = y;
-            doc.x = x_start;
-            doc.cell(col_codigo, row_height, prod.codigo, { align: "L" });
-            doc.cell(col_producto, row_height, prod.nombre, { align: "L" });
-            doc.cell(col_cantidad, row_height, String(prod.cantidad), { align: "C" });
-            doc.cell(col_unitario, row_height, `$${prod.precio_unitario.toLocaleString('es-AR')}`, { align: "R" });
-            doc.cell(col_subtotal, row_height, `$${prod.subtotal.toLocaleString('es-AR')}`, { align: "R" });
+            doc.text(prod.codigo, x_start, y, { width: col_codigo });
+            doc.text(prod.nombre, x_start + col_codigo, y, { width: col_producto });
+            doc.text(String(prod.cantidad), x_start + col_codigo + col_producto, y, { width: col_cantidad, align: "center" });
+            doc.text(`$${prod.precio_unitario.toLocaleString('es-AR')}`, x_start + col_codigo + col_producto + col_cantidad, y, { width: col_unitario, align: "right" });
+            doc.text(`$${prod.subtotal.toLocaleString('es-AR')}`, x_start + col_codigo + col_producto + col_cantidad + col_unitario, y, { width: col_subtotal, align: "right" });
+            doc.moveDown(nombre_lines.length * 0.5);
           });
       
           // 🧮 TOTAL
-          doc.font("Helvetica-Bold", 9);
-          doc.cell(col_codigo + col_producto + col_cantidad + col_unitario, 7, "TOTAL:", { align: "R" });
-          doc.cell(col_subtotal, 7, `$${detalle.total.toLocaleString('es-AR')}`, { align: "R" });
+          doc.moveDown(0.5);
+          doc.font("Helvetica-Bold").fontSize(9);
+          doc.text("TOTAL:", x_start, doc.y, { width: col_codigo + col_producto + col_cantidad + col_unitario, align: "right" });
+          doc.text(`$${detalle.total.toLocaleString('es-AR')}`, x_start + col_codigo + col_producto + col_cantidad + col_unitario, doc.y, { width: col_subtotal, align: "right" });
           doc.moveDown(2);
       
           // 📝 PIE
-          doc.font("Helvetica", 8);
+          doc.font("Helvetica").fontSize(8);
           doc.text("El producto se entrega en perfectas condiciones y fue revisado previamente.");
           doc.moveDown(1);
           doc.text("Firma del cliente: ______________________");
