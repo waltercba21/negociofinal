@@ -20,7 +20,7 @@ var pedidosRoutes = require('./routes/pedidos');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server, { cors: { origin: "*" } });  // ✅ Permite conexiones de cualquier origen
-
+app.set('io', io);
 // Configuración de Mercado Pago
 mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN
