@@ -99,7 +99,7 @@ module.exports = {
           const stream = fs.createWriteStream(filePath);
           doc.pipe(stream);
       
-          // 🧾 ENCABEZADO
+          // ✅ ENCABEZADO
           doc.font("Helvetica-Bold").fontSize(14).text("ORDEN DE PREPARACION DE PEDIDO", { align: "center" });
           doc.moveDown();
           doc.font("Helvetica").fontSize(11);
@@ -108,45 +108,67 @@ module.exports = {
           doc.text(`Fecha: ${detalle.fecha}`);
           doc.moveDown(1);
       
-          // 📊 ENCABEZADO DE TABLA
+          // ✅ CONFIGURACIÓN DE TABLA
           const col_codigo = 35;
           const col_producto = 75;
           const col_cantidad = 20;
           const col_unitario = 30;
           const col_subtotal = 30;
-          const x_start = doc.x;
+          const total_width = col_codigo + col_producto + col_cantidad + col_unitario + col_subtotal;
+          const startX = doc.x;
       
+          // ✅ ENCABEZADO DE TABLA
           doc.font("Helvetica-Bold").fontSize(9);
-          doc.text("Código", x_start, doc.y, { width: col_codigo });
-          doc.text("Producto", x_start + col_codigo, doc.y, { width: col_producto });
-          doc.text("Cant.", x_start + col_codigo + col_producto, doc.y, { width: col_cantidad, align: "center" });
-          doc.text("P. Unitario", x_start + col_codigo + col_producto + col_cantidad, doc.y, { width: col_unitario, align: "right" });
-          doc.text("Subtotal", x_start + col_codigo + col_producto + col_cantidad + col_unitario, doc.y, { width: col_subtotal, align: "right" });
+          doc.cell = (w, h, txt, align = "L") => {
+            doc.text(txt, doc.x, doc.y, { width: w, align });
+            doc.x += w;
+          };
+      
+          doc.cell(col_codigo, 7, "Código");
+          doc.cell(col_producto, 7, "Producto");
+          doc.cell(col_cantidad, 7, "Cant.", "C");
+          doc.cell(col_unitario, 7, "P. Unitario", "R");
+          doc.cell(col_subtotal, 7, "Subtotal", "R");
           doc.moveDown(0.5);
       
-          // 📦 DETALLE DE PRODUCTOS
+          // ✅ CUERPO DE TABLA
           doc.font("Helvetica").fontSize(8);
           detalle.productos.forEach(prod => {
             const y = doc.y;
-            const nombre_lines = doc.splitTextToSize(prod.nombre, col_producto);
-            const row_height = nombre_lines.length * 4.5;
+            const x = startX;
       
-            doc.text(prod.codigo, x_start, y, { width: col_codigo });
-            doc.text(prod.nombre, x_start + col_codigo, y, { width: col_producto });
-            doc.text(String(prod.cantidad), x_start + col_codigo + col_producto, y, { width: col_cantidad, align: "center" });
-            doc.text(`$${prod.precio_unitario.toLocaleString('es-AR')}`, x_start + col_codigo + col_producto + col_cantidad, y, { width: col_unitario, align: "right" });
-            doc.text(`$${prod.subtotal.toLocaleString('es-AR')}`, x_start + col_codigo + col_producto + col_cantidad + col_unitario, y, { width: col_subtotal, align: "right" });
+            // Simular altura basada en nombre
+            const nombre_lines = doc.splitTextToSize ? doc.splitTextToSize(prod.nombre, col_producto) : [prod.nombre];
+            const row_height = Math.max(nombre_lines.length * 4.5, 7);
+      
+            // Código
+            doc.text(prod.codigo, x, y, { width: col_codigo });
+            // Producto
+            doc.text(prod.nombre, x + col_codigo, y, { width: col_producto });
+            // Cantidad
+            doc.text(String(prod.cantidad), x + col_codigo + col_producto, y, { width: col_cantidad, align: "center" });
+            // Precio Unitario
+            doc.text(`$${prod.precio_unitario.toLocaleString('es-AR')}`, x + col_codigo + col_producto + col_cantidad, y, { width: col_unitario, align: "right" });
+            // Subtotal
+            doc.text(`$${prod.subtotal.toLocaleString('es-AR')}`, x + col_codigo + col_producto + col_cantidad + col_unitario, y, { width: col_subtotal, align: "right" });
+      
             doc.moveDown(nombre_lines.length * 0.5);
           });
       
-          // 🧮 TOTAL
+          // ✅ TOTAL
           doc.moveDown(0.5);
           doc.font("Helvetica-Bold").fontSize(9);
-          doc.text("TOTAL:", x_start, doc.y, { width: col_codigo + col_producto + col_cantidad + col_unitario, align: "right" });
-          doc.text(`$${detalle.total.toLocaleString('es-AR')}`, x_start + col_codigo + col_producto + col_cantidad + col_unitario, doc.y, { width: col_subtotal, align: "right" });
-          doc.moveDown(2);
+          doc.text("TOTAL:", startX, doc.y, {
+            width: col_codigo + col_producto + col_cantidad + col_unitario,
+            align: "right",
+          });
+          doc.text(`$${detalle.total.toLocaleString('es-AR')}`, startX + col_codigo + col_producto + col_cantidad + col_unitario, doc.y, {
+            width: col_subtotal,
+            align: "right",
+          });
       
-          // 📝 PIE
+          // ✅ PIE
+          doc.moveDown(2);
           doc.font("Helvetica").fontSize(8);
           doc.text("El producto se entrega en perfectas condiciones y fue revisado previamente.");
           doc.moveDown(1);
