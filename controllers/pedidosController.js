@@ -99,7 +99,7 @@ module.exports = {
           const stream = fs.createWriteStream(filePath);
           doc.pipe(stream);
       
-          // ENCABEZADO
+          // ✅ ENCABEZADO
           doc.font("Helvetica-Bold").fontSize(14).text("ORDEN DE PREPARACION DE PEDIDO", { align: "center" });
           doc.moveDown();
           doc.font("Helvetica").fontSize(11);
@@ -108,69 +108,62 @@ module.exports = {
           doc.text(`Fecha: ${detalle.fecha}`);
           doc.moveDown(1);
       
-          // CONFIGURACIÓN DE COLUMNAS
+          // ✅ CONFIGURAR ANCHO DE COLUMNAS
           const col_codigo = 35;
           const col_producto = 75;
           const col_cantidad = 20;
           const col_unitario = 30;
           const col_subtotal = 30;
       
-          // ENCABEZADO DE TABLA
+          // ✅ ENCABEZADO DE TABLA
           doc.font("Helvetica-Bold").fontSize(9);
-          doc.cell = (w, h, txt, align = "L") => {
-            doc.text(txt, doc.x, doc.y, { width: w, align });
-            doc.x += w;
-          };
+          doc.cell(col_codigo, 7, "Código", 1, 0);
+          doc.cell(col_producto, 7, "Producto", 1, 0);
+          doc.cell(col_cantidad, 7, "Cant.", 1, 0, "C");
+          doc.cell(col_unitario, 7, "P. Unitario", 1, 0, "R");
+          doc.cell(col_subtotal, 7, "Subtotal", 1, 1, "R");
       
-          doc.cell(col_codigo, 7, "Código");
-          doc.cell(col_producto, 7, "Producto");
-          doc.cell(col_cantidad, 7, "Cant.", "C");
-          doc.cell(col_unitario, 7, "P. Unitario", "R");
-          doc.cell(col_subtotal, 7, "Subtotal", "R");
-          doc.moveDown(0.5);
-      
-          // CUERPO DE TABLA
+          // ✅ CUERPO DE TABLA
           doc.font("Helvetica").fontSize(8);
           detalle.productos.forEach(prod => {
-            const x = doc.x;
-            const y = doc.y;
+            const y_start = doc.y;
+            const x_start = doc.x;
       
+            // Dividir el nombre en múltiples líneas para calcular la altura
             const nombre_lines = doc.splitTextToSize
               ? doc.splitTextToSize(prod.nombre, col_producto)
               : [prod.nombre];
             const row_height = Math.max(nombre_lines.length * 4, 7);
-      
-            doc.y = y;
+            doc.set_y(y_start);
       
             // Código
-            doc.text(prod.codigo, x, y, { width: col_codigo });
-      
-            // Producto
-            doc.text(prod.nombre, x + col_codigo, y, { width: col_producto });
+            doc.cell(col_codigo, row_height, prod.codigo, 1, 0);
+            
+            // Producto (multi-linea con borde)
+            const x = doc.get_x();
+            const y = doc.get_y();
+            doc.multi_cell(col_producto, 4, prod.nombre, 1, "L");
+            doc.set_xy(x_start + col_codigo + col_producto, y_start);
       
             // Cantidad
-            doc.text(String(prod.cantidad), x + col_codigo + col_producto, y, { width: col_cantidad, align: "center" });
+            doc.cell(col_cantidad, row_height, String(prod.cantidad), 1, 0, "C");
       
             // Precio unitario
-            doc.text(`$${prod.precio_unitario.toLocaleString('es-AR')}`, x + col_codigo + col_producto + col_cantidad, y, { width: col_unitario, align: "right" });
+            doc.cell(col_unitario, row_height, `$${prod.precio_unitario.toLocaleString('es-AR')}`, 1, 0, "R");
       
             // Subtotal
-            doc.text(`$${prod.subtotal.toLocaleString('es-AR')}`, x + col_codigo + col_producto + col_cantidad + col_unitario, y, { width: col_subtotal, align: "right" });
-      
-            doc.moveDown(nombre_lines.length * 0.5);
+            doc.cell(col_subtotal, row_height, `$${prod.subtotal.toLocaleString('es-AR')}`, 1, 1, "R");
           });
       
-          // TOTAL
-          doc.moveDown(0.5);
+          // ✅ TOTAL
           doc.font("Helvetica-Bold").fontSize(9);
-          const ancho_total = col_codigo + col_producto + col_cantidad + col_unitario;
-          doc.text("TOTAL:", doc.x, doc.y, { width: ancho_total, align: "right" });
-          doc.text(`$${detalle.total.toLocaleString('es-AR')}`, doc.x + ancho_total, doc.y, { width: col_subtotal, align: "right" });
+          doc.cell(col_codigo + col_producto + col_cantidad + col_unitario, 7, "TOTAL:", 1, 0, "R");
+          doc.cell(col_subtotal, 7, `$${detalle.total.toLocaleString('es-AR')}`, 1, 1, "R");
       
-          // PIE DE PÁGINA
+          // ✅ PIE DE PÁGINA
           doc.moveDown(2);
           doc.font("Helvetica").fontSize(8);
-          doc.text("El producto se entrega en perfectas condiciones y fue revisado previamente.");
+          doc.multi_cell(0, 5, "El producto se entrega en perfectas condiciones y fue revisado previamente.");
           doc.moveDown(1);
           doc.text("Firma del cliente: ______________________");
           doc.text("Aclaración: ______________________");
