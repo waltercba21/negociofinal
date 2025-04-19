@@ -81,7 +81,7 @@ module.exports = {
             res.json(detalle);
         });
     },
-    generarPDFPreparacion : (req, res) => {
+    generarPDFPreparacion: (req, res) => {
         const id_carrito = req.params.id;
       
         pedidos.obtenerDetallePedido(id_carrito, (error, detalle) => {
@@ -92,66 +92,68 @@ module.exports = {
       
           // Ruta temporal
           const filePath = path.join(__dirname, `../temp/preparacion_${id_carrito}.pdf`);
-          const doc = new PDFDocument();
+          const doc = new PDFDocument({ margin: 50 });
       
-          // Crear carpeta si no existe
           const dir = path.dirname(filePath);
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-          }
+          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
       
-          // Escribir PDF en disco
           const stream = fs.createWriteStream(filePath);
           doc.pipe(stream);
       
           // Encabezado
-          doc.fontSize(16).text("ORDEN DE PREPARACION DE PEDIDO", { align: "center" }).moveDown();
+          doc.fontSize(16).text("ORDEN DE PREPARACION DE PEDIDO", { align: "center" }).moveDown(1.5);
+      
           doc.fontSize(12);
-          doc.text(`Cliente: ${detalle.cliente}`);
-          doc.text(`Teléfono: ${detalle.telefono || '---'}`);
-          doc.text(`Fecha: ${detalle.fecha}`);
+          doc.text(`Cliente: ${detalle.cliente}`, { align: "left" });
+          doc.text(`Teléfono: ${detalle.telefono || '---'}`, { align: "left" });
+          doc.text(`Fecha: ${detalle.fecha}`, { align: "left" });
           doc.moveDown(1);
       
-          // Tabla de productos
+          // Tabla encabezado
           doc.font("Helvetica-Bold", 11);
           doc.text("Código", 50, doc.y, { continued: true });
-          doc.text("Producto", 120, doc.y, { continued: true });
+          doc.text("Producto", 110, doc.y, { continued: true });
           doc.text("Cant.", 300, doc.y, { continued: true });
           doc.text("P. Unitario", 360, doc.y, { continued: true });
           doc.text("Subtotal", 450);
           doc.moveDown(0.5);
+      
+          // Tabla contenido
           doc.font("Helvetica", 10);
+          let total = 0;
       
           detalle.productos.forEach(prod => {
+            total += prod.subtotal;
             doc.text(prod.codigo, 50, doc.y, { continued: true });
-            doc.text(prod.nombre, 120, doc.y, { continued: true });
+            doc.text(prod.nombre, 110, doc.y, { continued: true });
             doc.text(String(prod.cantidad), 300, doc.y, { continued: true });
-            doc.text(`$${prod.precio_unitario}`, 360, doc.y, { continued: true });
-            doc.text(`$${prod.subtotal}`, 450);
+            doc.text(`$${Number(prod.precio_unitario).toLocaleString('es-AR')}`, 360, doc.y, { continued: true });
+            doc.text(`$${Number(prod.subtotal).toLocaleString('es-AR')}`, 450);
           });
       
-          doc.moveDown();
-          doc.font("Helvetica-Bold").fontSize(12).text(`TOTAL: $${detalle.total}`, { align: "right" });
+          // Total
+          doc.moveDown(1);
+          doc.font("Helvetica-Bold", 12).text(`TOTAL: $${total.toLocaleString('es-AR')}`, { align: "right" });
           doc.moveDown(2);
       
           // Pie
           doc.font("Helvetica").fontSize(10);
           doc.text("El producto se entrega en perfectas condiciones y fue revisado previamente.");
           doc.moveDown(2);
-          doc.text("Firma del cliente: ______________________", { continued: true });
-          doc.text("   Aclaración: ______________________", { continued: true });
-          doc.text("   DNI: __________________");
+          doc.text("Firma del cliente: ______________________", { align: "left" });
+          doc.text("Aclaración: ______________________", { align: "left" });
+          doc.text("DNI: __________________", { align: "left" });
       
           doc.end();
       
-          // Cuando el archivo esté listo, enviarlo
           stream.on('finish', () => {
             res.download(filePath, `pedido_${id_carrito}.pdf`, (err) => {
               if (err) console.error("❌ Error al enviar el PDF:", err);
-              fs.unlink(filePath, () => {}); // Borrar archivo temporal
+              fs.unlink(filePath, () => {});
             });
           });
         });
       },
+      
     
 };
