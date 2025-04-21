@@ -1,40 +1,48 @@
-
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
+
 <body>
-    <main>
-        <h1>Productos Actualizados</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Precio Lista Viejo</th>
-                    <th>Precio Lista Nuevo</th>
-                    <th>Precio De Venta</th>
-                    <th>Diferencia</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% productos.forEach(producto => { 
-                    let diferencia = ((producto.precio_lista_nuevo - producto.precio_lista_antiguo) / producto.precio_lista_antiguo * 100).toFixed(2);
-                    let diferenciaClass = diferencia > 0 ? 'positivo' : 'negativo';
-                %>
-                    <tr>
-                        <td><%= producto.codigo %></td>
-                        <td><%= producto.nombre %></td>
-                        <td><%= producto.precio_lista_antiguo %></td>
-                        <td><%= producto.precio_lista_nuevo %></td>
-                        <td><%= producto.precio_venta %></td>
-                        <td class="<%= diferenciaClass %>"><%= diferencia %> %</td>
-                    </tr>
-                <% }); %>
-            </tbody>
-        </table>
-        <p>Total de productos actualizados: <%= productos.length %></p>
-    </main>
-    
-    <script src="/js/profile.js"></script>
-      <%- include ./layouts/footer.ejs %>
-  </body>
- 
+  <main>
+    <h1>Productos Actualizados</h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Precio Lista Viejo</th>
+          <th>Precio Lista Nuevo</th>
+          <th>Variación (%)</th>
+          <th>Precio de Venta</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% productos.forEach(producto => { %>
+          <tr>
+            <td><%= producto.codigo %></td>
+            <td><%= producto.nombre %></td>
+            <td>$<%= Number(producto.precio_lista_antiguo || 0).toLocaleString('es-AR') %></td>
+            <td>$<%= Number(producto.precio_lista_nuevo || 0).toLocaleString('es-AR') %></td>
+            <td>
+              <% if (producto.variacion !== null && producto.variacion !== undefined) { %>
+                <%= producto.variacion %>%
+              <% } else { %>
+                -
+              <% } %>
+            </td>
+            <td>$<%= Number(producto.precio_venta_calculado || 0).toLocaleString('es-AR') %></td>
+            <td>
+              <strong><%= producto.estado === 'MODIFICA' ? 'MODIFICA' : 'NO MODIFICA' %></strong>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+
+    <p>Total de productos actualizados: <%= productos.length %></p>
+  </main>
+
+  <script src="/js/profile.js"></script>
+  <%- include ./layouts/footer.ejs %>
+</body>
