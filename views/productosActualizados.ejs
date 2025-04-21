@@ -1,10 +1,8 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
-
 <body>
   <main>
     <h1>Productos Actualizados</h1>
-
     <table>
       <thead>
         <tr>
@@ -12,34 +10,30 @@
           <th>Nombre</th>
           <th>Precio Lista Viejo</th>
           <th>Precio Lista Nuevo</th>
-          <th>Variación (%)</th>
-          <th>Precio de Venta</th>
-          <th>Estado</th>
+          <th>Precio De Venta</th>
+          <th>Diferencia</th>
+          <th>Modificación</th>
         </tr>
       </thead>
       <tbody>
-        <% productos.forEach(producto => { %>
+        <% productos.forEach(producto => {
+          let viejo = parseFloat(producto.precio_lista_antiguo || 0);
+          let nuevo = parseFloat(producto.precio_lista || 0);
+          let diferencia = viejo > 0 ? (((nuevo - viejo) / viejo) * 100).toFixed(2) : '0.00';
+          let diferenciaClass = diferencia > 0 ? 'positivo' : (diferencia < 0 ? 'negativo' : 'neutro');
+        %>
           <tr>
             <td><%= producto.codigo %></td>
             <td><%= producto.nombre %></td>
-            <td>$<%= Number(producto.precio_lista_antiguo || 0).toLocaleString('es-AR') %></td>
-            <td>$<%= Number(producto.precio_lista_nuevo || 0).toLocaleString('es-AR') %></td>
-            <td>
-              <% if (producto.variacion !== null && producto.variacion !== undefined) { %>
-                <%= producto.variacion %>%
-              <% } else { %>
-                -
-              <% } %>
-            </td>
-            <td>$<%= Number(producto.precio_venta_calculado || 0).toLocaleString('es-AR') %></td>
-            <td>
-              <strong><%= producto.estado === 'MODIFICA' ? 'MODIFICA' : 'NO MODIFICA' %></strong>
-            </td>
+            <td>$<%= viejo.toLocaleString('es-AR') %></td>
+            <td>$<%= nuevo.toLocaleString('es-AR') %></td>
+            <td>$<%= parseFloat(producto.precio_venta || 0).toLocaleString('es-AR') %></td>
+            <td class="<%= diferenciaClass %>"><%= diferencia %> %</td>
+            <td><%= producto.estado || 'N/A' %></td>
           </tr>
         <% }); %>
       </tbody>
     </table>
-
     <p>Total de productos actualizados: <%= productos.length %></p>
   </main>
 
