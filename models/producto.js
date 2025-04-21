@@ -647,7 +647,8 @@ actualizarPreciosPDF : (precioLista, codigo, proveedor_id) => {
                 if (err) return reject(err);
 
                 // 2. Buscar proveedor más barato
-                const proveedorMasBarato = await exports.obtenerProveedorMasBarato(codigo);
+                const proveedorMasBarato = await producto.obtenerProveedorMasBarato(codigo);
+
 
 
                 if (!proveedorMasBarato) return resolve([]);
