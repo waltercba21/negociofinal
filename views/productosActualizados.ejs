@@ -1,74 +1,72 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body>
-  <main>
-    <h1>Productos Actualizados</h1>
-    <table>
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Nombre</th>
-          <th>Precio Lista Viejo</th>
-          <th>Precio Lista Nuevo</th>
-          <th>Precio De Venta</th>
-          <th>Diferencia</th>
-          <th>Modificación</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% productos.forEach(producto => {
-          const viejo = parseFloat(producto.precio_lista_antiguo || 0);
-          const nuevo = parseFloat(producto.precio_lista_nuevo || 0);
-          const diferencia = viejo > 0 ? (((nuevo - viejo) / viejo) * 100).toFixed(2) : '0.00';
-          const diferenciaClass = diferencia > 0 ? 'positivo' : (diferencia < 0 ? 'negativo' : 'neutro');
-        %>
-          <tr>
-            <td><%= producto.codigo %></td>
-            <td><%= producto.nombre %></td>
-            <td>$<%= viejo.toLocaleString('es-AR') %></td>
-            <td>$<%= nuevo.toLocaleString('es-AR') %></td>
-            <td>$<%= parseFloat(producto.precio_venta || 0).toLocaleString('es-AR') %></td>
-            <td class="<%= diferenciaClass %>"><%= diferencia %> %</td>
-            <td><%= producto.estado || 'N/A' %></td>
-          </tr>
-        <% }); %>
-      </tbody>
-    </table>
-    <p>Total de productos actualizados: <%= productos.length %></p>
-  </main>
+    <main>
+        <h1>Productos Actualizados</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Precio Lista Viejo</th>
+                    <th>Precio Lista Nuevo</th>
+                    <th>Precio De Venta</th>
+                    <th>Diferencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% productos.forEach(producto => { 
+                    const viejo = parseFloat(producto.precio_lista_antiguo || 0);
+                    const nuevo = parseFloat(producto.precio_lista_nuevo || 0);
+                    const diferencia = viejo > 0 ? (((nuevo - viejo) / viejo) * 100).toFixed(2) : '0.00';
+                    const diferenciaClass = diferencia > 0 ? 'positivo' : (diferencia < 0 ? 'negativo' : 'neutro');
+                %>
+                    <tr>
+                        <td><%= producto.codigo %></td>
+                        <td><%= producto.nombre %></td>
+                        <td>$<%= viejo.toLocaleString('es-AR') %></td>
+                        <td>$<%= nuevo.toLocaleString('es-AR') %></td>
+                        <td>$<%= parseFloat(producto.precio_venta || 0).toLocaleString('es-AR') %></td>
+                        <td class="<%= diferenciaClass %>"><%= diferencia %> %</td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <p>Total de productos actualizados: <%= productos.length %></p>
+    </main>
 
-  <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
 
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px 12px;
-      text-align: center;
-    }
+      th, td {
+        border: 1px solid #ccc;
+        padding: 8px 12px;
+        text-align: center;
+      }
 
-    th {
-      background-color: #f3f3f3;
-    }
+      th {
+        background-color: #f3f3f3;
+      }
 
-    .positivo {
-      color: green;
-      font-weight: bold;
-    }
+      .positivo {
+        color: green;
+        font-weight: bold;
+      }
 
-    .negativo {
-      color: red;
-      font-weight: bold;
-    }
+      .negativo {
+        color: red;
+        font-weight: bold;
+      }
 
-    .neutro {
-      color: gray;
-    }
-  </style>
+      .neutro {
+        color: gray;
+      }
+    </style>
 
-  <script src="/js/profile.js"></script>
-  <%- include ./layouts/footer.ejs %>
+    <script src="/js/profile.js"></script>
+    <%- include ./layouts/footer.ejs %>
 </body>

@@ -1450,141 +1450,106 @@ actualizarPrecios: function(req, res) {
     });
 },  
 actualizarPreciosExcel: async (req, res) => {
-  try {
-    const proveedor_id = req.body.proveedor;
-    const file = req.files[0];
-    let productosActualizados = [];
-
-    if (!proveedor_id || !file) {
-      return res.status(400).send('Proveedor y archivo son requeridos.');
-    }
-
-    if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-      const workbook = xlsx.readFile(file.path);
-      const sheet_name_list = workbook.SheetNames;
-      const resultados = [];
-
-      for (const sheet_name of sheet_name_list) {
-        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
-
-        for (const row of data) {
-          const codigoColumn = Object.keys(row).find(key =>
-            key.toLowerCase().replace(/\s/g, '').includes('codigo')
-          );
-          const precioColumn = Object.keys(row).find(key =>
-            key.toLowerCase().replace(/\s/g, '').includes('precio')
-          );
-
-          if (codigoColumn && precioColumn) {
-            const codigo = row[codigoColumn]?.toString().trim();
-            const precioRaw = row[precioColumn];
-
-            const precio = parseFloat(
-              typeof precioRaw === 'string'
-                ? precioRaw.replace(',', '.')
-                : precioRaw?.toString()
+    try {
+      const proveedor_id = req.body.proveedor;
+      const file = req.files[0];
+      let productosActualizados = [];
+  
+      if (!proveedor_id || !file) {
+        return res.status(400).send('Proveedor y archivo son requeridos.');
+      }
+  
+      if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        const workbook = xlsx.readFile(file.path);
+        const sheet_name_list = workbook.SheetNames;
+        const promises = [];
+  
+        for (const sheet_name of sheet_name_list) {
+          const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+  
+          for (const row of data) {
+            const codigoColumn = Object.keys(row).find(key =>
+              key.toLowerCase().replace(/\s/g, '').includes('codigo')
             );
-
-            if (!codigo || isNaN(precio) || precio <= 0) {
-              console.warn(`❌ Código o precio inválido: ${codigo} / ${precioRaw}`);
-              continue;
-            }
-
-            try {
-              const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
-              if (Array.isArray(resultado)) {
-                resultados.push(...resultado);
-              } else if (resultado) {
-                resultados.push(resultado);
+  
+            const precioColumn = Object.keys(row).find(key =>
+              key.toLowerCase().replace(/\s/g, '').includes('precio')
+            );
+  
+            if (codigoColumn && precioColumn) {
+              let codigoRaw = row[codigoColumn];
+              let precioRaw = row[precioColumn];
+  
+              let codigo = codigoRaw.toString().trim();
+  
+              if (typeof precioRaw === 'number') {
+                precioRaw = precioRaw.toString();
               }
-            } catch (error) {
-              console.log(`❌ Error al actualizar producto ${codigo}:`, error);
-              resultados.push({ error: true, codigo, message: error.message });
+  
+              if (typeof precioRaw === 'string') {
+                const precio = parseFloat(precioRaw.replace(',', '.'));
+  
+                if (isNaN(precio) || precio <= 0) {
+                  console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
+                  continue;
+                }
+  
+                promises.push(
+                  producto.actualizarPreciosPDF(precio, codigo, proveedor_id)
+                    .then(async productosActualizadosTemp => {
+                      if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
+                        productosActualizados.push(...productosActualizadosTemp);
+                        for (const productoActualizado of productosActualizadosTemp) {
+                          const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoActualizado.codigo);
+                          if (proveedorMasBarato) {
+                            await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo, proveedorMasBarato.proveedor_id);
+                          } else {
+                            console.log(`No se encontró ningún proveedor para el producto con código ${productoActualizado.codigo}`);
+                          }
+                        }
+                      } else {
+                        console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
+                        return { noExiste: true, codigo: codigo };
+                      }
+                    })
+                    .catch(error => {
+                      console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
+                      return { error: true, message: `Error al actualizar el producto con el código ${codigo}: ${error.message}` };
+                    })
+                );
+              } else {
+                console.error(`Tipo de dato no esperado para el precio en el código ${codigo}: ${typeof precioRaw}`);
+              }
+            } else {
+              console.error(`No se encontraron las columnas de código o precio en la fila: ${JSON.stringify(row)}`);
             }
           }
         }
-      }
-
-      for (const r of resultados) {
-        if (r && r.codigo && !r.error && !r.noExiste) {
-          try {
-            const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, r.producto_id);
-            if (proveedorMasBarato) {
-              await producto.asignarProveedorMasBarato(conexion, proveedorMasBarato.producto_id, proveedorMasBarato.proveedor_id);
-              productosActualizados.push({
-                codigo: r.codigo,
-                producto_id: r.producto_id,
-                precio_venta: r.precio_venta || 0,
-                sin_cambio: r.sin_cambio || false
-              });
-            }
-          } catch (e) {
-            console.log(`❌ No se pudo asignar proveedor más barato para ${r.codigo}:`, e.message);
-          }
+  
+        const resultados = await Promise.all(promises);
+        const errores = resultados.filter(resultado => resultado && resultado.error);
+        const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
+  
+        if (errores.length > 0) {
+          console.log("Errores al actualizar algunos productos:", errores);
         }
-      }
-
-      fs.unlinkSync(file.path);
-
-      const productosFinales = await Promise.all(
-        productosActualizados.map((prod) => {
-          return new Promise((resolve) => {
-            const sql = `
-              SELECT 
-                p.id, p.nombre, p.precio_venta, pp.codigo, 
-                (
-                  SELECT precio_lista FROM producto_proveedor 
-                  WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
-                  AND codigo = pp.codigo
-                  ORDER BY actualizado_en ASC LIMIT 1
-                ) AS precio_lista_antiguo,
-                (
-                  SELECT precio_lista FROM producto_proveedor 
-                  WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
-                  AND codigo = pp.codigo
-                  ORDER BY actualizado_en DESC LIMIT 1
-                ) AS precio_lista_nuevo
-              FROM productos p
-              JOIN producto_proveedor pp ON pp.producto_id = p.id
-              WHERE pp.codigo = ?
-              LIMIT 1
-            `;
-            conexion.query(sql, [prod.codigo], (err, rows) => {
-              if (err) {
-                console.error(`❌ Error al consultar producto ${prod.codigo}:`, err.message);
-                return resolve(prod);
-              }
-
-              const row = rows[0] || {};
-              const viejo = parseFloat(row.precio_lista_antiguo || 0);
-              const nuevo = parseFloat(row.precio_lista_nuevo || 0);
-              const variacion = viejo > 0 ? parseFloat((((nuevo - viejo) / viejo) * 100).toFixed(2)) : 0;
-
-              resolve({
-                ...row,
-                codigo: prod.codigo,
-                precio_venta: row.precio_venta || prod.precio_venta || 0,
-                precio_lista_antiguo: viejo,
-                precio_lista_nuevo: nuevo,
-                precio_venta_calculado: prod.precio_venta || 0,
-                estado: prod.sin_cambio ? 'NO MODIFICA' : 'MODIFICA',
-                variacion: variacion
-              });
-            });
+        if (noEncontrados.length > 0) {
+          noEncontrados.forEach(item => {
+            console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
           });
-        })
-      );
-
-      res.render('productosActualizados', { productos: productosFinales });
-
-    } else {
-      res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
+        }
+  
+        fs.unlinkSync(file.path);
+        res.render('productosActualizados', { productos: productosActualizados });
+      } else {
+        res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
+      }
+    } catch (error) {
+      console.log("Error durante el procesamiento de archivos", error);
+      res.status(500).send(error.message);
     }
-  } catch (error) {
-    console.log("❌ Error durante el procesamiento de archivos:", error);
-    res.status(500).send(error.message);
-  }
-},
+  },
+  
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
