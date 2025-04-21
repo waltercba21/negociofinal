@@ -1519,7 +1519,22 @@ actualizarPreciosExcel: async (req, res) => {
       }
 
       fs.unlinkSync(file.path);
-      res.render('productosActualizados', { productos: productosActualizados });
+
+// ✅ Refrescar los productos actualizados con valores reales desde la BD
+const productosFinales = await Promise.all(
+  productosActualizados.map(async (prod) => {
+    try {
+      const [rows] = await conexion.query('SELECT codigo, nombre, precio_venta FROM productos WHERE codigo = ?', [prod.codigo]);
+      return rows[0] || prod;
+    } catch (err) {
+      console.error(`❌ Error al consultar producto ${prod.codigo}:`, err.message);
+      return prod;
+    }
+  })
+);
+
+res.render('productosActualizados', { productos: productosFinales });
+
     } else {
       res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
     }
