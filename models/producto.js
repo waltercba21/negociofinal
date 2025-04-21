@@ -66,6 +66,15 @@ module.exports ={
         `;
         conexion.query(sql, [limite], callback);
       },      
+      obtenerUtilidadProducto : (codigoProducto) => {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT utilidad FROM productos WHERE id = (SELECT producto_id FROM producto_proveedor WHERE codigo = ? LIMIT 1)`;
+            conexion.query(sql, [codigoProducto], (error, results) => {
+                if (error) return reject(error);
+                resolve(results[0]?.utilidad || 0);
+            });
+        });
+    },
     eliminarPresupuesto : (conexion, id) => {
         return new Promise((resolve, reject) => {
             // Primero, eliminamos los ítems asociados al presupuesto
@@ -638,48 +647,41 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
         return callback(err);
     }
 },
-actualizarPreciosPDF : (conexion, producto, precio_venta) => {
-    return new Promise((resolveUpdate, rejectUpdate) => {
-      const sqlUpdateProductoProveedor = `
-        UPDATE producto_proveedor 
-        SET precio_lista = ? 
-        WHERE producto_id = ? AND proveedor_id = ?
-      `;
-  
-      conexion.query(sqlUpdateProductoProveedor, [producto.precio_lista, producto.producto_id, producto.proveedor_id], async (errorUpdatePP) => {
-        if (errorUpdatePP) {
-          console.error('❌ Error actualizando producto_proveedor:', errorUpdatePP);
-          return resolveUpdate(null);
-        }
-  
+actualizarPreciosPDF : (precioLista, codigo, proveedor_id) => {
+    return new Promise(async (resolve, reject) => {
         try {
-          const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, producto.producto_id);
-  
-          if (proveedorMasBarato && proveedorMasBarato.proveedor_id === producto.proveedor_id) {
-            const sqlUpdateProductos = `
-              UPDATE productos 
-              SET precio_venta = ? 
-              WHERE id = ?
-            `;
-  
-            conexion.query(sqlUpdateProductos, [precio_venta, producto.producto_id], (errorUpdateProd) => {
-              if (errorUpdateProd) {
-                console.error('❌ Error actualizando productos:', errorUpdateProd);
-                return resolveUpdate(null);
-              }
-              resolveUpdate({ actualizado: true });
-            });
-          } else {
-            resolveUpdate({ actualizado: false });
-          }
-        } catch (errorInterno) {
-          console.error('❌ Error interno al comparar proveedores:', errorInterno);
-          return resolveUpdate(null);
-        }
-      });
-    });
-  },
+            // 1. Actualizar precio_lista del proveedor
+            const sqlUpdate = `UPDATE producto_proveedor SET precio_lista = ? WHERE codigo = ? AND proveedor_id = ?`;
+            conexion.query(sqlUpdate, [precioLista, codigo, proveedor_id], async (err, result) => {
+                if (err) return reject(err);
 
+                // 2. Buscar proveedor más barato
+                const proveedorMasBarato = await producto.obtenerProveedorMasBarato(codigo);
+
+                if (!proveedorMasBarato) return resolve([]);
+
+                // 3. Si este proveedor es el más barato, actualizar el producto
+                if (proveedorMasBarato.proveedor_id === parseInt(proveedor_id)) {
+                    const utilidad = await producto.obtenerUtilidadProducto(codigo);
+                    const costoNeto = proveedorMasBarato.costo_neto;
+                    const costoIVA = proveedorMasBarato.costo_iva;
+                    const precioVenta = parseFloat((costoIVA + (costoIVA * utilidad / 100)).toFixed(2));
+
+                    const sqlUpdateProducto = `UPDATE productos SET costo_neto = ?, costo_iva = ?, precio_venta = ? WHERE id = ?`;
+                    conexion.query(sqlUpdateProducto, [costoNeto, costoIVA, precioVenta, proveedorMasBarato.producto_id], (err2) => {
+                        if (err2) return reject(err2);
+                        resolve([{ codigo: codigo, precio_venta: precioVenta }]);
+                    });
+                } else {
+                    // No es el proveedor más barato, no se modifica el precio de venta
+                    resolve([{ codigo: codigo, sinCambio: true }]);
+                }
+            });
+        } catch (error) {
+            reject(error);
+        }
+    });
+},
 obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
@@ -838,28 +840,24 @@ obtenerProveedores: function(conexion) {
         });
     });
 },
-obtenerProveedorMasBarato : (conexion, producto_id) => {
+obtenerProveedorMasBarato : (codigoProducto) => {
     return new Promise((resolve, reject) => {
-      const sql = `
-        SELECT pp.proveedor_id,
-               pp.precio_lista,
-               dp.descuento,
-               ROUND((pp.precio_lista - (pp.precio_lista * dp.descuento / 100)) * 1.21, 2) AS costo_iva
-        FROM producto_proveedor pp
-        JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-        WHERE pp.producto_id = ?
-        ORDER BY costo_iva ASC
-        LIMIT 1;
-      `;
-      conexion.query(sql, [producto_id], (error, results) => {
-        if (error) {
-          console.error("❌ Error obteniendo proveedor más barato:", error);
-          return reject(error);
-        }
-        resolve(results[0]);
-      });
+        const sql = `
+            SELECT pp.*, dp.descuento,
+                   ROUND(pp.precio_lista - (pp.precio_lista * dp.descuento / 100), 2) AS costo_neto,
+                   ROUND((pp.precio_lista - (pp.precio_lista * dp.descuento / 100)) * 1.21, 2) AS costo_iva
+            FROM producto_proveedor pp
+            JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+            WHERE pp.codigo = ?
+            ORDER BY costo_iva ASC
+            LIMIT 1
+        `;
+        conexion.query(sql, [codigoProducto], (error, results) => {
+            if (error) return reject(error);
+            resolve(results[0]);
+        });
     });
-  },
+},
 obtenerMarcas: function(conexion) {
     return new Promise((resolve, reject) => {
         conexion.query('SELECT * FROM marcas ORDER BY nombre ASC', function(error, resultados) {
