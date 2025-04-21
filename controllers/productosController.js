@@ -1497,7 +1497,7 @@ actualizarPreciosExcel: async (req, res) => {
               }
 
               promises.push(
-                producto.buscarProductoPorCodigo(codigo).then(async (productoBD) => {
+                producto.obtenerProductoPorCodigo(codigo).then(async (productoBD) => {
                   if (!productoBD) {
                     console.log(`Producto con código ${codigo} no encontrado.`);
                     return { noExiste: true, codigo };

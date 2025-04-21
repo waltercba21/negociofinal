@@ -679,6 +679,7 @@ actualizarPreciosPDF : (conexion, producto, precio_venta) => {
       });
     });
   },
+
 obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
@@ -698,19 +699,6 @@ obtenerProductoPorCodigo: function(codigo) {
             });
         });
     },
-    buscarProductoPorCodigo : (codigo) => {
-        return new Promise((resolve, reject) => {
-          const sql = `SELECT * FROM productos WHERE codigo = ? LIMIT 1`;
-          conexion.query(sql, [codigo], (error, results) => {
-            if (error) {
-              console.error("❌ Error al buscar producto por código:", error);
-              return reject(error);
-            }
-            resolve(results[0]);
-          });
-        });
-      },
-
     buscar : async (busqueda, categoria_id, marca_id, modelo_id) => {
         let query = `
             SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
