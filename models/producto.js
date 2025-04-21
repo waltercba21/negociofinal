@@ -65,7 +65,7 @@ module.exports ={
           LIMIT ?
         `;
         conexion.query(sql, [limite], callback);
-      }, 
+      },      
     eliminarPresupuesto : (conexion, id) => {
         return new Promise((resolve, reject) => {
             // Primero, eliminamos los ítems asociados al presupuesto
@@ -638,43 +638,121 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
         return callback(err);
     }
 },
-actualizarPreciosPDF : (precioLista, codigo, proveedor_id) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            // 1. Actualizar precio_lista del proveedor
-            const sqlUpdate = `UPDATE producto_proveedor SET precio_lista = ? WHERE codigo = ? AND proveedor_id = ?`;
-            conexion.query(sqlUpdate, [precioLista, codigo, proveedor_id], async (err, result) => {
-                if (err) return reject(err);
-
-                // 2. Buscar proveedor más barato
-                const proveedorMasBarato = await producto.obtenerProveedorMasBarato(codigo);
-
-
-
-                if (!proveedorMasBarato) return resolve([]);
-
-                // 3. Si este proveedor es el más barato, actualizar el producto
-                if (proveedorMasBarato.proveedor_id === parseInt(proveedor_id)) {
-                    const costoNeto = proveedorMasBarato.costo_neto;
-                    const costoIVA = proveedorMasBarato.costo_iva;
-                    const utilidad = proveedorMasBarato.utilidad || 0;
-                    const precioVenta = parseFloat((costoIVA + (costoIVA * utilidad / 100)).toFixed(2));
-
-                    const sqlUpdateProducto = `UPDATE productos SET costo_neto = ?, costo_iva = ?, precio_venta = ? WHERE id = ?`;
-                    conexion.query(sqlUpdateProducto, [costoNeto, costoIVA, precioVenta, proveedorMasBarato.producto_id], (err2) => {
-                        if (err2) return reject(err2);
-                        resolve([{ codigo: codigo, precio_venta: precioVenta }]);
-                    });
-                } else {
-                    // No es el proveedor más barato, no se modifica el precio de venta
-                    resolve([{ codigo: codigo, sinCambio: true }]);
-                }
-            });
-        } catch (error) {
-            reject(error);
+actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
+    return new Promise((resolve, reject) => {
+      if (typeof codigo !== 'string') {
+        console.error(`El código del producto no es una cadena: ${codigo}`);
+        resolve(null);
+        return;
+      }
+  
+      function redondearPrecioVenta(precio) {
+        const resto = precio % 100;
+        return resto < 50 ? precio - resto : precio + (100 - resto);
+      }
+  
+      const sql = `SELECT pp.*, p.utilidad, p.precio_venta, p.nombre, dp.descuento 
+                   FROM producto_proveedor pp 
+                   JOIN productos p ON pp.producto_id = p.id 
+                   JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id 
+                   WHERE pp.codigo = ? AND pp.proveedor_id = ?`;
+  
+      conexion.getConnection((err, conexion) => {
+        if (err) {
+          console.error('Error al obtener la conexión:', err);
+          resolve(null);
+          return;
         }
+  
+        conexion.query(sql, [codigo, proveedor_id], async (error, results) => {
+          if (error) {
+            console.error(`Error al ejecutar la consulta SQL para el código ${codigo}:`, error);
+            conexion.release();
+            resolve(null);
+            return;
+          }
+  
+          if (results.length === 0) {
+            conexion.release();
+            resolve(null);
+            return;
+          }
+  
+          const updatePromises = results.map(async producto => {
+            let descuento = producto.descuento;
+            let costo_neto = precio_lista - (precio_lista * descuento / 100);
+            let IVA = 21;
+            let costo_iva = costo_neto + (costo_neto * IVA / 100);
+            let utilidad = producto.utilidad;
+  
+            if (isNaN(costo_iva) || isNaN(utilidad)) {
+              console.error('Costo con IVA o utilidad no es un número válido');
+              return null;
+            }
+  
+            let precio_venta = costo_iva + (costo_iva * utilidad / 100);
+            precio_venta = redondearPrecioVenta(precio_venta);
+  
+            const sqlUpdateProductoProveedor = 'UPDATE producto_proveedor SET precio_lista = ? WHERE producto_id = ? AND codigo = ? AND proveedor_id = ?';
+  
+            return new Promise((resolveUpdate, rejectUpdate) => {
+              conexion.query(sqlUpdateProductoProveedor, [precio_lista, producto.producto_id, codigo, producto.proveedor_id], async (errorUpdatePP) => {
+                if (errorUpdatePP) {
+                  console.error('Error en la actualización de producto_proveedor:', errorUpdatePP);
+                  return resolveUpdate(null);
+                }
+  
+                try {
+                  // 🧠 Verificar si es el proveedor más barato
+                  const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, producto.producto_id);
+  
+                  if (proveedorMasBarato && proveedorMasBarato.proveedor_id === producto.proveedor_id) {
+                    const sqlUpdateProductos = 'UPDATE productos SET precio_venta = ? WHERE id = ?';
+                    conexion.query(sqlUpdateProductos, [precio_venta, producto.producto_id], (errorUpdateProd) => {
+                      if (errorUpdateProd) {
+                        console.error('Error en la actualización de productos:', errorUpdateProd);
+                        return resolveUpdate(null);
+                      }
+                      resolveUpdate({
+                        codigo: codigo,
+                        nombre: producto.nombre,
+                        producto_id: producto.producto_id,
+                        precio_lista_antiguo: producto.precio_lista,
+                        precio_lista_nuevo: precio_lista,
+                        precio_venta: precio_venta
+                      });
+                    });
+                  } else {
+                    // No actualizar precio_venta si no es el proveedor más barato
+                    resolveUpdate({
+                      codigo: codigo,
+                      nombre: producto.nombre,
+                      producto_id: producto.producto_id,
+                      precio_lista_antiguo: producto.precio_lista,
+                      precio_lista_nuevo: precio_lista,
+                      sin_cambio: true
+                    });
+                  }
+                } catch (errInterno) {
+                  console.error("❌ Error al comparar proveedores:", errInterno);
+                  resolveUpdate(null);
+                }
+              });
+            });
+          });
+  
+          Promise.all(updatePromises).then(updatedProducts => {
+            conexion.release();
+            resolve(updatedProducts.filter(p => p !== null));
+          }).catch(err => {
+            console.error('Error al actualizar los productos:', err);
+            conexion.release();
+            resolve(null);
+          });
+        });
+      });
     });
-},
+  },  
 obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
@@ -833,27 +911,31 @@ obtenerProveedores: function(conexion) {
         });
     });
 },
-obtenerProveedorMasBarato : (codigoProducto) => {
-    return new Promise((resolve, reject) => {
-        const sql = `
-            SELECT pp.*, dp.descuento,
-                   ROUND(pp.precio_lista - (pp.precio_lista * dp.descuento / 100), 2) AS costo_neto,
-                   ROUND((pp.precio_lista - (pp.precio_lista * dp.descuento / 100)) * 1.21, 2) AS costo_iva,
-                   pr.utilidad
-            FROM producto_proveedor pp
-            JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-            JOIN productos pr ON pr.id = pp.producto_id
-            WHERE pp.codigo = ?
-            ORDER BY costo_iva ASC
-            LIMIT 1
-        `;
-        conexion.query(sql, [codigoProducto], (error, results) => {
-            if (error) return reject(error);
-            resolve(results[0]);
-        });
-    });
-},
-
+obtenerProveedorMasBarato : async (conexion, productoId) => {
+    try {
+      const query = `
+        SELECT 
+          pp.proveedor_id,
+          pp.precio_lista,
+          dp.descuento,
+          (pp.precio_lista * (1 - (dp.descuento / 100))) + (pp.precio_lista * 0.21) AS costo_iva
+        FROM 
+          producto_proveedor pp
+        INNER JOIN 
+          descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+        WHERE 
+          pp.producto_id = ?
+        ORDER BY 
+          costo_iva ASC
+        LIMIT 1
+      `;
+      const resultado = await conexion.query(query, [productoId]);
+      return resultado[0];
+    } catch (error) {
+      console.error(`Error al obtener el proveedor más barato para el producto con ID ${productoId}:`, error);
+      throw error;
+    }
+  },
 obtenerMarcas: function(conexion) {
     return new Promise((resolve, reject) => {
         conexion.query('SELECT * FROM marcas ORDER BY nombre ASC', function(error, resultados) {
