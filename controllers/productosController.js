@@ -1517,7 +1517,7 @@ actualizarPreciosExcel: async (req, res) => {
           }
         }
       }
-// ✅ RENDER FINAL CORREGIDO EN EL CONTROLADOR (MEJORADO CON MÁS DATOS)
+// ✅ RENDER FINAL CORREGIDO EN EL CONTROLADOR (AHORA CON PRECIO LISTA ANTIGUO REAL)
 fs.unlinkSync(file.path);
 
 // ✅ Traer valores actualizados desde la base de datos correctamente con diferencia, listas y modificación
@@ -1525,16 +1525,26 @@ const productosFinales = await Promise.all(
   productosActualizados.map((prod) => {
     return new Promise((resolve, reject) => {
       const sql = `
-        SELECT p.id, p.nombre, p.precio_venta, pp.codigo, pp.precio_lista,
-               '${prod.precio_lista_antiguo ?? 0}' AS precio_lista_antiguo,
-               '${prod.precio_lista_nuevo ?? 0}' AS precio_lista_nuevo,
-               '${prod.precio_venta ?? 0}' AS precio_venta_calculado,
-               '${prod.sin_cambio ? 'NO MODIFICA' : 'MODIFICA'}' AS estado,
-               CASE 
-                 WHEN ${prod.precio_lista_antiguo ?? 0} > 0 THEN 
-                   ROUND(((${prod.precio_lista_nuevo ?? 0} - ${prod.precio_lista_antiguo ?? 0}) / ${prod.precio_lista_antiguo ?? 1}) * 100, 2)
-                 ELSE NULL
-               END AS variacion
+        SELECT 
+          p.id, p.nombre, p.precio_venta, pp.codigo, 
+          pp.precio_lista AS precio_lista_nuevo,
+          (SELECT precio_lista FROM producto_proveedor 
+            WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
+            AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1) AS precio_lista_antiguo,
+          '${prod.precio_venta ?? 0}' AS precio_venta_calculado,
+          '${prod.sin_cambio ? 'NO MODIFICA' : 'MODIFICA'}' AS estado,
+          CASE 
+            WHEN (SELECT precio_lista FROM producto_proveedor 
+                   WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
+                   AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1) > 0 THEN 
+              ROUND(((pp.precio_lista - (SELECT precio_lista FROM producto_proveedor 
+                   WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
+                   AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1)) / 
+                   (SELECT precio_lista FROM producto_proveedor 
+                   WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
+                   AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1)) * 100, 2)
+            ELSE NULL
+          END AS variacion
         FROM productos p
         JOIN producto_proveedor pp ON pp.producto_id = p.id
         WHERE pp.codigo = ?
