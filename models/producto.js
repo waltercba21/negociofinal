@@ -65,16 +65,7 @@ module.exports ={
           LIMIT ?
         `;
         conexion.query(sql, [limite], callback);
-      },      
-      obtenerUtilidadProducto : (codigoProducto) => {
-        return new Promise((resolve, reject) => {
-            const sql = `SELECT utilidad FROM productos WHERE id = (SELECT producto_id FROM producto_proveedor WHERE codigo = ? LIMIT 1)`;
-            conexion.query(sql, [codigoProducto], (error, results) => {
-                if (error) return reject(error);
-                resolve(results[0]?.utilidad || 0);
-            });
-        });
-    },
+      }, 
     eliminarPresupuesto : (conexion, id) => {
         return new Promise((resolve, reject) => {
             // Primero, eliminamos los ítems asociados al presupuesto
@@ -662,9 +653,9 @@ actualizarPreciosPDF : (precioLista, codigo, proveedor_id) => {
 
                 // 3. Si este proveedor es el más barato, actualizar el producto
                 if (proveedorMasBarato.proveedor_id === parseInt(proveedor_id)) {
-                    const utilidad = await producto.obtenerUtilidadProducto(codigo);
                     const costoNeto = proveedorMasBarato.costo_neto;
                     const costoIVA = proveedorMasBarato.costo_iva;
+                    const utilidad = proveedorMasBarato.utilidad || 0;
                     const precioVenta = parseFloat((costoIVA + (costoIVA * utilidad / 100)).toFixed(2));
 
                     const sqlUpdateProducto = `UPDATE productos SET costo_neto = ?, costo_iva = ?, precio_venta = ? WHERE id = ?`;
@@ -845,9 +836,11 @@ obtenerProveedorMasBarato : (codigoProducto) => {
         const sql = `
             SELECT pp.*, dp.descuento,
                    ROUND(pp.precio_lista - (pp.precio_lista * dp.descuento / 100), 2) AS costo_neto,
-                   ROUND((pp.precio_lista - (pp.precio_lista * dp.descuento / 100)) * 1.21, 2) AS costo_iva
+                   ROUND((pp.precio_lista - (pp.precio_lista * dp.descuento / 100)) * 1.21, 2) AS costo_iva,
+                   pr.utilidad
             FROM producto_proveedor pp
             JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+            JOIN productos pr ON pr.id = pp.producto_id
             WHERE pp.codigo = ?
             ORDER BY costo_iva ASC
             LIMIT 1
@@ -858,6 +851,7 @@ obtenerProveedorMasBarato : (codigoProducto) => {
         });
     });
 },
+
 obtenerMarcas: function(conexion) {
     return new Promise((resolve, reject) => {
         conexion.query('SELECT * FROM marcas ORDER BY nombre ASC', function(error, resultados) {
