@@ -1517,23 +1517,33 @@ actualizarPreciosExcel: async (req, res) => {
           }
         }
       }
+// ✅ RENDER FINAL CORREGIDO EN EL CONTROLADOR
+fs.unlinkSync(file.path);
 
-      fs.unlinkSync(file.path);
-
-// ✅ Refrescar los productos actualizados con valores reales desde la BD
+// ✅ Traer valores actualizados desde la base de datos correctamente
 const productosFinales = await Promise.all(
-  productosActualizados.map(async (prod) => {
-    try {
-      const [rows] = await conexion.query('SELECT codigo, nombre, precio_venta FROM productos WHERE codigo = ?', [prod.codigo]);
-      return rows[0] || prod;
-    } catch (err) {
-      console.error(`❌ Error al consultar producto ${prod.codigo}:`, err.message);
-      return prod;
-    }
+  productosActualizados.map((prod) => {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        SELECT p.id, p.nombre, p.precio_venta, pp.codigo
+        FROM productos p
+        JOIN producto_proveedor pp ON pp.producto_id = p.id
+        WHERE pp.codigo = ?
+        LIMIT 1
+      `;
+      conexion.query(sql, [prod.codigo], (err, rows) => {
+        if (err) {
+          console.error(`❌ Error al consultar producto ${prod.codigo}:`, err.message);
+          return resolve(prod); // fallback a prod si falla
+        }
+        resolve(rows[0] || prod); // usar resultado o fallback
+      });
+    });
   })
 );
 
 res.render('productosActualizados', { productos: productosFinales });
+
 
     } else {
       res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
