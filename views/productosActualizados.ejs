@@ -17,10 +17,10 @@
       </thead>
       <tbody>
         <% productos.forEach(producto => {
-          let viejo = parseFloat(producto.precio_lista_antiguo || 0);
-          let nuevo = parseFloat(producto.precio_lista || 0);
-          let diferencia = viejo > 0 ? (((nuevo - viejo) / viejo) * 100).toFixed(2) : '0.00';
-          let diferenciaClass = diferencia > 0 ? 'positivo' : (diferencia < 0 ? 'negativo' : 'neutro');
+          const viejo = parseFloat(producto.precio_lista_antiguo || 0);
+          const nuevo = parseFloat(producto.precio_lista_nuevo || 0);
+          const diferencia = viejo > 0 ? (((nuevo - viejo) / viejo) * 100).toFixed(2) : '0.00';
+          const diferenciaClass = diferencia > 0 ? 'positivo' : (diferencia < 0 ? 'negativo' : 'neutro');
         %>
           <tr>
             <td><%= producto.codigo %></td>
@@ -36,6 +36,38 @@
     </table>
     <p>Total de productos actualizados: <%= productos.length %></p>
   </main>
+
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f3f3f3;
+    }
+
+    .positivo {
+      color: green;
+      font-weight: bold;
+    }
+
+    .negativo {
+      color: red;
+      font-weight: bold;
+    }
+
+    .neutro {
+      color: gray;
+    }
+  </style>
 
   <script src="/js/profile.js"></script>
   <%- include ./layouts/footer.ejs %>

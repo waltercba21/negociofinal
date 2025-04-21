@@ -1476,41 +1476,35 @@ actualizarPreciosExcel: async (req, res) => {
           );
 
           if (codigoColumn && precioColumn) {
-            let codigoRaw = row[codigoColumn];
-            let precioRaw = row[precioColumn];
-            let codigo = codigoRaw.toString().trim();
+            const codigo = row[codigoColumn]?.toString().trim();
+            const precioRaw = row[precioColumn];
 
-            if (typeof precioRaw === 'number') precioRaw = precioRaw.toString();
+            const precio = parseFloat(
+              typeof precioRaw === 'string'
+                ? precioRaw.replace(',', '.')
+                : precioRaw?.toString()
+            );
 
-            if (typeof precioRaw === 'string') {
-              const precio = parseFloat(precioRaw.replace(',', '.'));
-              if (isNaN(precio) || precio <= 0) {
-                console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
-                continue;
+            if (!codigo || isNaN(precio) || precio <= 0) {
+              console.warn(`❌ Código o precio inválido: ${codigo} / ${precioRaw}`);
+              continue;
+            }
+
+            try {
+              const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
+              if (Array.isArray(resultado)) {
+                resultados.push(...resultado);
+              } else if (resultado) {
+                resultados.push(resultado);
               }
-
-              try {
-                const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
-
-                // ✅ Evitar errores por resultado null o no iterable
-                if (Array.isArray(resultado)) {
-                  resultados.push(...resultado);
-                } else if (resultado) {
-                  resultados.push(resultado);
-                } else {
-                  console.warn(`⚠️ Producto con código ${codigo} no devolvió datos actualizables.`);
-                }
-
-              } catch (error) {
-                console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
-                resultados.push({ error: true, codigo, message: error.message });
-              }
+            } catch (error) {
+              console.log(`❌ Error al actualizar producto ${codigo}:`, error);
+              resultados.push({ error: true, codigo, message: error.message });
             }
           }
         }
       }
 
-      // Paso posterior: asignar proveedor más barato
       for (const r of resultados) {
         if (r && r.codigo && !r.error && !r.noExiste) {
           try {
@@ -1525,7 +1519,7 @@ actualizarPreciosExcel: async (req, res) => {
               });
             }
           } catch (e) {
-            console.log(`No se pudo asignar proveedor más barato para ${r.codigo}`, e.message);
+            console.log(`❌ No se pudo asignar proveedor más barato para ${r.codigo}:`, e.message);
           }
         }
       }
@@ -1538,38 +1532,18 @@ actualizarPreciosExcel: async (req, res) => {
             const sql = `
               SELECT 
                 p.id, p.nombre, p.precio_venta, pp.codigo, 
-                (SELECT precio_lista FROM producto_proveedor 
-                  WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
-                  AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1) AS precio_lista_antiguo,
-                (SELECT precio_lista FROM producto_proveedor 
-                  WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
-                  AND codigo = pp.codigo ORDER BY actualizado_en DESC LIMIT 1) AS precio_lista_nuevo,
-                '${prod.precio_venta}' AS precio_venta_calculado,
-                '${prod.sin_cambio ? 'NO MODIFICA' : 'MODIFICA'}' AS estado,
-                CASE 
-                  WHEN (
-                    SELECT precio_lista FROM producto_proveedor 
-                    WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
-                    AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1
-                  ) > 0 THEN 
-                    ROUND((
-                      (
-                        (SELECT precio_lista FROM producto_proveedor 
-                          WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
-                          AND codigo = pp.codigo ORDER BY actualizado_en DESC LIMIT 1
-                        ) - 
-                        (SELECT precio_lista FROM producto_proveedor 
-                          WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
-                          AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1
-                        )
-                      ) /
-                      (SELECT precio_lista FROM producto_proveedor 
-                        WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
-                        AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1
-                      ) * 100, 2
-                    )
-                  ELSE NULL
-                END AS variacion
+                (
+                  SELECT precio_lista FROM producto_proveedor 
+                  WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
+                  AND codigo = pp.codigo
+                  ORDER BY actualizado_en ASC LIMIT 1
+                ) AS precio_lista_antiguo,
+                (
+                  SELECT precio_lista FROM producto_proveedor 
+                  WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
+                  AND codigo = pp.codigo
+                  ORDER BY actualizado_en DESC LIMIT 1
+                ) AS precio_lista_nuevo
               FROM productos p
               JOIN producto_proveedor pp ON pp.producto_id = p.id
               WHERE pp.codigo = ?
@@ -1580,18 +1554,34 @@ actualizarPreciosExcel: async (req, res) => {
                 console.error(`❌ Error al consultar producto ${prod.codigo}:`, err.message);
                 return resolve(prod);
               }
-              resolve(rows[0] || prod);
+
+              const row = rows[0] || {};
+              const viejo = parseFloat(row.precio_lista_antiguo || 0);
+              const nuevo = parseFloat(row.precio_lista_nuevo || 0);
+              const variacion = viejo > 0 ? parseFloat((((nuevo - viejo) / viejo) * 100).toFixed(2)) : 0;
+
+              resolve({
+                ...row,
+                codigo: prod.codigo,
+                precio_venta: row.precio_venta || prod.precio_venta || 0,
+                precio_lista_antiguo: viejo,
+                precio_lista_nuevo: nuevo,
+                precio_venta_calculado: prod.precio_venta || 0,
+                estado: prod.sin_cambio ? 'NO MODIFICA' : 'MODIFICA',
+                variacion: variacion
+              });
             });
           });
         })
       );
-      
+
       res.render('productosActualizados', { productos: productosFinales });
+
     } else {
       res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
     }
   } catch (error) {
-    console.log("Error durante el procesamiento de archivos", error);
+    console.log("❌ Error durante el procesamiento de archivos:", error);
     res.status(500).send(error.message);
   }
 },
