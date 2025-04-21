@@ -1530,7 +1530,6 @@ actualizarPreciosExcel: async (req, res) => {
         }
       }
 
-      // ✅ Consulta enriquecida para render con diferencia, estado y precios
       fs.unlinkSync(file.path);
 
       const productosFinales = await Promise.all(
@@ -1539,36 +1538,36 @@ actualizarPreciosExcel: async (req, res) => {
             const sql = `
               SELECT 
                 p.id, p.nombre, p.precio_venta, pp.codigo, 
-                pp.precio_lista AS precio_lista_nuevo,
-                (
-                  SELECT precio_lista FROM producto_proveedor 
-                  WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
-                  AND codigo = pp.codigo
-                  ORDER BY actualizado_en ASC
-                  LIMIT 1
-                ) AS precio_lista_antiguo,
+                (SELECT precio_lista FROM producto_proveedor 
+                  WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
+                  AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1) AS precio_lista_antiguo,
+                (SELECT precio_lista FROM producto_proveedor 
+                  WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
+                  AND codigo = pp.codigo ORDER BY actualizado_en DESC LIMIT 1) AS precio_lista_nuevo,
                 '${prod.precio_venta}' AS precio_venta_calculado,
                 '${prod.sin_cambio ? 'NO MODIFICA' : 'MODIFICA'}' AS estado,
                 CASE 
                   WHEN (
                     SELECT precio_lista FROM producto_proveedor 
-                    WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
-                    AND codigo = pp.codigo
-                    ORDER BY actualizado_en ASC LIMIT 1
+                    WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
+                    AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1
                   ) > 0 THEN 
                     ROUND((
-                      (pp.precio_lista - (
-                        SELECT precio_lista FROM producto_proveedor 
-                        WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
-                        AND codigo = pp.codigo
-                        ORDER BY actualizado_en ASC LIMIT 1
-                      )) / (
-                        SELECT precio_lista FROM producto_proveedor 
-                        WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
-                        AND codigo = pp.codigo
-                        ORDER BY actualizado_en ASC LIMIT 1
-                      )
-                    ) * 100, 2)
+                      (
+                        (SELECT precio_lista FROM producto_proveedor 
+                          WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
+                          AND codigo = pp.codigo ORDER BY actualizado_en DESC LIMIT 1
+                        ) - 
+                        (SELECT precio_lista FROM producto_proveedor 
+                          WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
+                          AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1
+                        )
+                      ) /
+                      (SELECT precio_lista FROM producto_proveedor 
+                        WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
+                        AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1
+                      ) * 100, 2
+                    )
                   ELSE NULL
                 END AS variacion
               FROM productos p
@@ -1586,9 +1585,8 @@ actualizarPreciosExcel: async (req, res) => {
           });
         })
       );
-
+      
       res.render('productosActualizados', { productos: productosFinales });
-
     } else {
       res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
     }
