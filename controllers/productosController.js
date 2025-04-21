@@ -1471,7 +1471,6 @@ actualizarPreciosExcel: async (req, res) => {
           const codigoColumn = Object.keys(row).find(key =>
             key.toLowerCase().replace(/\s/g, '').includes('codigo')
           );
-
           const precioColumn = Object.keys(row).find(key =>
             key.toLowerCase().replace(/\s/g, '').includes('precio')
           );
@@ -1485,7 +1484,6 @@ actualizarPreciosExcel: async (req, res) => {
 
             if (typeof precioRaw === 'string') {
               const precio = parseFloat(precioRaw.replace(',', '.'));
-
               if (isNaN(precio) || precio <= 0) {
                 console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
                 continue;
@@ -1493,7 +1491,16 @@ actualizarPreciosExcel: async (req, res) => {
 
               try {
                 const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
-                resultados.push(...resultado);
+
+                // ✅ Evitar errores por resultado null o no iterable
+                if (Array.isArray(resultado)) {
+                  resultados.push(...resultado);
+                } else if (resultado) {
+                  resultados.push(resultado);
+                } else {
+                  console.warn(`⚠️ Producto con código ${codigo} no devolvió datos actualizables.`);
+                }
+
               } catch (error) {
                 console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
                 resultados.push({ error: true, codigo, message: error.message });
@@ -1503,65 +1510,84 @@ actualizarPreciosExcel: async (req, res) => {
         }
       }
 
-      // Paso posterior: asignar proveedor más barato de forma secuencial y segura
+      // Paso posterior: asignar proveedor más barato
       for (const r of resultados) {
         if (r && r.codigo && !r.error && !r.noExiste) {
           try {
             const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, r.producto_id);
             if (proveedorMasBarato) {
               await producto.asignarProveedorMasBarato(conexion, proveedorMasBarato.producto_id, proveedorMasBarato.proveedor_id);
-              productosActualizados.push({ codigo: r.codigo, precio_venta: r.precio_venta || 'sin cambio' });
+              productosActualizados.push({
+                codigo: r.codigo,
+                producto_id: r.producto_id,
+                precio_venta: r.precio_venta || 0,
+                sin_cambio: r.sin_cambio || false
+              });
             }
           } catch (e) {
             console.log(`No se pudo asignar proveedor más barato para ${r.codigo}`, e.message);
           }
         }
       }
-// ✅ RENDER FINAL CORREGIDO EN EL CONTROLADOR (AHORA CON PRECIO LISTA ANTIGUO REAL)
-fs.unlinkSync(file.path);
 
-// ✅ Traer valores actualizados desde la base de datos correctamente con diferencia, listas y modificación
-const productosFinales = await Promise.all(
-  productosActualizados.map((prod) => {
-    return new Promise((resolve, reject) => {
-      const sql = `
-        SELECT 
-          p.id, p.nombre, p.precio_venta, pp.codigo, 
-          pp.precio_lista AS precio_lista_nuevo,
-          (SELECT precio_lista FROM producto_proveedor 
-            WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
-            AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1) AS precio_lista_antiguo,
-          '${prod.precio_venta ?? 0}' AS precio_venta_calculado,
-          '${prod.sin_cambio ? 'NO MODIFICA' : 'MODIFICA'}' AS estado,
-          CASE 
-            WHEN (SELECT precio_lista FROM producto_proveedor 
-                   WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
-                   AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1) > 0 THEN 
-              ROUND(((pp.precio_lista - (SELECT precio_lista FROM producto_proveedor 
-                   WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
-                   AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1)) / 
-                   (SELECT precio_lista FROM producto_proveedor 
-                   WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id} 
-                   AND codigo = pp.codigo ORDER BY actualizado_en ASC LIMIT 1)) * 100, 2)
-            ELSE NULL
-          END AS variacion
-        FROM productos p
-        JOIN producto_proveedor pp ON pp.producto_id = p.id
-        WHERE pp.codigo = ?
-        LIMIT 1
-      `;
-      conexion.query(sql, [prod.codigo], (err, rows) => {
-        if (err) {
-          console.error(`❌ Error al consultar producto ${prod.codigo}:`, err.message);
-          return resolve(prod); // fallback
-        }
-        resolve(rows[0] || prod);
-      });
-    });
-  })
-);
+      // ✅ Consulta enriquecida para render con diferencia, estado y precios
+      fs.unlinkSync(file.path);
 
-res.render('productosActualizados', { productos: productosFinales });
+      const productosFinales = await Promise.all(
+        productosActualizados.map((prod) => {
+          return new Promise((resolve) => {
+            const sql = `
+              SELECT 
+                p.id, p.nombre, p.precio_venta, pp.codigo, 
+                pp.precio_lista AS precio_lista_nuevo,
+                (
+                  SELECT precio_lista FROM producto_proveedor 
+                  WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
+                  AND codigo = pp.codigo
+                  ORDER BY actualizado_en ASC
+                  LIMIT 1
+                ) AS precio_lista_antiguo,
+                '${prod.precio_venta}' AS precio_venta_calculado,
+                '${prod.sin_cambio ? 'NO MODIFICA' : 'MODIFICA'}' AS estado,
+                CASE 
+                  WHEN (
+                    SELECT precio_lista FROM producto_proveedor 
+                    WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
+                    AND codigo = pp.codigo
+                    ORDER BY actualizado_en ASC LIMIT 1
+                  ) > 0 THEN 
+                    ROUND((
+                      (pp.precio_lista - (
+                        SELECT precio_lista FROM producto_proveedor 
+                        WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
+                        AND codigo = pp.codigo
+                        ORDER BY actualizado_en ASC LIMIT 1
+                      )) / (
+                        SELECT precio_lista FROM producto_proveedor 
+                        WHERE producto_id = pp.producto_id AND proveedor_id = ${proveedor_id}
+                        AND codigo = pp.codigo
+                        ORDER BY actualizado_en ASC LIMIT 1
+                      )
+                    ) * 100, 2)
+                  ELSE NULL
+                END AS variacion
+              FROM productos p
+              JOIN producto_proveedor pp ON pp.producto_id = p.id
+              WHERE pp.codigo = ?
+              LIMIT 1
+            `;
+            conexion.query(sql, [prod.codigo], (err, rows) => {
+              if (err) {
+                console.error(`❌ Error al consultar producto ${prod.codigo}:`, err.message);
+                return resolve(prod);
+              }
+              resolve(rows[0] || prod);
+            });
+          });
+        })
+      );
+
+      res.render('productosActualizados', { productos: productosFinales });
 
     } else {
       res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
@@ -1571,7 +1597,6 @@ res.render('productosActualizados', { productos: productosFinales });
     res.status(500).send(error.message);
   }
 },
-  
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
