@@ -1517,15 +1517,24 @@ actualizarPreciosExcel: async (req, res) => {
           }
         }
       }
-// ✅ RENDER FINAL CORREGIDO EN EL CONTROLADOR
+// ✅ RENDER FINAL CORREGIDO EN EL CONTROLADOR (MEJORADO CON MÁS DATOS)
 fs.unlinkSync(file.path);
 
-// ✅ Traer valores actualizados desde la base de datos correctamente
+// ✅ Traer valores actualizados desde la base de datos correctamente con diferencia, listas y modificación
 const productosFinales = await Promise.all(
   productosActualizados.map((prod) => {
     return new Promise((resolve, reject) => {
       const sql = `
-        SELECT p.id, p.nombre, p.precio_venta, pp.codigo
+        SELECT p.id, p.nombre, p.precio_venta, pp.codigo, pp.precio_lista,
+               '${prod.precio_lista_antiguo ?? 0}' AS precio_lista_antiguo,
+               '${prod.precio_lista_nuevo ?? 0}' AS precio_lista_nuevo,
+               '${prod.precio_venta ?? 0}' AS precio_venta_calculado,
+               '${prod.sin_cambio ? 'NO MODIFICA' : 'MODIFICA'}' AS estado,
+               CASE 
+                 WHEN ${prod.precio_lista_antiguo ?? 0} > 0 THEN 
+                   ROUND(((${prod.precio_lista_nuevo ?? 0} - ${prod.precio_lista_antiguo ?? 0}) / ${prod.precio_lista_antiguo ?? 1}) * 100, 2)
+                 ELSE NULL
+               END AS variacion
         FROM productos p
         JOIN producto_proveedor pp ON pp.producto_id = p.id
         WHERE pp.codigo = ?
@@ -1534,16 +1543,15 @@ const productosFinales = await Promise.all(
       conexion.query(sql, [prod.codigo], (err, rows) => {
         if (err) {
           console.error(`❌ Error al consultar producto ${prod.codigo}:`, err.message);
-          return resolve(prod); // fallback a prod si falla
+          return resolve(prod); // fallback
         }
-        resolve(rows[0] || prod); // usar resultado o fallback
+        resolve(rows[0] || prod);
       });
     });
   })
 );
 
 res.render('productosActualizados', { productos: productosFinales });
-
 
     } else {
       res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
