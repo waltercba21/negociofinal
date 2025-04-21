@@ -1507,7 +1507,7 @@ actualizarPreciosExcel: async (req, res) => {
       for (const r of resultados) {
         if (r && r.codigo && !r.error && !r.noExiste) {
           try {
-            const proveedorMasBarato = await producto.obtenerProveedorMasBarato(r.codigo);
+            const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, r.producto_id);
             if (proveedorMasBarato) {
               await producto.asignarProveedorMasBarato(conexion, proveedorMasBarato.producto_id, proveedorMasBarato.proveedor_id);
               productosActualizados.push({ codigo: r.codigo, precio_venta: r.precio_venta || 'sin cambio' });
