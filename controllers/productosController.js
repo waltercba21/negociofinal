@@ -1450,106 +1450,52 @@ actualizarPrecios: function(req, res) {
     });
 },  
 actualizarPreciosExcel: async (req, res) => {
-    try {
-      const proveedor_id = req.body.proveedor;
-      const file = req.files[0];
-      let productosActualizados = [];
-  
-      if (!proveedor_id || !file) {
-        return res.status(400).send('Proveedor y archivo son requeridos.');
-      }
-  
-      if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-        const workbook = xlsx.readFile(file.path);
-        const sheet_name_list = workbook.SheetNames;
-        const promises = [];
-  
-        for (const sheet_name of sheet_name_list) {
-          const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
-  
-          for (const row of data) {
-            const codigoColumn = Object.keys(row).find(key =>
-              key.toLowerCase().replace(/\s/g, '').includes('codigo')
-            );
-  
-            const precioColumn = Object.keys(row).find(key =>
-              key.toLowerCase().replace(/\s/g, '').includes('precio')
-            );
-  
-            if (codigoColumn && precioColumn) {
-              let codigoRaw = row[codigoColumn];
-              let precioRaw = row[precioColumn];
-  
-              let codigo = codigoRaw.toString().trim();
-  
-              if (typeof precioRaw === 'number') {
-                precioRaw = precioRaw.toString();
-              }
-  
-              if (typeof precioRaw === 'string') {
-                const precio = parseFloat(precioRaw.replace(',', '.'));
-  
-                if (isNaN(precio) || precio <= 0) {
-                  console.error(`Precio inválido para el código ${codigo}: ${precioRaw}`);
-                  continue;
-                }
-  
-                promises.push(
-                  producto.actualizarPreciosPDF(precio, codigo, proveedor_id)
-                    .then(async productosActualizadosTemp => {
-                      if (productosActualizadosTemp && productosActualizadosTemp.length > 0) {
-                        productosActualizados.push(...productosActualizadosTemp);
-                        for (const productoActualizado of productosActualizadosTemp) {
-                          const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoActualizado.codigo);
-                          if (proveedorMasBarato) {
-                            await producto.asignarProveedorMasBarato(conexion, productoActualizado.codigo, proveedorMasBarato.proveedor_id);
-                          } else {
-                            console.log(`No se encontró ningún proveedor para el producto con código ${productoActualizado.codigo}`);
-                          }
-                        }
-                      } else {
-                        console.log(`No se encontró ningún producto con el código ${codigo} en la base de datos.`);
-                        return { noExiste: true, codigo: codigo };
-                      }
-                    })
-                    .catch(error => {
-                      console.log(`Error al actualizar el producto con el código ${codigo}:`, error);
-                      return { error: true, message: `Error al actualizar el producto con el código ${codigo}: ${error.message}` };
-                    })
-                );
-              } else {
-                console.error(`Tipo de dato no esperado para el precio en el código ${codigo}: ${typeof precioRaw}`);
-              }
-            } else {
-              console.error(`No se encontraron las columnas de código o precio en la fila: ${JSON.stringify(row)}`);
-            }
+  try {
+    const proveedor_id = req.body.proveedor;
+    const file = req.files[0];
+    let productosActualizados = [];
+
+    if (!proveedor_id || !file) {
+      return res.status(400).send('Proveedor y archivo son requeridos.');
+    }
+
+    if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+      const workbook = xlsx.readFile(file.path);
+      const sheet_name_list = workbook.SheetNames;
+
+      for (const sheet of sheet_name_list) {
+        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
+
+        for (const row of data) {
+          const codigoCol = Object.keys(row).find(k => k.toLowerCase().includes('codigo'));
+          const precioCol = Object.keys(row).find(k => k.toLowerCase().includes('precio'));
+
+          if (!codigoCol || !precioCol) continue;
+
+          const codigo = row[codigoCol].toString().trim();
+          const precio = parseFloat((row[precioCol] || '').toString().replace(',', '.'));
+
+          if (!codigo || isNaN(precio) || precio <= 0) continue;
+
+          try {
+            const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
+            if (Array.isArray(resultado)) productosActualizados.push(...resultado);
+          } catch (err) {
+            console.log(`❌ Error procesando ${codigo}:`, err);
           }
         }
-  
-        const resultados = await Promise.all(promises);
-        const errores = resultados.filter(resultado => resultado && resultado.error);
-        const noEncontrados = resultados.filter(resultado => resultado && resultado.noExiste);
-  
-        if (errores.length > 0) {
-          console.log("Errores al actualizar algunos productos:", errores);
-        }
-        if (noEncontrados.length > 0) {
-          noEncontrados.forEach(item => {
-            console.log(`El producto con el código ${item.codigo} no existe en la base de datos.`);
-          });
-        }
-  
-        fs.unlinkSync(file.path);
-        res.render('productosActualizados', { productos: productosActualizados });
-      } else {
-        res.status(400).send('Tipo de archivo no soportado. Por favor, sube un archivo .xlsx');
       }
-    } catch (error) {
-      console.log("Error durante el procesamiento de archivos", error);
-      res.status(500).send(error.message);
+
+      fs.unlinkSync(file.path);
+      res.render('productosActualizados', { productos: productosActualizados });
+    } else {
+      res.status(400).send('Tipo de archivo no soportado.');
     }
-  },
-  
+  } catch (error) {
+    console.error("❌ Error general:", error);
+    res.status(500).send(error.message);
+  }
+},
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
