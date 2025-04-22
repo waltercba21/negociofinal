@@ -1453,11 +1453,9 @@ actualizarPreciosExcel: async (req, res) => {
     try {
       const proveedor_id = req.body.proveedor;
       const file = req.files[0];
-      let productosActualizados = [];
+      const productosActualizados = [];
   
-      if (!proveedor_id || !file) {
-        return res.status(400).send('Proveedor y archivo son requeridos.');
-      }
+      if (!proveedor_id || !file) return res.status(400).send('Proveedor y archivo son requeridos.');
   
       const workbook = xlsx.readFile(file.path);
       const sheet_name_list = workbook.SheetNames;
@@ -1473,30 +1471,27 @@ actualizarPreciosExcel: async (req, res) => {
   
           const codigo = row[codigoColumn].toString().trim();
           const precio = parseFloat(row[precioColumn].toString().replace(',', '.'));
-  
           if (!codigo || isNaN(precio) || precio <= 0) continue;
   
-          // Obtener precio viejo antes de actualizar
           const precioAnterior = await new Promise(resolve => {
             const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
-            conexion.query(sql, [proveedor_id, codigo], (err, result) => {
-              if (err || result.length === 0) return resolve(0);
-              resolve(result[0].precio_lista);
+            conexion.query(sql, [proveedor_id, codigo], (err, resQuery) => {
+              if (err || resQuery.length === 0) return resolve(0);
+              resolve(resQuery[0].precio_lista);
             });
           });
   
-          // Ejecutar actualización
-          const actualizados = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
-          if (!Array.isArray(actualizados)) continue;
+          const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
+          if (!Array.isArray(resultado)) continue;
   
-          actualizados.forEach(prod => {
+          resultado.forEach(p => {
             productosActualizados.push({
-              codigo: prod.codigo,
-              nombre: prod.nombre,
+              codigo: p.codigo,
+              nombre: p.nombre,
               precio_lista_antiguo: precioAnterior,
-              precio_lista_nuevo: prod.precio_lista,
-              precio_venta: prod.precio_venta || 0,
-              sin_cambio: prod.sin_cambio || false
+              precio_lista_nuevo: p.precio_lista,
+              precio_venta: p.precio_venta || 0,
+              sin_cambio: p.sin_cambio || false
             });
           });
         }
@@ -1504,8 +1499,9 @@ actualizarPreciosExcel: async (req, res) => {
   
       fs.unlinkSync(file.path);
       res.render('productosActualizados', { productos: productosActualizados });
+  
     } catch (error) {
-      console.log("Error general al procesar archivo:", error);
+      console.error("❌ Error en actualizarPreciosExcel:", error);
       res.status(500).send(error.message);
     }
   },  
