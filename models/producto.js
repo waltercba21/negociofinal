@@ -722,7 +722,9 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
                   const proveedorMasBarato = res2[0];
                   console.log(`🔍 Proveedor más barato para ${codigo}: ${proveedorMasBarato.proveedor_id}, actual: ${proveedor_id}`);
   
-                  if (proveedorMasBarato.proveedor_id === proveedor_id) {
+                  if (parseInt(proveedorMasBarato.proveedor_id) === parseInt(proveedor_id)) {
+                    console.log("📊 Comparando proveedorMasBarato.proveedor_id:", proveedorMasBarato.proveedor_id, typeof proveedorMasBarato.proveedor_id, "con proveedor_id:", proveedor_id, typeof proveedor_id);
+
                     // Actualizar precio_venta
                     const updateProducto = `
                       UPDATE productos SET precio_venta = ? WHERE id = ?
