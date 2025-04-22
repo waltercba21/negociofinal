@@ -1450,52 +1450,65 @@ actualizarPrecios: function(req, res) {
     });
 },  
 actualizarPreciosExcel: async (req, res) => {
-  try {
-    const proveedor_id = req.body.proveedor;
-    const file = req.files[0];
-    let productosActualizados = [];
-
-    if (!proveedor_id || !file) {
-      return res.status(400).send('Proveedor y archivo son requeridos.');
-    }
-
-    if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    try {
+      const proveedor_id = req.body.proveedor;
+      const file = req.files[0];
+      let productosActualizados = [];
+  
+      if (!proveedor_id || !file) {
+        return res.status(400).send('Proveedor y archivo son requeridos.');
+      }
+  
       const workbook = xlsx.readFile(file.path);
       const sheet_name_list = workbook.SheetNames;
-
-      for (const sheet of sheet_name_list) {
-        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
-
+  
+      for (const sheet_name of sheet_name_list) {
+        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+  
         for (const row of data) {
-          const codigoCol = Object.keys(row).find(k => k.toLowerCase().includes('codigo'));
-          const precioCol = Object.keys(row).find(k => k.toLowerCase().includes('precio'));
-
-          if (!codigoCol || !precioCol) continue;
-
-          const codigo = row[codigoCol].toString().trim();
-          const precio = parseFloat((row[precioCol] || '').toString().replace(',', '.'));
-
+          const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('codigo'));
+          const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
+  
+          if (!codigoColumn || !precioColumn) continue;
+  
+          const codigo = row[codigoColumn].toString().trim();
+          const precio = parseFloat(row[precioColumn].toString().replace(',', '.'));
+  
           if (!codigo || isNaN(precio) || precio <= 0) continue;
-
-          try {
-            const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
-            if (Array.isArray(resultado)) productosActualizados.push(...resultado);
-          } catch (err) {
-            console.log(`❌ Error procesando ${codigo}:`, err);
-          }
+  
+          // Obtener precio viejo antes de actualizar
+          const precioAnterior = await new Promise(resolve => {
+            const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
+            conexion.query(sql, [proveedor_id, codigo], (err, result) => {
+              if (err || result.length === 0) return resolve(0);
+              resolve(result[0].precio_lista);
+            });
+          });
+  
+          // Ejecutar actualización
+          const actualizados = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
+          if (!Array.isArray(actualizados)) continue;
+  
+          actualizados.forEach(prod => {
+            productosActualizados.push({
+              codigo: prod.codigo,
+              nombre: prod.nombre,
+              precio_lista_antiguo: precioAnterior,
+              precio_lista_nuevo: prod.precio_lista,
+              precio_venta: prod.precio_venta || 0,
+              sin_cambio: prod.sin_cambio || false
+            });
+          });
         }
       }
-
+  
       fs.unlinkSync(file.path);
       res.render('productosActualizados', { productos: productosActualizados });
-    } else {
-      res.status(400).send('Tipo de archivo no soportado.');
+    } catch (error) {
+      console.log("Error general al procesar archivo:", error);
+      res.status(500).send(error.message);
     }
-  } catch (error) {
-    console.error("❌ Error general:", error);
-    res.status(500).send(error.message);
-  }
-},
+  },  
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
