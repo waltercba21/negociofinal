@@ -638,6 +638,8 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
         return callback(err);
     }
 },
+// ✅ MODELO ACTUALIZADO CON LOGGING DETALLADO
+
 actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
     return new Promise((resolve, reject) => {
       if (typeof codigo !== 'string') {
