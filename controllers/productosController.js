@@ -661,7 +661,6 @@ module.exports = {
                 res.status(500).send('Error: ' + error.message);
             });
     },
-    
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
