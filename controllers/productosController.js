@@ -1100,72 +1100,74 @@ getProductosPorCategoria : async (req, res) => {
         res.send(pdfData);
     });
 }, 
-    generarPedidoPDF: async function (req, res) {
-        const PDFDocument = require('pdfkit');
-        const streamBuffers = require('stream-buffers');
-        const buffer = new streamBuffers.WritableStreamBuffer({
-            initialSize: (1024 * 1024),
-            incrementAmount: (1024 * 1024)
+generarPedidoPDF: async function (req, res) {
+    const PDFDocument = require('pdfkit');
+    const streamBuffers = require('stream-buffers');
+    const buffer = new streamBuffers.WritableStreamBuffer({
+      initialSize: (1024 * 1024),
+      incrementAmount: (1024 * 1024)
+    });
+    const doc = new PDFDocument;
+    doc.pipe(buffer);
+  
+    const proveedorId = req.query.proveedor;
+    const categoriaId = req.query.categoria;
+  
+    try {
+      const proveedores = await producto.obtenerProveedores(conexion);
+      const proveedor = proveedores.find(p => p.id == proveedorId);
+      const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
+  
+      doc.fontSize(14)
+        .text(`Pedido de Productos - ${nombreProveedor}`, {
+          align: 'center',
+          width: doc.page.width - 100
         });
-        const doc = new PDFDocument;
-        doc.pipe(buffer);
-
-        const proveedorId = req.query.proveedor;
-        const categoriaId = req.query.categoria;
-
-        try {
-            const proveedores = await producto.obtenerProveedores(conexion);
-        let proveedor = proveedores.find(p => p.id == proveedorId);
-        const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
-
-        // Título centrado
-        doc.fontSize(14)
-           .text(`Pedido de Productos - ${nombreProveedor}`, {
-               align: 'center',
-               width: doc.page.width - 100
-           });
-
-        // Obtener productos
-        const productos = await producto.obtenerProductosProveedorMasBarato(conexion, proveedorId, categoriaId);
-
-        // Encabezado de la tabla ajustado
+  
+      // Obtener productos donde el proveedor seleccionado es el más barato y hay stock bajo
+      const productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
+  
+      if (!productos.length) {
+        doc.moveDown().fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
+      } else {
         let currentY = doc.y + 20;
         doc.fontSize(12)
-           .fillColor('black')
-           .text('Código', 60, currentY, { align: 'left', width: 80 })       // Más a la izquierda
-           .text('Descripción', 150, currentY, { align: 'left', width: 250 }) // Ancho ampliado
-           .text('Stock Mínimo', 420, currentY, { align: 'center', width: 80 })
-           .text('Stock Actual', 500, currentY, { align: 'center', width: 80 })
-           .moveDown(2);
-
-        // Cuerpo de la tabla ajustado
+          .fillColor('black')
+          .text('Código', 60, currentY, { align: 'left', width: 80 })
+          .text('Descripción', 150, currentY, { align: 'left', width: 250 })
+          .text('Stock Mínimo', 420, currentY, { align: 'center', width: 80 })
+          .text('Stock Actual', 500, currentY, { align: 'center', width: 80 })
+          .moveDown(2);
+  
         productos.forEach(producto => {
+          currentY = doc.y;
+          if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
+            doc.addPage();
             currentY = doc.y;
-            if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
-                doc.addPage();
-                currentY = doc.y;
-            }
-            doc.fontSize(8)
-               .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 80 })       // Más a la izquierda
-               .text(producto.nombre, 150, currentY, { align: 'left', width: 250 })               // Ancho ampliado
-               .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 420, currentY, { align: 'center', width: 80 })
-               .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 500, currentY, { align: 'center', width: 80 })
-               .moveDown(1);
+          }
+          doc.fontSize(8)
+            .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 80 })
+            .text(producto.nombre, 150, currentY, { align: 'left', width: 250 })
+            .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 420, currentY, { align: 'center', width: 80 })
+            .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 500, currentY, { align: 'center', width: 80 })
+            .moveDown(1);
         });
-
-        doc.end();
+      }
+  
+      doc.end();
     } catch (error) {
-        console.log('Error al generar el PDF:', error);
-        res.status(500).send('Error al generar el PDF');
+      console.log('Error al generar el PDF:', error);
+      res.status(500).send('Error al generar el PDF');
+      return;
     }
-
+  
     buffer.on('finish', function () {
-        const pdfData = buffer.getContents();
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=pedido.pdf');
-        res.send(pdfData);
+      const pdfData = buffer.getContents();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=pedido.pdf');
+      res.send(pdfData);
     });
-},
+  },  
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();
