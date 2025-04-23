@@ -1890,14 +1890,22 @@ footer {
   margin-top: 10px;
   text-align: center;
 }
+
 .acciones-compartir a {
   margin: 0 5px;
-  font-size: 1.2em;
+  font-size: 1.5em;
   color: #333;
+  transition: color 0.3s ease;
 }
-.acciones-compartir a:hover {
-  color: #007bff;
+
+.acciones-compartir a.whatsapp:hover {
+  color: #25D366; /* Color oficial de WhatsApp */
 }
+
+.acciones-compartir a.facebook:hover {
+  color: #1877F2; /* Color oficial de Facebook */
+}
+
 /* INPUT Y BOTONES */
 .cantidad-producto input {
   width: 30px;

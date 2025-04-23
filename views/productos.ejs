@@ -90,15 +90,17 @@
             <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
           </div>
           <div class="acciones-compartir">
-            <a href="https://wa.me/?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/<%= producto.id %>"  title="Compartir por WhatsApp">
+            <a href="https://wa.me/?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/<%= producto.id %>" 
+               title="Compartir por WhatsApp" target="_blank" class="whatsapp">
               <i class="fab fa-whatsapp"></i>
             </a>
           
-            <a href="https://www.facebook.com/sharer/sharer.php?u=https://www.autofaros.com.ar/productos/<%= producto.id %>"  title="Compartir en Facebook">
+            <a href="https://www.facebook.com/sharer/sharer.php?u=https://www.autofaros.com.ar/productos/<%= producto.id %>" 
+               title="Compartir en Facebook" target="_blank" class="facebook">
               <i class="fab fa-facebook"></i>
             </a>
-        
           </div>
+          
         <% } %>
       <% } %>
 
