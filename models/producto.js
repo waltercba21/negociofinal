@@ -1865,5 +1865,51 @@ obtenerProductoConImagenes: (id_producto, callback) => {
             }
         }
     });
+},
+obtenerProductosProveedorMasBarato: function (conexion, proveedorId, categoriaId) {
+    return new Promise((resolve, reject) => {
+        let condiciones = [];
+        let params = [];
+
+        if (proveedorId !== 'TODOS') {
+            condiciones.push('pp.proveedor_id = ?');
+            params.push(proveedorId);
+        }
+
+        if (categoriaId && categoriaId !== 'TODAS') {
+            condiciones.push('p.categoria_id = ?');
+            params.push(categoriaId);
+        }
+
+        const whereClause = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
+
+        const sql = `
+            SELECT p.id, p.nombre, pp.codigo AS codigo_proveedor, p.stock_minimo, p.stock_actual
+            FROM productos p
+            JOIN producto_proveedor pp ON pp.producto_id = p.id
+            JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+            ${whereClause}
+            AND pp.proveedor_id = (
+                SELECT proveedor_id
+                FROM producto_proveedor AS sub_pp
+                JOIN descuentos_proveedor AS sub_dp ON sub_pp.proveedor_id = sub_dp.proveedor_id
+                WHERE sub_pp.producto_id = p.id
+                ORDER BY (sub_pp.precio_lista * (1 - (sub_dp.descuento / 100))) * 1.21 ASC
+                LIMIT 1
+            )
+            AND p.stock_actual < p.stock_minimo
+            ORDER BY p.nombre ASC
+        `;
+
+        conexion.query(sql, params, (error, results) => {
+            if (error) {
+                console.error("❌ Error al obtener productos proveedor más barato:", error);
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
 }
+
 }

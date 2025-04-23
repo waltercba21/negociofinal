@@ -1099,22 +1099,22 @@ getProductosPorCategoria : async (req, res) => {
         res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
         res.send(pdfData);
     });
-},
-generarPedidoPDF: async function (req, res) {
-    const PDFDocument = require('pdfkit');
-    const streamBuffers = require('stream-buffers');
-    const buffer = new streamBuffers.WritableStreamBuffer({
-        initialSize: (1024 * 1024),
-        incrementAmount: (1024 * 1024)
-    });
-    const doc = new PDFDocument;
-    doc.pipe(buffer);
+}, 
+    generarPedidoPDF: async function (req, res) {
+        const PDFDocument = require('pdfkit');
+        const streamBuffers = require('stream-buffers');
+        const buffer = new streamBuffers.WritableStreamBuffer({
+            initialSize: (1024 * 1024),
+            incrementAmount: (1024 * 1024)
+        });
+        const doc = new PDFDocument;
+        doc.pipe(buffer);
 
-    const proveedorId = req.query.proveedor;
-    const categoriaId = req.query.categoria;
+        const proveedorId = req.query.proveedor;
+        const categoriaId = req.query.categoria;
 
-    try {
-        const proveedores = await producto.obtenerProveedores(conexion);
+        try {
+            const proveedores = await producto.obtenerProveedores(conexion);
         let proveedor = proveedores.find(p => p.id == proveedorId);
         const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
 
@@ -1126,7 +1126,7 @@ generarPedidoPDF: async function (req, res) {
            });
 
         // Obtener productos
-        const productos = await producto.obtenerProductosParaPedidoPorProveedorConStock(conexion, proveedorId, categoriaId);
+        const productos = await producto.obtenerProductosProveedorMasBarato(conexion, proveedorId, categoriaId);
 
         // Encabezado de la tabla ajustado
         let currentY = doc.y + 20;
