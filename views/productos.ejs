@@ -90,25 +90,14 @@
             <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
           </div>
           <div class="acciones-compartir">
-            <a href="https://wa.me/?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/<%= producto.id %>" target="_blank" title="Compartir por WhatsApp">
+            <a href="https://wa.me/?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/<%= producto.id %>"  title="Compartir por WhatsApp">
               <i class="fab fa-whatsapp"></i>
             </a>
           
-            <a href="https://www.facebook.com/sharer/sharer.php?u=https://www.autofaros.com.ar/productos/<%= producto.id %>" target="_blank" title="Compartir en Facebook">
+            <a href="https://www.facebook.com/sharer/sharer.php?u=https://www.autofaros.com.ar/productos/<%= producto.id %>"  title="Compartir en Facebook">
               <i class="fab fa-facebook"></i>
             </a>
-          
-            <a href="https://twitter.com/intent/tweet?url=https://www.autofaros.com.ar/productos/<%= producto.id %>&text=Consulta%20sobre%20este%20producto" target="_blank" title="Compartir en X (Twitter)">
-              <i class="fab fa-x-twitter"></i>
-            </a>
-          
-            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://www.autofaros.com.ar/productos/<%= producto.id %>" target="_blank" title="Compartir en LinkedIn">
-              <i class="fab fa-linkedin"></i>
-            </a>
-          
-            <a href="mailto:?subject=Consulta producto&body=Hola! Estoy interesado en este producto: https://www.autofaros.com.ar/productos/<%= producto.id %>" title="Compartir por Email">
-              <i class="fas fa-envelope"></i>
-            </a>
+        
           </div>
         <% } %>
       <% } %>
