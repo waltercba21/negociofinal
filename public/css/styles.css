@@ -1896,40 +1896,33 @@ footer {
   margin: 0 10px;
   font-size: 1.8em;
   display: inline-block;
-  transition: transform 0.3s ease;
+  color: #333; /* visible sin hover */
+  transition: transform 0.3s ease, color 0.3s ease;
 }
 
-.acciones-compartir a i {
-  display: inline-block;
+/* WhatsApp */
+.acciones-compartir a.whatsapp:hover {
+  color: #25D366;
+  transform: scale(1.2) rotate(5deg);
+}
+
+/* Facebook */
+.acciones-compartir a.facebook:hover {
+  color: #1877F2;
+  transform: scale(1.2) rotate(5deg);
+}
+
+/* Instagram (solo este mantiene el gradiente animado porque es más icónico visualmente) */
+.acciones-compartir a.instagram i {
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-/* WhatsApp con gradiente animado */
-.acciones-compartir a.whatsapp i {
-  background: linear-gradient(45deg, #25D366, #128C7E);
-}
-.acciones-compartir a.whatsapp:hover i {
-  transform: scale(1.2) rotate(5deg);
-}
-
-/* Facebook con gradiente animado */
-.acciones-compartir a.facebook i {
-  background: linear-gradient(45deg, #1877F2, #0d47a1);
-}
-.acciones-compartir a.facebook:hover i {
-  transform: scale(1.2) rotate(5deg);
-}
-
-/* Instagram ya estilizado previamente */
-.acciones-compartir a.instagram i {
-  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  transition: transform 0.3s ease;
 }
 .acciones-compartir a.instagram:hover i {
   transform: scale(1.2) rotate(5deg);
 }
-
 
 /* INPUT Y BOTONES */
 .cantidad-producto input {
