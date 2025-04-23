@@ -49,7 +49,7 @@ router.delete('/api/facturas/:id', productosController.deleteFactura);
 
 
 router.get('/generarPDF', productosController.generarPDF);
-router.get('/generarPedidoPDF', productosController.generarPedidoPDF);
+router.get('/generarPedidoPDF', productosController.generarPDFProveedor);
 router.get('/editar/:id', productosController.editar);
 router.post('/actualizar/:id', cargar, productosController.actualizar);
 router.post('/actualizarPrecios/:id', productosController.actualizarPrecios);
