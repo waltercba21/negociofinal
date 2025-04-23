@@ -47,52 +47,42 @@
         </form>
     </div>
     <div class="form-control">
-        <h4>Listado Completo de Stock</h4>
-        <form method="get" action="/productos/generarStockPDF">
-            <label for="proveedorStock">Seleccionar Proveedor</label>
-            <select name="proveedor" id="proveedorStock">
-                <option value="TODOS">Mostrar Todos</option>
-                <% proveedores.forEach(proveedor => { %>
-                    <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
-                <% }); %>
-            </select>
-    
-            <label for="categoriaStock">Seleccionar Categoría</label>
-            <select name="categoria" id="categoriaStock">
-                <option value="TODAS">Mostrar Todas</option>
-                <% categorias.forEach(categoria => { %>
-                    <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
-                <% }); %>
-            </select>
-    
-            <button type="submit" class="btn btn-primary">Generar Listado de Stock</button>
-        </form>
-    </div>
-    
-    <div class="form-control">
-        <h4>Generar Pedido Proveedor Mas Barato </h4>
-        <form method="get" action="/productos/generarPedidoPDF">
-          <label for="proveedorPedido">Seleccionar Proveedor</label>
-          <select name="proveedor" id="proveedorPedido">
+        <h4>Generar Listado o Pedido de Proveedor</h4>
+        <form method="get" action="/productos/generarPDFProveedor">
+      
+          <label for="proveedor">Seleccionar Proveedor</label>
+          <select name="proveedor" id="proveedor">
             <option value="TODOS">Mostrar Todos</option>
             <% proveedores.forEach(proveedor => { %>
               <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>><%= proveedor.nombre %></option>
             <% }); %>
           </select>
       
-          <label for="categoriaPedido">Seleccionar Categoría</label>
-          <select name="categoria" id="categoriaPedido">
+          <label for="categoria">Seleccionar Categoría</label>
+          <select name="categoria" id="categoria">
             <option value="TODAS">Mostrar Todas</option>
             <% categorias.forEach(categoria => { %>
               <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>><%= categoria.nombre %></option>
             <% }); %>
           </select>
       
-          <button type="submit" class="btn btn-primary">Generar Pedido</button>
+          <label for="tipo">Tipo de Documento</label>
+          <div style="margin-bottom: 10px;">
+            <label>
+              <input type="radio" name="tipo" value="stock" checked>
+              Listado Completo del Proveedor (Stock bajo)
+            </label>
+            <br>
+            <label>
+              <input type="radio" name="tipo" value="pedido">
+              Pedido del Proveedor Más Barato (Stock bajo)
+            </label>
+          </div>
+      
+          <button type="submit" class="btn btn-primary">Generar PDF</button>
         </form>
       </div>
       
-    
 </div>
     <br/> 
 <div class="contenedor-busqueda">

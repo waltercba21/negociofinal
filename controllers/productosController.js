@@ -1031,143 +1031,90 @@ getProductosPorCategoria : async (req, res) => {
       }
     });
   },
-  generarStockPDF: async function (req, res) {
+  generarPDFProveedor: async function (req, res) {
     const PDFDocument = require('pdfkit');
     const streamBuffers = require('stream-buffers');
     const buffer = new streamBuffers.WritableStreamBuffer({
-        initialSize: (1024 * 1024),
-        incrementAmount: (1024 * 1024)
+      initialSize: 1024 * 1024,
+      incrementAmount: 1024 * 1024
     });
-    const doc = new PDFDocument;
-    doc.pipe(buffer);
-
-    const proveedorId = req.query.proveedor;
-    const categoriaId = req.query.categoria;
-
-    try {
-        const proveedores = await producto.obtenerProveedores(conexion);
-        const categorias = await producto.obtenerCategorias(conexion);
-
-        let proveedor = proveedores.find(p => p.id == proveedorId);
-        let categoria = categorias.find(c => c.id == categoriaId);
-
-        const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
-        const nombreCategoria = categoria ? categoria.nombre : 'Todas las categorías';
-
-        doc.fontSize(14)
-           .text(`Listado de Stock - ${nombreProveedor} - ${nombreCategoria}`, {
-               align: 'center',
-               width: doc.page.width - 100
-           });
-
-        const productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
-
-        // Generar tabla de productos
-        let currentY = doc.y + 20;
-        doc.fontSize(12)
-           .fillColor('black')
-           .text('Código', 60, currentY, { align: 'left', width: 100 })
-           .text('Descripción', 150, currentY, { align: 'left', width: 220 })
-           .text('Stock Mínimo', 400, currentY, { align: 'center', width: 80 })
-           .text('Stock Actual', 480, currentY, { align: 'center', width: 80 })
-           .moveDown(2);
-
-        productos.forEach(producto => {
-            if (producto.stock_actual < producto.stock_minimo) {
-                currentY = doc.y;
-                if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
-                    doc.addPage();
-                    currentY = doc.y;
-                }
-                doc.fontSize(8)
-                   .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 100 })
-                   .text(producto.nombre, 150, currentY, { align: 'left', width: 220 })
-                   .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, { align: 'center', width: 80 })
-                   .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 480, currentY, { align: 'center', width: 80 })
-                   .moveDown(1);
-            }
-        });
-
-        doc.end();
-    } catch (error) {
-        res.status(500).send('Error al generar el PDF');
-    }
-
-    buffer.on('finish', function () {
-        const pdfData = buffer.getContents();
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-        res.send(pdfData);
-    });
-}, 
-generarPedidoPDF: async function (req, res) {
-    const PDFDocument = require('pdfkit');
-    const streamBuffers = require('stream-buffers');
-    const buffer = new streamBuffers.WritableStreamBuffer({
-      initialSize: (1024 * 1024),
-      incrementAmount: (1024 * 1024)
-    });
-    const doc = new PDFDocument;
+    const doc = new PDFDocument();
     doc.pipe(buffer);
   
     const proveedorId = req.query.proveedor;
     const categoriaId = req.query.categoria;
+    const tipo = req.query.tipo; // 'stock' o 'pedido'
   
     try {
       const proveedores = await producto.obtenerProveedores(conexion);
+      const categorias = await producto.obtenerCategorias(conexion);
+  
       const proveedor = proveedores.find(p => p.id == proveedorId);
+      const categoria = categorias.find(c => c.id == categoriaId);
+  
       const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
+      const nombreCategoria = categoria ? categoria.nombre : 'Todas las categorías';
   
-      doc.fontSize(14)
-        .text(`Pedido de Productos - ${nombreProveedor}`, {
-          align: 'center',
-          width: doc.page.width - 100
-        });
+      let titulo = '';
+      let productos = [];
   
-      // Obtener productos donde el proveedor seleccionado es el más barato y hay stock bajo
-      const productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
-  
-      if (!productos.length) {
-        doc.moveDown().fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
+      if (tipo === 'pedido') {
+        titulo = `Pedido de Productos - ${nombreProveedor}`;
+        productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
       } else {
-        let currentY = doc.y + 20;
-        doc.fontSize(12)
-          .fillColor('black')
-          .text('Código', 60, currentY, { align: 'left', width: 80 })
-          .text('Descripción', 150, currentY, { align: 'left', width: 250 })
-          .text('Stock Mínimo', 420, currentY, { align: 'center', width: 80 })
-          .text('Stock Actual', 500, currentY, { align: 'center', width: 80 })
-          .moveDown(2);
+        titulo = `Listado de Stock - ${nombreProveedor} - ${nombreCategoria}`;
+        productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+      }
   
-        productos.forEach(producto => {
+      // Titulo
+      doc.fontSize(14).text(titulo, {
+        align: 'center',
+        width: doc.page.width - 100
+      });
+  
+      // Cabecera
+      let currentY = doc.y + 20;
+      doc.fontSize(12).fillColor('black')
+        .text('Código', 60, currentY, { align: 'left', width: 100 })
+        .text('Descripción', 150, currentY, { align: 'left', width: 220 })
+        .text('Stock Mínimo', 400, currentY, { align: 'center', width: 80 })
+        .text('Stock Actual', 480, currentY, { align: 'center', width: 80 })
+        .moveDown(2);
+  
+      // Filas
+      productos.forEach(producto => {
+        const mostrar = tipo === 'stock' ? producto.stock_actual < producto.stock_minimo : true;
+  
+        if (mostrar) {
           currentY = doc.y;
           if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
             doc.addPage();
             currentY = doc.y;
           }
+  
           doc.fontSize(8)
-            .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 80 })
-            .text(producto.nombre, 150, currentY, { align: 'left', width: 250 })
-            .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 420, currentY, { align: 'center', width: 80 })
-            .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 500, currentY, { align: 'center', width: 80 })
+            .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 100 })
+            .text(producto.nombre, 150, currentY, { align: 'left', width: 220 })
+            .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, { align: 'center', width: 80 })
+            .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 480, currentY, { align: 'center', width: 80 })
             .moveDown(1);
-        });
-      }
+        }
+      });
   
       doc.end();
+  
     } catch (error) {
-      console.log('Error al generar el PDF:', error);
-      res.status(500).send('Error al generar el PDF');
-      return;
+      console.error('❌ Error al generar el PDF:', error);
+      return res.status(500).send('Error al generar el PDF');
     }
   
     buffer.on('finish', function () {
       const pdfData = buffer.getContents();
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename=pedido.pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
       res.send(pdfData);
     });
-  },  
+  },
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();
