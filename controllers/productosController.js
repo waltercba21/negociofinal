@@ -238,7 +238,7 @@ module.exports = {
       
           // 🔍 Obtener todos los productos en oferta
           const todosLosProductos = await new Promise((resolve, reject) => {
-            producto.obtenerOfertas(conexion, (error, resultados) => {
+            producto.obtenerProductosOferta(conexion, (error, resultados) => {
               if (error) {
                 console.error("❌ Error al obtener productos en oferta:", error);
                 return reject(error);
