@@ -1038,73 +1038,70 @@ getProductosPorCategoria : async (req, res) => {
       initialSize: 1024 * 1024,
       incrementAmount: 1024 * 1024
     });
-    const doc = new PDFDocument();
+    const doc = new PDFDocument;
     doc.pipe(buffer);
   
     const proveedorId = req.query.proveedor;
     const categoriaId = req.query.categoria;
-    const tipo = req.query.tipo; // 'stock' o 'pedido'
+    const tipo = req.query.tipo; // "stock" o "pedido"
   
     try {
       const proveedores = await producto.obtenerProveedores(conexion);
       const categorias = await producto.obtenerCategorias(conexion);
-  
       const proveedor = proveedores.find(p => p.id == proveedorId);
       const categoria = categorias.find(c => c.id == categoriaId);
-  
       const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
       const nombreCategoria = categoria ? categoria.nombre : 'Todas las categorías';
   
-      let titulo = '';
-      let productos = [];
+      const titulo = tipo === 'pedido'
+        ? `Pedido de Productos - ${nombreProveedor}`
+        : `Listado de Stock - ${nombreProveedor} - ${nombreCategoria}`;
   
-      if (tipo === 'pedido') {
-        titulo = `Pedido de Productos - ${nombreProveedor}`;
-        productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
-      } else {
-        titulo = `Listado de Stock - ${nombreProveedor} - ${nombreCategoria}`;
-        productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
-      }
-  
-      // Titulo
       doc.fontSize(14).text(titulo, {
         align: 'center',
         width: doc.page.width - 100
       });
   
-      // Cabecera
-      let currentY = doc.y + 20;
-      doc.fontSize(12).fillColor('black')
-        .text('Código', 60, currentY, { align: 'left', width: 100 })
-        .text('Descripción', 150, currentY, { align: 'left', width: 220 })
-        .text('Stock Mínimo', 400, currentY, { align: 'center', width: 80 })
-        .text('Stock Actual', 480, currentY, { align: 'center', width: 80 })
-        .moveDown(2);
+      // Obtener productos
+      let productos = [];
+      if (tipo === 'pedido') {
+        productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
+      } else {
+        productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+      }
   
-      // Filas
-      productos.forEach(producto => {
-        const mostrar = tipo === 'stock' ? producto.stock_actual < producto.stock_minimo : true;
+      if (!productos.length) {
+        doc.moveDown().fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
+      } else {
+        let currentY = doc.y + 20;
+        doc.fontSize(12)
+          .fillColor('black')
+          .text('Código', 60, currentY, { align: 'left', width: 80 })
+          .text('Descripción', 150, currentY, { align: 'left', width: 250 })
+          .text('Stock Mínimo', 420, currentY, { align: 'center', width: 80 })
+          .text('Stock Actual', 500, currentY, { align: 'center', width: 80 })
+          .moveDown(2);
   
-        if (mostrar) {
-          currentY = doc.y;
-          if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
-            doc.addPage();
+        productos.forEach(producto => {
+          if (tipo === 'stock' || producto.stock_actual < producto.stock_minimo) {
             currentY = doc.y;
+            if (currentY + 50 > doc.page.height - doc.page.margins.bottom) {
+              doc.addPage();
+              currentY = doc.y;
+            }
+            doc.fontSize(8)
+              .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 80 })
+              .text(producto.nombre, 150, currentY, { align: 'left', width: 250 })
+              .text(producto.stock_minimo || '0', 420, currentY, { align: 'center', width: 80 })
+              .text(producto.stock_actual || 'Sin Stock', 500, currentY, { align: 'center', width: 80 })
+              .moveDown(1);
           }
-  
-          doc.fontSize(8)
-            .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 100 })
-            .text(producto.nombre, 150, currentY, { align: 'left', width: 220 })
-            .text(producto.stock_minimo ? producto.stock_minimo.toString() : '0', 400, currentY, { align: 'center', width: 80 })
-            .text(producto.stock_actual ? producto.stock_actual.toString() : 'Sin Stock', 480, currentY, { align: 'center', width: 80 })
-            .moveDown(1);
-        }
-      });
+        });
+      }
   
       doc.end();
-  
     } catch (error) {
-      console.error('❌ Error al generar el PDF:', error);
+      console.error('Error al generar el PDF:', error);
       return res.status(500).send('Error al generar el PDF');
     }
   
@@ -1114,7 +1111,7 @@ getProductosPorCategoria : async (req, res) => {
       res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
       res.send(pdfData);
     });
-  },
+  },  
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();
