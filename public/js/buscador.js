@@ -110,6 +110,29 @@ function mostrarProductos(productos) {
       <div class="categoria-producto"><h6 class="categoria">${producto.categoria_nombre || 'Sin categoría'}</h6></div>
       <div class="precio-producto"><p class="precio">$${formatearNumero(producto.precio_venta || 0)}</p></div>
       ${stockInfo}
+      <div class="acciones-compartir">
+  <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" 
+     title="Consultar por WhatsApp" 
+     target="_blank" 
+     class="whatsapp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+
+  <a href="https://www.facebook.com/profile.php?id=100063665395970" 
+     title="Visitar Facebook" 
+     target="_blank" 
+     class="facebook">
+    <i class="fab fa-facebook"></i>
+  </a>
+
+  <a href="https://www.instagram.com/autofaros_cordoba" 
+     title="Visitar Instagram" 
+     target="_blank" 
+     class="instagram">
+    <i class="fab fa-instagram"></i>
+  </a>
+</div>
+
     `;
 
     contenedorProductos.appendChild(card);
