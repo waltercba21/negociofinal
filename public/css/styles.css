@@ -1898,12 +1898,25 @@ footer {
   transition: color 0.3s ease;
 }
 
+/* Hover personalizados */
 .acciones-compartir a.whatsapp:hover {
-  color: #25D366; /* Color oficial de WhatsApp */
+  color: #25D366;
 }
 
 .acciones-compartir a.facebook:hover {
-  color: #1877F2; /* Color oficial de Facebook */
+  color: #1877F2;
+}
+
+/* Instagram con animación de gradiente */
+.acciones-compartir a.instagram i {
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: transform 0.3s ease;
+}
+
+.acciones-compartir a.instagram:hover i {
+  transform: scale(1.2) rotate(5deg);
 }
 
 /* INPUT Y BOTONES */
