@@ -1689,6 +1689,22 @@ footer {
   box-shadow: 0 0 2px #719ECE;
   outline: none;
 }
+.contenedor-selectores {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 20px 0;
+  justify-content: center;
+}
+
+.formulario-filtros select {
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  min-width: 180px;
+}
+
 
 /* GRID 4 TARJETAS */
 .contenedor-productos {
