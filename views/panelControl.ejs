@@ -117,45 +117,59 @@
         <input type="text" id="entradaBusqueda" placeholder="Que estás buscando? Ej: Escort, Optica, Faro, Agile">
     </div>
     <table class="tabla-control-productos">
-
-
-        <thead class="thead-light">
-            <tr>
-                <th><input type="checkbox" id="check-all"></th>
-                <th>Categoría</th>
-                <th>Nombre</th>
-                <th>Imagen</th>
-                <th>Precio</th>
-                <th>Acciones</th>   
-            </tr>
-        </thead>
-        <tbody id="contenedor-productos">
-            <% productos.forEach(producto => { %>
-                <tr>
-                    <td><input type="checkbox" class="product-check" value="<%= producto.id %>"></td>
-                    <td> <%= producto.categoria %></td>
-                    <td><%= producto.nombre %></td> 
-                    <td>
-                        <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-                          <img class="img-thumbnail" width='150' src="/uploads/productos/<%= producto.imagenes[0] %>" alt="Imagen de <%= producto.nombre %>">
-                        <% } else { %>
-                          <span>(Sin imagen)</span>
-                        <% } %>
-                      </td>
-                      
-                    <td>$<%= parseInt(producto.precio_venta) %></td>
-                    <td>
-                        <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-                            <form class="form-inline" method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>">
-
-                                <button class="btn btn-warning" type="submit">Editar</button>
-                            </form>
-                        </div> 
-                    </td>
-                </tr>
-            <% }); %>
-        </tbody>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="check-all"></th>
+          <th>Categoría</th>
+          <th>Nombre</th>
+          <th>Imagen</th>
+          <th>Precio</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="contenedor-productos">
+        <% productos.forEach(producto => { %>
+          <tr>
+            <!-- Columna 1: Checkbox -->
+            <td>
+              <input type="checkbox" class="product-check" value="<%= producto.id %>">
+            </td>
+    
+            <!-- Columna 2: Categoría -->
+            <td>
+              <%= producto.categoria %>
+            </td>
+    
+            <!-- Columna 3: Nombre -->
+            <td>
+              <%= producto.nombre %>
+            </td>
+    
+            <!-- Columna 4: Imagen -->
+            <td>
+              <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+                <img class="img-thumbnail" src="/uploads/productos/<%= producto.imagenes[0] %>" alt="Imagen de <%= producto.nombre %>">
+              <% } else { %>
+                <span>(Sin imagen)</span>
+              <% } %>
+            </td>
+    
+            <!-- Columna 5: Precio -->
+            <td>
+              $<%= parseInt(producto.precio_venta) %>
+            </td>
+    
+            <!-- Columna 6: Acciones -->
+            <td>
+              <form method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>">
+                <button class="btn btn-warning" type="submit">Editar</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
     </table>
+    
     <button id="delete-selected" class="btn btn-danger btn-delete">Eliminar seleccionados</button>
 </div>
 </main>
