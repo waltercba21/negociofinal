@@ -1,103 +1,56 @@
-document.getElementById('marca_id').addEventListener('change', function() {
-  const marcaId = this.value;
-  console.log('Marca seleccionada:', marcaId); // Agregar este log
-  fetch('/productos/modelos/' + marcaId)
-      .then(response => response.json())
-      .then(modelos => {
-          console.log('Modelos recibidos:', modelos); // Agregar este log
-          modelos.sort(function(a, b) {
-              return a.nombre.localeCompare(b.nombre);
-          });
-          const modeloSelect = document.getElementById('modelo_id');
-          modeloSelect.innerHTML = '';
-          const defaultOption = document.createElement('option');
-          defaultOption.value = '';
-          defaultOption.text = 'Selecciona un modelo';
-          modeloSelect.appendChild(defaultOption);
-          modelos.forEach(modelo => {
-              const option = document.createElement('option');
-              option.value = modelo.id;
-              option.text = modelo.nombre;
-              modeloSelect.appendChild(option);
-          });
-      })
-      .catch(error => console.error('Error al obtener modelos:', error));
-});
-
 document.addEventListener("DOMContentLoaded", function () {
+  const categoriaSelect = document.getElementById("categoria_id");
   const marcaSelect = document.getElementById("marca_id");
-  if (marcaSelect) {
-    marcaSelect.addEventListener("change", function () {
-      const marcaId = this.value;
-      console.log("Marca seleccionada:", marcaId);
+  const modeloSelect = document.getElementById("modelo_id");
+  const contenedorProductos = document.getElementById("contenedor-productos");
 
-      fetch("/productos/modelos/" + marcaId)
-        .then((response) => response.json())
-        .then((modelos) => {
-          console.log("Modelos recibidos:", modelos);
-          modelos.sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-          const modeloSelect = document.getElementById("modelo_id");
-          modeloSelect.innerHTML = "";
-          const defaultOption = document.createElement("option");
-          defaultOption.value = "";
-          defaultOption.text = "Selecciona un modelo";
-          modeloSelect.appendChild(defaultOption);
-
-          modelos.forEach((modelo) => {
-            const option = document.createElement("option");
-            option.value = modelo.id;
-            option.text = modelo.nombre;
-            modeloSelect.appendChild(option);
-          });
-        })
-        .catch((error) => console.error("Error al obtener modelos:", error));
-    });
-  } else {
-    console.error('Elemento con id="marca_id" no encontrado.');
-  }
-
-  // Variables para verificar si el usuario está logueado y si es administrador
   const isUserLoggedIn = document.body.dataset.isUserLoggedIn === "true";
   const isAdminUser = document.body.dataset.isAdminUser === "true";
 
-  console.log("isUserLoggedIn:", isUserLoggedIn);
-  console.log("isAdminUser:", isAdminUser);
+  // Cargar modelos al cambiar marca
+  marcaSelect.addEventListener("change", function () {
+    const marcaId = this.value;
+    fetch("/productos/modelos/" + marcaId)
+      .then((res) => res.json())
+      .then((modelos) => {
+        modeloSelect.innerHTML = "";
+        const option = document.createElement("option");
+        option.value = "";
+        option.text = "Selecciona un modelo";
+        modeloSelect.appendChild(option);
 
-  const selectores = document.querySelectorAll("#categoria_id, #marca_id, #modelo_id");
-  const contenedorProductos = document.getElementById("contenedor-productos");
+        modelos.forEach((modelo) => {
+          const opt = document.createElement("option");
+          opt.value = modelo.id;
+          opt.text = modelo.nombre;
+          modeloSelect.appendChild(opt);
+        });
+      })
+      .catch((err) => console.error("Error al cargar modelos:", err));
+  });
 
-  selectores.forEach((selector) => {
-    selector.addEventListener("change", function () {
-      const categoria_id = document.getElementById("categoria_id").value;
-      const marca_id = document.getElementById("marca_id").value;
-      const modelo_id = document.getElementById("modelo_id").value;
+  [categoriaSelect, marcaSelect, modeloSelect].forEach((selector) => {
+    selector.addEventListener("change", async () => {
+      const categoria_id = categoriaSelect.value;
+      const marca_id = marcaSelect.value;
+      const modelo_id = modeloSelect.value;
 
-      if (categoria_id === "" && marca_id === "" && modelo_id === "") {
-        contenedorProductos.innerHTML = "";
-        return;
-      }
-
-      console.log("Valores seleccionados - Categoría:", categoria_id, "Marca:", marca_id, "Modelo:", modelo_id);
       contenedorProductos.innerHTML = "<p>Cargando productos...</p>";
 
-      fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`)
-        .then((response) => {
-          if (!response.ok) throw new Error("Error en la respuesta de la API");
-          return response.json();
-        })
-        .then((productos) => {
-          console.log("Productos devueltos de la API:", productos);
-          renderizarProductos(productos);
-        })
-        .catch((error) => {
-          console.error("Error al buscar productos:", error);
-          contenedorProductos.innerHTML = "<p>Error al cargar los productos. Intenta nuevamente.</p>";
-        });
+      try {
+        const response = await fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`);
+        if (!response.ok) throw new Error("Error al obtener productos");
+
+        const productos = await response.json();
+        mostrarProductos(productos);
+      } catch (error) {
+        console.error("Error:", error);
+        contenedorProductos.innerHTML = "<p>Error al cargar productos.</p>";
+      }
     });
   });
 
-  function renderizarProductos(productos) {
+  function mostrarProductos(productos) {
     contenedorProductos.innerHTML = "";
 
     if (productos.length === 0) {
@@ -105,135 +58,135 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    productos.forEach((producto) => {
-      let imagenes = "";
-      if (producto.imagenes && producto.imagenes.length > 0) {
-        producto.imagenes.forEach((imagenObj, i) => {
-          imagenes += `<img class="carousel__image ${i !== 0 ? "hidden" : ""}" src="/uploads/productos/${imagenObj.imagen}" alt="Imagen de ${producto.nombre}">`;
-        });
-        imagenes = `
-          <div class="cover__card">
-            <div class="carousel">
-              ${imagenes}
+    productos.forEach((producto, index) => {
+      const card = document.createElement("div");
+      card.className = `
+        card 
+        ${producto.calidad_original ? "calidad-original-fitam" : ""} 
+        ${producto.calidad_vic ? "calidad_vic" : ""} 
+        ${producto.oferta ? "producto-oferta" : ""}
+      `;
+      card.setAttribute("data-label", producto.oferta ? "OFERTA" : producto.calidad_original ? "CALIDAD FITAM" : producto.calidad_vic ? "CALIDAD VIC" : "");
+
+      const imagenesHTML = producto.imagenes.map((img, i) => `
+        <img class="carousel__image ${i !== 0 ? "hidden" : ""}" src="/uploads/productos/${img.imagen}" alt="${producto.nombre}">
+      `).join("");
+
+      const stockHTML = isUserLoggedIn
+        ? isAdminUser
+          ? `
+            <div class="stock-producto ${producto.stock_actual >= producto.stock_minimo ? "suficiente-stock" : "bajo-stock"}">
+              <p>Stock Disponible: ${producto.stock_actual}</p>
             </div>
-          </div>
-          <div class="carousel__buttons">
-            <button class="carousel__button carousel__button--left"><i class="fas fa-chevron-left"></i></button>
-            <button class="carousel__button carousel__button--right"><i class="fas fa-chevron-right"></i></button>
-          </div>
-        `;
-      } else {
-        imagenes = '<img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="Imagen no disponible">';
-      }
+            <div class="cantidad-producto">
+              <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+            </div>
+          `
+          : `
+            <div class="semaforo-stock">
+              <i class="fa-solid fa-thumbs-${producto.stock_actual >= producto.stock_minimo ? "up verde" : "down rojo"}"></i>
+              <span class="texto-semaforo">
+                ${producto.stock_actual >= producto.stock_minimo
+                  ? "PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA"
+                  : "PRODUCTO PENDIENTE DE INGRESO O A PEDIDO"}
+              </span>
+            </div>
+            <div class="cantidad-producto">
+              <input type="number" class="cantidad-input" value="0" min="0" id="input-cantidad-${producto.id}">
+              <button class="agregar-carrito"
+                data-id="${producto.id}" 
+                data-nombre="${producto.nombre}" 
+                data-precio="${producto.precio_venta}" 
+                data-stock="${producto.stock_actual}" 
+                data-stockmin="${producto.stock_minimo}">
+                Agregar al carrito
+              </button>
+              <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
+            </div>
+          `
+        : `<div class="cantidad-producto"><a href="/productos/${producto.id}" class="card-link">Ver detalles</a></div>`;
 
-      const precio_venta = producto.precio_venta
-        ? `$${Math.floor(producto.precio_venta).toLocaleString("de-DE")}`
-        : "Precio no disponible";
-
-      let html = `<div class="card">${imagenes}
+      card.innerHTML = `
+        <div class="cover-card">
+          <div class="carousel-container">
+            <button class="carousel__button carousel__button--left" onclick="moverCarrusel('${index}', -1)">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="carousel-wrapper">
+              <div class="carousel" id="carousel-${index}">
+                ${imagenesHTML}
+              </div>
+            </div>
+            <button class="carousel__button carousel__button--right" onclick="moverCarrusel('${index}', 1)">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
         <div class="titulo-producto"><h3 class="nombre">${producto.nombre}</h3></div>
         <hr>
-        <div class="precio-producto"><p class="precio">${precio_venta}</p></div>`;
+        <div class="categoria-producto"><h6 class="categoria">${producto.categoria_nombre || "Sin categoría"}</h6></div>
+        <div class="precio-producto"><p class="precio">$${formatearNumero(producto.precio_venta || 0)}</p></div>
+        ${stockHTML}
+        <div class="acciones-compartir">
+          <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" class="whatsapp" target="_blank">
+            <i class="fab fa-whatsapp"></i>
+          </a>
+          <a href="https://www.facebook.com/profile.php?id=100063665395970" class="facebook" target="_blank">
+            <i class="fab fa-facebook"></i>
+          </a>
+          <a href="https://www.instagram.com/autofaros_cordoba" class="instagram" target="_blank">
+            <i class="fab fa-instagram"></i>
+          </a>
+        </div>
+      `;
 
-      if (isUserLoggedIn) {
-        if (!isAdminUser) {
-          html += `
-            <div class="semaforo-stock">${producto.stock_actual >= producto.stock_minimo
-              ? '<i class="fa-solid fa-thumbs-up semaforo verde"></i> <span class="texto-semaforo">PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA</span>'
-              : '<i class="fa-solid fa-thumbs-down semaforo rojo"></i> <span class="texto-semaforo">PRODUCTO PENDIENTE DE INGRESO O A PEDIDO</span>'}
-            
-</div>
+      contenedorProductos.appendChild(card);
 
-            <div class="cantidad-producto">
-              <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-              <input type="number" id="cantidad" value="1" min="1">
-              <button class="agregar-carrito">Agregar al carrito</button>
-            </div>
-          `;
-        } else {
-          html += `
-            <div class="cantidad-producto">
-              <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-            </div>
-            <div class="stock-producto ${producto.stock_actual < producto.stock_minimo ? "bajo-stock" : "suficiente-stock"}">
-              <p>Stock Disponible: ${producto.stock_actual !== undefined ? producto.stock_actual : "No disponible"}</p>
-            </div>
-          `;
-        }
-      } else {
-        html += `<div class="cantidad-producto"><a href="/productos/${producto.id}" class="card-link">Ver detalles</a></div>`;
-      }
+      if (!isAdminUser && isUserLoggedIn) {
+        const botonAgregar = card.querySelector('.agregar-carrito');
+        const inputCantidad = card.querySelector('.cantidad-input');
 
-      html += `</div>`;
-      const tarjetaProducto = document.createElement("div");
-      tarjetaProducto.innerHTML = html;
-      contenedorProductos.appendChild(tarjetaProducto);
-    });
+        botonAgregar.addEventListener('click', (e) => {
+          e.preventDefault();
+          const cantidad = parseInt(inputCantidad.value);
+          const stockDisponible = parseInt(producto.stock_actual);
 
-    agregarEventosCarrusel(contenedorProductos);
-  }
+          if (!cantidad || cantidad <= 0 || isNaN(cantidad)) {
+            Swal.fire({ icon: 'error', title: 'Cantidad inválida', text: 'Debes ingresar una cantidad mayor a 0.' });
+            return;
+          }
 
-  function agregarEventosCarrusel(contenedor) {
-    contenedor.querySelectorAll(".card").forEach((tarjeta) => {
-      const leftButton = tarjeta.querySelector(".carousel__button--left");
-      const rightButton = tarjeta.querySelector(".carousel__button--right");
-      const images = tarjeta.querySelectorAll(".carousel__image");
-      let currentIndex = 0;
+          if (cantidad > stockDisponible) {
+            Swal.fire({ icon: 'warning', title: 'Cantidades no disponibles', text: 'Si deseas más unidades comunicate con nosotros 3513820440' });
+            inputCantidad.value = stockDisponible;
+            return;
+          }
 
-      if (leftButton && rightButton && images.length > 1) {
-        leftButton.addEventListener("click", () => {
-          images[currentIndex].classList.add("hidden");
-          currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
-          images[currentIndex].classList.remove("hidden");
-        });
+          const eventoAgregar = new CustomEvent("agregarAlCarritoDesdeBuscador", {
+            detail: {
+              id: producto.id,
+              nombre: producto.nombre,
+              precio: producto.precio_venta,
+              cantidad: cantidad
+            }
+          });
 
-        rightButton.addEventListener("click", () => {
-          images[currentIndex].classList.add("hidden");
-          currentIndex = (currentIndex === images.length - 1) ? 0 : currentIndex + 1;
-          images[currentIndex].classList.remove("hidden");
+          document.dispatchEvent(eventoAgregar);
         });
       }
     });
   }
+
+  function moverCarrusel(index, direccion) {
+    const carousel = document.getElementById(`carousel-${index}`);
+    const imagenes = carousel.querySelectorAll(".carousel__image");
+    let activa = [...imagenes].findIndex(img => !img.classList.contains("hidden"));
+    imagenes[activa].classList.add("hidden");
+    activa = (activa + direccion + imagenes.length) % imagenes.length;
+    imagenes[activa].classList.remove("hidden");
+  }
+
+  function formatearNumero(num) {
+    return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
 });
-
-  // Lógica para el carrusel
-  $(document).on('click', '.carousel__button', function() {
-      var $carousel = $(this).closest('.card').find('.carousel');
-      var $images = $carousel.find('.carousel__image');
-      var index = $images.index($carousel.find('.carousel__image:visible'));
-
-      if ($(this).find('.fa-chevron-left').length > 0) {
-          $images.eq(index).hide();
-          index--;
-          if (index < 0) {
-              index = $images.length - 1;
-          }
-      } else {
-          $images.eq(index).hide();
-          index++;
-          if (index >= $images.length) {
-              index = 0;
-          }
-      }
-
-      $images.eq(index).show();
-  });
-  document.querySelectorAll('.flecha-izquierda, .flecha-derecha').forEach(boton => {
-    boton.addEventListener('click', function () {
-        const card = this.closest('.card-producto');
-        const imagen = card.querySelector('.imagen-producto');
-        const imagenes = JSON.parse(card.dataset.imagenes);
-        let indice = parseInt(card.dataset.indiceImagen);
-
-        if (this.classList.contains('flecha-izquierda')) {
-            indice = (indice - 1 + imagenes.length) % imagenes.length;
-        } else {
-            indice = (indice + 1) % imagenes.length;
-        }
-
-        card.dataset.indiceImagen = indice;
-        imagen.src = `/uploads/productos/${imagenes[indice]}`;
-    });
-});
-
