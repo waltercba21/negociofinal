@@ -1042,10 +1042,10 @@ footer {
   overflow-x: auto;
   border-radius: 12px;
   background-color: #fff;
-  table-layout: fixed; /* ✅ Centra y alinea todas las columnas de forma pareja */
+  table-layout: auto; /* ✅ permitimos que el contenido determine el ancho */
 }
 
-/* Unificamos el estilo general de todas las celdas */
+/* ✅ Aplicamos estilos generales */
 .tabla-panel-productos th,
 .tabla-panel-productos td {
   padding: 14px;
@@ -1057,37 +1057,15 @@ footer {
   overflow-wrap: break-word;
 }
 
-/* Anchos proporcionales y estables */
-.tabla-panel-productos th:nth-child(1),
-.tabla-panel-productos td:nth-child(1) {
-  width: 5%;
-  max-width: 50px;
-}
+/* ✅ SOLO definimos anchos en TH (encabezado) */
+.tabla-panel-productos th:nth-child(1) { width: 5%; }
+.tabla-panel-productos th:nth-child(2) { width: 15%; }
+.tabla-panel-productos th:nth-child(3) { width: 30%; }
+.tabla-panel-productos th:nth-child(4) { width: 20%; }
+.tabla-panel-productos th:nth-child(5) { width: 15%; }
+.tabla-panel-productos th:nth-child(6) { width: 15%; }
 
-.tabla-panel-productos th:nth-child(2),
-.tabla-panel-productos td:nth-child(2) {
-  width: 15%;
-}
-
-.tabla-panel-productos th:nth-child(3),
-.tabla-panel-productos td:nth-child(3) {
-  width: 30%;
-}
-
-.tabla-panel-productos th:nth-child(4),
-.tabla-panel-productos td:nth-child(4) {
-  width: 20%;
-}
-
-.tabla-panel-productos th:nth-child(5),
-.tabla-panel-productos td:nth-child(5) {
-  width: 15%;
-}
-
-.tabla-panel-productos th:nth-child(6),
-.tabla-panel-productos td:nth-child(6) {
-  width: 15%;
-}
+/* ✅ Dejar que TD se adapten automáticamente */
 
 /* Imagen dentro de tabla */
 .tabla-panel-productos img.img-thumbnail {
@@ -1114,12 +1092,6 @@ footer {
   display: block;
   margin-left: auto;
   margin-right: auto;
-}
-
-/* Animación */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .btn-group-vertical button,
