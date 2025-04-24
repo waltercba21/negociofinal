@@ -128,48 +128,43 @@
         </tr>
       </thead>
       <tbody id="contenedor-productos">
-        <% productos.forEach(producto => { %>
+        <% if (productos && productos.length > 0) { %>
+          <% productos.forEach(producto => { %>
+            <tr>
+              <td>
+                <input type="checkbox" class="product-check" value="<%= producto.id %>">
+              </td>
+              <td>
+                <%= producto.categoria %>
+              </td>
+              <td>
+                <%= producto.nombre %>
+              </td>
+              <td>
+                <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+                  <img class="img-thumbnail" src="/uploads/productos/<%= producto.imagenes[0] %>" alt="Imagen de <%= producto.nombre %>">
+                <% } else { %>
+                  <span>(Sin imagen)</span>
+                <% } %>
+              </td>
+              <td>
+                $<%= parseInt(producto.precio_venta) %>
+              </td>
+              <td>
+                <form method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>">
+                  <button class="btn btn-warning" type="submit">Editar</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
           <tr>
-            <!-- 1. Checkbox -->
-            <td>
-              <input type="checkbox" class="product-check" value="<%= producto.id %>">
-            </td>
-          
-            <!-- 2. Categoría -->
-            <td>
-              <%= producto.categoria %>
-            </td>
-          
-            <!-- 3. Nombre -->
-            <td>
-              <%= producto.nombre %>
-            </td>
-          
-            <!-- 4. Imagen -->
-            <td>
-              <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-                <img class="img-thumbnail" src="/uploads/productos/<%= producto.imagenes[0] %>" alt="Imagen de <%= producto.nombre %>">
-              <% } else { %>
-                <span>(Sin imagen)</span>
-              <% } %>
-            </td>
-          
-            <!-- 5. Precio -->
-            <td>
-              $<%= parseInt(producto.precio_venta) %>
-            </td>
-          
-            <!-- 6. Acciones -->
-            <td>
-              <form method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>">
-                <button class="btn btn-warning" type="submit">Editar</button>
-              </form>
-            </td>
+            <td colspan="6">No hay productos para mostrar.</td>
           </tr>
-          
-        <% }); %>
+        <% } %>
       </tbody>
     </table>
+    
     
     
     <button id="delete-selected" class="btn btn-danger btn-delete">Eliminar seleccionados</button>
