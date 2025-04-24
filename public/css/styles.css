@@ -1732,6 +1732,34 @@ footer {
   background-color: #f0f8ff;
   box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
 }
+.no-result {
+  text-align: center;
+  margin-top: 50px;
+  color: #555;
+  padding: 20px;
+}
+
+.no-result img.imagen-no-result {
+  max-width: 300px;
+  width: 100%;
+  margin: 0 auto 20px;
+  display: block;
+  opacity: 0.95;
+  transition: transform 0.3s ease;
+}
+
+.no-result img.imagen-no-result:hover {
+  transform: scale(1.05);
+}
+
+.imagen-no-result {
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 @media (max-width: 768px) {
   .contenedor-selectores {
