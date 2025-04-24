@@ -1733,12 +1733,33 @@ footer {
   width: 100%;
 }
 
+/* Estilo 3D moderno para los selectores */
 .formulario-filtros select {
-  padding: 12px;
+  padding: 12px 16px;
   font-size: 1rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  font-weight: bold;
+  border-radius: 10px;
+  border: none;
+  background-color: #f0f4f8;
+  color: #333;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08), inset 0 -2px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  appearance: none;
   min-width: 180px;
+  cursor: pointer;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23999" height="18" viewBox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+}
+
+/* Efecto de profundidad al pasar el mouse o al hacer foco */
+.formulario-filtros select:hover,
+.formulario-filtros select:focus {
+  background-color: #e6eef5;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1), inset 0 -2px 4px rgba(0, 0, 0, 0.05);
+  outline: none;
+  border: none;
 }
 
 #contenedor-productos {
