@@ -52,12 +52,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function mostrarProductos(productos) {
     contenedorProductos.innerHTML = "";
-
+  
     if (productos.length === 0) {
-      contenedorProductos.innerHTML = "<p>No se encontraron productos.</p>";
+      const contenedorVacio = document.createElement("div");
+      contenedorVacio.className = "no-result";
+      contenedorVacio.innerHTML = `
+        <img src="/images/noEncontrado.png" alt="Producto no encontrado" class="imagen-no-result">
+        <p>No se encontraron productos. Probá con otros filtros o palabras clave.</p>
+      `;
+      contenedorProductos.appendChild(contenedorVacio);
       return;
     }
-
+  
     productos.forEach((producto, index) => {
       const card = document.createElement("div");
       card.className = `
@@ -67,11 +73,11 @@ document.addEventListener("DOMContentLoaded", function () {
         ${producto.oferta ? "producto-oferta" : ""}
       `;
       card.setAttribute("data-label", producto.oferta ? "OFERTA" : producto.calidad_original ? "CALIDAD FITAM" : producto.calidad_vic ? "CALIDAD VIC" : "");
-
+  
       const imagenesHTML = producto.imagenes.map((img, i) => `
         <img class="carousel__image ${i !== 0 ? "hidden" : ""}" src="/uploads/productos/${img.imagen}" alt="${producto.nombre}">
       `).join("");
-
+  
       const stockHTML = isUserLoggedIn
         ? isAdminUser
           ? `
@@ -105,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
             </div>
           `
         : `<div class="cantidad-producto"><a href="/productos/${producto.id}" class="card-link">Ver detalles</a></div>`;
-
+  
       card.innerHTML = `
         <div class="cover-card">
           <div class="carousel-container">
@@ -139,29 +145,29 @@ document.addEventListener("DOMContentLoaded", function () {
           </a>
         </div>
       `;
-
+  
       contenedorProductos.appendChild(card);
-
+  
       if (!isAdminUser && isUserLoggedIn) {
         const botonAgregar = card.querySelector('.agregar-carrito');
         const inputCantidad = card.querySelector('.cantidad-input');
-
+  
         botonAgregar.addEventListener('click', (e) => {
           e.preventDefault();
           const cantidad = parseInt(inputCantidad.value);
           const stockDisponible = parseInt(producto.stock_actual);
-
+  
           if (!cantidad || cantidad <= 0 || isNaN(cantidad)) {
             Swal.fire({ icon: 'error', title: 'Cantidad inválida', text: 'Debes ingresar una cantidad mayor a 0.' });
             return;
           }
-
+  
           if (cantidad > stockDisponible) {
             Swal.fire({ icon: 'warning', title: 'Cantidades no disponibles', text: 'Si deseas más unidades comunicate con nosotros 3513820440' });
             inputCantidad.value = stockDisponible;
             return;
           }
-
+  
           const eventoAgregar = new CustomEvent("agregarAlCarritoDesdeBuscador", {
             detail: {
               id: producto.id,
@@ -170,12 +176,13 @@ document.addEventListener("DOMContentLoaded", function () {
               cantidad: cantidad
             }
           });
-
+  
           document.dispatchEvent(eventoAgregar);
         });
       }
     });
   }
+  
 
   function moverCarrusel(index, direccion) {
     const carousel = document.getElementById(`carousel-${index}`);
