@@ -1040,9 +1040,9 @@ footer {
   margin-top: 30px;
   background-color: #fff;
   border-radius: 10px;
-  overflow: hidden;
-  table-layout: auto;
+  overflow-x: auto;
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  table-layout: auto;
 }
 
 /* Encabezados */
@@ -1053,49 +1053,27 @@ footer {
   padding: 12px;
   border-bottom: 1px solid #ddd;
   font-size: 0.95rem;
+  text-align: center;
+  white-space: nowrap;
 }
 
-/* Filas de datos */
+/* Celdas de datos */
 .tabla-control-productos td {
   padding: 12px;
   text-align: center;
   vertical-align: middle;
   font-size: 0.95rem;
   border-bottom: 1px solid #f0f0f0;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
-/* ✅ Distribución exacta por columna */
-.tabla-control-productos th:nth-child(1),
-.tabla-control-productos td:nth-child(1) {
-  width: 5%;
-}
-
-.tabla-control-productos th:nth-child(2),
-.tabla-control-productos td:nth-child(2) {
-  width: 15%;
-}
-
-.tabla-control-productos th:nth-child(3),
-.tabla-control-productos td:nth-child(3) {
-  width: 30%;
-}
-
-.tabla-control-productos th:nth-child(4),
-.tabla-control-productos td:nth-child(4) {
-  width: 20%;
-}
-
-.tabla-control-productos th:nth-child(5),
-.tabla-control-productos td:nth-child(5) {
-  width: 15%;
-}
-
-.tabla-control-productos th:nth-child(6),
-.tabla-control-productos td:nth-child(6) {
-  width: 15%;
-}
+/* Columnas sugeridas (solo en TH para evitar desbordes) */
+.tabla-control-productos th:nth-child(1) { width: 5%; min-width: 40px; }
+.tabla-control-productos th:nth-child(2) { width: 15%; min-width: 100px; }
+.tabla-control-productos th:nth-child(3) { width: 25%; min-width: 150px; }
+.tabla-control-productos th:nth-child(4) { width: 20%; min-width: 120px; }
+.tabla-control-productos th:nth-child(5) { width: 15%; min-width: 100px; }
+.tabla-control-productos th:nth-child(6) { width: 15%; min-width: 120px; }
 
 /* Imagen */
 .tabla-control-productos img.img-thumbnail {
@@ -1136,6 +1114,7 @@ footer {
 .btn-danger:hover {
   background-color: #dc3545;
 }
+
 
 /*-----------------------------PRESUPUESTO MOSTRADOR--------------------------*/
 
