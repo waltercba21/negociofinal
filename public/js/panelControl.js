@@ -8,10 +8,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (searchValue) {
     inputBusqueda.value = searchValue;
-    inputBusqueda.dispatchEvent(new Event('input'));
+  
+    const productosDesdeServidor = document.querySelectorAll('#contenedor-productos .row');
+    if (productosDesdeServidor.length === 0) {
+      // Solo buscar si no hay productos ya cargados del servidor
+      inputBusqueda.dispatchEvent(new Event('input'));
+    }
+  
     history.replaceState(null, '', `${window.location.pathname}?busqueda=${encodeURIComponent(searchValue)}`);
   }
-
+  
   checkAll?.addEventListener('change', function (event) {
     const checks = document.querySelectorAll('.product-check');
     checks.forEach(cb => cb.checked = event.target.checked);
