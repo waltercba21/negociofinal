@@ -99,104 +99,101 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    Swal.fire({
-        title: 'Está en la sección de Presupuesto',
-        text: 'Recuerde que está realizando una presupuesto, no una factura.',
-        icon: 'info',
-        confirmButtonText: 'Entendido'
-    });
-        // 🔥 Establecer la fecha actual en el input de fecha
-        const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
-        if (fechaPresupuestoInput) {
-            const today = new Date();
-            const formattedDate = today.toISOString().split('T')[0];
-            fechaPresupuestoInput.value = formattedDate;
-        }
-    
     const entradaBusqueda = document.getElementById('entradaBusqueda');
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
     let timeoutId;
-
-    entradaBusqueda.addEventListener('keyup', async (e) => {
-        const busqueda = e.target.value;
-        resultadosBusqueda.innerHTML = '';
-
-        if (!busqueda.trim()) {
-            resultadosBusqueda.style.display = 'none';
-            return;
-        }
-
-        const url = '/productos/api/buscar?q=' + busqueda;
-
-        const respuesta = await fetch(url);
+  
+    if (!entradaBusqueda || !resultadosBusqueda) {
+      console.warn('❌ No se encontró el input de búsqueda o el contenedor de resultados.');
+      return;
+    }
+  
+    entradaBusqueda.addEventListener('input', async (e) => {
+      const busqueda = e.target.value.trim();
+      resultadosBusqueda.innerHTML = '';
+  
+      if (!busqueda) {
+        resultadosBusqueda.style.display = 'none';
+        return;
+      }
+  
+      try {
+        const respuesta = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda));
         const productos = await respuesta.json();
-
+  
+        if (!productos || productos.length === 0) {
+          resultadosBusqueda.style.display = 'none';
+          return;
+        }
+  
         productos.forEach((producto) => {
-            const resultado = document.createElement('div');
-            resultado.classList.add('resultado-busqueda');
-            resultado.dataset.codigo = producto.codigo;
-            resultado.dataset.nombre = producto.nombre;
-            resultado.dataset.precio_venta = producto.precio_venta;
-            resultado.dataset.stock_actual = producto.stock_actual;
-
-            if (producto.imagenes && producto.imagenes.length > 0) {
-                resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
-            }
-
-            const contenedor = document.createElement('div');
-            contenedor.classList.add('resultado-contenedor');
-
-            if (producto.imagenes && producto.imagenes.length > 0) {
-                const imagen = document.createElement('img');
-                imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
-                imagen.classList.add('miniatura');
-                contenedor.appendChild(imagen);
-            }
-
-            const nombreProducto = document.createElement('span');
-            nombreProducto.textContent = producto.nombre;
-            contenedor.appendChild(nombreProducto);
-
-            resultado.appendChild(contenedor);
-
-            resultado.addEventListener('mouseenter', function () {
-                const resultados = document.querySelectorAll('.resultado-busqueda');
-                resultados.forEach(r => r.classList.remove('hover-activo'));
-                this.classList.add('hover-activo');
-            });
-
-            resultado.addEventListener('mouseleave', function () {
-                this.classList.remove('hover-activo');
-            });
-
-            // Asociar el evento click directamente a cada resultado
-            resultado.addEventListener('click', function () {
-                console.log("Producto seleccionado:", this.dataset);
-                const codigoProducto = this.dataset.codigo;
-                const nombreProducto = this.dataset.nombre;
-                const precioVenta = this.dataset.precio_venta;
-                const stockActual = this.dataset.stock_actual;
-                const imagenProducto = this.dataset.imagen;
-                console.log(`Intentando agregar producto: ${codigoProducto}, ${nombreProducto}`);
-                agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
-            });
-
-            resultadosBusqueda.appendChild(resultado);
-            resultadosBusqueda.style.display = 'block';
+          const resultado = document.createElement('div');
+          resultado.classList.add('resultado-busqueda');
+          resultado.dataset.codigo = producto.codigo;
+          resultado.dataset.nombre = producto.nombre;
+          resultado.dataset.precio_venta = producto.precio_venta;
+          resultado.dataset.stock_actual = producto.stock_actual;
+  
+          if (producto.imagenes && producto.imagenes.length > 0) {
+            const img = producto.imagenes[0];
+            resultado.dataset.imagen = typeof img === 'string'
+              ? '/uploads/productos/' + img
+              : '/uploads/productos/' + (img.imagen || '');
+          }
+  
+          const contenedor = document.createElement('div');
+          contenedor.classList.add('resultado-contenedor');
+  
+          if (resultado.dataset.imagen) {
+            const imagen = document.createElement('img');
+            imagen.src = resultado.dataset.imagen;
+            imagen.classList.add('miniatura');
+            contenedor.appendChild(imagen);
+          }
+  
+          const nombreProducto = document.createElement('span');
+          nombreProducto.textContent = producto.nombre;
+          contenedor.appendChild(nombreProducto);
+  
+          resultado.appendChild(contenedor);
+          resultado.addEventListener('mouseenter', () => {
+            document.querySelectorAll('.resultado-busqueda').forEach(r => r.classList.remove('hover-activo'));
+            resultado.classList.add('hover-activo');
+          });
+          resultado.addEventListener('mouseleave', () => {
+            resultado.classList.remove('hover-activo');
+          });
+          resultado.addEventListener('click', () => {
+            agregarProductoATabla(
+              resultado.dataset.codigo,
+              resultado.dataset.nombre,
+              resultado.dataset.precio_venta,
+              resultado.dataset.stock_actual,
+              resultado.dataset.imagen
+            );
+          });
+  
+          resultadosBusqueda.appendChild(resultado);
+          resultadosBusqueda.style.display = 'block';
         });
+      } catch (err) {
+        console.error('❌ Error al buscar productos:', err);
+        resultadosBusqueda.style.display = 'none';
+      }
     });
-
+  
     resultadosBusqueda.addEventListener('mouseleave', () => {
-        timeoutId = setTimeout(() => {
-            resultadosBusqueda.style.display = 'none';
-        }, 300);
+      timeoutId = setTimeout(() => {
+        resultadosBusqueda.style.display = 'none';
+      }, 300);
     });
-
+  
     resultadosBusqueda.addEventListener('mouseenter', () => {
-        clearTimeout(timeoutId);
-        resultadosBusqueda.style.display = 'block';
+      clearTimeout(timeoutId);
+      resultadosBusqueda.style.display = 'block';
     });
-});
+  });
+  
 
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
     const tablaPresupuesto = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
