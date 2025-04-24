@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function () {
     inputBusqueda.value = searchValue;
   
     const productosDesdeServidor = document.querySelectorAll('.container-fluid.mt-4 .row');
+    console.log("📦 Productos renderizados por backend:", productosDesdeServidor.length);
+    console.log("🔎 Valor cargado desde URL:", searchValue);
     if (productosDesdeServidor.length === 0) {
       // Solo buscar si no hay productos ya cargados del servidor
       inputBusqueda.dispatchEvent(new Event('input'));
@@ -18,6 +20,8 @@ document.addEventListener('DOMContentLoaded', function () {
     history.replaceState(null, '', `${window.location.pathname}?busqueda=${encodeURIComponent(searchValue)}`);
   }
   
+
+
   checkAll?.addEventListener('change', function (event) {
     const checks = document.querySelectorAll('.product-check');
     checks.forEach(cb => cb.checked = event.target.checked);
@@ -154,5 +158,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 300);
   });
 });
-console.log("📦 Productos renderizados por backend:", productosDesdeServidor.length);
-console.log("🔎 Valor cargado desde URL:", searchValue);
+
