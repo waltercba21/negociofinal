@@ -1041,7 +1041,7 @@ footer {
   background-color: #fff;
   border-radius: 10px;
   overflow: hidden;
-  table-layout: fixed; /* ✅ Asegura que cada columna respete su ancho */
+  table-layout: auto;
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 

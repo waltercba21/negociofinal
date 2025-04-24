@@ -136,14 +136,10 @@
             </td>
     
             <!-- Columna 2: Categoría -->
-            <td>
-              <%= producto.categoria %>
-            </td>
+            <td><%= producto.categoria %></td>
     
             <!-- Columna 3: Nombre -->
-            <td>
-              <%= producto.nombre %>
-            </td>
+            <td><%= producto.nombre %></td>
     
             <!-- Columna 4: Imagen -->
             <td>
@@ -155,20 +151,19 @@
             </td>
     
             <!-- Columna 5: Precio -->
-            <td>
-              $<%= parseInt(producto.precio_venta) %>
-            </td>
+            <td>$<%= parseInt(producto.precio_venta) %></td>
     
             <!-- Columna 6: Acciones -->
             <td>
               <form method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>">
-                <button class="btn btn-warning" type="submit">Editar</button>
+                <button type="submit" class="btn btn-warning">Editar</button>
               </form>
             </td>
           </tr>
         <% }); %>
       </tbody>
     </table>
+    
     
     <button id="delete-selected" class="btn btn-danger btn-delete">Eliminar seleccionados</button>
 </div>
