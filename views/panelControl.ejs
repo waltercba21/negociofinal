@@ -131,50 +131,52 @@
       <div class="panel-buscador">
         <input type="text" id="entradaBusqueda" placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile">
       </div>
-      <table class="table table-striped table-hover table-bordered align-middle text-center">
-        <thead class="table-light">
-          <tr>
-            <th scope="col"><input type="checkbox" id="check-all"></th>
-            <th scope="col">Categoría</th>
-            <th scope="col">Nombre</th>
-            <th scope="col">Imagen</th>
-            <th scope="col">Precio</th>
-            <th scope="col">Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="contenedor-productos">
-          <% if (productos && productos.length > 0) { %>
-            <% productos.forEach(producto => { %>
-              <tr>
-                <td>
-                  <input type="checkbox" class="form-check-input product-check" value="<%= producto.id %>">
-                </td>
-                <td><%= producto.categoria %></td>
-                <td><%= producto.nombre %></td>
-                <td>
-                  <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-                    <img src="/uploads/productos/<%= producto.imagenes[0] %>" alt="Imagen de <%= producto.nombre %>" class="img-thumbnail" style="max-width: 100px;">
-                  <% } else { %>
-                    <span class="text-muted">(Sin imagen)</span>
-                  <% } %>
-                </td>
-                <td>$<%= parseInt(producto.precio_venta) %></td>
-                <td>
-                  <form method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>">
-                    <button class="btn btn-sm btn-warning" type="submit">
-                      <i class="fas fa-edit"></i> Editar
-                    </button>
-                  </form>
-                </td>
-              </tr>
-            <% }); %>
-          <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover table-bordered align-middle text-center">
+          <thead class="table-light">
             <tr>
-              <td colspan="6" class="text-muted">No hay productos para mostrar.</td>
+              <th scope="col"><input type="checkbox" id="check-all"></th>
+              <th scope="col">Categoría</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">Imagen</th>
+              <th scope="col">Precio</th>
+              <th scope="col">Acciones</th>
             </tr>
-          <% } %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody id="contenedor-productos">
+            <% if (productos && productos.length > 0) { %>
+              <% productos.forEach(producto => { %>
+                <tr>
+                  <td>
+                    <input type="checkbox" class="form-check-input product-check" value="<%= producto.id %>">
+                  </td>
+                  <td><%= producto.categoria %></td>
+                  <td><%= producto.nombre %></td>
+                  <td>
+                    <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+                      <img src="/uploads/productos/<%= producto.imagenes[0] %>" alt="Imagen de <%= producto.nombre %>" class="img-thumbnail" style="max-width: 100px;">
+                    <% } else { %>
+                      <span class="text-muted">(Sin imagen)</span>
+                    <% } %>
+                  </td>
+                  <td>$<%= parseInt(producto.precio_venta) %></td>
+                  <td>
+                    <form method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>">
+                      <button class="btn btn-sm btn-warning" type="submit">
+                        <i class="fas fa-edit"></i> Editar
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="text-muted">No hay productos para mostrar.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
       
 
       <button id="delete-selected" class="btn btn-danger btn-delete">Eliminar seleccionados</button>
