@@ -1735,7 +1735,7 @@ footer {
 
 /* Estilo 3D moderno para los selectores */
 .formulario-filtros select {
-  padding: 12px 50px;
+  padding: 12px 20px;
   font-size: 1rem;
   font-weight: bold;
   border-radius: 10px;
