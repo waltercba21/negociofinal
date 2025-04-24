@@ -1675,27 +1675,55 @@ footer {
   width: 100%;
   max-width: 600px;
 }
-  
-.buscador {
-  display: flex;
-  justify-content: center;
-  margin: 20px 0;
-    position: relative;
-    display: inline-block;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    width: 100%; 
-  }
+.buscador-con-icono {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+}
+.buscador-con-icono i.fa-search {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 16px;
+  pointer-events: none;
+}
 
-  .contenedor-busqueda input[type="text"] {
-    width: 100%;
-    padding: 12px 16px;
-    font-size: 1rem;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  }
+.buscador-con-icono input[type="text"] {
+  width: 100%;
+  padding: 12px 40px 12px 40px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  background-color: rgba(255, 255, 255, 0.8); /* fondo translúcido */
+  backdrop-filter: blur(2px);
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.buscador-con-icono input[type="text"]:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+/* ❌ Botón de limpiar */
+.boton-limpiar {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 16px;
+  cursor: pointer;
+  display: none;
+}
 
+.boton-limpiar:hover {
+  color: #ff4d4d;
+}
 /* 📦 Selectores */
 .contenedor-selectores {
   display: flex;

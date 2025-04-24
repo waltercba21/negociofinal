@@ -40,7 +40,20 @@ function mostrarProductos(productos) {
     contenedorProductos.appendChild(contenedorVacio);
     return;
   }
+  const botonLimpiar = document.getElementById('botonLimpiar');
+
+  // Mostrar el botón solo si hay texto
+  entradaBusqueda.addEventListener('input', () => {
+    botonLimpiar.style.display = entradaBusqueda.value.trim() !== '' ? 'block' : 'none';
+  });
   
+  // Al hacer clic, limpiar input y productos
+  botonLimpiar.addEventListener('click', () => {
+    entradaBusqueda.value = '';
+    botonLimpiar.style.display = 'none';
+    contenedorProductos.innerHTML = '';
+  });
+    
 
   productos.forEach((producto, index) => {
     const card = document.createElement('div');
