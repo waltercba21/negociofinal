@@ -1034,6 +1034,87 @@ footer {
   color: #fff;
   font-weight: bold;
 }
+.tabla-panel-productos {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 30px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  overflow-x: auto;
+  border-radius: 12px;
+  background-color: #fff;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.tabla-panel-productos thead {
+  background-color: #f2f4f8;
+  font-weight: bold;
+  color: #333;
+}
+
+.tabla-panel-productos thead th {
+  padding: 14px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.tabla-panel-productos tbody tr {
+  transition: background-color 0.3s ease;
+}
+
+.tabla-panel-productos tbody tr:hover {
+  background-color: #f8fbff;
+}
+
+.tabla-panel-productos td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+  font-size: 0.95rem;
+}
+
+.tabla-panel-productos img.img-thumbnail {
+  border-radius: 8px;
+  width: 100px;
+  height: auto;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Checkbox centrado */
+.tabla-panel-productos input[type="checkbox"] {
+  transform: scale(1.2);
+  accent-color: #007bff;
+}
+
+/* Botón eliminar */
+#delete-selected {
+  margin-top: 20px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Animación de entrada */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.btn-group-vertical button,
+#delete-selected {
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+}
+
+.btn-danger:hover {
+  background-color: #dc3545;
+}
 
 /*-----------------------------PRESUPUESTO MOSTRADOR--------------------------*/
 
