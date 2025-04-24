@@ -650,12 +650,13 @@ module.exports = {
           req.session.paginaActual = paginaActual;
       
           let busqueda = '';
-if (typeof req.query.busqueda === 'string') {
-  busqueda = req.query.busqueda.trim();
-} else if (typeof req.session.busqueda === 'string') {
-  busqueda = req.session.busqueda.trim();
-}
-
+          if (typeof req.query.busqueda === 'string') {
+            busqueda = req.query.busqueda.trim();
+            req.session.busqueda = busqueda; // ✅ Guardamos en sesión
+          } else if (typeof req.session.busqueda === 'string') {
+            busqueda = req.session.busqueda.trim();
+          }
+          
       
           const productosPorPagina = 30;
           const saltar = (paginaActual - 1) * productosPorPagina;
