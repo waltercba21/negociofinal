@@ -14,21 +14,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   checkAll?.addEventListener('change', function (event) {
     const checks = document.querySelectorAll('.product-check');
-    for (let i = 0; i < checks.length; i++) {
-      checks[i].checked = event.target.checked;
-    }
+    checks.forEach(cb => cb.checked = event.target.checked);
   });
 
   contenedorProductos?.addEventListener('change', function (event) {
     if (event.target.matches('.product-check')) {
       const checks = document.querySelectorAll('.product-check');
-      let allChecked = true;
-      for (let i = 0; i < checks.length; i++) {
-        if (!checks[i].checked) {
-          allChecked = false;
-          break;
-        }
-      }
+      const allChecked = Array.from(checks).every(cb => cb.checked);
       if (checkAll) checkAll.checked = allChecked;
     }
   });
@@ -60,12 +52,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 Swal.fire('Eliminados', 'Productos eliminados correctamente.', 'success')
                   .then(() => location.reload());
               } else {
-                Swal.fire('Error', 'Error al eliminar productos.', 'error');
+                throw new Error(data.message || 'Error al eliminar productos.');
               }
             })
             .catch(err => {
               console.error(err);
-              Swal.fire('Error', 'Error en la solicitud.', 'error');
+              Swal.fire('Error', 'Hubo un problema al eliminar.', 'error');
             });
         }
       });
@@ -82,7 +74,6 @@ document.addEventListener('DOMContentLoaded', function () {
       contenedorProductos.innerHTML = '';
 
       let productos = [];
-
       if (!busqueda) {
         productos = typeof productosOriginales !== 'undefined' ? productosOriginales.slice(0, 12) : [];
       } else {
@@ -95,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       if (productos.length === 0) {
-        contenedorProductos.innerHTML = `<div class="alert alert-warning text-center mt-4">No se encontraron productos para esta búsqueda.</div>`;
+        contenedorProductos.innerHTML = '<div class="alert alert-warning text-center mt-4">No se encontraron productos para esta búsqueda.</div>';
         return;
       }
 
@@ -112,8 +103,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
       productos.forEach(producto => {
         const categoria = producto.categoria_nombre || 'Sin categoría';
-        const imagen = (producto.imagenes?.[0]) ? `/uploads/productos/${producto.imagenes[0]}` : '/img/default.jpg';
-        const precio = producto.precio_venta ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}` : 'Precio no disponible';
+
+        let imagenURL = '/img/default.jpg';
+        try {
+          if (producto.imagenes && producto.imagenes.length > 0) {
+            const primera = producto.imagenes[0];
+            if (typeof primera === 'string') {
+              imagenURL = `/uploads/productos/${primera}`;
+            } else if (primera && typeof primera.imagen === 'string') {
+              imagenURL = `/uploads/productos/${primera.imagen}`;
+            }
+          }
+        } catch (err) {
+          console.warn('⚠️ No se pudo procesar imagen para producto:', producto.id, err);
+        }
+
+        const precio = producto.precio_venta
+          ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
+          : 'Precio no disponible';
+
         const action = `/productos/editar/${producto.id}?pagina=1&busqueda=${encodeURIComponent(busqueda || '')}`;
 
         const fila = `
@@ -124,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="col-12 col-md-2 text-center fw-bold">${categoria}</div>
             <div class="col-12 col-md-3 text-center">${producto.nombre}</div>
             <div class="col-12 col-md-2 text-center">
-              <img src="${imagen}" alt="Imagen de ${producto.nombre}" class="img-thumbnail" style="max-width: 80px;" />
+              <img src="${imagenURL}" alt="Imagen de ${producto.nombre}" class="img-thumbnail" style="max-width: 80px;" />
             </div>
             <div class="col-12 col-md-2 text-center fw-semibold text-success">${precio}</div>
             <div class="col-12 col-md-2 text-center">
