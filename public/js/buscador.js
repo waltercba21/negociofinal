@@ -31,9 +31,16 @@ function mostrarProductos(productos) {
   contenedorProductos.innerHTML = '';
 
   if (productos.length === 0) {
-    contenedorProductos.innerHTML = '<p>No hay productos disponibles.</p>';
+    const contenedorVacio = document.createElement("div");
+    contenedorVacio.className = "no-result";
+    contenedorVacio.innerHTML = `
+      <img src="/images/noEncontrado.png" alt="Producto no encontrado" class="imagen-no-result">
+      <p>No se encontraron productos. Probá con otros filtros o palabras clave.</p>
+    `;
+    contenedorProductos.appendChild(contenedorVacio);
     return;
   }
+  
 
   productos.forEach((producto, index) => {
     const card = document.createElement('div');
