@@ -1034,66 +1034,93 @@ footer {
   color: #fff;
   font-weight: bold;
 }
-.tabla-panel-productos {
+.tabla-control-productos {
   width: 100%;
   border-collapse: collapse;
   margin-top: 30px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  overflow-x: auto;
-  border-radius: 12px;
   background-color: #fff;
-  table-layout: auto; /* ✅ permitimos que el contenido determine el ancho */
+  border-radius: 10px;
+  overflow: hidden;
+  table-layout: fixed; /* ✅ Asegura que cada columna respete su ancho */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
-/* ✅ Aplicamos estilos generales */
-.tabla-panel-productos th,
-.tabla-panel-productos td {
-  padding: 14px;
+/* Encabezados */
+.tabla-control-productos thead th {
+  background-color: #f5f7fa;
+  color: #333;
+  font-weight: bold;
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.95rem;
+}
+
+/* Filas de datos */
+.tabla-control-productos td {
+  padding: 12px;
   text-align: center;
   vertical-align: middle;
   font-size: 0.95rem;
   border-bottom: 1px solid #f0f0f0;
-  word-break: break-word;
+  word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
-/* ✅ SOLO definimos anchos en TH (encabezado) */
-.tabla-panel-productos th:nth-child(1) { width: 5%; }
-.tabla-panel-productos th:nth-child(2) { width: 15%; }
-.tabla-panel-productos th:nth-child(3) { width: 30%; }
-.tabla-panel-productos th:nth-child(4) { width: 20%; }
-.tabla-panel-productos th:nth-child(5) { width: 15%; }
-.tabla-panel-productos th:nth-child(6) { width: 15%; }
-
-/* ✅ Dejar que TD se adapten automáticamente */
-
-/* Imagen dentro de tabla */
-.tabla-panel-productos img.img-thumbnail {
-  border-radius: 6px;
-  max-width: 100px;
-  height: auto;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  display: block;
-  margin: 0 auto;
+/* ✅ Distribución exacta por columna */
+.tabla-control-productos th:nth-child(1),
+.tabla-control-productos td:nth-child(1) {
+  width: 5%;
 }
 
-/* Checkbox centrado */
-.tabla-panel-productos input[type="checkbox"] {
-  transform: scale(1.2);
-  accent-color: #007bff;
-  cursor: pointer;
+.tabla-control-productos th:nth-child(2),
+.tabla-control-productos td:nth-child(2) {
+  width: 15%;
+}
+
+.tabla-control-productos th:nth-child(3),
+.tabla-control-productos td:nth-child(3) {
+  width: 30%;
+}
+
+.tabla-control-productos th:nth-child(4),
+.tabla-control-productos td:nth-child(4) {
+  width: 20%;
+}
+
+.tabla-control-productos th:nth-child(5),
+.tabla-control-productos td:nth-child(5) {
+  width: 15%;
+}
+
+.tabla-control-productos th:nth-child(6),
+.tabla-control-productos td:nth-child(6) {
+  width: 15%;
+}
+
+/* Imagen */
+.tabla-control-productos img.img-thumbnail {
+  max-width: 100px;
+  border-radius: 6px;
+  display: block;
+  margin: 0 auto;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Checkbox */
+.tabla-control-productos input[type="checkbox"] {
+  transform: scale(1.1);
   margin: 0 auto;
   display: block;
+  accent-color: #007bff;
 }
 
 /* Botón eliminar */
 #delete-selected {
-  margin-top: 20px;
+  margin: 20px auto;
   display: block;
-  margin-left: auto;
-  margin-right: auto;
 }
 
+/* Estilo botones */
 .btn-group-vertical button,
 #delete-selected {
   font-weight: bold;
