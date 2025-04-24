@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (searchValue) {
     inputBusqueda.value = searchValue;
   
-    const productosDesdeServidor = document.querySelectorAll('#contenedor-productos .row');
+    const productosDesdeServidor = document.querySelectorAll('.container-fluid.mt-4 .row');
     if (productosDesdeServidor.length === 0) {
       // Solo buscar si no hay productos ya cargados del servidor
       inputBusqueda.dispatchEvent(new Event('input'));
@@ -154,3 +154,5 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 300);
   });
 });
+console.log("📦 Productos renderizados por backend:", productosDesdeServidor.length);
+console.log("🔎 Valor cargado desde URL:", searchValue);
