@@ -1042,64 +1042,57 @@ footer {
   overflow-x: auto;
   border-radius: 12px;
   background-color: #fff;
-  table-layout: auto;
-}
-.tabla-panel-productos thead th,
-.tabla-panel-productos tbody td {
-  padding: 12px;
-  text-align: center;
-  vertical-align: middle;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 0.95rem;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-/* 🧱 Asignamos ancho proporcional a cada columna */
-.tabla-panel-productos thead th:nth-child(1),
-.tabla-panel-productos tbody td:nth-child(1) {
-  width: 5%;
-  min-width: 50px;
-}
-.tabla-panel-productos thead th:nth-child(2),
-.tabla-panel-productos tbody td:nth-child(2) {
-  width: 15%;
-  min-width: 100px;
+  table-layout: fixed; /* ✅ Centra y alinea todas las columnas de forma pareja */
 }
 
-.tabla-panel-productos thead th:nth-child(3),
-.tabla-panel-productos tbody td:nth-child(3) {
-  width: 30%;
-  min-width: 180px;
-}
-.tabla-panel-productos thead th:nth-child(4),
-.tabla-panel-productos tbody td:nth-child(4) {
-  width: 20%;
-  min-width: 150px;
-}
-.tabla-panel-productos thead th:nth-child(5),
-.tabla-panel-productos tbody td:nth-child(5) {
-  width: 15%;
-  min-width: 100px;
-}
-.tabla-panel-productos thead th:nth-child(6),
-.tabla-panel-productos tbody td:nth-child(6) {
-  width: 15%;
-  min-width: 120px;
-}
-/* Contenido de celdas */
+/* Unificamos el estilo general de todas las celdas */
+.tabla-panel-productos th,
 .tabla-panel-productos td {
   padding: 14px;
   text-align: center;
   vertical-align: middle;
   font-size: 0.95rem;
-  word-wrap: break-word;
+  border-bottom: 1px solid #f0f0f0;
+  word-break: break-word;
   overflow-wrap: break-word;
+}
+
+/* Anchos proporcionales y estables */
+.tabla-panel-productos th:nth-child(1),
+.tabla-panel-productos td:nth-child(1) {
+  width: 5%;
+  max-width: 50px;
+}
+
+.tabla-panel-productos th:nth-child(2),
+.tabla-panel-productos td:nth-child(2) {
+  width: 15%;
+}
+
+.tabla-panel-productos th:nth-child(3),
+.tabla-panel-productos td:nth-child(3) {
+  width: 30%;
+}
+
+.tabla-panel-productos th:nth-child(4),
+.tabla-panel-productos td:nth-child(4) {
+  width: 20%;
+}
+
+.tabla-panel-productos th:nth-child(5),
+.tabla-panel-productos td:nth-child(5) {
+  width: 15%;
+}
+
+.tabla-panel-productos th:nth-child(6),
+.tabla-panel-productos td:nth-child(6) {
+  width: 15%;
 }
 
 /* Imagen dentro de tabla */
 .tabla-panel-productos img.img-thumbnail {
   border-radius: 6px;
-  max-width: 120px;
+  max-width: 100px;
   height: auto;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   display: block;
@@ -1114,6 +1107,7 @@ footer {
   margin: 0 auto;
   display: block;
 }
+
 /* Botón eliminar */
 #delete-selected {
   margin-top: 20px;
@@ -1122,11 +1116,12 @@ footer {
   margin-right: auto;
 }
 
-/* Animación de entrada */
+/* Animación */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 .btn-group-vertical button,
 #delete-selected {
   font-weight: bold;
