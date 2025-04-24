@@ -89,145 +89,96 @@ module.exports = {
           return res.status(500).send("Error interno del servidor");
         }
       },      
-    lista: async function (req, res) {
+      lista: async function (req, res) {
         try {
-            const pagina = req.query.pagina ? Number(req.query.pagina) : 1;
-            const categoria = req.query.categoria ? Number(req.query.categoria) : undefined;
-            const marca = req.query.marca ? Number(req.query.marca) : undefined;
-            const modelo = req.query.modelo ? Number(req.query.modelo) : undefined;
-            const productosPorPagina = 10;
-    
-            console.log("\n🔎 Consulta recibida con parámetros:", { pagina, categoria, marca, modelo });
-    
-            if ((marca && isNaN(marca)) || (modelo && isNaN(modelo)) || (categoria && isNaN(categoria))) {
-                console.log("❌ Error: Algún parámetro no es un número válido.");
-                return res.status(400).send("Parámetros inválidos.");
-            }
-    
-            let productos = [];
-    
-            // **📌 Caso 1: Filtrar solo por categoría**
+          const pagina = req.query.pagina ? Number(req.query.pagina) : 1;
+          const categoria = req.query.categoria ? Number(req.query.categoria) : undefined;
+          const marca = req.query.marca ? Number(req.query.marca) : undefined;
+          const modelo = req.query.modelo ? Number(req.query.modelo) : undefined;
+          const productosPorPagina = 10;
+      
+          console.log("\n🔎 Consulta recibida con parámetros:", { pagina, categoria, marca, modelo });
+      
+          if ((marca && isNaN(marca)) || (modelo && isNaN(modelo)) || (categoria && isNaN(categoria))) {
+            console.log("❌ Error: Algún parámetro no es un número válido.");
+            return res.status(400).send("Parámetros inválidos.");
+          }
+      
+          let productos = [];
+      
+          // 🔍 Si hay al menos un filtro, buscar productos
+          if (categoria || marca || modelo) {
             if (categoria && !marca && !modelo) {
-                console.log(`📌 Filtrando SOLO por categoría ID: ${categoria}`);
-    
-                productos = await new Promise((resolve, reject) => {
-                    producto.obtenerProductosPorCategoria(conexion, categoria, (error, resultados) => {
-                        if (error) {
-                            console.error("❌ Error al obtener productos por categoría:", error);
-                            return reject(error);
-                        }
-                        console.log(`✅ Productos encontrados para categoría ${categoria}:`, resultados.length);
-                        resolve(resultados);
-                    });
+              console.log(`📌 Filtrando SOLO por categoría ID: ${categoria}`);
+              productos = await new Promise((resolve, reject) => {
+                producto.obtenerProductosPorCategoria(conexion, categoria, (error, resultados) => {
+                  if (error) return reject(error);
+                  resolve(resultados);
                 });
-    
-            // **📌 Caso 2: Obtener productos con filtros avanzados**
-            } else if (marca || modelo) {
-                console.log(`📌 Filtrando con marca: ${marca}, modelo: ${modelo}`);
-    
-                productos = await new Promise((resolve, reject) => {
-                    producto.obtenerPorFiltros(conexion, categoria, marca, modelo, pagina, (error, resultados) => {
-                        if (error) {
-                            console.error("❌ Error al obtener productos por filtros:", error);
-                            return reject(error);
-                        }
-                        console.log(`✅ Productos encontrados con filtros:`, resultados.length);
-                        resolve(resultados);
-                    });
-                });
-    
-            // **📌 Caso 3: No hay filtros → Mostrar todos los productos paginados**
+              });
             } else {
-                console.log("📌 No hay filtros. Mostrando todos los productos paginados.");
-    
-                productos = await new Promise((resolve, reject) => {
-                    producto.obtenerTodosPaginados(conexion, pagina, productosPorPagina, (error, resultados) => {
-                        if (error) {
-                            console.error("❌ Error al obtener todos los productos:", error);
-                            return reject(error);
-                        }
-                        console.log(`✅ Productos obtenidos sin filtros:`, resultados.length);
-                        resolve(resultados);
-                    });
+              console.log(`📌 Filtrando con marca: ${marca}, modelo: ${modelo}`);
+              productos = await new Promise((resolve, reject) => {
+                producto.obtenerPorFiltros(conexion, categoria, marca, modelo, pagina, (error, resultados) => {
+                  if (error) return reject(error);
+                  resolve(resultados);
                 });
+              });
             }
-    
-            // **📌 Si no hay productos, evitar errores posteriores**
-            if (!productos || productos.length === 0) {
-                console.log("⚠ No se encontraron productos con los filtros aplicados.");
-                return res.render("productos", {
-                    productos: [],
-                    categorias: [],
-                    marcas: [],
-                    modelosPorMarca: [],
-                    categoriaSeleccionada: "Todos",
-                    numeroDePaginas: 1,
-                    pagina: 1,
-                    modelo: null,
-                    req,
-                    isUserLoggedIn: !!req.session.usuario,
-                    isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
-                });
-            }
-    
-            // **📌 Obtener categorías y marcas para la vista**
-            const [categorias, marcas] = await Promise.all([
-                producto.obtenerCategorias(conexion),
-                producto.obtenerMarcas(conexion),
-            ]);
-    
-            // **📌 Obtener modelos de la marca seleccionada (si aplica)**
-            const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
-            const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
-    
-            // **📌 Obtener imágenes para los productos**
+      
             const productoIds = productos.map(p => p.id);
-    
             if (productoIds.length > 0) {
-                console.log("📌 Buscando imágenes para productos:", productoIds);
-    
-                const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
-    
-                productos.forEach(producto => {
-                    producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
-                    producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
-                });
+              const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
+              productos.forEach(producto => {
+                producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
+                producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
+              });
             }
-    
-            console.log(`✅ Enviando ${productos.length} productos a la vista.`);
-    
-            // **✅ Renderizar la vista de productos**
-            res.render("productos", {
-                productos,
-                categorias,
-                marcas,
-                modelosPorMarca,
-                categoriaSeleccionada: categoria ? categorias.find(cat => cat.id === categoria)?.nombre : "Todos",
-                numeroDePaginas: 1,
-                pagina,
-                modelo: modeloSeleccionado,
-                req,
-                isUserLoggedIn: !!req.session.usuario,
-                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
-            });
-    
+      
+          } else {
+            console.log("🛑 No se aplicaron filtros. No se mostrarán productos.");
+          }
+      
+          // 🗂 Obtener listas para los selectores
+          const [categorias, marcas] = await Promise.all([
+            producto.obtenerCategorias(conexion),
+            producto.obtenerMarcas(conexion),
+          ]);
+          const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
+          const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
+      
+          res.render("productos", {
+            productos,
+            categorias,
+            marcas,
+            modelosPorMarca,
+            categoriaSeleccionada: categoria ? categorias.find(cat => cat.id === categoria)?.nombre : "Todos",
+            numeroDePaginas: 1,
+            pagina,
+            modelo: modeloSeleccionado,
+            req,
+            isUserLoggedIn: !!req.session.usuario,
+            isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
+          });
+      
         } catch (error) {
-            console.error("❌ Error en el controlador lista:", error);
-            res.status(500).render("productos", {
-                productos: [],
-                categorias: [],
-                marcas: [],
-                modelosPorMarca: [],
-                categoriaSeleccionada: "Todos",
-                numeroDePaginas: 1,
-                pagina: 1,
-                modelo: null,
-                req,
-                isUserLoggedIn: !!req.session.usuario,
-                isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
-            });
+          console.error("❌ Error en el controlador lista:", error);
+          res.status(500).render("productos", {
+            productos: [],
+            categorias: [],
+            marcas: [],
+            modelosPorMarca: [],
+            categoriaSeleccionada: "Todos",
+            numeroDePaginas: 1,
+            pagina: 1,
+            modelo: null,
+            req,
+            isUserLoggedIn: !!req.session.usuario,
+            isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
+          });
         }
-    },
+      },
+      
     ofertas: async function (req, res) {
         try {
           const isUserLoggedIn = !!req.session.usuario;
