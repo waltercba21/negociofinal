@@ -1652,18 +1652,26 @@ footer {
   padding: 70px 0 10px 0;
 }
 
-/* Buscador */
-.contenedor-busqueda {
+/* 🔲 Contenedor general de búsqueda */
+.contenedor-busqueda-general {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 20px;
+  margin: 30px auto;
   padding: 20px;
-  background-color: #f7f7f7;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  width: 50%;
+  width: 100%;
+  max-width: 900px;
+  background-color: #fff;
 }
+
+/* 🔍 Buscador de texto */
+.contenedor-busqueda {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
   
 .buscador {
   display: flex;
@@ -1676,52 +1684,33 @@ footer {
     width: 100%; 
   }
 
-.buscador input {
-  border-radius: 10px;
-  border: none;
-  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
-  transition: box-shadow 0.3s ease-in-out;
-  cursor: pointer;
-  font-weight: bold;
-  height: 40px;
-  text-align: center;
-}
+  .contenedor-busqueda input[type="text"] {
+    width: 100%;
+    max-width: 600px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
 
-.buscador input:focus {
-  box-shadow: 0 0 2px #719ECE;
-  outline: none;
+/* 📦 Selectores */
+.contenedor-selectores {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
 }
 
 .formulario-filtros select {
-  padding: 12px 16px;
+  padding: 12px;
   font-size: 1rem;
-  border: 2px solid #d1d1d1;
-  border-radius: 12px;
-  background-color: #ffffff;
-  transition: all 0.3s ease-in-out;
-  min-width: 200px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  color: #333;
-  font-weight: 500;
-  appearance: none;
-  background-image: url('data:image/svg+xml;charset=UTF-8,<svg fill="%23999" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 40px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  min-width: 180px;
 }
 
-.formulario-filtros select:hover {
-  border-color: #007bff;
-  box-shadow: 0 0 5px rgba(0,123,255,0.4);
-}
-
-.formulario-filtros select:focus {
-  outline: none;
-  border-color: #007bff;
-  background-color: #f0f8ff;
-  box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
-}
 #contenedor-productos {
   display: flex;
   flex-wrap: wrap;

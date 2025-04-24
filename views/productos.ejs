@@ -6,41 +6,47 @@
 <main>
 <h2 class="titulo-principal">Busca Tus Productos</h2>
 
-<div class="contenedor-busqueda">
-  <div class="buscador">
-    <input type="text" id="entradaBusqueda" placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile">
+<div class="contenedor-busqueda-general">
+  <!-- Buscador por texto -->
+  <div class="contenedor-busqueda">
+    <div class="buscador">
+      <input type="text" id="entradaBusqueda" placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile">
+    </div>
+  </div>
+
+  <!-- Selectores -->
+  <div class="contenedor-selectores">
+    <form id="formulario-filtros" class="formulario-filtros">
+      <select name="categoria" id="categoria_id">
+        <option value="">Selecciona una categoría</option>
+        <% categorias.forEach(function(categoria) { %>
+          <option value="<%= categoria.id %>" <%= categoriaSeleccionada === categoria.nombre ? 'selected' : '' %>>
+            <%= categoria.nombre %>
+          </option>
+        <% }); %>
+      </select>
+
+      <select name="marca" id="marca_id">
+        <option value="">Selecciona una marca</option>
+        <% marcas.forEach(function(marca) { %>
+          <option value="<%= marca.id %>" <%= modelo && modelo.marca_id === marca.id ? 'selected' : '' %>>
+            <%= marca.nombre %>
+          </option>
+        <% }); %>
+      </select>
+
+      <select name="modelo" id="modelo_id">
+        <option value="">Selecciona un modelo</option>
+        <% modelosPorMarca.forEach(function(modeloItem) { %>
+          <option value="<%= modeloItem.id %>" <%= modelo && modelo.id === modeloItem.id ? 'selected' : '' %>>
+            <%= modeloItem.nombre %>
+          </option>
+        <% }); %>
+      </select>
+    </form>
   </div>
 </div>
-<div class="contenedor-selectores">
-  <form id="formulario-filtros" class="formulario-filtros">
-    <select name="categoria" id="categoria_id">
-      <option value="">Selecciona una categoría</option>
-      <% categorias.forEach(function(categoria) { %>
-        <option value="<%= categoria.id %>" <%= categoriaSeleccionada === categoria.nombre ? 'selected' : '' %>>
-          <%= categoria.nombre %>
-        </option>
-      <% }); %>
-    </select>
 
-    <select name="marca" id="marca_id">
-      <option value="">Selecciona una marca</option>
-      <% marcas.forEach(function(marca) { %>
-        <option value="<%= marca.id %>" <%= modelo && modelo.marca_id === marca.id ? 'selected' : '' %>>
-          <%= marca.nombre %>
-        </option>
-      <% }); %>
-    </select>
-
-    <select name="modelo" id="modelo_id">
-      <option value="">Selecciona un modelo</option>
-      <% modelosPorMarca.forEach(function(modeloItem) { %>
-        <option value="<%= modeloItem.id %>" <%= modelo && modelo.id === modeloItem.id ? 'selected' : '' %>>
-          <%= modeloItem.nombre %>
-        </option>
-      <% }); %>
-    </select>
-  </form>
-</div>
 
 <div id="contenedor-productos" class="contenedor-productos">
 <% if (productos && productos.length > 0) { %>
