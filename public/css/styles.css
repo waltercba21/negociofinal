@@ -969,6 +969,71 @@ footer {
   color: #888;
   margin-top: 5px;
 }
+/* -----------------------------------------PANEL DE CONTROL --------------------------------*/
+/* 🔧 Panel de Control: Contenedor general de búsqueda */
+.panel-busqueda {
+  padding: 30px;
+  background-color: #fdfdfd;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  margin: 30px auto;
+  max-width: 1200px;
+}
+
+/* 🔎 Input de búsqueda */
+.panel-buscador {
+  margin-top: 15px;
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: center;
+}
+
+.panel-buscador input[type="text"] {
+  width: 100%;
+  max-width: 500px;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.3s ease-in-out;
+}
+
+.panel-buscador input[type="text"]:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+}
+
+/* 🔢 Paginación */
+.panel-paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.panel-paginacion a,
+.panel-paginacion span {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: #f2f2f2;
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.panel-paginacion a:hover {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.panel-paginacion .active {
+  background-color: #007bff;
+  color: #fff;
+  font-weight: bold;
+}
 
 /*-----------------------------PRESUPUESTO MOSTRADOR--------------------------*/
 
@@ -2884,13 +2949,6 @@ footer {
   font-size: 14px;
 }
 
-.buscador-panel {
-  max-width: 50%;
-  margin-bottom: 20px;
-  display: grid;
-  place-items: center;
-}
-
 #entradaBusqueda {
   width: 100%;
   padding: 8px;
@@ -2959,10 +3017,6 @@ td {
   background-color: #840000;
 }
 
-.contenedor-busqueda:hover {
-  transform: scale(1.01);
-  transition: transform 0.3s ease-in-out;
-}
 
 /*---------------PROFILE---------------*/
 .user-card {
