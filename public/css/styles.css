@@ -1007,13 +1007,6 @@ footer {
   margin-bottom: 10px;
   text-align: center;
 }
-.buscador {
-  position: relative;
-  display: inline-block;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  width: 100%; 
-}
 
 #resultadosBusqueda {
   width: 90%;
@@ -1672,12 +1665,16 @@ footer {
   width: 50%;
 }
   
-
 .buscador {
   display: flex;
   justify-content: center;
   margin: 20px 0;
-}
+    position: relative;
+    display: inline-block;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 100%; 
+  }
 
 .buscador input {
   border-radius: 10px;
@@ -1686,7 +1683,6 @@ footer {
   transition: box-shadow 0.3s ease-in-out;
   cursor: pointer;
   font-weight: bold;
-  width: 50%;
   height: 40px;
   text-align: center;
 }
@@ -1694,18 +1690,6 @@ footer {
 .buscador input:focus {
   box-shadow: 0 0 2px #719ECE;
   outline: none;
-}
-.contenedor-selectores {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.2rem;
-  justify-content: center;
-  margin: 30px auto;
-  padding: 20px;
-  background: linear-gradient(145deg, #f2f2f2, #ffffff);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  border-radius: 16px;
-  max-width: 900px;
 }
 
 .formulario-filtros select {
@@ -3164,11 +3148,6 @@ td {
   margin-top: 20px;
 }
 
-.buscador {
-  width: 100%;
-  max-width: 1500px;
-  margin-bottom: 10px;
-}
 .loading {
   text-align: center;
   font-weight: bold;
