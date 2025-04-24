@@ -8,19 +8,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (searchValue) {
     inputBusqueda.value = searchValue;
-  
-    const productosDesdeServidor = document.querySelectorAll('.container-fluid.mt-4 .row');
-    console.log("📦 Productos renderizados por backend:", productosDesdeServidor.length);
-    console.log("🔎 Valor cargado desde URL:", searchValue);
-    if (productosDesdeServidor.length === 0) {
-      // Solo buscar si no hay productos ya cargados del servidor
-      inputBusqueda.dispatchEvent(new Event('input'));
-    }
-  
     history.replaceState(null, '', `${window.location.pathname}?busqueda=${encodeURIComponent(searchValue)}`);
   }
-  
-
 
   checkAll?.addEventListener('change', function (event) {
     const checks = document.querySelectorAll('.product-check');
@@ -31,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (event.target.matches('.product-check')) {
       const checks = document.querySelectorAll('.product-check');
       const allChecked = Array.from(checks).every(cb => cb.checked);
-      if (checkAll) checkAll.checked = allChecked;
+      checkAll.checked = allChecked;
     }
   });
 
@@ -39,41 +28,42 @@ document.addEventListener('DOMContentLoaded', function () {
     const checks = document.querySelectorAll('.product-check');
     const ids = Array.from(checks).filter(cb => cb.checked).map(cb => cb.value);
 
-    if (ids.length > 0) {
-      Swal.fire({
-        title: '¿Estás seguro?',
-        text: "Esta acción eliminará los productos seleccionados.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          fetch('/productos/eliminarSeleccionados', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids })
-          })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire('Eliminados', 'Productos eliminados correctamente.', 'success')
-                  .then(() => location.reload());
-              } else {
-                throw new Error(data.message || 'Error al eliminar productos.');
-              }
-            })
-            .catch(err => {
-              console.error(err);
-              Swal.fire('Error', 'Hubo un problema al eliminar.', 'error');
-            });
-        }
-      });
-    } else {
+    if (ids.length === 0) {
       Swal.fire('Sin selección', 'No seleccionaste ningún producto.', 'info');
+      return;
     }
+
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "Esta acción eliminará los productos seleccionados.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch('/productos/eliminarSeleccionados', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire('Eliminados', 'Productos eliminados correctamente.', 'success')
+                .then(() => location.reload());
+            } else {
+              throw new Error(data.message || 'Error al eliminar productos.');
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            Swal.fire('Error', 'Hubo un problema al eliminar.', 'error');
+          });
+      }
+    });
   });
 
   let timer;
@@ -84,15 +74,13 @@ document.addEventListener('DOMContentLoaded', function () {
       contenedorProductos.innerHTML = '';
 
       let productos = [];
-      if (!busqueda) {
-        productos = typeof productosOriginales !== 'undefined' ? productosOriginales.slice(0, 12) : [];
-      } else {
-        try {
-          const respuesta = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda));
-          productos = await respuesta.json();
-        } catch (err) {
-          console.error('Error al buscar productos:', err);
-        }
+      if (!busqueda) return;
+
+      try {
+        const respuesta = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda));
+        productos = await respuesta.json();
+      } catch (err) {
+        console.error('Error al buscar productos:', err);
       }
 
       if (productos.length === 0) {
@@ -111,39 +99,30 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>`;
       contenedorProductos.insertAdjacentHTML('beforeend', encabezado);
 
+      const paginaActual = urlParams.get('pagina') || 1;
+
       productos.forEach(producto => {
         const categoria = producto.categoria_nombre || 'Sin categoría';
 
         let imagenURL = '/img/default.jpg';
-        try {
-          if (producto.imagenes && producto.imagenes.length > 0) {
-            const primera = producto.imagenes[0];
-            if (typeof primera === 'string') {
-              imagenURL = `/uploads/productos/${primera}`;
-            } else if (primera && typeof primera.imagen === 'string') {
-              imagenURL = `/uploads/productos/${primera.imagen}`;
-            }
-          }
-        } catch (err) {
-          console.warn('⚠️ No se pudo procesar imagen para producto:', producto.id, err);
+        if (producto.imagenes && producto.imagenes.length > 0) {
+          const primera = producto.imagenes[0];
+          imagenURL = typeof primera === 'string'
+            ? `/uploads/productos/${primera}`
+            : (primera.imagen ? `/uploads/productos/${primera.imagen}` : imagenURL);
         }
 
         const precio = producto.precio_venta
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
           : 'Precio no disponible';
 
-          const urlParams = new URLSearchParams(window.location.search);
-const paginaActual = urlParams.get('pagina') || 1;
+        const action = `/productos/editar/${producto.id}?pagina=${paginaActual}&busqueda=${encodeURIComponent(busqueda)}`;
 
-const action = `/productos/editar/${producto.id}?pagina=${paginaActual}&busqueda=${encodeURIComponent(busqueda || '')}`;
-
-console.log("🔁 Enlace EDITAR generado:");
-console.log("🧠 Producto:", producto.nombre);
-console.log("📄 Página actual:", paginaActual);
-console.log("🔎 Busqueda actual:", busqueda);
-console.log("🔗 Link completo:", action);
-
-console.log("🔗 Link completo:", action);
+        console.log("🔗 Editar generado:");
+        console.log("🧠 Producto:", producto.nombre);
+        console.log("📄 Página actual:", paginaActual);
+        console.log("🔎 Búsqueda actual:", busqueda);
+        console.log("🔗 URL:", action);
 
         const fila = `
           <div class="row align-items-center border rounded p-2 mb-2 shadow-sm gx-2">
@@ -169,4 +148,3 @@ console.log("🔗 Link completo:", action);
     }, 300);
   });
 });
-

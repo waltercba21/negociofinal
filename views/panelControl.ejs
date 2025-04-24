@@ -237,5 +237,11 @@
   <script>
     console.log("🧠 EJS → busquedaActual:", "<%= busquedaActual %>");
   </script>
-  
+<script>
+  const paginaActualDesdeServidor = "<%- JSON.stringify(paginaActual || 1) %>";
+  const busquedaActualDesdeServidor = "<%- JSON.stringify(busquedaActual || '') %>";
+</script>
+
+
+
 </body>
