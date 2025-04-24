@@ -132,8 +132,9 @@ document.addEventListener('DOMContentLoaded', function () {
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
           : 'Precio no disponible';
 
-        const action = `/productos/editar/${producto.id}?pagina=1&busqueda=${encodeURIComponent(busqueda || '')}`;
-
+          const paginaActual = new URLSearchParams(window.location.search).get('pagina') || 1;
+          const action = `/productos/editar/${producto.id}?pagina=${paginaActual}&busqueda=${encodeURIComponent(busqueda || '')}`;
+          
         const fila = `
           <div class="row align-items-center border rounded p-2 mb-2 shadow-sm gx-2">
             <div class="col-12 col-md-1 text-center">
