@@ -130,18 +130,22 @@
       <tbody id="contenedor-productos">
         <% productos.forEach(producto => { %>
           <tr>
-            <!-- Columna 1: Checkbox -->
+            <!-- 1. Checkbox -->
             <td>
               <input type="checkbox" class="product-check" value="<%= producto.id %>">
             </td>
-    
-            <!-- Columna 2: Categoría -->
-            <td><%= producto.categoria %></td>
-    
-            <!-- Columna 3: Nombre -->
-            <td><%= producto.nombre %></td>
-    
-            <!-- Columna 4: Imagen -->
+          
+            <!-- 2. Categoría -->
+            <td>
+              <%= producto.categoria %>
+            </td>
+          
+            <!-- 3. Nombre -->
+            <td>
+              <%= producto.nombre %>
+            </td>
+          
+            <!-- 4. Imagen -->
             <td>
               <% if (producto.imagenes && producto.imagenes.length > 0) { %>
                 <img class="img-thumbnail" src="/uploads/productos/<%= producto.imagenes[0] %>" alt="Imagen de <%= producto.nombre %>">
@@ -149,17 +153,20 @@
                 <span>(Sin imagen)</span>
               <% } %>
             </td>
-    
-            <!-- Columna 5: Precio -->
-            <td>$<%= parseInt(producto.precio_venta) %></td>
-    
-            <!-- Columna 6: Acciones -->
+          
+            <!-- 5. Precio -->
+            <td>
+              $<%= parseInt(producto.precio_venta) %>
+            </td>
+          
+            <!-- 6. Acciones -->
             <td>
               <form method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>">
-                <button type="submit" class="btn btn-warning">Editar</button>
+                <button class="btn btn-warning" type="submit">Editar</button>
               </form>
             </td>
           </tr>
+          
         <% }); %>
       </tbody>
     </table>
