@@ -99,15 +99,17 @@ module.exports = {
       
           console.log("\n🔎 Consulta recibida con parámetros:", { pagina, categoria, marca, modelo });
       
+          // ✅ Validación de parámetros numéricos
           if ((marca && isNaN(marca)) || (modelo && isNaN(modelo)) || (categoria && isNaN(categoria))) {
             console.log("❌ Error: Algún parámetro no es un número válido.");
             return res.status(400).send("Parámetros inválidos.");
           }
       
+          const seHizoBusqueda = !!(categoria || marca || modelo); // 👈 Indicador para la vista
           let productos = [];
       
-          // 🔍 Si hay al menos un filtro, buscar productos
-          if (categoria || marca || modelo) {
+          // 🔍 Solo buscar productos si se aplicaron filtros
+          if (seHizoBusqueda) {
             if (categoria && !marca && !modelo) {
               console.log(`📌 Filtrando SOLO por categoría ID: ${categoria}`);
               productos = await new Promise((resolve, reject) => {
@@ -126,6 +128,7 @@ module.exports = {
               });
             }
       
+            // 📸 Obtener imágenes asociadas a los productos
             const productoIds = productos.map(p => p.id);
             if (productoIds.length > 0) {
               const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
@@ -134,12 +137,11 @@ module.exports = {
                 producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
               });
             }
-      
           } else {
             console.log("🛑 No se aplicaron filtros. No se mostrarán productos.");
           }
       
-          // 🗂 Obtener listas para los selectores
+          // 📂 Obtener datos para los selectores
           const [categorias, marcas] = await Promise.all([
             producto.obtenerCategorias(conexion),
             producto.obtenerMarcas(conexion),
@@ -147,6 +149,7 @@ module.exports = {
           const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
           const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
       
+          // ✅ Renderizar vista con o sin productos según búsqueda
           res.render("productos", {
             productos,
             categorias,
@@ -157,6 +160,7 @@ module.exports = {
             pagina,
             modelo: modeloSeleccionado,
             req,
+            seHizoBusqueda, // 👈 se envía a la vista
             isUserLoggedIn: !!req.session.usuario,
             isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
           });
@@ -172,12 +176,14 @@ module.exports = {
             numeroDePaginas: 1,
             pagina: 1,
             modelo: null,
+            seHizoBusqueda: false,
             req,
             isUserLoggedIn: !!req.session.usuario,
             isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
           });
         }
       },
+      
       
     ofertas: async function (req, res) {
         try {

@@ -154,12 +154,13 @@
     </div>
 
   <% }); %>
-  <% } else { %>
+  <% } else if (seHizoBusqueda) { %>
     <div class="no-result">
-      <img src="/img/noEncontrado.png" alt="Producto no encontrado" class="imagen-no-result">
+      <img src="/images/noEncontrado.png" alt="Producto no encontrado" class="imagen-no-result">
       <p>No se encontraron productos. Probá con otros filtros o palabras clave.</p>
     </div>
   <% } %>
+  
   
 </div>
 
