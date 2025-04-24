@@ -132,6 +132,11 @@ document.addEventListener('DOMContentLoaded', function () {
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
           : 'Precio no disponible';
 
+          console.log("🧠 Generando enlace para producto:", producto.nombre);
+console.log("🔢 Página actual:", paginaActual);
+console.log("🔍 Término búsqueda:", busqueda);
+console.log("🔗 Enlace generado:", action);
+
           const paginaActual = new URLSearchParams(window.location.search).get('pagina') || 1;
           const action = `/productos/editar/${producto.id}?pagina=${paginaActual}&busqueda=${encodeURIComponent(busqueda || '')}`;
           
