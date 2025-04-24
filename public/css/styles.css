@@ -1733,26 +1733,22 @@ footer {
   box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
 }
 .no-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
   text-align: center;
-  margin-top: 50px;
-  color: #555;
+  margin: 40px auto;
   padding: 20px;
-}
-
-.no-result img.imagen-no-result {
-  max-width: 300px;
-  width: 100%;
-  margin: 0 auto 20px;
-  display: block;
-  opacity: 0.95;
-  transition: transform 0.3s ease;
-}
-
-.no-result img.imagen-no-result:hover {
-  transform: scale(1.05);
+  color: #555;
 }
 
 .imagen-no-result {
+  max-width: 320px;
+  width: 100%;
+  margin-bottom: 20px;
+  opacity: 0.95;
   animation: fadeIn 0.8s ease-in-out;
 }
 
@@ -1760,6 +1756,7 @@ footer {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 
 @media (max-width: 768px) {
   .contenedor-selectores {
