@@ -187,10 +187,7 @@
                 </div>
       
                 <div class="col-12 col-md-2 text-center">
-                  <form
-  method="get"
-  action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? '&busqueda=' + encodeURIComponent(busquedaActual) : '' %>"
->
+                  <form method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? '&busqueda=' + busquedaActual.replace(/ /g, '+') : '' %>">
 
                     <button class="btn btn-sm btn-warning">
                       <i class="fas fa-edit"></i> Editar
