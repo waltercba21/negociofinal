@@ -132,12 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
           : 'Precio no disponible';
 
-          console.log("🧠 Generando enlace para producto:", producto.nombre);
-console.log("🔢 Página actual:", paginaActual);
-console.log("🔍 Término búsqueda:", busqueda);
-console.log("🔗 Enlace generado:", action);
-
-const urlParams = new URLSearchParams(window.location.search);
+          const urlParams = new URLSearchParams(window.location.search);
 const paginaActual = urlParams.get('pagina') || 1;
 
 const action = `/productos/editar/${producto.id}?pagina=${paginaActual}&busqueda=${encodeURIComponent(busqueda || '')}`;
@@ -146,6 +141,8 @@ console.log("🔁 Enlace EDITAR generado:");
 console.log("🧠 Producto:", producto.nombre);
 console.log("📄 Página actual:", paginaActual);
 console.log("🔎 Busqueda actual:", busqueda);
+console.log("🔗 Link completo:", action);
+
 console.log("🔗 Link completo:", action);
 
         const fila = `
