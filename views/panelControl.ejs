@@ -139,75 +139,76 @@
           placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile"
         />
       </div>
-    
-      <!-- TABLA -->
-      <div class="table-responsive">
-        <table class="table table-striped table-hover table-bordered align-middle text-center">
-          <thead class="table-light">
-            <tr>
-              <th scope="col"><input type="checkbox" id="check-all" /></th>
-              <th scope="col">Categoría</th>
-              <th scope="col">Nombre</th>
-              <th scope="col">Imagen</th>
-              <th scope="col">Precio</th>
-              <th scope="col">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="contenedor-productos">
-            <% if (productos && productos.length > 0) { %>
-              <% productos.forEach(producto => { %>
-                <tr>
-                  <td>
-                    <input
-                      type="checkbox"
-                      class="form-check-input product-check"
-                      value="<%= producto.id %>"
-                    />
-                  </td>
-                  <td><%= producto.categoria %></td>
-                  <td><%= producto.nombre %></td>
-                  <td>
-                    <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-                      <img
-                        src="/uploads/productos/<%= producto.imagenes[0] %>"
-                        alt="Imagen de <%= producto.nombre %>"
-                        class="img-thumbnail"
-                        style="max-width: 100px;"
-                      />
-                    <% } else { %>
-                      <span class="text-muted">(Sin imagen)</span>
-                    <% } %>
-                  </td>
-                  <td>$<%= parseInt(producto.precio_venta) %></td>
-                  <td>
-                    <form
-                      method="get"
-                      action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>"
-                    >
-                      <button class="btn btn-sm btn-warning" type="submit">
-                        <i class="fas fa-edit"></i> Editar
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-              <% }); %>
-            <% } else { %>
-              <tr>
-                <td colspan="6" class="text-muted">No hay productos para mostrar.</td>
-              </tr>
-            <% } %>
-          </tbody>
-        </table>
+      <div class="container-fluid mt-4">
+        <% if (productos && productos.length > 0) { %>
+          <div class="row fw-bold border-bottom py-2 text-center d-none d-md-flex">
+            <div class="col-md-1">✔</div>
+            <div class="col-md-2">Categoría</div>
+            <div class="col-md-3">Nombre</div>
+            <div class="col-md-2">Imagen</div>
+            <div class="col-md-2">Precio</div>
+            <div class="col-md-2">Acciones</div>
+          </div>
+      
+          <% productos.forEach(producto => { %>
+            <div class="row align-items-center border rounded p-2 mb-2 shadow-sm gx-2">
+              <div class="col-12 col-md-1 text-center">
+                <input
+                  type="checkbox"
+                  class="form-check-input product-check"
+                  value="<%= producto.id %>"
+                />
+              </div>
+      
+              <div class="col-12 col-md-2 text-center fw-bold">
+                <%= producto.categoria %>
+              </div>
+      
+              <div class="col-12 col-md-3 text-center">
+                <%= producto.nombre %>
+              </div>
+      
+              <div class="col-12 col-md-2 text-center">
+                <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+                  <img
+                    src="/uploads/productos/<%= producto.imagenes[0] %>"
+                    alt="Imagen de <%= producto.nombre %>"
+                    class="img-thumbnail"
+                    style="max-width: 80px;"
+                  />
+                <% } else { %>
+                  <span class="text-muted">(Sin imagen)</span>
+                <% } %>
+              </div>
+      
+              <div class="col-12 col-md-2 text-center fw-semibold text-success">
+                $<%= parseInt(producto.precio_venta) %>
+              </div>
+      
+              <div class="col-12 col-md-2 text-center">
+                <form
+                  method="get"
+                  action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? `&busqueda=${encodeURIComponent(busquedaActual)}` : '' %>"
+                >
+                  <button class="btn btn-sm btn-warning">
+                    <i class="fas fa-edit"></i> Editar
+                  </button>
+                </form>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="alert alert-info text-center mt-4">
+            No hay productos para mostrar.
+          </div>
+        <% } %>
+      
+        <!-- BOTÓN ELIMINAR -->
+        <div class="text-end mt-4">
+          <button id="delete-selected" class="btn btn-danger">Eliminar seleccionados</button>
+        </div>
       </div>
       
-    
-      <!-- BOTÓN ELIMINAR -->
-      <div class="text-end mt-3">
-        <button id="delete-selected" class="btn btn-danger">Eliminar seleccionados</button>
-      </div>
-    
-    </div>
-    
   </main>
 
   <%- include ./layouts/footer.ejs %>
