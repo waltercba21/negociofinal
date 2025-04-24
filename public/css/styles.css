@@ -1034,6 +1034,19 @@ footer {
   color: #fff;
   font-weight: bold;
 }
+/* 🔧 Forzar estilo correcto para la tabla en Panel de Control */
+.table.table-bordered {
+  table-layout: fixed !important;
+}
+
+.table.table-bordered th,
+.table.table-bordered td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  vertical-align: middle;
+}
 
 
 /*-----------------------------PRESUPUESTO MOSTRADOR--------------------------*/
