@@ -1921,10 +1921,11 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
     return new Promise((resolve, reject) => {
       conexion.query(query, [productoId], (err, results) => {
         if (err) return reject(err);
-        resolve(results[0]); // solo uno: el más barato
+        resolve(results[0]); // { proveedor_nombre, codigo_proveedor }
       });
     });
   }
+  
   
 
 }
