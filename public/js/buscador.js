@@ -129,6 +129,13 @@ function mostrarProductos(productos) {
       <hr>
       <div class="categoria-producto"><h6 class="categoria">${producto.categoria_nombre || 'Sin categoría'}</h6></div>
       <div class="precio-producto"><p class="precio">$${formatearNumero(producto.precio_venta || 0)}</p></div>
+      
+      ${isAdminUser ? `
+        <div class="codigo-admin">
+          <p><strong>Código:</strong> ${producto.codigo || '-'}</p>
+          <p><strong>Proveedor:</strong> ${producto.proveedor_nombre || 'Sin proveedor'} (${producto.codigo_proveedor || '-'})</p>
+        </div>
+      ` : ''}
       ${stockInfo}
       <div class="acciones-compartir">
   <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" 

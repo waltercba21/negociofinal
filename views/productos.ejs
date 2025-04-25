@@ -103,7 +103,11 @@
       <div class="precio-producto">
         <p><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %></p>
       </div>
-
+      <div class="codigo-admin">
+        <p><strong>Código:</strong> ${producto.codigo}</p>
+        <p><strong>Proveedor:</strong> ${producto.proveedor_nombre} (${producto.codigo_proveedor})</p>
+      </div>
+      
       <% if (isUserLoggedIn) { %>
         <% if (isAdminUser) { %>
           <div class="cantidad-producto">
@@ -131,8 +135,8 @@
             </button>
             <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
           </div>
-          <div class="acciones-compartir">
 
+          <div class="acciones-compartir">
             <!-- WhatsApp -->
             <a href="https://wa.me/543513820440?text=¡Hola! QUIERO CONSULTAR POR ESTE PRODUCTO: <%= producto.nombre %> 👉 https://www.autofaros.com.ar/productos/<%= producto.id %>"
                title="Consultar por WhatsApp"

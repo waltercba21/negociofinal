@@ -105,7 +105,7 @@ module.exports = {
             return res.status(400).send("Parámetros inválidos.");
           }
       
-          const seHizoBusqueda = !!(categoria || marca || modelo); // 👈 Indicador para la vista
+          const seHizoBusqueda = !!(categoria || marca || modelo);
           let productos = [];
       
           // 🔍 Solo buscar productos si se aplicaron filtros
@@ -132,10 +132,22 @@ module.exports = {
             const productoIds = productos.map(p => p.id);
             if (productoIds.length > 0) {
               const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
-              productos.forEach(producto => {
-                producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
-                producto.precio_venta = producto.precio_venta ? parseFloat(producto.precio_venta) : "No disponible";
-              });
+      
+              // 🔄 Enriquecer cada producto con imágenes, precio y proveedor más barato
+              for (const prod of productos) {
+                prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
+                prod.precio_venta = prod.precio_venta ? parseFloat(prod.precio_venta) : "No disponible";
+      
+                // ✅ Agregar proveedor más barato y su código
+                const proveedor = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
+                if (proveedor) {
+                  prod.proveedor_nombre = proveedor.proveedor_nombre;
+                  prod.codigo_proveedor = proveedor.codigo_proveedor;
+                } else {
+                  prod.proveedor_nombre = 'Sin proveedor';
+                  prod.codigo_proveedor = '';
+                }
+              }
             }
           } else {
             console.log("🛑 No se aplicaron filtros. No se mostrarán productos.");
@@ -149,7 +161,7 @@ module.exports = {
           const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
           const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
       
-          // ✅ Renderizar vista con o sin productos según búsqueda
+          // ✅ Renderizar vista
           res.render("productos", {
             productos,
             categorias,
@@ -160,7 +172,7 @@ module.exports = {
             pagina,
             modelo: modeloSeleccionado,
             req,
-            seHizoBusqueda, // 👈 se envía a la vista
+            seHizoBusqueda,
             isUserLoggedIn: !!req.session.usuario,
             isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
           });
@@ -182,9 +194,7 @@ module.exports = {
             isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
           });
         }
-      },
-      
-      
+      },      
     ofertas: async function (req, res) {
         try {
           const isUserLoggedIn = !!req.session.usuario;

@@ -1866,8 +1866,6 @@ obtenerProductoConImagenes: (id_producto, callback) => {
         }
     });
 },
-// ✅ MODELO ACTUALIZADO: obtenerProductosProveedorMasBaratoConStock
-
 obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorId, categoriaId) {
     try {
       let query = `
@@ -1910,5 +1908,23 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
       throw error;
     }
   },  
+  obtenerProveedorMasBaratoPorProducto: async function (conexion, productoId) {
+    const query = `
+      SELECT pr.nombre AS proveedor_nombre, pp.codigo AS codigo_proveedor
+      FROM producto_proveedor pp
+      JOIN proveedores pr ON pr.id = pp.proveedor_id
+      JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+      WHERE pp.producto_id = ?
+      ORDER BY (pp.precio_lista * (1 - (dp.descuento / 100))) * 1.21 ASC
+      LIMIT 1
+    `;
+    return new Promise((resolve, reject) => {
+      conexion.query(query, [productoId], (err, results) => {
+        if (err) return reject(err);
+        resolve(results[0]); // solo uno: el más barato
+      });
+    });
+  }
+  
 
 }
