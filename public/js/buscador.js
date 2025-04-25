@@ -132,8 +132,9 @@ function mostrarProductos(productos) {
       
       ${isAdminUser ? `
         <div class="codigo-admin">
+          <p><strong>Proveedor:</strong> ${producto.proveedor_nombre || 'Sin proveedor'}</p>
           <p><strong>Código:</strong> ${producto.codigo || '-'}</p>
-          <p><strong>Proveedor:</strong> ${producto.proveedor_nombre || 'Sin proveedor'} (${producto.codigo_proveedor || '-'})</p>
+          
         </div>
       ` : ''}
       ${stockInfo}
