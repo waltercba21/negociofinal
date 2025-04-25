@@ -1946,6 +1946,7 @@ footer {
 .codigo-admin {
   font-size: 0.8rem;
   color: #005099;
+  font-weight: bold;
   text-align: center;
   margin: 10px 0;
   line-height: 1.3;
