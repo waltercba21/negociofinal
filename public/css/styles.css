@@ -2949,27 +2949,28 @@ footer {
 }
 /* ------------------- BUSCADOR ------------- */
 .buscador {
-  position: relative; /* clave para el posicionamiento absoluto del dropdown */
+  position: relative;
   width: 100%;
   max-width: 500px;
   margin: 0 auto;
 }
 
+/* INPUT de búsqueda más grande */
 #entradaBusqueda {
   width: 100%;
-  padding: 8px;
-  font-size: 12px;
+  padding: 12px; /* Más alto */
+  font-size: 14px; /* Más legible */
   border-radius: 5px;
   border: 1px solid #8d8c8c;
   box-shadow: 1px 1px 4px rgba(0,0,0,0.05);
 }
 
-/* Estilos para los resultados */
+/* Contenedor de resultados, igual ancho al input */
 #resultadosBusqueda {
   position: absolute;
-  top: 100%; /* justo debajo del input */
+  top: 100%;
   left: 0;
-  right: 0;
+  width: 100%; /* Igual que el input */
   z-index: 1000;
   background-color: #ffffff;
   border: 1px solid #ccc;
@@ -2980,17 +2981,21 @@ footer {
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Estilo para cada item dentro del resultado */
+/* Estilo de cada resultado individual */
 #resultadosBusqueda div {
-  padding: 10px;
+  padding: 12px;
   cursor: pointer;
-  font-size: 13px;
-  transition: background 0.2s ease;
+  font-size: 14px;
+  color: #000; /* Texto por defecto negro */
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
+/* Hover: fondo rojo, texto blanco */
 #resultadosBusqueda div:hover {
-  background-color: #f0f0f0;
+  background-color: #d32f2f; /* Rojo */
+  color: #ffffff;
 }
+
 
 table {
   width: 100%;
