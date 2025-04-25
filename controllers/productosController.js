@@ -108,7 +108,6 @@ module.exports = {
           const seHizoBusqueda = !!(categoria || marca || modelo);
           let productos = [];
       
-          // 🔍 Solo buscar productos si se aplicaron filtros
           if (seHizoBusqueda) {
             if (categoria && !marca && !modelo) {
               console.log(`📌 Filtrando SOLO por categoría ID: ${categoria}`);
@@ -254,22 +253,28 @@ module.exports = {
           });
         }
       },
-      
-    buscar: async (req, res) => {
+      buscar: async (req, res) => {
         try {
-            const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
-            
-            req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
-            
-            const limite = req.query.limite ? parseInt(req.query.limite) : 100;
-
-            const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
-            
-            res.json(productos);
+          const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
+          req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
+          
+          const limite = req.query.limite ? parseInt(req.query.limite) : 100;
+      
+          const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
+      
+          // Enriquecer cada producto con proveedor más barato y su código
+          for (const prod of productos) {
+            const proveedor = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
+            prod.proveedor_nombre = proveedor ? proveedor.proveedor_nombre : 'Sin proveedor';
+            prod.codigo_proveedor = proveedor ? proveedor.codigo_proveedor : '';
+          }
+      
+          res.json(productos);
         } catch (error) {
-            res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
+          console.error("❌ Error en /productos/api/buscar:", error);
+          res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
         }
-    },
+      },      
     detalle: async function (req, res) {
         const id = req.params.id;
       
