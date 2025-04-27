@@ -2887,6 +2887,129 @@ footer {
   margin-right: 5px;
 }
 
+/* PANEL DE PRODUCTOS MODERNO */
+
+/* Contenedor general */
+.panel-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Encabezado de columnas */
+.panel-header {
+  display: grid;
+  grid-template-columns: 5% 20% 25% 15% 15% 20%;
+  background-color: #003f7d;
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+/* Cada fila de productos */
+.panel-row {
+  display: grid;
+  grid-template-columns: 5% 20% 25% 15% 15% 20%;
+  background-color: white;
+  align-items: center;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+}
+
+.panel-row:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+}
+
+/* Columnas generales */
+.panel-col {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Checkbox */
+.panel-col-small {
+  justify-content: center;
+}
+
+/* Imagen de producto */
+.product-image {
+  width: 80px;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* Precio */
+.panel-price {
+  font-weight: bold;
+  color: #2c7a2c;
+}
+
+/* Botón editar */
+.btn-edit {
+  background-color: #ffc107;
+  color: #333;
+  padding: 10px 15px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-edit:hover {
+  background-color: #e0a800;
+  transform: scale(1.05);
+}
+
+/* Botón eliminar */
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  padding: 12px 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-delete:hover {
+  background-color: #b02a37;
+  transform: scale(1.05);
+}
+
+/* Alerta sin productos */
+.panel-alert {
+  text-align: center;
+  background-color: #e9ecef;
+  padding: 20px;
+  border-radius: 10px;
+  color: #666;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+/* Estilo para cuando no hay imagen */
+.no-image {
+  color: #999;
+  font-style: italic;
+}
+
+
 
 /* ------------------- BUSCADOR ------------- */
 .buscador {

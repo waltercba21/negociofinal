@@ -78,7 +78,7 @@
               </option>
             <% }); %>
           </select>
-          
+
           <div style="margin-bottom: 10px;">
             <label>
               <input type="radio" name="tipo" value="stock" checked>
@@ -100,7 +100,6 @@
 
     <div class="panel-busqueda">
 
-      <!-- PAGINACIÓN -->
       <div class="panel-paginacion mb-3">
         <% if (paginaActual > 1) { %>
           <a href="?pagina=<%= paginaActual - 1 %>">&laquo;</a>
@@ -139,77 +138,79 @@
           placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile"
         /> 
       </div>
-      <div class="container-fluid mt-4">
+
+      <div class="panel-container">
         <% if (productos && productos.length > 0) { %>
-          <div class="row fw-bold border-bottom py-2 text-center d-none d-md-flex">
-            <div class="col-md-1">✔</div>
-            <div class="col-md-2">Categoría</div>
-            <div class="col-md-3">Nombre</div>
-            <div class="col-md-2">Imagen</div>
-            <div class="col-md-2">Precio</div>
-            <div class="col-md-2">Acciones</div>
+          
+          <!-- Encabezado de columnas -->
+          <div class="panel-header">
+            <div class="panel-col panel-col-small">✔</div>
+            <div class="panel-col">Categoría</div>
+            <div class="panel-col">Nombre</div>
+            <div class="panel-col">Imagen</div>
+            <div class="panel-col">Precio</div>
+            <div class="panel-col">Acciones</div>
           </div>
       
-          <% if (!busquedaActual) { %>
-            <% productos.forEach(producto => { %>
-              <div class="row align-items-center border rounded p-2 mb-2 shadow-sm gx-2">
-                <div class="col-12 col-md-1 text-center">
-                  <input
-                    type="checkbox"
-                    class="form-check-input product-check"
-                    value="<%= producto.id %>"
-                  />
-                </div>
-      
-                <div class="col-12 col-md-2 text-center fw-bold">
-                  <%= producto.categoria %>
-                </div>
-      
-                <div class="col-12 col-md-3 text-center">
-                  <%= producto.nombre %>
-                </div>
-      
-                <div class="col-12 col-md-2 text-center">
-                  <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-                    <img
-                      src="/uploads/productos/<%= producto.imagenes[0] %>"
-                      alt="Imagen de <%= producto.nombre %>"
-                      class="img-thumbnail"
-                      style="max-width: 80px;"
-                    />
-                  <% } else { %>
-                    <span class="text-muted">(Sin imagen)</span>
-                  <% } %>
-                </div>
-      
-                <div class="col-12 col-md-2 text-center fw-semibold text-success">
-                  $<%= parseInt(producto.precio_venta) %>
-                </div>
-      
-                <div class="col-12 col-md-2 text-center">
-                  <form method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? '&busqueda=' + busquedaActual.replace(/ /g, '+') : '' %>">
-
-                    <button class="btn btn-sm btn-warning">
-                      <i class="fas fa-edit"></i> Editar
-                    </button>
-                  </form>
-                </div>
+          <!-- Productos -->
+          <% productos.forEach(producto => { %>
+            <div class="panel-row">
+              <div class="panel-col panel-col-small">
+                <input
+                  type="checkbox"
+                  class="product-check"
+                  value="<%= producto.id %>"
+                />
               </div>
-            <% }); %>
-          <% } %> <!-- cierre de if (!busquedaActual) -->
+      
+              <div class="panel-col">
+                <%= producto.categoria %>
+              </div>
+      
+              <div class="panel-col">
+                <%= producto.nombre %>
+              </div>
+      
+              <div class="panel-col">
+                <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+                  <img
+                    src="/uploads/productos/<%= producto.imagenes[0] %>"
+                    alt="Imagen de <%= producto.nombre %>"
+                    class="product-image"
+                  />
+                <% } else { %>
+                  <span class="no-image">(Sin imagen)</span>
+                <% } %>
+              </div>
+      
+              <div class="panel-col panel-price">
+                $<%= parseInt(producto.precio_venta) %>
+              </div>
+      
+              <div class="panel-col">
+                <form method="get" action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? '&busqueda=' + busquedaActual.replace(/ /g, '+') : '' %>">
+                  <button class="btn-edit">
+                    <i class="fas fa-edit"></i> Editar
+                  </button>
+                </form>
+              </div>
+            </div>
+          <% }); %>
+      
         <% } else { %>
-          <div class="alert alert-info text-center mt-4">
+          <div class="panel-alert">
             No hay productos para mostrar.
           </div>
         <% } %>
       
-        <!-- BOTÓN ELIMINAR -->
-        <div class="text-end mt-4">
-          <button id="delete-selected" class="btn btn-danger">Eliminar seleccionados</button>
+        <!-- Botón eliminar -->
+        <div class="panel-actions">
+          <button id="delete-selected" class="btn-delete">
+            Eliminar seleccionados
+          </button>
         </div>
       </div>
-      
-      
+    
   </main>
 
   <%- include ./layouts/footer.ejs %>
@@ -230,9 +231,6 @@
         inputBusqueda.dispatchEvent(new Event('input'));
       }
     });
-  </script>
-  <script>
-    console.log("🧠 EJS → busquedaActual:", "<%= busquedaActual %>");
   </script>
 <script>
   const paginaActualDesdeServidor = "<%- JSON.stringify(paginaActual || 1) %>";
