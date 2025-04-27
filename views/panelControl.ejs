@@ -12,7 +12,7 @@
       </div>
 
       <div class="form-control">
-        <h4>Generar Listado de productos</h4>
+        <h4>Generar Lista Precios</h4>
         <form method="get" action="/productos/generarPDF">
           <label for="proveedor">Seleccionar Proveedor</label> 
           <select name="proveedor" id="proveedor">
@@ -57,7 +57,7 @@
       </div>
 
       <div class="form-control">
-        <h4>Generar Listado o Pedido de Proveedor</h4>
+        <h4>Generar Stock Proveedor</h4>
         <form method="get" action="/productos/generarPDFProveedor">
           <label for="proveedor">Seleccionar Proveedor</label>
           <select name="proveedor" id="proveedor">
@@ -78,8 +78,7 @@
               </option>
             <% }); %>
           </select>
-
-          <label for="tipo">Tipo de Documento</label>
+          
           <div style="margin-bottom: 10px;">
             <label>
               <input type="radio" name="tipo" value="stock" checked>

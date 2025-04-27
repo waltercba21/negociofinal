@@ -1944,7 +1944,7 @@ footer {
 }
 
 .codigo-admin {
-  font-size: 0.8rem;
+  font-size: 0.8rem; 
   color: #005099;
   font-weight: bold;
   text-align: center;
@@ -2784,183 +2784,110 @@ footer {
   100% { background-position: 0% 50%; }
 }
 
-/*---------------PANEL DE CONTROL ---------------*/
+/* PANEL DE CONTROL MODERNO */
 
 .container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
 }
 
-.container > div {
-  background-color: #003f7d;
-  padding: 15px;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  color: #fff;
-}
-
-.form-control .botones {
+/* Cada caja principal */
+.container > .form-control {
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  padding: 25px;
+  width: 300px;
+  min-height: 350px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-around;
+  justify-content: space-between;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.btn-primary {
-  background-color: #b80220;
-  padding: 8px 15px;
-  font-size: 0.7em;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease-in-out;
+.container > .form-control:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
-.btn-primary:hover {
-  background-color: #840000;
-}
-
-.form-control label, .form-control select, .form-control input, .form-control button {
-  font-size: 0.7em;
+/* Títulos dentro de cada tarjeta */
+.form-control h4 {
+  font-size: 1.4em;
   font-weight: bold;
-  color: #fff;
-}
-.form-control select {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  background-color: #f7f7f7;
-  color: #333;
+  color: #003f7d;
   text-align: center;
+  margin-bottom: 20px;
 }
 
-.form-control select option {
-  background-color: #f7f7f7;
-  color: #333;
-  padding: 10px;
-}
-
-.form-control button[type="submit"] {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 5px;
-  background-color: #b80220;
-  color: #fff;
-  cursor: pointer;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.form-control button[type="submit"]:hover {
-  background-color: #840000;
-}
-
+/* Labels de formularios */
 .form-control label {
-  margin-bottom: 10px;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
 }
 
+/* Selects e inputs */
+.form-control select, 
 .form-control input[type="file"] {
   width: 100%;
   padding: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: #f8f8f8;
+  color: #333;
+  font-size: 0.9em;
 }
 
-.form-control button{
-  background-color: #b80220;
-  padding: 8px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.form-control button:hover {
-  background-color: #840000;
-}
-
-.form-control h4 {
-  font-size: 1em;
-  font-weight: bold;
-  text-align: center;
-  color: #fff;
-  margin-bottom: 10px;
-}
-
-/* Animaciones */
-
-.container > div:hover {
-  transform: scale(1.02);
-  transition: transform 0.3s ease-in-out;
-}
-
-.btn-primary:active {
-  transform: scale(0.95);
-  transition: transform 0.3s ease-in-out;
-}
-
-.container > div {
-  min-height: 150px;
-}
+/* Botones generales */
+.form-control button[type="submit"], 
+.form-control .btn-primary, 
 .form-control.botones a {
-  font-weight: bold;
-  margin-bottom: 10px; 
-  background-color: #f4f3f4; 
-  color: #003f7d;
-  padding: 10px 20px;
+  width: 100%;
+  padding: 12px;
+  background-color: #003f7d;
+  color: #fff;
   border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.form-control.botones a:hover {
-  background-color: #e5e2e2;
-}
-
-.paginacion {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 30px;
-  flex-wrap: wrap;
-}
-
-.paginador {
-  padding: 8px 14px;
-  background-color: #d3d3d3;
-  color: #003f7d;
-  border-radius: 5px;
-  text-decoration: none;
+  border-radius: 10px;
   font-weight: bold;
-  transition: all 0.3s ease;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  text-align: center;
+  text-decoration: none;
 }
 
-.paginador:hover {
-  background-color: #003f7d;
-  color: #ccc;
+.form-control button[type="submit"]:hover,
+.form-control .btn-primary:hover,
+.form-control.botones a:hover {
+  background-color: #001f4d;
+  transform: scale(1.03);
 }
 
-.paginador.activo {
-  background-color: #003f7d;
-  color: #ccc;
-  box-shadow: 0 0 5px #000;
+/* Botones tipo enlaces */
+.form-control.botones {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.paginador.deshabilitado {
-  background-color: #ccc;
-  color: #666;
-  pointer-events: none;
-  cursor: not-allowed;
+/* Animación click en botón */
+.form-control button:active,
+.form-control .btn-primary:active,
+.form-control.botones a:active {
+  transform: scale(0.98);
 }
 
-.paginador.flecha {
-  font-size: 14px;
+/* Radio buttons */
+.form-control input[type="radio"] {
+  margin-right: 5px;
 }
+
+
 /* ------------------- BUSCADOR ------------- */
 .buscador {
   position: relative;
