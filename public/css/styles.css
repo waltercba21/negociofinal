@@ -2909,6 +2909,12 @@ footer {
   text-align: center;
   box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
+/* Texto de categoría y nombre */
+.panel-text-small-bold {
+  font-size: 0.9em; 
+  font-weight: bold;
+  color: #333;
+}
 
 /* Cada fila de productos */
 .panel-row {
