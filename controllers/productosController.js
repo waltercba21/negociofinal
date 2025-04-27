@@ -1396,7 +1396,7 @@ actualizarPreciosExcel: async (req, res) => {
               if (err || resQuery.length === 0) return resolve(0);
               resolve(resQuery[0].precio_lista);
             });
-          });
+          }); 
   
           const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
           if (!Array.isArray(resultado)) continue;

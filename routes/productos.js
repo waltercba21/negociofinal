@@ -46,7 +46,7 @@ router.get('/listadoFacturas', productosController.listaFacturas);
 router.get('/api/facturas', productosController.getFacturas);
 router.put('/api/facturas/:id', productosController.editarFacturas);
 router.delete('/api/facturas/:id', productosController.deleteFactura);
-
+ 
 
 router.get('/generarPDF', productosController.generarPDF);
 router.get('/generarPDFProveedor', productosController.generarPDFProveedor);

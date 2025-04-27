@@ -580,6 +580,12 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
     try {
         console.log(`🔧 Iniciando actualización completa para proveedor ID: ${proveedorId} con ${porcentaje * 100}%`);
 
+        // ✅ Función para redondear como en actualizarPreciosPDF
+        function redondearPrecioVenta(precio) {
+            const resto = precio % 100;
+            return resto < 50 ? precio - resto : precio + (100 - resto);
+        }
+
         // 1. Obtener todos los productos del proveedor
         const queryProductos = `
             SELECT p.id, p.utilidad, pp.precio_lista, dp.descuento, pp.producto_id
@@ -603,7 +609,10 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
 
             const costo_neto = +(nuevaLista * (1 - descuento / 100)).toFixed(2);
             const costo_iva = +(costo_neto * 1.21).toFixed(2);
-            const precio_venta = +(costo_iva * (1 + utilidad / 100)).toFixed(2);
+
+            // 🚀 APLICAR REDONDEO AL PRECIO VENTA
+            let precio_venta = +(costo_iva * (1 + utilidad / 100)).toFixed(2);
+            precio_venta = redondearPrecioVenta(precio_venta);
 
             console.log(`➡ Producto ${prod.id}:`);
             console.log(`   Nueva lista: ${nuevaLista}`);
@@ -611,7 +620,7 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
             console.log(`   Costo neto: ${costo_neto}`);
             console.log(`   Costo IVA: ${costo_iva}`);
             console.log(`   Utilidad: ${utilidad}%`);
-            console.log(`   Precio final: ${precio_venta}`);
+            console.log(`   Precio final REDONDEADO: ${precio_venta}`);
 
             const updateQuery = `
                 UPDATE producto_proveedor SET precio_lista = ? 
@@ -638,8 +647,6 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
         return callback(err);
     }
 },
-// ✅ MODELO ACTUALIZADO CON LOGGING DETALLADO
-
 actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
     return new Promise((resolve, reject) => {
       if (typeof codigo !== 'string') {
