@@ -138,12 +138,11 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
             <div class="col-12 col-md-2 text-center fw-semibold text-success">${precio}</div>
             <div class="col-12 col-md-2 text-center">
-              <form method="get" action="${action}">
-                <button class="btn btn-sm btn-warning">
-                  <i class="fas fa-edit"></i> Editar
-                </button>
-              </form>
-            </div>
+  <a href="${action}" class="btn btn-sm btn-warning">
+    <i class="fas fa-edit"></i> Editar
+  </a>
+</div>
+
           </div>`;
         contenedorProductos.insertAdjacentHTML('beforeend', fila);
       });
