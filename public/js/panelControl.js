@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const urlParams = new URLSearchParams(window.location.search);
   const searchValue = urlParams.get('busqueda');
-  const contenedorProductos = document.querySelector('.container-fluid.mt-4');
+  const contenedorProductos = document.querySelector('.panel-container');
   const checkAll = document.getElementById('check-all');
   const deleteSelectedButton = document.getElementById('delete-selected');
   const inputBusqueda = document.getElementById('entradaBusqueda');
