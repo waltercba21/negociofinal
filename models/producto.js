@@ -1931,7 +1931,31 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
         resolve(results[0]); // { proveedor_nombre, codigo_proveedor }
       });
     });
+  },
+  obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, categoriaId) {
+    try {
+      let query = `
+        SELECT p.id, p.nombre, p.stock_minimo, p.stock_actual, pp.codigo AS codigo_proveedor
+        FROM productos p
+        JOIN producto_proveedor pp ON p.id = pp.producto_id
+        WHERE pp.proveedor_id = ?
+      `;
+  
+      const params = [proveedorId];
+  
+      if (categoriaId && categoriaId !== 'TODAS' && categoriaId !== '') {
+        query += ` AND p.categoria_id = ?`;
+        params.push(categoriaId);
+      }
+  
+      const [rows] = await conexion.promise().query(query, params);
+      return rows;
+    } catch (error) {
+      console.error('❌ Error en obtenerProductosAsignadosAlProveedor:', error);
+      return [];
+    }
   }
+  
   
   
 

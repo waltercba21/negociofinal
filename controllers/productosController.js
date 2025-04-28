@@ -1042,13 +1042,15 @@ getProductosPorCategoria : async (req, res) => {
         width: doc.page.width - 100
       });
   
-      // Obtener productos
       let productos = [];
-      if (tipo === 'pedido') {
-        productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
-      } else {
-        productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
-      }
+if (tipo === 'pedido') {
+  productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
+} else if (tipo === 'asignado') {
+  productos = await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId);
+} else {
+  productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+}
+
   
       if (!productos.length) {
         doc.moveDown().fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
