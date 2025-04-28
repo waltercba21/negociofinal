@@ -4083,6 +4083,85 @@ table td img:hover {
 
 
 /*-----CONTENEDOR OFERTAS------*/
+/* 🔹 Contenedor del formulario de filtros */
+.filtros-ofertas {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px; /* separación entre categoría y marca */
+  margin: 30px auto;
+  flex-wrap: wrap;
+}
+
+/* 🔹 Cada div interno (categoría, marca) */
+.filtros-ofertas div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 🔹 Estilo para los labels */
+.filtros-ofertas label {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #333;
+}
+
+/* 🔹 Estilo para los selects */
+.filtros-ofertas select {
+  width: 220px;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.filtros-ofertas select:hover {
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+  border-color: #888;
+}
+
+/* 🔹 Estilos para los options */
+.filtros-ofertas select option {
+  padding: 10px;
+}
+/* 🔹 Botones de paginación */
+.paginador {
+  display: inline-block;
+  padding: 10px 15px;
+  margin: 2px;
+  font-size: 16px;
+  text-decoration: none;
+  color: #007bff;
+  border: 1px solid #007bff;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.paginador:hover {
+  background-color: #007bff;
+  color: #fff;
+}
+
+/* 🔹 Botón de página activa */
+.paginador.activo {
+  background-color: #007bff;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* 🔹 Botón deshabilitado */
+.paginador.deshabilitado {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border: 1px solid #ccc;
+  color: #aaa;
+}
   .contenedor-productos-ofertas {
     flex-wrap: nowrap;
     overflow-x: scroll;
