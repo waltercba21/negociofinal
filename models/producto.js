@@ -1954,9 +1954,36 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
       console.error('❌ Error en obtenerProductosAsignadosAlProveedor:', error);
       return [];
     }
-  }
+  },
+  obtenerProductosOfertaFiltrados: function (conexion, filtros, callback) {
+    let sql = `
+      SELECT p.*, c.nombre AS categoria_nombre, m.nombre AS marca_nombre
+      FROM productos p
+      LEFT JOIN categorias c ON p.categoria_id = c.id
+      LEFT JOIN marcas m ON p.marca_id = m.id
+      WHERE p.oferta = 1
+    `;
+    const params = [];
   
+    if (filtros.categoria_id) {
+      sql += " AND p.categoria_id = ?";
+      params.push(filtros.categoria_id);
+    }
   
+    if (filtros.marca_id) {
+      sql += " AND p.marca_id = ?";
+      params.push(filtros.marca_id);
+    }
   
-
+    sql += " ORDER BY p.nombre ASC";
+  
+    conexion.query(sql, params, (error, resultados) => {
+      if (error) {
+        console.error("❌ Error al filtrar productos en oferta:", error);
+        return callback(error, null);
+      }
+      callback(null, resultados);
+    });
+  },
+  
 }

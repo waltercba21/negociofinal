@@ -5,6 +5,29 @@
 
 <main>
   <h2 class="titulo-principal">Ofertas Disponibles</h2>
+
+    <form id="filtroOfertas" method="GET" action="/productos/ofertas" class="filtros-ofertas">
+      <div>
+        <label for="categoria_id">Categoría:</label>
+        <select name="categoria_id" id="categoria_id" onchange="document.getElementById('filtroOfertas').submit()">
+          <option value="">Todas las categorías</option>
+          <% categorias.forEach(categoria => { %>
+            <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>><%= categoria.nombre %></option>
+          <% }) %>
+        </select>
+      </div>
+  
+      <div>
+        <label for="marca_id">Marca:</label>
+        <select name="marca_id" id="marca_id" onchange="document.getElementById('filtroOfertas').submit()">
+          <option value="">Todas las marcas</option>
+          <% marcas.forEach(marca => { %>
+            <option value="<%= marca.id %>" <%= marca.id == marcaSeleccionada ? 'selected' : '' %>><%= marca.nombre %></option>
+          <% }) %>
+        </select>
+      </div>
+    </form>
+  
   <% if (numeroDePaginas > 1) { %>
     <div class="paginacion">
       <% if (pagina > 1) { %>

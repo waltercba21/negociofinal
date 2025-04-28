@@ -194,7 +194,7 @@ module.exports = {
           });
         }
       },      
-    ofertas: async function (req, res) {
+      ofertas: async function (req, res) {
         try {
           const isUserLoggedIn = !!req.session.usuario;
           const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin';
@@ -202,11 +202,21 @@ module.exports = {
           const paginaSolicitada = parseInt(req.query.pagina) || 1;
           const productosPorPagina = 20;
       
-          // 🔍 Obtener todos los productos en oferta
+          const categoriaSeleccionada = req.query.categoria_id || '';
+          const marcaSeleccionada = req.query.marca_id || '';
+      
+          // 🔍 Obtener categorías y marcas para los filtros
+          const categorias = await producto.obtenerCategorias(conexion);
+          const marcas = await producto.obtenerMarcas(conexion);
+      
+          // 🔍 Obtener productos en oferta aplicando filtros
           const todosLosProductos = await new Promise((resolve, reject) => {
-            producto.obtenerProductosOferta(conexion, (error, resultados) => {
+            producto.obtenerProductosOfertaFiltrados(conexion, {
+              categoria_id: categoriaSeleccionada,
+              marca_id: marcaSeleccionada
+            }, (error, resultados) => {
               if (error) {
-                console.error("❌ Error al obtener productos en oferta:", error);
+                console.error("❌ Error al obtener productos en oferta filtrados:", error);
                 return reject(error);
               }
               resolve(resultados);
@@ -215,7 +225,7 @@ module.exports = {
       
           const totalProductos = todosLosProductos.length;
           const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
-          const pagina = Math.min(Math.max(paginaSolicitada, 1), numeroDePaginas || 1); // previene páginas inválidas
+          const pagina = Math.min(Math.max(paginaSolicitada, 1), numeroDePaginas || 1);
       
           const inicio = (pagina - 1) * productosPorPagina;
           const productosPagina = todosLosProductos.slice(inicio, inicio + productosPorPagina);
@@ -232,10 +242,14 @@ module.exports = {
             });
           }
       
-          console.log(`✅ Mostrando página ${pagina} de ofertas con ${productosPagina.length} productos`);
+          console.log(`✅ Mostrando página ${pagina} de ofertas filtradas con ${productosPagina.length} productos`);
       
           res.render("ofertas", {
             productos: productosPagina,
+            categorias,
+            marcas,
+            categoriaSeleccionada,
+            marcaSeleccionada,
             isUserLoggedIn,
             isAdminUser,
             pagina,
@@ -246,13 +260,17 @@ module.exports = {
           console.error("❌ Error en el controlador ofertas:", error);
           res.status(500).render("ofertas", {
             productos: [],
+            categorias: [],
+            marcas: [],
+            categoriaSeleccionada: '',
+            marcaSeleccionada: '',
             isUserLoggedIn: !!req.session.usuario,
             isAdminUser: req.session.usuario && req.session.usuario.rol === 'admin',
             pagina: 1,
             numeroDePaginas: 1
           });
         }
-      },
+      },      
       buscar: async (req, res) => {
         try {
           const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
