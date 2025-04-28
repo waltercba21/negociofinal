@@ -683,9 +683,9 @@ footer {
   display: inline-block;
   padding: 10px 15px;
   margin: 2px;
-  font-size: 12px;
+  font-size: 10px;
   text-decoration: none;
-  color: #004d99;
+  color: #001f4d;
   border: 1px solid #003f7d;
   border-radius: 8px;
   transition: all 0.3s ease;
