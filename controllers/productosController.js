@@ -661,8 +661,16 @@ module.exports = {
         }
     
         req.session.paginaActual = paginaActual;
-        
+    
         let busqueda = '';
+    
+        // 🔥 ESTA PARTE NUEVA
+        if (!req.query.busqueda && req.session.busqueda) {
+          console.log("🧹 Limpiando búsqueda de la sesión...");
+          req.session.busqueda = null;
+        }
+    
+        // 📚 Después sigue el flujo normal
         if (typeof req.query.busqueda === 'string') {
           busqueda = req.query.busqueda.trim();
           req.session.busqueda = busqueda;
@@ -671,7 +679,6 @@ module.exports = {
         }
     
         console.log("🧩 Busqueda recibida en panelControl:", busqueda);
-
     
         const productosPorPagina = 30;
         const saltar = (paginaActual - 1) * productosPorPagina;
@@ -724,7 +731,8 @@ module.exports = {
         console.error('❌ Error en panelControl:', error);
         return res.status(500).send('Error: ' + error.message);
       }
-    },    
+    },
+    
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {
