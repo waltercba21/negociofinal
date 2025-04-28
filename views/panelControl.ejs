@@ -173,15 +173,20 @@
       
               <div class="panel-col">
                 <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-                  <img
-                    src="/uploads/productos/<%= producto.imagenes[0] %>"
-                    alt="Imagen de <%= producto.nombre %>"
-                    class="product-image"
-                  />
+                  <div class="panel-image-container">
+                    <img
+                      src="/uploads/productos/<%= producto.imagenes[0] %>"
+                      alt="Imagen de <%= producto.nombre %>"
+                      class="product-image"
+                    />
+                  </div>
                 <% } else { %>
-                  <span class="no-image">(Sin imagen)</span>
+                  <div class="panel-image-container">
+                    <span class="no-image">(Sin imagen)</span>
+                  </div>
                 <% } %>
               </div>
+              
       
               <div class="panel-col panel-price">
                 $<%= parseInt(producto.precio_venta) %>

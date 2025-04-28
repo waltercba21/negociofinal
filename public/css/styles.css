@@ -2940,6 +2940,25 @@ footer {
   justify-content: center;
   align-items: center;
 }
+/* Contenedor fijo para las imágenes */
+.panel-image-container {
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f2f2f2;
+  border-radius: 8px;
+  margin: 0 auto;
+}
+
+/* Imagen dentro del contenedor */
+.product-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Contiene la imagen sin deformar */
+}
 
 /* Checkbox */
 .panel-col-small {
