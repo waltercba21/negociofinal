@@ -8,9 +8,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (searchValue) {
     inputBusqueda.value = searchValue;
-    history.replaceState(null, '', `${window.location.pathname}?busqueda=${encodeURIComponent(searchValue)}`);
+    console.log("🧩 Busqueda detectada en la URL:", searchValue);
   }
-
+  
   checkAll?.addEventListener('change', function (event) {
     const checks = document.querySelectorAll('.product-check');
     checks.forEach(cb => cb.checked = event.target.checked);

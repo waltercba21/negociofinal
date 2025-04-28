@@ -661,16 +661,17 @@ module.exports = {
         }
     
         req.session.paginaActual = paginaActual;
-    
+        
         let busqueda = '';
         if (typeof req.query.busqueda === 'string') {
           busqueda = req.query.busqueda.trim();
-          req.session.busqueda = busqueda; // ✅ Guardamos en sesión
+          req.session.busqueda = busqueda;
         } else if (typeof req.session.busqueda === 'string') {
           busqueda = req.session.busqueda.trim();
         }
     
-        console.log("🔍 Busqueda recibida:", busqueda);
+        console.log("🧩 Busqueda recibida en panelControl:", busqueda);
+
     
         const productosPorPagina = 30;
         const saltar = (paginaActual - 1) * productosPorPagina;
