@@ -99,7 +99,8 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>`;
       contenedorProductos.insertAdjacentHTML('beforeend', encabezado);
 
-      const paginaActual = urlParams.get('pagina') || 1;
+      const paginaActual = 1; // Siempre al buscar se reinicia en 1
+      const busquedaActual = document.getElementById('entradaBusqueda')?.value.trim() || '';
 
       productos.forEach(producto => {
         const categoria = producto.categoria_nombre || 'Sin categoría';
@@ -116,7 +117,8 @@ document.addEventListener('DOMContentLoaded', function () {
           ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
           : 'Precio no disponible';
 
-        const action = `/productos/editar/${producto.id}?pagina=${paginaActual}&busqueda=${encodeURIComponent(busqueda)}`;
+        const action = `/productos/editar/${producto.id}?pagina=${paginaActual}&busqueda=${encodeURIComponent(busquedaActual)}`;
+
 
         console.log("🔗 Editar generado:");
         console.log("🧠 Producto:", producto.nombre);
