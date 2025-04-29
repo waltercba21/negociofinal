@@ -105,7 +105,6 @@ module.exports = {
       
           console.log("\n🔎 Consulta recibida con parámetros:", { pagina, categoria, marca, modelo });
       
-          // ✅ Validación de parámetros numéricos
           if ((marca && isNaN(marca)) || (modelo && isNaN(modelo)) || (categoria && isNaN(categoria))) {
             console.log("❌ Error: Algún parámetro no es un número válido.");
             return res.status(400).send("Parámetros inválidos.");
@@ -133,17 +132,14 @@ module.exports = {
               });
             }
       
-            // 📸 Obtener imágenes asociadas a los productos
             const productoIds = productos.map(p => p.id);
             if (productoIds.length > 0) {
               const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
       
-              // 🔄 Enriquecer cada producto con imágenes, precio y proveedor más barato
               for (const prod of productos) {
                 prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
                 prod.precio_venta = prod.precio_venta ? parseFloat(prod.precio_venta) : "No disponible";
       
-                // ✅ Agregar proveedor más barato y su código
                 const proveedor = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
                 if (proveedor) {
                   prod.proveedor_nombre = proveedor.proveedor_nombre;
@@ -158,15 +154,25 @@ module.exports = {
             console.log("🛑 No se aplicaron filtros. No se mostrarán productos.");
           }
       
-          // 📂 Obtener datos para los selectores
+          // Obtener y ordenar selectores
           const [categorias, marcas] = await Promise.all([
             producto.obtenerCategorias(conexion),
             producto.obtenerMarcas(conexion),
           ]);
-          const modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
+          let modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
+      
+          // Ordenar alfabéticamente
+          categorias.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+          marcas.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+          modelosPorMarca.sort((a, b) => {
+            if (!isNaN(a.nombre) && !isNaN(b.nombre)) {
+              return parseInt(a.nombre) - parseInt(b.nombre);
+            }
+            return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+          });
+      
           const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
       
-          // ✅ Renderizar vista
           res.render("productos", {
             productos,
             categorias,
@@ -199,7 +205,8 @@ module.exports = {
             isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
           });
         }
-      },      
+      },
+      
       ofertas: async function (req, res) {
         try {
           const isUserLoggedIn = !!req.session.usuario;
@@ -1399,7 +1406,7 @@ actualizarPrecios: function(req, res) {
     .catch(error => {
         res.status(500).send('Error: ' + error.message);
     });
-},  
+}, 
 actualizarPreciosExcel: async (req, res) => {
   function normalizarClave(texto) {
     return texto
