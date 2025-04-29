@@ -2,69 +2,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const urlParams = new URLSearchParams(window.location.search);
   const searchValue = urlParams.get('busqueda');
   const contenedorProductos = document.querySelector('.panel-container');
-  const checkAll = document.getElementById('check-all');
-  const deleteSelectedButton = document.getElementById('delete-selected');
   const inputBusqueda = document.getElementById('entradaBusqueda');
 
   if (searchValue) {
     inputBusqueda.value = searchValue;
-    console.log("🧩 Busqueda detectada en la URL:", searchValue);
   }
-  
-  checkAll?.addEventListener('change', function (event) {
-    const checks = document.querySelectorAll('.product-check');
-    checks.forEach(cb => cb.checked = event.target.checked);
-  });
-
-  contenedorProductos?.addEventListener('change', function (event) {
-    if (event.target.matches('.product-check')) {
-      const checks = document.querySelectorAll('.product-check');
-      const allChecked = Array.from(checks).every(cb => cb.checked);
-      checkAll.checked = allChecked;
-    }
-  });
-
-  deleteSelectedButton?.addEventListener('click', function () {
-    const checks = document.querySelectorAll('.product-check');
-    const ids = Array.from(checks).filter(cb => cb.checked).map(cb => cb.value);
-
-    if (ids.length === 0) {
-      Swal.fire('Sin selección', 'No seleccionaste ningún producto.', 'info');
-      return;
-    }
-
-    Swal.fire({
-      title: '¿Estás seguro?',
-      text: "Esta acción eliminará los productos seleccionados.",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        fetch('/productos/eliminarSeleccionados', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids })
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              Swal.fire('Eliminados', 'Productos eliminados correctamente.', 'success')
-                .then(() => location.reload());
-            } else {
-              throw new Error(data.message || 'Error al eliminar productos.');
-            }
-          })
-          .catch(err => {
-            console.error(err);
-            Swal.fire('Error', 'Hubo un problema al eliminar.', 'error');
-          });
-      }
-    });
-  });
 
   let timer;
   inputBusqueda?.addEventListener('input', function (e) {
@@ -88,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
+      // Render encabezado
       const encabezado = `
         <div class="row fw-bold border-bottom py-2 text-center d-none d-md-flex">
           <div class="col-md-1">✔</div>
@@ -99,13 +42,14 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>`;
       contenedorProductos.insertAdjacentHTML('beforeend', encabezado);
 
-      const paginaActual = 1; // Siempre al buscar se reinicia en 1
+      const paginaActual = 1;
       const busquedaActual = document.getElementById('entradaBusqueda')?.value.trim() || '';
 
+      // Render productos
       productos.forEach(producto => {
         const categoria = producto.categoria_nombre || 'Sin categoría';
-
         let imagenURL = '/img/default.jpg';
+
         if (producto.imagenes && producto.imagenes.length > 0) {
           const primera = producto.imagenes[0];
           imagenURL = typeof primera === 'string'
@@ -119,13 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const action = `/productos/editar/${producto.id}?pagina=${paginaActual}&busqueda=${encodeURIComponent(busquedaActual)}`;
 
-
-        console.log("🔗 Editar generado:");
-        console.log("🧠 Producto:", producto.nombre);
-        console.log("📄 Página actual:", paginaActual);
-        console.log("🔎 Búsqueda actual:", busqueda);
-        console.log("🔗 URL:", action);
-
         const fila = `
           <div class="row align-items-center border rounded p-2 mb-2 shadow-sm gx-2">
             <div class="col-12 col-md-1 text-center">
@@ -138,14 +75,66 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
             <div class="col-12 col-md-2 text-center fw-semibold text-success">${precio}</div>
             <div class="col-12 col-md-2 text-center">
-  <a href="${action}" class="btn btn-sm btn-warning">
-    <i class="fas fa-edit"></i> Editar
-  </a>
-</div>
-
+              <a href="${action}" class="btn btn-sm btn-warning">
+                <i class="fas fa-edit"></i> Editar
+              </a>
+            </div>
           </div>`;
         contenedorProductos.insertAdjacentHTML('beforeend', fila);
       });
-    }, 300);
-  });
-});
+
+      // Insertar botón Eliminar
+      const eliminarHTML = `
+        <div class="panel-actions mt-3 text-center">
+          <button id="delete-selected" class="btn-delete btn btn-danger">
+            Eliminar seleccionados
+          </button>
+        </div>`;
+      contenedorProductos.insertAdjacentHTML('beforeend', eliminarHTML);
+
+      // Asignar evento al nuevo botón
+      document.getElementById('delete-selected')?.addEventListener('click', function () {
+        const checks = document.querySelectorAll('.product-check');
+        const ids = Array.from(checks).filter(cb => cb.checked).map(cb => cb.value);
+
+        if (ids.length === 0) {
+          Swal.fire('Sin selección', 'No seleccionaste ningún producto.', 'info');
+          return;
+        }
+
+        Swal.fire({
+          title: '¿Estás seguro?',
+          text: "Esta acción eliminará los productos seleccionados.",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#3085d6',
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            fetch('/productos/eliminarSeleccionados', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ids })
+            })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  Swal.fire('Eliminados', 'Productos eliminados correctamente.', 'success')
+                    .then(() => location.reload());
+                } else {
+                  throw new Error(data.message || 'Error al eliminar productos.');
+                }
+              })
+              .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'Hubo un problema al eliminar.', 'error');
+              });
+          }
+        });
+      });
+
+    }, 300); // Fin del debounce
+  }); // Fin del input listener
+}); // Fin del DOMContentLoaded
