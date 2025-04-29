@@ -161,25 +161,23 @@ module.exports = {
           ]);
           let modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
       
-          // Ordenar categorías y marcas alfabéticamente
+          // Función para convertir modelo a número lógico ordenable
+          const normalizarModelo = (nombre) => {
+            const partes = nombre.split('/');
+            if (partes.length === 2 && !isNaN(partes[0]) && !isNaN(partes[1])) {
+              return parseInt(partes[0]) + parseInt(partes[1]) / 100;
+            }
+            const match = nombre.match(/\d+/g);
+            return match ? parseInt(match.join('')) : Number.MAX_SAFE_INTEGER;
+          };
+      
+          // Ordenar todo
           categorias.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
           marcas.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
-      
-          // Ordenar modelos extrayendo el número principal del nombre
           modelosPorMarca.sort((a, b) => {
-            const obtenerNumero = (texto) => {
-              const match = texto.match(/\d+/); // busca el primer número dentro del texto
-              return match ? parseInt(match[0]) : Number.MAX_SAFE_INTEGER;
-            };
-      
-            const numA = obtenerNumero(a.nombre);
-            const numB = obtenerNumero(b.nombre);
-      
-            if (!isNaN(numA) && !isNaN(numB)) {
-              return numA - numB;
-            }
-      
-            return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+            const numA = normalizarModelo(a.nombre);
+            const numB = normalizarModelo(b.nombre);
+            return numA - numB;
           });
       
           const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
