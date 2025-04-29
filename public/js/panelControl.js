@@ -135,6 +135,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       });
 
-    }, 300); // Fin del debounce
-  }); // Fin del input listener
-}); // Fin del DOMContentLoaded
+    }, 300);
+  });
+}); 

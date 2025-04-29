@@ -10,7 +10,13 @@ const fs = require('fs');
 const pdfParse = require('pdf-parse');
 
     const adminEmails = ['walter@autofaros.com.ar'];
-
+    function normalizarClave(texto) {
+      return texto
+        .normalize("NFD")                         // descompone tildes (ó → o +  ́)
+        .replace(/[\u0300-\u036f]/g, "")         // elimina tildes
+        .replace(/\s+/g, '')                     // elimina espacios
+        .toLowerCase();                          // pasa a minúsculas
+    }
 module.exports = {
     index: async (req, res) => {
         try {
@@ -1395,61 +1401,71 @@ actualizarPrecios: function(req, res) {
     });
 },  
 actualizarPreciosExcel: async (req, res) => {
-    try {
-      const proveedor_id = req.body.proveedor;
-      const file = req.files[0];
-      const productosActualizados = [];
-  
-      if (!proveedor_id || !file) return res.status(400).send('Proveedor y archivo son requeridos.');
-  
-      const workbook = xlsx.readFile(file.path);
-      const sheet_name_list = workbook.SheetNames;
-  
-      for (const sheet_name of sheet_name_list) {
-        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
-  
-        for (const row of data) {
-          const codigoColumn = Object.keys(row).find(key => key.toLowerCase().includes('codigo'));
-          const precioColumn = Object.keys(row).find(key => key.toLowerCase().includes('precio'));
-  
-          if (!codigoColumn || !precioColumn) continue;
-  
-          const codigo = row[codigoColumn].toString().trim();
-          const precio = parseFloat(row[precioColumn].toString().replace(',', '.'));
-          if (!codigo || isNaN(precio) || precio <= 0) continue;
-  
-          const precioAnterior = await new Promise(resolve => {
-            const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
-            conexion.query(sql, [proveedor_id, codigo], (err, resQuery) => {
-              if (err || resQuery.length === 0) return resolve(0);
-              resolve(resQuery[0].precio_lista);
-            });
-          }); 
-  
-          const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
-          if (!Array.isArray(resultado)) continue;
-  
-          resultado.forEach(p => {
-            productosActualizados.push({
-              codigo: p.codigo,
-              nombre: p.nombre,
-              precio_lista_antiguo: precioAnterior,
-              precio_lista_nuevo: p.precio_lista,
-              precio_venta: p.precio_venta || 0,
-              sin_cambio: p.sin_cambio || false
-            });
+  function normalizarClave(texto) {
+    return texto
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, '')
+      .toLowerCase();
+  }
+
+  try {
+    const proveedor_id = req.body.proveedor;
+    const file = req.files[0];
+    const productosActualizados = [];
+
+    if (!proveedor_id || !file) return res.status(400).send('Proveedor y archivo son requeridos.');
+
+    const workbook = xlsx.readFile(file.path);
+    const sheet_name_list = workbook.SheetNames;
+
+    for (const sheet_name of sheet_name_list) {
+      const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+
+      for (const row of data) {
+        const claves = Object.keys(row);
+        const codigoColumn = claves.find(key => normalizarClave(key).includes('codigo'));
+        const precioColumn = claves.find(key => normalizarClave(key).includes('precio'));
+
+        if (!codigoColumn || !precioColumn) continue;
+
+        const codigo = row[codigoColumn].toString().trim();
+        const precio = parseFloat(row[precioColumn].toString().replace(',', '.'));
+        if (!codigo || isNaN(precio) || precio <= 0) continue;
+
+        const precioAnterior = await new Promise(resolve => {
+          const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
+          conexion.query(sql, [proveedor_id, codigo], (err, resQuery) => {
+            if (err || resQuery.length === 0) return resolve(0);
+            resolve(resQuery[0].precio_lista);
           });
-        }
+        });
+
+        const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
+        if (!Array.isArray(resultado)) continue;
+
+        resultado.forEach(p => {
+          productosActualizados.push({
+            codigo: p.codigo,
+            nombre: p.nombre,
+            precio_lista_antiguo: precioAnterior,
+            precio_lista_nuevo: p.precio_lista,
+            precio_venta: p.precio_venta || 0,
+            sin_cambio: p.sin_cambio || false
+          });
+        });
       }
-  
-      fs.unlinkSync(file.path);
-      res.render('productosActualizados', { productos: productosActualizados });
-  
-    } catch (error) {
-      console.error("❌ Error en actualizarPreciosExcel:", error);
-      res.status(500).send(error.message);
     }
-  },  
+
+    fs.unlinkSync(file.path);
+    res.render('productosActualizados', { productos: productosActualizados });
+
+  } catch (error) {
+    console.error("❌ Error en actualizarPreciosExcel:", error);
+    res.status(500).send(error.message);
+  }
+},
+
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
