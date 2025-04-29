@@ -18,7 +18,22 @@ document.addEventListener("DOMContentLoaded", function () {
         option.value = "";
         option.text = "Selecciona un modelo";
         modeloSelect.appendChild(option);
-
+      
+        const normalizarModelo = (nombre) => {
+          const partes = nombre.split('/');
+          if (partes.length === 2 && !isNaN(partes[0]) && !isNaN(partes[1])) {
+            return parseInt(partes[0]) + parseInt(partes[1]) / 100;
+          }
+          const match = nombre.match(/\d+/g);
+          return match ? parseInt(match.join('')) : Number.MAX_SAFE_INTEGER;
+        };
+      
+        modelos.sort((a, b) => {
+          const numA = normalizarModelo(a.nombre);
+          const numB = normalizarModelo(b.nombre);
+          return numA - numB;
+        });
+      
         modelos.forEach((modelo) => {
           const opt = document.createElement("option");
           opt.value = modelo.id;
@@ -26,6 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
           modeloSelect.appendChild(opt);
         });
       })
+      
       .catch((err) => console.error("Error al cargar modelos:", err));
   });
 
