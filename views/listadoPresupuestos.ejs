@@ -3,15 +3,22 @@
 <body>
     <main class="container-listadoPresupuesto">
         <h2 class="titulo-listado">Listado de Presupuestos</h2>
-        <!-- Date pickers for selecting the date range -->
-        <label for="fechaInicio">Desde:</label>
-        <input type="date" id="fechaInicio" value="<%= new Date().toISOString().split('T')[0] %>">
-        <label for="fechaFin">Hasta:</label>
-        <input type="date" id="fechaFin" value="<%= new Date().toISOString().split('T')[0] %>">
-        <button id="buscar">Buscar</button>
-        <button id="btnImprimir" class="btn btn-primary">Imprimir Detalle</button>
-        <button id="btnImprimirTotal" class="btn btn-secondary">Imprimir Total</button> 
-
+        <div class="filtros-presupuestos">
+            <div class="filtros-fechas">
+              <label for="fechaInicio">Desde:</label>
+              <input type="date" id="fechaInicio" value="<%= new Date().toISOString().split('T')[0] %>">
+              
+              <label for="fechaFin">Hasta:</label>
+              <input type="date" id="fechaFin" value="<%= new Date().toISOString().split('T')[0] %>">
+            </div>
+          
+            <div class="filtros-botones">
+              <button id="buscar">Buscar</button>
+              <button id="btnImprimir" class="btn btn-primary">Imprimir Detalle</button>
+              <button id="btnImprimirTotal" class="btn btn-secondary">Imprimir Total</button>
+            </div>
+          </div>
+          
         <table id="presupuestos-table" class="table-presupuestos">
             <thead class="thead-presupuestos">
                 <tr>

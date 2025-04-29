@@ -1365,6 +1365,41 @@ footer {
 
 
 /*--------------------------Listado de Presupuestos Moderno--------------------------*/
+.filtros-presupuestos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.filtros-fechas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.filtros-fechas label {
+  font-weight: bold;
+  color: #003f7d;
+  font-size: 14px;
+}
+
+.filtros-fechas input {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.filtros-botones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+
 .container-listadoPresupuesto {
   width: 90%;
   margin: 30px auto;
