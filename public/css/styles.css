@@ -1364,132 +1364,124 @@ footer {
 }
 
 
-/*--------------------------listadoPresupuestos--------------------------*/
-.container-listadoPresupuestos {
-  width: 80%;
-  margin: auto;
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.15);
-}
-.container-listadoPresupuesto label,
-.container-listadoPresupuesto input,
-.container-listadoPresupuesto button {
-    margin: 10px;
+/*--------------------------Listado de Presupuestos Moderno--------------------------*/
+.container-listadoPresupuesto {
+  width: 90%;
+  margin: 30px auto;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', sans-serif;
 }
 
-#buscar {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 20px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s, box-shadow 0.3s;
-}
-
-#buscar:hover {
-    background-color: #0056b3;
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-}
-.thead-presupuestos{
-  background-color: #ccc;
-}
-.table-presupuestos th {
-  background-color: #ccc;
-}
 .titulo-listado {
   text-align: center;
-  font-size: 26px; 
+  font-size: 30px;
+  font-weight: 700;
   color: #003f7d;
-  margin-bottom: 20px; 
-  font-weight: bold;
+  margin-bottom: 30px;
 }
+
 .table-presupuestos {
   width: 100%;
-  table-layout: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
 }
 
-.table-presupuestos th{
-  padding: 10px;
-  text-align: center; 
-  color: #003f7d;
+.thead-presupuestos th {
+  background: #003f7d;
+  color: #fff;
+  padding: 14px 10px;
+  text-align: center;
+  font-size: 14px;
 }
 
-.table-presupuestos th:nth-child(1) {
-  width: 8% !important; /* Ancho para ID Presupuesto */
+.table-presupuestos td {
+  background-color: #f4f6f8;
+  text-align: center;
+  padding: 12px 8px;
+  font-size: 14px;
+  color: #333;
+  border-bottom: 1px solid #ddd;
 }
 
-.table-presupuestos th:nth-child(2) {
-  width: 10% !important; /* Ancho para Fecha */
-}
+.table-presupuestos th:nth-child(1) { width: 8%; }     /* ID */
+.table-presupuestos th:nth-child(2) { width: 12%; }    /* Fecha */
+.table-presupuestos th:nth-child(3) { width: 7%; }     /* Hora */
+.table-presupuestos th:nth-child(4) { width: 33%; }    /* Cliente */
+.table-presupuestos th:nth-child(5) { width: 15%; }    /* Total */
+.table-presupuestos th:nth-child(6) { width: 25%; }    /* Acciones */
 
-.table-presupuestos th:nth-child(3) {
-  width: 35% !important; /* Ancho para Cliente */
-}
-
-.table-presupuestos th:nth-child(4) {
-  width: 20% !important; /* Ancho para Total */
-}
-
-.table th, .table td {
-  border: 1px solid #dee2e6;
-  color: #003f7d;
+tfoot td {
+  background-color: #e8f0ff;
   font-weight: bold;
-}
-.text-right {
+  font-size: 15px;
   text-align: right;
+  padding: 12px 10px;
+  color: #b30000;
 }
 
 #total-presupuestos {
+  text-align: center;
   font-weight: bold;
+  font-size: 16px;
   color: #b30000;
 }
-.tfoot-total {
-  font-weight: bold;
-  color: #b30000;
-}
-.table-presupuestos .td-presupuestos {
-  font-weight: bold;
-  color: #b30000;
-}
+
+/*--------------------------Botones--------------------------*/
 #presupuestos-table button {
-  border-radius: 8px;
-  padding: 10px 15px;
-  margin: 5px;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
-  cursor: pointer;
-  font-weight: bold;
   border: none;
-}
-.btn-ver {
-  background-color: #0EAD69; 
-  color: white;
-}
-
-.btn-editar {
-  background-color: #FFD23F; 
-  color: white;
-}
-
-.btn-eliminar {
-  background-color: #F44336; 
-  color: white;
+  border-radius: 20px;
+  padding: 8px 14px;
+  margin: 4px;
+  font-weight: bold;
+  font-size: 13px;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.btn-guardar {
-  background-color: #540D6E; 
-  color: white;
+#presupuestos-table button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-.btn-cancelar {
-  background-color: #A76D60; 
-  color: white;
+.btn-ver      { background-color: #00b894; }
+.btn-editar   { background-color: #fdcb6e; color: #333; }
+.btn-eliminar { background-color: #d63031; }
+.btn-guardar  { background-color: #6c5ce7; }
+.btn-cancelar { background-color: #636e72; }
+
+/*--------------------------Formulario de Filtros--------------------------*/
+.container-listadoPresupuesto label,
+.container-listadoPresupuesto input,
+.container-listadoPresupuesto button {
+  margin: 10px 8px;
 }
 
-/* Estilos para botones ocultos */
+#buscar, #btnImprimir, #btnImprimirTotal {
+  padding: 10px 18px;
+  border-radius: 20px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#buscar:hover,
+#btnImprimir:hover,
+#btnImprimirTotal:hover {
+  background-color: #0056b3;
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Ocultar botones si se pide por inline-style */
 #presupuestos-table button[style*="display: none"] {
   display: none !important;
 }

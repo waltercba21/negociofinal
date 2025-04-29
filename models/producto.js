@@ -146,11 +146,13 @@ guardarPresupuesto : (presupuesto) => {
                     reject(new Error('Error al obtener presupuestos: ' + error.message));
                 } else {
                     const presupuestosFormateados = resultados.map(presupuesto => {
-                        const creado = new Date(presupuesto.creado_en);
+                        const creadoUTC = new Date(presupuesto.creado_en);
+                        const creadoArgentina = new Date(creadoUTC.getTime() - 3 * 60 * 60 * 1000);
+
                         return {
                             ...presupuesto,
                             fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES'),
-                            hora: creado.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+                            hora: creadoArgentina.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
                             total: new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(presupuesto.total)
                         };
                     });
