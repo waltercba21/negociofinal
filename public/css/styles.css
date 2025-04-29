@@ -1407,6 +1407,7 @@ footer {
   font-size: 14px;
   color: #333;
   border-bottom: 1px solid #ddd;
+  font-weight: bold;
 }
 
 .table-presupuestos th:nth-child(1) { width: 8%; }     /* ID */
