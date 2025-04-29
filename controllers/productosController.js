@@ -161,13 +161,24 @@ module.exports = {
           ]);
           let modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
       
-          // Ordenar alfabéticamente
+          // Ordenar categorías y marcas alfabéticamente
           categorias.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
           marcas.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+      
+          // Ordenar modelos extrayendo el número principal del nombre
           modelosPorMarca.sort((a, b) => {
-            if (!isNaN(a.nombre) && !isNaN(b.nombre)) {
-              return parseInt(a.nombre) - parseInt(b.nombre);
+            const obtenerNumero = (texto) => {
+              const match = texto.match(/\d+/); // busca el primer número dentro del texto
+              return match ? parseInt(match[0]) : Number.MAX_SAFE_INTEGER;
+            };
+      
+            const numA = obtenerNumero(a.nombre);
+            const numB = obtenerNumero(b.nombre);
+      
+            if (!isNaN(numA) && !isNaN(numB)) {
+              return numA - numB;
             }
+      
             return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
           });
       
@@ -205,8 +216,7 @@ module.exports = {
             isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
           });
         }
-      },
-      
+      },      
       ofertas: async function (req, res) {
         try {
           const isUserLoggedIn = !!req.session.usuario;
