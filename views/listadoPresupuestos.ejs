@@ -17,6 +17,7 @@
                 <tr>
                     <th>ID Presupuesto</th>
                     <th>Fecha</th>
+                    <th>Hora</th> <!-- ✅ NUEVA COLUMNA -->
                     <th>Cliente</th>
                     <th>Total</th>
                     <th>Acciones</th>
@@ -27,11 +28,12 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="4" class="td-presupuestos"><strong>Total:</strong></td>
+                    <td colspan="5" class="td-presupuestos"><strong>Total:</strong></td> <!-- Ajustado colspan de 4 a 5 -->
                     <td id="total-presupuestos" class="tfoot-total"></td>
                 </tr>
             </tfoot>
         </table>
+        
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
     <script src="/js/listadoPresupuestos.js"></script>

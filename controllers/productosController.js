@@ -1151,37 +1151,48 @@ presupuestoMostrador: async function(req, res) {
         res.status(500).send('Error al obtener el siguiente ID de factura.');
     }
 },
-  procesarFormulario: async (req, res) => {
-    console.log("🔍 Datos recibidos en el servidor:", req.body);
+procesarFormulario: async (req, res) => {
+  console.log("🔍 Datos recibidos en el servidor:", req.body);
 
-    try {
-        const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
-        const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
-        const presupuesto = {
-            nombre_cliente: nombreCliente,
-            fecha: fechaPresupuesto,
-            total: totalLimpio
-        };
-        const presupuestoId = await producto.guardarPresupuesto(presupuesto);
-        const items = await Promise.all(invoiceItems.map(async item => {
-        const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
-            // Actualizar stock del producto
-            await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
-            return [
-                presupuestoId,
-                producto_id,
-                item.cantidad,
-                item.precio_unitario,
-                item.subtotal
-            ];
-        }));
-        await producto.guardarItemsPresupuesto(items);
-        res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
-    } catch (error) {
-        console.error('Error al guardar el presupuesto:', error);
-        res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
-    }
+  try {
+      const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
+      const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
+
+      // ➡️ Creamos la fecha actual completa (YYYY-MM-DD HH:MM:SS)
+      const fechaHoraActual = new Date();
+      const creadoEn = fechaHoraActual.toISOString().slice(0, 19).replace('T', ' ');
+
+      const presupuesto = {
+          nombre_cliente: nombreCliente,
+          fecha: fechaPresupuesto,
+          total: totalLimpio,
+          creado_en: creadoEn 
+      };
+
+      const presupuestoId = await producto.guardarPresupuesto(presupuesto);
+
+      const items = await Promise.all(invoiceItems.map(async item => {
+          const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
+
+          await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
+
+          return [
+              presupuestoId,
+              producto_id,
+              item.cantidad,
+              item.precio_unitario,
+              item.subtotal
+          ];
+      }));
+
+      await producto.guardarItemsPresupuesto(items);
+      res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
+  } catch (error) {
+      console.error('Error al guardar el presupuesto:', error);
+      res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
+  }
 },
+
 procesarFormularioFacturas: async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
@@ -1257,7 +1268,7 @@ getPresupuestos: async (req, res) => {
         res.status(500).json({ error: 'Error al obtener presupuestos' });
     }
 },
-getFacturas: async (req, res) => {
+getFacturas: async (req, res) => { 
     try {
         const { fechaInicio, fechaFin } = req.query;
         console.log(`Buscando facturas desde ${fechaInicio} hasta ${fechaFin}`);

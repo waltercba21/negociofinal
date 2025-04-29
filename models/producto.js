@@ -138,7 +138,7 @@ guardarPresupuesto : (presupuesto) => {
       getAllPresupuestos: (fechaInicio, fechaFin) => {
         return new Promise((resolve, reject) => {
             conexion.query(`
-                SELECT p.id, p.nombre_cliente, p.fecha, p.total
+                SELECT p.id, p.nombre_cliente, p.fecha, p.total, p.creado_en
                 FROM presupuestos_mostrador p
                 WHERE DATE(p.fecha) BETWEEN ? AND ?
             `, [fechaInicio, fechaFin], (error, resultados) => {
@@ -146,12 +146,15 @@ guardarPresupuesto : (presupuesto) => {
                     reject(new Error('Error al obtener presupuestos: ' + error.message));
                 } else {
                     const presupuestosFormateados = resultados.map(presupuesto => {
+                        const creado = new Date(presupuesto.creado_en);
                         return {
                             ...presupuesto,
                             fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES'),
+                            hora: creado.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
                             total: new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(presupuesto.total)
                         };
                     });
+                    
                     resolve(presupuestosFormateados);
                 }
             });

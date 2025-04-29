@@ -58,6 +58,7 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
                 row.innerHTML = `
                     <td class="id">${presupuesto.id}</td>
                     <td class="fecha">${presupuesto.fecha}</td>
+                    <td class="hora">${presupuesto.hora}</td>
                     <td class="cliente">${presupuesto.nombre_cliente}</td>
                     <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
                     <td>
