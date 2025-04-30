@@ -1380,6 +1380,68 @@ footer {
   transition: all 0.3s ease;
 }
 
+/*-------------------- Estilos únicos para Detalle del Presupuesto --------------------*/
+
+.detalle-presupuesto-container {
+  max-width: 90%;
+  margin: 40px auto;
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.tabla-detalle-presupuesto {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+}
+
+.tabla-detalle-presupuesto thead th {
+  background-color: #003f7d;
+  color: #ffffff;
+  padding: 14px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.tabla-detalle-presupuesto thead td {
+  background-color: #f1f5f9;
+  padding: 12px;
+  font-weight: bold;
+  color: #003f7d;
+  border-bottom: 2px solid #ddd;
+}
+
+.tabla-detalle-presupuesto tbody td {
+  background-color: #f9fbfd;
+  text-align: center;
+  padding: 12px;
+  color: #333;
+  font-weight: bold;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tabla-detalle-presupuesto tfoot td {
+  background-color: #f1f5f9;
+  font-weight: bold;
+  padding: 14px;
+  font-size: 16px;
+  color: #b30000;
+  text-align: right;
+  border-top: 2px solid #ccc;
+}
+
+.tabla-detalle-presupuesto tfoot td:last-child {
+  text-align: center;
+  color: #b30000;
+}
 
 /*--------------------------Listado de Presupuestos Moderno--------------------------*/
 .filtros-presupuestos {
