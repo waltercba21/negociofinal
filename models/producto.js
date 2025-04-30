@@ -165,27 +165,40 @@ guardarPresupuesto : (presupuesto) => {
     getAllFacturas: (fechaInicio, fechaFin) => {
         return new Promise((resolve, reject) => {
             const sqlQuery = `
-                SELECT p.id, p.nombre_cliente, DATE_FORMAT(p.fecha, '%d/%m/%Y') AS fecha, 
-                       p.total, p.metodos_pago 
+                SELECT 
+                    p.id, 
+                    p.nombre_cliente, 
+                    p.fecha, 
+                    p.total, 
+                    p.metodos_pago,
+                    p.creado_en
                 FROM facturas_mostrador p
-                WHERE DATE(p.fecha) BETWEEN ? AND ?;
+                WHERE DATE(p.fecha) BETWEEN ? AND ?
+                ORDER BY p.fecha DESC, p.creado_en DESC;
             `;
+    
             conexion.query(sqlQuery, [fechaInicio, fechaFin], (error, resultados) => {
                 if (error) {
                     reject(new Error('Error al obtener facturas: ' + error.message));
                 } else {
                     const facturasFormateadas = resultados.map(factura => {
+                        const creadoUTC = new Date(factura.creado_en);
+                        const creadoAR = new Date(creadoUTC.getTime() - 3 * 60 * 60 * 1000); // Ajuste UTC-3
+    
                         return {
-                            ...factura,
-                            total: new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(factura.total) // Formatear el total
+                            id: factura.id,
+                            nombre_cliente: factura.nombre_cliente,
+                            fecha: new Date(factura.fecha).toLocaleDateString('es-AR'),
+                            hora: creadoAR.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+                            total: new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(factura.total),
+                            metodos_pago: factura.metodos_pago
                         };
                     });
                     resolve(facturasFormateadas);
                 }
             });
         });
-    },
-    
+    },    
     obtenerProductoIdPorCodigo: (codigo, nombre = null) => {
         return new Promise((resolve, reject) => {
             let query = `
@@ -1398,7 +1411,7 @@ obtenerDetallePresupuesto : (id) => {
   obtenerDetalleFactura: (id) => {
     return new Promise((resolve, reject) => {
         const query = `
-            SELECT fm.id AS factura_id, fm.nombre_cliente, fm.fecha, fm.total,
+            SELECT fm.id AS factura_id, fm.nombre_cliente, fm.fecha, fm.total, fm.creado_en,
                    p.nombre AS nombre_producto, fi.cantidad, fi.precio_unitario, fi.subtotal
             FROM facturas_mostrador fm
             LEFT JOIN factura_items fi ON fm.id = fi.factura_id
@@ -1416,10 +1429,10 @@ obtenerDetallePresupuesto : (id) => {
                     id: resultados[0].factura_id,
                     nombre_cliente: resultados[0].nombre_cliente,
                     fecha: resultados[0].fecha,
-                    total: resultados[0].total
+                    total: resultados[0].total,
+                    creado_en: resultados[0].creado_en // ✅ Aquí incluimos la hora
                 };
 
-                // Si no hay items, devolvemos un array vacío.
                 const items = resultados[0].nombre_producto ? resultados.map(r => ({
                     nombre_producto: r.nombre_producto,
                     cantidad: r.cantidad,
@@ -1432,8 +1445,6 @@ obtenerDetallePresupuesto : (id) => {
         });
     });
 },
-
-
 editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {

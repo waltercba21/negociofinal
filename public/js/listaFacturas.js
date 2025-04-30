@@ -134,18 +134,24 @@ function cargarDetallesFactura(id) {
             return response.json();
         })
         .then(data => {
-            const fechaOriginal = new Date(data.factura.fecha); 
-            const dia = fechaOriginal.getDate().toString().padStart(2, '0'); 
-            const mes = (fechaOriginal.getMonth() + 1).toString().padStart(2, '0'); 
-            const año = fechaOriginal.getFullYear().toString().slice(-2); 
-            const fechaFormateada = `${dia}/${mes}/${año}`;
+            const creado = new Date(data.factura.creado_en); // usamos la hora real
+            const fechaFormateada = creado.toLocaleDateString('es-AR');
+            const horaFormateada = creado.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+
+            // 🔥 Rellenar texto visible
             document.getElementById('nombreCliente').textContent = data.factura.nombre_cliente;
-            document.getElementById('fechaFactura').textContent = fechaFormateada;
+            document.getElementById('fechaFactura').textContent = `${fechaFormateada} ${horaFormateada}`;
             document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(data.factura.total);
-        
+
+            // 🔥 Rellenar los campos ocultos del botón ACEPTAR (filtros)
+            const fechaISO = creado.toISOString().split('T')[0];
+            document.getElementById('fechaInicioModal').value = fechaISO;
+            document.getElementById('fechaFinModal').value = fechaISO;
+
+            // 🔥 Cargar productos
             const productosFactura = document.getElementById('productosFactura');
             productosFactura.innerHTML = '';
-            
+
             if (Array.isArray(data.items) && data.items.length > 0) {
                 data.items.forEach(producto => {
                     const row = document.createElement('tr');
@@ -162,12 +168,15 @@ function cargarDetallesFactura(id) {
                 row.innerHTML = `<td colspan="4">No hay productos en esta factura.</td>`;
                 productosFactura.appendChild(row);
             }
+
+            // 🔥 Mostrar el modal
             $('#detalleFacturaModal').modal('show');
         })
         .catch(error => {
             console.error('Error al cargar detalles de la factura:', error);
         });
 }
+
 
 
 
@@ -266,7 +275,6 @@ function verDetalleFactura(id) {
             const factura = data.factura;
             const items = data.items;
 
-            // Llenar el modal con los datos de la factura
             document.getElementById('nombreCliente').textContent = factura.nombre_cliente;
             document.getElementById('fechaFactura').textContent = new Date(factura.fecha).toLocaleDateString('es-CL');
             document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(factura.total);
@@ -285,7 +293,6 @@ function verDetalleFactura(id) {
                 productosFactura.appendChild(row);
             });
 
-            // Mostrar el modal
             $('#detalleFacturaModal').modal('show');
         })
         .catch(error => {

@@ -1144,10 +1144,9 @@ presupuestoMostrador: async function(req, res) {
   },
   facturasMostrador: async function(req, res) {
     try {
-        const siguienteIDFactura = await producto.obtenerSiguienteIDFactura(); // Obtener el siguiente ID de facturas
-        res.render('facturasMostrador', { idFactura: siguienteIDFactura }); // Cambiar el nombre a idFactura
+        const siguienteIDFactura = await producto.obtenerSiguienteIDFactura(); 
+        res.render('facturasMostrador', { idFactura: siguienteIDFactura }); 
     } catch (error) {
-        console.error('Error al obtener el siguiente ID de factura:', error.message);
         res.status(500).send('Error al obtener el siguiente ID de factura.');
     }
 },
@@ -1192,44 +1191,35 @@ procesarFormulario: async (req, res) => {
       res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
   }
 },
-
 procesarFormularioFacturas: async (req, res) => {
     try {
         const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
- 
-        // Registrar los datos recibidos
-        console.log("Datos recibidos:", { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago });
-
-        // Limpieza del total recibido
         const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
-
-        // Convertir el arreglo de métodos de pago a una cadena
         const metodosPagoString = Array.isArray(metodosPago) ? metodosPago.join(', ') : metodosPago;
-
+        const fechaHoraActual = new Date();
+        const creadoEn = fechaHoraActual.toISOString().slice(0, 19).replace('T', ' ');
+        
         const factura = {
             nombre_cliente: nombreCliente,
             fecha: fechaPresupuesto,
             total: totalLimpio,
-            metodos_pago: metodosPagoString // Agregar métodos de pago
+            metodos_pago: metodosPagoString,
+            creado_en: creadoEn
         };
-
-        // Guardar la factura en la base de datos
+        
         const facturaId = await producto.guardarFactura(factura);
 
         if (!Array.isArray(invoiceItems) || invoiceItems.length === 0) {
-            console.error("No se proporcionaron items de factura.");
             return res.status(400).json({ error: 'No se proporcionaron items de factura.' });
         }
 
         // Procesar los items de la factura
         const items = await Promise.all(invoiceItems.map(async item => {
-            console.log("Procesando item:", item);
             const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
             
             if (!producto_id) {
                 throw new Error(`Producto con ID ${item.producto_id} y descripción ${item.descripcion} no encontrado.`);
             }
-
             await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
 
             return [
@@ -1240,14 +1230,10 @@ procesarFormularioFacturas: async (req, res) => {
                 item.subtotal
             ];
         }));
-
-        console.log("Items a guardar en la base de datos:", items);
-
         await producto.guardarItemsFactura(items);
 
         res.status(200).json({ message: 'FACTURA GUARDADA CORRECTAMENTE' });
     } catch (error) {
-        console.error('Error al guardar la factura:', error);
         res.status(500).json({ error: 'Error al guardar la factura: ' + error.message });
     }
 },
@@ -1262,8 +1248,13 @@ listadoPresupuestos: (req, res) => {
       fechaFin: fechaFin || hoy
   });
 },
-listaFacturas : (req, res) => {
-    res.render('listaFacturas'); 
+listaFacturas: (req, res) => {
+  const { fechaInicio, fechaFin } = req.query;
+  const hoy = new Date().toISOString().split('T')[0];
+  res.render('listaFacturas', {
+    fechaInicio: fechaInicio || hoy,
+    fechaFin: fechaFin || hoy
+  });
 },
 getPresupuestos: async (req, res) => {
     try {
@@ -1340,7 +1331,6 @@ factura: (req, res) => {
     producto.obtenerDetalleFactura(id)
         .then(data => {
             if (data && data.items && data.items.length > 0) {
-                // Enviar los datos como JSON
                 res.json({
                     factura: data.factura,
                     items: data.items
@@ -1350,7 +1340,6 @@ factura: (req, res) => {
             }
         })
         .catch(error => {
-            console.error("Error al cargar detalles de la factura:", error);
             res.status(500).json({ message: 'Error interno del servidor' });
         });
 },

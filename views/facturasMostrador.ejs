@@ -10,9 +10,15 @@
         <h2>Facturas</h2>
         <div id="invoice-details">
           <div class="input-container">
-            <label for="nombre-cliente">Nombre del cliente:</label>
-            <input type="text" id="nombre-cliente" name="nombreCliente">
+            <label for="nombre-cliente">Vendedor responsable:</label>
+            <select id="nombre-cliente" name="nombreCliente" required>
+              <option value="">Seleccionar vendedor</option>
+              <option value="CHACHO">CHACHO</option>
+              <option value="GERARDO">GERARDO</option>
+              <option value="WALTER">WALTER</option>
+            </select>
           </div>
+          
           <div class="input-container">
             <label for="fecha-presupuesto">Fecha:</label>
             <input type="date" id="fecha-presupuesto" name="fechaPresupuesto">
