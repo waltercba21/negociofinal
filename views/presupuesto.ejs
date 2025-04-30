@@ -1,33 +1,47 @@
 <%- include('./layouts/head.ejs') %>
 <%- include('./layouts/header.ejs') %>
 <body>
-<main>
-    <table>
-        <thead>
+    <main>
+        <table>
+          <thead>
             <tr>
-                <th colspan="4">Detalle del Presupuesto</th>
+              <th colspan="5">Detalle del Presupuesto</th>
             </tr>
             <tr>
-                <td>ID Presupuesto: <%= presupuesto.presupuesto_id %></td>
-                <td>Fecha: <%= new Date(presupuesto.fecha).toISOString().split('T')[0] %></td>
-                <td>Cliente: <%= presupuesto.nombre_cliente %></td>
+              <td><strong>ID Presupuesto:</strong> <%= presupuesto.presupuesto_id %></td>
+              <td><strong>Fecha:</strong> <%= new Date(presupuesto.fecha).toISOString().split('T')[0] %></td>
+              <td><strong>Vendedor:</strong> <%= presupuesto.nombre_cliente %></td>
             </tr>
             <tr>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Total</th>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio Unitario</th>
+              <th>Subtotal</th>
             </tr>
-        </thead>
-        <tbody>
-            <% detalles.forEach(item => { %>
-            <tr>
+          </thead>
+          <tbody>
+            <% let total = 0; %>
+            <% detalles.forEach(item => { 
+                 const subtotal = item.precio_unitario * item.cantidad;
+                 total += subtotal;
+            %>
+              <tr>
                 <td><%= item.nombre_producto %></td>
                 <td><%= item.cantidad %></td>
-                <td><%= presupuesto.total %></td>
+                <td>$<%= item.precio_unitario.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
+                <td>$<%= subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
+              </tr>
             <% }); %>
-        </tbody>
-    </table>
-</main>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
+              <td><strong>$<%= total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </main>
+      
 <%- include('./layouts/footer.ejs') %>
 <script src="/js/buscadorPresupuesto.js"></script>
 </body>
