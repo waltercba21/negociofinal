@@ -42,6 +42,7 @@ router.delete('/api/presupuestos/:id', productosController.deletePresupuesto);
 router.get('/facturasMostrador', productosController.facturasMostrador);
 router.post('/procesarFormularioFacturas', productosController.procesarFormularioFacturas);
 router.get('/factura/:id', productosController.factura);
+router.get('/facturaVista/:id', productosController.facturaVista);
 router.get('/listadoFacturas', productosController.listaFacturas);
 router.get('/api/facturas', productosController.getFacturas);
 router.put('/api/facturas/:id', productosController.editarFacturas);

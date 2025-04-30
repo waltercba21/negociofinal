@@ -1,0 +1,59 @@
+<%- include('./layouts/head.ejs') %>
+<%- include('./layouts/header.ejs') %>
+<body>
+  <main>
+    <div class="detalle-presupuesto-container">
+      <table class="tabla-detalle-presupuesto">
+        <thead>
+          <tr>
+            <th colspan="5">Detalle de la Factura</th>
+          </tr>
+          <tr>
+            <td><strong>ID Factura:</strong> <%= factura.id %></td>
+            <td><strong>Fecha:</strong> 
+              <%= new Date(factura.creado_en).toLocaleDateString('es-AR') %>
+              <%= new Date(factura.creado_en).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) %>
+            </td>
+            <td><strong>Vendedor:</strong> <%= factura.nombre_cliente %></td>
+          </tr>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% let total = 0; %>
+          <% detalles.forEach(item => { 
+               const subtotal = item.precio_unitario * item.cantidad;
+               total += subtotal;
+          %>
+            <tr>
+              <td><%= item.nombre_producto %></td>
+              <td><%= item.cantidad %></td>
+              <td>$<%= item.precio_unitario.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
+              <td>$<%= subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
+            <td><strong>$<%= total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="volver-listado">
+      <form action="/productos/listadoFacturas" method="GET">
+        <input type="hidden" name="fechaInicio" value="<%= new Date(factura.creado_en).toISOString().split('T')[0] %>">
+        <input type="hidden" name="fechaFin" value="<%= new Date(factura.creado_en).toISOString().split('T')[0] %>">
+        <button type="submit" class="btn-aceptar">ACEPTAR</button>
+      </form>
+    </div>
+  </main>
+
+  <%- include('./layouts/footer.ejs') %>
+</body>

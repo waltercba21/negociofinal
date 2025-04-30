@@ -1343,8 +1343,23 @@ factura: (req, res) => {
             res.status(500).json({ message: 'Error interno del servidor' });
         });
 },
-
-
+facturaVista: async (req, res) => {
+  const id = req.params.id;
+  try {
+    const data = await producto.obtenerDetalleFactura(id);
+    if (data && data.items.length > 0) {
+      res.render('factura', {
+        factura: data.factura,
+        detalles: data.items
+      });
+    } else {
+      res.status(404).send('Factura no encontrada o no tiene productos.');
+    }
+  } catch (error) {
+    console.error('Error al cargar factura:', error);
+    res.status(500).send('Error interno del servidor');
+  }
+},
 deletePresupuesto : (req, res) => {
     const { id } = req.params;
     producto.eliminarPresupuesto(conexion, id)

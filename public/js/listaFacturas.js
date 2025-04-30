@@ -54,19 +54,21 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 const row = document.createElement('tr');
                 row.setAttribute('data-id', factura.id);
                 row.innerHTML = `
-                    <td class="id">${factura.id}</td>
-                    <td class="fecha">${fechaFormateada}</td>
-                    <td class="cliente">${factura.nombre_cliente}</td>
-                    <td class="total">${totalFormateado}</td>
-                    <td class="metodos-pago">${factura.metodos_pago || 'N/A'}</td> <!-- Cambiado a metodos_pago -->
-                    <td>
-                        <button class="btn-ver ver-detalle" data-id="${factura.id}">Ver Detalle</button>
-                        <button class="btn-editar" data-id="${factura.id}">Editar</button>
-                        <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
-                        <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
-                        <button class="btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
-                    </td>
-                `;
+    <td class="id">${factura.id}</td>
+    <td class="fecha">${factura.fecha}</td>
+    <td class="hora">${factura.hora || '-'}</td>
+    <td class="cliente">${factura.nombre_cliente}</td>
+    <td class="total">${totalFormateado}</td>
+    <td class="metodos-pago">${factura.metodos_pago || 'N/A'}</td>
+    <td>
+        <button class="btn-ver" data-id="${factura.id}">Ver Detalle</button>
+        <button class="btn-editar" data-id="${factura.id}">Editar</button>
+        <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
+        <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
+        <button class="btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
+    </td>
+`;
+
                 tableBody.appendChild(row);
             });
             document.getElementById('total-presupuestos').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalFacturas);
@@ -79,12 +81,13 @@ function cargarFacturas(fechaInicio, fechaFin) {
 
 
 function addEventListenersFacturas() {
-    document.querySelectorAll('.ver-detalle').forEach(btn => {
-        btn.addEventListener('click', function() {
+    document.querySelectorAll('.btn-ver').forEach(btn => {
+        btn.addEventListener('click', function () {
             const id = this.getAttribute('data-id');
-            cargarDetallesFactura(id); 
+            window.location.href = `/productos/facturaVista/${id}`;
         });
     });
+    
     
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -125,60 +128,6 @@ function habilitarEdicionFactura(id) {
     row.querySelector('.btn-guardar').style.display = 'inline';
     row.querySelector('.btn-cancelar').style.display = 'inline';
 }
-function cargarDetallesFactura(id) {
-    fetch(`/productos/factura/${id}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
-            }
-            return response.json();
-        })
-        .then(data => {
-            const creado = new Date(data.factura.creado_en); // usamos la hora real
-            const fechaFormateada = creado.toLocaleDateString('es-AR');
-            const horaFormateada = creado.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-
-            // 🔥 Rellenar texto visible
-            document.getElementById('nombreCliente').textContent = data.factura.nombre_cliente;
-            document.getElementById('fechaFactura').textContent = `${fechaFormateada} ${horaFormateada}`;
-            document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(data.factura.total);
-
-            // 🔥 Rellenar los campos ocultos del botón ACEPTAR (filtros)
-            const fechaISO = creado.toISOString().split('T')[0];
-            document.getElementById('fechaInicioModal').value = fechaISO;
-            document.getElementById('fechaFinModal').value = fechaISO;
-
-            // 🔥 Cargar productos
-            const productosFactura = document.getElementById('productosFactura');
-            productosFactura.innerHTML = '';
-
-            if (Array.isArray(data.items) && data.items.length > 0) {
-                data.items.forEach(producto => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${producto.nombre_producto}</td>
-                        <td>${producto.cantidad}</td>
-                        <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_unitario)}</td>
-                        <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.subtotal)}</td>
-                    `;
-                    productosFactura.appendChild(row);
-                });
-            } else {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="4">No hay productos en esta factura.</td>`;
-                productosFactura.appendChild(row);
-            }
-
-            // 🔥 Mostrar el modal
-            $('#detalleFacturaModal').modal('show');
-        })
-        .catch(error => {
-            console.error('Error al cargar detalles de la factura:', error);
-        });
-}
-
-
-
 
 function cancelarEdicionFactura(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
@@ -261,45 +210,6 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
         });
 }
 
-function verDetalleFactura(id) {
-    console.log(`Ver detalle de factura ID: ${id}`); // Log del ID de la factura a ver
-    fetch(`/productos/api/factura/${id}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Datos de la factura recibidos:', data); // Log de los datos de la factura
-            const factura = data.factura;
-            const items = data.items;
-
-            document.getElementById('nombreCliente').textContent = factura.nombre_cliente;
-            document.getElementById('fechaFactura').textContent = new Date(factura.fecha).toLocaleDateString('es-CL');
-            document.getElementById('totalFactura').textContent = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(factura.total);
-
-            // Llenar la lista de items
-            const productosFactura = document.getElementById('productosFactura');
-            productosFactura.innerHTML = ''; // Limpiar la tabla antes de llenarla
-            items.forEach(item => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${item.nombre_producto}</td>
-                    <td>${item.cantidad}</td>
-                    <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(item.precio_unitario)}</td>
-                    <td>${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(item.subtotal)}</td>
-                `;
-                productosFactura.appendChild(row);
-            });
-
-            $('#detalleFacturaModal').modal('show');
-        })
-        .catch(error => {
-            console.error('Error al obtener los detalles de la factura:', error);
-            alert('Error al obtener los detalles de la factura.');
-        });
-}
 document.getElementById('btnImprimir').addEventListener('click', function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
