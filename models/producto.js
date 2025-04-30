@@ -2001,5 +2001,19 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
       callback(null, resultados);
     });
   },
+  obtenerProveedoresPorProducto: async (conexion, producto_id) => {
+    const query = `
+      SELECT pp.proveedor_id AS id, pp.codigo
+      FROM producto_proveedor pp
+      WHERE pp.producto_id = ?
+    `;
+    return new Promise((resolve, reject) => {
+      conexion.query(query, [producto_id], (error, resultados) => {
+        if (error) reject(error);
+        else resolve(resultados);
+      });
+    });
+  }
+  
   
 }

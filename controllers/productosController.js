@@ -296,16 +296,15 @@ module.exports = {
         try {
           const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
           req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
-          
+      
           const limite = req.query.limite ? parseInt(req.query.limite) : 100;
       
           const productos = await producto.obtenerPorFiltros(conexion, categoria_id, marca_id, modelo_id, busqueda_nombre, limite);
       
-          // Enriquecer cada producto con proveedor más barato y su código
+          // Enriquecer cada producto con todos los proveedores asociados
           for (const prod of productos) {
-            const proveedor = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
-            prod.proveedor_nombre = proveedor ? proveedor.proveedor_nombre : 'Sin proveedor';
-            prod.codigo_proveedor = proveedor ? proveedor.codigo_proveedor : '';
+            const proveedores = await producto.obtenerProveedoresPorProducto(conexion, prod.id);
+            prod.proveedores = proveedores; // [{ id: 1, codigo: 'ABC123' }, ...]
           }
       
           res.json(productos);

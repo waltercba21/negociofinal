@@ -9,8 +9,11 @@ window.onload = async () => {
 
 const entradaBusqueda = document.getElementById('entradaBusqueda');
 const contenedorProductos = document.getElementById('contenedor-productos');
-
+const proveedorSelect = document.querySelector('.proveedores');
+  
 entradaBusqueda.addEventListener('input', (e) => {
+  const proveedor_id = proveedorSelect.value;
+
   clearTimeout(timer);
   timer = setTimeout(async () => {
     const busqueda = e.target.value.trim();
@@ -91,7 +94,7 @@ function actualizarTabla() {
 
     const fila = document.createElement('tr');
     fila.innerHTML = `
-      <td>${producto.codigo}</td>
+      <td>${obtenerCodigoPorProveedor(producto, proveedorSelect.value)}</td>
       <td>${producto.nombre}</td>
       <td>$${formatearNumero(parseFloat(producto.costo_neto))}</td>
      <td>
@@ -109,6 +112,13 @@ function actualizarTabla() {
   });
 
   actualizarTotalPedido();
+}
+function obtenerCodigoPorProveedor(producto, proveedor_id) {
+  if (producto.proveedores && Array.isArray(producto.proveedores)) {
+    const proveedorEncontrado = producto.proveedores.find(p => p.id == proveedor_id);
+    return proveedorEncontrado ? proveedorEncontrado.codigo : '—';
+  }
+  return producto.codigo || '—';
 }
 
 function cambiarCantidad(index, cambio) {
