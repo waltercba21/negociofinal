@@ -1,76 +1,83 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 <body>
-    <main class="container-listadoPresupuesto">
-        <h2 class="titulo-listado">Listado de Facturas</h2>
-        <div class="filtros-presupuestos">
-          <div class="filtros-fechas">
-            <label for="fechaInicio">Desde:</label>
-            <input type="date" id="fechaInicio" value="<%= fechaInicio %>">
-        
-            <label for="fechaFin">Hasta:</label>
-            <input type="date" id="fechaFin" value="<%= fechaFin %>">
+  <main class="container-listadoPresupuesto">
+    <h2 class="titulo-listado">Listado de Facturas</h2>
+  
+    <div class="filtros-presupuestos">
+      <div class="filtros-fechas">
+        <label for="fechaInicio">Desde:</label>
+        <input type="date" id="fechaInicio" value="<%= fechaInicio %>">
+  
+        <label for="fechaFin">Hasta:</label>
+        <input type="date" id="fechaFin" value="<%= fechaFin %>">
+      </div>
+  
+      <div class="filtros-botones">
+        <button id="buscar">Buscar</button>
+        <button id="btnImprimir" class="btn btn-primary">Imprimir Detalle</button>
+        <button id="btnImprimirTotal" class="btn btn-secondary">Imprimir Total</button>
+      </div>
+    </div>
+  
+    <table id="facturas-table" class="table-presupuestos">
+      <thead class="thead-presupuestos">
+        <tr>
+          <th>ID Factura</th>
+          <th>Fecha</th>
+          <th>Hora</th> <!-- NUEVA COLUMNA -->
+          <th>Cliente</th>
+          <th>Total</th>
+          <th>Método de Pago</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Aquí se insertarán las filas dinámicamente con JavaScript -->
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="6" class="td-presupuestos"><strong>Total:</strong></td>
+          <td id="total-presupuestos" class="tfoot-total"></td>
+        </tr>
+      </tfoot>
+    </table>
+  
+    <!-- Modal para mostrar detalles de la factura -->
+    <div class="modal fade" id="detalleFacturaModal" tabindex="-1" role="dialog" aria-labelledby="detalleFacturaModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="detalleFacturaModalLabel">Detalles de la Factura</h5>
           </div>
-        
-          <div class="filtros-botones">
-            <button id="buscar">Buscar</button>
-            <button id="btnImprimir" class="btn btn-primary">Imprimir Detalle</button>
-            <button id="btnImprimirTotal" class="btn btn-secondary">Imprimir Total</button>
-          </div>
-        </div>
-        
-        <table id="facturas-table" class="table-presupuestos">
-            <thead class="thead-presupuestos">
+          <div class="modal-body">
+            <p><strong>Nombre del Cliente:</strong> <span id="nombreCliente"></span></p>
+            <p><strong>Fecha de la Factura:</strong> <span id="fechaFactura"></span></p>
+            <p><strong>Total:</strong> <span id="totalFactura"></span></p>
+            <table class="table">
+              <thead>
                 <tr>
-                    <th>ID Factura</th>
-                    <th>Fecha</th>
-                    <th>Cliente</th>
-                    <th>Total</th>
-                    <th>Método de Pago</th>
-                    <th>Acciones</th>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th>Precio Unitario</th>
+                  <th>Subtotal</th>
                 </tr>
-            </thead> 
-            <tbody>
-                <!-- Aquí se insertarán las filas dinámicamente con JavaScript -->
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="4" class="td-presupuestos"><strong>Total:</strong></td>
-                    <td id="total-presupuestos" class="tfoot-total"></td>
-                </tr>
-            </tfoot>
-        </table>
-
-        <!-- Modal para mostrar detalles de la factura -->
-        <div class="modal fade" id="detalleFacturaModal" tabindex="-1" role="dialog" aria-labelledby="detalleFacturaModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="detalleFacturaModalLabel">Detalles de la Factura</h5>
-                  
-                </div>
-                <div class="modal-body">
-                  <p><strong>Nombre del Cliente:</strong> <span id="nombreCliente"></span></p>
-                  <p><strong>Fecha de la Factura:</strong> <span id="fechaFactura"></span></p>
-                  <p><strong>Total:</strong> <span id="totalFactura"></span></p>
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody id="productosFactura"></tbody>
-                  </table>
-                </div>
-                
-              </div>
+              </thead>
+              <tbody id="productosFactura"></tbody>
+            </table>
+            <div class="text-center mt-3">
+              <form action="/productos/listadoFacturas" method="GET">
+                <input type="hidden" id="fechaInicioModal" name="fechaInicio">
+                <input type="hidden" id="fechaFinModal" name="fechaFin">
+                <button type="submit" class="btn-aceptar">ACEPTAR</button>
+              </form>
             </div>
           </div>
-          
-    </main>
+        </div>
+      </div>
+    </div>
+  </main>
+  
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
     <script src="/js/listaFacturas.js"></script>
 </body>
