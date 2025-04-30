@@ -3,28 +3,29 @@
 <body>
     <main class="container-listadoPresupuesto">
         <h2 class="titulo-listado">Listado de Presupuestos</h2>
+    
         <div class="filtros-presupuestos">
             <div class="filtros-fechas">
-              <label for="fechaInicio">Desde:</label>
-              <input type="date" id="fechaInicio" value="<%= new Date().toISOString().split('T')[0] %>">
-              
-              <label for="fechaFin">Hasta:</label>
-              <input type="date" id="fechaFin" value="<%= new Date().toISOString().split('T')[0] %>">
+                <label for="fechaInicio">Desde:</label>
+                <input type="date" id="fechaInicio" value="<%= fechaInicio %>">
+                
+                <label for="fechaFin">Hasta:</label>
+                <input type="date" id="fechaFin" value="<%= fechaFin %>">
             </div>
-          
+    
             <div class="filtros-botones">
-              <button id="buscar">Buscar</button>
-              <button id="btnImprimir" class="btn btn-primary">Imprimir Detalle</button>
-              <button id="btnImprimirTotal" class="btn btn-secondary">Imprimir Total</button>
+                <button id="buscar">Buscar</button>
+                <button id="btnImprimir" class="btn btn-primary">Imprimir Detalle</button>
+                <button id="btnImprimirTotal" class="btn btn-secondary">Imprimir Total</button>
             </div>
-          </div>
-          
+        </div>
+    
         <table id="presupuestos-table" class="table-presupuestos">
             <thead class="thead-presupuestos">
                 <tr>
                     <th>ID Presupuesto</th>
                     <th>Fecha</th>
-                    <th>Hora</th> <!-- ✅ NUEVA COLUMNA -->
+                    <th>Hora</th>
                     <th>Cliente</th>
                     <th>Total</th>
                     <th>Acciones</th>
@@ -35,13 +36,13 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="5" class="td-presupuestos"><strong>Total:</strong></td> <!-- Ajustado colspan de 4 a 5 -->
+                    <td colspan="5" class="td-presupuestos"><strong>Total:</strong></td>
                     <td id="total-presupuestos" class="tfoot-total"></td>
                 </tr>
             </tfoot>
         </table>
-        
     </main>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
     <script src="/js/listadoPresupuestos.js"></script>
 </body>

@@ -1251,9 +1251,16 @@ procesarFormularioFacturas: async (req, res) => {
         res.status(500).json({ error: 'Error al guardar la factura: ' + error.message });
     }
 },
+listadoPresupuestos: (req, res) => {
+  const { fechaInicio, fechaFin } = req.query;
 
-listadoPresupuestos : (req, res) => {
-    res.render('listadoPresupuestos');
+  // Si no se pasaron fechas, se usa la de hoy
+  const hoy = new Date().toISOString().split('T')[0];
+
+  res.render('listadoPresupuestos', {
+      fechaInicio: fechaInicio || hoy,
+      fechaFin: fechaFin || hoy
+  });
 },
 listaFacturas : (req, res) => {
     res.render('listaFacturas'); 
