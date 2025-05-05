@@ -4,10 +4,15 @@
 <body>
  <main>
   <div class="container mt-4 detalle-pedido-container">
-    <h2 class="titulo-detalle">📄 Detalle del Pedido</h2>
+    <div class="detalle-pedido-header">
+      <h2 class="titulo-detalle">📄 Detalle del Pedido</h2>
   
-    <p><strong>Proveedor:</strong> <%= pedido.proveedor %></p>
-    <p><strong>Fecha:</strong> <%= new Date(pedido.fecha).toLocaleDateString('es-AR') %></p>
+      <div class="detalle-pedido-info">
+        <p><strong>Proveedor:</strong> <%= pedido.proveedor %></p>
+        <p><strong>Fecha:</strong> <%= new Date(pedido.fecha).toLocaleDateString('es-AR') %></p>
+      </div>
+    </div>
+  
   
     <table class="tabla-detalle-pedido">
       <thead>
