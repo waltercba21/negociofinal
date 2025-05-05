@@ -2086,26 +2086,28 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
     return new Promise((resolve, reject) => {
       const sql = `
         SELECT 
-          p.nombre AS producto, 
-          pp.codigo AS codigo_proveedor,
-          pi.cantidad, 
-          pi.precio_unitario, 
+          p.nombre AS producto,
+          pi.cantidad,
+          pi.costo_unitario,
           pi.subtotal,
           ped.fecha,
-          prov.nombre AS proveedor
+          prov.nombre AS proveedor,
+          pp.codigo AS codigo_proveedor
         FROM pedidos ped
         JOIN pedido_items pi ON ped.id = pi.pedido_id
         JOIN productos p ON pi.producto_id = p.id
-        JOIN producto_proveedor pp ON p.id = pp.producto_id
         JOIN proveedores prov ON ped.proveedor_id = prov.id
+        JOIN producto_proveedor pp 
+          ON pp.producto_id = p.id AND pp.proveedor_id = ped.proveedor_id
         WHERE ped.id = ?
       `;
+  
       conexion.query(sql, [pedidoId], (err, rows) => {
         if (err) return reject(err);
         resolve(rows);
       });
     });
-  }
+  },  
   
   
 }
