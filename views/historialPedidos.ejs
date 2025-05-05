@@ -56,9 +56,9 @@
               <% historial.forEach(pedido => { %>
                 <tr>
                   <td><%= pedido.pedido_id %></td>
-                  <td><%= new Date(pedido.fecha).toLocaleDateString() %></td>
+                  <td><%= new Date(pedido.fecha).toLocaleDateString('es-AR') %></td>
                   <td><%= pedido.proveedor %></td>
-                  <td>$<%= Number(pedido.total).toFixed(2) %></td>
+                  <td>$<%= Number(pedido.total).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
                   <td>
                     <a href="/productos/verPedido/<%= pedido.pedido_id %>" class="btn-ver-detalle">Ver detalle</a>
                   </td>
