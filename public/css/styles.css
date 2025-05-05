@@ -2913,6 +2913,105 @@ tfoot td {
   text-align: center;
   font-weight: 500;
 }
+/* ----- HISORIAL PEDIDOS ----- */
+/* Contenedor general */
+.historial-pedidos-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Título */
+.titulo-historial {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.titulo-historial-texto {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+/* Filtros */
+.formulario-filtros-historial {
+  margin-bottom: 20px;
+}
+
+.filtros-historial-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.filtro-fecha,
+.filtro-proveedor,
+.filtro-boton {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-fecha,
+.select-proveedor {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+/* Botón de filtrar */
+.btn-filtrar {
+  padding: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+.btn-filtrar:hover {
+  background-color: #0056b3;
+}
+
+/* Tabla de resultados */
+.tabla-historial {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-historial th,
+.tabla-historial td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+.tabla-historial thead {
+  background-color: #343a40;
+  color: #fff;
+}
+
+.btn-ver-detalle {
+  padding: 5px 10px;
+  background-color: #17a2b8;
+  color: #fff;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.btn-ver-detalle:hover {
+  background-color: #138496;
+}
+
+/* Mensaje sin resultados */
+.mensaje-sin-resultados {
+  text-align: center;
+  font-style: italic;
+  color: #888;
+}
 
 
 /*--------------------DETALLE FACTURA --------------------*/

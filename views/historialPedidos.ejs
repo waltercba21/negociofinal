@@ -3,42 +3,44 @@
 <%- include('./layouts/header.ejs') %>
 <body>
  <main>
-    <div class="container mt-4">
-        <!-- Título del historial -->
-        <h2 class="mb-4 w-100" style="display: block;">📦 Historial de Pedidos</h2>
+    <div class="container mt-4 historial-pedidos-container">
+        <!-- 🏷️ Título -->
+        <div class="titulo-historial">
+          <h2 class="titulo-historial-texto">📦 Historial de Pedidos</h2>
+        </div>
       
-        <!-- Formulario de Filtros -->
-        <form method="GET" action="/productos/historialPedidos" class="mb-4">
-          <div class="row gx-2 gy-2">
-            <div class="col-md-3">
+        <!-- 🔍 Filtros -->
+        <form method="GET" action="/productos/historialPedidos" class="formulario-filtros-historial">
+          <div class="filtros-historial-row">
+            <div class="filtro-fecha">
               <label for="fechaDesde">Fecha Desde</label>
-              <input type="date" name="fechaDesde" id="fechaDesde" class="form-control" value="<%= fechaDesde || '' %>">
+              <input type="date" name="fechaDesde" id="fechaDesde" class="input-fecha" value="<%= fechaDesde || '' %>">
             </div>
-            <div class="col-md-3">
+            <div class="filtro-fecha">
               <label for="fechaHasta">Fecha Hasta</label>
-              <input type="date" name="fechaHasta" id="fechaHasta" class="form-control" value="<%= fechaHasta || '' %>">
+              <input type="date" name="fechaHasta" id="fechaHasta" class="input-fecha" value="<%= fechaHasta || '' %>">
             </div>
-            <div class="col-md-3">
+            <div class="filtro-proveedor">
               <label for="proveedor">Proveedor</label>
-              <select name="proveedor" id="proveedor" class="form-control">
+              <select name="proveedor" id="proveedor" class="select-proveedor">
                 <option value="">Todos</option>
                 <% proveedores.forEach(p => { %>
                   <option value="<%= p.id %>" <%= proveedorSeleccionado == p.id ? 'selected' : '' %>><%= p.nombre %></option>
                 <% }) %>
               </select>
             </div>
-            <div class="col-md-3 d-flex align-items-end">
-              <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            <div class="filtro-boton">
+              <button type="submit" class="btn-filtrar">Filtrar</button>
             </div>
           </div>
         </form>
       
-        <!-- Tabla de resultados -->
+        <!-- 📋 Resultados -->
         <% if (historial.length === 0) { %>
-          <p>No hay pedidos registrados con los filtros seleccionados.</p>
+          <p class="mensaje-sin-resultados">No hay pedidos registrados con los filtros seleccionados.</p>
         <% } else { %>
-          <table class="table table-bordered table-hover mt-3">
-            <thead class="thead-dark">
+          <table class="tabla-historial">
+            <thead>
               <tr>
                 <th># Pedido</th>
                 <th>Fecha</th>
@@ -55,7 +57,7 @@
                   <td><%= pedido.proveedor %></td>
                   <td>$<%= Number(pedido.total).toFixed(2) %></td>
                   <td>
-                    <a href="/productos/verPedido/<%= pedido.pedido_id %>" class="btn btn-sm btn-info">Ver detalle</a>
+                    <a href="/productos/verPedido/<%= pedido.pedido_id %>" class="btn-ver-detalle">Ver detalle</a>
                   </td>
                 </tr>
               <% }) %>
@@ -63,6 +65,7 @@
           </table>
         <% } %>
       </div>
+      
       
       
  </main>
