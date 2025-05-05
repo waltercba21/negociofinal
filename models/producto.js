@@ -1892,12 +1892,7 @@ obtenerProductoConImagenes: (id_producto, callback) => {
 obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorId, categoriaId) {
     try {
       let query = `
-        SELECT 
-          p.id, 
-          p.nombre, 
-          pp.codigo AS codigo_proveedor, 
-          p.stock_minimo, 
-          p.stock_actual
+        SELECT p.id, p.nombre, pp.codigo AS codigo_proveedor, p.stock_minimo, p.stock_actual
         FROM productos p
         JOIN producto_proveedor pp ON pp.producto_id = p.id
         JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
@@ -1920,8 +1915,10 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
         params.push(categoriaId);
       }
   
-      // Este ORDER BY fuerza el orden alfabético estricto
-      query += ' ORDER BY p.nombre COLLATE utf8_general_ci ASC, pp.codigo ASC';
+      // Orden final, que respeta el orden alfabético real sin los números iniciales
+      query += `
+        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+      `;
   
       return await new Promise((resolve, reject) => {
         conexion.query(query, params, (err, rows) => {
@@ -1936,7 +1933,8 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
       console.error("❌ Error general al obtener productos proveedor más barato:", error);
       throw error;
     }
-  },  
+  },
+  
   obtenerProveedorMasBaratoPorProducto: async function (conexion, productoId) {
     const query = `
       SELECT pr.nombre AS proveedor_nombre, pp.codigo AS codigo_proveedor
