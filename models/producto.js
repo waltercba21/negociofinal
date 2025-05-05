@@ -2042,7 +2042,47 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
       console.error('❌ Error al obtener historial de pedidos:', error);
       return [];
     }
+  },
+  obtenerHistorialPedidosFiltrado: async function (conexion, fechaDesde, fechaHasta, proveedorId) {
+    let query = `
+      SELECT 
+        pedidos.id AS pedido_id,
+        pedidos.fecha,
+        pedidos.total,
+        proveedores.nombre AS proveedor
+      FROM pedidos
+      JOIN proveedores ON pedidos.proveedor_id = proveedores.id
+      WHERE 1 = 1
+    `;
+  
+    const params = [];
+  
+    if (fechaDesde) {
+      query += ' AND pedidos.fecha >= ?';
+      params.push(fechaDesde);
+    }
+  
+    if (fechaHasta) {
+      query += ' AND pedidos.fecha <= ?';
+      params.push(fechaHasta);
+    }
+  
+    if (proveedorId) {
+      query += ' AND pedidos.proveedor_id = ?';
+      params.push(proveedorId);
+    }
+  
+    query += ' ORDER BY pedidos.fecha DESC';
+  
+    try {
+      const [rows] = await conexion.promise().query(query, params);
+      return rows;
+    } catch (error) {
+      console.error('❌ Error al obtener historial filtrado:', error);
+      return [];
+    }
   }
+  
   
   
   

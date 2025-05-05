@@ -1567,14 +1567,23 @@ guardarPedido: async (req, res) => {
 },
 historialPedidos: async (req, res) => {
   try {
-    const historial = await producto.obtenerHistorialPedidos(conexion);
-    res.render('historialPedidos', { historial });
+    const { fechaDesde, fechaHasta, proveedor } = req.query;
+
+    const historial = await producto.obtenerHistorialPedidosFiltrado(conexion, fechaDesde, fechaHasta, proveedor);
+    const proveedores = await producto.obtenerProveedores(conexion);
+
+    res.render('productos/historialPedidos', {
+      historial,
+      proveedores,
+      fechaDesde,
+      fechaHasta,
+      proveedorSeleccionado: proveedor || ''
+    });
   } catch (error) {
     console.error('❌ Error en historialPedidos:', error.message);
     res.status(500).send("Error al cargar el historial de pedidos");
   }
-}
-
+},
 
 
 } 
