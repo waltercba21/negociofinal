@@ -1098,8 +1098,8 @@ if (tipo === 'pedido') {
         let currentY = doc.y + 20;
         doc.fontSize(12)
           .fillColor('black')
-          .text('Código', 40, currentY, { align: 'left', width: 80 })
-          .text('Descripción', 120, currentY, { align: 'left', width: 300 })
+          .text('Código', 40, currentY, { align: 'left', width: 60 })
+          .text('Descripción', 105, currentY, { align: 'left', width: 310 })
 
           .text('Stock Mínimo', 420, currentY, { align: 'center', width: 80 })
           .text('Stock Actual', 500, currentY, { align: 'center', width: 80 })
@@ -1113,8 +1113,8 @@ if (tipo === 'pedido') {
               currentY = doc.y;
             }
             doc.fontSize(7)
-            .text(producto.codigo_proveedor, 40, currentY, { align: 'left', width: 80 })
-            .text(producto.nombre, 120, currentY, { align: 'left', width: 300 })          
+            .text(producto.codigo_proveedor, 40, currentY, { align: 'left', width: 60 })
+            .text(producto.nombre, 105, currentY, { align: 'left', width: 310 })          
               .text(producto.stock_minimo || '0', 420, currentY, { align: 'center', width: 80 })
               .text(producto.stock_actual || 'Sin Stock', 500, currentY, { align: 'center', width: 80 })
               .moveDown(1);
