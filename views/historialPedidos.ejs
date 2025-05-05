@@ -5,35 +5,38 @@
  <main>
     <div class="container mt-4 historial-pedidos-container">
         <!-- 🏷️ Título -->
-        <div class="titulo-historial">
-          <h2 class="titulo-historial-texto">📦 Historial de Pedidos</h2>
-        </div>
-      
-        <!-- 🔍 Filtros -->
-        <form method="GET" action="/productos/historialPedidos" class="formulario-filtros-historial">
-          <div class="filtros-historial-row">
-            <div class="filtro-fecha">
-              <label for="fechaDesde">Fecha Desde</label>
-              <input type="date" name="fechaDesde" id="fechaDesde" class="input-fecha" value="<%= fechaDesde || '' %>">
+        <div class="container mt-4 historial-pedidos-container">
+            <!-- 🏷️ Título -->
+            <div class="titulo-historial">
+              <h2 class="titulo-historial-texto">📦 Historial de Pedidos</h2>
             </div>
-            <div class="filtro-fecha">
-              <label for="fechaHasta">Fecha Hasta</label>
-              <input type="date" name="fechaHasta" id="fechaHasta" class="input-fecha" value="<%= fechaHasta || '' %>">
-            </div>
-            <div class="filtro-proveedor">
-              <label for="proveedor">Proveedor</label>
-              <select name="proveedor" id="proveedor" class="select-proveedor">
-                <option value="">Todos</option>
-                <% proveedores.forEach(p => { %>
-                  <option value="<%= p.id %>" <%= proveedorSeleccionado == p.id ? 'selected' : '' %>><%= p.nombre %></option>
-                <% }) %>
-              </select>
-            </div>
-            <div class="filtro-boton">
-              <button type="submit" class="btn-filtrar">Filtrar</button>
-            </div>
-          </div>
-        </form>
+          
+            <!-- 🔍 Filtros -->
+            <form method="GET" action="/productos/historialPedidos" class="formulario-filtros-historial">
+              <div class="filtros-historial-row">
+                <div class="filtro-fecha">
+                  <label for="fechaDesde">Fecha Desde</label>
+                  <input type="date" name="fechaDesde" id="fechaDesde" class="input-fecha" value="<%= fechaDesde || '' %>">
+                </div>
+                <div class="filtro-fecha">
+                  <label for="fechaHasta">Fecha Hasta</label>
+                  <input type="date" name="fechaHasta" id="fechaHasta" class="input-fecha" value="<%= fechaHasta || '' %>">
+                </div>
+                <div class="filtro-proveedor">
+                  <label for="proveedor">Proveedor</label>
+                  <select name="proveedor" id="proveedor" class="select-proveedor">
+                    <option value="">Todos</option>
+                    <% proveedores.forEach(p => { %>
+                      <option value="<%= p.id %>" <%= proveedorSeleccionado == p.id ? 'selected' : '' %>><%= p.nombre %></option>
+                    <% }) %>
+                  </select>
+                </div>
+                <div class="filtro-boton">
+                  <button type="submit" class="btn-filtrar">Filtrar</button>
+                </div>
+              </div>
+            </form>
+          
       
         <!-- 📋 Resultados -->
         <% if (historial.length === 0) { %>

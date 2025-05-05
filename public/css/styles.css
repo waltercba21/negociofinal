@@ -2923,20 +2923,23 @@ tfoot td {
 
 /* Título */
 .titulo-historial {
+  width: 100%;
+  margin-bottom: 20px;
+  display: block;
   text-align: center;
-  margin-bottom: 25px;
 }
 
 .titulo-historial-texto {
   font-size: 28px;
   font-weight: bold;
+  margin-bottom: 0;
 }
-
 /* Filtros */
 .formulario-filtros-historial {
-  margin-bottom: 20px;
+  width: 100%;
+  display: block;
+  margin-bottom: 25px;
 }
-
 .filtros-historial-row {
   display: flex;
   flex-wrap: wrap;
