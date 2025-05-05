@@ -30,7 +30,7 @@
             <td><%= item.producto %></td>
             <td><%= item.codigo_proveedor %></td>
             <td><%= item.cantidad %></td>
-            <td>$<%= Number(item.precio_unitario).toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
+            <td>$<%= Number(item.costo_unitario).toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
             <td>$<%= Number(item.subtotal).toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
           </tr>
         <% }) %>
