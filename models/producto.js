@@ -2088,7 +2088,7 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
         SELECT 
           p.nombre AS producto,
           pi.cantidad,
-          pi.precio_unitario AS costo_unitario,
+          p.costo_neto AS costo_unitario,  -- ← Lo traemos desde la tabla productos
           pi.subtotal,
           ped.fecha,
           prov.nombre AS proveedor,
@@ -2107,6 +2107,7 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
       });
     });
   }
+  
   
   
   
