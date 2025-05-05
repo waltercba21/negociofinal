@@ -1915,7 +1915,8 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
         params.push(categoriaId);
       }
   
-      query += ' ORDER BY p.nombre ASC';
+      // Cambiamos la cláusula ORDER BY para que ordene por nombre + código proveedor
+      query += ' ORDER BY p.nombre ASC, pp.codigo ASC';
   
       return await new Promise((resolve, reject) => {
         conexion.query(query, params, (err, rows) => {
