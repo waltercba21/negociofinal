@@ -3015,6 +3015,84 @@ tfoot td {
   font-style: italic;
   color: #888;
 }
+/*--------------------DETALLE PEDIDO --------------------*/
+.detalle-pedido-container {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.titulo-detalle {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #333;
+  text-align: center;
+}
+
+.tabla-detalle-pedido {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 0.95rem;
+}
+
+.tabla-detalle-pedido th,
+.tabla-detalle-pedido td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.tabla-detalle-pedido thead {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.col-producto {
+  width: 35%;
+}
+
+.col-codigo {
+  width: 20%;
+}
+
+.col-cantidad {
+  width: 10%;
+  text-align: center;
+}
+
+.col-precio,
+.col-subtotal {
+  width: 15%;
+  text-align: right;
+}
+
+.total-label {
+  text-align: right;
+  font-weight: bold;
+  background-color: #fafafa;
+}
+
+.total-monto {
+  font-weight: bold;
+  text-align: right;
+  background-color: #fafafa;
+}
+
+.btn-volver {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 8px 16px;
+  background-color: #6c757d;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
+.btn-volver:hover {
+  background-color: #5a6268;
+}
 
 
 /*--------------------DETALLE FACTURA --------------------*/

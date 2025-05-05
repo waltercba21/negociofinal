@@ -3,20 +3,20 @@
 <%- include('./layouts/header.ejs') %>
 <body>
  <main>
-  <div class="container mt-4">
-    <h2>📄 Detalle del Pedido</h2>
+  <div class="container mt-4 detalle-pedido-container">
+    <h2 class="titulo-detalle">📄 Detalle del Pedido</h2>
   
     <p><strong>Proveedor:</strong> <%= pedido.proveedor %></p>
     <p><strong>Fecha:</strong> <%= new Date(pedido.fecha).toLocaleDateString('es-AR') %></p>
   
-    <table class="table table-bordered table-striped mt-3">
+    <table class="tabla-detalle-pedido">
       <thead>
         <tr>
-          <th>Producto</th>
-          <th>Código Proveedor</th>
-          <th>Cantidad</th>
-          <th>Costo Unitario</th>
-          <th>Subtotal</th>
+          <th class="col-producto">Producto</th>
+          <th class="col-codigo">Código Proveedor</th>
+          <th class="col-cantidad">Cantidad</th>
+          <th class="col-precio">Costo Unitario</th>
+          <th class="col-subtotal">Subtotal</th>
         </tr>
       </thead>
       <tbody>
@@ -32,14 +32,15 @@
       </tbody>
       <tfoot>
         <tr>
-          <th colspan="4" class="text-end">Total</th>
-          <th>$<%= pedido.total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></th>
+          <th colspan="4" class="total-label">Total</th>
+          <th class="total-monto">$<%= pedido.total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></th>
         </tr>
       </tfoot>
     </table>
   
-    <a href="/productos/historialPedidos" class="btn btn-secondary mt-3">⬅ Volver al Historial</a>
+    <a href="/productos/historialPedidos" class="btn-volver">⬅ Volver al Historial</a>
   </div>
+  
   
  </main>
 

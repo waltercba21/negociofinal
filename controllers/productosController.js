@@ -1598,7 +1598,8 @@ verPedido: async (req, res) => {
       fecha: detalle[0].fecha,
       proveedor: detalle[0].proveedor,
       productos: detalle,
-      total: detalle.reduce((acc, item) => acc + item.subtotal, 0)
+      total: detalle.reduce((acc, item) => acc + Number(item.subtotal), 0)
+
     };
 
     res.render('verPedido', { pedido });
