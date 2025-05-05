@@ -2081,7 +2081,32 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
       console.error('❌ Error al obtener historial filtrado:', error);
       return [];
     }
-  }
+  },
+  obtenerDetallePedido: (pedidoId) => {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        SELECT 
+          p.nombre AS producto, 
+          pp.codigo AS codigo_proveedor,
+          pi.cantidad, 
+          pi.costo_unitario, 
+          pi.subtotal,
+          ped.fecha,
+          prov.nombre AS proveedor
+        FROM pedidos ped
+        JOIN pedidos_items pi ON ped.id = pi.pedido_id
+        JOIN productos p ON pi.producto_id = p.id
+        JOIN producto_proveedor pp ON p.id = pp.producto_id
+        JOIN proveedores prov ON ped.proveedor_id = prov.id
+        WHERE ped.id = ?
+      `;
+      conexion.query(sql, [pedidoId], (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+  },
+  
   
   
   

@@ -60,6 +60,7 @@ router.delete('/eliminarImagen/:id', productosController.eliminarImagen);
 router.get('/generarPedidoManual', productosController.generarPedidoManual);
 router.post('/guardarPedido', productosController.guardarPedido);
 router.get('/historialPedidos', productosController.historialPedidos);
+router.get('/verPedido/:id', productosController.verPedido);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);

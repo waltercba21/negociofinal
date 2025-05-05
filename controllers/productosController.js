@@ -1584,6 +1584,30 @@ historialPedidos: async (req, res) => {
     res.status(500).send("Error al cargar el historial de pedidos");
   }
 },
+verPedido: async (req, res) => {
+  try {
+    const pedidoId = req.params.id;
+    const detalle = await producto.obtenerDetallePedido(pedidoId);
+
+    if (detalle.length === 0) {
+      return res.status(404).send("Pedido no encontrado");
+    }
+
+    // Obtenemos datos generales del pedido (fecha, proveedor, etc.)
+    const pedido = {
+      fecha: detalle[0].fecha,
+      proveedor: detalle[0].proveedor,
+      productos: detalle,
+      total: detalle.reduce((acc, item) => acc + item.subtotal, 0)
+    };
+
+    res.render('verPedido', { pedido });
+  } catch (error) {
+    console.error("Error al obtener detalle del pedido:", error);
+    res.status(500).send("Error al cargar detalle del pedido");
+  }
+}
+
 
 
 } 

@@ -1,0 +1,47 @@
+<!-- Vista estilizada de Pedido Manual -->
+<%- include('./layouts/head.ejs') %>
+<%- include('./layouts/header.ejs') %>
+<body>
+ <main>
+    <div class="container mt-4">
+        <h2>📄 Detalle del Pedido</h2>
+      
+        <p><strong>Proveedor:</strong> <%= pedido.proveedor %></p>
+        <p><strong>Fecha:</strong> <%= new Date(pedido.fecha).toLocaleDateString('es-AR') %></p>
+      
+        <table class="table table-bordered table-striped mt-3">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Código Proveedor</th>
+              <th>Cantidad</th>
+              <th>Costo Unitario</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% pedido.productos.forEach(item => { %>
+              <tr>
+                <td><%= item.producto %></td>
+                <td><%= item.codigo_proveedor %></td>
+                <td><%= item.cantidad %></td>
+                <td>$<%= Number(item.costo_unitario).toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
+                <td>$<%= Number(item.subtotal).toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th colspan="4" class="text-end">Total</th>
+              <th>$<%= pedido.total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></th>
+            </tr>
+          </tfoot>
+        </table>
+      
+        <a href="/productos/historialPedidos" class="btn btn-secondary mt-3">⬅ Volver al Historial</a>
+      </div>
+      
+ </main>
+
+  </script><%- include('./layouts/footer.ejs') %>
+</body>
