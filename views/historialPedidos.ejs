@@ -4,16 +4,12 @@
 <body>
  <main>
     <div class="container mt-4">
-        <!-- 🏷️ Título en su propia fila -->
-        <div class="row mb-3">
-          <div class="col-12">
-            <h2>📦 Historial de Pedidos</h2>
-          </div>
-        </div>
+        <!-- Título del historial -->
+        <h2 class="mb-4 w-100" style="display: block;">📦 Historial de Pedidos</h2>
       
-        <!-- 🔍 Formulario de Filtros -->
+        <!-- Formulario de Filtros -->
         <form method="GET" action="/productos/historialPedidos" class="mb-4">
-          <div class="row">
+          <div class="row gx-2 gy-2">
             <div class="col-md-3">
               <label for="fechaDesde">Fecha Desde</label>
               <input type="date" name="fechaDesde" id="fechaDesde" class="form-control" value="<%= fechaDesde || '' %>">
@@ -37,7 +33,7 @@
           </div>
         </form>
       
-        <!-- 📋 Tabla de resultados -->
+        <!-- Tabla de resultados -->
         <% if (historial.length === 0) { %>
           <p>No hay pedidos registrados con los filtros seleccionados.</p>
         <% } else { %>
@@ -67,6 +63,7 @@
           </table>
         <% } %>
       </div>
+      
       
  </main>
 
