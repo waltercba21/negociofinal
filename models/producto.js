@@ -1916,7 +1916,8 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
       }
   
       // Cambiamos la cláusula ORDER BY para que ordene por nombre + código proveedor
-      query += ' ORDER BY p.nombre ASC, pp.codigo ASC';
+      query += " ORDER BY LOWER(p.nombre) COLLATE utf8_general_ci ASC, pp.codigo ASC";
+
   
       return await new Promise((resolve, reject) => {
         conexion.query(query, params, (err, rows) => {
