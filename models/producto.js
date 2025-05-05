@@ -1967,6 +1967,11 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
         params.push(categoriaId);
       }
   
+      // 🔧 AÑADIMOS ORDENAMIENTO ALFABÉTICO
+      query += `
+        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+      `;
+  
       const [rows] = await conexion.promise().query(query, params);
       return rows;
     } catch (error) {
@@ -1974,6 +1979,7 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
       return [];
     }
   },
+  
   obtenerProductosOfertaFiltrados: function (conexion, filtros, callback) {
     let sql = `
       SELECT p.*, c.nombre AS categoria_nombre, m.nombre AS marca_nombre
