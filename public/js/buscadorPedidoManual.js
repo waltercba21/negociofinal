@@ -119,7 +119,7 @@ function obtenerCodigoPorProveedor(producto, proveedor_id) {
     return proveedorEncontrado ? proveedorEncontrado.codigo : '—';
   }
   return producto.codigo || '—';
-}
+} 
 
 function cambiarCantidad(index, cambio) {
   const producto = productosSeleccionados[index];

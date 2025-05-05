@@ -2097,17 +2097,16 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
         JOIN pedido_items pi ON ped.id = pi.pedido_id
         JOIN productos p ON pi.producto_id = p.id
         JOIN proveedores prov ON ped.proveedor_id = prov.id
-        JOIN producto_proveedor pp 
+        LEFT JOIN producto_proveedor pp 
           ON pp.producto_id = p.id AND pp.proveedor_id = ped.proveedor_id
         WHERE ped.id = ?
       `;
-  
       conexion.query(sql, [pedidoId], (err, rows) => {
         if (err) return reject(err);
         resolve(rows);
       });
     });
-  },  
+  }
   
   
 }
