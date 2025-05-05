@@ -1922,9 +1922,9 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
   
       // Aplicamos el orden correcto:
       query += `
-        ORDER BY 
-          LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) COLLATE utf8_general_ci ASC,
-          p.nombre ASC
+        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) COLLATE utf8mb4_general_ci ASC,
+         p.nombre ASC
+
       `;
   
       const queryPromise = util.promisify(conexion.query).bind(conexion);
