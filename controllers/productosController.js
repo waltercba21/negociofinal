@@ -1572,7 +1572,7 @@ historialPedidos: async (req, res) => {
     const historial = await producto.obtenerHistorialPedidosFiltrado(conexion, fechaDesde, fechaHasta, proveedor);
     const proveedores = await producto.obtenerProveedores(conexion);
 
-    res.render('productos/historialPedidos', {
+    res.render('historialPedidos', {
       historial,
       proveedores,
       fechaDesde,
