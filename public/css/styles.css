@@ -3093,6 +3093,13 @@ tfoot td {
 .btn-volver:hover {
   background-color: #5a6268;
 }
+.total-label,
+.total-monto {
+  background-color: #f0f0f0; /* fondo gris claro */
+  color: #333333;            /* texto oscuro y legible */
+  font-weight: bold;
+  padding: 10px;
+}
 
 
 /*--------------------DETALLE FACTURA --------------------*/
