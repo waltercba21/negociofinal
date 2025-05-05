@@ -1056,7 +1056,9 @@ getProductosPorCategoria : async (req, res) => {
       initialSize: 1024 * 1024,
       incrementAmount: 1024 * 1024
     });
-    const doc = new PDFDocument;
+    const doc = new PDFDocument({
+      margin: 30 
+    });;
     doc.pipe(buffer);
   
     const proveedorId = req.query.proveedor;
@@ -1075,10 +1077,10 @@ getProductosPorCategoria : async (req, res) => {
         ? `Pedido de Productos - ${nombreProveedor}`
         : `Listado de Stock - ${nombreProveedor} - ${nombreCategoria}`;
   
-      doc.fontSize(14).text(titulo, {
-        align: 'center',
-        width: doc.page.width - 100
-      });
+        doc.fontSize(14).text(titulo, {
+          align: 'center',
+          width: doc.page.width - 60 // Antes: -100
+        });
   
       let productos = [];
 if (tipo === 'pedido') {
@@ -1096,8 +1098,9 @@ if (tipo === 'pedido') {
         let currentY = doc.y + 20;
         doc.fontSize(12)
           .fillColor('black')
-          .text('Código', 60, currentY, { align: 'left', width: 80 })
-          .text('Descripción', 150, currentY, { align: 'left', width: 250 })
+          .text('Código', 40, currentY, { align: 'left', width: 80 })
+.text('Descripción', 130, currentY, { align: 'left', width: 290 })
+
           .text('Stock Mínimo', 420, currentY, { align: 'center', width: 80 })
           .text('Stock Actual', 500, currentY, { align: 'center', width: 80 })
           .moveDown(2);
@@ -1110,8 +1113,8 @@ if (tipo === 'pedido') {
               currentY = doc.y;
             }
             doc.fontSize(8)
-              .text(producto.codigo_proveedor, 60, currentY, { align: 'left', width: 80 })
-              .text(producto.nombre, 150, currentY, { align: 'left', width: 250 })
+            .text(producto.codigo_proveedor, 40, currentY, { align: 'left', width: 80 })
+            .text(producto.nombre, 130, currentY, { align: 'left', width: 290 })            
               .text(producto.stock_minimo || '0', 420, currentY, { align: 'center', width: 80 })
               .text(producto.stock_actual || 'Sin Stock', 500, currentY, { align: 'center', width: 80 })
               .moveDown(1);
@@ -1131,7 +1134,7 @@ if (tipo === 'pedido') {
       res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
       res.send(pdfData);
     });
-  },  
+  },   
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();
