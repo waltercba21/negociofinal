@@ -1892,7 +1892,12 @@ obtenerProductoConImagenes: (id_producto, callback) => {
 obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorId, categoriaId) {
     try {
       let query = `
-        SELECT p.id, p.nombre, pp.codigo AS codigo_proveedor, p.stock_minimo, p.stock_actual
+        SELECT 
+          p.id, 
+          p.nombre, 
+          pp.codigo AS codigo_proveedor, 
+          p.stock_minimo, 
+          p.stock_actual
         FROM productos p
         JOIN producto_proveedor pp ON pp.producto_id = p.id
         JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
@@ -1915,26 +1920,20 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
         params.push(categoriaId);
       }
   
-      // Orden final, que respeta el orden alfabético real sin los números iniciales
+      // Aplicamos el orden correcto:
       query += `
-        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+        ORDER BY 
+          LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) COLLATE utf8_general_ci ASC,
+          p.nombre ASC
       `;
   
-      return await new Promise((resolve, reject) => {
-        conexion.query(query, params, (err, rows) => {
-          if (err) {
-            console.error("❌ Error al obtener productos proveedor más barato:", err);
-            return reject(err);
-          }
-          resolve(rows);
-        });
-      });
+      const queryPromise = util.promisify(conexion.query).bind(conexion);
+      return await queryPromise(query, params);
     } catch (error) {
       console.error("❌ Error general al obtener productos proveedor más barato:", error);
       throw error;
     }
-  },
-  
+  },  
   obtenerProveedorMasBaratoPorProducto: async function (conexion, productoId) {
     const query = `
       SELECT pr.nombre AS proveedor_nombre, pp.codigo AS codigo_proveedor
