@@ -2094,7 +2094,7 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
           ped.fecha,
           prov.nombre AS proveedor
         FROM pedidos ped
-        JOIN pedidos_items pi ON ped.id = pi.pedido_id
+        JOIN pedido_items pi ON ped.id = pi.pedido_id
         JOIN productos p ON pi.producto_id = p.id
         JOIN producto_proveedor pp ON p.id = pp.producto_id
         JOIN proveedores prov ON ped.proveedor_id = prov.id
