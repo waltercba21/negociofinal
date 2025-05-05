@@ -59,6 +59,7 @@ router.delete('/eliminarProveedor/:id', productosController.eliminarProveedor);
 router.delete('/eliminarImagen/:id', productosController.eliminarImagen);
 router.get('/generarPedidoManual', productosController.generarPedidoManual);
 router.post('/guardarPedido', productosController.guardarPedido);
+router.get('/historialPedidos', productosController.historialPedidos);
 router.get('/ultimos', productosController.ultimos);
 router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);

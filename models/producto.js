@@ -2022,7 +2022,28 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
         else resolve(resultados);
       });
     });
+  },
+  obtenerHistorialPedidos: async function (conexion) {
+    const query = `
+      SELECT 
+        pedidos.id AS pedido_id,
+        pedidos.fecha,
+        pedidos.total,
+        proveedores.nombre AS proveedor
+      FROM pedidos
+      JOIN proveedores ON pedidos.proveedor_id = proveedores.id
+      ORDER BY pedidos.fecha DESC
+    `;
+  
+    try {
+      const [rows] = await conexion.promise().query(query);
+      return rows;
+    } catch (error) {
+      console.error('❌ Error al obtener historial de pedidos:', error);
+      return [];
+    }
   }
+  
   
   
 }

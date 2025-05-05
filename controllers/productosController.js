@@ -1564,7 +1564,17 @@ guardarPedido: async (req, res) => {
         console.error('Error en guardarPedido:', err.message);
         res.status(500).json({ message: 'Error al guardar el pedido', error: err.message });
     }
+},
+historialPedidos: async (req, res) => {
+  try {
+    const historial = await producto.obtenerHistorialPedidos(conexion);
+    res.render('productos/historialPedidos', { historial });
+  } catch (error) {
+    console.error('❌ Error en historialPedidos:', error.message);
+    res.status(500).send("Error al cargar el historial de pedidos");
+  }
 }
+
 
 
 
