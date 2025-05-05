@@ -2089,7 +2089,7 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
           p.nombre AS producto, 
           pp.codigo AS codigo_proveedor,
           pi.cantidad, 
-          pi.costo_unitario, 
+          pi.precio_unitario, 
           pi.subtotal,
           ped.fecha,
           prov.nombre AS proveedor
@@ -2105,10 +2105,7 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
         resolve(rows);
       });
     });
-  },
-  
-  
-  
+  }
   
   
 }
