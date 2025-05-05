@@ -3256,26 +3256,26 @@ tfoot td {
 .buscador {
   position: relative;
   width: 100%;
-  max-width: 500px;
+  max-width: 700px; /* Aumentado para mayor visibilidad */
   margin: 0 auto;
 }
 
 /* INPUT de búsqueda más grande */
 #entradaBusqueda {
   width: 100%;
-  padding: 12px; /* Más alto */
-  font-size: 14px; /* Más legible */
+  padding: 12px;
+  font-size: 14px;
   border-radius: 5px;
   border: 1px solid #8d8c8c;
   box-shadow: 1px 1px 4px rgba(0,0,0,0.05);
 }
 
-/* Contenedor de resultados, igual ancho al input */
+/* Contenedor de resultados */
 #resultadosBusqueda {
   position: absolute;
   top: 100%;
   left: 0;
-  width: 100%; /* Igual que el input */
+  width: 100%;
   z-index: 1000;
   background-color: #ffffff;
   border: 1px solid #ccc;
@@ -3290,17 +3290,18 @@ tfoot td {
 #resultadosBusqueda div {
   padding: 12px;
   cursor: pointer;
-  font-size: 14px;
-  color: #000; /* Texto por defecto negro */
+  font-size: 13px; /* Reducido levemente */
+  color: #000;
   transition: background 0.2s ease, color 0.2s ease;
+  white-space: normal;         /* Permite múltiples líneas */
+  word-break: break-word;      /* Rompe palabras largas */
 }
 
 /* Hover: fondo rojo, texto blanco */
 #resultadosBusqueda div:hover {
-  background-color: #d32f2f; /* Rojo */
+  background-color: #d32f2f;
   color: #ffffff;
 }
-
 
 table {
   width: 100%;
