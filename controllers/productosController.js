@@ -1009,7 +1009,7 @@ obtenerModelosPorMarca: function(req, res) {
                 currentY = doc.y;
             }
 
-            doc.fontSize(8)
+            doc.fontSize(7)
                 .text(producto.codigo_proveedor, 20, currentY)
                 .text(producto.nombre, 80, currentY, {
                     width: 400
@@ -1099,7 +1099,7 @@ if (tipo === 'pedido') {
         doc.fontSize(12)
           .fillColor('black')
           .text('Código', 40, currentY, { align: 'left', width: 80 })
-.text('Descripción', 130, currentY, { align: 'left', width: 290 })
+          .text('Descripción', 120, currentY, { align: 'left', width: 300 })
 
           .text('Stock Mínimo', 420, currentY, { align: 'center', width: 80 })
           .text('Stock Actual', 500, currentY, { align: 'center', width: 80 })
@@ -1112,9 +1112,9 @@ if (tipo === 'pedido') {
               doc.addPage();
               currentY = doc.y;
             }
-            doc.fontSize(8)
+            doc.fontSize(7)
             .text(producto.codigo_proveedor, 40, currentY, { align: 'left', width: 80 })
-            .text(producto.nombre, 130, currentY, { align: 'left', width: 290 })            
+            .text(producto.nombre, 120, currentY, { align: 'left', width: 300 })          
               .text(producto.stock_minimo || '0', 420, currentY, { align: 'center', width: 80 })
               .text(producto.stock_actual || 'Sin Stock', 500, currentY, { align: 'center', width: 80 })
               .moveDown(1);
