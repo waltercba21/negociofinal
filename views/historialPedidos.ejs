@@ -4,35 +4,40 @@
 <body>
  <main>
     <div class="container mt-4">
-        <h2>📦 Historial de Pedidos</h2>
+        <!-- 🏷️ Título en su propia fila -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <h2>📦 Historial de Pedidos</h2>
+          </div>
+        </div>
       
         <!-- 🔍 Formulario de Filtros -->
         <form method="GET" action="/productos/historialPedidos" class="mb-4">
-            <div class="row">
-              <div class="col-md-3">
-                <label for="fechaDesde">Fecha Desde</label>
-                <input type="date" name="fechaDesde" id="fechaDesde" class="form-control" value="<%= fechaDesde || '' %>">
-              </div>
-              <div class="col-md-3">
-                <label for="fechaHasta">Fecha Hasta</label>
-                <input type="date" name="fechaHasta" id="fechaHasta" class="form-control" value="<%= fechaHasta || '' %>">
-              </div>
-              <div class="col-md-3">
-                <label for="proveedor">Proveedor</label>
-                <select name="proveedor" id="proveedor" class="form-control">
-                  <option value="">Todos</option>
-                  <% proveedores.forEach(p => { %>
-                    <option value="<%= p.id %>" <%= proveedorSeleccionado == p.id ? 'selected' : '' %>><%= p.nombre %></option>
-                  <% }) %>
-                </select>
-              </div>
-              <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-              </div>
+          <div class="row">
+            <div class="col-md-3">
+              <label for="fechaDesde">Fecha Desde</label>
+              <input type="date" name="fechaDesde" id="fechaDesde" class="form-control" value="<%= fechaDesde || '' %>">
             </div>
-          </form>
-          
+            <div class="col-md-3">
+              <label for="fechaHasta">Fecha Hasta</label>
+              <input type="date" name="fechaHasta" id="fechaHasta" class="form-control" value="<%= fechaHasta || '' %>">
+            </div>
+            <div class="col-md-3">
+              <label for="proveedor">Proveedor</label>
+              <select name="proveedor" id="proveedor" class="form-control">
+                <option value="">Todos</option>
+                <% proveedores.forEach(p => { %>
+                  <option value="<%= p.id %>" <%= proveedorSeleccionado == p.id ? 'selected' : '' %>><%= p.nombre %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+          </div>
+        </form>
       
+        <!-- 📋 Tabla de resultados -->
         <% if (historial.length === 0) { %>
           <p>No hay pedidos registrados con los filtros seleccionados.</p>
         <% } else { %>
@@ -62,6 +67,7 @@
           </table>
         <% } %>
       </div>
+      
  </main>
 
   </script><%- include('./layouts/footer.ejs') %>
