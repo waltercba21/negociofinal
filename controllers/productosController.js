@@ -1063,7 +1063,7 @@ getProductosPorCategoria : async (req, res) => {
   
     const proveedorId = req.query.proveedor;
     const categoriaId = req.query.categoria;
-    const tipo = req.query.tipo; // "stock" o "pedido"
+    const tipo = req.query.tipo;
   
     try {
       const proveedores = await producto.obtenerProveedores(conexion);
