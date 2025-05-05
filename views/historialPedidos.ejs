@@ -25,7 +25,7 @@
                   <td><%= pedido.pedido_id %></td>
                   <td><%= new Date(pedido.fecha).toLocaleDateString() %></td>
                   <td><%= pedido.proveedor %></td>
-                  <td>$<%= pedido.total.toFixed(2) %></td>
+                  <td>$<%= Number(pedido.total).toFixed(2) %></td>
                   <td>
                     <a href="/productos/verPedido/<%= pedido.pedido_id %>" class="btn btn-sm btn-info">Ver detalle</a>
                   </td>
