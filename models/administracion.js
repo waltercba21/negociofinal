@@ -136,10 +136,16 @@ module.exports ={
     },
     getProveedorById : function(idProveedor, callback) {
         pool.query('SELECT * FROM proveedores WHERE id = ?', [idProveedor], function(error, results) {
-            if (error) throw error;
-            callback(null, results[0]); // devuelve el primer resultado
+            if (error) {
+                console.error('❌ Error al obtener proveedor:', error);
+                return callback(error, null);
+            }
+            if (!results.length) {
+                return callback(null, null);
+            }
+            callback(null, results[0]);
         });
-    },
+    },    
     getFacturasByProveedorId : function(idProveedor, callback) {
         pool.query('SELECT * FROM facturas WHERE id_proveedor = ?', [idProveedor], function(error, results) {
             if (error) throw error;
