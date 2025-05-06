@@ -175,12 +175,25 @@ module.exports ={
       },
       
       updateProveedor: (id, data, callback) => {
-        pool.query('UPDATE proveedores SET ? WHERE id = ?', [data, id], (err, result) => {
-          if (err) return callback(err);
-          callback(null, result);
-        });
-      },
+        const { descuento, ...datosProveedor } = data;
       
+        pool.query('UPDATE proveedores SET ? WHERE id = ?', [datosProveedor, id], (err, result) => {
+          if (err) return callback(err);
+      
+          if (descuento !== undefined) {
+            pool.query(`
+              INSERT INTO descuentos_proveedor (proveedor_id, descuento)
+              VALUES (?, ?)
+              ON DUPLICATE KEY UPDATE descuento = VALUES(descuento)
+            `, [id, descuento], (err2, result2) => {
+              if (err2) return callback(err2);
+              callback(null, result2);
+            });
+          } else {
+            callback(null, result);
+          }
+        });
+      },      
       deleteProveedor: (id, callback) => {
         pool.query('DELETE FROM proveedores WHERE id = ?', [id], (err, result) => {
           if (err) return callback(err);
