@@ -284,6 +284,14 @@ header .icons p {
   justify-content: space-between;
 }
 
+.modal-proveedor-form .form-control {
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+  box-shadow: none !important;
+  outline: none;
+}
+
 /* Formulario del modal */
 .modal-proveedor-form .form-label {
   font-weight: 500;
