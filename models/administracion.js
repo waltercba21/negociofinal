@@ -168,12 +168,24 @@ module.exports ={
         });
     },
     insertProveedor: (data, callback) => {
-        pool.query('INSERT INTO proveedores SET ?', data, (err, result) => {
-          if (err) return callback(err);
-          callback(null, result);
-        });
-      },
+        const { descuento, ...datosProveedor } = data;
       
+        pool.query('INSERT INTO proveedores SET ?', datosProveedor, (err, result) => {
+          if (err) return callback(err);
+      
+          if (descuento !== undefined && result.insertId) {
+            pool.query('INSERT INTO descuentos_proveedor SET ?', {
+              proveedor_id: result.insertId,
+              descuento: descuento
+            }, err2 => {
+              if (err2) return callback(err2);
+              callback(null, result);
+            });
+          } else {
+            callback(null, result);
+          }
+        });
+      },      
       updateProveedor: (id, data, callback) => {
         const { descuento, ...datosProveedor } = data;
       
@@ -195,10 +207,17 @@ module.exports ={
         });
       },      
       deleteProveedor: (id, callback) => {
-        pool.query('DELETE FROM proveedores WHERE id = ?', [id], (err, result) => {
-          if (err) return callback(err);
-          callback(null, result);
+        // Primero borrar el descuento
+        pool.query('DELETE FROM descuentos_proveedor WHERE proveedor_id = ?', [id], (err1) => {
+          if (err1) return callback(err1);
+      
+          // Luego borrar el proveedor
+          pool.query('DELETE FROM proveedores WHERE id = ?', [id], (err2, result) => {
+            if (err2) return callback(err2);
+            callback(null, result);
+          });
         });
       }
+      
       
 }
