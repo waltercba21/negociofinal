@@ -2,137 +2,122 @@
 <%- include('./layouts/header.ejs') %>
 
 <body>
-<main class="container-fluid p-4">
+  <main class="contenedor-proveedores">
 
-<!-- CONTENEDOR DE PROVEEDORES -->
-<section class="mb-5">
-  <div class="card shadow border border-dark rounded p-3" style="max-width: 400px;">
-    <h5 class="fw-bold mb-3">Proveedor</h5>
-
-    <!-- Select de proveedores -->
-    <select id="selectProveedor" class="form-select mb-3">
-      <option value="">Seleccionar proveedor...</option>
-      <p><strong>Descuento:</strong> <span id="descuentoProveedorView">-</span></p>
-      <% proveedores.forEach(prov => { %>
-        <option value="<%= prov.id %>"><%= prov.nombre %></option>
-      <% }) %>
-    </select>
-
-<!-- Área para mostrar los datos -->
-<div id="detalleProveedor" class="small mb-3" style="min-height: 150px;">
-  <p class="text-muted">Seleccioná un proveedor</p>
-</div>
-
-<!-- Botones de acción (ahora dentro del card) -->
-<div class="d-flex gap-2 justify-content-end">
-  <button id="btnNuevoProveedor" class="btn btn-sm btn-success">+ Nuevo</button>
-  <button id="btnEditarProveedor" class="btn btn-sm btn-warning" disabled>Editar</button>
-  <button id="btnEliminarProveedorDirecto" class="btn btn-sm btn-danger" disabled>Eliminar</button>
-</div>
-</div> <!-- cierre del card -->
-
-</section>
-
-
-  <!-- MODAL DETALLE / EDICIÓN -->
- <!-- Modal Proveedor -->
-<div class="modal fade" id="modalProveedor" tabindex="-1" aria-labelledby="modalProveedorLabel" aria-hidden="true">
-  <div class="modal-dialog" style="max-width: 1000px; margin-top: 10px; margin-bottom: 10px;">
-    <div class="modal-content border border-dark shadow-lg">
-      <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title" id="modalProveedorLabel">
-          <i class="bi bi-person-lines-fill me-2"></i>Datos del Proveedor
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+    <!-- CONTENEDOR PRINCIPAL -->
+    <section class="panel-proveedores">
+      <div class="card-proveedor">
+        <h5 class="titulo-proveedor">Proveedor</h5>
+  
+        <!-- Select de proveedores -->
+        <select id="selectProveedor" class="select-proveedor">
+          <option value="">Seleccionar proveedor...</option>
+          <% proveedores.forEach(prov => { %>
+            <option value="<%= prov.id %>"><%= prov.nombre %></option>
+          <% }) %>
+        </select>
+  
+        <!-- Detalle -->
+        <div id="detalleProveedor" class="detalle-proveedor">
+          <p class="text-muted">Seleccioná un proveedor</p>
+          <p><strong>Descuento:</strong> <span id="descuentoProveedorView">-</span></p>
+        </div>
+  
+        <!-- Acciones -->
+        <div class="acciones-proveedor">
+          <button id="btnNuevoProveedor" class="btn btn-sm btn-success">+ Nuevo</button>
+          <button id="btnEditarProveedor" class="btn btn-sm btn-warning" disabled>Editar</button>
+          <button id="btnEliminarProveedorDirecto" class="btn btn-sm btn-danger" disabled>Eliminar</button>
+        </div>
       </div>
-
-      <form id="formProveedor" class="needs-validation" novalidate>
-        <input type="hidden" name="id" id="proveedorId">
-
-        <div class="modal-body py-4">
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label for="nombre" class="form-label">Nombre / Empresa</label>
-              <input type="text" class="form-control" name="nombre" id="nombre" required>
-            </div>
-
-            <div class="col-md-4">
-              <label for="contacto" class="form-label">Contacto</label>
-              <input type="text" class="form-control" name="contacto" id="contacto">
-            </div>
-
-            <div class="col-md-4">
-              <label for="telefono" class="form-label">Teléfono</label>
-              <input type="text" class="form-control" name="telefono" id="telefono">
-            </div>
-
-            <div class="col-md-4">
-              <label for="mail" class="form-label">Email</label>
-              <input type="email" class="form-control" name="mail" id="mail">
-            </div>
-
-            <div class="col-md-4">
-              <label for="direccion" class="form-label">Dirección</label>
-              <input type="text" class="form-control" name="direccion" id="direccion">
-            </div>
-
-            <div class="col-md-4">
-              <label for="ciudad" class="form-label">Ciudad</label>
-              <input type="text" class="form-control" name="ciudad" id="ciudad">
-            </div>
-
-            <div class="col-md-4">
-              <label for="provincia" class="form-label">Provincia</label>
-              <input type="text" class="form-control" name="provincia" id="provincia">
-            </div>
-
-            <div class="col-md-4">
-              <label for="cuit" class="form-label">CUIT</label>
-              <input type="text" class="form-control" name="cuit" id="cuit">
-            </div>
-
-            <div class="col-md-4">
-              <label for="banco" class="form-label">Banco</label>
-              <input type="text" class="form-control" name="banco" id="banco">
-            </div>
-
-            <div class="col-md-4">
-              <label for="cbu" class="form-label">CBU</label>
-              <input type="text" class="form-control" name="cbu" id="cbu">
-            </div>
-
-            <div class="col-md-4">
-              <label for="alias" class="form-label">Alias</label>
-              <input type="text" class="form-control" name="alias" id="alias">
-            </div>
-            <div class="col-md-4">
-              <label for="descuento" class="form-label">Descuento (%)</label>
-              <input type="number" class="form-control" name="descuento" id="descuento" min="0" max="100" step="0.01">
-            </div>
-            
+    </section>
+  
+    <!-- MODAL -->
+    <div class="modal fade" id="modalProveedor" tabindex="-1" aria-labelledby="modalProveedorLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-proveedor-dialog">
+        <div class="modal-content modal-proveedor-content">
+          <div class="modal-header modal-proveedor-header">
+            <h5 class="modal-title" id="modalProveedorLabel">
+              <i class="bi bi-person-lines-fill me-2"></i>Datos del Proveedor
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
+  
+          <form id="formProveedor" class="modal-proveedor-form needs-validation" novalidate>
+            <input type="hidden" name="id" id="proveedorId">
+  
+            <div class="modal-body modal-proveedor-body">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="nombre" class="form-label">Nombre / Empresa</label>
+                  <input type="text" class="form-control" name="nombre" id="nombre" required>
+                </div>
+                <div class="col-md-4">
+                  <label for="contacto" class="form-label">Contacto</label>
+                  <input type="text" class="form-control" name="contacto" id="contacto">
+                </div>
+                <div class="col-md-4">
+                  <label for="telefono" class="form-label">Teléfono</label>
+                  <input type="text" class="form-control" name="telefono" id="telefono">
+                </div>
+                <div class="col-md-4">
+                  <label for="mail" class="form-label">Email</label>
+                  <input type="email" class="form-control" name="mail" id="mail">
+                </div>
+                <div class="col-md-4">
+                  <label for="direccion" class="form-label">Dirección</label>
+                  <input type="text" class="form-control" name="direccion" id="direccion">
+                </div>
+                <div class="col-md-4">
+                  <label for="ciudad" class="form-label">Ciudad</label>
+                  <input type="text" class="form-control" name="ciudad" id="ciudad">
+                </div>
+                <div class="col-md-4">
+                  <label for="provincia" class="form-label">Provincia</label>
+                  <input type="text" class="form-control" name="provincia" id="provincia">
+                </div>
+                <div class="col-md-4">
+                  <label for="cuit" class="form-label">CUIT</label>
+                  <input type="text" class="form-control" name="cuit" id="cuit">
+                </div>
+                <div class="col-md-4">
+                  <label for="banco" class="form-label">Banco</label>
+                  <input type="text" class="form-control" name="banco" id="banco">
+                </div>
+                <div class="col-md-4">
+                  <label for="cbu" class="form-label">CBU</label>
+                  <input type="text" class="form-control" name="cbu" id="cbu">
+                </div>
+                <div class="col-md-4">
+                  <label for="alias" class="form-label">Alias</label>
+                  <input type="text" class="form-control" name="alias" id="alias">
+                </div>
+                <div class="col-md-4">
+                  <label for="descuento" class="form-label">Descuento (%)</label>
+                  <input type="number" class="form-control" name="descuento" id="descuento" min="0" max="100" step="0.01">
+                </div>
+              </div>
+            </div>
+  
+            <div class="modal-footer modal-proveedor-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <i class="bi bi-x-circle me-1"></i>Cancelar
+              </button>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-danger d-none" id="btnEliminarProveedor">
+                  <i class="bi bi-trash me-1"></i>Eliminar
+                </button>
+                <button type="submit" class="btn btn-success">
+                  <i class="bi bi-check2-circle me-1"></i>Guardar Cambios
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
-
-        <div class="modal-footer d-flex justify-content-between">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-            <i class="bi bi-x-circle me-1"></i>Cancelar
-          </button>
-          <div class="d-flex gap-2">
-            <button type="button" class="btn btn-danger d-none" id="btnEliminarProveedor">
-              <i class="bi bi-trash me-1"></i>Eliminar
-            </button>
-            <button type="submit" class="btn btn-success">
-              <i class="bi bi-check2-circle me-1"></i>Guardar Cambios
-            </button>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
-  </div>
-</div>
-
-
-</main>
+  </main>
+  
 <%- include('./layouts/footer.ejs') %>
 <script src="/js/proveedores.js"></script>
 </body>

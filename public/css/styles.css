@@ -212,6 +212,90 @@ header .icons p {
   margin-top: 20px;
   font-size: 14px;
 }
+/* ----------------------------- ADMINISTRACION 'PROVEEDORES' -------------------------- */
+/* Contenedor general de la sección */
+.contenedor-proveedores {
+  padding: 2rem;
+}
+
+/* Tarjeta del proveedor */
+.card-proveedor {
+  max-width: 400px;
+  border: 1px solid #212529;
+  border-radius: 0.25rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  background-color: #fff;
+}
+
+/* Título */
+.titulo-proveedor {
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+
+/* Select */
+.select-proveedor {
+  margin-bottom: 1rem;
+}
+
+/* Detalle visual del proveedor */
+.detalle-proveedor {
+  font-size: 0.9rem;
+  min-height: 150px;
+  margin-bottom: 1rem;
+}
+
+/* Botones */
+.acciones-proveedor {
+  display: flex;
+  justify-content: end;
+  gap: 0.5rem;
+}
+
+/* Estilos del modal */
+.modal-proveedor-dialog {
+  max-width: 1000px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+/* Contenido del modal */
+.modal-proveedor-content {
+  border: 1px solid #212529;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
+}
+
+/* Encabezado del modal */
+.modal-proveedor-header {
+  background-color: #212529;
+  color: #fff;
+}
+
+/* Cuerpo del modal */
+.modal-proveedor-body {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+/* Footer del modal */
+.modal-proveedor-footer {
+  justify-content: space-between;
+}
+
+/* Formulario del modal */
+.modal-proveedor-form .form-label {
+  font-weight: 500;
+}
+
+.modal-proveedor-form .form-control {
+  font-size: 0.9rem;
+}
+
+
+
+
 /* ---------------------------------------FOOTER ------------------------------------------- */
 footer {
   background-color: #fff;
