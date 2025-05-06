@@ -291,6 +291,9 @@ header .icons p {
   box-shadow: none !important;
   outline: none;
 }
+#direccion:focus {
+  box-shadow: none !important;
+}
 
 /* Formulario del modal */
 .modal-proveedor-form .form-label {
