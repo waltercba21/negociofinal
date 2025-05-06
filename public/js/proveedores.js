@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = document.getElementById('proveedorId').value;
         const data = Object.fromEntries(new FormData(form).entries());
   
-        fetch(id ? `/api/proveedores/${id}` : '/api/proveedores', {
+        fetch(id ? `/administracion/api/proveedores/${id}` : '/administracion/api/proveedores', {
           method: id ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnEliminar.addEventListener('click', () => {
         const id = document.getElementById('proveedorId').value;
         if (confirm('¿Estás seguro que querés eliminar este proveedor?')) {
-          fetch(`/api/proveedores/${id}`, {
+          fetch(`/administracion/api/proveedores/${id}`, {
             method: 'DELETE'
           })
           .then(res => res.json())
