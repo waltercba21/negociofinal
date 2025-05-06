@@ -120,22 +120,41 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = document.getElementById('proveedorId').value;
         const data = Object.fromEntries(new FormData(form).entries());
-  
-        fetch(id ? `/administracion/api/proveedores/${id}` : '/administracion/api/proveedores', {
-          method: id ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        })
-        .then(res => res.json())
-        .then(resp => {
-          alert(resp.message);
-          location.reload();
-        })
-        .catch(err => {
-          console.error('Error al guardar:', err);
-          alert('Error al guardar proveedor.');
+      
+        const confirmText = id
+          ? `¿Estás seguro de que querés guardar los cambios para el proveedor "${form.nombre.value}"?\n\nIMPORTANTE: Si modificás el descuento, afectará los precios de toda la lista.`
+          : `¿Estás seguro de que querés crear un nuevo proveedor con el nombre "${form.nombre.value}"?`;
+      
+        Swal.fire({
+          title: 'Confirmar cambios',
+          text: confirmText,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#198754',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Sí, guardar',
+          cancelButtonText: 'Cancelar'
+        }).then(result => {
+          if (result.isConfirmed) {
+            fetch(id ? `/administracion/api/proveedores/${id}` : '/administracion/api/proveedores', {
+              method: id ? 'PUT' : 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(resp => {
+              Swal.fire('Cambios guardados', resp.message, 'success').then(() => {
+                location.reload();
+              });
+            })
+            .catch(err => {
+              console.error('Error al guardar:', err);
+              Swal.fire('Error', 'No se pudo guardar el proveedor.', 'error');
+            });
+          }
         });
       });
+      
     }
   
     // ❌ Eliminar proveedor desde botón del modal
