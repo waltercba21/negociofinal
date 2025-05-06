@@ -168,7 +168,11 @@ module.exports ={
         });
     },
     insertProveedor: (data, callback) => {
-        const { descuento, ...datosProveedor } = data;
+        // Clonar data y quitar id y descuento manualmente
+        const descuento = data.descuento;
+        const datosProveedor = { ...data };
+        delete datosProveedor.descuento;
+        delete datosProveedor.id;
       
         pool.query('INSERT INTO proveedores SET ?', datosProveedor, (err, result) => {
           if (err) return callback(err);
@@ -185,7 +189,8 @@ module.exports ={
             callback(null, result);
           }
         });
-      },      
+      },
+      
       updateProveedor: (id, data, callback) => {
         const { descuento, ...datosProveedor } = data;
       
