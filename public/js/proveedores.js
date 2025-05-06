@@ -84,7 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
         form.banco.value = proveedorSeleccionado.banco || '';
         form.cbu.value = proveedorSeleccionado.cbu || '';
         form.alias.value = proveedorSeleccionado.alias || '';
-  
+        form.descuento.value = proveedorSeleccionado.descuento ?? '';
+
         document.getElementById('modalProveedorLabel').textContent = 'Editar Proveedor';
         btnEliminar.style.display = 'inline-block';
         modal.show();
