@@ -144,8 +144,29 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(resp => {
               Swal.fire('Cambios guardados', resp.message, 'success').then(() => {
-                location.reload();
+                const nuevoNombre = form.nombre.value;
+                const proveedorId = id || resp.insertId; // Si fue nuevo, usá el ID retornado
+              
+                let option = select.querySelector(`option[value="${proveedorId}"]`);
+              
+                if (option) {
+                  // Si ya existe, actualizá el texto
+                  option.textContent = nuevoNombre;
+                } else {
+                  // Si no existe (nuevo proveedor), agregalo
+                  const newOption = document.createElement('option');
+                  newOption.value = resp.insertId;
+                  newOption.textContent = nuevoNombre;
+                  select.appendChild(newOption);
+                  select.value = resp.insertId;
+                }
+              
+                // Simulamos el cambio manualmente para que se renderice el detalle
+                select.dispatchEvent(new Event('change'));
+              
+                modal.hide();
               });
+              
             })
             .catch(err => {
               console.error('Error al guardar:', err);
