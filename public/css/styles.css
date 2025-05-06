@@ -301,7 +301,12 @@ header .icons p {
 
 /* Corrige dirección solo en el modal */
 #modalProveedor #direccion:focus {
+  border: 1px solid #ced4da !important;
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+  padding: 0.375rem 0.75rem;
   box-shadow: none !important;
+  outline: none;
 }
 
 
