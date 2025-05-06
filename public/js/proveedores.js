@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
   
-        fetch(`/api/proveedores/${id}`)
+        fetch(`/administracion/api/proveedores/${id}`)
           .then(res => res.json())
           .then(proveedor => {
             contenedor.innerHTML = `
