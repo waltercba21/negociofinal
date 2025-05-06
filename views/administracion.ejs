@@ -22,6 +22,12 @@
       <p class="text-muted">Seleccioná un proveedor para ver sus datos.</p>
     </div>
   </div>
+  <!-- Botones de acción -->
+<div class="d-flex gap-2 justify-content-end">
+  <button id="btnNuevoProveedor" class="btn btn-sm btn-success">+ Nuevo</button>
+  <button id="btnEditarProveedor" class="btn btn-sm btn-warning" disabled>Editar</button>
+  <button id="btnEliminarProveedorDirecto" class="btn btn-sm btn-danger" disabled>Eliminar</button>
+</div>
 </section>
 
 
@@ -37,7 +43,7 @@
           <form id="formProveedor">
             <input type="hidden" id="proveedorId">
             <div class="row g-3">
-              <!-- Campos como en la versión anterior -->
+
               <!-- Nombre, contacto, ciudad, CUIT, etc -->
             </div>
             <div class="text-end mt-4">

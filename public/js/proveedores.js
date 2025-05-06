@@ -1,10 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
     const modal = new bootstrap.Modal(document.getElementById('modalProveedor'));
     const form = document.getElementById('formProveedor');
-    const btnAgregar = document.getElementById('btnAgregarProveedor');
-    const btnEliminar = document.getElementById('btnEliminarProveedor');
+    const btnAgregar = document.getElementById('btnAgregarProveedor'); // botón dentro del modal
+    const btnEliminar = document.getElementById('btnEliminarProveedor'); // botón dentro del modal
+  
     const select = document.getElementById('selectProveedor');
     const contenedor = document.getElementById('detalleProveedor');
+  
+    const btnNuevoProveedor = document.getElementById('btnNuevoProveedor'); // externo
+    const btnEditarProveedor = document.getElementById('btnEditarProveedor'); // externo
+    const btnEliminarDirecto = document.getElementById('btnEliminarProveedorDirecto'); // externo
+  
+    let proveedorSeleccionado = null;
   
     // ✅ Mostrar datos del proveedor seleccionado
     if (select) {
@@ -13,12 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
   
         if (!id) {
           contenedor.innerHTML = '<p class="text-muted">Seleccioná un proveedor para ver sus datos.</p>';
+          btnEditarProveedor.disabled = true;
+          btnEliminarDirecto.disabled = true;
+          proveedorSeleccionado = null;
           return;
         }
   
         fetch(`/administracion/api/proveedores/${id}`)
           .then(res => res.json())
           .then(proveedor => {
+            proveedorSeleccionado = proveedor;
+  
             contenedor.innerHTML = `
               <p><strong>Contacto:</strong> ${proveedor.contacto || '-'}</p>
               <p><strong>Teléfono:</strong> ${proveedor.telefono || '-'}</p>
@@ -30,6 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <p><strong>CBU:</strong> ${proveedor.cbu || '-'}</p>
               <p><strong>Alias:</strong> ${proveedor.alias || '-'}</p>
             `;
+  
+            btnEditarProveedor.disabled = false;
+            btnEliminarDirecto.disabled = false;
           })
           .catch(err => {
             console.error(err);
@@ -38,7 +53,64 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   
-    // ➕ Guardar proveedor
+    // ➕ Botón NUEVO
+    if (btnNuevoProveedor) {
+      btnNuevoProveedor.addEventListener('click', () => {
+        form.reset();
+        document.getElementById('proveedorId').value = '';
+        document.getElementById('modalProveedorLabel').textContent = 'Nuevo Proveedor';
+        btnEliminar.style.display = 'none';
+        modal.show();
+      });
+    }
+  
+    // ✏️ Botón EDITAR
+    if (btnEditarProveedor) {
+      btnEditarProveedor.addEventListener('click', () => {
+        if (!proveedorSeleccionado) return;
+  
+        document.getElementById('proveedorId').value = proveedorSeleccionado.id;
+        form.nombre.value = proveedorSeleccionado.nombre || '';
+        form.contacto.value = proveedorSeleccionado.contacto || '';
+        form.telefono.value = proveedorSeleccionado.telefono || '';
+        form.mail.value = proveedorSeleccionado.mail || '';
+        form.direccion.value = proveedorSeleccionado.direccion || '';
+        form.ciudad.value = proveedorSeleccionado.ciudad || '';
+        form.provincia.value = proveedorSeleccionado.provincia || '';
+        form.cuit.value = proveedorSeleccionado.cuit || '';
+        form.banco.value = proveedorSeleccionado.banco || '';
+        form.cbu.value = proveedorSeleccionado.cbu || '';
+        form.alias.value = proveedorSeleccionado.alias || '';
+  
+        document.getElementById('modalProveedorLabel').textContent = 'Editar Proveedor';
+        btnEliminar.style.display = 'inline-block';
+        modal.show();
+      });
+    }
+  
+    // 🗑️ Botón ELIMINAR DIRECTO
+    if (btnEliminarDirecto) {
+      btnEliminarDirecto.addEventListener('click', () => {
+        if (!proveedorSeleccionado) return;
+  
+        if (confirm('¿Seguro que querés eliminar este proveedor?')) {
+          fetch(`/administracion/api/proveedores/${proveedorSeleccionado.id}`, {
+            method: 'DELETE'
+          })
+          .then(res => res.json())
+          .then(resp => {
+            alert(resp.message);
+            location.reload();
+          })
+          .catch(err => {
+            console.error('Error al eliminar proveedor:', err);
+            alert('Error al eliminar proveedor.');
+          });
+        }
+      });
+    }
+  
+    // ✅ Guardar proveedor desde el modal (crear o editar)
     if (form) {
       form.addEventListener('submit', e => {
         e.preventDefault();
@@ -62,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   
-    // 🗑️ Eliminar proveedor
+    // ❌ Eliminar proveedor desde botón del modal
     if (btnEliminar) {
       btnEliminar.addEventListener('click', () => {
         const id = document.getElementById('proveedorId').value;
