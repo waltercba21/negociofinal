@@ -1,22 +1,120 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
+<%- include('./layouts/head.ejs') %>
+<%- include('./layouts/header.ejs') %>
 <body>
-    <main>
-  <div class="button-container">
-    <a href="https://empresas.santander.com.ar/login" target="_blank">
-      <button class="button santander-button">Banco Santander</button>
-    </a>
-    <a href="https://www.mercadopago.com.ar/home" target="_blank">
-      <button class="button mercadopago-button">MercadoPago</button>
-    </a>
-    <a href="/administracion/facturas">
-      <button class="button facturas-button">Facturas</button>
-    </a>
-    <a href="/administracion/presupuesto">
-      <button class="button presupuesto-button">Presupuesto</button>
-    </a>
+<main class="container-fluid p-4">
+
+  <section>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="fw-bold text-uppercase">Gestión de Proveedores</h2>
+      <button class="btn btn-dark" id="btnAgregarProveedor">+ Agregar Proveedor</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered border-dark text-center align-middle">
+        <thead class="table-dark text-uppercase">
+          <tr>
+            <th>Nombre / Firma</th>
+            <th>Teléfono</th>
+            <th>Ciudad</th>
+            <th>Provincia</th>
+            <th>Contacto</th>
+            <th>CUIT</th>
+            <th>Email</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% proveedores.forEach(proveedor => { %>
+            <tr>
+              <td><%= proveedor.nombre %></td>
+              <td><%= proveedor.telefono || '-' %></td>
+              <td><%= proveedor.ciudad || '-' %></td>
+              <td><%= proveedor.provincia || '-' %></td>
+              <td><%= proveedor.contacto || '-' %></td>
+              <td><%= proveedor.cuit || '-' %></td>
+              <td><%= proveedor.mail || '-' %></td>
+              <td>
+                <button class="btn btn-sm btn-primary btn-ver-detalle" data-id="<%= proveedor.id %>">Ver</button>
+                <button class="btn btn-sm btn-warning btn-editar-proveedor" data-id="<%= proveedor.id %>">Editar</button>
+                <button class="btn btn-sm btn-danger btn-eliminar-proveedor" data-id="<%= proveedor.id %>">Eliminar</button>
+              </td>
+              
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MODAL Proveedor (para Agregar / Editar) -->
+  <div class="modal fade" id="modalProveedor" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content border border-dark rounded-0">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title" id="modalProveedorLabel">Nuevo Proveedor</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formProveedor">
+            <input type="hidden" name="id" id="proveedorId">
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Nombre / Firma</label>
+                <input type="text" class="form-control" name="nombre" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Contacto</label>
+                <input type="text" class="form-control" name="contacto">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Teléfono</label>
+                <input type="text" class="form-control" name="telefono">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Mail</label>
+                <input type="email" class="form-control" name="mail">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Dirección</label>
+                <input type="text" class="form-control" name="direccion">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Ciudad</label>
+                <input type="text" class="form-control" name="ciudad">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Provincia</label>
+                <input type="text" class="form-control" name="provincia">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">CUIT</label>
+                <input type="text" class="form-control" name="cuit">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Banco</label>
+                <input type="text" class="form-control" name="banco">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">CBU</label>
+                <input type="text" class="form-control" name="cbu">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Alias</label>
+                <input type="text" class="form-control" name="alias">
+              </div>
+            </div>
+
+            <div class="text-end mt-4">
+              <button type="submit" class="btn btn-success">Guardar</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
-  
+
 </main>
-  <%- include ./layouts/footer.ejs %>
+<%- include('./layouts/footer.ejs') %>
 </body>

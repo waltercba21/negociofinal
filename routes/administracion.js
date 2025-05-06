@@ -24,7 +24,6 @@ router.get('/facturas/modificar/:id', administracionController.getModificarFactu
 router.post('/facturas/modificar/:id', upload.single('comprobante_pago'), administracionController.postModificarFactura);
 router.get('/facturas/eliminar/:id', administracionController.getEliminarFactura);
 router.post('/facturas/eliminar/:id', administracionController.postEliminarFactura);
-
 router.get('/facturas/proveedor', administracionController.generarPDFProveedor);
 
 router.post('/api/facturas', administracionController.apiFacturas);

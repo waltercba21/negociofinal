@@ -317,9 +317,19 @@ TABLA PRODUCTOS ORDEN:
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci |
 
 TABLA PROVEEDORES:
-| proveedores | CREATE TABLE `proveedores` (
+proveedores | CREATE TABLE `proveedores` (
   `id` int NOT NULL AUTO_INCREMENT,
   `nombre` varchar(255) NOT NULL,
+  `telefono` varchar(50) DEFAULT NULL,
+  `direccion` varchar(255) DEFAULT NULL,
+  `ciudad` varchar(100) DEFAULT NULL,
+  `provincia` varchar(100) DEFAULT NULL,
+  `contacto` varchar(255) DEFAULT NULL,
+  `cuit` varchar(20) DEFAULT NULL,
+  `mail` varchar(255) DEFAULT NULL,
+  `banco` varchar(100) DEFAULT NULL,
+  `cbu` varchar(30) DEFAULT NULL,
+  `alias` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci |
 
