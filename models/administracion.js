@@ -158,5 +158,25 @@ module.exports ={
             callback(null, results);
         });
     },
-    
+    insertProveedor: (data, callback) => {
+        pool.query('INSERT INTO proveedores SET ?', data, (err, result) => {
+          if (err) return callback(err);
+          callback(null, result);
+        });
+      },
+      
+      updateProveedor: (id, data, callback) => {
+        pool.query('UPDATE proveedores SET ? WHERE id = ?', [data, id], (err, result) => {
+          if (err) return callback(err);
+          callback(null, result);
+        });
+      },
+      
+      deleteProveedor: (id, callback) => {
+        pool.query('DELETE FROM proveedores WHERE id = ?', [id], (err, result) => {
+          if (err) return callback(err);
+          callback(null, result);
+        });
+      }
+      
 }

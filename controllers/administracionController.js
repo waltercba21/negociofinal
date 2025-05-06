@@ -33,7 +33,50 @@ module.exports = {
             }
         });
     },
-    
+    getProveedorByIdAPI: (req, res) => {
+        const id = req.params.id;
+        administracion.getProveedorById(id, (err, proveedor) => {
+          if (err || !proveedor) {
+            return res.status(404).json({ message: 'Proveedor no encontrado' });
+          }
+          res.json(proveedor);
+        });
+      },
+      
+      crearProveedor: (req, res) => {
+        const nuevoProveedor = req.body;
+        administracion.insertProveedor(nuevoProveedor, (err, result) => {
+          if (err) {
+            console.error("❌ Error al crear proveedor:", err);
+            return res.status(500).json({ message: 'Error al crear proveedor' });
+          }
+          res.json({ message: 'Proveedor creado exitosamente' });
+        });
+      },
+      
+      editarProveedor: (req, res) => {
+        const id = req.params.id;
+        const datosActualizados = req.body;
+        administracion.updateProveedor(id, datosActualizados, (err, result) => {
+          if (err) {
+            console.error("❌ Error al actualizar proveedor:", err);
+            return res.status(500).json({ message: 'Error al actualizar proveedor' });
+          }
+          res.json({ message: 'Proveedor actualizado exitosamente' });
+        });
+      },
+      
+      eliminarProveedor: (req, res) => {
+        const id = req.params.id;
+        administracion.deleteProveedor(id, (err, result) => {
+          if (err) {
+            console.error("❌ Error al eliminar proveedor:", err);
+            return res.status(500).json({ message: 'Error al eliminar proveedor' });
+          }
+          res.json({ message: 'Proveedor eliminado exitosamente' });
+        });
+      },
+            
     facturas: (req, res) => {
         administracion.getProveedores(function(error, proveedores) {
             if (error) {
