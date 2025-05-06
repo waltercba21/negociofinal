@@ -5,41 +5,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnEliminar = document.getElementById('btnEliminarProveedor');
   
     // Abrir modal para agregar proveedor
-    btnAgregar.addEventListener('click', () => {
-      form.reset();
-      document.getElementById('proveedorId').value = '';
-      document.getElementById('modalProveedorLabel').textContent = 'Nuevo Proveedor';
-      btnEliminar.style.display = 'none';
-      modal.show();
-    });
-  
-    // Abrir modal con datos al hacer clic en tarjeta
-    document.querySelectorAll('.proveedor-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const id = card.dataset.id;
-        fetch(`/api/proveedores/${id}`)
-          .then(res => res.json())
-          .then(proveedor => {
-            document.getElementById('proveedorId').value = proveedor.id;
-            form.nombre.value = proveedor.nombre || '';
-            form.contacto.value = proveedor.contacto || '';
-            form.telefono.value = proveedor.telefono || '';
-            form.mail.value = proveedor.mail || '';
-            form.direccion.value = proveedor.direccion || '';
-            form.ciudad.value = proveedor.ciudad || '';
-            form.provincia.value = proveedor.provincia || '';
-            form.cuit.value = proveedor.cuit || '';
-            form.banco.value = proveedor.banco || '';
-            form.cbu.value = proveedor.cbu || '';
-            form.alias.value = proveedor.alias || '';
-  
-            document.getElementById('modalProveedorLabel').textContent = 'Detalle del Proveedor';
-            btnEliminar.style.display = 'inline-block';
-            modal.show();
-          })
-          .catch(err => console.error('Error al obtener proveedor:', err));
+    document.addEventListener('DOMContentLoaded', () => {
+        const select = document.getElementById('selectProveedor');
+        const contenedor = document.getElementById('detalleProveedor');
+      
+        select.addEventListener('change', () => {
+          const id = select.value;
+      
+          if (!id) {
+            contenedor.innerHTML = '<p class="text-muted">Seleccioná un proveedor para ver sus datos.</p>';
+            return;
+          }
+      
+          fetch(`/api/proveedores/${id}`)
+            .then(res => res.json())
+            .then(proveedor => {
+              contenedor.innerHTML = `
+                <p><strong>Contacto:</strong> ${proveedor.contacto || '-'}</p>
+                <p><strong>Teléfono:</strong> ${proveedor.telefono || '-'}</p>
+                <p><strong>Email:</strong> ${proveedor.mail || '-'}</p>
+                <p><strong>Dirección:</strong> ${proveedor.direccion || '-'}</p>
+                <p><strong>Ciudad:</strong> ${proveedor.ciudad || '-'} - ${proveedor.provincia || '-'}</p>
+                <p><strong>CUIT:</strong> ${proveedor.cuit || '-'}</p>
+                <p><strong>Banco:</strong> ${proveedor.banco || '-'}</p>
+                <p><strong>CBU:</strong> ${proveedor.cbu || '-'}</p>
+                <p><strong>Alias:</strong> ${proveedor.alias || '-'}</p>
+              `;
+            })
+            .catch(err => {
+              console.error(err);
+              contenedor.innerHTML = '<p class="text-danger">Error al cargar los datos del proveedor.</p>';
+            });
+        });
       });
-    });
   
     // Guardar proveedor (nuevo o editado)
     form.addEventListener('submit', e => {
