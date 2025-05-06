@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
           .then(proveedor => {
             proveedorSeleccionado = proveedor;
   
+            const descuentoTexto = proveedor.descuento !== null ? `${proveedor.descuento}%` : 'Sin descuento';
+  
             contenedor.innerHTML = `
               <p><strong>Contacto:</strong> ${proveedor.contacto || '-'}</p>
               <p><strong>Teléfono:</strong> ${proveedor.telefono || '-'}</p>
@@ -41,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <p><strong>Banco:</strong> ${proveedor.banco || '-'}</p>
               <p><strong>CBU:</strong> ${proveedor.cbu || '-'}</p>
               <p><strong>Alias:</strong> ${proveedor.alias || '-'}</p>
+              <p><strong>Descuento:</strong> ${descuentoTexto}</p>
             `;
   
             btnEditarProveedor.disabled = false;

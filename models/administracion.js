@@ -3,13 +3,16 @@ const conexion = require('../config/conexion')
 
 module.exports ={
     getProveedores : function(callback) {
-        pool.query('SELECT id, nombre FROM proveedores', function(error, results) {
-            if (error) {
-                throw error;
-            }
-            callback(null, results);
+        pool.query(`
+          SELECT p.*, d.descuento 
+          FROM proveedores p 
+          LEFT JOIN descuentos_proveedor d ON d.proveedor_id = p.id
+        `, function(error, results) {
+          if (error) throw error;
+          callback(null, results);
         });
-    },
+      },
+      
     insertFactura: function (factura, callback) {
         pool.query('INSERT INTO facturas SET ?', factura, function (error, results) {
             if (error) {
@@ -135,17 +138,17 @@ module.exports ={
         });
     },
     getProveedorById : function(idProveedor, callback) {
-        pool.query('SELECT * FROM proveedores WHERE id = ?', [idProveedor], function(error, results) {
-            if (error) {
-                console.error('❌ Error al obtener proveedor:', error);
-                return callback(error, null);
-            }
-            if (!results.length) {
-                return callback(null, null);
-            }
-            callback(null, results[0]);
+        pool.query(`
+          SELECT p.*, d.descuento 
+          FROM proveedores p 
+          LEFT JOIN descuentos_proveedor d ON d.proveedor_id = p.id
+          WHERE p.id = ?
+        `, [idProveedor], function(error, results) {
+          if (error) return callback(error, null);
+          if (!results.length) return callback(null, null);
+          callback(null, results[0]);
         });
-    },    
+      },
     getFacturasByProveedorId : function(idProveedor, callback) {
         pool.query('SELECT * FROM facturas WHERE id_proveedor = ?', [idProveedor], function(error, results) {
             if (error) throw error;

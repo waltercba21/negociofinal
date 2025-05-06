@@ -12,6 +12,7 @@
     <!-- Select de proveedores -->
     <select id="selectProveedor" class="form-select mb-3">
       <option value="">Seleccionar proveedor...</option>
+      <p><strong>Descuento:</strong> <span id="descuentoProveedorView">-</span></p>
       <% proveedores.forEach(prov => { %>
         <option value="<%= prov.id %>"><%= prov.nombre %></option>
       <% }) %>
@@ -19,7 +20,7 @@
 
 <!-- Área para mostrar los datos -->
 <div id="detalleProveedor" class="small mb-3" style="min-height: 150px;">
-  <p class="text-muted">Seleccioná un proveedor para ver sus datos.</p>
+  <p class="text-muted">Seleccioná un proveedor</p>
 </div>
 
 <!-- Botones de acción (ahora dentro del card) -->
@@ -104,6 +105,11 @@
               <label for="alias" class="form-label">Alias</label>
               <input type="text" class="form-control" name="alias" id="alias">
             </div>
+            <div class="col-md-6">
+              <label for="descuento" class="form-label">Descuento (%)</label>
+              <input type="number" class="form-control" name="descuento" id="descuento" min="0" max="100" step="0.01">
+            </div>
+            
           </div>
         </div>
 
