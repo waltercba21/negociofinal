@@ -24,8 +24,16 @@ function formatDate(date) {
 
 module.exports = {
     administracion: (req, res) => {
-        res.render('administracion');
+        administracion.getProveedores((error, proveedores) => {
+            if (error) {
+                console.error("❌ Error al obtener proveedores:", error);
+                res.status(500).send("Error al obtener proveedores");
+            } else {
+                res.render('administracion', { proveedores });
+            }
+        });
     },
+    
     facturas: (req, res) => {
         administracion.getProveedores(function(error, proveedores) {
             if (error) {
