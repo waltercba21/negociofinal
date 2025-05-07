@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('/administracion/api/proveedores')
       .then(res => res.json())
       .then(proveedores => {
-        console.group('🔁 Actualizando lista de proveedores');
-        console.log('📦 Lista actualizada:', proveedores);
+        console.group('📥 Recibiendo proveedores del servidor');
+        console.log('Proveedores recibidos:', proveedores);
 
-        // Evitar duplicados: limpiar completamente el select
+        // Limpiar completamente el select
         select.innerHTML = '';
 
         const defaultOption = document.createElement('option');
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             select.appendChild(option);
             idsAgregados.add(prov.id);
           } else {
-            console.warn(`⚠️ ID duplicado ignorado: ${prov.id} - ${prov.nombre}`);
+            console.warn(`⚠️ Duplicado evitado: ID ${prov.id} - ${prov.nombre}`);
           }
         });
 
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnNuevoProveedor) {
     btnNuevoProveedor.addEventListener('click', () => {
       form.reset();
-      document.getElementById('proveedorId').value = '';
+      form.proveedorId.value = '';
       document.getElementById('modalProveedorLabel').textContent = 'Nuevo Proveedor';
       btnEliminar.style.display = 'none';
       modal.show();
@@ -125,12 +125,82 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (form) {
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const id = form.proveedorId.value;
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      Swal.fire({
+        title: '¿Deseás confirmar los cambios?',
+        text: id
+          ? 'Estás por modificar este proveedor. Verificá el descuento antes de continuar.'
+          : 'Estás por crear un nuevo proveedor.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Cancelar'
+      }).then(result => {
+        if (!result.isConfirmed) return;
+
+        fetch(id ? `/administracion/api/proveedores/${id}` : '/administracion/api/proveedores', {
+          method: id ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+          .then(res => res.json())
+          .then(resp => {
+            const proveedorId = resp.insertId || id;
+            console.log('✅ Proveedor guardado:', resp);
+            actualizarListaProveedores(proveedorId);
+            modal.hide();
+          })
+          .catch(err => {
+            console.error('❌ Error al guardar proveedor:', err);
+            Swal.fire('Error', 'No se pudo guardar el proveedor.', 'error');
+          });
+      });
+    });
+  }
+
+  if (btnEliminar) {
+    btnEliminar.addEventListener('click', () => {
+      const id = form.proveedorId.value;
+      if (!id) return;
+
+      Swal.fire({
+        title: '¿Eliminar proveedor?',
+        text: 'Esta acción eliminará también el descuento asociado.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then(result => {
+        if (result.isConfirmed) {
+          fetch(`/administracion/api/proveedores/${id}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(resp => {
+              Swal.fire('Eliminado', resp.message, 'success').then(() => {
+                actualizarListaProveedores();
+                contenedor.innerHTML = '<p class="text-muted">Seleccioná un proveedor para ver sus datos.</p>';
+              });
+            })
+            .catch(err => {
+              console.error('❌ Error al eliminar proveedor:', err);
+              Swal.fire('Error', 'No se pudo eliminar el proveedor.', 'error');
+            });
+        }
+      });
+    });
+  }
+
   if (btnEliminarDirecto) {
     btnEliminarDirecto.addEventListener('click', () => {
       if (!proveedorSeleccionado) return;
+
       Swal.fire({
         title: '¿Eliminar proveedor?',
-        text: 'Esta acción no se puede deshacer.',
+        text: 'Esta acción eliminará también su descuento asociado.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Sí, eliminar',
@@ -156,79 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (form) {
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const id = form.proveedorId.value;
-      const data = Object.fromEntries(new FormData(form).entries());
-
-      const confirmText = id
-        ? `¿Deseás guardar los cambios para "${form.nombre.value}"?\nEsto afectará la lista de precios si cambiás el descuento.`
-        : `¿Crear un nuevo proveedor llamado "${form.nombre.value}"?`;
-
-      Swal.fire({
-        title: 'Confirmar acción',
-        text: confirmText,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#198754',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, continuar',
-        cancelButtonText: 'Cancelar'
-      }).then(result => {
-        if (result.isConfirmed) {
-          fetch(id ? `/administracion/api/proveedores/${id}` : '/administracion/api/proveedores', {
-            method: id ? 'PUT' : 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-          })
-            .then(res => res.json())
-            .then(resp => {
-              console.log('✅ Proveedor guardado:', resp);
-              const proveedorId = resp.insertId || id;
-              actualizarListaProveedores(proveedorId);
-              modal.hide();
-            })
-            .catch(err => {
-              console.error('❌ Error al guardar proveedor:', err);
-              Swal.fire('Error', 'No se pudo guardar el proveedor.', 'error');
-            });
-        }
-      });
-    });
-  }
-
-  if (btnEliminar) {
-    btnEliminar.addEventListener('click', () => {
-      const id = form.proveedorId.value;
-      if (!id) return;
-      Swal.fire({
-        title: '¿Eliminar proveedor?',
-        text: 'Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Eliminar',
-        cancelButtonText: 'Cancelar'
-      }).then(result => {
-        if (result.isConfirmed) {
-          fetch(`/administracion/api/proveedores/${id}`, {
-            method: 'DELETE'
-          })
-            .then(res => res.json())
-            .then(resp => {
-              Swal.fire('Eliminado', resp.message, 'success').then(() => {
-                actualizarListaProveedores();
-              });
-            })
-            .catch(err => {
-              console.error('❌ Error al eliminar proveedor:', err);
-              Swal.fire('Error', 'No se pudo eliminar el proveedor.', 'error');
-            });
-        }
-      });
-    });
-  }
-
-  // Inicializar lista al cargar la vista
+  // 🚀 Carga inicial
   actualizarListaProveedores();
 });
