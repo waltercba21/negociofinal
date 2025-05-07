@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("🔄 Solicitando proveedores desde /administracion/api/proveedores...");
 
     try {
-      const response = await fetch('/administracion/api/proveedores');
+      const response = await fetch('/api/proveedores');
       if (!response.ok) {
         throw new Error(`❌ Error HTTP ${response.status}`);
       }
