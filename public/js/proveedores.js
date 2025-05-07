@@ -188,23 +188,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   function actualizarListaProveedores(selectedId = null) {
-    const select = document.getElementById('selectProveedor'); // 👈 asegurarse que esté definido correctamente
+    const select = document.getElementById('selectProveedor');
   
     if (!select) {
-      console.warn('No se encontró el select de proveedores.');
+      console.warn('❌ No se encontró el select de proveedores.');
       return;
     }
   
     fetch('/administracion/api/proveedores')
       .then(res => res.json())
       .then(proveedores => {
-        console.clear();
-        console.log('✅ Lista de proveedores obtenida del servidor:', proveedores);
+        console.group('🧾 Refrescando lista de proveedores...');
+        console.log('Proveedores recibidos:', proveedores);
   
-        // Limpiar el select
-        select.innerHTML = '<option value="">Seleccionar proveedor...</option>';
+        // Limpieza completa del select
+        while (select.options.length > 0) {
+          select.remove(0);
+        }
   
-        const idsAgregados = new Set(); // para evitar duplicados
+        // Opción por defecto
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Seleccionar proveedor...';
+        select.appendChild(defaultOption);
+  
+        const idsAgregados = new Set();
   
         proveedores.forEach(prov => {
           if (!idsAgregados.has(prov.id)) {
@@ -214,16 +222,20 @@ document.addEventListener('DOMContentLoaded', () => {
             select.appendChild(option);
             idsAgregados.add(prov.id);
           } else {
-            console.warn(`⚠️ Duplicado evitado para proveedor con ID ${prov.id}`);
+            console.warn(`⚠️ Proveedor duplicado detectado y evitado: ${prov.id} - ${prov.nombre}`);
           }
         });
   
-        // Reasignar selección si corresponde
+        // Reasignar proveedor seleccionado
         if (selectedId) {
           select.value = selectedId;
           select.dispatchEvent(new Event('change'));
         }
+  
+        console.groupEnd();
       })
-      .catch(err => console.error('❌ Error al actualizar lista de proveedores:', err));
+      .catch(err => {
+        console.error('❌ Error al actualizar lista de proveedores:', err);
+      });
   }
   
