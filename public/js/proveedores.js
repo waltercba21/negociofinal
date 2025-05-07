@@ -145,26 +145,29 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(resp => {
               Swal.fire('Cambios guardados', resp.message, 'success').then(() => {
                 const nuevoNombre = form.nombre.value;
-                const proveedorId = document.getElementById('proveedorId').value || resp.insertId;
+                const proveedorId = resp.insertId || document.getElementById('proveedorId').value;
             
-                // 🔒 Corregimos el bug: verificamos que no haya duplicado
+                // Buscar si ya existe el option
                 let option = select.querySelector(`option[value="${proveedorId}"]`);
             
                 if (option) {
+                  // Si existe, actualizá el texto
                   option.textContent = nuevoNombre;
                 } else {
+                  // Si no existe (nuevo), lo agregamos
                   const newOption = document.createElement('option');
-                  newOption.value = resp.insertId;
+                  newOption.value = proveedorId;
                   newOption.textContent = nuevoNombre;
                   select.appendChild(newOption);
                 }
             
-                // Reasignar selección y actualizar vista
+                // Seleccionamos el proveedor actualizado o nuevo
                 select.value = proveedorId;
                 select.dispatchEvent(new Event('change'));
                 modal.hide();
               });
             })
+            
             
             .catch(err => {
               console.error('Error al guardar:', err);
