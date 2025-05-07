@@ -11,11 +11,9 @@
   
         <!-- Select de proveedores -->
         <select id="selectProveedor" class="select-proveedor">
-          <option value="">Seleccionar proveedor...</option>
-          <% proveedores.forEach(prov => { %>
-            <option value="<%= prov.id %>"><%= prov.nombre %></option>
-          <% }) %>
+          <option value="">Cargando proveedores...</option>
         </select>
+        
   
         <!-- Detalle -->
         <div id="detalleProveedor" class="detalle-proveedor">
