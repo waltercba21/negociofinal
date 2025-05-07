@@ -144,25 +144,16 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(resp => {
               Swal.fire('Cambios guardados', resp.message, 'success').then(() => {
-                const nuevoNombre = form.nombre.value;
                 const proveedorId = resp.insertId || document.getElementById('proveedorId').value;
             
-                // 🔍 Eliminar duplicados antes de agregar/editar
-                const duplicados = Array.from(select.options).filter(opt => opt.value == proveedorId);
-                duplicados.forEach(opt => opt.remove());
+                // ✅ Regeneramos todo el listado limpio
+                actualizarListaProveedores(proveedorId);
             
-                // 🔄 Crear o actualizar la opción
-                const newOption = document.createElement('option');
-                newOption.value = proveedorId;
-                newOption.textContent = nuevoNombre;
-                select.appendChild(newOption);
-            
-                // Seleccionar el proveedor actualizado o nuevo
-                select.value = proveedorId;
-                select.dispatchEvent(new Event('change'));
+                // ✅ Cerramos el modal
                 modal.hide();
               });
             })
+            
             .catch(err => {
               console.error('Error al guardar:', err);
               Swal.fire('Error', 'No se pudo guardar el proveedor.', 'error');
@@ -200,7 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('/administracion/api/proveedores')
       .then(res => res.json())
       .then(proveedores => {
-        // Limpiar el select
         select.innerHTML = '<option value="">Seleccionar proveedor...</option>';
   
         proveedores.forEach(prov => {
@@ -210,7 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
           select.appendChild(option);
         });
   
-        // Si hay uno seleccionado, seleccionarlo
         if (selectedId) {
           select.value = selectedId;
           select.dispatchEvent(new Event('change'));
@@ -218,4 +207,5 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => console.error('Error al actualizar lista de proveedores:', err));
   }
+  
   
