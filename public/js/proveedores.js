@@ -144,35 +144,16 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(resp => {
               Swal.fire('Cambios guardados', resp.message, 'success').then(() => {
-                const nuevoNombre = form.nombre.value;
-                const proveedorId = resp.insertId || document.getElementById('proveedorId').value;
-            
-                // Buscar si ya existe el option
-                let option = select.querySelector(`option[value="${proveedorId}"]`);
-            
-                if (option) {
-                  // Si existe, actualizá el texto
-                  option.textContent = nuevoNombre;
-                } else {
-                  // Si no existe (nuevo), lo agregamos
-                  const newOption = document.createElement('option');
-                  newOption.value = proveedorId;
-                  newOption.textContent = nuevoNombre;
-                  select.appendChild(newOption);
-                }
-            
-                // Seleccionamos el proveedor actualizado o nuevo
-                select.value = proveedorId;
-                select.dispatchEvent(new Event('change'));
                 modal.hide();
+                const proveedorId = resp.insertId || document.getElementById('proveedorId').value;
+                actualizarListaProveedores(proveedorId); // 🔄 Recarga todo el <select> y selecciona el actual
               });
             })
-            
-            
             .catch(err => {
               console.error('Error al guardar:', err);
               Swal.fire('Error', 'No se pudo guardar el proveedor.', 'error');
             });
+            
           }
         });
       });
@@ -200,4 +181,26 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
+  function actualizarListaProveedores(selectedId = null) {
+    fetch('/administracion/api/proveedores')
+      .then(res => res.json())
+      .then(proveedores => {
+        // Limpiar el select
+        select.innerHTML = '<option value="">Seleccionar proveedor...</option>';
+  
+        proveedores.forEach(prov => {
+          const option = document.createElement('option');
+          option.value = prov.id;
+          option.textContent = prov.nombre;
+          select.appendChild(option);
+        });
+  
+        // Si hay uno seleccionado, seleccionarlo
+        if (selectedId) {
+          select.value = selectedId;
+          select.dispatchEvent(new Event('change'));
+        }
+      })
+      .catch(err => console.error('Error al actualizar lista de proveedores:', err));
+  }
   
