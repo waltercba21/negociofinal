@@ -188,24 +188,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   function actualizarListaProveedores(selectedId = null) {
+    const select = document.getElementById('selectProveedor'); // 👈 asegurarse que esté definido correctamente
+  
+    if (!select) {
+      console.warn('No se encontró el select de proveedores.');
+      return;
+    }
+  
     fetch('/administracion/api/proveedores')
       .then(res => res.json())
       .then(proveedores => {
+        console.clear();
+        console.log('✅ Lista de proveedores obtenida del servidor:', proveedores);
+  
+        // Limpiar el select
         select.innerHTML = '<option value="">Seleccionar proveedor...</option>';
   
+        const idsAgregados = new Set(); // para evitar duplicados
+  
         proveedores.forEach(prov => {
-          const option = document.createElement('option');
-          option.value = prov.id;
-          option.textContent = prov.nombre;
-          select.appendChild(option);
+          if (!idsAgregados.has(prov.id)) {
+            const option = document.createElement('option');
+            option.value = prov.id;
+            option.textContent = prov.nombre;
+            select.appendChild(option);
+            idsAgregados.add(prov.id);
+          } else {
+            console.warn(`⚠️ Duplicado evitado para proveedor con ID ${prov.id}`);
+          }
         });
   
+        // Reasignar selección si corresponde
         if (selectedId) {
           select.value = selectedId;
           select.dispatchEvent(new Event('change'));
         }
       })
-      .catch(err => console.error('Error al actualizar lista de proveedores:', err));
+      .catch(err => console.error('❌ Error al actualizar lista de proveedores:', err));
   }
-  
   
