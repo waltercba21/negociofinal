@@ -1,49 +1,60 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const select = document.getElementById('selectProveedor');
-  const form = document.getElementById('formProveedor');
   const modal = new bootstrap.Modal(document.getElementById('modalProveedor'));
-  const btnEditarProveedor = document.getElementById('btnEditarProveedor');
+  const form = document.getElementById('formProveedor');
+  const btnAgregar = document.getElementById('btnAgregarProveedor');
   const btnEliminar = document.getElementById('btnEliminarProveedor');
-  const btnEliminarDirecto = document.getElementById('btnEliminarDirecto');
-  const btnNuevoProveedor = document.getElementById('btnNuevoProveedor');
+  const select = document.getElementById('selectProveedor');
   const contenedor = document.getElementById('detalleProveedor');
+  const btnNuevoProveedor = document.getElementById('btnNuevoProveedor');
+  const btnEditarProveedor = document.getElementById('btnEditarProveedor');
+  const btnEliminarDirecto = document.getElementById('btnEliminarProveedorDirecto');
+
   let proveedorSeleccionado = null;
 
+  function renderDetalle(proveedor) {
+    const descuentoTexto = proveedor.descuento !== null ? `${proveedor.descuento}%` : 'Sin descuento';
+    contenedor.innerHTML = `
+      <p><strong>Contacto:</strong> ${proveedor.contacto || '-'}</p>
+      <p><strong>Teléfono:</strong> ${proveedor.telefono || '-'}</p>
+      <p><strong>Email:</strong> ${proveedor.mail || '-'}</p>
+      <p><strong>Dirección:</strong> ${proveedor.direccion || '-'}</p>
+      <p><strong>Ciudad:</strong> ${proveedor.ciudad || '-'} - ${proveedor.provincia || '-'}</p>
+      <p><strong>CUIT:</strong> ${proveedor.cuit || '-'}</p>
+      <p><strong>Banco:</strong> ${proveedor.banco || '-'}</p>
+      <p><strong>CBU:</strong> ${proveedor.cbu || '-'}</p>
+      <p><strong>Alias:</strong> ${proveedor.alias || '-'}</p>
+      <p><strong>Descuento:</strong> ${descuentoTexto}</p>
+    `;
+  }
+
   function actualizarListaProveedores(selectedId = null) {
-    console.clear();
-    console.group('🔁 Actualizando lista de proveedores');
-
     fetch('/administracion/api/proveedores')
-      .then(res => {
-        if (!res.ok) throw new Error("❌ Respuesta no válida del servidor");
-        return res.json();
-      })
+      .then(res => res.json())
       .then(proveedores => {
-        console.log('📦 Proveedores recibidos:', proveedores);
+        console.group('📥 Recibiendo proveedores del servidor');
+        console.log('Proveedores recibidos:', proveedores);
 
-        // Limpiar el select antes de insertar
+        // Limpiar completamente el select
         select.innerHTML = '';
 
         const defaultOption = document.createElement('option');
         defaultOption.value = '';
-        defaultOption.textContent = 'Seleccionar proveedor.';
+        defaultOption.textContent = 'Seleccionar proveedor...';
         select.appendChild(defaultOption);
 
-        const idsUnicos = new Set();
+        const idsAgregados = new Set();
 
         proveedores.forEach(prov => {
-          if (!idsUnicos.has(prov.id)) {
+          if (!idsAgregados.has(prov.id)) {
             const option = document.createElement('option');
             option.value = prov.id;
             option.textContent = prov.nombre;
             select.appendChild(option);
-            idsUnicos.add(prov.id);
+            idsAgregados.add(prov.id);
           } else {
-            console.warn(`⚠️ Proveedor duplicado ignorado: ID=${prov.id}, Nombre=${prov.nombre}`);
+            console.warn(`⚠️ Duplicado evitado: ID ${prov.id} - ${prov.nombre}`);
           }
         });
-
-        console.log('📌 Options finales renderizados:', Array.from(select.options).map(opt => `${opt.value} - ${opt.textContent}`));
 
         if (selectedId) {
           select.value = selectedId;
@@ -52,14 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.groupEnd();
       })
-      .catch(err => {
-        console.error('❌ Error al cargar proveedores:', err);
-      });
+      .catch(err => console.error('❌ Error al cargar proveedores:', err));
   }
 
   if (select) {
-    actualizarListaProveedores(); // Carga inicial
-
     select.addEventListener('change', () => {
       const id = select.value;
       if (!id) {
@@ -74,13 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(proveedor => {
           proveedorSeleccionado = proveedor;
-          console.log('📄 Detalle proveedor seleccionado:', proveedor);
           renderDetalle(proveedor);
           btnEditarProveedor.disabled = false;
           btnEliminarDirecto.disabled = false;
         })
         .catch(err => {
-          console.error('❌ Error al obtener proveedor por ID:', err);
+          console.error('❌ Error al obtener datos del proveedor:', err);
+          contenedor.innerHTML = '<p class="text-danger">Error al cargar los datos del proveedor.</p>';
         });
     });
   }
@@ -88,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnNuevoProveedor) {
     btnNuevoProveedor.addEventListener('click', () => {
       form.reset();
-      document.getElementById('proveedorId').value = '';
+      form.proveedorId.value = '';
       document.getElementById('modalProveedorLabel').textContent = 'Nuevo Proveedor';
       btnEliminar.style.display = 'none';
       modal.show();
@@ -107,6 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
       form.ciudad.value = proveedorSeleccionado.ciudad || '';
       form.provincia.value = proveedorSeleccionado.provincia || '';
       form.cuit.value = proveedorSeleccionado.cuit || '';
+      form.banco.value = proveedorSeleccionado.banco || '';
+      form.cbu.value = proveedorSeleccionado.cbu || '';
+      form.alias.value = proveedorSeleccionado.alias || '';
+      form.descuento.value = proveedorSeleccionado.descuento ?? '';
+
       document.getElementById('modalProveedorLabel').textContent = 'Editar Proveedor';
       btnEliminar.style.display = 'inline-block';
       modal.show();
@@ -114,67 +126,64 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (form) {
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', e => {
       e.preventDefault();
-      const id = document.getElementById('proveedorId').value;
+      const id = form.proveedorId.value;
       const data = Object.fromEntries(new FormData(form).entries());
 
-      const confirmText = id
-        ? `¿Querés guardar los cambios para "${form.nombre.value}"?`
-        : `¿Crear nuevo proveedor "${form.nombre.value}"?`;
-
       Swal.fire({
-        title: 'Confirmar',
-        text: confirmText,
+        title: '¿Deseás confirmar los cambios?',
+        text: id
+          ? 'Estás por modificar este proveedor. Verificá el descuento antes de continuar.'
+          : 'Estás por crear un nuevo proveedor.',
         icon: 'question',
         showCancelButton: true,
-        confirmButtonText: 'Sí',
+        confirmButtonText: 'Sí, guardar',
         cancelButtonText: 'Cancelar'
       }).then(result => {
-        if (result.isConfirmed) {
-          fetch(id ? `/administracion/api/proveedores/${id}` : '/administracion/api/proveedores', {
-            method: id ? 'PUT' : 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+        if (!result.isConfirmed) return;
+
+        fetch(id ? `/administracion/api/proveedores/${id}` : '/administracion/api/proveedores', {
+          method: id ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+          .then(res => res.json())
+          .then(resp => {
+            const proveedorId = resp.insertId || id;
+            console.log('✅ Proveedor guardado:', resp);
+            actualizarListaProveedores(proveedorId);
+            modal.hide();
           })
-            .then(res => res.json())
-            .then(resp => {
-              console.log('🟢 Proveedor guardado:', resp);
-              const proveedorId = resp.insertId || id;
-              actualizarListaProveedores(proveedorId);
-              modal.hide();
-            })
-            .catch(err => {
-              console.error('❌ Error al guardar proveedor:', err);
-              Swal.fire('Error', 'No se pudo guardar el proveedor.', 'error');
-            });
-        }
+          .catch(err => {
+            console.error('❌ Error al guardar proveedor:', err);
+            Swal.fire('Error', 'No se pudo guardar el proveedor.', 'error');
+          });
       });
     });
   }
 
   if (btnEliminar) {
     btnEliminar.addEventListener('click', () => {
-      const id = document.getElementById('proveedorId').value;
+      const id = form.proveedorId.value;
       if (!id) return;
 
       Swal.fire({
         title: '¿Eliminar proveedor?',
-        text: 'Esta acción no se puede deshacer.',
+        text: 'Esta acción eliminará también el descuento asociado.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Eliminar',
         cancelButtonText: 'Cancelar'
       }).then(result => {
         if (result.isConfirmed) {
-          fetch(`/administracion/api/proveedores/${id}`, {
-            method: 'DELETE'
-          })
+          fetch(`/administracion/api/proveedores/${id}`, { method: 'DELETE' })
             .then(res => res.json())
             .then(resp => {
-              console.log('🗑️ Proveedor eliminado:', resp);
-              actualizarListaProveedores();
-              modal.hide();
+              Swal.fire('Eliminado', resp.message, 'success').then(() => {
+                actualizarListaProveedores();
+                contenedor.innerHTML = '<p class="text-muted">Seleccioná un proveedor para ver sus datos.</p>';
+              });
             })
             .catch(err => {
               console.error('❌ Error al eliminar proveedor:', err);
@@ -184,4 +193,39 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  if (btnEliminarDirecto) {
+    btnEliminarDirecto.addEventListener('click', () => {
+      if (!proveedorSeleccionado) return;
+
+      Swal.fire({
+        title: '¿Eliminar proveedor?',
+        text: 'Esta acción eliminará también su descuento asociado.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then(result => {
+        if (result.isConfirmed) {
+          fetch(`/administracion/api/proveedores/${proveedorSeleccionado.id}`, {
+            method: 'DELETE'
+          })
+            .then(res => res.json())
+            .then(resp => {
+              Swal.fire('Eliminado', resp.message, 'success').then(() => {
+                actualizarListaProveedores();
+                contenedor.innerHTML = '<p class="text-muted">Seleccioná un proveedor para ver sus datos.</p>';
+              });
+            })
+            .catch(err => {
+              console.error('❌ Error al eliminar proveedor:', err);
+              Swal.fire('Error', 'No se pudo eliminar el proveedor.', 'error');
+            });
+        }
+      });
+    });
+  }
+
+  // 🚀 Carga inicial
+  actualizarListaProveedores();
 });
