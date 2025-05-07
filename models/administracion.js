@@ -190,27 +190,42 @@ module.exports ={
           }
         });
       },
-      
       updateProveedor: (id, data, callback) => {
         const { descuento, ...datosProveedor } = data;
       
+        // Primero actualizamos los datos generales del proveedor
         pool.query('UPDATE proveedores SET ? WHERE id = ?', [datosProveedor, id], (err, result) => {
           if (err) return callback(err);
       
-          if (descuento !== undefined) {
-            pool.query(`
-              INSERT INTO descuentos_proveedor (proveedor_id, descuento)
-              VALUES (?, ?)
-              ON DUPLICATE KEY UPDATE descuento = VALUES(descuento)
-            `, [id, descuento], (err2, result2) => {
-              if (err2) return callback(err2);
-              callback(null, result2);
-            });
-          } else {
-            callback(null, result);
-          }
+          // Luego actualizamos o insertamos el descuento (si existe)
+          pool.query('SELECT * FROM descuentos_proveedor WHERE proveedor_id = ?', [id], (err2, rows) => {
+            if (err2) return callback(err2);
+      
+            if (rows.length > 0) {
+              // Ya existe un descuento → actualizar
+              pool.query(
+                'UPDATE descuentos_proveedor SET descuento = ? WHERE proveedor_id = ?',
+                [descuento, id],
+                err3 => {
+                  if (err3) return callback(err3);
+                  callback(null, result);
+                }
+              );
+            } else {
+              // No existe → insertar nuevo descuento
+              pool.query(
+                'INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
+                [id, descuento],
+                err4 => {
+                  if (err4) return callback(err4);
+                  callback(null, result);
+                }
+              );
+            }
+          });
         });
-      },      
+      },
+      
       deleteProveedor: (id, callback) => {
         // Primero borrar el descuento
         pool.query('DELETE FROM descuentos_proveedor WHERE proveedor_id = ?', [id], (err1) => {
