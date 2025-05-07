@@ -144,15 +144,30 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(resp => {
               Swal.fire('Cambios guardados', resp.message, 'success').then(() => {
-                modal.hide();
+                const nuevoNombre = form.nombre.value;
                 const proveedorId = resp.insertId || document.getElementById('proveedorId').value;
-                actualizarListaProveedores(proveedorId); // 🔄 Recarga todo el <select> y selecciona el actual
+            
+                // 🔍 Eliminar duplicados antes de agregar/editar
+                const duplicados = Array.from(select.options).filter(opt => opt.value == proveedorId);
+                duplicados.forEach(opt => opt.remove());
+            
+                // 🔄 Crear o actualizar la opción
+                const newOption = document.createElement('option');
+                newOption.value = proveedorId;
+                newOption.textContent = nuevoNombre;
+                select.appendChild(newOption);
+            
+                // Seleccionar el proveedor actualizado o nuevo
+                select.value = proveedorId;
+                select.dispatchEvent(new Event('change'));
+                modal.hide();
               });
             })
             .catch(err => {
               console.error('Error al guardar:', err);
               Swal.fire('Error', 'No se pudo guardar el proveedor.', 'error');
             });
+            
             
           }
         });
