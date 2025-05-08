@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (query.length < 2) return;
   
       try {
-        const res = await fetch(`/productos/buscar?termino=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/buscar?q=${encodeURIComponent(query)}`)
         if (!res.ok) throw new Error('Error al buscar productos');
         const productos = await res.json();
   
