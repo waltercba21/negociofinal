@@ -143,9 +143,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (form) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+      console.log('🟨 Se envió el formulario de proveedor');
+  
       const id = document.getElementById('proveedorId').value;
       const data = Object.fromEntries(new FormData(form).entries());
-
+      console.log('📤 Datos del formulario:', data);
+  
       Swal.fire({
         title: 'Confirmar acción',
         text: id
@@ -156,18 +159,35 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmButtonText: 'Sí, guardar',
         cancelButtonText: 'Cancelar'
       }).then(result => {
-        if (!result.isConfirmed) return;
-
-        fetch(id ? `/administracion/api/proveedores/${id}` : '/administracion/api/proveedores', {
-          method: id ? 'PUT' : 'POST',
+        if (!result.isConfirmed) {
+          console.log('❌ Usuario canceló la acción');
+          return;
+        }
+  
+        const url = id
+          ? `/administracion/api/proveedores/${id}`
+          : '/administracion/api/proveedores';
+        const method = id ? 'PUT' : 'POST';
+  
+        console.log(`🔁 Enviando ${method} a ${url}`);
+  
+        fetch(url, {
+          method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         })
-          .then(res => res.json())
+          .then(res => {
+            console.log('📬 Respuesta recibida con status:', res.status);
+            return res.json();
+          })
           .then(resp => {
             console.log('🟢 Proveedor guardado:', resp);
             const proveedorId = resp.insertId || id;
+  
+            // ⚠️ Si esto no se ve en consola, no se ejecuta correctamente
+            console.log('📌 Ejecutando actualizarListaProveedores con ID:', proveedorId);
             actualizarListaProveedores(proveedorId);
+  
             modal.hide();
           })
           .catch(err => {
@@ -177,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
-
+  
   if (btnEliminarDirecto) {
     btnEliminarDirecto.addEventListener('click', () => {
       if (!proveedorSeleccionado) return;
