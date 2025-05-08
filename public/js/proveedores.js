@@ -28,44 +28,54 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function actualizarListaProveedores(selectedId = null) {
+    console.group('🔁 ACTUALIZAR LISTA DE PROVEEDORES');
+  
+    console.log('🧼 Opciones antes de limpiar:');
+    [...select.options].forEach(opt => {
+      console.log(`• ${opt.value} → ${opt.textContent}`);
+    });
+  
+    // Limpiar select excepto la opción por defecto
+    select.querySelectorAll('option:not([value=""])').forEach(opt => opt.remove());
+  
     fetch('/administracion/api/proveedores')
       .then(res => res.json())
       .then(proveedores => {
-        console.group('📥 Recibiendo proveedores del servidor');
-        console.log('Proveedores recibidos:', proveedores);
-
-        // Limpiar completamente el select
-        select.innerHTML = '';
-
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = 'Seleccionar proveedor...';
-        select.appendChild(defaultOption);
-
+        console.log('📦 Proveedores recibidos desde el servidor:', proveedores);
+  
         const idsAgregados = new Set();
-
         proveedores.forEach(prov => {
-          if (!idsAgregados.has(prov.id)) {
-            const option = document.createElement('option');
-            option.value = prov.id;
-            option.textContent = prov.nombre;
-            select.appendChild(option);
-            idsAgregados.add(prov.id);
-          } else {
-            console.warn(`⚠️ Duplicado evitado: ID ${prov.id} - ${prov.nombre}`);
+          const idStr = String(prov.id);
+  
+          if (idsAgregados.has(idStr)) {
+            console.warn(`⚠️ Duplicado evitado: ID ${prov.id}`);
+            return;
           }
+  
+          const option = document.createElement('option');
+          option.value = idStr;
+          option.textContent = prov.nombre;
+          select.appendChild(option);
+          idsAgregados.add(idStr);
         });
-
+  
+        console.log('✅ Opciones luego de actualizar:');
+        [...select.options].forEach(opt => {
+          console.log(`• ${opt.value} → ${opt.textContent}`);
+        });
+  
         if (selectedId) {
-          select.value = selectedId;
+          select.value = String(selectedId);
           select.dispatchEvent(new Event('change'));
         }
-
+  
         console.groupEnd();
       })
-      .catch(err => console.error('❌ Error al cargar proveedores:', err));
+      .catch(err => {
+        console.error('❌ Error al cargar proveedores:', err);
+      });
   }
-
+  
   if (select) {
     select.addEventListener('change', () => {
       const id = select.value;
