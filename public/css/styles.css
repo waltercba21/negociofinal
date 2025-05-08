@@ -230,9 +230,10 @@ header .icons p {
 
 /* Título */
 .titulo-proveedor {
-  font-weight: 700;
-  margin-bottom: 1rem;
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
   text-transform: uppercase;
+  font-weight: 600;
 }
 
 /* Select */
@@ -330,18 +331,29 @@ header .icons p {
 /* 🔷 Contenedor padre de administración */
 .contenedor-admin-flex {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 30px;
   flex-wrap: wrap;
   padding: 30px 20px;
 }
 
+
 /* 🔷 Asegurarse que el contenedor de factura herede el estilo */
 .contenedor-factura {
-  font-size: 0.85rem;
-  max-width: 450px;
+  font-size: 0.7rem; 
+  max-width: 420px;
+  padding: 1.2rem;
 }
-
+.contenedor-factura .form-label {
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+}
+.contenedor-factura .form-control,
+.contenedor-factura .form-select {
+  font-size: 0.85rem;
+  padding: 0.3rem 0.6rem;
+}
 /* ---------------------------------------FOOTER ------------------------------------------- */
 footer {
   background-color: #fff;
