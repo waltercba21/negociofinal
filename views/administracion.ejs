@@ -118,7 +118,7 @@
 
 
     <!----------------------- CONTENEDOR DE FACTURAS ---------------------->
-    
+
 <section class="panel-facturas mt-5">
   <div class="card-proveedor">
     <h5 class="titulo-proveedor">Registrar Factura</h5>
@@ -169,11 +169,63 @@
     </div>
 
     <!-- Botón de guardar -->
+    <button id="btnAgregarProductosFactura" class="btn btn-primary ms-2">Agregar Productos</button>
+
     <div class="d-flex justify-content-end mt-3">
       <button id="btnGuardarFactura" class="btn btn-success">Guardar Factura</button>
     </div>
   </div>
 </section>
+
+<!-- MODAL: AGREGAR PRODUCTOS A FACTURA -->
+<div class="modal fade" id="modalProductosFactura" tabindex="-1" aria-labelledby="modalProductosFacturaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-proveedor-dialog">
+    <div class="modal-content modal-proveedor-content">
+      <div class="modal-header modal-proveedor-header">
+        <h5 class="modal-title" id="modalProductosFacturaLabel">
+          <i class="bi bi-box-seam me-2"></i>Productos de la Factura
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body modal-proveedor-body">
+        <!-- Buscador -->
+        <div class="mb-3">
+          <label for="buscadorProducto" class="form-label">Buscar producto</label>
+          <input type="text" class="form-control" id="buscadorProducto" placeholder="Escribí el nombre o código...">
+          <div id="resultadosBusqueda" class="list-group mt-1"></div>
+        </div>
+
+        <!-- Tabla de productos seleccionados -->
+        <div class="table-responsive mt-4">
+          <table class="table table-bordered table-sm align-middle text-center" id="tablaProductosFactura">
+            <thead class="table-light">
+              <tr>
+                <th>Código Prov.</th>
+                <th>Producto</th>
+                <th>Imagen</th>
+                <th>Cantidad</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Se insertan dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer modal-proveedor-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          Cerrar
+        </button>
+        <button type="button" class="btn btn-success" id="btnGuardarProductosFactura">
+          Guardar Productos
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
   </main>
   

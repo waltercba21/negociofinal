@@ -1,135 +1,103 @@
-// Mostrar formulario de facturas
-document.getElementById('mostrarFormulario').addEventListener('click', function () {
-    var formulario = document.getElementById('formularioFacturas');
-    var fondoOscuro = document.getElementById('fondoOscuro');
-    formulario.style.display = 'block';
-    fondoOscuro.style.display = 'flex'; // Cambiado a 'flex' para centrar
-});
-
-// Cerrar formulario de facturas
-document.getElementById('cerrarFormulario').addEventListener('click', function () {
-    document.getElementById('formularioFacturas').style.display = 'none';
-    document.getElementById('fondoOscuro').style.display = 'none';
-});
-
-// Funcionalidad de agregar productos a la tabla
-document.getElementById('entradaBusqueda').addEventListener('input', async (e) => {
-    const busqueda = e.target.value;
-    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-    resultadosBusqueda.innerHTML = '';
-    
-    if (!busqueda.trim()) return;
-
-    const url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda);
-    const respuesta = await fetch(url);
-    const productos = await respuesta.json();
-
-    productos.forEach((producto) => {
-        const resultado = document.createElement('div');
-        resultado.textContent = producto.nombre;
-        resultado.classList.add('resultado-busqueda');
-        
-        resultado.addEventListener('click', () => {
-            resultadosBusqueda.innerHTML = '';
-
-            // Verificar si el producto ya está en la tabla
-            const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-            const filas = Array.from(tablaFactura.rows);
-            const existe = filas.some(row => row.dataset.productoId === String(producto.id));
-
-            if (existe) {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Este producto ya ha sido agregado',
-                    icon: 'warning',
-                    confirmButtonText: 'Entendido'
-                });
-                return;
-            }
-
-            // Crear nueva fila con producto
-            const filaFactura = tablaFactura.insertRow();
-            filaFactura.dataset.productoId = producto.id; 
-            filaFactura.insertCell(0).textContent = producto.codigo;
-            filaFactura.insertCell(1).textContent = producto.nombre;
-
-            // Input para cantidad
-            const cellCantidad = filaFactura.insertCell(2);
-            const inputCantidad = document.createElement('input');
-            inputCantidad.type = 'number';
-            inputCantidad.min = 1;
-            inputCantidad.value = 1;
-            inputCantidad.classList.add('input-cantidad'); 
-            cellCantidad.appendChild(inputCantidad);
-
-            // Botón eliminar
-            const cellEliminar = filaFactura.insertCell(3);
-            const botonEliminar = document.createElement('button');
-            botonEliminar.textContent = '✖';
-            botonEliminar.className = 'boton-eliminar';
-            botonEliminar.addEventListener('click', function () {
-                filaFactura.remove();
-            });
-            cellEliminar.appendChild(botonEliminar);
-        });
-
-        resultadosBusqueda.appendChild(resultado);
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = new bootstrap.Modal(document.getElementById('modalProductosFactura'));
+    const btnAbrirModal = document.getElementById('btnAgregarProductosFactura');
+    const buscador = document.getElementById('buscadorProducto');
+    const resultados = document.getElementById('resultadosBusqueda');
+    const tabla = document.getElementById('tablaProductosFactura').querySelector('tbody');
+    const btnGuardar = document.getElementById('btnGuardarProductosFactura');
+  
+    let productosSeleccionados = [];
+  
+    // Abrir el modal
+    btnAbrirModal.addEventListener('click', () => {
+      modal.show();
+      buscador.value = '';
+      resultados.innerHTML = '';
+      tabla.innerHTML = '';
+      productosSeleccionados = [];
     });
-});
-
-
-document.getElementById('formularioFacturas').addEventListener('submit', async function (e) {
-    e.preventDefault();
-    
-    const invoiceItems = [];
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    
-    for (let i = 0; i < filasFactura.length; i++) {
-        const productoId = filasFactura[i].dataset.productoId;
-        const descripcion = filasFactura[i].cells[1].textContent.trim();
-        const cantidad = parseInt(filasFactura[i].cells[2].querySelector('input').value);
-        
-        if (productoId && descripcion && !isNaN(cantidad)) {
-            invoiceItems.push({
-                id: productoId,
-                descripcion: descripcion,
-                cantidad: cantidad
-            });
-        }
-    }
-
-    console.log("Contenido de invoiceItems antes de enviar:", invoiceItems);
-
-    const formData = new FormData(this);
-    formData.delete('invoiceItems'); // Eliminamos cualquier rastro previo
-    formData.append('invoiceItems', JSON.stringify(invoiceItems));
-
-    try {
-        const response = await fetch('/administracion/facturas', {
-            method: 'POST',
-            body: formData
+  
+    // Buscar productos mientras escribe
+    buscador.addEventListener('input', async () => {
+      const query = buscador.value.trim();
+      resultados.innerHTML = '';
+  
+      if (query.length < 2) return;
+  
+      try {
+        const res = await fetch(`/productos/buscar?termino=${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error('Error al buscar productos');
+        const productos = await res.json();
+  
+        productos.forEach(prod => {
+          const item = document.createElement('div');
+          item.className = 'resultado-busqueda';
+          item.innerHTML = `
+            <img src="/uploads/${prod.imagen || 'noimg.jpg'}" class="miniatura">
+            <div class="resultado-contenedor">
+              <strong>${prod.nombre}</strong> - ${prod.codigo_proveedor || '-'}
+            </div>
+          `;
+          item.addEventListener('click', () => agregarProducto(prod));
+          resultados.appendChild(item);
         });
-
-        const data = await response.json();
-        
-        if (response.ok) {
-            Swal.fire({
-                title: '¡Éxito!',
-                text: data.message,
-                icon: 'success',
-                confirmButtonText: 'Entendido'
-            }).then(() => {
-                window.location.reload(); 
-            });
-        } else {
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        Swal.fire({
-            title: 'Error',
-            text: error.message || 'Hubo un problema al procesar la solicitud',
-            icon: 'error',
-            confirmButtonText: 'Reintentar'
-        });
+      } catch (err) {
+        console.error('❌ Error al buscar productos:', err);
+      }
+    });
+  
+    // Agregar producto a la tabla
+    function agregarProducto(prod) {
+      if (productosSeleccionados.some(p => p.id === prod.id)) return;
+  
+      productosSeleccionados.push({ id: prod.id, cantidad: 1 });
+  
+      const fila = document.createElement('tr');
+      fila.dataset.id = prod.id;
+      fila.innerHTML = `
+        <td>${prod.codigo_proveedor || '-'}</td>
+        <td>${prod.nombre}</td>
+        <td><img src="/uploads/${prod.imagen || 'noimg.jpg'}" class="miniatura-tabla"></td>
+        <td>
+          <input type="number" class="form-control form-control-sm cantidad-input" value="1" min="1">
+        </td>
+        <td>
+          <button class="btn btn-sm btn-danger boton-eliminar-factura">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      `;
+  
+      // eliminar fila
+      fila.querySelector('.boton-eliminar-factura').addEventListener('click', () => {
+        productosSeleccionados = productosSeleccionados.filter(p => p.id !== prod.id);
+        fila.remove();
+      });
+  
+      // cambiar cantidad
+      fila.querySelector('.cantidad-input').addEventListener('input', e => {
+        const cantidad = parseInt(e.target.value);
+        const prodSel = productosSeleccionados.find(p => p.id === prod.id);
+        if (prodSel) prodSel.cantidad = isNaN(cantidad) ? 1 : cantidad;
+      });
+  
+      tabla.appendChild(fila);
+      resultados.innerHTML = '';
+      buscador.value = '';
     }
-});
+  
+    // Guardar productos (solo muestra la consola por ahora)
+    btnGuardar.addEventListener('click', () => {
+      if (!productosSeleccionados.length) {
+        return Swal.fire('Atención', 'Debes seleccionar al menos un producto.', 'warning');
+      }
+  
+      console.log("🧾 Productos a guardar:", productosSeleccionados);
+  
+      Swal.fire('Guardado', 'Productos listos para enviar.', 'success');
+      modal.hide();
+  
+      // 🚧 Luego enviar productosSeleccionados al backend como parte del form de factura
+    });
+  });
+  
