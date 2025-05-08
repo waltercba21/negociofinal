@@ -224,7 +224,4 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
-
-  // 🚀 Carga inicial
-  actualizarListaProveedores();
 });
