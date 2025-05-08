@@ -316,8 +316,10 @@ header .icons p {
 }
 
 /* - ------------- Contenedor Facturas Administracion   ------------ */
+.panel-proveedores,
 .panel-facturas {
-  padding: 2rem 0;
+  padding: 0;
+  margin: 0;
 }
 
 .card-proveedor {
