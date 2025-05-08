@@ -327,6 +327,20 @@ header .icons p {
   background-color: #fff;
   border-radius: 0.5rem;
 }
+/* 🔷 Contenedor padre de administración */
+.contenedor-admin-flex {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  padding: 30px 20px;
+}
+
+/* 🔷 Asegurarse que el contenedor de factura herede el estilo */
+.contenedor-factura {
+  font-size: 0.85rem;
+  max-width: 450px;
+}
 
 /* ---------------------------------------FOOTER ------------------------------------------- */
 footer {
