@@ -14,59 +14,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function actualizarListaProveedores(selectedId = null) {
     console.group('🔁 ACTUALIZANDO SELECT DE PROVEEDORES');
-
-    // Mostrar qué opciones hay antes de limpiar
-    console.log('🧼 Opciones en el <select> antes de limpiar:');
+  
+    // Mostrar antes
+    console.log('🧼 Opciones actuales:');
     [...select.options].forEach(opt => {
       console.log(`• ${opt.value} → ${opt.textContent}`);
     });
-
-    while (select.options.length > 0) {
-      select.remove(0);
+  
+    // Limpiar todo el select
+    while (select.firstChild) {
+      select.removeChild(select.firstChild);
     }
-    
-
+  
     try {
       const res = await fetch('/administracion/api/proveedores');
       console.log('📶 Fetch ejecutado con status:', res.status);
-
       if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-
+  
       const proveedores = await res.json();
-      console.log('📦 Datos recibidos desde el backend:', proveedores);
-
+      console.log('📦 Proveedores recibidos:', proveedores);
+  
+      // Agregar opción por defecto
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Seleccionar proveedor...';
+      select.appendChild(defaultOption);
+  
       const idsAgregados = new Set();
-
+  
       proveedores.forEach(prov => {
         const idStr = String(prov.id);
+  
         if (idsAgregados.has(idStr)) {
-          console.warn(`⚠️ Proveedor duplicado ignorado: ${idStr} - ${prov.nombre}`);
+          console.warn(`⚠️ Duplicado ignorado: ${idStr} - ${prov.nombre}`);
           return;
         }
-
+  
         const option = document.createElement('option');
         option.value = idStr;
         option.textContent = prov.nombre;
         select.appendChild(option);
         idsAgregados.add(idStr);
       });
-
-      console.log('✅ Opciones renderizadas en el <select>:');
+  
+      console.log('✅ Opciones finales en el <select>:');
       [...select.options].forEach(opt => {
         console.log(`• ${opt.value} → ${opt.textContent}`);
       });
-
+  
       if (selectedId) {
         select.value = String(selectedId);
         select.dispatchEvent(new Event('change'));
       }
-
+  
     } catch (err) {
       console.error('❌ Error al recuperar proveedores:', err);
     }
-
+  
     console.groupEnd();
   }
+  
 
   if (select) {
     select.addEventListener('change', () => {
@@ -231,7 +238,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ❗ NO LLAMAR actualizarListaProveedores() al iniciar si ya viene cargado con EJS
-  // Solo se debe usar luego de crear, editar o eliminar
-  // actualizarListaProveedores(); ← Comentado a propósito
 });
