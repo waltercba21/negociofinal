@@ -218,6 +218,14 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
           Swal.fire('Error', err.message || 'Ocurrió un error al guardar.', 'error');
         }
       });
-      
+      document.getElementById('facturaFecha').addEventListener('change', function () {
+  const fechaFactura = new Date(this.value);
+  if (!isNaN(fechaFactura)) {
+    fechaFactura.setDate(fechaFactura.getDate() + 30);
+    const fechaVencimiento = fechaFactura.toISOString().split('T')[0];
+    document.getElementById('facturaFechaPago').value = fechaVencimiento;
+  }
+});
+
   });
   

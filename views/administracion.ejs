@@ -136,9 +136,13 @@
 
     <!-- Fecha -->
     <div class="mb-3">
-      <label for="facturaFecha" class="form-label">Fecha de la factura</label>
+      <label for="facturaFecha" class="form-label">Fecha Factura</label>
       <input type="date" id="facturaFecha" class="form-control">
     </div>
+    <div class="mb-3">
+  <label for="facturaFechaPago" class="form-label">Fecha Vencimiento</label>
+  <input type="date" id="facturaFechaPago" class="form-control">
+</div>
 
     <!-- Número de Factura -->
     <div class="mb-3">
@@ -167,6 +171,13 @@
       <label for="facturaImporteTotal" class="form-label">Importe total con IVA</label>
       <input type="number" step="0.01" id="facturaImporteTotal" class="form-control">
     </div>
+    <div class="mb-3">
+  <label for="facturaCondicion" class="form-label">Estado del pago</label>
+  <select id="facturaCondicion" class="form-select">
+    <option value="pendiente" selected>PENDIENTE</option>
+    <option value="pagado">PAGADO</option>
+  </select>
+</div>
 
     <!-- Botón de guardar -->
     <button id="btnAgregarProductosFactura" class="btn btn-primary ms-2">Agregar Productos</button>

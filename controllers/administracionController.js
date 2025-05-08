@@ -151,29 +151,6 @@ module.exports = {
             }
         });
     },
-    apiFacturas: function(req, res) {
-        let filtro = {
-            id_proveedor: req.body.proveedor,
-            fecha: req.body.fechaFactura,
-            fecha_pago: req.body.fechaPago,
-            condicion: req.body.condicion,
-            fechaDesde: req.body.fechaDesde,
-            fechaHasta: req.body.fechaHasta
-        };
-        for (let key in filtro) {
-            if (filtro[key] && key.includes('fecha')) {
-                let date = new Date(filtro[key]);
-                let day = String(date.getDate()).padStart(2, '0');
-                let month = String(date.getMonth() + 1).padStart(2, '0'); 
-                let year = date.getFullYear();
-                filtro[key] = `${year}-${month}-${day}`;
-            }
-        }
-    
-        administracion.getFacturasFiltradas(filtro, function(facturas) {
-            res.json(facturas);
-        });
-    },
     presupuestos: (req, res) => {
         res.render('presupuestos');
     },
