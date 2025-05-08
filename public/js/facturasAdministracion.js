@@ -58,13 +58,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   
     function agregarProducto(prod) {
-      if (productosSeleccionados.some(p => p.id === prod.id)) return;
-  
-      productosSeleccionados.push({ id: prod.id, cantidad: 1 });
-      renderizarTabla();
-      resultados.innerHTML = '';
-      buscador.value = '';
-    }
+        if (productosSeleccionados.some(p => p.id === prod.id)) return;
+      
+        productosSeleccionados.push({
+          id: prod.id,
+          nombre: prod.nombre,
+          proveedores: prod.proveedores || [],
+          imagenes: prod.imagenes || [],
+          cantidad: 1
+        });
+      
+        renderizarTabla();
+        resultados.innerHTML = '';
+        buscador.value = '';
+      }
+      
   
     function renderizarTabla() {
       tabla.innerHTML = '';
@@ -73,7 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
         fila.dataset.id = prod.id;
   
         const codigoProveedor = (prod.proveedores && prod.proveedores[0]?.codigo) || '-';
-        const imagenSrc = (prod.imagenes?.[0]) ? '/uploads/productos/' + prod.imagenes[0].imagen : '/uploads/noimg.jpg';
+const imagenSrc = (prod.imagenes?.[0]?.imagen)
+  ? '/uploads/productos/' + prod.imagenes[0].imagen
+  : '/uploads/noimg.jpg';
+
   
         fila.innerHTML = `
           <td>${codigoProveedor}</td>
