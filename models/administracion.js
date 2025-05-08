@@ -2,16 +2,24 @@ const pool = require('../config/conexion');
 const conexion = require('../config/conexion')
 
 module.exports ={
-    getProveedores : function(callback) {
-        pool.query(`
-          SELECT p.*, d.descuento 
-          FROM proveedores p 
-          LEFT JOIN descuentos_proveedor d ON d.proveedor_id = p.id
-        `, function(error, results) {
-          if (error) throw error;
-          callback(null, results);
-        });
-      },
+  getProveedores : function(callback) {
+    pool.query(`
+      SELECT 
+        p.id, p.nombre, p.telefono, p.direccion, p.ciudad, p.provincia, 
+        p.contacto, p.cuit, p.mail, p.banco, p.cbu, p.alias,
+        (
+          SELECT d.descuento 
+          FROM descuentos_proveedor d 
+          WHERE d.proveedor_id = p.id 
+          LIMIT 1
+        ) AS descuento
+      FROM proveedores p
+    `, function(error, results) {
+      if (error) return callback(error);
+      callback(null, results);
+    });
+  },
+  
       
     insertFactura: function (factura, callback) {
         pool.query('INSERT INTO facturas SET ?', factura, function (error, results) {
