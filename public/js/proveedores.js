@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <p><strong>Descuento:</strong> ${descuentoTexto}</p>
     `;
   }
+  console.log('🟢 Se cargó el archivo proveedores.js');
 
   function actualizarListaProveedores(selectedId = null) {
     console.group('🔁 ACTUALIZAR LISTA DE PROVEEDORES');
