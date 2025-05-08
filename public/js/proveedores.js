@@ -21,8 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log(`• ${opt.value} → ${opt.textContent}`);
     });
 
-    // Limpiar todas las opciones excepto la primera
-    select.querySelectorAll('option:not([value=""])').forEach(opt => opt.remove());
+    while (select.options.length > 0) {
+      select.remove(0);
+    }
+    
 
     try {
       const res = await fetch('/administracion/api/proveedores');
