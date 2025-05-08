@@ -217,6 +217,19 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
     Swal.fire('Error', err.message || 'Ocurrió un error al guardar.', 'error');
   }
 });
+const inputFechaFactura = document.getElementById('facturaFecha');
+const inputFechaPago = document.getElementById('facturaFechaPago');
+
+inputFechaFactura.addEventListener('change', () => {
+  const valorFecha = inputFechaFactura.value;
+  if (!valorFecha) return;
+
+  const fecha = new Date(valorFecha);
+  fecha.setDate(fecha.getDate() + 30);
+
+  const fecha30dias = fecha.toISOString().split('T')[0];
+  inputFechaPago.value = fecha30dias;
+});
 
 
   });
