@@ -181,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(resp => {
               Swal.fire('Eliminado', resp.message, 'success').then(() => {
-                actualizarListaProveedores();
                 contenedor.innerHTML = '<p class="text-muted">Seleccioná un proveedor para ver sus datos.</p>';
               });
             })
