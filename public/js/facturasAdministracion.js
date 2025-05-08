@@ -124,54 +124,100 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
       modal.hide();
       Swal.fire('Confirmado', 'Productos listos para guardar con la factura.', 'success');
     });
-  
-    btnGuardarFactura.addEventListener('click', async () => {
-        // 1. Preparar FormData para enviar texto + archivo
-const formData = new FormData();
-formData.append('id_proveedor', proveedor);
-formData.append('fecha', fecha);
-formData.append('numero_factura', numero);
-formData.append('importe_bruto', bruto);
-formData.append('iva', iva);
-formData.append('importe_factura', total);
-formData.append('fecha_pago', document.getElementById('facturaFechaPago').value);
-formData.append('condicion', document.getElementById('facturaCondicion').value);
+  btnGuardarFactura.addEventListener('click', async () => {
+  const proveedor = document.getElementById('facturaProveedor').value;
+  const fecha = document.getElementById('facturaFecha').value;
+  const numero = document.getElementById('facturaNumero').value;
+  const bruto = document.getElementById('facturaImporteBruto').value;
+  const iva = document.getElementById('facturaIVA').value;
+  const total = document.getElementById('facturaImporteTotal').value;
+  const condicion = document.getElementById('facturaCondicion').value;
+  const fecha_pago = document.getElementById('facturaFechaPago').value;
+  const comprobante = document.getElementById('facturaComprobante').files[0];
 
-const comprobante = document.getElementById('facturaComprobante').files[0];
-if (comprobante) {
-  formData.append('comprobante_pago', comprobante);
-}
+  if (!proveedor || !fecha || !numero || !bruto || !iva || !total || !condicion || !fecha_pago) {
+    return Swal.fire('Faltan datos', 'Completá todos los campos de la factura.', 'warning');
+  }
 
-// 2. Enviar la factura
-const res = await fetch('/administracion/api/facturas', {
-  method: 'POST',
-  body: formData // 👈 NO uses headers, fetch lo gestiona
-});
+  if (!productosSeleccionados.length) {
+    return Swal.fire('Faltan productos', 'Debe confirmar al menos un producto.', 'warning');
+  }
 
-if (!res.ok) {
-  const errorText = await res.text();
-  console.error('❌ Error del servidor al guardar factura:', errorText);
-  throw new Error('Error al guardar la factura (backend)');
-}
+  try {
+    const formData = new FormData();
+    formData.append('id_proveedor', proveedor);
+    formData.append('fecha', fecha);
+    formData.append('numero_factura', numero);
+    formData.append('importe_bruto', bruto);
+    formData.append('iva', iva);
+    formData.append('importe_factura', total);
+    formData.append('fecha_pago', fecha_pago);
+    formData.append('condicion', condicion);
+    if (comprobante) {
+      formData.append('comprobante_pago', comprobante);
+    }
 
-const respuesta = await res.json();
-console.log('📥 Respuesta del backend (factura):', respuesta);
+    console.log('📤 Enviando datos de factura con archivo:', Object.fromEntries(formData.entries()));
 
-if (!respuesta.insertId) {
-  console.error('⚠️ No se devolvió insertId');
-  throw new Error('No se pudo crear la factura');
-}
+    const res = await fetch('/administracion/api/facturas', {
+      method: 'POST',
+      body: formData
+    });
 
-      });
-      
-      document.getElementById('facturaFecha').addEventListener('change', function () {
-  const fechaFactura = new Date(this.value);
-  if (!isNaN(fechaFactura)) {
-    fechaFactura.setDate(fechaFactura.getDate() + 30);
-    const fechaVencimiento = fechaFactura.toISOString().split('T')[0];
-    document.getElementById('facturaFechaPago').value = fechaVencimiento;
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('❌ Error al guardar factura:', errorText);
+      throw new Error('Error al guardar la factura (backend)');
+    }
+
+    const respuesta = await res.json();
+    console.log('📥 Respuesta del backend (factura):', respuesta);
+
+    if (!respuesta.insertId) {
+      console.error('⚠️ No se devolvió insertId');
+      throw new Error('No se pudo crear la factura');
+    }
+
+    // Enviar los productos
+    const productosRes = await fetch('/administracion/api/factura/productos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        facturaId: respuesta.insertId,
+        items: productosSeleccionados
+      })
+    });
+
+    if (!productosRes.ok) {
+      const errorText = await productosRes.text();
+      console.error('❌ Error al guardar productos:', errorText);
+      throw new Error('Error al guardar productos');
+    }
+
+    const productosResp = await productosRes.json();
+    console.log('✅ Productos guardados:', productosResp);
+
+    Swal.fire('Éxito', 'Factura y productos guardados correctamente.', 'success');
+
+    // Limpiar formulario (opcional)
+    document.getElementById('facturaProveedor').value = '';
+    document.getElementById('facturaFecha').value = '';
+    document.getElementById('facturaNumero').value = '';
+    document.getElementById('facturaImporteBruto').value = '';
+    document.getElementById('facturaIVA').value = '';
+    document.getElementById('facturaImporteTotal').value = '';
+    document.getElementById('facturaFechaPago').value = '';
+    document.getElementById('facturaCondicion').value = 'pendiente';
+    document.getElementById('facturaComprobante').value = '';
+    productosSeleccionados = [];
+    tabla.innerHTML = '';
+
+  } catch (err) {
+    console.error('❌ Error general al guardar factura o productos:', err);
+    Swal.fire('Error', err.message || 'Ocurrió un error al guardar.', 'error');
   }
 });
+
 
   });
   

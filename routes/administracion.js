@@ -26,7 +26,7 @@ router.get('/facturas/eliminar/:id', administracionController.getEliminarFactura
 router.post('/facturas/eliminar/:id', administracionController.postEliminarFactura);
 router.get('/facturas/proveedor', administracionController.generarPDFProveedor);
 
-router.post('/api/facturas', administracionController.postFactura);
+router.post('/api/facturas', upload.single('comprobante_pago'), administracionController.postFactura);
 router.post('/api/factura/productos', administracionController.guardarItemsFactura);
 
 
