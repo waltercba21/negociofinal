@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let proveedorSeleccionado = null;
   async function actualizarListaProveedores(selectedId = null) {
-    alert("ACTUALIZAR LISTA EJECUTADA");
     const select = document.getElementById('selectProveedor');
     if (!select) {
       console.error('❌ No se encontró el <select> de proveedores');
@@ -23,19 +22,17 @@ document.addEventListener('DOMContentLoaded', () => {
   
     try {
       const res = await fetch('/administracion/api/proveedores');
-      alert(`STATUS FETCH: ${res.status}`);
-      console.log('📶 Fetch ejecutado con status:', res.status);
       if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
   
       const proveedores = await res.json();
-      console.log('📦 Proveedores recibidos desde backend:', proveedores);
+      console.log('📦 Proveedores desde API:', proveedores);
   
-      // 🔥 LIMPIAR TODAS LAS OPCIONES DEL SELECT
+      // 💣 ELIMINAR TODOS LOS OPTION (incluso los de EJS)
       while (select.firstChild) {
         select.removeChild(select.firstChild);
       }
   
-      // 🔁 INSERTAR OPCIÓN POR DEFECTO
+      // 🧩 Opción por defecto
       const defaultOption = document.createElement('option');
       defaultOption.value = '';
       defaultOption.textContent = 'Seleccionar proveedor...';
@@ -46,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
       proveedores.forEach(prov => {
         const idStr = String(prov.id);
         if (idsAgregados.has(idStr)) {
-          console.warn(`⚠️ Proveedor duplicado ignorado: ${idStr} - ${prov.nombre}`);
+          console.warn(`⚠️ Duplicado ignorado: ${idStr} - ${prov.nombre}`);
           return;
         }
   
@@ -57,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         idsAgregados.add(idStr);
       });
   
-      console.log('✅ Opciones finales en el select:');
+      console.log('✅ Opciones en <select> después:');
       [...select.options].forEach(opt => {
         console.log(`• ${opt.value} → ${opt.textContent}`);
       });
@@ -68,11 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   
     } catch (err) {
-      console.error('❌ Error al actualizar lista de proveedores:', err);
+      console.error('❌ Error en actualizarListaProveedores:', err);
     }
   
     console.groupEnd();
   }
+  
   
 
   if (select) {
