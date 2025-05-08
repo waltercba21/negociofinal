@@ -97,8 +97,6 @@ module.exports = {
         });
     },
     postFactura: function (req, res) {
-        console.log("📥 Datos recibidos en req.body:", req.body);
-    
         const nuevaFactura = {
             id_proveedor: req.body.id_proveedor,
             fecha: req.body.fecha,
