@@ -220,13 +220,21 @@ header .icons p {
 
 /* Tarjeta del proveedor */
 .card-proveedor {
-  max-width: 400px;
+  max-width: 450px;
   border: none;
-  border-radius: 0.30rem;
-  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.80);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
   padding: 1.5rem;
   background-color: #fff;
+  border-radius: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
+.panel-facturas .card-proveedor,
+.panel-proveedores .card-proveedor {
+  margin-top: 0;
+}
+
 
 /* Título */
 .titulo-proveedor {
