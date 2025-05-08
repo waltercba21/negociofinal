@@ -314,6 +314,19 @@ header .icons p {
   outline: none !important;
 }
 
+/* - ------------- Contenedor Facturas Administracion   ------------ */
+.panel-facturas {
+  padding: 2rem 0;
+}
+
+.card-proveedor {
+  max-width: 500px;
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 0.5rem;
+}
 
 /* ---------------------------------------FOOTER ------------------------------------------- */
 footer {

@@ -19,24 +19,49 @@ module.exports ={
       callback(null, results);
     });
   },
+  insertFactura: function (factura, callback) {
+    const {
+      id_proveedor,
+      fecha,
+      numero_factura,
+      importe_bruto,
+      percepcion_municipal,
+      percepcion_provincial,
+      iva,
+      importe_factura,
+      fecha_pago,
+      condicion,
+      comprobante_pago
+    } = factura;
   
-      
-    insertFactura: function (factura, callback) {
-        pool.query('INSERT INTO facturas SET ?', factura, function (error, results) {
-            if (error) {
-                console.error("❌ Error al insertar la factura:", error);
-                return callback(null, error);
-            }
-            if (!results.insertId) {
-                console.error("⚠️ La consulta de inserción no devolvió insertId.");
-                return callback(null, new Error("Factura no insertada correctamente."));
-            }
-            console.log("✅ Factura insertada con ID:", results.insertId);
-            callback(results.insertId, null);
-        });
-    },
-    
-
+    const datosFactura = {
+      id_proveedor,
+      fecha,
+      numero_factura,
+      importe_bruto,
+      percepcion_municipal,
+      percepcion_provincial,
+      iva,
+      importe_factura,
+      fecha_pago,
+      condicion,
+      comprobante_pago
+    };
+  
+    pool.query('INSERT INTO facturas SET ?', datosFactura, function (error, results) {
+      if (error) {
+        console.error("❌ Error al insertar la factura:", error);
+        return callback(null, error);
+      }
+      if (!results.insertId) {
+        console.error("⚠️ La consulta de inserción no devolvió insertId.");
+        return callback(null, new Error("Factura no insertada correctamente."));
+      }
+      console.log("✅ Factura insertada con ID:", results.insertId);
+      callback(results.insertId, null);
+    });
+  },
+  
     insertarItemFactura: function(itemFactura, callback) {
         console.log("📦 Insertando item en la factura:", itemFactura); 
         pool.query('INSERT INTO facturas_admin_items SET ?', itemFactura, function(error, results) {
@@ -140,11 +165,40 @@ module.exports ={
         });
     },
     updateFacturaById : function(id, factura, callback) {
-        pool.query('UPDATE facturas SET ? WHERE id = ?', [factura, id], function(error, results) {
-            if (error) throw error;
-            callback(results);
-        });
+      const {
+        id_proveedor,
+        fecha,
+        numero_factura,
+        importe_bruto,
+        percepcion_municipal,
+        percepcion_provincial,
+        iva,
+        importe_factura,
+        fecha_pago,
+        condicion,
+        comprobante_pago
+      } = factura;
+    
+      const datosActualizados = {
+        id_proveedor,
+        fecha,
+        numero_factura,
+        importe_bruto,
+        percepcion_municipal,
+        percepcion_provincial,
+        iva,
+        importe_factura,
+        fecha_pago,
+        condicion,
+        comprobante_pago
+      };
+    
+      pool.query('UPDATE facturas SET ? WHERE id = ?', [datosActualizados, id], function(error, results) {
+        if (error) return callback(error);
+        callback(null, results);
+      });
     },
+    
     getProveedorById : function(idProveedor, callback) {
         pool.query(`
           SELECT p.*, d.descuento 

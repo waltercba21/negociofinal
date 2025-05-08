@@ -96,114 +96,32 @@ module.exports = {
             }
         });
     },
-    postFactura: async function (req, res) {
+    postFactura: function (req, res) {
         console.log("📥 Datos recibidos en req.body:", req.body);
     
-        let nuevaFactura = {
+        const nuevaFactura = {
             id_proveedor: req.body.id_proveedor,
             fecha: req.body.fecha,
             numero_factura: req.body.numero_factura,
+            importe_bruto: req.body.importe_bruto,
+            percepcion_municipal: req.body.percepcion_municipal,
+            percepcion_provincial: req.body.percepcion_provincial,
+            iva: req.body.iva, // '21' o '10.5' como string
+            importe_factura: req.body.importe_factura,
             fecha_pago: req.body.fecha_pago,
-            importe: req.body.importe,
             condicion: req.body.condicion,
             comprobante_pago: req.file ? req.file.filename : null
         };
     
-        let productosFactura = [];
-    
-        try {
-            if (!req.body.invoiceItems) {
-                throw new Error("No se enviaron productos en la factura.");
+        administracion.insertFactura(nuevaFactura, function (insertId, error) {
+            if (error) {
+                console.error("❌ Error al insertar factura:", error);
+                return res.status(500).json({ message: 'Error al crear factura' });
             }
-    
-            // Aseguramos que invoiceItems es un string JSON válido
-            const invoiceItemsRaw = Array.isArray(req.body.invoiceItems) 
-                ? req.body.invoiceItems.find(item => item.trim().startsWith("["))
-                : req.body.invoiceItems;
-    
-            if (!invoiceItemsRaw) {
-                throw new Error("Formato inválido de invoiceItems.");
-            }
-    
-            // Aseguramos de que invoiceItemsRaw sea un JSON válido
-            productosFactura = JSON.parse(invoiceItemsRaw);
-            console.log("🛒 Cantidad de productos recibidos:", productosFactura.length);
-    
-        } catch (error) {
-            console.error("⚠️ Error al parsear productos:", error.message);
-            return res.status(400).json({ message: "Datos de productos inválidos." });
-        }
-    
-        try {
-            // Insertamos la factura y obtenemos su ID
-            let facturaID = await new Promise((resolve, reject) => {
-                administracion.insertFactura(nuevaFactura, function (id, error) {
-                    if (error) {
-                        console.error("❌ Error al insertar factura:", error);
-                        reject(error);
-                    } else if (!id) {
-                        reject(new Error("Factura no insertada correctamente."));
-                    } else {
-                        resolve(id);
-                    }
-                });
-            });
-    
-            console.log("📄 Factura creada con ID:", facturaID);
-            if (!facturaID) throw new Error("Factura no pudo ser creada.");
-    
-            // Insertamos los productos de la factura
-            for (let item of productosFactura) {
-                console.log("📦 Verificando producto:", item);
-    
-                if (!item.id || !item.cantidad) {
-                    console.error("⚠️ Item de factura inválido:", item);
-                    return res.status(400).json({ message: "Item de factura inválido." });
-                }
-    
-                let itemFactura = {
-                    factura_id: facturaID,
-                    producto_id: item.id,
-                    cantidad: item.cantidad
-                };
-    
-                console.log("📦 Insertando item en la factura:", itemFactura);
-    
-                // Insertamos el ítem en la factura
-                await new Promise((resolve, reject) => {
-                    administracion.insertarItemFactura(itemFactura, function (error, results) {
-                        if (error) {
-                            console.error("❌ Error en insertarItemFactura:", error);
-                            reject(error);
-                        } else {
-                            console.log("✅ Item insertado con ID:", results.insertId);
-                            resolve();
-                        }
-                    });
-                });
-    
-                // Actualizamos el stock del producto
-                await new Promise((resolve, reject) => {
-                    administracion.actualizarStockProducto(item.id, item.cantidad, function (error) {
-                        if (error) reject(error);
-                        else resolve();
-                    });
-                });
-    
-                console.log("🔄 Stock actualizado para producto:", item.id);
-            }
-    
-            res.json({
-                message: "Factura guardada exitosamente",
-                facturaID: facturaID
-            });
-    
-        } catch (error) {
-            console.error("❌ Error en la inserción de la factura:", error);
-            res.status(500).json({ message: "Error interno del servidor." });
-        }
-    },
-    
+            console.log("✅ Factura creada con ID:", insertId);
+            res.json({ message: 'Factura creada exitosamente', insertId });
+        });
+    },    
     listadoFacturas : function(req, res) {
         administracion.getFacturas(function(error, facturas) {
             if (error) {
@@ -244,13 +162,11 @@ module.exports = {
             fechaDesde: req.body.fechaDesde,
             fechaHasta: req.body.fechaHasta
         };
-    
-        // Convertir las fechas al formato yyyy-mm-dd
         for (let key in filtro) {
             if (filtro[key] && key.includes('fecha')) {
                 let date = new Date(filtro[key]);
                 let day = String(date.getDate()).padStart(2, '0');
-                let month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados, así que añadimos 1
+                let month = String(date.getMonth() + 1).padStart(2, '0'); 
                 let year = date.getFullYear();
                 filtro[key] = `${year}-${month}-${day}`;
             }
@@ -294,28 +210,34 @@ module.exports = {
             res.redirect('/administracion/listadoFacturas');
         });
     },
-    postModificarFactura: function(req, res) {
-        let id = req.params.id;
-        administracion.getFacturaById(id, function(err, facturaActual) {
+    postModificarFactura: function (req, res) {
+        const id = req.params.id;
+    
+        administracion.getFacturaById(id, function (err, facturaActual) {
             if (err) {
                 console.error(err);
-                res.status(500).send('Error al obtener la factura');
-            } else {
-                let facturaModificada = {
-                    id_proveedor: req.body.id_proveedor,
-                    fecha: req.body.fecha,
-                    numero_factura: req.body.numero_factura,
-                    fecha_pago: req.body.fecha_pago,
-                    importe: req.body.importe,
-                    condicion: req.body.condicion,
-                    comprobante_pago: req.file ? req.file.filename : facturaActual.comprobante_pago
-                };
-                administracion.updateFacturaById(id, facturaModificada, function() {
-                    res.redirect('/administracion/listadoFacturas');
-                });
+                return res.status(500).send('Error al obtener la factura');
             }
+    
+            const facturaModificada = {
+                id_proveedor: req.body.id_proveedor,
+                fecha: req.body.fecha,
+                numero_factura: req.body.numero_factura,
+                importe_bruto: req.body.importe_bruto,
+                percepcion_municipal: req.body.percepcion_municipal,
+                percepcion_provincial: req.body.percepcion_provincial,
+                iva: req.body.iva,
+                importe_factura: req.body.importe_factura,
+                fecha_pago: req.body.fecha_pago,
+                condicion: req.body.condicion,
+                comprobante_pago: req.file ? req.file.filename : facturaActual.comprobante_pago
+            };
+    
+            administracion.updateFacturaById(id, facturaModificada, function () {
+                res.redirect('/administracion/listadoFacturas');
+            });
         });
-    },
+    },    
     postEliminarFactura: function(req, res) {
         let id = req.params.id;
         administracion.deleteFacturaById(id, function(err, results) {
