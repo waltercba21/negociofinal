@@ -76,7 +76,16 @@ module.exports = {
           res.json({ message: 'Proveedor eliminado exitosamente' });
         });
       },
-            
+      getProveedoresAPI: (req, res) => {
+        administracion.getProveedores((err, proveedores) => {
+          if (err) {
+            console.error("❌ Error al obtener proveedores desde API:", err);
+            return res.status(500).json({ error: 'Error al obtener proveedores' });
+          }
+          res.json(proveedores);
+        });
+      },
+      
     facturas: (req, res) => {
         administracion.getProveedores(function(error, proveedores) {
             if (error) {

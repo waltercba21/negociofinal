@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let proveedorSeleccionado = null;
   async function actualizarListaProveedores(selectedId = null) {
+    alert("ACTUALIZAR LISTA EJECUTADA");
     const select = document.getElementById('selectProveedor');
     if (!select) {
       console.error('❌ No se encontró el <select> de proveedores');
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     try {
       const res = await fetch('/administracion/api/proveedores');
+      alert(`STATUS FETCH: ${res.status}`);
       console.log('📶 Fetch ejecutado con status:', res.status);
       if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
   

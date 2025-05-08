@@ -29,10 +29,12 @@ router.get('/facturas/proveedor', administracionController.generarPDFProveedor);
 router.post('/api/facturas', administracionController.apiFacturas);
 
 // API Proveedores
+router.get('/api/proveedores', administracionController.getProveedoresAPI);
 router.get('/api/proveedores/:id', administracionController.getProveedorByIdAPI);
 router.post('/api/proveedores', administracionController.crearProveedor);
 router.put('/api/proveedores/:id', administracionController.editarProveedor);
 router.delete('/api/proveedores/:id', administracionController.eliminarProveedor);
+
 
 
 module.exports = router;
