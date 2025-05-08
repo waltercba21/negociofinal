@@ -29,18 +29,45 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) throw new Error('Error al buscar productos');
         const productos = await res.json();
   
-        productos.forEach(prod => {
-          const item = document.createElement('div');
-          item.className = 'resultado-busqueda';
-          item.innerHTML = `
-            <img src="/uploads/${prod.imagen || 'noimg.jpg'}" class="miniatura">
-            <div class="resultado-contenedor">
-              <strong>${prod.nombre}</strong> - ${prod.codigo_proveedor || '-'}
-            </div>
-          `;
-          item.addEventListener('click', () => agregarProducto(prod));
-          resultados.appendChild(item);
-        });
+        productos.forEach(producto => {
+            const resultado = document.createElement('div');
+            resultado.classList.add('resultado-busqueda');
+          
+            const contenedor = document.createElement('div');
+            contenedor.classList.add('resultado-contenedor');
+          
+            // Imagen
+            if (producto.imagenes && producto.imagenes.length > 0) {
+              const imagen = document.createElement('img');
+              imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
+              imagen.classList.add('miniatura');
+              contenedor.appendChild(imagen);
+            }
+          
+            // Texto
+            const nombreProducto = document.createElement('span');
+            nombreProducto.textContent = producto.nombre;
+            contenedor.appendChild(nombreProducto);
+          
+            resultado.appendChild(contenedor);
+          
+            resultado.addEventListener('mouseenter', function () {
+              const resultados = document.querySelectorAll('.resultado-busqueda');
+              resultados.forEach(r => r.classList.remove('hover-activo'));
+              this.classList.add('hover-activo');
+            });
+          
+            resultado.addEventListener('mouseleave', function () {
+              this.classList.remove('hover-activo');
+            });
+          
+            resultado.addEventListener('click', () => agregarProducto(producto));
+          
+            resultados.appendChild(resultado);
+            resultados.style.display = 'block';
+          });
+          
+          
       } catch (err) {
         console.error('❌ Error al buscar productos:', err);
       }
