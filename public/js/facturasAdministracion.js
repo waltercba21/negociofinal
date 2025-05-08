@@ -46,45 +46,60 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   
-    // Agregar producto a la tabla
     function agregarProducto(prod) {
-      if (productosSeleccionados.some(p => p.id === prod.id)) return;
-  
-      productosSeleccionados.push({ id: prod.id, cantidad: 1 });
-  
-      const fila = document.createElement('tr');
-      fila.dataset.id = prod.id;
-      fila.innerHTML = `
-        <td>${prod.codigo_proveedor || '-'}</td>
-        <td>${prod.nombre}</td>
-        <td><img src="/uploads/${prod.imagen || 'noimg.jpg'}" class="miniatura-tabla"></td>
-        <td>
-          <input type="number" class="form-control form-control-sm cantidad-input" value="1" min="1">
-        </td>
-        <td>
-          <button class="btn btn-sm btn-danger boton-eliminar-factura">
-            <i class="bi bi-trash"></i>
-          </button>
-        </td>
-      `;
-  
-      // eliminar fila
-      fila.querySelector('.boton-eliminar-factura').addEventListener('click', () => {
-        productosSeleccionados = productosSeleccionados.filter(p => p.id !== prod.id);
-        fila.remove();
-      });
-  
-      // cambiar cantidad
-      fila.querySelector('.cantidad-input').addEventListener('input', e => {
-        const cantidad = parseInt(e.target.value);
-        const prodSel = productosSeleccionados.find(p => p.id === prod.id);
-        if (prodSel) prodSel.cantidad = isNaN(cantidad) ? 1 : cantidad;
-      });
-  
-      tabla.appendChild(fila);
-      resultados.innerHTML = '';
-      buscador.value = '';
-    }
+        if (productosSeleccionados.some(p => p.id === prod.id)) return;
+      
+        productosSeleccionados.push({ id: prod.id, cantidad: 1 });
+      
+        const fila = document.createElement('tr');
+        fila.dataset.id = prod.id;
+      
+        // 🔍 Buscar el código del proveedor principal (el más barato si hay varios)
+        let codigoProveedor = '-';
+        if (prod.proveedores && prod.proveedores.length > 0) {
+          codigoProveedor = prod.proveedores[0].codigo || '-';
+        }
+      
+        // 🔍 Imagen
+        let imagenSrc = '/uploads/noimg.jpg';
+        if (prod.imagenes && prod.imagenes.length > 0) {
+          imagenSrc = '/uploads/productos/' + prod.imagenes[0].imagen;
+        } else if (prod.imagen) {
+          imagenSrc = '/uploads/' + prod.imagen;
+        }
+      
+        fila.innerHTML = `
+          <td>${codigoProveedor}</td>
+          <td>${prod.nombre}</td>
+          <td><img src="${imagenSrc}" class="miniatura-tabla"></td>
+          <td>
+            <input type="number" class="form-control form-control-sm cantidad-input" value="1" min="1">
+          </td>
+          <td>
+            <button class="btn btn-sm btn-danger boton-eliminar-factura">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        `;
+      
+        // Eliminar fila
+        fila.querySelector('.boton-eliminar-factura').addEventListener('click', () => {
+          productosSeleccionados = productosSeleccionados.filter(p => p.id !== prod.id);
+          fila.remove();
+        });
+      
+        // Actualizar cantidad
+        fila.querySelector('.cantidad-input').addEventListener('input', e => {
+          const cantidad = parseInt(e.target.value);
+          const prodSel = productosSeleccionados.find(p => p.id === prod.id);
+          if (prodSel) prodSel.cantidad = isNaN(cantidad) ? 1 : cantidad;
+        });
+      
+        tabla.appendChild(fila);
+        resultados.innerHTML = '';
+        buscador.value = '';
+      }
+      
   
     // Guardar productos (solo muestra la consola por ahora)
     btnGuardar.addEventListener('click', () => {
