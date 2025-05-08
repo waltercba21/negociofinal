@@ -10,13 +10,12 @@
         <h5 class="titulo-proveedor">Proveedor</h5>
   
         <!-- Select de proveedores -->
-        <select id="selectProveedor" class="select-proveedor">
-          <option value="">Seleccionar proveedor...</option>
-          <% proveedores.forEach(prov => { %>
-            <option value="<%= prov.id %>"><%= prov.nombre %></option>
-          <% }) %>
+        <select id="selectProveedor" class="form-select">
+          <option value="">Cargando...</option>
         </select>
-  
+        <button onclick="actualizarListaProveedores()" class="btn btn-primary mt-2">Cargar Proveedores</button>
+        
+
         <!-- Detalle -->
         <div id="detalleProveedor" class="detalle-proveedor">
           <p class="text-muted">Seleccioná un proveedor</p>
