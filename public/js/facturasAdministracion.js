@@ -125,58 +125,71 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
       Swal.fire('Confirmado', 'Productos listos para guardar con la factura.', 'success');
     });
   
-    // Guardar la factura y luego los productos
-    btnGuardarFactura.addEventListener('click', async () => {
-      const proveedor = document.getElementById('facturaProveedor').value;
-      const fecha = document.getElementById('facturaFecha').value;
-      const numero = document.getElementById('facturaNumero').value;
-      const bruto = document.getElementById('facturaImporteBruto').value;
-      const iva = document.getElementById('facturaIVA').value;
-      const total = document.getElementById('facturaImporteTotal').value;
+// Guardar la factura y luego los productos
+btnGuardarFactura.addEventListener('click', async () => {
+    const proveedor = document.getElementById('facturaProveedor').value;
+    const fecha = document.getElementById('facturaFecha').value;
+    const numero = document.getElementById('facturaNumero').value;
+    const bruto = document.getElementById('facturaImporteBruto').value;
+    const iva = document.getElementById('facturaIVA').value;
+    const total = document.getElementById('facturaImporteTotal').value;
   
-      if (!proveedor || !fecha || !numero || !bruto || !iva || !total) {
-        return Swal.fire('Faltan datos', 'Completá todos los campos de la factura.', 'warning');
-      }
+    if (!proveedor || !fecha || !numero || !bruto || !iva || !total) {
+      return Swal.fire('Faltan datos', 'Completá todos los campos de la factura.', 'warning');
+    }
   
-      if (!productosSeleccionados.length) {
-        return Swal.fire('Faltan productos', 'Debe confirmar al menos un producto.', 'warning');
-      }
+    if (!productosSeleccionados.length) {
+      return Swal.fire('Faltan productos', 'Debe confirmar al menos un producto.', 'warning');
+    }
   
-      try {
-        // 1. Guardar la factura
-        const res = await fetch('/administracion/api/facturas', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_proveedor: proveedor,
-            fecha,
-            numero_factura: numero,
-            importe_bruto: bruto,
-            iva,
-            importe_factura: total,
-            condicion: 'pendiente'
-          })
-        });
+    try {
+      const facturaData = {
+        id_proveedor: proveedor,
+        fecha,
+        numero_factura: numero,
+        importe_bruto: bruto,
+        iva,
+        importe_factura: total,
+        fecha_pago: null, // si luego querés sumarlo, poné otro input
+        condicion: 'pendiente',
+        comprobante_pago: null
+      };
   
-        const respuesta = await res.json();
+      console.log('📤 Enviando factura:', facturaData);
   
-        if (!respuesta.insertId) throw new Error('No se pudo crear factura');
+      // 1. Guardar la factura
+      const res = await fetch('/administracion/api/facturas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(facturaData)
+      });
   
-        // 2. Enviar productos
-        await fetch('/administracion/api/factura/productos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            facturaId: respuesta.insertId,
-            items: productosSeleccionados
-          })
-        });
+      const respuesta = await res.json();
   
-        Swal.fire('Éxito', 'Factura y productos guardados correctamente.', 'success');
-      } catch (err) {
-        console.error('❌ Error al guardar factura o productos:', err);
-        Swal.fire('Error', 'Ocurrió un error al guardar.', 'error');
-      }
-    });
+      console.log('📥 Respuesta:', respuesta);
+  
+      if (!respuesta.insertId) throw new Error('No se pudo crear factura');
+  
+      // 2. Enviar productos
+      const productosRes = await fetch('/administracion/api/factura/productos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          facturaId: respuesta.insertId,
+          items: productosSeleccionados
+        })
+      });
+  
+      const productosResp = await productosRes.json();
+  
+      console.log('📥 Productos guardados:', productosResp);
+  
+      Swal.fire('Éxito', 'Factura y productos guardados correctamente.', 'success');
+    } catch (err) {
+      console.error('❌ Error al guardar factura o productos:', err);
+      Swal.fire('Error', 'Ocurrió un error al guardar.', 'error');
+    }
+  });
+  
   });
   
