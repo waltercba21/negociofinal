@@ -318,4 +318,41 @@ module.exports = {
             })
         });
     },
+    guardarItemsFactura: async (req, res) => {
+        const { facturaId, items } = req.body;
+      
+        if (!facturaId || !Array.isArray(items)) {
+          return res.status(400).json({ error: 'Datos incompletos' });
+        }
+      
+        try {
+          for (const item of items) {
+            const itemFactura = {
+              factura_id: facturaId,
+              producto_id: item.id,
+              cantidad: item.cantidad
+            };
+      
+            await new Promise((resolve, reject) => {
+              administracion.insertarItemFactura(itemFactura, (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
+              });
+            });
+      
+            await new Promise((resolve, reject) => {
+              administracion.actualizarStockProducto(item.id, item.cantidad, (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
+              });
+            });
+          }
+      
+          res.json({ message: 'Productos agregados y stock actualizado correctamente' });
+        } catch (err) {
+          console.error('❌ Error al guardar productos en factura:', err);
+          res.status(500).json({ error: 'Error al guardar productos de factura' });
+        }
+      },
+      
 }

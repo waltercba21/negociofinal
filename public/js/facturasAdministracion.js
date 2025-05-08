@@ -138,8 +138,30 @@ document.addEventListener('DOMContentLoaded', () => {
   
       Swal.fire('Guardado', 'Productos listos para enviar.', 'success');
       modal.hide();
-  
-      // 🚧 Luego enviar productosSeleccionados al backend como parte del form de factura
+      const facturaId = document.getElementById('facturaId')?.value; // asumimos que está seteado
+
+      if (!facturaId) {
+        return Swal.fire('Error', 'No se encontró el ID de la factura.', 'error');
+      }
+      
+      fetch('/administracion/api/factura/productos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          facturaId: facturaId,
+          items: productosSeleccionados
+        })
+      })
+      .then(res => res.json())
+      .then(resp => {
+        console.log('✅ Productos guardados en factura:', resp);
+        Swal.fire('Éxito', resp.message, 'success');
+      })
+      .catch(err => {
+        console.error('❌ Error al guardar productos:', err);
+        Swal.fire('Error', 'Ocurrió un problema al guardar productos.', 'error');
+      });
+      
     });
   });
   
