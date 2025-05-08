@@ -27,55 +27,75 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
   console.log('🟢 Se cargó el archivo proveedores.js');
-
-  function actualizarListaProveedores(selectedId = null) {
-    console.group('🔁 ACTUALIZAR LISTA DE PROVEEDORES');
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('🟢 Se cargó el archivo proveedores.js');
   
-    console.log('🧼 Opciones antes de limpiar:');
-    [...select.options].forEach(opt => {
-      console.log(`• ${opt.value} → ${opt.textContent}`);
-    });
+    const select = document.getElementById('selectProveedor');
   
-    // Limpiar select excepto la opción por defecto
-    select.querySelectorAll('option:not([value=""])').forEach(opt => opt.remove());
+    if (!select) {
+      console.warn('⚠️ No se encontró el select con id "selectProveedor"');
+      return;
+    }
   
-    fetch('/administracion/api/proveedores')
-      .then(res => res.json())
-      .then(proveedores => {
-        console.log('📦 Proveedores recibidos desde el servidor:', proveedores);
+    function actualizarListaProveedores(selectedId = null) {
+      console.group('🔁 ACTUALIZAR LISTA DE PROVEEDORES');
   
-        const idsAgregados = new Set();
-        proveedores.forEach(prov => {
-          const idStr = String(prov.id);
+      // Mostrar qué opciones hay antes de limpiar
+      console.log('🧼 Opciones antes de limpiar:');
+      [...select.options].forEach(opt => {
+        console.log(`• ${opt.value} → ${opt.textContent}`);
+      });
   
-          if (idsAgregados.has(idStr)) {
-            console.warn(`⚠️ Duplicado evitado: ID ${prov.id}`);
-            return;
+      // Limpiar el select excepto la opción por defecto
+      select.querySelectorAll('option:not([value=""])').forEach(opt => opt.remove());
+  
+      fetch('/administracion/api/proveedores')
+        .then(res => {
+          console.log('📶 Fetch ejecutado, status:', res.status);
+          if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
+          return res.json();
+        })
+        .then(proveedores => {
+          console.log('📦 Proveedores recibidos:', proveedores);
+  
+          const idsAgregados = new Set();
+  
+          proveedores.forEach(prov => {
+            const idStr = String(prov.id);
+  
+            if (idsAgregados.has(idStr)) {
+              console.warn(`⚠️ Duplicado ignorado: ${idStr} - ${prov.nombre}`);
+              return;
+            }
+  
+            const option = document.createElement('option');
+            option.value = idStr;
+            option.textContent = prov.nombre;
+            select.appendChild(option);
+            idsAgregados.add(idStr);
+          });
+  
+          console.log('✅ Opciones luego de actualizar:');
+          [...select.options].forEach(opt => {
+            console.log(`• ${opt.value} → ${opt.textContent}`);
+          });
+  
+          if (selectedId) {
+            select.value = String(selectedId);
+            select.dispatchEvent(new Event('change'));
           }
   
-          const option = document.createElement('option');
-          option.value = idStr;
-          option.textContent = prov.nombre;
-          select.appendChild(option);
-          idsAgregados.add(idStr);
+          console.groupEnd();
+        })
+        .catch(err => {
+          console.error('❌ Error al cargar proveedores:', err);
         });
+    }
   
-        console.log('✅ Opciones luego de actualizar:');
-        [...select.options].forEach(opt => {
-          console.log(`• ${opt.value} → ${opt.textContent}`);
-        });
+    // ⚠️ Ejecutar forzadamente para testeo
+    actualizarListaProveedores();
+  });
   
-        if (selectedId) {
-          select.value = String(selectedId);
-          select.dispatchEvent(new Event('change'));
-        }
-  
-        console.groupEnd();
-      })
-      .catch(err => {
-        console.error('❌ Error al cargar proveedores:', err);
-      });
-  }
   
   if (select) {
     select.addEventListener('change', () => {

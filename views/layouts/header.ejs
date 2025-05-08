@@ -68,20 +68,16 @@
       const socket = io();
 
       socket.on('connect', () => {
-          console.log("✅ Conectado a WebSocket correctamente.");
       });
 
       socket.on('actualizarNotificacion', (data) => {
-          console.log("🔔 Notificación recibida vía WebSocket:", data);
           actualizarPedidosPendientes();
       });
 
       async function actualizarPedidosPendientes() {
           try {
-              console.log("📢 Solicitando pedidos pendientes...");
               const response = await fetch('/pedidos/cantidad');  
               const data = await response.json();
-              console.log("🔍 Pedidos pendientes recibidos en el frontend:", data);
 
               const notificacion = document.getElementById("pedido-notificacion");
               if (data.cantidad > 0) {
