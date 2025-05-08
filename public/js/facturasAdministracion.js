@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (query.length < 2) return;
   
       try {
-        const res = await fetch(`/api/buscar?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/productos/api/buscar?q=${encodeURIComponent(query)}`);
         const productos = await res.json();
   
         productos.forEach(producto => {
