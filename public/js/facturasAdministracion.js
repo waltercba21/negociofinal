@@ -126,98 +126,44 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
     });
   
     btnGuardarFactura.addEventListener('click', async () => {
-        const proveedor = document.getElementById('facturaProveedor').value;
-        const fecha = document.getElementById('facturaFecha').value;
-        const numero = document.getElementById('facturaNumero').value;
-        const bruto = document.getElementById('facturaImporteBruto').value;
-        const iva = document.getElementById('facturaIVA').value;
-        const total = document.getElementById('facturaImporteTotal').value;
-      
-        // Validación de campos
-        if (!proveedor || !fecha || !numero || !bruto || !iva || !total) {
-          return Swal.fire('Faltan datos', 'Completá todos los campos de la factura.', 'warning');
-        }
-      
-        if (!productosSeleccionados.length) {
-          return Swal.fire('Faltan productos', 'Debe confirmar al menos un producto.', 'warning');
-        }
-      
-        try {
-          const facturaData = {
-            id_proveedor: proveedor,
-            fecha,
-            numero_factura: numero,
-            importe_bruto: bruto,
-            iva,
-            importe_factura: total,
-            fecha_pago: null,
-            condicion: 'pendiente',
-            comprobante_pago: null
-          };
-      
-          console.log('📤 Enviando datos de factura:', facturaData);
-      
-          // 1. Guardar la factura
-          const res = await fetch('/administracion/api/facturas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(facturaData)
-          });
-      
-          if (!res.ok) {
-            const errorText = await res.text();
-            console.error('❌ Error del servidor al guardar factura:', errorText);
-            throw new Error('Error al guardar la factura (backend)');
-          }
-      
-          const respuesta = await res.json();
-          console.log('📥 Respuesta del backend (factura):', respuesta);
-      
-          if (!respuesta.insertId) {
-            console.error('⚠️ No se devolvió insertId');
-            throw new Error('No se pudo crear la factura');
-          }
-      
-          const facturaId = respuesta.insertId;
-      
-          // 2. Enviar productos asociados
-          console.log('📤 Enviando productos:', productosSeleccionados);
-      
-          const productosRes = await fetch('/administracion/api/factura/productos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              facturaId,
-              items: productosSeleccionados
-            })
-          });
-      
-          if (!productosRes.ok) {
-            const errorText = await productosRes.text();
-            console.error('❌ Error al guardar productos:', errorText);
-            throw new Error('Error al guardar productos (backend)');
-          }
-      
-          const productosRespuesta = await productosRes.json();
-          console.log('📥 Productos guardados correctamente:', productosRespuesta);
-      
-          Swal.fire('Éxito', 'Factura y productos guardados correctamente.', 'success');
-      
-          // (Opcional) Resetear campos y tabla
-          document.getElementById('facturaProveedor').value = '';
-          document.getElementById('facturaFecha').value = '';
-          document.getElementById('facturaNumero').value = '';
-          document.getElementById('facturaImporteBruto').value = '';
-          document.getElementById('facturaIVA').value = '';
-          document.getElementById('facturaImporteTotal').value = '';
-          productosSeleccionados = [];
-          document.querySelector('#tablaProductosFactura tbody').innerHTML = '';
-      
-        } catch (err) {
-          console.error('❌ Error general al guardar factura o productos:', err);
-          Swal.fire('Error', err.message || 'Ocurrió un error al guardar.', 'error');
-        }
+        // 1. Preparar FormData para enviar texto + archivo
+const formData = new FormData();
+formData.append('id_proveedor', proveedor);
+formData.append('fecha', fecha);
+formData.append('numero_factura', numero);
+formData.append('importe_bruto', bruto);
+formData.append('iva', iva);
+formData.append('importe_factura', total);
+formData.append('fecha_pago', document.getElementById('facturaFechaPago').value);
+formData.append('condicion', document.getElementById('facturaCondicion').value);
+
+const comprobante = document.getElementById('facturaComprobante').files[0];
+if (comprobante) {
+  formData.append('comprobante_pago', comprobante);
+}
+
+// 2. Enviar la factura
+const res = await fetch('/administracion/api/facturas', {
+  method: 'POST',
+  body: formData // 👈 NO uses headers, fetch lo gestiona
+});
+
+if (!res.ok) {
+  const errorText = await res.text();
+  console.error('❌ Error del servidor al guardar factura:', errorText);
+  throw new Error('Error al guardar la factura (backend)');
+}
+
+const respuesta = await res.json();
+console.log('📥 Respuesta del backend (factura):', respuesta);
+
+if (!respuesta.insertId) {
+  console.error('⚠️ No se devolvió insertId');
+  throw new Error('No se pudo crear la factura');
+}
+
       });
+      
       document.getElementById('facturaFecha').addEventListener('change', function () {
   const fechaFactura = new Date(this.value);
   if (!isNaN(fechaFactura)) {
