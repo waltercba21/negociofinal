@@ -1,21 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
   const btnBuscar = document.getElementById('btnBuscarListados');
   const filtroProveedor = document.getElementById('filtroProveedor');
-  const filtroFecha = document.getElementById('filtroFecha');
+  const filtroTipo = document.getElementById('filtroTipo');
+  const filtroFechaDesde = document.getElementById('filtroFechaDesde');
+  const filtroFechaHasta = document.getElementById('filtroFechaHasta');
   const filtroCondicion = document.getElementById('filtroCondicion');
   const resultados = document.getElementById('resultadosListado');
   const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
   const contenidoModal = document.getElementById('contenidoDetalleDocumento');
 
   btnBuscar.addEventListener('click', async () => {
+    const tipo = filtroTipo.value;
     const proveedor = filtroProveedor.value;
-    const fecha = filtroFecha.value;
+    const fechaDesde = filtroFechaDesde.value;
+    const fechaHasta = filtroFechaHasta.value;
     const condicion = filtroCondicion.value;
+
+    const query = new URLSearchParams({
+      tipo,
+      proveedor,
+      fechaDesde,
+      fechaHasta,
+      condicion
+    }).toString();
 
     resultados.innerHTML = '<p class="text-muted">Buscando...</p>';
 
     try {
-      const res = await fetch(`/administracion/api/documentos?proveedor=${proveedor}&fecha=${fecha}&condicion=${condicion}`);
+      const res = await fetch(`/administracion/api/documentos?${query}`);
       const documentos = await res.json();
 
       if (!documentos.length) {
@@ -45,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error('Error al cargar documentos:', err);
-      resultados.innerHTML = '<p class="text-danger">Ocurrió un error.</p>';
+      resultados.innerHTML = '<p class="text-danger">Ocurrió un error al obtener los datos.</p>';
     }
   });
 

@@ -355,21 +355,25 @@
   <div class="card-proveedor contenedor-factura">
     <h5 class="titulo-proveedor">Listado de Facturas y Presupuestos</h5>
 
-    <!-- Filtros -->
-    <div class="mb-3">
-      <label for="filtroProveedor" class="form-label">Proveedor</label>
-      <select id="filtroProveedor" class="form-select">
-        <option value="">Todos</option>
-        <% proveedores.forEach(p => { %>
-          <option value="<%= p.id %>"><%= p.nombre %></option>
-        <% }) %>
-      </select>
-    </div>
+   <!-- Filtro por tipo -->
+<div class="mb-3">
+  <label for="filtroTipo" class="form-label">Tipo</label>
+  <select id="filtroTipo" class="form-select">
+    <option value="">Todos</option>
+    <option value="factura">Facturas</option>
+    <option value="presupuesto">Presupuestos</option>
+  </select>
+</div>
 
-    <div class="mb-3">
-      <label for="filtroFecha" class="form-label">Fecha</label>
-      <input type="date" id="filtroFecha" class="form-control">
-    </div>
+<!-- Fechas Desde / Hasta -->
+<div class="mb-3">
+  <label class="form-label">Fecha Desde</label>
+  <input type="date" id="filtroFechaDesde" class="form-control">
+</div>
+<div class="mb-3">
+  <label class="form-label">Fecha Hasta</label>
+  <input type="date" id="filtroFechaHasta" class="form-control">
+</div>
 
     <div class="mb-3">
       <label for="filtroCondicion" class="form-label">Condición</label>

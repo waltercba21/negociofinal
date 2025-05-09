@@ -434,6 +434,46 @@ actualizarPresupuesto: (req, res) => {
   });
 },
 
+getDocumentosFiltrados: (req, res) => {
+  const { tipo, proveedor, fechaDesde, fechaHasta, condicion } = req.query;
+
+  const filtros = [];
+  if (proveedor) filtros.push(`id_proveedor = ${pool.escape(proveedor)}`);
+  if (condicion) filtros.push(`condicion = ${pool.escape(condicion)}`);
+  if (fechaDesde) filtros.push(`fecha >= ${pool.escape(fechaDesde)}`);
+  if (fechaHasta) filtros.push(`fecha <= ${pool.escape(fechaHasta)}`);
+  const where = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
+
+  const consultas = [];
+
+  if (!tipo || tipo === 'factura') {
+    consultas.push(`
+      SELECT 'factura' AS tipo, f.id, f.numero_factura AS numero, f.fecha, f.condicion, p.nombre AS nombre_proveedor
+      FROM facturas f
+      JOIN proveedores p ON p.id = f.id_proveedor
+      ${where}
+    `);
+  }
+
+  if (!tipo || tipo === 'presupuesto') {
+    consultas.push(`
+      SELECT 'presupuesto' AS tipo, pz.id, pz.numero_presupuesto AS numero, pz.fecha, pz.condicion, pr.nombre AS nombre_proveedor
+      FROM presupuestos pz
+      JOIN proveedores pr ON pr.id = pz.id_proveedor
+      ${where}
+    `);
+  }
+
+  const sql = consultas.join(' UNION ALL ') + ' ORDER BY fecha DESC';
+
+  pool.query(sql, (err, result) => {
+    if (err) {
+      console.error('❌ Error al buscar documentos:', err);
+      return res.status(500).json({ error: 'Error al buscar documentos' });
+    }
+    res.json(result);
+  });
+}
 
       
 }
