@@ -149,9 +149,6 @@ module.exports = {
             }
         });
     },
-    presupuestos: (req, res) => {
-        res.render('presupuestos');
-    },
     getModificarFactura : function(req, res) {
         console.log("getModificarFactura called with id:", req.params.id);
         let id = req.params.id;

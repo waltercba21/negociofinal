@@ -17,7 +17,6 @@ var upload = multer({ storage: storage });
 router.get('/', administracionController.administracion);
 router.get('/facturas', administracionController.facturas); 
 router.post('/facturas', upload.single('comprobante_pago'), administracionController.postFactura);
-router.get('/presupuestos', administracionController.presupuestos);
 router.get('/listadoFacturas', administracionController.listadoFacturas);
 router.get('/facturas/detalle/:id', administracionController.verDetalle);
 router.get('/facturas/modificar/:id', administracionController.getModificarFactura);
