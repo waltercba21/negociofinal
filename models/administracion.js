@@ -1,5 +1,32 @@
 const pool = require('../config/conexion');
 const conexion = require('../config/conexion')
+function obtenerProductosFactura(facturaId) {
+  return new Promise((resolve, reject) => {
+    pool.query(`
+      SELECT pr.nombre, fi.cantidad
+      FROM factura_items fi
+      JOIN productos pr ON pr.id = fi.producto_id
+      WHERE fi.factura_id = ?
+    `, [facturaId], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+}
+
+function obtenerProductosPresupuesto(presupuestoId) {
+  return new Promise((resolve, reject) => {
+    pool.query(`
+      SELECT pr.nombre, pi.cantidad
+      FROM presupuestos_admin_items pi
+      JOIN productos pr ON pr.id = pi.producto_id
+      WHERE pi.presupuesto_id = ?
+    `, [presupuestoId], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+}
 
 module.exports ={
   getProveedores : function(callback) {
@@ -279,7 +306,59 @@ guardarItemsPresupuesto: function (presupuestoId, items, callback) {
   const values = items.map(item => [presupuestoId, item.id, item.cantidad]);
 
   pool.query(sql, [values], callback);
-}
+},
+filtrarFacturas: function (proveedor, fecha, condicion, callback) {
+  const sql = `
+    SELECT f.id, f.numero_factura, f.fecha, f.condicion, p.nombre AS nombre_proveedor
+    FROM facturas f
+    JOIN proveedores p ON p.id = f.id_proveedor
+    WHERE (f.id_proveedor = ? OR ? = '')
+      AND (f.fecha = ? OR ? = '')
+      AND (f.condicion = ? OR ? = '')
+  `;
+  pool.query(sql, [proveedor, proveedor, fecha, fecha, condicion, condicion], callback);
+},
+
+filtrarPresupuestos: function (proveedor, fecha, condicion, callback) {
+  const sql = `
+    SELECT pr.id, pr.numero_presupuesto, pr.fecha, pr.condicion, p.nombre AS nombre_proveedor
+    FROM presupuestos pr
+    JOIN proveedores p ON p.id = pr.id_proveedor
+    WHERE (pr.id_proveedor = ? OR ? = '')
+      AND (pr.fecha = ? OR ? = '')
+      AND (pr.condicion = ? OR ? = '')
+  `;
+  pool.query(sql, [proveedor, proveedor, fecha, fecha, condicion, condicion], callback);
+},
+obtenerFacturaPorId: function (id, callback) {
+  const sql = `
+    SELECT f.*, p.nombre AS nombre_proveedor
+    FROM facturas f
+    JOIN proveedores p ON p.id = f.id_proveedor
+    WHERE f.id = ?
+  `;
+  pool.query(sql, [id], async (err, result) => {
+    if (err) return callback(err);
+    if (!result.length) return callback(null, {});
+    const productos = await obtenerProductosFactura(id);
+    callback(null, { ...result[0], productos });
+  });
+},
+
+obtenerPresupuestoPorId: function (id, callback) {
+  const sql = `
+    SELECT pr.*, p.nombre AS nombre_proveedor
+    FROM presupuestos pr
+    JOIN proveedores p ON p.id = pr.id_proveedor
+    WHERE pr.id = ?
+  `;
+  pool.query(sql, [id], async (err, result) => {
+    if (err) return callback(err);
+    if (!result.length) return callback(null, {});
+    const productos = await obtenerProductosPresupuesto(id);
+    callback(null, { ...result[0], productos });
+  });
+},
 
 
       

@@ -383,6 +383,43 @@ guardarItemsPresupuesto: async (req, res) => {
     res.status(500).json({ error: 'Error al guardar productos del presupuesto' });
   }
 },
+listarDocumentos: async (req, res) => {
+  const { proveedor, fecha, condicion } = req.query;
+
+  try {
+    const facturas = await new Promise((resolve, reject) => {
+      administracion.filtrarFacturas(proveedor, fecha, condicion, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows.map(row => ({ ...row, tipo: 'factura', numero: row.numero_factura })));
+      });
+    });
+
+    const presupuestos = await new Promise((resolve, reject) => {
+      administracion.filtrarPresupuestos(proveedor, fecha, condicion, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows.map(row => ({ ...row, tipo: 'presupuesto', numero: row.numero_presupuesto })));
+      });
+    });
+
+    res.json([...facturas, ...presupuestos]);
+  } catch (error) {
+    console.error('❌ Error en listarDocumentos:', error);
+    res.status(500).json({ error: 'Error al listar documentos' });
+  }
+},
+getFacturaById: (req, res) => {
+  administracion.obtenerFacturaPorId(req.params.id, (err, datos) => {
+    if (err) return res.status(500).json({ error: 'Error al buscar factura' });
+    res.json(datos);
+  });
+},
+
+getPresupuestoById: (req, res) => {
+  administracion.obtenerPresupuestoPorId(req.params.id, (err, datos) => {
+    if (err) return res.status(500).json({ error: 'Error al buscar presupuesto' });
+    res.json(datos);
+  });
+},
 
       
 }

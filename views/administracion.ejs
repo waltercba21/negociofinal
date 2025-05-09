@@ -350,7 +350,65 @@
       </div>
     </div>
   </div>
+</div> 
+<section class="panel-listados">
+  <div class="card-proveedor contenedor-factura">
+    <h5 class="titulo-proveedor">Listado de Facturas y Presupuestos</h5>
+
+    <!-- Filtros -->
+    <div class="mb-3">
+      <label for="filtroProveedor" class="form-label">Proveedor</label>
+      <select id="filtroProveedor" class="form-select">
+        <option value="">Todos</option>
+        <% proveedores.forEach(p => { %>
+          <option value="<%= p.id %>"><%= p.nombre %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="filtroFecha" class="form-label">Fecha</label>
+      <input type="date" id="filtroFecha" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label for="filtroCondicion" class="form-label">Condición</label>
+      <select id="filtroCondicion" class="form-select">
+        <option value="">Todas</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="pagado">Pagado</option>
+      </select>
+    </div>
+
+    <div class="d-grid">
+      <button class="btn btn-primary" id="btnBuscarListados">Buscar</button>
+    </div>
+
+    <!-- Resultados -->
+    <div id="resultadosListado" class="mt-3"></div>
+  </div>
+</section>
+<div class="modal fade" id="modalDetalleDocumento" tabindex="-1" aria-labelledby="modalDetalleLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-proveedor-dialog">
+    <div class="modal-content modal-proveedor-content">
+      <div class="modal-header modal-proveedor-header">
+        <h5 class="modal-title" id="modalDetalleLabel">Detalle del Documento</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body modal-proveedor-body">
+        <!-- Aquí se carga dinámicamente desde JS los datos de la factura o presupuesto -->
+        <div id="contenidoDetalleDocumento"></div>
+      </div>
+
+      <div class="modal-footer modal-proveedor-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button class="btn btn-success" id="btnGuardarCambiosDocumento">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
 </div>
+
 
   </main>
   
@@ -358,5 +416,6 @@
 <script src="/js/proveedores.js"></script>
 <script src="/js/facturasAdministracion.js"></script>
 <script src="/js/presupuestosAdministracion.js"></script>
+<script src="/js/listadosDocumentos.js"></script>
 
 </body>

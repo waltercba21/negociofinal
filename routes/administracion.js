@@ -39,5 +39,16 @@ router.delete('/api/proveedores/:id', administracionController.eliminarProveedor
 router.post('/api/presupuestos', administracionController.postPresupuesto);
 router.post('/api/presupuestos/productos', administracionController.guardarItemsPresupuesto);
 
+// API de documentos combinados (facturas y presupuestos)
+router.get('/api/documentos', administracionController.listarDocumentos);
+
+// Obtener detalle individual
+router.get('/api/factura/:id', administracionController.getFacturaById);
+router.get('/api/presupuesto/:id', administracionController.getPresupuestoById);
+
+// Actualizar
+router.put('/api/factura/:id', administracionController.actualizarFactura);
+router.put('/api/presupuesto/:id', administracionController.actualizarPresupuesto);
+
 
 module.exports = router;
