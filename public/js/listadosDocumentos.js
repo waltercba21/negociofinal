@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const btnBuscar = document.getElementById('btnBuscarListados');
-  const filtroProveedor = document.getElementById('filtroProveedor');
   const filtroTipo = document.getElementById('filtroTipo');
+  const filtroProveedor = document.getElementById('filtroProveedor'); // Este falta en el HTML
   const filtroFechaDesde = document.getElementById('filtroFechaDesde');
   const filtroFechaHasta = document.getElementById('filtroFechaHasta');
   const filtroCondicion = document.getElementById('filtroCondicion');
@@ -9,20 +9,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
   const contenidoModal = document.getElementById('contenidoDetalleDocumento');
 
+  // ✅ Validación de existencia
+  if (!btnBuscar || !filtroTipo || !filtroFechaDesde || !filtroFechaHasta || !filtroCondicion || !resultados || !modal || !contenidoModal) {
+    console.warn('⚠️ Elementos de filtros no encontrados en el DOM.');
+    return;
+  }
+
+  // ✅ Continuar lógica si todos existen
   btnBuscar.addEventListener('click', async () => {
     const tipo = filtroTipo.value;
-    const proveedor = filtroProveedor.value;
+    const proveedor = filtroProveedor ? filtroProveedor.value : ''; // Evitar error si no existe
     const fechaDesde = filtroFechaDesde.value;
     const fechaHasta = filtroFechaHasta.value;
     const condicion = filtroCondicion.value;
 
-    const query = new URLSearchParams({
-      tipo,
-      proveedor,
-      fechaDesde,
-      fechaHasta,
-      condicion
-    }).toString();
+    const query = new URLSearchParams({ tipo, proveedor, fechaDesde, fechaHasta, condicion }).toString();
 
     resultados.innerHTML = '<p class="text-muted">Buscando...</p>';
 
@@ -42,9 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = document.createElement('li');
         item.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
         item.innerHTML = `
-          <span>
-            <strong>${doc.tipo.toUpperCase()}</strong> #${doc.numero} - ${doc.nombre_proveedor} (${doc.fecha})
-          </span>
+          <span><strong>${doc.tipo.toUpperCase()}</strong> #${doc.numero} - ${doc.nombre_proveedor} (${doc.fecha})</span>
           <button class="btn btn-sm btn-primary" data-id="${doc.id}" data-tipo="${doc.tipo}">Ver</button>
         `;
 
@@ -54,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       resultados.innerHTML = '';
       resultados.appendChild(lista);
-
     } catch (err) {
       console.error('Error al cargar documentos:', err);
       resultados.innerHTML = '<p class="text-danger">Ocurrió un error al obtener los datos.</p>';
