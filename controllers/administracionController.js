@@ -345,21 +345,43 @@ module.exports = {
     res.json({ message: 'Presupuesto creado exitosamente', insertId });
   });
 },
-guardarItemsPresupuesto: (req, res) => {
+guardarItemsPresupuesto: async (req, res) => {
   const { presupuestoId, items } = req.body;
 
   if (!presupuestoId || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'Datos inválidos para productos del presupuesto' });
   }
 
-  administracion.guardarItemsPresupuesto(presupuestoId, items, (err) => {
-    if (err) {
-      console.error("❌ Error al guardar productos del presupuesto:", err);
-      return res.status(500).json({ error: 'Error al guardar productos del presupuesto' });
+  try {
+    for (const item of items) {
+      const itemPresupuesto = {
+        presupuesto_id: presupuestoId,
+        producto_id: item.id,
+        cantidad: item.cantidad
+      };
+
+      // Guardar ítem
+      await new Promise((resolve, reject) => {
+        administracion.insertarItemPresupuesto(itemPresupuesto, (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        });
+      });
+
+      // Actualizar stock
+      await new Promise((resolve, reject) => {
+        administracion.actualizarStockProducto(item.id, item.cantidad, (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        });
+      });
     }
 
-    res.json({ message: 'Productos del presupuesto guardados correctamente' });
-  });
+    res.json({ message: 'Productos del presupuesto guardados y stock actualizado correctamente' });
+  } catch (err) {
+    console.error("❌ Error al guardar productos del presupuesto:", err);
+    res.status(500).json({ error: 'Error al guardar productos del presupuesto' });
+  }
 },
 
       

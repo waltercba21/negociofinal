@@ -57,20 +57,13 @@ module.exports ={
       callback(results.insertId, null);
     });
   },
-  
-    insertarItemFactura: function(itemFactura, callback) {
-        console.log("📦 Insertando item en la factura:", itemFactura); 
-        pool.query('INSERT INTO facturas_admin_items SET ?', itemFactura, function(error, results) {
-            if (error) {
-                console.error("❌ Error al insertar item en la base de datos:", error);
-                return callback(error, null); // Devolvemos error en callback
-            }
-            console.log("✅ Item insertado correctamente con ID:", results.insertId);
-            if (callback) callback(null, results); // Devuelve los resultados
-        });
-    },
-    
-    
+insertarItemPresupuesto: function(item, callback) {
+  pool.query('INSERT INTO presupuestos_admin_items SET ?', item, function(error, results) {
+    if (error) return callback(error);
+    callback(null, results);
+  });
+},
+
     actualizarStockProducto: function(productoID, cantidad, callback) {
         if (!productoID || !cantidad) {
             return callback(new Error("El productoID y la cantidad son obligatorios"));
