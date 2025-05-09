@@ -58,20 +58,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   
     function agregarProducto(prod) {
-        if (productosSeleccionados.some(p => p.id === prod.id)) return;
-      
-        productosSeleccionados.push({
-          id: prod.id,
-          nombre: prod.nombre,
-          proveedores: prod.proveedores || [],
-          imagenes: prod.imagenes || [],
-          cantidad: 1
-        });
-      
-        renderizarTabla();
-        resultados.innerHTML = '';
-        buscador.value = '';
-      }
+  if (productosSeleccionados.some(p => p.id === prod.id)) return;
+
+  productosSeleccionados.push({
+    id: prod.id,
+    nombre: prod.nombre,
+    proveedores: prod.proveedores || [],
+    imagenes: prod.imagenes || [],
+    cantidad: 1
+  });
+
+  renderizarTabla();
+
+}
+
       
   
     function renderizarTabla() {
@@ -124,6 +124,7 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
       modal.hide();
       Swal.fire('Confirmado', 'Productos listos para guardar con la factura.', 'success');
     });
+
   btnGuardarFactura.addEventListener('click', async () => {
   const proveedor = document.getElementById('facturaProveedor').value;
   const fecha = document.getElementById('facturaFecha').value;
@@ -229,8 +230,6 @@ inputFechaFactura.addEventListener('change', () => {
 
   const fecha30dias = fecha.toISOString().split('T')[0];
   inputFechaPago.value = fecha30dias;
-});
-
-
   });
+});
   
