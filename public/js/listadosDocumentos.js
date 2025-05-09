@@ -1,16 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
   const btnBuscar = document.getElementById('btnBuscarListados');
   const filtroTipo = document.getElementById('filtroTipo');
-  const filtroProveedor = document.getElementById('filtroProveedor'); // Este falta en el HTML
+  const proveedor = document.getElementById('filtroProveedor').value;
   const filtroFechaDesde = document.getElementById('filtroFechaDesde');
   const filtroFechaHasta = document.getElementById('filtroFechaHasta');
   const filtroCondicion = document.getElementById('filtroCondicion');
   const resultados = document.getElementById('resultadosListado');
-  const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
+  const modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
   const contenidoModal = document.getElementById('contenidoDetalleDocumento');
 
   // ✅ Validación de existencia
-  if (!btnBuscar || !filtroTipo || !filtroFechaDesde || !filtroFechaHasta || !filtroCondicion || !resultados || !modal || !contenidoModal) {
+  if (!btnBuscar || !filtroTipo || !filtroFechaDesde || !filtroFechaHasta || !filtroCondicion || !resultados || !modalDetalle || !contenidoModal) {
     console.warn('⚠️ Elementos de filtros no encontrados en el DOM.');
     return;
   }
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </ul>
       `;
 
-      modal.show();
+      modalDetalle.show();
 
       document.getElementById('btnGuardarCambiosDocumento').onclick = async () => {
         const form = document.getElementById('formEditarDocumento');
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           const respuesta = await res.json();
           Swal.fire('Actualizado', respuesta.message || 'Cambios guardados.', 'success');
-          modal.hide();
+          modalDetalle.hide();
         } catch (err) {
           console.error('Error al guardar cambios:', err);
           Swal.fire('Error', 'No se pudieron guardar los cambios.', 'error');
@@ -119,3 +119,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+function mostrarDetalle(documento) {
+  const contenido = document.getElementById('contenidoDetalleDocumento');
+
+  // Generar HTML según el tipo (factura o presupuesto)
+  contenido.innerHTML = `
+    <p><strong>Tipo:</strong> ${documento.tipo}</p>
+    <p><strong>Proveedor:</strong> ${documento.nombre_proveedor}</p>
+    <p><strong>Número:</strong> ${documento.numero}</p>
+    <p><strong>Fecha:</strong> ${documento.fecha}</p>
+    <p><strong>Condición:</strong> ${documento.condicion}</p>
+  `;
+
+  // Mostrar el modal
+  modalDetalle.show();
+}

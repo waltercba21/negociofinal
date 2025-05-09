@@ -164,9 +164,22 @@
     </div>
   </div>
 </section>
+
+<!------------------------------ Contenedor Listado de Facturas y Presupuestos------------ -->
+
 <section class="panel-listados">
   <div class="card-proveedor contenedor-factura">
     <h5 class="titulo-proveedor">Listado de Facturas y Presupuestos</h5>
+    <div class="mb-3">
+  <label for="filtroProveedor" class="form-label">Proveedor</label>
+  <select id="filtroProveedor" class="form-select">
+    <option value="">Todos los proveedores</option>
+    <% proveedores.forEach(p => { %>
+      <option value="<%= p.id %>"><%= p.nombre %></option>
+    <% }) %>
+  </select>
+</div>
+
 <div class="mb-3">
   <label for="filtroTipo" class="form-label">Tipo</label>
   <select id="filtroTipo" class="form-select">
