@@ -385,28 +385,28 @@ editarPresupuesto: function (id, datos, callback) {
 obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, condicion, callback) {
   const filtrosFactura = [];
   const filtrosPresupuesto = [];
-  const escape = pool.escape;
+  pool.escape(proveedor)
 
-  // Filtros dinámicos
-  if (proveedor && proveedor.trim() !== '') {
-    filtrosFactura.push(`f.id_proveedor = ${escape(proveedor)}`);
-    filtrosPresupuesto.push(`pz.id_proveedor = ${escape(proveedor)}`);
-  }
+if (proveedor && proveedor.trim() !== '') {
+  filtrosFactura.push(`f.id_proveedor = ${pool.escape(proveedor)}`);
+  filtrosPresupuesto.push(`pz.id_proveedor = ${pool.escape(proveedor)}`);
+}
 
-  if (condicion && condicion.trim() !== '') {
-    filtrosFactura.push(`f.condicion = ${escape(condicion)}`);
-    filtrosPresupuesto.push(`pz.condicion = ${escape(condicion)}`);
-  }
+if (condicion && condicion.trim() !== '') {
+  filtrosFactura.push(`f.condicion = ${pool.escape(condicion)}`);
+  filtrosPresupuesto.push(`pz.condicion = ${pool.escape(condicion)}`);
+}
 
-  if (fechaDesde) {
-    filtrosFactura.push(`f.fecha >= ${escape(fechaDesde)}`);
-    filtrosPresupuesto.push(`pz.fecha >= ${escape(fechaDesde)}`);
-  }
+if (fechaDesde) {
+  filtrosFactura.push(`f.fecha >= ${pool.escape(fechaDesde)}`);
+  filtrosPresupuesto.push(`pz.fecha >= ${pool.escape(fechaDesde)}`);
+}
 
-  if (fechaHasta) {
-    filtrosFactura.push(`f.fecha <= ${escape(fechaHasta)}`);
-    filtrosPresupuesto.push(`pz.fecha <= ${escape(fechaHasta)}`);
-  }
+if (fechaHasta) {
+  filtrosFactura.push(`f.fecha <= ${pool.escape(fechaHasta)}`);
+  filtrosPresupuesto.push(`pz.fecha <= ${pool.escape(fechaHasta)}`);
+}
+
 
   const whereFactura = filtrosFactura.length ? `WHERE ${filtrosFactura.join(' AND ')}` : '';
   const wherePresupuesto = filtrosPresupuesto.length ? `WHERE ${filtrosPresupuesto.join(' AND ')}` : '';
