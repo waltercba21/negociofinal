@@ -254,7 +254,41 @@ module.exports ={
             callback(null, result);
           });
         });
-      }
+      },
+      insertPresupuesto: function (presupuesto, callback) {
+  const {
+    id_proveedor,
+    fecha,
+    numero_presupuesto,
+    fecha_pago,
+    importe,
+    condicion
+  } = presupuesto;
+
+  const datos = {
+    id_proveedor,
+    fecha,
+    numero_presupuesto,
+    fecha_pago,
+    importe,
+    condicion
+  };
+
+  pool.query('INSERT INTO presupuestos SET ?', datos, function (error, results) {
+    if (error) return callback(null, error);
+    if (!results.insertId) return callback(null, new Error("Presupuesto no insertado."));
+    callback(results.insertId, null);
+  });
+},
+
+guardarItemsPresupuesto: function (presupuestoId, items, callback) {
+  const sql = 'INSERT INTO presupuestos_admin_items (presupuesto_id, producto_id, cantidad) VALUES ?';
+  const values = items.map(item => [presupuestoId, item.id, item.cantidad]);
+
+  pool.query(sql, [values], callback);
+}
+
+
       
       
 }

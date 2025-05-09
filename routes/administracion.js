@@ -36,6 +36,9 @@ router.post('/api/proveedores', administracionController.crearProveedor);
 router.put('/api/proveedores/:id', administracionController.editarProveedor);
 router.delete('/api/proveedores/:id', administracionController.eliminarProveedor);
 
+router.get('/presupuestos', administracionController.presupuestos);
+router.post('/api/presupuestos', administracionController.postPresupuesto);
+router.post('/api/presupuestos/productos', administracionController.guardarItemsPresupuesto);
 
 
 module.exports = router;
