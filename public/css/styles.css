@@ -363,6 +363,9 @@ header .icons p {
   font-size: 0.85rem;
   padding: 0.3rem 0.6rem;
 }
+#tablaProductosFactura {
+  font-size: 0.85rem;
+}
 #tablaProductosFactura td {
   font-size: 12px;
   padding: 4px;
@@ -386,7 +389,61 @@ header .icons p {
   padding: 4px 6px;
   font-size: 12px;
 }
+#tablaProductosFactura th {
+  background-color: #f1f1f1; /* gris claro */
+  color: #212529; /* texto oscuro */
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+/* Ajuste de columnas específicas */
+#tablaProductosFactura td:nth-child(1), /* Código proveedor */
+#tablaProductosFactura th:nth-child(1) {
+  width: 15%;
+  white-space: nowrap;
+}
 
+#tablaProductosFactura td:nth-child(2), /* Nombre producto */
+#tablaProductosFactura th:nth-child(2) {
+  width: 45%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+#tablaProductosFactura td:nth-child(3), /* Imagen */
+#tablaProductosFactura th:nth-child(3) {
+  width: 15%;
+}
+
+#tablaProductosFactura td:nth-child(4), /* Cantidad */
+#tablaProductosFactura th:nth-child(4) {
+  width: 10%;
+}
+
+#tablaProductosFactura td:nth-child(5), /* Acción */
+#tablaProductosFactura th:nth-child(5) {
+  width: 15%;
+}
+
+/* Imagen miniatura */
+#tablaProductosFactura .miniatura-tabla {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+/* Input cantidad más compacto */
+#tablaProductosFactura input.cantidad-input {
+  width: 55px;
+  padding: 2px 5px;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* Botón eliminar compacto */
+#tablaProductosFactura button.boton-eliminar-factura {
+  padding: 4px 6px;
+  font-size: 0.8rem;
+}
 /* ---------------------------------------FOOTER ------------------------------------------- */
 footer {
   background-color: #fff;
