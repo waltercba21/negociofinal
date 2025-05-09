@@ -384,28 +384,75 @@ guardarItemsPresupuesto: async (req, res) => {
   }
 },
 listarDocumentos: async (req, res) => {
-  const { proveedor, fecha, condicion } = req.query;
+  const { tipo, proveedor, fechaDesde, fechaHasta, condicion } = req.query;
 
-  try {
-    const facturas = await new Promise((resolve, reject) => {
-      administracion.filtrarFacturas(proveedor, fecha, condicion, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows.map(row => ({ ...row, tipo: 'factura', numero: row.numero_factura })));
-      });
-    });
+  const filtrosFactura = [];
+  const filtrosPresupuesto = [];
 
-    const presupuestos = await new Promise((resolve, reject) => {
-      administracion.filtrarPresupuestos(proveedor, fecha, condicion, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows.map(row => ({ ...row, tipo: 'presupuesto', numero: row.numero_presupuesto })));
-      });
-    });
-
-    res.json([...facturas, ...presupuestos]);
-  } catch (error) {
-    console.error('❌ Error en listarDocumentos:', error);
-    res.status(500).json({ error: 'Error al listar documentos' });
+  if (proveedor && proveedor.trim() !== '') {
+    filtrosFactura.push(`f.id_proveedor = ${conexion.escape(proveedor)}`);
+    filtrosPresupuesto.push(`pz.id_proveedor = ${conexion.escape(proveedor)}`);
   }
+
+  if (condicion && condicion.trim() !== '') {
+    filtrosFactura.push(`f.condicion = ${conexion.escape(condicion)}`);
+    filtrosPresupuesto.push(`pz.condicion = ${conexion.escape(condicion)}`);
+  }
+
+  if (fechaDesde) {
+    filtrosFactura.push(`f.fecha >= ${conexion.escape(fechaDesde)}`);
+    filtrosPresupuesto.push(`pz.fecha >= ${conexion.escape(fechaDesde)}`);
+  }
+
+  if (fechaHasta) {
+    filtrosFactura.push(`f.fecha <= ${conexion.escape(fechaHasta)}`);
+    filtrosPresupuesto.push(`pz.fecha <= ${conexion.escape(fechaHasta)}`);
+  }
+
+  const whereFactura = filtrosFactura.length ? `WHERE ${filtrosFactura.join(' AND ')}` : '';
+  const wherePresupuesto = filtrosPresupuesto.length ? `WHERE ${filtrosPresupuesto.join(' AND ')}` : '';
+
+  const consultas = [];
+
+  if (!tipo || tipo === 'factura') {
+    consultas.push(`
+      SELECT 
+        'factura' AS tipo,
+        f.id,
+        f.numero_factura AS numero,
+        f.fecha,
+        f.condicion,
+        p.nombre AS nombre_proveedor
+      FROM facturas f
+      JOIN proveedores p ON p.id = f.id_proveedor
+      ${whereFactura}
+    `);
+  }
+
+  if (!tipo || tipo === 'presupuesto') {
+    consultas.push(`
+      SELECT 
+        'presupuesto' AS tipo,
+        pz.id,
+        pz.numero_presupuesto AS numero,
+        pz.fecha,
+        pz.condicion,
+        pr.nombre AS nombre_proveedor
+      FROM presupuestos pz
+      JOIN proveedores pr ON pr.id = pz.id_proveedor
+      ${wherePresupuesto}
+    `);
+  }
+
+  const sqlFinal = consultas.join(' UNION ALL ') + ' ORDER BY fecha DESC';
+
+  conexion.query(sqlFinal, (err, result) => {
+    if (err) {
+      console.error('❌ Error en getDocumentosFiltrados:', err);
+      return res.status(500).json({ error: 'Error al buscar documentos' });
+    }
+    res.json(result);
+  });
 },
 getFacturaById: (req, res) => {
   administracion.obtenerFacturaPorId(req.params.id, (err, datos) => {
