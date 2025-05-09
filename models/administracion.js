@@ -359,6 +359,29 @@ obtenerPresupuestoPorId: function (id, callback) {
     callback(null, { ...result[0], productos });
   });
 },
+editarFactura: function (id, datos, callback) {
+  const { numero, fecha, condicion } = datos;
+
+  const sql = `
+    UPDATE facturas 
+    SET numero_factura = ?, fecha = ?, condicion = ?
+    WHERE id = ?
+  `;
+
+  pool.query(sql, [numero, fecha, condicion, id], callback);
+},
+
+editarPresupuesto: function (id, datos, callback) {
+  const { numero, fecha, condicion } = datos;
+
+  const sql = `
+    UPDATE presupuestos 
+    SET numero_presupuesto = ?, fecha = ?, condicion = ?
+    WHERE id = ?
+  `;
+
+  pool.query(sql, [numero, fecha, condicion, id], callback);
+},
 
 
       

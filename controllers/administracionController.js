@@ -420,6 +420,20 @@ getPresupuestoById: (req, res) => {
     res.json(datos);
   });
 },
+actualizarFactura: (req, res) => {
+  administracion.editarFactura(req.params.id, req.body, (err, resultado) => {
+    if (err) return res.status(500).json({ error: 'Error al actualizar factura' });
+    res.json({ message: 'Factura actualizada correctamente' });
+  });
+},
+
+actualizarPresupuesto: (req, res) => {
+  administracion.editarPresupuesto(req.params.id, req.body, (err, resultado) => {
+    if (err) return res.status(500).json({ error: 'Error al actualizar presupuesto' });
+    res.json({ message: 'Presupuesto actualizado correctamente' });
+  });
+},
+
 
       
 }
