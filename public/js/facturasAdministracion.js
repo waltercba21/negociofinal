@@ -8,7 +8,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnGuardarFactura = document.getElementById('btnGuardarFactura');
   
     let productosSeleccionados = [];
-  
+  // Cerrar con Escape
+buscador.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    resultados.innerHTML = '';
+    resultados.style.display = 'none';
+  }
+});
+document.addEventListener('click', (e) => {
+  const dentroDelBuscador = buscador.contains(e.target);
+  const dentroDeResultados = resultados.contains(e.target);
+  if (!dentroDelBuscador && !dentroDeResultados) {
+    resultados.innerHTML = '';
+    resultados.style.display = 'none';
+  }
+});
     btnAbrirModal.addEventListener('click', () => {
       modal.show();
       buscador.value = '';
