@@ -383,77 +383,25 @@ guardarItemsPresupuesto: async (req, res) => {
     res.status(500).json({ error: 'Error al guardar productos del presupuesto' });
   }
 },
-listarDocumentos: async (req, res) => {
+listarDocumentos: (req, res) => {
   const { tipo, proveedor, fechaDesde, fechaHasta, condicion } = req.query;
 
-  const filtrosFactura = [];
-  const filtrosPresupuesto = [];
-
-  if (proveedor && proveedor.trim() !== '') {
-    filtrosFactura.push(`f.id_proveedor = ${conexion.escape(proveedor)}`);
-    filtrosPresupuesto.push(`pz.id_proveedor = ${conexion.escape(proveedor)}`);
-  }
-
-  if (condicion && condicion.trim() !== '') {
-    filtrosFactura.push(`f.condicion = ${conexion.escape(condicion)}`);
-    filtrosPresupuesto.push(`pz.condicion = ${conexion.escape(condicion)}`);
-  }
-
-  if (fechaDesde) {
-    filtrosFactura.push(`f.fecha >= ${conexion.escape(fechaDesde)}`);
-    filtrosPresupuesto.push(`pz.fecha >= ${conexion.escape(fechaDesde)}`);
-  }
-
-  if (fechaHasta) {
-    filtrosFactura.push(`f.fecha <= ${conexion.escape(fechaHasta)}`);
-    filtrosPresupuesto.push(`pz.fecha <= ${conexion.escape(fechaHasta)}`);
-  }
-
-  const whereFactura = filtrosFactura.length ? `WHERE ${filtrosFactura.join(' AND ')}` : '';
-  const wherePresupuesto = filtrosPresupuesto.length ? `WHERE ${filtrosPresupuesto.join(' AND ')}` : '';
-
-  const consultas = [];
-
-  if (!tipo || tipo === 'factura') {
-    consultas.push(`
-      SELECT 
-        'factura' AS tipo,
-        f.id,
-        f.numero_factura AS numero,
-        f.fecha,
-        f.condicion,
-        p.nombre AS nombre_proveedor
-      FROM facturas f
-      JOIN proveedores p ON p.id = f.id_proveedor
-      ${whereFactura}
-    `);
-  }
-
-  if (!tipo || tipo === 'presupuesto') {
-    consultas.push(`
-      SELECT 
-        'presupuesto' AS tipo,
-        pz.id,
-        pz.numero_presupuesto AS numero,
-        pz.fecha,
-        pz.condicion,
-        pr.nombre AS nombre_proveedor
-      FROM presupuestos pz
-      JOIN proveedores pr ON pr.id = pz.id_proveedor
-      ${wherePresupuesto}
-    `);
-  }
-
-  const sqlFinal = consultas.join(' UNION ALL ') + ' ORDER BY fecha DESC';
-
-  conexion.query(sqlFinal, (err, result) => {
-    if (err) {
-      console.error('❌ Error en getDocumentosFiltrados:', err);
-      return res.status(500).json({ error: 'Error al buscar documentos' });
+  administracion.obtenerDocumentosFiltrados(
+    tipo,
+    proveedor,
+    fechaDesde,
+    fechaHasta,
+    condicion,
+    (err, resultados) => {
+      if (err) {
+        console.error('❌ Error en listarDocumentos:', err);
+        return res.status(500).json({ error: 'Error al obtener documentos' });
+      }
+      res.json(resultados);
     }
-    res.json(result);
-  });
+  );
 },
+
 getFacturaById: (req, res) => {
   administracion.obtenerFacturaPorId(req.params.id, (err, datos) => {
     if (err) return res.status(500).json({ error: 'Error al buscar factura' });
@@ -467,94 +415,20 @@ getPresupuestoById: (req, res) => {
     res.json(datos);
   });
 },
-actualizarFactura: (req, res) => {
-  administracion.editarFactura(req.params.id, req.body, (err, resultado) => {
-    if (err) return res.status(500).json({ error: 'Error al actualizar factura' });
-    res.json({ message: 'Factura actualizada correctamente' });
-  });
-},
 
-actualizarPresupuesto: (req, res) => {
-  administracion.editarPresupuesto(req.params.id, req.body, (err, resultado) => {
-    if (err) return res.status(500).json({ error: 'Error al actualizar presupuesto' });
-    res.json({ message: 'Presupuesto actualizado correctamente' });
-  });
-},
-getDocumentosFiltrados: (req, res) => {
-  const { tipo, proveedor, fechaDesde, fechaHasta, condicion } = req.query;
+  actualizarFactura: (req, res) => {
+    administracion.editarFactura(req.params.id, req.body, (err, resultado) => {
+      if (err) return res.status(500).json({ error: 'Error al actualizar factura' });
+      res.json({ message: 'Factura actualizada correctamente' });
+    });
+  },
 
-  const filtrosFactura = [];
-  const filtrosPresupuesto = [];
-
-  // ✅ Solo agregamos filtros si tienen valor
-  if (proveedor && proveedor.trim() !== '') {
-    filtrosFactura.push(`f.id_proveedor = ${pool.escape(proveedor)}`);
-    filtrosPresupuesto.push(`pz.id_proveedor = ${pool.escape(proveedor)}`);
-  }
-
-  if (condicion && condicion.trim() !== '') {
-    filtrosFactura.push(`f.condicion = ${pool.escape(condicion)}`);
-    filtrosPresupuesto.push(`pz.condicion = ${pool.escape(condicion)}`);
-  }
-
-  if (fechaDesde) {
-    filtrosFactura.push(`f.fecha >= ${pool.escape(fechaDesde)}`);
-    filtrosPresupuesto.push(`pz.fecha >= ${pool.escape(fechaDesde)}`);
-  }
-
-  if (fechaHasta) {
-    filtrosFactura.push(`f.fecha <= ${pool.escape(fechaHasta)}`);
-    filtrosPresupuesto.push(`pz.fecha <= ${pool.escape(fechaHasta)}`);
-  }
-
-  const whereFactura = filtrosFactura.length ? `WHERE ${filtrosFactura.join(' AND ')}` : '';
-  const wherePresupuesto = filtrosPresupuesto.length ? `WHERE ${filtrosPresupuesto.join(' AND ')}` : '';
-
-  const consultas = [];
-
-  if (!tipo || tipo === 'factura') {
-    consultas.push(`
-      SELECT 
-        'factura' AS tipo,
-        f.id,
-        f.numero_factura AS numero,
-        f.fecha,
-        f.condicion,
-        p.nombre AS nombre_proveedor
-      FROM facturas f
-      JOIN proveedores p ON p.id = f.id_proveedor
-      ${whereFactura}
-    `);
-  }
-
-  if (!tipo || tipo === 'presupuesto') {
-    consultas.push(`
-      SELECT 
-        'presupuesto' AS tipo,
-        pz.id,
-        pz.numero_presupuesto AS numero,
-        pz.fecha,
-        pz.condicion,
-        pr.nombre AS nombre_proveedor
-      FROM presupuestos pz
-      JOIN proveedores pr ON pr.id = pz.id_proveedor
-      ${wherePresupuesto}
-    `);
-  }
-
-  const sqlFinal = consultas.join(' UNION ALL ') + ' ORDER BY fecha DESC';
-
-  pool.query(sqlFinal, (err, result) => {
-    if (err) {
-      console.error('❌ Error en getDocumentosFiltrados:', err);
-      return res.status(500).json({ error: 'Error al buscar documentos' });
-    }
-
-    res.json(result);
-  });
-}
-
-
+  actualizarPresupuesto: (req, res) => {
+    administracion.editarPresupuesto(req.params.id, req.body, (err, resultado) => {
+      if (err) return res.status(500).json({ error: 'Error al actualizar presupuesto' });
+      res.json({ message: 'Presupuesto actualizado correctamente' });
+    });
+  },
 
       
 }

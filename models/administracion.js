@@ -382,8 +382,71 @@ editarPresupuesto: function (id, datos, callback) {
 
   pool.query(sql, [numero, fecha, condicion, id], callback);
 },
+obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, condicion, callback) {
+  const filtrosFactura = [];
+  const filtrosPresupuesto = [];
+  const escape = pool.escape;
 
+  // Filtros dinámicos
+  if (proveedor && proveedor.trim() !== '') {
+    filtrosFactura.push(`f.id_proveedor = ${escape(proveedor)}`);
+    filtrosPresupuesto.push(`pz.id_proveedor = ${escape(proveedor)}`);
+  }
 
-      
+  if (condicion && condicion.trim() !== '') {
+    filtrosFactura.push(`f.condicion = ${escape(condicion)}`);
+    filtrosPresupuesto.push(`pz.condicion = ${escape(condicion)}`);
+  }
+
+  if (fechaDesde) {
+    filtrosFactura.push(`f.fecha >= ${escape(fechaDesde)}`);
+    filtrosPresupuesto.push(`pz.fecha >= ${escape(fechaDesde)}`);
+  }
+
+  if (fechaHasta) {
+    filtrosFactura.push(`f.fecha <= ${escape(fechaHasta)}`);
+    filtrosPresupuesto.push(`pz.fecha <= ${escape(fechaHasta)}`);
+  }
+
+  const whereFactura = filtrosFactura.length ? `WHERE ${filtrosFactura.join(' AND ')}` : '';
+  const wherePresupuesto = filtrosPresupuesto.length ? `WHERE ${filtrosPresupuesto.join(' AND ')}` : '';
+
+  const consultas = [];
+
+  if (!tipo || tipo === 'factura') {
+    consultas.push(`
+      SELECT 
+        'factura' AS tipo,
+        f.id,
+        f.numero_factura AS numero,
+        f.fecha,
+        f.condicion,
+        p.nombre AS nombre_proveedor
+      FROM facturas f
+      JOIN proveedores p ON p.id = f.id_proveedor
+      ${whereFactura}
+    `);
+  }
+
+  if (!tipo || tipo === 'presupuesto') {
+    consultas.push(`
+      SELECT 
+        'presupuesto' AS tipo,
+        pz.id,
+        pz.numero_presupuesto AS numero,
+        pz.fecha,
+        pz.condicion,
+        pr.nombre AS nombre_proveedor
+      FROM presupuestos pz
+      JOIN proveedores pr ON pr.id = pz.id_proveedor
+      ${wherePresupuesto}
+    `);
+  }
+
+  const sqlFinal = consultas.join(' UNION ALL ') + ' ORDER BY fecha DESC';
+
+  pool.query(sqlFinal, callback);
+}
+
       
 }
