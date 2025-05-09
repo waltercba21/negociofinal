@@ -1,29 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
   const btnBuscar = document.getElementById('btnBuscarListados');
   const filtroTipo = document.getElementById('filtroTipo');
-  const proveedor = document.getElementById('filtroProveedor').value;
+  const filtroProveedor = document.getElementById('filtroProveedor');
   const filtroFechaDesde = document.getElementById('filtroFechaDesde');
   const filtroFechaHasta = document.getElementById('filtroFechaHasta');
   const filtroCondicion = document.getElementById('filtroCondicion');
   const resultados = document.getElementById('resultadosListado');
-  const modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
-  const contenidoModal = document.getElementById('contenidoDetalleDocumento');
+  const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
+  const contenido = document.getElementById('contenidoDetalleDocumento');
 
-  // ✅ Validación de existencia
-  if (!btnBuscar || !filtroTipo || !filtroFechaDesde || !filtroFechaHasta || !filtroCondicion || !resultados || !modalDetalle || !contenidoModal) {
-    console.warn('⚠️ Elementos de filtros no encontrados en el DOM.');
-    return;
-  }
-
-  // ✅ Continuar lógica si todos existen
   btnBuscar.addEventListener('click', async () => {
-    const tipo = filtroTipo.value;
-    const proveedor = filtroProveedor ? filtroProveedor.value : ''; // Evitar error si no existe
-    const fechaDesde = filtroFechaDesde.value;
-    const fechaHasta = filtroFechaHasta.value;
-    const condicion = filtroCondicion.value;
-
-    const query = new URLSearchParams({ tipo, proveedor, fechaDesde, fechaHasta, condicion }).toString();
+    const query = new URLSearchParams({
+      tipo: filtroTipo.value,
+      proveedor: filtroProveedor.value,
+      fechaDesde: filtroFechaDesde.value,
+      fechaHasta: filtroFechaHasta.value,
+      condicion: filtroCondicion.value
+    }).toString();
 
     resultados.innerHTML = '<p class="text-muted">Buscando...</p>';
 
@@ -46,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <span><strong>${doc.tipo.toUpperCase()}</strong> #${doc.numero} - ${doc.nombre_proveedor} (${doc.fecha})</span>
           <button class="btn btn-sm btn-primary" data-id="${doc.id}" data-tipo="${doc.tipo}">Ver</button>
         `;
-
         item.querySelector('button').addEventListener('click', () => cargarDetalleDocumento(doc.id, doc.tipo));
         lista.appendChild(item);
       });
@@ -64,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/administracion/api/${tipo}/${id}`);
       const data = await res.json();
 
-      contenidoModal.innerHTML = `
+      contenido.innerHTML = `
         <form id="formEditarDocumento">
           <input type="hidden" name="id" value="${data.id}">
           <div class="mb-3">
@@ -86,14 +78,15 @@ document.addEventListener('DOMContentLoaded', () => {
               <option value="pagado" ${data.condicion === 'pagado' ? 'selected' : ''}>Pagado</option>
             </select>
           </div>
+
+          <p class="mt-3"><strong>Productos:</strong></p>
+          <ul class="list-group">
+            ${(data.productos || []).map(p => `<li class="list-group-item">${p.nombre} - Cantidad: ${p.cantidad}</li>`).join('')}
+          </ul>
         </form>
-        <p class="mt-3"><strong>Productos:</strong></p>
-        <ul class="list-group">
-          ${data.productos.map(p => `<li class="list-group-item">${p.nombre} - Cantidad: ${p.cantidad}</li>`).join('')}
-        </ul>
       `;
 
-      modalDetalle.show();
+      modal.show();
 
       document.getElementById('btnGuardarCambiosDocumento').onclick = async () => {
         const form = document.getElementById('formEditarDocumento');
@@ -107,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           const respuesta = await res.json();
           Swal.fire('Actualizado', respuesta.message || 'Cambios guardados.', 'success');
-          modalDetalle.hide();
+          modal.hide();
         } catch (err) {
           console.error('Error al guardar cambios:', err);
           Swal.fire('Error', 'No se pudieron guardar los cambios.', 'error');
@@ -119,18 +112,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
-function mostrarDetalle(documento) {
-  const contenido = document.getElementById('contenidoDetalleDocumento');
-
-  // Generar HTML según el tipo (factura o presupuesto)
-  contenido.innerHTML = `
-    <p><strong>Tipo:</strong> ${documento.tipo}</p>
-    <p><strong>Proveedor:</strong> ${documento.nombre_proveedor}</p>
-    <p><strong>Número:</strong> ${documento.numero}</p>
-    <p><strong>Fecha:</strong> ${documento.fecha}</p>
-    <p><strong>Condición:</strong> ${documento.condicion}</p>
-  `;
-
-  // Mostrar el modal
-  modalDetalle.show();
-}
