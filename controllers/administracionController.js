@@ -439,12 +439,13 @@ getDocumentosFiltrados: (req, res) => {
   const filtrosFactura = [];
   const filtrosPresupuesto = [];
 
-  if (proveedor) {
+  // ✅ Solo agregamos filtros si tienen valor
+  if (proveedor && proveedor.trim() !== '') {
     filtrosFactura.push(`f.id_proveedor = ${pool.escape(proveedor)}`);
     filtrosPresupuesto.push(`pz.id_proveedor = ${pool.escape(proveedor)}`);
   }
 
-  if (condicion) {
+  if (condicion && condicion.trim() !== '') {
     filtrosFactura.push(`f.condicion = ${pool.escape(condicion)}`);
     filtrosPresupuesto.push(`pz.condicion = ${pool.escape(condicion)}`);
   }
@@ -505,6 +506,7 @@ getDocumentosFiltrados: (req, res) => {
     res.json(result);
   });
 }
+
 
 
       
