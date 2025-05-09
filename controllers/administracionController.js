@@ -326,5 +326,41 @@ module.exports = {
           res.status(500).json({ error: 'Error al guardar productos de factura' });
         }
       },
+      postPresupuesto: (req, res) => {
+  const nuevoPresupuesto = {
+    id_proveedor: req.body.id_proveedor,
+    fecha: req.body.fecha,
+    numero_presupuesto: req.body.numero_presupuesto,
+    fecha_pago: req.body.fecha_pago,
+    importe: req.body.importe,
+    condicion: req.body.condicion
+  };
+
+  administracion.insertPresupuesto(nuevoPresupuesto, (insertId, error) => {
+    if (error) {
+      console.error("❌ Error al guardar presupuesto:", error);
+      return res.status(500).json({ message: 'Error al crear presupuesto' });
+    }
+
+    res.json({ message: 'Presupuesto creado exitosamente', insertId });
+  });
+},
+guardarItemsPresupuesto: (req, res) => {
+  const { presupuestoId, items } = req.body;
+
+  if (!presupuestoId || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Datos inválidos para productos del presupuesto' });
+  }
+
+  administracion.guardarItemsPresupuesto(presupuestoId, items, (err) => {
+    if (err) {
+      console.error("❌ Error al guardar productos del presupuesto:", err);
+      return res.status(500).json({ error: 'Error al guardar productos del presupuesto' });
+    }
+
+    res.json({ message: 'Productos del presupuesto guardados correctamente' });
+  });
+},
+
       
 }
