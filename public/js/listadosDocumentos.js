@@ -16,38 +16,45 @@ document.addEventListener('DOMContentLoaded', () => {
   let paginaActual = 1;
   const porPagina = 6;
 
-  function renderizarPaginado() {
-    const inicio = (paginaActual - 1) * porPagina;
-    const fin = inicio + porPagina;
-    const pagina = documentosFiltrados.slice(inicio, fin);
+function renderizarPaginado() {
+  const inicio = (paginaActual - 1) * porPagina;
+  const fin = inicio + porPagina;
+  const pagina = documentosFiltrados.slice(inicio, fin);
 
-    const html = pagina.map(doc => `
-      <div class="card border-0 shadow-sm p-3 mb-2">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <div class="fw-bold">${doc.nombre_proveedor}</div>
-            <div class="text-muted small">${doc.tipo.toUpperCase()} N° ${doc.numero}</div>
-            <div class="text-muted small">Fecha: ${formatoFecha(doc.fecha)}</div>
+  const html = `
+    <div class="row">
+      ${pagina.map(doc => `
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 shadow-sm p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold">${doc.nombre_proveedor}</div>
+                <div class="text-muted small">${doc.tipo.toUpperCase()} N° ${doc.numero}</div>
+                <div class="text-muted small">Fecha: ${formatoFecha(doc.fecha)}</div>
+              </div>
+              <button class="btn btn-sm btn-outline-primary verDocumentoBtn" data-id="${doc.id}" data-tipo="${doc.tipo}">
+                Ver
+              </button>
+            </div>
           </div>
-          <button class="btn btn-sm btn-outline-primary verDocumentoBtn" data-id="${doc.id}" data-tipo="${doc.tipo}">
-            Ver
-          </button>
         </div>
-      </div>
-    `).join('');
+      `).join('')}
+    </div>
+  `;
 
-    const totalPaginas = Math.ceil(documentosFiltrados.length / porPagina);
-    let paginacionHTML = '<div class="d-flex justify-content-center mt-3 gap-2">';
-    for (let i = 1; i <= totalPaginas; i++) {
-      paginacionHTML += `
-        <button class="btn btn-sm ${i === paginaActual ? 'btn-dark' : 'btn-outline-secondary'} paginadorBtn" data-pag="${i}">${i}</button>
-      `;
-    }
-    paginacionHTML += '</div>';
-
-    contenidoDetalle.innerHTML = html + paginacionHTML;
-    modal.show();
+  const totalPaginas = Math.ceil(documentosFiltrados.length / porPagina);
+  let paginacionHTML = '<div class="d-flex justify-content-center mt-3 gap-2">';
+  for (let i = 1; i <= totalPaginas; i++) {
+    paginacionHTML += `
+      <button class="btn btn-sm ${i === paginaActual ? 'btn-dark' : 'btn-outline-secondary'} paginadorBtn" data-pag="${i}">${i}</button>
+    `;
   }
+  paginacionHTML += '</div>';
+
+  contenidoDetalle.innerHTML = html + paginacionHTML;
+  modal.show();
+}
+
 
   btnBuscar.addEventListener('click', async () => {
     const tipo = document.getElementById('filtroTipo')?.value || '';
