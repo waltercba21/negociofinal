@@ -452,6 +452,18 @@ header .icons p {
   padding: 4px 6px;
   font-size: 0.8rem;
 }
+
+/* --------------------contenedor modal facturas y presupuesto administracion -------------------------------- */
+
+#modalDetalleDocumento .modal-body {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.card {
+  font-size: 0.9rem;
+}
+
 /* ---------------------------------------FOOTER ------------------------------------------- */
 footer {
   background-color: #fff;

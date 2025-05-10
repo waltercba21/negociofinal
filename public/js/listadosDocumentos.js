@@ -12,6 +12,43 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${dia}/${mes}/${anio}`;
   };
 
+  let documentosFiltrados = [];
+  let paginaActual = 1;
+  const porPagina = 6;
+
+  function renderizarPaginado() {
+    const inicio = (paginaActual - 1) * porPagina;
+    const fin = inicio + porPagina;
+    const pagina = documentosFiltrados.slice(inicio, fin);
+
+    const html = pagina.map(doc => `
+      <div class="card border-0 shadow-sm p-3 mb-2">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-bold">${doc.nombre_proveedor}</div>
+            <div class="text-muted small">${doc.tipo.toUpperCase()} N° ${doc.numero}</div>
+            <div class="text-muted small">Fecha: ${formatoFecha(doc.fecha)}</div>
+          </div>
+          <button class="btn btn-sm btn-outline-primary verDocumentoBtn" data-id="${doc.id}" data-tipo="${doc.tipo}">
+            Ver
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    const totalPaginas = Math.ceil(documentosFiltrados.length / porPagina);
+    let paginacionHTML = '<div class="d-flex justify-content-center mt-3 gap-2">';
+    for (let i = 1; i <= totalPaginas; i++) {
+      paginacionHTML += `
+        <button class="btn btn-sm ${i === paginaActual ? 'btn-dark' : 'btn-outline-secondary'} paginadorBtn" data-pag="${i}">${i}</button>
+      `;
+    }
+    paginacionHTML += '</div>';
+
+    contenidoDetalle.innerHTML = html + paginacionHTML;
+    modal.show();
+  }
+
   btnBuscar.addEventListener('click', async () => {
     const tipo = document.getElementById('filtroTipo')?.value || '';
     const proveedor = document.getElementById('filtroProveedor')?.value || '';
@@ -30,24 +67,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Abrimos el modal y mostramos el listado de documentos
-      const html = data.map(doc => `
-        <div class="border rounded p-3 mb-2">
-          <strong>${doc.nombre_proveedor}</strong><br>
-          <span>${doc.tipo.toUpperCase()} N° ${doc.numero}</span><br>
-          <span>Fecha: ${formatoFecha(doc.fecha)}</span><br>
-          <span>Estado: ${doc.condicion.toUpperCase()}</span><br>
-          <button class="btn btn-sm btn-outline-primary mt-2 verDocumentoBtn" data-id="${doc.id}" data-tipo="${doc.tipo}">
-            Ver
-          </button>
-        </div>
-      `).join('');
-
-      contenidoDetalle.innerHTML = html;
-      modal.show();
+      // Ordenar por fecha descendente
+      documentosFiltrados = data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      paginaActual = 1;
+      renderizarPaginado();
     } catch (error) {
       console.error('❌ Error al obtener documentos:', error);
       resultadosListado.innerHTML = '<div class="alert alert-danger">Ocurrió un error al buscar los documentos.</div>';
+    }
+  });
+
+  // Delegación para paginación
+  document.getElementById('contenidoDetalleDocumento').addEventListener('click', (e) => {
+    if (e.target.classList.contains('paginadorBtn')) {
+      paginaActual = parseInt(e.target.dataset.pag);
+      renderizarPaginado();
     }
   });
 
