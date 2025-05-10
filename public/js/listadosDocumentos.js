@@ -1,10 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
   const btnBuscar = document.getElementById('btnBuscarListados');
   const resultadosListado = document.getElementById('resultadosListado');
-  const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
   const contenidoDetalle = document.getElementById('contenidoDetalleDocumento');
 
-  const formatoFecha = (fechaStr) => {
+  let documentosFiltrados = [];
+  let paginaActual = 1;
+  const porPagina = 6;
+
+  const formatearFecha = (fechaStr) => {
     const fecha = new Date(fechaStr);
     const dia = String(fecha.getDate()).padStart(2, '0');
     const mes = String(fecha.getMonth() + 1).padStart(2, '0');
@@ -12,66 +15,58 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${dia}/${mes}/${anio}`;
   };
 
-  let documentosFiltrados = [];
-  let paginaActual = 1;
-  const porPagina = 6;
-async function mostrarDetalleDocumento(tipo, id) {
-  try {
-    const res = await fetch(`/administracion/api/${tipo}/${id}`);
-    const datos = await res.json();
+  const formatearPesos = (monto) => {
+    const numero = parseFloat(monto);
+    if (isNaN(numero)) return '-';
+    const opciones = { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 2 };
+    return new Intl.NumberFormat('es-AR', opciones).format(numero);
+  };
 
-    const contenedor = document.getElementById('contenidoDetalleDocumento');
-    if (!contenedor) return;
+  function renderizarPaginado() {
+    resultadosListado.innerHTML = '';
+    const inicio = (paginaActual - 1) * porPagina;
+    const documentosPagina = documentosFiltrados.slice(inicio, inicio + porPagina);
 
-    let html = `<h5 class="mb-3">${datos.nombre_proveedor || 'Proveedor'}</h5>`;
+    const fila = document.createElement('div');
+    fila.classList.add('row');
 
-    if (tipo === 'factura') {
-      html += `
-        <p><strong>Factura N°:</strong> ${datos.numero_factura}</p>
-        <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
-        <p><strong>Importe Bruto:</strong> ${formatearPesos(datos.importe_bruto)}</p>
-        <p><strong>IVA:</strong> ${datos.iva}%</p>
-        <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe_factura)}</p>
-        <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
-        <p><strong>Condición:</strong> ${datos.condicion}</p>
-        <p><strong>Comprobante:</strong> 
-          ${datos.comprobante_pago 
-            ? `<a href="/uploads/comprobantes/${datos.comprobante_pago}" target="_blank">${datos.comprobante_pago}</a>` 
-            : 'Sin archivo'}
-        </p>
-        <div class="mt-3">
-          <button class="btn btn-outline-info" id="btnVerProductosDocumento">Ver Productos</button>
-        </div>
+    documentosPagina.forEach(doc => {
+      const col = document.createElement('div');
+      col.classList.add('col-md-6', 'mb-3');
+
+      const tarjeta = document.createElement('div');
+      tarjeta.classList.add('border', 'rounded', 'p-3', 'shadow-sm', 'h-100');
+
+      tarjeta.innerHTML = `
+        <h6 class="mb-2">${doc.nombre_proveedor}</h6>
+        <p class="mb-1">${doc.tipo.toUpperCase()} N°: <strong>${doc.numero}</strong></p>
+        <p class="mb-1">Fecha: ${formatearFecha(doc.fecha)}</p>
+        <p class="mb-2">Condición: <strong>${doc.condicion.toUpperCase()}</strong></p>
+        <button class="btn btn-sm btn-outline-primary verDocumentoBtn" data-id="${doc.id}" data-tipo="${doc.tipo}">Ver</button>
       `;
-    } else if (tipo === 'presupuesto') {
-      html += `
-        <p><strong>Presupuesto N°:</strong> ${datos.numero_presupuesto}</p>
-        <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
-        <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe)}</p>
-        <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
-        <p><strong>Condición:</strong> ${datos.condicion}</p>
-        <div class="mt-3">
-          <button class="btn btn-outline-info" id="btnVerProductosDocumento">Ver Productos</button>
-        </div>
-      `;
+
+      col.appendChild(tarjeta);
+      fila.appendChild(col);
+    });
+
+    resultadosListado.appendChild(fila);
+
+    const totalPaginas = Math.ceil(documentosFiltrados.length / porPagina);
+    if (totalPaginas > 1) {
+      const paginador = document.createElement('div');
+      paginador.classList.add('mt-3', 'text-center');
+
+      for (let i = 1; i <= totalPaginas; i++) {
+        const btn = document.createElement('button');
+        btn.classList.add('btn', 'btn-sm', i === paginaActual ? 'btn-primary' : 'btn-outline-primary', 'me-1', 'paginadorBtn');
+        btn.textContent = i;
+        btn.dataset.pag = i;
+        paginador.appendChild(btn);
+      }
+
+      resultadosListado.appendChild(paginador);
     }
-
-    contenedor.innerHTML = html;
-
-    const btn = document.getElementById('btnVerProductosDocumento');
-    if (btn) {
-      btn.addEventListener('click', () => abrirModalProductosDocumento(datos.productos));
-    }
-
-    const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
-    modal.show();
-
-  } catch (err) {
-    console.error('❌ Error al cargar detalle del documento:', err);
-    Swal.fire('Error', 'No se pudo cargar el detalle.', 'error');
   }
-}
-
 
   btnBuscar.addEventListener('click', async () => {
     const tipo = document.getElementById('filtroTipo')?.value || '';
@@ -87,11 +82,10 @@ async function mostrarDetalleDocumento(tipo, id) {
       resultadosListado.innerHTML = '';
 
       if (!data.length) {
-        resultadosListado.innerHTML = '<div class="alert alert-warning">No se encontraron resultados para los filtros aplicados.</div>';
+        resultadosListado.innerHTML = '<div class="alert alert-warning">No se encontraron resultados.</div>';
         return;
       }
 
-      // Ordenar por fecha descendente
       documentosFiltrados = data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
       paginaActual = 1;
       renderizarPaginado();
@@ -101,154 +95,106 @@ async function mostrarDetalleDocumento(tipo, id) {
     }
   });
 
-  // Delegación para paginación
-  document.getElementById('contenidoDetalleDocumento').addEventListener('click', (e) => {
+  document.addEventListener('click', (e) => {
     if (e.target.classList.contains('paginadorBtn')) {
       paginaActual = parseInt(e.target.dataset.pag);
       renderizarPaginado();
     }
-  });
 
-  // Delegación para botón "Ver"
-  document.getElementById('contenidoDetalleDocumento').addEventListener('click', async (e) => {
     if (e.target.classList.contains('verDocumentoBtn')) {
       const id = e.target.dataset.id;
       const tipo = e.target.dataset.tipo;
-
-      try {
-        const response = await fetch(`/administracion/api/${tipo}/${id}`);
-        console.log('📡 Fetching documento desde URL:', `/administracion/api/${tipo}/${id}`);
-
-        const data = await response.json();
-
-        let detalleHTML = `
-          <p><strong>Proveedor:</strong> ${data.nombre_proveedor}</p>
-          <p><strong>Fecha:</strong> ${formatoFecha(data.fecha)}</p>
-          <p><strong>Condición:</strong> ${data.condicion.toUpperCase()}</p>
-        `;
-
-        if (data.productos && data.productos.length) {
-          detalleHTML += `<h6 class="mt-3">Productos</h6><ul>`;
-          data.productos.forEach(p => {
-            detalleHTML += `<li>${p.nombre} - Cantidad: ${p.cantidad}</li>`;
-          });
-          detalleHTML += `</ul>`;
-        }
-
-        contenidoDetalle.innerHTML = detalleHTML;
-      } catch (error) {
-        console.error('❌ Error al cargar detalles del documento:', error);
-        contenidoDetalle.innerHTML = '<div class="alert alert-danger">Error al mostrar el detalle del documento.</div>';
-      }
+      mostrarDetalleDocumento(tipo, id);
     }
   });
-  function formatearFecha(fechaStr) {
-  const fecha = new Date(fechaStr);
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const anio = fecha.getFullYear();
-  return `${dia}/${mes}/${anio}`;
-}
 
-function formatearPesos(monto) {
-  const numero = parseFloat(monto);
-  if (isNaN(numero)) return '-';
-  const opciones = { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 2 };
-  const formato = new Intl.NumberFormat('es-AR', opciones).format(numero);
-  return formato;
-}
+  async function mostrarDetalleDocumento(tipo, id) {
+    try {
+      const res = await fetch(`/administracion/api/${tipo}/${id}`);
+      const datos = await res.json();
 
-async function mostrarDetalleDocumento(tipo, id) {
-  try {
-    const res = await fetch(`/administracion/api/documentos/${tipo}/${id}`);
-    const datos = await res.json();
+      const contenedor = document.getElementById('contenidoDetalleDocumento');
+      if (!contenedor) return;
 
-    const contenedor = document.getElementById('contenidoDetalleDocumento');
-    if (!contenedor) return;
+      let html = `<h5 class="mb-3">${datos.nombre_proveedor || 'Proveedor'}</h5>`;
 
-    let html = `<h5 class="mb-3">${datos.nombre_proveedor || 'Proveedor'}</h5>`;
+      if (tipo === 'factura') {
+        html += `
+          <p><strong>Factura N°:</strong> ${datos.numero_factura}</p>
+          <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
+          <p><strong>Importe Bruto:</strong> ${formatearPesos(datos.importe_bruto)}</p>
+          <p><strong>IVA:</strong> ${datos.iva}%</p>
+          <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe_factura)}</p>
+          <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
+          <p><strong>Condición:</strong> ${datos.condicion}</p>
+          <p><strong>Comprobante:</strong> 
+            ${datos.comprobante_pago 
+              ? `<a href="/uploads/comprobantes/${datos.comprobante_pago}" target="_blank">${datos.comprobante_pago}</a>` 
+              : 'Sin archivo'}
+          </p>
+        `;
+      } else if (tipo === 'presupuesto') {
+        html += `
+          <p><strong>Presupuesto N°:</strong> ${datos.numero_presupuesto}</p>
+          <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
+          <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe)}</p>
+          <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
+          <p><strong>Condición:</strong> ${datos.condicion}</p>
+        `;
+      }
 
-    if (tipo === 'factura') {
-      html += `
-        <p><strong>Factura N°:</strong> ${datos.numero_factura}</p>
-        <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
-        <p><strong>Importe Bruto:</strong> ${formatearPesos(datos.importe_bruto)}</p>
-        <p><strong>IVA:</strong> ${datos.iva}%</p>
-        <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe_factura)}</p>
-        <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
-        <p><strong>Condición:</strong> ${datos.condicion}</p>
-        <p><strong>Comprobante:</strong> 
-          ${datos.comprobante_pago 
-            ? `<a href="/uploads/comprobantes/${datos.comprobante_pago}" target="_blank">${datos.comprobante_pago}</a>` 
-            : 'Sin archivo'}
-        </p>
-        <div class="mt-3">
-          <button class="btn btn-outline-info" id="btnVerProductosDocumento">Ver Productos</button>
-        </div>
-      `;
-    } else if (tipo === 'presupuesto') {
-      html += `
-        <p><strong>Presupuesto N°:</strong> ${datos.numero_presupuesto}</p>
-        <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
-        <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe)}</p>
-        <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
-        <p><strong>Condición:</strong> ${datos.condicion}</p>
-        <div class="mt-3">
-          <button class="btn btn-outline-info" id="btnVerProductosDocumento">Ver Productos</button>
-        </div>
-      `;
+      if (datos.productos && datos.productos.length) {
+        html += `
+          <div class="mt-3">
+            <button class="btn btn-outline-info" id="btnVerProductosDocumento">Ver Productos</button>
+          </div>
+        `;
+      }
+
+      contenedor.innerHTML = html;
+
+      const btnProductos = document.getElementById('btnVerProductosDocumento');
+      if (btnProductos) {
+        btnProductos.addEventListener('click', () => {
+          abrirModalProductosDocumento(datos.productos);
+        });
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
+      modal.show();
+    } catch (err) {
+      console.error('❌ Error al cargar detalle del documento:', err);
+      Swal.fire('Error', 'No se pudo cargar el detalle.', 'error');
     }
-
-    contenedor.innerHTML = html;
-
-    // 🟢 Ahora que el botón existe, le asociamos el evento
-    const btnProductos = document.getElementById('btnVerProductosDocumento');
-    if (btnProductos) {
-      btnProductos.addEventListener('click', () => {
-        abrirModalProductosDocumento(datos.productos);
-      });
-    }
-
-    const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
-    modal.show();
-
-  } catch (err) {
-    console.error('❌ Error al cargar detalle del documento:', err);
-    Swal.fire('Error', 'No se pudo cargar el detalle.', 'error');
   }
-}
 
+  function abrirModalProductosDocumento(productos = []) {
+    const tbody = document.getElementById('tbodyProductosDetalle');
+    tbody.innerHTML = '';
 
-function abrirModalProductosDocumento(productos = []) {
-  const tbody = document.getElementById('tbodyProductosDetalle');
-  tbody.innerHTML = '';
+    if (!productos.length) {
+      tbody.innerHTML = `<tr><td colspan="4">No hay productos cargados.</td></tr>`;
+      return;
+    }
 
-  if (!productos.length) {
-    const fila = document.createElement('tr');
-    fila.innerHTML = `<td colspan="4">Sin productos registrados.</td>`;
-    tbody.appendChild(fila);
-  } else {
     productos.forEach(prod => {
       const fila = document.createElement('tr');
-
-      const imagen = prod.imagenes && prod.imagenes.length > 0
+      const imagen = prod.imagenes?.[0]?.imagen
         ? `<img src="/uploads/productos/${prod.imagenes[0].imagen}" style="width:40px;height:40px;object-fit:contain">`
         : '—';
 
-      const codigoProveedor = prod.proveedores?.[0]?.codigo || '—';
+      const codigoProv = prod.proveedores?.[0]?.codigo || '—';
 
       fila.innerHTML = `
         <td>${imagen}</td>
         <td>${prod.nombre}</td>
-        <td>${codigoProveedor}</td>
+        <td>${codigoProv}</td>
         <td>${prod.cantidad}</td>
       `;
       tbody.appendChild(fila);
     });
+
+    const modal = new bootstrap.Modal(document.getElementById('modalProductosDocumento'));
+    modal.show();
   }
-
-  const modal = new bootstrap.Modal(document.getElementById('modalProductosDocumento'));
-  modal.show();
-}
-
 });
