@@ -33,8 +33,9 @@ function renderizarPaginado() {
                 <div class="text-muted small">Fecha: ${formatoFecha(doc.fecha)}</div>
               </div>
               <button class="btn btn-sm btn-outline-primary verDocumentoBtn" data-id="${doc.id}" data-tipo="${doc.tipo}">
-                Ver
-              </button>
+               Ver
+              /button>
+
             </div>
           </div>
         </div>
@@ -150,51 +151,59 @@ async function mostrarDetalleDocumento(tipo, id) {
     const contenedor = document.getElementById('contenidoDetalleDocumento');
     if (!contenedor) return;
 
-let html = `<h5 class="mb-3">${datos.nombre_proveedor || 'Proveedor'}</h5>`;
+    let html = `<h5 class="mb-3">${datos.nombre_proveedor || 'Proveedor'}</h5>`;
 
-if (tipo === 'factura') {
-  html += `
-    <p><strong>Factura N°:</strong> ${datos.numero_factura}</p>
-    <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
-    <p><strong>Importe Bruto:</strong> ${formatearPesos(datos.importe_bruto)}</p>
-    <p><strong>IVA:</strong> ${datos.iva}%</p>
-    <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe_factura)}</p>
-    <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
-    <p><strong>Condición:</strong> ${datos.condicion}</p>
-    <p><strong>Comprobante:</strong> ${datos.comprobante_pago ? `<a href="/uploads/comprobantes/${datos.comprobante_pago}" target="_blank">${datos.comprobante_pago}</a>` : 'Sin archivo'}</p>
-  `;
-} else if (tipo === 'presupuesto') {
-  html += `
-    <p><strong>Presupuesto N°:</strong> ${datos.numero_presupuesto}</p>
-    <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
-    <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe)}</p>
-    <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
-    <p><strong>Condición:</strong> ${datos.condicion}</p>
-  `;
-}
+    if (tipo === 'factura') {
+      html += `
+        <p><strong>Factura N°:</strong> ${datos.numero_factura}</p>
+        <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
+        <p><strong>Importe Bruto:</strong> ${formatearPesos(datos.importe_bruto)}</p>
+        <p><strong>IVA:</strong> ${datos.iva}%</p>
+        <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe_factura)}</p>
+        <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
+        <p><strong>Condición:</strong> ${datos.condicion}</p>
+        <p><strong>Comprobante:</strong> 
+          ${datos.comprobante_pago 
+            ? `<a href="/uploads/comprobantes/${datos.comprobante_pago}" target="_blank">${datos.comprobante_pago}</a>` 
+            : 'Sin archivo'}
+        </p>
+        <div class="mt-3">
+          <button class="btn btn-outline-info" id="btnVerProductosDocumento">Ver Productos</button>
+        </div>
+      `;
+    } else if (tipo === 'presupuesto') {
+      html += `
+        <p><strong>Presupuesto N°:</strong> ${datos.numero_presupuesto}</p>
+        <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
+        <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe)}</p>
+        <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
+        <p><strong>Condición:</strong> ${datos.condicion}</p>
+        <div class="mt-3">
+          <button class="btn btn-outline-info" id="btnVerProductosDocumento">Ver Productos</button>
+        </div>
+      `;
+    }
 
-html += `
-  <button class="btn btn-outline-info mt-3" id="btnVerProductosDocumento">
-    Ver Productos
-  </button>
-`;
+    contenedor.innerHTML = html;
 
-contenedor.innerHTML = html;
+    // 🟢 Ahora que el botón existe, le asociamos el evento
+    const btnProductos = document.getElementById('btnVerProductosDocumento');
+    if (btnProductos) {
+      btnProductos.addEventListener('click', () => {
+        abrirModalProductosDocumento(datos.productos);
+      });
+    }
 
-// ✅ Asociar botón luego de renderizar
-document.getElementById('btnVerProductosDocumento')?.addEventListener('click', () => {
-  abrirModalProductosDocumento(datos.productos);
-});
-
-const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
-modal.show();
-
+    const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
+    modal.show();
 
   } catch (err) {
     console.error('❌ Error al cargar detalle del documento:', err);
     Swal.fire('Error', 'No se pudo cargar el detalle.', 'error');
   }
 }
+
+
 function abrirModalProductosDocumento(productos = []) {
   const tbody = document.getElementById('tbodyProductosDetalle');
   tbody.innerHTML = '';
