@@ -99,7 +99,9 @@ function renderizarPaginado() {
       const tipo = e.target.dataset.tipo;
 
       try {
-        const response = await fetch(`/administracion/api/${tipo}s/${id}`);
+        const response = await fetch(`/administracion/api/${tipo}/${id}`);
+        console.log('📡 Fetching documento desde URL:', `/administracion/api/${tipo}/${id}`);
+
         const data = await response.json();
 
         let detalleHTML = `
