@@ -405,6 +405,7 @@
   </div>
 </div> 
 
+<!-- Modal de presupuestos y facturas -->
 <div class="modal fade" id="modalDetalleDocumento" tabindex="-1" aria-labelledby="modalDetalleLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-proveedor-dialog">
     <div class="modal-content modal-proveedor-content">
@@ -417,10 +418,47 @@
         <!-- Aquí se carga dinámicamente desde JS los datos de la factura o presupuesto -->
         <div id="contenidoDetalleDocumento"></div>
       </div>
+      <button class="btn btn-outline-info mt-3" onclick="abrirModalProductosDocumento(data.productos)">
+  Ver Productos
+</button>
 
       <div class="modal-footer modal-proveedor-footer">
         <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         <button class="btn btn-success" id="btnGuardarCambiosDocumento">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modalProductosDocumento" tabindex="-1" aria-labelledby="modalProductosDocumentoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-proveedor-dialog">
+    <div class="modal-content modal-proveedor-content">
+      <div class="modal-header modal-proveedor-header">
+        <h5 class="modal-title" id="modalProductosDocumentoLabel">
+          <i class="bi bi-box-seam me-2"></i>Productos del Documento
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body modal-proveedor-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm align-middle text-center" id="tablaProductosDetalle">
+            <thead class="table-light">
+              <tr>
+                <th>Imagen</th>
+                <th>Producto</th>
+                <th>Código Prov.</th>
+                <th>Cantidad</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyProductosDetalle">
+              <!-- Contenido dinámico desde JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer modal-proveedor-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
