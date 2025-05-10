@@ -15,45 +15,61 @@ document.addEventListener('DOMContentLoaded', () => {
   let documentosFiltrados = [];
   let paginaActual = 1;
   const porPagina = 6;
+async function mostrarDetalleDocumento(tipo, id) {
+  try {
+    const res = await fetch(`/administracion/api/${tipo}/${id}`);
+    const datos = await res.json();
 
-function renderizarPaginado() {
-  const inicio = (paginaActual - 1) * porPagina;
-  const fin = inicio + porPagina;
-  const pagina = documentosFiltrados.slice(inicio, fin);
+    const contenedor = document.getElementById('contenidoDetalleDocumento');
+    if (!contenedor) return;
 
-  const html = `
-    <div class="row">
-      ${pagina.map(doc => `
-        <div class="col-md-6 mb-3">
-          <div class="card border-0 shadow-sm p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <div class="fw-bold">${doc.nombre_proveedor}</div>
-                <div class="text-muted small">${doc.tipo.toUpperCase()} N° ${doc.numero}</div>
-                <div class="text-muted small">Fecha: ${formatoFecha(doc.fecha)}</div>
-              </div>
-              <button class="btn btn-sm btn-outline-primary verDocumentoBtn" data-id="${doc.id}" data-tipo="${doc.tipo}">
-               Ver
-              /button>
+    let html = `<h5 class="mb-3">${datos.nombre_proveedor || 'Proveedor'}</h5>`;
 
-            </div>
-          </div>
+    if (tipo === 'factura') {
+      html += `
+        <p><strong>Factura N°:</strong> ${datos.numero_factura}</p>
+        <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
+        <p><strong>Importe Bruto:</strong> ${formatearPesos(datos.importe_bruto)}</p>
+        <p><strong>IVA:</strong> ${datos.iva}%</p>
+        <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe_factura)}</p>
+        <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
+        <p><strong>Condición:</strong> ${datos.condicion}</p>
+        <p><strong>Comprobante:</strong> 
+          ${datos.comprobante_pago 
+            ? `<a href="/uploads/comprobantes/${datos.comprobante_pago}" target="_blank">${datos.comprobante_pago}</a>` 
+            : 'Sin archivo'}
+        </p>
+        <div class="mt-3">
+          <button class="btn btn-outline-info" id="btnVerProductosDocumento">Ver Productos</button>
         </div>
-      `).join('')}
-    </div>
-  `;
+      `;
+    } else if (tipo === 'presupuesto') {
+      html += `
+        <p><strong>Presupuesto N°:</strong> ${datos.numero_presupuesto}</p>
+        <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
+        <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe)}</p>
+        <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
+        <p><strong>Condición:</strong> ${datos.condicion}</p>
+        <div class="mt-3">
+          <button class="btn btn-outline-info" id="btnVerProductosDocumento">Ver Productos</button>
+        </div>
+      `;
+    }
 
-  const totalPaginas = Math.ceil(documentosFiltrados.length / porPagina);
-  let paginacionHTML = '<div class="d-flex justify-content-center mt-3 gap-2">';
-  for (let i = 1; i <= totalPaginas; i++) {
-    paginacionHTML += `
-      <button class="btn btn-sm ${i === paginaActual ? 'btn-dark' : 'btn-outline-secondary'} paginadorBtn" data-pag="${i}">${i}</button>
-    `;
+    contenedor.innerHTML = html;
+
+    const btn = document.getElementById('btnVerProductosDocumento');
+    if (btn) {
+      btn.addEventListener('click', () => abrirModalProductosDocumento(datos.productos));
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
+    modal.show();
+
+  } catch (err) {
+    console.error('❌ Error al cargar detalle del documento:', err);
+    Swal.fire('Error', 'No se pudo cargar el detalle.', 'error');
   }
-  paginacionHTML += '</div>';
-
-  contenidoDetalle.innerHTML = html + paginacionHTML;
-  modal.show();
 }
 
 
@@ -106,7 +122,6 @@ function renderizarPaginado() {
         const data = await response.json();
 
         let detalleHTML = `
-          <h5>${tipo.toUpperCase()} N° ${data.numero}</h5>
           <p><strong>Proveedor:</strong> ${data.nombre_proveedor}</p>
           <p><strong>Fecha:</strong> ${formatoFecha(data.fecha)}</p>
           <p><strong>Condición:</strong> ${data.condicion.toUpperCase()}</p>
