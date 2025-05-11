@@ -2,8 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnBuscar = document.getElementById('btnBuscarListados');
   const resultadosListado = document.getElementById('resultadosListado');
   const contenidoDetalle = document.getElementById('contenidoDetalleDocumento');
-
-  // ✅ Instanciar los modales una sola vez al iniciar
   const modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
   const modalProductos = new bootstrap.Modal(document.getElementById('modalProductosDocumento'));
 
