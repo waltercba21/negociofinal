@@ -358,6 +358,19 @@ header .icons p {
   font-size: 0.8rem;
 }
 
+#modalDetalleDocumento,
+#modalProductosDocumento {
+  z-index: 1055 !important;
+  position: fixed !important;
+}
+
+.modal-backdrop {
+  z-index: 1050 !important;
+}
+body.modal-open {
+  overflow: hidden !important;
+}
+
 /* Modal de detalle */
 #modalDetalleDocumento .modal-dialog {
   max-width: 800px;
