@@ -407,22 +407,23 @@
 </main>
   <!-- 🔵 MODAL DETALLE DE DOCUMENTO -->
 <div class="modal fade" id="modalDetalleDocumento" tabindex="-1" aria-labelledby="modalDetalleLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-dark text-white">
+  <div class="modal-dialog modal-xl modal-proveedor-dialog modal-dialog-centered">
+    <div class="modal-content modal-proveedor-content">
+      <div class="modal-header modal-proveedor-header">
         <h5 class="modal-title" id="modalDetalleLabel">Detalle del Documento</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body modal-proveedor-body">
         <div id="contenidoDetalleDocumento"></div>
       </div>
-      <div class="modal-footer justify-content-between">
+      <div class="modal-footer modal-proveedor-footer justify-content-between">
         <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         <button class="btn btn-success" id="btnGuardarCambiosDocumento">Guardar Cambios</button>
       </div>
     </div>
   </div>
 </div>
+
 
 <!-- 🟢 MODAL PRODUCTOS DEL DOCUMENTO -->
 <div class="modal fade" id="modalProductosDocumento" tabindex="-1" aria-labelledby="modalProductosDocumentoLabel" aria-hidden="true">
