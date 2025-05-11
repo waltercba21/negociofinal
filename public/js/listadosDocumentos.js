@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnBuscar = document.getElementById('btnBuscarListados');
   const resultadosListado = document.getElementById('resultadosListado');
   const contenidoDetalle = document.getElementById('contenidoDetalleDocumento');
+
+  // ✅ Instanciar los modales una sola vez al iniciar
   const modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
   const modalProductos = new bootstrap.Modal(document.getElementById('modalProductosDocumento'));
 
@@ -119,8 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/administracion/api/${tipo}/${id}`);
       const datos = await res.json();
 
-      const contenedor = document.getElementById('contenidoDetalleDocumento');
-      if (!contenedor) return;
+      if (!contenidoDetalle) return;
 
       let html = `
         <div class="container-fluid">
@@ -168,9 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }
 
-      html += `</div>`; // Cierre de container-fluid
+      html += `</div>`;
 
-      contenedor.innerHTML = html;
+      contenidoDetalle.innerHTML = html;
 
       const btnProductos = document.getElementById('btnVerProductosDocumento');
       if (btnProductos) {
