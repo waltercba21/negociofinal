@@ -357,24 +357,31 @@ header .icons p {
   padding: 4px 6px;
   font-size: 0.8rem;
 }
-
+/* Asegura que los modales se ubiquen por encima */
 #modalDetalleDocumento,
 #modalProductosDocumento {
   z-index: 1055 !important;
   position: fixed !important;
 }
 
+/* Fondo oscuro detrás del modal */
 .modal-backdrop {
   z-index: 1050 !important;
 }
+
+/* Evita scroll de fondo */
 body.modal-open {
   overflow: hidden !important;
 }
 
-/* Modal de detalle */
+/* Estilo para modal de DETALLE */
 #modalDetalleDocumento .modal-dialog {
   max-width: 800px;
   margin: 1.75rem auto;
+}
+
+#modalDetalleDocumento .modal-content {
+  min-height: 300px; /* 🔧 Agrega cuerpo visual mínimo */
 }
 
 #modalDetalleDocumento .modal-body {
@@ -386,6 +393,10 @@ body.modal-open {
   margin-bottom: 0.4rem;
 }
 
+/* Estilo opcional para modal de PRODUCTOS si necesitás altura mínima también */
+#modalProductosDocumento .modal-content {
+  min-height: 300px;
+}
 
 .contenedor-admin-flex h5{
   font-weight: bold;
