@@ -363,11 +363,12 @@ header .icons p {
   max-height: 500px;
   overflow-y: auto;
 }
+.contenedor-admin-flex h5{
+  font-weight: bold;
+  color: #003f7d;
+  text-align: center;
+} 
 
-/* Fuente general */
-.card {
-  font-size: 0.9rem;
-}
 
 /* ---------------------------------------FOOTER ------------------------------------------- */
 footer {
