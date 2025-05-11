@@ -177,6 +177,10 @@ document.addEventListener('DOMContentLoaded', () => {
           abrirModalProductosDocumento(datos.productos);
         });
       }
+console.log('✔ Se va a mostrar el modal', modalDetalle);
+setTimeout(() => {
+  modalDetalle.show();
+}, 100);
 
       modalDetalle.show();
     } catch (err) {
@@ -184,6 +188,13 @@ document.addEventListener('DOMContentLoaded', () => {
       Swal.fire('Error', 'No se pudo cargar el detalle.', 'error');
     }
   }
+function abrirModalTest() {
+  const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
+  document.getElementById('contenidoDetalleDocumento').innerHTML = `
+    <p><strong>Prueba manual</strong> Este es un modal abierto sin inyección desde layout dinámico.</p>
+  `;
+  modal.show();
+}
 
   function abrirModalProductosDocumento(productos = []) {
     const tbody = document.getElementById('tbodyProductosDetalle');
