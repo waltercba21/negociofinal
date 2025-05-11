@@ -212,192 +212,88 @@ header .icons p {
   margin-top: 20px;
   font-size: 14px;
 }
-/* ----------------------------- ADMINISTRACION 'PROVEEDORES' -------------------------- */
-/* Contenedor general de la sección */
-.contenedor-proveedores {
-  padding: 2rem;
-}
+/* ----------------------------- ADMINISTRACION 'PROVEEDORES / FACTURAS / PRESUPUESTOS / LISTADOS' -------------------------- */
 
-/* Tarjeta del proveedor */
-.card-proveedor {
-  border: none;
-  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
-  padding: 1.5rem;
-  background-color: #fff;
-  border-radius: 0.3rem;
+/* Contenedor principal del dashboard administrativo */
+.contenedor-admin-flex {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 30px;
   justify-content: flex-start;
-}
-.panel-facturas .card-proveedor,
-.panel-proveedores .card-proveedor {
-  margin-top: 0;
+  align-items: flex-start;
+  padding: 30px 20px;
 }
 
-
-/* Título */
-.titulo-proveedor {
-  font-size: 1rem;
-  margin-bottom: 0.8rem;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-/* Select */
-.select-proveedor {
-  margin-bottom: 1rem;
-}
-
-/* Detalle visual del proveedor */
-.detalle-proveedor {
-  font-size: 0.9rem;
-  min-height: 150px;
-  margin-top: 1.5rem;  
-  margin-bottom: 1rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid #dee2e6; 
-}
-
-/* Botones */
-.acciones-proveedor {
-  display: flex;
-  justify-content: flex-start;
-  gap: 1rem;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-}
-
-/* Estilos del modal */
-.modal-proveedor-dialog {
-  max-width: 1000px;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-/* Contenido del modal */
-.modal-proveedor-content {
-  border: 1px solid #212529;
-  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
-}
-
-/* Encabezado del modal */
-.modal-proveedor-header {
-  background-color: #212529;
-  color: #fff;
-}
-
-/* Cuerpo del modal */
-.modal-proveedor-body {
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-}
-
-/* Footer del modal */
-.modal-proveedor-footer {
-  justify-content: space-between;
-}
-
-/* Etiquetas del formulario */
-.modal-proveedor-form .form-label {
-  font-weight: 500;
-}
-
-/* Inputs del formulario */
-.modal-proveedor-form .form-control {
-  border: 1px solid #ced4da;
-  border-radius: 0.25rem;
-  font-size: 0.9rem;
-  padding: 0.375rem 0.75rem;
-  box-shadow: none !important;
-  outline: none;
-}
-
-#modalProveedor #direccion {
-  width: 100% !important;
-  padding: 0.375rem 0.75rem !important;
-  font-size: 0.9rem !important;
-  border: 1px solid #ced4da !important;
-  border-radius: 0.25rem !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* - ------------- Contenedor Facturas Administracion   ------------ */
+/* Cada panel ocupa espacio uniforme y controlado */
 .panel-proveedores,
-.panel-facturas {
+.panel-facturas,
+.panel-listados {
+  flex: 1 1 320px;
+  max-width: 420px;
   padding: 0;
   margin: 0;
 }
 
+/* Tarjeta contenedora común para todos los paneles */
 .card-proveedor {
-  max-width: 500px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border: none;
   box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
   padding: 1.5rem;
   background-color: #fff;
   border-radius: 0.5rem;
-}
-/* 🔷 Contenedor padre de administración */
-.contenedor-admin-flex {
   display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 30px;
-  flex-wrap: wrap;
-  padding: 30px 20px;
+  flex-direction: column;
 }
 
-
-/* 🔷 Asegurarse que el contenedor de factura herede el estilo */
+/* Estilo interno de inputs y selects */
 .contenedor-factura {
-  font-size: 0.7rem; 
-  max-width: 420px;
+  font-size: 0.7rem;
+  max-width: 100%;
   padding: 1.2rem;
 }
+
 .contenedor-factura .form-label {
   font-size: 0.85rem;
   margin-bottom: 0.3rem;
 }
+
 .contenedor-factura .form-control,
 .contenedor-factura .form-select {
   font-size: 0.85rem;
   padding: 0.3rem 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
 }
+
+/* Estilos para tablas de productos en facturas y presupuestos */
 #tablaProductosFactura,
 #tablaProductosPresupuesto {
   font-size: 0.85rem;
+  width: 100%;
+  border-collapse: collapse;
 }
+
 #tablaProductosFactura td,
-#tablaProductosPresupuesto td {
+#tablaProductosPresupuesto td,
+#tablaProductosFactura th,
+#tablaProductosPresupuesto th {
   font-size: 12px;
   padding: 4px;
+  text-align: center;
   vertical-align: middle;
 }
 
-#tablaProductosFactura .miniatura-tabla {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-#tablaProductosFactura input.cantidad-input {
-  width: 60px;
-  padding: 2px 5px;
-  font-size: 12px;
-  text-align: center;
-}
-
-#tablaProductosFactura button.boton-eliminar-factura {
-  padding: 4px 6px;
-  font-size: 12px;
-}
 #tablaProductosFactura th,
 #tablaProductosPresupuesto th {
+  background-color: #f1f1f1;
   font-size: 13px;
   color: #212529;
-  background-color: #f1f1f1;
 }
-/* Ajuste de columnas específicas */
+
+/* Columnas específicas */
 #tablaProductosFactura td:nth-child(1),
 #tablaProductosPresupuesto td:nth-child(1),
 #tablaProductosFactura th:nth-child(1),
@@ -405,26 +301,29 @@ header .icons p {
   width: 15%;
   white-space: nowrap;
 }
+
 #tablaProductosFactura td:nth-child(2),
 #tablaProductosPresupuesto td:nth-child(2),
 #tablaProductosFactura th:nth-child(2),
 #tablaProductosPresupuesto th:nth-child(2) {
   width: 45%;
-  white-space: normal;
   word-break: break-word;
 }
+
 #tablaProductosFactura td:nth-child(3),
 #tablaProductosPresupuesto td:nth-child(3),
 #tablaProductosFactura th:nth-child(3),
 #tablaProductosPresupuesto th:nth-child(3) {
   width: 15%;
 }
+
 #tablaProductosFactura td:nth-child(4),
 #tablaProductosPresupuesto td:nth-child(4),
 #tablaProductosFactura th:nth-child(4),
 #tablaProductosPresupuesto th:nth-child(4) {
   width: 10%;
 }
+
 #tablaProductosFactura td:nth-child(5),
 #tablaProductosPresupuesto td:nth-child(5),
 #tablaProductosFactura th:nth-child(5),
@@ -432,14 +331,15 @@ header .icons p {
   width: 15%;
 }
 
-/* Imagen miniatura */
+/* Miniaturas */
 #tablaProductosFactura .miniatura-tabla,
 #tablaProductosPresupuesto .miniatura-tabla {
   width: 40px;
   height: 40px;
   object-fit: contain;
 }
-/* Input cantidad más compacto */
+
+/* Input cantidad compacto */
 #tablaProductosFactura input.cantidad-input,
 #tablaProductosPresupuesto input.cantidad-input {
   width: 55px;
@@ -447,19 +347,21 @@ header .icons p {
   font-size: 0.8rem;
   text-align: center;
 }
+
+/* Botón eliminar */
 #tablaProductosFactura button.boton-eliminar-factura,
 #tablaProductosPresupuesto button.boton-eliminar-factura {
   padding: 4px 6px;
   font-size: 0.8rem;
 }
 
-/* --------------------contenedor modal facturas y presupuesto administracion -------------------------------- */
-
+/* Modal de detalle */
 #modalDetalleDocumento .modal-body {
   max-height: 500px;
   overflow-y: auto;
 }
 
+/* Fuente general */
 .card {
   font-size: 0.9rem;
 }
