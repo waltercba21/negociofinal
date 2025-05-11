@@ -359,10 +359,21 @@ header .icons p {
 }
 
 /* Modal de detalle */
-#modalDetalleDocumento .modal-body {
-  max-height: 500px;
-  overflow-y: auto;
+#modalDetalleDocumento .modal-dialog {
+  max-width: 800px;
+  margin: 1.75rem auto;
 }
+
+#modalDetalleDocumento .modal-body {
+  padding: 1.5rem;
+  font-size: 0.9rem;
+}
+
+#modalDetalleDocumento .modal-body p {
+  margin-bottom: 0.4rem;
+}
+
+
 .contenedor-admin-flex h5{
   font-weight: bold;
   color: #003f7d;
@@ -373,6 +384,7 @@ header .icons p {
   margin-top: 10px;
   margin-bottom: 30px;
 }
+
 
 /* ---------------------------------------FOOTER ------------------------------------------- */
 footer {

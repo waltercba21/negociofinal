@@ -108,65 +108,78 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  async function mostrarDetalleDocumento(tipo, id) {
-    try {
-      const res = await fetch(`/administracion/api/${tipo}/${id}`);
-      const datos = await res.json();
+async function mostrarDetalleDocumento(tipo, id) {
+  try {
+    const res = await fetch(`/administracion/api/${tipo}/${id}`);
+    const datos = await res.json();
 
-      const contenedor = document.getElementById('contenidoDetalleDocumento');
-      if (!contenedor) return;
+    const contenedor = document.getElementById('contenidoDetalleDocumento');
+    if (!contenedor) return;
 
-      let html = `<h5 class="mb-3">${datos.nombre_proveedor || 'Proveedor'}</h5>`;
+    let html = `
+      <div class="container-fluid">
+        <div class="row mb-3">
+          <div class="col-12">
+            <h5 class="fw-bold">${datos.nombre_proveedor || 'Proveedor'}</h5>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>${tipo === 'factura' ? 'Factura' : 'Presupuesto'} N°:</strong> ${tipo === 'factura' ? datos.numero_factura : datos.numero_presupuesto}</p>
+            <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
+            <p><strong>Condición:</strong> ${datos.condicion}</p>
+            <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
+          </div>
+          <div class="col-md-6">
+            ${
+              tipo === 'factura'
+                ? `
+              <p><strong>Importe Bruto:</strong> ${formatearPesos(datos.importe_bruto)}</p>
+              <p><strong>IVA:</strong> ${datos.iva}%</p>
+              <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe_factura)}</p>
+              <p><strong>Comprobante:</strong> 
+                ${
+                  datos.comprobante_pago
+                    ? `<a href="/uploads/comprobantes/${datos.comprobante_pago}" target="_blank">${datos.comprobante_pago}</a>`
+                    : 'Sin archivo'
+                }
+              </p>`
+                : `
+              <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe)}</p>
+            `
+            }
+          </div>
+        </div>
+    `;
 
-      if (tipo === 'factura') {
-        html += `
-          <p><strong>Factura N°:</strong> ${datos.numero_factura}</p>
-          <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
-          <p><strong>Importe Bruto:</strong> ${formatearPesos(datos.importe_bruto)}</p>
-          <p><strong>IVA:</strong> ${datos.iva}%</p>
-          <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe_factura)}</p>
-          <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
-          <p><strong>Condición:</strong> ${datos.condicion}</p>
-          <p><strong>Comprobante:</strong> 
-            ${datos.comprobante_pago 
-              ? `<a href="/uploads/comprobantes/${datos.comprobante_pago}" target="_blank">${datos.comprobante_pago}</a>` 
-              : 'Sin archivo'}
-          </p>
-        `;
-      } else if (tipo === 'presupuesto') {
-        html += `
-          <p><strong>Presupuesto N°:</strong> ${datos.numero_presupuesto}</p>
-          <p><strong>Fecha:</strong> ${formatearFecha(datos.fecha)}</p>
-          <p><strong>Importe Total:</strong> ${formatearPesos(datos.importe)}</p>
-          <p><strong>Vencimiento:</strong> ${formatearFecha(datos.fecha_pago)}</p>
-          <p><strong>Condición:</strong> ${datos.condicion}</p>
-        `;
-      }
-
-      if (datos.productos && datos.productos.length) {
-        html += `
-          <div class="mt-3">
+    if (datos.productos && datos.productos.length) {
+      html += `
+        <div class="row mt-3">
+          <div class="col-12 text-end">
             <button class="btn btn-outline-info" id="btnVerProductosDocumento">Ver Productos</button>
           </div>
-        `;
-      }
-
-      contenedor.innerHTML = html;
-
-      const btnProductos = document.getElementById('btnVerProductosDocumento');
-      if (btnProductos) {
-        btnProductos.addEventListener('click', () => {
-          abrirModalProductosDocumento(datos.productos);
-        });
-      }
-
-      const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
-      modal.show();
-    } catch (err) {
-      console.error('❌ Error al cargar detalle del documento:', err);
-      Swal.fire('Error', 'No se pudo cargar el detalle.', 'error');
+        </div>
+      `;
     }
+
+    html += `</div>`; // Cierre de container-fluid
+
+    contenedor.innerHTML = html;
+
+    const btnProductos = document.getElementById('btnVerProductosDocumento');
+    if (btnProductos) {
+      btnProductos.addEventListener('click', () => {
+        abrirModalProductosDocumento(datos.productos);
+      });
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
+    modal.show();
+  } catch (err) {
+    console.error('❌ Error al cargar detalle del documento:', err);
+    Swal.fire('Error', 'No se pudo cargar el detalle.', 'error');
   }
+}
 
   function abrirModalProductosDocumento(productos = []) {
     const tbody = document.getElementById('tbodyProductosDetalle');
