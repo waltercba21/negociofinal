@@ -218,10 +218,10 @@ header .icons p {
 .contenedor-admin-flex {
   display: flex;
   flex-wrap: wrap;
-  gap: 30px;
+  gap: 20px;
   justify-content: flex-start;
   align-items: flex-start;
-  padding: 30px 20px;
+  padding: 20px 10px;
 }
 
 /* Cada panel ocupa espacio uniforme y controlado */
@@ -240,7 +240,7 @@ header .icons p {
   max-width: 100%;
   box-sizing: border-box;
   border: none;
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.8);
   padding: 1.5rem;
   background-color: #fff;
   border-radius: 0.5rem;
@@ -250,14 +250,16 @@ header .icons p {
 
 /* Estilo interno de inputs y selects */
 .contenedor-factura {
-  font-size: 0.7rem;
+  font-size: 0.5rem;
   max-width: 100%;
-  padding: 1.2rem;
+  padding: 1rem;
 }
 
 .contenedor-factura .form-label {
   font-size: 0.85rem;
   margin-bottom: 0.3rem;
+  color: #003f7d;
+  font-weight: bold;
 }
 
 .contenedor-factura .form-control,
@@ -271,7 +273,7 @@ header .icons p {
 /* Estilos para tablas de productos en facturas y presupuestos */
 #tablaProductosFactura,
 #tablaProductosPresupuesto {
-  font-size: 0.85rem;
+  font-size: 0.70rem;
   width: 100%;
   border-collapse: collapse;
 }
@@ -284,6 +286,7 @@ header .icons p {
   padding: 4px;
   text-align: center;
   vertical-align: middle;
+  font-weight: bold;
 }
 
 #tablaProductosFactura th,
