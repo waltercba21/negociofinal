@@ -19,7 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
         condicion
       });
 
-      const res = await fetch(`/administracion/api/listarDocumentos?${query.toString()}`);
+      const res = await fetch(`/administracion/api/documentos?${query.toString()}`);
+
       const datos = await res.json();
 
       contenedorResultados.innerHTML = '';
