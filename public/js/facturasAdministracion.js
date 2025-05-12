@@ -155,9 +155,20 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
     return Swal.fire('Faltan datos', 'Completá todos los campos de la factura.', 'warning');
   }
 
-  if (!productosSeleccionados.length) {
-    return Swal.fire('Faltan productos', 'Debe confirmar al menos un producto.', 'warning');
-  }
+  // Si no hay productos, advertimos con SweetAlert
+if (!productosSeleccionados.length) {
+  const confirmacion = await Swal.fire({
+    title: 'Factura sin productos',
+    text: 'Estás por guardar una factura sin productos asociados. ¿Deseás continuar?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, guardar de todos modos',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!confirmacion.isConfirmed) return;
+}
+
 
   try {
     const formData = new FormData();
