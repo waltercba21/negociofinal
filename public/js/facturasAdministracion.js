@@ -5,8 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultados = document.getElementById('resultadosBusqueda');
     const tabla = document.getElementById('tablaProductosFactura').querySelector('tbody');
     const btnConfirmar = document.getElementById('btnConfirmarProductosFactura');
-    const btnGuardarFactura = document.getElementById('btnGuardarFactura');
-    const administrador = document.getElementById('facturaAdministrador').value;
+    const btnGuardarFactura = document.getElementById('btnGuardarFactura');s
 
     let productosSeleccionados = [];
   // Cerrar con Escape
@@ -141,6 +140,7 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
     });
 
   btnGuardarFactura.addEventListener('click', async () => {
+  const administrador = document.getElementById('facturaAdministrador').value;
   const proveedor = document.getElementById('facturaProveedor').value;
   const fecha = document.getElementById('facturaFecha').value;
   const numero = document.getElementById('facturaNumero').value;
@@ -152,8 +152,20 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
   const comprobante = document.getElementById('facturaComprobante').files[0];
 
   if (!proveedor || !fecha || !numero || !bruto || !iva || !total || !condicion || !fecha_pago || !administrador) {
-    return Swal.fire('Faltan datos', 'Completá todos los campos de la factura.', 'warning');
-  }
+  let mensaje = 'Los siguientes campos son obligatorios:\n';
+  if (!proveedor) mensaje += '- Proveedor\n';
+  if (!fecha) mensaje += '- Fecha de factura\n';
+  if (!numero) mensaje += '- Número de factura\n';
+  if (!bruto) mensaje += '- Importe bruto\n';
+  if (!iva) mensaje += '- IVA\n';
+  if (!total) mensaje += '- Importe total\n';
+  if (!fecha_pago) mensaje += '- Fecha de vencimiento\n';
+  if (!condicion) mensaje += '- Condición de pago\n';
+  if (!administrador) mensaje += '- Administrador\n';
+
+  return Swal.fire('Faltan datos', mensaje, 'warning');
+}
+
 
   // Si no hay productos, advertimos con SweetAlert
 if (!productosSeleccionados.length) {
