@@ -358,34 +358,6 @@ header .icons p {
   font-size: 0.8rem;
 }
 
-/* Fondo oscuro detrás del modal */
-.modal-backdrop {
-  z-index: 1050 !important;
-}
-
-/* Estilo para modal de DETALLE */
-#modalDetalleDocumento .modal-dialog {
-  max-width: 800px;
-  margin: 1.75rem auto;
-}
-
-#modalDetalleDocumento .modal-content {
-  min-height: 300px; /* 🔧 Agrega cuerpo visual mínimo */
-}
-
-#modalDetalleDocumento .modal-body {
-  padding: 1.5rem;
-  font-size: 0.9rem;
-}
-
-#modalDetalleDocumento .modal-body p {
-  margin-bottom: 0.4rem;
-}
-
-/* Estilo opcional para modal de PRODUCTOS si necesitás altura mínima también */
-#modalProductosDocumento .modal-content {
-  min-height: 300px;
-}
 
 .contenedor-admin-flex h5{
   font-weight: bold;
@@ -396,6 +368,38 @@ header .icons p {
 .acciones-proveedor {
   margin-top: 10px;
   margin-bottom: 30px;
+}
+.panel-listados {
+  position: relative;
+  z-index: 1;
+}
+
+/* 🔧 Forzamos comportamiento de modal bootstrap real */
+.modal {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  z-index: 1055 !important;
+  display: none;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  outline: 0;
+}
+
+.modal.show {
+  display: block;
+}
+
+/* Asegura que el fondo se aplique correctamente */
+.modal-backdrop {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1050 !important;
+  background-color: rgba(0,0,0,0.5);
 }
 
 
