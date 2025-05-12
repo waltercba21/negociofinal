@@ -357,21 +357,10 @@ header .icons p {
   padding: 4px 6px;
   font-size: 0.8rem;
 }
-/* Asegura que los modales se ubiquen por encima */
-#modalDetalleDocumento,
-#modalProductosDocumento {
-  z-index: 1055 !important;
-  position: fixed !important;
-}
 
 /* Fondo oscuro detrás del modal */
 .modal-backdrop {
   z-index: 1050 !important;
-}
-
-/* Evita scroll de fondo */
-body.modal-open {
-  overflow: hidden !important;
 }
 
 /* Estilo para modal de DETALLE */
