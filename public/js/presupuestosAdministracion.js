@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabla = document.getElementById('tablaProductosPresupuesto').querySelector('tbody');
   const btnConfirmar = document.getElementById('btnConfirmarProductosPresupuesto');
   const btnGuardarPresupuesto = document.getElementById('btnGuardarPresupuesto');
-  const administrador = document.getElementById('presupuestoAdministrador').value;
 
   let productosSeleccionados = [];
 
@@ -141,10 +140,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const importe = document.getElementById('presupuestoImporte').value;
     const condicion = document.getElementById('presupuestoCondicion').value;
     const fecha_pago = document.getElementById('presupuestoFechaPago').value;
+    const administrador = document.getElementById('presupuestoAdministrador').value;
+
 
     if (!proveedor || !fecha || !numero || !importe || !condicion || !fecha_pago || !administrador) {
-      return Swal.fire('Faltan datos', 'Completá todos los campos del presupuesto.', 'warning');
-    }
+  let mensaje = 'Los siguientes campos son obligatorios:\n';
+  if (!proveedor) mensaje += '- Proveedor\n';
+  if (!fecha) mensaje += '- Fecha del presupuesto\n';
+  if (!numero) mensaje += '- Número\n';
+  if (!importe) mensaje += '- Importe\n';
+  if (!fecha_pago) mensaje += '- Fecha de vencimiento\n';
+  if (!condicion) mensaje += '- Condición de pago\n';
+  if (!administrador) mensaje += '- Administrador\n';
+
+  return Swal.fire('Faltan datos', mensaje, 'warning');
+}
+
 
     if (!productosSeleccionados.length) {
       return Swal.fire('Faltan productos', 'Debe confirmar al menos un producto.', 'warning');
