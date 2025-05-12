@@ -413,8 +413,16 @@
       </div>
 
       <div class="modal-body modal-proveedor-body">
+        <!-- Contenedor de tarjetas -->
         <div class="row" id="contenedorResultadosListados">
           <!-- Se insertan dinámicamente -->
+        </div>
+
+        <!-- 🔹 Paginación dentro del modal-body -->
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <button class="btn btn-outline-secondary" id="btnAnteriorPagina" disabled>← Anterior</button>
+          <span id="indicadorPagina" class="fw-bold">Página 1</span>
+          <button class="btn btn-outline-secondary" id="btnSiguientePagina" disabled>Siguiente →</button>
         </div>
       </div>
 
@@ -424,6 +432,8 @@
     </div>
   </div>
 </div>
+
+
 </div>
 </main>
 
