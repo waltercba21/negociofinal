@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultados = document.getElementById('resultadosBusqueda');
     const tabla = document.getElementById('tablaProductosFactura').querySelector('tbody');
     const btnConfirmar = document.getElementById('btnConfirmarProductosFactura');
-    const btnGuardarFactura = document.getElementById('btnGuardarFactura');s
+    const btnGuardarFactura = document.getElementById('btnGuardarFactura');
 
     let productosSeleccionados = [];
   // Cerrar con Escape
