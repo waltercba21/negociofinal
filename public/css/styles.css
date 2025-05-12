@@ -374,23 +374,6 @@ header .icons p {
   z-index: 1;
 }
 
-/* 🔧 Forzamos comportamiento de modal bootstrap real */
-.modal {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  z-index: 1055 !important;
-  display: none;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  outline: 0;
-}
-
-.modal.show {
-  display: block;
-}
-
 /* Asegura que el fondo se aplique correctamente */
 .modal-backdrop {
   position: fixed !important;
