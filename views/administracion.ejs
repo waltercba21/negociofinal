@@ -353,6 +353,55 @@
   </div>
 </div>  
 
+<!-- 🔷 CONTENEDOR DE FILTROS Y RESULTADOS -->
+<section class="panel-listados">
+  <div class="card-proveedor contenedor-factura">
+    <h5 class="titulo-proveedor">Listado de Facturas y Presupuestos</h5>
+
+    <div class="mb-3">
+      <label for="filtroProveedor" class="form-label">Proveedor</label>
+      <select id="filtroProveedor" class="form-select">
+        <option value="">Todos los proveedores</option>
+        <% proveedores.forEach(p => { %>
+          <option value="<%= p.id %>"><%= p.nombre %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="filtroTipo" class="form-label">Tipo</label>
+      <select id="filtroTipo" class="form-select">
+        <option value="">Todos</option>
+        <option value="factura">Facturas</option>
+        <option value="presupuesto">Presupuestos</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Fecha Desde</label>
+      <input type="date" id="filtroFechaDesde" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Fecha Hasta</label>
+      <input type="date" id="filtroFechaHasta" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label for="filtroCondicion" class="form-label">Condición</label>
+      <select id="filtroCondicion" class="form-select">
+        <option value="">Todas</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="pagado">Pagado</option>
+      </select>
+    </div>
+
+    <div class="d-grid">
+      <button class="btn btn-primary" id="btnBuscarListados">Buscar</button>
+    </div>
+  </div>
+</section>
+
+
 </div>
 </main>
 <!-- MODAL: RESULTADOS DE FACTURAS / PRESUPUESTOS -->
