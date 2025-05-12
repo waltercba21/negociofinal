@@ -336,7 +336,9 @@ postFactura: function (req, res) {
     numero_presupuesto: req.body.numero_presupuesto,
     fecha_pago: req.body.fecha_pago,
     importe: req.body.importe,
-    condicion: req.body.condicion
+    condicion: req.body.condicion,
+    administrador: req.body.administrador
+
   };
 
   administracion.insertPresupuesto(nuevoPresupuesto, (insertId, error) => {

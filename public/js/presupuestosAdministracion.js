@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabla = document.getElementById('tablaProductosPresupuesto').querySelector('tbody');
   const btnConfirmar = document.getElementById('btnConfirmarProductosPresupuesto');
   const btnGuardarPresupuesto = document.getElementById('btnGuardarPresupuesto');
+  const administrador = document.getElementById('presupuestoAdministrador').value;
 
   let productosSeleccionados = [];
 
@@ -141,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const condicion = document.getElementById('presupuestoCondicion').value;
     const fecha_pago = document.getElementById('presupuestoFechaPago').value;
 
-    if (!proveedor || !fecha || !numero || !importe || !condicion || !fecha_pago) {
+    if (!proveedor || !fecha || !numero || !importe || !condicion || !fecha_pago || !administrador) {
       return Swal.fire('Faltan datos', 'Completá todos los campos del presupuesto.', 'warning');
     }
 
@@ -159,7 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
           numero_presupuesto: numero,
           importe,
           condicion,
-          fecha_pago
+          fecha_pago,
+          administrador
         })
       });
 

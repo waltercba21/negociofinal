@@ -297,7 +297,8 @@ insertarItemPresupuesto: function(item, callback) {
     numero_presupuesto,
     fecha_pago,
     importe,
-    condicion
+    condicion,
+    administrador
   } = presupuesto;
 
   const datos = {
@@ -306,7 +307,8 @@ insertarItemPresupuesto: function(item, callback) {
     numero_presupuesto,
     fecha_pago,
     importe,
-    condicion
+    condicion,
+    administrador
   };
 
   pool.query('INSERT INTO presupuestos SET ?', datos, function (error, results) {
