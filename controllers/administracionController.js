@@ -96,28 +96,30 @@ module.exports = {
             }
         });
     },
-    postFactura: function (req, res) {
-        const nuevaFactura = {
-            id_proveedor: req.body.id_proveedor,
-            fecha: req.body.fecha,
-            numero_factura: req.body.numero_factura,
-            importe_bruto: req.body.importe_bruto,
-            iva: req.body.iva,
-            importe_factura: req.body.importe_factura,
-            fecha_pago: req.body.fecha_pago,
-            condicion: req.body.condicion,
-            comprobante_pago: req.file ? req.file.filename : null
-        };
-    
-        administracion.insertFactura(nuevaFactura, function (insertId, error) {
-            if (error) {
-                console.error("❌ Error al insertar factura:", error);
-                return res.status(500).json({ message: 'Error al crear factura' });
-            }
-            console.log("✅ Factura creada con ID:", insertId);
-            res.json({ message: 'Factura creada exitosamente', insertId });
-        });
-    },    
+postFactura: function (req, res) {
+  const nuevaFactura = {
+    id_proveedor: req.body.id_proveedor,
+    fecha: req.body.fecha,
+    numero_factura: req.body.numero_factura,
+    importe_bruto: req.body.importe_bruto,
+    iva: req.body.iva,
+    importe_factura: req.body.importe_factura,
+    fecha_pago: req.body.fecha_pago,
+    condicion: req.body.condicion,
+    administrador: req.body.administrador, // 👈 ESTE ES EL NUEVO CAMPO
+    comprobante_pago: req.file ? req.file.filename : null
+  };
+
+  administracion.insertFactura(nuevaFactura, function (insertId, error) {
+    if (error) {
+      console.error("❌ Error al insertar factura:", error);
+      return res.status(500).json({ message: 'Error al crear factura' });
+    }
+    console.log("✅ Factura creada con ID:", insertId);
+    res.json({ message: 'Factura creada exitosamente', insertId });
+  });
+},
+
     listadoFacturas : function(req, res) {
         administracion.getFacturas(function(error, facturas) {
             if (error) {
@@ -326,7 +328,8 @@ module.exports = {
           res.status(500).json({ error: 'Error al guardar productos de factura' });
         }
       },
-      postPresupuesto: (req, res) => {
+
+  postPresupuesto: (req, res) => {
   const nuevoPresupuesto = {
     id_proveedor: req.body.id_proveedor,
     fecha: req.body.fecha,

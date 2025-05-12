@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabla = document.getElementById('tablaProductosFactura').querySelector('tbody');
     const btnConfirmar = document.getElementById('btnConfirmarProductosFactura');
     const btnGuardarFactura = document.getElementById('btnGuardarFactura');
-  
+    const administrador = document.getElementById('facturaAdministrador').value;
+
     let productosSeleccionados = [];
   // Cerrar con Escape
 buscador.addEventListener('keydown', (e) => {
@@ -150,7 +151,7 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
   const fecha_pago = document.getElementById('facturaFechaPago').value;
   const comprobante = document.getElementById('facturaComprobante').files[0];
 
-  if (!proveedor || !fecha || !numero || !bruto || !iva || !total || !condicion || !fecha_pago) {
+  if (!proveedor || !fecha || !numero || !bruto || !iva || !total || !condicion || !fecha_pago || !administrador) {
     return Swal.fire('Faltan datos', 'Completá todos los campos de la factura.', 'warning');
   }
 
@@ -168,6 +169,8 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
     formData.append('importe_factura', total);
     formData.append('fecha_pago', fecha_pago);
     formData.append('condicion', condicion);
+    formData.append('administrador', administrador);
+
     if (comprobante) {
       formData.append('comprobante_pago', comprobante);
     }

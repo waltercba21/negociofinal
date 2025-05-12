@@ -84,6 +84,19 @@ module.exports ={
       callback(results.insertId, null);
     });
   },
+  insertarItemFactura: function (item, callback) {
+  const sql = `
+    INSERT INTO facturas_admin_items (factura_id, producto_id, cantidad)
+    VALUES (?, ?, ?)
+  `;
+  const params = [item.factura_id, item.producto_id, item.cantidad];
+
+  pool.query(sql, params, function (error, results) {
+    if (error) return callback(error);
+    callback(null, results);
+  });
+},
+
 insertarItemPresupuesto: function(item, callback) {
   pool.query('INSERT INTO presupuestos_admin_items SET ?', item, function(error, results) {
     if (error) return callback(error);
@@ -275,7 +288,7 @@ insertarItemPresupuesto: function(item, callback) {
           });
         });
       },
-      insertPresupuesto: function (presupuesto, callback) {
+  insertPresupuesto: function (presupuesto, callback) {
   const {
     id_proveedor,
     fecha,
