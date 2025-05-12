@@ -56,7 +56,8 @@ module.exports ={
       importe_factura,
       fecha_pago,
       condicion,
-      comprobante_pago
+      comprobante_pago,
+      administrador
     } = factura;
   
     const datosFactura = {
@@ -68,7 +69,8 @@ module.exports ={
       importe_factura,
       fecha_pago,
       condicion,
-      comprobante_pago
+      comprobante_pago,
+      administrador
     };
   
     pool.query('INSERT INTO facturas SET ?', datosFactura, function (error, results) {

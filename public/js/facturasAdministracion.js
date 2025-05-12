@@ -8,7 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnGuardarFactura = document.getElementById('btnGuardarFactura');
 
     let productosSeleccionados = [];
-  // Cerrar con Escape
+
+    // Cerrar con Escape
 buscador.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     resultados.innerHTML = '';
