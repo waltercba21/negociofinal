@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let datosFiltrados = [];
   let paginaActual = 1;
-  const tarjetasPorPagina = 4;
+  const tarjetasPorPagina = 6;
 
   btnBuscar.addEventListener('click', async () => {
     const proveedor = document.getElementById('filtroProveedor').value;
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     datosPagina.forEach(doc => {
       const tarjeta = document.createElement('div');
-      tarjeta.className = 'col-md-6 mb-3';
+      tarjeta.className = 'col-md-4 mb-3';
 
       tarjeta.innerHTML = `
   <div class="card resultado-doc shadow-sm">
