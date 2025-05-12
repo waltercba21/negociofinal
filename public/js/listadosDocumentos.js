@@ -58,18 +58,18 @@ document.addEventListener('DOMContentLoaded', () => {
       tarjeta.className = 'col-md-6 mb-3';
 
       tarjeta.innerHTML = `
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted">${doc.tipo.toUpperCase()}</h6>
-            <p class="card-text mb-1"><strong>Número:</strong> ${doc.numero}</p>
-            <p class="card-text mb-1"><strong>Fecha:</strong> ${new Date(doc.fecha).toLocaleDateString()}</p>
-            <p class="card-text"><strong>Proveedor:</strong> ${doc.nombre_proveedor}</p>
-            <button class="btn btn-outline-primary btn-sm ver-mas-documento" data-id="${doc.id}" data-tipo="${doc.tipo}">
-              Ver más
-            </button>
-          </div>
-        </div>
-      `;
+  <div class="card resultado-doc shadow-sm">
+    <div class="card-body">
+      <h6>${doc.tipo.toUpperCase()}</h6>
+      <p><strong>Número:</strong> ${doc.numero}</p>
+      <p><strong>Fecha:</strong> ${new Date(doc.fecha).toLocaleDateString()}</p>
+      <p><strong>Proveedor:</strong> ${doc.nombre_proveedor}</p>
+      <button class="btn btn-outline-primary btn-sm ver-mas-documento" data-id="${doc.id}" data-tipo="${doc.tipo}">
+        Ver más
+      </button>
+    </div>
+  </div>
+`;
       contenedorResultados.appendChild(tarjeta);
     });
 

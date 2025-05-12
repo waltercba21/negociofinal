@@ -372,6 +372,43 @@ header .icons p {
   position: relative;
   z-index: 1;
 }
+/* Estilo visual de las tarjetas en el modal de resultados */
+.card.resultado-doc {
+  min-height: 160px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background-color: #f9f9f9;
+  transition: transform 0.2s ease;
+  margin-bottom: 10px;
+}
+
+.card.resultado-doc:hover {
+  transform: scale(1.01);
+}
+
+.card.resultado-doc .card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.card.resultado-doc h6 {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.card.resultado-doc p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.card.resultado-doc button {
+  margin-top: 10px;
+}
 
 
 /* ---------------------------------------FOOTER ------------------------------------------- */
