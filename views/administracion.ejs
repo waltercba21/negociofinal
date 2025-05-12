@@ -355,6 +355,29 @@
 
 </div>
 </main>
+<!-- MODAL: RESULTADOS DE FACTURAS / PRESUPUESTOS -->
+<div class="modal fade" id="modalResultadosListados" tabindex="-1" aria-labelledby="modalResultadosListadosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-proveedor-dialog">
+    <div class="modal-content modal-proveedor-content">
+      <div class="modal-header modal-proveedor-header">
+        <h5 class="modal-title" id="modalResultadosListadosLabel">
+          <i class="bi bi-journal-text me-2"></i>Resultados de la búsqueda
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body modal-proveedor-body">
+        <div class="row" id="contenedorResultadosListados">
+          <!-- Se insertan dinámicamente -->
+        </div>
+      </div>
+
+      <div class="modal-footer modal-proveedor-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 <%- include('./layouts/footer.ejs') %>
