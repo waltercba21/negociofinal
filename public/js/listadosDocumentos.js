@@ -2,10 +2,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnBuscar = document.getElementById('btnBuscarListados');
   const resultados = document.getElementById('resultadosListado');
   const modalDetalleEl = document.getElementById('modalDetalleDocumento');
-  const modalDetalle = new bootstrap.Modal(modalDetalleEl);
   const contenidoDetalle = document.getElementById('contenidoDetalleDocumento');
 
+  let modalDetalle = null;
   let datosGlobales = [];
+
+  // Verificación de existencia del modal
+  if (!modalDetalleEl) {
+    console.error('⛔ No se encontró el modalDetalleDocumento en el DOM.');
+  } else {
+    modalDetalle = new bootstrap.Modal(modalDetalleEl);
+  }
 
   btnBuscar.addEventListener('click', async () => {
     const tipo = document.getElementById('filtroTipo')?.value || '';
@@ -24,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderizarResultados(data);
     } catch (err) {
       resultados.innerHTML = '<div class="alert alert-danger">Ocurrió un error al buscar documentos.</div>';
-      console.error('Error en fetch:', err);
+      console.error('❌ Error en fetch:', err);
     }
   });
 
@@ -67,7 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/administracion/api/${tipo}/${id}`);
       const doc = await res.json();
 
-      if (!contenidoDetalle) return;
+      if (!contenidoDetalle) {
+        console.error('⛔ No se encontró #contenidoDetalleDocumento.');
+        return;
+      }
 
       contenidoDetalle.innerHTML = `
         <p><strong>Proveedor:</strong> ${doc.nombre_proveedor}</p>
@@ -77,9 +87,14 @@ document.addEventListener('DOMContentLoaded', () => {
         <p><strong>Condición:</strong> ${doc.condicion}</p>
       `;
 
-      modalDetalle.show();
+      if (modalDetalle) {
+        modalDetalle.show();
+      } else {
+        console.error('⛔ modalDetalle no fue inicializado correctamente.');
+      }
+
     } catch (err) {
-      console.error('Error al mostrar detalle:', err);
+      console.error('❌ Error al mostrar detalle del documento:', err);
       Swal.fire('Error', 'No se pudo mostrar el detalle del documento.', 'error');
     }
   }
