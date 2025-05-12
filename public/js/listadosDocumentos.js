@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const btnBuscar = document.getElementById('btnBuscarListados');
   const resultados = document.getElementById('resultadosListado');
-  const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
   const contenido = document.getElementById('contenidoDetalleDocumento');
 
   btnBuscar.addEventListener('click', () => {
@@ -16,8 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Asociar evento a botón "Ver"
+    // Esperamos que esté en el DOM antes de instanciar
     document.getElementById('btnVerDetalle').addEventListener('click', () => {
+      const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDetalleDocumento'));
+
       contenido.innerHTML = `
         <p><strong>Proveedor:</strong> LIDERCAR</p>
         <p><strong>Factura:</strong> 123456</p>
@@ -25,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p><strong>Importe:</strong> $45.000</p>
         <p><strong>Condición:</strong> Pendiente</p>
       `;
+
       modal.show();
     });
   });
