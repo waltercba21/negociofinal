@@ -155,11 +155,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   return Swal.fire('Faltan datos', mensaje, 'warning');
 }
-
-
     if (!productosSeleccionados.length) {
-      return Swal.fire('Faltan productos', 'Debe confirmar al menos un producto.', 'warning');
-    }
+  const confirmacion = await Swal.fire({
+    title: 'Presupuesto sin productos',
+    text: 'Estás por guardar un presupuesto sin productos asociados. ¿Deseás continuar?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, guardar de todos modos',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!confirmacion.isConfirmed) return;
+}
+
 
     try {
       const res = await fetch('/administracion/api/presupuestos', {
