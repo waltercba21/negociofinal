@@ -1108,11 +1108,14 @@ generarPDFProveedor: async function (req, res) {
     } else if (tipo === 'porCategoria') {
       // ✅ DISEÑO CORREGIDO PARA tipo "porCategoria"
       doc.moveDown(2);
-      doc.fontSize(9).fillColor('black');
-      doc.text('Código', 40, doc.y, { width: 100 });
-      doc.text('Descripción', 150, doc.y, { width: 300 });
-      doc.text('Stock Actual', 460, doc.y, { width: 100 });
-      doc.moveDown(0.5);
+      // Encabezado alineado en una sola línea
+doc.fontSize(9).fillColor('black');
+const headerY = doc.y;
+doc.text('Código', 40, headerY, { width: 100 });
+doc.text('Descripción', 150, headerY, { width: 300 });
+doc.text('Stock Actual', 460, headerY, { width: 100 });
+doc.moveDown(1);
+
 
       productos.forEach(prod => {
         if (doc.y + 15 > doc.page.height - doc.page.margins.bottom) {
