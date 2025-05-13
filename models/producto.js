@@ -1100,21 +1100,22 @@ obtenerProductos: function(conexion, saltar, productosPorPagina, callback) {
       }
   });
 },
-obtenerProductosPorCategoria: function(conexion, categoriaId, callback) {
-    let query = `
-        SELECT * FROM productos
-        WHERE categoria_id = ?
-        ORDER BY id DESC
-    `;
-    
-    conexion.query(query, [categoriaId], function(error, resultados) {
-        if (error) {
-            console.error('❌ Error en obtenerProductosPorCategoria:', error);
-            return callback(error, null);
-        }
-        callback(null, resultados);
+obtenerProductosPorCategoria: function(conexion, categoriaId) {
+  const query = `
+    SELECT p.nombre, p.stock_actual, pp.codigo
+    FROM productos p
+    LEFT JOIN producto_proveedor pp ON p.id = pp.producto_id
+    WHERE p.categoria_id = ?
+    ORDER BY p.nombre ASC
+  `;
+  return new Promise((resolve, reject) => {
+    conexion.query(query, [categoriaId], (err, results) => {
+      if (err) return reject(err);
+      resolve(results);
     });
+  });
 },
+
 obtenerTodosPaginados: function(conexion, pagina, productosPorPagina, callback) {
     const offset = (pagina - 1) * productosPorPagina;
     let query = `

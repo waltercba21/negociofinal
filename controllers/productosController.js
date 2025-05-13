@@ -1045,62 +1045,96 @@ getProductosPorCategoria : async (req, res) => {
       }
     });
   },
-  generarPDFProveedor: async function (req, res) {
-    const PDFDocument = require('pdfkit');
-    const streamBuffers = require('stream-buffers');
-    const buffer = new streamBuffers.WritableStreamBuffer({
-      initialSize: 1024 * 1024,
-      incrementAmount: 1024 * 1024
-    });
-    const doc = new PDFDocument({
-      margin: 30 
-    });;
-    doc.pipe(buffer);
-  
-    const proveedorId = req.query.proveedor;
-    const categoriaId = req.query.categoria;
-    const tipo = req.query.tipo;
-  
-    try {
-      const proveedores = await producto.obtenerProveedores(conexion);
-      const categorias = await producto.obtenerCategorias(conexion);
-      const proveedor = proveedores.find(p => p.id == proveedorId);
-      const categoria = categorias.find(c => c.id == categoriaId);
-      const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
-      const nombreCategoria = categoria ? categoria.nombre : 'Todas las categorías';
-  
-      const titulo = tipo === 'pedido'
-        ? `Pedido de Productos - ${nombreProveedor}`
-        : `Listado de Stock - ${nombreProveedor} - ${nombreCategoria}`;
-  
-        doc.fontSize(14).text(titulo, {
-          align: 'center',
-          width: doc.page.width - 60 // Antes: -100
-        });
-  
-      let productos = [];
-if (tipo === 'pedido') {
-  productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
-} else if (tipo === 'asignado') {
-  productos = await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId);
-} else {
-  productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
-}
+generarPDFProveedor: async function (req, res) {
+  const PDFDocument = require('pdfkit');
+  const streamBuffers = require('stream-buffers');
+  const buffer = new streamBuffers.WritableStreamBuffer({
+    initialSize: 1024 * 1024,
+    incrementAmount: 1024 * 1024
+  });
 
-  
-      if (!productos.length) {
-        doc.moveDown().fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
+  const doc = new PDFDocument({ margin: 30 });
+  doc.pipe(buffer);
+
+  const proveedorId = req.query.proveedor;
+  const categoriaId = req.query.categoria;
+  const tipo = req.query.tipo;
+
+  try {
+    const proveedores = await producto.obtenerProveedores(conexion);
+    const categorias = await producto.obtenerCategorias(conexion);
+    const proveedor = proveedores.find(p => p.id == proveedorId);
+    const categoria = categorias.find(c => c.id == categoriaId);
+    const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
+    const nombreCategoria = categoria ? categoria.nombre : 'Todas las categorías';
+
+    let titulo = '';
+    switch (tipo) {
+      case 'pedido':
+        titulo = `Pedido de Productos - ${nombreProveedor}`;
+        break;
+      case 'asignado':
+        titulo = `Stock Mínimo - Proveedor Asignado - ${nombreProveedor}`;
+        break;
+      case 'porCategoria':
+        titulo = `Listado de Productos por Categoría - ${nombreCategoria}`;
+        break;
+      default:
+        titulo = `Listado de Stock - ${nombreProveedor} - ${nombreCategoria}`;
+    }
+
+    doc.fontSize(14).text(titulo, {
+      align: 'center',
+      width: doc.page.width - 60
+    });
+
+    let productos = [];
+
+    // Distinción por tipo
+    if (tipo === 'pedido') {
+      productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
+    } else if (tipo === 'asignado') {
+      productos = await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId);
+    } else if (tipo === 'porCategoria') {
+      productos = await producto.obtenerProductosPorCategoria(conexion, categoriaId);
+    } else {
+      productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+    }
+
+    // Si no hay productos
+    if (!productos.length) {
+      doc.moveDown().fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
+    } else {
+      let currentY = doc.y + 20;
+
+      if (tipo === 'porCategoria') {
+        doc.fontSize(12).fillColor('black')
+          .text('Código', 40, currentY, { width: 100 })
+          .text('Descripción', 140, currentY, { width: 250 })
+          .text('Stock Actual', 400, currentY, { width: 100 });
+        doc.moveDown(2);
+
+        productos.forEach(prod => {
+          const y = doc.y;
+          if (y + 20 > doc.page.height - doc.page.margins.bottom) {
+            doc.addPage();
+          }
+          doc.fontSize(9)
+            .text(prod.codigo || '-', 40, doc.y, { width: 100 })
+            .text(prod.nombre, 140, doc.y, { width: 250 })
+            .text(prod.stock_actual || 0, 400, doc.y, { width: 100 });
+          doc.moveDown();
+        });
       } else {
-        let currentY = doc.y + 20;
+        // Para tipos: stock, pedido, asignado
         doc.fontSize(12)
           .fillColor('black')
           .text('Código', 40, currentY, { align: 'left', width: 60 })
           .text('Descripción', 105, currentY, { align: 'left', width: 310 })
-
           .text('Stock Mínimo', 420, currentY, { align: 'center', width: 80 })
           .text('Stock Actual', 500, currentY, { align: 'center', width: 80 })
           .moveDown(2);
-  
+
         productos.forEach(producto => {
           if (tipo === 'stock' || producto.stock_actual < producto.stock_minimo) {
             currentY = doc.y;
@@ -1109,28 +1143,30 @@ if (tipo === 'pedido') {
               currentY = doc.y;
             }
             doc.fontSize(7)
-            .text(producto.codigo_proveedor, 40, currentY, { align: 'left', width: 60 })
-            .text(producto.nombre, 105, currentY, { align: 'left', width: 310 })          
+              .text(producto.codigo_proveedor, 40, currentY, { align: 'left', width: 60 })
+              .text(producto.nombre, 105, currentY, { align: 'left', width: 310 })
               .text(producto.stock_minimo || '0', 420, currentY, { align: 'center', width: 80 })
               .text(producto.stock_actual || 'Sin Stock', 500, currentY, { align: 'center', width: 80 })
               .moveDown(1);
           }
         });
       }
-  
-      doc.end();
-    } catch (error) {
-      console.error('Error al generar el PDF:', error);
-      return res.status(500).send('Error al generar el PDF');
     }
-  
-    buffer.on('finish', function () {
-      const pdfData = buffer.getContents();
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-      res.send(pdfData);
-    });
-  },   
+
+    doc.end();
+  } catch (error) {
+    console.error('❌ Error al generar el PDF:', error);
+    return res.status(500).send('Error al generar el PDF');
+  }
+
+  buffer.on('finish', function () {
+    const pdfData = buffer.getContents();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
+    res.send(pdfData);
+  });
+},
+
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();
