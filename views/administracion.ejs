@@ -452,6 +452,28 @@
     </div>
   </div>
 </div>
+<!-- MODAL DETALLE FACTURA/PRESUPUESTO -->
+<div class="modal fade" id="modalDetalleDocumento" tabindex="-1" aria-labelledby="modalDetalleDocumentoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content modal-proveedor-content">
+      <div class="modal-header modal-proveedor-header">
+        <h5 class="modal-title" id="modalDetalleDocumentoLabel">
+          <i class="bi bi-file-earmark-text me-2"></i>Detalle del Documento
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" id="contenedorDetalleDocumento">
+        <!-- Se carga con JS -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" id="btnHabilitarEdicion" class="btn btn-warning">Editar</button>
+        <button type="button" id="btnGuardarCambiosDocumento" class="btn btn-success d-none">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 
 </div>
