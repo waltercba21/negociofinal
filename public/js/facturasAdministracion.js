@@ -182,7 +182,6 @@ if (!productosSeleccionados.length) {
   if (!confirmacion.isConfirmed) return;
 }
 
-
   try {
     const formData = new FormData();
     formData.append('id_proveedor', proveedor);
@@ -290,6 +289,7 @@ if (!productosSeleccionados.length) {
     Swal.fire('Error', err.message || 'Ocurrió un error al guardar.', 'error');
   }
 });
+
 const inputFechaFactura = document.getElementById('facturaFecha');
 const inputFechaPago = document.getElementById('facturaFechaPago');
 
