@@ -140,7 +140,7 @@ const imagenSrc = (prod.imagenes?.[0]?.imagen)
       Swal.fire('Confirmado', 'Productos listos para guardar con la factura.', 'success');
     });
 
-btnGuardarFactura.addEventListener('click', async () => {
+  btnGuardarFactura.addEventListener('click', async () => {
   const administrador = document.getElementById('facturaAdministrador').value;
   const proveedor = document.getElementById('facturaProveedor').value;
   const fecha = document.getElementById('facturaFecha').value;
@@ -153,70 +153,37 @@ btnGuardarFactura.addEventListener('click', async () => {
   const comprobante = document.getElementById('facturaComprobante').files[0];
 
   if (!proveedor || !fecha || !numero || !bruto || !iva || !total || !condicion || !fecha_pago || !administrador) {
-    let mensaje = 'Los siguientes campos son obligatorios:\n';
-    if (!proveedor) mensaje += '- Proveedor\n';
-    if (!fecha) mensaje += '- Fecha de factura\n';
-    if (!numero) mensaje += '- Número de factura\n';
-    if (!bruto) mensaje += '- Importe bruto\n';
-    if (!iva) mensaje += '- IVA\n';
-    if (!total) mensaje += '- Importe total\n';
-    if (!fecha_pago) mensaje += '- Fecha de vencimiento\n';
-    if (!condicion) mensaje += '- Condición de pago\n';
-    if (!administrador) mensaje += '- Administrador\n';
+  let mensaje = 'Los siguientes campos son obligatorios:\n';
+  if (!proveedor) mensaje += '- Proveedor\n';
+  if (!fecha) mensaje += '- Fecha de factura\n';
+  if (!numero) mensaje += '- Número de factura\n';
+  if (!bruto) mensaje += '- Importe bruto\n';
+  if (!iva) mensaje += '- IVA\n';
+  if (!total) mensaje += '- Importe total\n';
+  if (!fecha_pago) mensaje += '- Fecha de vencimiento\n';
+  if (!condicion) mensaje += '- Condición de pago\n';
+  if (!administrador) mensaje += '- Administrador\n';
 
-    return Swal.fire('Faltan datos', mensaje, 'warning');
-  }
+  return Swal.fire('Faltan datos', mensaje, 'warning');
+}
+
 
   // Si no hay productos, advertimos con SweetAlert
-  if (!productosSeleccionados.length) {
-    const confirmacion = await Swal.fire({
-      title: 'Factura sin productos',
-      text: 'Estás por guardar una factura sin productos asociados. ¿Deseás continuar?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, guardar de todos modos',
-      cancelButtonText: 'Cancelar'
-    });
+if (!productosSeleccionados.length) {
+  const confirmacion = await Swal.fire({
+    title: 'Factura sin productos',
+    text: 'Estás por guardar una factura sin productos asociados. ¿Deseás continuar?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, guardar de todos modos',
+    cancelButtonText: 'Cancelar'
+  });
 
-    if (!confirmacion.isConfirmed) return;
-  }
+  if (!confirmacion.isConfirmed) return;
+}
+
 
   try {
-    // 🔍 Verificar si ya existe una factura similar
-    const verificar = await fetch('/administracion/api/documentos');
-    const documentos = await verificar.json();
-
-    const proveedorNombre = document.getElementById('facturaProveedor').selectedOptions[0].textContent.trim();
-
-    const yaExiste = documentos.find(d =>
-      d.tipo === 'factura' &&
-      d.numero == numero &&
-      d.fecha === fecha &&
-      d.nombre_proveedor === proveedorNombre
-    );
-
-    if (yaExiste) {
-      const confirmacion = await Swal.fire({
-        title: 'Factura existente',
-        text: 'Ya existe una factura con ese número, fecha y proveedor. ¿Deseás editarla o eliminarla?',
-        icon: 'warning',
-        showDenyButton: true,
-        showCancelButton: true,
-        confirmButtonText: 'Editar',
-        denyButtonText: 'Eliminar',
-        cancelButtonText: 'Cancelar'
-      });
-
-      if (confirmacion.isConfirmed) {
-        return abrirModalEdicion(yaExiste.id);
-      } else if (confirmacion.isDenied) {
-        return confirmarEliminacionFactura(yaExiste.id);
-      } else {
-        return;
-      }
-    }
-
-    // 🧾 Enviar nueva factura
     const formData = new FormData();
     formData.append('id_proveedor', proveedor);
     formData.append('fecha', fecha);
@@ -227,9 +194,12 @@ btnGuardarFactura.addEventListener('click', async () => {
     formData.append('fecha_pago', fecha_pago);
     formData.append('condicion', condicion);
     formData.append('administrador', administrador);
+
     if (comprobante) {
       formData.append('comprobante_pago', comprobante);
     }
+
+    console.log('📤 Enviando datos de factura con archivo:', Object.fromEntries(formData.entries()));
 
     const res = await fetch('/administracion/api/facturas', {
       method: 'POST',
@@ -243,34 +213,35 @@ btnGuardarFactura.addEventListener('click', async () => {
     }
 
     const respuesta = await res.json();
+    console.log('📥 Respuesta del backend (factura):', respuesta);
 
     if (!respuesta.insertId) {
-      throw new Error('No se pudo crear la factura (sin insertId)');
+      console.error('⚠️ No se devolvió insertId');
+      throw new Error('No se pudo crear la factura');
     }
 
-    // 💾 Guardar productos si hay
-    if (productosSeleccionados.length > 0) {
-      const productosRes = await fetch('/administracion/api/factura/productos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          facturaId: respuesta.insertId,
-          items: productosSeleccionados
-        })
-      });
+    // Enviar los productos
+    const productosRes = await fetch('/administracion/api/factura/productos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        facturaId: respuesta.insertId,
+        items: productosSeleccionados
+      })
+    });
 
-      if (!productosRes.ok) {
-        const errorText = await productosRes.text();
-        throw new Error('Error al guardar productos: ' + errorText);
-      }
-
-      const productosResp = await productosRes.json();
-      console.log('✅ Productos guardados:', productosResp);
+    if (!productosRes.ok) {
+      const errorText = await productosRes.text();
+      console.error('❌ Error al guardar productos:', errorText);
+      throw new Error('Error al guardar productos');
     }
+
+    const productosResp = await productosRes.json();
+    console.log('✅ Productos guardados:', productosResp);
 
     Swal.fire('Éxito', 'Factura y productos guardados correctamente.', 'success');
 
-    // 🔄 Limpiar formulario
+    // Limpiar formulario (opcional)
     document.getElementById('facturaProveedor').value = '';
     document.getElementById('facturaFecha').value = '';
     document.getElementById('facturaNumero').value = '';
@@ -288,54 +259,18 @@ btnGuardarFactura.addEventListener('click', async () => {
     Swal.fire('Error', err.message || 'Ocurrió un error al guardar.', 'error');
   }
 });
+const inputFechaFactura = document.getElementById('facturaFecha');
+const inputFechaPago = document.getElementById('facturaFechaPago');
 
-async function abrirModalEdicion(id) {
-  try {
-    const res = await fetch(`/administracion/api/factura/${id}`);
-    const factura = await res.json();
+inputFechaFactura.addEventListener('change', () => {
+  const valorFecha = inputFechaFactura.value;
+  if (!valorFecha) return;
 
-    // Aquí podés abrir un modal y precargar los valores.
-    // Por ahora, solo mostramos los datos como prueba:
-    Swal.fire({
-      title: 'Editar factura',
-      html: `
-        <strong>Proveedor:</strong> ${factura.nombre_proveedor}<br>
-        <strong>Fecha:</strong> ${factura.fecha}<br>
-        <strong>Número:</strong> ${factura.numero_factura}<br>
-        <strong>Condición:</strong> ${factura.condicion}
-      `,
-      confirmButtonText: 'Cerrar'
-    });
+  const fecha = new Date(valorFecha);
+  fecha.setDate(fecha.getDate() + 30);
 
-    // Luego implementaremos el modal editable
-  } catch (err) {
-    console.error('❌ Error al obtener factura:', err);
-    Swal.fire('Error', 'No se pudo cargar la factura para editar.', 'error');
-  }
-}
-
-async function confirmarEliminacionFactura(id) {
-  const confirmacion = await Swal.fire({
-    title: '¿Eliminar factura?',
-    text: 'Esta acción eliminará definitivamente la factura seleccionada.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sí, eliminar',
-    cancelButtonText: 'Cancelar'
+  const fecha30dias = fecha.toISOString().split('T')[0];
+  inputFechaPago.value = fecha30dias;
   });
-
-  if (!confirmacion.isConfirmed) return;
-
-  try {
-    const res = await fetch(`/administracion/facturas/eliminar/${id}`, { method: 'POST' });
-    if (res.ok) {
-      Swal.fire('Eliminada', 'La factura fue eliminada correctamente.', 'success');
-    } else {
-      throw new Error('Error en la respuesta del servidor');
-    }
-  } catch (err) {
-    console.error('❌ Error al eliminar factura:', err);
-    Swal.fire('Error', 'No se pudo eliminar la factura.', 'error');
-  }
-}
-})
+});
+  
