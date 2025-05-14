@@ -1479,9 +1479,21 @@ actualizarPreciosExcel: async (req, res) => {
   function normalizarClave(texto) {
     return texto
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, '')
-      .toLowerCase();
+      .replace(/[\u0300-\u036f]/g, "") // eliminar tildes
+      .replace(/\s+/g, '')             // eliminar espacios
+      .toLowerCase();                  // minúsculas
+  }
+
+  function limpiarPrecio(valor) {
+    if (!valor) return 0;
+    return parseFloat(
+      valor
+        .toString()
+        .replace(/\./g, '')  // elimina puntos (miles)
+        .replace(',', '.')   // reemplaza coma decimal por punto
+        .replace('$', '')
+        .trim()
+    );
   }
 
   try {
@@ -1497,17 +1509,32 @@ actualizarPreciosExcel: async (req, res) => {
     for (const sheet_name of sheet_name_list) {
       const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
 
+      console.log(`📄 Hoja detectada: "${sheet_name}" con ${data.length} filas`);
+
       for (const row of data) {
         const claves = Object.keys(row);
         const codigoColumn = claves.find(key => normalizarClave(key).includes('codigo'));
         const precioColumn = claves.find(key => normalizarClave(key).includes('precio'));
 
-        if (!codigoColumn || !precioColumn) continue;
+        if (!codigoColumn || !precioColumn) {
+          console.warn(`⚠️ No se detectó columna válida de código o precio en hoja "${sheet_name}"`);
+          continue;
+        }
 
-        const codigo = row[codigoColumn].toString().trim();
-        const precio = parseFloat(row[precioColumn].toString().replace(',', '.'));
-        if (!codigo || isNaN(precio) || precio <= 0) continue;
+        const codigoRaw = row[codigoColumn];
+        const precioRaw = row[precioColumn];
 
+        if (!codigoRaw || !precioRaw) continue;
+
+        const codigo = codigoRaw.toString().trim();
+        const precio = limpiarPrecio(precioRaw);
+
+        if (!codigo || isNaN(precio) || precio <= 0) {
+          console.warn(`⚠️ Código o precio inválido: código="${codigo}", precio="${precio}"`);
+          continue;
+        }
+
+        // Buscar precio anterior para comparación
         const precioAnterior = await new Promise(resolve => {
           const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
           conexion.query(sql, [proveedor_id, codigo], (err, resQuery) => {
@@ -1516,8 +1543,12 @@ actualizarPreciosExcel: async (req, res) => {
           });
         });
 
+        // Actualizar el producto en DB
         const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
-        if (!Array.isArray(resultado)) continue;
+        if (!Array.isArray(resultado)) {
+          console.warn(`❌ No se pudo actualizar el producto con código ${codigo}`);
+          continue;
+        }
 
         resultado.forEach(p => {
           productosActualizados.push({
@@ -1540,7 +1571,6 @@ actualizarPreciosExcel: async (req, res) => {
     res.status(500).send(error.message);
   }
 },
-
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
