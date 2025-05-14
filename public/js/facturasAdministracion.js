@@ -194,13 +194,44 @@ if (!productosSeleccionados.length) {
     formData.append('fecha_pago', fecha_pago);
     formData.append('condicion', condicion);
     formData.append('administrador', administrador);
+    const verificar = await fetch('/administracion/api/documentos');
+  const documentos = await verificar.json();
 
+  const proveedorNombre = document.getElementById('facturaProveedor').selectedOptions[0].textContent.trim();
+
+  const yaExiste = documentos.find(d =>
+    d.tipo === 'factura' &&
+    d.numero == numero &&
+    d.fecha === fecha &&
+    d.nombre_proveedor === proveedorNombre
+  );
+
+  if (yaExiste) {
+    const confirmacion = await Swal.fire({
+      title: 'Factura existente',
+      text: 'Ya existe una factura con ese número, fecha y proveedor. ¿Deseás editarla o eliminarla?',
+      icon: 'warning',
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: 'Editar',
+      denyButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (confirmacion.isConfirmed) {
+      return abrirModalEdicion(yaExiste.id);
+    } else if (confirmacion.isDenied) {
+      return confirmarEliminacionFactura(yaExiste.id);
+    } else {
+      return;
+    } 
+  }
     if (comprobante) {
       formData.append('comprobante_pago', comprobante);
     }
 
     console.log('📤 Enviando datos de factura con archivo:', Object.fromEntries(formData.entries()));
-
+    
     const res = await fetch('/administracion/api/facturas', {
       method: 'POST',
       body: formData
@@ -273,4 +304,52 @@ inputFechaFactura.addEventListener('change', () => {
   inputFechaPago.value = fecha30dias;
   });
 });
-  
+async function abrirModalEdicion(id) {
+  try {
+    const res = await fetch(`/administracion/api/factura/${id}`);
+    const factura = await res.json();
+
+    // Aquí podés abrir un modal y precargar los valores.
+    // Por ahora, solo mostramos los datos como prueba:
+    Swal.fire({
+      title: 'Editar factura',
+      html: `
+        <strong>Proveedor:</strong> ${factura.nombre_proveedor}<br>
+        <strong>Fecha:</strong> ${factura.fecha}<br>
+        <strong>Número:</strong> ${factura.numero_factura}<br>
+        <strong>Condición:</strong> ${factura.condicion}
+      `,
+      confirmButtonText: 'Cerrar'
+    });
+
+    // Luego implementaremos el modal editable
+  } catch (err) {
+    console.error('❌ Error al obtener factura:', err);
+    Swal.fire('Error', 'No se pudo cargar la factura para editar.', 'error');
+  }
+}
+
+async function confirmarEliminacionFactura(id) {
+  const confirmacion = await Swal.fire({
+    title: '¿Eliminar factura?',
+    text: 'Esta acción eliminará definitivamente la factura seleccionada.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!confirmacion.isConfirmed) return;
+
+  try {
+    const res = await fetch(`/administracion/facturas/eliminar/${id}`, { method: 'POST' });
+    if (res.ok) {
+      Swal.fire('Eliminada', 'La factura fue eliminada correctamente.', 'success');
+    } else {
+      throw new Error('Error en la respuesta del servidor');
+    }
+  } catch (err) {
+    console.error('❌ Error al eliminar factura:', err);
+    Swal.fire('Error', 'No se pudo eliminar la factura.', 'error');
+  }
+}
