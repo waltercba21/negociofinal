@@ -416,7 +416,6 @@ generarPDFIndividual: async (req, res) => {
 },
 generarResumenFacturasPDF: (req, res) => {
   const { desde, hasta } = req.query;
-
   const printer = new pdfmake({ Roboto: fonts.Roboto });
 
   const sql = `
@@ -434,6 +433,7 @@ generarResumenFacturasPDF: (req, res) => {
       return res.status(500).send('Error al generar el resumen');
     }
 
+    let total = 0;
     const body = [
       ['Fecha', 'Número', 'Proveedor', 'Condición', 'Importe']
     ];
@@ -446,7 +446,14 @@ generarResumenFacturasPDF: (req, res) => {
         row.condicion,
         `$${row.importe_factura}`
       ]);
+      total += parseFloat(row.importe_factura);
     });
+
+    // Pie de tabla con total
+    body.push([
+      { text: 'Total Compras:', colSpan: 4, alignment: 'right', bold: true }, {}, {}, {},
+      { text: `$${total.toFixed(2)}`, bold: true }
+    ]);
 
     const docDefinition = {
       content: [
@@ -456,7 +463,8 @@ generarResumenFacturasPDF: (req, res) => {
           table: {
             widths: ['auto', 'auto', '*', 'auto', 'auto'],
             body
-          }
+          },
+          layout: 'lightHorizontalLines'
         }
       ],
       styles: {

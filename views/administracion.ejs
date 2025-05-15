@@ -377,7 +377,6 @@
 <section class="panel-listados">
   <div class="card-proveedor contenedor-factura">
     <h5 class="titulo-proveedor">Listado de Facturas y Presupuestos</h5>
-
     <div class="mb-3">
       <label for="filtroProveedor" class="form-label">Proveedor</label>
       <select id="filtroProveedor" class="form-select">
@@ -414,6 +413,11 @@
         <option value="pagado">Pagado</option>
       </select>
     </div>
+    <div class="d-flex gap-2 mt-2">
+  <button class="btn btn-outline-primary" id="btnGenerarPDFResumen">
+    <i class="bi bi-file-earmark-pdf me-1"></i> Descargar PDF Resumen
+  </button>
+</div>
 
     <div class="d-grid">
       <button class="btn btn-primary" id="btnBuscarListados">Buscar</button>
@@ -466,6 +470,10 @@
         <!-- Se carga con JS -->
       </div>
       <div class="modal-footer">
+        <a id="btnImprimirDetallePDF" href="#" target="_blank" class="btn btn-outline-secondary mt-3">
+  <i class="bi bi-printer me-1"></i> Imprimir Comprobante
+</a>
+
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         <button type="button" id="btnHabilitarEdicion" class="btn btn-warning">Editar</button>
         <button type="button" id="btnGuardarCambiosDocumento" class="btn btn-success d-none">Guardar Cambios</button>

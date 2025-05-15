@@ -255,4 +255,17 @@ document.getElementById('btnGuardarCambiosDocumento').addEventListener('click', 
     Swal.fire('Error', 'No se pudo guardar los cambios', 'error');
   }
 });
+document.getElementById('btnGenerarPDFResumen').addEventListener('click', () => {
+  const desde = document.getElementById('filtroFechaDesde').value;
+  const hasta = document.getElementById('filtroFechaHasta').value;
+
+  if (!desde || !hasta) {
+    Swal.fire('Falta información', 'Debés seleccionar un rango de fechas para generar el PDF.', 'warning');
+    return;
+  }
+
+  const url = `/administracion/pdf/resumen/facturas?desde=${desde}&hasta=${hasta}`;
+  window.open(url, '_blank');
+});
+document.getElementById('btnImprimirDetallePDF').href = `/administracion/pdf/${tipo}/${id}`;
 
