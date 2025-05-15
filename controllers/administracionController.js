@@ -450,7 +450,8 @@ generarResumenPresupuestosPDF : (req, res) => {
 
     doc.fontSize(16).text('Resumen de Presupuestos', { align: 'center' });
     doc.moveDown();
-    doc.fontSize(10).text(`Período: ${desde} al ${hasta}`);
+    doc.fontSize(10).text(`Período: ${formatFechaDMY(desde)} al ${formatFechaDMY(hasta)}`);
+
     if (proveedor) doc.text(`Proveedor filtrado: ${proveedor}`);
     doc.moveDown();
 
@@ -512,7 +513,8 @@ generarResumenFacturasPDF : (req, res) => {
 
     doc.fontSize(16).text('Resumen de Facturas', { align: 'center' });
     doc.moveDown();
-    doc.fontSize(10).text(`Período: ${desde} al ${hasta}`);
+    doc.fontSize(10).text(`Período: ${formatFechaDMY(desde)} al ${formatFechaDMY(hasta)}`);
+
     doc.moveDown();
 
     const startY = doc.y;
