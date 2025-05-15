@@ -260,6 +260,8 @@ document.getElementById('btnGenerarPDFResumenFacturas').addEventListener('click'
   const desde = document.getElementById('filtroFechaDesde').value;
   const hasta = document.getElementById('filtroFechaHasta').value;
   const proveedor = document.getElementById('filtroProveedor').value;
+  const condicion = document.getElementById('filtroCondicion').value;
+
 
   if (!desde || !hasta) {
     Swal.fire('Faltan fechas', 'Debés seleccionar un rango de fechas.', 'warning');
@@ -274,6 +276,7 @@ document.getElementById('btnGenerarPDFResumenPresupuestos').addEventListener('cl
   const desde = document.getElementById('filtroFechaDesde').value;
   const hasta = document.getElementById('filtroFechaHasta').value;
   const proveedor = document.getElementById('filtroProveedor').value;
+  const condicion = document.getElementById('filtroCondicion').value;
 
   if (!desde || !hasta) {
     Swal.fire('Faltan fechas', 'Debés seleccionar un rango de fechas.', 'warning');
