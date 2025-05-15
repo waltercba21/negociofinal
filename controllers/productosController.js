@@ -1484,31 +1484,47 @@ actualizarPreciosExcel: async (req, res) => {
       .toLowerCase();                  // minúsculas
   }
 
-  function limpiarPrecio(valor) {
-    if (!valor) return 0;
+function limpiarPrecio(valor) {
+  if (!valor) return 0;
 
-    let limpio = valor.toString()
-      .replace(/\$/g, '')
-      .replace(/\s+/g, '')
-      .replace(/\./g, '')
-      .replace(',', '.')
-      .trim();
+  let original = valor.toString().trim();
 
-    // Si tiene más de 2 decimales, truncar
-    if (limpio.includes('.')) {
-      const [entero, decimal] = limpio.split('.');
-      if (decimal.length > 2) {
-        limpio = `${entero}.${decimal.slice(0, 2)}`;
-      }
-    }
-
-    const numero = parseFloat(limpio);
-    if (numero > 999999) {
-      console.warn(`⚠️ Posible error de miles/decimales: "${valor}" interpretado como ${numero}`);
-    }
-
-    return numero;
+  // Si es un número real (viene como número desde Excel), lo devolvemos directo
+  if (typeof valor === 'number') {
+    return Math.round(valor * 100) / 100;
   }
+
+  // Elimina $ y espacios
+  original = original.replace(/\$/g, '').replace(/\s+/g, '');
+
+  // Si tiene tanto punto como coma (ej. 1.234,56), asumimos formato latino
+  if (original.includes('.') && original.includes(',')) {
+    original = original.replace(/\./g, '').replace(',', '.');
+  }
+  // Si tiene solo coma (ej. 7261,25), cambiamos a punto
+  else if (original.includes(',') && !original.includes('.')) {
+    original = original.replace(',', '.');
+  }
+  // Si tiene solo punto, lo dejamos (asumimos que es decimal correctamente formateado)
+
+  // Truncar si tiene más de 2 decimales
+  if (original.includes('.')) {
+    const [entero, decimal] = original.split('.');
+    if (decimal.length > 2) {
+      original = `${entero}.${decimal.substring(0, 2)}`;
+    }
+  }
+
+  const numero = parseFloat(original);
+
+  // Si el número es anormalmente grande, alertar
+  if (numero > 100000) {
+    console.warn(`⚠️ Valor posiblemente mal interpretado: ${valor} → ${numero}`);
+  }
+
+  return numero;
+}
+
 
   try {
     const proveedor_id = req.body.proveedor;
