@@ -127,7 +127,7 @@ function renderDetalleDocumento(data, tipo) {
   const d = new Date(fecha);
   return d.toISOString().split('T')[0];
 };
-
+  document.getElementById('btnImprimirDetallePDF').href = `/administracion/pdf/${tipo}/${data.id}`;
   const isFactura = tipo === 'factura';
 
   contenedor.innerHTML = `
@@ -255,17 +255,26 @@ document.getElementById('btnGuardarCambiosDocumento').addEventListener('click', 
     Swal.fire('Error', 'No se pudo guardar los cambios', 'error');
   }
 });
-document.getElementById('btnGenerarPDFResumen').addEventListener('click', () => {
+document.getElementById('btnGenerarPDFResumenFacturas').addEventListener('click', () => {
   const desde = document.getElementById('filtroFechaDesde').value;
   const hasta = document.getElementById('filtroFechaHasta').value;
 
   if (!desde || !hasta) {
-    Swal.fire('Falta información', 'Debés seleccionar un rango de fechas para generar el PDF.', 'warning');
+    Swal.fire('Faltan fechas', 'Debés seleccionar un rango de fechas.', 'warning');
     return;
   }
 
-  const url = `/administracion/pdf/resumen/facturas?desde=${desde}&hasta=${hasta}`;
-  window.open(url, '_blank');
+  window.open(`/administracion/pdf/resumen/facturas?desde=${desde}&hasta=${hasta}`, '_blank');
 });
-document.getElementById('btnImprimirDetallePDF').href = `/administracion/pdf/${tipo}/${id}`;
 
+document.getElementById('btnGenerarPDFResumenPresupuestos').addEventListener('click', () => {
+  const desde = document.getElementById('filtroFechaDesde').value;
+  const hasta = document.getElementById('filtroFechaHasta').value;
+
+  if (!desde || !hasta) {
+    Swal.fire('Faltan fechas', 'Debés seleccionar un rango de fechas.', 'warning');
+    return;
+  }
+
+  window.open(`/administracion/pdf/resumen/presupuestos?desde=${desde}&hasta=${hasta}`, '_blank');
+});

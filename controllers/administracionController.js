@@ -414,20 +414,65 @@ generarPDFIndividual: async (req, res) => {
     res.status(500).send('Error al generar el PDF');
   }
 },
+generarResumenPresupuestosPDF: (req, res) => {
+  const { desde, hasta } = req.query;
+  const printer = new pdfmake({ Roboto: fonts.Roboto });
+
+  administracion.getPresupuestosEntreFechas(desde, hasta, (err, rows) => {
+    if (err) {
+      console.error('❌ Error al obtener presupuestos:', err);
+      return res.status(500).send('Error al generar el resumen de presupuestos');
+    }
+
+    let total = 0;
+    const body = [
+      ['Fecha', 'Número', 'Proveedor', 'Condición', 'Importe']
+    ];
+
+    rows.forEach(row => {
+      body.push([
+        new Date(row.fecha).toLocaleDateString(),
+        row.numero_presupuesto,
+        row.proveedor,
+        row.condicion,
+        `$${row.importe}`
+      ]);
+      total += parseFloat(row.importe);
+    });
+
+    body.push([
+      { text: 'Total Presupuestado:', colSpan: 4, alignment: 'right', bold: true }, {}, {}, {},
+      { text: `$${total.toFixed(2)}`, bold: true }
+    ]);
+
+    const docDefinition = {
+      content: [
+        { text: 'Resumen de Presupuestos', style: 'header' },
+        { text: `Desde: ${desde} - Hasta: ${hasta}`, margin: [0, 5, 0, 10] },
+        {
+          table: {
+            widths: ['auto', 'auto', '*', 'auto', 'auto'],
+            body
+          },
+          layout: 'lightHorizontalLines'
+        }
+      ],
+      styles: {
+        header: { fontSize: 16, bold: true }
+      }
+    };
+
+    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    res.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.pipe(res);
+    pdfDoc.end();
+  });
+},
 generarResumenFacturasPDF: (req, res) => {
   const { desde, hasta } = req.query;
   const printer = new pdfmake({ Roboto: fonts.Roboto });
 
-  const sql = `
-    SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor
-    FROM facturas f
-    JOIN proveedores p ON f.id_proveedor = p.id
-    WHERE f.fecha BETWEEN ? AND ?
-    ORDER BY f.fecha ASC
-  `;
-
-  const conexion = require('../config/conexion');
-  conexion.query(sql, [desde, hasta], (err, rows) => {
+  administracion.getFacturasEntreFechas(desde, hasta, (err, rows) => {
     if (err) {
       console.error('❌ Error al obtener facturas:', err);
       return res.status(500).send('Error al generar el resumen');
@@ -449,7 +494,6 @@ generarResumenFacturasPDF: (req, res) => {
       total += parseFloat(row.importe_factura);
     });
 
-    // Pie de tabla con total
     body.push([
       { text: 'Total Compras:', colSpan: 4, alignment: 'right', bold: true }, {}, {}, {},
       { text: `$${total.toFixed(2)}`, bold: true }

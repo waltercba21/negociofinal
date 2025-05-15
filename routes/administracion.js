@@ -52,5 +52,6 @@ router.put('/api/presupuesto/:id', administracionController.actualizarPresupuest
 
 router.get('/pdf/:tipo/:id', administracionController.generarPDFIndividual);
 router.get('/pdf/resumen/facturas', administracionController.generarResumenFacturasPDF);
+router.get('/pdf/resumen/presupuestos', administracionController.generarResumenPresupuestosPDF);
 
 module.exports = router;

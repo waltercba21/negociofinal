@@ -465,7 +465,29 @@ if (fechaHasta) {
   const sqlFinal = consultas.join(' UNION ALL ') + ' ORDER BY fecha DESC';
 
   pool.query(sqlFinal, callback);
+},
+getFacturasEntreFechas: function(desde, hasta, callback) {
+  const sql = `
+    SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor
+    FROM facturas f
+    JOIN proveedores p ON f.id_proveedor = p.id
+    WHERE f.fecha BETWEEN ? AND ?
+    ORDER BY f.fecha ASC
+  `;
+  pool.query(sql, [desde, hasta], callback);
+},
+getPresupuestosEntreFechas: function(desde, hasta, callback) {
+  const sql = `
+    SELECT pr.numero_presupuesto, pr.fecha, pr.importe, pr.condicion, p.nombre AS proveedor
+    FROM presupuestos pr
+    JOIN proveedores p ON pr.id_proveedor = p.id
+    WHERE pr.fecha BETWEEN ? AND ?
+    ORDER BY pr.fecha ASC
+  `;
+  pool.query(sql, [desde, hasta], callback);
 }
+
+
 
       
 }
