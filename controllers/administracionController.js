@@ -1,13 +1,17 @@
 const administracion = require('../models/administracion')
-var pdfmake = require('pdfmake');
-var fonts = {
-    Roboto: {
-        normal: 'node_modules/roboto-font/fonts/Roboto/roboto-regular-webfont.ttf',
-        bold: 'node_modules/roboto-font/fonts/Roboto/roboto-bold-webfont.ttf',
-        italics: 'node_modules/roboto-font/fonts/Roboto/roboto-italic-webfont.ttf',
-        bolditalics: 'node_modules/roboto-font/fonts/Roboto/roboto-bolditalic-webfont.ttf'
-    }
+const path = require('path');
+const PdfPrinter = require('pdfmake');
+
+const fonts = {
+  Roboto: {
+    normal: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto-Regular.ttf'),
+    bold: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto-Medium.ttf'),
+    italics: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto-Italic.ttf'),
+    bolditalics: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto-MediumItalic.ttf')
+  }
 };
+
+const printer = new PdfPrinter(fonts);
 function formatDate(date) {
     var d = new Date(date),
         month = '' + (d.getMonth() + 1),
@@ -350,12 +354,14 @@ postFactura: function (req, res) {
     res.json({ message: 'Presupuesto creado exitosamente', insertId });
   });
 },
-generarPDFIndividual: async (req, res) => {
-  const tipo = req.params.tipo; // 'factura' o 'presupuesto'
+generarPDFIndividual : async (req, res) => {
+  const tipo = req.params.tipo;
   const id = req.params.id;
+  console.log(`🧾 Generar PDF individual: tipo=${tipo}, id=${id}`);
 
   try {
     let data;
+
     if (tipo === 'factura') {
       data = await new Promise((resolve, reject) => {
         administracion.obtenerFacturaPorId(id, (err, datos) => err ? reject(err) : resolve(datos));
@@ -365,11 +371,11 @@ generarPDFIndividual: async (req, res) => {
         administracion.obtenerPresupuestoPorId(id, (err, datos) => err ? reject(err) : resolve(datos));
       });
     } else {
+      console.warn('❌ Tipo inválido en generarPDFIndividual');
       return res.status(400).send('Tipo inválido');
     }
 
-    const PdfPrinter = require('pdfmake');
-const printer = new PdfPrinter(fonts);
+    console.log('✅ Datos obtenidos:', data);
 
     const productos = data.productos || [];
 
@@ -412,15 +418,20 @@ const printer = new PdfPrinter(fonts);
     pdfDoc.pipe(res);
     pdfDoc.end();
   } catch (error) {
-    console.error('❌ Error al generar PDF:', error);
+    console.error('❌ Error al generar PDF individual:', error);
     res.status(500).send('Error al generar el PDF');
   }
 },
-generarResumenPresupuestosPDF: (req, res) => {
+generarResumenPresupuestosPDF : (req, res) => {
   const { desde, hasta } = req.query;
-  const PdfPrinter = require('pdfmake');
-const printer = new PdfPrinter(fonts);
+  console.log(`📊 Generar resumen presupuestos: desde=${desde}, hasta=${hasta}`);
 
+  if (!desde || !hasta) {
+    console.warn('❗ Rango de fechas incompleto en resumen presupuestos');
+    return res.status(400).send('Debe especificar fecha desde y hasta');
+  }
+
+  const printer = new PdfPrinter(fonts);
 
   administracion.getPresupuestosEntreFechas(desde, hasta, (err, rows) => {
     if (err) {
@@ -428,10 +439,10 @@ const printer = new PdfPrinter(fonts);
       return res.status(500).send('Error al generar el resumen de presupuestos');
     }
 
+    console.log(`✅ ${rows.length} presupuestos encontrados`);
+
     let total = 0;
-    const body = [
-      ['Fecha', 'Número', 'Proveedor', 'Condición', 'Importe']
-    ];
+    const body = [['Fecha', 'Número', 'Proveedor', 'Condición', 'Importe']];
 
     rows.forEach(row => {
       body.push([
@@ -454,10 +465,7 @@ const printer = new PdfPrinter(fonts);
         { text: 'Resumen de Presupuestos', style: 'header' },
         { text: `Desde: ${desde} - Hasta: ${hasta}`, margin: [0, 5, 0, 10] },
         {
-          table: {
-            widths: ['auto', 'auto', '*', 'auto', 'auto'],
-            body
-          },
+          table: { widths: ['auto', 'auto', '*', 'auto', 'auto'], body },
           layout: 'lightHorizontalLines'
         }
       ],
@@ -472,11 +480,16 @@ const printer = new PdfPrinter(fonts);
     pdfDoc.end();
   });
 },
-generarResumenFacturasPDF: (req, res) => {
+generarResumenFacturasPDF : (req, res) => {
   const { desde, hasta } = req.query;
-  const PdfPrinter = require('pdfmake');
-const printer = new PdfPrinter(fonts);
+  console.log(`📊 Generar resumen facturas: desde=${desde}, hasta=${hasta}`);
 
+  if (!desde || !hasta) {
+    console.warn('❗ Rango de fechas incompleto en resumen facturas');
+    return res.status(400).send('Debe especificar fecha desde y hasta');
+  }
+
+  const printer = new PdfPrinter(fonts);
 
   administracion.getFacturasEntreFechas(desde, hasta, (err, rows) => {
     if (err) {
@@ -484,10 +497,10 @@ const printer = new PdfPrinter(fonts);
       return res.status(500).send('Error al generar el resumen');
     }
 
+    console.log(`✅ ${rows.length} facturas encontradas`);
+
     let total = 0;
-    const body = [
-      ['Fecha', 'Número', 'Proveedor', 'Condición', 'Importe']
-    ];
+    const body = [['Fecha', 'Número', 'Proveedor', 'Condición', 'Importe']];
 
     rows.forEach(row => {
       body.push([
@@ -510,10 +523,7 @@ const printer = new PdfPrinter(fonts);
         { text: 'Resumen de Facturas', style: 'header' },
         { text: `Desde: ${desde} - Hasta: ${hasta}`, margin: [0, 5, 0, 10] },
         {
-          table: {
-            widths: ['auto', 'auto', '*', 'auto', 'auto'],
-            body
-          },
+          table: { widths: ['auto', 'auto', '*', 'auto', 'auto'], body },
           layout: 'lightHorizontalLines'
         }
       ],
