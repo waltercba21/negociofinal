@@ -454,6 +454,7 @@ generarResumenPresupuestosPDF : (req, res) => {
     doc.fontSize(10).text(`Período: ${formatFechaDMY(desde)} al ${formatFechaDMY(hasta)}`);
 
     if (proveedor) doc.text(`Proveedor filtrado: ${proveedor}`);
+    if (condicion) doc.text(`Condición filtrada: ${condicion.toUpperCase()}`);
     doc.moveDown();
 
     // Posiciones fijas para columnas
@@ -461,11 +462,12 @@ generarResumenPresupuestosPDF : (req, res) => {
     let y = doc.y;
 
     doc.font('Helvetica-Bold');
-    doc.text('Fecha', colX[0], y);
-    doc.text('N° Presupuesto', colX[1], y);
-    doc.text('Proveedor', colX[2], y);
-    doc.text(`Condición: ${condicion.toUpperCase()}`)
-    doc.text('Importe', colX[4], y);
+doc.text('Fecha', colX[0], y);
+doc.text('N° Presupuesto', colX[1], y);
+doc.text('Proveedor', colX[2], y);
+doc.text('Condición', colX[3], y);
+doc.text('Importe', colX[4], y);
+
     y += 20;
 
     doc.font('Helvetica');
@@ -515,7 +517,7 @@ generarResumenFacturasPDF : (req, res) => {
     doc.fontSize(16).text('Resumen de Facturas', { align: 'center' });
     doc.moveDown();
     doc.fontSize(10).text(`Período: ${formatFechaDMY(desde)} al ${formatFechaDMY(hasta)}`);
-
+    if (condicion) doc.text(`Condición filtrada: ${condicion.toUpperCase()}`);
     doc.moveDown();
 
     const startY = doc.y;
@@ -543,7 +545,7 @@ generarResumenFacturasPDF : (req, res) => {
       doc.text(formatFechaDMY(f.fecha), colX[0], y);
       doc.text(f.numero_factura, colX[1], y);
       doc.text(f.proveedor, colX[2], y, { width: 130 });
-      doc.text(`Condición: ${condicion.toUpperCase()}`);
+      doc.text(f.condicion, colX[3], y);
       doc.text(`$${f.importe_factura}`, colX[4], y);
       y += 18;
 
