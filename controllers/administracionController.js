@@ -1,17 +1,8 @@
 const administracion = require('../models/administracion')
 const path = require('path');
-const PdfPrinter = require('pdfmake');
+const PDFDocument = require('pdfkit');
 
-const fonts = {
-  Roboto: {
-    normal: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto-Regular.ttf'),
-    bold: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto-Medium.ttf'),
-    italics: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto-Italic.ttf'),
-    bolditalics: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto-MediumItalic.ttf')
-  }
-};
 
-const printer = new PdfPrinter(fonts);
 function formatDate(date) {
     var d = new Date(date),
         month = '' + (d.getMonth() + 1),
@@ -376,47 +367,53 @@ generarPDFIndividual : async (req, res) => {
     }
 
     console.log('✅ Datos obtenidos:', data);
-
     const productos = data.productos || [];
 
-    const docDefinition = {
-      content: [
-        { text: tipo.toUpperCase(), style: 'header' },
-        { text: `Proveedor: ${data.nombre_proveedor}` },
-        { text: `Número: ${tipo === 'factura' ? data.numero_factura : data.numero_presupuesto}` },
-        { text: `Fecha: ${new Date(data.fecha).toLocaleDateString()}` },
-        { text: `Vencimiento: ${new Date(data.fecha_pago).toLocaleDateString()}` },
-        { text: `Administrador: ${data.administrador}` },
-        { text: `Condición: ${data.condicion}` },
-        tipo === 'factura' ? [
-          { text: `Importe Bruto: $${data.importe_bruto}` },
-          { text: `IVA: ${data.iva}%` },
-          { text: `Total: $${data.importe_factura}` }
-        ] : [
-          { text: `Importe Total: $${data.importe}` }
-        ],
-        { text: ' ' },
-        { text: 'Productos Asociados', style: 'subheader' },
-        productos.length > 0 ? {
-          table: {
-            widths: ['*', 'auto'],
-            body: [
-              ['Producto', 'Cantidad'],
-              ...productos.map(p => [p.nombre, p.cantidad])
-            ]
-          }
-        } : { text: 'Comprobante sin productos.' }
-      ],
-      styles: {
-        header: { fontSize: 16, bold: true },
-        subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] }
-      }
-    };
-
-    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
     res.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.pipe(res);
-    pdfDoc.end();
+    doc.pipe(res);
+
+    doc.fontSize(16).text(tipo === 'factura' ? 'FACTURA' : 'PRESUPUESTO', { align: 'center' });
+    doc.moveDown();
+
+    // Datos principales
+    doc.fontSize(11);
+    doc.text(`Proveedor: ${data.nombre_proveedor}`);
+    doc.text(`Número: ${tipo === 'factura' ? data.numero_factura : data.numero_presupuesto}`);
+    doc.text(`Fecha: ${new Date(data.fecha).toLocaleDateString()}`);
+    doc.text(`Vencimiento: ${new Date(data.fecha_pago).toLocaleDateString()}`);
+    doc.text(`Administrador: ${data.administrador}`);
+    doc.text(`Condición: ${data.condicion}`);
+    doc.moveDown();
+
+    if (tipo === 'factura') {
+      doc.text(`Importe Bruto: $${data.importe_bruto}`);
+      doc.text(`IVA: ${data.iva}%`);
+      doc.text(`Importe Total: $${data.importe_factura}`);
+    } else {
+      doc.text(`Importe Total: $${data.importe}`);
+    }
+
+    doc.moveDown().fontSize(13).text('Productos Asociados', { underline: true });
+    doc.moveDown();
+
+    if (productos.length > 0) {
+      doc.fontSize(11).font('Helvetica-Bold');
+      doc.text('Producto', 50, doc.y);
+      doc.text('Cantidad', 300, doc.y);
+      doc.moveDown();
+
+      doc.font('Helvetica');
+      productos.forEach(p => {
+        doc.text(p.nombre, 50, doc.y);
+        doc.text(p.cantidad.toString(), 300, doc.y);
+        doc.moveDown();
+      });
+    } else {
+      doc.fontSize(11).text('Comprobante sin productos asociados.');
+    }
+
+    doc.end();
   } catch (error) {
     console.error('❌ Error al generar PDF individual:', error);
     res.status(500).send('Error al generar el PDF');
@@ -424,118 +421,104 @@ generarPDFIndividual : async (req, res) => {
 },
 generarResumenPresupuestosPDF : (req, res) => {
   const { desde, hasta } = req.query;
-  console.log(`📊 Generar resumen presupuestos: desde=${desde}, hasta=${hasta}`);
+  console.log(`📄 Generar PDF resumen presupuestos: desde=${desde}, hasta=${hasta}`);
 
   if (!desde || !hasta) {
-    console.warn('❗ Rango de fechas incompleto en resumen presupuestos');
-    return res.status(400).send('Debe especificar fecha desde y hasta');
+    return res.status(400).send('Debés especificar fecha desde y hasta');
   }
 
-  const printer = new PdfPrinter(fonts);
-
-  administracion.getPresupuestosEntreFechas(desde, hasta, (err, rows) => {
+  administracion.getPresupuestosEntreFechas(desde, hasta, (err, presupuestos) => {
     if (err) {
-      console.error('❌ Error al obtener presupuestos:', err);
-      return res.status(500).send('Error al generar el resumen de presupuestos');
-    }
-
-    console.log(`✅ ${rows.length} presupuestos encontrados`);
-
-    let total = 0;
-    const body = [['Fecha', 'Número', 'Proveedor', 'Condición', 'Importe']];
-
-    rows.forEach(row => {
-      body.push([
-        new Date(row.fecha).toLocaleDateString(),
-        row.numero_presupuesto,
-        row.proveedor,
-        row.condicion,
-        `$${row.importe}`
-      ]);
-      total += parseFloat(row.importe);
-    });
-
-    body.push([
-      { text: 'Total Presupuestado:', colSpan: 4, alignment: 'right', bold: true }, {}, {}, {},
-      { text: `$${total.toFixed(2)}`, bold: true }
-    ]);
-
-    const docDefinition = {
-      content: [
-        { text: 'Resumen de Presupuestos', style: 'header' },
-        { text: `Desde: ${desde} - Hasta: ${hasta}`, margin: [0, 5, 0, 10] },
-        {
-          table: { widths: ['auto', 'auto', '*', 'auto', 'auto'], body },
-          layout: 'lightHorizontalLines'
-        }
-      ],
-      styles: {
-        header: { fontSize: 16, bold: true }
-      }
-    };
-
-    const pdfDoc = printer.createPdfKitDocument(docDefinition);
-    res.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.pipe(res);
-    pdfDoc.end();
-  });
-},
-generarResumenFacturasPDF : (req, res) => {
-  const { desde, hasta } = req.query;
-  console.log(`📊 Generar resumen facturas: desde=${desde}, hasta=${hasta}`);
-
-  if (!desde || !hasta) {
-    console.warn('❗ Rango de fechas incompleto en resumen facturas');
-    return res.status(400).send('Debe especificar fecha desde y hasta');
-  }
-
-  const printer = new PdfPrinter(fonts);
-
-  administracion.getFacturasEntreFechas(desde, hasta, (err, rows) => {
-    if (err) {
-      console.error('❌ Error al obtener facturas:', err);
+      console.error("❌ Error al obtener presupuestos:", err);
       return res.status(500).send('Error al generar el resumen');
     }
 
-    console.log(`✅ ${rows.length} facturas encontradas`);
+    console.log(`✅ ${presupuestos.length} presupuestos encontrados`);
 
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    res.setHeader('Content-Type', 'application/pdf');
+    doc.pipe(res);
+
+    doc.fontSize(16).text('Resumen de Presupuestos', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(10).text(`Período: ${desde} al ${hasta}`);
+    doc.moveDown();
+
+    // Encabezado tabla
+    doc.font('Helvetica-Bold').text('Fecha', 50, doc.y);
+    doc.text('N° Presupuesto', 120, doc.y);
+    doc.text('Proveedor', 200, doc.y);
+    doc.text('Condición', 350, doc.y);
+    doc.text('Importe', 440, doc.y);
+    doc.moveDown();
+
+    doc.font('Helvetica');
     let total = 0;
-    const body = [['Fecha', 'Número', 'Proveedor', 'Condición', 'Importe']];
 
-    rows.forEach(row => {
-      body.push([
-        new Date(row.fecha).toLocaleDateString(),
-        row.numero_factura,
-        row.proveedor,
-        row.condicion,
-        `$${row.importe_factura}`
-      ]);
-      total += parseFloat(row.importe_factura);
+    presupuestos.forEach(p => {
+      doc.text(new Date(p.fecha).toLocaleDateString(), 50, doc.y);
+      doc.text(p.numero_presupuesto, 120, doc.y);
+      doc.text(p.proveedor, 200, doc.y, { width: 140 });
+      doc.text(p.condicion, 350, doc.y);
+      doc.text(`$${p.importe}`, 440, doc.y);
+      total += parseFloat(p.importe);
+      doc.moveDown();
     });
 
-    body.push([
-      { text: 'Total Compras:', colSpan: 4, alignment: 'right', bold: true }, {}, {}, {},
-      { text: `$${total.toFixed(2)}`, bold: true }
-    ]);
+    doc.moveDown().font('Helvetica-Bold').text(`Total presupuestado: $${total.toFixed(2)}`, { align: 'right' });
 
-    const docDefinition = {
-      content: [
-        { text: 'Resumen de Facturas', style: 'header' },
-        { text: `Desde: ${desde} - Hasta: ${hasta}`, margin: [0, 5, 0, 10] },
-        {
-          table: { widths: ['auto', 'auto', '*', 'auto', 'auto'], body },
-          layout: 'lightHorizontalLines'
-        }
-      ],
-      styles: {
-        header: { fontSize: 16, bold: true }
-      }
-    };
+    doc.end();
+  });
+},
+ generarResumenFacturasPDF : (req, res) => {
+  const { desde, hasta } = req.query;
+  console.log(`📄 Generar PDF resumen facturas: desde=${desde}, hasta=${hasta}`);
 
-    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+  if (!desde || !hasta) {
+    return res.status(400).send('Debés especificar fecha desde y hasta');
+  }
+
+  administracion.getFacturasEntreFechas(desde, hasta, (err, facturas) => {
+    if (err) {
+      console.error("❌ Error al obtener facturas:", err);
+      return res.status(500).send('Error al generar el resumen');
+    }
+
+    console.log(`✅ ${facturas.length} facturas encontradas`);
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
     res.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.pipe(res);
-    pdfDoc.end();
+    doc.pipe(res);
+
+    doc.fontSize(16).text('Resumen de Facturas', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(10).text(`Período: ${desde} al ${hasta}`);
+    doc.moveDown();
+
+    // Encabezado tabla
+    doc.font('Helvetica-Bold').text('Fecha', 50, doc.y);
+    doc.text('N° Factura', 120, doc.y);
+    doc.text('Proveedor', 200, doc.y);
+    doc.text('Condición', 350, doc.y);
+    doc.text('Importe', 440, doc.y);
+    doc.moveDown();
+
+    doc.font('Helvetica');
+    let total = 0;
+
+    facturas.forEach(f => {
+      doc.text(new Date(f.fecha).toLocaleDateString(), 50, doc.y);
+      doc.text(f.numero_factura, 120, doc.y);
+      doc.text(f.proveedor, 200, doc.y, { width: 140 });
+      doc.text(f.condicion, 350, doc.y);
+      doc.text(`$${f.importe_factura}`, 440, doc.y);
+      total += parseFloat(f.importe_factura);
+      doc.moveDown();
+    });
+
+    doc.moveDown().font('Helvetica-Bold').text(`Total compras: $${total.toFixed(2)}`, { align: 'right' });
+
+    doc.end();
   });
 },
 guardarItemsPresupuesto: async (req, res) => {
