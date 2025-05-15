@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fechaDesde = document.getElementById('filtroFechaDesde').value;
     const fechaHasta = document.getElementById('filtroFechaHasta').value;
     const condicion = document.getElementById('filtroCondicion').value;
+  
 
     try {
       const query = new URLSearchParams({
@@ -265,7 +266,7 @@ document.getElementById('btnGenerarPDFResumenFacturas').addEventListener('click'
     return;
   }
 
-  const url = `/administracion/pdf/resumen/facturas?desde=${desde}&hasta=${hasta}&proveedor=${proveedor}`;
+  const url = `/administracion/pdf/resumen/facturas?desde=${desde}&hasta=${hasta}&proveedor=${proveedor}&condicion=${condicion}`;
   window.open(url, '_blank');
 });
 
@@ -279,7 +280,7 @@ document.getElementById('btnGenerarPDFResumenPresupuestos').addEventListener('cl
     return;
   }
 
-  const url = `/administracion/pdf/resumen/presupuestos?desde=${desde}&hasta=${hasta}&proveedor=${proveedor}`;
+  const url = `/administracion/pdf/resumen/presupuestos?desde=${desde}&hasta=${hasta}&proveedor=${proveedor}&condicion=${condicion}`;
   window.open(url, '_blank');
 });
 

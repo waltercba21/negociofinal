@@ -466,7 +466,7 @@ if (fechaHasta) {
 
   pool.query(sqlFinal, callback);
 },
-getFacturasEntreFechas: function(desde, hasta, proveedorId, callback) {
+getFacturasEntreFechas: function(desde, hasta, proveedorId, condicion, callback) {
   let sql = `
     SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor
     FROM facturas f
@@ -480,9 +480,15 @@ getFacturasEntreFechas: function(desde, hasta, proveedorId, callback) {
     params.push(proveedorId);
   }
 
+  if (condicion && condicion !== '') {
+    sql += ' AND f.condicion = ?';
+    params.push(condicion);
+  }
+
+  sql += ' ORDER BY f.fecha ASC';
   pool.query(sql, params, callback);
 },
-getPresupuestosEntreFechas: function(desde, hasta, proveedorId, callback) {
+getPresupuestosEntreFechas: function(desde, hasta, proveedorId, condicion, callback) {
   let sql = `
     SELECT pr.numero_presupuesto, pr.fecha, pr.importe, pr.condicion, p.nombre AS proveedor
     FROM presupuestos pr
@@ -494,6 +500,11 @@ getPresupuestosEntreFechas: function(desde, hasta, proveedorId, callback) {
   if (proveedorId && proveedorId !== '') {
     sql += ' AND pr.id_proveedor = ?';
     params.push(proveedorId);
+  }
+
+  if (condicion && condicion !== '') {
+    sql += ' AND pr.condicion = ?';
+    params.push(condicion);
   }
 
   sql += ' ORDER BY pr.fecha ASC';

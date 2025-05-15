@@ -428,7 +428,8 @@ generarPDFIndividual : async (req, res) => {
   }
 },
 generarResumenPresupuestosPDF : (req, res) => {
-  const { desde, hasta, proveedor } = req.query;
+  const { desde, hasta, proveedor, condicion } = req.query;
+
 
   console.log(`📄 Generar PDF resumen presupuestos: desde=${desde}, hasta=${hasta}, proveedor=${proveedor}`);
 
@@ -436,7 +437,7 @@ generarResumenPresupuestosPDF : (req, res) => {
     return res.status(400).send('Debés especificar fecha desde y hasta');
   }
 
-  administracion.getPresupuestosEntreFechas(desde, hasta, proveedor, (err, presupuestos) => {
+  administracion.getPresupuestosEntreFechas(desde, hasta, proveedor, condicion, (err, presupuestos) => {
     if (err) {
       console.error("❌ Error al obtener presupuestos:", err);
       return res.status(500).send('Error al generar el resumen');
@@ -463,7 +464,7 @@ generarResumenPresupuestosPDF : (req, res) => {
     doc.text('Fecha', colX[0], y);
     doc.text('N° Presupuesto', colX[1], y);
     doc.text('Proveedor', colX[2], y);
-    doc.text('Condición', colX[3], y);
+    doc.text(`Condición: ${condicion.toUpperCase()}`)
     doc.text('Importe', colX[4], y);
     y += 20;
 
@@ -493,7 +494,7 @@ generarResumenPresupuestosPDF : (req, res) => {
   });
 },
 generarResumenFacturasPDF : (req, res) => {
-  const { desde, hasta, proveedor } = req.query;
+  const { desde, hasta, proveedor, condicion } = req.query;
 
   console.log(`📄 Generar PDF resumen facturas: desde=${desde}, hasta=${hasta}`);
 
@@ -501,7 +502,7 @@ generarResumenFacturasPDF : (req, res) => {
     return res.status(400).send('Debés especificar fecha desde y hasta');
   }
 
-  administracion.getFacturasEntreFechas(desde, hasta, proveedor, (err, facturas) => {
+  administracion.getFacturasEntreFechas(desde, hasta, proveedor, condicion, (err, facturas) => {
     if (err) {
       console.error("❌ Error al obtener facturas:", err);
       return res.status(500).send('Error al generar el resumen');
@@ -542,7 +543,7 @@ generarResumenFacturasPDF : (req, res) => {
       doc.text(formatFechaDMY(f.fecha), colX[0], y);
       doc.text(f.numero_factura, colX[1], y);
       doc.text(f.proveedor, colX[2], y, { width: 130 });
-      doc.text(f.condicion, colX[3], y);
+      doc.text(`Condición: ${condicion.toUpperCase()}`);
       doc.text(`$${f.importe_factura}`, colX[4], y);
       y += 18;
 
