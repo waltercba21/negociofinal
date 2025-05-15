@@ -273,11 +273,12 @@ inputFechaFactura.addEventListener('change', () => {
   inputFechaPago.value = fecha30dias;
   });
 });
-document.getElementById('numeroDocumento').addEventListener('blur', async () => {
-  const tipo = document.getElementById('tipoDocumento').value; // 'factura' o 'presupuesto'
-  const proveedor = document.getElementById('proveedor').value;
-  const fecha = document.getElementById('fecha').value;
-  const numero = document.getElementById('numeroDocumento').value;
+document.getElementById('facturaNumero').addEventListener('blur', async () => {
+  const tipo = 'factura';
+  const proveedor = document.getElementById('facturaProveedor').value;
+  const fecha = document.getElementById('facturaFecha').value;
+  const numero = document.getElementById('facturaNumero').value;
+
 
   if (!proveedor || !fecha || !numero) return;
 

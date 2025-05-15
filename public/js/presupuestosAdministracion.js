@@ -230,11 +230,12 @@ document.addEventListener('DOMContentLoaded', () => {
     inputFechaPago.value = fecha.toISOString().split('T')[0];
   });
 });
-document.getElementById('numeroDocumento').addEventListener('blur', async () => {
-  const tipo = document.getElementById('tipoDocumento').value; // 'factura' o 'presupuesto'
-  const proveedor = document.getElementById('proveedor').value;
-  const fecha = document.getElementById('fecha').value;
-  const numero = document.getElementById('numeroDocumento').value;
+document.getElementById('presupuestoNumero').addEventListener('blur', async () => {
+  const tipo = 'presupuesto';
+  const proveedor = document.getElementById('presupuestoProveedor').value;
+  const fecha = document.getElementById('presupuestoFecha').value;
+  const numero = document.getElementById('presupuestoNumero').value;
+
 
   if (!proveedor || !fecha || !numero) return;
 
