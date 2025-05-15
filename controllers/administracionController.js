@@ -350,6 +350,126 @@ postFactura: function (req, res) {
     res.json({ message: 'Presupuesto creado exitosamente', insertId });
   });
 },
+generarPDFIndividual: async (req, res) => {
+  const tipo = req.params.tipo; // 'factura' o 'presupuesto'
+  const id = req.params.id;
+
+  try {
+    let data;
+    if (tipo === 'factura') {
+      data = await new Promise((resolve, reject) => {
+        administracion.obtenerFacturaPorId(id, (err, datos) => err ? reject(err) : resolve(datos));
+      });
+    } else if (tipo === 'presupuesto') {
+      data = await new Promise((resolve, reject) => {
+        administracion.obtenerPresupuestoPorId(id, (err, datos) => err ? reject(err) : resolve(datos));
+      });
+    } else {
+      return res.status(400).send('Tipo inválido');
+    }
+
+    const printer = new pdfmake({ Roboto: fonts.Roboto });
+    const productos = data.productos || [];
+
+    const docDefinition = {
+      content: [
+        { text: tipo.toUpperCase(), style: 'header' },
+        { text: `Proveedor: ${data.nombre_proveedor}` },
+        { text: `Número: ${tipo === 'factura' ? data.numero_factura : data.numero_presupuesto}` },
+        { text: `Fecha: ${new Date(data.fecha).toLocaleDateString()}` },
+        { text: `Vencimiento: ${new Date(data.fecha_pago).toLocaleDateString()}` },
+        { text: `Administrador: ${data.administrador}` },
+        { text: `Condición: ${data.condicion}` },
+        tipo === 'factura' ? [
+          { text: `Importe Bruto: $${data.importe_bruto}` },
+          { text: `IVA: ${data.iva}%` },
+          { text: `Total: $${data.importe_factura}` }
+        ] : [
+          { text: `Importe Total: $${data.importe}` }
+        ],
+        { text: ' ' },
+        { text: 'Productos Asociados', style: 'subheader' },
+        productos.length > 0 ? {
+          table: {
+            widths: ['*', 'auto'],
+            body: [
+              ['Producto', 'Cantidad'],
+              ...productos.map(p => [p.nombre, p.cantidad])
+            ]
+          }
+        } : { text: 'Comprobante sin productos.' }
+      ],
+      styles: {
+        header: { fontSize: 16, bold: true },
+        subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] }
+      }
+    };
+
+    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    res.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.pipe(res);
+    pdfDoc.end();
+  } catch (error) {
+    console.error('❌ Error al generar PDF:', error);
+    res.status(500).send('Error al generar el PDF');
+  }
+},
+generarResumenFacturasPDF: (req, res) => {
+  const { desde, hasta } = req.query;
+
+  const printer = new pdfmake({ Roboto: fonts.Roboto });
+
+  const sql = `
+    SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor
+    FROM facturas f
+    JOIN proveedores p ON f.id_proveedor = p.id
+    WHERE f.fecha BETWEEN ? AND ?
+    ORDER BY f.fecha ASC
+  `;
+
+  const conexion = require('../config/conexion');
+  conexion.query(sql, [desde, hasta], (err, rows) => {
+    if (err) {
+      console.error('❌ Error al obtener facturas:', err);
+      return res.status(500).send('Error al generar el resumen');
+    }
+
+    const body = [
+      ['Fecha', 'Número', 'Proveedor', 'Condición', 'Importe']
+    ];
+
+    rows.forEach(row => {
+      body.push([
+        new Date(row.fecha).toLocaleDateString(),
+        row.numero_factura,
+        row.proveedor,
+        row.condicion,
+        `$${row.importe_factura}`
+      ]);
+    });
+
+    const docDefinition = {
+      content: [
+        { text: 'Resumen de Facturas', style: 'header' },
+        { text: `Desde: ${desde} - Hasta: ${hasta}`, margin: [0, 5, 0, 10] },
+        {
+          table: {
+            widths: ['auto', 'auto', '*', 'auto', 'auto'],
+            body
+          }
+        }
+      ],
+      styles: {
+        header: { fontSize: 16, bold: true }
+      }
+    };
+
+    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    res.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.pipe(res);
+    pdfDoc.end();
+  });
+},
 guardarItemsPresupuesto: async (req, res) => {
   const { presupuestoId, items } = req.body;
 
