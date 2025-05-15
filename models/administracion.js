@@ -512,8 +512,5 @@ getPresupuestosEntreFechas: function(desde, hasta, proveedorId, condicion, callb
   pool.query(sql, params, callback);
 }
 
-
-
-
       
 }
