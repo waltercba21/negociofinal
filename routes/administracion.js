@@ -57,5 +57,6 @@ router.get('/pdf/resumen/presupuestos', administracionController.generarResumenP
 // ✅ Esta después (más general)
 router.get('/pdf/:tipo/:id', administracionController.generarPDFIndividual);
 
+router.get('/verificar-duplicado', administracionController.verificarDocumentoDuplicado);
 
 module.exports = router;

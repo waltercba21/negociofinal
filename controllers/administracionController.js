@@ -642,6 +642,25 @@ getPresupuestoById: (req, res) => {
       res.json({ message: 'Presupuesto actualizado correctamente' });
     });
   },
+verificarDocumentoDuplicado: (req, res) => {
+  const { tipo, proveedor, fecha, numero } = req.query;
 
+  if (!tipo || !proveedor || !fecha || !numero) {
+    return res.status(400).json({ error: 'Faltan parámetros' });
+  }
+
+  const consulta = tipo === 'factura'
+    ? `SELECT id FROM facturas WHERE id_proveedor = ? AND fecha = ? AND numero_factura = ?`
+    : `SELECT id FROM presupuestos WHERE id_proveedor = ? AND fecha = ? AND numero_presupuesto = ?`;
+
+  pool.query(consulta, [proveedor, fecha, numero], (err, resultados) => {
+    if (err) {
+      console.error('❌ Error en verificación de duplicado:', err);
+      return res.status(500).json({ error: 'Error interno' });
+    }
+
+    return res.json({ existe: resultados.length > 0 });
+  });
+},
       
 }

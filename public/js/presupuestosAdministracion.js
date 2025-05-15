@@ -230,3 +230,27 @@ document.addEventListener('DOMContentLoaded', () => {
     inputFechaPago.value = fecha.toISOString().split('T')[0];
   });
 });
+document.getElementById('numeroDocumento').addEventListener('blur', async () => {
+  const tipo = document.getElementById('tipoDocumento').value; // 'factura' o 'presupuesto'
+  const proveedor = document.getElementById('proveedor').value;
+  const fecha = document.getElementById('fecha').value;
+  const numero = document.getElementById('numeroDocumento').value;
+
+  if (!proveedor || !fecha || !numero) return;
+
+  try {
+    const res = await fetch(`/administracion/verificar-duplicado?tipo=${tipo}&proveedor=${proveedor}&fecha=${fecha}&numero=${numero}`);
+    const data = await res.json();
+
+    if (data.existe) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Documento duplicado',
+        text: `Ya existe una ${tipo} con esos datos.`,
+        confirmButtonText: 'Revisar',
+      });
+    }
+  } catch (err) {
+    console.error('Error al verificar duplicado:', err);
+  }
+});
