@@ -1,10 +1,11 @@
 const pool = require('../config/conexion');
 const conexion = require('../config/conexion')
+
 function obtenerProductosFactura(facturaId) {
   return new Promise((resolve, reject) => {
     pool.query(`
       SELECT pr.nombre, fi.cantidad
-      FROM factura_items fi
+      FROM facturas_admin_items fi
       JOIN productos pr ON pr.id = fi.producto_id
       WHERE fi.factura_id = ?
     `, [facturaId], (err, rows) => {
@@ -27,6 +28,7 @@ function obtenerProductosPresupuesto(presupuestoId) {
     });
   });
 }
+
 
 module.exports ={
   getProveedores : function(callback) {

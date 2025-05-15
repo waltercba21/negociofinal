@@ -123,6 +123,10 @@ document.addEventListener('click', async (e) => {
 function renderDetalleDocumento(data, tipo) {
   const contenedor = document.getElementById('contenedorDetalleDocumento');
   const modal = new bootstrap.Modal(document.getElementById('modalDetalleDocumento'));
+  const formatearFechaInput = fecha => {
+  const d = new Date(fecha);
+  return d.toISOString().split('T')[0];
+};
 
   const isFactura = tipo === 'factura';
 
@@ -144,11 +148,11 @@ function renderDetalleDocumento(data, tipo) {
       <div class="row">
         <div class="col-md-4 mb-2">
           <label>Fecha</label>
-          <input type="date" name="fecha" class="form-control" value="${data.fecha}" disabled>
+          <input type="date" name="fecha" class="form-control" value="${formatearFechaInput(data.fecha)}" disabled>
         </div>
         <div class="col-md-4 mb-2">
           <label>Fecha de Pago</label>
-          <input type="date" name="fecha_pago" class="form-control" value="${data.fecha_pago}" disabled>
+          <input type="date" name="fecha_pago" class="form-control" value="${formatearFechaInput(data.fecha_pago)}" disabled>
         </div>
         <div class="col-md-4 mb-2">
           <label>${isFactura ? 'Número de Factura' : 'Número de Presupuesto'}</label>
