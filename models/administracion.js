@@ -466,26 +466,41 @@ if (fechaHasta) {
 
   pool.query(sqlFinal, callback);
 },
-getFacturasEntreFechas: function(desde, hasta, callback) {
-  const sql = `
+getFacturasEntreFechas: function(desde, hasta, proveedorId, callback) {
+  let sql = `
     SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor
     FROM facturas f
     JOIN proveedores p ON f.id_proveedor = p.id
     WHERE f.fecha BETWEEN ? AND ?
-    ORDER BY f.fecha ASC
   `;
-  pool.query(sql, [desde, hasta], callback);
+  const params = [desde, hasta];
+
+  if (proveedorId && proveedorId !== '') {
+    sql += ' AND f.id_proveedor = ?';
+    params.push(proveedorId);
+  }
+
+  pool.query(sql, params, callback);
 },
-getPresupuestosEntreFechas: function(desde, hasta, callback) {
-  const sql = `
+getPresupuestosEntreFechas: function(desde, hasta, proveedorId, callback) {
+  let sql = `
     SELECT pr.numero_presupuesto, pr.fecha, pr.importe, pr.condicion, p.nombre AS proveedor
     FROM presupuestos pr
     JOIN proveedores p ON pr.id_proveedor = p.id
     WHERE pr.fecha BETWEEN ? AND ?
-    ORDER BY pr.fecha ASC
   `;
-  pool.query(sql, [desde, hasta], callback);
+  const params = [desde, hasta];
+
+  if (proveedorId && proveedorId !== '') {
+    sql += ' AND pr.id_proveedor = ?';
+    params.push(proveedorId);
+  }
+
+  sql += ' ORDER BY pr.fecha ASC';
+
+  pool.query(sql, params, callback);
 }
+
 
 
 

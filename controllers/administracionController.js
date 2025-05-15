@@ -420,14 +420,15 @@ generarPDFIndividual : async (req, res) => {
   }
 },
 generarResumenPresupuestosPDF : (req, res) => {
-  const { desde, hasta } = req.query;
-  console.log(`📄 Generar PDF resumen presupuestos: desde=${desde}, hasta=${hasta}`);
+  const { desde, hasta, proveedor } = req.query;
+
+  console.log(`📄 Generar PDF resumen presupuestos: desde=${desde}, hasta=${hasta}, proveedor=${proveedor}`);
 
   if (!desde || !hasta) {
     return res.status(400).send('Debés especificar fecha desde y hasta');
   }
 
-  administracion.getPresupuestosEntreFechas(desde, hasta, (err, presupuestos) => {
+  administracion.getPresupuestosEntreFechas(desde, hasta, proveedor, (err, presupuestos) => {
     if (err) {
       console.error("❌ Error al obtener presupuestos:", err);
       return res.status(500).send('Error al generar el resumen');
@@ -442,49 +443,60 @@ generarResumenPresupuestosPDF : (req, res) => {
     doc.fontSize(16).text('Resumen de Presupuestos', { align: 'center' });
     doc.moveDown();
     doc.fontSize(10).text(`Período: ${desde} al ${hasta}`);
+    if (proveedor) doc.text(`Proveedor filtrado: ${proveedor}`);
     doc.moveDown();
 
-    // Encabezado tabla
-    doc.font('Helvetica-Bold').text('Fecha', 50, doc.y);
-    doc.text('N° Presupuesto', 120, doc.y);
-    doc.text('Proveedor', 200, doc.y);
-    doc.text('Condición', 350, doc.y);
-    doc.text('Importe', 440, doc.y);
-    doc.moveDown();
+    // Posiciones fijas para columnas
+    const colX = [50, 130, 250, 390, 470];
+    let y = doc.y;
+
+    doc.font('Helvetica-Bold');
+    doc.text('Fecha', colX[0], y);
+    doc.text('N° Presupuesto', colX[1], y);
+    doc.text('Proveedor', colX[2], y);
+    doc.text('Condición', colX[3], y);
+    doc.text('Importe', colX[4], y);
+    y += 20;
 
     doc.font('Helvetica');
     let total = 0;
 
     presupuestos.forEach(p => {
-      doc.text(new Date(p.fecha).toLocaleDateString(), 50, doc.y);
-      doc.text(p.numero_presupuesto, 120, doc.y);
-      doc.text(p.proveedor, 200, doc.y, { width: 140 });
-      doc.text(p.condicion, 350, doc.y);
-      doc.text(`$${p.importe}`, 440, doc.y);
+      if (y > 750) {
+        doc.addPage();
+        y = 40;
+      }
+
+      doc.text(new Date(p.fecha).toLocaleDateString(), colX[0], y);
+      doc.text(p.numero_presupuesto, colX[1], y);
+      doc.text(p.proveedor, colX[2], y, { width: 130 });
+      doc.text(p.condicion, colX[3], y);
+      doc.text(`$${p.importe}`, colX[4], y);
+      y += 18;
+
       total += parseFloat(p.importe);
-      doc.moveDown();
     });
 
-    doc.moveDown().font('Helvetica-Bold').text(`Total presupuestado: $${total.toFixed(2)}`, { align: 'right' });
+    y += 20;
+    doc.font('Helvetica-Bold').text(`Total presupuestado: $${total.toFixed(2)}`, colX[4], y, { align: 'right' });
 
     doc.end();
   });
 },
- generarResumenFacturasPDF : (req, res) => {
-  const { desde, hasta } = req.query;
+generarResumenFacturasPDF : (req, res) => {
+  const { desde, hasta, proveedor } = req.query;
+
   console.log(`📄 Generar PDF resumen facturas: desde=${desde}, hasta=${hasta}`);
 
   if (!desde || !hasta) {
     return res.status(400).send('Debés especificar fecha desde y hasta');
   }
 
-  administracion.getFacturasEntreFechas(desde, hasta, (err, facturas) => {
+  administracion.getFacturasEntreFechas(desde, hasta, proveedor, (err, facturas) => {
     if (err) {
       console.error("❌ Error al obtener facturas:", err);
       return res.status(500).send('Error al generar el resumen');
     }
-
-    console.log(`✅ ${facturas.length} facturas encontradas`);
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
     res.setHeader('Content-Type', 'application/pdf');
@@ -495,28 +507,40 @@ generarResumenPresupuestosPDF : (req, res) => {
     doc.fontSize(10).text(`Período: ${desde} al ${hasta}`);
     doc.moveDown();
 
-    // Encabezado tabla
-    doc.font('Helvetica-Bold').text('Fecha', 50, doc.y);
-    doc.text('N° Factura', 120, doc.y);
-    doc.text('Proveedor', 200, doc.y);
-    doc.text('Condición', 350, doc.y);
-    doc.text('Importe', 440, doc.y);
-    doc.moveDown();
+    const startY = doc.y;
+    let y = startY;
+    const colX = [50, 130, 250, 390, 470];
+
+    // Encabezados
+    doc.font('Helvetica-Bold');
+    doc.text('Fecha', colX[0], y);
+    doc.text('N° Factura', colX[1], y);
+    doc.text('Proveedor', colX[2], y);
+    doc.text('Condición', colX[3], y);
+    doc.text('Importe', colX[4], y);
+    y += 20;
 
     doc.font('Helvetica');
     let total = 0;
 
     facturas.forEach(f => {
-      doc.text(new Date(f.fecha).toLocaleDateString(), 50, doc.y);
-      doc.text(f.numero_factura, 120, doc.y);
-      doc.text(f.proveedor, 200, doc.y, { width: 140 });
-      doc.text(f.condicion, 350, doc.y);
-      doc.text(`$${f.importe_factura}`, 440, doc.y);
+      if (y > 750) {
+        doc.addPage();
+        y = 40;
+      }
+
+      doc.text(new Date(f.fecha).toLocaleDateString(), colX[0], y);
+      doc.text(f.numero_factura, colX[1], y);
+      doc.text(f.proveedor, colX[2], y, { width: 130 });
+      doc.text(f.condicion, colX[3], y);
+      doc.text(`$${f.importe_factura}`, colX[4], y);
+      y += 18;
+
       total += parseFloat(f.importe_factura);
-      doc.moveDown();
     });
 
-    doc.moveDown().font('Helvetica-Bold').text(`Total compras: $${total.toFixed(2)}`, { align: 'right' });
+    y += 20;
+    doc.font('Helvetica-Bold').text(`Total compras: $${total.toFixed(2)}`, colX[4], y, { align: 'right' });
 
     doc.end();
   });
