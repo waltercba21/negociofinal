@@ -368,7 +368,9 @@ generarPDFIndividual: async (req, res) => {
       return res.status(400).send('Tipo inválido');
     }
 
-    const printer = new pdfmake({ Roboto: fonts.Roboto });
+    const PdfPrinter = require('pdfmake');
+const printer = new PdfPrinter(fonts);
+
     const productos = data.productos || [];
 
     const docDefinition = {
@@ -416,7 +418,9 @@ generarPDFIndividual: async (req, res) => {
 },
 generarResumenPresupuestosPDF: (req, res) => {
   const { desde, hasta } = req.query;
-  const printer = new pdfmake({ Roboto: fonts.Roboto });
+  const PdfPrinter = require('pdfmake');
+const printer = new PdfPrinter(fonts);
+
 
   administracion.getPresupuestosEntreFechas(desde, hasta, (err, rows) => {
     if (err) {
@@ -470,7 +474,9 @@ generarResumenPresupuestosPDF: (req, res) => {
 },
 generarResumenFacturasPDF: (req, res) => {
   const { desde, hasta } = req.query;
-  const printer = new pdfmake({ Roboto: fonts.Roboto });
+  const PdfPrinter = require('pdfmake');
+const printer = new PdfPrinter(fonts);
+
 
   administracion.getFacturasEntreFechas(desde, hasta, (err, rows) => {
     if (err) {
