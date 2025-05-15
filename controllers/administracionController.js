@@ -16,6 +16,13 @@ function formatDate(date) {
 
     return [year, month, day].join('-');
 }
+function formatFechaDMY(date) {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 
 module.exports = {
     administracion: (req, res) => {
@@ -369,6 +376,7 @@ generarPDFIndividual : async (req, res) => {
     console.log('✅ Datos obtenidos:', data);
     const productos = data.productos || [];
 
+    
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
     res.setHeader('Content-Type', 'application/pdf');
     doc.pipe(res);
@@ -380,8 +388,8 @@ generarPDFIndividual : async (req, res) => {
     doc.fontSize(11);
     doc.text(`Proveedor: ${data.nombre_proveedor}`);
     doc.text(`Número: ${tipo === 'factura' ? data.numero_factura : data.numero_presupuesto}`);
-    doc.text(`Fecha: ${new Date(data.fecha).toLocaleDateString()}`);
-    doc.text(`Vencimiento: ${new Date(data.fecha_pago).toLocaleDateString()}`);
+    doc.text(`Fecha: ${formatFechaDMY(data.fecha)}`);
+    doc.text(`Vencimiento: ${formatFechaDMY(data.fecha_pago)}`);
     doc.text(`Administrador: ${data.administrador}`);
     doc.text(`Condición: ${data.condicion}`);
     doc.moveDown();
@@ -467,7 +475,7 @@ generarResumenPresupuestosPDF : (req, res) => {
         y = 40;
       }
 
-      doc.text(new Date(p.fecha).toLocaleDateString(), colX[0], y);
+      doc.text(formatFechaDMY(p.fecha), colX[0], y);
       doc.text(p.numero_presupuesto, colX[1], y);
       doc.text(p.proveedor, colX[2], y, { width: 130 });
       doc.text(p.condicion, colX[3], y);
@@ -529,7 +537,7 @@ generarResumenFacturasPDF : (req, res) => {
         y = 40;
       }
 
-      doc.text(new Date(f.fecha).toLocaleDateString(), colX[0], y);
+      doc.text(formatFechaDMY(f.fecha), colX[0], y);
       doc.text(f.numero_factura, colX[1], y);
       doc.text(f.proveedor, colX[2], y, { width: 130 });
       doc.text(f.condicion, colX[3], y);

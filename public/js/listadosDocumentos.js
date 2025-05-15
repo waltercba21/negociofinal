@@ -258,23 +258,28 @@ document.getElementById('btnGuardarCambiosDocumento').addEventListener('click', 
 document.getElementById('btnGenerarPDFResumenFacturas').addEventListener('click', () => {
   const desde = document.getElementById('filtroFechaDesde').value;
   const hasta = document.getElementById('filtroFechaHasta').value;
+  const proveedor = document.getElementById('filtroProveedor').value;
 
   if (!desde || !hasta) {
     Swal.fire('Faltan fechas', 'Debés seleccionar un rango de fechas.', 'warning');
     return;
   }
 
-  window.open(`/administracion/pdf/resumen/facturas?desde=${desde}&hasta=${hasta}`, '_blank');
+  const url = `/administracion/pdf/resumen/facturas?desde=${desde}&hasta=${hasta}&proveedor=${proveedor}`;
+  window.open(url, '_blank');
 });
 
 document.getElementById('btnGenerarPDFResumenPresupuestos').addEventListener('click', () => {
   const desde = document.getElementById('filtroFechaDesde').value;
   const hasta = document.getElementById('filtroFechaHasta').value;
+  const proveedor = document.getElementById('filtroProveedor').value;
 
   if (!desde || !hasta) {
     Swal.fire('Faltan fechas', 'Debés seleccionar un rango de fechas.', 'warning');
     return;
   }
 
-  window.open(`/administracion/pdf/resumen/presupuestos?desde=${desde}&hasta=${hasta}`, '_blank');
+  const url = `/administracion/pdf/resumen/presupuestos?desde=${desde}&hasta=${hasta}&proveedor=${proveedor}`;
+  window.open(url, '_blank');
 });
+
