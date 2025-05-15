@@ -1486,14 +1486,28 @@ actualizarPreciosExcel: async (req, res) => {
 
   function limpiarPrecio(valor) {
     if (!valor) return 0;
-    return parseFloat(
-      valor
-        .toString()
-        .replace(/\./g, '')  // elimina puntos (miles)
-        .replace(',', '.')   // reemplaza coma decimal por punto
-        .replace('$', '')
-        .trim()
-    );
+
+    let limpio = valor.toString()
+      .replace(/\$/g, '')
+      .replace(/\s+/g, '')
+      .replace(/\./g, '')
+      .replace(',', '.')
+      .trim();
+
+    // Si tiene más de 2 decimales, truncar
+    if (limpio.includes('.')) {
+      const [entero, decimal] = limpio.split('.');
+      if (decimal.length > 2) {
+        limpio = `${entero}.${decimal.slice(0, 2)}`;
+      }
+    }
+
+    const numero = parseFloat(limpio);
+    if (numero > 999999) {
+      console.warn(`⚠️ Posible error de miles/decimales: "${valor}" interpretado como ${numero}`);
+    }
+
+    return numero;
   }
 
   try {
@@ -1534,16 +1548,16 @@ actualizarPreciosExcel: async (req, res) => {
           continue;
         }
 
-        // Buscar precio anterior para comparación
         const precioAnterior = await new Promise(resolve => {
           const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
           conexion.query(sql, [proveedor_id, codigo], (err, resQuery) => {
             if (err || resQuery.length === 0) return resolve(0);
-            resolve(resQuery[0].precio_lista);
+            resolve(parseFloat(resQuery[0].precio_lista));
           });
         });
 
-        // Actualizar el producto en DB
+        const mismoPrecio = Math.abs(precio - precioAnterior) < 0.01;
+
         const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
         if (!Array.isArray(resultado)) {
           console.warn(`❌ No se pudo actualizar el producto con código ${codigo}`);
@@ -1557,7 +1571,7 @@ actualizarPreciosExcel: async (req, res) => {
             precio_lista_antiguo: precioAnterior,
             precio_lista_nuevo: p.precio_lista,
             precio_venta: p.precio_venta || 0,
-            sin_cambio: p.sin_cambio || false
+            sin_cambio: mismoPrecio
           });
         });
       }
@@ -1571,6 +1585,7 @@ actualizarPreciosExcel: async (req, res) => {
     res.status(500).send(error.message);
   }
 },
+
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
