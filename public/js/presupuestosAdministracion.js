@@ -229,8 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fecha.setDate(fecha.getDate() + 30);
     inputFechaPago.value = fecha.toISOString().split('T')[0];
   });
-});
-document.getElementById('presupuestoNumero').addEventListener('blur', async () => {
+  document.getElementById('presupuestoNumero').addEventListener('blur', async () => {
   const tipo = 'presupuesto';
   const proveedor = document.getElementById('presupuestoProveedor').value;
   const fecha = document.getElementById('presupuestoFecha').value;
@@ -255,3 +254,5 @@ document.getElementById('presupuestoNumero').addEventListener('blur', async () =
     console.error('Error al verificar duplicado:', err);
   }
 });
+});
+

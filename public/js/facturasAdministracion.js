@@ -272,8 +272,8 @@ inputFechaFactura.addEventListener('change', () => {
   const fecha30dias = fecha.toISOString().split('T')[0];
   inputFechaPago.value = fecha30dias;
   });
-});
-document.getElementById('facturaNumero').addEventListener('blur', async () => {
+
+  document.getElementById('facturaNumero').addEventListener('blur', async () => {
   const tipo = 'factura';
   const proveedor = document.getElementById('facturaProveedor').value;
   const fecha = document.getElementById('facturaFecha').value;
@@ -298,4 +298,6 @@ document.getElementById('facturaNumero').addEventListener('blur', async () => {
     console.error('Error al verificar duplicado:', err);
   }
 });
+});
+
  
