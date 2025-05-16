@@ -379,17 +379,48 @@ obtenerPresupuestoPorId: function (id, callback) {
   });
 },
 editarFactura: function (id, datos, callback) {
-  const { numero, fecha, condicion } = datos;
+  const {
+    numero_factura,
+    fecha,
+    fecha_pago,
+    importe_bruto,
+    iva,
+    importe_factura,
+    condicion,
+    administrador,
+    comprobante_pago
+  } = datos;
 
   const sql = `
     UPDATE facturas 
-    SET numero_factura = ?, fecha = ?, condicion = ?
+    SET 
+      numero_factura = ?, 
+      fecha = ?, 
+      fecha_pago = ?, 
+      importe_bruto = ?, 
+      iva = ?, 
+      importe_factura = ?, 
+      condicion = ?, 
+      administrador = ?, 
+      comprobante_pago = ?
     WHERE id = ?
   `;
 
-  pool.query(sql, [numero, fecha, condicion, id], callback);
-},
+  const valores = [
+    numero_factura,
+    fecha,
+    fecha_pago,
+    importe_bruto,
+    iva,
+    importe_factura,
+    condicion,
+    administrador,
+    comprobante_pago,
+    id
+  ];
 
+  pool.query(sql, valores, callback);
+},
 editarPresupuesto: function (id, datos, callback) {
   const { numero, fecha, condicion } = datos;
 
