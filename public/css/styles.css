@@ -464,6 +464,16 @@ header .icons p {
   transform: translateY(-2px);
 }
 
+#modalVencimientos h6 {
+  font-size: 16px;
+}
+
+#modalVencimientos table td,
+#modalVencimientos table th {
+  font-size: 14px;
+  text-align: center;
+}
+
 /* ---------------------------------------FOOTER ------------------------------------------- */
 
 footer {

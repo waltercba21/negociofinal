@@ -143,41 +143,74 @@ document.getElementById('btnVerVencimientos').addEventListener('click', async ()
   try {
     const res = await fetch('/administracion/api/documentos?condicion=pendiente');
     const documentos = await res.json();
-    const contenedor = document.getElementById('contenedorVencimientos');
     const hoy = new Date();
 
-    contenedor.innerHTML = '<div class="row row-cols-1 row-cols-md-3 g-3">';
+    // Clasificamos y ordenamos
+    const vencidos = [];
+    const proximos = [];
+    const aTiempo = [];
 
     documentos.forEach(doc => {
       const vencimiento = new Date(doc.fecha_pago);
-      const diferencia = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
-      let clase = 'text-bg-success';
-      let mensaje = `Faltan ${diferencia} días`;
+      const dias = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
+      const item = {
+        ...doc,
+        dias,
+        fechaFormateada: vencimiento.toLocaleDateString('es-AR'),
+        vencimiento
+      };
 
-      if (diferencia < 0) {
-        clase = 'text-bg-danger';
-        mensaje = `Vencido hace ${Math.abs(diferencia)} días`;
-      } else if (diferencia <= 7) {
-        clase = 'text-bg-warning';
-        mensaje = `Vence en ${diferencia} días`;
+      if (dias < 0) {
+        vencidos.push(item);
+      } else if (dias <= 7) {
+        proximos.push(item);
+      } else {
+        aTiempo.push(item);
       }
-
-      contenedor.innerHTML += `
-        <div class="col">
-          <div class="card ${clase} h-100">
-            <div class="card-body">
-              <h6>${doc.tipo.toUpperCase()}</h6>
-              <p><strong>Proveedor:</strong> ${doc.nombre_proveedor}</p>
-              <p><strong>Número:</strong> ${doc.numero}</p>
-              <p><strong>Fecha Vencimiento:</strong> ${new Date(doc.fecha_pago).toLocaleDateString()}</p>
-              <p><strong>${mensaje}</strong></p>
-            </div>
-          </div>
-        </div>
-      `;
     });
 
-    contenedor.innerHTML += '</div>';
+    // Ordenar internamente por fecha de vencimiento
+    vencidos.sort((a, b) => a.vencimiento - b.vencimiento);
+    proximos.sort((a, b) => a.vencimiento - b.vencimiento);
+    aTiempo.sort((a, b) => a.vencimiento - b.vencimiento);
+
+    const contenedor = document.getElementById('contenedorVencimientos');
+    contenedor.innerHTML = '';
+
+    function renderGrupo(titulo, grupo, colorClase) {
+      if (grupo.length === 0) return;
+
+      contenedor.innerHTML += `<h6 class="fw-bold mt-4 mb-2 text-${colorClase}">${titulo}</h6>`;
+      contenedor.innerHTML += `
+        <table class="table table-sm table-bordered align-middle">
+          <thead class="table-${colorClase}">
+            <tr>
+              <th>Tipo</th>
+              <th>Proveedor</th>
+              <th>Número</th>
+              <th>Vencimiento</th>
+              <th>Días</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${grupo.map(doc => `
+              <tr>
+                <td class="text-uppercase">${doc.tipo}</td>
+                <td>${doc.nombre_proveedor}</td>
+                <td>${doc.numero}</td>
+                <td>${doc.fechaFormateada}</td>
+                <td>${doc.dias < 0 ? `Vencido hace ${Math.abs(doc.dias)} días` : `Faltan ${doc.dias} días`}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    renderGrupo('🔴 Documentos vencidos', vencidos, 'danger');
+    renderGrupo('🟠 Prontos a vencer (≤ 7 días)', proximos, 'warning');
+    renderGrupo('🟢 Documentos aún dentro del plazo', aTiempo, 'success');
+
     new bootstrap.Modal(document.getElementById('modalVencimientos')).show();
 
   } catch (err) {
@@ -185,6 +218,7 @@ document.getElementById('btnVerVencimientos').addEventListener('click', async ()
     Swal.fire('Error', 'No se pudieron obtener los vencimientos', 'error');
   }
 });
+
 
 });
 document.addEventListener('click', async (e) => {
