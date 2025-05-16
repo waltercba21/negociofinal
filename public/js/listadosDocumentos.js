@@ -250,7 +250,11 @@ function renderDetalleDocumento(data, tipo) {
 
 document.getElementById('btnHabilitarEdicion').addEventListener('click', () => {
   const form = document.querySelector('#formDetalleDocumento');
-  form.querySelectorAll('input, select').forEach(el => el.disabled = false);
+  form.querySelectorAll('input, select').forEach(el => {
+  el.disabled = false;
+  if (el.hasAttribute('readonly')) el.removeAttribute('readonly');
+});
+
   document.getElementById('btnGuardarCambiosDocumento').classList.remove('d-none');
 });
 
