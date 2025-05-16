@@ -493,7 +493,7 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
     `);
   }
 
-  const sqlFinal = consultas.join(' UNION ALL ') + ' ORDER BY fecha DESC';
+  const sqlFinal = consultas.join(' UNION ALL ') + ' ORDER BY fecha_pago ASC';
 
   pool.query(sqlFinal, callback);
 },
