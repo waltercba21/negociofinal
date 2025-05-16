@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnAnterior = document.getElementById('btnAnteriorPagina');
   const btnSiguiente = document.getElementById('btnSiguientePagina');
   const indicadorPagina = document.getElementById('indicadorPagina');
+  const btnGuardarCambios = document.getElementById('btnGuardarCambiosDocumento');
 
   let datosFiltrados = [];
   let paginaActual = 1;
