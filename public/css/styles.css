@@ -410,6 +410,16 @@ header .icons p {
   margin-top: 10px;
 }
 /*----------- Botones contenedor listados facturas presupuestos y vencimientos  -------------- */
+.botones-acciones-admin {
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.botones-acciones-admin .btn {
+  flex: 1 1 auto;
+  max-width: 100%;
+  text-align: center;
+}
 .botones-acciones-admin .btn {
   padding: 10px 20px;
   font-weight: 600;
@@ -427,7 +437,8 @@ header .icons p {
 }
 
 .btn-admin-facturas {
-  background-color: #007bff;
+  background-color: #007bff !important;
+  color: #fff !important;
 }
 
 .btn-admin-facturas:hover {
@@ -436,24 +447,25 @@ header .icons p {
 }
 
 .btn-admin-presupuestos {
-  background-color: #28a745;
+  background-color: #28a745 !important;
+  color: #fff !important;
 }
 
 .btn-admin-presupuestos:hover {
   background-color: #1c7c31;
   transform: translateY(-2px);
 }
-
 .btn-admin-vencimientos {
-  background-color: #dc3545;
+  background-color: #dc3545 !important;
+  color: #fff !important;
 }
-
 .btn-admin-vencimientos:hover {
   background-color: #a71d2a;
   transform: translateY(-2px);
 }
 
 /* ---------------------------------------FOOTER ------------------------------------------- */
+
 footer {
   background-color: #fff;
   box-shadow: 0px 0px 25px rgba(189, 189, 189, 0.52);
