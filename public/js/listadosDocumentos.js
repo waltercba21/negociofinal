@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="card-body">
       <h6>${doc.tipo.toUpperCase()}</h6>
       <p><strong>Proveedor:</strong> ${doc.nombre_proveedor}</p>
-      <p><strong>Número:</strong> ${doc.numero || '—'}</p>
+      <p><strong>Número:</strong> ${doc.numero}</p>
       <p><strong>Fecha:</strong> ${new Date(doc.fecha).toLocaleDateString()}</p>
       <button class="btn btn-outline-primary btn-sm ver-mas-documento" data-id="${doc.id}" data-tipo="${doc.tipo}">
         Ver más
@@ -262,8 +262,7 @@ document.getElementById('btnGuardarCambiosDocumento').addEventListener('click', 
   const form = document.querySelector('#formDetalleDocumento');
   const tipo = document.getElementById('btnGuardarCambiosDocumento').dataset.tipo;
   const id = document.getElementById('btnGuardarCambiosDocumento').dataset.id;
-
-  const datos = {
+const datos = {
   fecha: form.fecha.value,
   fecha_pago: form.fecha_pago.value,
   condicion: form.condicion.value,
