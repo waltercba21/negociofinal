@@ -435,28 +435,26 @@ editarPresupuesto: function (id, datos, callback) {
 obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, condicion, callback) {
   const filtrosFactura = [];
   const filtrosPresupuesto = [];
-  pool.escape(proveedor)
 
-if (proveedor && proveedor.trim() !== '') {
-  filtrosFactura.push(`f.id_proveedor = ${pool.escape(proveedor)}`);
-  filtrosPresupuesto.push(`pz.id_proveedor = ${pool.escape(proveedor)}`);
-}
+  if (proveedor && proveedor.trim() !== '') {
+    filtrosFactura.push(`f.id_proveedor = ${pool.escape(proveedor)}`);
+    filtrosPresupuesto.push(`pz.id_proveedor = ${pool.escape(proveedor)}`);
+  }
 
-if (condicion && condicion.trim() !== '') {
-  filtrosFactura.push(`f.condicion = ${pool.escape(condicion)}`);
-  filtrosPresupuesto.push(`pz.condicion = ${pool.escape(condicion)}`);
-}
+  if (condicion && condicion.trim() !== '') {
+    filtrosFactura.push(`f.condicion = ${pool.escape(condicion)}`);
+    filtrosPresupuesto.push(`pz.condicion = ${pool.escape(condicion)}`);
+  }
 
-if (fechaDesde) {
-  filtrosFactura.push(`f.fecha >= ${pool.escape(fechaDesde)}`);
-  filtrosPresupuesto.push(`pz.fecha >= ${pool.escape(fechaDesde)}`);
-}
+  if (fechaDesde) {
+    filtrosFactura.push(`f.fecha >= ${pool.escape(fechaDesde)}`);
+    filtrosPresupuesto.push(`pz.fecha >= ${pool.escape(fechaDesde)}`);
+  }
 
-if (fechaHasta) {
-  filtrosFactura.push(`f.fecha <= ${pool.escape(fechaHasta)}`);
-  filtrosPresupuesto.push(`pz.fecha <= ${pool.escape(fechaHasta)}`);
-}
-
+  if (fechaHasta) {
+    filtrosFactura.push(`f.fecha <= ${pool.escape(fechaHasta)}`);
+    filtrosPresupuesto.push(`pz.fecha <= ${pool.escape(fechaHasta)}`);
+  }
 
   const whereFactura = filtrosFactura.length ? `WHERE ${filtrosFactura.join(' AND ')}` : '';
   const wherePresupuesto = filtrosPresupuesto.length ? `WHERE ${filtrosPresupuesto.join(' AND ')}` : '';
@@ -497,6 +495,7 @@ if (fechaHasta) {
 
   pool.query(sqlFinal, callback);
 },
+
 getFacturasEntreFechas: function(desde, hasta, proveedorId, condicion, callback) {
   let sql = `
     SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor
