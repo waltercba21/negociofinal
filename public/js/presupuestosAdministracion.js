@@ -239,7 +239,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!proveedor || !fecha || !numero) return;
 
   try {
-    const res = await fetch(`/administracion/verificar-duplicado?tipo=${tipo}&proveedor=${proveedor}&fecha=${fecha}&numero=${numero}`);
+  const res = await fetch(`/administracion/verificar-duplicado?tipo=${tipo}&proveedor=${proveedor}&fecha=${fecha}&numero=${encodeURIComponent(numero)}`);
+
     const data = await res.json();
 
     if (data.existe) {
