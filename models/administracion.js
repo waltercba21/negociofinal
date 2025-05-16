@@ -468,6 +468,7 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
         f.id,
         f.numero_factura AS numero,
         f.fecha,
+        f.fecha_pago,
         f.condicion,
         p.nombre AS nombre_proveedor
       FROM facturas f
@@ -483,6 +484,7 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
         pz.id,
         pz.numero_presupuesto AS numero,
         pz.fecha,
+        pz.fecha_pago,
         pz.condicion,
         pr.nombre AS nombre_proveedor
       FROM presupuestos pz
@@ -495,7 +497,6 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
 
   pool.query(sqlFinal, callback);
 },
-
 getFacturasEntreFechas: function(desde, hasta, proveedorId, condicion, callback) {
   let sql = `
     SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor

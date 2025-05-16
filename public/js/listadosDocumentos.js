@@ -138,6 +138,53 @@ document.addEventListener('DOMContentLoaded', () => {
     Swal.fire('Error', err.message || 'Error al guardar', 'error');
   }
 });
+document.getElementById('btnVerVencimientos').addEventListener('click', async () => {
+  try {
+    const res = await fetch('/administracion/api/documentos?condicion=pendiente');
+    const documentos = await res.json();
+    const contenedor = document.getElementById('contenedorVencimientos');
+    const hoy = new Date();
+
+    contenedor.innerHTML = '<div class="row row-cols-1 row-cols-md-3 g-3">';
+
+    documentos.forEach(doc => {
+      const vencimiento = new Date(doc.fecha_pago);
+      const diferencia = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
+      let clase = 'text-bg-success';
+      let mensaje = `Faltan ${diferencia} días`;
+
+      if (diferencia < 0) {
+        clase = 'text-bg-danger';
+        mensaje = `Vencido hace ${Math.abs(diferencia)} días`;
+      } else if (diferencia <= 7) {
+        clase = 'text-bg-warning';
+        mensaje = `Vence en ${diferencia} días`;
+      }
+
+      contenedor.innerHTML += `
+        <div class="col">
+          <div class="card ${clase} h-100">
+            <div class="card-body">
+              <h6>${doc.tipo.toUpperCase()}</h6>
+              <p><strong>Proveedor:</strong> ${doc.nombre_proveedor}</p>
+              <p><strong>Número:</strong> ${doc.numero}</p>
+              <p><strong>Fecha Vencimiento:</strong> ${new Date(doc.fecha_pago).toLocaleDateString()}</p>
+              <p><strong>${mensaje}</strong></p>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    contenedor.innerHTML += '</div>';
+    new bootstrap.Modal(document.getElementById('modalVencimientos')).show();
+
+  } catch (err) {
+    console.error('❌ Error al cargar vencimientos:', err);
+    Swal.fire('Error', 'No se pudieron obtener los vencimientos', 'error');
+  }
+});
+
 });
 document.addEventListener('click', async (e) => {
   if (e.target.classList.contains('ver-mas-documento')) {

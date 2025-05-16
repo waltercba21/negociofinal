@@ -420,6 +420,9 @@
   <button class="btn btn-outline-success" id="btnGenerarPDFResumenPresupuestos">
     📝 Resumen Presupuestos
   </button>
+  <button class="btn btn-outline-danger" id="btnVerVencimientos">
+    📆 Ver Vencimientos
+  </button>
 </div>
 
 
@@ -481,6 +484,26 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         <button type="button" id="btnHabilitarEdicion" class="btn btn-warning">Editar</button>
         <button type="button" id="btnGuardarCambiosDocumento" class="btn btn-success d-none">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE VENCIMIENTOS -->
+<div class="modal fade" id="modalVencimientos" tabindex="-1" aria-labelledby="modalVencimientosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-proveedor-dialog">
+    <div class="modal-content modal-proveedor-content">
+      <div class="modal-header modal-proveedor-header">
+        <h5 class="modal-title" id="modalVencimientosLabel">
+          <i class="bi bi-calendar3-event me-2"></i>Vencimientos de Facturas y Presupuestos Pendientes
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" id="contenedorVencimientos">
+        <!-- Se llena dinámicamente con JS -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
