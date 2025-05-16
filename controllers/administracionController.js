@@ -610,10 +610,18 @@ listarDocumentos: (req, res) => {
         console.error('❌ Error en listarDocumentos:', err);
         return res.status(500).json({ error: 'Error al obtener documentos' });
       }
-      res.json(resultados);
+
+      // 🔁 Agregamos el campo "numero" según el tipo
+      const resultadosConNumero = resultados.map(r => ({
+        ...r,
+        numero: r.numero_factura || r.numero_presupuesto || '—'
+      }));
+
+      res.json(resultadosConNumero);
     }
   );
 },
+
 
 getFacturaById: (req, res) => {
   administracion.obtenerFacturaPorId(req.params.id, (err, datos) => {
