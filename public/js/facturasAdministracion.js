@@ -298,6 +298,25 @@ inputFechaFactura.addEventListener('change', () => {
     console.error('Error al verificar duplicado:', err);
   }
 });
+const inputTotal = document.getElementById('facturaImporteTotal');
+const inputIVA = document.getElementById('facturaIVA');
+const inputBruto = document.getElementById('facturaImporteBruto');
+
+// Cada vez que cambie el total o el IVA, recalcula el bruto
+function recalcularBrutoDesdeTotal() {
+  const total = parseFloat(inputTotal.value);
+  const iva = parseFloat(inputIVA.value);
+
+  if (isNaN(total) || isNaN(iva)) return;
+
+  const bruto = total / (1 + (iva / 100));
+  inputBruto.value = bruto.toFixed(2);
+}
+
+// Recalcular cuando cambia el IVA o el total
+inputTotal.addEventListener('input', recalcularBrutoDesdeTotal);
+inputIVA.addEventListener('change', recalcularBrutoDesdeTotal);
+
 });
 
  
