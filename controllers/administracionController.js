@@ -649,18 +649,15 @@ verificarDocumentoDuplicado: (req, res) => {
     return res.status(400).json({ error: 'Faltan parámetros' });
   }
 
-  const consulta = tipo === 'factura'
-    ? `SELECT id FROM facturas WHERE id_proveedor = ? AND fecha = ? AND numero_factura = ?`
-    : `SELECT id FROM presupuestos WHERE id_proveedor = ? AND fecha = ? AND numero_presupuesto = ?`;
-
-  pool.query(consulta, [proveedor, fecha, numero], (err, resultados) => {
+  administracion.verificarDocumentoDuplicado(tipo, proveedor, fecha, numero, (err, resultados) => {
     if (err) {
-      console.error('❌ Error en verificación de duplicado:', err);
-      return res.status(500).json({ error: 'Error interno' });
+      console.error('❌ Error al verificar duplicado:', err);
+      return res.status(500).json({ error: 'Error interno al verificar duplicado' });
     }
 
     return res.json({ existe: resultados.length > 0 });
   });
-},
+}
+
       
 }

@@ -510,7 +510,22 @@ getPresupuestosEntreFechas: function(desde, hasta, proveedorId, condicion, callb
   sql += ' ORDER BY pr.fecha ASC';
 
   pool.query(sql, params, callback);
+},
+verificarDocumentoDuplicado: function (tipo, proveedorId, fecha, numero, callback) {
+  let sql = '';
+  const params = [proveedorId, fecha, numero];
+
+  if (tipo === 'factura') {
+    sql = `SELECT id FROM facturas WHERE id_proveedor = ? AND fecha = ? AND numero_factura = ?`;
+  } else if (tipo === 'presupuesto') {
+    sql = `SELECT id FROM presupuestos WHERE id_proveedor = ? AND fecha = ? AND numero_presupuesto = ?`;
+  } else {
+    return callback(new Error('Tipo inválido'), null);
+  }
+
+  pool.query(sql, params, callback);
 }
+
 
       
 }
