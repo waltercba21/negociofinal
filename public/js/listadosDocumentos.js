@@ -264,20 +264,22 @@ document.getElementById('btnGuardarCambiosDocumento').addEventListener('click', 
   const id = document.getElementById('btnGuardarCambiosDocumento').dataset.id;
 
   const datos = {
-    numero: form.numero.value,
-    fecha: form.fecha.value,
-    fecha_pago: form.fecha_pago.value,
-    condicion: form.condicion.value,
-    administrador: form.administrador.value
-  };
+  fecha: form.fecha.value,
+  fecha_pago: form.fecha_pago.value,
+  condicion: form.condicion.value,
+  administrador: form.administrador.value
+};
 
-  if (tipo === 'factura') {
-    datos.importe_bruto = form.importe_bruto.value;
-    datos.iva = form.iva.value;
-    datos.importe_factura = form.importe_factura.value;
-  } else {
-    datos.importe = form.importe.value;
-  }
+if (tipo === 'factura') {
+  datos.numero_factura = form.numero.value;
+  datos.importe_bruto = form.importe_bruto.value;
+  datos.iva = form.iva.value;
+  datos.importe_factura = form.importe_factura.value;
+} else {
+  datos.numero_presupuesto = form.numero.value;
+  datos.importe = form.importe.value;
+}
+
 
   try {
     const res = await fetch(`/administracion/api/${tipo}/${id}`, {
