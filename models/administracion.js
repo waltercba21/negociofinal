@@ -380,6 +380,7 @@ obtenerPresupuestoPorId: function (id, callback) {
 },
 editarFactura: function (id, datos, callback) {
   const {
+    id_proveedor,
     numero_factura,
     fecha,
     fecha_pago,
@@ -394,6 +395,7 @@ editarFactura: function (id, datos, callback) {
   const sql = `
     UPDATE facturas 
     SET 
+      id_proveedor = ?,
       numero_factura = ?, 
       fecha = ?, 
       fecha_pago = ?, 
@@ -407,6 +409,7 @@ editarFactura: function (id, datos, callback) {
   `;
 
   const valores = [
+    id_proveedor,
     numero_factura,
     fecha,
     fecha_pago,
@@ -421,17 +424,45 @@ editarFactura: function (id, datos, callback) {
 
   pool.query(sql, valores, callback);
 },
+
 editarPresupuesto: function (id, datos, callback) {
-  const { numero, fecha, condicion } = datos;
+  const {
+    numero_presupuesto,
+    fecha,
+    fecha_pago,
+    importe,
+    condicion,
+    administrador,
+    id_proveedor
+  } = datos;
 
   const sql = `
     UPDATE presupuestos 
-    SET numero_presupuesto = ?, fecha = ?, condicion = ?
+    SET 
+      numero_presupuesto = ?, 
+      fecha = ?, 
+      fecha_pago = ?, 
+      importe = ?, 
+      condicion = ?, 
+      administrador = ?, 
+      id_proveedor = ?
     WHERE id = ?
   `;
 
-  pool.query(sql, [numero, fecha, condicion, id], callback);
+  const valores = [
+    numero_presupuesto,
+    fecha,
+    fecha_pago,
+    importe,
+    condicion,
+    administrador,
+    id_proveedor,
+    id
+  ];
+
+  pool.query(sql, valores, callback);
 },
+
 obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, condicion, numero, callback) {
   const filtrosFactura = [];
   const filtrosPresupuesto = [];
