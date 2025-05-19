@@ -108,40 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Se puede abrir otro modal con los detalles en el siguiente paso
     }
   });
-  btnGuardarCambios.addEventListener('click', async () => {
-  const formulario = document.querySelector('#formDetalleDocumento');
-  const tipo = btnGuardarCambios.dataset.tipo;
-  const id = btnGuardarCambios.dataset.id;
 
-  if (tipo !== 'factura') return; // Solo aplica para facturas por ahora
-
-  const datos = {
-    numero_factura: formulario.numero.value,
-    fecha: formulario.fecha.value,
-    fecha_pago: formulario.fecha_pago.value,
-    importe_bruto: formulario.importe_bruto.value,
-    iva: formulario.iva.value,
-    importe_factura: formulario.importe_factura.value,
-    condicion: formulario.condicion.value,
-    administrador: formulario.administrador.value,
-    comprobante_pago: null // o cargarlo si lo agregás como archivo editable
-  };
-
-  try {
-    const res = await fetch(`/administracion/api/factura/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datos)
-    });
-
-    if (!res.ok) throw new Error('No se pudo actualizar la factura');
-
-    Swal.fire('Guardado', 'Factura actualizada correctamente', 'success');
-  } catch (err) {
-    console.error('❌ Error al actualizar factura:', err);
-    Swal.fire('Error', err.message || 'Error al guardar', 'error');
-  }
-});
 document.getElementById('btnVerVencimientos').addEventListener('click', async () => {
   try {
     const res = await fetch('/administracion/api/documentos?condicion=pendiente');
