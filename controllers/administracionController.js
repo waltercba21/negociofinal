@@ -657,7 +657,20 @@ verificarDocumentoDuplicado: (req, res) => {
 
     return res.json({ existe: resultados.length > 0 });
   });
+},
+eliminarFactura: (req, res) => {
+  administracion.deleteFacturaById(req.params.id, (err) => {
+    if (err) return res.status(500).json({ error: 'Error al eliminar factura' });
+    res.json({ message: 'Factura eliminada correctamente' });
+  });
+},
+eliminarPresupuesto: (req, res) => {
+  administracion.deletePresupuestoById(req.params.id, (err) => {
+    if (err) return res.status(500).json({ error: 'Error al eliminar presupuesto' });
+    res.json({ message: 'Presupuesto eliminado correctamente' });
+  });
 }
+
 
       
 }

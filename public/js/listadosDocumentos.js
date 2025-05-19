@@ -424,3 +424,34 @@ document.getElementById('btnGenerarPDFResumenPresupuestos').addEventListener('cl
   window.open(url, '_blank');
 });
 
+document.getElementById('btnEliminarDocumento').addEventListener('click', async () => {
+  const tipo = document.getElementById('btnGuardarCambiosDocumento').dataset.tipo;
+  const id = document.getElementById('btnGuardarCambiosDocumento').dataset.id;
+
+  const confirmacion = await Swal.fire({
+    title: '¿Eliminar documento?',
+    text: `Esta acción no se puede deshacer.`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!confirmacion.isConfirmed) return;
+
+  try {
+    const res = await fetch(`/administracion/api/${tipo}/${id}`, {
+      method: 'DELETE'
+    });
+
+    if (!res.ok) throw new Error();
+
+    Swal.fire('Eliminado', 'Documento eliminado correctamente.', 'success');
+    document.getElementById('modalDetalleDocumento').classList.remove('show');
+    document.querySelector('.modal-backdrop').remove();
+    document.body.classList.remove('modal-open');
+  } catch (err) {
+    Swal.fire('Error', 'No se pudo eliminar el documento.', 'error');
+  }
+});
+  

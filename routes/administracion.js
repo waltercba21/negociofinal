@@ -59,4 +59,7 @@ router.get('/pdf/:tipo/:id', administracionController.generarPDFIndividual);
 
 router.get('/verificar-duplicado', administracionController.verificarDocumentoDuplicado);
 
+router.delete('/api/factura/:id', administracionController.eliminarFactura);
+router.delete('/api/presupuesto/:id', administracionController.eliminarPresupuesto);
+
 module.exports = router;
