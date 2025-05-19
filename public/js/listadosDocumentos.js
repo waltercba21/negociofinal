@@ -335,12 +335,22 @@ function renderDetalleDocumento(data, tipo) {
       ` : `<p class="text-muted">Sin productos asociados.</p>`}
     </form>
   `;
-  
+  const selectProv = document.getElementById('selectProveedorDetalleDocumento');
+obtenerProveedores().then(proveedores => {
+  proveedores.forEach(p => {
+    const option = document.createElement('option');
+    option.value = p.id;
+    option.textContent = p.nombre;
+    if (p.id === data.id_proveedor) option.selected = true;
+    selectProv.appendChild(option);
+  });
+});
+
   // Activar botón guardar
   const btnGuardar = document.getElementById('btnGuardarCambiosDocumento');
   btnGuardar.dataset.tipo = tipo;
   btnGuardar.dataset.id = data.id;
-  datos.id_proveedor = form.id_proveedor.value;
+
      
   modal.show();
 }
@@ -363,7 +373,8 @@ const datos = {
   fecha: form.fecha.value,
   fecha_pago: form.fecha_pago.value,
   condicion: form.condicion.value,
-  administrador: form.administrador.value
+  administrador: form.administrador.value,
+  id_proveedor: form.id_proveedor.value
 };
 
 if (tipo === 'factura') {
@@ -454,4 +465,3 @@ document.getElementById('btnEliminarDocumento').addEventListener('click', async 
     Swal.fire('Error', 'No se pudo eliminar el documento.', 'error');
   }
 });
-  
