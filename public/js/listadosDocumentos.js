@@ -146,16 +146,7 @@ document.getElementById('btnVerVencimientos').addEventListener('click', async ()
 
     const contenedor = document.getElementById('contenedorVencimientos');
     contenedor.innerHTML = '';
-    const selectProv = document.getElementById('selectProveedorDetalleDocumento');
-const proveedores = await obtenerProveedores();
-proveedores.forEach(p => {
-  const option = document.createElement('option');
-  option.value = p.id;
-  option.textContent = p.nombre;
-  if (p.id === data.id_proveedor) option.selected = true;
-  selectProv.appendChild(option);
-});
-
+    
     function renderGrupo(titulo, grupo, colorClase) {
       if (grupo.length === 0) return;
 
