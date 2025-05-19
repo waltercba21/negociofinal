@@ -176,6 +176,15 @@ document.getElementById('btnVerVencimientos').addEventListener('click', async ()
 
     const contenedor = document.getElementById('contenedorVencimientos');
     contenedor.innerHTML = '';
+    const selectProv = document.getElementById('selectProveedorDetalleDocumento');
+const proveedores = await obtenerProveedores();
+proveedores.forEach(p => {
+  const option = document.createElement('option');
+  option.value = p.id;
+  option.textContent = p.nombre;
+  if (p.id === data.id_proveedor) option.selected = true;
+  selectProv.appendChild(option);
+});
 
     function renderGrupo(titulo, grupo, colorClase) {
       if (grupo.length === 0) return;
@@ -236,6 +245,10 @@ document.addEventListener('click', async (e) => {
     }
   }
 });
+async function obtenerProveedores() {
+  const res = await fetch('/administracion/api/proveedores');
+  return await res.json();
+}
 
 function renderDetalleDocumento(data, tipo) {
   const contenedor = document.getElementById('contenedorDetalleDocumento');
@@ -253,9 +266,10 @@ function renderDetalleDocumento(data, tipo) {
 
       <div class="row">
         <div class="col-md-6 mb-2">
-          <label>Proveedor</label>
-          <input type="text" class="form-control" value="${data.nombre_proveedor}" readonly>
+        <label>Proveedor</label>
+        <select name="id_proveedor" class="form-select" disabled id="selectProveedorDetalleDocumento"></select>
         </div>
+
         <div class="col-md-6 mb-2">
           <label>Administrador</label>
           <input type="text" class="form-control" name="administrador" value="${data.administrador || ''}" disabled>
@@ -321,12 +335,13 @@ function renderDetalleDocumento(data, tipo) {
       ` : `<p class="text-muted">Sin productos asociados.</p>`}
     </form>
   `;
-
+  
   // Activar botón guardar
   const btnGuardar = document.getElementById('btnGuardarCambiosDocumento');
   btnGuardar.dataset.tipo = tipo;
   btnGuardar.dataset.id = data.id;
-
+  datos.id_proveedor = form.id_proveedor.value;
+     
   modal.show();
 }
 
