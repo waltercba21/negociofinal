@@ -432,7 +432,7 @@ editarPresupuesto: function (id, datos, callback) {
 
   pool.query(sql, [numero, fecha, condicion, id], callback);
 },
-obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, condicion, callback) {
+obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, condicion, numero, callback) {
   const filtrosFactura = [];
   const filtrosPresupuesto = [];
 
@@ -454,6 +454,11 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
   if (fechaHasta) {
     filtrosFactura.push(`f.fecha <= ${pool.escape(fechaHasta)}`);
     filtrosPresupuesto.push(`pz.fecha <= ${pool.escape(fechaHasta)}`);
+  }
+
+  if (numero && numero.trim() !== '') {
+    filtrosFactura.push(`f.numero_factura = ${pool.escape(numero)}`);
+    filtrosPresupuesto.push(`pz.numero_presupuesto = ${pool.escape(numero)}`);
   }
 
   const whereFactura = filtrosFactura.length ? `WHERE ${filtrosFactura.join(' AND ')}` : '';
@@ -497,6 +502,7 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
 
   pool.query(sqlFinal, callback);
 },
+
 getFacturasEntreFechas: function(desde, hasta, proveedorId, condicion, callback) {
   let sql = `
     SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor

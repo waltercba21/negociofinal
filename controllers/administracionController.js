@@ -597,7 +597,7 @@ guardarItemsPresupuesto: async (req, res) => {
   }
 },
 listarDocumentos: (req, res) => {
-  const { tipo, proveedor, fechaDesde, fechaHasta, condicion } = req.query;
+  const { tipo, proveedor, fechaDesde, fechaHasta, condicion, numero } = req.query;
 
   administracion.obtenerDocumentosFiltrados(
     tipo,
@@ -605,6 +605,7 @@ listarDocumentos: (req, res) => {
     fechaDesde,
     fechaHasta,
     condicion,
+    numero,
     (err, resultados) => {
       if (err) {
         console.error('❌ Error en listarDocumentos:', err);

@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSiguiente = document.getElementById('btnSiguientePagina');
   const indicadorPagina = document.getElementById('indicadorPagina');
   const btnGuardarCambios = document.getElementById('btnGuardarCambiosDocumento');
+  
+
 
   let datosFiltrados = [];
   let paginaActual = 1;
@@ -17,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fechaDesde = document.getElementById('filtroFechaDesde').value;
     const fechaHasta = document.getElementById('filtroFechaHasta').value;
     const condicion = document.getElementById('filtroCondicion').value;
-  
+    const numero = document.getElementById('filtroNumero').value;
 
     try {
       const query = new URLSearchParams({
@@ -25,7 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tipo,
         fechaDesde,
         fechaHasta,
-        condicion
+        condicion,
+        numero
       });
 
       const res = await fetch(`/administracion/api/documentos?${query.toString()}`);
