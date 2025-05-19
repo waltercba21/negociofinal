@@ -555,7 +555,33 @@ verificarDocumentoDuplicado: function (tipo, proveedorId, fecha, numero, callbac
   }
 
   pool.query(sql, params, callback);
-}
+},
+deletePresupuestoById: function(id, callback) {
+  // Primero eliminamos los ítems relacionados en presupuestos_admin_items
+  pool.query('DELETE FROM presupuestos_admin_items WHERE presupuesto_id = ?', [id], function(error) {
+    if (error) return callback(error);
+
+    // Luego eliminamos el presupuesto
+    pool.query('DELETE FROM presupuestos WHERE id = ?', [id], function(error2, results) {
+      if (error2) return callback(error2);
+      callback(null, results);
+    });
+  });
+},
+
+deleteFacturaById: function(id, callback) {
+  // Primero eliminamos los ítems relacionados en facturas_admin_items
+  pool.query('DELETE FROM facturas_admin_items WHERE factura_id = ?', [id], function(error) {
+    if (error) return callback(error);
+
+    // Luego eliminamos la factura
+    pool.query('DELETE FROM facturas WHERE id = ?', [id], function(error2, results) {
+      if (error2) return callback(error2);
+      callback(null, results);
+    });
+  });
+},
+
 
 
       
