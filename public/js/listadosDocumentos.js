@@ -150,7 +150,7 @@ document.getElementById('btnVerVencimientos').addEventListener('click', async ()
 function renderGrupo(titulo, grupo, colorClase) {
   if (grupo.length === 0) return;
 
-  // Calcular total según si es factura o presupuesto
+  // Calcular total
   let totalGrupo = 0;
   grupo.forEach(doc => {
     if (doc.tipo === 'factura') {
@@ -170,24 +170,31 @@ function renderGrupo(titulo, grupo, colorClase) {
           <th>Número</th>
           <th>Vencimiento</th>
           <th>Días</th>
+          <th>Importe</th>
         </tr>
       </thead>
       <tbody>
-        ${grupo.map(doc => `
-          <tr>
-            <td class="text-uppercase">${doc.tipo}</td>
-            <td>${doc.nombre_proveedor}</td>
-            <td>${doc.numero}</td>
-            <td>${doc.fechaFormateada}</td>
-            <td>${doc.dias < 0 ? `Vencido hace ${Math.abs(doc.dias)} días` : `Faltan ${doc.dias} días`}</td>
-          </tr>
-        `).join('')}
+        ${grupo.map(doc => {
+          const importe = doc.tipo === 'factura' 
+            ? parseFloat(doc.importe_factura || 0) 
+            : parseFloat(doc.importe || 0);
+
+          return `
+            <tr>
+              <td class="text-uppercase">${doc.tipo}</td>
+              <td>${doc.nombre_proveedor}</td>
+              <td>${doc.numero}</td>
+              <td>${doc.fechaFormateada}</td>
+              <td>${doc.dias < 0 ? `Vencido hace ${Math.abs(doc.dias)} días` : `Faltan ${doc.dias} días`}</td>
+              <td>$${importe.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+            </tr>
+          `;
+        }).join('')}
       </tbody>
     </table>
     <p class="fw-bold text-end text-${colorClase}">Total: $${totalGrupo.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
   `;
 }
-
 
     renderGrupo('🔴 Documentos vencidos', vencidos, 'danger');
     renderGrupo('🟠 Prontos a vencer (≤ 7 días)', proximos, 'warning');
