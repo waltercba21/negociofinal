@@ -706,19 +706,20 @@ generarPDFDeudaPendiente : async (req, res) => {
       res.setHeader('Content-Type', 'application/pdf');
       docPDF.pipe(res);
 
-      // Encabezado
+      // Encabezado principal
       docPDF.fontSize(16).font('Helvetica-Bold').text('Deuda Pendiente por Vencimiento', { align: 'center' });
       docPDF.moveDown();
       docPDF.fontSize(10).font('Helvetica').text(`Fecha de generación: ${formatFechaDMY(hoy)}`, { align: 'right' });
       docPDF.moveDown();
 
-      // Variable para controlar si ya se imprimió la primera sección
       let primeraSeccion = true;
+      let totalVencidos = 0;
+      let totalProximos = 0;
+      let totalATiempo = 0;
 
       const renderGrupoPDF = (titulo, grupo, color) => {
-        if (!grupo.length) return;
+        if (!grupo.length) return 0;
 
-        // Evitar página en blanco en la primera sección
         if (!primeraSeccion) {
           docPDF.addPage();
         } else {
@@ -770,13 +771,19 @@ generarPDFDeudaPendiente : async (req, res) => {
         });
 
         docPDF.moveDown(1).font('Helvetica-Bold');
-        docPDF.text(`Total ${titulo}: $${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, { align: 'right' });
+        const totalFormatted = total.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+        docPDF.text(`Total ${titulo}: $${totalFormatted}`, 50, docPDF.y, {
+          align: 'right',
+          width: 500
+        });
+
+        return total;
       };
 
       // Render de los 3 grupos
-      renderGrupoPDF('Documentos Vencidos', vencidos, 'red');
-      renderGrupoPDF('Prontos a Vencer (≤ 7 días)', proximos, 'orange');
-      renderGrupoPDF('Documentos en Fecha', aTiempo, 'green');
+      totalVencidos = renderGrupoPDF('Documentos Vencidos', vencidos, 'red');
+      totalProximos = renderGrupoPDF('Prontos a Vencer (≤ 7 días)', proximos, 'orange');
+      totalATiempo = renderGrupoPDF('Documentos en Fecha', aTiempo, 'green');
 
       docPDF.end();
     });
