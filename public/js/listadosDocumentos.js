@@ -175,9 +175,9 @@ function renderGrupo(titulo, grupo, colorClase) {
       </thead>
       <tbody>
         ${grupo.map(doc => {
-          const importe = doc.tipo === 'factura' 
-            ? parseFloat(doc.importe_factura || 0) 
-            : parseFloat(doc.importe || 0);
+          const importe = parseFloat(doc.importe || 0);
+
+
 
           return `
             <tr>

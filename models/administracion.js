@@ -526,7 +526,12 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
     ${wherePresupuesto}
   `);
 
-  const sqlFinal = consultas.join(' UNION ALL ') + ' ORDER BY fecha_pago ASC';
+  const sqlFinal = `
+    (${consultas[0]})
+    UNION ALL
+    (${consultas[1]})
+    ORDER BY fecha_pago ASC
+  `;
 
   pool.query(sqlFinal, callback);
 },
