@@ -62,4 +62,6 @@ router.get('/verificar-duplicado', administracionController.verificarDocumentoDu
 router.delete('/api/factura/:id', administracionController.eliminarFactura);
 router.delete('/api/presupuesto/:id', administracionController.eliminarPresupuesto);
 
+router.get('/pdf/deuda-pendiente', administracionController.generarPDFDeudaPendiente);
+
 module.exports = router;

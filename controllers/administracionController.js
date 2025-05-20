@@ -670,7 +670,89 @@ eliminarPresupuesto: (req, res) => {
     if (err) return res.status(500).json({ error: 'Error al eliminar presupuesto' });
     res.json({ message: 'Presupuesto eliminado correctamente' });
   });
+},
+generarPDFDeudaPendiente: async (req, res) => {
+  const PDFDocument = require('pdfkit');
+  const { formatFechaDMY } = require('./helpers'); // O declaralo si no lo usás como helper
+
+  try {
+    administracion.obtenerDocumentosFiltrados(null, null, null, null, 'pendiente', null, (err, docs) => {
+      if (err) {
+        console.error('❌ Error al obtener documentos:', err);
+        return res.status(500).send('Error al generar el PDF');
+      }
+
+      // Clasificar
+      const hoy = new Date();
+      const vencidos = [];
+      const proximos = [];
+      const aTiempo = [];
+
+      docs.forEach(doc => {
+        const venc = new Date(doc.fecha_pago);
+        const dias = Math.ceil((venc - hoy) / (1000 * 60 * 60 * 24));
+        doc.fechaFormateada = formatFechaDMY(venc);
+
+        if (dias < 0) vencidos.push(doc);
+        else if (dias <= 7) proximos.push(doc);
+        else aTiempo.push(doc);
+      });
+
+      const docPDF = new PDFDocument({ margin: 40, size: 'A4' });
+      res.setHeader('Content-Type', 'application/pdf');
+      docPDF.pipe(res);
+
+      docPDF.fontSize(16).text('Deuda Pendiente por Vencimiento', { align: 'center' });
+      docPDF.moveDown();
+
+      const renderGrupoPDF = (titulo, grupo, color) => {
+        if (!grupo.length) return;
+
+        docPDF
+          .moveDown()
+          .fillColor(color)
+          .font('Helvetica-Bold')
+          .text(titulo)
+          .moveDown()
+          .fillColor('black');
+
+        const colX = [40, 150, 260, 360, 460];
+        docPDF.fontSize(10).font('Helvetica-Bold');
+        docPDF.text('Tipo', colX[0], docPDF.y);
+        docPDF.text('Proveedor', colX[1], docPDF.y);
+        docPDF.text('N°', colX[2], docPDF.y);
+        docPDF.text('Vencimiento', colX[3], docPDF.y);
+        docPDF.text('Importe', colX[4], docPDF.y);
+        docPDF.moveDown();
+
+        docPDF.font('Helvetica');
+        let total = 0;
+        grupo.forEach(d => {
+          docPDF.text(d.tipo.toUpperCase(), colX[0], docPDF.y);
+          docPDF.text(d.nombre_proveedor, colX[1], docPDF.y, { width: 100 });
+          docPDF.text(d.numero, colX[2], docPDF.y);
+          docPDF.text(d.fechaFormateada, colX[3], docPDF.y);
+          docPDF.text(`$${parseFloat(d.importe).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, colX[4], docPDF.y);
+          docPDF.moveDown();
+          total += parseFloat(d.importe || 0);
+        });
+
+        docPDF.moveDown(0.5).font('Helvetica-Bold');
+        docPDF.text(`Total ${titulo}: $${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, { align: 'right' });
+      };
+
+      renderGrupoPDF('🔴 Documentos Vencidos', vencidos, 'red');
+      renderGrupoPDF('🟠 Prontos a Vencer (≤ 7 días)', proximos, 'orange');
+      renderGrupoPDF('🟢 En Fecha', aTiempo, 'green');
+
+      docPDF.end();
+    });
+  } catch (err) {
+    console.error('❌ Error en PDF deuda pendiente:', err);
+    res.status(500).send('Error interno al generar el PDF');
+  }
 }
+
 
 
       

@@ -157,7 +157,6 @@ function renderGrupo(titulo, grupo, colorClase) {
     totalGrupo += parseFloat(doc.importe || 0);
   });
 
-
   contenedor.innerHTML += `<h6 class="fw-bold mt-4 mb-2 text-${colorClase}">${titulo}</h6>`;
   contenedor.innerHTML += `
     <table class="table table-sm table-bordered align-middle">
@@ -192,7 +191,12 @@ function renderGrupo(titulo, grupo, colorClase) {
     </table>
     <p class="fw-bold text-end text-${colorClase}">Total: $${totalGrupo.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
   `;
-}
+
+}  
+document.getElementById('btnImprimirDeuda').addEventListener('click', () => {
+  window.open('/administracion/pdf/deuda-pendiente', '_blank');
+});
+
 
     renderGrupo('🔴 Documentos vencidos', vencidos, 'danger');
     renderGrupo('🟠 Prontos a vencer (≤ 7 días)', proximos, 'warning');
