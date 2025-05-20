@@ -81,7 +81,7 @@ if (!metodosPagoSeleccionados) {
                 fechaPresupuesto: fechaFactura,
                 totalPresupuesto: totalFactura,
                 invoiceItems,
-                metodosPago: metodosPago.join(', ')
+                metodosPago: metodosPago
             })
         });
 
