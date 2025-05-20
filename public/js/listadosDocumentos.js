@@ -147,35 +147,47 @@ document.getElementById('btnVerVencimientos').addEventListener('click', async ()
     const contenedor = document.getElementById('contenedorVencimientos');
     contenedor.innerHTML = '';
     
-    function renderGrupo(titulo, grupo, colorClase) {
-      if (grupo.length === 0) return;
+function renderGrupo(titulo, grupo, colorClase) {
+  if (grupo.length === 0) return;
 
-      contenedor.innerHTML += `<h6 class="fw-bold mt-4 mb-2 text-${colorClase}">${titulo}</h6>`;
-      contenedor.innerHTML += `
-        <table class="table table-sm table-bordered align-middle">
-          <thead class="table-${colorClase}">
-            <tr>
-              <th>Tipo</th>
-              <th>Proveedor</th>
-              <th>Número</th>
-              <th>Vencimiento</th>
-              <th>Días</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${grupo.map(doc => `
-              <tr>
-                <td class="text-uppercase">${doc.tipo}</td>
-                <td>${doc.nombre_proveedor}</td>
-                <td>${doc.numero}</td>
-                <td>${doc.fechaFormateada}</td>
-                <td>${doc.dias < 0 ? `Vencido hace ${Math.abs(doc.dias)} días` : `Faltan ${doc.dias} días`}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
+  // Calcular total según si es factura o presupuesto
+  let totalGrupo = 0;
+  grupo.forEach(doc => {
+    if (doc.tipo === 'factura') {
+      totalGrupo += parseFloat(doc.importe_factura || 0);
+    } else if (doc.tipo === 'presupuesto') {
+      totalGrupo += parseFloat(doc.importe || 0);
     }
+  });
+
+  contenedor.innerHTML += `<h6 class="fw-bold mt-4 mb-2 text-${colorClase}">${titulo}</h6>`;
+  contenedor.innerHTML += `
+    <table class="table table-sm table-bordered align-middle">
+      <thead class="table-${colorClase}">
+        <tr>
+          <th>Tipo</th>
+          <th>Proveedor</th>
+          <th>Número</th>
+          <th>Vencimiento</th>
+          <th>Días</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${grupo.map(doc => `
+          <tr>
+            <td class="text-uppercase">${doc.tipo}</td>
+            <td>${doc.nombre_proveedor}</td>
+            <td>${doc.numero}</td>
+            <td>${doc.fechaFormateada}</td>
+            <td>${doc.dias < 0 ? `Vencido hace ${Math.abs(doc.dias)} días` : `Faltan ${doc.dias} días`}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <p class="fw-bold text-end text-${colorClase}">Total: $${totalGrupo.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
+  `;
+}
+
 
     renderGrupo('🔴 Documentos vencidos', vencidos, 'danger');
     renderGrupo('🟠 Prontos a vencer (≤ 7 días)', proximos, 'warning');
