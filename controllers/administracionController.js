@@ -712,11 +712,18 @@ generarPDFDeudaPendiente : async (req, res) => {
       docPDF.fontSize(10).font('Helvetica').text(`Fecha de generación: ${formatFechaDMY(hoy)}`, { align: 'right' });
       docPDF.moveDown();
 
-      // Función para renderizar grupos con cabecera
+      // Variable para controlar si ya se imprimió la primera sección
+      let primeraSeccion = true;
+
       const renderGrupoPDF = (titulo, grupo, color) => {
         if (!grupo.length) return;
 
-        docPDF.addPage(); // Asegura comienzo limpio
+        // Evitar página en blanco en la primera sección
+        if (!primeraSeccion) {
+          docPDF.addPage();
+        } else {
+          primeraSeccion = false;
+        }
 
         docPDF
           .moveDown()
