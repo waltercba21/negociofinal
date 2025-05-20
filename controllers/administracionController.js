@@ -679,8 +679,7 @@ eliminarPresupuesto: (req, res) => {
     res.json({ message: 'Presupuesto eliminado correctamente' });
   });
 },
-generarPDFDeudaPendiente: async (req, res) => {
-
+ generarPDFDeudaPendiente : async (req, res) => {
   try {
     administracion.obtenerDocumentosFiltrados(null, null, null, null, 'pendiente', null, (err, docs) => {
       if (err) {
@@ -688,7 +687,6 @@ generarPDFDeudaPendiente: async (req, res) => {
         return res.status(500).send('Error al generar el PDF');
       }
 
-      // Clasificar
       const hoy = new Date();
       const vencidos = [];
       const proximos = [];
@@ -708,9 +706,13 @@ generarPDFDeudaPendiente: async (req, res) => {
       res.setHeader('Content-Type', 'application/pdf');
       docPDF.pipe(res);
 
-      docPDF.fontSize(16).text('Deuda Pendiente por Vencimiento', { align: 'center' });
+      // Encabezado principal
+      docPDF.fontSize(16).font('Helvetica-Bold').text('Deuda Pendiente por Vencimiento', { align: 'center' });
+      docPDF.moveDown();
+      docPDF.fontSize(10).font('Helvetica').text(`Fecha de generación: ${formatFechaDMY(hoy)}`, { align: 'right' });
       docPDF.moveDown();
 
+      // Función para renderizar cada grupo
       const renderGrupoPDF = (titulo, grupo, color) => {
         if (!grupo.length) return;
 
@@ -718,28 +720,34 @@ generarPDFDeudaPendiente: async (req, res) => {
           .moveDown()
           .fillColor(color)
           .font('Helvetica-Bold')
+          .fontSize(12)
           .text(titulo)
           .moveDown()
           .fillColor('black');
 
-        const colX = [40, 150, 260, 360, 460];
+        const colX = [50, 140, 260, 370, 470]; // Posiciones de columnas
         docPDF.fontSize(10).font('Helvetica-Bold');
-        docPDF.text('Tipo', colX[0], docPDF.y);
-        docPDF.text('Proveedor', colX[1], docPDF.y);
-        docPDF.text('N°', colX[2], docPDF.y);
-        docPDF.text('Vencimiento', colX[3], docPDF.y);
-        docPDF.text('Importe', colX[4], docPDF.y);
-        docPDF.moveDown();
+        const yHeader = docPDF.y;
+        docPDF.text('Tipo', colX[0], yHeader);
+        docPDF.text('Proveedor', colX[1], yHeader);
+        docPDF.text('N°', colX[2], yHeader);
+        docPDF.text('Vencimiento', colX[3], yHeader);
+        docPDF.text('Importe', colX[4], yHeader);
+        docPDF.moveDown(0.5);
 
         docPDF.font('Helvetica');
         let total = 0;
+
         grupo.forEach(d => {
-          docPDF.text(d.tipo.toUpperCase(), colX[0], docPDF.y);
-          docPDF.text(d.nombre_proveedor, colX[1], docPDF.y, { width: 100 });
-          docPDF.text(d.numero, colX[2], docPDF.y);
-          docPDF.text(d.fechaFormateada, colX[3], docPDF.y);
-          docPDF.text(`$${parseFloat(d.importe).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, colX[4], docPDF.y);
-          docPDF.moveDown();
+          const y = docPDF.y;
+
+          docPDF.text(d.tipo.toUpperCase(), colX[0], y);
+          docPDF.text(d.nombre_proveedor, colX[1], y, { width: 110 });
+          docPDF.text(d.numero, colX[2], y);
+          docPDF.text(d.fechaFormateada, colX[3], y);
+          docPDF.text(`$${parseFloat(d.importe).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, colX[4], y);
+
+          docPDF.moveDown(0.5);
           total += parseFloat(d.importe || 0);
         });
 
@@ -747,9 +755,10 @@ generarPDFDeudaPendiente: async (req, res) => {
         docPDF.text(`Total ${titulo}: $${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, { align: 'right' });
       };
 
-      renderGrupoPDF('🔴 Documentos Vencidos', vencidos, 'red');
-      renderGrupoPDF('🟠 Prontos a Vencer (≤ 7 días)', proximos, 'orange');
-      renderGrupoPDF('🟢 En Fecha', aTiempo, 'green');
+      // Render de las 3 secciones
+      renderGrupoPDF('Documentos Vencidos', vencidos, 'red');
+      renderGrupoPDF('Prontos a Vencer (≤ 7 días)', proximos, 'orange');
+      renderGrupoPDF('Documentos en Fecha', aTiempo, 'green');
 
       docPDF.end();
     });
