@@ -151,14 +151,12 @@ function renderGrupo(titulo, grupo, colorClase) {
   if (grupo.length === 0) return;
 
   // Calcular total
+  // Calcular total
   let totalGrupo = 0;
   grupo.forEach(doc => {
-    if (doc.tipo === 'factura') {
-      totalGrupo += parseFloat(doc.importe_factura || 0);
-    } else if (doc.tipo === 'presupuesto') {
-      totalGrupo += parseFloat(doc.importe || 0);
-    }
+    totalGrupo += parseFloat(doc.importe || 0);
   });
+
 
   contenedor.innerHTML += `<h6 class="fw-bold mt-4 mb-2 text-${colorClase}">${titulo}</h6>`;
   contenedor.innerHTML += `
