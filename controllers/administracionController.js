@@ -680,8 +680,6 @@ eliminarPresupuesto: (req, res) => {
   });
 },
 generarPDFDeudaPendiente: async (req, res) => {
-  const PDFDocument = require('pdfkit');
-  const { formatFechaDMY } = require('./helpers'); // O declaralo si no lo usás como helper
 
   try {
     administracion.obtenerDocumentosFiltrados(null, null, null, null, 'pendiente', null, (err, docs) => {
