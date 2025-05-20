@@ -462,7 +462,6 @@ editarPresupuesto: function (id, datos, callback) {
 
   pool.query(sql, valores, callback);
 },
-
 obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, condicion, numero, callback) {
   const filtrosFactura = [];
   const filtrosPresupuesto = [];
@@ -506,6 +505,7 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
         f.fecha,
         f.fecha_pago,
         f.condicion,
+        f.importe_factura,
         p.nombre AS nombre_proveedor
       FROM facturas f
       JOIN proveedores p ON p.id = f.id_proveedor
@@ -522,6 +522,7 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
         pz.fecha,
         pz.fecha_pago,
         pz.condicion,
+        pz.importe,
         pr.nombre AS nombre_proveedor
       FROM presupuestos pz
       JOIN proveedores pr ON pr.id = pz.id_proveedor
@@ -533,7 +534,6 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
 
   pool.query(sqlFinal, callback);
 },
-
 getFacturasEntreFechas: function(desde, hasta, proveedorId, condicion, callback) {
   let sql = `
     SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor
