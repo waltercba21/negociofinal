@@ -679,7 +679,7 @@ eliminarPresupuesto: (req, res) => {
     res.json({ message: 'Presupuesto eliminado correctamente' });
   });
 },
- generarPDFDeudaPendiente : async (req, res) => {
+generarPDFDeudaPendiente : async (req, res) => {
   try {
     administracion.obtenerDocumentosFiltrados(null, null, null, null, 'pendiente', null, (err, docs) => {
       if (err) {
@@ -706,15 +706,17 @@ eliminarPresupuesto: (req, res) => {
       res.setHeader('Content-Type', 'application/pdf');
       docPDF.pipe(res);
 
-      // Encabezado principal
+      // Encabezado
       docPDF.fontSize(16).font('Helvetica-Bold').text('Deuda Pendiente por Vencimiento', { align: 'center' });
       docPDF.moveDown();
       docPDF.fontSize(10).font('Helvetica').text(`Fecha de generación: ${formatFechaDMY(hoy)}`, { align: 'right' });
       docPDF.moveDown();
 
-      // Función para renderizar cada grupo
+      // Función para renderizar grupos con cabecera
       const renderGrupoPDF = (titulo, grupo, color) => {
         if (!grupo.length) return;
+
+        docPDF.addPage(); // Asegura comienzo limpio
 
         docPDF
           .moveDown()
@@ -725,20 +727,29 @@ eliminarPresupuesto: (req, res) => {
           .moveDown()
           .fillColor('black');
 
-        const colX = [50, 140, 260, 370, 470]; // Posiciones de columnas
-        docPDF.fontSize(10).font('Helvetica-Bold');
-        const yHeader = docPDF.y;
-        docPDF.text('Tipo', colX[0], yHeader);
-        docPDF.text('Proveedor', colX[1], yHeader);
-        docPDF.text('N°', colX[2], yHeader);
-        docPDF.text('Vencimiento', colX[3], yHeader);
-        docPDF.text('Importe', colX[4], yHeader);
-        docPDF.moveDown(0.5);
+        const colX = [50, 140, 260, 370, 470];
 
-        docPDF.font('Helvetica');
+        const renderHeader = () => {
+          const y = docPDF.y;
+          docPDF.fontSize(10).font('Helvetica-Bold');
+          docPDF.text('Tipo', colX[0], y);
+          docPDF.text('Proveedor', colX[1], y);
+          docPDF.text('N°', colX[2], y);
+          docPDF.text('Vencimiento', colX[3], y);
+          docPDF.text('Importe', colX[4], y);
+          docPDF.moveDown(0.5);
+          docPDF.font('Helvetica');
+        };
+
+        renderHeader();
+
         let total = 0;
-
         grupo.forEach(d => {
+          if (docPDF.y > 750) {
+            docPDF.addPage();
+            renderHeader();
+          }
+
           const y = docPDF.y;
 
           docPDF.text(d.tipo.toUpperCase(), colX[0], y);
@@ -751,11 +762,11 @@ eliminarPresupuesto: (req, res) => {
           total += parseFloat(d.importe || 0);
         });
 
-        docPDF.moveDown(0.5).font('Helvetica-Bold');
+        docPDF.moveDown(1).font('Helvetica-Bold');
         docPDF.text(`Total ${titulo}: $${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, { align: 'right' });
       };
 
-      // Render de las 3 secciones
+      // Render de los 3 grupos
       renderGrupoPDF('Documentos Vencidos', vencidos, 'red');
       renderGrupoPDF('Prontos a Vencer (≤ 7 días)', proximos, 'orange');
       renderGrupoPDF('Documentos en Fecha', aTiempo, 'green');
