@@ -9,16 +9,16 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     e.preventDefault();
 
     // Validar que al menos un método de pago esté seleccionado
-    const metodosPagoSeleccionados = document.querySelectorAll('input[name="metodosPago"]:checked');
-    if (metodosPagoSeleccionados.length === 0) {
-        Swal.fire({
-            title: 'Error',
-            text: 'Debe seleccionar al menos un método de pago antes de continuar.',
-            icon: 'warning',
-            confirmButtonText: 'Entendido'
-        });
-        return;
-    }
+    const metodosPagoSeleccionados = document.querySelector('input[name="metodosPago"]:checked');
+if (!metodosPagoSeleccionados) {
+    Swal.fire({
+        title: 'Error',
+        text: 'Debe seleccionar un método de pago antes de continuar.',
+        icon: 'warning',
+        confirmButtonText: 'Entendido'
+    });
+    return;
+}
 
     const invoiceItems = [];
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
@@ -67,7 +67,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
-    const metodosPago = Array.from(metodosPagoSeleccionados).map(input => input.value);
+    const metodosPago = metodosPagoSeleccionados.value;
+
 
     try {
         const response = await fetch('/productos/procesarFormularioFacturas', {
