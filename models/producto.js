@@ -946,7 +946,16 @@ obtenerProductosPorProveedorYCategoría: function (conexion, proveedor, categori
 },
 obtenerProveedores: function(conexion) {
     return new Promise((resolve, reject) => {
-        const query = 'SELECT proveedores.id, proveedores.nombre, descuentos_proveedor.descuento FROM proveedores LEFT JOIN descuentos_proveedor ON proveedores.id = descuentos_proveedor.proveedor_id';
+        const query = `
+            SELECT proveedores.id, proveedores.nombre, dp.descuento
+            FROM proveedores
+            LEFT JOIN (
+                SELECT proveedor_id, MAX(descuento) AS descuento
+                FROM descuentos_proveedor
+                GROUP BY proveedor_id
+            ) AS dp ON proveedores.id = dp.proveedor_id
+        `;
+
         conexion.query(query, function(error, resultados) {
             if (error) {
                 reject(error);
@@ -956,6 +965,7 @@ obtenerProveedores: function(conexion) {
         });
     });
 },
+
 obtenerProveedorMasBarato : async (conexion, productoId) => {
     try {
       const query = `
