@@ -1759,10 +1759,15 @@ obtenerDescuentosProveedor: function(conexion) {
 retornarDatosProveedores: function(conexion, productoId) {
     return new Promise((resolve, reject) => {
         const query = `
-            SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento, p.costo_neto, p.costo_iva, p.utilidad, p.precio_venta
+            SELECT DISTINCT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento,
+                   p.costo_neto, p.costo_iva, p.utilidad, p.precio_venta
             FROM producto_proveedor AS pp
             INNER JOIN productos AS p ON pp.producto_id = p.id
-            LEFT JOIN descuentos_proveedor AS dp ON pp.proveedor_id = dp.proveedor_id
+            LEFT JOIN (
+                SELECT proveedor_id, MAX(descuento) AS descuento
+                FROM descuentos_proveedor
+                GROUP BY proveedor_id
+            ) AS dp ON pp.proveedor_id = dp.proveedor_id
             WHERE pp.producto_id = ?
         `;
         conexion.query(query, [productoId], (error, results) => {
@@ -1774,6 +1779,7 @@ retornarDatosProveedores: function(conexion, productoId) {
         });
     });
 },
+
 eliminarProveedor: function(conexion, proveedorId, productoId) {
     return new Promise((resolve, reject) => {
         conexion.query('DELETE FROM producto_proveedor WHERE proveedor_id = ? AND producto_id = ?', [proveedorId, productoId], function(error, results, fields) {
