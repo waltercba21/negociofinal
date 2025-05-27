@@ -28,6 +28,13 @@
             <p><%= idFactura %></p>
           </div>
         </div>
+        <div class="input-container">
+           <label>
+          <input type="checkbox" id="esDevolucion" name="esDevolucion">
+          Es una devolución de mercadería
+           </label>
+          </div>
+
         <div id="metodos-pago">
         <h3>Método de Pago</h3>
         <label><input type="radio" name="metodosPago" value="EFECTIVO"> Efectivo</label>
@@ -81,7 +88,7 @@
           <div id="invoice-interes">
             <label>Interés (15%): <input type="text" id="interes-amount" name="interes" readonly></label>
         </div>
-         <label>Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
+         <label id="label-total">Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
         </div>
         <input type="hidden" id="invoiceItems" name="invoiceItems">
         <div class="botones-contenedor">

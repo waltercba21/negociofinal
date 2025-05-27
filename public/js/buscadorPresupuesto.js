@@ -8,29 +8,8 @@ document.getElementById('invoice-form').addEventListener('keydown', function(e) 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
+    const esDevolucion = document.getElementById('esDevolucion')?.checked || false;
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-
-    // 🔥 Validar stock antes de procesar
-    for (let i = 0; i < filasFactura.length; i++) {
-        const cantidadInput = filasFactura[i].cells[4].querySelector('input');
-        const stockText = filasFactura[i].cells[5].textContent.trim();
-
-        if (cantidadInput && stockText) {
-            const cantidad = parseInt(cantidadInput.value);
-            const stock = parseInt(stockText);
-
-            if (!isNaN(cantidad) && !isNaN(stock) && cantidad > stock) {
-                Swal.fire({
-                    title: 'Stock insuficiente',
-                    text: `No hay stock suficiente para el producto en la fila ${i + 1}. Tiene ${stock} en stock, y está intentando presupuestar ${cantidad}.`,
-                    icon: 'error',
-                    confirmButtonText: 'Entendido'
-                });
-                return; // Detiene el envío del formulario
-            }
-        }
-    }
-
     const invoiceItems = [];
 
     for (let i = 0; i < filasFactura.length; i++) {
@@ -39,11 +18,25 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         const precioInput = filasFactura[i].cells[3].querySelector('input').value;
         let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
         let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value);
+        const stock = parseInt(filasFactura[i].cells[5].textContent.trim());
+
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
-        let subtotal = precio_unitario * cantidad;
 
-        if (codigo !== '' && descripcion !== '' && cantidad > 0 && precio_unitario > 0) {
+        if (!esDevolucion && cantidad > stock) {
+            Swal.fire({
+                title: 'Stock insuficiente',
+                text: `No hay stock suficiente para el producto en la fila ${i + 1}. Tiene ${stock}, y desea presupuestar ${cantidad}.`,
+                icon: 'error',
+                confirmButtonText: 'Entendido'
+            });
+            return;
+        }
+
+        if (esDevolucion) cantidad *= -1;
+        const subtotal = precio_unitario * cantidad;
+
+        if (codigo !== '' && descripcion !== '' && precio_unitario > 0 && cantidad !== 0) {
             invoiceItems.push({
                 producto_id: codigo,
                 descripcion,
@@ -57,7 +50,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     if (invoiceItems.length === 0) {
         Swal.fire({
             title: 'Error',
-            text: 'Debe agregar al menos un producto válido al presupuesto antes de enviarlo.',
+            text: 'Debe agregar al menos un producto válido antes de continuar.',
             icon: 'error',
             confirmButtonText: 'Entendido'
         });
@@ -68,8 +61,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     let totalFactura = '0';
     if (totalFacturaElement) {
         totalFactura = totalFacturaElement.value.replace(/\./g, '').replace(',', '.').replace('$', '').trim();
-    } else {
-        console.error('No se encontró el elemento total-amount.');
     }
 
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
@@ -78,22 +69,20 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     try {
         const response = await fetch('/productos/procesarFormulario', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: fechaFactura,
                 totalPresupuesto: totalFactura,
-                invoiceItems
+                invoiceItems,
+                esDevolucion: esDevolucion
             })
         });
 
         const data = await response.json();
-
         if (response.ok) {
             Swal.fire({
-                title: '¡Presupuesto guardado!',
+                title: esDevolucion ? '¡Devolución registrada!' : '¡Presupuesto guardado!',
                 text: data.message,
                 icon: 'success',
                 confirmButtonText: 'Ir a productos'
@@ -113,6 +102,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 document.addEventListener('DOMContentLoaded', () => {
     Swal.fire({

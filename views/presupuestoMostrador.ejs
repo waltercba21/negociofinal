@@ -28,6 +28,12 @@
             <p><%= idPresupuesto%></p>
           </div>
         </div>
+        <div class="input-container">
+        <label>
+         <input type="checkbox" id="esDevolucion" name="esDevolucion">
+          Es una devolución de mercadería
+          </label>
+        </div>
 
         <div class="buscador">
           <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
@@ -71,7 +77,8 @@
           </table>
       </div>
         <div id="invoice-total">
-         <label>Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
+         <label id="label-total">Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
+
         </div>
         <input type="hidden" id="invoiceItems" name="invoiceItems">
         <div class="botones-contenedor">

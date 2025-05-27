@@ -869,6 +869,22 @@ obtenerProductoPorCodigo: function(codigo) {
             });
         });
     },
+ajustarStockPorOperacion: function(conexion, productoId, cantidad) {
+    return new Promise((resolve, reject) => {
+        const sql = `
+            UPDATE productos
+            SET stock_actual = stock_actual + ?
+            WHERE id = ?
+        `;
+        conexion.query(sql, [cantidad, productoId], (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+},
 
     obtenerStock: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
