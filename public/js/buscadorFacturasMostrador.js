@@ -10,19 +10,41 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
     // Validar que al menos un método de pago esté seleccionado
     const metodosPagoSeleccionados = document.querySelector('input[name="metodosPago"]:checked');
-if (!metodosPagoSeleccionados) {
-    Swal.fire({
-        title: 'Error',
-        text: 'Debe seleccionar un método de pago antes de continuar.',
-        icon: 'warning',
-        confirmButtonText: 'Entendido'
-    });
-    return;
-}
+    if (!metodosPagoSeleccionados) {
+        Swal.fire({
+            title: 'Error',
+            text: 'Debe seleccionar un método de pago antes de continuar.',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
+
+    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+
+    // 🔥 Validar stock antes de procesar
+    for (let i = 0; i < filasFactura.length; i++) {
+        const cantidadInput = filasFactura[i].cells[4].querySelector('input');
+        const stockText = filasFactura[i].cells[5].textContent.trim();
+
+        if (cantidadInput && stockText) {
+            const cantidad = parseInt(cantidadInput.value);
+            const stock = parseInt(stockText);
+
+            if (!isNaN(cantidad) && !isNaN(stock) && cantidad > stock) {
+                Swal.fire({
+                    title: 'Stock insuficiente',
+                    text: `No hay stock suficiente para el producto en la fila ${i + 1}. Tiene ${stock} en stock, y está intentando facturar ${cantidad}.`,
+                    icon: 'error',
+                    confirmButtonText: 'Entendido'
+                });
+                return; // Detiene el envío del formulario
+            }
+        }
+    }
 
     const invoiceItems = [];
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    
+
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[1].textContent.trim();
         const descripcion = filasFactura[i].cells[2].textContent.trim();
@@ -33,7 +55,7 @@ if (!metodosPagoSeleccionados) {
         cantidad = !isNaN(cantidad) ? cantidad : 1;
         let subtotal = precio_unitario * cantidad;
 
-        // 🔥🔥🔥 Solo agregar productos que tienen un código y una descripción válida
+        // 🔥 Solo agregar productos que tienen un código y una descripción válida
         if (codigo !== '' && descripcion !== '' && cantidad > 0 && precio_unitario > 0) {
             invoiceItems.push({
                 producto_id: codigo,
@@ -45,7 +67,7 @@ if (!metodosPagoSeleccionados) {
         }
     }
 
-    // 🔥🔥🔥 Validar que al menos un producto válido fue agregado
+    // 🔥 Validar que al menos un producto válido fue agregado
     if (invoiceItems.length === 0) {
         Swal.fire({
             title: 'Error',
@@ -55,7 +77,7 @@ if (!metodosPagoSeleccionados) {
         });
         return;
     }
-    
+
     const totalFacturaElement = document.getElementById('total-amount');
     let totalFactura = '0';
     if (totalFacturaElement) {
@@ -68,7 +90,6 @@ if (!metodosPagoSeleccionados) {
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
     const metodosPago = metodosPagoSeleccionados.value;
-
 
     try {
         const response = await fetch('/productos/procesarFormularioFacturas', {
@@ -98,7 +119,7 @@ if (!metodosPagoSeleccionados) {
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
         }
-        
+
     } catch (error) {
         console.error('Error al enviar el formulario:', error);
         Swal.fire({
@@ -109,6 +130,7 @@ if (!metodosPagoSeleccionados) {
         });
     }
 });
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
