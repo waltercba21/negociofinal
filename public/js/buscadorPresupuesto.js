@@ -8,18 +8,6 @@ document.getElementById('invoice-form').addEventListener('keydown', function(e) 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // Validar que al menos un método de pago esté seleccionado
-    const metodosPagoSeleccionados = document.querySelector('input[name="metodosPago"]:checked');
-    if (!metodosPagoSeleccionados) {
-        Swal.fire({
-            title: 'Error',
-            text: 'Debe seleccionar un método de pago antes de continuar.',
-            icon: 'warning',
-            confirmButtonText: 'Entendido'
-        });
-        return;
-    }
-
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
 
     // 🔥 Validar stock antes de procesar
@@ -34,7 +22,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             if (!isNaN(cantidad) && !isNaN(stock) && cantidad > stock) {
                 Swal.fire({
                     title: 'Stock insuficiente',
-                    text: `No hay stock suficiente para el producto en la fila ${i + 1}. Tiene ${stock} en stock, y está intentando facturar ${cantidad}.`,
+                    text: `No hay stock suficiente para el producto en la fila ${i + 1}. Tiene ${stock} en stock, y está intentando presupuestar ${cantidad}.`,
                     icon: 'error',
                     confirmButtonText: 'Entendido'
                 });
@@ -55,7 +43,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         cantidad = !isNaN(cantidad) ? cantidad : 1;
         let subtotal = precio_unitario * cantidad;
 
-        // 🔥 Solo agregar productos que tienen un código y una descripción válida
         if (codigo !== '' && descripcion !== '' && cantidad > 0 && precio_unitario > 0) {
             invoiceItems.push({
                 producto_id: codigo,
@@ -67,11 +54,10 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         }
     }
 
-    // 🔥 Validar que al menos un producto válido fue agregado
     if (invoiceItems.length === 0) {
         Swal.fire({
             title: 'Error',
-            text: 'Debe agregar al menos un producto válido a la factura antes de enviarla.',
+            text: 'Debe agregar al menos un producto válido al presupuesto antes de enviarlo.',
             icon: 'error',
             confirmButtonText: 'Entendido'
         });
@@ -89,10 +75,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
-    const metodosPago = metodosPagoSeleccionados.value;
-
     try {
-        const response = await fetch('/productos/procesarFormularioFacturas', {
+        const response = await fetch('/productos/procesarFormulario', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -101,15 +85,15 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: fechaFactura,
                 totalPresupuesto: totalFactura,
-                invoiceItems,
-                metodosPago: metodosPago
+                invoiceItems
             })
         });
 
         const data = await response.json();
+
         if (response.ok) {
             Swal.fire({
-                title: '¡Factura guardada!',
+                title: '¡Presupuesto guardado!',
                 text: data.message,
                 icon: 'success',
                 confirmButtonText: 'Ir a productos'
@@ -119,7 +103,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         } else {
             throw new Error(data.error || 'Error al procesar el formulario');
         }
-
     } catch (error) {
         console.error('Error al enviar el formulario:', error);
         Swal.fire({
