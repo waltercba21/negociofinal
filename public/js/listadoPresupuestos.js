@@ -23,11 +23,19 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('El elemento con ID "btnImprimirTotal" no se encontró en el DOM.');
     }
 });
+
 function imprimirTotalPresupuestos(fechaInicio, fechaFin) {
     fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor al obtener los presupuestos');
+            }
+            return response.json();
+        })
         .then(data => {
             let totalPresupuestos = 0;
+            const cantidadPresupuestos = data.length;
+
             data.forEach(presupuesto => {
                 const totalNumerico = parseFloat(presupuesto.total.replace('.', '').replace(',', '.'));
                 totalPresupuestos += totalNumerico;
@@ -35,14 +43,34 @@ function imprimirTotalPresupuestos(fechaInicio, fechaFin) {
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+
             doc.setFontSize(16);
-            doc.text('Total de Presupuestos', 14, 20);
-            const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalPresupuestos);
-            doc.text(totalText, 14, 40);
-            doc.save('total_presupuestos.pdf');
+            doc.text('Resumen de Presupuestos', 14, 20);
+
+            doc.setFontSize(12);
+            doc.text(`Rango de fechas: ${fechaInicio} a ${fechaFin}`, 14, 35);
+            doc.text(`Cantidad total de presupuestos: ${cantidadPresupuestos}`, 14, 45);
+
+            const totalFormateado = new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS'
+            }).format(totalPresupuestos);
+
+            doc.text(`Total presupuestado: ${totalFormateado}`, 14, 55);
+
+            doc.save(`resumen_presupuestos_${fechaInicio}_a_${fechaFin}.pdf`);
         })
-        .catch(error => console.error('Error al cargar los presupuestos:', error));
+        .catch(error => {
+            console.error('Error al generar el PDF de presupuestos:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudo generar el PDF de total de presupuestos.',
+                icon: 'error',
+                confirmButtonText: 'Entendido'
+            });
+        });
 }
+
 function cargarPresupuestos(fechaInicio, fechaFin) {
     fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())

@@ -1311,11 +1311,8 @@ getPresupuestos: async (req, res) => {
 getFacturas: async (req, res) => { 
     try {
         const { fechaInicio, fechaFin } = req.query;
-        console.log(`Buscando facturas desde ${fechaInicio} hasta ${fechaFin}`);
         
         const facturas = await producto.getAllFacturas(fechaInicio, fechaFin);
-        console.log('Facturas encontradas:', facturas);
-        
         res.json(facturas);
     } catch (error) {
         console.error('Error al obtener facturas:', error);

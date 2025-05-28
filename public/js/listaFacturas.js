@@ -192,23 +192,54 @@ function eliminarFactura(id) {
         });
     }
 }
-
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
-    fetch(`/productos/api/facturas/total?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
+    fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => {
             if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor al obtener total');
+                throw new Error('Error en la respuesta del servidor al obtener las facturas');
             }
             return response.json();
         })
         .then(data => {
-            console.log('Total de facturas obtenido:', data.total); // Log del total obtenido
-            alert(`Total de facturas entre ${fechaInicio} y ${fechaFin}: ${data.total}`);
+            let totalFacturas = 0;
+            let cantidadFacturas = data.length;
+
+            data.forEach(factura => {
+                const totalNumerico = parseFloat(factura.total.replace('.', '').replace(',', '.'));
+                totalFacturas += totalNumerico;
+            });
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(16);
+            doc.text('Resumen de Facturas', 14, 20);
+
+            doc.setFontSize(12);
+            doc.text(`Rango de fechas: ${fechaInicio} a ${fechaFin}`, 14, 35);
+            doc.text(`Cantidad total de facturas: ${cantidadFacturas}`, 14, 45);
+
+            const totalFormateado = new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS'
+            }).format(totalFacturas);
+
+            doc.text(`Total vendido: ${totalFormateado}`, 14, 55);
+
+            doc.save(`resumen_facturas_${fechaInicio}_a_${fechaFin}.pdf`);
         })
         .catch(error => {
-            console.error('Error al imprimir total de facturas:', error); // Log de error
+            console.error('Error al imprimir total de facturas:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudo generar el PDF de total de facturas.',
+                icon: 'error',
+                confirmButtonText: 'Entendido'
+            });
         });
 }
+
+
 
 document.getElementById('btnImprimir').addEventListener('click', function() {
     const { jsPDF } = window.jspdf;
