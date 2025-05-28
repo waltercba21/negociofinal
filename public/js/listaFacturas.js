@@ -250,54 +250,84 @@ document.getElementById('btnImprimir').addEventListener('click', function () {
     const salto = 7;
     const margenInferior = 280;
 
-    doc.setFontSize(10);
+    const filas = Array.from(document.querySelectorAll('#facturas-table tbody tr'));
+    const datosPorDia = {};
 
-    const posXFecha = 20;
-    const posXCliente = 70;
-    const posXTotal = 120;
-    const posXMetodoPago = 160;
-
-    // Encabezados
-    doc.text('Fecha', posXFecha, y);
-    doc.text('Cliente', posXCliente, y);
-    doc.text('Total', posXTotal, y);
-    doc.text('Método de Pago', posXMetodoPago, y);
-    y += 5;
+    // Agrupar por fecha
+    filas.forEach(row => {
+        const fecha = row.querySelector('.fecha')?.textContent.trim() || 'N/A';
+        if (!datosPorDia[fecha]) datosPorDia[fecha] = [];
+        datosPorDia[fecha].push({
+            cliente: row.querySelector('.cliente')?.textContent.trim() || 'N/A',
+            total: row.querySelector('.total')?.textContent.trim() || '0.00',
+            metodo: row.querySelector('.metodos-pago')?.textContent.trim() || 'N/A'
+        });
+    });
 
     let totalGeneral = 0;
+    doc.setFontSize(11);
 
-    document.querySelectorAll('#facturas-table tbody tr').forEach(function (row, index) {
+    Object.entries(datosPorDia).forEach(([fecha, ventas]) => {
+        // Salto si no entra nuevo bloque
+        if (y + 25 > margenInferior) {
+            doc.addPage();
+            y = 10;
+        }
+
+        doc.setFontSize(13);
+        doc.text(`Ventas del ${fecha}`, 14, y);
+        y += 10;
+
+        doc.setFontSize(10);
+        doc.text('Cliente', 20, y);
+        doc.text('Total', 110, y);
+        doc.text('Método de Pago', 150, y);
+        y += 5;
+
+        let totalDia = 0;
+        ventas.forEach(v => {
+            if (y + salto > margenInferior) {
+                doc.addPage();
+                y = 10;
+            }
+
+            doc.text(v.cliente, 20, y);
+            doc.text(v.total, 110, y);
+            doc.text(v.metodo, 150, y);
+            totalDia += parseFloat(v.total.replace(/[^0-9,-]+/g, "").replace(',', '.'));
+            y += salto;
+        });
+
+        const totalDiaFormateado = new Intl.NumberFormat('es-CL', {
+            style: 'currency',
+            currency: 'CLP'
+        }).format(totalDia);
+
         if (y + salto > margenInferior) {
             doc.addPage();
             y = 10;
-            doc.setFontSize(10);
-            doc.text('Fecha', posXFecha, y);
-            doc.text('Cliente', posXCliente, y);
-            doc.text('Total', posXTotal, y);
-            doc.text('Método de Pago', posXMetodoPago, y);
-            y += 5;
         }
 
-        const fecha = row.querySelector('.fecha')?.textContent.trim() || 'N/A';
-        const cliente = row.querySelector('.cliente')?.textContent.trim() || 'N/A';
-        const total = row.querySelector('.total')?.textContent.trim() || '0.00';
-        const metodosPago = row.querySelector('.metodos-pago')?.textContent.trim() || 'N/A';
+        doc.setFontSize(10);
+        doc.text(`Total del día: ${totalDiaFormateado}`, 20, y);
+        y += 10;
 
-        y += salto;
-        doc.text(fecha, posXFecha, y);
-        doc.text(cliente, posXCliente, y);
-        doc.text(total, posXTotal, y);
-        doc.text(metodosPago, posXMetodoPago, y);
-
-        totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g, "").replace(',', '.'));
+        totalGeneral += totalDia;
     });
 
-    y += 10;
-    const totalText = 'Total General: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalGeneral);
-    const textWidth = doc.getTextWidth(totalText);
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const textX = (pageWidth - textWidth) / 2;
-    doc.text(totalText, textX, y);
+    // Imprimir total general
+    if (y + 10 > margenInferior) {
+        doc.addPage();
+        y = 10;
+    }
 
-    doc.save('detalle_ventas.pdf');
+    const totalFormateado = new Intl.NumberFormat('es-CL', {
+        style: 'currency',
+        currency: 'CLP'
+    }).format(totalGeneral);
+
+    doc.setFontSize(12);
+    doc.text(`TOTAL GENERAL DE VENTAS: ${totalFormateado}`, 14, y + 10);
+
+    doc.save('detalle_ventas_segmentado.pdf');
 });

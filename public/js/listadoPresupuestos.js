@@ -226,50 +226,88 @@ document.getElementById('btnImprimir').addEventListener('click', function () {
     const salto = 7;
     const margenInferior = 280;
 
-    doc.setFontSize(10);
-    doc.text('ID', 14, y);
-    doc.text('Fecha', 50, y);
-    doc.text('Cliente', 80, y);
-    doc.text('Total', 140, y);
-    y += 5;
+    const filas = Array.from(document.querySelectorAll('#presupuestos-table tbody tr'));
+    const datosPorDia = {};
+
+    // Agrupar por fecha
+    filas.forEach(row => {
+        const fecha = row.querySelector('.fecha')?.textContent.trim() || 'N/A';
+        if (!datosPorDia[fecha]) datosPorDia[fecha] = [];
+        datosPorDia[fecha].push({
+            id: row.querySelector('.id')?.textContent.trim() || 'N/A',
+            cliente: row.querySelector('.cliente')?.textContent.trim() || 'N/A',
+            total: row.querySelector('.total')?.textContent.trim() || '0.00'
+        });
+    });
 
     let totalGeneral = 0;
+    doc.setFontSize(11);
 
-    document.querySelectorAll('#presupuestos-table tbody tr').forEach(function (row, index) {
+    Object.entries(datosPorDia).forEach(([fecha, presupuestos]) => {
+        // Salto si no entra nuevo bloque
+        if (y + 25 > margenInferior) {
+            doc.addPage();
+            y = 10;
+        }
+
+        doc.setFontSize(13);
+        doc.text(`Presupuestos del ${fecha}`, 14, y);
+        y += 10;
+
+        doc.setFontSize(10);
+        doc.text('ID', 14, y);
+        doc.text('Cliente', 50, y);
+        doc.text('Total', 140, y);
+        y += 5;
+
+        let totalDia = 0;
+        presupuestos.forEach(p => {
+            if (y + salto > margenInferior) {
+                doc.addPage();
+                y = 10;
+            }
+
+            doc.text(p.id, 14, y);
+            doc.text(p.cliente, 50, y);
+            doc.text(p.total, 140, y);
+            totalDia += parseFloat(p.total.replace(/[^0-9,-]+/g, "").replace(',', '.'));
+            y += salto;
+        });
+
+        const totalDiaFormateado = new Intl.NumberFormat('es-CL', {
+            style: 'currency',
+            currency: 'CLP'
+        }).format(totalDia);
+
         if (y + salto > margenInferior) {
             doc.addPage();
             y = 10;
-            doc.setFontSize(10);
-            doc.text('ID', 14, y);
-            doc.text('Fecha', 50, y);
-            doc.text('Cliente', 80, y);
-            doc.text('Total', 140, y);
-            y += 5;
         }
 
-        const id = row.querySelector('.id').textContent;
-        const fecha = row.querySelector('.fecha').textContent;
-        const cliente = row.querySelector('.cliente').textContent;
-        const total = row.querySelector('.total').textContent;
+        doc.setFontSize(10);
+        doc.text(`Total del día: ${totalDiaFormateado}`, 14, y);
+        y += 10;
 
-        y += salto;
-        doc.text(id, 14, y);
-        doc.text(fecha, 50, y);
-        doc.text(cliente, 80, y);
-        doc.text(total, 140, y);
-
-        totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g, "").replace(',', '.'));
+        totalGeneral += totalDia;
     });
 
-    y += 10;
-    const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalGeneral);
-    const textWidth = doc.getTextWidth(totalText);
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const textX = (pageWidth - textWidth) / 2;
-    doc.text(totalText, textX, y);
+    // Total general
+    if (y + 10 > margenInferior) {
+        doc.addPage();
+        y = 10;
+    }
 
-    doc.save('listado_presupuestos.pdf');
+    const totalFormateado = new Intl.NumberFormat('es-CL', {
+        style: 'currency',
+        currency: 'CLP'
+    }).format(totalGeneral);
+
+    doc.setFontSize(12);
+    doc.text(`TOTAL GENERAL PRESUPUESTADO: ${totalFormateado}`, 14, y + 10);
+
+    doc.save('detalle_presupuestos_segmentado.pdf');
 });
+
 
 
 
