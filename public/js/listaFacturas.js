@@ -309,7 +309,7 @@ document.getElementById('btnImprimir').addEventListener('click', function () {
         }
 
         doc.setFontSize(10);
-        doc.text(`Total del día: ${totalDiaFormateado}`, 20, y);
+        doc.text(`Total del día: ${totalDiaFormateado}`, 140, y);
         y += 10;
 
         totalGeneral += totalDia;
