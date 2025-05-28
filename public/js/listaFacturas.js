@@ -192,6 +192,11 @@ function eliminarFactura(id) {
         });
     }
 }
+function formatearFecha(fechaISO) {
+    const [anio, mes, dia] = fechaISO.split('-');
+    return `${dia}-${mes}-${anio}`;
+}
+
 function imprimirTotalFacturas(fechaInicio, fechaFin) {
     fetch(`/productos/api/facturas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => {
@@ -216,7 +221,7 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
             doc.text('Resumen de Facturas', 14, 20);
 
             doc.setFontSize(12);
-            doc.text(`Rango de fechas: ${fechaInicio} a ${fechaFin}`, 14, 35);
+            doc.text(`Rango de fechas: ${formatearFecha(fechaInicio)} a ${formatearFecha(fechaFin)}`, 14, 35);
             doc.text(`Cantidad total de facturas: ${cantidadFacturas}`, 14, 45);
 
             const totalFormateado = new Intl.NumberFormat('es-AR', {

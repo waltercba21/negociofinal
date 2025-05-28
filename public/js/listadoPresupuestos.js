@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('El elemento con ID "btnImprimirTotal" no se encontró en el DOM.');
     }
 });
+function formatearFecha(fechaISO) {
+    const [anio, mes, dia] = fechaISO.split('-');
+    return `${dia}-${mes}-${anio}`;
+}
 
 function imprimirTotalPresupuestos(fechaInicio, fechaFin) {
     fetch(`/productos/api/presupuestos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
@@ -48,7 +52,8 @@ function imprimirTotalPresupuestos(fechaInicio, fechaFin) {
             doc.text('Resumen de Presupuestos', 14, 20);
 
             doc.setFontSize(12);
-            doc.text(`Rango de fechas: ${fechaInicio} a ${fechaFin}`, 14, 35);
+            doc.text(`Rango de fechas: ${formatearFecha(fechaInicio)} a ${formatearFecha(fechaFin)}`, 14, 35);
+
             doc.text(`Cantidad total de presupuestos: ${cantidadPresupuestos}`, 14, 45);
 
             const totalFormateado = new Intl.NumberFormat('es-AR', {
