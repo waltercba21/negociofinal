@@ -8,11 +8,9 @@ document.getElementById('invoice-form').addEventListener('keydown', function(e) 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    const esDevolucion = document.getElementById('esDevolucion')?.checked || false;
-
-    // Validar método de pago SOLO si NO es devolución
+    // Validar que al menos un método de pago esté seleccionado
     const metodosPagoSeleccionados = document.querySelector('input[name="metodosPago"]:checked');
-    if (!esDevolucion && !metodosPagoSeleccionados) {
+    if (!metodosPagoSeleccionados) {
         Swal.fire({
             title: 'Error',
             text: 'Debe seleccionar un método de pago antes de continuar.',
@@ -23,7 +21,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     }
 
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-
     const invoiceItems = [];
 
     for (let i = 0; i < filasFactura.length; i++) {
@@ -37,7 +34,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
 
-        if (!esDevolucion && cantidad > stock) {
+        if (cantidad > stock) {
             Swal.fire({
                 title: 'Stock insuficiente',
                 text: `No hay stock suficiente para el producto en la fila ${i + 1}. Tiene ${stock}, y desea facturar ${cantidad}.`,
@@ -47,12 +44,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             return;
         }
 
-        // En devolución, la cantidad va NEGATIVA
-        if (esDevolucion) cantidad *= -1;
-
         const subtotal = precio_unitario * cantidad;
 
-        if (codigo !== '' && descripcion !== '' && precio_unitario > 0 && cantidad !== 0) {
+        if (codigo !== '' && descripcion !== '' && precio_unitario > 0 && cantidad > 0) {
             invoiceItems.push({
                 producto_id: codigo,
                 descripcion,
@@ -91,15 +85,14 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 fechaPresupuesto: fechaFactura,
                 totalPresupuesto: totalFactura,
                 invoiceItems,
-                metodosPago: metodosPagoSeleccionados?.value || '',
-                esDevolucion: esDevolucion
+                metodosPago: metodosPagoSeleccionados.value
             })
         });
 
         const data = await response.json();
         if (response.ok) {
             Swal.fire({
-                title: esDevolucion ? '¡Devolución registrada!' : '¡Factura guardada!',
+                title: '¡Factura guardada!',
                 text: data.message,
                 icon: 'success',
                 confirmButtonText: 'Ir a productos'
@@ -119,9 +112,6 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
-
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
     Swal.fire({

@@ -8,7 +8,6 @@ document.getElementById('invoice-form').addEventListener('keydown', function(e) 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    const esDevolucion = document.getElementById('esDevolucion')?.checked || false;
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     const invoiceItems = [];
 
@@ -23,7 +22,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
         cantidad = !isNaN(cantidad) ? cantidad : 1;
 
-        if (!esDevolucion && cantidad > stock) {
+        if (cantidad > stock) {
             Swal.fire({
                 title: 'Stock insuficiente',
                 text: `No hay stock suficiente para el producto en la fila ${i + 1}. Tiene ${stock}, y desea presupuestar ${cantidad}.`,
@@ -33,10 +32,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
             return;
         }
 
-        if (esDevolucion) cantidad *= -1;
         const subtotal = precio_unitario * cantidad;
 
-        if (codigo !== '' && descripcion !== '' && precio_unitario > 0 && cantidad !== 0) {
+        if (codigo !== '' && descripcion !== '' && precio_unitario > 0 && cantidad > 0) {
             invoiceItems.push({
                 producto_id: codigo,
                 descripcion,
@@ -74,15 +72,14 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 nombreCliente: document.getElementById('nombre-cliente').value.trim(),
                 fechaPresupuesto: fechaFactura,
                 totalPresupuesto: totalFactura,
-                invoiceItems,
-                esDevolucion: esDevolucion
+                invoiceItems
             })
         });
 
         const data = await response.json();
         if (response.ok) {
             Swal.fire({
-                title: esDevolucion ? '¡Devolución registrada!' : '¡Presupuesto guardado!',
+                title: '¡Presupuesto guardado!',
                 text: data.message,
                 icon: 'success',
                 confirmButtonText: 'Ir a productos'
@@ -102,6 +99,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 
 
 document.addEventListener('DOMContentLoaded', () => {

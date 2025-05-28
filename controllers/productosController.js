@@ -1192,8 +1192,9 @@ procesarFormulario: async (req, res) => {
   console.log("🔍 Datos recibidos en el servidor:", req.body);
 
   try {
-      const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, esDevolucion } = req.body;
+      const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
       const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
+
       const fechaHoraActual = new Date();
       const creadoEn = fechaHoraActual.toISOString().slice(0, 19).replace('T', ' ');
 
@@ -1201,20 +1202,15 @@ procesarFormulario: async (req, res) => {
           nombre_cliente: nombreCliente,
           fecha: fechaPresupuesto,
           total: totalLimpio,
-          creado_en: creadoEn,
-          es_devolucion: esDevolucion ? 1 : 0 // si lo vas a guardar en DB
+          creado_en: creadoEn 
       };
 
       const presupuestoId = await producto.guardarPresupuesto(presupuesto);
 
       const items = await Promise.all(invoiceItems.map(async item => {
           const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
-          
-          if (!producto_id) {
-              throw new Error(`Producto con código ${item.producto_id} y descripción ${item.descripcion} no encontrado.`);
-          }
 
-          await producto.ajustarStockPorOperacion(producto_id, item.cantidad); // cantidad puede ser negativa o positiva
+          await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
 
           return [
               presupuestoId,
@@ -1226,7 +1222,7 @@ procesarFormulario: async (req, res) => {
       }));
 
       await producto.guardarItemsPresupuesto(items);
-      res.status(200).json({ message: esDevolucion ? 'DEVOLUCIÓN GUARDADA CORRECTAMENTE' : 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
+      res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
 
   } catch (error) {
       console.error('Error al guardar el presupuesto:', error);
@@ -1235,9 +1231,10 @@ procesarFormulario: async (req, res) => {
 },
 procesarFormularioFacturas: async (req, res) => {
     try {
-        const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago, esDevolucion } = req.body;
+        const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
         const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
         const metodosPagoString = Array.isArray(metodosPago) ? metodosPago.join(', ') : metodosPago;
+
         const fechaHoraActual = new Date();
         const creadoEn = fechaHoraActual.toISOString().slice(0, 19).replace('T', ' ');
 
@@ -1246,8 +1243,7 @@ procesarFormularioFacturas: async (req, res) => {
             fecha: fechaPresupuesto,
             total: totalLimpio,
             metodos_pago: metodosPagoString,
-            creado_en: creadoEn,
-            es_devolucion: esDevolucion ? 1 : 0 // si tenés este campo en DB
+            creado_en: creadoEn
         };
 
         const facturaId = await producto.guardarFactura(factura);
@@ -1263,7 +1259,7 @@ procesarFormularioFacturas: async (req, res) => {
                 throw new Error(`Producto con ID ${item.producto_id} y descripción ${item.descripcion} no encontrado.`);
             }
 
-            await producto.ajustarStockPorOperacion(producto_id, item.cantidad); // puede ser negativo o positivo
+            await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
 
             return [
                 facturaId,
@@ -1276,7 +1272,8 @@ procesarFormularioFacturas: async (req, res) => {
 
         await producto.guardarItemsFactura(items);
 
-        res.status(200).json({ message: esDevolucion ? 'DEVOLUCIÓN GUARDADA CORRECTAMENTE' : 'FACTURA GUARDADA CORRECTAMENTE' });
+        res.status(200).json({ message: 'FACTURA GUARDADA CORRECTAMENTE' });
+
     } catch (error) {
         console.error('Error al guardar la factura:', error);
         res.status(500).json({ error: 'Error al guardar la factura: ' + error.message });
