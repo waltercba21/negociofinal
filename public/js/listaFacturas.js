@@ -243,55 +243,61 @@ function imprimirTotalFacturas(fechaInicio, fechaFin) {
             });
         });
 }
-
-
-
-document.getElementById('btnImprimir').addEventListener('click', function() {
+document.getElementById('btnImprimir').addEventListener('click', function () {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    let y = 10; 
+    let y = 10;
+    const salto = 7;
+    const margenInferior = 280;
+
     doc.setFontSize(10);
 
-    const posXFecha = 20;       
-    const posXCliente = 70;     
-    const posXTotal = 120;      
-    const posXMetodoPago = 160; 
+    const posXFecha = 20;
+    const posXCliente = 70;
+    const posXTotal = 120;
+    const posXMetodoPago = 160;
 
-    // Títulos de las columnas
+    // Encabezados
     doc.text('Fecha', posXFecha, y);
     doc.text('Cliente', posXCliente, y);
     doc.text('Total', posXTotal, y);
-    doc.text('Método de Pago', posXMetodoPago, y); // Nueva columna para el método de pago
+    doc.text('Método de Pago', posXMetodoPago, y);
     y += 5;
 
     let totalGeneral = 0;
 
-    // Iterar sobre las filas de la tabla de facturas
-    document.querySelectorAll('#facturas-table tbody tr').forEach(function(row) {
-        const fecha = row.querySelector('.fecha') ? row.querySelector('.fecha').textContent.trim() : 'N/A';
-        const cliente = row.querySelector('.cliente') ? row.querySelector('.cliente').textContent.trim() : 'N/A';
-        const total = row.querySelector('.total') ? row.querySelector('.total').textContent.trim() : '0.00';
-        const metodosPago = row.querySelector('.metodos-pago') ? row.querySelector('.metodos-pago').textContent.trim() : 'N/A'; // Obtener el método de pago
+    document.querySelectorAll('#facturas-table tbody tr').forEach(function (row, index) {
+        if (y + salto > margenInferior) {
+            doc.addPage();
+            y = 10;
+            doc.setFontSize(10);
+            doc.text('Fecha', posXFecha, y);
+            doc.text('Cliente', posXCliente, y);
+            doc.text('Total', posXTotal, y);
+            doc.text('Método de Pago', posXMetodoPago, y);
+            y += 5;
+        }
 
-        console.log(`Fecha: ${fecha}, Cliente: ${cliente}, Total: ${total}, Método de Pago: ${metodosPago}`); // Para depuración
+        const fecha = row.querySelector('.fecha')?.textContent.trim() || 'N/A';
+        const cliente = row.querySelector('.cliente')?.textContent.trim() || 'N/A';
+        const total = row.querySelector('.total')?.textContent.trim() || '0.00';
+        const metodosPago = row.querySelector('.metodos-pago')?.textContent.trim() || 'N/A';
 
-        y += 7;
-        doc.text(fecha, posXFecha, y); 
+        y += salto;
+        doc.text(fecha, posXFecha, y);
         doc.text(cliente, posXCliente, y);
         doc.text(total, posXTotal, y);
         doc.text(metodosPago, posXMetodoPago, y);
 
-        // Sumar al total general
         totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g, "").replace(',', '.'));
     });
 
-    y += 10; 
+    y += 10;
     const totalText = 'Total General: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalGeneral);
     const textWidth = doc.getTextWidth(totalText);
     const pageWidth = doc.internal.pageSize.getWidth();
-    const textX = (pageWidth / 2) + (pageWidth / 4) - (textWidth / 2); 
+    const textX = (pageWidth - textWidth) / 2;
     doc.text(totalText, textX, y);
 
-    // Guardar el PDF
     doc.save('detalle_ventas.pdf');
 });

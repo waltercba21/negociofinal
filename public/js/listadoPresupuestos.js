@@ -219,38 +219,58 @@ function eliminarPresupuesto(id) {
         });
     }
 }
-
-document.getElementById('btnImprimir').addEventListener('click', function() {
+document.getElementById('btnImprimir').addEventListener('click', function () {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    let y = 10; 
+    let y = 10;
+    const salto = 7;
+    const margenInferior = 280;
+
     doc.setFontSize(10);
     doc.text('ID', 14, y);
     doc.text('Fecha', 50, y);
     doc.text('Cliente', 80, y);
     doc.text('Total', 140, y);
     y += 5;
+
     let totalGeneral = 0;
-    document.querySelectorAll('#presupuestos-table tbody tr').forEach(function(row) {
+
+    document.querySelectorAll('#presupuestos-table tbody tr').forEach(function (row, index) {
+        if (y + salto > margenInferior) {
+            doc.addPage();
+            y = 10;
+            doc.setFontSize(10);
+            doc.text('ID', 14, y);
+            doc.text('Fecha', 50, y);
+            doc.text('Cliente', 80, y);
+            doc.text('Total', 140, y);
+            y += 5;
+        }
+
         const id = row.querySelector('.id').textContent;
         const fecha = row.querySelector('.fecha').textContent;
         const cliente = row.querySelector('.cliente').textContent;
         const total = row.querySelector('.total').textContent;
-        y += 7;
+
+        y += salto;
         doc.text(id, 14, y);
-        doc.text(fecha, 50, y); 
+        doc.text(fecha, 50, y);
         doc.text(cliente, 80, y);
         doc.text(total, 140, y);
-        totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g,"").replace(',', '.'));
+
+        totalGeneral += parseFloat(total.replace(/[^0-9,-]+/g, "").replace(',', '.'));
     });
-    y += 10; 
+
+    y += 10;
     const totalText = 'Total: ' + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalGeneral);
     const textWidth = doc.getTextWidth(totalText);
     const pageWidth = doc.internal.pageSize.getWidth();
-    const textX = (pageWidth / 2) + (pageWidth / 4) - (textWidth / 2); 
+    const textX = (pageWidth - textWidth) / 2;
     doc.text(totalText, textX, y);
+
     doc.save('listado_presupuestos.pdf');
 });
+
 
 
 
