@@ -1,77 +1,53 @@
-<!-- Vista estilizada de Pedido Manual -->
 <%- include('./layouts/head.ejs') %>
 <%- include('./layouts/header.ejs') %>
-<body>
- <main>
-    <div class="container mt-4 historial-pedidos-container">
-        <!-- 🏷️ Título -->
-        <div class="container mt-4 historial-pedidos-container">
-            <!-- 🏷️ Título -->
-            <div class="titulo-historial">
-              <h2 class="titulo-historial-texto">📦 Historial de Pedidos</h2>
-            </div>
-          
-            <!-- 🔍 Filtros -->
-            <form method="GET" action="/productos/historialPedidos" class="formulario-filtros-historial">
-              <div class="filtros-historial-row">
-                <div class="filtro-fecha">
-                  <label for="fechaDesde">Fecha Desde</label>
-                  <input type="date" name="fechaDesde" id="fechaDesde" class="input-fecha" value="<%= fechaDesde || '' %>">
-                </div>
-                <div class="filtro-fecha">
-                  <label for="fechaHasta">Fecha Hasta</label>
-                  <input type="date" name="fechaHasta" id="fechaHasta" class="input-fecha" value="<%= fechaHasta || '' %>">
-                </div>
-                <div class="filtro-proveedor">
-                  <label for="proveedor">Proveedor</label>
-                  <select name="proveedor" id="proveedor" class="select-proveedor">
-                    <option value="">Todos</option>
-                    <% proveedores.forEach(p => { %>
-                      <option value="<%= p.id %>" <%= proveedorSeleccionado == p.id ? 'selected' : '' %>><%= p.nombre %></option>
-                    <% }) %>
-                  </select>
-                </div>
-                <div class="filtro-boton">
-                  <button type="submit" class="btn-filtrar">Filtrar</button>
-                </div>
-              </div>
-            </form>
-          
-      
-        <!-- 📋 Resultados -->
-        <% if (historial.length === 0) { %>
-          <p class="mensaje-sin-resultados">No hay pedidos registrados con los filtros seleccionados.</p>
-        <% } else { %>
-          <table class="tabla-historial">
-            <thead>
-              <tr>
-                <th># Pedido</th>
-                <th>Fecha</th>
-                <th>Proveedor</th>
-                <th>Total</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% historial.forEach(pedido => { %>
-                <tr>
-                  <td><%= pedido.pedido_id %></td>
-                  <td><%= new Date(pedido.fecha).toLocaleDateString('es-AR') %></td>
-                  <td><%= pedido.proveedor %></td>
-                  <td>$<%= Number(pedido.total).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
-                  <td>
-                    <a href="/productos/verPedido/<%= pedido.pedido_id %>" class="btn-ver-detalle">Ver detalle</a>
-                  </td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        <% } %>
-      </div>
-      
-      
-      
- </main>
 
-  </script><%- include('./layouts/footer.ejs') %>
-</body>
+<main class="container mt-4">
+  <h2>Historial de Pedidos</h2>
+
+  <form method="get" class="mb-3 d-flex gap-2">
+    <label for="fechaDesde">Desde:</label>
+    <input type="date" name="fechaDesde" id="fechaDesde" value="<%= fechaDesde || '' %>">
+
+    <label for="fechaHasta">Hasta:</label>
+    <input type="date" name="fechaHasta" id="fechaHasta" value="<%= fechaHasta || '' %>">
+
+    <label for="proveedor">Proveedor:</label>
+    <select name="proveedor" id="proveedor">
+      <option value="">Todos</option>
+      <% proveedores.forEach(p => { %>
+        <option value="<%= p.id %>" <%= proveedorSeleccionado == p.id ? 'selected' : '' %>><%= p.nombre %></option>
+      <% }) %>
+    </select>
+
+    <button class="btn btn-primary">Filtrar</button>
+  </form>
+
+  <% if (historial.length === 0) { %>
+    <p>No hay pedidos que coincidan con los filtros.</p>
+  <% } else { %>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Proveedor</th>
+          <th>Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% historial.forEach(pedido => { %>
+          <tr>
+            <td><%= new Date(pedido.fecha).toLocaleDateString() %></td>
+            <td><%= pedido.proveedor %></td>
+            <td>$<%= Number(pedido.total).toLocaleString('es-AR') %></td>
+            <td>
+              <a href="/productos/verPedido/<%= pedido.pedido_id %>" class="btn btn-sm btn-info">Ver Detalle</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</main>
+
+<%- include('./layouts/footer.ejs') %>
