@@ -2139,11 +2139,33 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
         resolve(rows);
       });
     });
+  },
+ eliminarPedido: async function (conexion, pedidoId) {
+  const conn = await conexion.promise().getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // 1️⃣ Eliminar los items del pedido
+    await conn.query(
+      `DELETE FROM pedido_items WHERE pedido_id = ?`,
+      [pedidoId]
+    );
+
+    // 2️⃣ Eliminar el pedido
+    const [result] = await conn.query(
+      `DELETE FROM pedidos WHERE id = ?`,
+      [pedidoId]
+    );
+
+    await conn.commit();
+    return result.affectedRows;
+  } catch (error) {
+    await conn.rollback();
+    console.error('❌ Error al eliminar el pedido:', error);
+    throw error;
+  } finally {
+    conn.release();
   }
-  
-  
-  
-  
-  
-  
+},
+
 }

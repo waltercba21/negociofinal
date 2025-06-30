@@ -1705,7 +1705,19 @@ verPedido: async (req, res) => {
     console.error("Error al obtener detalle del pedido:", error);
     res.status(500).send("Error al cargar detalle del pedido");
   }
-}
+},
+eliminarPedido: async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const affectedRows = await producto.eliminarPedido(conexion, id);
+    res.json({ message: 'Pedido eliminado correctamente', affectedRows });
+  } catch (error) {
+    console.error('❌ Error al eliminar pedido:', error);
+    res.status(500).json({ message: 'Error al eliminar el pedido: ' + error.message });
+  }
+},
+
 
 
 

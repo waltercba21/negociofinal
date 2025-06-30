@@ -43,6 +43,13 @@
             <td>
               <a href="/productos/verPedido/<%= pedido.pedido_id %>" class="btn btn-sm btn-info">Ver Detalle</a>
             </td>
+            <td>
+  <a href="/productos/verPedido/<%= pedido.pedido_id %>" class="btn btn-sm btn-info">Ver Detalle</a>
+  <button class="btn btn-sm btn-danger btn-eliminar-pedido" data-id="<%= pedido.pedido_id %>">Eliminar</button>
+</td>
+
+
+
           </tr>
         <% }) %>
       </tbody>
@@ -51,3 +58,33 @@
 </main>
 
 <%- include('./layouts/footer.ejs') %>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const botonesEliminar = document.querySelectorAll('.btn-eliminar-pedido');
+
+  botonesEliminar.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+
+      if (confirm('¿Estás seguro de que quieres eliminar este pedido? Esta acción no se puede deshacer.')) {
+        fetch(`/productos/eliminarPedido/${id}`, {
+          method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.affectedRows > 0) {
+            alert('Pedido eliminado correctamente');
+            location.reload();
+          } else {
+            alert('No se pudo eliminar el pedido');
+          }
+        })
+        .catch(err => {
+          console.error('Error al eliminar el pedido:', err);
+          alert('Error al eliminar el pedido');
+        });
+      }
+    });
+  });
+});
+</script>
