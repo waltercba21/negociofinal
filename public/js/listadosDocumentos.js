@@ -13,44 +13,45 @@ document.addEventListener('DOMContentLoaded', () => {
   let paginaActual = 1;
   const tarjetasPorPagina = 6;
 
-  btnBuscar.addEventListener('click', async () => {
-    const proveedor = document.getElementById('filtroProveedor').value;
-    const tipo = document.getElementById('filtroTipo').value;
-    const fechaDesde = document.getElementById('filtroFechaDesde').value;
-    const fechaHasta = document.getElementById('filtroFechaHasta').value;
-    const condicion = document.getElementById('filtroCondicion').value;
-    const numero = document.getElementById('filtroNumero').value;
+btnBuscar.addEventListener('click', async () => {
+  const proveedor = document.getElementById('filtroProveedor').value;
+  const tipo = document.getElementById('filtroTipo').value;
+  const fechaDesde = document.getElementById('filtroFechaDesde').value;
+  const fechaHasta = document.getElementById('filtroFechaHasta').value;
+  const condicion = document.getElementById('filtroCondicion').value;
+  const numero = document.getElementById('filtroNumero').value;
 
-    try {
-      const query = new URLSearchParams({
-        proveedor,
-        tipo,
-        fechaDesde,
-        fechaHasta,
-        condicion,
-        numero
-      });
+  // ✅ Primero validamos antes de todo
+  if (numero && !tipo) {
+    Swal.fire('Atención', 'Si vas a buscar por número, debés seleccionar el tipo de documento.', 'warning');
+    return;
+  }
 
-      const res = await fetch(`/administracion/api/documentos?${query.toString()}`);
-      if (!res.ok || res.headers.get("content-type")?.includes("text/html")) {
-        throw new Error("Respuesta inválida del servidor");
-      }
+  try {
+    const query = new URLSearchParams({
+      proveedor,
+      tipo,
+      fechaDesde,
+      fechaHasta,
+      condicion,
+      numero
+    });
 
-      const datos = await res.json();
-      datosFiltrados = datos;
-      paginaActual = 1;
-      renderizarPagina(paginaActual);
-      modal.show();
-    } catch (err) {
-      console.error('❌ Error al buscar documentos:', err);
-      Swal.fire('Error', 'Ocurrió un error al buscar los documentos.', 'error');
+    const res = await fetch(`/administracion/api/documentos?${query.toString()}`);
+    if (!res.ok || res.headers.get("content-type")?.includes("text/html")) {
+      throw new Error("Respuesta inválida del servidor");
     }
 
-    if (numero && !tipo) {
-  Swal.fire('Atención', 'Si vas a buscar por número, debés seleccionar el tipo de documento.', 'warning');
-  return;
-}
-  });
+    const datos = await res.json();
+    datosFiltrados = datos;
+    paginaActual = 1;
+    renderizarPagina(paginaActual);
+    modal.show();
+  } catch (err) {
+    console.error('❌ Error al buscar documentos:', err);
+    Swal.fire('Error', 'Ocurrió un error al buscar los documentos.', 'error');
+  }
+});
 
   function renderizarPagina(pagina) {
     contenedorResultados.innerHTML = '';
