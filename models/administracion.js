@@ -506,9 +506,9 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
         f.fecha_pago,
         f.condicion,
         f.importe_factura AS importe,
-        p.nombre AS nombre_proveedor
+        COALESCE(p.nombre, 'SIN PROVEEDOR') AS nombre_proveedor
       FROM facturas f
-      JOIN proveedores p ON p.id = f.id_proveedor
+      LEFT JOIN proveedores p ON p.id = f.id_proveedor
       ${whereFactura}
     `);
   }
@@ -523,9 +523,9 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
         pz.fecha_pago,
         pz.condicion,
         pz.importe AS importe,
-        pr.nombre AS nombre_proveedor
+        COALESCE(pr.nombre, 'SIN PROVEEDOR') AS nombre_proveedor
       FROM presupuestos pz
-      JOIN proveedores pr ON pr.id = pz.id_proveedor
+      LEFT JOIN proveedores pr ON pr.id = pz.id_proveedor
       ${wherePresupuesto}
     `);
   }
