@@ -45,6 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('❌ Error al buscar documentos:', err);
       Swal.fire('Error', 'Ocurrió un error al buscar los documentos.', 'error');
     }
+
+    if (numero && !tipo) {
+  Swal.fire('Atención', 'Si vas a buscar por número, debés seleccionar el tipo de documento.', 'warning');
+  return;
+}
   });
 
   function renderizarPagina(pagina) {

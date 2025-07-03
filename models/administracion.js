@@ -496,45 +496,45 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
 
   const consultas = [];
 
-  consultas.push(`
-    SELECT 
-      'factura' AS tipo,
-      f.id,
-      f.numero_factura AS numero,
-      f.fecha,
-      f.fecha_pago,
-      f.condicion,
-      f.importe_factura AS importe,
-      p.nombre AS nombre_proveedor
-    FROM facturas f
-    JOIN proveedores p ON p.id = f.id_proveedor
-    ${whereFactura}
-  `);
+  if (!tipo || tipo === 'factura') {
+    consultas.push(`
+      SELECT 
+        'factura' AS tipo,
+        f.id,
+        f.numero_factura AS numero,
+        f.fecha,
+        f.fecha_pago,
+        f.condicion,
+        f.importe_factura AS importe,
+        p.nombre AS nombre_proveedor
+      FROM facturas f
+      JOIN proveedores p ON p.id = f.id_proveedor
+      ${whereFactura}
+    `);
+  }
 
-  consultas.push(`
-    SELECT 
-      'presupuesto' AS tipo,
-      pz.id,
-      pz.numero_presupuesto AS numero,
-      pz.fecha,
-      pz.fecha_pago,
-      pz.condicion,
-      pz.importe AS importe,
-      pr.nombre AS nombre_proveedor
-    FROM presupuestos pz
-    JOIN proveedores pr ON pr.id = pz.id_proveedor
-    ${wherePresupuesto}
-  `);
+  if (!tipo || tipo === 'presupuesto') {
+    consultas.push(`
+      SELECT 
+        'presupuesto' AS tipo,
+        pz.id,
+        pz.numero_presupuesto AS numero,
+        pz.fecha,
+        pz.fecha_pago,
+        pz.condicion,
+        pz.importe AS importe,
+        pr.nombre AS nombre_proveedor
+      FROM presupuestos pz
+      JOIN proveedores pr ON pr.id = pz.id_proveedor
+      ${wherePresupuesto}
+    `);
+  }
 
-  const sqlFinal = `
-    (${consultas[0]})
-    UNION ALL
-    (${consultas[1]})
-    ORDER BY fecha_pago ASC
-  `;
+  const sqlFinal = consultas.join(' UNION ALL ') + ' ORDER BY fecha_pago ASC';
 
   pool.query(sqlFinal, callback);
 },
+
 getFacturasEntreFechas: function(desde, hasta, proveedorId, condicion, callback) {
   let sql = `
     SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor
