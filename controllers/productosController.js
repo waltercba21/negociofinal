@@ -1492,66 +1492,57 @@ actualizarPreciosExcel: async (req, res) => {
   function normalizarClave(texto) {
     return texto
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // eliminar tildes
-      .replace(/\s+/g, '')             // eliminar espacios
-      .toLowerCase();                  // minúsculas
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, '')
+      .toLowerCase();
   }
 
-function limpiarPrecio(valor) {
-  if (!valor) return 0;
+  function limpiarPrecio(valor) {
+    if (!valor) return 0;
+    let original = valor.toString().trim();
 
-  let original = valor.toString().trim();
-
-  // Si es un número real (viene como número desde Excel), lo devolvemos directo
-  if (typeof valor === 'number') {
-    return Math.round(valor * 100) / 100;
-  }
-
-  // Elimina $ y espacios
-  original = original.replace(/\$/g, '').replace(/\s+/g, '');
-
-  // Si tiene tanto punto como coma (ej. 1.234,56), asumimos formato latino
-  if (original.includes('.') && original.includes(',')) {
-    original = original.replace(/\./g, '').replace(',', '.');
-  }
-  // Si tiene solo coma (ej. 7261,25), cambiamos a punto
-  else if (original.includes(',') && !original.includes('.')) {
-    original = original.replace(',', '.');
-  }
-  // Si tiene solo punto, lo dejamos (asumimos que es decimal correctamente formateado)
-
-  // Truncar si tiene más de 2 decimales
-  if (original.includes('.')) {
-    const [entero, decimal] = original.split('.');
-    if (decimal.length > 2) {
-      original = `${entero}.${decimal.substring(0, 2)}`;
+    if (typeof valor === 'number') {
+      return Math.round(valor * 100) / 100;
     }
+
+    original = original.replace(/\$/g, '').replace(/\s+/g, '');
+
+    if (original.includes('.') && original.includes(',')) {
+      original = original.replace(/\./g, '').replace(',', '.');
+    } else if (original.includes(',') && !original.includes('.')) {
+      original = original.replace(',', '.');
+    }
+
+    if (original.includes('.')) {
+      const [entero, decimal] = original.split('.');
+      if (decimal.length > 2) {
+        original = `${entero}.${decimal.substring(0, 2)}`;
+      }
+    }
+
+    const numero = parseFloat(original);
+
+    if (numero > 100000) {
+      console.warn(`⚠️ Valor posiblemente mal interpretado: ${valor} → ${numero}`);
+    }
+
+    return numero;
   }
-
-  const numero = parseFloat(original);
-
-  // Si el número es anormalmente grande, alertar
-  if (numero > 100000) {
-    console.warn(`⚠️ Valor posiblemente mal interpretado: ${valor} → ${numero}`);
-  }
-
-  return numero;
-}
-
 
   try {
     const proveedor_id = req.body.proveedor;
     const file = req.files[0];
-    const productosActualizados = [];
+    let productosActualizados = [];
 
-    if (!proveedor_id || !file) return res.status(400).send('Proveedor y archivo son requeridos.');
+    if (!proveedor_id || !file) {
+      return res.status(400).send('Proveedor y archivo son requeridos.');
+    }
 
     const workbook = xlsx.readFile(file.path);
     const sheet_name_list = workbook.SheetNames;
 
     for (const sheet_name of sheet_name_list) {
       const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
-
       console.log(`📄 Hoja detectada: "${sheet_name}" con ${data.length} filas`);
 
       for (const row of data) {
@@ -1606,6 +1597,16 @@ function limpiarPrecio(valor) {
       }
     }
 
+    // ✅ Eliminar duplicados por código
+    productosActualizados = productosActualizados.filter(
+      (value, index, self) =>
+        index === self.findIndex(t => t.codigo === value.codigo)
+    );
+
+    // ✅ Mostrar en consola el resultado final
+    console.log("✅ Productos actualizados sin duplicados:");
+    console.log(JSON.stringify(productosActualizados, null, 2));
+
     fs.unlinkSync(file.path);
     res.render('productosActualizados', { productos: productosActualizados });
 
@@ -1614,6 +1615,7 @@ function limpiarPrecio(valor) {
     res.status(500).send(error.message);
   }
 },
+
 
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
