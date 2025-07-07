@@ -1541,12 +1541,11 @@ actualizarPreciosExcel: async (req, res) => {
     const workbook = xlsx.readFile(file.path);
     const sheet_name_list = workbook.SheetNames;
 
-    // ✅ Set para rastrear qué códigos ya procesaste
     const codigosProcesados = new Set();
 
     for (const sheet_name of sheet_name_list) {
       const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
-      console.log(`📄 Hoja detectada: "${sheet_name}" con ${data.length} filas`);
+      console.log(`📄 Hoja: "${sheet_name}" con ${data.length} filas`);
 
       for (const row of data) {
         const claves = Object.keys(row);
@@ -1554,7 +1553,7 @@ actualizarPreciosExcel: async (req, res) => {
         const precioColumn = claves.find(key => normalizarClave(key).includes('precio'));
 
         if (!codigoColumn || !precioColumn) {
-          console.warn(`⚠️ No se detectó columna válida de código o precio en hoja "${sheet_name}"`);
+          console.warn(`⚠️ No se detectó columna válida de código o precio`);
           continue;
         }
 
@@ -1571,15 +1570,15 @@ actualizarPreciosExcel: async (req, res) => {
           continue;
         }
 
-        // ✅ Si el código ya fue procesado en este bucle, se salta
+        // ✅ Si el código ya se procesó, se salta
         if (codigosProcesados.has(codigo)) {
-          console.log(`🔁 Código ${codigo} ya procesado, se omite.`);
+          console.log(`🔁 Código ${codigo} ya procesado en este lote, se omite.`);
           continue;
         }
 
-        // ✅ Marcar como procesado
         codigosProcesados.add(codigo);
 
+        // Precio anterior
         const precioAnterior = await new Promise(resolve => {
           const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
           conexion.query(sql, [proveedor_id, codigo], (err, resQuery) => {
@@ -1590,11 +1589,18 @@ actualizarPreciosExcel: async (req, res) => {
 
         const mismoPrecio = Math.abs(precio - precioAnterior) < 0.01;
 
+        // Log antes de actualizar
+        console.log(`➡️ Actualizando precio: código=${codigo}, precio=${precio}, precioAnterior=${precioAnterior}`);
+
         const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
+
         if (!Array.isArray(resultado)) {
           console.warn(`❌ No se pudo actualizar el producto con código ${codigo}`);
           continue;
         }
+
+        console.log(`✅ Resultado de actualizarPreciosPDF para ${codigo}:`);
+        console.log(JSON.stringify(resultado, null, 2));
 
         resultado.forEach(p => {
           productosActualizados.push({
@@ -1609,13 +1615,16 @@ actualizarPreciosExcel: async (req, res) => {
       }
     }
 
-    // ✅ Eliminar duplicados en el array final por código
+    // ✅ Eliminamos duplicados por combinación de codigo y precio_lista_nuevo
     productosActualizados = productosActualizados.filter(
       (value, index, self) =>
-        index === self.findIndex(t => t.codigo === value.codigo)
+        index === self.findIndex(t =>
+          t.codigo === value.codigo &&
+          t.precio_lista_nuevo === value.precio_lista_nuevo
+        )
     );
 
-    console.log("✅ Productos actualizados sin duplicados:");
+    console.log("✅ Lista final de productos actualizados:");
     console.log(JSON.stringify(productosActualizados, null, 2));
 
     fs.unlinkSync(file.path);
