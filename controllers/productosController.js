@@ -1102,20 +1102,31 @@ generarPDFProveedor: async function (req, res) {
       productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
     }
 
+    // ✅ Mostrar en consola qué productos obtuviste
+    console.log("✅ Productos obtenidos antes de filtrar duplicados:");
+    console.log(JSON.stringify(productos, null, 2));
+
+    // ✅ Filtrar duplicados por ID
+    productos = productos.filter(
+      (value, index, self) =>
+        index === self.findIndex((t) => t.id === value.id)
+    );
+
+    console.log("✅ Productos después de eliminar duplicados:");
+    console.log(JSON.stringify(productos, null, 2));
+
     // Si no hay productos
     if (!productos.length) {
       doc.moveDown().fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
     } else if (tipo === 'porCategoria') {
-      // ✅ DISEÑO CORREGIDO PARA tipo "porCategoria"
+      // Diseño del encabezado
       doc.moveDown(2);
-      // Encabezado alineado en una sola línea
-doc.fontSize(9).fillColor('black');
-const headerY = doc.y;
-doc.text('Código', 40, headerY, { width: 100 });
-doc.text('Descripción', 150, headerY, { width: 300 });
-doc.text('Stock Actual', 460, headerY, { width: 100 });
-doc.moveDown(1);
-
+      doc.fontSize(9).fillColor('black');
+      const headerY = doc.y;
+      doc.text('Código', 40, headerY, { width: 100 });
+      doc.text('Descripción', 150, headerY, { width: 300 });
+      doc.text('Stock Actual', 460, headerY, { width: 100 });
+      doc.moveDown(1);
 
       productos.forEach(prod => {
         if (doc.y + 15 > doc.page.height - doc.page.margins.bottom) {
@@ -1149,10 +1160,10 @@ doc.moveDown(1);
           }
 
           doc.fontSize(7)
-            .text(producto.codigo_proveedor, 40, currentY, { align: 'left', width: 60 })
+            .text(producto.codigo_proveedor || '-', 40, currentY, { align: 'left', width: 60 })
             .text(producto.nombre, 105, currentY, { align: 'left', width: 310 })
-            .text(producto.stock_minimo || '0', 420, currentY, { align: 'center', width: 80 })
-            .text(producto.stock_actual || 'Sin Stock', 500, currentY, { align: 'center', width: 80 });
+            .text(producto.stock_minimo?.toString() || '0', 420, currentY, { align: 'center', width: 80 })
+            .text(producto.stock_actual?.toString() || 'Sin Stock', 500, currentY, { align: 'center', width: 80 });
           doc.moveDown(1);
         }
       });
@@ -1171,6 +1182,7 @@ doc.moveDown(1);
     res.send(pdfData);
   });
 },
+
 presupuestoMostrador: async function(req, res) {
     try {
       const siguienteID = await producto.obtenerSiguienteID();
