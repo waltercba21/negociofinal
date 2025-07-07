@@ -1541,6 +1541,9 @@ actualizarPreciosExcel: async (req, res) => {
     const workbook = xlsx.readFile(file.path);
     const sheet_name_list = workbook.SheetNames;
 
+    // ✅ Set para rastrear qué códigos ya procesaste
+    const codigosProcesados = new Set();
+
     for (const sheet_name of sheet_name_list) {
       const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
       console.log(`📄 Hoja detectada: "${sheet_name}" con ${data.length} filas`);
@@ -1567,6 +1570,15 @@ actualizarPreciosExcel: async (req, res) => {
           console.warn(`⚠️ Código o precio inválido: código="${codigo}", precio="${precio}"`);
           continue;
         }
+
+        // ✅ Si el código ya fue procesado en este bucle, se salta
+        if (codigosProcesados.has(codigo)) {
+          console.log(`🔁 Código ${codigo} ya procesado, se omite.`);
+          continue;
+        }
+
+        // ✅ Marcar como procesado
+        codigosProcesados.add(codigo);
 
         const precioAnterior = await new Promise(resolve => {
           const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
@@ -1597,13 +1609,12 @@ actualizarPreciosExcel: async (req, res) => {
       }
     }
 
-    // ✅ Eliminar duplicados por código
+    // ✅ Eliminar duplicados en el array final por código
     productosActualizados = productosActualizados.filter(
       (value, index, self) =>
         index === self.findIndex(t => t.codigo === value.codigo)
     );
 
-    // ✅ Mostrar en consola el resultado final
     console.log("✅ Productos actualizados sin duplicados:");
     console.log(JSON.stringify(productosActualizados, null, 2));
 
