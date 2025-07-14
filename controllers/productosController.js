@@ -1080,6 +1080,9 @@ generarPDFProveedor: async function (req, res) {
       case 'porCategoria':
         titulo = `Listado de Productos por Categoría - ${nombreCategoria}`;
         break;
+      case 'categoriaProveedorMasBarato':
+        titulo = `Listado por Categoría - Proveedor Más Barato - ${nombreProveedor} - ${nombreCategoria}`;
+        break;
       default:
         titulo = `Listado de Stock - ${nombreProveedor} - ${nombreCategoria}`;
     }
@@ -1098,6 +1101,8 @@ generarPDFProveedor: async function (req, res) {
       productos = await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId);
     } else if (tipo === 'porCategoria') {
       productos = await producto.obtenerProductosPorCategoria(conexion, categoriaId);
+    } else if (tipo === 'categoriaProveedorMasBarato') {
+      productos = await producto.obtenerProductosPorCategoriaYProveedorMasBarato(conexion, proveedorId, categoriaId);
     } else {
       productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
     }
@@ -1118,8 +1123,8 @@ generarPDFProveedor: async function (req, res) {
     // Si no hay productos
     if (!productos.length) {
       doc.moveDown().fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
-    } else if (tipo === 'porCategoria') {
-      // Diseño del encabezado
+    } else if (tipo === 'porCategoria' || tipo === 'categoriaProveedorMasBarato') {
+      // Diseño del encabezado simple
       doc.moveDown(2);
       doc.fontSize(9).fillColor('black');
       const headerY = doc.y;
@@ -1182,6 +1187,7 @@ generarPDFProveedor: async function (req, res) {
     res.send(pdfData);
   });
 },
+
 
 presupuestoMostrador: async function(req, res) {
     try {
@@ -1635,8 +1641,6 @@ actualizarPreciosExcel: async (req, res) => {
     res.status(500).send(error.message);
   }
 },
-
-
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
@@ -1751,8 +1755,5 @@ eliminarPedido: async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar el pedido: ' + error.message });
   }
 },
-
-
-
 
 } 

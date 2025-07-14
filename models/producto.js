@@ -2167,5 +2167,37 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
     conn.release();
   }
 },
+obtenerProductosPorCategoriaYProveedorMasBarato: async function (conexion, proveedorId, categoriaId) {
+  try {
+    const query = `
+      SELECT 
+        p.id,
+        p.nombre,
+        pp.codigo AS codigo_proveedor,
+        p.stock_minimo,
+        p.stock_actual
+      FROM productos p
+      JOIN producto_proveedor pp ON pp.producto_id = p.id
+      JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+      WHERE pp.proveedor_id = ?
+        AND p.categoria_id = ?
+        AND pp.proveedor_id = (
+          SELECT sub_pp.proveedor_id
+          FROM producto_proveedor sub_pp
+          JOIN descuentos_proveedor sub_dp ON sub_pp.proveedor_id = sub_dp.proveedor_id
+          WHERE sub_pp.producto_id = p.id
+          ORDER BY (sub_pp.precio_lista * (1 - (sub_dp.descuento / 100))) * 1.21 ASC
+          LIMIT 1
+        )
+      ORDER BY LOWER(p.nombre) ASC
+    `;
+    const queryPromise = require('util').promisify(conexion.query).bind(conexion);
+    return await queryPromise(query, [proveedorId, categoriaId]);
+  } catch (error) {
+    console.error("❌ Error en obtenerProductosPorCategoriaYProveedorMasBarato:", error);
+    throw error;
+  }
+},
+
 
 }
