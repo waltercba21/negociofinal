@@ -1140,7 +1140,7 @@ generarPDFProveedor: async function (req, res) {
 
         const y = doc.y;
         doc.fontSize(8);
-        doc.text(prod.codigo || '-', 40, y, { width: 100 });
+        doc.text(prod.codigo_proveedor || '-', 40, y, { width: 100 });
         doc.text(prod.nombre, 150, y, { width: 300 });
         doc.text(prod.stock_actual?.toString() || '0', 460, y, { width: 100 });
         doc.moveDown(0.2);
