@@ -16,6 +16,7 @@ var productosRouter = require('./routes/productos');
 var administracionRouter = require('./routes/administracion');
 var carritoRoutes = require('./routes/carrito');
 var pedidosRoutes = require('./routes/pedidos');
+var whatsappRoutes = require('./routes/whatsapp');
 // **Corrección de socket.io**
 var app = express();
 var server = require('http').Server(app);
@@ -89,6 +90,7 @@ app.use('/productos', productosRouter);
 app.use('/administracion', administracionRouter);
 app.use('/carrito', carritoRoutes);
 app.use('/pedidos', pedidosRoutes);
+app.use('/whatsapp', express.urlencoded({ extended: true }), whatsappRoutes);
 
 // **Configuración de WebSockets**
 io.on('connection', (socket) => {
