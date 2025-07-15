@@ -2,18 +2,23 @@ const db = require('../config/conexion');
 
 async function buscarProductoPorNombre(texto) {
   return new Promise((resolve) => {
+    console.log("🧠 Texto recibido para búsqueda:", texto); // NUEVO LOG
+
     const palabras = texto
       .toLowerCase()
       .split(' ')
-      .filter(p => p.length > 1); // elimina espacios vacíos y palabras cortas
+      .filter(p => p.length > 1);
 
     if (palabras.length === 0) {
+      console.log("⚠️ No hay palabras válidas");
       return resolve("⚠️ Por favor escribí el nombre del producto que buscás.");
     }
 
-    // Arma condiciones: nombre LIKE '%faro%' AND nombre LIKE '%agile%' ...
     const condiciones = palabras.map(() => `LOWER(nombre) LIKE ?`).join(' AND ');
     const valores = palabras.map(p => `%${p}%`);
+
+    console.log("🔍 Condiciones SQL:", condiciones);
+    console.log("🔍 Valores SQL:", valores);
 
     const sql = `
       SELECT id, nombre, precio_venta 
@@ -29,6 +34,7 @@ async function buscarProductoPorNombre(texto) {
       }
 
       if (resultados.length === 0) {
+        console.log("🔍 No se encontraron coincidencias");
         return resolve("🔍 No encontré ese producto. ¿Podés ser más específico?");
       }
 
