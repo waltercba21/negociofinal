@@ -5,10 +5,13 @@ async function buscarProductoPorNombre(texto) {
     const entrada = texto.toLowerCase().trim();
 
     // 🟢 Detectar saludos simples
-    const saludos = ['hola', 'buenas', 'buen dia', 'buenas tardes', 'buenas noches', 'saludos', 'busco', 'tienen', 'hay'];
+    const saludos = [
+      'hola', 'buenas', 'buen dia', 'buenas tardes', 'buenas noches',
+      'saludos', 'busco', 'tienen', 'hay'
+    ];
     if (saludos.some(s => entrada.includes(s))) {
       return resolve(
-        `👋 ¡Hola! Bienvenido a *Autofaros Cordoba*.\n\nPodés enviarnos el nombre o una descripción del repuesto que necesitás (por ejemplo: _faro agile trasero 2012_ o _óptica renault kangoo izquierda_).\n\n🔎 Te voy a mostrar los productos más similares automáticamente.\n\nSi no encontrás lo que buscás, también podés escribir *"VENDEDOR"* para que un asesor te atienda directamente.`
+        `👋 ¡Hola! Bienvenido a *Autofaros Córdoba*.\n\nPodés enviarnos el nombre o una descripción del repuesto que necesitás (por ejemplo: _faro agile trasero 2012_ o _óptica renault kangoo izquierda_).\n\n🔎 Te voy a mostrar los productos más similares automáticamente.\n\nSi no encontrás lo que buscás, también podés escribir *"VENDEDOR"* para que un asesor te atienda directamente.`
       );
     }
 
@@ -41,11 +44,22 @@ async function buscarProductoPorNombre(texto) {
         return resolve("🔍 No encontré ese producto. ¿Podés ser más específico?");
       }
 
+      // ✅ Si hay resultados, mostrar productos + mensaje final
       const respuesta = resultados.map(p => (
         `📦 ${p.nombre}\n💲$${p.precio_venta}\n🔗 https://www.autofaros.com.ar/productos/${p.id}`
       )).join('\n\n');
 
-      resolve(respuesta);
+      const mensajeFinal = `${respuesta}
+
+🧐 *¿Era lo que estabas buscando?*
+
+🔁 Podés:
+- Enviar una *nueva búsqueda*
+- O escribir *"VENDEDOR"* si querés que te atienda un asesor
+
+🛠️ Estoy para ayudarte`;
+
+      resolve(mensajeFinal);
     });
   });
 }
