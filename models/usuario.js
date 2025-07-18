@@ -1,4 +1,5 @@
 const conexion = require('../config/conexion');
+const bcrypt = require('bcryptjs');
 
 module.exports = {
   obtener: function (funcion) {
