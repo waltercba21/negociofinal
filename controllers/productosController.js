@@ -1527,9 +1527,8 @@ actualizarPreciosExcel: async (req, res) => {
     }
 
     const numero = parseFloat(original);
-
     if (numero > 100000) {
-      console.warn(`⚠️ Valor posiblemente mal interpretado: ${valor} → ${numero}`);
+      console.warn(`⚠️ Precio posiblemente mal interpretado: ${valor} → ${numero}`);
     }
 
     return numero;
@@ -1546,7 +1545,6 @@ actualizarPreciosExcel: async (req, res) => {
 
     const workbook = xlsx.readFile(file.path);
     const sheet_name_list = workbook.SheetNames;
-
     const codigosProcesados = new Set();
 
     for (const sheet_name of sheet_name_list) {
@@ -1565,38 +1563,38 @@ actualizarPreciosExcel: async (req, res) => {
 
         const codigoRaw = row[codigoColumn];
         const precioRaw = row[precioColumn];
-
         if (!codigoRaw || !precioRaw) continue;
 
         const codigo = codigoRaw.toString().trim();
         const precio = limpiarPrecio(precioRaw);
-
         if (!codigo || isNaN(precio) || precio <= 0) {
           console.warn(`⚠️ Código o precio inválido: código="${codigo}", precio="${precio}"`);
           continue;
         }
 
-        // ✅ Si el código ya se procesó, se salta
         if (codigosProcesados.has(codigo)) {
           console.log(`🔁 Código ${codigo} ya procesado en este lote, se omite.`);
           continue;
         }
-
         codigosProcesados.add(codigo);
 
-        // Precio anterior
-        const precioAnterior = await new Promise(resolve => {
-          const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
-          conexion.query(sql, [proveedor_id, codigo], (err, resQuery) => {
-            if (err || resQuery.length === 0) return resolve(0);
-            resolve(parseFloat(resQuery[0].precio_lista));
+        // ✅ Consultar todos los precios actuales que coincidan con códigos similares
+        const codigosRelacionados = await new Promise(resolve => {
+          const sql = `
+            SELECT DISTINCT codigo, precio_lista 
+            FROM producto_proveedor 
+            WHERE proveedor_id = ? AND codigo LIKE ?
+          `;
+          conexion.query(sql, [proveedor_id, `${codigo}%`], (err, resQuery) => {
+            if (err || resQuery.length === 0) return resolve([]);
+            resolve(resQuery);
           });
         });
 
-        const mismoPrecio = Math.abs(precio - precioAnterior) < 0.01;
+        const algunoDiferente = codigosRelacionados.some(p => Math.abs(precio - p.precio_lista) >= 0.01);
+        const mismoPrecio = !algunoDiferente;
 
-        // Log antes de actualizar
-        console.log(`➡️ Actualizando precio: código=${codigo}, precio=${precio}, precioAnterior=${precioAnterior}`);
+        console.log(`➡️ Actualizando precio: código=${codigo}, precio=${precio} | mismoPrecio=${mismoPrecio}`);
 
         const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
 
@@ -1605,15 +1603,12 @@ actualizarPreciosExcel: async (req, res) => {
           continue;
         }
 
-        console.log(`✅ Resultado de actualizarPreciosPDF para ${codigo}:`);
-        console.log(JSON.stringify(resultado, null, 2));
-
         resultado.forEach(p => {
           productosActualizados.push({
             codigo: p.codigo,
             nombre: p.nombre,
-            precio_lista_antiguo: precioAnterior,
-            precio_lista_nuevo: p.precio_lista,
+            precio_lista_antiguo: p.precio_lista || 0,
+            precio_lista_nuevo: precio,
             precio_venta: p.precio_venta || 0,
             sin_cambio: mismoPrecio
           });
@@ -1621,7 +1616,7 @@ actualizarPreciosExcel: async (req, res) => {
       }
     }
 
-    // ✅ Eliminamos duplicados por combinación de codigo y precio_lista_nuevo
+    // ✅ Eliminar duplicados si existiesen
     productosActualizados = productosActualizados.filter(
       (value, index, self) =>
         index === self.findIndex(t =>

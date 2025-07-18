@@ -665,10 +665,10 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
         return callback(err);
     }
 },
-actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
+actualizarPreciosPDF: function (precio_lista, codigoBase, proveedor_id) {
   return new Promise((resolve, reject) => {
-    if (typeof codigo !== 'string') {
-      console.error(`❌ Código inválido: ${codigo}`);
+    if (typeof codigoBase !== 'string') {
+      console.error(`❌ Código inválido: ${codigoBase}`);
       return resolve(null);
     }
 
@@ -687,7 +687,7 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
       FROM producto_proveedor pp
       JOIN productos p ON pp.producto_id = p.id
       JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-      WHERE pp.codigo = ? AND pp.proveedor_id = ?
+      WHERE pp.proveedor_id = ? AND pp.codigo LIKE ?
     `;
 
     conexion.getConnection((err, conexion) => {
@@ -696,37 +696,36 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
         return resolve(null);
       }
 
-      conexion.query(sql, [codigo, proveedor_id], async (error, results) => {
+      conexion.query(sql, [proveedor_id, `${codigoBase}%`], async (error, results) => {
         if (error || results.length === 0) {
-          console.error(`❌ Error SQL o sin resultados para ${codigo}:`, error);
+          console.error(`❌ No se encontraron coincidencias para código base "${codigoBase}" y proveedor ID ${proveedor_id}`);
           conexion.release();
           return resolve(null);
         }
 
         const updates = results.map((producto) => {
-          const { producto_id, utilidad, nombre } = producto;
+          const { producto_id, utilidad, nombre, codigo } = producto;
           const descuento = producto.descuento || 0;
 
           const costo_neto = precio_lista - (precio_lista * descuento / 100);
           const costo_iva = costo_neto + (costo_neto * 0.21);
           const precio_venta = redondearPrecioVenta(costo_iva + (costo_iva * utilidad / 100));
 
-          console.log(`➡️ Producto ID: ${producto_id} | Código: ${codigo} | Utilidad: ${utilidad} | Costo IVA: ${costo_iva} | PV calculado: ${precio_venta}`);
+          console.log(`➡️ Producto ID: ${producto_id} | Código: ${codigo} | PV calculado: ${precio_venta}`);
 
           const updatePrecioLista = `
             UPDATE producto_proveedor 
             SET precio_lista = ? 
-            WHERE producto_id = ? AND codigo = ? AND proveedor_id = ?
+            WHERE producto_id = ? AND proveedor_id = ? AND codigo = ?
           `;
 
           return new Promise((resolveInterna) => {
-            conexion.query(updatePrecioLista, [precio_lista, producto_id, codigo, proveedor_id], async (err1) => {
+            conexion.query(updatePrecioLista, [precio_lista, producto_id, proveedor_id, codigo], (err1) => {
               if (err1) {
-                console.error(`❌ Error update precio_lista (ID: ${producto_id}, código: ${codigo}):`, err1);
+                console.error(`❌ Error update precio_lista (${codigo}):`, err1);
                 return resolveInterna(null);
               }
 
-              // Verificar si este proveedor es el más barato
               const q = `
                 SELECT 
                   pp.proveedor_id,
@@ -740,20 +739,22 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
 
               conexion.query(q, [producto_id], (err2, res2) => {
                 if (err2 || res2.length === 0) {
-                  console.error(`❌ Error comparando proveedor más barato (ID: ${producto_id}):`, err2);
+                  console.error(`❌ Error comparando proveedor más barato (${codigo}):`, err2);
                   return resolveInterna(null);
                 }
 
                 const proveedorMasBarato = res2[0];
 
                 if (parseInt(proveedorMasBarato.proveedor_id) === parseInt(proveedor_id)) {
-                  const updateProducto = `UPDATE productos SET precio_venta = ? WHERE id = ?`;
+                  const updateProducto = `
+                    UPDATE productos SET precio_venta = ? WHERE id = ?
+                  `;
                   conexion.query(updateProducto, [precio_venta, producto_id], (err3) => {
                     if (err3) {
-                      console.error(`❌ Error update precio_venta (ID: ${producto_id}):`, err3);
+                      console.error(`❌ Error update precio_venta (${codigo}):`, err3);
                       return resolveInterna(null);
                     }
-                    console.log(`✅ Precio de venta actualizado (ID: ${producto_id}) a $${precio_venta}`);
+                    console.log(`✅ Precio de venta actualizado para ${codigo} → $${precio_venta}`);
                     resolveInterna({
                       codigo,
                       nombre,
@@ -764,7 +765,7 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
                     });
                   });
                 } else {
-                  console.log(`⚠️ PV no actualizado. Proveedor actual ${proveedor_id} no es el más barato para producto ID: ${producto_id}`);
+                  console.log(`⚠️ No se actualiza PV. ${proveedor_id} no es el más barato para ${codigo}`);
                   resolveInterna({
                     codigo,
                     nombre,
@@ -792,7 +793,6 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
     });
   });
 },
-
 obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
