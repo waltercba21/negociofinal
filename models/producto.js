@@ -686,7 +686,7 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
         dp.descuento 
       FROM producto_proveedor pp
       JOIN productos p ON pp.producto_id = p.id
-      JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+      LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
       WHERE pp.codigo = ? AND pp.proveedor_id = ?
     `;
 
@@ -711,8 +711,6 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
           const costo_iva = costo_neto + (costo_neto * 0.21);
           const precio_venta = redondearPrecioVenta(costo_iva + (costo_iva * utilidad / 100));
 
-          console.log(`➡️ Producto ID: ${producto_id} | Código: ${codigo} | PV calculado: ${precio_venta}`);
-
           const updatePrecioLista = `
             UPDATE producto_proveedor 
             SET precio_lista = ?, actualizado_en = NOW()
@@ -726,13 +724,12 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
                 return resolveInterna(null);
               }
 
-              // ✅ NUEVA COMPARACIÓN para este producto_id
               const compararProveedor = `
                 SELECT 
                   pp.proveedor_id,
-                  (pp.precio_lista * (1 - dp.descuento / 100)) * 1.21 AS costo_iva
+                  (pp.precio_lista * (1 - IFNULL(dp.descuento, 0) / 100)) * 1.21 AS costo_iva
                 FROM producto_proveedor pp
-                JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+                LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
                 WHERE pp.producto_id = ?
                 ORDER BY costo_iva ASC
                 LIMIT 1
@@ -745,7 +742,6 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
                 }
 
                 const proveedorMasBarato = res2[0];
-
                 if (parseInt(proveedorMasBarato.proveedor_id) === parseInt(proveedor_id)) {
                   const updateProducto = `
                     UPDATE productos SET precio_venta = ? WHERE id = ?
@@ -755,8 +751,7 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
                       console.error(`❌ Error update precio_venta (${codigo}):`, err3);
                       return resolveInterna(null);
                     }
-
-                    console.log(`✅ Precio de venta actualizado para ${codigo} → $${precio_venta}`);
+                    console.log(`✅ Actualizado: ${codigo} (ID: ${producto_id}) → $${precio_venta}`);
                     resolveInterna({
                       codigo,
                       nombre,
