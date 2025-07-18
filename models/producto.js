@@ -666,138 +666,133 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
     }
 },
 actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
-    return new Promise((resolve, reject) => {
-      if (typeof codigo !== 'string') {
-        console.error(`❌ Código inválido: ${codigo}`);
+  return new Promise((resolve, reject) => {
+    if (typeof codigo !== 'string') {
+      console.error(`❌ Código inválido: ${codigo}`);
+      return resolve(null);
+    }
+
+    function redondearPrecioVenta(precio) {
+      const resto = precio % 100;
+      return resto < 50 ? precio - resto : precio + (100 - resto);
+    }
+
+    const sql = `
+      SELECT 
+        pp.*, 
+        p.utilidad, 
+        p.nombre, 
+        p.precio_venta AS precio_venta_anterior,
+        dp.descuento 
+      FROM producto_proveedor pp
+      JOIN productos p ON pp.producto_id = p.id
+      JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+      WHERE pp.codigo = ? AND pp.proveedor_id = ?
+    `;
+
+    conexion.getConnection((err, conexion) => {
+      if (err) {
+        console.error('❌ Error conexión MySQL:', err);
         return resolve(null);
       }
-  
-      function redondearPrecioVenta(precio) {
-        const resto = precio % 100;
-        return resto < 50 ? precio - resto : precio + (100 - resto);
-      }
-  
-      const sql = `
-        SELECT 
-          pp.*, 
-          p.utilidad, 
-          p.nombre, 
-          p.precio_venta AS precio_venta_anterior,
-          dp.descuento 
-        FROM producto_proveedor pp
-        JOIN productos p ON pp.producto_id = p.id
-        JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-        WHERE pp.codigo = ? AND pp.proveedor_id = ?
-      `;
-  
-      conexion.getConnection((err, conexion) => {
-        if (err) {
-          console.error('❌ Error conexión MySQL:', err);
+
+      conexion.query(sql, [codigo, proveedor_id], async (error, results) => {
+        if (error || results.length === 0) {
+          console.error(`❌ Error SQL o sin resultados para ${codigo}:`, error);
+          conexion.release();
           return resolve(null);
         }
-  
-        conexion.query(sql, [codigo, proveedor_id], async (error, results) => {
-          if (error || results.length === 0) {
-            console.error(`❌ Error SQL o sin resultados para ${codigo}:`, error);
-            conexion.release();
-            return resolve(null);
-          }
-  
-          const updates = results.map((producto) => {
-            const { producto_id, utilidad, nombre } = producto;
-            const descuento = producto.descuento || 0;
-  
-            const costo_neto = precio_lista - (precio_lista * descuento / 100);
-            const costo_iva = costo_neto + (costo_neto * 0.21);
-            const precio_venta = redondearPrecioVenta(costo_iva + (costo_iva * utilidad / 100));
-  
-            console.log(`➡️ Producto: ${codigo} | Utilidad: ${utilidad} | Costo IVA: ${costo_iva} | PV calculado: ${precio_venta}`);
-  
-            const updatePrecioLista = `
-              UPDATE producto_proveedor 
-              SET precio_lista = ? 
-              WHERE producto_id = ? AND codigo = ? AND proveedor_id = ?
-            `;
-  
-            return new Promise((resolveInterna) => {
-              conexion.query(updatePrecioLista, [precio_lista, producto_id, codigo, proveedor_id], async (err1) => {
-                if (err1) {
-                  console.error(`❌ Error update precio_lista (${codigo}):`, err1);
+
+        const updates = results.map((producto) => {
+          const { producto_id, utilidad, nombre } = producto;
+          const descuento = producto.descuento || 0;
+
+          const costo_neto = precio_lista - (precio_lista * descuento / 100);
+          const costo_iva = costo_neto + (costo_neto * 0.21);
+          const precio_venta = redondearPrecioVenta(costo_iva + (costo_iva * utilidad / 100));
+
+          console.log(`➡️ Producto ID: ${producto_id} | Código: ${codigo} | Utilidad: ${utilidad} | Costo IVA: ${costo_iva} | PV calculado: ${precio_venta}`);
+
+          const updatePrecioLista = `
+            UPDATE producto_proveedor 
+            SET precio_lista = ? 
+            WHERE producto_id = ? AND codigo = ? AND proveedor_id = ?
+          `;
+
+          return new Promise((resolveInterna) => {
+            conexion.query(updatePrecioLista, [precio_lista, producto_id, codigo, proveedor_id], async (err1) => {
+              if (err1) {
+                console.error(`❌ Error update precio_lista (ID: ${producto_id}, código: ${codigo}):`, err1);
+                return resolveInterna(null);
+              }
+
+              // Verificar si este proveedor es el más barato
+              const q = `
+                SELECT 
+                  pp.proveedor_id,
+                  (pp.precio_lista * (1 - dp.descuento / 100)) * 1.21 AS costo_iva
+                FROM producto_proveedor pp
+                JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
+                WHERE pp.producto_id = ?
+                ORDER BY costo_iva ASC
+                LIMIT 1
+              `;
+
+              conexion.query(q, [producto_id], (err2, res2) => {
+                if (err2 || res2.length === 0) {
+                  console.error(`❌ Error comparando proveedor más barato (ID: ${producto_id}):`, err2);
                   return resolveInterna(null);
                 }
-  
-                // Verificar proveedor más barato
-                const q = `
-                  SELECT 
-                    pp.proveedor_id,
-                    (pp.precio_lista * (1 - dp.descuento / 100)) * 1.21 AS costo_iva
-                  FROM producto_proveedor pp
-                  JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-                  WHERE pp.producto_id = ?
-                  ORDER BY costo_iva ASC
-                  LIMIT 1
-                `;
-  
-                conexion.query(q, [producto_id], (err2, res2) => {
-                  if (err2 || res2.length === 0) {
-                    console.error(`❌ Error comparando proveedor más barato (${codigo}):`, err2);
-                    return resolveInterna(null);
-                  }
-  
-                  const proveedorMasBarato = res2[0];
-                  console.log(`🔍 Proveedor más barato para ${codigo}: ${proveedorMasBarato.proveedor_id}, actual: ${proveedor_id}`);
-  
-                  if (parseInt(proveedorMasBarato.proveedor_id) === parseInt(proveedor_id)) {
-                    console.log("📊 Comparando proveedorMasBarato.proveedor_id:", proveedorMasBarato.proveedor_id, typeof proveedorMasBarato.proveedor_id, "con proveedor_id:", proveedor_id, typeof proveedor_id);
 
-                    // Actualizar precio_venta
-                    const updateProducto = `
-                      UPDATE productos SET precio_venta = ? WHERE id = ?
-                    `;
-                    conexion.query(updateProducto, [precio_venta, producto_id], (err3) => {
-                      if (err3) {
-                        console.error(`❌ Error update precio_venta (${codigo}):`, err3);
-                        return resolveInterna(null);
-                      }
-                      console.log(`✅ Precio de venta actualizado para ${codigo} a $${precio_venta}`);
-                      resolveInterna({
-                        codigo,
-                        nombre,
-                        producto_id,
-                        precio_lista,
-                        precio_venta,
-                        sin_cambio: false
-                      });
-                    });
-                  } else {
-                    console.log(`⚠️ No se actualiza PV. ${proveedor_id} no es el más barato para ${codigo}`);
+                const proveedorMasBarato = res2[0];
+
+                if (parseInt(proveedorMasBarato.proveedor_id) === parseInt(proveedor_id)) {
+                  const updateProducto = `UPDATE productos SET precio_venta = ? WHERE id = ?`;
+                  conexion.query(updateProducto, [precio_venta, producto_id], (err3) => {
+                    if (err3) {
+                      console.error(`❌ Error update precio_venta (ID: ${producto_id}):`, err3);
+                      return resolveInterna(null);
+                    }
+                    console.log(`✅ Precio de venta actualizado (ID: ${producto_id}) a $${precio_venta}`);
                     resolveInterna({
                       codigo,
                       nombre,
                       producto_id,
                       precio_lista,
-                      precio_venta: 0,
-                      sin_cambio: true
+                      precio_venta,
+                      sin_cambio: false
                     });
-                  }
-                });
+                  });
+                } else {
+                  console.log(`⚠️ PV no actualizado. Proveedor actual ${proveedor_id} no es el más barato para producto ID: ${producto_id}`);
+                  resolveInterna({
+                    codigo,
+                    nombre,
+                    producto_id,
+                    precio_lista,
+                    precio_venta: 0,
+                    sin_cambio: true
+                  });
+                }
               });
             });
           });
-  
-          Promise.all(updates)
-            .then(resultados => {
-              conexion.release();
-              resolve(resultados.filter(r => r !== null));
-            })
-            .catch(err => {
-              conexion.release();
-              reject(err);
-            });
         });
+
+        Promise.all(updates)
+          .then(resultados => {
+            conexion.release();
+            resolve(resultados.filter(r => r !== null));
+          })
+          .catch(err => {
+            conexion.release();
+            reject(err);
+          });
       });
     });
-  },  
+  });
+},
+
 obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
