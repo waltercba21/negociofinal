@@ -665,10 +665,10 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
         return callback(err);
     }
 },
-actualizarPreciosPDF: function (precio_lista, codigoBase, proveedor_id) {
+actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
   return new Promise((resolve, reject) => {
-    if (typeof codigoBase !== 'string') {
-      console.error(`❌ Código inválido: ${codigoBase}`);
+    if (typeof codigo !== 'string') {
+      console.error(`❌ Código inválido: ${codigo}`);
       return resolve(null);
     }
 
@@ -687,7 +687,7 @@ actualizarPreciosPDF: function (precio_lista, codigoBase, proveedor_id) {
       FROM producto_proveedor pp
       JOIN productos p ON pp.producto_id = p.id
       JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-      WHERE pp.proveedor_id = ? AND pp.codigo LIKE ?
+      WHERE pp.codigo = ? AND pp.proveedor_id = ?
     `;
 
     conexion.getConnection((err, conexion) => {
@@ -696,15 +696,15 @@ actualizarPreciosPDF: function (precio_lista, codigoBase, proveedor_id) {
         return resolve(null);
       }
 
-      conexion.query(sql, [proveedor_id, `${codigoBase}%`], async (error, results) => {
+      conexion.query(sql, [codigo, proveedor_id], async (error, results) => {
         if (error || results.length === 0) {
-          console.error(`❌ No se encontraron coincidencias para código base "${codigoBase}" y proveedor ID ${proveedor_id}`);
+          console.error(`❌ No se encontraron productos con código "${codigo}" y proveedor ID ${proveedor_id}`);
           conexion.release();
           return resolve(null);
         }
 
         const updates = results.map((producto) => {
-          const { producto_id, utilidad, nombre, codigo } = producto;
+          const { producto_id, utilidad, nombre } = producto;
           const descuento = producto.descuento || 0;
 
           const costo_neto = precio_lista - (precio_lista * descuento / 100);
@@ -715,7 +715,7 @@ actualizarPreciosPDF: function (precio_lista, codigoBase, proveedor_id) {
 
           const updatePrecioLista = `
             UPDATE producto_proveedor 
-            SET precio_lista = ? 
+            SET precio_lista = ?, actualizado_en = NOW()
             WHERE producto_id = ? AND proveedor_id = ? AND codigo = ?
           `;
 
@@ -754,6 +754,7 @@ actualizarPreciosPDF: function (precio_lista, codigoBase, proveedor_id) {
                       console.error(`❌ Error update precio_venta (${codigo}):`, err3);
                       return resolveInterna(null);
                     }
+
                     console.log(`✅ Precio de venta actualizado para ${codigo} → $${precio_venta}`);
                     resolveInterna({
                       codigo,
@@ -793,6 +794,7 @@ actualizarPreciosPDF: function (precio_lista, codigoBase, proveedor_id) {
     });
   });
 },
+
 obtenerProductoPorCodigo: function(codigo) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
