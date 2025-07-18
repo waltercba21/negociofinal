@@ -677,7 +677,7 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
       return resto < 50 ? precio - resto : precio + (100 - resto);
     }
 
-    const sql = `
+    const buscarProductos = `
       SELECT 
         pp.*, 
         p.utilidad, 
@@ -696,7 +696,7 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
         return resolve(null);
       }
 
-      conexion.query(sql, [codigo, proveedor_id], async (error, results) => {
+      conexion.query(buscarProductos, [codigo, proveedor_id], async (error, results) => {
         if (error || results.length === 0) {
           console.error(`❌ No se encontraron productos con código "${codigo}" y proveedor ID ${proveedor_id}`);
           conexion.release();
@@ -704,7 +704,7 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
         }
 
         const updates = results.map((producto) => {
-          const { producto_id, utilidad, nombre } = producto;
+          const { producto_id, utilidad, nombre, codigo } = producto;
           const descuento = producto.descuento || 0;
 
           const costo_neto = precio_lista - (precio_lista * descuento / 100);
@@ -726,7 +726,8 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
                 return resolveInterna(null);
               }
 
-              const q = `
+              // ✅ NUEVA COMPARACIÓN para este producto_id
+              const compararProveedor = `
                 SELECT 
                   pp.proveedor_id,
                   (pp.precio_lista * (1 - dp.descuento / 100)) * 1.21 AS costo_iva
@@ -737,7 +738,7 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
                 LIMIT 1
               `;
 
-              conexion.query(q, [producto_id], (err2, res2) => {
+              conexion.query(compararProveedor, [producto_id], (err2, res2) => {
                 if (err2 || res2.length === 0) {
                   console.error(`❌ Error comparando proveedor más barato (${codigo}):`, err2);
                   return resolveInterna(null);
@@ -766,7 +767,7 @@ actualizarPreciosPDF: function (precio_lista, codigo, proveedor_id) {
                     });
                   });
                 } else {
-                  console.log(`⚠️ No se actualiza PV. ${proveedor_id} no es el más barato para ${codigo}`);
+                  console.log(`⚠️ No se actualiza PV. ${proveedor_id} no es el más barato para producto ID ${producto_id}`);
                   resolveInterna({
                     codigo,
                     nombre,
