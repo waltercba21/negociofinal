@@ -1605,6 +1605,7 @@ actualizarPreciosExcel: async (req, res) => {
 
         resultado.forEach(p => {
           productosActualizados.push({
+            producto_id: p.producto_id,
             codigo: p.codigo,
             nombre: p.nombre,
             precio_lista_antiguo: p.precio_lista || 0,
@@ -1617,13 +1618,14 @@ actualizarPreciosExcel: async (req, res) => {
     }
 
     // ✅ Eliminar duplicados si existiesen
-    productosActualizados = productosActualizados.filter(
-      (value, index, self) =>
-        index === self.findIndex(t =>
-          t.codigo === value.codigo &&
-          t.precio_lista_nuevo === value.precio_lista_nuevo
-        )
-    );
+  productosActualizados = productosActualizados.filter(
+  (value, index, self) =>
+    index === self.findIndex(t =>
+      t.codigo === value.codigo &&
+      t.producto_id === value.producto_id
+    )
+);
+
 
     console.log("✅ Lista final de productos actualizados:");
     console.log(JSON.stringify(productosActualizados, null, 2));
