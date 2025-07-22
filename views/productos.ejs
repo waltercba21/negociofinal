@@ -103,8 +103,9 @@
       </div>
      <% if (isAdminUser) { %>
   <div class="codigo-admin">
-    <p><strong>Código:</strong> <%= producto.codigo %></p>
-    <p><strong>Proveedor:</strong> <%= producto.proveedor_nombre %> (<%= producto.codigo_proveedor %>)</p>
+    <p><strong>Proveedor:</strong> <%= producto.proveedor_nombre %></p>
+    <p><strong>Código:</strong> <%= producto.codigo_proveedor %></p>
+    
   </div>
 <% } %>
 
