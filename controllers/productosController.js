@@ -17,6 +17,7 @@ const pdfParse = require('pdf-parse');
         .replace(/\s+/g, '')                     // elimina espacios
         .toLowerCase();                          // pasa a minúsculas
     }
+const productosPorPagina = 10; 
 module.exports = {
     index: async (req, res) => {
         try {
@@ -95,126 +96,152 @@ module.exports = {
           return res.status(500).send("Error interno del servidor");
         }
       },      
-      lista: async function (req, res) {
-        try {
-          const pagina = req.query.pagina ? Number(req.query.pagina) : 1;
-          const categoria = req.query.categoria ? Number(req.query.categoria) : undefined;
-          const marca = req.query.marca ? Number(req.query.marca) : undefined;
-          const modelo = req.query.modelo ? Number(req.query.modelo) : undefined;
-          const productosPorPagina = 10;
-      
-          console.log("\n🔎 Consulta recibida con parámetros:", { pagina, categoria, marca, modelo });
-      
-          if ((marca && isNaN(marca)) || (modelo && isNaN(modelo)) || (categoria && isNaN(categoria))) {
-            console.log("❌ Error: Algún parámetro no es un número válido.");
-            return res.status(400).send("Parámetros inválidos.");
-          }
-      
-          const seHizoBusqueda = !!(categoria || marca || modelo);
-          let productos = [];
-      
-          if (seHizoBusqueda) {
-            if (categoria && !marca && !modelo) {
-              console.log(`📌 Filtrando SOLO por categoría ID: ${categoria}`);
-              productos = await new Promise((resolve, reject) => {
-                producto.obtenerProductosPorCategoria(conexion, categoria, (error, resultados) => {
-                  if (error) return reject(error);
-                  resolve(resultados);
-                });
-              });
-            } else {
-              console.log(`📌 Filtrando con marca: ${marca}, modelo: ${modelo}`);
-              productos = await new Promise((resolve, reject) => {
-                producto.obtenerPorFiltros(conexion, categoria, marca, modelo, pagina, (error, resultados) => {
-                  if (error) return reject(error);
-                  resolve(resultados);
-                });
-              });
-            }
-      
-            const productoIds = productos.map(p => p.id);
-            if (productoIds.length > 0) {
-              const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
-      
-              for (const prod of productos) {
-                prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
-                prod.precio_venta = prod.precio_venta ? parseFloat(prod.precio_venta) : "No disponible";
-      
-                const proveedor = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
-                if (proveedor) {
-                  prod.proveedor_nombre = proveedor.proveedor_nombre;
-                  prod.codigo_proveedor = proveedor.codigo_proveedor;
-                } else {
-                  prod.proveedor_nombre = 'Sin proveedor';
-                  prod.codigo_proveedor = '';
-                }
-              }
-            }
-          } else {
-            console.log("🛑 No se aplicaron filtros. No se mostrarán productos.");
-          }
-      
-          // Obtener y ordenar selectores
-          const [categorias, marcas] = await Promise.all([
-            producto.obtenerCategorias(conexion),
-            producto.obtenerMarcas(conexion),
-          ]);
-          let modelosPorMarca = marca ? await producto.obtenerModelosPorMarca(conexion, marca) : [];
-      
-          // Función para convertir modelo a número lógico ordenable
-          const normalizarModelo = (nombre) => {
-            const partes = nombre.split('/');
-            if (partes.length === 2 && !isNaN(partes[0]) && !isNaN(partes[1])) {
-              return parseInt(partes[0]) + parseInt(partes[1]) / 100;
-            }
-            const match = nombre.match(/\d+/g);
-            return match ? parseInt(match.join('')) : Number.MAX_SAFE_INTEGER;
-          };
-      
-          // Ordenar todo
-          categorias.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
-          marcas.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
-          modelosPorMarca.sort((a, b) => {
-            const numA = normalizarModelo(a.nombre);
-            const numB = normalizarModelo(b.nombre);
-            return numA - numB;
-          });
-      
-          const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
-      
-          res.render("productos", {
-            productos,
-            categorias,
-            marcas,
-            modelosPorMarca,
-            categoriaSeleccionada: categoria ? categorias.find(cat => cat.id === categoria)?.nombre : "Todos",
-            numeroDePaginas: 1,
-            pagina,
-            modelo: modeloSeleccionado,
-            req,
-            seHizoBusqueda,
-            isUserLoggedIn: !!req.session.usuario,
-            isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
-          });
-      
-        } catch (error) {
-          console.error("❌ Error en el controlador lista:", error);
-          res.status(500).render("productos", {
-            productos: [],
-            categorias: [],
-            marcas: [],
-            modelosPorMarca: [],
-            categoriaSeleccionada: "Todos",
-            numeroDePaginas: 1,
-            pagina: 1,
-            modelo: null,
-            seHizoBusqueda: false,
-            req,
-            isUserLoggedIn: !!req.session.usuario,
-            isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
-          });
+lista: async function (req, res) {
+    try {
+      /** ───────────────────────────
+       * 1. Parámetros y validaciones
+       * ─────────────────────────── */
+      const pagina    = req.query.pagina    ? Number(req.query.pagina)    : 1;
+      const categoria = req.query.categoria ? Number(req.query.categoria) : undefined;
+      const marca     = req.query.marca     ? Number(req.query.marca)     : undefined;
+      const modelo    = req.query.modelo    ? Number(req.query.modelo)    : undefined;
+
+      console.log("\n🔎 Consulta recibida:", { pagina, categoria, marca, modelo });
+
+      if (
+        (categoria && isNaN(categoria)) ||
+        (marca     && isNaN(marca))     ||
+        (modelo    && isNaN(modelo))
+      ) {
+        console.log("❌ Parámetros inválidos.");
+        return res.status(400).send("Parámetros inválidos.");
+      }
+
+      const seHizoBusqueda  = !!(categoria || marca || modelo);
+      let   productos       = [];
+      let   numeroDePaginas = 1;               // ← se recalcula cuando toca
+
+      /** ───────────────────────────
+       * 2. Consulta de productos
+       * ─────────────────────────── */
+      if (seHizoBusqueda) {
+
+        /* ========= A) Solo CATEGORÍA ========= */
+        if (categoria && !marca && !modelo) {
+          const offset = (pagina - 1) * productosPorPagina;
+
+          // Nueva función paginada que creaste en el modelo
+          const { productos: listaCategoria, total } =
+                await producto.obtenerProductosPorCategoriaPaginado(
+                       conexion, categoria, offset, productosPorPagina);
+
+          productos       = listaCategoria;
+          numeroDePaginas = Math.max(1, Math.ceil(total / productosPorPagina));
+
+        /* ========= B) Filtros combinados (marca / modelo) ========= */
+        } else {
+          console.log(`📌 Filtros combinados — marca: ${marca} modelo: ${modelo}`);
+
+          const offset = (pagina - 1) * productosPorPagina;
+
+          // Si aún no tienes un método paginado, implementa uno similar.
+          // Mientras tanto, este ejemplo supone que el método devuelve { productos, total }
+          const { productos: listaFiltros, total } =
+                await producto.obtenerPorFiltrosPaginado(
+                       conexion, { categoria, marca, modelo }, offset, productosPorPagina);
+
+          productos       = listaFiltros;
+          numeroDePaginas = Math.max(1, Math.ceil(total / productosPorPagina));
         }
-      },      
+
+        /* ========= Carga de imágenes y proveedor más barato ========= */
+        const productoIds = productos.map(p => p.id);
+        if (productoIds.length) {
+          const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
+
+          for (const prod of productos) {
+            prod.imagenes     = todasLasImagenes.filter(img => img.producto_id === prod.id);
+            prod.precio_venta = prod.precio_venta ? parseFloat(prod.precio_venta) : "No disponible";
+
+            const proveedor = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
+            prod.proveedor_nombre  = proveedor ? proveedor.proveedor_nombre  : "Sin proveedor";
+            prod.codigo_proveedor  = proveedor ? proveedor.codigo_proveedor  : "";
+          }
+        }
+      } else {
+        console.log("🛑 Sin filtros: no se mostrarán productos.");
+      }
+
+      /** ───────────────────────────
+       * 3. Cargar selectores y ordenar
+       * ─────────────────────────── */
+      const [categorias, marcas] = await Promise.all([
+        producto.obtenerCategorias(conexion),
+        producto.obtenerMarcas(conexion),
+      ]);
+
+      let modelosPorMarca = marca
+        ? await producto.obtenerModelosPorMarca(conexion, marca)
+        : [];
+
+      // Función de orden “inteligente” de modelos
+      const normalizarModelo = (nombre) => {
+        const partes = nombre.split("/");
+        if (partes.length === 2 && !isNaN(partes[0]) && !isNaN(partes[1])) {
+          return parseInt(partes[0]) + parseInt(partes[1]) / 100;
+        }
+        const match = nombre.match(/\d+/g);
+        return match ? parseInt(match.join("")) : Number.MAX_SAFE_INTEGER;
+      };
+
+      categorias.sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+      marcas.sort    ((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+      modelosPorMarca.sort((a, b) => normalizarModelo(a.nombre) - normalizarModelo(b.nombre));
+
+      const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
+
+      /** ───────────────────────────
+       * 4. Render de la vista
+       * ─────────────────────────── */
+      res.render("productos", {
+        productos,
+        categorias,
+        marcas,
+        modelosPorMarca,
+        categoriaSeleccionada : categoria
+          ? categorias.find(cat => cat.id === categoria)?.nombre
+          : "Todos",
+        numeroDePaginas,
+        pagina,
+        modelo                : modeloSeleccionado,
+        req,
+        seHizoBusqueda,
+        isUserLoggedIn        : !!req.session.usuario,
+        isAdminUser           : req.session.usuario &&
+                                 adminEmails.includes(req.session.usuario?.email),
+      });
+
+    } catch (error) {
+      console.error("❌ Error en productosController.lista:", error);
+
+      // Render de emergencia para no romper UX
+      res.status(500).render("productos", {
+        productos       : [],
+        categorias      : [],
+        marcas          : [],
+        modelosPorMarca : [],
+        categoriaSeleccionada : "Todos",
+        numeroDePaginas : 1,
+        pagina          : 1,
+        modelo          : null,
+        seHizoBusqueda  : false,
+        req,
+        isUserLoggedIn  : !!req.session.usuario,
+        isAdminUser     : req.session.usuario &&
+                          adminEmails.includes(req.session.usuario?.email),
+      });
+    }
+  },
       ofertas: async function (req, res) {
         try {
           const isUserLoggedIn = !!req.session.usuario;

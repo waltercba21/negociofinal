@@ -2191,6 +2191,38 @@ obtenerProductosPorCategoriaYProveedorMasBarato: async function (conexion, prove
     throw error;
   }
 },
+// 🔥  NUEVO  ─ producto.obtenerProductosPorCategoriaPaginado
+obtenerProductosPorCategoriaPaginado(conexion, categoriaId, offset, limit) {
+  return new Promise((resolve, reject) => {
+    // ① Productos
+    const sqlProductos = `
+      SELECT p.*, c.nombre   AS categoria_nombre,
+             GROUP_CONCAT(i.imagen) AS imagenes
+      FROM productos p
+      LEFT JOIN categorias        c ON p.categoria_id = c.id
+      LEFT JOIN imagenes_producto i ON p.id = i.producto_id
+      WHERE p.categoria_id = ?
+      GROUP BY p.id
+      ORDER BY p.id DESC
+      LIMIT ? OFFSET ?`;
+    // ② Total para paginador
+    const sqlTotal = `SELECT COUNT(*) AS total FROM productos WHERE categoria_id = ?`;
+
+    conexion.query(sqlProductos, [categoriaId, limit, offset], (err, productos) => {
+      if (err) return reject(err);
+
+      // Convertimos la cadena de imágenes a array
+      productos.forEach(p =>
+        p.imagenes = p.imagenes ? p.imagenes.split(',') : []
+      );
+
+      conexion.query(sqlTotal, [categoriaId], (err2, totalRows) => {
+        if (err2) return reject(err2);
+        resolve({ productos, total: totalRows[0].total });
+      });
+    });
+  });
+},
 
 
 }
