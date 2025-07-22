@@ -319,40 +319,47 @@ lista: async function (req, res) {
           });
         }
       },      
-    buscar: async function (req, res) {
+   buscar: async (req, res) => {
   try {
-    const termino = req.query.q;
+    const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
+    req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
 
-    if (!termino || termino.trim() === "") {
-      return res.json([]);
-    }
+    const limite = req.query.limite ? parseInt(req.query.limite) : 100;
 
-    const resultados = await producto.buscarPorNombre(conexion, termino.trim());
+    const productos = await producto.obtenerPorFiltros(
+      conexion,
+      categoria_id,
+      marca_id,
+      modelo_id,
+      busqueda_nombre,
+      limite
+    );
 
-    // Obtener imágenes
-    const productoIds = resultados.map(p => p.id);
+    const productoIds = productos.map(p => p.id);
     const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
 
-    // Obtener proveedores más baratos por producto
-    for (const prod of resultados) {
+    for (const prod of productos) {
+      // Agregar imágenes
       prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
 
-      const proveedor = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
-      if (proveedor) {
-        prod.proveedor_nombre = proveedor.proveedor_nombre;
-        prod.codigo_proveedor = proveedor.codigo_proveedor;
-      } else {
-        prod.proveedor_nombre = "Sin proveedor";
-        prod.codigo_proveedor = "-";
-      }
+      // Obtener todos los proveedores del producto
+      const proveedores = await producto.obtenerProveedoresPorProducto(conexion, prod.id);
+      prod.proveedores = proveedores;
+
+      // Buscar el proveedor más barato (si tenés esta lógica)
+      const proveedorMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
+
+      prod.proveedor_nombre = proveedorMasBarato?.proveedor_nombre || 'Sin proveedor';
+      prod.codigo_proveedor = proveedorMasBarato?.codigo_proveedor || '-';
     }
 
-    res.json(resultados);
+    res.json(productos);
   } catch (error) {
-    console.error("❌ Error en productosController.buscar:", error);
-    res.status(500).json([]);
+    console.error("❌ Error en /productos/api/buscar:", error);
+    res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
   }
 },
+
     detalle: async function (req, res) {
         const id = req.params.id;
       
