@@ -12,10 +12,10 @@ const pdfParse = require('pdf-parse');
     const adminEmails = ['walter@autofaros.com.ar'];
     function normalizarClave(texto) {
       return texto
-        .normalize("NFD")                         // descompone tildes (ó → o +  ́)
-        .replace(/[\u0300-\u036f]/g, "")         // elimina tildes
-        .replace(/\s+/g, '')                     // elimina espacios
-        .toLowerCase();                          // pasa a minúsculas
+        .normalize("NFD")                        
+        .replace(/[\u0300-\u036f]/g, "")        
+        .replace(/\s+/g, '')                     
+        .toLowerCase();                          
     }
 const productosPorPagina = 10; 
 module.exports = {
