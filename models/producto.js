@@ -1002,15 +1002,18 @@ obtenerProveedorMasBarato : async (conexion, productoId) => {
   },
 obtenerMarcas: function(conexion) {
     return new Promise((resolve, reject) => {
-        conexion.query('SELECT * FROM marcas ORDER BY nombre ASC', function(error, resultados) {
+        const consulta = 'SELECT * FROM marcas ORDER BY nombre ASC';
+
+        conexion.query(consulta, function(error, resultados) {
             if (error) {
                 reject(error);
             } else {
-                resolve(resultados);
+                resolve(resultados); 
             }
         });
     });
-  },
+},
+
   obtenerModelosPorMarca: function(conexion, marcaId) {
     return new Promise((resolve, reject) => {
         let query = 'SELECT * FROM modelos';
