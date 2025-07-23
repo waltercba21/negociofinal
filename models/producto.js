@@ -963,6 +963,7 @@ obtenerProveedores: function(conexion) {
                 FROM descuentos_proveedor
                 GROUP BY proveedor_id
             ) AS dp ON proveedores.id = dp.proveedor_id
+            ORDER BY proveedores.nombre ASC
         `;
 
         conexion.query(query, function(error, resultados) {
@@ -974,7 +975,6 @@ obtenerProveedores: function(conexion) {
         });
     });
 },
-
 obtenerProveedorMasBarato : async (conexion, productoId) => {
     try {
       const query = `
