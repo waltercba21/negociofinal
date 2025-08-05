@@ -19,7 +19,8 @@
         <% productos.forEach(producto => {
           let viejo = parseFloat(producto.precio_lista_antiguo || 0);
           let nuevo = parseFloat(producto.precio_lista_nuevo || 0);
-          let diferencia = viejo > 0 ? (((nuevo - viejo) / viejo) * 100).toFixed(2) : '0.00';
+          let diferencia = viejo > 0 ? ((nuevo - viejo) / viejo) * 100 : 0;
+          let diferenciaRedondeada = diferencia.toFixed(2);
           let diferenciaClass = diferencia > 0 ? 'positivo' : (diferencia < 0 ? 'negativo' : 'neutro');
           let modificacion = producto.sin_cambio ? 'NO MODIFICA' : 'MODIFICA';
         %>
@@ -29,7 +30,7 @@
           <td>$<%= viejo.toLocaleString('es-AR') %></td>
           <td>$<%= nuevo.toLocaleString('es-AR') %></td>
           <td>$<%= parseFloat(producto.precio_venta || 0).toLocaleString('es-AR') %></td>
-          <td class="<%= diferenciaClass %>"><%= diferencia %> %</td>
+          <td class="<%= diferenciaClass %>"><%= diferenciaRedondeada %> %</td>
           <td><%= modificacion %></td>
         </tr>
         <% }); %>
@@ -37,5 +38,11 @@
     </table>
     <p>Total de productos actualizados: <%= productos.length %></p>
   </main>
+  <div style="margin-top: 20px; text-align: center;">
+  <a href="/productos/panelControl" class="btn btn-primary">
+    ← Volver al Panel de Control
+  </a>
+</div>
+
   <%- include ./layouts/footer.ejs %>
 </body>
