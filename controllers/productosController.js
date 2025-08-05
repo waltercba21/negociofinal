@@ -1651,16 +1651,17 @@ actualizarPreciosExcel: async (req, res) => {
         }
 
         resultado.forEach(p => {
-          productosActualizados.push({
-            producto_id: p.producto_id,
-            codigo: p.codigo,
-            nombre: p.nombre,
-            precio_lista_antiguo: p.precio_lista || 0,
-            precio_lista_nuevo: precio,
-            precio_venta: p.precio_venta || 0,
-            sin_cambio: mismoPrecio
-          });
-        });
+  productosActualizados.push({
+    producto_id: p.producto_id,
+    codigo: p.codigo,
+    nombre: p.nombre,
+    precio_lista_antiguo: precioAnterior, // ✔️ valor real anterior desde la DB
+    precio_lista_nuevo: precio,           // ✔️ valor leído del Excel
+    precio_venta: p.precio_venta || 0,
+    sin_cambio: mismoPrecio
+  });
+});
+
       }
     }
 
