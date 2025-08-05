@@ -1625,7 +1625,16 @@ actualizarPreciosExcel: async (req, res) => {
         }
         codigosProcesados.add(codigo);
 
-        // ✅ Consultar todos los precios actuales que coincidan con códigos similares
+        // 🔎 Consultar precio anterior real antes de actualizar
+        const precioAnterior = await new Promise(resolve => {
+          const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
+          conexion.query(sql, [proveedor_id, codigo], (err, resQuery) => {
+            if (err || resQuery.length === 0) return resolve(0);
+            resolve(resQuery[0].precio_lista);
+          });
+        });
+
+        // Comparar con todos los códigos similares
         const codigosRelacionados = await new Promise(resolve => {
           const sql = `
             SELECT DISTINCT codigo, precio_lista 
@@ -1641,7 +1650,7 @@ actualizarPreciosExcel: async (req, res) => {
         const algunoDiferente = codigosRelacionados.some(p => Math.abs(precio - p.precio_lista) >= 0.01);
         const mismoPrecio = !algunoDiferente;
 
-        console.log(`➡️ Actualizando precio: código=${codigo}, precio=${precio} | mismoPrecio=${mismoPrecio}`);
+        console.log(`➡️ Actualizando precio: código=${codigo}, nuevo=${precio}, anterior=${precioAnterior} | mismoPrecio=${mismoPrecio}`);
 
         const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
 
@@ -1651,29 +1660,27 @@ actualizarPreciosExcel: async (req, res) => {
         }
 
         resultado.forEach(p => {
-  productosActualizados.push({
-    producto_id: p.producto_id,
-    codigo: p.codigo,
-    nombre: p.nombre,
-    precio_lista_antiguo: precioAnterior, // ✔️ valor real anterior desde la DB
-    precio_lista_nuevo: precio,           // ✔️ valor leído del Excel
-    precio_venta: p.precio_venta || 0,
-    sin_cambio: mismoPrecio
-  });
-});
-
+          productosActualizados.push({
+            producto_id: p.producto_id,
+            codigo: p.codigo,
+            nombre: p.nombre,
+            precio_lista_antiguo: precioAnterior, // ✅ correcto ahora
+            precio_lista_nuevo: precio,
+            precio_venta: p.precio_venta || 0,
+            sin_cambio: mismoPrecio
+          });
+        });
       }
     }
 
-    // ✅ Eliminar duplicados si existiesen
-  productosActualizados = productosActualizados.filter(
-  (value, index, self) =>
-    index === self.findIndex(t =>
-      t.codigo === value.codigo &&
-      t.producto_id === value.producto_id
-    )
-);
-
+    // 🧹 Eliminar duplicados
+    productosActualizados = productosActualizados.filter(
+      (value, index, self) =>
+        index === self.findIndex(t =>
+          t.codigo === value.codigo &&
+          t.producto_id === value.producto_id
+        )
+    );
 
     console.log("✅ Lista final de productos actualizados:");
     console.log(JSON.stringify(productosActualizados, null, 2));
@@ -1686,6 +1693,7 @@ actualizarPreciosExcel: async (req, res) => {
     res.status(500).send(error.message);
   }
 },
+
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
