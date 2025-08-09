@@ -2240,29 +2240,40 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
       params.push(Number(categoria_id));
     }
 
-    // Filtros por fecha (sobre facturas_mostrador.fecha)
+    // Filtros por fecha (unificado sobre v.fecha -> vale para facturas y presupuestos)
     if (desde && hasta) {
-      filtros.push(`fm.fecha BETWEEN ? AND ?`);
+      filtros.push(`v.fecha BETWEEN ? AND ?`);
       params.push(desde, hasta);
     } else if (desde) {
-      filtros.push(`fm.fecha >= ?`);
+      filtros.push(`v.fecha >= ?`);
       params.push(desde);
     } else if (hasta) {
-      filtros.push(`fm.fecha <= ?`);
+      filtros.push(`v.fecha <= ?`);
       params.push(hasta);
     }
 
     const whereSQL = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
 
     const sql = `
-      SELECT 
+      SELECT
         p.id,
         p.nombre,
-        SUM(fi.cantidad) AS total_vendido,
+        SUM(v.cantidad) AS total_vendido,
         p.precio_venta
-      FROM factura_items fi
-      INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
-      INNER JOIN productos p ON p.id = fi.producto_id
+      FROM (
+        /* Ventas por FACTURAS */
+        SELECT fi.producto_id, fi.cantidad, fm.fecha AS fecha
+        FROM factura_items fi
+        INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
+
+        UNION ALL
+
+        /* Ítems de PRESUPUESTOS */
+        SELECT pi.producto_id, pi.cantidad, pm.fecha AS fecha
+        FROM presupuesto_items pi
+        INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
+      ) v
+      INNER JOIN productos p ON p.id = v.producto_id
       ${whereSQL}
       GROUP BY p.id, p.nombre, p.precio_venta
       ORDER BY total_vendido DESC
@@ -2272,6 +2283,7 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
+
 
 
 
