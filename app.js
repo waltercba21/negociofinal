@@ -7,12 +7,9 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const session = require('express-session');
 const mercadopago = require('mercadopago');
+
 const adminMiddleware = require('./middleware/adminMiddleware');
 const middlewares = require('./middleware/middlewares');
-
-// Opcionalmente, seguridad/perf:
-const helmet = require('helmet');
-const compression = require('compression');
 
 // Routers
 const indexRouter = require('./routes/index');
@@ -29,12 +26,6 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server, { cors: { origin: '*' } });
 app.set('io', io);
-
-// --- Seguridad/Perf (opcional pero recomendado) ---
-app.use(helmet({
-  contentSecurityPolicy: false, // si usás inline scripts/styles
-}));
-app.use(compression());
 
 // --- Mercado Pago ---
 if (!process.env.MP_ACCESS_TOKEN) {
@@ -53,9 +44,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 1000 * 60 * 60 * 2, // 2h (ajustable)
+    maxAge: 1000 * 60 * 60 * 2, // 2h
     sameSite: 'lax',
-    secure: !!process.env.TRUST_PROXY, // true si usás HTTPS detrás de proxy
+    secure: process.env.TRUST_PROXY === '1' // true si usás HTTPS detrás de proxy
   }
 }));
 
@@ -101,11 +92,17 @@ io.on('connection', (socket) => {
   });
 });
 
-// --- 404 y manejador de errores (opcional recomendado) ---
-app.use((req, res) => res.status(404).render('404')); // crea views/404.ejs si querés
+// --- 404 y 500 (sin vistas para evitar errores) ---
+app.use((req, res) => {
+  res.status(404).send('No encontrado');
+});
+
 app.use((err, req, res, next) => {
   console.error('💥 Error no controlado:', err);
-  res.status(500).render('500', { error: err }); // crea views/500.ejs si querés
+  if (req.xhr || (req.headers.accept || '').includes('application/json')) {
+    return res.status(500).json({ error: 'Error interno' });
+  }
+  res.status(500).send('Error interno');
 });
 
 // --- Server ---
