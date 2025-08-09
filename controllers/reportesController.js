@@ -3,7 +3,7 @@ const ejs = require('ejs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 const producto = require('../models/producto');
-const conexion = require('../database/conexion');
+const conexion = require('../config/conexion')
 
 function getFirst(v) {
   return Array.isArray(v) ? v[0] : v;
