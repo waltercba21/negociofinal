@@ -2228,28 +2228,32 @@ obtenerProductosPorCategoriaPaginado(conexion, categoriaId, offset, limit) {
     });
   });
 },
-// En models/producto.js, dentro de module.exports { ... }
 obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, hasta = null, limit = 100 }) {
   return new Promise((resolve, reject) => {
     const filtros = [];
     const params = [];
 
-    // Filtro por categoría (productos.categoria_id)
-    if (categoria_id) {
+    // Sanitizar categoría
+    const cat = Number.isInteger(parseInt(categoria_id, 10)) ? parseInt(categoria_id, 10) : null;
+    if (cat && cat > 0) {
       filtros.push(`p.categoria_id = ?`);
-      params.push(Number(categoria_id));
+      params.push(cat);
     }
 
-    // Filtros por fecha (unificado sobre v.fecha -> vale para facturas y presupuestos)
-    if (desde && hasta) {
+    // Sanitizar fechas (YYYY-MM-DD)
+    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    const d1 = isDate(desde) ? desde : null;
+    const d2 = isDate(hasta) ? hasta : null;
+
+    if (d1 && d2) {
       filtros.push(`v.fecha BETWEEN ? AND ?`);
-      params.push(desde, hasta);
-    } else if (desde) {
+      params.push(d1, d2);
+    } else if (d1) {
       filtros.push(`v.fecha >= ?`);
-      params.push(desde);
-    } else if (hasta) {
+      params.push(d1);
+    } else if (d2) {
       filtros.push(`v.fecha <= ?`);
-      params.push(hasta);
+      params.push(d2);
     }
 
     const whereSQL = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
@@ -2283,6 +2287,7 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
+
 // Inserta búsqueda de texto
 insertarBusquedaTexto: function (conexion, { q, origen, user_id, ip }) {
   return new Promise((resolve, reject) => {

@@ -1810,32 +1810,31 @@ eliminarPedido: async (req, res) => {
 },
 masVendidos: async (req, res) => {
   try {
-    const { categoria_id, desde, hasta } = req.query;
+    // Si hay parámetros duplicados, quedate con el primero
+    const getFirst = (v) => Array.isArray(v) ? v[0] : v;
 
+    let categoria_id = getFirst(req.query.categoria_id) || null;
+    let desde        = getFirst(req.query.desde) || null;
+    let hasta        = getFirst(req.query.hasta) || null;
+
+    // Pasar al modelo
     const [productos, categorias] = await Promise.all([
-      producto.obtenerMasVendidos(conexion, {
-        categoria_id: categoria_id || null,
-        desde: desde || null,
-        hasta: hasta || null,
-        limit: 100
-      }),
+      producto.obtenerMasVendidos(conexion, { categoria_id, desde, hasta, limit: 100 }),
       producto.obtenerCategorias(conexion)
     ]);
 
     res.render('productosMasVendidos', {
       productos,
       categorias,
-      filtros: {
-        categoria_id: categoria_id || '',
-        desde: desde || '',
-        hasta: hasta || ''
-      }
+      filtros: { categoria_id: categoria_id || '', desde: desde || '', hasta: hasta || '' }
     });
+
   } catch (error) {
     console.error('❌ Error al obtener productos más vendidos:', error);
     res.status(500).send('Error al obtener productos más vendidos');
   }
-},
+}
+
 
 
 
