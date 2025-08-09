@@ -1810,29 +1810,34 @@ eliminarPedido: async (req, res) => {
 },
 masVendidos: async (req, res) => {
   try {
-    const query = `
-      SELECT p.id, p.nombre, SUM(v.cantidad) as total_vendido, p.precio_venta
-      FROM (
-        SELECT producto_id, cantidad FROM productos_orden
-        UNION ALL
-        SELECT producto_id, cantidad FROM factura_items
-      ) v
-      INNER JOIN productos p ON p.id = v.producto_id
-      GROUP BY p.id, p.nombre, p.precio_venta
-      ORDER BY total_vendido DESC
-      LIMIT 20
-    `;
+    const { categoria_id, desde, hasta } = req.query;
 
-    conexion.query(query, (err, resultados) => {
-      if (err) throw err;
-      res.render('productosMasVendidos', { productos: resultados });
+    const [productos, categorias] = await Promise.all([
+      producto.obtenerMasVendidos(conexion, {
+        categoria_id: categoria_id || null,
+        desde: desde || null,
+        hasta: hasta || null,
+        limit: 100
+      }),
+      producto.obtenerCategorias(conexion)
+    ]);
+
+    res.render('productosMasVendidos', {
+      productos,
+      categorias,
+      filtros: {
+        categoria_id: categoria_id || '',
+        desde: desde || '',
+        hasta: hasta || ''
+      }
     });
-
   } catch (error) {
-    console.error('Error al obtener productos más vendidos:', error);
+    console.error('❌ Error al obtener productos más vendidos:', error);
     res.status(500).send('Error al obtener productos más vendidos');
   }
 }
+
+
 
 
 } 

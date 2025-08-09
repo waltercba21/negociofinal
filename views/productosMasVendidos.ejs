@@ -2,25 +2,79 @@
 <%- include('./layouts/header.ejs') %>
 
 <div class="container mt-4">
-  <h2>Productos Más Vendidos</h2>
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Nombre</th>
-        <th>Total Vendido</th>
-        <th>Precio Venta</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% productos.forEach(prod => { %>
+  <h2 class="mb-3">Productos Más Vendidos</h2>
+
+  <!-- Filtros -->
+  <form class="row g-3 mb-4" method="GET" action="">
+    <div class="col-md-4">
+      <label for="categoria_id" class="form-label">Categoría</label>
+      <select id="categoria_id" name="categoria_id" class="form-select">
+        <option value="">Todas</option>
+        <% (categorias || []).forEach(c => { %>
+          <option value="<%= c.id %>" <%= (filtros && String(filtros.categoria_id) === String(c.id)) ? 'selected' : '' %>>
+            <%= c.nombre %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label for="desde" class="form-label">Desde</label>
+      <input type="date" id="desde" name="desde" class="form-control" value="<%= filtros?.desde || '' %>">
+    </div>
+
+    <div class="col-md-3">
+      <label for="hasta" class="form-label">Hasta</label>
+      <input type="date" id="hasta" name="hasta" class="form-control" value="<%= filtros?.hasta || '' %>">
+    </div>
+
+    <div class="col-md-2 d-flex align-items-end">
+      <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+    </div>
+  </form>
+
+  <!-- Resumen filtros -->
+  <div class="mb-3">
+    <small class="text-muted">
+      <strong>Filtros:</strong>
+      <%= (filtros?.categoria_id ? 'Categoría ID ' + filtros.categoria_id : 'Todas las categorías') %> ·
+      <%= (filtros?.desde ? ('Desde ' + filtros.desde) : 'Sin fecha desde') %> ·
+      <%= (filtros?.hasta ? ('Hasta ' + filtros.hasta) : 'Sin fecha hasta') %>
+    </small>
+  </div>
+
+  <!-- Tabla -->
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
         <tr>
-          <td><%= prod.nombre %></td>
-          <td><%= prod.total_vendido %></td>
-          <td>$<%= prod.precio_venta %></td>
+          <th>Nombre</th>
+          <th class="text-end">Total Vendido</th>
+          <th class="text-end">Precio Venta</th>
         </tr>
-      <% }) %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% if ((productos || []).length === 0) { %>
+          <tr>
+            <td colspan="3" class="text-center text-muted py-4">
+              No se encontraron resultados con los filtros aplicados.
+            </td>
+          </tr>
+        <% } else { %>
+          <% productos.forEach(prod => { %>
+            <tr>
+              <td><%= prod.nombre %></td>
+              <td class="text-end"><%= prod.total_vendido %></td>
+              <td class="text-end">
+                $
+                <%= Number(prod.precio_venta || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+              </td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <%- include('./layouts/footer.ejs') %>

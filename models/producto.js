@@ -2228,6 +2228,51 @@ obtenerProductosPorCategoriaPaginado(conexion, categoriaId, offset, limit) {
     });
   });
 },
+// En models/producto.js, dentro de module.exports { ... }
+obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, hasta = null, limit = 100 }) {
+  return new Promise((resolve, reject) => {
+    const filtros = [];
+    const params = [];
+
+    // Filtro por categoría (productos.categoria_id)
+    if (categoria_id) {
+      filtros.push(`p.categoria_id = ?`);
+      params.push(Number(categoria_id));
+    }
+
+    // Filtros por fecha (sobre facturas_mostrador.fecha)
+    if (desde && hasta) {
+      filtros.push(`fm.fecha BETWEEN ? AND ?`);
+      params.push(desde, hasta);
+    } else if (desde) {
+      filtros.push(`fm.fecha >= ?`);
+      params.push(desde);
+    } else if (hasta) {
+      filtros.push(`fm.fecha <= ?`);
+      params.push(hasta);
+    }
+
+    const whereSQL = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
+
+    const sql = `
+      SELECT 
+        p.id,
+        p.nombre,
+        SUM(fi.cantidad) AS total_vendido,
+        p.precio_venta
+      FROM factura_items fi
+      INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
+      INNER JOIN productos p ON p.id = fi.producto_id
+      ${whereSQL}
+      GROUP BY p.id, p.nombre, p.precio_venta
+      ORDER BY total_vendido DESC
+      LIMIT ${Number(limit) || 100}
+    `;
+
+    conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+  });
+},
+
 
 
 }
