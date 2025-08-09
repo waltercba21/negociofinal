@@ -2,79 +2,120 @@
 const ejs = require('ejs');
 const path = require('path');
 const puppeteer = require('puppeteer');
+const producto = require('../models/producto');
+const conexion = require('../database/conexion');
+
+function getFirst(v) {
+  return Array.isArray(v) ? v[0] : v;
+}
+function isDate(d) {
+  return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+}
 
 module.exports = {
   recomendacionesCompra: async (req, res) => {
     try {
-      const { categoria_id, desde, hasta } = req.query;
+      // Normalizar query params
+      let categoria_id = getFirst(req.query.categoria_id) || null;
+      let desde        = getFirst(req.query.desde) || null;
+      let hasta        = getFirst(req.query.hasta) || null;
 
-      // 1) Datos de ventas + presupuestos (lo que ya hicimos)
+      const cat = Number.parseInt(categoria_id, 10);
+      categoria_id = Number.isInteger(cat) && cat > 0 ? cat : null;
+
+      desde = isDate(desde) ? desde : null;
+      hasta = isDate(hasta) ? hasta : null;
+
+      console.log('➡️ /reportes/recomendaciones', { categoria_id, desde, hasta });
+
+      // 1) Más vendidos (facturas + presupuestos)
       const masVendidos = await producto.obtenerMasVendidos(conexion, {
-        categoria_id: categoria_id || null,
-        desde: desde || null,
-        hasta: hasta || null,
+        categoria_id,
+        desde,
+        hasta,
         limit: 100
       });
 
-      // 2) Datos de "más buscados" (ver modelo más abajo)
+      // 2) Más buscados (clicks en buscador)
       const masBuscados = await producto.obtenerMasBuscados(conexion, {
-        categoria_id: categoria_id || null,
-        desde: desde || null,
-        hasta: hasta || null,
+        categoria_id,
+        desde,
+        hasta,
         limit: 100
       });
 
-      // 3) Fusionar en un ranking combinado (score simple)
-      // Normalizamos por percentil y sumamos ponderado (ventas 0.7, búsquedas 0.3)
-      const mapVentas = new Map(masVendidos.map((r, i) => [r.id, { rank: i+1, total: r.total_vendido }]));
-      const mapBusq  = new Map(masBuscados.map((r, i) => [r.id, { rank: i+1, total: r.total_buscado }]));
+      // 3) Fusionar (ventas 0.7 + búsquedas 0.3)
+      const ventasById = new Map();
+      const buscById = new Map();
+      const metaById = new Map();
 
-      const productosIds = new Set([...mapVentas.keys(), ...mapBusq.keys()]);
-      const combinar = [];
-
-      for (const id of productosIds) {
-        const v = mapVentas.get(id);
-        const b = mapBusq.get(id);
-        const ventas = v?.total || 0;
-        const busq  = b?.total || 0;
-        combinar.push({
-          id,
-          nombre: (masVendidos.find(x => x.id === id)?.nombre) || (masBuscados.find(x => x.id === id)?.nombre) || '',
-          precio_venta: (masVendidos.find(x => x.id === id)?.precio_venta) || (masBuscados.find(x => x.id === id)?.precio_venta) || 0,
-          ventas,
-          buscado: busq,
-          score: ventas * 0.7 + busq * 0.3
-        });
+      for (const r of masVendidos) {
+        ventasById.set(r.id, Number(r.total_vendido) || 0);
+        metaById.set(r.id, { nombre: r.nombre, precio_venta: r.precio_venta });
+      }
+      for (const r of masBuscados) {
+        buscById.set(r.id, Number(r.total_buscado) || 0);
+        if (!metaById.has(r.id)) {
+          metaById.set(r.id, { nombre: r.nombre, precio_venta: r.precio_venta });
+        }
       }
 
-      combinar.sort((a,b)=> b.score - a.score);
+      const productosIds = new Set([
+        ...ventasById.keys(),
+        ...buscById.keys()
+      ]);
+
+      const ranking = [];
+      for (const id of productosIds) {
+        const ventas = ventasById.get(id) || 0;
+        const buscado = buscById.get(id) || 0;
+        const meta = metaById.get(id) || { nombre: '', precio_venta: 0 };
+        ranking.push({
+          id,
+          nombre: meta.nombre,
+          precio_venta: meta.precio_venta,
+          ventas,
+          buscado,
+          score: ventas * 0.7 + buscado * 0.3
+        });
+      }
+      ranking.sort((a, b) => b.score - a.score);
 
       // 4) Render EJS -> HTML
-      const templatePath = path.join(__dirname, '../views/reportes/recomendacionesCompra.ejs');
+      const templatePath = path.resolve(__dirname, '..', 'views', 'reportes', 'recomendacionesCompra.ejs');
       const html = await ejs.renderFile(templatePath, {
         filtros: { categoria_id, desde, hasta },
         topVendidos: masVendidos.slice(0, 20),
         topBuscados: masBuscados.slice(0, 20),
-        ranking: combinar.slice(0, 50) // top 50 recomendados
+        ranking: ranking.slice(0, 50)
       });
 
-      // 5) HTML -> PDF
-      const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '20mm', right: '12mm', bottom: '18mm', left: '12mm' }
-      });
-      await browser.close();
+      // 5) HTML -> PDF (con fallback a HTML si no hay Puppeteer)
+      try {
+        const browser = await puppeteer.launch({
+          args: ['--no-sandbox', '--disable-setuid-sandbox']
+          // Si necesitás path a Chromium del sistema, agregamos executablePath acá.
+        });
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: { top: '20mm', right: '12mm', bottom: '18mm', left: '12mm' }
+        });
+        await browser.close();
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="recomendaciones_compra.pdf"`);
-      res.send(pdfBuffer);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="recomendaciones_compra.pdf"');
+        return res.send(pdfBuffer);
+      } catch (pdfErr) {
+        console.error('⚠️ Puppeteer falló, devuelvo HTML:', pdfErr.message);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+      }
     } catch (error) {
       console.error('❌ recomendacionesCompra:', error);
-      res.status(500).send('Error al generar recomendaciones');
+      return res.status(500).send('Error al generar recomendaciones');
     }
   }
 };

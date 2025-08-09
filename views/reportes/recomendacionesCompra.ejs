@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Recomendaciones de compra</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin:0; padding:24px; color:#0f172a; }
+    h1 { margin:0 0 4px; font-size:22px; }
+    .sub { color:#475569; font-size:12px; margin-bottom:16px; }
+    .muted { color:#64748b; font-size:12px; }
+    .section { margin-top:18px; }
+    table { border-collapse: collapse; width:100%; font-size:12px; }
+    th, td { border-bottom:1px solid #e2e8f0; text-align:left; padding:8px 6px; }
+    th { background:#f8fafc; text-transform:uppercase; letter-spacing:.4px; font-size:11px; color:#334155; }
+    .num { text-align:right; font-variant-numeric: tabular-nums; white-space:nowrap; }
+  </style>
+</head>
+<body>
+  <h1>Recomendaciones de compra</h1>
+  <div class="sub">
+    Según el filtro aplicado, deberías considerar pedir los siguientes productos para mantener stock y respuesta a la demanda.
+  </div>
+  <div class="muted">
+    <strong>Filtros:</strong>
+    <%= filtros?.categoria_id ? ('Categoría ID ' + filtros.categoria_id) : 'Todas las categorías' %> ·
+    <%= filtros?.desde ? ('Desde ' + filtros.desde) : 'Sin fecha desde' %> ·
+    <%= filtros?.hasta ? ('Hasta ' + filtros.hasta) : 'Sin fecha hasta' %>
+  </div>
+
+  <div class="section">
+    <h3>Ranking combinado (ventas + búsquedas)</h3>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Producto</th><th class="num">Ventas</th><th class="num">Búsquedas</th><th class="num">Score</th><th class="num">Precio</th></tr>
+      </thead>
+      <tbody>
+      <% ranking.forEach((r, i) => { %>
+        <tr>
+          <td><%= i+1 %></td>
+          <td><%= r.nombre %></td>
+          <td class="num"><%= r.ventas %></td>
+          <td class="num"><%= r.buscado %></td>
+          <td class="num"><%= r.score.toFixed(2) %></td>
+          <td class="num">$ <%= Number(r.precio_venta||0).toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Top vendidos (solo ventas)</h3>
+    <table>
+      <thead><tr><th>#</th><th>Producto</th><th class="num">Total vendido</th><th class="num">Precio</th></tr></thead>
+      <tbody>
+      <% topVendidos.forEach((p,i)=>{ %>
+        <tr>
+          <td><%= i+1 %></td>
+          <td><%= p.nombre %></td>
+          <td class="num"><%= p.total_vendido %></td>
+          <td class="num">$ <%= Number(p.precio_venta||0).toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Top buscados (solo buscador)</h3>
+    <table>
+      <thead><tr><th>#</th><th>Producto</th><th class="num">Veces buscado</th><th class="num">Precio</th></tr></thead>
+      <tbody>
+      <% topBuscados.forEach((p,i)=>{ %>
+        <tr>
+          <td><%= i+1 %></td>
+          <td><%= p.nombre %></td>
+          <td class="num"><%= p.total_buscado %></td>
+          <td class="num">$ <%= Number(p.precio_venta||0).toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
