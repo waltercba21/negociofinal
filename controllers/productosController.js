@@ -1835,8 +1835,7 @@ masVendidos: async (req, res) => {
     console.error('❌ Error al obtener productos más vendidos:', error);
     res.status(500).send('Error al obtener productos más vendidos');
   }
-}
-
+},
 
 
 

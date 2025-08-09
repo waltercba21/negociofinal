@@ -5,6 +5,7 @@ const productosController = require('../controllers/productosController');
 const ensureAuthenticated = require('../middleware/usuarioMiddleware');
 var methodOverride = require('method-override');
 
+
 router.use(methodOverride('_method'));
 
 // Configuración de Multer para almacenamiento de archivos

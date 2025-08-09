@@ -2283,6 +2283,64 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
+// Inserta búsqueda de texto
+insertarBusquedaTexto: function (conexion, { q, origen, user_id, ip }) {
+  return new Promise((resolve, reject) => {
+    const sql = `INSERT INTO busquedas_texto (q, origen, user_id, ip) VALUES (?, ?, ?, ?)`;
+    conexion.query(sql, [q, origen || 'texto', user_id, ip], (err, r) => err ? reject(err) : resolve(r.insertId));
+  });
+},
+
+// Inserta búsqueda con selección de producto
+insertarBusquedaProducto: function (conexion, { producto_id, q, user_id, ip }) {
+  return new Promise((resolve, reject) => {
+    const sql = `INSERT INTO busquedas_producto (producto_id, q, user_id, ip) VALUES (?, ?, ?, ?)`;
+    conexion.query(sql, [producto_id, q, user_id, ip], (err, r) => err ? reject(err) : resolve(r.insertId));
+  });
+},
+
+// Agrega este método para obtener "más buscados"
+obtenerMasBuscados: function (conexion, { categoria_id = null, desde = null, hasta = null, limit = 100 }) {
+  return new Promise((resolve, reject) => {
+    const filtros = [];
+    const params = [];
+
+    // Fecha (sobre created_at de clicks en producto, más fiable que solo texto)
+    if (desde && hasta) {
+      filtros.push(`bp.created_at BETWEEN ? AND ?`);
+      params.push(desde, hasta);
+    } else if (desde) {
+      filtros.push(`bp.created_at >= ?`);
+      params.push(desde);
+    } else if (hasta) {
+      filtros.push(`bp.created_at <= ?`);
+      params.push(hasta);
+    }
+
+    if (categoria_id) {
+      filtros.push(`p.categoria_id = ?`);
+      params.push(Number(categoria_id));
+    }
+
+    const whereSQL = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
+
+    const sql = `
+      SELECT 
+        p.id,
+        p.nombre,
+        p.precio_venta,
+        COUNT(*) AS total_buscado
+      FROM busquedas_producto bp
+      INNER JOIN productos p ON p.id = bp.producto_id
+      ${whereSQL}
+      GROUP BY p.id, p.nombre, p.precio_venta
+      ORDER BY total_buscado DESC
+      LIMIT ${Number(limit) || 100}
+    `;
+
+    conexion.query(sql, params, (err, rows) => err ? reject(err) : resolve(rows));
+  });
+},
 
 
 

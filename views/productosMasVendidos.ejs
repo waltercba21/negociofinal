@@ -27,6 +27,16 @@
           <label for="hasta" class="mv-label">Hasta</label>
           <input type="date" id="hasta" name="hasta" class="mv-input" value="<%= filtros?.hasta || '' %>">
         </div>
+        <div class="mv-actions-extra">
+  <form method="GET" action="/reportes/recomendaciones">
+    <input type="hidden" name="categoria_id" value="<%= filtros?.categoria_id || '' %>">
+    <input type="hidden" name="desde" value="<%= filtros?.desde || '' %>">
+    <input type="hidden" name="hasta" value="<%= filtros?.hasta || '' %>">
+    <button class="mv-btn" type="submit">
+      Generar Recomendaciones de Compra (PDF)
+    </button>
+  </form>
+</div>
 
         <div class="mv-actions">
           <button type="submit" class="mv-btn">Filtrar</button>
