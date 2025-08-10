@@ -5,6 +5,26 @@ const entradaBusqueda = document.getElementById('entradaBusqueda');
 const contenedorProductos = document.getElementById('contenedor-productos');
 const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
 const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
+let lastLogAt = 0;
+
+// ⬇️ FUNCIONES AUXILIARES
+function logBusquedaTexto(q, origen = 'texto') {
+  if (!q || q.length < 3) return;
+  fetch('/analytics/busquedas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ q, origen })
+  }).catch(()=>{});
+}
+
+function logBusquedaProducto(producto_id, qActual) {
+  if (!producto_id) return;
+  fetch('/analytics/busqueda-producto', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ producto_id: Number(producto_id), q: qActual || null })
+  }).catch(()=>{});
+}
 
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
@@ -15,6 +35,32 @@ entradaBusqueda.addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
     const busqueda = e.target.value.trim();
+    const now = Date.now();
+if (busqueda.length >= 3 && (now - lastLogAt > 1200)) {
+  lastLogAt = now;
+  logBusquedaTexto(busqueda, 'texto');
+}
+// ⬇️ UNA SOLA VEZ, DESPUÉS DE DEFINIR contenedorProductos/entradaBusqueda
+// Listener delegado para clicks en productos mostrados por el buscador
+contenedorProductos.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.agregar-carrito');
+  const link = ev.target.closest('.card-link');
+  if (!btn && !link) return;
+
+  let productoId = null;
+
+  if (btn) productoId = btn.dataset?.id;
+  if (!productoId && link && link.getAttribute('href')) {
+    const m = link.getAttribute('href').match(/\/productos\/(\d+)/);
+    if (m) productoId = m[1];
+  }
+
+  if (!productoId) return;
+
+  const qActual = (entradaBusqueda?.value || '').trim();
+  logBusquedaProducto(productoId, qActual);
+}, { passive: true });
+
     contenedorProductos.innerHTML = '';
 
     if (busqueda) {
