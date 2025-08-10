@@ -1,6 +1,6 @@
 // controllers/analyticsController.js
 const producto  = require('../models/producto');           // 👈 FALTABA
-const conexion  = require('../database/conexion');         // 👈 FALTABA (ajustá la ruta si usás ../config/conexion)
+const conexion = require('../config/conexion')         // 👈 FALTABA (ajustá la ruta si usás ../config/conexion)
 const requestIp = (req) => (req.headers['x-forwarded-for']?.split(',')[0] || req.ip || null);
 
 module.exports = {
