@@ -3,18 +3,21 @@ let timer;
 
 const entradaBusqueda = document.getElementById('entradaBusqueda');
 const contenedorProductos = document.getElementById('contenedor-productos');
+const botonLimpiar = document.getElementById('botonLimpiar');
+
 const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
 const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
-let lastLogAt = 0;
 
-// ⬇️ FUNCIONES AUXILIARES
+let lastLogAt = 0; // debounce para analytics
+
+// ===== Analytics helpers =====
 function logBusquedaTexto(q, origen = 'texto') {
   if (!q || q.length < 3) return;
   fetch('/analytics/busquedas', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ q, origen })
-  }).catch(()=>{});
+  }).catch(() => {});
 }
 
 function logBusquedaProducto(producto_id, qActual) {
@@ -23,25 +26,16 @@ function logBusquedaProducto(producto_id, qActual) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ producto_id: Number(producto_id), q: qActual || null })
-  }).catch(()=>{});
+  }).catch(() => {});
 }
 
+// ===== Carga inicial =====
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
 };
 
-entradaBusqueda.addEventListener('input', (e) => {
-  clearTimeout(timer);
-  timer = setTimeout(async () => {
-    const busqueda = e.target.value.trim();
-    const now = Date.now();
-if (busqueda.length >= 3 && (now - lastLogAt > 1200)) {
-  lastLogAt = now;
-  logBusquedaTexto(busqueda, 'texto');
-}
-// ⬇️ UNA SOLA VEZ, DESPUÉS DE DEFINIR contenedorProductos/entradaBusqueda
-// Listener delegado para clicks en productos mostrados por el buscador
+// ===== Listener delegado de clicks en cards (UNA sola vez) =====
 contenedorProductos.addEventListener('click', (ev) => {
   const btn = ev.target.closest('.agregar-carrito');
   const link = ev.target.closest('.card-link');
@@ -54,12 +48,38 @@ contenedorProductos.addEventListener('click', (ev) => {
     const m = link.getAttribute('href').match(/\/productos\/(\d+)/);
     if (m) productoId = m[1];
   }
-
   if (!productoId) return;
 
   const qActual = (entradaBusqueda?.value || '').trim();
   logBusquedaProducto(productoId, qActual);
 }, { passive: true });
+
+// ===== Botón limpiar (UNA sola vez) =====
+if (botonLimpiar) {
+  // Mostrar/ocultar según contenido
+  entradaBusqueda.addEventListener('input', () => {
+    botonLimpiar.style.display = entradaBusqueda.value.trim() !== '' ? 'block' : 'none';
+  });
+  // Limpiar al hacer clic
+  botonLimpiar.addEventListener('click', () => {
+    entradaBusqueda.value = '';
+    botonLimpiar.style.display = 'none';
+    contenedorProductos.innerHTML = '';
+  });
+}
+
+// ===== Búsqueda con debounce + log texto =====
+entradaBusqueda.addEventListener('input', (e) => {
+  clearTimeout(timer);
+  timer = setTimeout(async () => {
+    const busqueda = e.target.value.trim();
+
+    // Analytics: registrar texto (cada 1.2s mín., 3+ chars)
+    const now = Date.now();
+    if (busqueda.length >= 3 && (now - lastLogAt > 1200)) {
+      lastLogAt = now;
+      logBusquedaTexto(busqueda, 'texto');
+    }
 
     contenedorProductos.innerHTML = '';
 
@@ -67,7 +87,6 @@ contenedorProductos.addEventListener('click', (ev) => {
       const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
       const respuesta = await fetch(url);
       const productos = await respuesta.json();
-
       mostrarProductos(productos);
     }
   }, 300);
@@ -76,9 +95,9 @@ contenedorProductos.addEventListener('click', (ev) => {
 function mostrarProductos(productos) {
   contenedorProductos.innerHTML = '';
 
-  if (productos.length === 0) {
-    const contenedorVacio = document.createElement("div");
-    contenedorVacio.className = "no-result";
+  if (!Array.isArray(productos) || productos.length === 0) {
+    const contenedorVacio = document.createElement('div');
+    contenedorVacio.className = 'no-result';
     contenedorVacio.innerHTML = `
       <img src="/images/noEncontrado.png" alt="Producto no encontrado" class="imagen-no-result">
       <p>No se encontraron productos. Probá con otros filtros o palabras clave.</p>
@@ -86,20 +105,6 @@ function mostrarProductos(productos) {
     contenedorProductos.appendChild(contenedorVacio);
     return;
   }
-  const botonLimpiar = document.getElementById('botonLimpiar');
-
-  // Mostrar el botón solo si hay texto
-  entradaBusqueda.addEventListener('input', () => {
-    botonLimpiar.style.display = entradaBusqueda.value.trim() !== '' ? 'block' : 'none';
-  });
-  
-  // Al hacer clic, limpiar input y productos
-  botonLimpiar.addEventListener('click', () => {
-    entradaBusqueda.value = '';
-    botonLimpiar.style.display = 'none';
-    contenedorProductos.innerHTML = '';
-  });
-    
 
   productos.forEach((producto, index) => {
     const card = document.createElement('div');
@@ -109,10 +114,16 @@ function mostrarProductos(productos) {
       ${producto.calidad_vic ? 'calidad_vic' : ''} 
       ${producto.oferta ? 'producto-oferta' : ''}
     `;
-    card.setAttribute('data-label', producto.oferta ? 'OFERTA' : producto.calidad_original ? 'CALIDAD FITAM' : producto.calidad_vic ? 'CALIDAD VIC' : '');
+    card.setAttribute(
+      'data-label',
+      producto.oferta ? 'OFERTA'
+        : producto.calidad_original ? 'CALIDAD FITAM'
+        : producto.calidad_vic ? 'CALIDAD VIC'
+        : ''
+    );
 
     let imagenesHTML = '';
-    producto.imagenes.forEach((imagen, i) => {
+    (producto.imagenes || []).forEach((imagen, i) => {
       imagenesHTML += `
         <img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen.imagen}" alt="${producto.nombre}">
       `;
@@ -175,43 +186,35 @@ function mostrarProductos(productos) {
       <hr>
       <div class="categoria-producto"><h6 class="categoria">${producto.categoria_nombre || 'Sin categoría'}</h6></div>
       <div class="precio-producto"><p class="precio">$${formatearNumero(producto.precio_venta || 0)}</p></div>
-      
+
       ${isAdminUser ? `
         <div class="codigo-admin">
           <p><strong>Proveedor:</strong> ${producto.proveedor_nombre || 'Sin proveedor'}</p>
           <p><strong>Código:</strong> ${producto.codigo || '-'}</p>
-          
         </div>
       ` : ''}
+
       ${stockInfo}
+
       <div class="acciones-compartir">
-  <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" 
-     title="Consultar por WhatsApp" 
-     target="_blank" 
-     class="whatsapp">
-    <i class="fab fa-whatsapp"></i>
-  </a>
-
-  <a href="https://www.facebook.com/profile.php?id=100063665395970" 
-     title="Visitar Facebook" 
-     target="_blank" 
-     class="facebook">
-    <i class="fab fa-facebook"></i>
-  </a>
-
-  <a href="https://www.instagram.com/autofaros_cordoba" 
-     title="Visitar Instagram" 
-     target="_blank" 
-     class="instagram">
-    <i class="fab fa-instagram"></i>
-  </a>
-</div>
-
+        <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" 
+           title="Consultar por WhatsApp" target="_blank" class="whatsapp">
+          <i class="fab fa-whatsapp"></i>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=100063665395970" 
+           title="Visitar Facebook" target="_blank" class="facebook">
+          <i class="fab fa-facebook"></i>
+        </a>
+        <a href="https://www.instagram.com/autofaros_cordoba" 
+           title="Visitar Instagram" target="_blank" class="instagram">
+          <i class="fab fa-instagram"></i>
+        </a>
+      </div>
     `;
 
     contenedorProductos.appendChild(card);
 
-    // 💡 Solo usuarios comunes: validar el input antes de agregar al carrito
+    // Validación de cantidad (solo usuarios comunes logueados)
     if (!isAdminUser && isUserLoggedIn) {
       const botonAgregar = card.querySelector('.agregar-carrito');
       const inputCantidad = card.querySelector('.cantidad-input');
@@ -241,8 +244,7 @@ function mostrarProductos(productos) {
           return;
         }
 
-        // ✅ Si pasa las validaciones, activamos evento personalizado
-        const eventoAgregar = new CustomEvent("agregarAlCarritoDesdeBuscador", {
+        const eventoAgregar = new CustomEvent('agregarAlCarritoDesdeBuscador', {
           detail: {
             id: producto.id,
             nombre: producto.nombre,

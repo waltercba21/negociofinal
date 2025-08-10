@@ -4,10 +4,33 @@ document.addEventListener("DOMContentLoaded", function () {
   const modeloSelect = document.getElementById("modelo_id");
   const contenedorProductos = document.getElementById("contenedor-productos");
 
+  if (!categoriaSelect || !marcaSelect || !modeloSelect || !contenedorProductos) return;
+
   const isUserLoggedIn = document.body.dataset.isUserLoggedIn === "true";
   const isAdminUser = document.body.dataset.isAdminUser === "true";
 
-  // Cargar modelos al cambiar marca
+  // === Analytics helpers ===
+  function logBusquedaTexto(q, origen = "selectores") {
+    if (!q) return;
+    fetch("/analytics/busquedas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q, origen })
+    }).catch(() => {});
+  }
+  function logBusquedaProducto(producto_id, qActual) {
+    if (!producto_id) return;
+    fetch("/analytics/busqueda-producto", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ producto_id: Number(producto_id), q: qActual || null })
+    }).catch(() => {});
+  }
+  function buildQueryDesc() {
+    return `categoria=${categoriaSelect.value||''};marca=${marcaSelect.value||''};modelo=${modeloSelect.value||''}`;
+  }
+
+  // === Cargar modelos al cambiar marca ===
   marcaSelect.addEventListener("change", function () {
     const marcaId = this.value;
     fetch("/productos/modelos/" + marcaId)
@@ -18,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
         option.value = "";
         option.text = "Selecciona un modelo";
         modeloSelect.appendChild(option);
-      
+
         const normalizarModelo = (nombre) => {
           const partes = nombre.split('/');
           if (partes.length === 2 && !isNaN(partes[0]) && !isNaN(partes[1])) {
@@ -27,13 +50,9 @@ document.addEventListener("DOMContentLoaded", function () {
           const match = nombre.match(/\d+/g);
           return match ? parseInt(match.join('')) : Number.MAX_SAFE_INTEGER;
         };
-      
-        modelos.sort((a, b) => {
-          const numA = normalizarModelo(a.nombre);
-          const numB = normalizarModelo(b.nombre);
-          return numA - numB;
-        });
-      
+
+        modelos.sort((a, b) => normalizarModelo(a.nombre) - normalizarModelo(b.nombre));
+
         modelos.forEach((modelo) => {
           const opt = document.createElement("option");
           opt.value = modelo.id;
@@ -41,22 +60,24 @@ document.addEventListener("DOMContentLoaded", function () {
           modeloSelect.appendChild(opt);
         });
       })
-      
       .catch((err) => console.error("Error al cargar modelos:", err));
   });
 
+  // === Cambio en cualquier selector => buscar productos + log de búsqueda ===
   [categoriaSelect, marcaSelect, modeloSelect].forEach((selector) => {
     selector.addEventListener("change", async () => {
       const categoria_id = categoriaSelect.value;
       const marca_id = marcaSelect.value;
       const modelo_id = modeloSelect.value;
 
+      // Log de búsqueda (selectores)
+      logBusquedaTexto(buildQueryDesc(), "selectores");
+
       contenedorProductos.innerHTML = "<p>Cargando productos...</p>";
 
       try {
-        const response = await fetch(`/productos/api/buscar?categoria_id=${categoria_id}&marca_id=${marca_id}&modelo_id=${modelo_id}`);
+        const response = await fetch(`/productos/api/buscar?categoria_id=${encodeURIComponent(categoria_id)}&marca_id=${encodeURIComponent(marca_id)}&modelo_id=${encodeURIComponent(modelo_id)}`);
         if (!response.ok) throw new Error("Error al obtener productos");
-
         const productos = await response.json();
         mostrarProductos(productos);
       } catch (error) {
@@ -66,10 +87,28 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
+  // === Delegado: click en cards para loguear selección de producto (sin interferir con tu lógica) ===
+  contenedorProductos.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.agregar-carrito');
+    const link = ev.target.closest('.card-link');
+    if (!btn && !link) return;
+
+    let productoId = null;
+    if (btn) productoId = btn.dataset?.id;
+    if (!productoId && link && link.getAttribute('href')) {
+      const m = link.getAttribute('href').match(/\/productos\/(\d+)/);
+      if (m) productoId = m[1];
+    }
+    if (!productoId) return;
+
+    logBusquedaProducto(productoId, buildQueryDesc());
+  }, { passive: true });
+
+  // === Render de resultados (sin cambios funcionales, solo tal cual lo tenías) ===
   function mostrarProductos(productos) {
     contenedorProductos.innerHTML = "";
-  
-    if (productos.length === 0) {
+
+    if (!Array.isArray(productos) || productos.length === 0) {
       const contenedorVacio = document.createElement("div");
       contenedorVacio.className = "no-result";
       contenedorVacio.innerHTML = `
@@ -79,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function () {
       contenedorProductos.appendChild(contenedorVacio);
       return;
     }
-  
+
     productos.forEach((producto, index) => {
       const card = document.createElement("div");
       card.className = `
@@ -88,14 +127,18 @@ document.addEventListener("DOMContentLoaded", function () {
         ${producto.calidad_vic ? "calidad_vic" : ""} 
         ${producto.oferta ? "producto-oferta" : ""}
       `;
-      card.setAttribute("data-label", producto.oferta ? "OFERTA" : producto.calidad_original ? "CALIDAD FITAM" : producto.calidad_vic ? "CALIDAD VIC" : "");
-  
-      const imagenesHTML = producto.imagenes.map((img, i) => `
+      card.setAttribute("data-label",
+        producto.oferta ? "OFERTA" :
+        producto.calidad_original ? "CALIDAD FITAM" :
+        producto.calidad_vic ? "CALIDAD VIC" : ""
+      );
+
+      const imagenesHTML = (producto.imagenes || []).map((img, i) => `
         <img class="carousel__image ${i !== 0 ? "hidden" : ""}" src="/uploads/productos/${img.imagen}" alt="${producto.nombre}">
       `).join("");
-  
+
       const stockHTML = isUserLoggedIn
-        ? isAdminUser
+        ? (isAdminUser
           ? `
             <div class="stock-producto ${producto.stock_actual >= producto.stock_minimo ? "suficiente-stock" : "bajo-stock"}">
               <p>Stock Disponible: ${producto.stock_actual}</p>
@@ -125,9 +168,9 @@ document.addEventListener("DOMContentLoaded", function () {
               </button>
               <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
             </div>
-          `
+          `)
         : `<div class="cantidad-producto"><a href="/productos/${producto.id}" class="card-link">Ver detalles</a></div>`;
-  
+
       card.innerHTML = `
         <div class="cover-card">
           <div class="carousel-container">
@@ -161,29 +204,30 @@ document.addEventListener("DOMContentLoaded", function () {
           </a>
         </div>
       `;
-  
+
       contenedorProductos.appendChild(card);
-  
+
+      // Lógica de validación/dispatch para agregar al carrito (igual que tenías)
       if (!isAdminUser && isUserLoggedIn) {
         const botonAgregar = card.querySelector('.agregar-carrito');
         const inputCantidad = card.querySelector('.cantidad-input');
-  
+
         botonAgregar.addEventListener('click', (e) => {
           e.preventDefault();
           const cantidad = parseInt(inputCantidad.value);
           const stockDisponible = parseInt(producto.stock_actual);
-  
+
           if (!cantidad || cantidad <= 0 || isNaN(cantidad)) {
             Swal.fire({ icon: 'error', title: 'Cantidad inválida', text: 'Debes ingresar una cantidad mayor a 0.' });
             return;
           }
-  
+
           if (cantidad > stockDisponible) {
             Swal.fire({ icon: 'warning', title: 'Cantidades no disponibles', text: 'Si deseas más unidades comunicate con nosotros 3513820440' });
             inputCantidad.value = stockDisponible;
             return;
           }
-  
+
           const eventoAgregar = new CustomEvent("agregarAlCarritoDesdeBuscador", {
             detail: {
               id: producto.id,
@@ -192,22 +236,22 @@ document.addEventListener("DOMContentLoaded", function () {
               cantidad: cantidad
             }
           });
-  
+
           document.dispatchEvent(eventoAgregar);
         });
       }
     });
   }
-  
 
-  function moverCarrusel(index, direccion) {
+  // === Helpers existentes ===
+  window.moverCarrusel = function (index, direccion) {
     const carousel = document.getElementById(`carousel-${index}`);
     const imagenes = carousel.querySelectorAll(".carousel__image");
     let activa = [...imagenes].findIndex(img => !img.classList.contains("hidden"));
     imagenes[activa].classList.add("hidden");
     activa = (activa + direccion + imagenes.length) % imagenes.length;
     imagenes[activa].classList.remove("hidden");
-  }
+  };
 
   function formatearNumero(num) {
     return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
