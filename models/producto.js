@@ -2304,8 +2304,6 @@ insertarBusquedaProducto: function (conexion, { producto_id, q, user_id, ip }) {
   });
 },
 // models/producto.js
-// Combina clicks + texto mapeado a productos por nombre.
-// Pesos: clicks = 1.0, texto = 0.3 (configurable via weightText)
 obtenerMasBuscados: function (
   conexion,
   { categoria_id = null, desde = null, hasta = null, limit = 100, weightText = 0.3 }
@@ -2318,7 +2316,6 @@ obtenerMasBuscados: function (
     const filtrosOuter = [];
     const outerParams = [];
 
-    // Fechas
     const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
     const d1 = isDate(desde) ? desde : null;
     const d2 = isDate(hasta) ? hasta : null;
@@ -2340,7 +2337,6 @@ obtenerMasBuscados: function (
       ptParams.push(d2);
     }
 
-    // Categoría (se aplica en el outer sobre productos)
     const cat = Number.parseInt(categoria_id, 10);
     if (Number.isInteger(cat) && cat > 0) {
       filtrosOuter.push(`p.categoria_id = ?`);
@@ -2351,8 +2347,7 @@ obtenerMasBuscados: function (
     const whereText   = filtrosText.length   ? `WHERE ${filtrosText.join(' AND ')}`   : '';
     const whereOuter  = filtrosOuter.length  ? `WHERE ${filtrosOuter.join(' AND ')}`  : '';
 
-    // NOTA: Para mapear texto->producto usamos LIKE (robusto aunque menos performante).
-    // Si tenés FULLTEXT, te paso una versión MATCH AGAINST para mejorar performance.
+    // Fuerzo misma collation en ambos lados del LIKE para evitar ER_CANT_AGGREGATE_2COLLATIONS
     const sql = `
       SELECT
         p.id,
@@ -2369,26 +2364,20 @@ obtenerMasBuscados: function (
       LEFT JOIN (
         SELECT p2.id AS producto_id, COUNT(*) AS textos
         FROM busquedas_texto bt
-        /* Mapear q -> productos por nombre (LIKE con palabra comodín entre espacios) */
         INNER JOIN productos p2
-          ON p2.nombre LIKE CONCAT('%', REPLACE(bt.q, ' ', '%'), '%')
+          ON p2.nombre COLLATE utf8mb4_general_ci
+             LIKE CONCAT('%', REPLACE(bt.q COLLATE utf8mb4_general_ci, ' ', '%'), '%')
         ${whereText}
         GROUP BY p2.id
       ) pt ON pt.producto_id = p.id
       ${whereOuter}
-      /* solo productos con alguna señal de búsqueda */
       HAVING (COALESCE(pc.clicks, 0) + (? * COALESCE(pt.textos, 0))) > 0
       ORDER BY total_buscado DESC
       LIMIT ${Number(limit) || 100}
     `;
 
-    const params = [
-      Number(weightText) || 0.3,
-      ...pcParams,
-      ...ptParams,
-      ...outerParams,
-      Number(weightText) || 0.3
-    ];
+    const w = Number(weightText) || 0.3;
+    const params = [w, ...pcParams, ...ptParams, ...outerParams, w];
 
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
