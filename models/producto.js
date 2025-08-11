@@ -2228,32 +2228,52 @@ obtenerProductosPorCategoriaPaginado(conexion, categoriaId, offset, limit) {
     });
   });
 },
-obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, hasta = null, limit = 100 }) {
+// models/producto.js
+obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, hasta = null, busqueda = null, limit = 100 }) {
   return new Promise((resolve, reject) => {
     const filtros = [];
     const params = [];
 
-    // Sanitizar categoría
-    const catNum = parseInt(categoria_id, 10);
-    if (!Number.isNaN(catNum) && catNum > 0) {
+    // Categoría
+    const cat = Number.parseInt(categoria_id, 10);
+    if (Number.isInteger(cat) && cat > 0) {
       filtros.push(`p.categoria_id = ?`);
-      params.push(catNum);
+      params.push(cat);
     }
 
-    // Sanitizar fechas
+    // Fechas (YYYY-MM-DD)
     const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
     const d1 = isDate(desde) ? desde : null;
     const d2 = isDate(hasta) ? hasta : null;
 
-    if (d1 && d2) {
-      filtros.push(`v.fecha BETWEEN ? AND ?`);
-      params.push(d1, d2);
-    } else if (d1) {
-      filtros.push(`v.fecha >= ?`);
-      params.push(d1);
-    } else if (d2) {
-      filtros.push(`v.fecha <= ?`);
-      params.push(d2);
+    if (d1 && d2) { filtros.push(`v.fecha BETWEEN ? AND ?`); params.push(d1, d2); }
+    else if (d1)  { filtros.push(`v.fecha >= ?`);           params.push(d1); }
+    else if (d2)  { filtros.push(`v.fecha <= ?`);           params.push(d2); }
+
+    // Búsqueda por texto/código (todas las palabras)
+    const tokens = (busqueda || '')
+      .toString()
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (tokens.length) {
+      // por cada palabra, exigimos que aparezca en nombre o en algún código vinculado
+      for (const t of tokens) {
+        filtros.push(`
+          (
+            p.nombre COLLATE utf8mb4_general_ci LIKE ?
+            OR EXISTS (
+              SELECT 1
+              FROM producto_proveedor pp
+              WHERE pp.producto_id = p.id
+                AND pp.codigo LIKE ?
+            )
+          )
+        `);
+        const like = `%${t}%`;
+        params.push(like, like);
+      }
     }
 
     const whereSQL = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
@@ -2262,20 +2282,20 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
       SELECT
         p.id,
         p.nombre,
-        SUM(v.cantidad) AS total_vendido,
         p.precio_venta,
-        p.stock_actual,      -- 👈 necesario para "sugerido"
-        p.stock_minimo       -- 👈 necesario para "sugerido"
+        p.stock_actual,
+        p.stock_minimo,
+        SUM(v.cantidad) AS total_vendido
       FROM (
-        /* Ventas por FACTURAS */
-        SELECT fi.producto_id, fi.cantidad, fm.fecha AS fecha
+        /* FACTURAS */
+        SELECT fi.producto_id, fi.cantidad, fm.fecha
         FROM factura_items fi
         INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
 
         UNION ALL
 
-        /* Ítems de PRESUPUESTOS */
-        SELECT pi.producto_id, pi.cantidad, pm.fecha AS fecha
+        /* PRESUPUESTOS */
+        SELECT pi.producto_id, pi.cantidad, pm.fecha
         FROM presupuesto_items pi
         INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
       ) v
@@ -2289,6 +2309,7 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
+
 
 // Inserta búsqueda de texto
 insertarBusquedaTexto: function (conexion, { q, origen, user_id, ip }) {

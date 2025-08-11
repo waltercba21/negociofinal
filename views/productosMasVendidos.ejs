@@ -2,9 +2,18 @@
 <%- include('./layouts/header.ejs') %>
 
 <div class="mv-wrap container mt-4">
-  <!-- ================== FILTROS PRINCIPALES ================== -->
-  <form id="mv-filter-form" class="mv-filters" method="GET" action="">
-    <!-- Categoría -->
+  <form class="mv-filters" method="GET" action="">
+    <div class="mv-field" style="min-width:260px;">
+      <label for="busqueda" class="mv-label">Producto (nombre o código)</label>
+      <input
+        type="text"
+        id="busqueda"
+        name="busqueda"
+        class="mv-input"
+        placeholder="Ej: Faro Ranger 2018 o ABC123"
+        value="<%= filtros?.busqueda || '' %>">
+    </div>
+
     <div class="mv-field">
       <label for="categoria_id" class="mv-label">Categoría</label>
       <select id="categoria_id" name="categoria_id" class="mv-input">
@@ -17,20 +26,6 @@
       </select>
     </div>
 
-    <!-- 🔍 Búsqueda por nombre o código -->
-    <div class="mv-field" style="min-width:260px;">
-      <label for="busqueda" class="mv-label">Producto (nombre o código)</label>
-      <input
-        type="text"
-        id="busqueda"
-        name="busqueda"
-        class="mv-input"
-        placeholder="Ej: Faros Ranger 2018 o ABC123"
-        value="<%= filtros?.busqueda || '' %>"
-      >
-    </div>
-
-    <!-- Fechas -->
     <div class="mv-field">
       <label for="desde" class="mv-label">Desde</label>
       <input type="date" id="desde" name="desde" class="mv-input" value="<%= filtros?.desde || '' %>">
@@ -41,74 +36,33 @@
       <input type="date" id="hasta" name="hasta" class="mv-input" value="<%= filtros?.hasta || '' %>">
     </div>
 
-    <!-- Acciones -->
     <div class="mv-actions" style="gap:12px;">
-      <!-- Filtrar en la misma vista -->
       <button type="submit" class="mv-btn">Filtrar</button>
-
-      <!-- Generar PDF de recomendaciones (envía mismos filtros) -->
       <button
         type="submit"
         class="mv-btn"
         formaction="/reportes/recomendaciones"
         formmethod="GET"
         formtarget="_blank"
-        title="Genera el PDF con Top vendidos, Top buscados y Sugerido de compra"
-      >
-        Generar Recomendaciones de Compra (PDF)
+        title="Genera PDF con top vendidos, top buscados y sugerido de compra">
+        PDF Recomendaciones
       </button>
     </div>
   </form>
 
-  <!-- ================== CONSULTA RÁPIDA: VENTAS DE UN PRODUCTO ================== -->
-  <form class="mv-filters" method="GET" action="/reportes/ventas-producto" target="_blank" style="margin-top:8px;">
-    <div class="mv-field" style="min-width:220px;">
-      <label for="producto_id" class="mv-label">Consultar ventas de (producto_id)</label>
-      <input
-        type="number"
-        id="producto_id"
-        name="producto_id"
-        class="mv-input"
-        placeholder="Ej: 5071"
-        min="1"
-      >
-    </div>
-
-    <!-- Reuso las fechas del filtro superior si el usuario no completa -->
-    <input type="hidden" name="desde" value="<%= filtros?.desde || '' %>">
-    <input type="hidden" name="hasta" value="<%= filtros?.hasta || '' %>">
-
-    <div class="mv-actions" style="gap:12px;">
-      <button type="submit" class="mv-btn" title="Devuelve JSON con total y/o detalle diario">Ver ventas del producto</button>
-      <!-- Opción: detalle por día -->
-      <button
-        type="submit"
-        class="mv-btn"
-        name="agrupar"
-        value="dia"
-        title="Detalle diario en JSON (nueva pestaña)"
-      >Ver por día</button>
-    </div>
-    <div class="muted" style="margin-top:-6px;">
-      Tip: si no sabés el <code>producto_id</code>, usá la búsqueda de arriba para ubicarlo y luego copiá su ID desde la URL del detalle.
-    </div>
-  </form>
-
-  <!-- ================== RESUMEN DE FILTROS ================== -->
   <div class="mv-summary" style="margin-top:8px;">
     <strong>Filtros:</strong>
-    <span><%= (filtros?.categoria_id ? 'Categoría ID ' + filtros.categoria_id : 'Todas las categorías') %></span> ·
-    <span><%= (filtros?.busqueda ? ('Búsqueda "' + filtros.busqueda + '"') : 'Sin texto de búsqueda') %></span> ·
-    <span><%= (filtros?.desde ? ('Desde ' + filtros.desde) : 'Sin fecha desde') %></span> ·
-    <span><%= (filtros?.hasta ? ('Hasta ' + filtros.hasta) : 'Sin fecha hasta') %></span>
+    <span><%= (filtros?.busqueda ? ('“' + filtros.busqueda + '”') : 'Sin texto') %></span> ·
+    <span><%= (filtros?.categoria_id ? ('Categoría ID ' + filtros.categoria_id) : 'Todas categorías') %></span> ·
+    <span><%= (filtros?.desde ? ('Desde ' + filtros.desde) : 'Sin desde') %></span> ·
+    <span><%= (filtros?.hasta ? ('Hasta ' + filtros.hasta) : 'Sin hasta') %></span>
   </div>
 
-  <!-- ================== TABLA RESULTADOS ================== -->
   <div class="mv-table-wrap">
     <table class="mv-table">
       <thead>
         <tr>
-          <th>Nombre</th>
+          <th>Producto</th>
           <th class="mv-num">Total Vendido</th>
           <th class="mv-num">Precio Venta</th>
         </tr>
@@ -119,13 +73,11 @@
             <td colspan="3" class="mv-empty">No se encontraron resultados con los filtros aplicados.</td>
           </tr>
         <% } else { %>
-          <% productos.forEach(prod => { %>
+          <% productos.forEach(p => { %>
             <tr>
-              <td class="mv-name"><%= prod.nombre %></td>
-              <td class="mv-num"><%= prod.total_vendido %></td>
-              <td class="mv-num">
-                $ <%= Number(prod.precio_venta || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
-              </td>
+              <td class="mv-name"><%= p.nombre %></td>
+              <td class="mv-num"><%= Number(p.total_vendido || 0) %></td>
+              <td class="mv-num">$ <%= Number(p.precio_venta || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
             </tr>
           <% }) %>
         <% } %>
