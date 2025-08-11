@@ -2303,7 +2303,6 @@ insertarBusquedaProducto: function (conexion, { producto_id, q, user_id, ip }) {
     conexion.query(sql, [producto_id, q, user_id, ip], (err, r) => err ? reject(err) : resolve(r.insertId));
   });
 },
-// models/producto.js
 obtenerMasBuscados: function (
   conexion,
   { categoria_id = null, desde = null, hasta = null, limit = 100, weightText = 0.3 }
@@ -2347,43 +2346,43 @@ obtenerMasBuscados: function (
     const whereText   = filtrosText.length   ? `WHERE ${filtrosText.join(' AND ')}`   : '';
     const whereOuter  = filtrosOuter.length  ? `WHERE ${filtrosOuter.join(' AND ')}`  : '';
 
-    // Fuerzo misma collation en ambos lados del LIKE para evitar ER_CANT_AGGREGATE_2COLLATIONS
+    // Subselect + WHERE por alias total_buscado (evita "Unknown column ... in HAVING")
     const sql = `
-      SELECT
-        p.id,
-        p.nombre,
-        p.precio_venta,
-        COALESCE(pc.clicks, 0) + (? * COALESCE(pt.textos, 0)) AS total_buscado
-      FROM productos p
-      LEFT JOIN (
-        SELECT bp.producto_id, COUNT(*) AS clicks
-        FROM busquedas_producto bp
-        ${whereClicks}
-        GROUP BY bp.producto_id
-      ) pc ON pc.producto_id = p.id
-      LEFT JOIN (
-        SELECT p2.id AS producto_id, COUNT(*) AS textos
-        FROM busquedas_texto bt
-        INNER JOIN productos p2
-          ON p2.nombre COLLATE utf8mb4_general_ci
-             LIKE CONCAT('%', REPLACE(bt.q COLLATE utf8mb4_general_ci, ' ', '%'), '%')
-        ${whereText}
-        GROUP BY p2.id
-      ) pt ON pt.producto_id = p.id
-      ${whereOuter}
-      HAVING (COALESCE(pc.clicks, 0) + (? * COALESCE(pt.textos, 0))) > 0
-      ORDER BY total_buscado DESC
+      SELECT *
+      FROM (
+        SELECT
+          p.id,
+          p.nombre,
+          p.precio_venta,
+          COALESCE(pc.clicks, 0) + (? * COALESCE(pt.textos, 0)) AS total_buscado
+        FROM productos p
+        LEFT JOIN (
+          SELECT bp.producto_id, COUNT(*) AS clicks
+          FROM busquedas_producto bp
+          ${whereClicks}
+          GROUP BY bp.producto_id
+        ) pc ON pc.producto_id = p.id
+        LEFT JOIN (
+          SELECT p2.id AS producto_id, COUNT(*) AS textos
+          FROM busquedas_texto bt
+          INNER JOIN productos p2
+            ON p2.nombre COLLATE utf8mb4_general_ci
+               LIKE CONCAT('%', REPLACE(bt.q COLLATE utf8mb4_general_ci, ' ', '%'), '%')
+          ${whereText}
+          GROUP BY p2.id
+        ) pt ON pt.producto_id = p.id
+        ${whereOuter}
+      ) x
+      WHERE x.total_buscado > 0
+      ORDER BY x.total_buscado DESC
       LIMIT ${Number(limit) || 100}
     `;
 
     const w = Number(weightText) || 0.3;
-    const params = [w, ...pcParams, ...ptParams, ...outerParams, w];
+    const params = [w, ...pcParams, ...ptParams, ...outerParams];
 
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
-
-
-
 
 }
