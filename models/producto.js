@@ -2241,7 +2241,7 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
       params.push(cat);
     }
 
-    // Fechas (YYYY-MM-DD)
+    // Fechas
     const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
     const d1 = isDate(desde) ? desde : null;
     const d2 = isDate(hasta) ? hasta : null;
@@ -2250,30 +2250,28 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
     else if (d1)  { filtros.push(`v.fecha >= ?`);           params.push(d1); }
     else if (d2)  { filtros.push(`v.fecha <= ?`);           params.push(d2); }
 
-    // Búsqueda por texto/código (todas las palabras)
+    // Búsqueda (todas las palabras deben aparecer en nombre o código)
     const tokens = (busqueda || '')
       .toString()
+      .replace(/[^0-9a-zA-Z]+/g, ' ')   // "04/09" -> "04 09"
       .trim()
       .split(/\s+/)
       .filter(Boolean);
 
-    if (tokens.length) {
-      // por cada palabra, exigimos que aparezca en nombre o en algún código vinculado
-      for (const t of tokens) {
-        filtros.push(`
-          (
-            p.nombre COLLATE utf8mb4_general_ci LIKE ?
-            OR EXISTS (
-              SELECT 1
-              FROM producto_proveedor pp
-              WHERE pp.producto_id = p.id
-                AND pp.codigo LIKE ?
-            )
+    for (const t of tokens) {
+      filtros.push(`
+        (
+          p.nombre COLLATE utf8mb4_general_ci LIKE ?
+          OR EXISTS (
+            SELECT 1
+            FROM producto_proveedor pp
+            WHERE pp.producto_id = p.id
+              AND pp.codigo LIKE ?
           )
-        `);
-        const like = `%${t}%`;
-        params.push(like, like);
-      }
+        )
+      `);
+      const like = `%${t}%`;
+      params.push(like, like);
     }
 
     const whereSQL = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
@@ -2309,7 +2307,6 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
-
 
 // Inserta búsqueda de texto
 insertarBusquedaTexto: function (conexion, { q, origen, user_id, ip }) {
