@@ -21,21 +21,76 @@ async function masVendidosView(req, res) {
     desde = isDate(desde) ? desde : null;
     hasta = isDate(hasta) ? hasta : null;
 
-    const [categorias, productos] = await Promise.all([
-      producto.obtenerCategorias(conexion),
-      producto.obtenerMasVendidos(conexion, {
-        categoria_id,
-        desde,
-        hasta,
-        busqueda,
-        limit: 100
-      })
-    ]);
+    // 1) Traer categorías para el select
+    const categorias = await producto.obtenerCategorias(conexion);
+
+    // 2) Si hay texto, prefiltrar IDs de productos por nombre/código (AND entre tokens)
+    let idsFiltrados = null;
+    if (busqueda) {
+      // tokens: "FARO RANGER TRASERO 04/09" -> ["faro","ranger","trasero","04","09"]
+      const tokens = busqueda
+        .toLowerCase()
+        .split(/[\s\/\-]+/) // separa por espacio, slash o guion
+        .filter(Boolean);
+
+      if (tokens.length) {
+        const whereParts = [];
+        const params = [];
+
+        // cada token debe aparecer en nombre o en algún código de proveedor
+        for (const t of tokens) {
+          whereParts.push(`(
+            LOWER(p.nombre) LIKE ?
+            OR EXISTS (
+              SELECT 1
+              FROM producto_proveedor pp
+              WHERE pp.producto_id = p.id
+                AND LOWER(pp.codigo) LIKE ?
+            )
+          )`);
+          const like = `%${t}%`;
+          params.push(like, like);
+        }
+
+        if (categoria_id) {
+          whereParts.push('p.categoria_id = ?');
+          params.push(categoria_id);
+        }
+
+        const whereSQL = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+        const [rows] = await conexion.promise().query(
+          `SELECT p.id
+             FROM productos p
+            ${whereSQL}
+            LIMIT 500`,
+          params
+        );
+
+        idsFiltrados = rows.map(r => r.id);
+        if (idsFiltrados.length === 0) {
+          // No hubo match -> devolvemos lista vacía rápido
+          return res.render('productosMasVendidos', {
+            categorias,
+            filtros: { categoria_id, desde, hasta, busqueda },
+            productos: []
+          });
+        }
+      }
+    }
+
+    // 3) Pedir "más vendidos" aplicando fechas/categoría y (si corresponde) la lista de IDs
+    const productosList = await producto.obtenerMasVendidos(conexion, {
+      categoria_id,
+      desde,
+      hasta,
+      ids: idsFiltrados,   // 👈 el modelo debe aceptar este parámetro
+      limit: 100
+    });
 
     return res.render('productosMasVendidos', {
       categorias,
       filtros: { categoria_id, desde, hasta, busqueda },
-      productos
+      productos: productosList
     });
   } catch (e) {
     console.error('❌ masVendidosView:', e);

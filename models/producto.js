@@ -2228,21 +2228,27 @@ obtenerProductosPorCategoriaPaginado(conexion, categoriaId, offset, limit) {
     });
   });
 },
-// models/producto.js
-obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, hasta = null, busqueda = null, limit = 100 }) {
+// models/producto.js (ajuste en la firma y en el armado del WHERE)
+obtenerMasVendidos: function (conexion, {
+  categoria_id = null,
+  desde = null,
+  hasta = null,
+  ids = null,          // 👈 NUEVO
+  limit = 100
+}) {
   return new Promise((resolve, reject) => {
     const filtros = [];
     const params = [];
 
     // Categoría
-    const cat = Number.parseInt(categoria_id, 10);
-    if (Number.isInteger(cat) && cat > 0) {
+    const cat = parseInt(categoria_id, 10);
+    if (!Number.isNaN(cat) && cat > 0) {
       filtros.push(`p.categoria_id = ?`);
       params.push(cat);
     }
 
     // Fechas
-    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    const isDate = (d) => typeof d==='string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
     const d1 = isDate(desde) ? desde : null;
     const d2 = isDate(hasta) ? hasta : null;
 
@@ -2250,28 +2256,10 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
     else if (d1)  { filtros.push(`v.fecha >= ?`);           params.push(d1); }
     else if (d2)  { filtros.push(`v.fecha <= ?`);           params.push(d2); }
 
-    // Búsqueda (todas las palabras deben aparecer en nombre o código)
-    const tokens = (busqueda || '')
-      .toString()
-      .replace(/[^0-9a-zA-Z]+/g, ' ')   // "04/09" -> "04 09"
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-
-    for (const t of tokens) {
-      filtros.push(`
-        (
-          p.nombre COLLATE utf8mb4_general_ci LIKE ?
-          OR EXISTS (
-            SELECT 1
-            FROM producto_proveedor pp
-            WHERE pp.producto_id = p.id
-              AND pp.codigo LIKE ?
-          )
-        )
-      `);
-      const like = `%${t}%`;
-      params.push(like, like);
+    // 🔎 IDs prefiltrados por texto (si vinieron)
+    if (Array.isArray(ids) && ids.length) {
+      filtros.push(`p.id IN (${ids.map(()=>'?').join(',')})`);
+      params.push(...ids);
     }
 
     const whereSQL = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
@@ -2285,14 +2273,12 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
         p.stock_minimo,
         SUM(v.cantidad) AS total_vendido
       FROM (
-        /* FACTURAS */
         SELECT fi.producto_id, fi.cantidad, fm.fecha
         FROM factura_items fi
         INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
 
         UNION ALL
 
-        /* PRESUPUESTOS */
         SELECT pi.producto_id, pi.cantidad, pm.fecha
         FROM presupuesto_items pi
         INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
