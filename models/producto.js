@@ -2421,6 +2421,141 @@ obtenerMasBuscadosDetallado: function (
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
+// Ventas (unidades) de un producto en un período (facturas + presupuestos)
+obtenerVentasDeProducto: function (
+  conexion,
+  { producto_id, desde = null, hasta = null, agruparPor = null } // agruparPor: 'dia' | null
+) {
+  return new Promise((resolve, reject) => {
+    const pid = parseInt(producto_id, 10);
+    if (!Number.isInteger(pid) || pid <= 0) {
+      return reject(new Error('producto_id inválido'));
+    }
+
+    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    const d1 = isDate(desde) ? desde : null;
+    const d2 = isDate(hasta) ? hasta : null;
+
+    const filtros = [`v.producto_id = ?`];
+    const params = [pid];
+
+    if (d1 && d2) { filtros.push(`v.fecha BETWEEN ? AND ?`); params.push(d1, d2); }
+    else if (d1) { filtros.push(`v.fecha >= ?`); params.push(d1); }
+    else if (d2) { filtros.push(`v.fecha <= ?`); params.push(d2); }
+
+    const whereSQL = `WHERE ${filtros.join(' AND ')}`;
+
+    // subconsulta unifica facturas + presupuestos
+    const base = `
+      FROM (
+        SELECT fi.producto_id, fi.cantidad, fm.fecha
+        FROM factura_items fi
+        INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
+
+        UNION ALL
+
+        SELECT pi.producto_id, pi.cantidad, pm.fecha
+        FROM presupuesto_items pi
+        INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
+      ) v
+      ${whereSQL}
+    `;
+
+    // si pedís agrupación por día
+    if (agruparPor === 'dia') {
+      const sql = `
+        SELECT DATE(v.fecha) AS dia, SUM(v.cantidad) AS unidades
+        ${base}
+        GROUP BY DATE(v.fecha)
+        ORDER BY dia ASC
+      `;
+      return conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve({
+        detalle: rows,
+        total: rows.reduce((acc, r) => acc + Number(r.unidades || 0), 0)
+      })));
+    }
+
+    // total simple
+    const sqlTotal = `
+      SELECT SUM(v.cantidad) AS total_unidades
+      ${base}
+    `;
+    conexion.query(sqlTotal, params, (err, rows) => {
+      if (err) return reject(err);
+      const total = Number(rows?.[0]?.total_unidades || 0);
+      resolve({ total });
+    });
+  });
+},
+// Búsquedas de un producto específico en un período
+obtenerBusquedasDeProducto: function (
+  conexion,
+  { producto_id, desde = null, hasta = null, weightText = 0.3 }
+) {
+  return new Promise((resolve, reject) => {
+    const pid = parseInt(producto_id, 10);
+    if (!Number.isInteger(pid) || pid <= 0) {
+      return reject(new Error('producto_id inválido'));
+    }
+
+    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    const d1 = isDate(desde) ? desde : null;
+    const d2 = isDate(hasta) ? hasta : null;
+
+    // filtros para clicks
+    const fc = ['bp.producto_id = ?'];
+    const pc = [pid];
+    if (d1 && d2) { fc.push('bp.created_at BETWEEN ? AND ?'); pc.push(d1, d2); }
+    else if (d1) { fc.push('bp.created_at >= ?'); pc.push(d1); }
+    else if (d2) { fc.push('bp.created_at <= ?'); pc.push(d2); }
+    const whereC = `WHERE ${fc.join(' AND ')}`;
+
+    // filtros para texto
+    const ft = [];
+    const pt = [];
+    if (d1 && d2) { ft.push('bt.created_at BETWEEN ? AND ?'); pt.push(d1, d2); }
+    else if (d1) { ft.push('bt.created_at >= ?'); pt.push(d1); }
+    else if (d2) { ft.push('bt.created_at <= ?'); pt.push(d2); }
+    const whereT = ft.length ? `WHERE ${ft.join(' AND ')}` : '';
+
+    const sql = `
+      SELECT
+        p.id,
+        p.nombre,
+        COALESCE(c.clicks, 0) AS clicks,
+        COALESCE(t.textos, 0) AS textos,
+        (COALESCE(c.clicks, 0) + (? * COALESCE(t.textos, 0))) AS total_buscado
+      FROM productos p
+      LEFT JOIN (
+        SELECT bp.producto_id, COUNT(*) AS clicks
+        FROM busquedas_producto bp
+        ${whereC}
+        GROUP BY bp.producto_id
+      ) c ON c.producto_id = p.id
+      LEFT JOIN (
+        /* mapeo de búsquedas de texto al nombre del producto */
+        SELECT ? AS producto_id, COUNT(*) AS textos
+        FROM busquedas_texto bt
+        INNER JOIN productos px
+          ON px.id = ?
+         AND px.nombre COLLATE utf8mb4_general_ci
+             LIKE CONCAT('%', REPLACE(bt.q COLLATE utf8mb4_general_ci, ' ', '%'), '%')
+        ${whereT}
+      ) t ON t.producto_id = p.id
+      WHERE p.id = ?
+      LIMIT 1
+    `;
+
+    const w = Number(weightText) || 0.3;
+    const params = [w, ...pc, pid, pid, ...pt, pid];
+
+    conexion.query(sql, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows[0] || { id: pid, nombre: null, clicks: 0, textos: 0, total_buscado: 0 });
+    });
+  });
+},
+
 
 
 }

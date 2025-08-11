@@ -147,5 +147,51 @@ module.exports = {
       console.error('❌ recomendacionesCompra:', error);
       return res.status(500).send('Error al generar recomendaciones');
     }
+  },
+// controllers/reportesController.js (agregar/ajustar acción)
+ventasDeProducto: async (req, res) => {
+  try {
+    const producto_id = parseInt(req.query.producto_id, 10);
+    const desde = req.query.desde || null;
+    const hasta = req.query.hasta || null;
+    const agrupar = (req.query.agrupar === 'dia') ? 'dia' : null;
+    const incluirBusquedas = req.query.incluir_busquedas === '1';
+
+    if (!Number.isInteger(producto_id) || producto_id <= 0) {
+      return res.status(400).json({ ok: false, error: 'producto_id inválido' });
+    }
+
+    // Ventas
+    const ventas = await producto.obtenerVentasDeProducto(conexion, {
+      producto_id,
+      desde,
+      hasta,
+      agruparPor: agrupar
+    });
+
+    // Búsquedas (si se pide)
+    let busquedas = null;
+    if (incluirBusquedas) {
+      busquedas = await producto.obtenerBusquedasDeProducto(conexion, {
+        producto_id,
+        desde,
+        hasta,
+        weightText: 0.3
+      });
+    }
+
+    return res.json({
+      ok: true,
+      producto_id,
+      desde,
+      hasta,
+      ...(agrupar === 'dia' ? { detalle: ventas.detalle, total_ventas: ventas.total } : { total_ventas: ventas.total }),
+      ...(incluirBusquedas ? { busquedas } : {})
+    });
+  } catch (e) {
+    console.error('❌ ventasDeProducto:', e);
+    return res.status(500).json({ ok: false, error: 'server_error' });
   }
+},
+
 };

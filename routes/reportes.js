@@ -3,5 +3,6 @@ const router = express.Router();
 const reportes = require('../controllers/reportesController');
 
 router.get('/recomendaciones', reportes.recomendacionesCompra);
+router.get('/ventas-producto', reportes.ventasDeProducto);
 
 module.exports = router;
