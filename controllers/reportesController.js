@@ -3,7 +3,7 @@ const ejs = require('ejs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 const producto = require('../models/producto');
-const conexion = require('../config/conexion')
+const conexion = require('../config/conexion');
 
 function getFirst(v) {
   return Array.isArray(v) ? v[0] : v;
@@ -22,79 +22,41 @@ module.exports = {
 
       const cat = Number.parseInt(categoria_id, 10);
       categoria_id = Number.isInteger(cat) && cat > 0 ? cat : null;
-
       desde = isDate(desde) ? desde : null;
       hasta = isDate(hasta) ? hasta : null;
 
       console.log('➡️ /reportes/recomendaciones', { categoria_id, desde, hasta });
 
-      // 1) Más vendidos (facturas + presupuestos)
-      const masVendidos = await producto.obtenerMasVendidos(conexion, {
+      // 1) Top 50 más vendidos (facturas + presupuestos)
+      const topVendidos = await producto.obtenerMasVendidos(conexion, {
         categoria_id,
         desde,
         hasta,
-        limit: 100
+        limit: 50
       });
 
-      // 2) Más buscados (clicks en buscador)
-      const masBuscados = await producto.obtenerMasBuscados(conexion, {
+      // 2) Top 50 más buscados (detallado: clicks, textos, total_buscado y ventas)
+      const topBuscados = await producto.obtenerMasBuscadosDetallado(conexion, {
         categoria_id,
         desde,
         hasta,
-        limit: 100
+        limit: 50,
+        weightText: 0.3 // peso de búsquedas de texto en total_buscado
       });
 
-      // 3) Fusionar (ventas 0.7 + búsquedas 0.3)
-      const ventasById = new Map();
-      const buscById = new Map();
-      const metaById = new Map();
-
-      for (const r of masVendidos) {
-        ventasById.set(r.id, Number(r.total_vendido) || 0);
-        metaById.set(r.id, { nombre: r.nombre, precio_venta: r.precio_venta });
-      }
-      for (const r of masBuscados) {
-        buscById.set(r.id, Number(r.total_buscado) || 0);
-        if (!metaById.has(r.id)) {
-          metaById.set(r.id, { nombre: r.nombre, precio_venta: r.precio_venta });
-        }
-      }
-
-      const productosIds = new Set([
-        ...ventasById.keys(),
-        ...buscById.keys()
-      ]);
-
-      const ranking = [];
-      for (const id of productosIds) {
-        const ventas = ventasById.get(id) || 0;
-        const buscado = buscById.get(id) || 0;
-        const meta = metaById.get(id) || { nombre: '', precio_venta: 0 };
-        ranking.push({
-          id,
-          nombre: meta.nombre,
-          precio_venta: meta.precio_venta,
-          ventas,
-          buscado,
-          score: ventas * 0.7 + buscado * 0.3
-        });
-      }
-      ranking.sort((a, b) => b.score - a.score);
-
-      // 4) Render EJS -> HTML
+      // 3) Render EJS -> HTML (solo 2 secciones solicitadas)
       const templatePath = path.resolve(__dirname, '..', 'views', 'reportes', 'recomendacionesCompra.ejs');
       const html = await ejs.renderFile(templatePath, {
         filtros: { categoria_id, desde, hasta },
-        topVendidos: masVendidos.slice(0, 20),
-        topBuscados: masBuscados.slice(0, 20),
-        ranking: ranking.slice(0, 50)
+        topVendidos,   // #, Producto, Ventas
+        topBuscados    // #, Producto, Clicks, Búsquedas texto, Total buscado, Ventas
       });
 
-      // 5) HTML -> PDF (con fallback a HTML si no hay Puppeteer)
+      // 4) HTML -> PDF (fallback a HTML si falla)
       try {
         const browser = await puppeteer.launch({
           args: ['--no-sandbox', '--disable-setuid-sandbox']
-          // Si necesitás path a Chromium del sistema, agregamos executablePath acá.
+          // executablePath: '/usr/bin/chromium-browser', // <-- si tu server lo requiere
         });
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
@@ -113,9 +75,11 @@ module.exports = {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(html);
       }
+
     } catch (error) {
       console.error('❌ recomendacionesCompra:', error);
       return res.status(500).send('Error al generar recomendaciones');
     }
   }
 };
+

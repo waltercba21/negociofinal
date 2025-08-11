@@ -6,9 +6,10 @@
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin:0; padding:24px; color:#0f172a; }
     h1 { margin:0 0 4px; font-size:22px; }
+    h3 { margin: 12px 0 8px; }
     .sub { color:#475569; font-size:12px; margin-bottom:16px; }
     .muted { color:#64748b; font-size:12px; }
-    .section { margin-top:18px; }
+    .section { margin-top:18px; page-break-inside: avoid; }
     table { border-collapse: collapse; width:100%; font-size:12px; }
     th, td { border-bottom:1px solid #e2e8f0; text-align:left; padding:8px 6px; }
     th { background:#f8fafc; text-transform:uppercase; letter-spacing:.4px; font-size:11px; color:#334155; }
@@ -18,7 +19,7 @@
 <body>
   <h1>Recomendaciones de compra</h1>
   <div class="sub">
-    Según el filtro aplicado, deberías considerar pedir los siguientes productos para mantener stock y respuesta a la demanda.
+    Según el filtro aplicado, estos son los productos a considerar para mantener stock y responder a la demanda.
   </div>
   <div class="muted">
     <strong>Filtros:</strong>
@@ -27,59 +28,59 @@
     <%= filtros?.hasta ? ('Hasta ' + filtros.hasta) : 'Sin fecha hasta' %>
   </div>
 
+  <!-- Top 50 más vendidos -->
   <div class="section">
-    <h3>Ranking combinado (ventas + búsquedas)</h3>
+    <h3>Top 50 productos más vendidos</h3>
     <table>
       <thead>
-        <tr><th>#</th><th>Producto</th><th class="num">Ventas</th><th class="num">Búsquedas</th><th class="num">Score</th><th class="num">Precio</th></tr>
+        <tr>
+          <th>#</th>
+          <th>Producto</th>
+          <th class="num">Ventas</th>
+        </tr>
       </thead>
       <tbody>
-      <% ranking.forEach((r, i) => { %>
+      <% (topVendidos || []).forEach((p,i)=>{ %>
+        <tr>
+          <td><%= i+1 %></td>
+          <td><%= p.nombre %></td>
+          <td class="num"><%= Number(p.total_vendido || 0) %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Top 50 más buscados con desglose -->
+  <div class="section">
+    <h3>Top 50 productos más buscados (con desglose)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Producto</th>
+          <th class="num">Clicks</th>
+          <th class="num">Búsquedas texto</th>
+          <th class="num">Total buscado</th>
+          <th class="num">Ventas</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% (topBuscados || []).forEach((r,i)=>{ %>
         <tr>
           <td><%= i+1 %></td>
           <td><%= r.nombre %></td>
-          <td class="num"><%= r.ventas %></td>
-          <td class="num"><%= r.buscado %></td>
-          <td class="num"><%= r.score.toFixed(2) %></td>
-          <td class="num">$ <%= Number(r.precio_venta||0).toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
+          <td class="num"><%= Number(r.clicks || 0) %></td>
+          <td class="num"><%= Number(r.textos || 0) %></td>
+          <td class="num"><%= (Number(r.total_buscado) || 0).toFixed(1) %></td>
+          <td class="num"><%= Number(r.ventas || 0) %></td>
         </tr>
       <% }) %>
       </tbody>
     </table>
-  </div>
-
-  <div class="section">
-    <h3>Top vendidos (solo ventas)</h3>
-    <table>
-      <thead><tr><th>#</th><th>Producto</th><th class="num">Total vendido</th><th class="num">Precio</th></tr></thead>
-      <tbody>
-      <% topVendidos.forEach((p,i)=>{ %>
-        <tr>
-          <td><%= i+1 %></td>
-          <td><%= p.nombre %></td>
-          <td class="num"><%= p.total_vendido %></td>
-          <td class="num">$ <%= Number(p.precio_venta||0).toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
-        </tr>
-      <% }) %>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="section">
-    <h3>Top buscados (solo buscador)</h3>
-    <table>
-      <thead><tr><th>#</th><th>Producto</th><th class="num">Veces buscado</th><th class="num">Precio</th></tr></thead>
-      <tbody>
-      <% topBuscados.forEach((p,i)=>{ %>
-        <tr>
-          <td><%= i+1 %></td>
-          <td><%= p.nombre %></td>
-          <td class="num"><%= p.total_buscado %></td>
-          <td class="num">$ <%= Number(p.precio_venta||0).toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
-        </tr>
-      <% }) %>
-      </tbody>
-    </table>
+    <div class="muted">
+      * “Total buscado” = Clicks + (Búsquedas por texto × 0.3).
+    </div>
   </div>
 </body>
 </html>

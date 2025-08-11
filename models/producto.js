@@ -2303,9 +2303,10 @@ insertarBusquedaProducto: function (conexion, { producto_id, q, user_id, ip }) {
     conexion.query(sql, [producto_id, q, user_id, ip], (err, r) => err ? reject(err) : resolve(r.insertId));
   });
 },
-obtenerMasBuscados: function (
+// Devuelve Top "más buscados" con desglose: clicks, textos, total_buscado y ventas de cada producto
+obtenerMasBuscadosDetallado: function (
   conexion,
-  { categoria_id = null, desde = null, hasta = null, limit = 100, weightText = 0.3 }
+  { categoria_id = null, desde = null, hasta = null, limit = 50, weightText = 0.3 }
 ) {
   return new Promise((resolve, reject) => {
     const filtrosClicks = [];
@@ -2346,7 +2347,6 @@ obtenerMasBuscados: function (
     const whereText   = filtrosText.length   ? `WHERE ${filtrosText.join(' AND ')}`   : '';
     const whereOuter  = filtrosOuter.length  ? `WHERE ${filtrosOuter.join(' AND ')}`  : '';
 
-    // Subselect + WHERE por alias total_buscado (evita "Unknown column ... in HAVING")
     const sql = `
       SELECT *
       FROM (
@@ -2354,7 +2354,10 @@ obtenerMasBuscados: function (
           p.id,
           p.nombre,
           p.precio_venta,
-          COALESCE(pc.clicks, 0) + (? * COALESCE(pt.textos, 0)) AS total_buscado
+          COALESCE(pc.clicks, 0)  AS clicks,
+          COALESCE(pt.textos, 0)  AS textos,
+          (COALESCE(pc.clicks, 0) + (? * COALESCE(pt.textos, 0))) AS total_buscado,
+          COALESCE(vv.ventas, 0)  AS ventas
         FROM productos p
         LEFT JOIN (
           SELECT bp.producto_id, COUNT(*) AS clicks
@@ -2371,18 +2374,46 @@ obtenerMasBuscados: function (
           ${whereText}
           GROUP BY p2.id
         ) pt ON pt.producto_id = p.id
+        LEFT JOIN (
+          /* Ventas (facturas + presupuestos) en el período */
+          SELECT v.producto_id, SUM(v.cantidad) AS ventas
+          FROM (
+            SELECT fi.producto_id, fi.cantidad, fm.fecha
+            FROM factura_items fi
+            INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
+            ${d1 || d2 ? `WHERE fm.fecha ${d1 && d2 ? 'BETWEEN ? AND ?' : d1 ? '>= ?' : '<= ?'}` : ''}
+
+            UNION ALL
+
+            SELECT pi.producto_id, pi.cantidad, pm.fecha
+            FROM presupuesto_items pi
+            INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
+            ${d1 || d2 ? `WHERE pm.fecha ${d1 && d2 ? 'BETWEEN ? AND ?' : d1 ? '>= ?' : '<= ?'}` : ''}
+          ) v
+          GROUP BY v.producto_id
+        ) vv ON vv.producto_id = p.id
         ${whereOuter}
       ) x
       WHERE x.total_buscado > 0
       ORDER BY x.total_buscado DESC
-      LIMIT ${Number(limit) || 100}
+      LIMIT ${Number(limit) || 50}
     `;
 
+    // parámetros en orden
     const w = Number(weightText) || 0.3;
-    const params = [w, ...pcParams, ...ptParams, ...outerParams];
+    const params = [w, ...pcParams, ...ptParams];
+
+    // fechas para subconsulta de ventas (dos apariciones: facturas y presupuestos)
+    if (d1 && d2) params.push(d1, d2, d1, d2);
+    else if (d1) params.push(d1, d1);
+    else if (d2) params.push(d2, d2);
+
+    // categoría al final (outer)
+    params.push(...outerParams);
 
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
+
 
 }
