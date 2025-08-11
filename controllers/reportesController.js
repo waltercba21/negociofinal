@@ -8,6 +8,52 @@ const conexion = require('../config/conexion');
 function getFirst(v) { return Array.isArray(v) ? v[0] : v; }
 function isDate(d) { return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d); }
 
+/**
+ * Prefiltra IDs de productos por texto (tokens AND) y opcionalmente por categoría.
+ * - Matchea en p.nombre y en producto_proveedor.codigo (case-insensitive).
+ * - Tolerante a separadores: "04/09" => tokens ["04","09"]
+ */
+async function prefiltrarProductoIds({ busqueda, categoria_id }) {
+  const txt = (busqueda || '').trim().toLowerCase();
+  if (!txt) return null; // sin filtro de texto
+
+  const tokens = txt.split(/[\s\/\-]+/).filter(Boolean);
+  if (!tokens.length) return null;
+
+  const whereParts = [];
+  const params = [];
+
+  for (const t of tokens) {
+    whereParts.push(`(
+      LOWER(p.nombre) LIKE ?
+      OR EXISTS (
+        SELECT 1
+        FROM producto_proveedor pp
+        WHERE pp.producto_id = p.id
+          AND LOWER(pp.codigo) LIKE ?
+      )
+    )`);
+    const like = `%${t}%`;
+    params.push(like, like);
+  }
+
+  if (Number.isInteger(categoria_id) && categoria_id > 0) {
+    whereParts.push('p.categoria_id = ?');
+    params.push(categoria_id);
+  }
+
+  const whereSQL = `WHERE ${whereParts.join(' AND ')}`;
+  const [rows] = await conexion.promise().query(
+    `SELECT p.id
+       FROM productos p
+      ${whereSQL}
+      LIMIT 500`,
+    params
+  );
+
+  return rows.map(r => r.id);
+}
+
 // ========================= VISTA: MAS VENDIDOS =========================
 async function masVendidosView(req, res) {
   try {
@@ -21,69 +67,17 @@ async function masVendidosView(req, res) {
     desde = isDate(desde) ? desde : null;
     hasta = isDate(hasta) ? hasta : null;
 
-    // 1) Traer categorías para el select
     const categorias = await producto.obtenerCategorias(conexion);
 
-    // 2) Si hay texto, prefiltrar IDs de productos por nombre/código (AND entre tokens)
-    let idsFiltrados = null;
-    if (busqueda) {
-      // tokens: "FARO RANGER TRASERO 04/09" -> ["faro","ranger","trasero","04","09"]
-      const tokens = busqueda
-        .toLowerCase()
-        .split(/[\s\/\-]+/) // separa por espacio, slash o guion
-        .filter(Boolean);
+    // Prefiltro de IDs por texto (y categoría)
+    const idsFiltrados = await prefiltrarProductoIds({ busqueda, categoria_id });
 
-      if (tokens.length) {
-        const whereParts = [];
-        const params = [];
-
-        // cada token debe aparecer en nombre o en algún código de proveedor
-        for (const t of tokens) {
-          whereParts.push(`(
-            LOWER(p.nombre) LIKE ?
-            OR EXISTS (
-              SELECT 1
-              FROM producto_proveedor pp
-              WHERE pp.producto_id = p.id
-                AND LOWER(pp.codigo) LIKE ?
-            )
-          )`);
-          const like = `%${t}%`;
-          params.push(like, like);
-        }
-
-        if (categoria_id) {
-          whereParts.push('p.categoria_id = ?');
-          params.push(categoria_id);
-        }
-
-        const whereSQL = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
-        const [rows] = await conexion.promise().query(
-          `SELECT p.id
-             FROM productos p
-            ${whereSQL}
-            LIMIT 500`,
-          params
-        );
-
-        idsFiltrados = rows.map(r => r.id);
-        if (idsFiltrados.length === 0) {
-          // No hubo match -> devolvemos lista vacía rápido
-          return res.render('productosMasVendidos', {
-            categorias,
-            filtros: { categoria_id, desde, hasta, busqueda },
-            productos: []
-          });
-        }
-      }
-    }
-
-    // 3) Pedir "más vendidos" aplicando fechas/categoría y (si corresponde) la lista de IDs
+    // Más vendidos con fechas/categoría + (opcional) ids prefiltrados
     const productosList = await producto.obtenerMasVendidos(conexion, {
       categoria_id,
       desde,
       hasta,
-      ids: idsFiltrados,   // 👈 el modelo debe aceptar este parámetro
+      ids: idsFiltrados || null,
       limit: 100
     });
 
@@ -104,25 +98,33 @@ async function recomendacionesCompra(req, res) {
     let categoria_id = getFirst(req.query.categoria_id) || null;
     let desde        = getFirst(req.query.desde) || null;
     let hasta        = getFirst(req.query.hasta) || null;
+    let busqueda     = (getFirst(req.query.busqueda) || '').trim();
 
     const cat = Number.parseInt(categoria_id, 10);
     categoria_id = Number.isInteger(cat) && cat > 0 ? cat : null;
     desde = isDate(desde) ? desde : null;
     hasta = isDate(hasta) ? hasta : null;
 
-    console.log('➡️ /reportes/recomendaciones', { categoria_id, desde, hasta });
+    console.log('➡️ /reportes/recomendaciones', { categoria_id, desde, hasta, busqueda });
 
-    // Top 50 más vendidos (facturas + presupuestos)
+    // Prefiltro de IDs por texto (y categoría) para que el PDF también respete la búsqueda
+    const idsFiltrados = await prefiltrarProductoIds({ busqueda, categoria_id });
+    const idsSet = idsFiltrados ? new Set(idsFiltrados) : null;
+
+    // Top 50 más vendidos (facturas + presupuestos), respetando ids si hay
     const topVendidos = await producto.obtenerMasVendidos(conexion, {
-      categoria_id, desde, hasta, limit: 50
+      categoria_id, desde, hasta, ids: idsFiltrados || null, limit: 50
     });
 
-    // Top 50 más buscados (detallado)
-    const topBuscados = await producto.obtenerMasBuscadosDetallado(conexion, {
-      categoria_id, desde, hasta, limit: 50, weightText: 0.3
+    // Top 50 más buscados (detallado). Si hay ids, filtro en memoria.
+    const topBuscadosRaw = await producto.obtenerMasBuscadosDetallado(conexion, {
+      categoria_id, desde, hasta, limit: 200, weightText: 0.3
     });
+    const topBuscados = idsSet
+      ? topBuscadosRaw.filter(r => idsSet.has(r.id)).slice(0, 50)
+      : topBuscadosRaw.slice(0, 50);
 
-    // Sugerido de compra
+    // --------- Sugerido de compra ----------
     const DAY_MS = 24 * 60 * 60 * 1000;
     const COVER_DAYS = 15;
 
@@ -170,15 +172,18 @@ async function recomendacionesCompra(req, res) {
       const base = Math.max(minimo, objetivo);
       const sugerido = Math.max(0, base - actual);
 
-      sugeridos.push({
-        id,
-        nombre: metaById.get(id)?.nombre || '',
-        ventas_periodo: ventasPeriodo,
-        stock_actual: actual,
-        stock_minimo: minimo,
-        cobertura_objetivo: COVER_DAYS,
-        sugerido
-      });
+      // Si hay filtro por ids, respetarlo también en sugeridos
+      if (!idsSet || idsSet.has(id)) {
+        sugeridos.push({
+          id,
+          nombre: metaById.get(id)?.nombre || '',
+          ventas_periodo: ventasPeriodo,
+          stock_actual: actual,
+          stock_minimo: minimo,
+          cobertura_objetivo: COVER_DAYS,
+          sugerido
+        });
+      }
     }
 
     sugeridos.sort((a, b) => b.sugerido - a.sugerido);
@@ -187,7 +192,7 @@ async function recomendacionesCompra(req, res) {
     // Render EJS -> HTML
     const templatePath = path.resolve(__dirname, '..', 'views', 'reportes', 'recomendacionesCompra.ejs');
     const html = await ejs.renderFile(templatePath, {
-      filtros: { categoria_id, desde, hasta },
+      filtros: { categoria_id, desde, hasta, busqueda },
       topVendidos,
       topBuscados,
       topSugeridos
@@ -235,30 +240,20 @@ async function ventasDeProducto(req, res) {
       return res.status(400).json({ ok: false, error: 'producto_id inválido' });
     }
 
-    // Ventas
     const ventas = await producto.obtenerVentasDeProducto(conexion, {
-      producto_id,
-      desde,
-      hasta,
-      agruparPor: agrupar
+      producto_id, desde, hasta, agruparPor: agrupar
     });
 
-    // Búsquedas (opcional)
     let busquedas = null;
     if (incluirBusquedas) {
       busquedas = await producto.obtenerBusquedasDeProducto(conexion, {
-        producto_id,
-        desde,
-        hasta,
-        weightText: 0.3
+        producto_id, desde, hasta, weightText: 0.3
       });
     }
 
     return res.json({
       ok: true,
-      producto_id,
-      desde,
-      hasta,
+      producto_id, desde, hasta,
       ...(agrupar === 'dia'
         ? { detalle: ventas.detalle, total_ventas: ventas.total }
         : { total_ventas: ventas.total }),

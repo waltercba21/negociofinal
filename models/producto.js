@@ -2228,14 +2228,10 @@ obtenerProductosPorCategoriaPaginado(conexion, categoriaId, offset, limit) {
     });
   });
 },
-// models/producto.js (ajuste en la firma y en el armado del WHERE)
-obtenerMasVendidos: function (conexion, {
-  categoria_id = null,
-  desde = null,
-  hasta = null,
-  ids = null,          // 👈 NUEVO
-  limit = 100
-}) {
+obtenerMasVendidos: function (
+  conexion,
+  { categoria_id = null, desde = null, hasta = null, ids = null, limit = 100 }
+) {
   return new Promise((resolve, reject) => {
     const filtros = [];
     const params = [];
@@ -2247,8 +2243,8 @@ obtenerMasVendidos: function (conexion, {
       params.push(cat);
     }
 
-    // Fechas
-    const isDate = (d) => typeof d==='string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    // Fechas (YYYY-MM-DD)
+    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
     const d1 = isDate(desde) ? desde : null;
     const d2 = isDate(hasta) ? hasta : null;
 
@@ -2256,13 +2252,18 @@ obtenerMasVendidos: function (conexion, {
     else if (d1)  { filtros.push(`v.fecha >= ?`);           params.push(d1); }
     else if (d2)  { filtros.push(`v.fecha <= ?`);           params.push(d2); }
 
-    // 🔎 IDs prefiltrados por texto (si vinieron)
-    if (Array.isArray(ids) && ids.length) {
-      filtros.push(`p.id IN (${ids.map(()=>'?').join(',')})`);
-      params.push(...ids);
+    // IDs prefiltrados por texto (si vinieron)
+    const idList = Array.isArray(ids)
+      ? ids.map(n => parseInt(n, 10)).filter(Number.isInteger).slice(0, 500)
+      : null;
+
+    if (idList && idList.length) {
+      filtros.push(`p.id IN (${idList.map(() => '?').join(',')})`);
+      params.push(...idList);
     }
 
     const whereSQL = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
+    const safeLimit = Math.max(1, Math.min(parseInt(limit, 10) || 100, 500));
 
     const sql = `
       SELECT
@@ -2273,12 +2274,14 @@ obtenerMasVendidos: function (conexion, {
         p.stock_minimo,
         SUM(v.cantidad) AS total_vendido
       FROM (
+        /* FACTURAS */
         SELECT fi.producto_id, fi.cantidad, fm.fecha
         FROM factura_items fi
         INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
 
         UNION ALL
 
+        /* PRESUPUESTOS */
         SELECT pi.producto_id, pi.cantidad, pm.fecha
         FROM presupuesto_items pi
         INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
@@ -2287,12 +2290,13 @@ obtenerMasVendidos: function (conexion, {
       ${whereSQL}
       GROUP BY p.id, p.nombre, p.precio_venta, p.stock_actual, p.stock_minimo
       ORDER BY total_vendido DESC
-      LIMIT ${Number(limit) || 100}
+      LIMIT ${safeLimit}
     `;
 
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
+
 
 // Inserta búsqueda de texto
 insertarBusquedaTexto: function (conexion, { q, origen, user_id, ip }) {
