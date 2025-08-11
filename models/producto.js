@@ -2303,47 +2303,94 @@ insertarBusquedaProducto: function (conexion, { producto_id, q, user_id, ip }) {
     conexion.query(sql, [producto_id, q, user_id, ip], (err, r) => err ? reject(err) : resolve(r.insertId));
   });
 },
-
-// Agrega este método para obtener "más buscados"
-obtenerMasBuscados: function (conexion, { categoria_id = null, desde = null, hasta = null, limit = 100 }) {
+// models/producto.js
+// Combina clicks + texto mapeado a productos por nombre.
+// Pesos: clicks = 1.0, texto = 0.3 (configurable via weightText)
+obtenerMasBuscados: function (
+  conexion,
+  { categoria_id = null, desde = null, hasta = null, limit = 100, weightText = 0.3 }
+) {
   return new Promise((resolve, reject) => {
-    const filtros = [];
-    const params = [];
+    const filtrosClicks = [];
+    const pcParams = [];
+    const filtrosText = [];
+    const ptParams = [];
+    const filtrosOuter = [];
+    const outerParams = [];
 
-    // Fecha (sobre created_at de clicks en producto, más fiable que solo texto)
-    if (desde && hasta) {
-      filtros.push(`bp.created_at BETWEEN ? AND ?`);
-      params.push(desde, hasta);
-    } else if (desde) {
-      filtros.push(`bp.created_at >= ?`);
-      params.push(desde);
-    } else if (hasta) {
-      filtros.push(`bp.created_at <= ?`);
-      params.push(hasta);
+    // Fechas
+    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    const d1 = isDate(desde) ? desde : null;
+    const d2 = isDate(hasta) ? hasta : null;
+
+    if (d1 && d2) {
+      filtrosClicks.push(`bp.created_at BETWEEN ? AND ?`);
+      pcParams.push(d1, d2);
+      filtrosText.push(`bt.created_at BETWEEN ? AND ?`);
+      ptParams.push(d1, d2);
+    } else if (d1) {
+      filtrosClicks.push(`bp.created_at >= ?`);
+      pcParams.push(d1);
+      filtrosText.push(`bt.created_at >= ?`);
+      ptParams.push(d1);
+    } else if (d2) {
+      filtrosClicks.push(`bp.created_at <= ?`);
+      pcParams.push(d2);
+      filtrosText.push(`bt.created_at <= ?`);
+      ptParams.push(d2);
     }
 
-    if (categoria_id) {
-      filtros.push(`p.categoria_id = ?`);
-      params.push(Number(categoria_id));
+    // Categoría (se aplica en el outer sobre productos)
+    const cat = Number.parseInt(categoria_id, 10);
+    if (Number.isInteger(cat) && cat > 0) {
+      filtrosOuter.push(`p.categoria_id = ?`);
+      outerParams.push(cat);
     }
 
-    const whereSQL = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
+    const whereClicks = filtrosClicks.length ? `WHERE ${filtrosClicks.join(' AND ')}` : '';
+    const whereText   = filtrosText.length   ? `WHERE ${filtrosText.join(' AND ')}`   : '';
+    const whereOuter  = filtrosOuter.length  ? `WHERE ${filtrosOuter.join(' AND ')}`  : '';
 
+    // NOTA: Para mapear texto->producto usamos LIKE (robusto aunque menos performante).
+    // Si tenés FULLTEXT, te paso una versión MATCH AGAINST para mejorar performance.
     const sql = `
-      SELECT 
+      SELECT
         p.id,
         p.nombre,
         p.precio_venta,
-        COUNT(*) AS total_buscado
-      FROM busquedas_producto bp
-      INNER JOIN productos p ON p.id = bp.producto_id
-      ${whereSQL}
-      GROUP BY p.id, p.nombre, p.precio_venta
+        COALESCE(pc.clicks, 0) + (? * COALESCE(pt.textos, 0)) AS total_buscado
+      FROM productos p
+      LEFT JOIN (
+        SELECT bp.producto_id, COUNT(*) AS clicks
+        FROM busquedas_producto bp
+        ${whereClicks}
+        GROUP BY bp.producto_id
+      ) pc ON pc.producto_id = p.id
+      LEFT JOIN (
+        SELECT p2.id AS producto_id, COUNT(*) AS textos
+        FROM busquedas_texto bt
+        /* Mapear q -> productos por nombre (LIKE con palabra comodín entre espacios) */
+        INNER JOIN productos p2
+          ON p2.nombre LIKE CONCAT('%', REPLACE(bt.q, ' ', '%'), '%')
+        ${whereText}
+        GROUP BY p2.id
+      ) pt ON pt.producto_id = p.id
+      ${whereOuter}
+      /* solo productos con alguna señal de búsqueda */
+      HAVING (COALESCE(pc.clicks, 0) + (? * COALESCE(pt.textos, 0))) > 0
       ORDER BY total_buscado DESC
       LIMIT ${Number(limit) || 100}
     `;
 
-    conexion.query(sql, params, (err, rows) => err ? reject(err) : resolve(rows));
+    const params = [
+      Number(weightText) || 0.3,
+      ...pcParams,
+      ...ptParams,
+      ...outerParams,
+      Number(weightText) || 0.3
+    ];
+
+    conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
 
