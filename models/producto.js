@@ -2234,13 +2234,13 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
     const params = [];
 
     // Sanitizar categoría
-    const cat = Number.isInteger(parseInt(categoria_id, 10)) ? parseInt(categoria_id, 10) : null;
-    if (cat && cat > 0) {
+    const catNum = parseInt(categoria_id, 10);
+    if (!Number.isNaN(catNum) && catNum > 0) {
       filtros.push(`p.categoria_id = ?`);
-      params.push(cat);
+      params.push(catNum);
     }
 
-    // Sanitizar fechas (YYYY-MM-DD)
+    // Sanitizar fechas
     const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
     const d1 = isDate(desde) ? desde : null;
     const d2 = isDate(hasta) ? hasta : null;
@@ -2263,7 +2263,9 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
         p.id,
         p.nombre,
         SUM(v.cantidad) AS total_vendido,
-        p.precio_venta
+        p.precio_venta,
+        p.stock_actual,      -- 👈 necesario para "sugerido"
+        p.stock_minimo       -- 👈 necesario para "sugerido"
       FROM (
         /* Ventas por FACTURAS */
         SELECT fi.producto_id, fi.cantidad, fm.fecha AS fecha
@@ -2279,7 +2281,7 @@ obtenerMasVendidos: function (conexion, { categoria_id = null, desde = null, has
       ) v
       INNER JOIN productos p ON p.id = v.producto_id
       ${whereSQL}
-      GROUP BY p.id, p.nombre, p.precio_venta
+      GROUP BY p.id, p.nombre, p.precio_venta, p.stock_actual, p.stock_minimo
       ORDER BY total_vendido DESC
       LIMIT ${Number(limit) || 100}
     `;
@@ -2303,7 +2305,6 @@ insertarBusquedaProducto: function (conexion, { producto_id, q, user_id, ip }) {
     conexion.query(sql, [producto_id, q, user_id, ip], (err, r) => err ? reject(err) : resolve(r.insertId));
   });
 },
-// Devuelve Top "más buscados" con desglose: clicks, textos, total_buscado y ventas de cada producto
 obtenerMasBuscadosDetallado: function (
   conexion,
   { categoria_id = null, desde = null, hasta = null, limit = 50, weightText = 0.3 }
@@ -2320,6 +2321,7 @@ obtenerMasBuscadosDetallado: function (
     const d1 = isDate(desde) ? desde : null;
     const d2 = isDate(hasta) ? hasta : null;
 
+    // Fechas para clicks y texto
     if (d1 && d2) {
       filtrosClicks.push(`bp.created_at BETWEEN ? AND ?`);
       pcParams.push(d1, d2);
@@ -2337,16 +2339,19 @@ obtenerMasBuscadosDetallado: function (
       ptParams.push(d2);
     }
 
-    const cat = Number.parseInt(categoria_id, 10);
-    if (Number.isInteger(cat) && cat > 0) {
+    // Categoría (se aplica en el outer)
+    const catNum = parseInt(categoria_id, 10);
+    if (!Number.isNaN(catNum) && catNum > 0) {
       filtrosOuter.push(`p.categoria_id = ?`);
-      outerParams.push(cat);
+      outerParams.push(catNum);
     }
 
     const whereClicks = filtrosClicks.length ? `WHERE ${filtrosClicks.join(' AND ')}` : '';
     const whereText   = filtrosText.length   ? `WHERE ${filtrosText.join(' AND ')}`   : '';
     const whereOuter  = filtrosOuter.length  ? `WHERE ${filtrosOuter.join(' AND ')}`  : '';
 
+    // Subselect + WHERE por total_buscado (evita errores en HAVING)
+    // Collate unificado para evitar "Illegal mix of collations" en LIKE
     const sql = `
       SELECT *
       FROM (
@@ -2354,6 +2359,8 @@ obtenerMasBuscadosDetallado: function (
           p.id,
           p.nombre,
           p.precio_venta,
+          p.stock_actual,                -- 👈 para "sugerido"
+          p.stock_minimo,                -- 👈 para "sugerido"
           COALESCE(pc.clicks, 0)  AS clicks,
           COALESCE(pt.textos, 0)  AS textos,
           (COALESCE(pc.clicks, 0) + (? * COALESCE(pt.textos, 0))) AS total_buscado,
@@ -2403,12 +2410,12 @@ obtenerMasBuscadosDetallado: function (
     const w = Number(weightText) || 0.3;
     const params = [w, ...pcParams, ...ptParams];
 
-    // fechas para subconsulta de ventas (dos apariciones: facturas y presupuestos)
+    // Fechas para subconsulta de ventas (dos apariciones: facturas y presupuestos)
     if (d1 && d2) params.push(d1, d2, d1, d2);
     else if (d1) params.push(d1, d1);
     else if (d2) params.push(d2, d2);
 
-    // categoría al final (outer)
+    // Categoría al final (outer)
     params.push(...outerParams);
 
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));

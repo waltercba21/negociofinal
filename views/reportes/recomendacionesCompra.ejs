@@ -82,5 +82,40 @@
       * “Total buscado” = Clicks + (Búsquedas por texto × 0.3).
     </div>
   </div>
+
+  <!-- Sugerido de compra (Top 50) -->
+  <div class="section">
+    <h3>Sugerido de compra (Top 50)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Producto</th>
+          <th class="num">Ventas (período)</th>
+          <th class="num">Stock actual</th>
+          <th class="num">Stock mínimo</th>
+          <th class="num">Cobertura obj. (días)</th>
+          <th class="num">Sugerido</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% (topSugeridos || []).forEach((r,i)=>{ %>
+        <tr>
+          <td><%= i+1 %></td>
+          <td><%= r.nombre %></td>
+          <td class="num"><%= Number(r.ventas_periodo || 0) %></td>
+          <td class="num"><%= Number(r.stock_actual || 0) %></td>
+          <td class="num"><%= Number(r.stock_minimo || 0) %></td>
+          <td class="num"><%= Number(r.cobertura_objetivo || 0) %></td>
+          <td class="num"><strong><%= Number(r.sugerido || 0) %></strong></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <div class="muted">
+      * Cálculo: (Ventas del período / días del período) × Cobertura objetivo ⇒ Objetivo. 
+      Base = max(Stock mínimo, Objetivo). Sugerido = max(0, Base − Stock actual).
+    </div>
+  </div>
 </body>
 </html>
