@@ -4650,6 +4650,140 @@ table td img:hover {
   color: #b30000;
 }
 
+/* ====== FIXES ESPECÍFICOS PARA CREAR / EDITAR ====== */
+
+/* 1) Aislar el .form-control global (home) dentro de crear/editar */
+.container-crear .form-control,
+.container-crear .form-control-file,
+.container-editar .form-control,
+.container-editar .form-control-file {
+  display: block;      /* override del display:flex global */
+  width: 100%;         /* usar ancho de campo, no 200px fijos */
+  margin-bottom: 0;    /* evitar márgenes raros */
+}
+
+/* 2) No estilar igual text/number que checkbox/radio */
+.container-crear .form-group-crear input:not([type="checkbox"]):not([type="radio"]),
+.container-crear .form-group-crear select,
+.container-editar .form-group-crear input:not([type="checkbox"]):not([type="radio"]),
+.container-editar .form-group-crear select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  background: #fff;
+  border: 2px solid var(--border-strong, #9aa9bd);
+  border-radius: 10px;
+  box-shadow: inset 0 2px 6px rgba(15,23,42,0.06);
+  outline: none;
+}
+
+.container-crear .form-group-crear input:not([type="checkbox"]):not([type="radio"]):focus,
+.container-crear .form-group-crear select:focus,
+.container-editar .form-group-crear input:not([type="checkbox"]):not([type="radio"]):focus,
+.container-editar .form-group-crear select:focus {
+  border-color: var(--primary, #003f7d);
+  box-shadow: 0 0 0 3px rgba(0,63,125,0.12), inset 0 2px 6px rgba(15,23,42,0.06);
+}
+
+/* 3) Checkbox/radio nativos: tamaño correcto, inline y sin “estirarse” */
+.container-crear .form-group-crear input[type="checkbox"],
+.container-crear .form-group-crear input[type="radio"],
+.container-editar .form-group-crear input[type="checkbox"],
+.container-editar .form-group-crear input[type="radio"] {
+  appearance: auto;
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+  display: inline-block;
+  width: auto;
+  height: auto;
+  margin: 0 8px 0 0;   /* pequeño espacio antes del texto */
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  vertical-align: middle;
+  accent-color: var(--primary, #003f7d);
+}
+
+/* 4) El contenedor del checkbox NO debe ocupar 100% con fondo/“rectángulo” */
+.container-crear .form-group-crear,
+.container-editar .form-group-crear {
+  align-items: flex-start;    /* evita “centrado raro” cuando hay check/radio */
+}
+
+/* 5) Oferta / Calidad FITAM / VIC (quedan como checkbox normales) */
+#oferta.form-check-input {
+  margin-top: 0;
+}
+
+/* 6) Radio “Usar este proveedor”: mejorar alineación y no pegarlo al borde */
+.proveedor > .form-group-crear:first-child {
+  position: absolute;
+  top: 10px;
+  right: 12px;               /* un respiro del borde derecho */
+  margin: 0;
+  align-items: flex-end;
+}
+
+.proveedor > .form-group-crear:first-child label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-muted, #f5f7fb);
+  border: 2px solid var(--border, #cbd5e1);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text, #1b2b45);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
+}
+
+/* Aumentar sutilmente el tamaño del círculo del radio */
+.proveedor-designado-radio {
+  transform: scale(1.1);
+}
+
+/* 7) Resalte de la tarjeta al seleccionar el radio (si el navegador soporta :has) */
+.proveedor:has(.proveedor-designado-radio:checked) {
+  border-color: var(--primary, #003f7d);
+  box-shadow: 0 0 0 3px rgba(0,63,125,0.10), 0 10px 28px rgba(15, 23, 42, 0.16);
+}
+
+/* 8) Bordes y sombra “3D” en contenedores para que se distingan mejor */
+.container-crear,
+.container-editar,
+.container-crear .contenido-crear,
+.container-crear .card-body,
+.container-editar .card-body-editar,
+.container-crear .form-crear > div,
+.container-editar .caracteristicas-editar,
+.container-editar #proveedoresContainer-editar,
+.container-editar .utilidades-editar,
+#proveedoresContainer .proveedor,
+#proveedoresContainer-editar .proveedor {
+  border: 2px solid var(--border, #cbd5e1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12) !important;
+  background: #fff !important;
+}
+
+/* 9) El contenedor de proveedores en grid centrado/alineado */
+#proveedoresContainer,
+#proveedoresContainer-editar {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* 10) Asegurar padding superior en la tarjeta para que la “pill” no se superponga */
+#proveedoresContainer .proveedor,
+#proveedoresContainer-editar .proveedor {
+  position: relative;
+  padding-top: 60px; /* espacio para la pill del radio */
+}
+
 /*------------------RESPONSIVE------------------*/
 
 @media screen and (max-width: 768px) {
