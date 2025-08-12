@@ -177,32 +177,26 @@ function calcularCostos(proveedorElement) {
 }
 
 function actualizarProveedorAsignado() {
-    var proveedorSeleccionado = $('.proveedor-designado-radio:checked').closest('.proveedor');
-    var proveedorMasBarato = null;
+  // 1) si hay radio marcado, ese manda
+  var elegido = $('.proveedor-designado-radio:checked').closest('.proveedor');
 
-    if (proveedorSeleccionado.length > 0) {
-        proveedorMasBarato = proveedorSeleccionado;
-    } else {
-        // Si no hay uno marcado, elegir el más barato
-        var costoMasBajo = Infinity;
-        $('.costo_iva').each(function() {
-            var costoActual = parseFloat($(this).val());
-            if (!isNaN(costoActual) && costoActual < costoMasBajo) {
-                costoMasBajo = costoActual;
-                proveedorMasBarato = $(this).closest('.proveedor');
-            }
-        });
-    }
+  // 2) si no hay radio, buscamos el más barato por costo_iva
+  if (elegido.length === 0) {
+    var costoMasBajo = Infinity;
+    $('.costo_iva').each(function() {
+      var costo = parseFloat($(this).val());
+      if (!isNaN(costo) && costo < costoMasBajo) {
+        costoMasBajo = costo;
+        elegido = $(this).closest('.proveedor');
+      }
+    });
+  }
 
-    $('.proveedor').removeClass('proveedor-asignado').find('span:contains("Proveedor Asignado")').remove();
-
-    if (proveedorMasBarato && proveedorMasBarato.find('.costo_iva').val() !== '') {
-        proveedorMasBarato.addClass('proveedor-asignado');
-        proveedorMasBarato.find('.nombre_proveedor').after('<span> (Proveedor Asignado)</span>');
-    }
-
-    $('.proveedor-asignado').css('background-color', '#dff0d8');
+  // 3) toggle de clase; sin estilos inline
+  $('.proveedor').removeClass('proveedor-asignado');
+  if (elegido.length) elegido.addClass('proveedor-asignado');
 }
+
 
 function actualizarPrecioVenta() {
     var utilidad = parseFloat($('#utilidad').val() || 0);
