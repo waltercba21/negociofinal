@@ -2008,179 +2008,102 @@ tfoot td {
   display: none !important;
 }
 
-
-/*  -----------------------------CREAR-------------------------- */
-
+/* =====================================================================
+   ----------------------------- CREAR -----------------------------
+   ===================================================================== */
 .container-crear {
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: var(--shadow);
   padding: 20px;
+
   background: var(--surface);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
+
 .titulo-crear {
-  font-weight: bold;
+  font-weight: 800;
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 30px;
+  margin-bottom: 18px;
+  font-size: 28px;
   color: var(--primary);
 }
-.contenido-crear {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: stretch;
-  flex-wrap: wrap; 
-  box-shadow: var(--shadow);
-  margin: auto; 
-  background: var(--surface);
-  border-radius: var(--radius);
-}
+
+.contenido-crear,
 .card-body {
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: stretch;
-  flex-wrap: wrap; 
-  box-shadow: var(--shadow);
-  margin: auto; 
-  background: var(--surface);
-  border-radius: var(--radius);
-}
-.form-crear {
-  display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
-.caracteristicas, #proveedoresContainer, .utilidades {
-  flex: 1 1 0;
-  margin: 10px;
-  padding: 20px;
-  box-sizing: border-box;
+
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
 }
+
+.form-crear {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* características | proveedores | utilidades */
+  gap: 20px;
+  align-items: start;
+  justify-items: stretch;
+}
+
 .form-crear > div {
-  border-right: 2px solid #d3d3d3; 
-  padding-top: 10px; 
-  padding-bottom: 10px; 
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
 }
-.form-crear > div:last-child {
-  border-right: none; 
-}
+
+.form-crear > div:last-child { border-right: 2px solid var(--border); }
+
 .caracteristicas, .proveedores, .utilidades {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  min-width: 0; 
-}
-.proveedores {
-  margin: 0 20px; 
-}
-.form-group-crear {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 12px;
-  align-items: stretch;
-  gap: 6px;
-}
-.form-group-crear label {
-  font-weight: bold;
-  color: var(--label);
-  font-size: 13px;
-}
-.form-group-crear input, .form-group-crear select {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: none;
-  padding: 10px;
-  width: 100%;
-  text-align: center; 
-  font-weight: bold;
-  border-radius: 10px;
-  font-size: 12px;
-}
-.botones-crear {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
   gap: 12px;
+  min-width: 0;
 }
-.botones-crear button, .botones-crear a {
-  border: none;
-  box-shadow: var(--shadow);
-  padding: 10px 20px;
-  font-weight: bold;
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-  background: var(--primary);
-  color: #fff;
-}
-.botones-crear a.btn-primary{
-  background: var(--primary-600);
-}
-#proveedoresContainer {
+
+.proveedores { margin: 0; }
+
+/* Grilla de tarjetas de proveedores */
+#proveedoresContainer{
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
   align-items: start;
 }
 
-/* Botón agregar proveedor (crear/editar comparten el mismo id en tu vista) */
-#addProveedor {
-  background-color: #22A35A;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  line-height: 1;
-  margin: 4px 2px;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease;
-  border-radius: 999px;
-  justify-self: center;
-}
-#addProveedor:hover {
-  background-color: #2EDB77;
-  color: #0b1729;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-hover);
-}
-
-/* Tarjeta de proveedor (aplica tanto en crear como en editar) */
+/* Tarjeta de proveedor con 3D */
 .proveedor{
   position: relative;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 18px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  transition: box-shadow .2s ease, border-color .2s ease, transform .05s ease-in;
-  /* espacio para el radio arriba a la derecha */
-  padding-top: 54px;
+  transition: box-shadow .2s ease, border-color .2s ease, transform .06s ease-in;
+  padding-top: 58px; /* espacio para pill del radio */
 }
-.proveedor:hover{
-  box-shadow: var(--shadow-hover);
-  border-color: #c8d4e6;
-}
+.proveedor:hover{ box-shadow: var(--shadow-hover); border-color: var(--border-strong); }
 
-/* Ubicar el primer form-group (el del radio) arriba a la derecha como una "pill" */
+/* “Pill” del radio arriba derecha */
 .proveedor > .form-group-crear:first-child{
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   margin: 0;
   align-items: flex-end;
 }
@@ -2189,404 +2112,259 @@ tfoot td {
   align-items: center;
   gap: 8px;
   background: var(--surface-muted);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 999px;
-  padding: 6px 10px 6px 8px;
-  font-size: 11px;
+  padding: 6px 10px;
+  font-size: 12px;
   color: var(--text);
-  box-shadow: 0 2px 6px rgba(15,23,42,0.06);
+  box-shadow: var(--shadow);
   user-select: none;
 }
 
-/* Radio más grande, con color y sin pegarse al borde */
+/* Radio visible y cómodo */
 .proveedor-designado-radio{
-  transform: scale(1.2);
+  transform: scale(1.15);
   accent-color: var(--primary);
   margin: 0;
 }
 
-/* Resaltar tarjeta cuando ese radio está seleccionado (Chrome/Edge soportan :has) */
+/* Resalte de tarjeta cuando está seleccionado (si el navegador soporta :has) */
 .proveedor:has(.proveedor-designado-radio:checked){
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0,63,125,0.12), var(--shadow-hover);
+  box-shadow: 0 0 0 3px rgba(0,63,125,0.10), var(--shadow-hover);
 }
 
-/* Inputs dentro de la tarjeta de proveedor: */
-.proveedor .form-group-crear label{
+/* Grupos y labels (CREAR) con bordes/inputs bien definidos */
+.form-group-crear{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  align-items: stretch;
+}
+
+.form-group-crear label{
+  font-weight: 700;
   color: var(--label);
-  font-size: 12px;
-  margin-bottom: 2px;
-}
-.proveedor .form-group-crear input,
-.proveedor .form-group-crear select{
-  text-align: left;
-  font-weight: 600;
-  border-radius: 8px;
+  font-size: 13px;
 }
 
-/* Botón eliminar proveedor */
-.eliminar-proveedor {
-  background-color: #b30000; 
-  color: white; 
-  border: none; 
-  padding: 10px 14px;
-  border-radius: 10px; 
-  cursor: pointer; 
-  transition: background-color 0.2s ease, transform .05s ease-in;
+.form-group-crear input,
+.form-group-crear select{
   width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow-inset);
+  outline: none;
 }
-.eliminar-proveedor:hover {
-  background-color: #e11d1d; 
+
+.form-group-crear input:focus,
+.form-group-crear select:focus{
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0,63,125,0.12), var(--shadow-inset);
+}
+
+/* Botón agregar proveedor (crear) */
+#addProveedor{
+  background-color: #22A35A;
+  color: white;
+  border: 2px solid #1e8c4d;
+  padding: 10px 16px;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
+  justify-self: center;
+}
+#addProveedor:hover{
+  background-color: #2EDB77;
+  color: #0b1729;
   transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Botón eliminar proveedor con 3D */
+.eliminar-proveedor{
+  background-color: #b30000;
+  color: #fff;
+  border: 2px solid #941010;
+  padding: 10px 14px;
+  border-radius: 10px;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color .15s ease, transform .06s ease-in;
+  box-shadow: var(--shadow);
+}
+.eliminar-proveedor:hover{ background-color: #e11d1d; transform: translateY(-1px); }
+
+/* Botonera general (crear) */
+.botones-crear {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+}
+.botones-crear button, .botones-crear a{
+  border: 2px solid var(--primary-600);
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 20px;
+  font-weight: 800;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
 }
 
 /* Miniaturas */
-.imagen-miniatura-contenedor .imagen-miniatura {
-  width: 80px;
-  height: 80px;
-}
-.imagen-miniatura-contenedor {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-.imagen-miniatura {
+.imagen-miniatura-contenedor{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+.imagen-miniatura-contenedor .imagen-miniatura{ width:80px; height:80px; }
+.imagen-miniatura{
   object-fit: cover;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  border: 2px solid var(--border);
 }
-.preview-img {
-  position: relative;
-  cursor: pointer;
-}
-.preview-img::after {
+.preview-img{ position: relative; cursor: pointer; }
+.preview-img::after{
   content: '✕';
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  padding: 2px 5px;
-  border-radius: 50%;
+  position: absolute; top: 5px; right: 5px;
+  background: rgba(0,0,0,0.55); color:#fff;
+  padding: 2px 5px; border-radius: 50%;
   font-size: 12px;
 }
 
 /* =====================================================================
-   -----------------------------EDITAR--------------------------
+   ----------------------------- EDITAR -----------------------------
    ===================================================================== */
-.container-editar {
-  max-width: 1200px;
-  margin: 0 auto;
+.container-editar{
   padding: 20px;
-  border: 1px solid var(--border);
+  background-color: var(--surface);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  background-color: var(--surface);
 }
-.titulo-editar {
+
+.titulo-editar{
   text-align: center;
   font-size: 20px;
   font-weight: 800;
   margin-bottom: 14px;
   color: var(--primary);
 }
-.card-body-editar {
-  padding: 0; 
-  background-color: #f9f9f9;
-  border-radius: var(--radius);
-}
-.contenido-editar {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 20px; 
-  width: 100%; 
-  box-sizing: border-box;
-}
-.caracteristicas-editar, 
-#proveedoresContainer-editar, 
-.utilidades-editar {
-  flex: 1; 
-  min-width: 0; 
-  padding: 20px;
-  border: 1px solid var(--border);
+
+.card-body-editar{
+  padding: 0;
+  background-color: var(--surface);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  background-color: var(--surface); 
-}
-.form-group-editar input,
-.form-group-editar select,
-.form-group-editar .form-control {
-  width: 100%;
-  padding: 8px; 
-  font-size: 12px; 
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: none; 
-  height: auto; 
-  box-sizing: border-box; 
-}
-.caracteristicas-editar {
-  border-right: 1px solid var(--border);
-}
-.utilidades-editar {
-  border-left: 1px solid var(--border);
-}
-.form-group-editar {
-  margin-bottom: 15px;
-}
-.form-group-editar label {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--label);
-  font-weight: bold;
-  font-size: 12px;
-}
-.form-group-editar input,
-.form-group-editar select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
-  font-weight: bold;
-  font-size: 12px;
 }
 
-/* Cuando uses .proveedor dentro del editar, hereda los estilos de arriba */
-
-.proveedor-editar .form-group-editar select.proveedores {
-  width: 100%; 
-  padding: 6px;
-  margin: 0;
-  box-sizing: border-box;
+.contenido-editar{
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* características | proveedores | utilidades */
+  gap: 20px;
+  width: 100%;
 }
-.proveedor-editar .form-group-editar {
+
+.caracteristicas-editar,
+#proveedoresContainer-editar,
+.utilidades-editar{
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+/* Inputs/Selects EDITAR con bordes visibles y 3D */
+.form-group-editar{
+  margin-bottom: 14px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 6px;
+}
+
+.form-group-editar label{
+  display: block;
+  color: var(--label);
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.form-group-editar input,
+.form-group-editar select,
+.form-group-editar .form-control{
   width: 100%;
-  margin: 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow-inset);
+  outline: none;
 }
 
-#addProveedor-editar {
-  margin: 16px 0 0;
-  font-size: 20px;
-  padding: 6px 10px;
-  border: none;
-  background-color: #4CAF50;
-  color: white;
-  border-radius: 50%;
-  cursor: pointer;
+.form-group-editar input:focus,
+.form-group-editar select:focus,
+.form-group-editar .form-control:focus{
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0,63,125,0.12), var(--shadow-inset);
 }
 
-/* Botonera */
-.botones-editar {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-  gap: 12px;
-}
-.botones-editar .btn {
-  padding: 10px 16px;
-  font-size: 14px;
-  border-radius: 8px;
-  font-weight: bold;
-  box-shadow: var(--shadow);
-}
-
-/* Utilidades/columnas laterales del editor (pequeños ajustes) */
-.proveedor-asignado {
-  width: 100%;
-}
-
-/* Para el contenedor de proveedores en EDITAR si usas el mismo id */
+/* Grilla de proveedores en EDITAR */
 #proveedoresContainer-editar{
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
 }
 
-/*-----------------------------EDITAR--------------------------*/
+/* Reutiliza .proveedor de arriba para el estilo 3D */
+.proveedor .form-group-crear label{ font-size: 12px; }
 
-.container-editar {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: #fff;
-}
-.titulo-editar {
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  color: #003f7d;
-}
-.card-body-editar {
-  padding: 0; 
-  background-color: #f9f9f9;
-}
-.contenido-editar {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 20px; 
-  width: 100%; 
-  box-sizing: border-box;
-}
-.caracteristicas-editar, 
-#proveedoresContainer-editar, 
-.utilidades-editar {
-  flex: 1; 
-  min-width: 0; 
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: #fff; 
-}
-.form-group-editar input,
-.form-group-editar select,
-.form-group-editar .form-control {
-  width: 100%;
-  padding: 6px; 
-  font-size: 12px; 
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  box-shadow: none; 
-  height: auto; 
-  box-sizing: border-box; 
-}
-.caracteristicas-editar {
-  border-right: 1px solid #ccc;
-}
-.utilidades-editar {
-  border-left: 1px solid #ccc;
-}
-.form-group-editar {
-  margin-bottom: 15px;
-}
-.form-group-editar label {
-  display: block;
-  margin-bottom: 5px;
-  color: blue;
-  font-weight: bold;
-  font-size: 12px;
-}
-.form-group-editar input,
-.form-group-editar select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  font-weight: bold;
-  font-size: 12px;
-}
-.proveedor-editar .form-group-editar select.proveedores {
-  width: 100%; 
-  padding: 6px;
-  margin: 0;
-  box-sizing: border-box;
-}
-.proveedor-editar .form-group-editar {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
-  margin: 0;
-}
-.imagen-miniatura-contenedor .imagen-miniatura {
-  width: 80px;
-  height: 80px;
-}
-.imagen-miniatura-contenedor {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-.imagen-miniatura {
-  object-fit: cover;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-.preview-img {
-  position: relative;
-  cursor: pointer;
-}
-.preview-img::after {
-  content: '✕';
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  padding: 2px 5px;
-  border-radius: 50%;
-  font-size: 12px;
-}
+/* Botón agregar proveedor (editar) */
 #addProveedor-editar {
-  margin: 20px 0;
+  margin: 10px 0 0;
   font-size: 20px;
-  padding: 4px 8px;
-  border: none;
+  padding: 6px 10px;
+  border: 2px solid #3e9e43;
   background-color: #4CAF50;
   color: white;
   border-radius: 50%;
   cursor: pointer;
+  box-shadow: var(--shadow);
 }
-.botones-editar .btn {
-  padding: 8px 16px;
-  font-size: 14px;
-  border-radius: 4px;
-}
-.botones-editar {
+
+/* Botonera EDITAR */
+.botones-editar{
   display: flex;
   justify-content: space-between;
+  gap: 12px;
   margin-top: 20px;
 }
-.botones-editar .btn {
-  font-weight: bold;
-}
-.proveedor-asignado {
-  width: 100%;
-}
-#proveedoresContainer {
-  display: flex;
-  flex-direction: column;
-}
-.eliminar-proveedor {
-  background-color: #b30000; 
-  color: white; 
-  border: none; 
-  padding: 10px 20px;
-  border-radius: 10px; 
-  cursor: pointer; 
-  transition: background-color 0.3s ease;
+.botones-editar .btn{
+  padding: 10px 16px;
+  font-size: 14px;
+  border-radius: 10px;
+  font-weight: 800;
+  box-shadow: var(--shadow);
+  border: 2px solid var(--primary-600);
+  background: var(--primary);
+  color: #fff;
 }
 
-.eliminar-proveedor:hover {
-  background-color: #ff1a1a; 
-}
-.form-group-crear {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.form-group-crear input,
-.form-group-crear select {
-  flex: 1;
-  max-width: 100%;
-}
-.form-group-crear select {
-  padding: 5px; 
-  border-radius: 5px; 
-}
 
 /* --------------------------- Productos ------------------------------ */
 
