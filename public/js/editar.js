@@ -101,9 +101,9 @@ $(document).ready(function() {
         });
 
         // Evento para input radio de proveedor asignado
-        proveedorElement.find('.radio-proveedor-asignado').off('change').on('change', function() {
+        proveedorElement.find('.proveedor-designado-radio').off('change').on('change', function() {
             if ($(this).is(':checked')) {
-                $('.radio-proveedor-asignado').not(this).prop('checked', false);
+                $('.proveedor-designado-radio').not(this).prop('checked', false);
             }
             actualizarPrecioVenta();
             actualizarProveedorAsignado();
@@ -138,7 +138,7 @@ $(document).ready(function() {
         newProveedor.find('input:not([type="button"]), select').val('');
         newProveedor.find('.IVA').val('21');
         newProveedor.find('.nombre_proveedor').text('');
-        newProveedor.find('.radio-proveedor-asignado').prop('checked', false);
+        newProveedor.find('.proveedor-designado-radio').prop('checked', false);
         $('#proveedoresContainer').append(newProveedor);
         bindEventsToProveedor(newProveedor);
         calcularCostos(newProveedor);
@@ -177,7 +177,7 @@ function calcularCostos(proveedorElement) {
 }
 
 function actualizarProveedorAsignado() {
-    var proveedorSeleccionado = $('.radio-proveedor-asignado:checked').closest('.proveedor');
+    var proveedorSeleccionado = $('.proveedor-designado-radio:checked').closest('.proveedor');
     var proveedorMasBarato = null;
 
     if (proveedorSeleccionado.length > 0) {
@@ -206,14 +206,14 @@ function actualizarProveedorAsignado() {
 
 function actualizarPrecioVenta() {
     var utilidad = parseFloat($('#utilidad').val() || 0);
-    var proveedorSeleccionado = $('.radio-proveedor-asignado:checked').closest('.proveedor');
+    var proveedorSeleccionado = $('.proveedor-designado-radio:checked').closest('.proveedor');
     var costoConIVA = 0;
 
     if (proveedorSeleccionado.length > 0) {
         costoConIVA = parseFloat(proveedorSeleccionado.find('.costo_iva').val()) || 0;
     } else {
         // Si no hay uno marcado, usar el más barato
-        costoConIVA = Math.min(...$.map($('.costo_iva'), function(el) { return parseFloat($(el).val()) || Infinity; }));
+        costoConIVA = Math.min(...$.map($('.costo_iva'), el => parseFloat($(el).val()) || Infinity));
     }
 
     var precioVenta = Math.ceil(costoConIVA * (1 + utilidad / 100));

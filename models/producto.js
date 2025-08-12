@@ -442,14 +442,16 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
             params.push(datos.calidad_vic);
             first = false;
         }
-
-        // 🔥🔥🔥 AÑADIR ACTUALIZACIÓN DEL CAMPO OFERTA 🔥🔥🔥
+        if (datos.proveedor_id) {
+        query += first ? "proveedor_id=?" : ", proveedor_id=?";
+        params.push(datos.proveedor_id);
+        first = false;
+}
         if (typeof datos.oferta !== 'undefined') {
             query += first ? "oferta=?" : ", oferta=?";
             params.push(datos.oferta);
             first = false;
         }
-
         if (!datos.id) {
             reject(new Error('Los datos del producto deben incluir un ID'));
         }
