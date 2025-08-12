@@ -2296,8 +2296,6 @@ obtenerMasVendidos: function (
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
-
-
 // Inserta búsqueda de texto
 insertarBusquedaTexto: function (conexion, { q, origen, user_id, ip }) {
   return new Promise((resolve, reject) => {

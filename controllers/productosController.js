@@ -635,87 +635,123 @@ lista: async function (req, res) {
             }
         });
     },    
-    actualizar: function(req, res) {
-        if (!req.body.proveedores || req.body.proveedores.length === 0) {
-            res.status(400).send('Error: proveedor_id no puede ser nulo');
-            return;
-        }
-    
-        let datosProducto = {
-            id: req.body.id,
-            nombre: req.body.nombre,
-            descripcion: req.body.descripcion,
-            categoria_id: req.body.categoria,
-            marca_id: req.body.marca,
-            modelo_id: req.body.modelo_id,
-            utilidad: req.body.utilidad,
-            precio_venta: req.body.precio_venta,
-            estado: req.body.estado,
-            paginaActual: req.body.paginaActual,
-            stock_minimo: req.body.stock_minimo,
-            stock_actual: req.body.stock_actual,
-            descuentos_proveedor_id: req.body.descuentos_proveedor_id[0],
-            costo_neto: req.body.costo_neto[0],
-            IVA: req.body.IVA[0],
-            costo_iva: req.body.costo_iva[0],
-            oferta: Array.isArray(req.body.oferta) ? req.body.oferta.includes('1') ? 1 : 0 : Number(req.body.oferta) || 0,
-            calidad_original: req.body.calidad_original ? 1 : 0, 
-            calidad_vic: req.body.calidad_vic ? 1 : 0 
-        };
-    
-        // 🔄 Aplicar redondeo al precio de venta
-        if (datosProducto.precio_venta) {
-            const redondearPrecioVenta = (precio) => {
-                const valor = Number(precio);
-                const resto = valor % 100;
-                return resto < 50 ? valor - resto : valor + (100 - resto);
-            };
-            datosProducto.precio_venta = redondearPrecioVenta(datosProducto.precio_venta);
-        }
-    
-        producto.actualizar(conexion, datosProducto)
-            .then(() => {
-                if (req.files) {
-                    const promesasArchivos = req.files.map(file => {
-                        return producto.actualizarArchivo(conexion, datosProducto, file);
-                    });
-                    return Promise.all(promesasArchivos);
-                } else {
-                    return Promise.resolve();
-                }
-            })
-            .then(() => {
-                const proveedores = req.body.proveedores.map((proveedorId, index) => {
-                    return {
-                        producto_id: datosProducto.id,
-                        proveedor_id: proveedorId,
-                        precio_lista: req.body.precio_lista[index],
-                        codigo: req.body.codigo[index]
-                    };
-                });
-                const promesasProveedor = proveedores.map((proveedor) => {
-                    return producto.actualizarProductoProveedor(conexion, proveedor);
-                });
-                return Promise.all(promesasProveedor);
-            })
-            .then(() => {
-                return producto.actualizarStock(conexion, datosProducto.id, datosProducto.stock_minimo, datosProducto.stock_actual);
-            })
-            .then(() => {
-                return producto.obtenerPosicion(conexion, datosProducto.id);
-            })
-            .then(() => {
-              const pagina = req.body.paginaActual || 1;
-              const busqueda = req.body.busqueda || '';
-              
-                res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
-                console.log("🔁 REDIRECT a panelControl:", `/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
+   actualizar: function(req, res) {
+  if (!req.body.proveedores || req.body.proveedores.length === 0) {
+    res.status(400).send('Error: proveedor_id no puede ser nulo');
+    return;
+  }
 
-            })
-            .catch(error => {
-                res.status(500).send('Error: ' + error.message);
-            });
-    },
+  // Arrays que vienen del form
+  const arrProveedores = req.body.proveedores;             // [proveedor_id,...]
+  const arrDescuentos  = req.body.descuentos_proveedor_id; // [%...]
+  const arrCostoNeto   = req.body.costo_neto;              // [...]
+  const arrIVA         = req.body.IVA;                     // [...]
+  const arrCostoIVA    = req.body.costo_iva;               // [...]
+
+  // 1) Determinar índice base
+  let idx = null;
+  if (typeof req.body.proveedor_designado !== 'undefined' && req.body.proveedor_designado !== '') {
+    idx = parseInt(req.body.proveedor_designado, 10);
+    if (Number.isNaN(idx) || idx < 0 || idx >= arrProveedores.length) idx = null;
+  }
+
+  if (idx === null) {
+    // fallback: más barato por costo_iva
+    let min = Infinity, minIdx = 0;
+    (arrCostoIVA || []).forEach((v, i) => {
+      const n = parseFloat(v);
+      if (!Number.isNaN(n) && n < min) { min = n; minIdx = i; }
+    });
+    idx = minIdx;
+  }
+
+  // 2) Armar datos coherentes usando el índice elegido
+  const proveedorElegidoId = Array.isArray(arrProveedores) ? arrProveedores[idx] : arrProveedores;
+  const descuentoElegido   = Array.isArray(arrDescuentos)  ? arrDescuentos[idx]  : arrDescuentos;
+  const costoNetoElegido   = Array.isArray(arrCostoNeto)   ? arrCostoNeto[idx]   : arrCostoNeto;
+  const ivaElegido         = Array.isArray(arrIVA)         ? arrIVA[idx]         : arrIVA;
+  const costoIvaElegido    = Array.isArray(arrCostoIVA)    ? arrCostoIVA[idx]    : arrCostoIVA;
+
+  let datosProducto = {
+    id: req.body.id,
+    nombre: req.body.nombre,
+    descripcion: req.body.descripcion,
+    categoria_id: req.body.categoria,
+    marca_id: req.body.marca,
+    modelo_id: req.body.modelo_id,
+    utilidad: req.body.utilidad,
+    precio_venta: req.body.precio_venta,  // lo revalidamos abajo
+    estado: req.body.estado,
+    paginaActual: req.body.paginaActual,
+    stock_minimo: req.body.stock_minimo,
+    stock_actual: req.body.stock_actual,
+
+    // 👇 ahora NO usamos [0], usamos el índice elegido
+    descuentos_proveedor_id: descuentoElegido,
+    costo_neto: costoNetoElegido,
+    IVA: ivaElegido,
+    costo_iva: costoIvaElegido,
+
+    // checkboxes
+    oferta: Array.isArray(req.body.oferta) ? (req.body.oferta.includes('1') ? 1 : 0) : Number(req.body.oferta) || 0,
+    calidad_original: req.body.calidad_original ? 1 : 0,
+    calidad_vic: req.body.calidad_vic ? 1 : 0,
+
+    // 👇 guardar el proveedor designado (o el más barato si no había designado)
+    proveedor_id: proveedorElegidoId
+  };
+
+  // 🔄 Redondeo del precio de venta (y opcionalmente recalcular)
+  const redondearPrecioVenta = (precio) => {
+    const valor = Number(precio) || 0;
+    const resto = valor % 100;
+    return resto < 50 ? valor - resto : valor + (100 - resto);
+  };
+
+  // (Opcional) recalcular server-side por coherencia
+  if (datosProducto.utilidad && costoIvaElegido) {
+    const u = parseFloat(datosProducto.utilidad) || 0;
+    const base = parseFloat(costoIvaElegido) || 0;
+    const pvCalc = Math.ceil(base * (1 + u / 100));
+    datosProducto.precio_venta = pvCalc;
+  }
+
+  if (datosProducto.precio_venta) {
+    datosProducto.precio_venta = redondearPrecioVenta(datosProducto.precio_venta);
+  }
+
+  producto.actualizar(conexion, datosProducto)
+    .then(() => {
+      if (req.files) {
+        const promesasArchivos = req.files.map(file => producto.actualizarArchivo(conexion, datosProducto, file));
+        return Promise.all(promesasArchivos);
+      } else {
+        return Promise.resolve();
+      }
+    })
+    .then(() => {
+      const proveedores = req.body.proveedores.map((proveedorId, index) => ({
+        producto_id: datosProducto.id,
+        proveedor_id: proveedorId,
+        precio_lista: req.body.precio_lista[index],
+        codigo: req.body.codigo[index]
+      }));
+      const promesasProveedor = proveedores.map((proveedor) => producto.actualizarProductoProveedor(conexion, proveedor));
+      return Promise.all(promesasProveedor);
+    })
+    .then(() => producto.actualizarStock(conexion, datosProducto.id, datosProducto.stock_minimo, datosProducto.stock_actual))
+    .then(() => producto.obtenerPosicion(conexion, datosProducto.id))
+    .then(() => {
+      const pagina = req.body.paginaActual || 1;
+      const busqueda = req.body.busqueda || '';
+      res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
+      console.log("🔁 REDIRECT a panelControl:", `/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
+    })
+    .catch(error => {
+      res.status(500).send('Error: ' + error.message);
+    });
+},
+
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
