@@ -1126,7 +1126,11 @@ obtenerProductos: function(conexion, saltar, productosPorPagina, callback) {
 },
 obtenerProductosPorCategoria: function(conexion, categoriaId) {
   const query = `
-    SELECT p.nombre, p.stock_actual, pp.codigo
+    SELECT 
+      p.id,                           -- ✅ necesario para deduplicar
+      p.nombre, 
+      p.stock_actual, 
+      pp.codigo AS codigo
     FROM productos p
     LEFT JOIN producto_proveedor pp ON p.id = pp.producto_id
     WHERE p.categoria_id = ?
@@ -1169,36 +1173,36 @@ contarProductos: function(conexion, callback) {
   });
 },  
 obtenerProductosPorProveedorYCategoria: function(conexion, proveedor, categoria) {
-    let query = `
-        SELECT 
-            pp.codigo AS codigo_proveedor, 
-            p.nombre, 
-            pp.precio_lista, 
-            p.precio_venta, 
-            p.stock_minimo, 
-            p.stock_actual
-        FROM productos p
-        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-        WHERE 1=1
-    `;
+  let query = `
+      SELECT 
+          p.id,                                     -- ✅ necesario para deduplicar
+          pp.codigo AS codigo_proveedor, 
+          p.nombre, 
+          pp.precio_lista, 
+          p.precio_venta, 
+          p.stock_minimo, 
+          p.stock_actual
+      FROM productos p
+      INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+      WHERE 1=1
+  `;
 
-    const params = [];
-    if (proveedor && proveedor !== 'TODOS') {
-        query += ` AND pp.proveedor_id = ?`;
-        params.push(proveedor);
-    }
-    if (categoria && categoria !== 'TODAS') {
-        query += ` AND p.categoria_id = ?`;
-        params.push(categoria);
-    }
+  const params = [];
+  if (proveedor && proveedor !== 'TODOS') {
+      query += ` AND pp.proveedor_id = ?`;
+      params.push(proveedor);
+  }
+  if (categoria && categoria !== 'TODAS') {
+      query += ` AND p.categoria_id = ?`;
+      params.push(categoria);
+  }
 
-    query += `
-        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
-    `;
+  query += ` ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC`;
 
-    const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return queryPromise(query, params);
+  const queryPromise = require('util').promisify(conexion.query).bind(conexion);
+  return queryPromise(query, params);
 },
+
 
 obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
     if (!proveedor) {
