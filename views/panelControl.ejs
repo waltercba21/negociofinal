@@ -58,108 +58,57 @@
       </div>
 
       <div class="form-control">
-  <h4 class="mb-2">Listados de stock y pedido</h4>
-  <p class="text-muted mb-3" style="line-height:1.3">
-    Elegí el tipo de listado y, si corresponde, el proveedor y/o la categoría. El PDF se descarga automáticamente.
-  </p>
+        <h4>Generar Stock Proveedor</h4>
+        <form method="get" action="/productos/generarPDFProveedor">
+          <label for="proveedor">Seleccionar Proveedor</label>
+          <select name="proveedor" id="proveedor">
+            <option value="TODOS">Mostrar Todos</option>
+            <% proveedores.forEach(proveedor => { %>
+              <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>>
+                <%= proveedor.nombre %>
+              </option>
+            <% }); %>
+          </select>
 
-  <form id="form-reportes" method="get" action="/productos/generarPDFProveedor" class="row g-3">
-    <!-- Tipo de listado -->
-    <div class="col-12">
-      <fieldset class="border rounded p-3">
-        <legend class="float-none w-auto px-2 fs-6 fw-semibold">Tipo de listado</legend>
+          <label for="categoria">Seleccionar Categoría</label>
+          <select name="categoria" id="categoria">
+            <option value="TODAS">Mostrar Todas</option>
+            <% categorias.forEach(categoria => { %>
+              <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>>
+                <%= categoria.nombre %>
+              </option>
+            <% }); %>
+          </select>
 
-        <!-- Catálogo / Stock -->
-        <div class="mb-2">
-          <div class="fw-semibold small text-uppercase text-secondary mb-1">Catálogo / Stock</div>
-
-          <label class="d-block mb-1">
-            <input type="radio" name="tipo" value="stock" checked>
-            <span class="ms-1">Listado de stock completo</span>
-            <span class="badge bg-light text-dark ms-2">Opcional: Proveedor · Categoría</span>
-          </label>
-
-          <label class="d-block">
-            <input type="radio" name="tipo" value="porCategoria">
-            <span class="ms-1">Listado por categoría</span>
-            <span class="badge bg-warning text-dark ms-2">Requiere: Categoría</span>
-          </label>
-        </div>
-
-        <hr class="my-3">
-
-        <!-- Pedido sugerido -->
-        <div>
-          <div class="fw-semibold small text-uppercase text-secondary mb-1">Pedido sugerido</div>
-
-          <label class="d-block mb-1">
-            <input type="radio" name="tipo" value="pedido">
-            <span class="ms-1">Productos por debajo del stock mínimo (Proveedor más barato)</span>
-            <span class="badge bg-warning text-dark ms-2">Requiere: Proveedor</span>
-            <span class="badge bg-light text-dark ms-1">Opcional: Categoría</span>
-          </label>
-
-          <label class="d-block mb-1">
+          <div style="margin-bottom: 10px;">
+            <label>
+              <input type="radio" name="tipo" value="stock" checked>
+              Listado Stock Completo
+            </label>
+            <br>
+            <label>
+           <input type="radio" name="tipo" value="categoriaProveedorMasBarato">
+            Listado por Categoría - Proveedor Más Barato
+            </label>
+            <br>
+            <label>
+              <input type="radio" name="tipo" value="pedido">
+              Stock Minimo del Proveedor Más Barato
+            </label>
+            <br>
+            <label>
             <input type="radio" name="tipo" value="asignado">
-            <span class="ms-1">Productos por debajo del stock mínimo (Proveedor asignado)</span>
-            <span class="badge bg-warning text-dark ms-2">Requiere: Proveedor</span>
-            <span class="badge bg-light text-dark ms-1">Opcional: Categoría</span>
+            Stock Minimo Proveedor
+          </label>
+          <label>
+            <input type="radio" name="tipo" value="porCategoria">
+            Listado por Categoría
           </label>
 
-          <label class="d-block">
-            <input type="radio" name="tipo" value="categoriaProveedorMasBarato">
-            <span class="ms-1">Catálogo por categoría con proveedor más barato</span>
-            <span class="badge bg-warning text-dark ms-2">Requiere: Proveedor · Categoría</span>
-          </label>
-        </div>
-      </fieldset>
-    </div>
-
-    <!-- Proveedor -->
-    <div class="col-md-6">
-      <label for="proveedor" class="form-label">Proveedor</label>
-      <select name="proveedor" id="proveedor" class="form-select">
-        <option value="TODOS">Todos los proveedores</option>
-        <% proveedores.forEach(proveedor => { %>
-          <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>>
-            <%= proveedor.nombre %>
-          </option>
-        <% }); %>
-      </select>
-      <div id="ayuda-proveedor" class="form-text">
-        Obligatorio para: Pedido sugerido (ambas variantes) y “Categoría + más barato”.
+          </div>
+          <button type="submit" class="btn btn-primary">Generar PDF</button>
+        </form>
       </div>
-    </div>
-
-    <!-- Categoría -->
-    <div class="col-md-6">
-      <label for="categoria" class="form-label">Categoría</label>
-      <select name="categoria" id="categoria" class="form-select">
-        <option value="TODAS">Todas las categorías</option>
-        <% categorias.forEach(categoria => { %>
-          <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>>
-            <%= categoria.nombre %>
-          </option>
-        <% }); %>
-      </select>
-      <div id="ayuda-categoria" class="form-text">
-        Obligatoria para: Listado por categoría / Categoría + más barato.
-      </div>
-    </div>
-
-    <!-- Alertas de requisitos -->
-    <div class="col-12">
-      <div id="alertas-requeridos" class="alert alert-warning d-none py-2 px-3 mb-0 small"></div>
-    </div>
-
-    <!-- CTA -->
-    <div class="col-12 d-flex gap-2">
-      <button type="submit" class="btn btn-primary">Generar PDF</button>
-      <button type="button" id="btn-previa" class="btn btn-outline-secondary" disabled>Vista rápida (próximamente)</button>
-    </div>
-  </form>
-</div>
-
     </div>
     <br/>
 
