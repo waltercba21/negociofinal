@@ -1925,19 +1925,20 @@ obtenerProductoConImagenes: (id_producto, callback) => {
     });
 },
 obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorId, categoriaId) {
-    try {
-      let query = `
-        SELECT 
-          p.id, 
-          p.nombre, 
-          pp.codigo AS codigo_proveedor, 
-          p.stock_minimo, 
-          p.stock_actual
-        FROM productos p
-        JOIN producto_proveedor pp ON pp.producto_id = p.id
-        JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-        WHERE pp.proveedor_id = ?
-          AND pp.proveedor_id = (
+  const util = require('util');
+  try {
+    let query = `
+      SELECT 
+        p.id, p.nombre,
+        pp.codigo AS codigo_proveedor,
+        p.stock_minimo, p.stock_actual
+      FROM productos p
+      JOIN producto_proveedor pp ON pp.producto_id = p.id
+      JOIN descuentos_proveedor dp ON dp.proveedor_id = pp.proveedor_id
+      WHERE
+        pp.proveedor_id = COALESCE(
+          p.proveedor_id,
+          (
             SELECT sub_pp.proveedor_id
             FROM producto_proveedor sub_pp
             JOIN descuentos_proveedor sub_dp ON sub_pp.proveedor_id = sub_dp.proveedor_id
@@ -1945,30 +1946,27 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
             ORDER BY (sub_pp.precio_lista * (1 - (sub_dp.descuento / 100))) * 1.21 ASC
             LIMIT 1
           )
-          AND p.stock_actual < p.stock_minimo
-      `;
-  
-      const params = [proveedorId];
-  
-      if (categoriaId && categoriaId !== 'TODAS') {
-        query += ' AND p.categoria_id = ?';
-        params.push(categoriaId);
-      }
-  
-      // Aplicamos el orden correcto:
-      query += `
-        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) COLLATE utf8mb4_general_ci ASC,
-         p.nombre ASC
+        )
+        AND (${proveedorId ? 'pp.proveedor_id = ?' : '1=1'})
+        AND (${categoriaId && categoriaId !== 'TODAS' ? 'p.categoria_id = ?' : '1=1'})
+        AND p.stock_actual < p.stock_minimo
+      ORDER BY 
+        LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) COLLATE utf8mb4_general_ci ASC,
+        p.nombre ASC
+    `;
 
-      `;
-  
-      const queryPromise = util.promisify(conexion.query).bind(conexion);
-      return await queryPromise(query, params);
-    } catch (error) {
-      console.error("❌ Error general al obtener productos proveedor más barato:", error);
-      throw error;
-    }
-  },  
+    const params = [];
+    if (proveedorId) params.push(proveedorId);
+    if (categoriaId && categoriaId !== 'TODAS') params.push(categoriaId);
+
+    const queryPromise = util.promisify(conexion.query).bind(conexion);
+    return await queryPromise(query, params);
+  } catch (error) {
+    console.error("❌ Error en obtenerProductosProveedorMasBaratoConStock:", error);
+    throw error;
+  }
+},
+
   obtenerProveedorMasBaratoPorProducto: async function (conexion, productoId) {
     const query = `
       SELECT pr.nombre AS proveedor_nombre, pp.codigo AS codigo_proveedor
@@ -1986,35 +1984,29 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
       });
     });
   },
-  obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, categoriaId) {
-    try {
-      let query = `
-        SELECT p.id, p.nombre, p.stock_minimo, p.stock_actual, pp.codigo AS codigo_proveedor
-        FROM productos p
-        JOIN producto_proveedor pp ON p.id = pp.producto_id
-        WHERE pp.proveedor_id = ?
-      `;
-  
-      const params = [proveedorId];
-  
-      if (categoriaId && categoriaId !== 'TODAS' && categoriaId !== '') {
-        query += ` AND p.categoria_id = ?`;
-        params.push(categoriaId);
-      }
-  
-      // 🔧 AÑADIMOS ORDENAMIENTO ALFABÉTICO
-      query += `
-        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
-      `;
-  
-      const [rows] = await conexion.promise().query(query, params);
-      return rows;
-    } catch (error) {
-      console.error('❌ Error en obtenerProductosAsignadosAlProveedor:', error);
-      return [];
-    }
-  },
-  
+obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, categoriaId) {
+  try {
+    let query = `
+      SELECT p.id, p.nombre, p.stock_minimo, p.stock_actual, pp.codigo AS codigo_proveedor
+      FROM productos p
+      JOIN producto_proveedor pp ON p.id = pp.producto_id
+      WHERE 
+        pp.proveedor_id = ?
+        AND p.proveedor_id = pp.proveedor_id
+        ${categoriaId && categoriaId !== 'TODAS' && categoriaId !== '' ? 'AND p.categoria_id = ?' : ''}
+      ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+    `;
+
+    const params = [proveedorId];
+    if (categoriaId && categoriaId !== 'TODAS' && categoriaId !== '') params.push(categoriaId);
+
+    const [rows] = await conexion.promise().query(query, params);
+    return rows;
+  } catch (error) {
+    console.error('❌ Error en obtenerProductosAsignadosAlProveedor:', error);
+    return [];
+  }
+},  
   obtenerProductosOfertaFiltrados: function (conexion, filtros, callback) {
     let sql = `
       SELECT p.*, c.nombre AS categoria_nombre, m.nombre AS marca_nombre
@@ -2172,37 +2164,40 @@ obtenerProveedoresPorProducto: async (conexion, producto_id) => {
   }
 },
 obtenerProductosPorCategoriaYProveedorMasBarato: async function (conexion, proveedorId, categoriaId) {
+  const util = require('util');
   try {
     const query = `
       SELECT 
-        p.id,
-        p.nombre,
+        p.id, p.nombre,
         pp.codigo AS codigo_proveedor,
-        p.stock_minimo,
-        p.stock_actual
+        p.stock_minimo, p.stock_actual
       FROM productos p
       JOIN producto_proveedor pp ON pp.producto_id = p.id
       JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-      WHERE pp.proveedor_id = ?
-        AND p.categoria_id = ?
-        AND pp.proveedor_id = (
-          SELECT sub_pp.proveedor_id
-          FROM producto_proveedor sub_pp
-          JOIN descuentos_proveedor sub_dp ON sub_pp.proveedor_id = sub_dp.proveedor_id
-          WHERE sub_pp.producto_id = p.id
-          ORDER BY (sub_pp.precio_lista * (1 - (sub_dp.descuento / 100))) * 1.21 ASC
-          LIMIT 1
+      WHERE 
+        p.categoria_id = ?
+        AND pp.proveedor_id = COALESCE(
+          p.proveedor_id,
+          (
+            SELECT sub_pp.proveedor_id
+            FROM producto_proveedor sub_pp
+            JOIN descuentos_proveedor sub_dp ON sub_pp.proveedor_id = sub_dp.proveedor_id
+            WHERE sub_pp.producto_id = p.id
+            ORDER BY (sub_pp.precio_lista * (1 - (sub_dp.descuento / 100))) * 1.21 ASC
+            LIMIT 1
+          )
         )
+        AND pp.proveedor_id = ?
       ORDER BY LOWER(p.nombre) ASC
     `;
-    const queryPromise = require('util').promisify(conexion.query).bind(conexion);
-    return await queryPromise(query, [proveedorId, categoriaId]);
+    const queryPromise = util.promisify(conexion.query).bind(conexion);
+    return await queryPromise(query, [categoriaId, proveedorId]);
   } catch (error) {
     console.error("❌ Error en obtenerProductosPorCategoriaYProveedorMasBarato:", error);
     throw error;
   }
 },
-// 🔥  NUEVO  ─ producto.obtenerProductosPorCategoriaPaginado
+
 obtenerProductosPorCategoriaPaginado(conexion, categoriaId, offset, limit) {
   return new Promise((resolve, reject) => {
     // ① Productos

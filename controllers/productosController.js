@@ -635,7 +635,7 @@ lista: async function (req, res) {
             }
         });
     },    
-   actualizar: function(req, res) {
+  actualizar: function(req, res) {
   if (!req.body.proveedores || req.body.proveedores.length === 0) {
     res.status(400).send('Error: proveedor_id no puede ser nulo');
     return;
