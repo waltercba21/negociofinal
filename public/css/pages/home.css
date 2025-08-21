@@ -1,0 +1,41 @@
+.af-home { padding-top: 18px; animation: af-fade-up .5s ease both; }
+
+
+/* ===== Carrusel de categorías (usa .contenedor-carrousel & .pelicula) ===== */
+.af-home .contenedor-carrousel { position: relative; overflow: hidden; scroll-behavior: smooth; padding: 8px 0; }
+.af-home .pelicula { min-width: 260px; max-width: 260px; margin: 10px; background: var(--af-surface); border-radius: var(--af-radius); border: 1px solid rgba(255,255,255,.06); box-shadow: var(--af-shadow); cursor: pointer; transition: transform .18s ease, box-shadow .18s ease; }
+.af-home .pelicula:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 14px 40px rgba(0,0,0,.4); }
+.af-home .imagen-carrusel { aspect-ratio: 16/9; width: 100%; object-fit: cover; border-top-left-radius: var(--af-radius); border-top-right-radius: var(--af-radius); }
+
+
+/* Flechas genéricas */
+.af-home .flecha-izquierda,
+.af-home .flecha-derecha,
+.af-home .flecha-izquierda-ofertas,
+.af-home .flecha-derecha-ofertas {
+position: absolute; top: 45%; transform: translateY(-50%);
+width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+color: var(--af-txt); cursor: pointer; user-select: none; transition: transform .15s ease, background .2s ease; z-index: 2;
+}
+.af-home .flecha-izquierda:hover,
+.af-home .flecha-derecha:hover,
+.af-home .flecha-izquierda-ofertas:hover,
+.af-home .flecha-derecha-ofertas:hover { background: rgba(255,255,255,.16); transform: translateY(-50%) scale(1.04); }
+.af-home .flecha-izquierda, .af-home .flecha-izquierda-ofertas { left: 8px; }
+.af-home .flecha-derecha, .af-home .flecha-derecha-ofertas { right: 8px; }
+
+
+/* ===== Carrusel Ofertas (usa .contenedor-productos-ofertas & .card-oferta) ===== */
+.af-home .contenedor-productos-ofertas { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.af-home .card-oferta { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: var(--af-surface); border-radius: 18px; border: 1px solid rgba(255,255,255,.06); box-shadow: var(--af-shadow); }
+.af-home .card-oferta img { width: 100%; aspect-ratio: 4/3; object-fit: contain; background: #0c0f15; border-radius: 14px; }
+.af-home .card-oferta h4 { margin: 6px 0 0; font-size: 16px; line-height: 1.25; color: var(--af-txt); }
+.af-home .card-oferta .precio { font-weight: 700; font-size: 18px; color: var(--af-brand); }
+.af-home .card-oferta .cta { margin-top: auto; display: flex; gap: 10px; }
+.af-home .card-oferta .btn { flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(135deg, rgba(0,224,255,.18), rgba(124,92,255,.18)); color: var(--af-txt); font-weight: 700; cursor: pointer; transition: transform .15s ease, background .2s ease; }
+.af-home .card-oferta .btn:hover { transform: translateY(-2px); background: linear-gradient(135deg, rgba(0,224,255,.28), rgba(124,92,255,.28)); }
+
+
+@media (max-width: 1024px) { .af-home .contenedor-productos-ofertas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .af-home .contenedor-productos-ofertas { grid-template-columns: 1fr; } }

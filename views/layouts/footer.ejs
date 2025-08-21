@@ -1,26 +1,31 @@
-<!------------Footer------------>
-<footer>
-    <div class="main-footer">
-      
-      <a href="/">
-        <img class="logo" src="/uploads/productos/logo.png" width="200rem" alt="LOGO" />
-    </a>
+<footer class="af-footer">
+<div class="af-footer__inner main-footer">
 
-      <!------------Redes sociales y logo------------>
-      <div class="redes">
-        <h2>Seguinos en nuestras redes</h2>
-        <div class="iconos-redes">
-          <a href="https://www.instagram.com/autofaros_cordoba/" target="_blank"><i class="fab fa-instagram"></i></a>
-          <a href="https://www.facebook.com/profile.php?id=100063665395970/" target="_blank"><i class="fab fa-facebook"></i></a>
-          <a href="#" onclick="abrirMapa(); return false;"><i class="fas fa-map-marker-alt"></i></a> <!-- Icono de ubicación -->
-          <a href="https://wa.me/+543513820440/" target="_blank"><i class="fab fa-whatsapp"></i></a> <!-- Icono de WhatsApp -->
-        </div>
-      </div>
-      
-     
-    <!------------Autor------------>
-    <div class="autor">
-      <h3><a href="http://www.wcdeveloper.com" target="_blank">DESARROLLADO POR WC DEVELOPER</a></h3>
-  </div>
-    <script src="js/index.js"></script> 
+
+<a href="/" class="af-footer__brand">
+<img class="af-footer__logo logo" src="/uploads/productos/logo.png" width="200" alt="AUTOFAROS" />
+</a>
+
+
+<div class="af-footer__social redes">
+<h2>Seguinos en nuestras redes</h2>
+<div class="af-footer__icons iconos-redes">
+<a href="https://www.instagram.com/autofaros_cordoba/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+<a href="https://www.facebook.com/profile.php?id=100063665395970/" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+<a href="#" onclick="abrirMapa(); return false;" aria-label="Ubicación"><i class="fas fa-map-marker-alt"></i></a>
+<a href="https://wa.me/+543513820440/" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+</div>
+</div>
+
+
+<div class="af-footer__author autor">
+<h3><a href="http://www.wcdeveloper.com" target="_blank" rel="noopener">DESARROLLADO POR WC DEVELOPER</a></h3>
+</div>
+</div>
+
+
+<!-- JS: poné scripts globales abajo para no bloquear render -->
+<script src="/js/index.js"></script>
+<script src="/js/carruselOfertas.js"></script>
+<script src="/js/header.js"></script>
 </footer>
