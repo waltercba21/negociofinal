@@ -1,62 +1,53 @@
 <head>
-<meta charset="UTF-8" />
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title><%= (typeof producto !== 'undefined' && producto) ? producto.nombre : 'AUTOFAROS' %></title>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= (typeof producto !== 'undefined' && producto) ? producto.nombre : 'AUTOFAROS' %></title>
 
-
-<!-- Open Graph / Twitter (sin cambios) -->
+<!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
 <meta property="og:type" content="product" />
 <meta property="og:title" content="<%= producto ? producto.nombre : 'AUTOFAROS' %>" />
 <meta property="og:description" content="<%= producto ? producto.descripcion || 'Repuestos de iluminación para tu auto al mejor precio' : 'AUTOFAROS - Iluminación automotriz' %>" />
 <meta property="og:image" content="<%= (producto && producto.imagenes && producto.imagenes.length > 0) ? 'https://www.autofaros.com.ar/uploads/productos/' + producto.imagenes[0].imagen : 'https://www.autofaros.com.ar/images/default-share.jpg' %>" />
 <meta property="og:url" content="<%= producto ? 'https://www.autofaros.com.ar/productos/' + producto.id : 'https://www.autofaros.com.ar' %>" />
+
+<!-- Twitter Card (recomendado) -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="<%= producto ? producto.nombre : 'AUTOFAROS' %>" />
 <meta name="twitter:description" content="<%= producto ? producto.descripcion || 'Repuestos de iluminación para tu auto al mejor precio' : 'AUTOFAROS - Iluminación automotriz' %>" />
 <meta name="twitter:image" content="<%= (producto && producto.imagenes && producto.imagenes.length > 0) ? 'https://www.autofaros.com.ar/uploads/productos/' + producto.imagenes[0].imagen : 'https://www.autofaros.com.ar/images/default-share.jpg' %>" />
 
+ <!-- Favicon -->
+ <link rel="icon" type="image/ico" href="/images/favicon.ico" sizes="150x150" />
 
-<link rel="icon" type="image/ico" href="/images/favicon.ico" sizes="150x150" />
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" crossorigin="anonymous" />
+  <link href="http://fonts.cdnfonts.com/css/versa" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
 
+  <!-- JS -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-<HASH>" crossorigin="anonymous"></script>
+  <script src="https://kit.fontawesome.com/95919219af.js" crossorigin="anonymous"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-7CZ53J6STJ"></script>
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- CSS legado (mantener mientras migramos) -->
-<link rel="stylesheet" href="/css/styles.css" />
-
-
-<!-- CSS nuevo modular -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" crossorigin="anonymous" />
-
-
-<link rel="stylesheet" href="/css/base.css" />
-<link rel="stylesheet" href="/css/components/header.css" />
-<link rel="stylesheet" href="/css/components/footer.css" />
-
-
-<% if (typeof pageName !== 'undefined' && pageName === 'home') { %>
-<link rel="stylesheet" href="/css/pages/home.css" />
-<% } %>
-
-
-<!-- Libs / SDKs que ya usabas -->
-<link href="http://fonts.cdnfonts.com/css/versa" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="https://kit.fontawesome.com/95919219af.js" crossorigin="anonymous"></script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-7CZ53J6STJ"></script>
-<script src="https://sdk.mercadopago.com/js/v2"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- SweetAlert -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Socket.io -->
 <script src="/socket.io/socket.io.js"></script>
 
-
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-7CZ53J6STJ');
-</script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-7CZ53J6STJ');
+  </script>
 </head>
