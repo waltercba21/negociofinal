@@ -117,7 +117,7 @@ postFactura: function (req, res) {
     fecha_pago: req.body.fecha_pago,
     condicion: req.body.condicion,
     administrador: req.body.administrador, // 👈 ESTE ES EL NUEVO CAMPO
-    comprobante_pago: req.file ? req.file.filename : null
+    comprobante_pago: null
   };
 
   administracion.insertFactura(nuevaFactura, function (insertId, error) {
@@ -792,8 +792,5 @@ generarPDFDeudaPendiente : async (req, res) => {
     res.status(500).send('Error interno al generar el PDF');
   }
 }
-
-
-
-      
+   
 }

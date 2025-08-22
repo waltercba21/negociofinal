@@ -1,4 +1,3 @@
-// facturasAdministracion.js (actualizado sin comprobante de pago)
 document.addEventListener('DOMContentLoaded', () => {
   const modal = new bootstrap.Modal(document.getElementById('modalProductosFactura'));
   const btnAbrirModal = document.getElementById('btnAgregarProductosFactura');
@@ -192,10 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('fecha_pago', fecha_pago);
       formData.append('condicion', condicion);
       formData.append('administrador', administrador);
-      // ✅ Ya NO anexamos 'comprobante_pago'
-
-      console.log('📤 Enviando datos de factura (sin comprobante):', Object.fromEntries(formData.entries()));
-
+   
       const res = await fetch('/administracion/api/facturas', {
         method: 'POST',
         body: formData
