@@ -57,11 +57,17 @@
         </form>
       </div>
 
-      <div class="form-control">
-        <h4>Generar Stock Proveedor</h4>
-        <form method="get" action="/productos/generarPDFProveedor">
-          <label for="proveedor">Seleccionar Proveedor</label>
-          <select name="proveedor" id="proveedor">
+<!-- ====== Contenedor: Generar Stock Proveedor (PDF) ====== -->
+<div class="form-control" id="contenedor-pdf-stock-proveedor">
+  <h4>Generar Stock Proveedor</h4>
+
+  <form method="get" action="/productos/generarPDFProveedor" id="form-pdf-stock-proveedor">
+    <!-- ÁMBITO (Proveedor / Categoría) -->
+    <fieldset style="border:0; padding:0; margin:0 0 10px 0;">
+      <div class="grupo-campos" style="display:flex; gap:12px; flex-wrap:wrap;">
+        <label for="pdf-prov-proveedor" style="min-width:220px;">
+          <span class="d-block">Seleccionar Proveedor</span>
+          <select name="proveedor" id="pdf-prov-proveedor" class="form-select">
             <option value="TODOS">Mostrar Todos</option>
             <% proveedores.forEach(proveedor => { %>
               <option value="<%= proveedor.id %>" <%= proveedor.id == proveedorSeleccionado ? 'selected' : '' %>>
@@ -69,9 +75,11 @@
               </option>
             <% }); %>
           </select>
+        </label>
 
-          <label for="categoria">Seleccionar Categoría</label>
-          <select name="categoria" id="categoria">
+        <label for="pdf-prov-categoria" style="min-width:220px;">
+          <span class="d-block">Seleccionar Categoría</span>
+          <select name="categoria" id="pdf-prov-categoria" class="form-select">
             <option value="TODAS">Mostrar Todas</option>
             <% categorias.forEach(categoria => { %>
               <option value="<%= categoria.id %>" <%= categoria.id == categoriaSeleccionada ? 'selected' : '' %>>
@@ -79,38 +87,60 @@
               </option>
             <% }); %>
           </select>
-
-          <div style="margin-bottom: 10px;">
-            <label>
-              <input type="radio" name="tipo" value="stock" checked>
-              Listado Stock Completo
-            </label>
-            <br>
-            <label>
-           <input type="radio" name="tipo" value="categoriaProveedorMasBarato">
-            Listado por Categoría - Proveedor Más Barato
-            </label>
-            <br>
-            <label>
-              <input type="radio" name="tipo" value="pedido">
-              Stock Minimo del Proveedor Más Barato
-            </label>
-            <br>
-            <label>
-            <input type="radio" name="tipo" value="asignado">
-            Stock Minimo Proveedor
-          </label>
-          <label>
-            <input type="radio" name="tipo" value="porCategoria">
-            Listado por Categoría
-          </label>
-
-          </div>
-          <button type="submit" class="btn btn-primary">Generar PDF</button>
-        </form>
+        </label>
       </div>
+      <small class="text-muted d-block" style="margin-top:6px;">
+        Tip: podés combinar proveedor y categoría para filtrar el reporte.
+      </small>
+    </fieldset>
+
+    <!-- TIPO DE REPORTE -->
+    <fieldset style="border:0; padding:0; margin-top:14px;">
+      <legend style="font-size:0.95rem; font-weight:600; margin-bottom:6px;">Tipo de reporte</legend>
+
+      <div class="opciones-reporte" style="display:grid; gap:6px;">
+        <label>
+          <input type="radio" name="tipo" value="stock" checked>
+          <strong>Stock completo</strong> — Muestra todo el stock (aplica filtros si elegís proveedor/categoría).
+        </label>
+
+        <label>
+          <input type="radio" name="tipo" value="asignadoCompleto">
+          <strong>Asignados al proveedor (con categoría)</strong> — Lista <em>todos</em> los productos asignados
+          al proveedor elegido (opcionalmente filtrados por categoría). <!-- Requiere ajuste en el controller -->
+        </label>
+
+        <label>
+          <input type="radio" name="tipo" value="asignado">
+          <strong>Faltantes del proveedor asignado</strong> — Solo productos asignados al proveedor cuya
+          existencia está por debajo del stock mínimo.
+        </label>
+
+        <label>
+          <input type="radio" name="tipo" value="pedido">
+          <strong>Faltantes del proveedor más barato</strong> — Productos por debajo del mínimo considerando
+          al proveedor con mejor costo.
+        </label>
+
+        <label>
+          <input type="radio" name="tipo" value="porCategoria">
+          <strong>Listado por categoría (todos los proveedores)</strong> — Ignora el proveedor y lista según categoría.
+        </label>
+
+        <label>
+          <input type="radio" name="tipo" value="categoriaProveedorMasBarato">
+          <strong>Proveedor más barato por categoría</strong> — Requiere proveedor y categoría.
+        </label>
+      </div>
+    </fieldset>
+
+    <div style="margin-top:14px;">
+      <button type="submit" class="btn btn-primary">Generar PDF</button>
     </div>
-    <br/>
+  </form>
+</div>
+<!-- ====== /Contenedor ====== -->
+
 
     <div class="panel-busqueda">
 
@@ -237,24 +267,5 @@
   <script id="productos-data" type="application/json">
     <%- JSON.stringify(productos) %>
   </script>
-  <script>
-    const productosOriginales = JSON.parse(document.getElementById('productos-data').textContent);
-  </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const inputBusqueda = document.getElementById('entradaBusqueda');
-      const busquedaActual = "<%= busquedaActual || '' %>";
-      if (busquedaActual && inputBusqueda) {
-        inputBusqueda.value = busquedaActual;
-        inputBusqueda.dispatchEvent(new Event('input'));
-      }
-    });
-  </script>
-<script>
-  const paginaActualDesdeServidor = "<%- JSON.stringify(paginaActual || 1) %>";
-  const busquedaActualDesdeServidor = "<%- JSON.stringify(busquedaActual || '') %>";
-</script>
-
-
-
+ 
 </body>
