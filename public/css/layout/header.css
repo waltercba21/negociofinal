@@ -79,3 +79,65 @@ header .icons p{ font-size:15px; align-items:flex-start; }
   border-radius:50%; width:20px; height:20px; display:flex; justify-content:center; align-items:center;
   font-size:12px; font-weight:bold;
 }
+
+/* ------------------ RESPONSIVE HEADER ------------------ */
+@media screen and (max-width: 768px) {
+  header {
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    height: auto;
+  }
+  header .logo,
+  .logo {
+    width: 200px;
+    height: auto;
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  header .navbar {
+    flex-direction: column;
+    align-items: center;
+  }
+  header .navbar a {
+    padding: .5rem 0;
+  }
+
+  .icons {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  header .icons a {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: .5rem;
+    text-align: center;
+  }
+
+  header .icons .logueado {
+    flex-direction: column;
+    align-items: center;
+  }
+  header .icons .logueado a {
+    margin-right: 0;
+    margin-bottom: .5rem;
+  }
+
+  /* Menú hamburguesa y toggles */
+  .navbar, .icons { display: none; }
+  header.open .navbar,
+  header.open .icons {
+    display: flex;
+    justify-content: center;
+  }
+  .hamburger {
+    margin-top: 20px;
+    display: block;
+    align-self: center;
+  }
+}

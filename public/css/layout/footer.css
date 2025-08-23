@@ -33,3 +33,30 @@ footer {
 
 .autor h3{ text-align:center; margin:10px; font-size:.6rem; font-weight:600; }
 .autor h3 a{ text-decoration:none; }
+
+
+/* ------------------ RESPONSIVE FOOTER ------------------ */
+@media screen and (max-width: 768px) {
+  .main-footer {
+    flex-direction: column;
+    align-items: center;
+  }
+  .redes, .footer-nav {
+    align-items: center;
+    text-align: center;
+  }
+  .redes .iconos-redes {
+    justify-content: center;
+  }
+  .footer-nav ul {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .footer-nav ul a {
+    margin: 10px 0;
+  }
+  .autor h3 {
+    margin: 20px 10px;
+  }
+}

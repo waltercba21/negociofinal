@@ -106,3 +106,105 @@
 }
 .body-index .flecha-izquierda-ofertas{ left:10px; }
 .body-index .flecha-derecha-ofertas{ right:10px; }
+
+/* ------------------ RESPONSIVE HOME (index) ------------------ */
+@media screen and (max-width: 768px) {
+  /* Carrusel principal */
+  .body-index .peliculas-recomendadas .contenedor-carrousel .carrousel{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .body-index .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula{
+    min-width: 0;
+    position: relative;
+  }
+  .body-index .indicadores,
+  .body-index #flecha-izquierda,
+  .body-index #flecha-derecha {
+    display: none;
+  }
+  .body-index .pelicula {
+    width: 100%;
+    height: 30vh;
+  }
+  .body-index .imagen-carrusel {
+    height: 100%;
+    object-fit: cover;
+  }
+  .body-index .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula .tarjeta-texto {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  /* Contenedor principal: Últimos + Ofertas */
+  .body-index .contenedor-principal-productos {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+  .body-index .ultimos-productos,
+  .body-index .contenedor-ofertas {
+    max-width: 100%;
+    margin: 0;
+    padding: 10px;
+  }
+
+  /* Ofertas (carrusel horizontal con snap) */
+  .body-index .contenedor-productos-ofertas {
+    flex-wrap: nowrap;
+    overflow-x: scroll;
+    gap: 20px;
+    scroll-snap-type: x mandatory;
+  }
+  .body-index .card-oferta {
+    min-width: 250px;
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+    padding: 10px;
+  }
+  .body-index .flecha-izquierda-ofertas,
+  .body-index .flecha-derecha-ofertas {
+    display: none;
+  }
+
+  /* Últimos agregados (carrusel horizontal con snap) */
+  .body-index .contenedor-ultimos {
+    max-width: 100%;
+    margin-right: 0;
+  }
+  .body-index .contenedor-productos-ultimos {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 10px;
+  }
+  .body-index .card-ultimo {
+    flex: 0 0 80%;
+    max-width: 80%;
+    scroll-snap-align: start;
+    padding: 10px;
+  }
+
+  /* Tipos y tamaños en tarjetas home */
+  .body-index .titulo-producto-ultimo h3,
+  .body-index .titulo-producto-oferta h3 {
+    font-size: 14px;
+  }
+  .body-index .precio-producto-ultimo p,
+  .body-index .precio-producto-oferta p {
+    font-size: 12px;
+  }
+}
