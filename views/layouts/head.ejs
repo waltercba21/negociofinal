@@ -22,6 +22,14 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="/css/styles.css" />
+    <!-- +++ NUEVO: layout siempre +++ -->
+  <link rel="stylesheet" href="/css/layout/header.css" />
+  <link rel="stylesheet" href="/css/layout/footer.css" />
+
+  <!-- +++ NUEVO: por-vista, si la vista define pageCss +++ -->
+  <% if (typeof pageCss !== 'undefined' && pageCss) { %>
+    <link rel="stylesheet" href="<%= pageCss %>">
+  <% } %>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />

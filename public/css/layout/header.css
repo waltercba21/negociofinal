@@ -1,0 +1,81 @@
+/* === HEADER (layout) === */
+header {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0px 0px 25px rgba(189, 189, 189, 0.52);
+  background-color: #ffffff;
+  position: relative;
+  z-index: 10;
+}
+.hamburger {
+  font-size: 1.5rem;
+  display: none;
+  background: linear-gradient(to bottom, #4c8fbd, #003f7d);
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  box-shadow: 0px 5px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.1s ease-in-out;
+  text-shadow: 0px 2px 3px rgba(0,0,0,0.3);
+  position: relative;
+}
+.hamburger:active {
+  top: 3px;
+  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.2);
+}
+header .logo{ height: 200px; }
+
+header .navbar a {
+  font-size: 14px;
+  padding: 0 .9rem;
+  text-decoration: none;
+  color: #1F487E;
+  font-family: "Montserrat";
+  font-weight: bold;
+  z-index: 10;
+}
+.navbar .nav-link-factura{ color: #b80220; }
+.navbar .nav-link:hover { color: #d90429; }
+
+.icons{ display:flex; justify-content:center; align-items:center; }
+
+header .icons a{
+  display:flex; flex-direction:row; width:70%;
+  font-size:14px; font-weight:bold; text-decoration:none; color:#1F487E;
+  margin:10px 50px 10px 0;
+}
+header .icons a:hover { color: var(--Red); }
+
+header .icons .register-link{
+  border-radius:5px; background-color:#1F487E; color:#fff !important;
+  padding:.5rem 1rem; cursor:pointer; top:-4px;
+}
+header .icons .register-link:hover{ transition:.2s ease; background-color:#d90429; }
+
+header .logueado{ display:flex; align-items:center; gap:10px; }
+header .icons .logueado a{ position:relative; margin-right:10px; }
+header .icons .logueado a i{ position:relative; margin-top:0; font-size:24px; vertical-align:middle; }
+header .icons .logueado a span{ margin-left:5px; }
+header .logueado img{ width:60px; height:60px; border-radius:100%; }
+
+header .icons p{ font-size:15px; align-items:flex-start; }
+
+/* Notificación de pedidos (badge) */
+.pedidos-icon{ position:relative; display:inline-block; }
+.pedido-alerta{
+  position:absolute; top:-5px; right:-10px; background-color:#d90429; color:#fff;
+  border-radius:50%; width:22px; height:22px; display:flex; justify-content:center; align-items:center;
+  font-size:14px; font-weight:bold; box-shadow:0 0 5px rgba(0,0,0,.2);
+}
+
+/* Carrito badge */
+.carrito-icon{ position:relative; display:inline-block; }
+.cantidad-alerta{
+  position:absolute; top:-8px; right:-8px; background:red; color:#fff;
+  border-radius:50%; width:20px; height:20px; display:flex; justify-content:center; align-items:center;
+  font-size:12px; font-weight:bold;
+}
