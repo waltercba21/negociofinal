@@ -33,367 +33,6 @@ main {
   margin-bottom: 100px; 
 }
 
-/* ----------------------------- ADMINISTRACION 'PROVEEDORES / FACTURAS / PRESUPUESTOS / LISTADOS' -------------------------- */
-
-/* Contenedor principal del dashboard administrativo */
-.contenedor-admin-flex {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: flex-start;
-  align-items: flex-start;
-  padding: 20px 10px;
-}
-
-/* Cada panel ocupa espacio uniforme y controlado */
-.panel-proveedores,
-.panel-facturas,
-.panel-listados {
-  flex: 1 1 320px;
-  max-width: 420px;
-  padding: 0;
-  margin: 0;
-}
-
-/* Tarjeta contenedora común para todos los paneles */
-.card-proveedor {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  border: none;
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.8);
-  padding: 1.5rem;
-  background-color: #fff;
-  border-radius: 0.5rem;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Estilo interno de inputs y selects */
-.contenedor-factura {
-  font-size: 0.5rem;
-  max-width: 100%;
-  padding: 1rem;
-}
-
-.contenedor-factura .form-label {
-  font-size: 0.85rem;
-  margin-bottom: 0.3rem;
-  color: #003f7d;
-  font-weight: bold;
-}
-
-.contenedor-factura .form-control,
-.contenedor-factura .form-select {
-  font-size: 0.85rem;
-  padding: 0.3rem 0.6rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Estilos para tablas de productos en facturas y presupuestos */
-#tablaProductosFactura,
-#tablaProductosPresupuesto {
-  font-size: 0.70rem;
-  width: 100%;
-  border-collapse: collapse;
-}
-
-#tablaProductosFactura td,
-#tablaProductosPresupuesto td,
-#tablaProductosFactura th,
-#tablaProductosPresupuesto th {
-  font-size: 12px;
-  padding: 4px;
-  text-align: center;
-  vertical-align: middle;
-  font-weight: bold;
-}
-
-#tablaProductosFactura th,
-#tablaProductosPresupuesto th {
-  background-color: #f1f1f1;
-  font-size: 13px;
-  color: #212529;
-}
-
-/* Columnas específicas */
-#tablaProductosFactura td:nth-child(1),
-#tablaProductosPresupuesto td:nth-child(1),
-#tablaProductosFactura th:nth-child(1),
-#tablaProductosPresupuesto th:nth-child(1) {
-  width: 15%;
-  white-space: nowrap;
-}
-
-#tablaProductosFactura td:nth-child(2),
-#tablaProductosPresupuesto td:nth-child(2),
-#tablaProductosFactura th:nth-child(2),
-#tablaProductosPresupuesto th:nth-child(2) {
-  width: 45%;
-  word-break: break-word;
-}
-
-#tablaProductosFactura td:nth-child(3),
-#tablaProductosPresupuesto td:nth-child(3),
-#tablaProductosFactura th:nth-child(3),
-#tablaProductosPresupuesto th:nth-child(3) {
-  width: 15%;
-}
-
-#tablaProductosFactura td:nth-child(4),
-#tablaProductosPresupuesto td:nth-child(4),
-#tablaProductosFactura th:nth-child(4),
-#tablaProductosPresupuesto th:nth-child(4) {
-  width: 10%;
-}
-
-#tablaProductosFactura td:nth-child(5),
-#tablaProductosPresupuesto td:nth-child(5),
-#tablaProductosFactura th:nth-child(5),
-#tablaProductosPresupuesto th:nth-child(5) {
-  width: 15%;
-}
-
-/* Miniaturas */
-#tablaProductosFactura .miniatura-tabla,
-#tablaProductosPresupuesto .miniatura-tabla {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-/* Input cantidad compacto */
-#tablaProductosFactura input.cantidad-input,
-#tablaProductosPresupuesto input.cantidad-input {
-  width: 55px;
-  padding: 2px 5px;
-  font-size: 0.8rem;
-  text-align: center;
-}
-
-/* Botón eliminar */
-#tablaProductosFactura button.boton-eliminar-factura,
-#tablaProductosPresupuesto button.boton-eliminar-factura {
-  padding: 4px 6px;
-  font-size: 0.8rem;
-}
-
-.contenedor-admin-flex h5{
-  font-weight: bold;
-  color: #003f7d;
-  text-align: center;
-  margin-bottom: 30px;
-} 
-.acciones-proveedor {
-  margin-top: 10px;
-  margin-bottom: 30px;
-}
-.panel-listados {
-  position: relative;
-  z-index: 1;
-}
-/* Estilo visual de las tarjetas en el modal de resultados */
-.card.resultado-doc {
-  min-height: 160px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background-color: #f9f9f9;
-  transition: transform 0.2s ease;
-  margin-bottom: 10px;
-}
-
-.card.resultado-doc:hover {
-  transform: scale(1.01);
-}
-
-.card.resultado-doc .card-body {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
-}
-
-.card.resultado-doc h6 {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 10px;
-  text-transform: uppercase;
-}
-
-.card.resultado-doc p {
-  margin: 0;
-  font-size: 13px;
-}
-
-.card.resultado-doc button {
-  margin-top: 10px;
-}
-/*----------- Botones contenedor listados facturas presupuestos y vencimientos  -------------- */
-.botones-acciones-admin {
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-.botones-acciones-admin .btn {
-  flex: 1 1 auto;
-  max-width: 100%;
-  text-align: center;
-}
-.botones-acciones-admin .btn {
-  padding: 10px 20px;
-  font-weight: 600;
-  font-size: 15px;
-  border: none;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  color: white;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-width: 190px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.btn-admin-facturas {
-  background-color: #007bff !important;
-  color: #fff !important;
-}
-
-.btn-admin-facturas:hover {
-  background-color: #0056b3;
-  transform: translateY(-2px);
-}
-
-.btn-admin-presupuestos {
-  background-color: #28a745 !important;
-  color: #fff !important;
-}
-
-.btn-admin-presupuestos:hover {
-  background-color: #1c7c31;
-  transform: translateY(-2px);
-}
-.btn-admin-vencimientos {
-  background-color: #dc3545 !important;
-  color: #fff !important;
-}
-.btn-admin-vencimientos:hover {
-  background-color: #a71d2a;
-  transform: translateY(-2px);
-}
-
-#modalVencimientos h6 {
-  font-size: 16px;
-}
-
-#modalVencimientos table td,
-#modalVencimientos table th {
-  font-size: 14px;
-  text-align: center;
-}
-
-/* ---------------------------------------FOOTER ------------------------------------------- */
-
-footer {
-  background-color: #fff;
-  box-shadow: 0px 0px 25px rgba(189, 189, 189, 0.52);
-  width: 100%;
-}
-.main-footer {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-}
-.redes {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.redes .logo{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.redes h2{
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  margin-top:20px;
-  font-size: 1rem;
-  font-weight: 800;
-  color: #000000;
-}
-.redes .iconos-redes {
-  display: flex;
-  justify-content: space-between;
-  margin-top:20px;
-  font-size: 1.5rem;
-  color: #1F487E
-} 
-.iconos-redes i {
-  margin: 0px 20px;
-  cursor: pointer;
-}   
-.iconos-redes i:hover{
-  color: #d90429;
-}
-.footer-nav {
-  margin-top: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.footer-nav ul a {
-  text-decoration: none;
-  color: #000000;
-  font-size: 1rem;
-  font-weight: 800;
-  margin: 5px;
-  list-style-type: none;
-}
-.footer-nav ul a:hover{
-  color: #d90429;
-}
-.suscripcion {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 30px;
-}
-.suscripcion label{
-  font-weight: 600;
-  font-size: 1rem;
-}
-.suscripcion input {
-  margin: 20px;
-  font-size: 0.8rem;
-  border-radius: 2px;
-}
-.main-footer .suscripcion .btn {
-  background-color: #1F487E;
-  color: #fff;
-  font-size: 14px;
-  cursor: pointer;
-}
-.main-footer .suscripcion .btn:hover{
-  background-color: #d90429;
-  color: #fff;
-}
-.autor h3 {
-  text-align: center;
-  margin: 10px;
-  font-size: 0.6rem;
-  font-weight: 600;
-}
-.autor h3 a {
-  text-decoration: none;
-}
-
-
 /* ----------Ofertas productos (Actualizado para coherencia visual) ---------- */
 /* 🔹 Contenedor del formulario de filtros */
 .filtros-ofertas {
@@ -2237,13 +1876,21 @@ tfoot td {
   text-align: center;
   font-weight: bold;
   color: #1f487e;
-  line-height: 15px;
-  word-break: break-word;  /* Rompe palabra larga */
-  white-space: normal;     /* Permite salto de línea */
-  max-height: 32px;        /* Limita altura si querés */
-  overflow: hidden;        /* Oculta desborde vertical */
+
+  /* ✅ Ajustes clave para mostrar el nombre completo */
+  line-height: 1.25;             /* un poco más respirado que 15px fijos */
+  white-space: normal;            /* permite múltiples renglones */
+  word-break: break-word;         /* rompe palabras muy largas/códigos */
+  overflow-wrap: anywhere;        /* mejora el corte en mobile */
+  max-height: none;               /* sin límite de altura */
+  height: auto;                   /* crece según contenido */
+  overflow: visible;              /* no recorta verticalmente */
+  text-overflow: clip;            /* sin puntos suspensivos */
+  display: block;                 /* evita -webkit-box o similares */
 }
 
+/* Refuerzo por si alguna regla externa fijaba altura al contenedor del título */
+.titulo-producto { min-height: unset !important; }
 
 .categoria-producto,
 .precio-producto,
@@ -2332,7 +1979,6 @@ tfoot td {
   transform: scale(1.2) rotate(5deg);
 }
 
-
 /* INPUT Y BOTONES */
 .cantidad-producto input {
   width: 30px;
@@ -2371,6 +2017,7 @@ tfoot td {
   margin-top: 5px;
   font-size: 12px;
 }
+
 /* ESTILO STOCK ADMIN */
 .stock-producto {
   display: flex;
