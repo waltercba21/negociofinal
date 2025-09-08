@@ -32,19 +32,24 @@
   }
 
   /* ---------- Grupo de botones principales ---------- */
-  .form-control.botones {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 10px;
-  }
-  .form-control.botones .panel-control.btn {
-    padding: 8px 10px;              /* ↓ padding */
-    font-size: 0.92rem;             /* ↓ tipografía */
-    border-radius: 10px;
-    font-weight: 700;
-    white-space: normal;
-    line-height: 1.2;
-  }
+.form-control.botones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  align-items: stretch;            /* cada celda estira su contenido */
+}
+
+.form-control.botones .panel-control.btn {
+  display: flex;                   /* permite centrar contenido */
+  align-items: center;             /* centrado vertical */
+  justify-content: center;         /* centrado horizontal */
+  text-align: center;              /* centra líneas múltiples */
+  height: 100%;                    /* ocupa toda la celda del grid */
+  min-height: 48px;                /* alto mínimo consistente */
+  line-height: 1.2;                /* evita texto “estirado” */
+  padding: 10px 12px;              /* cómodo pero compacto */
+  white-space: normal;             /* permite 2+ líneas si hace falta */
+}
 
   /* ---------- Formularios (selects, inputs, file) ---------- */
   main > .container > .form-control label {
