@@ -2,6 +2,277 @@
 <%- include ./layouts/header.ejs %>
 
 <body>
+  <style>
+  /* ======================== PANEL CONTROL — MODO COMPACTO UNIVERSAL ======================== */
+  /* Pensado para el HTML actual del panel (botones + 3 formularios + listado tipo grid).      */
+  /* No requiere cambiar tu markup y evita colisionar con otras vistas ajustando selectores.   */
+
+  /* ---------- Contenedor general ---------- */
+  main > .container {
+    max-width: 1400px;              /* limita ancho en pantallas muy grandes */
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* ---------- Tarjetas/segmentos de la parte superior (reutilizan .form-control como caja) ---------- */
+  main > .container > .form-control {
+    box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    border: 1px solid rgba(31,72,126,.12);
+    border-radius: 12px;
+    padding: 14px;                  /* compacto */
+    margin-bottom: 14px;
+    background: #fff;
+  }
+
+  main > .container > .form-control h4 {
+    font-size: 1rem;                /* ↓ títulos más chicos */
+    font-weight: 700;
+    color: #1f487e;
+    margin: 0 0 10px 0;
+  }
+
+  /* ---------- Grupo de botones principales ---------- */
+  .form-control.botones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .form-control.botones .panel-control.btn {
+    padding: 8px 10px;              /* ↓ padding */
+    font-size: 0.92rem;             /* ↓ tipografía */
+    border-radius: 10px;
+    font-weight: 700;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  /* ---------- Formularios (selects, inputs, file) ---------- */
+  main > .container > .form-control label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #29486f;
+    margin: 0 8px 4px 0;
+  }
+  main > .container > .form-control select,
+  main > .container > .form-control input[type="file"] {
+    font-size: 0.9rem;
+    padding: .35rem .5rem;          /* compacto */
+    height: auto;
+    line-height: 1.25;
+    border-radius: 10px;
+  }
+  main > .container > .form-control button.btn {
+    padding: 8px 12px;
+    font-size: 0.92rem;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+
+  /* ---------- Bloque: Generar Stock Proveedor (PDF) ---------- */
+  #contenedor-pdf-stock-proveedor .grupo-campos {
+    gap: 10px !important;
+  }
+  #contenedor-pdf-stock-proveedor .form-select {
+    padding: .35rem .5rem;
+    font-size: .9rem;
+  }
+  #contenedor-pdf-stock-proveedor legend {
+    font-size: .95rem;
+    margin-bottom: 6px;
+  }
+  #contenedor-pdf-stock-proveedor .opciones-reporte label {
+    font-size: .9rem;
+  }
+  #contenedor-pdf-stock-proveedor button.btn {
+    padding: 8px 12px;
+    font-size: .92rem;
+    border-radius: 10px;
+  }
+
+  /* ===================== Listado (paginador + buscador + grilla) ===================== */
+
+  /* Paginación */
+  .panel-paginacion {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    user-select: none;
+  }
+  .panel-paginacion a,
+  .panel-paginacion span {
+    padding: 4px 8px;
+    font-size: .9rem;
+    border: 1px solid #dfe7f2;
+    border-radius: 8px;
+    color: #1f487e;
+    text-decoration: none;
+    background: #fff;
+  }
+  .panel-paginacion span.active {
+    background: #1f487e;
+    border-color: #1f487e;
+    color: #fff;
+  }
+
+  /* Buscador */
+  .panel-buscador #entradaBusqueda {
+    font-size: .95rem;
+    padding: .45rem .6rem;
+    height: auto;
+    line-height: 1.25;
+    border-radius: 10px;
+  }
+
+  /* Contenedor del listado con scroll horizontal de respaldo (no corta columnas) */
+  .panel-container {
+    overflow-x: auto;               /* si no entra, permite desplazamiento horizontal */
+    padding-bottom: 6px;
+  }
+
+  /* Cabecera y filas como grilla compacta */
+  .panel-header,
+  .panel-row {
+    display: grid;
+    grid-template-columns: 36px 1.1fr 2fr 120px .9fr 140px; /* ✔ col de check | categoría | nombre | imagen | precio | acciones */
+    gap: 8px;
+    align-items: center;
+    min-width: 900px;               /* asegura estructura estable en pantallas muy chicas */
+  }
+
+  .panel-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f6f8fb;
+    border: 1px solid #e5edf7;
+    border-radius: 10px;
+    padding: 8px;
+    font-weight: 700;
+    font-size: .9rem;
+    color: #1f487e;
+  }
+
+  .panel-row {
+    border-bottom: 1px solid #eef2f7;
+    padding: 8px 2px;
+    font-size: .92rem;
+  }
+
+  .panel-col-small { width: 36px; text-align: center; }
+  .panel-text-small-bold { font-weight: 600; font-size: .9rem; }
+
+  .panel-image-container {
+    width: 100%;
+    max-width: 120px;
+    margin: 0 auto;
+  }
+  .product-image {
+    display: block;
+    width: 100%;
+    height: 70px;                   /* altura fija compacta */
+    object-fit: contain;
+  }
+
+  .panel-price { font-weight: 700; color: #0b6e4f; }
+
+  /* Acciones */
+  .btn-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    font-size: .85rem;
+    font-weight: 700;
+    border: 1px solid #d0d7e2;
+    border-radius: 8px;
+    background: #fff;
+    color: #1f487e;
+    cursor: pointer;
+  }
+
+  .panel-actions { display: flex; justify-content: flex-end; padding-top: 10px; }
+  .btn-delete {
+    padding: 6px 10px;
+    font-size: .85rem;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 1px solid #f2d7da;
+    background: #fff;
+    color: #dc3545;
+    cursor: pointer;
+  }
+
+  .panel-alert {
+    font-size: .95rem;
+    color: #6b7280;
+    padding: 10px;
+    text-align: center;
+  }
+
+  /* ===================== Breakpoints (más compacto en resoluciones comunes) ===================== */
+
+  /* 1600px: leves ajustes */
+  @media (max-width: 1600px) {
+    .panel-header,
+    .panel-row {
+      grid-template-columns: 36px 1fr 1.8fr 110px .85fr 130px;
+    }
+  }
+
+  /* 1366px: tamaño típico de monitores chicos */
+  @media (max-width: 1366px) {
+    main > .container { max-width: 98vw; }
+    .form-control.botones { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+    .panel-header,
+    .panel-row {
+      grid-template-columns: 34px 1fr 1.6fr 100px .8fr 120px;
+      gap: 7px;
+      min-width: 860px;
+    }
+    .panel-header { font-size: .88rem; padding: 7px; }
+    .panel-row    { font-size: .9rem;  padding: 7px 2px; }
+    .panel-image-container { max-width: 100px; }
+    .product-image { height: 64px; }
+    .btn-edit, .btn-delete { padding: 6px 9px; font-size: .83rem; }
+  }
+
+  /* 1280px: aún más angosto */
+  @media (max-width: 1280px) {
+    .panel-header,
+    .panel-row {
+      grid-template-columns: 32px .9fr 1.4fr 90px .75fr 110px;
+      min-width: 820px;
+    }
+    .panel-image-container { max-width: 90px; }
+    .product-image { height: 58px; }
+  }
+
+  /* 1024px: notebooks compactas */
+  @media (max-width: 1024px) {
+    .form-control.botones { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .panel-header,
+    .panel-row {
+      grid-template-columns: 30px .9fr 1.3fr 84px .7fr 104px;
+      gap: 6px;
+      min-width: 780px;
+    }
+    .panel-image-container { max-width: 84px; }
+    .product-image { height: 54px; }
+  }
+
+  /* 768px: tablets / si se usa en móvil, se mantiene scroll horizontal y se baja tipografía */
+  @media (max-width: 768px) {
+    main > .container > .form-control { padding: 12px; }
+    .form-control.botones .panel-control.btn { font-size: .9rem; padding: 7px 9px; }
+    .panel-header { font-size: .85rem; }
+    .panel-row    { font-size: .88rem; }
+  }
+</style>
+
   <main>
     <div class="container"> 
       <div class="form-control botones">
