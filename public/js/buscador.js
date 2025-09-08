@@ -187,10 +187,10 @@ function mostrarProductos(productos) {
       <div class="categoria-producto"><h6 class="categoria">${producto.categoria_nombre || 'Sin categoría'}</h6></div>
       <div class="precio-producto"><p class="precio">$${formatearNumero(producto.precio_venta || 0)}</p></div>
 
-      ${isAdminUser ? `
+     ${isAdminUser ? `
         <div class="codigo-admin">
           <p><strong>Proveedor:</strong> ${producto.proveedor_nombre || 'Sin proveedor'}</p>
-          <p><strong>Código:</strong> ${producto.codigo || '-'}</p>
+          <p><strong>Código:</strong> ${producto.codigo_proveedor || '-'}</p>
         </div>
       ` : ''}
 
