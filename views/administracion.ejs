@@ -2,532 +2,522 @@
 <%- include('./layouts/header.ejs') %>
 
 <body>
-  <main class="contenedor-proveedores">
+  <!-- ========= ESTILOS AISLADOS DEL PANEL (namespace .af-admin) ========= -->
+  <style>
+    .af-admin {
+      --af-gap: 20px;
+      --af-col-min: 340px;
+      --af-card-bg: #fff;
+      --af-card-br: 14px;
+      --af-card-shadow: 0 6px 18px rgba(0,0,0,.08);
+      --af-border: 1px solid rgba(31,72,126,.12);
+    }
+    .af-admin__grid {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(var(--af-col-min), 1fr));
+      gap: var(--af-gap);
+      align-items: start;
+    }
+    .af-card {
+      background: var(--af-card-bg);
+      border-radius: var(--af-card-br);
+      box-shadow: var(--af-card-shadow);
+      border: var(--af-border);
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .af-card__title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1f487e;
+      margin: 0 0 12px 0;
+      letter-spacing: .2px;
+    }
+    .af-card .form-label { font-weight: 600; color: #29486f; }
+    .af-card .btn { border-radius: 10px; }
 
-    <div class="contenedor-admin-flex">
+    /* Botonera de acciones (PDFs, Vencimientos, etc.) */
+    .af-actions-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 14px;
+    }
+    .btn-admin-facturas, .btn-admin-presupuestos, .btn-admin-vencimientos {
+      background: #1f487e;
+      color: #fff;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn-admin-facturas:hover,
+    .btn-admin-presupuestos:hover,
+    .btn-admin-vencimientos:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,.12); }
 
-    <!-- CONTENEDOR PRINCIPAL PROVEEDORES -->
-    <section class="panel-proveedores">
-      <div class="card-proveedor contenedor-factura">
+    /* Ajustes de tablas dentro de modales */
+    .af-modal .table th, .af-modal .table td { vertical-align: middle; }
+    .af-modal .modal-proveedor-header { background:#1f487e; color:#fff; }
+    .af-modal .btn-close-white { filter: invert(1); }
 
-        <h5 class="titulo-proveedor">Proveedor</h5>
-   <!-- Acciones -->
-        <div class="acciones-proveedor">
+    /* Espaciados consistentes en inputs/grillas */
+    .af-card .mb-3 { margin-bottom: .9rem !important; }
+    .af-card .d-grid .btn-primary { border-radius: 10px; font-weight: 700; }
+
+    /* Responsive fine-tuning */
+    @media (max-width: 768px) {
+      .af-card { padding: 14px; }
+      .af-card__title { margin-bottom: 10px; }
+    }
+  </style>
+  <!-- ========================= FIN ESTILOS AISLADOS ======================= -->
+
+  <main class="contenedor-proveedores af-admin">
+    <!-- Forzamos el grid aunque tu CSS global haya cambiado -->
+    <div class="contenedor-admin-flex af-admin__grid">
+
+      <!-- =============== PROVEEDORES =============== -->
+      <section class="panel-proveedores af-card" data-af="proveedores">
+        <h5 class="af-card__title">Proveedor</h5>
+
+        <div class="acciones-proveedor d-flex gap-2 mb-2">
           <button id="btnNuevoProveedor" class="btn btn-sm btn-success">+ Nuevo</button>
           <button id="btnEditarProveedor" class="btn btn-sm btn-warning" disabled>Editar</button>
           <button id="btnEliminarProveedorDirecto" class="btn btn-sm btn-danger" disabled>Eliminar</button>
         </div>
-        <!-- Select de proveedores -->
-        <select id="selectProveedor" class="form-select">
+
+        <select id="selectProveedor" class="form-select mb-2">
           <option value="">Cargando...</option>
         </select>
-        <!-- Detalle -->
+
         <div id="detalleProveedor" class="detalle-proveedor">
           <p id="bloqueDescuentoProveedor" class="d-none">
             <strong>Descuento:</strong> <span id="descuentoProveedorView">-</span>
           </p>
-          
         </div>
-  
-       
-      </div>
-    </section>
-    
-    <!-- MODAL PROVEEDOR -->
-    <div class="modal fade" id="modalProveedor" tabindex="-1" aria-labelledby="modalProveedorLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content modal-proveedor-content">
-          <div class="modal-header modal-proveedor-header">
-            <h5 class="modal-title" id="modalProveedorLabel">
-              <i class="bi bi-person-lines-fill me-2"></i>Datos del Proveedor
-            </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </section>
+
+      <!-- MODAL PROVEEDOR -->
+      <div class="modal fade af-modal" id="modalProveedor" tabindex="-1" aria-labelledby="modalProveedorLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content modal-proveedor-content">
+            <div class="modal-header modal-proveedor-header">
+              <h5 class="modal-title" id="modalProveedorLabel">
+                <i class="bi bi-person-lines-fill me-2"></i>Datos del Proveedor
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <form id="formProveedor" class="modal-proveedor-form needs-validation" novalidate>
+              <input type="hidden" name="id" id="proveedorId">
+              <div class="modal-body modal-proveedor-body">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label for="nombre" class="form-label">Nombre / Empresa</label>
+                    <input type="text" class="form-control" name="nombre" id="nombre" autocomplete="off" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="contacto" class="form-label">Contacto</label>
+                    <input type="text" class="form-control" name="contacto" autocomplete="off" id="contacto">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="telefono" class="form-label">Teléfono</label>
+                    <input type="text" class="form-control" name="telefono" autocomplete="off" id="telefono">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="mail" class="form-label">Email</label>
+                    <input type="email" class="form-control" name="mail" autocomplete="off" id="mail">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="direccion" class="form-label">Dirección</label>
+                    <input type="text" class="form-control" name="direccion" autocomplete="off" id="direccion">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="ciudad" class="form-label">Ciudad</label>
+                    <input type="text" class="form-control" name="ciudad" autocomplete="off" id="ciudad">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="provincia" class="form-label">Provincia</label>
+                    <input type="text" class="form-control" name="provincia" autocomplete="off" id="provincia">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="cuit" class="form-label">CUIT</label>
+                    <input type="text" class="form-control" name="cuit" autocomplete="off" id="cuit">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="banco" class="form-label">Banco</label>
+                    <input type="text" class="form-control" name="banco" autocomplete="off" id="banco">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="cbu" class="form-label">CBU</label>
+                    <input type="text" class="form-control" name="cbu" autocomplete="off" id="cbu">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="alias" class="form-label">Alias</label>
+                    <input type="text" class="form-control" name="alias" autocomplete="off" id="alias">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="descuento" class="form-label">Descuento (%)</label>
+                    <input type="number" class="form-control" autocomplete="off" name="descuento" id="descuento" min="0" max="100" step="0.01">
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer modal-proveedor-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                  <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-danger d-none" id="btnEliminarProveedor">
+                    <i class="bi bi-trash me-1"></i>Eliminar
+                  </button>
+                  <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check2-circle me-1"></i>Guardar Cambios
+                  </button>
+                </div>
+              </div>
+            </form>
+
           </div>
-  
-          <form id="formProveedor" class="modal-proveedor-form needs-validation" novalidate>
-            <input type="hidden" name="id" id="proveedorId">
-  
+        </div>
+      </div>
+
+      <!-- =============== FACTURAS =============== -->
+      <section class="panel-facturas af-card" data-af="facturas">
+        <h5 class="af-card__title">Registrar Factura</h5>
+
+        <div class="mb-3">
+          <label for="facturaProveedor" class="form-label">Proveedor</label>
+          <select id="facturaProveedor" class="form-select">
+            <option value="">Seleccionar proveedor...</option>
+            <% proveedores.forEach(p => { %>
+              <option value="<%= p.id %>"><%= p.nombre %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="facturaFecha" class="form-label">Fecha Factura</label>
+          <input type="date" id="facturaFecha" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label for="facturaFechaPago" class="form-label">Fecha Vencimiento</label>
+          <input type="date" id="facturaFechaPago" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label for="facturaNumero" class="form-label">Número de factura</label>
+          <input type="text" id="facturaNumero" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label for="facturaImporteTotal" class="form-label">Importe total con IVA</label>
+          <input type="number" step="0.01" id="facturaImporteTotal" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label for="facturaIVA" class="form-label">IVA</label>
+          <select id="facturaIVA" class="form-select">
+            <option value="">Seleccionar IVA...</option>
+            <option value="21">21%</option>
+            <option value="10.5">10.5%</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="facturaImporteBruto" class="form-label">Importe bruto</label>
+          <input type="number" step="0.01" id="facturaImporteBruto" class="form-control">
+        </div>
+
+        <button id="btnAgregarProductosFactura" class="btn btn-primary ms-0 mb-2">Agregar Productos</button>
+
+        <div class="mb-3">
+          <label for="facturaCondicion" class="form-label">Estado del pago</label>
+          <select id="facturaCondicion" class="form-select">
+            <option value="pendiente" selected>PENDIENTE</option>
+            <option value="pagado">PAGADO</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="facturaAdministrador" class="form-label">Administrador</label>
+          <select id="facturaAdministrador" class="form-select" required>
+            <option value="">Seleccionar administrador...</option>
+            <option value="GERARDO">GERARDO</option>
+            <option value="CHACHO">CHACHO</option>
+            <option value="WALTER">WALTER</option>
+          </select>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+          <button id="btnGuardarFactura" class="btn btn-success">Guardar Factura</button>
+        </div>
+      </section>
+
+      <!-- MODAL Productos Factura -->
+      <div class="modal fade af-modal" id="modalProductosFactura" tabindex="-1" aria-labelledby="modalProductosFacturaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-proveedor-dialog">
+          <div class="modal-content modal-proveedor-content">
+            <div class="modal-header modal-proveedor-header">
+              <h5 class="modal-title" id="modalProductosFacturaLabel">
+                <i class="bi bi-box-seam me-2"></i>Productos de la Factura
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
             <div class="modal-body modal-proveedor-body">
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label for="nombre" class="form-label">Nombre / Empresa</label>
-                  <input type="text" class="form-control" name="nombre" id="nombre" autocomplete="off" required>
-                </div>
-                <div class="col-md-4">
-                  <label for="contacto" class="form-label">Contacto</label>
-                  <input type="text" class="form-control" name="contacto" autocomplete="off" id="contacto">
-                </div>
-                <div class="col-md-4">
-                  <label for="telefono" class="form-label">Teléfono</label>
-                  <input type="text" class="form-control" name="telefono" autocomplete="off" id="telefono">
-                </div>
-                <div class="col-md-4">
-                  <label for="mail" class="form-label">Email</label>
-                  <input type="email" class="form-control" name="mail" autocomplete="off" id="mail">
-                </div>
-                <div class="col-md-4">
-                  <label for="direccion" class="form-label">Dirección</label>
-                  <input type="text" class="form-control" name="direccion" autocomplete="off" id="direccion">
-                </div>
-                <div class="col-md-4">
-                  <label for="ciudad" class="form-label">Ciudad</label>
-                  <input type="text" class="form-control" name="ciudad" autocomplete="off" id="ciudad">
-                </div>
-                <div class="col-md-4">
-                  <label for="provincia" class="form-label">Provincia</label>
-                  <input type="text" class="form-control" name="provincia" autocomplete="off" id="provincia">
-                </div>
-                <div class="col-md-4">
-                  <label for="cuit" class="form-label">CUIT</label>
-                  <input type="text" class="form-control" name="cuit" autocomplete="off" id="cuit">
-                </div>
-                <div class="col-md-4">
-                  <label for="banco" class="form-label">Banco</label>
-                  <input type="text" class="form-control" name="banco" autocomplete="off" id="banco">
-                </div>
-                <div class="col-md-4">
-                  <label for="cbu" class="form-label">CBU</label>
-                  <input type="text" class="form-control" name="cbu" autocomplete="off" id="cbu">
-                </div>
-                <div class="col-md-4">
-                  <label for="alias" class="form-label">Alias</label>
-                  <input type="text" class="form-control" name="alias" autocomplete="off" id="alias">
-                </div>
-                <div class="col-md-4">
-                  <label for="descuento" class="form-label">Descuento (%)</label>
-                  <input type="number" class="form-control" autocomplete="off" name="descuento" id="descuento" min="0" max="100" step="0.01">
-                </div>
+              <div class="mb-3 position-relative">
+                <label for="buscadorProducto" class="form-label">Buscar producto</label>
+                <input type="text" class="form-control" id="buscadorProducto" placeholder="Escribí el nombre o código...">
+                <div id="resultadosBusqueda" class="list-group mt-1"></div>
+              </div>
+
+              <div class="table-responsive mt-4">
+                <table class="table table-bordered table-sm align-middle text-center" id="tablaProductosFactura">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Código Prov.</th>
+                      <th>Producto</th>
+                      <th>Imagen</th>
+                      <th>Cantidad</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
               </div>
             </div>
-  
+
             <div class="modal-footer modal-proveedor-footer">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                <i class="bi bi-x-circle me-1"></i>Cancelar
-              </button>
-              <div class="d-flex gap-2">
-                <button type="button" class="btn btn-danger d-none" id="btnEliminarProveedor">
-                  <i class="bi bi-trash me-1"></i>Eliminar
-                </button>
-                <button type="submit" class="btn btn-success">
-                  <i class="bi bi-check2-circle me-1"></i>Guardar Cambios
-                </button>
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+              <button type="button" class="btn btn-success" id="btnConfirmarProductosFactura">Confirmar Productos</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============== PRESUPUESTOS =============== -->
+      <section class="panel-presupuestos af-card" data-af="presupuestos">
+        <h5 class="af-card__title">Registrar Presupuesto</h5>
+
+        <div class="mb-3">
+          <label for="presupuestoProveedor" class="form-label">Proveedor</label>
+          <select id="presupuestoProveedor" class="form-select">
+            <option value="">Seleccionar proveedor...</option>
+            <% proveedores.forEach(p => { %>
+              <option value="<%= p.id %>"><%= p.nombre %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="presupuestoFecha" class="form-label">Fecha del presupuesto</label>
+          <input type="date" id="presupuestoFecha" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label for="presupuestoFechaPago" class="form-label">Fecha Vencimiento</label>
+          <input type="date" id="presupuestoFechaPago" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label for="presupuestoNumero" class="form-label">Número</label>
+          <input type="text" id="presupuestoNumero" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label for="presupuestoImporte" class="form-label">Importe total</label>
+          <input type="number" step="0.01" id="presupuestoImporte" class="form-control">
+        </div>
+
+        <button id="btnAgregarProductosPresupuesto" class="btn btn-primary ms-0 mb-2">Agregar Productos</button>
+
+        <div class="mb-3">
+          <label for="presupuestoCondicion" class="form-label">Estado del pago</label>
+          <select id="presupuestoCondicion" class="form-select">
+            <option value="pendiente" selected>PENDIENTE</option>
+            <option value="pagado">PAGADO</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="presupuestoAdministrador" class="form-label">Administrador</label>
+          <select id="presupuestoAdministrador" class="form-select" required>
+            <option value="">Seleccionar administrador...</option>
+            <option value="GERARDO">GERARDO</option>
+            <option value="CHACHO">CHACHO</option>
+            <option value="WALTER">WALTER</option>
+          </select>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+          <button id="btnGuardarPresupuesto" class="btn btn-success">Guardar Presupuesto</button>
+        </div>
+      </section>
+
+      <!-- MODAL Productos Presupuesto -->
+      <div class="modal fade af-modal" id="modalProductosPresupuesto" tabindex="-1" aria-labelledby="modalProductosPresupuestoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-proveedor-dialog">
+          <div class="modal-content modal-proveedor-content">
+            <div class="modal-header modal-proveedor-header">
+              <h5 class="modal-title" id="modalProductosPresupuestoLabel">
+                <i class="bi bi-box-seam me-2"></i>Productos del Presupuesto
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body modal-proveedor-body">
+              <div class="mb-3 position-relative">
+                <label for="buscadorProductoPresupuesto" class="form-label">Buscar producto</label>
+                <input type="text" class="form-control" id="buscadorProductoPresupuesto" placeholder="Escribí el nombre o código...">
+                <div id="resultadosBusquedaPresupuesto" class="list-group mt-1"></div>
+              </div>
+
+              <div class="table-responsive mt-4">
+                <table class="table table-bordered table-sm align-middle text-center" id="tablaProductosPresupuesto">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Código Prov.</th>
+                      <th>Producto</th>
+                      <th>Imagen</th>
+                      <th>Cantidad</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
               </div>
             </div>
-          </form>
-        </div>
-      </div>
-    </div>
 
-  <!----------------------- CONTENEDOR DE FACTURAS ---------------------->
-
-  <section class="panel-facturas">
-  <div class="card-proveedor contenedor-factura">
-
-    <h5 class="titulo-proveedor">Registrar Factura</h5>
-    <!-- Proveedor -->
-    <div class="mb-3">
-      <label for="facturaProveedor" class="form-label">Proveedor</label>
-      <select id="facturaProveedor" class="form-select">
-        <option value="">Seleccionar proveedor...</option>
-        <% proveedores.forEach(p => { %>
-          <option value="<%= p.id %>"><%= p.nombre %></option>
-        <% }) %>
-      </select>
-    </div>
-
-    <!-- Fecha -->
-    <div class="mb-3">
-      <label for="facturaFecha" class="form-label">Fecha Factura</label>
-      <input type="date" id="facturaFecha" class="form-control">
-    </div>
-    <div class="mb-3">
-  <label for="facturaFechaPago" class="form-label">Fecha Vencimiento</label>
-  <input type="date" id="facturaFechaPago" class="form-control">
-</div>
-
-    <!-- Número de Factura -->
-    <div class="mb-3">
-      <label for="facturaNumero" class="form-label">Número de factura</label>
-      <input type="text" id="facturaNumero" class="form-control">
-    </div>
-
-    <!-- Importe final -->
-    <div class="mb-3">
-      <label for="facturaImporteTotal" class="form-label">Importe total con IVA</label>
-      <input type="number" step="0.01" id="facturaImporteTotal" class="form-control">
-    </div>
-
-    <!-- IVA -->
-    <div class="mb-3">
-      <label for="facturaIVA" class="form-label">IVA</label>
-      <select id="facturaIVA" class="form-select">
-        <option value="">Seleccionar IVA...</option>
-        <option value="21">21%</option>
-        <option value="10.5">10.5%</option>
-      </select>
-    </div>
-
-    <!-- Importe bruto -->
-    <div class="mb-3">
-      <label for="facturaImporteBruto" class="form-label">Importe bruto</label>
-      <input type="number" step="0.01" id="facturaImporteBruto" class="form-control">
-    </div>
-    
-    <button id="btnAgregarProductosFactura" class="btn btn-primary ms-2">Agregar Productos</button>
-    
-    <!-- Estado -->
-    <div class="mb-3">
-    <label for="facturaCondicion" class="form-label">Estado del pago</label>
-    <select id="facturaCondicion" class="form-select">
-    <option value="pendiente" selected>PENDIENTE</option>
-    <option value="pagado">PAGADO</option>
-    </select>
-    </div>
-
-  <div class="mb-3">
-  <label for="facturaAdministrador" class="form-label">Administrador</label>
-  <select id="facturaAdministrador" class="form-select" required>
-    <option value="">Seleccionar administrador...</option>
-    <option value="GERARDO">GERARDO</option>
-    <option value="CHACHO">CHACHO</option>
-    <option value="WALTER">WALTER</option>
-  </select>
-</div>
-
-    <!-- Botón de guardar -->
-    <div class="d-flex justify-content-end mt-3">
-      <button id="btnGuardarFactura" class="btn btn-success">Guardar Factura</button>
-    </div>
-  </div>
-</section>
-
-   
-<!-- MODAL: AGREGAR PRODUCTOS A FACTURA -->
-<div class="modal fade" id="modalProductosFactura" tabindex="-1" aria-labelledby="modalProductosFacturaLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-proveedor-dialog">
-    <div class="modal-content modal-proveedor-content">
-      <div class="modal-header modal-proveedor-header">
-        <h5 class="modal-title" id="modalProductosFacturaLabel">
-          <i class="bi bi-box-seam me-2"></i>Productos de la Factura
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-
-      <div class="modal-body modal-proveedor-body">
-        <!-- Buscador -->
-        <div class="mb-3 position-relative">
-  <label for="buscadorProducto" class="form-label">Buscar producto</label>
-  <input type="text" class="form-control" id="buscadorProducto" placeholder="Escribí el nombre o código...">
-  <div id="resultadosBusqueda" class="list-group mt-1"></div>
-</div>
-
-        <!-- Tabla de productos seleccionados -->
-        <div class="table-responsive mt-4">
-          <table class="table table-bordered table-sm align-middle text-center" id="tablaProductosFactura">
-            <thead class="table-light">
-              <tr>
-                <th>Código Prov.</th>
-                <th>Producto</th>
-                <th>Imagen</th>
-                <th>Cantidad</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Se insertan dinámicamente -->
-            </tbody>
-          </table>
+            <div class="modal-footer modal-proveedor-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+              <button type="button" class="btn btn-success" id="btnConfirmarProductosPresupuesto">Confirmar Productos</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="modal-footer modal-proveedor-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-          Cerrar
-        </button>
-        <button type="button" class="btn btn-success" id="btnConfirmarProductosFactura">
-          Confirmar Productos
-        </button>
-        
-      </div>
-    </div>
-  </div>
-</div>
+      <!-- =============== LISTADOS =============== -->
+      <section class="panel-listados af-card" data-af="listados">
+        <h5 class="af-card__title">Listado de Facturas y Presupuestos</h5>
 
-<!-------------------- CONTENEDOR DE PRESUPUESTOS ---------------->
-<section class="panel-facturas">
-  <div class="card-proveedor contenedor-factura">
-    <h5 class="titulo-proveedor">Registrar Presupuesto</h5>
-
-    <!-- Proveedor -->
-    <div class="mb-3">
-      <label for="presupuestoProveedor" class="form-label">Proveedor</label>
-      <select id="presupuestoProveedor" class="form-select">
-        <option value="">Seleccionar proveedor...</option>
-        <% proveedores.forEach(p => { %>
-          <option value="<%= p.id %>"><%= p.nombre %></option>
-        <% }) %>
-      </select>
-    </div>
-
-    <!-- Fecha -->
-    <div class="mb-3">
-      <label for="presupuestoFecha" class="form-label">Fecha del presupuesto</label>
-      <input type="date" id="presupuestoFecha" class="form-control">
-    </div>
-
-    <!-- Fecha Vencimiento -->
-    <div class="mb-3">
-      <label for="presupuestoFechaPago" class="form-label">Fecha Vencimiento</label>
-      <input type="date" id="presupuestoFechaPago" class="form-control">
-    </div>
-
-    <!-- Número -->
-    <div class="mb-3">
-      <label for="presupuestoNumero" class="form-label">Número</label>
-      <input type="text" id="presupuestoNumero" class="form-control">
-    </div>
-
-    <!-- Importe -->
-    <div class="mb-3">
-      <label for="presupuestoImporte" class="form-label">Importe total</label>
-      <input type="number" step="0.01" id="presupuestoImporte" class="form-control">
-    </div>
-    
-    <!-- Botones -->
-    <button id="btnAgregarProductosPresupuesto" class="btn btn-primary ms-2">Agregar Productos</button>
-
-    <!-- Estado -->
-    <div class="mb-3">
-      <label for="presupuestoCondicion" class="form-label">Estado del pago</label>
-      <select id="presupuestoCondicion" class="form-select">
-        <option value="pendiente" selected>PENDIENTE</option>
-        <option value="pagado">PAGADO</option>
-      </select>
-    </div>
-
-    <!-- Administrador -->
-<div class="mb-3">
-  <label for="presupuestoAdministrador" class="form-label">Administrador</label>
-  <select id="presupuestoAdministrador" class="form-select" required>
-    <option value="">Seleccionar administrador...</option>
-    <option value="GERARDO">GERARDO</option>
-    <option value="CHACHO">CHACHO</option>
-    <option value="WALTER">WALTER</option>
-  </select>
-</div>
-
-    <div class="d-flex justify-content-end mt-3">
-      <button id="btnGuardarPresupuesto" class="btn btn-success">Guardar Presupuesto</button>
-    </div>
-  </div>
-</section>
-
-<!-- MODAL: AGREGAR PRODUCTOS A PRESUPUESTO -->
-<div class="modal fade" id="modalProductosPresupuesto" tabindex="-1" aria-labelledby="modalProductosPresupuestoLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-proveedor-dialog">
-    <div class="modal-content modal-proveedor-content">
-      <div class="modal-header modal-proveedor-header">
-        <h5 class="modal-title" id="modalProductosPresupuestoLabel">
-          <i class="bi bi-box-seam me-2"></i>Productos del Presupuesto
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-
-      <div class="modal-body modal-proveedor-body">
-        <!-- Buscador -->
-        <div class="mb-3 position-relative">
-          <label for="buscadorProductoPresupuesto" class="form-label">Buscar producto</label>
-          <input type="text" class="form-control" id="buscadorProductoPresupuesto" placeholder="Escribí el nombre o código...">
-          <div id="resultadosBusquedaPresupuesto" class="list-group mt-1"></div>
+        <div class="mb-3">
+          <label for="filtroProveedor" class="form-label">Proveedor</label>
+          <select id="filtroProveedor" class="form-select">
+            <option value="">Todos los proveedores</option>
+            <% proveedores.forEach(p => { %>
+              <option value="<%= p.id %>"><%= p.nombre %></option>
+            <% }) %>
+          </select>
         </div>
 
-        <!-- Tabla -->
-        <div class="table-responsive mt-4">
-          <table class="table table-bordered table-sm align-middle text-center" id="tablaProductosPresupuesto">
-            <thead class="table-light">
-              <tr>
-                <th>Código Prov.</th>
-                <th>Producto</th>
-                <th>Imagen</th>
-                <th>Cantidad</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Carga dinámica desde JS -->
-            </tbody>
-          </table>
+        <div class="mb-3">
+          <label for="filtroTipo" class="form-label">Tipo</label>
+          <select id="filtroTipo" class="form-select">
+            <option value="">Todos</option>
+            <option value="factura">Facturas</option>
+            <option value="presupuesto">Presupuestos</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="filtroNumero" class="form-label">Número</label>
+          <input type="text" id="filtroNumero" class="form-control" placeholder="Ej: 001-12345">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Fecha Desde</label>
+          <input type="date" id="filtroFechaDesde" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Fecha Hasta</label>
+          <input type="date" id="filtroFechaHasta" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label for="filtroCondicion" class="form-label">Condición</label>
+          <select id="filtroCondicion" class="form-select">
+            <option value="">Todas</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="pagado">Pagado</option>
+          </select>
+        </div>
+
+        <div class="af-actions-row">
+          <button id="btnGenerarPDFResumenFacturas" class="btn-admin-facturas">📄 Resumen Facturas</button>
+          <button id="btnGenerarPDFResumenPresupuestos" class="btn-admin-presupuestos">📝 Resumen Presupuestos</button>
+          <button id="btnVerVencimientos" class="btn-admin-vencimientos">📆 Ver Vencimientos</button>
+        </div>
+
+        <div class="d-grid mt-3">
+          <button class="btn btn-primary" id="btnBuscarListados">Buscar</button>
+        </div>
+      </section>
+
+      <!-- MODAL Resultados Listados -->
+      <div class="modal fade af-modal" id="modalResultadosListados" tabindex="-1" aria-labelledby="modalResultadosListadosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-proveedor-dialog">
+          <div class="modal-content modal-proveedor-content">
+            <div class="modal-header modal-proveedor-header">
+              <h5 class="modal-title" id="modalResultadosListadosLabel">
+                <i class="bi bi-journal-text me-2"></i>Resultados de la búsqueda
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body modal-proveedor-body">
+              <div class="row" id="contenedorResultadosListados"></div>
+
+              <div class="d-flex justify-content-between align-items-center mt-4">
+                <button class="btn btn-outline-secondary" id="btnAnteriorPagina" disabled>← Anterior</button>
+                <span id="indicadorPagina" class="fw-bold">Página 1</span>
+                <button class="btn btn-outline-secondary" id="btnSiguientePagina" disabled>Siguiente →</button>
+              </div>
+            </div>
+
+            <div class="modal-footer modal-proveedor-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="modal-footer modal-proveedor-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-          Cerrar
-        </button>
-        <button type="button" class="btn btn-success" id="btnConfirmarProductosPresupuesto">
-          Confirmar Productos
-        </button>
-      </div>
-    </div>
-  </div>
-</div>  
+      <!-- MODAL Detalle Documento -->
+      <div class="modal fade af-modal" id="modalDetalleDocumento" tabindex="-1" aria-labelledby="modalDetalleDocumentoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content modal-proveedor-content">
+            <div class="modal-header modal-proveedor-header">
+              <h5 class="modal-title" id="modalDetalleDocumentoLabel">
+                <i class="bi bi-file-earmark-text me-2"></i>Detalle del Documento
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="contenedorDetalleDocumento"></div>
+            <div class="modal-footer">
+              <a id="btnImprimirDetallePDF" href="#" target="_blank" class="btn btn-outline-secondary mt-3">
+                <i class="bi bi-printer me-1"></i> Imprimir Comprobante
+              </a>
 
-<!-- 🔷 CONTENEDOR DE FILTROS Y RESULTADOS -->
-<section class="panel-listados">
-  <div class="card-proveedor contenedor-factura">
-    <h5 class="titulo-proveedor">Listado de Facturas y Presupuestos</h5>
-    <div class="mb-3">
-      <label for="filtroProveedor" class="form-label">Proveedor</label>
-      <select id="filtroProveedor" class="form-select">
-        <option value="">Todos los proveedores</option>
-        <% proveedores.forEach(p => { %>
-          <option value="<%= p.id %>"><%= p.nombre %></option>
-        <% }) %>
-      </select>
-    </div>
-
-    <div class="mb-3">
-      <label for="filtroTipo" class="form-label">Tipo</label>
-      <select id="filtroTipo" class="form-select">
-        <option value="">Todos</option>
-        <option value="factura">Facturas</option>
-        <option value="presupuesto">Presupuestos</option>
-      </select>
-    </div>
-    <div class="mb-3">
-     <label for="filtroNumero" class="form-label">Número</label>
-     <input type="text" id="filtroNumero" class="form-control" placeholder="Ej: 001-12345">
-    </div>
-
-
-    <div class="mb-3">
-      <label class="form-label">Fecha Desde</label>
-      <input type="date" id="filtroFechaDesde" class="form-control">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Fecha Hasta</label>
-      <input type="date" id="filtroFechaHasta" class="form-control">
-    </div>
-
-    <div class="mb-3">
-      <label for="filtroCondicion" class="form-label">Condición</label>
-      <select id="filtroCondicion" class="form-select">
-        <option value="">Todas</option>
-        <option value="pendiente">Pendiente</option>
-        <option value="pagado">Pagado</option>
-      </select>
-    </div>
-<div class="d-flex gap-3 mt-3 justify-content-center botones-acciones-admin">
-  <button id="btnGenerarPDFResumenFacturas" class="btn btn-admin-facturas">
-    📄 Resumen Facturas
-  </button>
-  <button id="btnGenerarPDFResumenPresupuestos" class="btn btn-admin-presupuestos">
-    📝 Resumen Presupuestos
-  </button>
-  <button id="btnVerVencimientos" class="btn btn-admin-vencimientos">
-    📆 Ver Vencimientos
-  </button>
-</div>
-    <div class="d-grid">
-      <button class="btn btn-primary" id="btnBuscarListados">Buscar</button>
-    </div>
-  </div>
-</section>
-
-<!-- MODAL: RESULTADOS DE FACTURAS / PRESUPUESTOS -->
-<div class="modal fade" id="modalResultadosListados" tabindex="-1" aria-labelledby="modalResultadosListadosLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-proveedor-dialog">
-    <div class="modal-content modal-proveedor-content">
-      <div class="modal-header modal-proveedor-header">
-        <h5 class="modal-title" id="modalResultadosListadosLabel">
-          <i class="bi bi-journal-text me-2"></i>Resultados de la búsqueda
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-
-      <div class="modal-body modal-proveedor-body">
-        <!-- Contenedor de tarjetas -->
-        <div class="row" id="contenedorResultadosListados">
-          <!-- Se insertan dinámicamente -->
-        </div>
-
-        <!-- 🔹 Paginación dentro del modal-body -->
-        <div class="d-flex justify-content-between align-items-center mt-4">
-          <button class="btn btn-outline-secondary" id="btnAnteriorPagina" disabled>← Anterior</button>
-          <span id="indicadorPagina" class="fw-bold">Página 1</span>
-          <button class="btn btn-outline-secondary" id="btnSiguientePagina" disabled>Siguiente →</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+              <button type="button" id="btnHabilitarEdicion" class="btn btn-warning">Editar</button>
+              <button type="button" id="btnEliminarDocumento" class="btn btn-danger">Eliminar</button>
+              <button type="button" id="btnGuardarCambiosDocumento" class="btn btn-success d-none">Guardar Cambios</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="modal-footer modal-proveedor-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- MODAL DETALLE FACTURA/PRESUPUESTO -->
-<div class="modal fade" id="modalDetalleDocumento" tabindex="-1" aria-labelledby="modalDetalleDocumentoLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content modal-proveedor-content">
-      <div class="modal-header modal-proveedor-header">
-        <h5 class="modal-title" id="modalDetalleDocumentoLabel">
-          <i class="bi bi-file-earmark-text me-2"></i>Detalle del Documento
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body" id="contenedorDetalleDocumento">
-        <!-- Se carga con JS -->
-      </div>
-      <div class="modal-footer">
-        <a id="btnImprimirDetallePDF" href="#" target="_blank" class="btn btn-outline-secondary mt-3">
-  <i class="bi bi-printer me-1"></i> Imprimir Comprobante
-</a>
+    </div> <!-- /af-admin__grid -->
+  </main>
 
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-        <button type="button" id="btnHabilitarEdicion" class="btn btn-warning">Editar</button>
-        <button type="button" id="btnEliminarDocumento" class="btn btn-danger">Eliminar</button>
-
-        <button type="button" id="btnGuardarCambiosDocumento" class="btn btn-success d-none">Guardar Cambios</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL DE VENCIMIENTOS -->
-<div class="modal fade" id="modalVencimientos" tabindex="-1" aria-labelledby="modalVencimientosLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-proveedor-dialog">
-    <div class="modal-content modal-proveedor-content">
-      <div class="modal-header modal-proveedor-header">
-        <h5 class="modal-title" id="modalVencimientosLabel">
-          <i class="bi bi-calendar3-event me-2"></i>Vencimientos de Facturas y Presupuestos Pendientes
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        <button type="button" id="btnImprimirDeuda" class="btn btn-outline-primary">
-        <i class="bi bi-printer me-1"></i> Imprimir Deuda
-        </button>
-
-      </div>
-      <div class="modal-body" id="contenedorVencimientos">
-        <!-- Se llena dinámicamente con JS -->
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-</div>
-</main>
-
-
-
-<%- include('./layouts/footer.ejs') %>
-<script src="/js/proveedores.js"></script>
-<script src="/js/facturasAdministracion.js"></script>
-<script src="/js/presupuestosAdministracion.js"></script>
-<script src="/js/listadosDocumentos.js"></script>
-
+  <%- include('./layouts/footer.ejs') %>
+  <script src="/js/proveedores.js"></script>
+  <script src="/js/facturasAdministracion.js"></script>
+  <script src="/js/presupuestosAdministracion.js"></script>
+  <script src="/js/listadosDocumentos.js"></script>
 </body>
