@@ -1,10 +1,105 @@
 // ================================
-// panelControl.js
+// panelControl.js (versión corregida)
 // ================================
 
+// ---------------------------------------------
+// Helpers: selección, request y binding único
+// ---------------------------------------------
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll('.product-check'))
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+}
+
+async function requestDelete(ids) {
+  const res = await fetch('/productos/eliminarSeleccionados', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids })
+  });
+
+  // Robustez: aceptar JSON o texto
+  const ct = res.headers.get('content-type') || '';
+  let payload = null;
+
+  if (ct.includes('application/json')) {
+    payload = await res.json().catch(() => null);
+  } else {
+    const text = await res.text().catch(() => '');
+    payload = { success: res.ok, message: text };
+  }
+
+  // Consideramos éxito si res.ok y (o no hay payload, o payload.success != false)
+  const ok = res.ok && (!payload || payload.success !== false);
+  if (!ok) {
+    const msg = (payload && (payload.message || payload.error)) || 'Error al eliminar productos.';
+    throw new Error(msg);
+  }
+  return payload || { success: true };
+}
+
+// Evitar dobles bindings: usar data-bound
+function bindDeleteButton(scope = document) {
+  const btn = scope.querySelector('#delete-selected');
+  if (!btn || btn.dataset.bound === '1') return;
+
+  btn.dataset.bound = '1';
+  btn.addEventListener('click', async () => {
+    const ids = getSelectedIds();
+
+    if (ids.length === 0) {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Sin selección', 'No seleccionaste ningún producto.', 'info');
+      } else {
+        alert('No seleccionaste ningún producto.');
+      }
+      return;
+    }
+
+    // Confirmación
+    const confirmar = async () => {
+      try {
+        btn.disabled = true;
+        const res = await requestDelete(ids);
+        if (typeof Swal !== 'undefined') {
+          await Swal.fire('Eliminados', 'Productos eliminados correctamente.', 'success');
+        } else {
+          alert('Productos eliminados correctamente.');
+        }
+        // Refrescamos la vista (mantiene querystring si lo hubiera)
+        location.reload();
+      } catch (err) {
+        console.error(err);
+        if (typeof Swal !== 'undefined') {
+          Swal.fire('Error', String(err.message || 'Hubo un problema al eliminar.'), 'error');
+        } else {
+          alert('Error: ' + (err.message || 'Hubo un problema al eliminar.'));
+        }
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    if (typeof Swal !== 'undefined') {
+      const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'Esta acción eliminará los productos seleccionados.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+      if (result.isConfirmed) await confirmar();
+    } else {
+      if (confirm('¿Eliminar los productos seleccionados?')) await confirmar();
+    }
+  });
+}
+
 // -------------------------------------------------------------------
-// 1) Buscador dinámico + render de resultados + eliminar seleccionados
-//    (Código existente, conservado tal cual y con mínimos comentarios)
+// 1) Buscador dinámico + render de resultados
 // -------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', function () {
   const urlParams = new URLSearchParams(window.location.search);
@@ -94,80 +189,36 @@ document.addEventListener('DOMContentLoaded', function () {
       // Insertar botón Eliminar
       const eliminarHTML = `
         <div class="panel-actions mt-3 text-center">
-          <button id="delete-selected" class="btn-delete btn btn-danger">
+          <button id="delete-selected" class="btn-delete btn btn-danger" type="button">
             Eliminar seleccionados
           </button>
         </div>`;
       contenedorProductos.insertAdjacentHTML('beforeend', eliminarHTML);
 
-      // Asignar evento al nuevo botón
-      document.getElementById('delete-selected')?.addEventListener('click', function () {
-        const checks = document.querySelectorAll('.product-check');
-        const ids = Array.from(checks).filter(cb => cb.checked).map(cb => cb.value);
-
-        if (ids.length === 0) {
-          Swal.fire('Sin selección', 'No seleccionaste ningún producto.', 'info');
-          return;
-        }
-
-        Swal.fire({
-          title: '¿Estás seguro?',
-          text: "Esta acción eliminará los productos seleccionados.",
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#d33',
-          cancelButtonColor: '#3085d6',
-          confirmButtonText: 'Sí, eliminar',
-          cancelButtonText: 'Cancelar'
-        }).then((result) => {
-          if (result.isConfirmed) {
-            fetch('/productos/eliminarSeleccionados', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ids })
-            })
-              .then(res => res.json())
-              .then(data => {
-                if (data.success) {
-                  Swal.fire('Eliminados', 'Productos eliminados correctamente.', 'success')
-                    .then(() => location.reload());
-                } else {
-                  throw new Error(data.message || 'Error al eliminar productos.');
-                }
-              })
-              .catch(err => {
-                console.error(err);
-                Swal.fire('Error', 'Hubo un problema al eliminar.', 'error');
-              });
-          }
-        });
-      });
+      // ✅ Conectar el botón de esta sección dinámica
+      bindDeleteButton(contenedorProductos);
 
     }, 300);
   });
+
+  // ✅ Conectar el botón del listado inicial (EJS) por si no se usa el buscador
+  bindDeleteButton(document);
 });
 
 // ----------------------------------------------------------
-// 2) Inicializaciones que estaban inline en panelControl.ejs
-//    - Prefill del buscador con busquedaActual
-//    - Carga de productosOriginales desde <script id="productos-data">
-//    Las movemos acá para no mezclar lógica en la vista.
+// 2) Inicializaciones (prefill buscador + carga de productos)
 // ----------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  // Lee la data embebida del servidor si existe
   const dataEl = document.getElementById('productos-data');
   if (dataEl) {
     try {
-      // Exponer como global (si lo estabas usando así) o mantener en este scope
       window.productosOriginales = JSON.parse(dataEl.textContent);
     } catch (e) {
       console.warn('No se pudo parsear productos-data:', e);
     }
   }
 
-  // Prefill del buscador (usa variables globales si el EJS las deja)
   const inputBusqueda = document.getElementById('entradaBusqueda');
-  // Estas variables se definen en el EJS; si no existen, no pasa nada.
   const busquedaActual = (typeof busquedaActualDesdeServidor !== 'undefined' && busquedaActualDesdeServidor)
     ? JSON.parse(busquedaActualDesdeServidor)
     : (typeof window.busquedaActualDesdeServidor !== 'undefined' ? window.busquedaActualDesdeServidor : '');
@@ -179,44 +230,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ----------------------------------------------------------
-// 3) NUEVO: Lógica del formulario de reportes PDF (Stock/Proveedor)
-//    - Valida requisitos según el "tipo" elegido
-//    - Previene envíos sin proveedor/categoría cuando son obligatorios
-//    - Compatible con el bloque HTML nuevo (ids con prefijo "pdf-")
-//      y también con el bloque actual (ids genéricos "proveedor"/"categoria")
+// 3) Lógica del formulario de reportes PDF (validaciones)
 // ----------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  // Intenta primero con los IDs "nuevos" del contenedor que te pasé
   let form = document.getElementById('form-pdf-stock-proveedor')
            || document.querySelector('form[action="/productos/generarPDFProveedor"]');
 
-  if (!form) return; // no hay formulario de PDFs en esta vista
+  if (!form) return;
 
-  // Selects (prefijo nuevo o fallback a ids antiguos)
   const selProv = document.getElementById('pdf-prov-proveedor') || document.getElementById('proveedor');
   const selCat  = document.getElementById('pdf-prov-categoria') || document.getElementById('categoria');
 
   const radiosTipo = form.querySelectorAll('input[name="tipo"]');
-
-  // Caja de alerta si existe; si no, usamos SweetAlert2 para avisar
   const alertBox = document.getElementById('alertas-requeridos') || null;
 
-  // Reglas por tipo
   function reglas(tipo) {
     return {
       requiereProveedor: ['pedido', 'asignado', 'asignadoPorCategoria', 'categoriaProveedorMasBarato', 'asignadoCompleto'].includes(tipo),
       requiereCategoria: ['porCategoria', 'asignadoPorCategoria', 'categoriaProveedorMasBarato'].includes(tipo),
-      // Si usás el contenedor nuevo, podrías ocultar categoría en ciertos tipos por UX (lo dejamos solo validado)
     };
   }
 
-  // Valida al vuelo
   function validar() {
     const tipo = form.querySelector('input[name="tipo"]:checked')?.value || 'stock';
     const r = reglas(tipo);
     const faltas = [];
 
-    // Normalizamos valores "Todos/Todas"
     const provVal = selProv?.value ?? 'TODOS';
     const catVal  = selCat?.value ?? 'TODAS';
 
@@ -236,21 +275,17 @@ document.addEventListener('DOMContentLoaded', () => {
         alertBox.textContent = '';
       }
     }
-
     return faltas.length === 0;
   }
 
-  // Eventos
   radiosTipo.forEach(r => r.addEventListener('change', validar));
   selProv?.addEventListener('change', validar);
   selCat?.addEventListener('change', validar);
 
-  // Validación final en submit
   form.addEventListener('submit', (e) => {
     if (!validar()) {
       e.preventDefault();
       e.stopPropagation();
-      // Si no hay alertBox en el HTML, usamos SweetAlert para avisar
       if (!alertBox && typeof Swal !== 'undefined') {
         Swal.fire('Datos incompletos', 'Revisá proveedor y/o categoría según el tipo elegido.', 'warning');
       }
