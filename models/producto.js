@@ -2000,17 +2000,14 @@ obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, cat
         p.nombre,
         COALESCE(p.stock_minimo, 0) AS stock_minimo,
         COALESCE(p.stock_actual, 0) AS stock_actual,
-        (
-          SELECT subpp.codigo
-          FROM producto_proveedor AS subpp
-          WHERE subpp.producto_id = p.id
-            AND subpp.proveedor_id = p.proveedor_id
-          ORDER BY subpp.id DESC
-          LIMIT 1
-        ) AS codigo_proveedor
+        MAX(pp.codigo) AS codigo_proveedor
       FROM productos AS p
-      WHERE p.proveedor_id = ?  -- ✅ solo los realmente ASIGNADOS a este proveedor
+      LEFT JOIN producto_proveedor AS pp
+        ON pp.producto_id = p.id
+       AND pp.proveedor_id = p.proveedor_id   -- solo el proveedor ASIGNADO
+      WHERE p.proveedor_id = ?                -- productos realmente asignados a ese proveedor
       ${filtroCategoria}
+      GROUP BY p.id, p.nombre, p.stock_minimo, p.stock_actual
       ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC, p.nombre ASC
     `;
 
@@ -2021,6 +2018,7 @@ obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, cat
     return [];
   }
 },
+
 
   obtenerProductosOfertaFiltrados: function (conexion, filtros, callback) {
     let sql = `
