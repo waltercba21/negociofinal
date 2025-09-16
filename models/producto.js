@@ -1986,19 +1986,33 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
   },
 obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, categoriaId) {
   try {
-    let query = `
-      SELECT p.id, p.nombre, p.stock_minimo, p.stock_actual, pp.codigo AS codigo_proveedor
-      FROM productos p
-      JOIN producto_proveedor pp ON p.id = pp.producto_id
-      WHERE 
-        pp.proveedor_id = ?
-        AND p.proveedor_id = pp.proveedor_id
-        ${categoriaId && categoriaId !== 'TODAS' && categoriaId !== '' ? 'AND p.categoria_id = ?' : ''}
-      ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
-    `;
-
     const params = [proveedorId];
-    if (categoriaId && categoriaId !== 'TODAS' && categoriaId !== '') params.push(categoriaId);
+    let filtroCategoria = '';
+
+    if (categoriaId && categoriaId !== 'TODAS' && categoriaId !== '') {
+      filtroCategoria = ' AND p.categoria_id = ?';
+      params.push(categoriaId);
+    }
+
+    const query = `
+      SELECT
+        p.id,
+        p.nombre,
+        COALESCE(p.stock_minimo, 0) AS stock_minimo,
+        COALESCE(p.stock_actual, 0) AS stock_actual,
+        (
+          SELECT subpp.codigo
+          FROM producto_proveedor AS subpp
+          WHERE subpp.producto_id = p.id
+            AND subpp.proveedor_id = p.proveedor_id
+          ORDER BY subpp.id DESC
+          LIMIT 1
+        ) AS codigo_proveedor
+      FROM productos AS p
+      WHERE p.proveedor_id = ?  -- ✅ solo los realmente ASIGNADOS a este proveedor
+      ${filtroCategoria}
+      ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC, p.nombre ASC
+    `;
 
     const [rows] = await conexion.promise().query(query, params);
     return rows;
@@ -2006,7 +2020,8 @@ obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, cat
     console.error('❌ Error en obtenerProductosAsignadosAlProveedor:', error);
     return [];
   }
-},  
+},
+
   obtenerProductosOfertaFiltrados: function (conexion, filtros, callback) {
     let sql = `
       SELECT p.*, c.nombre AS categoria_nombre, m.nombre AS marca_nombre
