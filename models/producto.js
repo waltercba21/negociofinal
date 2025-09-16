@@ -1986,28 +1986,47 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
   },
 obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, categoriaId) {
   try {
-    const params = [proveedorId];
-    let filtroCategoria = '';
-
-    if (categoriaId && categoriaId !== 'TODAS' && categoriaId !== '') {
-      filtroCategoria = ' AND p.categoria_id = ?';
-      params.push(categoriaId);
-    }
-
-    const query = `
+    // Armamos la consulta en una sola pieza para que el orden de parámetros sea claro:
+    // 1) proveedorId para el subquery del código
+    // 2) proveedorId para p.proveedor_id = ?
+    // 3) proveedorId para el EXISTS (fallback cuando p.proveedor_id es NULL)
+    let query = `
       SELECT
         p.id,
         p.nombre,
         COALESCE(p.stock_minimo, 0) AS stock_minimo,
         COALESCE(p.stock_actual, 0) AS stock_actual,
-        MAX(pp.codigo) AS codigo_proveedor
+        (
+          SELECT pp.codigo
+          FROM producto_proveedor AS pp
+          WHERE pp.producto_id = p.id
+            AND pp.proveedor_id = ?
+          LIMIT 1
+        ) AS codigo_proveedor
       FROM productos AS p
-      LEFT JOIN producto_proveedor AS pp
-        ON pp.producto_id = p.id
-       AND pp.proveedor_id = p.proveedor_id   -- solo el proveedor ASIGNADO
-      WHERE p.proveedor_id = ?                -- productos realmente asignados a ese proveedor
-      ${filtroCategoria}
-      GROUP BY p.id, p.nombre, p.stock_minimo, p.stock_actual
+      WHERE
+        (
+          p.proveedor_id = ?                                   -- ✅ estrictamente asignados al proveedor
+          OR (
+               p.proveedor_id IS NULL                          -- ✅ fallback: no asignado aún
+               AND EXISTS (
+                 SELECT 1
+                 FROM producto_proveedor AS pp2
+                 WHERE pp2.producto_id = p.id
+                   AND pp2.proveedor_id = ?                    -- ...pero hay relación con el proveedor elegido
+               )
+             )
+        )
+    `;
+
+    const params = [proveedorId, proveedorId, proveedorId];
+
+    if (categoriaId && categoriaId !== 'TODAS' && categoriaId !== '') {
+      query += ` AND p.categoria_id = ?`;
+      params.push(categoriaId);
+    }
+
+    query += `
       ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC, p.nombre ASC
     `;
 
@@ -2018,7 +2037,6 @@ obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, cat
     return [];
   }
 },
-
 
   obtenerProductosOfertaFiltrados: function (conexion, filtros, callback) {
     let sql = `
