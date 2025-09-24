@@ -52,17 +52,34 @@ function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosList
   return filas;
 }
 
-// Upsert simple: intenta update, si no tocó filas hace insert
-async function upsertProductoProveedor(modeloProducto, conexion, row) {
-  // Debes tener implementadas estas funciones en tu modelo:
-  // - actualizarProductoProveedor(conexion, { producto_id, proveedor_id, ...campos })
-  // - insertarProductoProveedor(conexion, { ...row })
-  const { producto_id, proveedor_id, ...resto } = row;
-  const afectadas = await modeloProducto.actualizarProductoProveedor(conexion, { producto_id, proveedor_id, ...resto });
-  if (!afectadas || afectadas.affectedRows === 0) {
-    await modeloProducto.insertarProductoProveedor(conexion, row);
-  }
+// Upsert crudo con SQL: evita ER_DUP_ENTRY
+async function upsertProductoProveedorRaw(conexion, row) {
+  const sql = `
+    INSERT INTO producto_proveedor
+      (producto_id, proveedor_id, precio_lista, codigo, descuento, costo_neto, IVA, costo_iva)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      precio_lista = VALUES(precio_lista),
+      codigo      = VALUES(codigo),
+      descuento   = VALUES(descuento),
+      costo_neto  = VALUES(costo_neto),
+      IVA         = VALUES(IVA),
+      costo_iva   = VALUES(costo_iva)
+  `;
+  const params = [
+    row.producto_id,
+    row.proveedor_id,
+    Number(row.precio_lista) || 0,
+    row.codigo || null,
+    Number(row.descuento) || 0,
+    Number(row.costo_neto) || 0,
+    Number(row.IVA) || 21,
+    Number(row.costo_iva) || 0,
+  ];
+  // Si usás mysql2/promise:
+  await conexion.query(sql, params);
 }
+
 // ✅ Después (SIEMPRE trata el valor como proveedor_id)
 const mapearProveedorDesignado = (proveedorDesignado /*, proveedoresArr no hace falta */) => {
   return (proveedorDesignado == null || proveedorDesignado === '') ? '' : String(proveedorDesignado);
@@ -555,9 +572,11 @@ guardar: async function (req, res) {
       const filas = dedupeProveedorRows(
         productoId, proveedoresArr, codigosArr, preciosListaArr, descArr, costoNetoArr, ivaArr, costoIvaArr
       );
-      for (const row of filas) {
-        await upsertProductoProveedor(producto, conexion, row);
-      }
+      // ✅ Después
+for (const row of filas) {
+  await upsertProductoProveedorRaw(conexion, row);
+}
+
 
       // 4) Proveedor asignado: primero manual (hidden), si no hay => más barato
       let proveedorElegido = req.body.proveedor_designado ? Number(req.body.proveedor_designado) : null;
@@ -709,9 +728,11 @@ actualizar: async function (req, res) {
       const filas = dedupeProveedorRows(
         productoId, proveedoresArr, codigosArr, preciosListaArr, descArr, costoNetoArr, ivaArr, costoIvaArr
       );
-      for (const row of filas) {
-        await upsertProductoProveedor(producto, conexion, row);
-      }
+      // ✅ Después
+for (const row of filas) {
+  await upsertProductoProveedorRaw(conexion, row);
+}
+
 
       // 3) Proveedor asignado: respetar manual; si no hay, usar más barato
       let proveedorElegido = req.body.proveedor_designado ? Number(req.body.proveedor_designado) : null;
