@@ -101,11 +101,10 @@ $(document).ready(function () {
     actualizarPrecioFinal();
   });
 
-  // Disparos iniciales
-  $('.proveedores').first().trigger('change');
-  $('.precio_lista').first().trigger('change');
-  actualizarProveedorAsignado();
-  actualizarPrecioFinal();
+$('.proveedores').each(function () { $(this).trigger('change'); });
+$('.precio_lista').each(function () { $(this).trigger('change'); });
+actualizarProveedorAsignado();
+actualizarPrecioFinal();
 });
 
 // =======================================

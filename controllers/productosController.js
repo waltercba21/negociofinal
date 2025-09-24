@@ -82,16 +82,11 @@ const elegirProveedorAsignado = (proveedorDesignado, proveedoresArr, costoIvaArr
   // 3) Fallback
   return proveedoresArr[0] || null;
 };
-const mapearProveedorDesignado = (proveedorDesignado, proveedoresArr) => {
-  if (proveedorDesignado == null || proveedorDesignado === '') return '';
-  // ¿es un índice?
-  const idx = parseInt(proveedorDesignado, 10);
-  if (!Number.isNaN(idx) && proveedoresArr[idx] != null) {
-    return proveedoresArr[idx]; // ← devuelve proveedor_id
-  }
-  // si no es índice, asumimos que ya es un proveedor_id
-  return proveedorDesignado;
+// ✅ Después (SIEMPRE trata el valor como proveedor_id)
+const mapearProveedorDesignado = (proveedorDesignado /*, proveedoresArr no hace falta */) => {
+  return (proveedorDesignado == null || proveedorDesignado === '') ? '' : String(proveedorDesignado);
 };
+
 module.exports = {
     index: async (req, res) => {
         try {
