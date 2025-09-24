@@ -751,11 +751,40 @@ guardar: async function (req, res) {
         });
     },    
 actualizar: async function (req, res) {
-  console.log("Inicio del controlador actualizar...");
+  console.log("===== Inicio del controlador actualizar =====");
+
+  // Sanidad: helpers disponibles
+  console.log("[DEBUG] Helpers presentes?",
+    {
+      has_numOr0: typeof numOr0 === 'function',
+      has_strOrNull: typeof strOrNull === 'function',
+      has_buildProveedorRows: typeof buildProveedorRows === 'function',
+      has_pickCheapestProveedorId: typeof pickCheapestProveedorId === 'function',
+      has_conexion_promise: !!(conexion && typeof conexion.promise === 'function')
+    }
+  );
 
   try {
     const productoId = numOr0(req.params.id || req.body.id);
+    console.log("[DEBUG] productoId:", productoId, "req.params.id:", req.params.id, "req.body.id:", req.body.id);
     if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
+
+    // Log de entrada (compacto para no inundar)
+    console.log("[DEBUG] req.body resumen:", {
+      nombre: req.body.nombre,
+      categoria: req.body.categoria,
+      marca: req.body.marca,
+      modelo_id: req.body.modelo_id,
+      utilidad: req.body.utilidad,
+      precio_venta: req.body.precio_venta,
+      estado: req.body.estado,
+      stock_minimo: req.body.stock_minimo,
+      stock_actual: req.body.stock_actual,
+      oferta: req.body.oferta,
+      calidad_original: req.body.calidad_original,
+      calidad_vic: req.body.calidad_vic,
+      proveedor_designado: req.body.proveedor_designado
+    });
 
     // 1) Actualizar escalares del producto
     const datosProducto = {
@@ -774,58 +803,95 @@ actualizar: async function (req, res) {
       calidad_original: req.body.calidad_original ? 1 : 0,
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
-    await producto.actualizar(conexion, datosProducto);
+    console.log("[DEBUG] datosProducto (update productos):", datosProducto);
+
+    const updRes = await producto.actualizar(conexion, datosProducto);
+    console.log("[DEBUG] producto.actualizar() ->", updRes);
 
     // 2) Proveedores (UPSERT SOLO columnas existentes)
-    const filas = buildProveedorRows(productoId, req.body); // puede traer campos extra; no pasa nada
-    for (const row of filas) {
-      await conexion.promise().query(
-        `
+    // buildProveedorRows puede devolver campos extra; acá usamos solo 4 columnas
+    const filas = buildProveedorRows(productoId, req.body);
+    console.log("[DEBUG] filas construidas (producto_proveedor) cantidad:", filas.length);
+    if (filas.length) {
+      // Log de muestra de la primera fila
+      console.log("[DEBUG] fila[0] ejemplo:", filas[0]);
+    }
+
+    for (let i = 0; i < filas.length; i++) {
+      const row = filas[i];
+      const sql = `
         INSERT INTO producto_proveedor
           (producto_id, proveedor_id, precio_lista, codigo)
         VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           precio_lista = VALUES(precio_lista),
           codigo      = VALUES(codigo)
-        `,
-        [
-          row.producto_id,
-          row.proveedor_id,
-          Number(row.precio_lista) || 0,
-          row.codigo || null
-        ]
-      );
+      `;
+      const params = [
+        row.producto_id,
+        row.proveedor_id,
+        Number(row.precio_lista) || 0,
+        row.codigo || null
+      ];
+
+      try {
+        console.log(`[DEBUG] UPSERT fila ${i}:`, params);
+        const [result] = await conexion.promise().query(sql, params);
+        console.log(`[DEBUG] UPSERT OK fila ${i}: affectedRows=${result.affectedRows}`);
+      } catch (e) {
+        console.error(`[ERROR] UPSERT fila ${i} falló. SQL params:`, params);
+        console.error(e);
+        throw e; // re-lanzar para capturarlo en el catch principal
+      }
     }
 
     // 3) Proveedor asignado: prioridad manual; si no hay, el más barato por costo_iva[]
     let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
+    console.log("[DEBUG] proveedor_designado (hidden) recibido:", req.body.proveedor_designado, "=> num:", proveedorAsignado);
+
     if (!proveedorAsignado) {
       proveedorAsignado = pickCheapestProveedorId(req.body); // devuelve proveedor_id o null
+      console.log("[DEBUG] proveedor más barato elegido por costo_iva[]:", proveedorAsignado);
+    } else {
+      console.log("[DEBUG] Se respeta selección manual del proveedor:", proveedorAsignado);
     }
+
     if (proveedorAsignado) {
-      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
+      const updProv = await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
+      console.log("[DEBUG] producto.proveedor_id actualizado:", proveedorAsignado, "resultado:", updProv);
+    } else {
+      console.log("[DEBUG] No se pudo determinar proveedor asignado (ni manual ni por costo). No se actualiza proveedor_id.");
     }
 
     // 4) Imágenes nuevas (opcionales)
     if (req.files && req.files.length > 0) {
-      await Promise.all(
-        req.files.map(f => producto.insertarImagenProducto(conexion, {
+      console.log("[DEBUG] Subiendo imágenes nuevas. Cantidad:", req.files.length);
+      const promImgs = req.files.map(f => {
+        console.log("[DEBUG] Imagen:", f.originalname, "->", f.filename);
+        return producto.insertarImagenProducto(conexion, {
           producto_id: productoId,
           imagen: f.filename
-        }))
-      );
+        });
+      });
+      await Promise.all(promImgs);
+      console.log("[DEBUG] Imágenes insertadas OK.");
+    } else {
+      console.log("[DEBUG] No llegaron imágenes nuevas.");
     }
 
     // Volver a donde estaba el usuario
     const pagina = req.body.pagina || 1;
     const busqueda = req.body.busqueda ? encodeURIComponent(req.body.busqueda) : '';
+    console.log("[DEBUG] Redirigiendo a panelControl con pagina/busqueda:", pagina, busqueda);
+
+    console.log("===== Fin controlador actualizar (OK) =====");
     return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
   } catch (error) {
-    console.error("Error durante la ejecución:", error);
+    console.error("===== Error durante la ejecución en actualizar =====");
+    console.error(error);
     return res.status(500).send("Error: " + error.message);
   }
 },
-
 
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
