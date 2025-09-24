@@ -428,45 +428,54 @@ lista: async function (req, res) {
           return res.status(500).send('Error interno del servidor');
         }
       },      
-      crear: function(req, res) {
-        let categorias, marcas, modelos, proveedores, descuentoProveedor, preciosConDescuento;
-        producto.obtenerCategorias(conexion).then(result => {
-            categorias = result;
-            return producto.obtenerMarcas(conexion);
-        }).then(result => {
-            marcas = result;
-            return producto.obtenerModelosPorMarca(conexion);
-        }).then(result => {
-            modelos = result;
-            return Promise.all([
-                producto.obtenerProveedores(conexion),
-                producto.obtenerDescuentosProveedor(conexion)
-            ]);
-        }).then(results => {
-            proveedores = results[0].map(proveedor => {
-                const descuento = results[1].find(desc => desc.proveedor_id === proveedor.id);
-                return {
-                    ...proveedor,
-                    descuento: descuento ? descuento.descuento : 0
-                };
-            });
-            preciosConDescuento = proveedores.map(proveedor => req.body.precio_venta * (1 - proveedor.descuento / 100));
-            descuentoProveedor = proveedores.map(proveedor => proveedor.descuento);
-        }).then(() => {
-            res.render('crear', {
-                categorias,
-                marcas,
-                modelos,
-                proveedores,
-                preciosConDescuento,
-                utilidad: req.body.utilidad,
-                descuentoProveedor,
-                producto: { oferta: 0 } 
-              });
-        }).catch(error => {
-            return res.status(500).send('Error: ' + error.message);
-        });
-    },
+    crear: async function (req, res) {
+  try {
+    let categorias, marcas, modelos;
+
+    // Catálogos
+    categorias = await producto.obtenerCategorias(conexion);
+    marcas     = await producto.obtenerMarcas(conexion);
+    modelos    = await producto.obtenerModelosPorMarca(conexion); // si tu fn devuelve todos, OK
+
+    // Proveedores + descuentos
+    const [proveedoresRaw, descuentos] = await Promise.all([
+      producto.obtenerProveedores(conexion),
+      producto.obtenerDescuentosProveedor(conexion)
+    ]);
+
+    const proveedores = (proveedoresRaw || []).map(p => {
+      const d = (descuentos || []).find(x => x.proveedor_id === p.id);
+      return { ...p, descuento: d ? Number(d.descuento) || 0 : 0 };
+    });
+
+    // Defaults para que la vista no explote si no viene body
+    const utilidadDefault = Number(req.body?.utilidad) || 0;
+    const basePrecio      = Number(req.body?.precio_venta) || 0;
+
+    const preciosConDescuento = proveedores.map(p =>
+      Math.ceil(basePrecio - (basePrecio * (Number(p.descuento) || 0) / 100))
+    );
+    const descuentoProveedor = proveedores.map(p => Number(p.descuento) || 0);
+
+    return res.render('crear', {
+      categorias,
+      marcas,
+      modelos,
+      proveedores,
+      preciosConDescuento,
+      utilidad: utilidadDefault,
+      descuentoProveedor,
+      producto: { oferta: 0 } // para el checkbox
+    });
+  } catch (error) {
+    console.error('Error en crear:', error);
+    return res.status(500).send('Error: ' + error.message);
+  }
+},
+
+/* =========================
+   POST /productos (guardar)
+========================= */
 guardar: async function (req, res) {
   console.log("Inicio del controlador guardar...");
 
@@ -475,28 +484,27 @@ guardar: async function (req, res) {
       return res.status(400).send("Error: no se cargaron archivos");
     }
 
-    // Campos escalares del producto (¡no metas arrays acá!)
+    // 1) Insertar PRODUCTO (solo escalares)
     const datosProducto = {
       nombre: req.body.nombre || null,
       descripcion: req.body.descripcion || null,
       categoria_id: req.body.categoria || null,
       marca_id: req.body.marca || null,
       modelo_id: req.body.modelo_id || null,
-      utilidad: req.body.utilidad || 0,
-      precio_venta: req.body.precio_venta || 0,
+      utilidad: Number(req.body.utilidad) || 0,
+      precio_venta: Number(req.body.precio_venta) || 0,
       estado: req.body.estado || 'activo',
-      stock_minimo: req.body.stock_minimo || 0,
-      stock_actual: req.body.stock_actual || 0,
+      stock_minimo: Number(req.body.stock_minimo) || 0,
+      stock_actual: Number(req.body.stock_actual) || 0,
       oferta: Number(req.body.oferta) === 1 ? 1 : 0,
       calidad_original: req.body.calidad_original ? 1 : 0,
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
 
-    // Insert del producto base
     const result = await producto.insertarProducto(conexion, datosProducto);
     const productoId = result.insertId;
 
-    // Arrays de proveedores
+    // 2) Arrays para producto_proveedor
     const proveedoresArr = toArray(req.body.proveedores);
     const codigosArr      = toArray(req.body.codigo);
     const preciosListaArr = toArray(req.body.precio_lista);
@@ -505,51 +513,59 @@ guardar: async function (req, res) {
     const ivaArr          = toArray(req.body.IVA);
     const costoIvaArr     = toArray(req.body.costo_iva);
 
-    // Insert por cada proveedor
-    const insertsPP = proveedoresArr.map((provId, i) => {
-      const datosPP = {
-        producto_id: productoId,
-        proveedor_id: provId || null,
-        precio_lista: preciosListaArr[i] || 0,
-        codigo: codigosArr[i] || null,
-        descuento: descArr[i] || 0,
-        costo_neto: costoNetoArr[i] || 0,
-        IVA: ivaArr[i] || 21,
-        costo_iva: costoIvaArr[i] || 0
-      };
-      return producto.insertarProductoProveedor(conexion, datosPP);
-    });
-    await Promise.all(insertsPP);
+    if (proveedoresArr.length === 0) {
+      return res.status(400).send("Error: debe seleccionar al menos un proveedor.");
+    }
 
-    // Proveedor asignado: si no viene radio, usamos el más barato por costo_iva
+    // 3) Insertar relaciones producto_proveedor (uno por proveedor)
+    await Promise.all(
+      proveedoresArr.map((provId, i) => {
+        const datosPP = {
+          producto_id: productoId,
+          proveedor_id: provId || null,
+          precio_lista: Number(preciosListaArr[i]) || 0,
+          codigo: codigosArr[i] || null,
+          descuento: Number(descArr[i]) || 0,
+          costo_neto: Number(costoNetoArr[i]) || 0,
+          IVA: Number(ivaArr[i]) || 21,
+          costo_iva: Number(costoIvaArr[i]) || 0
+        };
+        return producto.insertarProductoProveedor(conexion, datosPP);
+      })
+    );
+
+    // 4) Determinar proveedor asignado
     let asignadoId = req.body.proveedor_designado;
     if (asignadoId == null || asignadoId === '') {
-      // buscar índice del min costo_iva
+      // Elegir el más barato por costo_iva
       let minIdx = -1, minVal = Infinity;
       costoIvaArr.forEach((v, i) => {
-        const val = parseFloat(v);
+        const val = Number(v);
         if (!isNaN(val) && val < minVal) { minVal = val; minIdx = i; }
       });
       if (minIdx >= 0) asignadoId = proveedoresArr[minIdx];
     } else {
-      // si vino radio: proveedor_designado es índice del array
+      // Si vino radio: es índice del array de proveedores
       const idx = parseInt(asignadoId, 10);
-      if (!isNaN(idx) && proveedoresArr[idx] != null) asignadoId = proveedoresArr[idx];
+      if (!isNaN(idx) && proveedoresArr[idx] != null) {
+        asignadoId = proveedoresArr[idx];
+      }
     }
 
     if (asignadoId) {
-      await producto.actualizarProveedorAsignado(conexion, {
-        producto_id: productoId,
-        proveedor_id: asignadoId
-      });
+      // IMPORTANTE: usar actualizarProducto para setear proveedor_id
+      await producto.actualizarProducto(conexion, productoId, { proveedor_id: asignadoId });
     }
 
-    // Imágenes
-    const promImgs = req.files.map(f => producto.insertarImagenProducto(conexion, {
-      producto_id: productoId,
-      imagen: f.filename
-    }));
-    await Promise.all(promImgs);
+    // 5) Imágenes
+    await Promise.all(
+      req.files.map(f =>
+        producto.insertarImagenProducto(conexion, {
+          producto_id: productoId,
+          imagen: f.filename
+        })
+      )
+    );
 
     return res.redirect("/productos/panelControl");
   } catch (error) {
