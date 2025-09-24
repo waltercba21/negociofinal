@@ -459,107 +459,94 @@ lista: async function (req, res) {
             return res.status(500).send('Error: ' + error.message);
         });
     },
-    guardar: function (req, res) {
-        console.log("Inicio del controlador guardar...");
-    
-        // Verificar si el campo proveedores está presente y no está vacío
-        console.log("req.body.proveedores:", req.body.proveedores);
-        if (!req.body.proveedores || req.body.proveedores.length === 0) {
-            res.status(400).send("Error: proveedor_id no puede ser nulo");
-            return;
-        }
-    
-        // Verificar si se recibieron archivos
-        console.log("req.files:", req.files);
-        if (!req.files || req.files.length === 0) {
-            res.status(400).send("Error: no se cargaron archivos");
-            return;
-        }
-    
-        // Preparar los datos del producto
-        const datosProducto = {
-            nombre: req.body.nombre,
-            descripcion: req.body.descripcion,
-            categoria_id: req.body.categoria,
-            marca_id: req.body.marca,
-            modelo_id: req.body.modelo_id,
-            descuentos_proveedor_id: req.body.descuentos_proveedor_id,
-            costo_neto: req.body.costo_neto,
-            IVA: req.body.IVA,
-            costo_iva: req.body.costo_iva,
-            utilidad: req.body.utilidad,
-            precio_venta: req.body.precio_venta,
-            estado: req.body.estado,
-            stock_minimo: req.body.stock_minimo,
-            stock_actual: req.body.stock_actual,
-            oferta: Number(req.body.oferta) === 1 ? 1 : 0,
-            calidad_original: req.body.calidad_original_fitam ? 1 : 0,
-            calidad_vic: req.body.calidad_vic ? 1 : 0,
+ // productosController.js
+guardar: function (req, res) {
+  console.log("Inicio del controlador guardar...");
+
+  // 1) Normalización robusta a array para cualquier input (string, string separado por comas, valor único o array)
+  const toArray = (v) => {
+    if (Array.isArray(v)) return v;
+    if (v == null) return [];
+    if (typeof v === 'string') {
+      // admitir "A,B,C" o " A , B , C "
+      return v.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    return [v];
+  };
+
+  // 2) Validaciones básicas
+  const proveedoresArr = toArray(req.body.proveedores);
+  if (proveedoresArr.length === 0) {
+    return res.status(400).send("Error: proveedor_id no puede ser nulo");
+  }
+
+  // Imágenes (si en tu flujo es obligatorio)
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).send("Error: no se cargaron archivos");
+  }
+
+  // 3) Datos del producto
+  const datosProducto = {
+    nombre: req.body.nombre,
+    descripcion: req.body.descripcion,
+    categoria_id: req.body.categoria,
+    marca_id: req.body.marca,
+    modelo_id: req.body.modelo_id,
+    descuentos_proveedor_id: req.body.descuentos_proveedor_id,
+    costo_neto: req.body.costo_neto,
+    IVA: req.body.IVA,
+    costo_iva: req.body.costo_iva,
+    utilidad: req.body.utilidad,
+    precio_venta: req.body.precio_venta,
+    estado: req.body.estado,
+    stock_minimo: req.body.stock_minimo,
+    stock_actual: req.body.stock_actual,
+    oferta: Number(req.body.oferta) === 1 ? 1 : 0,
+    calidad_original: req.body.calidad_original_fitam ? 1 : 0,
+    calidad_vic: req.body.calidad_vic ? 1 : 0,
+  };
+
+  // 4) Insertar producto y luego proveedores/imágenes
+  producto
+    .insertarProducto(conexion, datosProducto)
+    .then((result) => {
+      const productoId = result.insertId;
+
+      // **AQUÍ EL CAMBIO**: normalizamos arrays de proveedores/códigos/listas
+      const codigosArr      = toArray(req.body.codigo);
+      const preciosListaArr = toArray(req.body.precio_lista);
+
+      const proveedores = proveedoresArr.map((proveedorId, index) => ({
+        id: proveedorId,
+        codigo: codigosArr[index] || '',                 // tolerante a faltantes
+        precio_lista: preciosListaArr[index] || 0
+      }));
+
+      const promesasProveedor = proveedores.map((prov) => {
+        const datosPP = {
+          producto_id: productoId,
+          proveedor_id: prov.id,
+          precio_lista: prov.precio_lista,
+          codigo: prov.codigo,
         };
-    
-        console.log("Datos preparados para insertar en productos:", datosProducto);
-    
-        // Intentar insertar el producto en la base de datos
-        producto
-            .insertarProducto(conexion, datosProducto)
-            .then((result) => {
-                console.log("Producto insertado con éxito. ID generado:", result.insertId);
-                const productoId = result.insertId;
-    
-                // Manejar los proveedores asociados
-                const codigos = req.body.codigo.split(",");
-                console.log("Codigos de los productos:", codigos);
-    
-                const proveedores = req.body.proveedores.map((proveedorId, index) => {
-                    return {
-                        id: proveedorId,
-                        codigo: codigos[index],
-                        precio_lista: req.body.precio_lista[index],
-                    };
-                });
-    
-                console.log("Datos de los proveedores asociados:", proveedores);
-    
-                const promesasProveedor = proveedores.map((proveedor) => {
-                    const datosProductoProveedor = {
-                        producto_id: productoId,
-                        proveedor_id: proveedor.id,
-                        precio_lista: proveedor.precio_lista,
-                        codigo: proveedor.codigo,
-                    };
-    
-                    console.log("Datos para insertar en producto_proveedor:", datosProductoProveedor);
-                    return producto.insertarProductoProveedor(conexion, datosProductoProveedor);
-                });
-    
-                // Manejar las imágenes asociadas
-                console.log("Archivos subidos (imágenes):", req.files);
-                const promesasImagenes = req.files.map((file) => {
-                    const datosImagen = { producto_id: productoId, imagen: file.filename };
-                    console.log("Datos para insertar en imágenes:", datosImagen);
-                    return producto.insertarImagenProducto(conexion, datosImagen);
-                });
-    
-                // Ejecutar todas las promesas y capturar errores individuales
-                return Promise.allSettled([...promesasProveedor, ...promesasImagenes]).then((results) => {
-                    results.forEach((result, index) => {
-                        if (result.status === "fulfilled") {
-                            console.log(`Operación ${index + 1} completada con éxito:`, result.value);
-                        } else {
-                            console.error(`Operación ${index + 1} falló:`, result.reason);
-                        }
-                    });
-                });
-            })
-            .then(() => {
-                console.log("Todas las operaciones completadas con éxito.");
-                res.redirect("/productos/panelControl");
-            })
-            .catch((error) => {
-                console.error("Error durante la ejecución:", error.message);
-                res.status(500).send("Error: " + error.message);
-            });
-    },    
+        return producto.insertarProductoProveedor(conexion, datosPP);
+      });
+
+      const promesasImagenes = req.files.map((file) =>
+        producto.insertarImagenProducto(conexion, {
+          producto_id: productoId,
+          imagen: file.filename
+        })
+      );
+
+      return Promise.allSettled([...promesasProveedor, ...promesasImagenes]);
+    })
+    .then(() => res.redirect("/productos/panelControl"))
+    .catch((error) => {
+      console.error("Error durante la ejecución:", error);
+      res.status(500).send("Error: " + error.message);
+    });
+},
     eliminarSeleccionados : async (req, res) => {
         const { ids } = req.body;
         try {
