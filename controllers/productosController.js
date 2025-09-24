@@ -125,6 +125,54 @@ function pickCheapestProveedorId(reqBody) {
   if (minIdx >= 0) return numOr0(proveedoresArr[minIdx]);
   return null;
 }
+// ==============================
+// Construir filas para producto_proveedor
+// Toma arrays del body y devuelve filas deduplicadas por (producto_id, proveedor_id)
+// ==============================
+function buildProveedorRows(productoId, body) {
+  const proveedoresArr  = toArray(body.proveedores);               // proveedores[]
+  const codigosArr      = toArray(body.codigo);                    // codigo[]
+  const preciosListaArr = toArray(body.precio_lista);              // precio_lista[]
+  const descArr         = toArray(body.descuentos_proveedor_id);   // descuentos_proveedor_id[]
+  const costoNetoArr    = toArray(body.costo_neto);                // costo_neto[]
+  const ivaArr          = toArray(body.IVA);                       // IVA[]
+  const costoIvaArr     = toArray(body.costo_iva);                 // costo_iva[]
+
+  // Usamos un Map para que, si llega el mismo proveedor repetido, se quede el último valor
+  const byProveedor = new Map();
+
+  const len = Math.max(
+    proveedoresArr.length,
+    codigosArr.length,
+    preciosListaArr.length,
+    descArr.length,
+    costoNetoArr.length,
+    ivaArr.length,
+    costoIvaArr.length
+  );
+
+  for (let i = 0; i < len; i++) {
+    const proveedor_id = numOr0(proveedoresArr[i]);
+    if (!proveedor_id) continue; // ignorar entradas vacías/0
+
+    const row = {
+      producto_id: numOr0(productoId),
+      proveedor_id: proveedor_id,
+      precio_lista: numOr0(preciosListaArr[i]),
+      codigo: strOrNull(codigosArr[i]),
+      descuentos_proveedor_id: numOr0(descArr[i]),   // porcentaje de descuento
+      costo_neto: numOr0(costoNetoArr[i]),
+      IVA: numOr0(ivaArr[i]) || 21,
+      costo_iva: numOr0(costoIvaArr[i])
+    };
+
+    // Guardar/overwite por proveedor_id
+    byProveedor.set(proveedor_id, row);
+  }
+
+  // Devolver como array
+  return Array.from(byProveedor.values());
+}
 
 
 module.exports = {
