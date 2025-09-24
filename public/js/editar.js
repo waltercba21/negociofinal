@@ -86,8 +86,8 @@ $(document).ready(function () {
     $nuevo.find('.label-precio-lista').text('Precio de Lista');
     $nuevo.find('.label-descuento').text('Descuento');
 
-    // Si el bloque tiene radio, desmarcarlo en el clon
-    $nuevo.find('.proveedor-designado-radio').prop('checked', false);
+    // Si el bloque tiene radio, desmarcarlo en el clon y vaciar su value
+    $nuevo.find('.proveedor-designado-radio').prop('checked', false).val('');
 
     // Insertar antes del botón + (el botón no se clona)
     $nuevo.insertBefore('#addProveedor');
@@ -97,7 +97,6 @@ $(document).ready(function () {
     $nuevo.find('.precio_lista').trigger('change');
 
     // Si agregamos un proveedor nuevo, no forzamos selección manual
-    // (seguimos respetando si ya hubo una manual previa)
     actualizarProveedorAsignado();
     actualizarPrecioFinal();
   });
@@ -165,6 +164,9 @@ function actualizarProveedor($select) {
   if (isNaN(descuento)) descuento = 0;
 
   $wrap.find('.nombre_proveedor').text(nombreProveedor);
+
+  // *** IMPORTANTE: que el radio de este bloque tenga como value el proveedor_id seleccionado
+  $wrap.find('.proveedor-designado-radio').val($select.val());
 
   // hidden descuento
   var $hiddenDesc = $wrap.find('.descuentos_proveedor_id');
@@ -284,7 +286,7 @@ function actualizarProveedorAsignado() {
       $radio.prop('checked', true);
       $('#proveedor_designado').val($radio.val()); // proveedor_id
     } else {
-      // Si no hay radio, al menos setear hidden vacío/consistente
+      // Si no hay radio, al menos setear hidden con el proveedor seleccionado en el <select>
       var provIdSel = $proveedor.find('.proveedores').val();
       if (provIdSel) $('#proveedor_designado').val(provIdSel);
     }
