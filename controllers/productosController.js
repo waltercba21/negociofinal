@@ -1,5 +1,5 @@
-const conexion = require('../config/conexion')
-const producto = require('../models/producto')
+const conexion = require('../config/conexion');
+const producto = require('../models/producto');
 const carrito = require('../models/carrito'); // Ajusta la ruta según corresponda
 var borrar = require('fs');
 const PDFDocument = require('pdfkit');
@@ -9,23 +9,47 @@ const xlsx = require('xlsx');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
 
-    const adminEmails = ['walter@autofaros.com.ar'];
-    function normalizarClave(texto) {
-      return texto
-        .normalize("NFD")                        
-        .replace(/[\u0300-\u036f]/g, "")        
-        .replace(/\s+/g, '')                     
-        .toLowerCase();                          
-    }
-const productosPorPagina = 10; 
+const adminEmails = ['walter@autofaros.com.ar'];
 
+function normalizarClave(texto) {
+  return texto
+    .normalize("NFD")                        // separa acentos
+    .replace(/[\u0300-\u036f]/g, "")         // quita diacríticos
+    .replace(/\s+/g, '')                     // quita espacios
+    .toLowerCase();                          // a minúsculas
+}
+
+const productosPorPagina = 10;
+
+// ==============================
+// Helpers genéricos
+// ==============================
 function toArray(v) {
   if (Array.isArray(v)) return v;
   if (v === undefined || v === null) return [];
   return [v];
 }
 
-// Solo columnas existentes en producto_proveedor
+function numOr0(v) {
+  const n = Number(v);
+  return isNaN(n) ? 0 : n;
+}
+
+function strOrNull(v) {
+  if (v == null) return null;
+  const s = String(v).trim();
+  return s === '' ? null : s;
+}
+
+// ✅ Siempre trata el valor como proveedor_id (no índice)
+const mapearProveedorDesignado = (proveedorDesignado /* , proveedoresArr no hace falta */) => {
+  return (proveedorDesignado == null || proveedorDesignado === '') ? '' : String(proveedorDesignado);
+};
+
+// ==============================
+// Filas de producto_proveedor
+// (solo columnas existentes en la tabla)
+// ==============================
 function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr) {
   const seen = new Set();
   const filas = [];
@@ -48,7 +72,11 @@ function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosList
   return filas;
 }
 
-async function upsertProductoProveedorRaw(conexion, row) {
+// ==============================
+// Upsert crudo (evita ER_DUP_ENTRY)
+// Usa promesas si el pool soporta .promise(), sino callback → Promise
+// ==============================
+async function upsertProductoProveedorRaw(con, row) {
   const sql = `
     INSERT INTO producto_proveedor
       (producto_id, proveedor_id, precio_lista, codigo)
@@ -64,21 +92,40 @@ async function upsertProductoProveedorRaw(conexion, row) {
     row.codigo || null
   ];
 
-  // Soporta pool con wrapper de promesas y pool clásico
-  if (conexion.promise && typeof conexion.promise === 'function') {
-    await conexion.promise().query(sql, params);
+  if (con.promise && typeof con.promise === 'function') {
+    await con.promise().query(sql, params);
     return;
   }
   await new Promise((resolve, reject) => {
-    conexion.query(sql, params, (err) => (err ? reject(err) : resolve()));
+    con.query(sql, params, (err) => (err ? reject(err) : resolve()));
   });
 }
 
+// ==============================
+// Elegir proveedor más barato (por costo_iva recibido del form)
+// Se usa SOLO para decidir proveedor asignado cuando no hay selección manual
+// ==============================
+function pickCheapestProveedorId(reqBody) {
+  const proveedoresArr = toArray(reqBody.proveedores);
+  const costoIvaArr    = toArray(reqBody.costo_iva);
 
-// ✅ Después (SIEMPRE trata el valor como proveedor_id)
-const mapearProveedorDesignado = (proveedorDesignado /*, proveedoresArr no hace falta */) => {
-  return (proveedorDesignado == null || proveedorDesignado === '') ? '' : String(proveedorDesignado);
-};
+  let minIdx = -1, minVal = Infinity;
+
+  for (let i = 0; i < proveedoresArr.length; i++) {
+    const provId = numOr0(proveedoresArr[i]);
+    if (!provId) continue;
+
+    const cIva = numOr0(costoIvaArr[i]);
+    if (cIva > 0 && cIva < minVal) {
+      minVal = cIva;
+      minIdx = i;
+    }
+  }
+
+  if (minIdx >= 0) return numOr0(proveedoresArr[minIdx]);
+  return null;
+}
+
 
 module.exports = {
     index: async (req, res) => {
@@ -528,67 +575,68 @@ lista: async function (req, res) {
 },
 guardar: async function (req, res) {
   console.log("Inicio del controlador guardar...");
+
   try {
-    // 1) Insert base de producto
+    // 1) Insertar PRODUCTO (solo escalares)
     const datosProducto = {
-      nombre: req.body.nombre || null,
-      descripcion: req.body.descripcion || null,
-      categoria_id: req.body.categoria || null,
-      marca_id: req.body.marca || null,
-      modelo_id: req.body.modelo_id || null,
-      utilidad: Number(req.body.utilidad) || 0,
-      precio_venta: Number(req.body.precio_venta) || 0,
-      estado: req.body.estado || 'activo',
-      stock_minimo: Number(req.body.stock_minimo) || 0,
-      stock_actual: Number(req.body.stock_actual) || 0,
+      nombre: strOrNull(req.body.nombre),
+      descripcion: strOrNull(req.body.descripcion),
+      categoria_id: numOr0(req.body.categoria) || null,
+      marca_id: numOr0(req.body.marca) || null,
+      modelo_id: numOr0(req.body.modelo_id) || null,
+      utilidad: numOr0(req.body.utilidad),
+      precio_venta: numOr0(req.body.precio_venta),
+      estado: strOrNull(req.body.estado) || 'activo',
+      stock_minimo: numOr0(req.body.stock_minimo),
+      stock_actual: numOr0(req.body.stock_actual),
       oferta: Number(req.body.oferta) === 1 ? 1 : 0,
       calidad_original: req.body.calidad_original ? 1 : 0,
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
 
-    const insertRes = await producto.insertarProducto(conexion, datosProducto);
-    const productoId = insertRes && insertRes.insertId;
+    const ins = await producto.insertarProducto(conexion, datosProducto);
+    const productoId = ins && ins.insertId;
     if (!productoId) throw new Error('No se obtuvo insertId al crear el producto');
 
-    // 2) Arrays
-    const proveedoresArr  = toArray(req.body.proveedores);
-    const codigosArr      = toArray(req.body.codigo);
-    const preciosListaArr = toArray(req.body.precio_lista);
-    const costoIvaArr     = toArray(req.body.costo_iva); // sólo para decidir proveedor
-
-    if (proveedoresArr.length === 0) {
+    // 2) Proveedores (upsert)
+    const filas = buildProveedorRows(productoId, req.body);
+    if (filas.length === 0) {
       return res.status(400).send("Error: debe seleccionar al menos un proveedor.");
     }
 
-    // 3) Upsert por proveedor (solo columnas existentes)
-    const filas = dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr);
+    // ON DUPLICATE KEY UPDATE sobre PK (producto_id, proveedor_id)
     for (const row of filas) {
-      await upsertProductoProveedorRaw(conexion, row);
+      await conexion.promise().query(
+        `
+        INSERT INTO producto_proveedor
+          (producto_id, proveedor_id, precio_lista, codigo, descuentos_proveedor_id, costo_neto, IVA, costo_iva)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          precio_lista = VALUES(precio_lista),
+          codigo      = VALUES(codigo),
+          descuentos_proveedor_id = VALUES(descuentos_proveedor_id),
+          costo_neto  = VALUES(costo_neto),
+          IVA         = VALUES(IVA),
+          costo_iva   = VALUES(costo_iva)
+        `,
+        [
+          row.producto_id, row.proveedor_id, row.precio_lista, row.codigo,
+          row.descuentos_proveedor_id, row.costo_neto, row.IVA, row.costo_iva
+        ]
+      );
     }
 
-    // 4) Proveedor asignado:
-    //    a) si viene hidden proveedor_designado (proveedor_id) => respetar
-    //    b) si no, elegir más barato por costo_iva[]
-    let proveedorElegido = req.body.proveedor_designado ? Number(req.body.proveedor_designado) : null;
-
-    if (!proveedorElegido) {
-      let minVal = Infinity;
-      let minProv = null;
-      costoIvaArr.forEach((v, i) => {
-        const val = Number(v);
-        if (!isNaN(val) && val < minVal) {
-          minVal = val;
-          minProv = Number(proveedoresArr[i]);
-        }
-      });
-      proveedorElegido = minProv;
+    // 3) Proveedor asignado: prioridad manual; si no hay, el más barato
+    let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
+    if (!proveedorAsignado) {
+      proveedorAsignado = pickCheapestProveedorId(req.body);
     }
 
-    if (proveedorElegido) {
-      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorElegido });
+    if (proveedorAsignado) {
+      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
     }
 
-    // 5) Imágenes (opcionales)
+    // 4) Imágenes (opcionales)
     if (req.files && req.files.length > 0) {
       await Promise.all(
         req.files.map(f => producto.insertarImagenProducto(conexion, {
@@ -604,7 +652,6 @@ guardar: async function (req, res) {
     return res.status(500).send("Error: " + error.message);
   }
 },
-
     eliminarSeleccionados : async (req, res) => {
         const { ids } = req.body;
         try {
@@ -682,64 +729,75 @@ guardar: async function (req, res) {
     },    
 actualizar: async function (req, res) {
   console.log("Inicio del controlador actualizar...");
-  try {
-    const productoId = Number(req.params.id || req.body.id);
-    if (!productoId) throw new Error('Falta ID de producto');
 
-    // 1) Update de escalares de productos
-    const datosUpdate = {
+  try {
+    const productoId = numOr0(req.params.id || req.body.id);
+    if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
+
+    // 1) Actualizar escalares del producto
+    const datosProducto = {
       id: productoId,
-      nombre: req.body.nombre || null,
-      descripcion: req.body.descripcion || null,
-      categoria_id: req.body.categoria || null,
-      marca_id: req.body.marca || null,
-      modelo_id: req.body.modelo_id || null,
-      utilidad: Number(req.body.utilidad) || 0,
-      precio_venta: Number(req.body.precio_venta) || 0,
-      estado: req.body.estado || 'activo',
-      stock_minimo: Number(req.body.stock_minimo) || 0,
-      stock_actual: Number(req.body.stock_actual) || 0,
+      nombre: strOrNull(req.body.nombre),
+      descripcion: strOrNull(req.body.descripcion),
+      categoria_id: numOr0(req.body.categoria) || null,
+      marca_id: numOr0(req.body.marca) || null,
+      modelo_id: numOr0(req.body.modelo_id) || null,
+      utilidad: numOr0(req.body.utilidad),
+      precio_venta: numOr0(req.body.precio_venta),
+      estado: strOrNull(req.body.estado) || 'activo',
+      stock_minimo: numOr0(req.body.stock_minimo),
+      stock_actual: numOr0(req.body.stock_actual),
       oferta: Number(req.body.oferta) === 1 ? 1 : 0,
       calidad_original: req.body.calidad_original ? 1 : 0,
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
-    await producto.actualizar(conexion, datosUpdate);
+    await producto.actualizar(conexion, datosProducto);
 
-    // 2) Arrays
-    const proveedoresArr  = toArray(req.body.proveedores);
-    const codigosArr      = toArray(req.body.codigo);
-    const preciosListaArr = toArray(req.body.precio_lista);
-    const costoIvaArr     = toArray(req.body.costo_iva); // sólo para decidir proveedor
+    // 2) Proveedores (upsert)
+    const filas = buildProveedorRows(productoId, req.body);
 
-    // 2.a) Upsert de producto_proveedor (solo columnas existentes)
-    const filas = dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr);
     for (const row of filas) {
-      await upsertProductoProveedorRaw(conexion, row);
+      await conexion.promise().query(
+        `
+        INSERT INTO producto_proveedor
+          (producto_id, proveedor_id, precio_lista, codigo, descuentos_proveedor_id, costo_neto, IVA, costo_iva)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          precio_lista = VALUES(precio_lista),
+          codigo      = VALUES(codigo),
+          descuentos_proveedor_id = VALUES(descuentos_proveedor_id),
+          costo_neto  = VALUES(costo_neto),
+          IVA         = VALUES(IVA),
+          costo_iva   = VALUES(costo_iva)
+        `,
+        [
+          row.producto_id, row.proveedor_id, row.precio_lista, row.codigo,
+          row.descuentos_proveedor_id, row.costo_neto, row.IVA, row.costo_iva
+        ]
+      );
     }
 
-    // 3) Proveedor asignado:
-    //    Primero respetar hidden proveedor_designado (proveedor_id);
-    //    si no viene, elegir por costo_iva más bajo.
-    let proveedorElegido = req.body.proveedor_designado ? Number(req.body.proveedor_designado) : null;
+    // (Opcional) Si querés eliminar proveedores que ya no vienen en el form:
+    // const provIdsVigentes = filas.map(f => f.proveedor_id);
+    // await conexion.promise().query(
+    //   `DELETE FROM producto_proveedor WHERE producto_id = ? AND proveedor_id NOT IN (?)`,
+    //   [productoId, provIdsVigentes.length ? provIdsVigentes : [0]]
+    // );
 
-    if (!proveedorElegido) {
-      let minVal = Infinity;
-      let minProv = null;
-      costoIvaArr.forEach((v, i) => {
-        const val = Number(v);
-        if (!isNaN(val) && val < minVal) {
-          minVal = val;
-          minProv = Number(proveedoresArr[i]);
-        }
-      });
-      proveedorElegido = minProv;
+    // 3) Proveedor asignado: prioridad manual; si no hay, el más barato
+    let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
+    if (!proveedorAsignado) {
+      proveedorAsignado = pickCheapestProveedorId(req.body);
     }
 
-    if (proveedorElegido) {
-      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorElegido });
+    if (proveedorAsignado) {
+      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
+    } else {
+      // si no hay ninguno, podés limpiar el campo si tu modelo lo permite:
+      // await producto.actualizar(conexion, { id: productoId, proveedor_id: null });
     }
 
-    // 4) Imágenes nuevas (si llegaron)
+    // 4) Imágenes nuevas (opcionales)
     if (req.files && req.files.length > 0) {
       await Promise.all(
         req.files.map(f => producto.insertarImagenProducto(conexion, {
@@ -749,7 +807,7 @@ actualizar: async function (req, res) {
       );
     }
 
-    // Volver donde estaba el usuario
+    // Volver a donde estaba el usuario
     const pagina = req.body.pagina || 1;
     const busqueda = req.body.busqueda ? encodeURIComponent(req.body.busqueda) : '';
     return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
