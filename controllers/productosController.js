@@ -76,6 +76,7 @@ function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosList
 // Upsert crudo (evita ER_DUP_ENTRY)
 // Usa promesas si el pool soporta .promise(), sino callback → Promise
 // ==============================
+// Upsert SOLO con columnas existentes en producto_proveedor
 async function upsertProductoProveedorRaw(con, row) {
   const sql = `
     INSERT INTO producto_proveedor
@@ -94,12 +95,13 @@ async function upsertProductoProveedorRaw(con, row) {
 
   if (con.promise && typeof con.promise === 'function') {
     await con.promise().query(sql, params);
-    return;
+  } else {
+    await new Promise((resolve, reject) => {
+      con.query(sql, params, (err) => (err ? reject(err) : resolve()));
+    });
   }
-  await new Promise((resolve, reject) => {
-    con.query(sql, params, (err) => (err ? reject(err) : resolve()));
-  });
 }
+
 
 // ==============================
 // Elegir proveedor más barato (por costo_iva recibido del form)
@@ -125,52 +127,25 @@ function pickCheapestProveedorId(reqBody) {
   if (minIdx >= 0) return numOr0(proveedoresArr[minIdx]);
   return null;
 }
-// ==============================
-// Construir filas para producto_proveedor
-// Toma arrays del body y devuelve filas deduplicadas por (producto_id, proveedor_id)
-// ==============================
 function buildProveedorRows(productoId, body) {
-  const proveedoresArr  = toArray(body.proveedores);               // proveedores[]
-  const codigosArr      = toArray(body.codigo);                    // codigo[]
-  const preciosListaArr = toArray(body.precio_lista);              // precio_lista[]
-  const descArr         = toArray(body.descuentos_proveedor_id);   // descuentos_proveedor_id[]
-  const costoNetoArr    = toArray(body.costo_neto);                // costo_neto[]
-  const ivaArr          = toArray(body.IVA);                       // IVA[]
-  const costoIvaArr     = toArray(body.costo_iva);                 // costo_iva[]
+  const proveedoresArr  = toArray(body.proveedores);
+  const codigosArr      = toArray(body.codigo);
+  const preciosListaArr = toArray(body.precio_lista);
 
-  // Usamos un Map para que, si llega el mismo proveedor repetido, se quede el último valor
   const byProveedor = new Map();
-
-  const len = Math.max(
-    proveedoresArr.length,
-    codigosArr.length,
-    preciosListaArr.length,
-    descArr.length,
-    costoNetoArr.length,
-    ivaArr.length,
-    costoIvaArr.length
-  );
+  const len = Math.max(proveedoresArr.length, codigosArr.length, preciosListaArr.length);
 
   for (let i = 0; i < len; i++) {
-    const proveedor_id = numOr0(proveedoresArr[i]);
-    if (!proveedor_id) continue; // ignorar entradas vacías/0
+    const proveedor_id = Number(proveedoresArr[i]) || 0;
+    if (!proveedor_id) continue;
 
-    const row = {
-      producto_id: numOr0(productoId),
-      proveedor_id: proveedor_id,
-      precio_lista: numOr0(preciosListaArr[i]),
-      codigo: strOrNull(codigosArr[i]),
-      descuentos_proveedor_id: numOr0(descArr[i]),   // porcentaje de descuento
-      costo_neto: numOr0(costoNetoArr[i]),
-      IVA: numOr0(ivaArr[i]) || 21,
-      costo_iva: numOr0(costoIvaArr[i])
-    };
-
-    // Guardar/overwite por proveedor_id
-    byProveedor.set(proveedor_id, row);
+    byProveedor.set(proveedor_id, {
+      producto_id: Number(productoId),
+      proveedor_id,
+      precio_lista: Number(preciosListaArr[i]) || 0,
+      codigo: (codigosArr[i] == null || String(codigosArr[i]).trim() === '') ? null : String(codigosArr[i]).trim()
+    });
   }
-
-  // Devolver como array
   return Array.from(byProveedor.values());
 }
 
@@ -801,48 +776,34 @@ actualizar: async function (req, res) {
     };
     await producto.actualizar(conexion, datosProducto);
 
-    // 2) Proveedores (upsert)
-    const filas = buildProveedorRows(productoId, req.body);
-
+    // 2) Proveedores (UPSERT SOLO columnas existentes)
+    const filas = buildProveedorRows(productoId, req.body); // puede traer campos extra; no pasa nada
     for (const row of filas) {
       await conexion.promise().query(
         `
         INSERT INTO producto_proveedor
-          (producto_id, proveedor_id, precio_lista, codigo, descuentos_proveedor_id, costo_neto, IVA, costo_iva)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          (producto_id, proveedor_id, precio_lista, codigo)
+        VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           precio_lista = VALUES(precio_lista),
-          codigo      = VALUES(codigo),
-          descuentos_proveedor_id = VALUES(descuentos_proveedor_id),
-          costo_neto  = VALUES(costo_neto),
-          IVA         = VALUES(IVA),
-          costo_iva   = VALUES(costo_iva)
+          codigo      = VALUES(codigo)
         `,
         [
-          row.producto_id, row.proveedor_id, row.precio_lista, row.codigo,
-          row.descuentos_proveedor_id, row.costo_neto, row.IVA, row.costo_iva
+          row.producto_id,
+          row.proveedor_id,
+          Number(row.precio_lista) || 0,
+          row.codigo || null
         ]
       );
     }
 
-    // (Opcional) Si querés eliminar proveedores que ya no vienen en el form:
-    // const provIdsVigentes = filas.map(f => f.proveedor_id);
-    // await conexion.promise().query(
-    //   `DELETE FROM producto_proveedor WHERE producto_id = ? AND proveedor_id NOT IN (?)`,
-    //   [productoId, provIdsVigentes.length ? provIdsVigentes : [0]]
-    // );
-
-    // 3) Proveedor asignado: prioridad manual; si no hay, el más barato
+    // 3) Proveedor asignado: prioridad manual; si no hay, el más barato por costo_iva[]
     let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
     if (!proveedorAsignado) {
-      proveedorAsignado = pickCheapestProveedorId(req.body);
+      proveedorAsignado = pickCheapestProveedorId(req.body); // devuelve proveedor_id o null
     }
-
     if (proveedorAsignado) {
       await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
-    } else {
-      // si no hay ninguno, podés limpiar el campo si tu modelo lo permite:
-      // await producto.actualizar(conexion, { id: productoId, proveedor_id: null });
     }
 
     // 4) Imágenes nuevas (opcionales)
@@ -864,6 +825,7 @@ actualizar: async function (req, res) {
     return res.status(500).send("Error: " + error.message);
   }
 },
+
 
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
