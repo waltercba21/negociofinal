@@ -25,8 +25,7 @@ function toArray(v) {
   return [v];
 }
 
-// Evita filas vacías / duplicadas (mismo producto + proveedor)
-function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr, descArr, costoNetoArr, ivaArr, costoIvaArr) {
+function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr, costoNetoArr, ivaArr, costoIvaArr) {
   const seen = new Set();
   const filas = [];
 
@@ -39,11 +38,11 @@ function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosList
     seen.add(key);
 
     filas.push({
-      producto_id: productoId,
+      producto_id: Number(productoId),
       proveedor_id,
       codigo: (codigosArr[i] ?? null) || null,
       precio_lista: Number(preciosListaArr[i]) || 0,
-      descuento: Number(descArr[i]) || 0,
+      // descuento: Number(descArr[i]) || 0, // << NO, la tabla no lo tiene
       costo_neto: Number(costoNetoArr[i]) || 0,
       IVA: Number(ivaArr[i]) || 21,
       costo_iva: Number(costoIvaArr[i]) || 0,
@@ -52,32 +51,41 @@ function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosList
   return filas;
 }
 
-// Upsert crudo con SQL: evita ER_DUP_ENTRY
 async function upsertProductoProveedorRaw(conexion, row) {
   const sql = `
     INSERT INTO producto_proveedor
-      (producto_id, proveedor_id, precio_lista, codigo, descuento, costo_neto, IVA, costo_iva)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (producto_id, proveedor_id, precio_lista, codigo, costo_neto, IVA, costo_iva)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
       precio_lista = VALUES(precio_lista),
       codigo      = VALUES(codigo),
-      descuento   = VALUES(descuento),
       costo_neto  = VALUES(costo_neto),
       IVA         = VALUES(IVA),
       costo_iva   = VALUES(costo_iva)
   `;
   const params = [
-    row.producto_id,
-    row.proveedor_id,
+    Number(row.producto_id),
+    Number(row.proveedor_id),
     Number(row.precio_lista) || 0,
     row.codigo || null,
-    Number(row.descuento) || 0,
     Number(row.costo_neto) || 0,
     Number(row.IVA) || 21,
     Number(row.costo_iva) || 0,
   ];
-  // Si usás mysql2/promise:
-  await conexion.query(sql, params);
+
+  // 1) Si tu pool/conexión expone el wrapper de promesas
+  if (conexion.promise && typeof conexion.promise === 'function') {
+    await conexion.promise().query(sql, params);
+    return;
+  }
+
+  // 2) Fallback: envolver query callback-style en una Promesa
+  await new Promise((resolve, reject) => {
+    conexion.query(sql, params, (err/*, results*/) => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
 }
 
 // ✅ Después (SIEMPRE trata el valor como proveedor_id)
