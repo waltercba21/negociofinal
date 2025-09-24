@@ -472,10 +472,6 @@ lista: async function (req, res) {
     return res.status(500).send('Error: ' + error.message);
   }
 },
-
-/* =========================
-   POST /productos (guardar)
-========================= */
 guardar: async function (req, res) {
   console.log("Inicio del controlador guardar...");
 
@@ -501,43 +497,43 @@ guardar: async function (req, res) {
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
 
-    const result = await producto.insertarProducto(conexion, datosProducto);
-    const productoId = result.insertId;
+    const insertRes = await producto.insertarProducto(conexion, datosProducto); // INSERT INTO productos SET ?
+    const productoId = insertRes && insertRes.insertId;
+    console.log('DEBUG guardar -> productoId:', productoId);
+
+    if (!productoId) {
+      // Si por alguna razón no vino insertId, abortamos con claridad
+      throw new Error('No se obtuvo insertId al crear el producto');
+    }
 
     // 2) Arrays para producto_proveedor
     const proveedoresArr = toArray(req.body.proveedores);
     const codigosArr      = toArray(req.body.codigo);
     const preciosListaArr = toArray(req.body.precio_lista);
-    const descArr         = toArray(req.body.descuentos_proveedor_id);
-    const costoNetoArr    = toArray(req.body.costo_neto);
-    const ivaArr          = toArray(req.body.IVA);
-    const costoIvaArr     = toArray(req.body.costo_iva);
 
     if (proveedoresArr.length === 0) {
       return res.status(400).send("Error: debe seleccionar al menos un proveedor.");
     }
 
-    // 3) Insertar relaciones producto_proveedor (uno por proveedor)
+    // 3) Insertar relaciones producto_proveedor (según columnas soportadas por el modelo actual)
     await Promise.all(
       proveedoresArr.map((provId, i) => {
         const datosPP = {
           producto_id: productoId,
           proveedor_id: provId || null,
           precio_lista: Number(preciosListaArr[i]) || 0,
-          codigo: codigosArr[i] || null,
-          descuento: Number(descArr[i]) || 0,
-          costo_neto: Number(costoNetoArr[i]) || 0,
-          IVA: Number(ivaArr[i]) || 21,
-          costo_iva: Number(costoIvaArr[i]) || 0
+          codigo: (Array.isArray(codigosArr) ? codigosArr[i] : codigosArr) || null
         };
         return producto.insertarProductoProveedor(conexion, datosPP);
       })
     );
 
-    // 4) Determinar proveedor asignado
+    // 4) Determinar proveedor asignado (radio o más barato por costo_iva del front)
     let asignadoId = req.body.proveedor_designado;
+    const costoIvaArr = toArray(req.body.costo_iva);
+
     if (asignadoId == null || asignadoId === '') {
-      // Elegir el más barato por costo_iva
+      // Elegimos el más barato por costo_iva
       let minIdx = -1, minVal = Infinity;
       costoIvaArr.forEach((v, i) => {
         const val = Number(v);
@@ -545,15 +541,16 @@ guardar: async function (req, res) {
       });
       if (minIdx >= 0) asignadoId = proveedoresArr[minIdx];
     } else {
-      // Si vino radio: es índice del array de proveedores
+      // Vino índice del array
       const idx = parseInt(asignadoId, 10);
-      if (!isNaN(idx) && proveedoresArr[idx] != null) {
-        asignadoId = proveedoresArr[idx];
-      }
+      if (!isNaN(idx) && proveedoresArr[idx] != null) asignadoId = proveedoresArr[idx];
     }
 
+    console.log('DEBUG guardar -> proveedor asignadoId:', asignadoId);
+
     if (asignadoId) {
-      await producto.actualizar(conexion, productoId, { proveedor_id: asignadoId });
+      // MUY IMPORTANTE: el modelo expone 'actualizar(conexion, datos)' y requiere datos.id
+      await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
     }
 
     // 5) Imágenes
