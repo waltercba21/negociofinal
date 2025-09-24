@@ -553,8 +553,7 @@ guardar: async function (req, res) {
     }
 
     if (asignadoId) {
-      // IMPORTANTE: usar actualizarProducto para setear proveedor_id
-      await producto.actualizarProducto(conexion, productoId, { proveedor_id: asignadoId });
+      await producto.actualizar(conexion, productoId, { proveedor_id: asignadoId });
     }
 
     // 5) Imágenes
@@ -670,7 +669,7 @@ actualizar: async function (req, res) {
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
 
-    await producto.actualizarProducto(conexion, productoId, datosProducto);
+    await producto.actualizar(conexion, productoId, datosProducto);
 
     // Borramos y reinsertamos relaciones (o hacé upsert si ya lo tenías)
     await producto.eliminarProveedoresDeProducto(conexion, productoId);
