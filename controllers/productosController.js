@@ -18,70 +18,51 @@ const pdfParse = require('pdf-parse');
         .toLowerCase();                          
     }
 const productosPorPagina = 10; 
-const toArray = (v) => {
+
+function toArray(v) {
   if (Array.isArray(v)) return v;
-  if (v == null) return [];
-  if (typeof v === 'string') return v.split(',').map(s => s.trim()).filter(Boolean);
+  if (v === undefined || v === null) return [];
   return [v];
-};
+}
 
-// Dedupe por proveedor_id (conserva el ÚLTIMO valor)
-const dedupeProveedorRows = (productoId, proveedoresArr, codigosArr, preciosListaArr) => {
-  const map = new Map(); // proveedor_id -> row
-  proveedoresArr.forEach((provId, i) => {
-    if (!provId) return;
-    map.set(String(provId), {
+// Evita filas vacías / duplicadas (mismo producto + proveedor)
+function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr, descArr, costoNetoArr, ivaArr, costoIvaArr) {
+  const seen = new Set();
+  const filas = [];
+
+  for (let i = 0; i < proveedoresArr.length; i++) {
+    const proveedor_id = proveedoresArr[i] ? Number(proveedoresArr[i]) : null;
+    if (!proveedor_id) continue;
+
+    const key = `${productoId}-${proveedor_id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    filas.push({
       producto_id: productoId,
-      proveedor_id: provId,
+      proveedor_id,
+      codigo: (codigosArr[i] ?? null) || null,
       precio_lista: Number(preciosListaArr[i]) || 0,
-      codigo: Array.isArray(codigosArr) ? (codigosArr[i] || null) : (codigosArr || null),
+      descuento: Number(descArr[i]) || 0,
+      costo_neto: Number(costoNetoArr[i]) || 0,
+      IVA: Number(ivaArr[i]) || 21,
+      costo_iva: Number(costoIvaArr[i]) || 0,
     });
-  });
-  return Array.from(map.values());
-};
-
-// Inserta o actualiza una fila de producto_proveedor
-const upsertProductoProveedor = async (productoModel, conexion, row) => {
-  try {
-    return await productoModel.insertarProductoProveedor(conexion, row);
-  } catch (e) {
-    if (e && (e.code === 'ER_DUP_ENTRY' || e.errno === 1062)) {
-      if (typeof productoModel.actualizarProductoProveedor === 'function') {
-        return await productoModel.actualizarProductoProveedor(conexion, row);
-      }
-      if (typeof productoModel.eliminarProductoProveedor === 'function') {
-        await productoModel.eliminarProductoProveedor(conexion, row.producto_id, row.proveedor_id);
-        return await productoModel.insertarProductoProveedor(conexion, row);
-      }
-      console.warn('DUP en producto_proveedor y no hay actualizar/eliminar en el modelo. Se ignora.');
-      return;
-    }
-    throw e;
   }
-};
+  return filas;
+}
 
-// Decide proveedor asignado (prioriza selección manual; si no hay, usa el más barato)
-const elegirProveedorAsignado = (proveedorDesignado, proveedoresArr, costoIvaArr) => {
-  // 1) Selección manual explícita (proveedor_id)
-  if (proveedorDesignado) {
-    const existe = proveedoresArr.map(String).includes(String(proveedorDesignado));
-    if (existe) return proveedorDesignado;
-    // si no coincide, devolvemos el primero como fallback
-    if (proveedoresArr.length > 0) return proveedoresArr[0];
-    return null;
+// Upsert simple: intenta update, si no tocó filas hace insert
+async function upsertProductoProveedor(modeloProducto, conexion, row) {
+  // Debes tener implementadas estas funciones en tu modelo:
+  // - actualizarProductoProveedor(conexion, { producto_id, proveedor_id, ...campos })
+  // - insertarProductoProveedor(conexion, { ...row })
+  const { producto_id, proveedor_id, ...resto } = row;
+  const afectadas = await modeloProducto.actualizarProductoProveedor(conexion, { producto_id, proveedor_id, ...resto });
+  if (!afectadas || afectadas.affectedRows === 0) {
+    await modeloProducto.insertarProductoProveedor(conexion, row);
   }
-
-  // 2) Auto: más barato por costo_iva (costoIvaArr alineado a proveedoresArr)
-  let minIdx = -1, minVal = Infinity;
-  (costoIvaArr || []).forEach((v, i) => {
-    const val = Number(v);
-    if (!isNaN(val) && val < minVal) { minVal = val; minIdx = i; }
-  });
-  if (minIdx >= 0) return proveedoresArr[minIdx] || null;
-
-  // 3) Fallback
-  return proveedoresArr[0] || null;
-};
+}
 // ✅ Después (SIEMPRE trata el valor como proveedor_id)
 const mapearProveedorDesignado = (proveedorDesignado /*, proveedoresArr no hace falta */) => {
   return (proveedorDesignado == null || proveedorDesignado === '') ? '' : String(proveedorDesignado);
@@ -534,72 +515,87 @@ lista: async function (req, res) {
   }
 },
 guardar: async function (req, res) {
-  console.log("Inicio del controlador guardar...");
+    console.log("Inicio del controlador guardar...");
+    try {
+      // 1) Insert base de producto
+      const datosProducto = {
+        nombre: req.body.nombre || null,
+        descripcion: req.body.descripcion || null,
+        categoria_id: req.body.categoria || null,
+        marca_id: req.body.marca || null,
+        modelo_id: req.body.modelo_id || null,
+        utilidad: Number(req.body.utilidad) || 0,
+        precio_venta: Number(req.body.precio_venta) || 0,
+        estado: req.body.estado || 'activo',
+        stock_minimo: Number(req.body.stock_minimo) || 0,
+        stock_actual: Number(req.body.stock_actual) || 0,
+        oferta: Number(req.body.oferta) === 1 ? 1 : 0,
+        calidad_original: req.body.calidad_original ? 1 : 0,
+        calidad_vic: req.body.calidad_vic ? 1 : 0
+      };
 
-  try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).send("Error: no se cargaron archivos");
+      const insertRes = await producto.insertarProducto(conexion, datosProducto);
+      const productoId = insertRes && insertRes.insertId;
+      if (!productoId) throw new Error('No se obtuvo insertId al crear el producto');
+
+      // 2) Arrays
+      const proveedoresArr  = toArray(req.body.proveedores);
+      const codigosArr      = toArray(req.body.codigo);
+      const preciosListaArr = toArray(req.body.precio_lista);
+      const descArr         = toArray(req.body.descuentos_proveedor_id);
+      const costoNetoArr    = toArray(req.body.costo_neto);
+      const ivaArr          = toArray(req.body.IVA);
+      const costoIvaArr     = toArray(req.body.costo_iva);
+
+      if (proveedoresArr.length === 0) {
+        return res.status(400).send("Error: debe seleccionar al menos un proveedor.");
+      }
+
+      // 3) Upsert por proveedor
+      const filas = dedupeProveedorRows(
+        productoId, proveedoresArr, codigosArr, preciosListaArr, descArr, costoNetoArr, ivaArr, costoIvaArr
+      );
+      for (const row of filas) {
+        await upsertProductoProveedor(producto, conexion, row);
+      }
+
+      // 4) Proveedor asignado: primero manual (hidden), si no hay => más barato
+      let proveedorElegido = req.body.proveedor_designado ? Number(req.body.proveedor_designado) : null;
+
+      if (!proveedorElegido) {
+        // elegir min costo_iva
+        let minVal = Infinity;
+        let minProv = null;
+        costoIvaArr.forEach((v, i) => {
+          const val = Number(v);
+          if (!isNaN(val) && val < minVal) {
+            minVal = val;
+            minProv = Number(proveedoresArr[i]);
+          }
+        });
+        proveedorElegido = minProv;
+      }
+
+      if (proveedorElegido) {
+        await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorElegido });
+      }
+
+      // 5) Imágenes (opcionales)
+      if (req.files && req.files.length > 0) {
+        await Promise.all(
+          req.files.map(f => producto.insertarImagenProducto(conexion, {
+            producto_id: productoId,
+            imagen: f.filename
+          }))
+        );
+      }
+
+      return res.redirect("/productos/panelControl");
+    } catch (error) {
+      console.error("Error durante la ejecución:", error);
+      return res.status(500).send("Error: " + error.message);
     }
-
-    // 1) Insertar PRODUCTO (solo escalares)
-    const datosProducto = {
-      nombre: req.body.nombre || null,
-      descripcion: req.body.descripcion || null,
-      categoria_id: req.body.categoria || null,
-      marca_id: req.body.marca || null,
-      modelo_id: req.body.modelo_id || null,
-      utilidad: Number(req.body.utilidad) || 0,
-      precio_venta: Number(req.body.precio_venta) || 0,
-      estado: req.body.estado || 'activo',
-      stock_minimo: Number(req.body.stock_minimo) || 0,
-      stock_actual: Number(req.body.stock_actual) || 0,
-      oferta: Number(req.body.oferta) === 1 ? 1 : 0,
-      calidad_original: req.body.calidad_original ? 1 : 0,
-      calidad_vic: req.body.calidad_vic ? 1 : 0
-    };
-
-    const insertRes = await producto.insertarProducto(conexion, datosProducto);
-    const productoId = insertRes && insertRes.insertId;
-    if (!productoId) throw new Error('No se obtuvo insertId al crear el producto');
-
-    // 2) Arrays desde el form
-    const proveedoresArr   = toArray(req.body.proveedores);     // proveedor_id[]
-    const codigosArr       = toArray(req.body.codigo);
-    const preciosListaArr  = toArray(req.body.precio_lista);
-    const costoIvaArr      = toArray(req.body.costo_iva);       // usado solo para decidir el más barato
-    const manualProveedorId = mapearProveedorDesignado(req.body.proveedor_designado, proveedoresArr);
-
-    if (proveedoresArr.length === 0) {
-      return res.status(400).send("Error: debe seleccionar al menos un proveedor.");
-    }
-
-    // 3) Dedupe y UPSERT en producto_proveedor
-    const filas = dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr);
-    for (const row of filas) {
-      await upsertProductoProveedor(producto, conexion, row);
-    }
-
-    // 4) Elegir proveedor asignado (manual ó más barato)
-    const asignadoId = elegirProveedorAsignado(manualProveedorId, proveedoresArr, costoIvaArr);
-if (asignadoId) {
-  await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
-}
-
-    // 5) Imágenes
-    await Promise.all(
-      req.files.map(f => producto.insertarImagenProducto(conexion, {
-        producto_id: productoId,
-        imagen: f.filename
-      }))
-    );
-
-    return res.redirect("/productos/panelControl");
-  } catch (error) {
-    console.error("Error durante la ejecución:", error);
-    return res.status(500).send("Error: " + error.message);
-  }
-},
-
+  },
     eliminarSeleccionados : async (req, res) => {
         const { ids } = req.body;
         try {
@@ -676,73 +672,86 @@ if (asignadoId) {
         });
     },    
 actualizar: async function (req, res) {
-  console.log("Inicio del controlador actualizar...");
+    console.log("Inicio del controlador actualizar...");
+    try {
+      const productoId = Number(req.params.id || req.body.id);
+      if (!productoId) throw new Error('Falta ID de producto');
 
-  try {
-    const productoId = req.params.id || req.body.id;
-    if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
+      // 1) Update de escalares
+      const datosUpdate = {
+        id: productoId,
+        nombre: req.body.nombre || null,
+        descripcion: req.body.descripcion || null,
+        categoria_id: req.body.categoria || null,
+        marca_id: req.body.marca || null,
+        modelo_id: req.body.modelo_id || null,
+        utilidad: Number(req.body.utilidad) || 0,
+        precio_venta: Number(req.body.precio_venta) || 0,
+        estado: req.body.estado || 'activo',
+        stock_minimo: Number(req.body.stock_minimo) || 0,
+        stock_actual: Number(req.body.stock_actual) || 0,
+        oferta: Number(req.body.oferta) === 1 ? 1 : 0,
+        calidad_original: req.body.calidad_original ? 1 : 0,
+        calidad_vic: req.body.calidad_vic ? 1 : 0
+      };
+      await producto.actualizar(conexion, datosUpdate);
 
-    // 1) Actualizar PRODUCTO (solo escalares)
-    const datosProducto = {
-      id: productoId,
-      nombre: req.body.nombre || null,
-      descripcion: req.body.descripcion || null,
-      categoria_id: req.body.categoria || null,
-      marca_id: req.body.marca || null,
-      modelo_id: req.body.modelo_id || null,
-      utilidad: Number(req.body.utilidad) || 0,
-      precio_venta: Number(req.body.precio_venta) || 0,
-      estado: req.body.estado || 'activo',
-      stock_minimo: Number(req.body.stock_minimo) || 0,
-      stock_actual: Number(req.body.stock_actual) || 0,
-      oferta: Number(req.body.oferta) === 1 ? 1 : 0,
-      calidad_original: req.body.calidad_original ? 1 : 0,
-      calidad_vic: req.body.calidad_vic ? 1 : 0
-    };
-    await producto.actualizar(conexion, datosProducto);
+      // 2) Arrays
+      const proveedoresArr  = toArray(req.body.proveedores);
+      const codigosArr      = toArray(req.body.codigo);
+      const preciosListaArr = toArray(req.body.precio_lista);
+      const descArr         = toArray(req.body.descuentos_proveedor_id);
+      const costoNetoArr    = toArray(req.body.costo_neto);
+      const ivaArr          = toArray(req.body.IVA);
+      const costoIvaArr     = toArray(req.body.costo_iva);
 
-    // 2) Arrays desde el form
-    const proveedoresArr    = toArray(req.body.proveedores);    // proveedor_id[]
-    const codigosArr        = toArray(req.body.codigo);
-    const preciosListaArr   = toArray(req.body.precio_lista);
-    const costoIvaArr       = toArray(req.body.costo_iva);      // para decidir el más barato
-    const manualProveedorId = mapearProveedorDesignado(req.body.proveedor_designado, proveedoresArr);
-
-    // (Opcional) limpiar relaciones viejas si el modelo lo soporta
-    if (typeof producto.eliminarProveedoresDeProducto === 'function') {
-      try { await producto.eliminarProveedoresDeProducto(conexion, productoId); }
-      catch (e) { console.warn('No se pudo eliminar relaciones previas:', e.message); }
-    }
-
-    // 3) Dedupe y UPSERT en producto_proveedor
-    const filas = dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr);
-    for (const row of filas) {
-      await upsertProductoProveedor(producto, conexion, row);
-    }
-
-    // 4) Elegir proveedor asignado (manual ó más barato)
-    const asignadoId = elegirProveedorAsignado(manualProveedorId, proveedoresArr, costoIvaArr);
-if (asignadoId) {
-  await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
-}
-    // 5) Imágenes nuevas (si vinieron)
-    if (req.files && req.files.length > 0) {
-      await Promise.all(
-        req.files.map(f => producto.insertarImagenProducto(conexion, {
-          producto_id: productoId,
-          imagen: f.filename
-        }))
+      // 2.a) Limpiar/Upsert de tabla producto_proveedor
+      const filas = dedupeProveedorRows(
+        productoId, proveedoresArr, codigosArr, preciosListaArr, descArr, costoNetoArr, ivaArr, costoIvaArr
       );
-    }
+      for (const row of filas) {
+        await upsertProductoProveedor(producto, conexion, row);
+      }
 
-    const pagina = encodeURIComponent(req.body.pagina || req.body.paginaActual || '');
-    const busqueda = encodeURIComponent(req.body.busqueda || '');
-    return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
-  } catch (error) {
-    console.error("Error durante la ejecución:", error);
-    return res.status(500).send("Error: " + error.message);
-  }
-},
+      // 3) Proveedor asignado: respetar manual; si no hay, usar más barato
+      let proveedorElegido = req.body.proveedor_designado ? Number(req.body.proveedor_designado) : null;
+
+      if (!proveedorElegido) {
+        let minVal = Infinity;
+        let minProv = null;
+        costoIvaArr.forEach((v, i) => {
+          const val = Number(v);
+          if (!isNaN(val) && val < minVal) {
+            minVal = val;
+            minProv = Number(proveedoresArr[i]);
+          }
+        });
+        proveedorElegido = minProv;
+      }
+
+      if (proveedorElegido) {
+        await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorElegido });
+      }
+
+      // 4) Imágenes nuevas (si llegaron)
+      if (req.files && req.files.length > 0) {
+        await Promise.all(
+          req.files.map(f => producto.insertarImagenProducto(conexion, {
+            producto_id: productoId,
+            imagen: f.filename
+          }))
+        );
+      }
+
+      // volver donde estaba el usuario
+      const pagina = req.body.pagina || 1;
+      const busqueda = req.body.busqueda ? encodeURIComponent(req.body.busqueda) : '';
+      return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
+    } catch (error) {
+      console.error("Error durante la ejecución:", error);
+      return res.status(500).send("Error: " + error.message);
+    }
+  },
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
