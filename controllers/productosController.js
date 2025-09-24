@@ -19,12 +19,51 @@ const pdfParse = require('pdf-parse');
     }
 const productosPorPagina = 10; 
 
+// Normaliza a array
 const toArray = (v) => {
   if (Array.isArray(v)) return v;
   if (v == null) return [];
   if (typeof v === 'string') return v.split(',').map(s => s.trim()).filter(Boolean);
   return [v];
 };
+
+// Dedupe por proveedor_id, conservando el ÚLTIMO valor enviado (habitual en formularios)
+const dedupeProveedorRows = (productoId, proveedoresArr, codigosArr, preciosListaArr) => {
+  const map = new Map(); // proveedor_id -> { producto_id, proveedor_id, precio_lista, codigo }
+  proveedoresArr.forEach((provId, i) => {
+    if (!provId) return;
+    map.set(String(provId), {
+      producto_id: productoId,
+      proveedor_id: provId,
+      precio_lista: Number(preciosListaArr[i]) || 0,
+      codigo: Array.isArray(codigosArr) ? (codigosArr[i] || null) : (codigosArr || null),
+    });
+  });
+  return Array.from(map.values());
+};
+
+// Inserta o actualiza (upsert) una fila producto_proveedor
+const upsertProductoProveedor = async (productoModel, conexion, row) => {
+  try {
+    return await productoModel.insertarProductoProveedor(conexion, row);
+  } catch (e) {
+    if (e && (e.code === 'ER_DUP_ENTRY' || e.errno === 1062)) {
+      // Si existe método 'actualizarProductoProveedor', lo usamos; si no, intentamos eliminar y reinsertar
+      if (typeof productoModel.actualizarProductoProveedor === 'function') {
+        return await productoModel.actualizarProductoProveedor(conexion, row);
+      }
+      if (typeof productoModel.eliminarProductoProveedor === 'function') {
+        await productoModel.eliminarProductoProveedor(conexion, row.producto_id, row.proveedor_id);
+        return await productoModel.insertarProductoProveedor(conexion, row);
+      }
+      // Fallback sin romper el flujo
+      console.warn('No hay actualizar/eliminar de producto_proveedor en el modelo. Se ignora el DUP.');
+      return;
+    }
+    throw e;
+  }
+};
+
 
 module.exports = {
     index: async (req, res) => {
@@ -497,17 +536,12 @@ guardar: async function (req, res) {
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
 
-    const insertRes = await producto.insertarProducto(conexion, datosProducto); // INSERT INTO productos SET ?
+    const insertRes = await producto.insertarProducto(conexion, datosProducto);
     const productoId = insertRes && insertRes.insertId;
-    console.log('DEBUG guardar -> productoId:', productoId);
+    if (!productoId) throw new Error('No se obtuvo insertId al crear el producto');
 
-    if (!productoId) {
-      // Si por alguna razón no vino insertId, abortamos con claridad
-      throw new Error('No se obtuvo insertId al crear el producto');
-    }
-
-    // 2) Arrays para producto_proveedor
-    const proveedoresArr = toArray(req.body.proveedores);
+    // 2) Arrays y dedupe
+    const proveedoresArr  = toArray(req.body.proveedores);
     const codigosArr      = toArray(req.body.codigo);
     const preciosListaArr = toArray(req.body.precio_lista);
 
@@ -515,25 +549,18 @@ guardar: async function (req, res) {
       return res.status(400).send("Error: debe seleccionar al menos un proveedor.");
     }
 
-    // 3) Insertar relaciones producto_proveedor (según columnas soportadas por el modelo actual)
-    await Promise.all(
-      proveedoresArr.map((provId, i) => {
-        const datosPP = {
-          producto_id: productoId,
-          proveedor_id: provId || null,
-          precio_lista: Number(preciosListaArr[i]) || 0,
-          codigo: (Array.isArray(codigosArr) ? codigosArr[i] : codigosArr) || null
-        };
-        return producto.insertarProductoProveedor(conexion, datosPP);
-      })
-    );
+    const filas = dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr);
 
-    // 4) Determinar proveedor asignado (radio o más barato por costo_iva del front)
+    // 3) UPSERT por fila
+    for (const row of filas) {
+      await upsertProductoProveedor(producto, conexion, row);
+    }
+
+    // 4) Proveedor asignado (índice del radio o más barato por costo_iva)
     let asignadoId = req.body.proveedor_designado;
     const costoIvaArr = toArray(req.body.costo_iva);
 
     if (asignadoId == null || asignadoId === '') {
-      // Elegimos el más barato por costo_iva
       let minIdx = -1, minVal = Infinity;
       costoIvaArr.forEach((v, i) => {
         const val = Number(v);
@@ -541,26 +568,20 @@ guardar: async function (req, res) {
       });
       if (minIdx >= 0) asignadoId = proveedoresArr[minIdx];
     } else {
-      // Vino índice del array
       const idx = parseInt(asignadoId, 10);
       if (!isNaN(idx) && proveedoresArr[idx] != null) asignadoId = proveedoresArr[idx];
     }
 
-    console.log('DEBUG guardar -> proveedor asignadoId:', asignadoId);
-
     if (asignadoId) {
-      // MUY IMPORTANTE: el modelo expone 'actualizar(conexion, datos)' y requiere datos.id
       await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
     }
 
     // 5) Imágenes
     await Promise.all(
-      req.files.map(f =>
-        producto.insertarImagenProducto(conexion, {
-          producto_id: productoId,
-          imagen: f.filename
-        })
-      )
+      req.files.map(f => producto.insertarImagenProducto(conexion, {
+        producto_id: productoId,
+        imagen: f.filename
+      }))
     );
 
     return res.redirect("/productos/panelControl");
@@ -569,6 +590,7 @@ guardar: async function (req, res) {
     return res.status(500).send("Error: " + error.message);
   }
 },
+
     eliminarSeleccionados : async (req, res) => {
         const { ids } = req.body;
         try {
@@ -648,11 +670,8 @@ actualizar: async function (req, res) {
   console.log("Inicio del controlador actualizar...");
 
   try {
-    // 0) ID del producto (OBLIGATORIO para el modelo.actualizar)
     const productoId = req.params.id || req.body.id;
-    if (!productoId) {
-      throw new Error('Los datos del producto deben incluir un ID');
-    }
+    if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
 
     // 1) Actualizar PRODUCTO (solo escalares)
     const datosProducto = {
@@ -670,39 +689,28 @@ actualizar: async function (req, res) {
       oferta: Number(req.body.oferta) === 1 ? 1 : 0,
       calidad_original: req.body.calidad_original ? 1 : 0,
       calidad_vic: req.body.calidad_vic ? 1 : 0
-      // proveedor_id lo seteamos más abajo, luego de decidir el asignado
     };
-
     await producto.actualizar(conexion, datosProducto);
 
-    // 2) Proveedores: BORRAR y REINSERTAR (si existe el método)
-    const proveedoresArr = toArray(req.body.proveedores);
+    // 2) Arrays y dedupe de proveedores
+    const proveedoresArr  = toArray(req.body.proveedores);
     const codigosArr      = toArray(req.body.codigo);
     const preciosListaArr = toArray(req.body.precio_lista);
 
-    // Si tenés el método para limpiar relaciones, lo usamos; si no, seguimos
+    // (Opcional) borrar relaciones viejas si tu modelo lo soporta — evita basura huérfana
     if (typeof producto.eliminarProveedoresDeProducto === 'function') {
-      try {
-        await producto.eliminarProveedoresDeProducto(conexion, productoId);
-      } catch (e) {
-        console.warn('No se pudo eliminar proveedores existentes (continuo):', e.message);
-      }
+      try { await producto.eliminarProveedoresDeProducto(conexion, productoId); }
+      catch (e) { console.warn('No se pudo eliminar relaciones previas:', e.message); }
     }
 
-    // Insertar relaciones actuales (usa las columnas soportadas por tu modelo hoy)
-    await Promise.all(
-      proveedoresArr.map((provId, i) => {
-        const datosPP = {
-          producto_id: productoId,
-          proveedor_id: provId || null,
-          precio_lista: Number(preciosListaArr[i]) || 0,
-          codigo: (Array.isArray(codigosArr) ? codigosArr[i] : codigosArr) || null
-        };
-        return producto.insertarProductoProveedor(conexion, datosPP);
-      })
-    );
+    const filas = dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr);
 
-    // 3) Proveedor asignado: índice del radio o el más barato por costo_iva del front
+    // 3) UPSERT por fila (inserta o actualiza si ya existe)
+    for (const row of filas) {
+      await upsertProductoProveedor(producto, conexion, row);
+    }
+
+    // 4) Proveedor asignado (índice o más barato por costo_iva)
     let asignadoId = req.body.proveedor_designado;
     const costoIvaArr = toArray(req.body.costo_iva);
 
@@ -722,19 +730,16 @@ actualizar: async function (req, res) {
       await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
     }
 
-    // 4) Imágenes nuevas (si llegaron archivos en la edición)
+    // 5) Imágenes nuevas (si vinieron)
     if (req.files && req.files.length > 0) {
       await Promise.all(
-        req.files.map(f =>
-          producto.insertarImagenProducto(conexion, {
-            producto_id: productoId,
-            imagen: f.filename
-          })
-        )
+        req.files.map(f => producto.insertarImagenProducto(conexion, {
+          producto_id: productoId,
+          imagen: f.filename
+        }))
       );
     }
 
-    // 5) Redirección post-actualización
     const pagina = encodeURIComponent(req.body.pagina || req.body.paginaActual || '');
     const busqueda = encodeURIComponent(req.body.busqueda || '');
     return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
@@ -743,6 +748,7 @@ actualizar: async function (req, res) {
     return res.status(500).send("Error: " + error.message);
   }
 },
+
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
