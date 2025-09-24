@@ -167,8 +167,18 @@
                   </div>
                 <% }); %>
               <% } else { %>
-                <!-- Si no hay proveedores, renderizamos un bloque base para clonar -->
+                <!-- Si no hay proveedores, renderizamos un bloque base para clonar (con radio incluido) -->
                 <div class="proveedor">
+                  <div class="form-group-crear">
+                    <label>
+                      <input type="radio"
+                             name="proveedor_designado_radio"
+                             class="proveedor-designado-radio"
+                             value="">
+                      Usar este proveedor
+                    </label>
+                  </div>
+
                   <div class="form-group-crear">
                     <label class="label-proveedor">Proveedor <span class="nombre_proveedor"></span></label>
                     <select class="proveedores form-control" name="proveedores[]">

@@ -82,6 +82,16 @@ const elegirProveedorAsignado = (proveedorDesignado, proveedoresArr, costoIvaArr
   // 3) Fallback
   return proveedoresArr[0] || null;
 };
+const mapearProveedorDesignado = (proveedorDesignado, proveedoresArr) => {
+  if (proveedorDesignado == null || proveedorDesignado === '') return '';
+  // ¿es un índice?
+  const idx = parseInt(proveedorDesignado, 10);
+  if (!Number.isNaN(idx) && proveedoresArr[idx] != null) {
+    return proveedoresArr[idx]; // ← devuelve proveedor_id
+  }
+  // si no es índice, asumimos que ya es un proveedor_id
+  return proveedorDesignado;
+};
 module.exports = {
     index: async (req, res) => {
         try {
@@ -562,7 +572,7 @@ guardar: async function (req, res) {
     const codigosArr       = toArray(req.body.codigo);
     const preciosListaArr  = toArray(req.body.precio_lista);
     const costoIvaArr      = toArray(req.body.costo_iva);       // usado solo para decidir el más barato
-    const manualProveedorId = req.body.proveedor_designado || ''; // proveedor_id si el admin eligió manual
+    const manualProveedorId = mapearProveedorDesignado(req.body.proveedor_designado, proveedoresArr);
 
     if (proveedoresArr.length === 0) {
       return res.status(400).send("Error: debe seleccionar al menos un proveedor.");
@@ -576,9 +586,9 @@ guardar: async function (req, res) {
 
     // 4) Elegir proveedor asignado (manual ó más barato)
     const asignadoId = elegirProveedorAsignado(manualProveedorId, proveedoresArr, costoIvaArr);
-    if (asignadoId) {
-      await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
-    }
+if (asignadoId) {
+  await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
+}
 
     // 5) Imágenes
     await Promise.all(
@@ -701,7 +711,7 @@ actualizar: async function (req, res) {
     const codigosArr        = toArray(req.body.codigo);
     const preciosListaArr   = toArray(req.body.precio_lista);
     const costoIvaArr       = toArray(req.body.costo_iva);      // para decidir el más barato
-    const manualProveedorId = req.body.proveedor_designado || '';// proveedor_id si el admin eligió manual
+    const manualProveedorId = mapearProveedorDesignado(req.body.proveedor_designado, proveedoresArr);
 
     // (Opcional) limpiar relaciones viejas si el modelo lo soporta
     if (typeof producto.eliminarProveedoresDeProducto === 'function') {
@@ -717,10 +727,9 @@ actualizar: async function (req, res) {
 
     // 4) Elegir proveedor asignado (manual ó más barato)
     const asignadoId = elegirProveedorAsignado(manualProveedorId, proveedoresArr, costoIvaArr);
-    if (asignadoId) {
-      await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
-    }
-
+if (asignadoId) {
+  await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
+}
     // 5) Imágenes nuevas (si vinieron)
     if (req.files && req.files.length > 0) {
       await Promise.all(
