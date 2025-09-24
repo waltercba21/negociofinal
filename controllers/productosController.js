@@ -18,8 +18,6 @@ const pdfParse = require('pdf-parse');
         .toLowerCase();                          
     }
 const productosPorPagina = 10; 
-
-// Normaliza a array
 const toArray = (v) => {
   if (Array.isArray(v)) return v;
   if (v == null) return [];
@@ -27,9 +25,9 @@ const toArray = (v) => {
   return [v];
 };
 
-// Dedupe por proveedor_id, conservando el ÚLTIMO valor enviado (habitual en formularios)
+// Dedupe por proveedor_id (conserva el ÚLTIMO valor)
 const dedupeProveedorRows = (productoId, proveedoresArr, codigosArr, preciosListaArr) => {
-  const map = new Map(); // proveedor_id -> { producto_id, proveedor_id, precio_lista, codigo }
+  const map = new Map(); // proveedor_id -> row
   proveedoresArr.forEach((provId, i) => {
     if (!provId) return;
     map.set(String(provId), {
@@ -42,13 +40,12 @@ const dedupeProveedorRows = (productoId, proveedoresArr, codigosArr, preciosList
   return Array.from(map.values());
 };
 
-// Inserta o actualiza (upsert) una fila producto_proveedor
+// Inserta o actualiza una fila de producto_proveedor
 const upsertProductoProveedor = async (productoModel, conexion, row) => {
   try {
     return await productoModel.insertarProductoProveedor(conexion, row);
   } catch (e) {
     if (e && (e.code === 'ER_DUP_ENTRY' || e.errno === 1062)) {
-      // Si existe método 'actualizarProductoProveedor', lo usamos; si no, intentamos eliminar y reinsertar
       if (typeof productoModel.actualizarProductoProveedor === 'function') {
         return await productoModel.actualizarProductoProveedor(conexion, row);
       }
@@ -56,15 +53,35 @@ const upsertProductoProveedor = async (productoModel, conexion, row) => {
         await productoModel.eliminarProductoProveedor(conexion, row.producto_id, row.proveedor_id);
         return await productoModel.insertarProductoProveedor(conexion, row);
       }
-      // Fallback sin romper el flujo
-      console.warn('No hay actualizar/eliminar de producto_proveedor en el modelo. Se ignora el DUP.');
+      console.warn('DUP en producto_proveedor y no hay actualizar/eliminar en el modelo. Se ignora.');
       return;
     }
     throw e;
   }
 };
 
+// Decide proveedor asignado (prioriza selección manual; si no hay, usa el más barato)
+const elegirProveedorAsignado = (proveedorDesignado, proveedoresArr, costoIvaArr) => {
+  // 1) Selección manual explícita (proveedor_id)
+  if (proveedorDesignado) {
+    const existe = proveedoresArr.map(String).includes(String(proveedorDesignado));
+    if (existe) return proveedorDesignado;
+    // si no coincide, devolvemos el primero como fallback
+    if (proveedoresArr.length > 0) return proveedoresArr[0];
+    return null;
+  }
 
+  // 2) Auto: más barato por costo_iva (costoIvaArr alineado a proveedoresArr)
+  let minIdx = -1, minVal = Infinity;
+  (costoIvaArr || []).forEach((v, i) => {
+    const val = Number(v);
+    if (!isNaN(val) && val < minVal) { minVal = val; minIdx = i; }
+  });
+  if (minIdx >= 0) return proveedoresArr[minIdx] || null;
+
+  // 3) Fallback
+  return proveedoresArr[0] || null;
+};
 module.exports = {
     index: async (req, res) => {
         try {
@@ -540,38 +557,25 @@ guardar: async function (req, res) {
     const productoId = insertRes && insertRes.insertId;
     if (!productoId) throw new Error('No se obtuvo insertId al crear el producto');
 
-    // 2) Arrays y dedupe
-    const proveedoresArr  = toArray(req.body.proveedores);
-    const codigosArr      = toArray(req.body.codigo);
-    const preciosListaArr = toArray(req.body.precio_lista);
+    // 2) Arrays desde el form
+    const proveedoresArr   = toArray(req.body.proveedores);     // proveedor_id[]
+    const codigosArr       = toArray(req.body.codigo);
+    const preciosListaArr  = toArray(req.body.precio_lista);
+    const costoIvaArr      = toArray(req.body.costo_iva);       // usado solo para decidir el más barato
+    const manualProveedorId = req.body.proveedor_designado || ''; // proveedor_id si el admin eligió manual
 
     if (proveedoresArr.length === 0) {
       return res.status(400).send("Error: debe seleccionar al menos un proveedor.");
     }
 
+    // 3) Dedupe y UPSERT en producto_proveedor
     const filas = dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr);
-
-    // 3) UPSERT por fila
     for (const row of filas) {
       await upsertProductoProveedor(producto, conexion, row);
     }
 
-    // 4) Proveedor asignado (índice del radio o más barato por costo_iva)
-    let asignadoId = req.body.proveedor_designado;
-    const costoIvaArr = toArray(req.body.costo_iva);
-
-    if (asignadoId == null || asignadoId === '') {
-      let minIdx = -1, minVal = Infinity;
-      costoIvaArr.forEach((v, i) => {
-        const val = Number(v);
-        if (!isNaN(val) && val < minVal) { minVal = val; minIdx = i; }
-      });
-      if (minIdx >= 0) asignadoId = proveedoresArr[minIdx];
-    } else {
-      const idx = parseInt(asignadoId, 10);
-      if (!isNaN(idx) && proveedoresArr[idx] != null) asignadoId = proveedoresArr[idx];
-    }
-
+    // 4) Elegir proveedor asignado (manual ó más barato)
+    const asignadoId = elegirProveedorAsignado(manualProveedorId, proveedoresArr, costoIvaArr);
     if (asignadoId) {
       await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
     }
@@ -692,40 +696,27 @@ actualizar: async function (req, res) {
     };
     await producto.actualizar(conexion, datosProducto);
 
-    // 2) Arrays y dedupe de proveedores
-    const proveedoresArr  = toArray(req.body.proveedores);
-    const codigosArr      = toArray(req.body.codigo);
-    const preciosListaArr = toArray(req.body.precio_lista);
+    // 2) Arrays desde el form
+    const proveedoresArr    = toArray(req.body.proveedores);    // proveedor_id[]
+    const codigosArr        = toArray(req.body.codigo);
+    const preciosListaArr   = toArray(req.body.precio_lista);
+    const costoIvaArr       = toArray(req.body.costo_iva);      // para decidir el más barato
+    const manualProveedorId = req.body.proveedor_designado || '';// proveedor_id si el admin eligió manual
 
-    // (Opcional) borrar relaciones viejas si tu modelo lo soporta — evita basura huérfana
+    // (Opcional) limpiar relaciones viejas si el modelo lo soporta
     if (typeof producto.eliminarProveedoresDeProducto === 'function') {
       try { await producto.eliminarProveedoresDeProducto(conexion, productoId); }
       catch (e) { console.warn('No se pudo eliminar relaciones previas:', e.message); }
     }
 
+    // 3) Dedupe y UPSERT en producto_proveedor
     const filas = dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr);
-
-    // 3) UPSERT por fila (inserta o actualiza si ya existe)
     for (const row of filas) {
       await upsertProductoProveedor(producto, conexion, row);
     }
 
-    // 4) Proveedor asignado (índice o más barato por costo_iva)
-    let asignadoId = req.body.proveedor_designado;
-    const costoIvaArr = toArray(req.body.costo_iva);
-
-    if (asignadoId == null || asignadoId === '') {
-      let minIdx = -1, minVal = Infinity;
-      costoIvaArr.forEach((v, i) => {
-        const val = Number(v);
-        if (!isNaN(val) && val < minVal) { minVal = val; minIdx = i; }
-      });
-      if (minIdx >= 0) asignadoId = proveedoresArr[minIdx];
-    } else {
-      const idx = parseInt(asignadoId, 10);
-      if (!isNaN(idx) && proveedoresArr[idx] != null) asignadoId = proveedoresArr[idx];
-    }
-
+    // 4) Elegir proveedor asignado (manual ó más barato)
+    const asignadoId = elegirProveedorAsignado(manualProveedorId, proveedoresArr, costoIvaArr);
     if (asignadoId) {
       await producto.actualizar(conexion, { id: productoId, proveedor_id: asignadoId });
     }
@@ -748,7 +739,6 @@ actualizar: async function (req, res) {
     return res.status(500).send("Error: " + error.message);
   }
 },
-
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {

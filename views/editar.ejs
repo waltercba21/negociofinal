@@ -13,6 +13,8 @@
             <input type="hidden" name="busqueda" value="<%= producto.busqueda || '' %>">
             <input type="hidden" name="id" value="<%= producto.id %>">
             <input type="hidden" name="paginaActual" value="<%= producto.paginaActual %>">
+            <!-- Hidden donde guardamos SIEMPRE el proveedor_id elegido -->
+            <input type="hidden" id="proveedor_designado" name="proveedor_designado" value="<%= producto.proveedor_id || '' %>">
 
             <!-- ============ CARACTERÍSTICAS ============ -->
             <div class="caracteristicas">
@@ -23,7 +25,7 @@
 
                 <div id="preview" class="imagen-miniatura-contenedor">
                   <% if (producto && producto.imagenes && producto.imagenes.length > 0) { %>
-                    <% producto.imagenes.forEach((imagen, index) => { %>
+                    <% producto.imagenes.forEach((imagen) => { %>
                       <div data-imagen-id="<%= imagen.id %>" class="preview-img">
                         <img class="imagen-miniatura" src="<%= imagen.imagen %>" alt="Imagen del producto">
                       </div>
@@ -91,22 +93,22 @@
                 <input type="checkbox" id="calidad_vic" name="calidad_vic" value="1" <%= producto.calidad_vic === 1 ? 'checked' : '' %>>
               </div>
 
-              <!-- Indicador del proveedor asignado (más barato) -->
+              <!-- Indicador del proveedor asignado -->
               <div class="form-group-crear">
-                <label>Proveedor asignado (automático por costo IVA más bajo):</label>
+                <label>Proveedor asignado:</label>
                 <div id="proveedorAsignado" class="texto-resaltado"></div>
               </div>
 
               <% if (productoProveedores && productoProveedores.length > 0) { %>
-                <% productoProveedores.forEach(function(productoProveedor, index) { %>
+                <% productoProveedores.forEach(function(productoProveedor) { %>
                   <div class="proveedor">
                     <div class="form-group-crear">
                       <label>
                         <input type="radio"
-                               name="proveedor_designado"
+                               name="proveedor_designado_radio"
                                class="proveedor-designado-radio"
-                               value="<%= index %>"
-                               <%= (producto.proveedor_id && producto.proveedor_id === productoProveedor.proveedor_id) ? 'checked' : '' %>>
+                               value="<%= productoProveedor.proveedor_id %>"
+                               <%= (producto.proveedor_id && producto.proveedor_id === productoProveedor.proveedor_id) ? 'checked' : '' %> >
                         Usar este proveedor
                       </label>
                     </div>
@@ -140,7 +142,7 @@
                     </div>
 
                     <div class="form-group-crear">
-                      <label>Costo Neto</label>
+                      <label>Precio de costo (Neto)</label>
                       <input class="costo_neto form-control" type="number" name="costo_neto[]" value="<%= productoProveedor.costo_neto %>" readonly>
                     </div>
 
@@ -150,7 +152,7 @@
                     </div>
 
                     <div class="form-group-crear">
-                      <label>Costo Neto con IVA</label>
+                      <label>Precio de costo con IVA</label>
                       <input class="costo_iva form-control" type="number" name="costo_iva[]" step="0.01"
                              value="<%= (typeof productoProveedor.costo_iva === 'number'
                                       ? productoProveedor.costo_iva
@@ -194,12 +196,24 @@
                     <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
                   </div>
 
-                  <input type="hidden" class="costo_neto" name="costo_neto[]" value="0">
-                  <input type="hidden" class="IVA" name="IVA[]" value="21">
-                  <input type="hidden" class="costo_iva" name="costo_iva[]" value="0">
+                  <div class="form-group-crear">
+                    <label>Precio de costo (Neto)</label>
+                    <input type="number" class="costo_neto form-control" name="costo_neto[]" value="0" readonly>
+                  </div>
+
+                  <div class="form-group-crear">
+                    <label>IVA</label>
+                    <input type="number" class="IVA form-control" name="IVA[]" value="21" readonly>
+                  </div>
+
+                  <div class="form-group-crear">
+                    <label>Precio de costo con IVA</label>
+                    <input type="number" class="costo_iva form-control" name="costo_iva[]" value="0" step="0.01">
+                  </div>
                 </div>
               <% } %>
 
+              <!-- Botón + SIEMPRE fuera del bloque .proveedor -->
               <div class="form-group-crear">
                 <button id="addProveedor" type="button" class="btn btn-secondary">+ Agregar proveedor</button>
               </div>
@@ -254,14 +268,15 @@
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.10.2/Sortable.min.js"></script>
 
-  <!-- JS de edición (si tu lógica de “crear” y “editar” comparten script, podés apuntar a /js/crear.js) -->
+  <!-- JS de edición -->
   <script src="/js/editar.js"></script>
 
   <script>
-    console.log("📝 DEBUG - input[name='pagina']:", document.querySelector('input[name="pagina"]').value);
-    console.log("📝 DEBUG - input[name='busqueda']:", document.querySelector('input[name="busqueda"]').value);
+    // Logs útiles
+    console.log("📝 DEBUG - input[name='pagina']:", document.querySelector('input[name="pagina"]')?.value);
+    console.log("📝 DEBUG - input[name='busqueda']:", document.querySelector('input[name="busqueda"]')?.value);
 
-    // Si al entrar la marca ya está seleccionada, refrescamos modelos por marca para mantener coherencia.
+    // Si al entrar la marca ya está seleccionada, refrescamos modelos por marca
     (function initModeloSeleccionado() {
       var marcaSel = document.getElementById('marca')?.value;
       var modeloSel = document.getElementById('modelo_id')?.getAttribute('data-selected');
