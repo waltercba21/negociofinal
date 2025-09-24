@@ -18,6 +18,14 @@ const pdfParse = require('pdf-parse');
         .toLowerCase();                          
     }
 const productosPorPagina = 10; 
+
+const toArray = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v == null) return [];
+  if (typeof v === 'string') return v.split(',').map(s => s.trim()).filter(Boolean);
+  return [v];
+};
+
 module.exports = {
     index: async (req, res) => {
         try {
@@ -459,93 +467,95 @@ lista: async function (req, res) {
             return res.status(500).send('Error: ' + error.message);
         });
     },
- // productosController.js
-guardar: function (req, res) {
+guardar: async function (req, res) {
   console.log("Inicio del controlador guardar...");
 
-  // 1) Normalización robusta a array para cualquier input (string, string separado por comas, valor único o array)
-  const toArray = (v) => {
-    if (Array.isArray(v)) return v;
-    if (v == null) return [];
-    if (typeof v === 'string') {
-      // admitir "A,B,C" o " A , B , C "
-      return v.split(',').map(s => s.trim()).filter(Boolean);
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).send("Error: no se cargaron archivos");
     }
-    return [v];
-  };
 
-  // 2) Validaciones básicas
-  const proveedoresArr = toArray(req.body.proveedores);
-  if (proveedoresArr.length === 0) {
-    return res.status(400).send("Error: proveedor_id no puede ser nulo");
-  }
+    // Campos escalares del producto (¡no metas arrays acá!)
+    const datosProducto = {
+      nombre: req.body.nombre || null,
+      descripcion: req.body.descripcion || null,
+      categoria_id: req.body.categoria || null,
+      marca_id: req.body.marca || null,
+      modelo_id: req.body.modelo_id || null,
+      utilidad: req.body.utilidad || 0,
+      precio_venta: req.body.precio_venta || 0,
+      estado: req.body.estado || 'activo',
+      stock_minimo: req.body.stock_minimo || 0,
+      stock_actual: req.body.stock_actual || 0,
+      oferta: Number(req.body.oferta) === 1 ? 1 : 0,
+      calidad_original: req.body.calidad_original ? 1 : 0,
+      calidad_vic: req.body.calidad_vic ? 1 : 0
+    };
 
-  // Imágenes (si en tu flujo es obligatorio)
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).send("Error: no se cargaron archivos");
-  }
+    // Insert del producto base
+    const result = await producto.insertarProducto(conexion, datosProducto);
+    const productoId = result.insertId;
 
-  // 3) Datos del producto
-  const datosProducto = {
-    nombre: req.body.nombre,
-    descripcion: req.body.descripcion,
-    categoria_id: req.body.categoria,
-    marca_id: req.body.marca,
-    modelo_id: req.body.modelo_id,
-    descuentos_proveedor_id: req.body.descuentos_proveedor_id,
-    costo_neto: req.body.costo_neto,
-    IVA: req.body.IVA,
-    costo_iva: req.body.costo_iva,
-    utilidad: req.body.utilidad,
-    precio_venta: req.body.precio_venta,
-    estado: req.body.estado,
-    stock_minimo: req.body.stock_minimo,
-    stock_actual: req.body.stock_actual,
-    oferta: Number(req.body.oferta) === 1 ? 1 : 0,
-    calidad_original: req.body.calidad_original_fitam ? 1 : 0,
-    calidad_vic: req.body.calidad_vic ? 1 : 0,
-  };
+    // Arrays de proveedores
+    const proveedoresArr = toArray(req.body.proveedores);
+    const codigosArr      = toArray(req.body.codigo);
+    const preciosListaArr = toArray(req.body.precio_lista);
+    const descArr         = toArray(req.body.descuentos_proveedor_id);
+    const costoNetoArr    = toArray(req.body.costo_neto);
+    const ivaArr          = toArray(req.body.IVA);
+    const costoIvaArr     = toArray(req.body.costo_iva);
 
-  // 4) Insertar producto y luego proveedores/imágenes
-  producto
-    .insertarProducto(conexion, datosProducto)
-    .then((result) => {
-      const productoId = result.insertId;
-
-      // **AQUÍ EL CAMBIO**: normalizamos arrays de proveedores/códigos/listas
-      const codigosArr      = toArray(req.body.codigo);
-      const preciosListaArr = toArray(req.body.precio_lista);
-
-      const proveedores = proveedoresArr.map((proveedorId, index) => ({
-        id: proveedorId,
-        codigo: codigosArr[index] || '',                 // tolerante a faltantes
-        precio_lista: preciosListaArr[index] || 0
-      }));
-
-      const promesasProveedor = proveedores.map((prov) => {
-        const datosPP = {
-          producto_id: productoId,
-          proveedor_id: prov.id,
-          precio_lista: prov.precio_lista,
-          codigo: prov.codigo,
-        };
-        return producto.insertarProductoProveedor(conexion, datosPP);
-      });
-
-      const promesasImagenes = req.files.map((file) =>
-        producto.insertarImagenProducto(conexion, {
-          producto_id: productoId,
-          imagen: file.filename
-        })
-      );
-
-      return Promise.allSettled([...promesasProveedor, ...promesasImagenes]);
-    })
-    .then(() => res.redirect("/productos/panelControl"))
-    .catch((error) => {
-      console.error("Error durante la ejecución:", error);
-      res.status(500).send("Error: " + error.message);
+    // Insert por cada proveedor
+    const insertsPP = proveedoresArr.map((provId, i) => {
+      const datosPP = {
+        producto_id: productoId,
+        proveedor_id: provId || null,
+        precio_lista: preciosListaArr[i] || 0,
+        codigo: codigosArr[i] || null,
+        descuento: descArr[i] || 0,
+        costo_neto: costoNetoArr[i] || 0,
+        IVA: ivaArr[i] || 21,
+        costo_iva: costoIvaArr[i] || 0
+      };
+      return producto.insertarProductoProveedor(conexion, datosPP);
     });
+    await Promise.all(insertsPP);
+
+    // Proveedor asignado: si no viene radio, usamos el más barato por costo_iva
+    let asignadoId = req.body.proveedor_designado;
+    if (asignadoId == null || asignadoId === '') {
+      // buscar índice del min costo_iva
+      let minIdx = -1, minVal = Infinity;
+      costoIvaArr.forEach((v, i) => {
+        const val = parseFloat(v);
+        if (!isNaN(val) && val < minVal) { minVal = val; minIdx = i; }
+      });
+      if (minIdx >= 0) asignadoId = proveedoresArr[minIdx];
+    } else {
+      // si vino radio: proveedor_designado es índice del array
+      const idx = parseInt(asignadoId, 10);
+      if (!isNaN(idx) && proveedoresArr[idx] != null) asignadoId = proveedoresArr[idx];
+    }
+
+    if (asignadoId) {
+      await producto.actualizarProveedorAsignado(conexion, {
+        producto_id: productoId,
+        proveedor_id: asignadoId
+      });
+    }
+
+    // Imágenes
+    const promImgs = req.files.map(f => producto.insertarImagenProducto(conexion, {
+      producto_id: productoId,
+      imagen: f.filename
+    }));
+    await Promise.all(promImgs);
+
+    return res.redirect("/productos/panelControl");
+  } catch (error) {
+    console.error("Error durante la ejecución:", error);
+    return res.status(500).send("Error: " + error.message);
+  }
 },
     eliminarSeleccionados : async (req, res) => {
         const { ids } = req.body;
@@ -622,123 +632,92 @@ guardar: function (req, res) {
             }
         });
     },    
-  actualizar: function(req, res) {
-  if (!req.body.proveedores || req.body.proveedores.length === 0) {
-    res.status(400).send('Error: proveedor_id no puede ser nulo');
-    return;
-  }
+actualizar: async function (req, res) {
+  console.log("Inicio del controlador actualizar...");
 
-  // Arrays que vienen del form
-  const arrProveedores = req.body.proveedores;             // [proveedor_id,...]
-  const arrDescuentos  = req.body.descuentos_proveedor_id; // [%...]
-  const arrCostoNeto   = req.body.costo_neto;              // [...]
-  const arrIVA         = req.body.IVA;                     // [...]
-  const arrCostoIVA    = req.body.costo_iva;               // [...]
+  try {
+    const productoId = req.params.id;
 
-  // 1) Determinar índice base
-  let idx = null;
-  if (typeof req.body.proveedor_designado !== 'undefined' && req.body.proveedor_designado !== '') {
-    idx = parseInt(req.body.proveedor_designado, 10);
-    if (Number.isNaN(idx) || idx < 0 || idx >= arrProveedores.length) idx = null;
-  }
+    const datosProducto = {
+      nombre: req.body.nombre || null,
+      descripcion: req.body.descripcion || null,
+      categoria_id: req.body.categoria || null,
+      marca_id: req.body.marca || null,
+      modelo_id: req.body.modelo_id || null,
+      utilidad: req.body.utilidad || 0,
+      precio_venta: req.body.precio_venta || 0,
+      estado: req.body.estado || 'activo',
+      stock_minimo: req.body.stock_minimo || 0,
+      stock_actual: req.body.stock_actual || 0,
+      oferta: Number(req.body.oferta) === 1 ? 1 : 0,
+      calidad_original: req.body.calidad_original ? 1 : 0,
+      calidad_vic: req.body.calidad_vic ? 1 : 0
+    };
 
-  if (idx === null) {
-    // fallback: más barato por costo_iva
-    let min = Infinity, minIdx = 0;
-    (arrCostoIVA || []).forEach((v, i) => {
-      const n = parseFloat(v);
-      if (!Number.isNaN(n) && n < min) { min = n; minIdx = i; }
+    await producto.actualizarProducto(conexion, productoId, datosProducto);
+
+    // Borramos y reinsertamos relaciones (o hacé upsert si ya lo tenías)
+    await producto.eliminarProveedoresDeProducto(conexion, productoId);
+
+    const proveedoresArr = toArray(req.body.proveedores);
+    const codigosArr      = toArray(req.body.codigo);
+    const preciosListaArr = toArray(req.body.precio_lista);
+    const descArr         = toArray(req.body.descuentos_proveedor_id);
+    const costoNetoArr    = toArray(req.body.costo_neto);
+    const ivaArr          = toArray(req.body.IVA);
+    const costoIvaArr     = toArray(req.body.costo_iva);
+
+    const insertsPP = proveedoresArr.map((provId, i) => {
+      const datosPP = {
+        producto_id: productoId,
+        proveedor_id: provId || null,
+        precio_lista: preciosListaArr[i] || 0,
+        codigo: codigosArr[i] || null,
+        descuento: descArr[i] || 0,
+        costo_neto: costoNetoArr[i] || 0,
+        IVA: ivaArr[i] || 21,
+        costo_iva: costoIvaArr[i] || 0
+      };
+      return producto.insertarProductoProveedor(conexion, datosPP);
     });
-    idx = minIdx;
-  }
+    await Promise.all(insertsPP);
 
-  // 2) Armar datos coherentes usando el índice elegido
-  const proveedorElegidoId = Array.isArray(arrProveedores) ? arrProveedores[idx] : arrProveedores;
-  const descuentoElegido   = Array.isArray(arrDescuentos)  ? arrDescuentos[idx]  : arrDescuentos;
-  const costoNetoElegido   = Array.isArray(arrCostoNeto)   ? arrCostoNeto[idx]   : arrCostoNeto;
-  const ivaElegido         = Array.isArray(arrIVA)         ? arrIVA[idx]         : arrIVA;
-  const costoIvaElegido    = Array.isArray(arrCostoIVA)    ? arrCostoIVA[idx]    : arrCostoIVA;
+    // Proveedor asignado (radio o más barato)
+    let asignadoId = req.body.proveedor_designado;
+    if (asignadoId == null || asignadoId === '') {
+      let minIdx = -1, minVal = Infinity;
+      costoIvaArr.forEach((v, i) => {
+        const val = parseFloat(v);
+        if (!isNaN(val) && val < minVal) { minVal = val; minIdx = i; }
+      });
+      if (minIdx >= 0) asignadoId = proveedoresArr[minIdx];
+    } else {
+      const idx = parseInt(asignadoId, 10);
+      if (!isNaN(idx) && proveedoresArr[idx] != null) asignadoId = proveedoresArr[idx];
+    }
 
-  let datosProducto = {
-    id: req.body.id,
-    nombre: req.body.nombre,
-    descripcion: req.body.descripcion,
-    categoria_id: req.body.categoria,
-    marca_id: req.body.marca,
-    modelo_id: req.body.modelo_id,
-    utilidad: req.body.utilidad,
-    precio_venta: req.body.precio_venta,  // lo revalidamos abajo
-    estado: req.body.estado,
-    paginaActual: req.body.paginaActual,
-    stock_minimo: req.body.stock_minimo,
-    stock_actual: req.body.stock_actual,
+    if (asignadoId) {
+      await producto.actualizarProveedorAsignado(conexion, {
+        producto_id: productoId,
+        proveedor_id: asignadoId
+      });
+    }
 
-    // 👇 ahora NO usamos [0], usamos el índice elegido
-    descuentos_proveedor_id: descuentoElegido,
-    costo_neto: costoNetoElegido,
-    IVA: ivaElegido,
-    costo_iva: costoIvaElegido,
-
-    // checkboxes
-    oferta: Array.isArray(req.body.oferta) ? (req.body.oferta.includes('1') ? 1 : 0) : Number(req.body.oferta) || 0,
-    calidad_original: req.body.calidad_original ? 1 : 0,
-    calidad_vic: req.body.calidad_vic ? 1 : 0,
-
-    // 👇 guardar el proveedor designado (o el más barato si no había designado)
-    proveedor_id: proveedorElegidoId
-  };
-
-  // 🔄 Redondeo del precio de venta (y opcionalmente recalcular)
-  const redondearPrecioVenta = (precio) => {
-    const valor = Number(precio) || 0;
-    const resto = valor % 100;
-    return resto < 50 ? valor - resto : valor + (100 - resto);
-  };
-
-  // (Opcional) recalcular server-side por coherencia
-  if (datosProducto.utilidad && costoIvaElegido) {
-    const u = parseFloat(datosProducto.utilidad) || 0;
-    const base = parseFloat(costoIvaElegido) || 0;
-    const pvCalc = Math.ceil(base * (1 + u / 100));
-    datosProducto.precio_venta = pvCalc;
-  }
-
-  if (datosProducto.precio_venta) {
-    datosProducto.precio_venta = redondearPrecioVenta(datosProducto.precio_venta);
-  }
-
-  producto.actualizar(conexion, datosProducto)
-    .then(() => {
-      if (req.files) {
-        const promesasArchivos = req.files.map(file => producto.actualizarArchivo(conexion, datosProducto, file));
-        return Promise.all(promesasArchivos);
-      } else {
-        return Promise.resolve();
-      }
-    })
-    .then(() => {
-      const proveedores = req.body.proveedores.map((proveedorId, index) => ({
-        producto_id: datosProducto.id,
-        proveedor_id: proveedorId,
-        precio_lista: req.body.precio_lista[index],
-        codigo: req.body.codigo[index]
+    // Imágenes nuevas (opcional)
+    if (req.files && req.files.length > 0) {
+      const promImgs = req.files.map(f => producto.insertarImagenProducto(conexion, {
+        producto_id: productoId,
+        imagen: f.filename
       }));
-      const promesasProveedor = proveedores.map((proveedor) => producto.actualizarProductoProveedor(conexion, proveedor));
-      return Promise.all(promesasProveedor);
-    })
-    .then(() => producto.actualizarStock(conexion, datosProducto.id, datosProducto.stock_minimo, datosProducto.stock_actual))
-    .then(() => producto.obtenerPosicion(conexion, datosProducto.id))
-    .then(() => {
-      const pagina = req.body.paginaActual || 1;
-      const busqueda = req.body.busqueda || '';
-      res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
-      console.log("🔁 REDIRECT a panelControl:", `/productos/panelControl?pagina=${pagina}&busqueda=${encodeURIComponent(busqueda)}`);
-    })
-    .catch(error => {
-      res.status(500).send('Error: ' + error.message);
-    });
-},
+      await Promise.all(promImgs);
+    }
 
+    return res.redirect(`/productos/panelControl?pagina=${encodeURIComponent(req.body.pagina || '')}&busqueda=${encodeURIComponent(req.body.busqueda || '')}`);
+  } catch (error) {
+    console.error("Error durante la ejecución:", error);
+    return res.status(500).send("Error: " + error.message);
+  }
+},
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
