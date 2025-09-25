@@ -19,7 +19,12 @@ function logBusquedaTexto(q, origen = 'texto') {
     body: JSON.stringify({ q, origen })
   }).catch(() => {});
 }
-
+function _sortedIdxByCosto(lista){
+  return lista
+    .map((p, i) => ({ i, c: toNumberSafe(p.costo_iva) }))
+    .sort((a,b) => a.c - b.c)
+    .map(x => x.i);
+}
 function logBusquedaProducto(producto_id, qActual) {
   if (!producto_id) return;
   fetch('/analytics/busqueda-producto', {
@@ -383,19 +388,16 @@ function _renderProveedor(productoId, data) {
 }
 
 // === REEMPLAZAR _renderSimulacion ===
-function _renderSimulacion(productoId, precioVentaSimulado, costoProveedor){
+function _renderSimulacion(productoId, precioVentaSimulado){
   const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
   if (!nodo) return;
-
   if (Number.isFinite(precioVentaSimulado) && precioVentaSimulado > 0) {
-    const costoTxt = Number.isFinite(costoProveedor) && costoProveedor > 0
-      ? ` (costo proveedor: $${formatearNumero(costoProveedor)})`
-      : '';
-    nodo.textContent = `Precio venta simulado: $${formatearNumero(precioVentaSimulado)}${costoTxt}`;
+    nodo.textContent = `Precio venta simulado: $${formatearNumero(precioVentaSimulado)}`;
   } else {
     nodo.textContent = '';
   }
 }
+
 
 
 function _inicializarProveedorActual(producto) {
@@ -420,7 +422,6 @@ async function _initProveedorButton(productoId){
   }
 }
 
-// === REEMPLAZAR ESTE LISTENER COMPLETO (botón "Siguiente proveedor") ===
 contenedorProductos.addEventListener('click', async (ev) => {
   const btn = ev.target.closest('.btn-siguiente-proveedor');
   if (!btn || !isAdminUser) return;
@@ -431,58 +432,60 @@ contenedorProductos.addEventListener('click', async (ev) => {
   const cardEl = btn.closest('.card');
   const precioVentaOriginal = toNumberSafe(cardEl?.dataset?.precioVenta);
 
-  // Estado proveedores (lista + base por ID + flags)
   const st = await _getOrInitState(productoId);
   if (!st.lista || !st.lista.length) {
     Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
     return;
   }
   if (st.lista.length < 2) {
-    // Ocultar botón si no hay alternativos
     btn.style.display = 'none';
     return;
   }
 
-  // Elegir SIGUIENTE índice: primer click = MÁS BARATO; luego = rotación cíclica
+  // Elegir el índice a mostrar
   let nextIdx;
   if (st.first) {
-    let cheapestIdx = 0;
-    for (let i = 1; i < st.lista.length; i++) {
-      if (toNumberSafe(st.lista[i].costo_iva) < toNumberSafe(st.lista[cheapestIdx].costo_iva)) {
-        cheapestIdx = i;
-      }
-    }
-    nextIdx = cheapestIdx;
+    // Ordenar por costo (asc)
+    const orden = _sortedIdxByCosto(st.lista);
+    const cheapestIdx = orden[0];
+    const secondIdx = orden[1] ?? cheapestIdx;
+
+    // Si el asignado YA es el más barato, 1er clic muestra el segundo más barato.
+    // Si no, 1er clic muestra el más barato.
+    nextIdx = (st.baseIdx === cheapestIdx) ? secondIdx : cheapestIdx;
     st.first = false;
   } else {
+    // Rotación cíclica normal a partir del actual
     nextIdx = (st.idx + 1) % st.lista.length;
   }
 
-  // Cálculo SIEMPRE con base = proveedor ASIGNADO
-  const costoAsignado = toNumberSafe(st.lista[st.baseIdx]?.costo_iva);
-  const costoNuevo    = toNumberSafe(st.lista[nextIdx]?.costo_iva);
-
-  // Actualizar estado antes de renderizar
+  // Actualizar estado antes de renderizar (para que el "Mostrando X de N" quede bien)
   st.idx = nextIdx;
   _cacheProveedores.set(productoId, st);
 
-  // Render proveedor/código en UI
+  // Render proveedor/código
   const provNuevo = st.lista[st.idx];
   _renderProveedor(productoId, provNuevo);
 
-  // Mostrar simulación (sin tocar el precio principal de la card)
+  // Calcular precio simulado usando SIEMPRE la base del proveedor asignado
+  const costoAsignado = toNumberSafe(st.lista[st.baseIdx]?.costo_iva);
+  const costoNuevo    = toNumberSafe(provNuevo?.costo_iva);
+
   if (costoAsignado > 0 && costoNuevo > 0 && precioVentaOriginal > 0) {
     const markup = precioVentaOriginal / costoAsignado;
     const precioSimulado = Math.round(markup * costoNuevo);
 
+    // Si volvimos al asignado, limpiar simulación; si no, mostrarla.
     if (st.idx === st.baseIdx) {
-      // Volviste al asignado -> limpiar simulación
-      _renderSimulacion(productoId, null, null);
+      _renderSimulacion(productoId, null);
     } else {
-      _renderSimulacion(productoId, precioSimulado, costoNuevo);
+      _renderSimulacion(productoId, precioSimulado);
     }
   } else {
-    _renderSimulacion(productoId, null, null);
+    _renderSimulacion(productoId, null);
   }
+
+  // MUY IMPORTANTE: no tocar el precio principal de la card.
 }, { passive: true });
+
 
