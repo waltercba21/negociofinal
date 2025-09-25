@@ -5,7 +5,6 @@ const productosController = require('../controllers/productosController');
 const ensureAuthenticated = require('../middleware/usuarioMiddleware');
 var methodOverride = require('method-override');
 
-
 router.use(methodOverride('_method'));
 
 // Configuración de Multer para almacenamiento de archivos
@@ -68,7 +67,14 @@ router.get('/modificarPorProveedor', productosController.modificarPorProveedor);
 router.post('/actualizarPorProveedor', productosController.actualizarPorProveedor);
 router.post('/actualizarPrecio', productosController.actualizarPrecio);
 router.get('/api/buscar', productosController.buscar); 
+
+// === NUEVO: Endpoints para “siguiente proveedor” ===
+router.get('/api/proveedores/:productoId', productosController.apiProveedoresDeProducto);
+router.get('/api/proveedor-siguiente', productosController.apiProveedorSiguiente);
+
+// ⚠️ Mantener estas rutas nuevas ANTES de la dinámica '/:id'
 router.get('/:id', productosController.detalle);
+
 router.post('/generarPresupuestoPDF', productosController.generarPresupuestoPDF);
 router.post('/actualizarPreciosExcel', cargar, productosController.actualizarPreciosExcel);
 

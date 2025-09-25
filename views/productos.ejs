@@ -101,15 +101,34 @@
       <div class="precio-producto">
         <p><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %></p>
       </div>
-     <% if (isAdminUser) { %>
-  <div class="codigo-admin">
-    <p><strong>Proveedor:</strong> <%= producto.proveedor_nombre %></p>
-    <p><strong>Código:</strong> <%= producto.codigo_proveedor %></p>
-    
-  </div>
-<% } %>
 
-      
+      <% if (isAdminUser) { %>
+        <div class="codigo-admin">
+          <p>
+            <strong>Proveedor:</strong>
+            <span class="prov-nombre" data-producto-id="<%= producto.id %>">
+              <%= producto.proveedor_nombre %>
+            </span>
+          </p>
+          <p>
+            <strong>Código:</strong>
+            <span class="prov-codigo" data-producto-id="<%= producto.id %>">
+              <%= producto.codigo_proveedor %>
+            </span>
+          </p>
+          <div class="prov-actions">
+            <button type="button"
+                    class="btn-siguiente-proveedor"
+                    data-producto-id="<%= producto.id %>">
+              Siguiente proveedor
+            </button>
+            <small class="prov-idx"
+                   data-producto-id="<%= producto.id %>"
+                   style="display:block;opacity:.7;margin-top:4px"></small>
+          </div>
+        </div>
+      <% } %>
+
       <% if (isUserLoggedIn) { %>
         <% if (isAdminUser) { %>
           <div class="cantidad-producto">

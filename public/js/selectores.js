@@ -104,7 +104,66 @@ document.addEventListener("DOMContentLoaded", function () {
     logBusquedaProducto(productoId, buildQueryDesc());
   }, { passive: true });
 
-  // === Render de resultados (sin cambios funcionales, solo tal cual lo tenías) ===
+  /* =========================
+     NUEVO: Siguiente proveedor
+     ========================= */
+  const _cacheProveedores = new Map(); // productoId -> { lista: [], idx: number }
+
+  async function _getListaProveedores(productoId) {
+    if (_cacheProveedores.has(productoId)) return _cacheProveedores.get(productoId).lista;
+    const r = await fetch(`/productos/api/proveedores/${productoId}`);
+    const lista = await r.json();
+    _cacheProveedores.set(productoId, { lista: Array.isArray(lista) ? lista : [], idx: 0 });
+    return _cacheProveedores.get(productoId).lista;
+  }
+
+  function _renderProveedor(productoId, data) {
+    const spanNombre = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
+    const spanCodigo = document.querySelector(`.prov-codigo[data-producto-id="${productoId}"]`);
+    const smallIdx   = document.querySelector(`.prov-idx[data-producto-id="${productoId}"]`);
+    if (spanNombre) spanNombre.textContent = data?.proveedor_nombre || 'Sin proveedor';
+    if (spanCodigo) spanCodigo.textContent = data?.codigo || '-';
+    if (smallIdx) {
+      const st = _cacheProveedores.get(productoId);
+      const pos = (st?.idx ?? 0) + 1;
+      const total = st?.lista?.length || 0;
+      smallIdx.textContent = total > 0 ? `Mostrando ${pos} de ${total}` : '';
+    }
+  }
+
+  function _inicializarProveedorActual(producto) {
+    if (!isAdminUser) return;
+    const st = _cacheProveedores.get(producto.id);
+    if (!st || !st.lista?.length) return;
+
+    const actualNombre = (document.querySelector(`.prov-nombre[data-producto-id="${producto.id}"]`)?.textContent || '').trim();
+    const idx = st.lista.findIndex(p => (p.proveedor_nombre || '').trim() === actualNombre);
+    st.idx = idx >= 0 ? idx : 0;
+    _cacheProveedores.set(producto.id, st);
+    _renderProveedor(producto.id, st.lista[st.idx]);
+  }
+
+  // Delegado de click SOLO para “Siguiente proveedor”
+  contenedorProductos.addEventListener('click', async (ev) => {
+    const btn = ev.target.closest('.btn-siguiente-proveedor');
+    if (!btn || !isAdminUser) return;
+
+    const productoId = Number(btn.dataset.productoId);
+    if (!productoId) return;
+
+    const lista = await _getListaProveedores(productoId);
+    if (!lista || !lista.length) {
+      Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
+      return;
+    }
+
+    const state = _cacheProveedores.get(productoId) || { lista, idx: 0 };
+    state.idx = (state.idx + 1) % state.lista.length; // avance cíclico
+    _cacheProveedores.set(productoId, state);
+    _renderProveedor(productoId, state.lista[state.idx]);
+  }, { passive: true });
+
+  // === Render de resultados ===
   function mostrarProductos(productos) {
     contenedorProductos.innerHTML = "";
 
@@ -136,6 +195,34 @@ document.addEventListener("DOMContentLoaded", function () {
       const imagenesHTML = (producto.imagenes || []).map((img, i) => `
         <img class="carousel__image ${i !== 0 ? "hidden" : ""}" src="/uploads/productos/${img.imagen}" alt="${producto.nombre}">
       `).join("");
+
+      // Bloque admin (proveedor/código + botón)
+      const adminProveedorHTML = isAdminUser ? `
+        <div class="codigo-admin">
+          <p>
+            <strong>Proveedor:</strong>
+            <span class="prov-nombre" data-producto-id="${producto.id}">
+              ${producto.proveedor_nombre || 'Sin proveedor'}
+            </span>
+          </p>
+          <p>
+            <strong>Código:</strong>
+            <span class="prov-codigo" data-producto-id="${producto.id}">
+              ${producto.codigo_proveedor || '-'}
+            </span>
+          </p>
+          <div class="prov-actions">
+            <button type="button"
+                    class="btn-siguiente-proveedor"
+                    data-producto-id="${producto.id}">
+              Siguiente proveedor
+            </button>
+            <small class="prov-idx"
+                   data-producto-id="${producto.id}"
+                   style="display:block;opacity:.7;margin-top:4px"></small>
+          </div>
+        </div>
+      ` : '';
 
       const stockHTML = isUserLoggedIn
         ? (isAdminUser
@@ -191,7 +278,10 @@ document.addEventListener("DOMContentLoaded", function () {
         <hr>
         <div class="categoria-producto"><h6 class="categoria">${producto.categoria_nombre || "Sin categoría"}</h6></div>
         <div class="precio-producto"><p class="precio">$${formatearNumero(producto.precio_venta || 0)}</p></div>
+
+        ${adminProveedorHTML}
         ${stockHTML}
+
         <div class="acciones-compartir">
           <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" class="whatsapp" target="_blank">
             <i class="fab fa-whatsapp"></i>
@@ -240,6 +330,9 @@ document.addEventListener("DOMContentLoaded", function () {
           document.dispatchEvent(eventoAgregar);
         });
       }
+
+      // Inicializar proveedor actual si ya hay lista cacheada
+      _inicializarProveedorActual(producto);
     });
   }
 

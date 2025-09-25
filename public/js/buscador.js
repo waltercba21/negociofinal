@@ -189,8 +189,28 @@ function mostrarProductos(productos) {
 
      ${isAdminUser ? `
         <div class="codigo-admin">
-          <p><strong>Proveedor:</strong> ${producto.proveedor_nombre || 'Sin proveedor'}</p>
-          <p><strong>Código:</strong> ${producto.codigo_proveedor || '-'}</p>
+          <p>
+            <strong>Proveedor:</strong>
+            <span class="prov-nombre" data-producto-id="${producto.id}">
+              ${producto.proveedor_nombre || 'Sin proveedor'}
+            </span>
+          </p>
+          <p>
+            <strong>Código:</strong>
+            <span class="prov-codigo" data-producto-id="${producto.id}">
+              ${producto.codigo_proveedor || '-'}
+            </span>
+          </p>
+          <div class="prov-actions">
+            <button type="button"
+                    class="btn-siguiente-proveedor"
+                    data-producto-id="${producto.id}">
+              Siguiente proveedor
+            </button>
+            <small class="prov-idx"
+                   data-producto-id="${producto.id}"
+                   style="display:block;opacity:.7;margin-top:4px"></small>
+          </div>
         </div>
       ` : ''}
 
@@ -256,6 +276,9 @@ function mostrarProductos(productos) {
         document.dispatchEvent(eventoAgregar);
       });
     }
+
+    // === NUEVO: inicializar proveedor actual (si ya hay lista cacheada) ===
+    _inicializarProveedorActual(producto);
   });
 }
 
@@ -272,3 +295,65 @@ function moverCarrusel(index, direccion) {
 function formatearNumero(num) {
   return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+
+/* =========================
+   NUEVO: Siguiente proveedor
+   ========================= */
+
+const _cacheProveedores = new Map(); // productoId -> { lista: [], idx: number }
+
+async function _getListaProveedores(productoId) {
+  if (_cacheProveedores.has(productoId)) return _cacheProveedores.get(productoId).lista;
+  const r = await fetch(`/productos/api/proveedores/${productoId}`);
+  const lista = await r.json();
+  _cacheProveedores.set(productoId, { lista: Array.isArray(lista) ? lista : [], idx: 0 });
+  return _cacheProveedores.get(productoId).lista;
+}
+
+function _renderProveedor(productoId, data) {
+  const spanNombre = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
+  const spanCodigo = document.querySelector(`.prov-codigo[data-producto-id="${productoId}"]`);
+  const smallIdx   = document.querySelector(`.prov-idx[data-producto-id="${productoId}"]`);
+  if (spanNombre) spanNombre.textContent = data?.proveedor_nombre || 'Sin proveedor';
+  if (spanCodigo) spanCodigo.textContent = data?.codigo || '-';
+  if (smallIdx) {
+    const st = _cacheProveedores.get(productoId);
+    const pos = (st?.idx ?? 0) + 1;
+    const total = st?.lista?.length || 0;
+    smallIdx.textContent = total > 0 ? `Mostrando ${pos} de ${total}` : '';
+  }
+}
+
+function _inicializarProveedorActual(producto) {
+  if (!isAdminUser) return;
+  const st = _cacheProveedores.get(producto.id);
+  if (!st || !st.lista?.length) return;
+
+  // Encontrar el índice del proveedor actualmente mostrado por SSR/front
+  const actualNombre = (document.querySelector(`.prov-nombre[data-producto-id="${producto.id}"]`)?.textContent || '').trim();
+  const idx = st.lista.findIndex(p => (p.proveedor_nombre || '').trim() === actualNombre);
+  st.idx = idx >= 0 ? idx : 0;
+  _cacheProveedores.set(producto.id, st);
+  _renderProveedor(producto.id, st.lista[st.idx]);
+}
+
+// Delegado de click SOLO para “Siguiente proveedor”
+contenedorProductos.addEventListener('click', async (ev) => {
+  const btn = ev.target.closest('.btn-siguiente-proveedor');
+  if (!btn || !isAdminUser) return;
+
+  const productoId = Number(btn.dataset.productoId);
+  if (!productoId) return;
+
+  const lista = await _getListaProveedores(productoId);
+  if (!lista || !lista.length) {
+    Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
+    return;
+  }
+
+  const state = _cacheProveedores.get(productoId) || { lista, idx: 0 };
+  // Avanzar de forma cíclica
+  state.idx = (state.idx + 1) % state.lista.length;
+  _cacheProveedores.set(productoId, state);
+  _renderProveedor(productoId, state.lista[state.idx]);
+}, { passive: true });

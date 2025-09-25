@@ -2594,6 +2594,33 @@ obtenerBusquedasDeProducto: function (
   });
 },
 
+obtenerProveedoresOrdenadosPorCosto : function (conexion, productoId) {
+  return new Promise((resolve, reject) => {
+    const sql = `
+      SELECT 
+        pp.proveedor_id   AS id,
+        pr.nombre         AS proveedor_nombre,
+        pp.codigo         AS codigo,
+        pp.precio_lista   AS precio_lista,
+        COALESCE(dp.descuento, 0) AS descuento,
+        /* costo_neto = lista * (1 - desc/100), costo_iva = costo_neto * 1.21 */
+        ROUND(pp.precio_lista * (1 - COALESCE(dp.descuento, 0)/100) * 1.21, 2) AS costo_iva
+      FROM producto_proveedor pp
+      JOIN proveedores pr        ON pr.id = pp.proveedor_id
+      LEFT JOIN (
+        SELECT proveedor_id, MAX(descuento) AS descuento
+        FROM descuentos_proveedor
+        GROUP BY proveedor_id
+      ) dp ON dp.proveedor_id = pp.proveedor_id
+      WHERE pp.producto_id = ?
+      ORDER BY costo_iva ASC, pr.nombre ASC
+    `;
+    conexion.query(sql, [productoId], (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows || []);
+    });
+  });
+}
 
 
 }

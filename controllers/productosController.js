@@ -675,7 +675,7 @@ guardar: async function (req, res) {
   }
 },
 
-    eliminarSeleccionados : async (req, res) => {
+    eliminarSeleccionados : async (req, res) => { 
         const { ids } = req.body;
         try {
             await producto.eliminar(ids);
@@ -2008,7 +2008,40 @@ masVendidos: async (req, res) => {
     console.error('❌ Error al obtener productos más vendidos:', error);
     res.status(500).send('Error al obtener productos más vendidos');
   }
-}
+},
+apiProveedoresDeProducto : async function (req, res) {
+  try {
+    const { productoId } = req.params;
+    if (!productoId) return res.status(400).json({ error: 'productoId requerido' });
+
+    const lista = await producto.obtenerProveedoresOrdenadosPorCosto(conexion, Number(productoId));
+    return res.json(lista);
+  } catch (e) {
+    console.error('Error apiProveedoresDeProducto:', e);
+    res.status(500).json({ error: 'Error obteniendo proveedores' });
+  }
+},
+apiProveedorSiguiente : async function (req, res) {
+  try {
+    const productoId = Number(req.query.producto_id);
+    const actualId   = req.query.actual_id ? Number(req.query.actual_id) : null;
+    if (!productoId) return res.status(400).json({ error: 'producto_id requerido' });
+
+    const lista = await producto.obtenerProveedoresOrdenadosPorCosto(conexion, productoId);
+    if (!lista.length) return res.json(null);
+
+    // Si no vino actual, devolvemos el primero (más barato)
+    if (!actualId) return res.json(lista[0]);
+
+    // Buscar el siguiente de forma cíclica
+    const idx = lista.findIndex(p => p.id === actualId);
+    const siguiente = idx === -1 ? lista[0] : lista[(idx + 1) % lista.length];
+    res.json(siguiente);
+  } catch (e) {
+    console.error('Error apiProveedorSiguiente:', e);
+    res.status(500).json({ error: 'Error obteniendo siguiente proveedor' });
+  }
+},
 
 
 
