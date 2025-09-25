@@ -382,15 +382,21 @@ function _renderProveedor(productoId, data) {
   }
 }
 
-function _renderSimulacion(productoId, precio){
+// === REEMPLAZAR _renderSimulacion ===
+function _renderSimulacion(productoId, precioVentaSimulado, costoProveedor){
   const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
   if (!nodo) return;
-  if (precio && Number.isFinite(precio)) {
-    nodo.textContent = `Precio venta simulado: $${formatearNumero(precio)}`;
+
+  if (Number.isFinite(precioVentaSimulado) && precioVentaSimulado > 0) {
+    const costoTxt = Number.isFinite(costoProveedor) && costoProveedor > 0
+      ? ` (costo proveedor: $${formatearNumero(costoProveedor)})`
+      : '';
+    nodo.textContent = `Precio venta simulado: $${formatearNumero(precioVentaSimulado)}${costoTxt}`;
   } else {
     nodo.textContent = '';
   }
 }
+
 
 function _inicializarProveedorActual(producto) {
   if (!isAdminUser) return;
@@ -414,7 +420,7 @@ async function _initProveedorButton(productoId){
   }
 }
 
-// Delegado de click SOLO para “Siguiente proveedor”
+// === REEMPLAZAR ESTE LISTENER COMPLETO (botón "Siguiente proveedor") ===
 contenedorProductos.addEventListener('click', async (ev) => {
   const btn = ev.target.closest('.btn-siguiente-proveedor');
   if (!btn || !isAdminUser) return;
@@ -425,17 +431,20 @@ contenedorProductos.addEventListener('click', async (ev) => {
   const cardEl = btn.closest('.card');
   const precioVentaOriginal = toNumberSafe(cardEl?.dataset?.precioVenta);
 
+  // Estado proveedores (lista + base por ID + flags)
   const st = await _getOrInitState(productoId);
   if (!st.lista || !st.lista.length) {
     Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
     return;
   }
   if (st.lista.length < 2) {
+    // Ocultar botón si no hay alternativos
     btn.style.display = 'none';
     return;
   }
 
-  // Primer click: saltar al proveedor MÁS BARATO
+  // Elegir SIGUIENTE índice: primer click = MÁS BARATO; luego = rotación cíclica
+  let nextIdx;
   if (st.first) {
     let cheapestIdx = 0;
     for (let i = 1; i < st.lista.length; i++) {
@@ -443,38 +452,37 @@ contenedorProductos.addEventListener('click', async (ev) => {
         cheapestIdx = i;
       }
     }
-    st.idx = cheapestIdx;
+    nextIdx = cheapestIdx;
     st.first = false;
   } else {
-    // Resto: rotación cíclica
-    st.idx = (st.idx + 1) % st.lista.length;
+    nextIdx = (st.idx + 1) % st.lista.length;
   }
 
+  // Cálculo SIEMPRE con base = proveedor ASIGNADO
+  const costoAsignado = toNumberSafe(st.lista[st.baseIdx]?.costo_iva);
+  const costoNuevo    = toNumberSafe(st.lista[nextIdx]?.costo_iva);
+
+  // Actualizar estado antes de renderizar
+  st.idx = nextIdx;
   _cacheProveedores.set(productoId, st);
 
-  // Render proveedor elegido
+  // Render proveedor/código en UI
   const provNuevo = st.lista[st.idx];
   _renderProveedor(productoId, provNuevo);
 
-  // Cálculo con base FIJA (proveedor asignado)
-  const costoAsignado = toNumberSafe(st.lista[st.baseIdx]?.costo_iva);
-  const costoNuevo = toNumberSafe(provNuevo?.costo_iva);
-
+  // Mostrar simulación (sin tocar el precio principal de la card)
   if (costoAsignado > 0 && costoNuevo > 0 && precioVentaOriginal > 0) {
-    const markup = precioVentaOriginal / costoAsignado;   // <- base correcta por ID
+    const markup = precioVentaOriginal / costoAsignado;
     const precioSimulado = Math.round(markup * costoNuevo);
 
-    const precioNode = cardEl.querySelector('.precio-producto .precio');
-    if (precioNode) {
-      if (st.idx === st.baseIdx) {
-        precioNode.textContent = `$${formatearNumero(precioVentaOriginal)}`;
-        _renderSimulacion(productoId, null);
-      } else {
-        precioNode.textContent = `$${formatearNumero(precioSimulado)}`;
-        _renderSimulacion(productoId, precioSimulado);
-      }
+    if (st.idx === st.baseIdx) {
+      // Volviste al asignado -> limpiar simulación
+      _renderSimulacion(productoId, null, null);
+    } else {
+      _renderSimulacion(productoId, precioSimulado, costoNuevo);
     }
   } else {
-    _renderSimulacion(productoId, null);
+    _renderSimulacion(productoId, null, null);
   }
 }, { passive: true });
+
