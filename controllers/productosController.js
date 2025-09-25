@@ -597,10 +597,10 @@ lista: async function (req, res) {
   }
 },
 guardar: async function (req, res) {
-  console.log("Inicio del controlador guardar...");
+  console.log("===== Inicio del controlador guardar =====");
 
   try {
-    // 1) Insertar PRODUCTO (solo escalares)
+    // 1) Insertar PRODUCTO (escalares)
     const datosProducto = {
       nombre: strOrNull(req.body.nombre),
       descripcion: strOrNull(req.body.descripcion),
@@ -616,51 +616,48 @@ guardar: async function (req, res) {
       calidad_original: req.body.calidad_original ? 1 : 0,
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
+    console.log("[GUARDAR] datosProducto:", datosProducto);
 
     const ins = await producto.insertarProducto(conexion, datosProducto);
     const productoId = ins && ins.insertId;
+    console.log("[GUARDAR] productoId:", productoId);
     if (!productoId) throw new Error('No se obtuvo insertId al crear el producto');
 
-    // 2) Proveedores (upsert)
+    // 2) Proveedores → UPSERT (solo columnas reales)
     const filas = buildProveedorRows(productoId, req.body);
-    if (filas.length === 0) {
-      return res.status(400).send("Error: debe seleccionar al menos un proveedor.");
-    }
+    console.log("[GUARDAR] filas producto_proveedor:", filas.length, filas[0] || '(sin filas)');
 
-    // ON DUPLICATE KEY UPDATE sobre PK (producto_id, proveedor_id)
-    for (const row of filas) {
-      await conexion.promise().query(
-        `
+    for (let i = 0; i < filas.length; i++) {
+      const row = filas[i];
+      const sql = `
         INSERT INTO producto_proveedor
-          (producto_id, proveedor_id, precio_lista, codigo, descuentos_proveedor_id, costo_neto, IVA, costo_iva)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          (producto_id, proveedor_id, precio_lista, codigo)
+        VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           precio_lista = VALUES(precio_lista),
-          codigo      = VALUES(codigo),
-          descuentos_proveedor_id = VALUES(descuentos_proveedor_id),
-          costo_neto  = VALUES(costo_neto),
-          IVA         = VALUES(IVA),
-          costo_iva   = VALUES(costo_iva)
-        `,
-        [
-          row.producto_id, row.proveedor_id, row.precio_lista, row.codigo,
-          row.descuentos_proveedor_id, row.costo_neto, row.IVA, row.costo_iva
-        ]
-      );
+          codigo      = VALUES(codigo)
+      `;
+      const params = [row.producto_id, row.proveedor_id, row.precio_lista, row.codigo];
+      console.log(`[GUARDAR] UPSERT fila ${i}:`, params);
+      await conexion.promise().query(sql, params);
     }
 
-    // 3) Proveedor asignado: prioridad manual; si no hay, el más barato
+    // 3) Proveedor asignado: prioridad manual; si no hay, más barato por costo_iva[]
     let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
+    console.log("[GUARDAR] proveedor_designado recibido:", req.body.proveedor_designado, "→", proveedorAsignado);
     if (!proveedorAsignado) {
       proveedorAsignado = pickCheapestProveedorId(req.body);
+      console.log("[GUARDAR] proveedor más barato por costo_iva[]:", proveedorAsignado);
     }
 
     if (proveedorAsignado) {
       await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
+      console.log("[GUARDAR] productos.proveedor_id actualizado a:", proveedorAsignado);
     }
 
-    // 4) Imágenes (opcionales)
+    // 4) Imágenes nuevas (si llegan)
     if (req.files && req.files.length > 0) {
+      console.log("[GUARDAR] Cant. imágenes:", req.files.length);
       await Promise.all(
         req.files.map(f => producto.insertarImagenProducto(conexion, {
           producto_id: productoId,
@@ -669,12 +666,15 @@ guardar: async function (req, res) {
       );
     }
 
+    console.log("===== Fin guardar (OK) =====");
     return res.redirect("/productos/panelControl");
   } catch (error) {
-    console.error("Error durante la ejecución:", error);
+    console.error("===== Error durante la ejecución en guardar =====");
+    console.error(error);
     return res.status(500).send("Error: " + error.message);
   }
 },
+
     eliminarSeleccionados : async (req, res) => {
         const { ids } = req.body;
         try {
@@ -752,41 +752,12 @@ guardar: async function (req, res) {
     },    
 actualizar: async function (req, res) {
   console.log("===== Inicio del controlador actualizar =====");
-
-  // Sanidad: helpers disponibles
-  console.log("[DEBUG] Helpers presentes?",
-    {
-      has_numOr0: typeof numOr0 === 'function',
-      has_strOrNull: typeof strOrNull === 'function',
-      has_buildProveedorRows: typeof buildProveedorRows === 'function',
-      has_pickCheapestProveedorId: typeof pickCheapestProveedorId === 'function',
-      has_conexion_promise: !!(conexion && typeof conexion.promise === 'function')
-    }
-  );
-
   try {
     const productoId = numOr0(req.params.id || req.body.id);
-    console.log("[DEBUG] productoId:", productoId, "req.params.id:", req.params.id, "req.body.id:", req.body.id);
+    console.log("[ACTUALIZAR] productoId:", productoId);
     if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
 
-    // Log de entrada (compacto para no inundar)
-    console.log("[DEBUG] req.body resumen:", {
-      nombre: req.body.nombre,
-      categoria: req.body.categoria,
-      marca: req.body.marca,
-      modelo_id: req.body.modelo_id,
-      utilidad: req.body.utilidad,
-      precio_venta: req.body.precio_venta,
-      estado: req.body.estado,
-      stock_minimo: req.body.stock_minimo,
-      stock_actual: req.body.stock_actual,
-      oferta: req.body.oferta,
-      calidad_original: req.body.calidad_original,
-      calidad_vic: req.body.calidad_vic,
-      proveedor_designado: req.body.proveedor_designado
-    });
-
-    // 1) Actualizar escalares del producto
+    // 1) Update escalares del producto
     const datosProducto = {
       id: productoId,
       nombre: strOrNull(req.body.nombre),
@@ -803,19 +774,13 @@ actualizar: async function (req, res) {
       calidad_original: req.body.calidad_original ? 1 : 0,
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
-    console.log("[DEBUG] datosProducto (update productos):", datosProducto);
+    console.log("[ACTUALIZAR] datosProducto:", datosProducto);
 
-    const updRes = await producto.actualizar(conexion, datosProducto);
-    console.log("[DEBUG] producto.actualizar() ->", updRes);
+    await producto.actualizar(conexion, datosProducto);
 
-    // 2) Proveedores (UPSERT SOLO columnas existentes)
-    // buildProveedorRows puede devolver campos extra; acá usamos solo 4 columnas
+    // 2) Proveedores → UPSERT (solo columnas reales)
     const filas = buildProveedorRows(productoId, req.body);
-    console.log("[DEBUG] filas construidas (producto_proveedor) cantidad:", filas.length);
-    if (filas.length) {
-      // Log de muestra de la primera fila
-      console.log("[DEBUG] fila[0] ejemplo:", filas[0]);
-    }
+    console.log("[ACTUALIZAR] filas producto_proveedor:", filas.length, filas[0] || '(sin filas)');
 
     for (let i = 0; i < filas.length; i++) {
       const row = filas[i];
@@ -827,64 +792,41 @@ actualizar: async function (req, res) {
           precio_lista = VALUES(precio_lista),
           codigo      = VALUES(codigo)
       `;
-      const params = [
-        row.producto_id,
-        row.proveedor_id,
-        Number(row.precio_lista) || 0,
-        row.codigo || null
-      ];
-
-      try {
-        console.log(`[DEBUG] UPSERT fila ${i}:`, params);
-        const [result] = await conexion.promise().query(sql, params);
-        console.log(`[DEBUG] UPSERT OK fila ${i}: affectedRows=${result.affectedRows}`);
-      } catch (e) {
-        console.error(`[ERROR] UPSERT fila ${i} falló. SQL params:`, params);
-        console.error(e);
-        throw e; // re-lanzar para capturarlo en el catch principal
-      }
+      const params = [row.producto_id, row.proveedor_id, row.precio_lista, row.codigo];
+      console.log(`[ACTUALIZAR] UPSERT fila ${i}:`, params);
+      await conexion.promise().query(sql, params);
     }
 
-    // 3) Proveedor asignado: prioridad manual; si no hay, el más barato por costo_iva[]
+    // 3) Proveedor asignado: prioridad manual; si no hay, más barato por costo_iva[]
     let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
-    console.log("[DEBUG] proveedor_designado (hidden) recibido:", req.body.proveedor_designado, "=> num:", proveedorAsignado);
-
+    console.log("[ACTUALIZAR] proveedor_designado recibido:", req.body.proveedor_designado, "→", proveedorAsignado);
     if (!proveedorAsignado) {
-      proveedorAsignado = pickCheapestProveedorId(req.body); // devuelve proveedor_id o null
-      console.log("[DEBUG] proveedor más barato elegido por costo_iva[]:", proveedorAsignado);
-    } else {
-      console.log("[DEBUG] Se respeta selección manual del proveedor:", proveedorAsignado);
+      proveedorAsignado = pickCheapestProveedorId(req.body);
+      console.log("[ACTUALIZAR] proveedor más barato por costo_iva[]:", proveedorAsignado);
     }
 
     if (proveedorAsignado) {
-      const updProv = await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
-      console.log("[DEBUG] producto.proveedor_id actualizado:", proveedorAsignado, "resultado:", updProv);
-    } else {
-      console.log("[DEBUG] No se pudo determinar proveedor asignado (ni manual ni por costo). No se actualiza proveedor_id.");
+      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
+      console.log("[ACTUALIZAR] productos.proveedor_id actualizado a:", proveedorAsignado);
     }
 
     // 4) Imágenes nuevas (opcionales)
     if (req.files && req.files.length > 0) {
-      console.log("[DEBUG] Subiendo imágenes nuevas. Cantidad:", req.files.length);
-      const promImgs = req.files.map(f => {
-        console.log("[DEBUG] Imagen:", f.originalname, "->", f.filename);
-        return producto.insertarImagenProducto(conexion, {
+      console.log("[ACTUALIZAR] Cant. imágenes:", req.files.length);
+      await Promise.all(
+        req.files.map(f => producto.insertarImagenProducto(conexion, {
           producto_id: productoId,
           imagen: f.filename
-        });
-      });
-      await Promise.all(promImgs);
-      console.log("[DEBUG] Imágenes insertadas OK.");
-    } else {
-      console.log("[DEBUG] No llegaron imágenes nuevas.");
+        }))
+      );
     }
 
-    // Volver a donde estaba el usuario
+    // Redirección de retorno
     const pagina = req.body.pagina || 1;
     const busqueda = req.body.busqueda ? encodeURIComponent(req.body.busqueda) : '';
-    console.log("[DEBUG] Redirigiendo a panelControl con pagina/busqueda:", pagina, busqueda);
+    console.log("[ACTUALIZAR] redirect -> pagina/busqueda:", pagina, busqueda);
 
-    console.log("===== Fin controlador actualizar (OK) =====");
+    console.log("===== Fin actualizar (OK) =====");
     return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
   } catch (error) {
     console.error("===== Error durante la ejecución en actualizar =====");
@@ -892,7 +834,6 @@ actualizar: async function (req, res) {
     return res.status(500).send("Error: " + error.message);
   }
 },
-
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
