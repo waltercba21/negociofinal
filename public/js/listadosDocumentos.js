@@ -116,105 +116,76 @@ btnBuscar.addEventListener('click', async () => {
   });
 
 document.getElementById('btnVerVencimientos').addEventListener('click', async () => {
+  // Garantiza que existan los nodos necesarios
+  const { modalEl, contenedor, btnPrint } = ensureVencimientosModal();
+
   try {
     const res = await fetch('/administracion/api/documentos?condicion=pendiente');
+    if (!res.ok) throw new Error('Respuesta inválida del servidor');
     const documentos = await res.json();
     const hoy = new Date();
 
-    // Clasificamos y ordenamos
-    const vencidos = [];
-    const proximos = [];
-    const aTiempo = [];
-
+    const vencidos = [], proximos = [], aTiempo = [];
     documentos.forEach(doc => {
-      const vencimiento = new Date(doc.fecha_pago);
-      const dias = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
-      const item = {
-        ...doc,
-        dias,
-        fechaFormateada: vencimiento.toLocaleDateString('es-AR'),
-        vencimiento
-      };
-
-      if (dias < 0) {
-        vencidos.push(item);
-      } else if (dias <= 7) {
-        proximos.push(item);
-      } else {
-        aTiempo.push(item);
-      }
+      const vto = new Date(doc.fecha_pago);
+      const dias = Math.ceil((vto - hoy) / (1000 * 60 * 60 * 24));
+      const item = {...doc, dias, fechaFormateada: vto.toLocaleDateString('es-AR'), vto};
+      if (dias < 0) vencidos.push(item);
+      else if (dias <= 7) proximos.push(item);
+      else aTiempo.push(item);
     });
 
-    // Ordenar internamente por fecha de vencimiento
-    vencidos.sort((a, b) => a.vencimiento - b.vencimiento);
-    proximos.sort((a, b) => a.vencimiento - b.vencimiento);
-    aTiempo.sort((a, b) => a.vencimiento - b.vencimiento);
+    // ordenar
+    const byVto = (a, b) => a.vto - b.vto;
+    vencidos.sort(byVto); proximos.sort(byVto); aTiempo.sort(byVto);
 
-    const contenedor = document.getElementById('contenedorVencimientos');
+    // render
     contenedor.innerHTML = '';
-    
-function renderGrupo(titulo, grupo, colorClase) {
-  if (grupo.length === 0) return;
-
-  // Calcular total
-  // Calcular total
-  let totalGrupo = 0;
-  grupo.forEach(doc => {
-    totalGrupo += parseFloat(doc.importe || 0);
-  });
-
-  contenedor.innerHTML += `<h6 class="fw-bold mt-4 mb-2 text-${colorClase}">${titulo}</h6>`;
-  contenedor.innerHTML += `
-    <table class="table table-sm table-bordered align-middle">
-      <thead class="table-${colorClase}">
-        <tr>
-          <th>Tipo</th>
-          <th>Proveedor</th>
-          <th>Número</th>
-          <th>Vencimiento</th>
-          <th>Días</th>
-          <th>Importe</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${grupo.map(doc => {
-          const importe = parseFloat(doc.importe || 0);
-
-
-
-          return `
+    const renderGrupo = (titulo, grupo, colorClase) => {
+      if (!grupo.length) return;
+      const total = grupo.reduce((acc, d) => acc + parseFloat(d.importe || 0), 0);
+      contenedor.insertAdjacentHTML('beforeend', `
+        <h6 class="fw-bold mt-4 mb-2 text-${colorClase}">${titulo}</h6>
+        <table class="table table-sm table-bordered align-middle">
+          <thead class="table-${colorClase}">
             <tr>
-              <td class="text-uppercase">${doc.tipo}</td>
-              <td>${doc.nombre_proveedor}</td>
-              <td>${doc.numero}</td>
-              <td>${doc.fechaFormateada}</td>
-              <td>${doc.dias < 0 ? `Vencido hace ${Math.abs(doc.dias)} días` : `Faltan ${doc.dias} días`}</td>
-              <td>$${importe.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+              <th>Tipo</th><th>Proveedor</th><th>Número</th>
+              <th>Vencimiento</th><th>Días</th><th>Importe</th>
             </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-    <p class="fw-bold text-end text-${colorClase}">Total: $${totalGrupo.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
-  `;
-
-}  
-document.getElementById('btnImprimirDeuda').addEventListener('click', () => {
-  window.open('/administracion/pdf/deuda-pendiente', '_blank');
-});
-
+          </thead>
+          <tbody>
+            ${grupo.map(d => `
+              <tr>
+                <td class="text-uppercase">${d.tipo}</td>
+                <td>${d.nombre_proveedor}</td>
+                <td>${d.numero}</td>
+                <td>${d.fechaFormateada}</td>
+                <td>${d.dias < 0 ? `Vencido hace ${Math.abs(d.dias)} días` : `Faltan ${d.dias} días`}</td>
+                <td>$${parseFloat(d.importe || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        <p class="fw-bold text-end text-${colorClase}">Total: $${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
+      `);
+    };
 
     renderGrupo('🔴 Documentos vencidos', vencidos, 'danger');
     renderGrupo('🟠 Prontos a vencer (≤ 7 días)', proximos, 'warning');
-    renderGrupo('🟢 Documentos aún dentro del plazo', aTiempo, 'success');
+    renderGrupo('🟢 Documentos dentro del plazo', aTiempo, 'success');
 
-    new bootstrap.Modal(document.getElementById('modalVencimientos')).show();
+    // Listener de imprimir (sin romper si no existe)
+    if (btnPrint && !btnPrint.dataset.bound) {
+      btnPrint.addEventListener('click', () => window.open('/administracion/pdf/deuda-pendiente', '_blank'));
+      btnPrint.dataset.bound = '1';
+    }
 
+    new bootstrap.Modal(modalEl).show();
   } catch (err) {
     console.error('❌ Error al cargar vencimientos:', err);
     Swal.fire('Error', 'No se pudieron obtener los vencimientos', 'error');
   }
 });
+
 
 
 });
@@ -453,3 +424,38 @@ document.getElementById('btnEliminarDocumento').addEventListener('click', async 
     Swal.fire('Error', 'No se pudo eliminar el documento.', 'error');
   }
 });
+// --- Hardening para Vencimientos: crea el modal si falta ---
+function ensureVencimientosModal() {
+  let modal = document.getElementById('modalVencimientos');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'modal fade af-modal';
+    modal.id = 'modalVencimientos';
+    modal.tabIndex = -1;
+    modal.innerHTML = `
+      <div class="modal-dialog modal-xl modal-proveedor-dialog">
+        <div class="modal-content modal-proveedor-content">
+          <div class="modal-header modal-proveedor-header">
+            <h5 class="modal-title"><i class="bi bi-calendar-event me-2"></i>Vencimientos de documentos</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <div id="contenedorVencimientos"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="btnImprimirDeuda" class="btn btn-outline-secondary">
+              <i class="bi bi-printer me-1"></i> Imprimir Deuda Pendiente
+            </button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  // devolvemos referencias seguras
+  return {
+    modalEl: modal,
+    contenedor: modal.querySelector('#contenedorVencimientos'),
+    btnPrint: modal.querySelector('#btnImprimirDeuda')
+  };
+}
