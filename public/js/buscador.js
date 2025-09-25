@@ -118,8 +118,10 @@ function mostrarProductos(productos) {
         : producto.calidad_vic ? 'CALIDAD VIC'
         : ''
     );
-    // Guardar precio de venta original para simulación/restauración
+    // === NUEVO: datasets para simulación y detección de base ===
+    card.dataset.productoId = producto.id;
     card.dataset.precioVenta = producto.precio_venta;
+    card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // <- clave
 
     let imagenesHTML = '';
     (producto.imagenes || []).forEach((imagen, i) => {
@@ -301,14 +303,13 @@ function formatearNumero(num) {
 function toNumberSafe(v){
   if (v == null) return 0;
   if (typeof v === 'number') return v;
-  // convertir "1.234,56" o "1234,56" -> 1234.56
   const s = String(v).replace(/\./g,'').replace(',', '.').trim();
   const n = Number(s);
   return Number.isFinite(n) ? n : 0;
 }
 
 /* =========================
-   Siguiente proveedor (con base asignada)
+   Siguiente proveedor (con base asignada por ID)
    ========================= */
 
 // productoId -> { lista: [], idx: number, first: true, baseIdx: number }
@@ -322,12 +323,31 @@ async function _getOrInitState(productoId){
   const lista = await r.json();
   state = { lista: Array.isArray(lista) ? lista : [], idx: 0, first: true, baseIdx: 0 };
 
-  // Si hay lista, detectar el proveedor ASIGNADO (el que se muestra al render inicial)
   if (state.lista.length) {
-    const nombreAsignado = (document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`)?.textContent || '').trim();
-    const found = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
-    state.baseIdx = found >= 0 ? found : 0; // si no matchea, por defecto 0
-    state.idx = state.baseIdx;
+    // Buscar card para obtener el proveedor asignado por ID
+    const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
+    const cardEl = provSpan ? provSpan.closest('.card') : null;
+    const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
+
+    if (asignadoId) {
+      const byId = state.lista.findIndex(p => Number(p.id) === asignadoId);
+      if (byId >= 0) {
+        state.baseIdx = byId;
+        state.idx = byId;
+      } else {
+        // Fallback por nombre si no aparece en la lista
+        const nombreAsignado = (provSpan?.textContent || '').trim();
+        const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
+        state.baseIdx = byName >= 0 ? byName : 0;
+        state.idx = state.baseIdx;
+      }
+    } else {
+      // Sin ID disponible, intentar por nombre
+      const nombreAsignado = (provSpan?.textContent || '').trim();
+      const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
+      state.baseIdx = byName >= 0 ? byName : 0;
+      state.idx = state.baseIdx;
+    }
   }
 
   _cacheProveedores.set(productoId, state);
@@ -422,18 +442,16 @@ contenedorProductos.addEventListener('click', async (ev) => {
   const provNuevo = st.lista[st.idx];
   _renderProveedor(productoId, provNuevo);
 
-  // Calcular simulación usando SIEMPRE el proveedor ASIGNADO como base
+  // Cálculo con base FIJA (proveedor asignado)
   const costoAsignado = toNumberSafe(st.lista[st.baseIdx]?.costo_iva);
   const costoNuevo = toNumberSafe(provNuevo?.costo_iva);
 
   if (costoAsignado > 0 && costoNuevo > 0 && precioVentaOriginal > 0) {
-    const markup = precioVentaOriginal / costoAsignado;
+    const markup = precioVentaOriginal / costoAsignado;   // <- base correcta por ID
     const precioSimulado = Math.round(markup * costoNuevo);
 
-    // Actualizar precio visible en la card
     const precioNode = cardEl.querySelector('.precio-producto .precio');
     if (precioNode) {
-      // Si volvemos al proveedor base, restauramos el precio original
       if (st.idx === st.baseIdx) {
         precioNode.textContent = `$${formatearNumero(precioVentaOriginal)}`;
         _renderSimulacion(productoId, null);
@@ -443,7 +461,6 @@ contenedorProductos.addEventListener('click', async (ev) => {
       }
     }
   } else {
-    // No se puede simular con datos incompletos
     _renderSimulacion(productoId, null);
   }
 }, { passive: true });
