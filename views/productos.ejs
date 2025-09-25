@@ -1,5 +1,330 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
+<style>
+  /* =========================================================
+   PALETA / FALLBACKS (ajusta si ya tenés variables globales)
+   ========================================================= */
+:root{
+  --brand:#003f7d;
+  --brand-2:#1F487E;
+  --accent:#d90429;
+  --text:#0f172a;
+  --muted:#7b8a97;
+  --card-bg: rgba(255,255,255,0.75);
+  --card-brd: rgba(0,0,0,0.06);
+  --card-shadow: 0 12px 30px rgba(0,0,0,0.10);
+  --hover-shadow: 0 18px 45px rgba(0,0,0,0.16);
+  --radius:16px;
+}
+
+/* =========================================================
+   1) BOTÓN 3D "Siguiente proveedor"
+   ========================================================= */
+.btn-siguiente-proveedor{
+  --btn-bg-1:#0a5ccd;        /* degradé superior */
+  --btn-bg-2:#064aa6;        /* degradé inferior */
+  --btn-gloss:rgba(255,255,255,0.22);
+  --btn-shadow:rgba(0,0,0,0.35);
+
+  display:inline-flex;
+  align-items:center;
+  gap:.5rem;
+  padding:12px 16px;
+  border:none;
+  border-radius:12px;
+  font-weight:700;
+  letter-spacing:.2px;
+  color:#fff;
+  background: linear-gradient(180deg, var(--btn-bg-1), var(--btn-bg-2));
+  box-shadow:
+    0 10px 0 0 rgba(6, 55, 118, .6),           /* “base” 3D */
+    0 12px 24px var(--btn-shadow),             /* sombra suave */
+    inset 0 1px 0 var(--btn-gloss);            /* brillo superior */
+  transform: translateY(0);
+  transition: transform .12s ease, box-shadow .2s ease, filter .2s ease;
+  cursor:pointer;
+  will-change: transform;
+}
+.btn-siguiente-proveedor:hover{
+  filter: brightness(1.06);
+  box-shadow:
+    0 10px 0 0 rgba(6, 55, 118, .55),
+    0 18px 34px rgba(0,0,0,.22),
+    inset 0 1px 0 var(--btn-gloss);
+}
+.btn-siguiente-proveedor:active{
+  transform: translateY(6px);
+  box-shadow:
+    0 4px 0 0 rgba(6, 55, 118, .6),
+    0 10px 22px rgba(0,0,0,.22),
+    inset 0 2px 4px rgba(0,0,0,.18);
+}
+.btn-siguiente-proveedor:focus-visible{
+  outline: 3px solid rgba(217,4,41,.35);
+  outline-offset: 2px;
+}
+.btn-siguiente-proveedor::after{
+  content:"↻";
+  font-weight:800;
+  opacity:.9;
+}
+
+/* Contenedor del botón + índice (admin) */
+.prov-actions{
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+  margin-top:.25rem;
+}
+.prov-idx{
+  color:var(--muted);
+  font-size:.85rem;
+}
+
+/* =========================================================
+   2) TARJETA DE PRODUCTO – Refresh moderno
+   ========================================================= */
+
+/* Card: glass/neumorphism suave */
+.card{
+  position:relative;
+  background: var(--card-bg);
+  border:1px solid var(--card-brd);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  overflow:hidden;
+  backdrop-filter: blur(6px);
+}
+.card:hover{
+  transform: translateY(-4px);
+  box-shadow: var(--hover-shadow);
+  border-color: rgba(0,0,0,0.10);
+}
+
+/* Ribbon usando data-label existente */
+.card[data-label]:before{
+  content: attr(data-label);
+  position:absolute;
+  top:14px; left:-10px;
+  background: linear-gradient(90deg, var(--accent), #ff5a5a);
+  color:#fff;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.4px;
+  padding:6px 14px;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 6px 14px rgba(217,4,41, .25);
+}
+
+/* Encabezados y bloques */
+.titulo-producto h3{
+  font-size:1.1rem;
+  font-weight:800;
+  color:var(--text);
+  margin:8px 14px 0 14px;
+  line-height:1.25;
+}
+.categoria-producto h6{
+  margin:2px 14px 6px 14px;
+  font-size:.85rem;
+  font-weight:700;
+  color:#334155;
+  display:inline-flex;
+  align-items:center;
+  gap:.4rem;
+}
+.categoria-producto h6::before{
+  content:"•";
+  color:var(--brand);
+  font-weight:900;
+}
+
+/* Precio destacado */
+.precio-producto p{
+  margin: 8px 14px 10px 14px;
+  font-size:1.35rem;
+  font-weight:900;
+  color:#0b1220;
+  letter-spacing:.2px;
+}
+.precio-producto p::after{
+  /* mini barra de énfasis */
+  content:"";
+  display:block;
+  width:68px; height:3px;
+  margin-top:6px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--brand), var(--accent));
+  opacity:.75;
+}
+
+/* Bloque admin (proveedor + código) */
+.codigo-admin{
+  margin: 8px 14px 10px 14px;
+  padding:10px 12px;
+  border-radius:12px;
+  background: rgba(0,0,0,.03);
+  border:1px dashed rgba(0,0,0,.08);
+}
+.codigo-admin p{
+  margin:0 0 6px 0;
+  color:#1f2937;
+}
+.codigo-admin strong{ color:#0f172a; }
+
+/* Carrusel */
+.cover-card{
+  padding: 10px 10px 0 10px;
+}
+.carousel-wrapper{
+  aspect-ratio: 4/3;        /* mantiene proporción limpia */
+  border-radius: 12px;
+  overflow:hidden;
+  background:#f4f6f8;
+}
+.carousel__image{
+  width:100%;
+  height:100%;
+  object-fit: contain;       /* evita deformaciones */
+  display:block;
+  background: radial-gradient(ellipse at center, #ffffff 0%, #eef2f7 100%);
+}
+
+/* Flechas del carrusel */
+.carousel__button{
+  background: rgba(255,255,255,.9);
+  border:1px solid rgba(0,0,0,.08);
+  width:38px; height:38px;
+  border-radius: 10px;
+  display:grid; place-items:center;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  transition: transform .12s ease, background .2s ease, box-shadow .2s ease;
+}
+.carousel__button:hover{
+  transform: translateY(-1px);
+  background:#fff;
+  box-shadow: 0 10px 22px rgba(0,0,0,.16);
+}
+.carousel__button i{ color:#111827; }
+
+/* Estado/semáforo y stock */
+.semaforo-stock, .stock-producto{
+  margin: 6px 14px 10px 14px;
+}
+.semaforo-stock .texto-semaforo{
+  font-weight:700;
+  color:#0b1324;
+}
+.semaforo-stock .verde{ color:#10b981; }
+.semaforo-stock .rojo{ color:#ef4444; }
+
+/* Acciones (Agregar al carrito / Ver detalles / Compartir) */
+.cantidad-producto{
+  display:flex;
+  align-items:center;
+  gap:.6rem;
+  padding: 6px 14px 14px 14px;
+}
+.cantidad-input{
+  height:40px;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,.12);
+  padding:0 10px;
+}
+.agregar-carrito{
+  background: linear-gradient(180deg, #1cb655, #159445);
+  color:#fff;
+  font-weight:800;
+  border:none;
+  border-radius:10px;
+  padding:10px 14px;
+  box-shadow: 0 10px 0 0 rgba(9, 103, 45,.45), 0 14px 28px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.25);
+  transition: transform .12s ease, box-shadow .18s ease, filter .2s ease;
+}
+.agregar-carrito:hover{ filter: brightness(1.05); }
+.agregar-carrito:active{
+  transform: translateY(6px);
+  box-shadow: 0 4px 0 0 rgba(9,103,45,.5), 0 10px 22px rgba(0,0,0,.18), inset 0 2px 3px rgba(0,0,0,.18);
+}
+.card-link{
+  font-weight:800;
+  color: var(--brand);
+  text-decoration:none;
+}
+.card-link:hover{ text-decoration: underline; }
+
+/* Compartir */
+.acciones-compartir{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 0 14px 14px 14px;
+}
+.acciones-compartir a{
+  width:38px; height:38px;
+  display:grid; place-items:center;
+  border-radius:10px;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow: 0 6px 14px rgba(0,0,0,.10);
+  transition: transform .12s ease, box-shadow .18s ease;
+}
+.acciones-compartir a:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0,0,0,.14);
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px){
+  .card{ border-radius:14px; }
+  .carousel-wrapper{ aspect-ratio: 1/1; } /* cuadrado en mobile */
+  .precio-producto p{ font-size:1.2rem; }
+}
+
+/* =========================================================
+   3) MINI POLISH BUSCADOR
+   ========================================================= */
+.buscador-con-icono input[type="text"]{
+  border-color: rgba(0,0,0,.08);
+  background: linear-gradient(180deg, #ffffff, #fafbff);
+}
+.buscador-con-icono input[type="text"]:focus{
+  border-color: rgba(0,63,125,.35);
+  box-shadow: 0 8px 26px rgba(0,63,125,.18);
+}
+
+/* Seletores con look pill (manteniendo tu 3D) */
+.formulario-filtros select{
+  background: linear-gradient(180deg, #0b62d0, #0a4ea6);
+  border:1px solid rgba(0,0,0,.08);
+}
+.formulario-filtros select:hover,
+.formulario-filtros select:focus{
+  background: #eef2f6;
+  border:1px solid rgba(0,0,0,.12);
+}
+
+/* =========================================================
+   4) OPCIONAL: Dark-friendly (si usás dark mode del sistema)
+   ========================================================= */
+@media (prefers-color-scheme: dark){
+  :root{
+    --card-bg: rgba(18,23,33,.66);
+    --card-brd: rgba(255,255,255,.06);
+    --text:#e5e7eb;
+  }
+  .card{ box-shadow: 0 10px 32px rgba(0,0,0,.55); }
+  .titulo-producto h3, .codigo-admin strong{ color:#e8eef8; }
+  .categoria-producto h6{ color:#d0d7e2; }
+  .precio-producto p{ color:#f9fbff; }
+  .carousel-wrapper{ background: #111827; }
+  .carousel__button{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.12); }
+  .acciones-compartir a{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); }
+  .codigo-admin{ background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.10); }
+}
+
+</style>
 
 <body data-is-admin-user="<%= isAdminUser %>" data-is-user-logged-in="<%= isUserLoggedIn %>">
 
