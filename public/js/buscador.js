@@ -121,6 +121,8 @@ function mostrarProductos(productos) {
         : producto.calidad_vic ? 'CALIDAD VIC'
         : ''
     );
+    // === NUEVO: guardo precio de venta para simulación
+    card.dataset.precioVenta = producto.precio_venta;
 
     let imagenesHTML = '';
     (producto.imagenes || []).forEach((imagen, i) => {
@@ -211,6 +213,8 @@ function mostrarProductos(productos) {
                    data-producto-id="${producto.id}"
                    style="display:block;opacity:.7;margin-top:4px"></small>
           </div>
+          <!-- NUEVO: línea para mostrar la simulación -->
+          <p class="prov-simulacion" data-producto-id="${producto.id}" style="margin-top:6px;font-weight:700;"></p>
         </div>
       ` : ''}
 
@@ -279,6 +283,9 @@ function mostrarProductos(productos) {
 
     // === NUEVO: inicializar proveedor actual (si ya hay lista cacheada) ===
     _inicializarProveedorActual(producto);
+
+    // === NUEVO: ocultar botón si hay menos de 2 proveedores ===
+    _initProveedorButton(producto.id);
   });
 }
 
@@ -300,13 +307,13 @@ function formatearNumero(num) {
    NUEVO: Siguiente proveedor
    ========================= */
 
-const _cacheProveedores = new Map(); // productoId -> { lista: [], idx: number }
+const _cacheProveedores = new Map(); // productoId -> { lista: [], idx: number, first?: boolean }
 
 async function _getListaProveedores(productoId) {
   if (_cacheProveedores.has(productoId)) return _cacheProveedores.get(productoId).lista;
   const r = await fetch(`/productos/api/proveedores/${productoId}`);
   const lista = await r.json();
-  _cacheProveedores.set(productoId, { lista: Array.isArray(lista) ? lista : [], idx: 0 });
+  _cacheProveedores.set(productoId, { lista: Array.isArray(lista) ? lista : [], idx: 0, first: true });
   return _cacheProveedores.get(productoId).lista;
 }
 
@@ -324,6 +331,16 @@ function _renderProveedor(productoId, data) {
   }
 }
 
+function _renderSimulacion(productoId, precio){
+  const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
+  if (!nodo) return;
+  if (precio && !Number.isNaN(precio)) {
+    nodo.textContent = `Precio venta simulado: $${formatearNumero(precio)}`;
+  } else {
+    nodo.textContent = '';
+  }
+}
+
 function _inicializarProveedorActual(producto) {
   if (!isAdminUser) return;
   const st = _cacheProveedores.get(producto.id);
@@ -335,6 +352,16 @@ function _inicializarProveedorActual(producto) {
   st.idx = idx >= 0 ? idx : 0;
   _cacheProveedores.set(producto.id, st);
   _renderProveedor(producto.id, st.lista[st.idx]);
+}
+
+async function _initProveedorButton(productoId){
+  if (!isAdminUser) return;
+  const btn = document.querySelector(`.btn-siguiente-proveedor[data-producto-id="${productoId}"]`);
+  if (!btn) return;
+  const lista = await _getListaProveedores(productoId);
+  if (!lista || lista.length < 2){
+    btn.style.display = 'none';
+  }
 }
 
 // Delegado de click SOLO para “Siguiente proveedor”
@@ -351,9 +378,51 @@ contenedorProductos.addEventListener('click', async (ev) => {
     return;
   }
 
-  const state = _cacheProveedores.get(productoId) || { lista, idx: 0 };
-  // Avanzar de forma cíclica
-  state.idx = (state.idx + 1) % state.lista.length;
+  const state = _cacheProveedores.get(productoId) || { lista, idx: 0, first: true };
+
+  // Si menos de 2 -> ocultar botón y salir
+  if (state.lista.length < 2) {
+    btn.style.display = 'none';
+    return;
+  }
+
+  // Obtener el precio de venta actual de la card
+  const cardEl = btn.closest('.card');
+  const precioVentaActual = Number(cardEl?.dataset?.precioVenta || 0);
+
+  // Encontrar el proveedor mostrado ahora por nombre (si coincide)
+  const nombreActual = (document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`)?.textContent || '').trim();
+  const idxActual = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreActual);
+  const costoActual = idxActual >= 0 ? Number(state.lista[idxActual].costo_iva) : 0;
+
+  // Elegir índice a mostrar:
+  if (state.first) {
+    // Primer click: ir al MÁS BARATO
+    let cheapestIdx = 0;
+    for (let i = 1; i < state.lista.length; i++) {
+      if (Number(state.lista[i].costo_iva) < Number(state.lista[cheapestIdx].costo_iva)) {
+        cheapestIdx = i;
+      }
+    }
+    state.idx = cheapestIdx;
+    state.first = false;
+  } else {
+    // Siguientes clicks: rotación cíclica
+    state.idx = (state.idx + 1) % state.lista.length;
+  }
+
   _cacheProveedores.set(productoId, state);
-  _renderProveedor(productoId, state.lista[state.idx]);
+
+  // Render proveedor elegido
+  const provNuevo = state.lista[state.idx];
+  _renderProveedor(productoId, provNuevo);
+
+  // Simular precio de venta manteniendo el mismo markup del producto actual
+  if (precioVentaActual > 0 && costoActual > 0) {
+    const factorMarkup = precioVentaActual / costoActual;
+    const precioSimulado = Math.round(factorMarkup * Number(provNuevo.costo_iva));
+    _renderSimulacion(productoId, precioSimulado);
+  } else {
+    _renderSimulacion(productoId, null);
+  }
 }, { passive: true });

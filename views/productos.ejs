@@ -57,10 +57,12 @@
   <% productos.forEach(function(producto, index) { %>
 
     <div class="card
-      <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
-      <%= producto.calidad_vic ? 'calidad_vic' : '' %>
-      <%= producto.oferta ? 'producto-oferta' : '' %>"
-      data-label="<%= producto.oferta ? 'OFERTA' : (producto.calidad_original ? 'CALIDAD FITAM' : (producto.calidad_vic ? 'CALIDAD VIC' : '')) %>">
+  <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
+  <%= producto.calidad_vic ? 'calidad_vic' : '' %>
+  <%= producto.oferta ? 'producto-oferta' : '' %>"
+  data-label="<%= producto.oferta ? 'OFERTA' : (producto.calidad_original ? 'CALIDAD FITAM' : (producto.calidad_vic ? 'CALIDAD VIC' : '')) %>"
+  data-precio-venta="<%= producto.precio_venta %>">
+
 
       <div class="cover-card">
         <% if (producto.imagenes && producto.imagenes.length > 0) { %>
@@ -117,11 +119,15 @@
             </span>
           </p>
           <div class="prov-actions">
-            <button type="button"
-                    class="btn-siguiente-proveedor"
-                    data-producto-id="<%= producto.id %>">
-              Siguiente proveedor
-            </button>
+  <button type="button"
+          class="btn-siguiente-proveedor"
+          data-producto-id="<%= producto.id %>">
+    Siguiente proveedor
+  </button>
+  <small class="prov-idx" data-producto-id="<%= producto.id %>" style="display:block;opacity:.7;margin-top:4px"></small>
+</div>
+<p class="prov-simulacion" data-producto-id="<%= producto.id %>" style="margin-top:6px;font-weight:700;"></p>
+
             <small class="prov-idx"
                    data-producto-id="<%= producto.id %>"
                    style="display:block;opacity:.7;margin-top:4px"></small>
