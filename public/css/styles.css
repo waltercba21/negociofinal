@@ -1246,15 +1246,15 @@ tfoot td {
 
 .form-crear > div:last-child { border-right: 2px solid var(--border); }
 
-/* ⬇️ Acotamos la regla para NO afectar al <select class="proveedores"> */
-.caracteristicas, .utilidades, .form-crear > .proveedores {
+/* columnas internas (ojo: esta .proveedores es la COLUMNA, no el <select>) */
+.caracteristicas,
+.utilidades,
+.form-crear > .proveedores {
   display: flex;
   flex-direction: column;
   gap: 12px;
   min-width: 0;
 }
-
-/* ⬇️ También acotamos el margin a la columna, no al select */
 .form-crear > .proveedores { margin: 0; }
 
 /* Grilla de tarjetas de proveedores */
@@ -1265,7 +1265,7 @@ tfoot td {
   align-items: start;
 }
 
-/* Tarjeta de proveedor con 3D */
+/* Tarjeta de proveedor */
 .proveedor{
   position: relative;
   background: var(--surface);
@@ -1310,7 +1310,7 @@ tfoot td {
   margin: 0;
 }
 
-/* Resalte de tarjeta cuando está seleccionado */
+/* Resalte cuando está seleccionado */
 .proveedor:has(.proveedor-designado-radio:checked){
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0,63,125,0.10), var(--shadow-hover);
@@ -1326,7 +1326,7 @@ tfoot td {
 }
 
 .form-group-crear > label {
-  display: block;        /* label ocupa todo el ancho */
+  display: block;
   width: 100%;
   text-align: left;
   margin-bottom: 6px;
@@ -1336,18 +1336,12 @@ tfoot td {
   font-size: 13px;
 }
 
-/* Label específico del selector de proveedores */
 .label-proveedor {
   display: block;
   font-weight: 700;
 }
 
-/* ⬇️ Aseguramos que el <select class="proveedores"> sea bloque y ancho completo */
-.form-group-crear select.proveedores {
-  display: block;
-  width: 100%;
-}
-
+/* Inputs/selects generales */
 .form-group-crear input,
 .form-group-crear select{
   width: 100%;
@@ -1369,7 +1363,7 @@ tfoot td {
   box-shadow: 0 0 0 3px rgba(0,63,125,0.12), var(--shadow-inset);
 }
 
-/* Botón agregar proveedor (crear) */
+/* Botón agregar proveedor */
 #addProveedor{
   background-color: #22A35A;
   color: white;
@@ -1390,7 +1384,7 @@ tfoot td {
   box-shadow: var(--shadow-hover);
 }
 
-/* Botón eliminar proveedor con 3D */
+/* Botón eliminar proveedor */
 .eliminar-proveedor{
   background-color: #b30000;
   color: #fff;
@@ -1404,7 +1398,7 @@ tfoot td {
 }
 .eliminar-proveedor:hover{ background-color: #e11d1d; transform: translateY(-1px); }
 
-/* Botonera general (crear) */
+/* Botonera general */
 .botones-crear {
   width: 100%;
   display: flex;
@@ -1440,38 +1434,65 @@ tfoot td {
   padding: 2px 5px; border-radius: 50%;
   font-size: 12px;
 }
-/* --- FIX select de proveedores dentro de la tarjeta .proveedor --- */
-.proveedor .form-group-crear > select.proveedores {
-  display: block !important;
-  width: 100% !important;
-  max-width: 100%;
-  position: static !important;  /* por si heredó absolute/fixed */
-  float: none !important;       /* por si alguna regla lo flotaba */
-  align-self: stretch;          /* llena el ancho del contenedor flex-col */
-  box-sizing: border-box;
+
+/* =========================================================
+   FIX DEFINITIVO: select de Proveedores dentro de la tarjeta
+   ========================================================= */
+
+/* Grupo columna sano dentro de la tarjeta */
+.container-crear .proveedor .form-group-crear {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
 }
 
-/* Garantiza que el label quede arriba y no se “pegue” al campo de abajo */
-.proveedor .form-group-crear > label.label-proveedor {
+/* Label arriba */
+.container-crear .proveedor .form-group-crear > label.label-proveedor {
   display: block;
   width: 100%;
   margin: 0 0 6px 0;
   line-height: 1.2;
 }
 
-/* Asegura que cada bloque mantenga el flujo vertical y no colapse */
-.proveedor .form-group-crear {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
+/* Blindaje del <select class="proveedores"> */
+.container-crear .proveedor .form-group-crear > select.proveedores {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  position: static !important;
+  float: none !important;
+  clear: both !important;
+  flex: 0 0 auto !important;
+  align-self: stretch !important;
+  box-sizing: border-box !important;
 }
 
-/* Si existiese una regla global que hace flex a .proveedores, la anulamos aquí */
-.form-group-crear > select.proveedores { 
-  flex: 0 0 auto; 
+/* Por si alguna regla global pone display:flex a .proveedores,
+   aquí lo neutralizamos cuando es el select */
+.container-crear .proveedor select.proveedores {
+  display: block !important;
 }
 
+/* Evita montajes del input siguiente por floats absolutos externos */
+.container-crear .proveedor .form-group-crear .codigo.form-control,
+.container-crear .proveedor .form-group-crear .precio_lista.form-control,
+.container-crear .proveedor .form-group-crear .descuentos_proveedor_id.form-control,
+.container-crear .proveedor .form-group-crear .costo_neto.form-control,
+.container-crear .proveedor .form-group-crear .IVA.form-control,
+.container-crear .proveedor .form-group-crear .costo_iva.form-control {
+  position: static !important;
+  float: none !important;
+  clear: none !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Mantener el “pill” del radio */
+.proveedor > .form-group-crear:first-child label{
+  display: inline-flex;
+}
 
 /* =====================================================================
    ----------------------------- EDITAR -----------------------------
