@@ -56,11 +56,9 @@ contenedorProductos.addEventListener('click', (ev) => {
 
 // ===== Botón limpiar (UNA sola vez) =====
 if (botonLimpiar) {
-  // Mostrar/ocultar según contenido
   entradaBusqueda.addEventListener('input', () => {
     botonLimpiar.style.display = entradaBusqueda.value.trim() !== '' ? 'block' : 'none';
   });
-  // Limpiar al hacer clic
   botonLimpiar.addEventListener('click', () => {
     entradaBusqueda.value = '';
     botonLimpiar.style.display = 'none';
@@ -74,7 +72,6 @@ entradaBusqueda.addEventListener('input', (e) => {
   timer = setTimeout(async () => {
     const busqueda = e.target.value.trim();
 
-    // Analytics: registrar texto (cada 1.2s mín., 3+ chars)
     const now = Date.now();
     if (busqueda.length >= 3 && (now - lastLogAt > 1200)) {
       lastLogAt = now;
@@ -121,7 +118,7 @@ function mostrarProductos(productos) {
         : producto.calidad_vic ? 'CALIDAD VIC'
         : ''
     );
-    // === NUEVO: guardo precio de venta para simulación
+    // Guardar precio de venta original para simulación/restauración
     card.dataset.precioVenta = producto.precio_venta;
 
     let imagenesHTML = '';
@@ -213,7 +210,6 @@ function mostrarProductos(productos) {
                    data-producto-id="${producto.id}"
                    style="display:block;opacity:.7;margin-top:4px"></small>
           </div>
-          <!-- NUEVO: línea para mostrar la simulación -->
           <p class="prov-simulacion" data-producto-id="${producto.id}" style="margin-top:6px;font-weight:700;"></p>
         </div>
       ` : ''}
@@ -281,10 +277,8 @@ function mostrarProductos(productos) {
       });
     }
 
-    // === NUEVO: inicializar proveedor actual (si ya hay lista cacheada) ===
+    // Inicializaciones proveedor
     _inicializarProveedorActual(producto);
-
-    // === NUEVO: ocultar botón si hay menos de 2 proveedores ===
     _initProveedorButton(producto.id);
   });
 }
@@ -300,21 +294,44 @@ function moverCarrusel(index, direccion) {
 }
 
 function formatearNumero(num) {
-  return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return Math.floor(Number(num) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// ============== Helpers numéricos ==============
+function toNumberSafe(v){
+  if (v == null) return 0;
+  if (typeof v === 'number') return v;
+  // convertir "1.234,56" o "1234,56" -> 1234.56
+  const s = String(v).replace(/\./g,'').replace(',', '.').trim();
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
 }
 
 /* =========================
-   NUEVO: Siguiente proveedor
+   Siguiente proveedor (con base asignada)
    ========================= */
 
-const _cacheProveedores = new Map(); // productoId -> { lista: [], idx: number, first?: boolean }
+// productoId -> { lista: [], idx: number, first: true, baseIdx: number }
+const _cacheProveedores = new Map();
 
-async function _getListaProveedores(productoId) {
-  if (_cacheProveedores.has(productoId)) return _cacheProveedores.get(productoId).lista;
+async function _getOrInitState(productoId){
+  let state = _cacheProveedores.get(productoId);
+  if (state) return state;
+
   const r = await fetch(`/productos/api/proveedores/${productoId}`);
   const lista = await r.json();
-  _cacheProveedores.set(productoId, { lista: Array.isArray(lista) ? lista : [], idx: 0, first: true });
-  return _cacheProveedores.get(productoId).lista;
+  state = { lista: Array.isArray(lista) ? lista : [], idx: 0, first: true, baseIdx: 0 };
+
+  // Si hay lista, detectar el proveedor ASIGNADO (el que se muestra al render inicial)
+  if (state.lista.length) {
+    const nombreAsignado = (document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`)?.textContent || '').trim();
+    const found = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
+    state.baseIdx = found >= 0 ? found : 0; // si no matchea, por defecto 0
+    state.idx = state.baseIdx;
+  }
+
+  _cacheProveedores.set(productoId, state);
+  return state;
 }
 
 function _renderProveedor(productoId, data) {
@@ -334,7 +351,7 @@ function _renderProveedor(productoId, data) {
 function _renderSimulacion(productoId, precio){
   const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
   if (!nodo) return;
-  if (precio && !Number.isNaN(precio)) {
+  if (precio && Number.isFinite(precio)) {
     nodo.textContent = `Precio venta simulado: $${formatearNumero(precio)}`;
   } else {
     nodo.textContent = '';
@@ -346,10 +363,9 @@ function _inicializarProveedorActual(producto) {
   const st = _cacheProveedores.get(producto.id);
   if (!st || !st.lista?.length) return;
 
-  // Encontrar el índice del proveedor actualmente mostrado por SSR/front
   const actualNombre = (document.querySelector(`.prov-nombre[data-producto-id="${producto.id}"]`)?.textContent || '').trim();
   const idx = st.lista.findIndex(p => (p.proveedor_nombre || '').trim() === actualNombre);
-  st.idx = idx >= 0 ? idx : 0;
+  st.idx = idx >= 0 ? idx : st.idx;
   _cacheProveedores.set(producto.id, st);
   _renderProveedor(producto.id, st.lista[st.idx]);
 }
@@ -358,8 +374,8 @@ async function _initProveedorButton(productoId){
   if (!isAdminUser) return;
   const btn = document.querySelector(`.btn-siguiente-proveedor[data-producto-id="${productoId}"]`);
   if (!btn) return;
-  const lista = await _getListaProveedores(productoId);
-  if (!lista || lista.length < 2){
+  const st = await _getOrInitState(productoId);
+  if (!st.lista || st.lista.length < 2){
     btn.style.display = 'none';
   }
 }
@@ -372,57 +388,62 @@ contenedorProductos.addEventListener('click', async (ev) => {
   const productoId = Number(btn.dataset.productoId);
   if (!productoId) return;
 
-  const lista = await _getListaProveedores(productoId);
-  if (!lista || !lista.length) {
+  const cardEl = btn.closest('.card');
+  const precioVentaOriginal = toNumberSafe(cardEl?.dataset?.precioVenta);
+
+  const st = await _getOrInitState(productoId);
+  if (!st.lista || !st.lista.length) {
     Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
     return;
   }
-
-  const state = _cacheProveedores.get(productoId) || { lista, idx: 0, first: true };
-
-  // Si menos de 2 -> ocultar botón y salir
-  if (state.lista.length < 2) {
+  if (st.lista.length < 2) {
     btn.style.display = 'none';
     return;
   }
 
-  // Obtener el precio de venta actual de la card
-  const cardEl = btn.closest('.card');
-  const precioVentaActual = Number(cardEl?.dataset?.precioVenta || 0);
-
-  // Encontrar el proveedor mostrado ahora por nombre (si coincide)
-  const nombreActual = (document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`)?.textContent || '').trim();
-  const idxActual = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreActual);
-  const costoActual = idxActual >= 0 ? Number(state.lista[idxActual].costo_iva) : 0;
-
-  // Elegir índice a mostrar:
-  if (state.first) {
-    // Primer click: ir al MÁS BARATO
+  // Primer click: saltar al proveedor MÁS BARATO
+  if (st.first) {
     let cheapestIdx = 0;
-    for (let i = 1; i < state.lista.length; i++) {
-      if (Number(state.lista[i].costo_iva) < Number(state.lista[cheapestIdx].costo_iva)) {
+    for (let i = 1; i < st.lista.length; i++) {
+      if (toNumberSafe(st.lista[i].costo_iva) < toNumberSafe(st.lista[cheapestIdx].costo_iva)) {
         cheapestIdx = i;
       }
     }
-    state.idx = cheapestIdx;
-    state.first = false;
+    st.idx = cheapestIdx;
+    st.first = false;
   } else {
-    // Siguientes clicks: rotación cíclica
-    state.idx = (state.idx + 1) % state.lista.length;
+    // Resto: rotación cíclica
+    st.idx = (st.idx + 1) % st.lista.length;
   }
 
-  _cacheProveedores.set(productoId, state);
+  _cacheProveedores.set(productoId, st);
 
   // Render proveedor elegido
-  const provNuevo = state.lista[state.idx];
+  const provNuevo = st.lista[st.idx];
   _renderProveedor(productoId, provNuevo);
 
-  // Simular precio de venta manteniendo el mismo markup del producto actual
-  if (precioVentaActual > 0 && costoActual > 0) {
-    const factorMarkup = precioVentaActual / costoActual;
-    const precioSimulado = Math.round(factorMarkup * Number(provNuevo.costo_iva));
-    _renderSimulacion(productoId, precioSimulado);
+  // Calcular simulación usando SIEMPRE el proveedor ASIGNADO como base
+  const costoAsignado = toNumberSafe(st.lista[st.baseIdx]?.costo_iva);
+  const costoNuevo = toNumberSafe(provNuevo?.costo_iva);
+
+  if (costoAsignado > 0 && costoNuevo > 0 && precioVentaOriginal > 0) {
+    const markup = precioVentaOriginal / costoAsignado;
+    const precioSimulado = Math.round(markup * costoNuevo);
+
+    // Actualizar precio visible en la card
+    const precioNode = cardEl.querySelector('.precio-producto .precio');
+    if (precioNode) {
+      // Si volvemos al proveedor base, restauramos el precio original
+      if (st.idx === st.baseIdx) {
+        precioNode.textContent = `$${formatearNumero(precioVentaOriginal)}`;
+        _renderSimulacion(productoId, null);
+      } else {
+        precioNode.textContent = `$${formatearNumero(precioSimulado)}`;
+        _renderSimulacion(productoId, precioSimulado);
+      }
+    }
   } else {
+    // No se puede simular con datos incompletos
     _renderSimulacion(productoId, null);
   }
 }, { passive: true });
