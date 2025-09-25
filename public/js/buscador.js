@@ -392,7 +392,7 @@ function _renderSimulacion(productoId, precioVentaSimulado){
   const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
   if (!nodo) return;
   if (Number.isFinite(precioVentaSimulado) && precioVentaSimulado > 0) {
-    nodo.textContent = `Precio venta simulado: $${formatearNumero(precioVentaSimulado)}`;
+    nodo.textContent = `Precio venta: $${formatearNumero(precioVentaSimulado)}`;
   } else {
     nodo.textContent = '';
   }
