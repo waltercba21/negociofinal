@@ -300,13 +300,27 @@ function formatearNumero(num) {
 }
 
 // ============== Helpers numéricos ==============
-function toNumberSafe(v){
+// Reemplazá la función toNumberSafe por esta
+function toNumberSafe(v) {
   if (v == null) return 0;
-  if (typeof v === 'number') return v;
-  const s = String(v).replace(/\./g,'').replace(',', '.').trim();
-  const n = Number(s);
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+
+  let s = String(v).trim();
+
+  // Si trae ambos signos (.) y (,) asumimos miles con punto y decimales con coma: 1.234,56
+  if (s.includes('.') && s.includes(',')) {
+    s = s.replace(/\./g, '').replace(',', '.'); // -> 1234.56
+  } else if (s.includes(',')) {
+    // Solo comas: 1234,56 -> 1234.56
+    s = s.replace(',', '.');
+  } else {
+    // Solo puntos: viene como MySQL/US (1234.56), lo dejamos tal cual
+  }
+
+  const n = parseFloat(s);
   return Number.isFinite(n) ? n : 0;
 }
+
 
 /* =========================
    Siguiente proveedor (con base asignada por ID)
