@@ -1193,6 +1193,8 @@ tfoot td {
 /* =====================================================================
    ----------------------------- CREAR -----------------------------
    ===================================================================== */
+
+/* Contenedor principal */
 .container-crear {
   display: flex;
   flex-direction: column;
@@ -1229,6 +1231,7 @@ tfoot td {
   padding: 16px;
 }
 
+/* Layout del formulario */
 .form-crear {
   width: 100%;
   display: grid;
@@ -1246,8 +1249,7 @@ tfoot td {
   padding: 16px;
 }
 
-.form-crear > div:last-child { border-right: 2px solid var(--border); }
-
+/* Columnas internas */
 .caracteristicas, .proveedores, .utilidades {
   display: flex;
   flex-direction: column;
@@ -1257,7 +1259,9 @@ tfoot td {
 
 .proveedores { margin: 0; }
 
-/* Grilla de tarjetas de proveedores */
+/* =======================
+   Grilla de proveedores
+   ======================= */
 #proveedoresContainer{
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1265,7 +1269,7 @@ tfoot td {
   align-items: start;
 }
 
-/* Tarjeta de proveedor con 3D */
+/* Tarjeta de proveedor */
 .proveedor{
   position: relative;
   background: var(--surface);
@@ -1303,20 +1307,22 @@ tfoot td {
   user-select: none;
 }
 
-/* Radio visible y cómodo */
+/* Radio visible */
 .proveedor-designado-radio{
   transform: scale(1.15);
   accent-color: var(--primary);
   margin: 0;
 }
 
-/* Resalte de tarjeta cuando está seleccionado (si el navegador soporta :has) */
+/* Resalte tarjeta seleccionada */
 .proveedor:has(.proveedor-designado-radio:checked){
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0,63,125,0.10), var(--shadow-hover);
 }
 
-/* Grupos y labels (CREAR) con bordes/inputs bien definidos */
+/* =======================
+   Grupos e inputs
+   ======================= */
 .form-group-crear{
   display: flex;
   flex-direction: column;
@@ -1325,10 +1331,28 @@ tfoot td {
   align-items: stretch;
 }
 
-.form-group-crear label{
+/* Alineación firme de labels (excepto el “pill”, que tiene su regla propia arriba) */
+.form-group-crear > label {
+  display: block;        /* ocupa todo el ancho del contenedor */
+  width: 100%;
+  text-align: left;
+  margin-bottom: 6px;
+  line-height: 1.2;
   font-weight: 700;
   color: var(--label);
   font-size: 13px;
+}
+
+/* Label específico del selector de proveedores */
+.label-proveedor {
+  display: block;
+  font-weight: 700;
+}
+
+/* Select de proveedores bien estirado */
+.form-group-crear select.proveedores {
+  display: block;
+  width: 100%;
 }
 
 .form-group-crear input,
@@ -1352,7 +1376,9 @@ tfoot td {
   box-shadow: 0 0 0 3px rgba(0,63,125,0.12), var(--shadow-inset);
 }
 
-/* Botón agregar proveedor (crear) */
+/* =======================
+   Botón agregar proveedor
+   ======================= */
 #addProveedor{
   background-color: #22A35A;
   color: white;
@@ -1373,7 +1399,7 @@ tfoot td {
   box-shadow: var(--shadow-hover);
 }
 
-/* Botón eliminar proveedor con 3D */
+/* Botón eliminar proveedor */
 .eliminar-proveedor{
   background-color: #b30000;
   color: #fff;
@@ -1387,7 +1413,9 @@ tfoot td {
 }
 .eliminar-proveedor:hover{ background-color: #e11d1d; transform: translateY(-1px); }
 
-/* Botonera general (crear) */
+/* =======================
+   Botonera general
+   ======================= */
 .botones-crear {
   width: 100%;
   display: flex;
@@ -1406,7 +1434,9 @@ tfoot td {
   box-shadow: var(--shadow);
 }
 
-/* Miniaturas */
+/* =======================
+   Miniaturas
+   ======================= */
 .imagen-miniatura-contenedor{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
 .imagen-miniatura-contenedor .imagen-miniatura{ width:80px; height:80px; }
 .imagen-miniatura{
