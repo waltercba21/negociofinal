@@ -18,10 +18,24 @@
     #proveedoresContainer{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-items:start}
 
     /* Tarjeta de proveedor */
-    .proveedor{position:relative;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 16px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .2s ease,border-color .2s ease,transform .06s ease-in;padding-top:58px}
+    .proveedor{position:relative;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 16px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .2s ease,border-color .2s ease,transform .06s ease-in;padding-top:18px}
+
+    /* ✅ SOLO en tarjetas que tengan radio (vista EDITAR) mostramos el “pill” arriba a la derecha */
+    .proveedor:has(.proveedor-designado-radio) { padding-top:58px; }
+    .proveedor:has(.proveedor-designado-radio) > .form-group-crear:first-child{
+      position:absolute;top:10px;right:10px;margin:0;align-items:flex-end
+    }
+    .proveedor:has(.proveedor-designado-radio) > .form-group-crear:first-child label{
+      display:inline-flex;align-items:center;gap:8px;background:var(--surface-muted);border:2px solid var(--border);
+      border-radius:999px;padding:6px 10px;font-size:12px;color:var(--text);box-shadow:var(--shadow);user-select:none
+    }
+
+    /* ✅ En CREAR (sin radio) el primer grupo es el select de proveedores → flujo normal */
+    .proveedor:not(:has(.proveedor-designado-radio)) > .form-group-crear:first-child{
+      position:static;margin-bottom:10px;align-items:stretch
+    }
+
     .proveedor:hover{box-shadow:var(--shadow-hover);border-color:var(--border-strong)}
-    .proveedor>.form-group-crear:first-child{position:absolute;top:10px;right:10px;margin:0;align-items:flex-end}
-    .proveedor>.form-group-crear:first-child label{display:inline-flex;align-items:center;gap:8px;background:var(--surface-muted);border:2px solid var(--border);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--text);box-shadow:var(--shadow);user-select:none}
     .proveedor-designado-radio{transform:scale(1.15);accent-color:var(--primary);margin:0}
     .proveedor:has(.proveedor-designado-radio:checked){border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,63,125,.1),var(--shadow-hover)}
 
@@ -34,32 +48,11 @@
     .form-group-crear input,.form-group-crear select{width:100%;max-width:100%;padding:10px 12px;font-size:13px;font-weight:600;text-align:left;background:var(--surface);border:2px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-inset);outline:none}
     .form-group-crear input:focus,.form-group-crear select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,63,125,.12),var(--shadow-inset)}
 
-    /* ===== FIX DEFINITIVO: select.proveedores dentro de la tarjeta ===== */
-    .proveedor .form-group-crear>select.proveedores{
-      display:block !important;
-      width:100% !important;
-      max-width:100% !important;
-      position:static !important;   /* cancela absolute/fixed heredados */
-      float:none !important;        /* cancela floats ajenos */
-      clear:both !important;
-      flex:0 0 auto !important;     /* que no crezca/encoga raro */
-      align-self:stretch !important;
-      box-sizing:border-box !important;
-      z-index:1;                    /* por si algo debajo tenía z-index */
-    }
-
-    /* Asegura flujo vertical limpio para los campos siguientes */
-    .proveedor .form-group-crear .codigo.form-control,
-    .proveedor .form-group-crear .precio_lista.form-control,
-    .proveedor .form-group-crear .descuentos_proveedor_id.form-control,
-    .proveedor .form-group-crear .costo_neto.form-control,
-    .proveedor .form-group-crear .IVA.form-control,
-    .proveedor .form-group-crear .costo_iva.form-control{
-      position:static !important;
-      float:none !important;
-      clear:none !important;
-      width:100%;
-      max-width:100%;
+    /* 🔒 Blindaje extra: el select de proveedores siempre como bloque ancho completo */
+    .proveedor .form-group-crear > select.proveedores{
+      display:block !important;width:100% !important;max-width:100% !important;
+      position:static !important;float:none !important;clear:both !important;
+      flex:0 0 auto !important;align-self:stretch !important;box-sizing:border-box !important;z-index:1
     }
 
     /* Botones */
@@ -73,8 +66,7 @@
 
     /* Miniaturas */
     .imagen-miniatura-contenedor{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-    .imagen-miniatura-contenedor .imagen-miniatura{width:80px;height:80px}
-    .imagen-miniatura{object-fit:cover;border-radius:6px;box-shadow:var(--shadow);border:2px solid var(--border)}
+    .imagen-miniatura{object-fit:cover;border-radius:6px;box-shadow:var(--shadow);border:2px solid var(--border);width:80px;height:80px}
     .preview-img{position:relative;cursor:pointer}
     .preview-img::after{content:'✕';position:absolute;top:5px;right:5px;background:rgba(0,0,0,.55);color:#fff;padding:2px 5px;border-radius:50%;font-size:12px}
   </style>
@@ -82,9 +74,7 @@
 
   <main>
     <div class="container-crear">
-      <div class="titulo-crear">
-        Crear Producto
-      </div>
+      <div class="titulo-crear">Crear Producto</div>
 
       <div class="contenido-crear">
         <div class="card-body">
@@ -96,7 +86,7 @@
                 <input id="imagen" class="form-control-file" type="file" name="archivos[]" multiple>
               </div>
 
-              <div id="preview"></div>
+              <div id="preview" class="imagen-miniatura-contenedor"></div>
 
               <div class="form-group-crear">
                 <label for="nombre">Nombre</label>
@@ -104,19 +94,18 @@
               </div>
 
               <div class="form-group-crear">
-                <label for="descripcion">Descripcion</label>
+                <label for="descripcion">Descripción</label>
                 <input id="descripcion" class="form-control" type="text" name="descripcion">
               </div>
 
               <div class="form-group-crear">
                 <label for="oferta">Oferta</label>
                 <input type="hidden" name="oferta" value="0">
-                <input type="checkbox" id="oferta" name="oferta" value="1" class="form-check-input"
-                  <%= producto && producto.oferta === 1 ? 'checked' : '' %>>
+                <input type="checkbox" id="oferta" name="oferta" value="1" class="form-check-input" <%= producto && producto.oferta === 1 ? 'checked' : '' %>>
               </div>
 
               <div class="form-group-crear">
-                <label for="categoria">Categoria</label>
+                <label for="categoria">Categoría</label>
                 <select id="categoria" name="categoria">
                   <option value="" selected>Selecciona una categoría</option>
                   <% categorias.forEach(function(categoria) { %>
