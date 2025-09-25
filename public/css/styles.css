@@ -1440,6 +1440,38 @@ tfoot td {
   padding: 2px 5px; border-radius: 50%;
   font-size: 12px;
 }
+/* --- FIX select de proveedores dentro de la tarjeta .proveedor --- */
+.proveedor .form-group-crear > select.proveedores {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100%;
+  position: static !important;  /* por si heredó absolute/fixed */
+  float: none !important;       /* por si alguna regla lo flotaba */
+  align-self: stretch;          /* llena el ancho del contenedor flex-col */
+  box-sizing: border-box;
+}
+
+/* Garantiza que el label quede arriba y no se “pegue” al campo de abajo */
+.proveedor .form-group-crear > label.label-proveedor {
+  display: block;
+  width: 100%;
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+}
+
+/* Asegura que cada bloque mantenga el flujo vertical y no colapse */
+.proveedor .form-group-crear {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Si existiese una regla global que hace flex a .proveedores, la anulamos aquí */
+.form-group-crear > select.proveedores { 
+  flex: 0 0 auto; 
+}
+
 
 /* =====================================================================
    ----------------------------- EDITAR -----------------------------
