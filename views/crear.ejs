@@ -2,6 +2,84 @@
 <%- include ./layouts/header.ejs %>
 
 <body>
+  <!-- ======= CSS ESPECÍFICO DE ESTA VISTA ======= -->
+  <style>
+    /* Layout general */
+    .container-crear{display:flex;flex-direction:column;align-items:center;padding:20px;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .titulo-crear{font-weight:800;text-align:center;margin-bottom:18px;font-size:28px;color:var(--primary)}
+    .contenido-crear,.card-body{display:flex;flex-direction:row;justify-content:center;align-items:stretch;flex-wrap:wrap;gap:20px;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .form-crear{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:start;justify-items:stretch}
+    .form-crear>div{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .form-crear>div:last-child{border-right:2px solid var(--border)}
+    .caracteristicas,.utilidades,.form-crear>.proveedores{display:flex;flex-direction:column;gap:12px;min-width:0}
+    .form-crear>.proveedores{margin:0}
+
+    /* Grilla de tarjetas de proveedores */
+    #proveedoresContainer{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-items:start}
+
+    /* Tarjeta de proveedor */
+    .proveedor{position:relative;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 16px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .2s ease,border-color .2s ease,transform .06s ease-in;padding-top:58px}
+    .proveedor:hover{box-shadow:var(--shadow-hover);border-color:var(--border-strong)}
+    .proveedor>.form-group-crear:first-child{position:absolute;top:10px;right:10px;margin:0;align-items:flex-end}
+    .proveedor>.form-group-crear:first-child label{display:inline-flex;align-items:center;gap:8px;background:var(--surface-muted);border:2px solid var(--border);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--text);box-shadow:var(--shadow);user-select:none}
+    .proveedor-designado-radio{transform:scale(1.15);accent-color:var(--primary);margin:0}
+    .proveedor:has(.proveedor-designado-radio:checked){border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,63,125,.1),var(--shadow-hover)}
+
+    /* Grupos */
+    .form-group-crear{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;align-items:stretch}
+    .form-group-crear>label{display:block;width:100%;text-align:left;margin:0 0 6px 0;line-height:1.2;font-weight:700;color:var(--label);font-size:13px}
+    .label-proveedor{display:block;font-weight:700}
+
+    /* Inputs/selects generales */
+    .form-group-crear input,.form-group-crear select{width:100%;max-width:100%;padding:10px 12px;font-size:13px;font-weight:600;text-align:left;background:var(--surface);border:2px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-inset);outline:none}
+    .form-group-crear input:focus,.form-group-crear select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,63,125,.12),var(--shadow-inset)}
+
+    /* ===== FIX DEFINITIVO: select.proveedores dentro de la tarjeta ===== */
+    .proveedor .form-group-crear>select.proveedores{
+      display:block !important;
+      width:100% !important;
+      max-width:100% !important;
+      position:static !important;   /* cancela absolute/fixed heredados */
+      float:none !important;        /* cancela floats ajenos */
+      clear:both !important;
+      flex:0 0 auto !important;     /* que no crezca/encoga raro */
+      align-self:stretch !important;
+      box-sizing:border-box !important;
+      z-index:1;                    /* por si algo debajo tenía z-index */
+    }
+
+    /* Asegura flujo vertical limpio para los campos siguientes */
+    .proveedor .form-group-crear .codigo.form-control,
+    .proveedor .form-group-crear .precio_lista.form-control,
+    .proveedor .form-group-crear .descuentos_proveedor_id.form-control,
+    .proveedor .form-group-crear .costo_neto.form-control,
+    .proveedor .form-group-crear .IVA.form-control,
+    .proveedor .form-group-crear .costo_iva.form-control{
+      position:static !important;
+      float:none !important;
+      clear:none !important;
+      width:100%;
+      max-width:100%;
+    }
+
+    /* Botones */
+    #addProveedor{background:#22A35A;color:#fff;border:2px solid #1e8c4d;padding:10px 16px;font-size:14px;line-height:1;border-radius:999px;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s,background-color .15s;justify-self:center}
+    #addProveedor:hover{background:#2EDB77;color:#0b1729;transform:translateY(-1px);box-shadow:var(--shadow-hover)}
+    .eliminar-proveedor{background:#b30000;color:#fff;border:2px solid #941010;padding:10px 14px;border-radius:10px;width:100%;cursor:pointer;transition:background-color .15s,transform .06s;box-shadow:var(--shadow)}
+    .eliminar-proveedor:hover{background:#e11d1d;transform:translateY(-1px)}
+
+    .botones-crear{width:100%;display:flex;justify-content:space-between;gap:12px;margin-top:20px}
+    .botones-crear button,.botones-crear a{border:2px solid var(--primary-600);background:var(--primary);color:#fff;padding:10px 20px;font-weight:800;text-decoration:none;border-radius:var(--radius-sm);box-shadow:var(--shadow)}
+
+    /* Miniaturas */
+    .imagen-miniatura-contenedor{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .imagen-miniatura-contenedor .imagen-miniatura{width:80px;height:80px}
+    .imagen-miniatura{object-fit:cover;border-radius:6px;box-shadow:var(--shadow);border:2px solid var(--border)}
+    .preview-img{position:relative;cursor:pointer}
+    .preview-img::after{content:'✕';position:absolute;top:5px;right:5px;background:rgba(0,0,0,.55);color:#fff;padding:2px 5px;border-radius:50%;font-size:12px}
+  </style>
+  <!-- ======= /CSS ESPECÍFICO ======= -->
+
   <main>
     <div class="container-crear">
       <div class="titulo-crear">
@@ -11,6 +89,7 @@
       <div class="contenido-crear">
         <div class="card-body">
           <form class="form-crear" method="POST" action="/productos" enctype="multipart/form-data">
+            <!-- Columna 1: Características -->
             <div class="caracteristicas">
               <div class="form-group-crear">
                 <label for="imagen">Imagen</label>
@@ -67,7 +146,8 @@
               </div>
             </div>
 
-            <div id="proveedoresContainer">
+            <!-- Columna 2: Proveedores -->
+            <div id="proveedoresContainer" class="proveedores">
               <div class="form-group-crear">
                 <label for="calidad_original">Calidad FITAM</label>
                 <input type="checkbox" id="calidad_original" name="calidad_original" value="1">
@@ -85,7 +165,6 @@
 
               <!-- BLOQUE BASE DE PROVEEDOR (plantilla para clonar) -->
               <div class="proveedor">
-                
                 <div class="form-group-crear">
                   <label class="label-proveedor">Proveedores: <span class="nombre_proveedor"></span></label>
                   <select class="proveedores" name="proveedores[]" required>
@@ -111,7 +190,6 @@
                   <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
                 </div>
 
-                <!-- VISIBLES: Precio de costo y costo con IVA -->
                 <div class="form-group-crear">
                   <label for="costo_neto">Precio de costo (Neto):</label>
                   <input class="costo_neto form-control" type="number" step="0.01" name="costo_neto[]" value="0">
@@ -132,6 +210,7 @@
               <button id="addProveedor" type="button" class="btn btn-secondary">+</button>
             </div>
 
+            <!-- Columna 3: Utilidades/estado/stock -->
             <div class="utilidades">
               <div class="form-group-crear">
                 <label for="utilidad">Utilidad:</label>
