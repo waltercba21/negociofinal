@@ -1356,11 +1356,7 @@ tfoot td {
   letter-spacing: .2px;
   color: #fff;
   cursor: pointer;
-  background: linear-gradient(180deg, #0b61a4, #084a7a); /* azul sólido -> más profundo */
-  box-shadow:
-    0 8px 0 0 #063a60,               /* base “3D” (sombra dura) */
-    0 14px 26px rgba(0,0,0,.18),     /* sombra suave exterior */
-    inset 0 1px 0 rgba(255,255,255,.25); /* brillo superior */
+  background: linear-gradient(180deg, #0b61a4, #084a7a);
   transform: translateY(0);
   transition: transform .12s ease, box-shadow .18s ease, filter .18s ease;
   user-select: none;
@@ -1369,18 +1365,12 @@ tfoot td {
 
 .btn-siguiente-proveedor:hover{
   filter: brightness(1.06);
-  box-shadow:
-    0 8px 0 0 #063a60,
-    0 20px 34px rgba(0,0,0,.22),
-    inset 0 1px 0 rgba(255,255,255,.28);
+  
 }
 
 .btn-siguiente-proveedor:active{
   transform: translateY(6px);
-  box-shadow:
-    0 3px 0 0 #063a60,
-    0 12px 22px rgba(0,0,0,.22),
-    inset 0 2px 4px rgba(0,0,0,.18);
+  
 }
 
 .btn-siguiente-proveedor:focus-visible{
