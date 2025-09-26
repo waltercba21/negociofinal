@@ -330,16 +330,17 @@
               <% productoProveedores.forEach(function(productoProveedor) { %>
                 <div class="proveedor">
                   <div class="form-group-crear">
-  <label>
+  <label class="radio-elige-proveedor">
     <input
       type="radio"
-      name="proveedor_designado_radio"  <!-- <- nombre distinto al hidden -->
+      name="proveedor_designado_radio"
       class="proveedor-designado-radio"
-      value="<%= productoProveedor.proveedor_id %>"  <!-- <- ID real, no index -->
-      <%= (producto.proveedor_id && producto.proveedor_id === productoProveedor.proveedor_id) ? 'checked' : '' %> >
+      value="<%= productoProveedor.proveedor_id %>"
+      <%= (producto.proveedor_id === productoProveedor.proveedor_id) ? 'checked' : '' %> />
     Usar este proveedor
   </label>
 </div>
+
 
 
                   <div class="form-group-crear">
