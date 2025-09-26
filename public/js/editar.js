@@ -112,23 +112,14 @@ $(document).ready(function () {
     actualizarPrecioFinal();
   });
 
-  // Disparos iniciales
+  // Disparos iniciales: calcular todo y elegir *automático* (más barato)
   $('.proveedores').each(function () { $(this).trigger('change'); });
   $('.precio_lista').each(function () { $(this).trigger('change'); });
+  // IMPORTANTE: por defecto NO respetamos proveedor de BD; elegimos el más barato
+  window.__seleccionManualProveedor__ = false;
+  $('.proveedor-designado-radio').prop('checked', false);
   actualizarProveedorAsignado();
   actualizarPrecioFinal();
-
-  // Respetar proveedor asignado desde BD al cargar
-  var provBD = $('#proveedor_designado').val(); // hidden con proveedor_id guardado en BD
-  if (provBD) {
-    var $radioBD = $('.proveedor-designado-radio[value="' + String(provBD) + '"]');
-    if ($radioBD.length) {
-      $radioBD.prop('checked', true);
-      window.__seleccionManualProveedor__ = true;
-      var nombre = $radioBD.closest('.proveedor').find('.nombre_proveedor').text() || '';
-      $('#proveedorAsignado').text(nombre);
-    }
-  }
 });
 
 // =======================================
@@ -202,10 +193,12 @@ $('#utilidad').off('input change.util').on('input change.util', function () {
 $(document)
   .off('change.provRadio', '.proveedor-designado-radio')
   .on('change.provRadio', '.proveedor-designado-radio', function () {
+    // Marca selección manual y sincroniza el hidden con el proveedor_id
     window.__seleccionManualProveedor__ = true;
     var proveedorId = $(this).val(); // proveedor_id
     $('#proveedor_designado').val(proveedorId);
 
+    // Refrescar el nombre mostrado
     var nombre = $(this).closest('.proveedor').find('.nombre_proveedor').text() || '';
     $('#proveedorAsignado').text(nombre);
   });
@@ -320,9 +313,8 @@ function getProveedorConCostoIvaMasBajo() {
 }
 
 function actualizarProveedorAsignado() {
+  // 1) Si el usuario eligió manualmente, NO sobreescribimos su elección
   var $radioChecked = $('.proveedor-designado-radio:checked');
-
-  // Si el usuario eligió manualmente, NO sobreescribimos su elección
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
     var nombreManual = $radioChecked.closest('.proveedor').find('.nombre_proveedor').text() || '';
     $('#proveedorAsignado').text(nombreManual);
@@ -330,17 +322,12 @@ function actualizarProveedorAsignado() {
     return;
   }
 
-  // Si ya hay un radio marcado (p. ej. vino de BD), respetarlo
-  if (!window.__seleccionManualProveedor__ && $radioChecked.length) {
-    var nombreMarcado = $radioChecked.closest('.proveedor').find('.nombre_proveedor').text() || '';
-    $('#proveedorAsignado').text(nombreMarcado);
-    $('#proveedor_designado').val($radioChecked.val());
-    return;
-  }
-
-  // Auto: elegir el más barato (solo si no hay ninguno marcado)
+  // 2) Automático SIEMPRE (cuando no hay selección manual): elegir el más barato
   var $proveedor = getProveedorConCostoIvaMasBajo();
   var nombre = '';
+
+  // Desmarcar todos antes de marcar el auto
+  $('.proveedor-designado-radio').prop('checked', false);
 
   if ($proveedor && $proveedor.length) {
     nombre = $proveedor.find('.nombre_proveedor').text() || '';
@@ -369,9 +356,8 @@ function actualizarPrecioFinal() {
 
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
     $proveedor = $radioChecked.closest('.proveedor');
-  } else if ($radioChecked.length) {
-    $proveedor = $radioChecked.closest('.proveedor');
   } else {
+    // Sin selección manual → usar el más barato (aunque algún radio esté marcado)
     $proveedor = getProveedorConCostoIvaMasBajo();
   }
 
