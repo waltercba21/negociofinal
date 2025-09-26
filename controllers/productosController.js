@@ -778,10 +778,38 @@ actualizar: async function (req, res) {
 
     await producto.actualizar(conexion, datosProducto);
 
-    // 2) Proveedores → UPSERT (solo columnas reales)
+    // 2) Proveedores del form → filas (dedupe por proveedor_id)
     const filas = buildProveedorRows(productoId, req.body);
-    console.log("[ACTUALIZAR] filas producto_proveedor:", filas.length, filas[0] || '(sin filas)');
+    console.log("[ACTUALIZAR] filas producto_proveedor (post):", filas.length, filas[0] || '(sin filas)');
 
+    const postedIdsSet = new Set(filas.map(f => Number(f.proveedor_id)).filter(Boolean));
+
+    // 2.a) Traer proveedores actuales en DB
+    const [existentesRows] = await conexion.promise().query(
+      'SELECT proveedor_id FROM producto_proveedor WHERE producto_id = ?',
+      [productoId]
+    );
+    const existentes = (existentesRows || []).map(r => Number(r.proveedor_id));
+    console.log("[ACTUALIZAR] proveedores existentes en DB:", existentes);
+
+    // 2.b) Determinar cuáles hay que ELIMINAR (estaban en DB y NO vienen en el form)
+    const toDelete = existentes.filter(id => !postedIdsSet.has(id));
+    console.log("[ACTUALIZAR] proveedores a eliminar:", toDelete);
+
+    if (toDelete.length) {
+      const delSql = `
+        DELETE FROM producto_proveedor
+        WHERE producto_id = ? AND proveedor_id IN (${toDelete.map(() => '?').join(',')})
+      `;
+      const delParams = [productoId, ...toDelete];
+      console.log("[ACTUALIZAR] DELETE:", delSql, delParams);
+      const [delRes] = await conexion.promise().query(delSql, delParams);
+      console.log("[ACTUALIZAR] DELETE resultado:", delRes.affectedRows);
+    } else {
+      console.log("[ACTUALIZAR] No hay proveedores para eliminar.");
+    }
+
+    // 2.c) UPSERT de los que vienen en el form
     for (let i = 0; i < filas.length; i++) {
       const row = filas[i];
       const sql = `
@@ -794,31 +822,45 @@ actualizar: async function (req, res) {
       `;
       const params = [row.producto_id, row.proveedor_id, row.precio_lista, row.codigo];
       console.log(`[ACTUALIZAR] UPSERT fila ${i}:`, params);
-      await conexion.promise().query(sql, params);
+      const [upRes] = await conexion.promise().query(sql, params);
+      console.log(`[ACTUALIZAR] UPSERT OK fila ${i}: affectedRows=${upRes.affectedRows}`);
     }
 
-    // 3) Proveedor asignado: prioridad manual; si no hay, más barato por costo_iva[]
+    // 3) Proveedor asignado: prioridad manual; si no hay, más barato por costo_iva[].
+    //    Si el asignado manual ya no existe (lo borraron del form), recalcular.
     let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
-    console.log("[ACTUALIZAR] proveedor_designado recibido:", req.body.proveedor_designado, "→", proveedorAsignado);
-    if (!proveedorAsignado) {
-      proveedorAsignado = pickCheapestProveedorId(req.body);
-      console.log("[ACTUALIZAR] proveedor más barato por costo_iva[]:", proveedorAsignado);
+    console.log("[ACTUALIZAR] proveedor_designado (hidden) recibido:", req.body.proveedor_designado, "→", proveedorAsignado);
+
+    // Si el asignado no quedó entre los proveedores del form (o no hay asignado), elegir más barato.
+    if (!proveedorAsignado || !postedIdsSet.has(proveedorAsignado)) {
+      const recalculado = pickCheapestProveedorId(req.body);
+      console.log("[ACTUALIZAR] proveedor asignado no válido o ausente; recalculado más barato:", recalculado);
+      proveedorAsignado = recalculado || null;
     }
 
     if (proveedorAsignado) {
-      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
-      console.log("[ACTUALIZAR] productos.proveedor_id actualizado a:", proveedorAsignado);
+      const [resUpdProv] = await conexion.promise().query(
+        'UPDATE productos SET proveedor_id = ? WHERE id = ?',
+        [proveedorAsignado, productoId]
+      );
+      console.log("[ACTUALIZAR] productos.proveedor_id actualizado:", { proveedorAsignado, affectedRows: resUpdProv.affectedRows });
+    } else {
+      console.log("[ACTUALIZAR] Sin proveedor asignado (no hay proveedores en el form).");
+      // Si querés limpiar explícitamente:
+      // await conexion.promise().query('UPDATE productos SET proveedor_id = NULL WHERE id = ?', [productoId]);
     }
 
     // 4) Imágenes nuevas (opcionales)
     if (req.files && req.files.length > 0) {
-      console.log("[ACTUALIZAR] Cant. imágenes:", req.files.length);
+      console.log("[ACTUALIZAR] Cant. imágenes nuevas:", req.files.length);
       await Promise.all(
         req.files.map(f => producto.insertarImagenProducto(conexion, {
           producto_id: productoId,
           imagen: f.filename
         }))
       );
+    } else {
+      console.log("[ACTUALIZAR] No llegaron imágenes nuevas.");
     }
 
     // Redirección de retorno
@@ -834,6 +876,7 @@ actualizar: async function (req, res) {
     return res.status(500).send("Error: " + error.message);
   }
 },
+
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
