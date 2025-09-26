@@ -62,14 +62,47 @@ $(document).ready(function () {
   // Flag global: si el usuario eligió manualmente un proveedor
   window.__seleccionManualProveedor__ = false;
 
-  // Botón Agregar Proveedor (prevenir handlers duplicados)
+  // ===== 1) RESPETAR SELECCIÓN GUARDADA (ANTES de cualquier trigger) =====
+  var seleccionadoBD = $('#proveedor_designado').val(); // proveedor_id que viene del server
+  if (seleccionadoBD) {
+    var $radioBD = $('.proveedor-designado-radio').filter(function () {
+      return String($(this).val()) === String(seleccionadoBD);
+    });
+    if ($radioBD.length) {
+      // Marcar radio, activar modo manual y mostrar nombre
+      $radioBD.prop('checked', true);
+      window.__seleccionManualProveedor__ = true;
+
+      // Mostrar nombre (si aún no se setea .nombre_proveedor, tomar del select)
+      var $bloque = $radioBD.closest('.proveedor');
+      var nombre = $bloque.find('.nombre_proveedor').text().trim();
+      if (!nombre) {
+        nombre = $bloque.find('.proveedores option:selected').text().trim() || '';
+        $bloque.find('.nombre_proveedor').text(nombre);
+      }
+      $('#proveedorAsignado').text(nombre);
+    }
+  }
+
+  // ===== 2) Inicializar cálculos del DOM (AHORA sí lanzo triggers) =====
+  $('.proveedores').each(function () { $(this).trigger('change'); });
+  $('.precio_lista').each(function () { $(this).trigger('change'); });
+
+  // Si NO había selección guardada, autoselecciono el más barato:
+  if (!window.__seleccionManualProveedor__) {
+    actualizarProveedorAsignado();
+  }
+
+  // Calcular precio final con el bloque vigente (manual o auto)
+  actualizarPrecioFinal();
+
+  // Botón Agregar Proveedor
   $('#addProveedor').off('click.addProv').on('click.addProv', function (e) {
     e.preventDefault();
 
-    var $base = $('.proveedor').first(); // plantilla
+    var $base = $('.proveedor').first();
     if ($base.length === 0) return;
 
-    // Clon sin eventos
     var $nuevo = $base.clone(false);
 
     // Limpiar valores del clon
@@ -86,7 +119,7 @@ $(document).ready(function () {
     $nuevo.find('.label-precio-lista').text('Precio de Lista');
     $nuevo.find('.label-descuento').text('Descuento');
 
-    // Radio del clon desmarcado y sin valor
+    // Radio desmarcado y sin valor
     $nuevo.find('.proveedor-designado-radio').prop('checked', false).val('');
 
     // Botón eliminar (si no está)
@@ -97,54 +130,20 @@ $(document).ready(function () {
         '</div>'
       );
     } else {
-      // Si estaba (del bloque base), quitar data-proveedor-id por si era de BD
       $nuevo.find('.eliminar-proveedor').removeAttr('data-proveedor-id');
     }
 
-    // Insertar antes del botón +
     $nuevo.insertBefore('#addProveedor');
 
-    // Inicializar cálculos en el bloque nuevo
+    // Inicializar cálculos del bloque nuevo
     $nuevo.find('.proveedores').trigger('change');
     $nuevo.find('.precio_lista').trigger('change');
 
-    // Si no hay selección manual, puede que cambie el más barato
     if (!window.__seleccionManualProveedor__) {
       actualizarProveedorAsignado();
-      actualizarPrecioFinal();
     }
-  });
-
-  // Disparos iniciales de cálculo por bloque
-  $('.proveedores').each(function () { $(this).trigger('change'); });
-  $('.precio_lista').each(function () { $(this).trigger('change'); });
-
-  // ====== RESPETAR SELECCIÓN GUARDADA (si existe) o elegir el más barato ======
-  var seleccionadoBD = $('#proveedor_designado').val(); // proveedor_id que vino del server
-  if (seleccionadoBD) {
-    // Buscar el radio con ese value y marcarlo
-    var $radio = $('.proveedor-designado-radio').filter(function () {
-      return String($(this).val()) === String(seleccionadoBD);
-    });
-    if ($radio.length) {
-      $radio.prop('checked', true);
-      window.__seleccionManualProveedor__ = true; // fue una elección previa del admin
-      // Mostrar el nombre y recalcular precio final con ese bloque
-      var nombre = $radio.closest('.proveedor').find('.nombre_proveedor').text() || '';
-      $('#proveedorAsignado').text(nombre);
-      actualizarPrecioFinal();
-    } else {
-      // Si no hay radio que coincida (cambios de proveedores), caemos al auto
-      window.__seleccionManualProveedor__ = false;
-      actualizarProveedorAsignado();
-      actualizarPrecioFinal();
-    }
-  } else {
-    // No vino proveedor asignado → auto por más barato
-    window.__seleccionManualProveedor__ = false;
-    actualizarProveedorAsignado();
     actualizarPrecioFinal();
-  }
+  });
 });
 
 // =======================================
@@ -157,12 +156,11 @@ $(document)
     actualizarProveedor($(this));
     $wrap.find('.precio_lista').trigger('change');
 
-    // Si este bloque es el seleccionado manualmente, sincronizar hidden y recalcular
+    // Si este bloque es el seleccionado manualmente, sincronizamos hidden
     if ($wrap.find('.proveedor-designado-radio').is(':checked')) {
       $('#proveedor_designado').val($(this).val() || '');
       actualizarPrecioFinal();
     } else if (!window.__seleccionManualProveedor__) {
-      // Si no hay selección manual, puede cambiar el más barato
       actualizarProveedorAsignado();
       actualizarPrecioFinal();
     }
@@ -203,7 +201,6 @@ $(document)
 
     $bloque.remove();
 
-    // Si quitamos el seleccionado, liberar selección manual para re-autoseleccionar
     if (eraSeleccionado) {
       window.__seleccionManualProveedor__ = false;
       $('#proveedor_designado').val('');
@@ -220,21 +217,22 @@ $(document)
 $(document)
   .off('change.provRadio', '.proveedor-designado-radio')
   .on('change.provRadio', '.proveedor-designado-radio', function () {
+    // Activar modo manual ANTES de cualquier recalculo
     window.__seleccionManualProveedor__ = true;
 
-    // Desmarcar los demás (por seguridad) y marcar éste
     $('.proveedor-designado-radio').not(this).prop('checked', false);
     $(this).prop('checked', true);
 
-    // Sincronizar hidden con proveedor_id del radio
     var proveedorId = $(this).val() || '';
     $('#proveedor_designado').val(proveedorId);
 
-    // Refrescar el nombre mostrado
-    var nombre = $(this).closest('.proveedor').find('.nombre_proveedor').text() || '';
+    var nombre = $(this).closest('.proveedor').find('.nombre_proveedor').text().trim();
+    if (!nombre) {
+      nombre = $(this).closest('.proveedor').find('.proveedores option:selected').text().trim() || '';
+      $(this).closest('.proveedor').find('.nombre_proveedor').text(nombre);
+    }
     $('#proveedorAsignado').text(nombre);
 
-    // Recalcular precio final con el bloque elegido
     actualizarPrecioFinal();
   });
 
@@ -251,7 +249,7 @@ function actualizarProveedor($select) {
 
   $wrap.find('.nombre_proveedor').text(nombreProveedor);
 
-  // El radio de este bloque debe tener como value el proveedor_id del select
+  // Alinear value del radio con el proveedor seleccionado en el <select>
   $wrap.find('.proveedor-designado-radio').val($select.val() || '');
 
   // hidden descuento
@@ -353,7 +351,11 @@ function actualizarProveedorAsignado() {
   // Si el usuario eligió manualmente, NO sobreescribimos su elección
   var $radioChecked = $('.proveedor-designado-radio:checked');
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
-    var nombreManual = $radioChecked.closest('.proveedor').find('.nombre_proveedor').text() || '';
+    var nombreManual = $radioChecked.closest('.proveedor').find('.nombre_proveedor').text().trim();
+    if (!nombreManual) {
+      nombreManual = $radioChecked.closest('.proveedor').find('.proveedores option:selected').text().trim() || '';
+      $radioChecked.closest('.proveedor').find('.nombre_proveedor').text(nombreManual);
+    }
     $('#proveedorAsignado').text(nombreManual);
     $('#proveedor_designado').val($radioChecked.val() || '');
     return;
@@ -366,7 +368,11 @@ function actualizarProveedorAsignado() {
   $('.proveedor-designado-radio').prop('checked', false);
 
   if ($proveedor && $proveedor.length) {
-    nombre = $proveedor.find('.nombre_proveedor').text() || '';
+    nombre = $proveedor.find('.nombre_proveedor').text().trim();
+    if (!nombre) {
+      nombre = $proveedor.find('.proveedores option:selected').text().trim() || '';
+      $proveedor.find('.nombre_proveedor').text(nombre);
+    }
     var $radio = $proveedor.find('.proveedor-designado-radio');
     if ($radio.length) {
       $radio.prop('checked', true);
