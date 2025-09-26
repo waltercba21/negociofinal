@@ -684,191 +684,196 @@ guardar: async function (req, res) {
             res.status(500).json({ success: false, error: error.message });
         }
     },
-    editar: function(req, res) {
-        let productoResult;
-        let responseSent = false;
-        producto.retornarDatosId(conexion, req.params.id).then(result => {
-            if (!result) {
-                res.status(404).send("No se encontró el producto");
-                responseSent = true;
-                return;
-            }
-            productoResult = result;
-            productoResult.precio_lista = Math.round(productoResult.precio_lista);
-            productoResult.costo_neto = Math.round(productoResult.costo_neto);
-            productoResult.costo_iva = Math.round(productoResult.costo_iva);
-            productoResult.utilidad = Math.round(productoResult.utilidad);
-            productoResult.precio_venta = Math.round(productoResult.precio_venta);
-            productoResult.calidad_original_fitam = result.calidad_original_fitam;
-            productoResult.calidad_vic = result.calidad_vic; 
-            productoResult.paginaActual = req.query.pagina;
-            productoResult.busqueda = req.query.busqueda;   
+ // GET /productos/editar/:id
+editar: async function (req, res) {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).send('ID inválido');
 
-            producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
-                productoProveedoresResult.forEach(productoProveedorResult => {
-                    productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
-                    productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
-                    productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
-                });
-                Promise.all([
-                    producto.obtenerCategorias(conexion),
-                    producto.obtenerMarcas(conexion),
-                    producto.obtenerProveedores(conexion),
-                    producto.obtenerModelosPorMarca(conexion, productoResult.marca),
-                    producto.obtenerDescuentosProveedor(conexion),
-                    producto.obtenerStock(conexion, req.params.id) 
-                ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult, stockResult]) => {
-                    console.log('🔁 GET /productos/editar/:id');
-                    console.log('🧩 req.query.pagina:', req.query.pagina);
-                    console.log('🧩 req.query.busqueda:', req.query.busqueda);
-                    console.log('📦 productoResult.paginaActual:', productoResult.paginaActual);
-                    console.log('📦 productoResult.busqueda:', productoResult.busqueda);
+    // 1) Producto con proveedor_id (¡IMPORTANTE!)
+    const [prodRows] = await conexion.promise().query(
+      `SELECT p.id, p.nombre, p.descripcion, p.categoria_id, p.marca_id, p.modelo_id,
+              p.utilidad, p.precio_venta, p.estado, p.oferta,
+              p.calidad_original, p.calidad_vic, p.proveedor_id,   -- <- asegurate de traerlo
+              COALESCE(s.stock_minimo, 0) AS stock_minimo,
+              COALESCE(s.stock_actual, 0) AS stock_actual
+       FROM productos p
+       LEFT JOIN stock s ON s.producto_id = p.id
+       WHERE p.id = ?`,
+      [id]
+    );
+    if (!prodRows || prodRows.length === 0) {
+      return res.status(404).send('Producto no encontrado');
+    }
+    const producto = prodRows[0];
 
-                    res.render('editar', {
-                        producto: productoResult,
-                        productoProveedores: productoProveedoresResult,
-                        categorias: categoriasResult,
-                        marcas: marcasResult,
-                        proveedores: proveedoresResult,
-                        modelos: modelosResult,
-                        descuentosProveedor: descuentosProveedoresResult,
-                        stock: stockResult
-                    });
-                }).catch(error => {
-                    if (!responseSent) {
-                        res.status(500).send("Error al obtener los datos: " + error.message);
-                    }
-                });
-            }).catch(error => {
-                if (!responseSent) {
-                    res.status(500).send("Error al obtener los datos de producto_proveedor: " + error.message);
-                }
-            });
-        }).catch(error => {
-            if (!responseSent) {
-                res.status(500).send("Error al obtener los datos del producto: " + error.message);
-            }
-        });
-    },    
+    // 2) Listas auxiliares
+    const [categorias]  = await conexion.promise().query('SELECT id, nombre FROM categorias ORDER BY nombre');
+    const [marcas]      = await conexion.promise().query('SELECT id, nombre FROM marcas ORDER BY nombre');
+    const [modelos]     = await conexion.promise().query('SELECT id, nombre FROM modelos WHERE marca_id = ? OR ? IS NULL ORDER BY nombre', [producto.marca_id || null, producto.marca_id || null]);
+    const [proveedores] = await conexion.promise().query('SELECT id, nombre, descuento FROM proveedores ORDER BY nombre');
+
+    // 3) Proveedores del producto
+    const [ppRows] = await conexion.promise().query(
+      `SELECT producto_id, proveedor_id, precio_lista, codigo
+       FROM producto_proveedor
+       WHERE producto_id = ?
+       ORDER BY proveedor_id`,
+      [id]
+    );
+    const productoProveedores = ppRows || [];
+
+    // 4) Imágenes (si usás)
+    const [imgRows] = await conexion.promise().query(
+      'SELECT id, imagen FROM producto_imagenes WHERE producto_id = ? ORDER BY id',
+      [id]
+    );
+    producto.imagenes = imgRows || [];
+
+    // 5) Paginación / búsqueda de origen (si vienen por query)
+    producto.paginaActual = Number(req.query.pagina || 1);
+    producto.busqueda     = req.query.busqueda || '';
+
+    // 6) Render (¡enviamos producto.proveedor_id!)
+    return res.render('editar', {
+      producto,
+      categorias,
+      marcas,
+      modelos,
+      proveedores,
+      productoProveedores,
+      stock: { stock_minimo: producto.stock_minimo, stock_actual: producto.stock_actual }
+    });
+  } catch (err) {
+    console.error('[EDITAR] Error:', err);
+    return res.status(500).send('Error: ' + err.message);
+  }
+},
 actualizar: async function (req, res) {
   console.log("===== Inicio del controlador actualizar =====");
   try {
-    const productoId = numOr0(req.params.id || req.body.id);
-    console.log("[ACTUALIZAR] productoId:", productoId);
+    const productoId = Number(req.params.id || req.body.id);
     if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
 
-    // 1) Update escalares del producto
+    // 1) Update escalares
     const datosProducto = {
       id: productoId,
-      nombre: strOrNull(req.body.nombre),
-      descripcion: strOrNull(req.body.descripcion),
-      categoria_id: numOr0(req.body.categoria) || null,
-      marca_id: numOr0(req.body.marca) || null,
-      modelo_id: numOr0(req.body.modelo_id) || null,
-      utilidad: numOr0(req.body.utilidad),
-      precio_venta: numOr0(req.body.precio_venta),
-      estado: strOrNull(req.body.estado) || 'activo',
-      stock_minimo: numOr0(req.body.stock_minimo),
-      stock_actual: numOr0(req.body.stock_actual),
+      nombre: req.body.nombre || null,
+      descripcion: req.body.descripcion || null,
+      categoria_id: Number(req.body.categoria) || null,
+      marca_id: Number(req.body.marca) || null,
+      modelo_id: Number(req.body.modelo_id) || null,
+      utilidad: Number(req.body.utilidad) || 0,
+      precio_venta: Number(req.body.precio_venta) || 0,
+      estado: req.body.estado || 'activo',
+      stock_minimo: Number(req.body.stock_minimo) || 0,
+      stock_actual: Number(req.body.stock_actual) || 0,
       oferta: Number(req.body.oferta) === 1 ? 1 : 0,
       calidad_original: req.body.calidad_original ? 1 : 0,
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
-    console.log("[ACTUALIZAR] datosProducto:", datosProducto);
-
     await producto.actualizar(conexion, datosProducto);
 
     // 2) Proveedores del form → filas (dedupe por proveedor_id)
-    const filas = buildProveedorRows(productoId, req.body);
-    console.log("[ACTUALIZAR] filas producto_proveedor (post):", filas.length, filas[0] || '(sin filas)');
+    const proveedoresArr  = Array.isArray(req.body.proveedores) ? req.body.proveedores : (req.body.proveedores ? [req.body.proveedores] : []);
+    const codigosArr      = Array.isArray(req.body.codigo) ? req.body.codigo : (req.body.codigo ? [req.body.codigo] : []);
+    const preciosListaArr = Array.isArray(req.body.precio_lista) ? req.body.precio_lista : (req.body.precio_lista ? [req.body.precio_lista] : []);
 
-    const postedIdsSet = new Set(filas.map(f => Number(f.proveedor_id)).filter(Boolean));
+    // construir filas limpias
+    const seen = new Set();
+    const filas = [];
+    for (let i = 0; i < proveedoresArr.length; i++) {
+      const pid = Number(proveedoresArr[i] || 0);
+      if (!pid) continue;
+      const key = `${productoId}-${pid}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      filas.push({
+        producto_id: productoId,
+        proveedor_id: pid,
+        precio_lista: Number(preciosListaArr[i] || 0),
+        codigo: (codigosArr[i] ?? null) || null
+      });
+    }
 
-    // 2.a) Traer proveedores actuales en DB
+    const postedIdsSet = new Set(filas.map(f => f.proveedor_id));
+
+    // 2.a) Proveedores existentes para limpiar los que se quitaron
     const [existentesRows] = await conexion.promise().query(
       'SELECT proveedor_id FROM producto_proveedor WHERE producto_id = ?',
       [productoId]
     );
     const existentes = (existentesRows || []).map(r => Number(r.proveedor_id));
-    console.log("[ACTUALIZAR] proveedores existentes en DB:", existentes);
 
-    // 2.b) Determinar cuáles hay que ELIMINAR (estaban en DB y NO vienen en el form)
     const toDelete = existentes.filter(id => !postedIdsSet.has(id));
-    console.log("[ACTUALIZAR] proveedores a eliminar:", toDelete);
-
     if (toDelete.length) {
       const delSql = `
         DELETE FROM producto_proveedor
         WHERE producto_id = ? AND proveedor_id IN (${toDelete.map(() => '?').join(',')})
       `;
-      const delParams = [productoId, ...toDelete];
-      console.log("[ACTUALIZAR] DELETE:", delSql, delParams);
-      const [delRes] = await conexion.promise().query(delSql, delParams);
-      console.log("[ACTUALIZAR] DELETE resultado:", delRes.affectedRows);
-    } else {
-      console.log("[ACTUALIZAR] No hay proveedores para eliminar.");
+      await conexion.promise().query(delSql, [productoId, ...toDelete]);
     }
 
-    // 2.c) UPSERT de los que vienen en el form
-    for (let i = 0; i < filas.length; i++) {
-      const row = filas[i];
-      const sql = `
+    // 2.b) UPSERT de los que vienen en el form
+    for (const row of filas) {
+      await conexion.promise().query(
+        `
         INSERT INTO producto_proveedor
           (producto_id, proveedor_id, precio_lista, codigo)
         VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           precio_lista = VALUES(precio_lista),
           codigo      = VALUES(codigo)
-      `;
-      const params = [row.producto_id, row.proveedor_id, row.precio_lista, row.codigo];
-      console.log(`[ACTUALIZAR] UPSERT fila ${i}:`, params);
-      const [upRes] = await conexion.promise().query(sql, params);
-      console.log(`[ACTUALIZAR] UPSERT OK fila ${i}: affectedRows=${upRes.affectedRows}`);
+        `,
+        [row.producto_id, row.proveedor_id, row.precio_lista, row.codigo]
+      );
     }
 
-    // 3) Proveedor asignado: prioridad manual; si no hay, más barato por costo_iva[].
-    //    Si el asignado manual ya no existe (lo borraron del form), recalcular.
-    let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
-    console.log("[ACTUALIZAR] proveedor_designado (hidden) recibido:", req.body.proveedor_designado, "→", proveedorAsignado);
-
-    // Si el asignado no quedó entre los proveedores del form (o no hay asignado), elegir más barato.
-    if (!proveedorAsignado || !postedIdsSet.has(proveedorAsignado)) {
-      const recalculado = pickCheapestProveedorId(req.body);
-      console.log("[ACTUALIZAR] proveedor asignado no válido o ausente; recalculado más barato:", recalculado);
-      proveedorAsignado = recalculado || null;
-    }
-
-    if (proveedorAsignado) {
-      const [resUpdProv] = await conexion.promise().query(
+    // 3) Proveedor asignado
+    let proveedorAsignado = Number(req.body.proveedor_designado) || 0;
+    if (proveedorAsignado && postedIdsSet.has(proveedorAsignado)) {
+      // preferencia manual válida → respetar
+      await conexion.promise().query(
         'UPDATE productos SET proveedor_id = ? WHERE id = ?',
         [proveedorAsignado, productoId]
       );
-      console.log("[ACTUALIZAR] productos.proveedor_id actualizado:", { proveedorAsignado, affectedRows: resUpdProv.affectedRows });
     } else {
-      console.log("[ACTUALIZAR] Sin proveedor asignado (no hay proveedores en el form).");
-      // Si querés limpiar explícitamente:
-      // await conexion.promise().query('UPDATE productos SET proveedor_id = NULL WHERE id = ?', [productoId]);
+      // si no hay preferencia manual válida, elegimos el más barato con los datos que vinieron
+      // costo_iva[] viene en el form; usamos el índice para mapear al proveedor_id correspondiente
+      const costosIvaArr = Array.isArray(req.body.costo_iva) ? req.body.costo_iva : (req.body.costo_iva ? [req.body.costo_iva] : []);
+      let minIdx = -1, minVal = Infinity;
+      for (let i = 0; i < costosIvaArr.length; i++) {
+        const val = Number(costosIvaArr[i]);
+        if (!isNaN(val) && val < minVal) { minVal = val; minIdx = i; }
+      }
+      const autoProvId = (minIdx >= 0 && proveedoresArr[minIdx]) ? Number(proveedoresArr[minIdx]) : 0;
+      if (autoProvId) {
+        await conexion.promise().query(
+          'UPDATE productos SET proveedor_id = ? WHERE id = ?',
+          [autoProvId, productoId]
+        );
+      } else {
+        // Si por algún motivo no hay ninguno, podés dejarlo en NULL
+        await conexion.promise().query(
+          'UPDATE productos SET proveedor_id = NULL WHERE id = ?',
+          [productoId]
+        );
+      }
     }
 
-    // 4) Imágenes nuevas (opcionales)
+    // 4) Imágenes nuevas (si vinieron)
     if (req.files && req.files.length > 0) {
-      console.log("[ACTUALIZAR] Cant. imágenes nuevas:", req.files.length);
       await Promise.all(
         req.files.map(f => producto.insertarImagenProducto(conexion, {
           producto_id: productoId,
           imagen: f.filename
         }))
       );
-    } else {
-      console.log("[ACTUALIZAR] No llegaron imágenes nuevas.");
     }
 
-    // Redirección de retorno
+    // 5) Redirigir de vuelta al panel con la paginación/búsqueda
     const pagina = req.body.pagina || 1;
     const busqueda = req.body.busqueda ? encodeURIComponent(req.body.busqueda) : '';
-    console.log("[ACTUALIZAR] redirect -> pagina/busqueda:", pagina, busqueda);
-
-    console.log("===== Fin actualizar (OK) =====");
     return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
   } catch (error) {
     console.error("===== Error durante la ejecución en actualizar =====");
