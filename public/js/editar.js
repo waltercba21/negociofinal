@@ -97,6 +97,7 @@ $(document).ready(function () {
         '</div>'
       );
     } else {
+      // Si estaba (del bloque base), quitar data-proveedor-id por si era de BD
       $nuevo.find('.eliminar-proveedor').removeAttr('data-proveedor-id');
     }
 
