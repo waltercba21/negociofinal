@@ -12,7 +12,6 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
-
 .container-editar .titulo-editar{
   text-align: center;
   font-size: 24px;
@@ -20,7 +19,6 @@
   margin-bottom: 16px;
   color: var(--primary);
 }
-
 .container-editar .card-body-editar{
   padding: 0;
   background-color: var(--surface);
@@ -28,15 +26,13 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
-
-/* Tres columnas principales (características | proveedores | utilidades) */
+/* Tres columnas (características | proveedores | utilidades) */
 .container-editar .contenido-editar{
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 20px;
   width: 100%;
 }
-
 .container-editar .caracteristicas,
 .container-editar #proveedoresContainer,
 .container-editar .utilidades{
@@ -46,8 +42,7 @@
   box-shadow: var(--shadow);
   padding: 16px;
 }
-
-/* ---- Inputs/Selects (reutiliza clases ya usadas por el JS) ---- */
+/* Inputs/Selects (reutiliza clases del JS) */
 .container-editar .form-group-crear{
   margin-bottom: 14px;
   display: flex;
@@ -55,7 +50,6 @@
   gap: 6px;
   align-items: stretch;
 }
-
 .container-editar .form-group-crear label{
   display: block;
   color: var(--label);
@@ -63,7 +57,6 @@
   font-size: 13px;
   margin-bottom: 2px;
 }
-
 .container-editar .form-group-crear input,
 .container-editar .form-group-crear select,
 .container-editar .form-group-crear .form-control{
@@ -77,23 +70,20 @@
   box-shadow: var(--shadow-inset);
   outline: none;
 }
-
 .container-editar .form-group-crear input:focus,
 .container-editar .form-group-crear select:focus,
 .container-editar .form-group-crear .form-control:focus{
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0,63,125,0.12), var(--shadow-inset);
 }
-
-/* ---- Grilla de tarjetas de proveedores ---- */
+/* Grilla de proveedores */
 .container-editar #proveedoresContainer{
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
   align-items: start;
 }
-
-/* ---- Tarjeta proveedor con “pill” del radio arriba a la derecha ---- */
+/* Tarjeta proveedor + “pill” radio */
 .container-editar .proveedor{
   position: relative;
   background: var(--surface);
@@ -107,12 +97,10 @@
   transition: box-shadow .2s ease, border-color .2s ease, transform .06s ease-in;
   padding-top: 58px; /* espacio para pill del radio */
 }
-
 .container-editar .proveedor:hover{
   box-shadow: var(--shadow-hover);
   border-color: var(--border-strong);
 }
-
 .container-editar .proveedor > .form-group-crear:first-child{
   position: absolute;
   top: 10px;
@@ -120,7 +108,6 @@
   margin: 0;
   align-items: flex-end;
 }
-
 .container-editar .proveedor > .form-group-crear:first-child label{
   display: inline-flex;
   align-items: center;
@@ -134,26 +121,22 @@
   box-shadow: var(--shadow);
   user-select: none;
 }
-
 .container-editar .proveedor-designado-radio{
   transform: scale(1.15);
   accent-color: var(--primary);
   margin: 0;
 }
-
 .container-editar .proveedor:has(.proveedor-designado-radio:checked){
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0,63,125,0.10), var(--shadow-hover);
 }
-
-/* ---- FIX select de Proveedores (evita solaparse con el input de Código) ---- */
+/* FIX: select Proveedores ancho completo y sin solapar */
 .container-editar .proveedor .form-group-crear > label.label-proveedor{
   display: block;
   width: 100%;
   margin: 0 0 6px 0;
   line-height: 1.2;
 }
-
 .container-editar .proveedor .form-group-crear > select.proveedores{
   display: block !important;
   width: 100% !important;
@@ -165,8 +148,7 @@
   align-self: stretch !important;
   box-sizing: border-box !important;
 }
-
-/* ---- Miniaturas ---- */
+/* Miniaturas */
 .container-editar .imagen-miniatura-contenedor{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
 .container-editar .imagen-miniatura-contenedor .imagen-miniatura{ width:80px; height:80px; }
 .container-editar .imagen-miniatura{
@@ -183,8 +165,7 @@
   padding: 2px 5px; border-radius: 50%;
   font-size: 12px;
 }
-
-/* ---- Botón agregar proveedor ---- */
+/* Botón + proveedor */
 .container-editar #addProveedor{
   background-color: #22A35A;
   color: white;
@@ -204,8 +185,7 @@
   transform: translateY(-1px);
   box-shadow: var(--shadow-hover);
 }
-
-/* ---- Botonera ---- */
+/* Botonera */
 .container-editar .botones-crear{
   display: flex;
   justify-content: space-between;
@@ -222,12 +202,9 @@
   background: var(--primary);
   color: #fff;
 }
-
-/* Responsive: en pantallas chicas, 1 columna */
+/* Responsive */
 @media (max-width: 992px){
-  .container-editar .contenido-editar{
-    grid-template-columns: 1fr;
-  }
+  .container-editar .contenido-editar{ grid-template-columns: 1fr; }
 }
 </style>
 
@@ -242,7 +219,7 @@
           <input type="hidden" name="busqueda" value="<%= producto.busqueda || '' %>">
           <input type="hidden" name="id" value="<%= producto.id %>">
           <input type="hidden" name="paginaActual" value="<%= producto.paginaActual %>">
-          <!-- Hidden donde guardamos SIEMPRE el proveedor_id elegido -->
+          <!-- Hidden preferencia del proveedor -->
           <input type="hidden" id="proveedor_designado" name="proveedor_designado" value="<%= producto.proveedor_id || '' %>">
 
           <!-- ============ CARACTERÍSTICAS ============ -->
@@ -328,20 +305,19 @@
 
             <% if (productoProveedores && productoProveedores.length > 0) { %>
               <% productoProveedores.forEach(function(productoProveedor) { %>
-                <div class="proveedor">
+                <div class="proveedor" data-proveedor-id="<%= productoProveedor.proveedor_id %>">
+                  <!-- Pill radio -->
                   <div class="form-group-crear">
-  <label class="radio-elige-proveedor">
-    <input
-      type="radio"
-      name="proveedor_designado_radio"
-      class="proveedor-designado-radio"
-      value="<%= productoProveedor.proveedor_id %>"
-      <%= (producto.proveedor_id === productoProveedor.proveedor_id) ? 'checked' : '' %> />
-    Usar este proveedor
-  </label>
-</div>
-
-
+                    <label class="radio-elige-proveedor">
+                      <input
+                        type="radio"
+                        name="proveedor_designado_radio"
+                        class="proveedor-designado-radio"
+                        value="<%= productoProveedor.proveedor_id %>"
+                        <%= (producto.proveedor_id === productoProveedor.proveedor_id) ? 'checked' : '' %> />
+                      Usar este proveedor
+                    </label>
+                  </div>
 
                   <div class="form-group-crear">
                     <label class="label-proveedor">Proveedor <span class="nombre_proveedor"></span></label>
@@ -397,14 +373,11 @@
                 </div>
               <% }); %>
             <% } else { %>
-              <!-- Si no hay proveedores, renderizamos un bloque base para clonar (con radio incluido) -->
-              <div class="proveedor">
+              <!-- Plantilla base si no hay proveedores -->
+              <div class="proveedor" data-proveedor-id="">
                 <div class="form-group-crear">
-                  <label>
-                    <input type="radio"
-                           name="proveedor_designado_radio"
-                           class="proveedor-designado-radio"
-                           value="">
+                  <label class="radio-elige-proveedor">
+                    <input type="radio" name="proveedor_designado_radio" class="proveedor-designado-radio" value="">
                     Usar este proveedor
                   </label>
                 </div>
@@ -414,9 +387,7 @@
                   <select class="proveedores form-control" name="proveedores[]">
                     <option value="">Selecciona proveedor...</option>
                     <% proveedores.forEach(function(proveedor) { %>
-                      <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>">
-                        <%= proveedor.nombre %>
-                      </option>
+                      <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>"><%= proveedor.nombre %></option>
                     <% }); %>
                   </select>
                 </div>
