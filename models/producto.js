@@ -1798,17 +1798,34 @@ retornarDatosProveedores: function(conexion, productoId) {
     });
 },
 
-eliminarProveedor: function(conexion, proveedorId, productoId) {
-    return new Promise((resolve, reject) => {
-        conexion.query('DELETE FROM producto_proveedor WHERE proveedor_id = ? AND producto_id = ?', [proveedorId, productoId], function(error, results, fields) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(results);
-            }
-        });
+eliminarProveedor: function (conexion, proveedorId, productoId) {
+  const pid = Number(productoId) || 0;
+  const prv = Number(proveedorId) || 0;
+
+  if (!pid || !prv) {
+    // entrada inválida: resolvemos coherentemente sin tocar DB
+    return Promise.resolve({ affectedRows: 0 });
+  }
+
+  const sql = `
+    DELETE FROM producto_proveedor
+    WHERE producto_id = ? AND proveedor_id = ?
+  `;
+  const params = [pid, prv];
+
+  // Soporta mysql2 (promises) y mysql (callbacks)
+  if (conexion.promise && typeof conexion.promise === 'function') {
+    return conexion.promise().query(sql, params).then(([result]) => result);
+  }
+
+  return new Promise((resolve, reject) => {
+    conexion.query(sql, params, (err, results) => {
+      if (err) return reject(err);
+      resolve(results); // results.affectedRows disponible
     });
+  });
 },
+
 
 insertarImagenProducto: function(conexion, datosImagen) {
     return new Promise((resolve, reject) => {

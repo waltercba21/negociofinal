@@ -20,9 +20,8 @@ function normalizarClave(texto) {
 }
 
 const productosPorPagina = 10;
-
 // ==============================
-// Helpers genéricos
+// Helpers genéricos (compatibles)
 // ==============================
 function toArray(v) {
   if (Array.isArray(v)) return v;
@@ -31,7 +30,9 @@ function toArray(v) {
 }
 
 function numOr0(v) {
-  const n = Number(v);
+  // Soporta "10,5" y "10.5"
+  if (v === undefined || v === null || v === '') return 0;
+  const n = parseFloat(String(v).replace(',', '.'));
   return isNaN(n) ? 0 : n;
 }
 
@@ -42,13 +43,23 @@ function strOrNull(v) {
 }
 
 // ✅ Siempre trata el valor como proveedor_id (no índice)
-const mapearProveedorDesignado = (proveedorDesignado /* , proveedoresArr no hace falta */) => {
+const mapearProveedorDesignado = (proveedorDesignado) => {
   return (proveedorDesignado == null || proveedorDesignado === '') ? '' : String(proveedorDesignado);
 };
 
 // ==============================
-// Filas de producto_proveedor
-// (solo columnas existentes en la tabla)
+// Utilidades numéricas específicas
+// ==============================
+function numInt(v) {
+  const n = parseInt(v, 10);
+  return isNaN(n) ? 0 : n;
+}
+function numF(v) { // float con coma o punto
+  return numOr0(v);
+}
+
+// ==============================
+// (Opcional) Dedupe por si llega repetido el mismo proveedor
 // ==============================
 function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr) {
   const seen = new Set();
@@ -73,10 +84,10 @@ function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosList
 }
 
 // ==============================
-// Upsert crudo (evita ER_DUP_ENTRY)
-// Usa promesas si el pool soporta .promise(), sino callback → Promise
+// LEGACY: Upsert crudo (NO guarda IVA/desc/costos)
+// Úsalo solo si la tabla no tiene esas columnas o en otros flujos viejos.
+// En el flujo de editar usamos el UPSERT completo dentro del controlador.
 // ==============================
-// Upsert SOLO con columnas existentes en producto_proveedor
 async function upsertProductoProveedorRaw(con, row) {
   const sql = `
     INSERT INTO producto_proveedor
@@ -102,51 +113,61 @@ async function upsertProductoProveedorRaw(con, row) {
   }
 }
 
-
 // ==============================
-// Elegir proveedor más barato (por costo_iva recibido del form)
-// Se usa SOLO para decidir proveedor asignado cuando no hay selección manual
+// Elegir proveedor más barato (por costo_iva del form)
 // ==============================
-function pickCheapestProveedorId(reqBody) {
-  const proveedoresArr = toArray(reqBody.proveedores);
-  const costoIvaArr    = toArray(reqBody.costo_iva);
+function pickCheapestProveedorId(body) {
+  const provIds = toArray(body.proveedores);
+  const civas   = toArray(body.costo_iva);
 
-  let minIdx = -1, minVal = Infinity;
+  let ganador = 0;
+  let min = Number.POSITIVE_INFINITY;
 
-  for (let i = 0; i < proveedoresArr.length; i++) {
-    const provId = numOr0(proveedoresArr[i]);
-    if (!provId) continue;
-
-    const cIva = numOr0(costoIvaArr[i]);
-    if (cIva > 0 && cIva < minVal) {
-      minVal = cIva;
-      minIdx = i;
+  for (let i = 0; i < Math.max(provIds.length, civas.length); i++) {
+    const pid = numInt(provIds[i]);
+    const ci  = numF(civas[i]);
+    if (pid && ci > 0 && ci < min) {
+      min = ci; ganador = pid;
     }
   }
-
-  if (minIdx >= 0) return numOr0(proveedoresArr[minIdx]);
-  return null;
+  return ganador || 0;
 }
-function buildProveedorRows(productoId, body) {
-  const proveedoresArr  = toArray(body.proveedores);
-  const codigosArr      = toArray(body.codigo);
-  const preciosListaArr = toArray(body.precio_lista);
 
-  const byProveedor = new Map();
-  const len = Math.max(proveedoresArr.length, codigosArr.length, preciosListaArr.length);
+// ==============================
+// Filas completas producto_proveedor (GUARDA TODO)
+// Alinear índices de los arrays del form y normalizar tipos
+// ==============================
+function buildProveedorRows(productoId, body) {
+  const provIds   = toArray(body.proveedores);              // proveedor_id[]
+  const codigos   = toArray(body.codigo);                   // codigo[]
+  const plistas   = toArray(body.precio_lista);             // precio_lista[]
+  const descs     = toArray(body.descuentos_proveedor_id);  // descuento[] (%)
+  const cnnetos   = toArray(body.costo_neto);               // costo_neto[]
+  const ivas      = toArray(body.IVA);                      // IVA[] (21 / 10.5)
+  const civas     = toArray(body.costo_iva);                // costo_iva[]
+
+  const filas = [];
+  const len = Math.max(
+    provIds.length, codigos.length, plistas.length,
+    descs.length, cnnetos.length, ivas.length, civas.length
+  );
 
   for (let i = 0; i < len; i++) {
-    const proveedor_id = Number(proveedoresArr[i]) || 0;
+    const proveedor_id = numInt(provIds[i]);
     if (!proveedor_id) continue;
 
-    byProveedor.set(proveedor_id, {
+    filas.push({
       producto_id: Number(productoId),
       proveedor_id,
-      precio_lista: Number(preciosListaArr[i]) || 0,
-      codigo: (codigosArr[i] == null || String(codigosArr[i]).trim() === '') ? null : String(codigosArr[i]).trim()
+      codigo: strOrNull(codigos[i]) || '',
+      precio_lista: numF(plistas[i]),
+      descuento: numF(descs[i]),     // %
+      costo_neto: numF(cnnetos[i]),
+      iva: numF(ivas[i]),            // 21 o 10.5
+      costo_iva: numF(civas[i])
     });
   }
-  return Array.from(byProveedor.values());
+  return filas;
 }
 
 
@@ -753,66 +774,102 @@ guardar: async function (req, res) {
 actualizar: async function (req, res) {
   console.log("===== Inicio del controlador actualizar =====");
   try {
-    const productoId = numOr0(req.params.id || req.body.id);
-    console.log("[ACTUALIZAR] productoId:", productoId);
+    const productoId = numInt(req.params.id || req.body.id);
     if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
 
-    // 1) Update escalares del producto
+    // 1) Datos escalares del producto (SIN tocar IVA todavía)
     const datosProducto = {
-      id: productoId,
-      nombre: strOrNull(req.body.nombre),
-      descripcion: strOrNull(req.body.descripcion),
-      categoria_id: numOr0(req.body.categoria) || null,
-      marca_id: numOr0(req.body.marca) || null,
-      modelo_id: numOr0(req.body.modelo_id) || null,
-      utilidad: numOr0(req.body.utilidad),
-      precio_venta: numOr0(req.body.precio_venta),
-      estado: strOrNull(req.body.estado) || 'activo',
-      stock_minimo: numOr0(req.body.stock_minimo),
-      stock_actual: numOr0(req.body.stock_actual),
-      oferta: Number(req.body.oferta) === 1 ? 1 : 0,
-      calidad_original: req.body.calidad_original ? 1 : 0,
-      calidad_vic: req.body.calidad_vic ? 1 : 0
+      id            : productoId,
+      nombre        : req.body.nombre ?? null,
+      descripcion   : (req.body.descripcion ?? '').trim() || null,
+      categoria_id  : numInt(req.body.categoria) || null,
+      marca_id      : numInt(req.body.marca) || null,
+      modelo_id     : numInt(req.body.modelo_id) || null,
+      utilidad      : numOr0(req.body.utilidad),
+      precio_venta  : numOr0(req.body.precio_venta),
+      estado        : (req.body.estado ?? 'activo'),
+      stock_minimo  : numInt(req.body.stock_minimo),
+      stock_actual  : numInt(req.body.stock_actual),
+      oferta        : Number(req.body.oferta) === 1 ? 1 : 0,
+      calidad_original : req.body.calidad_original ? 1 : 0,
+      calidad_vic      : req.body.calidad_vic ? 1 : 0
+      // IVA lo seteamos más abajo, cuando sepamos qué proveedor aplica
     };
-    console.log("[ACTUALIZAR] datosProducto:", datosProducto);
-
     await producto.actualizar(conexion, datosProducto);
 
-    // 2) Proveedores → UPSERT (solo columnas reales)
-    const filas = buildProveedorRows(productoId, req.body);
-    console.log("[ACTUALIZAR] filas producto_proveedor:", filas.length, filas[0] || '(sin filas)');
-
-    for (let i = 0; i < filas.length; i++) {
-      const row = filas[i];
-      const sql = `
-        INSERT INTO producto_proveedor
-          (producto_id, proveedor_id, precio_lista, codigo)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          precio_lista = VALUES(precio_lista),
-          codigo      = VALUES(codigo)
+    // 2) Eliminar proveedores marcados (si vinieron)
+    const aEliminar = toArray(req.body.eliminar_proveedores).map(numInt).filter(Boolean);
+    if (aEliminar.length){
+      const sqlDel = `
+        DELETE FROM producto_proveedor
+        WHERE producto_id = ? AND proveedor_id IN (${aEliminar.map(()=>'?').join(',')})
       `;
-      const params = [row.producto_id, row.proveedor_id, row.precio_lista, row.codigo];
-      console.log(`[ACTUALIZAR] UPSERT fila ${i}:`, params);
-      await conexion.promise().query(sql, params);
+      await conexion.promise().query(sqlDel, [productoId, ...aEliminar]);
     }
 
-    // 3) Proveedor asignado: prioridad manual; si no hay, más barato por costo_iva[]
-    let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
-    console.log("[ACTUALIZAR] proveedor_designado recibido:", req.body.proveedor_designado, "→", proveedorAsignado);
+    // 3) UPSERT mínimo de producto_proveedor (sin IVA/desc/costos -> no hay columnas)
+    const provIds = toArray(req.body.proveedores);
+    const codigos = toArray(req.body.codigo);
+    const plist   = toArray(req.body.precio_lista);
+
+    const sqlUpsert = `
+      INSERT INTO producto_proveedor
+        (producto_id, proveedor_id, precio_lista, codigo)
+      VALUES (?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        precio_lista = VALUES(precio_lista),
+        codigo      = VALUES(codigo)
+    `;
+    for (let i = 0; i < Math.max(provIds.length, codigos.length, plist.length); i++){
+      const proveedor_id = numInt(provIds[i]);
+      if (!proveedor_id) continue;
+      const params = [
+        productoId,
+        proveedor_id,
+        numOr0(plist[i]),
+        (codigos[i] == null || String(codigos[i]).trim()==='') ? null : String(codigos[i]).trim()
+      ];
+      await conexion.promise().query(sqlUpsert, params);
+    }
+
+    // 4) Determinar proveedor asignado y el IVA a guardar EN productos.IVA
+    const arrIVA    = toArray(req.body.IVA);        // IVA[] que viene del form (21 / 10.5)
+    const arrCIva   = toArray(req.body.costo_iva);  // para decidir el "más barato" si no hay designado
+    let proveedorAsignado = numInt(req.body.proveedor_designado) || 0;
+
+    // Si no hay proveedor designado, elegir por menor costo_iva
     if (!proveedorAsignado) {
-      proveedorAsignado = pickCheapestProveedorId(req.body);
-      console.log("[ACTUALIZAR] proveedor más barato por costo_iva[]:", proveedorAsignado);
+      let bestIdx = -1, best = Number.POSITIVE_INFINITY;
+      for (let i=0;i<Math.max(provIds.length, arrCIva.length);i++){
+        const pid = numInt(provIds[i]);
+        const ci  = numOr0(arrCIva[i]);
+        if (pid && ci>0 && ci<best){ best=ci; bestIdx=i; proveedorAsignado=pid; }
+      }
+      // Si no encontró, usar el primero válido de la lista
+      if (!proveedorAsignado) {
+        for (let i=0;i<provIds.length;i++){
+          const pid = numInt(provIds[i]);
+          if (pid){ proveedorAsignado = pid; break; }
+        }
+      }
     }
 
-    if (proveedorAsignado) {
-      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
-      console.log("[ACTUALIZAR] productos.proveedor_id actualizado a:", proveedorAsignado);
+    // IVA a guardar en productos (SÓLO 1 por producto): tomar el IVA del bloque elegido
+    let ivaProducto = 21; // default
+    if (proveedorAsignado){
+      // Buscar el índice del proveedorAsignado dentro del array de proveedores del form
+      let idx = provIds.findIndex(v => numInt(v) === proveedorAsignado);
+      if (idx < 0) idx = 0; // fallback
+      ivaProducto = numOr0(arrIVA[idx] ?? 21);
+      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado, IVA: ivaProducto });
+    } else {
+      // Sin proveedores: mantener proveedor_id null y IVA default (o lo que venga del form posición 0)
+      ivaProducto = numOr0(arrIVA[0] ?? 21);
+      await producto.actualizar(conexion, { id: productoId, proveedor_id: null, IVA: ivaProducto });
     }
 
-    // 4) Imágenes nuevas (opcionales)
+    // 5) Imágenes nuevas (si hay)
     if (req.files && req.files.length > 0) {
-      console.log("[ACTUALIZAR] Cant. imágenes:", req.files.length);
       await Promise.all(
         req.files.map(f => producto.insertarImagenProducto(conexion, {
           producto_id: productoId,
@@ -821,11 +878,9 @@ actualizar: async function (req, res) {
       );
     }
 
-    // Redirección de retorno
+    // Redirección
     const pagina = req.body.pagina || 1;
     const busqueda = req.body.busqueda ? encodeURIComponent(req.body.busqueda) : '';
-    console.log("[ACTUALIZAR] redirect -> pagina/busqueda:", pagina, busqueda);
-
     console.log("===== Fin actualizar (OK) =====");
     return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
   } catch (error) {
@@ -834,6 +889,7 @@ actualizar: async function (req, res) {
     return res.status(500).send("Error: " + error.message);
   }
 },
+
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
             if (error) {
@@ -994,15 +1050,35 @@ todos: function (req, res) {
         }
     });
 },
-eliminarProveedor: function(req, res) {
-    let proveedorId = req.params.id;
-    let productoId = req.body.productoId;
-    producto.eliminarProveedor(conexion, proveedorId, productoId).then(() => {
-        res.json({ success: true });
-    }).catch(error => {
-        console.error("Error eliminando el proveedor:", error); 
-        res.status(500).json({ success: false, error: "Error al eliminar el proveedor. Por favor, intente nuevamente más tarde." });
+eliminarProveedor: async function (req, res) {
+  try {
+    // proveedorId por :id en ruta (DELETE /productos/eliminarProveedor/:id)
+    const proveedorId = Number(req.params.id || req.body.proveedorId || 0);
+    // productoId puede venir por query (en DELETE) o por body (fallback POST)
+    const productoId  = Number((req.query && req.query.productoId) || req.body.productoId || 0);
+
+    if (!productoId || !proveedorId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Faltan productoId o proveedorId válidos.'
+      });
+    }
+
+    // Si ya tenés producto.eliminarProveedor(conexion, proveedorId, productoId) dejalo igual:
+    // (si tu modelo devuelve affectedRows mejor)
+    const result = await producto.eliminarProveedor(conexion, proveedorId, productoId);
+
+    // Opcional: si tu modelo NO devuelve result, podés omitir affectedRows
+    const affected = (result && (result.affectedRows || (result[0] && result[0].affectedRows))) || undefined;
+
+    return res.json({ success: true, affectedRows: affected });
+  } catch (error) {
+    console.error("Error eliminando el proveedor:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al eliminar el proveedor. Intente nuevamente."
     });
+  }
 },
 
 eliminarImagen: function(req, res) {
