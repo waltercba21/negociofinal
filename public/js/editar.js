@@ -239,6 +239,10 @@ $(document)
 // ===============================
 //  LÓGICA DE CÁLCULOS POR BLOQUE
 // ===============================
+function redondearAlCentenar(valor) {
+  var n = Number(valor) || 0;
+  return Math.round(n / 100) * 100;
+}
 function actualizarProveedor($select) {
   var $wrap = $select.closest('.proveedor');
   var $opt = $select.find('option:selected');
@@ -393,8 +397,9 @@ function actualizarProveedorAsignado() {
 // ===============================
 function actualizarPrecioFinal() {
   var $proveedor;
-  var $radioChecked = $('.proveedor-designado-radio:checked');
 
+  // Si hay selección manual, usar ese bloque para el cálculo de precio final
+  var $radioChecked = $('.proveedor-designado-radio:checked');
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
     $proveedor = $radioChecked.closest('.proveedor');
   } else {
@@ -410,7 +415,12 @@ function actualizarPrecioFinal() {
   if (isNaN(utilidad)) utilidad = 0;
 
   var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
-  precioFinal = Math.ceil(precioFinal / 10) * 10;
+
+  // ✅ redondeo al centenar más cercano (p.ej. 15750 → 15800, 8310 → 8300)
+  precioFinal = redondearAlCentenar(precioFinal);
 
   $('#precio_venta').val(precioFinal);
+
+  // refrescar asignado por si cambió (no pisa selección manual)
+  actualizarProveedorAsignado();
 }
