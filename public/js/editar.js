@@ -176,6 +176,10 @@ $(document)
       actualizarProveedorAsignado();
     }
     actualizarPrecioFinal();
+  })
+  .off('input change.utilidad', '#utilidad')
+  .on('input change.utilidad', '#utilidad', function () {
+    actualizarPrecioFinal();
   });
 
 // ===============================
@@ -183,32 +187,58 @@ $(document)
 // ===============================
 $(document)
   .off('click.eliminarProveedor', '.eliminar-proveedor')
-  .on('click.eliminarProveedor', '.eliminar-proveedor', function () {
+  .on('click.eliminarProveedor', '.eliminar-proveedor', async function () {
     var $btn = $(this);
     var $bloque = $btn.closest('.proveedor');
     var proveedorId = $btn.data('proveedor-id'); // existe si viene de BD
-    var $form = $btn.closest('form');
-
     var eraSeleccionado = $bloque.find('.proveedor-designado-radio').is(':checked');
 
-    if (proveedorId) {
-      $('<input>', {
-        type: 'hidden',
-        name: 'eliminar_proveedores[]',
-        value: String(proveedorId)
-      }).appendTo($form);
+    // Si el proveedor aún no está en BD (clonado nuevo), simplemente quitamos el bloque
+    if (!proveedorId) {
+      $bloque.remove();
+      if (eraSeleccionado) {
+        window.__seleccionManualProveedor__ = false;
+        $('#proveedor_designado').val('');
+        $('.proveedor-designado-radio').prop('checked', false);
+      }
+      actualizarProveedorAsignado();
+      actualizarPrecioFinal();
+      return;
     }
 
-    $bloque.remove();
+    // Caso proveedor existente en BD: llamar endpoint DELETE (productoId por query)
+    try {
+      var productoId = $('#id').val() || $('[name="id"]').val() || $('#producto_id').val() || '';
+      if (!productoId) {
+        console.error('No se pudo determinar el productoId para eliminar proveedor.');
+        return;
+      }
 
-    if (eraSeleccionado) {
-      window.__seleccionManualProveedor__ = false;
-      $('#proveedor_designado').val('');
-      $('.proveedor-designado-radio').prop('checked', false);
+      const resp = await fetch(`/productos/eliminarProveedor/${encodeURIComponent(proveedorId)}?productoId=${encodeURIComponent(productoId)}`, {
+        method: 'DELETE'
+      });
+
+      const data = await resp.json().catch(() => ({}));
+      if (resp.ok && data && data.success) {
+        // Borrar del DOM
+        $bloque.remove();
+
+        if (eraSeleccionado) {
+          window.__seleccionManualProveedor__ = false;
+          $('#proveedor_designado').val('');
+          $('.proveedor-designado-radio').prop('checked', false);
+        }
+
+        actualizarProveedorAsignado();
+        actualizarPrecioFinal();
+      } else {
+        console.error('Error al eliminar proveedor:', data);
+        alert('No se pudo eliminar el proveedor. Intenta nuevamente.');
+      }
+    } catch (err) {
+      console.error('Fallo eliminando el proveedor:', err);
+      alert('Error de red al eliminar el proveedor.');
     }
-
-    actualizarProveedorAsignado();
-    actualizarPrecioFinal();
   });
 
 // ===============================
@@ -241,8 +271,10 @@ $(document)
 // ===============================
 function redondearAlCentenar(valor) {
   var n = Number(valor) || 0;
-  return Math.round(n / 100) * 100;
+  var resto = n % 100;
+  return resto < 50 ? (n - resto) : (n + (100 - resto));
 }
+
 function actualizarProveedor($select) {
   var $wrap = $select.closest('.proveedor');
   var $opt = $select.find('option:selected');
@@ -416,7 +448,7 @@ function actualizarPrecioFinal() {
 
   var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
 
-  // ✅ redondeo al centenar más cercano (p.ej. 15750 → 15800, 8310 → 8300)
+  // ✅ redondeo al centenar (resto<50 baja; si no, sube)
   precioFinal = redondearAlCentenar(precioFinal);
 
   $('#precio_venta').val(precioFinal);
