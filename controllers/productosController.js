@@ -1078,20 +1078,79 @@ eliminarProveedor: async function (req, res) {
     const proveedorId = Number(req.params.id || req.body.proveedorId || 0);
     const productoId  = Number((req.query && req.query.productoId) || req.body.productoId || 0);
 
-    console.log('🗑️ [CTRL] eliminarProveedor →', { proveedorId, productoId });
+    console.log('🗑️ [CTRL] eliminarProveedor →', { proveedorId, productoId }, 'url=', req.originalUrl);
 
     if (!productoId || !proveedorId) {
       return res.status(400).json({ success:false, message:'Faltan productoId o proveedorId' });
     }
 
-    const result = await producto.eliminarProveedor(conexion, proveedorId, productoId);
-    const affected = (result && (result.affectedRows || (result[0] && result[0].affectedRows))) || 0;
+    // 1) Anular referencias en presupuesto_productos (solo ese par producto/proveedor)
+    //    (dejamos el presupuesto vivo, pero sin proveedor asociado)
+    const sqlNullRefs = `
+      UPDATE presupuesto_productos
+      SET proveedor_id = NULL
+      WHERE producto_id = ? AND proveedor_id = ?
+    `;
+    const paramsNull = [productoId, proveedorId];
+    try {
+      const [rNull] = await conexion.promise().query(sqlNullRefs, paramsNull);
+      console.log('🗑️ [CTRL] Nullify refs presupuesto_productos:', rNull && rNull.affectedRows);
+    } catch (eNull) {
+      // No es fatal; seguimos, pero lo logueamos para diagnóstico
+      console.warn('⚠️ [CTRL] No se pudo nullificar refs (continuo):', eNull.code || eNull.message);
+    }
 
-    if (affected > 0) return res.json({ success:true, affectedRows: affected });
-    return res.status(404).json({ success:false, message:'No se encontró relación producto-proveedor' });
+    // 2) Intentar borrar la relación producto_proveedor
+    const result = await producto.eliminarProveedor(conexion, proveedorId, productoId);
+    console.log('🗑️ [CTRL] delete producto_proveedor result =', result);
+    let affected = (result && (result.affectedRows || (result[0] && result[0].affectedRows))) || 0;
+
+    // 3) Si aún está bloqueado por FK, intentamos nullificar y reintentar una vez
+    if (affected === 0) {
+      // Reintento solo si existe realmente la fila (para no dar 404 falso)
+      const [rowsExist] = await conexion.promise().query(
+        'SELECT 1 FROM producto_proveedor WHERE producto_id=? AND proveedor_id=? LIMIT 1',
+        [productoId, proveedorId]
+      );
+      const existe = Array.isArray(rowsExist) ? rowsExist.length > 0 : !!rowsExist;
+      if (existe) {
+        try {
+          // por si quedó alguna referencia que no matcheó en el paso 1
+          const [rNull2] = await conexion.promise().query(sqlNullRefs, paramsNull);
+          console.log('🔁 [CTRL] Nullify refs (retry) affected=', rNull2 && rNull2.affectedRows);
+          const result2 = await producto.eliminarProveedor(conexion, proveedorId, productoId);
+          console.log('🔁 [CTRL] delete (retry) result =', result2);
+          affected = (result2 && (result2.affectedRows || (result2[0] && result2[0].affectedRows))) || 0;
+        } catch (eRetry) {
+          if (eRetry && (eRetry.code === 'ER_ROW_IS_REFERENCED' || eRetry.code === 'ER_ROW_IS_REFERENCED_2' || eRetry.errno === 1451)) {
+            console.error('❌ [CTRL] Bloqueado por FK incluso tras nullify:', eRetry.sqlMessage || eRetry.message);
+            return res.status(409).json({
+              success:false,
+              message:'No se puede eliminar: el proveedor sigue referenciado en otra tabla.',
+              code:eRetry.code, errno:eRetry.errno
+            });
+          }
+          throw eRetry;
+        }
+      }
+    }
+
+    if (affected > 0) {
+      return res.json({ success:true, affectedRows: affected });
+    }
+    return res.status(404).json({ success:false, message:'No se encontró relación producto-proveedor para borrar.' });
+
   } catch (e) {
-    console.error('❌ eliminarProveedor:', e);
-    return res.status(500).json({ success:false, message:'Error interno' });
+    if (e && (e.code === 'ER_ROW_IS_REFERENCED' || e.code === 'ER_ROW_IS_REFERENCED_2' || e.errno === 1451)) {
+      console.error('❌ [CTRL] Bloqueado por FK:', e.sqlMessage || e.message);
+      return res.status(409).json({
+        success:false,
+        message:'No se puede eliminar: el proveedor está referenciado en otra tabla.',
+        code:e.code, errno:e.errno
+      });
+    }
+    console.error('❌ [CTRL] Error eliminando proveedor:', e);
+    return res.status(500).json({ success:false, message:'Error interno', code:e.code, errno:e.errno });
   }
 },
 
