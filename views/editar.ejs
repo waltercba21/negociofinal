@@ -418,9 +418,13 @@
                 </div>
 
                 <div class="form-group-crear">
-                  <label>Precio de costo con IVA</label>
-                  <input type="number" class="costo_iva form-control" name="costo_iva[]" value="0" step="0.01">
-                </div>
+  <label>IVA</label>
+  <select class="IVA form-control" name="IVA[]">
+    <option value="21"   <%= (!productoProveedor.iva || Number(productoProveedor.iva) === 21) ? 'selected' : '' %>>21%</option>
+    <option value="10.5" <%= (Number(productoProveedor.iva) === 10.5) ? 'selected' : '' %>>10,5%</option>
+  </select>
+</div>
+
               </div>
             <% } %>
 
