@@ -65,7 +65,6 @@ function redondearAlCentenar(valor) {
   return (resto < 50) ? (n - resto) : (n + (100 - resto));
 }
 function getIVA($wrap) {
-  // Lee de <select class="IVA"> o <input class="IVA">
   var raw = $wrap.find('.IVA').val();
   return toNumber(raw);
 }
@@ -76,6 +75,17 @@ function asegurarHidden($wrap, cls, name, defVal) {
     $wrap.append($el);
   }
   return $el;
+}
+// Nuevo: hidden IVA del producto (un solo valor)
+function asegurarHiddenIVAProducto() {
+  var $form = $('form.contenido-editar');
+  if ($form.length === 0) $form = $('form'); // fallback
+  var $ivaProd = $form.find('#iva_producto');
+  if ($ivaProd.length === 0) {
+    $ivaProd = $('<input>', { type: 'hidden', id: 'iva_producto', name: 'IVA', value: 21 });
+    $form.append($ivaProd);
+  }
+  return $ivaProd;
 }
 
 // ===============================
@@ -118,6 +128,8 @@ $(document).ready(function () {
     actualizarProveedorAsignado();
   }
   actualizarPrecioFinal();
+  // Sincronizar IVA del producto al arrancar
+  syncIVAProductoConAsignado();
 
   // Botón Agregar Proveedor
   $('#addProveedor').off('click.addProv').on('click.addProv', function (e) {
@@ -130,7 +142,6 @@ $(document).ready(function () {
     // Limpiar valores del clon
     $nuevo.find('input:not(.IVA)').val('');
     $nuevo.find('select').each(function(){
-      // reset selects, excepto .IVA (dejar default 21%)
       if (!$(this).hasClass('IVA')) $(this).prop('selectedIndex', 0);
     });
     $nuevo.find('.nombre_proveedor').text('');
@@ -168,6 +179,7 @@ $(document).ready(function () {
       actualizarProveedorAsignado();
     }
     actualizarPrecioFinal();
+    syncIVAProductoConAsignado();
   });
 });
 
@@ -188,23 +200,24 @@ $(document)
       actualizarProveedorAsignado();
       actualizarPrecioFinal();
     }
+    syncIVAProductoConAsignado();
   })
   .off('input change.precioLista', '.precio_lista')
   .on('input change.precioLista', '.precio_lista', function () {
     actualizarPrecio($(this));
   })
-  // ✅ al cambiar IVA (select o input), recalcular todo
+  // al cambiar IVA (select o input), recalcular todo y sincronizar IVA del producto
   .off('input change.iva', '.IVA')
   .on('input change.iva', '.IVA', function () {
     var $wrap = $(this).closest('.proveedor');
-    // si hay costo_neto, recalcular costo_iva
     actualizarCostoNeto($wrap.find('.costo_neto'));
     if (!window.__seleccionManualProveedor__) {
       actualizarProveedorAsignado();
     }
     actualizarPrecioFinal();
+    syncIVAProductoConAsignado();
   })
-  // ✅ cambiar utilidad SIEMPRE recalcula precio de venta (ignora modo manual)
+  // cambiar utilidad recalcula precio de venta
   .off('input change.utilidad', '#utilidad')
   .on('input change.utilidad', '#utilidad', function () {
     actualizarPrecioFinal();
@@ -218,12 +231,19 @@ $(document)
   .on('click.eliminarProveedor', async function () {
     var $btn = $(this);
     var $bloque = $btn.closest('.proveedor');
-    var proveedorId = $btn.data('proveedor-id'); // si viene de BD
+
+    // buscar proveedorId desde 3 lugares
+    var proveedorId = $btn.data('proveedor-id');
+    if (!proveedorId) proveedorId = $bloque.data('proveedor-id');
+    if (!proveedorId) proveedorId = $bloque.find('.proveedores').val();
+
+    proveedorId = proveedorId ? String(proveedorId).trim() : '';
+
     var eraSeleccionado = $bloque.find('.proveedor-designado-radio').is(':checked');
     var $form = $btn.closest('form');
     var productoId = $('[name="id"]').val() || $('#id').val() || $('#producto_id').val() || '';
 
-    // Siempre quitamos del DOM para que la UI quede consistente
+    // Quitar del DOM
     $bloque.remove();
 
     // Si estaba seleccionado, reseteo selección manual
@@ -233,7 +253,7 @@ $(document)
       $('.proveedor-designado-radio').prop('checked', false);
     }
 
-    // 1) Fallback por formulario (por si el backend lo maneja en /actualizar)
+    // Fallback por formulario
     if (proveedorId) {
       $('<input>', {
         type: 'hidden',
@@ -242,12 +262,11 @@ $(document)
       }).appendTo($form);
     }
 
-    // 2) Intento DELETE (ruta típica)
+    // Intento DELETE y, si falla, POST
     try {
       if (proveedorId && productoId) {
         const resp = await fetch(`/productos/eliminarProveedor/${encodeURIComponent(proveedorId)}?productoId=${encodeURIComponent(productoId)}`, { method: 'DELETE' });
         if (!resp.ok) {
-          // 3) Fallback POST (otra variante común)
           await fetch('/productos/eliminarProveedor', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -255,12 +274,11 @@ $(document)
           }).catch(()=>{});
         }
       }
-    } catch (_) {
-      // sin bloquear la UI
-    }
+    } catch (_) { /* no bloquear UI */ }
 
     actualizarProveedorAsignado();
     actualizarPrecioFinal();
+    syncIVAProductoConAsignado();
   });
 
 // ===============================
@@ -277,14 +295,16 @@ $(document)
     var proveedorId = $(this).val() || '';
     $('#proveedor_designado').val(proveedorId);
 
-    var nombre = $(this).closest('.proveedor').find('.nombre_proveedor').text().trim();
+    var $wrap = $(this).closest('.proveedor');
+    var nombre = $wrap.find('.nombre_proveedor').text().trim();
     if (!nombre) {
-      nombre = $(this).closest('.proveedor').find('.proveedores option:selected').text().trim() || '';
-      $(this).closest('.proveedor').find('.nombre_proveedor').text(nombre);
+      nombre = $wrap.find('.proveedores option:selected').text().trim() || '';
+      $wrap.find('.nombre_proveedor').text(nombre);
     }
     $('#proveedorAsignado').text(nombre);
 
     actualizarPrecioFinal();
+    syncIVAProductoConAsignado();
   });
 
 // ===============================
@@ -433,11 +453,33 @@ function actualizarPrecioFinal() {
   var utilidad = toNumber($('#utilidad').val());
   var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
 
-  // redondeo al centenar (como en backend)
   precioFinal = redondearAlCentenar(precioFinal);
 
   $('#precio_venta').val(precioFinal);
 
-  // refrescar asignado (no pisa selección manual)
   actualizarProveedorAsignado();
+  // Importantísimo: mantener IVA del producto sincronizado
+  syncIVAProductoConAsignado();
+}
+
+// ===============================
+//  SYNC IVA PRODUCTO (hidden name="IVA")
+// ===============================
+function syncIVAProductoConAsignado() {
+  var $ivaProd = asegurarHiddenIVAProducto();
+
+  var $proveedor;
+  var $radioChecked = $('.proveedor-designado-radio:checked');
+  if (window.__seleccionManualProveedor__ && $radioChecked.length) {
+    $proveedor = $radioChecked.closest('.proveedor');
+  } else {
+    $proveedor = getProveedorConCostoIvaMasBajo();
+  }
+  if (!$proveedor || !$proveedor.length) {
+    $ivaProd.val(21);
+    return;
+  }
+
+  var ivaSel = getIVA($proveedor);
+  $ivaProd.val(ivaSel || 21);
 }
