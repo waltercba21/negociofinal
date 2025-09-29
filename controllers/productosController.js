@@ -780,6 +780,7 @@ actualizar: async function (req, res) {
     // --- LOG de lo que llega del form (clave para diagnosticar) ---
     console.log('[ACTUALIZAR][INPUT] proveedores   =', toArray(req.body.proveedores));
     console.log('[ACTUALIZAR][INPUT] IVA[]        =', toArray(req.body.IVA));
+    console.log('[ACTUALIZAR][INPUT] IVA_producto =', req.body.IVA_producto);
     console.log('[ACTUALIZAR][INPUT] costo_iva[]  =', toArray(req.body.costo_iva));
     console.log('[ACTUALIZAR][INPUT] precio_lista[] =', toArray(req.body.precio_lista));
     console.log('[ACTUALIZAR][INPUT] codigo[]     =', toArray(req.body.codigo));
@@ -801,7 +802,7 @@ actualizar: async function (req, res) {
       oferta        : Number(req.body.oferta) === 1 ? 1 : 0,
       calidad_original : req.body.calidad_original ? 1 : 0,
       calidad_vic      : req.body.calidad_vic ? 1 : 0
-      // IVA lo seteamos más abajo, cuando sepamos qué proveedor aplica
+      // IVA lo seteamos más abajo
     };
     console.log('[ACTUALIZAR] datosProducto (sin IVA aún)=', datosProducto);
     await producto.actualizar(conexion, datosProducto);
@@ -818,7 +819,7 @@ actualizar: async function (req, res) {
       await conexion.promise().query(sqlDel, [productoId, ...aEliminar]);
     }
 
-    // 3) UPSERT mínimo de producto_proveedor (sin IVA/desc/costos -> no hay columnas)
+    // 3) UPSERT mínimo de producto_proveedor (precio_lista/codigo)
     const provIds = toArray(req.body.proveedores);
     const codigos = toArray(req.body.codigo);
     const plist   = toArray(req.body.precio_lista);
@@ -844,9 +845,9 @@ actualizar: async function (req, res) {
       await conexion.promise().query(sqlUpsert, params);
     }
 
-    // 4) Determinar proveedor asignado y el IVA a guardar EN productos.IVA
-    const arrIVA    = toArray(req.body.IVA);        // IVA[] que viene del form (21 / 10.5)
-    const arrCIva   = toArray(req.body.costo_iva);  // para decidir el "más barato" si no hay designado
+    // 4) Determinar proveedor asignado y el IVA (un solo IVA en productos)
+    const arrIVA    = toArray(req.body.IVA);        // array por card
+    const arrCIva   = toArray(req.body.costo_iva);  // para elegir más barato si falta designado
     let proveedorAsignado = numInt(req.body.proveedor_designado) || 0;
     console.log('[ACTUALIZAR] proveedor_designado (pre) =', proveedorAsignado);
 
@@ -858,32 +859,36 @@ actualizar: async function (req, res) {
         const ci  = numOr0(arrCIva[i]);
         if (pid && ci>0 && ci<best){ best=ci; bestIdx=i; proveedorAsignado=pid; }
       }
-      // Si no encontró, usar el primero válido de la lista
+      // Si no encontró, usar el primero válido
       if (!proveedorAsignado) {
         for (let i=0;i<provIds.length;i++){
           const pid = numInt(provIds[i]);
           if (pid){ proveedorAsignado = pid; break; }
         }
       }
-      console.log('[ACTUALIZAR] proveedor_designado (auto por costo_iva o primero válido)=', proveedorAsignado);
+      console.log('[ACTUALIZAR] proveedor_designado (auto)=', proveedorAsignado);
     }
 
-    // IVA a guardar en productos (SÓLO 1 por producto): tomar el IVA del bloque elegido
+    // 👉 Priorizar el hidden "IVA_producto" sincronizado por el JS
+    const ivaProductoHidden = numOr0(req.body.IVA_producto);
+    console.log('[ACTUALIZAR] IVA_producto (hidden)=', ivaProductoHidden);
+
     let ivaProducto = 21; // default
-    if (proveedorAsignado){
-      // Buscar índice del proveedorAsignado dentro del array de proveedores del form
+    if (ivaProductoHidden > 0) {
+      ivaProducto = ivaProductoHidden;
+      console.log('[ACTUALIZAR] IVA elegido por hidden =', ivaProducto);
+    } else if (proveedorAsignado) {
       let idx = provIds.findIndex(v => numInt(v) === proveedorAsignado);
       if (idx < 0) idx = 0; // fallback al primero
       ivaProducto = numOr0(arrIVA[idx] ?? 21);
-      console.log('[ACTUALIZAR] Índice proveedorAsignado =', idx, ' ⇒ IVA elegido =', ivaProducto);
-      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado, IVA: ivaProducto });
-      console.log('[ACTUALIZAR] productos.proveedor_id =', proveedorAsignado, ' | productos.IVA =', ivaProducto);
+      console.log('[ACTUALIZAR] IVA elegido por índice =', ivaProducto, '(idx=', idx, ')');
     } else {
-      // Sin proveedores: mantener proveedor_id null y IVA default (o el primero disponible)
       ivaProducto = numOr0(arrIVA[0] ?? 21);
-      console.log('[ACTUALIZAR] Sin proveedores, IVA default/primero =', ivaProducto);
-      await producto.actualizar(conexion, { id: productoId, proveedor_id: null, IVA: ivaProducto });
+      console.log('[ACTUALIZAR] IVA elegido default/primero =', ivaProducto);
     }
+
+    await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado || null, IVA: ivaProducto });
+    console.log('[ACTUALIZAR] productos.proveedor_id =', proveedorAsignado, ' | productos.IVA =', ivaProducto);
 
     // 5) Imágenes nuevas (si hay)
     if (req.files && req.files.length > 0) {
@@ -907,7 +912,6 @@ actualizar: async function (req, res) {
     return res.status(500).send("Error: " + error.message);
   }
 },
-
 
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
@@ -1071,37 +1075,23 @@ todos: function (req, res) {
 },
 eliminarProveedor: async function (req, res) {
   try {
-    // proveedorId por :id en ruta (DELETE /productos/eliminarProveedor/:id)
     const proveedorId = Number(req.params.id || req.body.proveedorId || 0);
-    // productoId puede venir por body (fetch con JSON) o por query (?productoId=)
-    const productoId  = Number((req.body && req.body.productoId) || (req.query && req.query.productoId) || 0);
+    const productoId  = Number((req.query && req.query.productoId) || req.body.productoId || 0);
 
-    console.log('🗑️ [CTRL] eliminarProveedor → proveedorId:', proveedorId, 'productoId:', productoId);
+    console.log('🗑️ [CTRL] eliminarProveedor →', { proveedorId, productoId });
 
     if (!productoId || !proveedorId) {
-      console.log('🗑️ [CTRL] falta productoId o proveedorId');
-      return res.status(400).json({
-        success: false,
-        message: 'Faltan productoId o proveedorId válidos.'
-      });
+      return res.status(400).json({ success:false, message:'Faltan productoId o proveedorId' });
     }
 
     const result = await producto.eliminarProveedor(conexion, proveedorId, productoId);
-    console.log('🗑️ [CTRL] resultado modelo.eliminarProveedor =', result);
-
     const affected = (result && (result.affectedRows || (result[0] && result[0].affectedRows))) || 0;
 
-    if (affected > 0) {
-      return res.json({ success: true, affectedRows: affected });
-    } else {
-      return res.status(404).json({ success: false, message: 'No se encontró relación producto-proveedor', affectedRows: 0 });
-    }
-  } catch (error) {
-    console.error("❌ Error eliminando el proveedor:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Error al eliminar el proveedor. Intente nuevamente."
-    });
+    if (affected > 0) return res.json({ success:true, affectedRows: affected });
+    return res.status(404).json({ success:false, message:'No se encontró relación producto-proveedor' });
+  } catch (e) {
+    console.error('❌ eliminarProveedor:', e);
+    return res.status(500).json({ success:false, message:'Error interno' });
   }
 },
 

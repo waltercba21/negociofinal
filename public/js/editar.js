@@ -479,9 +479,12 @@ function syncIVAProductoConAsignado() {
   }
   if (!$proveedor || !$proveedor.length) {
     $ivaProd.val(21);
+    console.log('syncIVA → sin proveedor, IVA_producto=21');
     return;
   }
 
-  var ivaSel = getIVA($proveedor);
-  $ivaProd.val(ivaSel || 21);
+  var ivaSel = getIVA($proveedor) || 21;
+  $ivaProd.val(ivaSel);
+  console.log('syncIVA → IVA_producto=', ivaSel);
 }
+
