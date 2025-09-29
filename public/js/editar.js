@@ -82,11 +82,13 @@ function asegurarHiddenIVAProducto() {
   if ($form.length === 0) $form = $('form'); // fallback
   var $ivaProd = $form.find('#iva_producto');
   if ($ivaProd.length === 0) {
-    $ivaProd = $('<input>', { type: 'hidden', id: 'iva_producto', name: 'IVA', value: 21 });
+    // 👇 nombre SIN colisión
+    $ivaProd = $('<input>', { type: 'hidden', id: 'iva_producto', name: 'IVA_producto', value: 21 });
     $form.append($ivaProd);
   }
   return $ivaProd;
 }
+
 
 // ===============================
 //  INIT

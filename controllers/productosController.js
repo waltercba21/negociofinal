@@ -777,6 +777,14 @@ actualizar: async function (req, res) {
     const productoId = numInt(req.params.id || req.body.id);
     if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
 
+    // --- LOG de lo que llega del form (clave para diagnosticar) ---
+    console.log('[ACTUALIZAR][INPUT] proveedores   =', toArray(req.body.proveedores));
+    console.log('[ACTUALIZAR][INPUT] IVA[]        =', toArray(req.body.IVA));
+    console.log('[ACTUALIZAR][INPUT] costo_iva[]  =', toArray(req.body.costo_iva));
+    console.log('[ACTUALIZAR][INPUT] precio_lista[] =', toArray(req.body.precio_lista));
+    console.log('[ACTUALIZAR][INPUT] codigo[]     =', toArray(req.body.codigo));
+    console.log('[ACTUALIZAR][INPUT] proveedor_designado (hidden)=', req.body.proveedor_designado);
+
     // 1) Datos escalares del producto (SIN tocar IVA todavía)
     const datosProducto = {
       id            : productoId,
@@ -795,15 +803,18 @@ actualizar: async function (req, res) {
       calidad_vic      : req.body.calidad_vic ? 1 : 0
       // IVA lo seteamos más abajo, cuando sepamos qué proveedor aplica
     };
+    console.log('[ACTUALIZAR] datosProducto (sin IVA aún)=', datosProducto);
     await producto.actualizar(conexion, datosProducto);
 
     // 2) Eliminar proveedores marcados (si vinieron)
     const aEliminar = toArray(req.body.eliminar_proveedores).map(numInt).filter(Boolean);
+    console.log('[ACTUALIZAR] eliminar_proveedores[] =', aEliminar);
     if (aEliminar.length){
       const sqlDel = `
         DELETE FROM producto_proveedor
         WHERE producto_id = ? AND proveedor_id IN (${aEliminar.map(()=>'?').join(',')})
       `;
+      console.log('[ACTUALIZAR][SQL] DELETE producto_proveedor', { sql: sqlDel, params: [productoId, ...aEliminar] });
       await conexion.promise().query(sqlDel, [productoId, ...aEliminar]);
     }
 
@@ -829,6 +840,7 @@ actualizar: async function (req, res) {
         numOr0(plist[i]),
         (codigos[i] == null || String(codigos[i]).trim()==='') ? null : String(codigos[i]).trim()
       ];
+      console.log(`[ACTUALIZAR][SQL] UPSERT fila ${i}:`, params);
       await conexion.promise().query(sqlUpsert, params);
     }
 
@@ -836,6 +848,7 @@ actualizar: async function (req, res) {
     const arrIVA    = toArray(req.body.IVA);        // IVA[] que viene del form (21 / 10.5)
     const arrCIva   = toArray(req.body.costo_iva);  // para decidir el "más barato" si no hay designado
     let proveedorAsignado = numInt(req.body.proveedor_designado) || 0;
+    console.log('[ACTUALIZAR] proveedor_designado (pre) =', proveedorAsignado);
 
     // Si no hay proveedor designado, elegir por menor costo_iva
     if (!proveedorAsignado) {
@@ -852,24 +865,29 @@ actualizar: async function (req, res) {
           if (pid){ proveedorAsignado = pid; break; }
         }
       }
+      console.log('[ACTUALIZAR] proveedor_designado (auto por costo_iva o primero válido)=', proveedorAsignado);
     }
 
     // IVA a guardar en productos (SÓLO 1 por producto): tomar el IVA del bloque elegido
     let ivaProducto = 21; // default
     if (proveedorAsignado){
-      // Buscar el índice del proveedorAsignado dentro del array de proveedores del form
+      // Buscar índice del proveedorAsignado dentro del array de proveedores del form
       let idx = provIds.findIndex(v => numInt(v) === proveedorAsignado);
-      if (idx < 0) idx = 0; // fallback
+      if (idx < 0) idx = 0; // fallback al primero
       ivaProducto = numOr0(arrIVA[idx] ?? 21);
+      console.log('[ACTUALIZAR] Índice proveedorAsignado =', idx, ' ⇒ IVA elegido =', ivaProducto);
       await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado, IVA: ivaProducto });
+      console.log('[ACTUALIZAR] productos.proveedor_id =', proveedorAsignado, ' | productos.IVA =', ivaProducto);
     } else {
-      // Sin proveedores: mantener proveedor_id null y IVA default (o lo que venga del form posición 0)
+      // Sin proveedores: mantener proveedor_id null y IVA default (o el primero disponible)
       ivaProducto = numOr0(arrIVA[0] ?? 21);
+      console.log('[ACTUALIZAR] Sin proveedores, IVA default/primero =', ivaProducto);
       await producto.actualizar(conexion, { id: productoId, proveedor_id: null, IVA: ivaProducto });
     }
 
     // 5) Imágenes nuevas (si hay)
     if (req.files && req.files.length > 0) {
+      console.log("[ACTUALIZAR] Cant. imágenes nuevas:", req.files.length);
       await Promise.all(
         req.files.map(f => producto.insertarImagenProducto(conexion, {
           producto_id: productoId,
@@ -889,6 +907,7 @@ actualizar: async function (req, res) {
     return res.status(500).send("Error: " + error.message);
   }
 },
+
 
     ultimos: function(req, res) {
         producto.obtenerUltimos(conexion, 3, function(error, productos) {
@@ -1054,26 +1073,31 @@ eliminarProveedor: async function (req, res) {
   try {
     // proveedorId por :id en ruta (DELETE /productos/eliminarProveedor/:id)
     const proveedorId = Number(req.params.id || req.body.proveedorId || 0);
-    // productoId puede venir por query (en DELETE) o por body (fallback POST)
-    const productoId  = Number((req.query && req.query.productoId) || req.body.productoId || 0);
+    // productoId puede venir por body (fetch con JSON) o por query (?productoId=)
+    const productoId  = Number((req.body && req.body.productoId) || (req.query && req.query.productoId) || 0);
+
+    console.log('🗑️ [CTRL] eliminarProveedor → proveedorId:', proveedorId, 'productoId:', productoId);
 
     if (!productoId || !proveedorId) {
+      console.log('🗑️ [CTRL] falta productoId o proveedorId');
       return res.status(400).json({
         success: false,
         message: 'Faltan productoId o proveedorId válidos.'
       });
     }
 
-    // Si ya tenés producto.eliminarProveedor(conexion, proveedorId, productoId) dejalo igual:
-    // (si tu modelo devuelve affectedRows mejor)
     const result = await producto.eliminarProveedor(conexion, proveedorId, productoId);
+    console.log('🗑️ [CTRL] resultado modelo.eliminarProveedor =', result);
 
-    // Opcional: si tu modelo NO devuelve result, podés omitir affectedRows
-    const affected = (result && (result.affectedRows || (result[0] && result[0].affectedRows))) || undefined;
+    const affected = (result && (result.affectedRows || (result[0] && result[0].affectedRows))) || 0;
 
-    return res.json({ success: true, affectedRows: affected });
+    if (affected > 0) {
+      return res.json({ success: true, affectedRows: affected });
+    } else {
+      return res.status(404).json({ success: false, message: 'No se encontró relación producto-proveedor', affectedRows: 0 });
+    }
   } catch (error) {
-    console.error("Error eliminando el proveedor:", error);
+    console.error("❌ Error eliminando el proveedor:", error);
     return res.status(500).json({
       success: false,
       message: "Error al eliminar el proveedor. Intente nuevamente."
