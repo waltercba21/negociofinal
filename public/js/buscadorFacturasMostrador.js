@@ -113,6 +113,45 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     }
 });
 
+// --- Protege la fecha contra cambios no intencionales ---
+function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA') {
+  if (!fechaInput) return;
+
+  let base = fechaInput.value;     // fecha original (día de actividad)
+  let prev = base;                 // última fecha antes del cambio
+
+  // Guardar el valor previo al empezar a editar/abrir el datepicker
+  fechaInput.addEventListener('focus', () => { prev = fechaInput.value; });
+  fechaInput.addEventListener('mousedown', () => { prev = fechaInput.value; }); // para abrir el datepicker
+
+  async function confirmarCambio() {
+    const nueva = fechaInput.value;
+    if (!nueva || nueva === prev) return; // no hubo cambio real
+
+    const { isConfirmed } = await Swal.fire({
+      title: '⚠️ Atención',
+      text: `${mensaje}. La fecha habitual es ${base}.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cambiar',
+      cancelButtonText: 'No, mantener',
+      reverseButtons: true,
+      focusCancel: true
+    });
+
+    if (isConfirmed) {
+      base = nueva; // aceptar y actualizar base
+      fechaInput.dispatchEvent(new Event('change'));
+    } else {
+      fechaInput.value = prev; // revertir
+      fechaInput.dispatchEvent(new Event('change'));
+    }
+  }
+
+  fechaInput.addEventListener('change', confirmarCambio);
+  fechaInput.addEventListener('input', confirmarCambio);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     Swal.fire({
         title: 'Está en la sección de Facturas',
@@ -120,14 +159,18 @@ document.addEventListener('DOMContentLoaded', () => {
         icon: 'info',
         confirmButtonText: 'Entendido'
     });
-            // 🔥 Establecer la fecha actual en el input de fecha
-            const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
-            if (fechaPresupuestoInput) {
-                const today = new Date();
-                const formattedDate = today.toISOString().split('T')[0];
-                fechaPresupuestoInput.value = formattedDate;
-            }
-        
+
+    // 🔥 Establecer la fecha actual en el input de fecha y activar protección
+    const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
+    if (fechaPresupuestoInput) {
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        fechaPresupuestoInput.value = formattedDate;
+
+        // ✅ Activar confirmación
+        setupFechaProtegida(fechaPresupuestoInput, 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA DE LA FACTURA');
+    }
+
     const entradaBusqueda = document.getElementById('entradaBusqueda');
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
     let timeoutId;
@@ -288,8 +331,6 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     console.log("Producto agregado correctamente a la tabla.");
 }
 
-
-
 function updateSubtotal(row, verificarStock = true) {
     const inputPrecio = row.cells[3].querySelector('input');
     const inputCantidad = row.cells[4].querySelector('input');
@@ -320,8 +361,8 @@ function updateSubtotal(row, verificarStock = true) {
                 icon: 'error',
                 confirmButtonText: 'Entendido'
             });
-            inputCantidad.value = stockActual > 0 ? stockActual : 1; // Si hay stock disponible, usa el máximo, si no, 1
-            cantidad = parseInt(inputCantidad.value); // Actualizamos la cantidad
+            inputCantidad.value = stockActual > 0 ? stockActual : 1;
+            cantidad = parseInt(inputCantidad.value);
         }
 
         const stockRestante = stockActual - cantidad;
@@ -365,7 +406,6 @@ function calcularTotal() {
     totalAmountInput.value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
 
-
 // 🔥 Asociar eventos a los inputs de cantidad y precio para actualizar dinámicamente
 document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
     const inputCantidad = row.cells[4].querySelector('input');
@@ -388,6 +428,7 @@ document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
 document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
     checkbox.addEventListener('change', calcularTotal);
 });
+
 // 🔒 Bloquea Enter en todos los inputs excepto en la búsqueda
 document.querySelectorAll('input:not(#entradaBusqueda)').forEach(input => {
     input.addEventListener('keydown', function (e) {

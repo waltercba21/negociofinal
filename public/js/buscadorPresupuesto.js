@@ -99,30 +99,25 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+
 // --- Protege la fecha contra cambios no intencionales ---
 function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA') {
   if (!fechaInput) return;
 
-  // Guarda el valor inicial (día de actividad)
-  let fechaOriginal = fechaInput.value;
-  let cambioConfirmado = false;
+  let base = fechaInput.value;     // fecha original (día de actividad)
+  let prev = base;                 // última fecha antes del cambio
 
-  // Si alguien escribe a mano o elige en el datepicker:
-  const handler = async () => {
-    // Evita bucles si acabamos de confirmar
-    if (cambioConfirmado) { 
-      cambioConfirmado = false;
-      fechaOriginal = fechaInput.value; // nueva base
-      return;
-    }
-    if (!fechaOriginal) fechaOriginal = fechaInput.value;
+  // Guardar el valor previo al empezar a editar/abrir el datepicker
+  fechaInput.addEventListener('focus', () => { prev = fechaInput.value; });
+  fechaInput.addEventListener('mousedown', () => { prev = fechaInput.value; }); // para abrir el datepicker
 
-    const nuevaFecha = fechaInput.value;
-    if (!nuevaFecha || nuevaFecha === fechaOriginal) return;
+  async function confirmarCambio() {
+    const nueva = fechaInput.value;
+    if (!nueva || nueva === prev) return; // no hubo cambio real
 
     const { isConfirmed } = await Swal.fire({
       title: '⚠️ Atención',
-      text: `${mensaje}. La fecha habitual es ${fechaOriginal}.`,
+      text: `${mensaje}. La fecha habitual es ${base}.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, cambiar',
@@ -132,22 +127,21 @@ function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR L
     });
 
     if (isConfirmed) {
-      // Acepta el cambio y fija nueva base
-      cambioConfirmado = true;
-      fechaInput.dispatchEvent(new Event('change')); // normaliza eventos
+      base = nueva; // aceptar y actualizar base
+      // disparamos change por si otros listeners dependen
+      fechaInput.dispatchEvent(new Event('change'));
     } else {
-      // Revertir al valor original
-      fechaInput.value = fechaOriginal;
+      // revertir al valor previo
+      fechaInput.value = prev;
       fechaInput.dispatchEvent(new Event('change'));
     }
-  };
+  }
 
-  // Cubrimos cambios con teclado y selección en calendario
-  fechaInput.addEventListener('input', handler);
-  fechaInput.addEventListener('change', handler);
+  // 'change' captura selección en datepicker y edición manual al salir del input
+  fechaInput.addEventListener('change', confirmarCambio);
+  // 'input' captura tipeo inmediato (opcional; mantiene UX estricta)
+  fechaInput.addEventListener('input', confirmarCambio);
 }
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
     Swal.fire({
@@ -156,15 +150,18 @@ document.addEventListener('DOMContentLoaded', () => {
         icon: 'info',
         confirmButtonText: 'Entendido'
     });
-    
-        // 🔥 Establecer la fecha actual en el input de fecha
-        const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
-        if (fechaPresupuestoInput) {
-            const today = new Date();
-            const formattedDate = today.toISOString().split('T')[0];
-            fechaPresupuestoInput.value = formattedDate;
-        }
-    
+
+    // 🔥 Establecer la fecha actual en el input de fecha y activar protección
+    const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
+    if (fechaPresupuestoInput) {
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        fechaPresupuestoInput.value = formattedDate;
+
+        // ✅ Activar confirmación
+        setupFechaProtegida(fechaPresupuestoInput, 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA DEL PRESUPUESTO');
+    }
+
     const entradaBusqueda = document.getElementById('entradaBusqueda');
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
     let timeoutId;
@@ -325,8 +322,6 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     console.log("Producto agregado correctamente a la tabla.");
 }
 
-
-
 function updateSubtotal(row, verificarStock = true) {
     const inputPrecio = row.cells[3].querySelector('input');
     const inputCantidad = row.cells[4].querySelector('input');
@@ -357,8 +352,8 @@ function updateSubtotal(row, verificarStock = true) {
                 icon: 'error',
                 confirmButtonText: 'Entendido'
             });
-            inputCantidad.value = stockActual > 0 ? stockActual : 1; // Si hay stock disponible, usa el máximo, si no, 1
-            cantidad = parseInt(inputCantidad.value); // Actualizamos la cantidad
+            inputCantidad.value = stockActual > 0 ? stockActual : 1;
+            cantidad = parseInt(inputCantidad.value);
         }
 
         const stockRestante = stockActual - cantidad;
@@ -377,7 +372,6 @@ function updateSubtotal(row, verificarStock = true) {
     calcularTotal(); // Recalcular total después de actualizar el subtotal
 }
 
-
 function calcularTotal() {
     const filasPresupuesto = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     let total = 0;
@@ -393,7 +387,6 @@ function calcularTotal() {
 
     console.log("Total actualizado:", totalAmountInput.value);
 }
-
 
 // 🔥 Asociar eventos a los inputs de cantidad y precio para actualizar dinámicamente
 document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
@@ -417,6 +410,7 @@ document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
 document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
     checkbox.addEventListener('change', calcularTotal);
 });
+
 // 🔒 Bloquea Enter en todos los inputs excepto en la búsqueda
 document.querySelectorAll('input:not(#entradaBusqueda)').forEach(input => {
     input.addEventListener('keydown', function (e) {
