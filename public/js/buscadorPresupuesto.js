@@ -99,6 +99,53 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         });
     }
 });
+// --- Protege la fecha contra cambios no intencionales ---
+function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA') {
+  if (!fechaInput) return;
+
+  // Guarda el valor inicial (día de actividad)
+  let fechaOriginal = fechaInput.value;
+  let cambioConfirmado = false;
+
+  // Si alguien escribe a mano o elige en el datepicker:
+  const handler = async () => {
+    // Evita bucles si acabamos de confirmar
+    if (cambioConfirmado) { 
+      cambioConfirmado = false;
+      fechaOriginal = fechaInput.value; // nueva base
+      return;
+    }
+    if (!fechaOriginal) fechaOriginal = fechaInput.value;
+
+    const nuevaFecha = fechaInput.value;
+    if (!nuevaFecha || nuevaFecha === fechaOriginal) return;
+
+    const { isConfirmed } = await Swal.fire({
+      title: '⚠️ Atención',
+      text: `${mensaje}. La fecha habitual es ${fechaOriginal}.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cambiar',
+      cancelButtonText: 'No, mantener',
+      reverseButtons: true,
+      focusCancel: true
+    });
+
+    if (isConfirmed) {
+      // Acepta el cambio y fija nueva base
+      cambioConfirmado = true;
+      fechaInput.dispatchEvent(new Event('change')); // normaliza eventos
+    } else {
+      // Revertir al valor original
+      fechaInput.value = fechaOriginal;
+      fechaInput.dispatchEvent(new Event('change'));
+    }
+  };
+
+  // Cubrimos cambios con teclado y selección en calendario
+  fechaInput.addEventListener('input', handler);
+  fechaInput.addEventListener('change', handler);
+}
 
 
 
@@ -109,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         icon: 'info',
         confirmButtonText: 'Entendido'
     });
+    
         // 🔥 Establecer la fecha actual en el input de fecha
         const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
         if (fechaPresupuestoInput) {
