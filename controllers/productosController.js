@@ -788,21 +788,21 @@ actualizar: async function (req, res) {
 
     // 1) Datos escalares del producto (SIN tocar IVA todavía)
     const datosProducto = {
-      id            : productoId,
-      nombre        : req.body.nombre ?? null,
-      descripcion   : (req.body.descripcion ?? '').trim() || null,
-      categoria_id  : numInt(req.body.categoria) || null,
-      marca_id      : numInt(req.body.marca) || null,
-      modelo_id     : numInt(req.body.modelo_id) || null,
-      utilidad      : numOr0(req.body.utilidad),
-      precio_venta  : numOr0(req.body.precio_venta),
-      estado        : (req.body.estado ?? 'activo'),
-      stock_minimo  : numInt(req.body.stock_minimo),
-      stock_actual  : numInt(req.body.stock_actual),
-      oferta        : Number(req.body.oferta) === 1 ? 1 : 0,
+      id               : productoId,
+      nombre           : req.body.nombre ?? null,
+      descripcion      : (req.body.descripcion ?? '').trim() || null,
+      categoria_id     : numInt(req.body.categoria) || null,
+      marca_id         : numInt(req.body.marca) || null,
+      modelo_id        : numInt(req.body.modelo_id) || null,
+      utilidad         : numOr0(req.body.utilidad),
+      precio_venta     : numOr0(req.body.precio_venta),
+      estado           : (req.body.estado ?? 'activo'),
+      stock_minimo     : numInt(req.body.stock_minimo),
+      stock_actual     : numInt(req.body.stock_actual),
+      oferta           : Number(req.body.oferta) === 1 ? 1 : 0,
       calidad_original : req.body.calidad_original ? 1 : 0,
       calidad_vic      : req.body.calidad_vic ? 1 : 0
-      // IVA lo seteamos más abajo
+      // ⚠️ No seteamos IVA acá: se hace más abajo según proveedor designado/hidden
     };
     console.log('[ACTUALIZAR] datosProducto (sin IVA aún)=', datosProducto);
     await producto.actualizar(conexion, datosProducto);
@@ -819,34 +819,41 @@ actualizar: async function (req, res) {
       await conexion.promise().query(sqlDel, [productoId, ...aEliminar]);
     }
 
-    // 3) UPSERT mínimo de producto_proveedor (precio_lista/codigo)
+    // 3) UPSERT de producto_proveedor (precio_lista / codigo / iva POR PROVEEDOR)
     const provIds = toArray(req.body.proveedores);
     const codigos = toArray(req.body.codigo);
     const plist   = toArray(req.body.precio_lista);
+    const arrIVA  = toArray(req.body.IVA); // <-- IVA por card/proveedor
 
+    // IMPORTANTE: este UPSERT ahora incluye 'iva'
     const sqlUpsert = `
       INSERT INTO producto_proveedor
-        (producto_id, proveedor_id, precio_lista, codigo)
-      VALUES (?, ?, ?, ?)
+        (producto_id, proveedor_id, precio_lista, codigo, iva)
+      VALUES (?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         precio_lista = VALUES(precio_lista),
-        codigo      = VALUES(codigo)
+        codigo       = VALUES(codigo),
+        iva          = VALUES(iva)
     `;
-    for (let i = 0; i < Math.max(provIds.length, codigos.length, plist.length); i++){
+
+    const filas = Math.max(provIds.length, codigos.length, plist.length, arrIVA.length);
+    for (let i = 0; i < filas; i++){
       const proveedor_id = numInt(provIds[i]);
       if (!proveedor_id) continue;
-      const params = [
-        productoId,
-        proveedor_id,
-        numOr0(plist[i]),
-        (codigos[i] == null || String(codigos[i]).trim()==='') ? null : String(codigos[i]).trim()
-      ];
+
+      const precio_lista = numOr0(plist[i]);
+      const codigo       = (codigos[i] == null || String(codigos[i]).trim()==='') ? null : String(codigos[i]).trim();
+      const iva          = (function(v){
+        const n = Number(String(v ?? '').toString().replace(',', '.')); // tolerar "10,5"
+        return Number.isFinite(n) && n > 0 ? n : 21;
+      })(arrIVA[i]);
+
+      const params = [ productoId, proveedor_id, precio_lista, codigo, iva ];
       console.log(`[ACTUALIZAR][SQL] UPSERT fila ${i}:`, params);
       await conexion.promise().query(sqlUpsert, params);
     }
 
-    // 4) Determinar proveedor asignado y el IVA (un solo IVA en productos)
-    const arrIVA    = toArray(req.body.IVA);        // array por card
+    // 4) Determinar proveedor asignado y el IVA que se guarda en productos (referencia/fallback)
     const arrCIva   = toArray(req.body.costo_iva);  // para elegir más barato si falta designado
     let proveedorAsignado = numInt(req.body.proveedor_designado) || 0;
     console.log('[ACTUALIZAR] proveedor_designado (pre) =', proveedorAsignado);
@@ -869,24 +876,28 @@ actualizar: async function (req, res) {
       console.log('[ACTUALIZAR] proveedor_designado (auto)=', proveedorAsignado);
     }
 
-    // 👉 Priorizar el hidden "IVA_producto" sincronizado por el JS
+    // 👉 Priorizar el hidden "IVA_producto" sincronizado por el JS (proveedor designado)
     const ivaProductoHidden = numOr0(req.body.IVA_producto);
     console.log('[ACTUALIZAR] IVA_producto (hidden)=', ivaProductoHidden);
 
-    let ivaProducto = 21; // default
+    let ivaProducto = 21; // default de referencia para productos
     if (ivaProductoHidden > 0) {
       ivaProducto = ivaProductoHidden;
       console.log('[ACTUALIZAR] IVA elegido por hidden =', ivaProducto);
     } else if (proveedorAsignado) {
       let idx = provIds.findIndex(v => numInt(v) === proveedorAsignado);
       if (idx < 0) idx = 0; // fallback al primero
-      ivaProducto = numOr0(arrIVA[idx] ?? 21);
+      // Usamos el IVA del array alineado a ese proveedor
+      const ivaIdxRaw = arrIVA[idx] ?? 21;
+      ivaProducto = Number(String(ivaIdxRaw).replace(',', '.')) || 21;
       console.log('[ACTUALIZAR] IVA elegido por índice =', ivaProducto, '(idx=', idx, ')');
     } else {
-      ivaProducto = numOr0(arrIVA[0] ?? 21);
+      const iva0 = arrIVA[0] ?? 21;
+      ivaProducto = Number(String(iva0).replace(',', '.')) || 21;
       console.log('[ACTUALIZAR] IVA elegido default/primero =', ivaProducto);
     }
 
+    // Guardar proveedor asignado y el IVA de referencia en productos
     await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado || null, IVA: ivaProducto });
     console.log('[ACTUALIZAR] productos.proveedor_id =', proveedorAsignado, ' | productos.IVA =', ivaProducto);
 

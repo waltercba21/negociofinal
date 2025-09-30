@@ -3,6 +3,15 @@ const pool = require('../config/conexion');
 const util = require('util');
 const path = require('path');
 
+function isSet(v) {
+  return typeof v !== 'undefined' && v !== null;
+}
+function parseDecimal(v, def = null) {
+  if (!isSet(v)) return def;
+  const n = Number(String(v).replace(',', '.'));
+  return Number.isFinite(n) ? n : def;
+}
+
 module.exports ={
     
     obtener: function (conexion, pagina, callback) {
@@ -351,167 +360,92 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
       });
     });
   }, 
-  actualizar: function (conexion, datos, archivo) { 
+   actualizar: function (conexion, datos, archivo) {
     return new Promise((resolve, reject) => {
-        let query = "UPDATE productos SET ";
-        let params = [];
-        let first = true;
+      if (!isSet(datos.id)) {
+        return reject(new Error('Los datos del producto deben incluir un ID'));
+      }
 
-        if (datos.nombre) {
-            query += first ? "nombre=?" : ", nombre=?";
-            params.push(datos.nombre);
-            first = false;
-        }
-        if (datos.codigo) {
-            query += first ? "codigo=?" : ", codigo=?";
-            params.push(datos.codigo);
-            first = false;
-        }
-        if (datos.categoria_id) {
-            query += first ? "categoria_id=?" : ", categoria_id=?";
-            params.push(datos.categoria_id);
-            first = false;
-        }
-        if (datos.marca_id) {
-            query += first ? "marca_id=?" : ", marca_id=?";
-            params.push(datos.marca_id);
-            first = false;
-        }
-        if (datos.modelo_id) {
-            query += first ? "modelo_id=?" : ", modelo_id=?";
-            params.push(datos.modelo_id);
-            first = false;
-        }
-        if (datos.precio_venta) {
-            query += first ? "precio_venta=?" : ", precio_venta=?";
-            params.push(datos.precio_venta);
-            first = false;
-        }
-        if (datos.utilidad) {
-            query += first ? "utilidad=?" : ", utilidad=?";
-            params.push(datos.utilidad);
-            first = false;
-        }
-        if (datos.descuentos_proveedor_id) {
-            query += first ? "descuentos_proveedor_id=?" : ", descuentos_proveedor_id=?";
-            params.push(datos.descuentos_proveedor_id);
-            first = false;
-        }
-        if (datos.costo_neto) {
-            query += first ? "costo_neto=?" : ", costo_neto=?";
-            params.push(datos.costo_neto);
-            first = false;
-        }
-        if (datos.IVA) {
-            query += first ? "IVA=?" : ", IVA=?";
-            params.push(datos.IVA);
-            first = false;
-        }
-        if (datos.costo_iva) {
-            query += first ? "costo_iva=?" : ", costo_iva=?";
-            params.push(datos.costo_iva);
-            first = false;
-        }
-        if (datos.estado) {
-            query += first ? "estado=?" : ", estado=?";
-            params.push(datos.estado);
-            first = false;
-        }
-        if (datos.stock_minimo) {
-            query += first ? "stock_minimo=?" : ", stock_minimo=?";
-            params.push(datos.stock_minimo);
-            first = false;
-        }
-        if (datos.stock_actual) {
-            query += first ? "stock_actual=?" : ", stock_actual=?";
-            params.push(datos.stock_actual);
-            first = false;
-        }
-        if (archivo) {
-            query += first ? "imagen=?" : ", imagen=?";
-            params.push(archivo.filename);
-            first = false;
-        }
-        if (typeof datos.calidad_original !== 'undefined') {
-            query += first ? "calidad_original=?" : ", calidad_original=?";
-            params.push(datos.calidad_original);
-            first = false;
-        }
-        if (typeof datos.calidad_vic !== 'undefined') {
-            query += first ? "calidad_vic=?" : ", calidad_vic=?";
-            params.push(datos.calidad_vic);
-            first = false;
-        }
-        if (datos.proveedor_id) {
-        query += first ? "proveedor_id=?" : ", proveedor_id=?";
-        params.push(datos.proveedor_id);
+      let query = "UPDATE productos SET ";
+      const params = [];
+      let first = true;
+
+      const add = (sqlFrag, val) => {
+        query += first ? sqlFrag : ", " + sqlFrag;
+        params.push(val);
         first = false;
-}
-        if (typeof datos.oferta !== 'undefined') {
-            query += first ? "oferta=?" : ", oferta=?";
-            params.push(datos.oferta);
-            first = false;
-        }
-        if (!datos.id) {
-            reject(new Error('Los datos del producto deben incluir un ID'));
-        }
-        query += " WHERE id=?";
-        params.push(datos.id);
+      };
 
-        conexion.query(query, params, (error, results) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(results);
-            }
-        });
+      if (isSet(datos.nombre)) add("nombre=?", datos.nombre);
+      if (isSet(datos.codigo)) add("codigo=?", datos.codigo);
+      if (isSet(datos.categoria_id)) add("categoria_id=?", datos.categoria_id);
+      if (isSet(datos.marca_id)) add("marca_id=?", datos.marca_id);
+      if (isSet(datos.modelo_id)) add("modelo_id=?", datos.modelo_id);
+
+      if (isSet(datos.precio_venta)) add("precio_venta=?", parseDecimal(datos.precio_venta, 0));
+      if (isSet(datos.utilidad)) add("utilidad=?", parseDecimal(datos.utilidad, 0));
+      if (isSet(datos.descuentos_proveedor_id)) add("descuentos_proveedor_id=?", datos.descuentos_proveedor_id);
+      if (isSet(datos.costo_neto)) add("costo_neto=?", parseDecimal(datos.costo_neto, 0));
+
+      // IVA de referencia del producto (no confundir con iva por proveedor)
+      if (isSet(datos.IVA)) add("IVA=?", parseDecimal(datos.IVA, 21));
+
+      if (isSet(datos.costo_iva)) add("costo_iva=?", parseDecimal(datos.costo_iva, 0));
+      if (isSet(datos.estado)) add("estado=?", datos.estado);
+      if (isSet(datos.stock_minimo)) add("stock_minimo=?", parseInt(datos.stock_minimo, 10) || 0);
+      if (isSet(datos.stock_actual)) add("stock_actual=?", parseInt(datos.stock_actual, 10) || 0);
+
+      if (archivo && isSet(archivo.filename)) add("imagen=?", archivo.filename);
+
+      if (isSet(datos.calidad_original)) add("calidad_original=?", datos.calidad_original ? 1 : 0);
+      if (isSet(datos.calidad_vic)) add("calidad_vic=?", datos.calidad_vic ? 1 : 0);
+
+      if (isSet(datos.proveedor_id)) add("proveedor_id=?", datos.proveedor_id);
+
+      if (isSet(datos.oferta)) add("oferta=?", datos.oferta ? 1 : 0);
+
+      query += " WHERE id=?";
+      params.push(datos.id);
+
+      // Si no se actualiza ningún campo, evitamos romper (aunque debería venir al menos 1)
+      if (first) {
+        return resolve({ affectedRows: 0, warning: 'Sin campos para actualizar' });
+      }
+
+      conexion.query(query, params, (error, results) => {
+        if (error) return reject(error);
+        resolve(results);
+      });
     });
-},
-
-actualizarProductoProveedor: function(conexion, datosProductoProveedor) {
+  },
+ actualizarProductoProveedor: function (conexion, datos) {
     return new Promise((resolve, reject) => {
-        const querySelect = 'SELECT * FROM producto_proveedor WHERE producto_id = ? AND proveedor_id = ?';
-        conexion.query(querySelect, [datosProductoProveedor.producto_id, datosProductoProveedor.proveedor_id], (error, results) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            if (results.length > 0) {
-                // Si ya existe una entrada, actualízala
-                const queryUpdate = 'UPDATE producto_proveedor SET precio_lista = ?, codigo = ? WHERE producto_id = ? AND proveedor_id = ?';
-                const paramsUpdate = [
-                    datosProductoProveedor.precio_lista,
-                    datosProductoProveedor.codigo,
-                    datosProductoProveedor.producto_id,
-                    datosProductoProveedor.proveedor_id
-                ];
-                conexion.query(queryUpdate, paramsUpdate, (error, results) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve();
-                });
-            } else {
-                // Si no existe una entrada, crea una nueva
-                const queryInsert = 'INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?)';
-                const paramsInsert = [
-                    datosProductoProveedor.producto_id,
-                    datosProductoProveedor.proveedor_id,
-                    datosProductoProveedor.precio_lista,
-                    datosProductoProveedor.codigo
-                ];
-                conexion.query(queryInsert, paramsInsert, (error, results) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve();
-                });
-            }
-        });
+      const producto_id  = Number(datos.producto_id) || 0;
+      const proveedor_id = Number(datos.proveedor_id) || 0;
+      const precio_lista = parseDecimal(datos.precio_lista, 0);
+      const codigo       = (typeof datos.codigo === 'string' && datos.codigo.trim() !== '') ? datos.codigo.trim() : null;
+      const iva          = parseDecimal(datos.iva, 21);
+
+      if (!producto_id || !proveedor_id) {
+        return reject(new Error('producto_id y proveedor_id son obligatorios'));
+      }
+
+      const sql = `
+        INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo, iva)
+        VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          precio_lista = VALUES(precio_lista),
+          codigo       = VALUES(codigo),
+          iva          = VALUES(iva)
+      `;
+      const params = [producto_id, proveedor_id, precio_lista, codigo, iva];
+
+      conexion.query(sql, params, (error, results) => {
+        if (error) return reject(error);
+        resolve(results);
+      });
     });
-},
+  },
 actualizarArchivo: function(conexion, datosProducto, archivo) {
     return new Promise((resolve, reject) => {
         const query = 'INSERT INTO imagenes_producto (imagen, producto_id) VALUES (?, ?)';
@@ -1827,18 +1761,47 @@ eliminarProveedor: function (conexion, proveedorId, productoId) {
 },
 
 
-insertarImagenProducto: function(conexion, datosImagen) {
+insertarImagenProducto: function (conexion, datos) {
     return new Promise((resolve, reject) => {
-        const sql = 'INSERT INTO imagenes_producto (producto_id, imagen) VALUES (?, ?)';
-        conexion.query(sql, [datosImagen.producto_id, datosImagen.imagen], (error, results) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(results);
-            }
-        });
+      const producto_id = Number(datos.producto_id) || 0;
+      const imagen = (datos.imagen || '').trim();
+      if (!producto_id || !imagen) {
+        return reject(new Error('producto_id e imagen son obligatorios'));
+      }
+
+      const sql = `
+        INSERT INTO producto_imagen (producto_id, imagen)
+        VALUES (?, ?)
+      `;
+      conexion.query(sql, [producto_id, imagen], (error, results) => {
+        if (error) return reject(error);
+        resolve(results);
+      });
     });
-},
+  },
+   obtenerProveedoresDeProducto: function (conexion, producto_id) {
+    return new Promise((resolve, reject) => {
+      const pid = Number(producto_id) || 0;
+      if (!pid) return reject(new Error('producto_id inválido'));
+
+      const sql = `
+        SELECT
+          pp.producto_id,
+          pp.proveedor_id,
+          pp.precio_lista,
+          pp.codigo,
+          pp.iva,
+          pp.actualizado_en
+        FROM producto_proveedor pp
+        WHERE pp.producto_id = ?
+        ORDER BY pp.proveedor_id ASC
+      `;
+      conexion.query(sql, [pid], (error, rows) => {
+        if (error) return reject(error);
+        resolve(rows || []);
+      });
+    });
+  },
 eliminarImagen : function(id) {
     return new Promise((resolve, reject) => {
         const sql = 'DELETE FROM imagenes_producto WHERE id = ?';
