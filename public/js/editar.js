@@ -51,7 +51,7 @@ $('#marca').off('change.cargarModelos').on('change.cargarModelos', function () {
 });
 
 // ===============================
-//  HELPERS
+//  HELPERS NÚMERICOS
 // ===============================
 function toNumber(val) {
   if (val == null) return 0;
@@ -76,49 +76,33 @@ function asegurarHidden($wrap, cls, name, defVal) {
   }
   return $el;
 }
+// Nuevo: hidden IVA del producto (un solo valor)
 function asegurarHiddenIVAProducto() {
   var $form = $('form.contenido-editar');
   if ($form.length === 0) $form = $('form'); // fallback
   var $ivaProd = $form.find('#iva_producto');
   if ($ivaProd.length === 0) {
+    // 👇 nombre SIN colisión
     $ivaProd = $('<input>', { type: 'hidden', id: 'iva_producto', name: 'IVA_producto', value: 21 });
     $form.append($ivaProd);
   }
   return $ivaProd;
 }
-function getProductoId($context) {
-  var $scope = $context && $context.length ? $context : $(document);
-  return (
-    $scope.find('#producto_id').val() ||
-    $scope.find('#id').val() ||
-    $scope.find('[name="id"]').val() || ''
-  );
-}
 
-// 🔎 Localizador DOM estricto del bloque .proveedor
-function findProveedorBlockStrict($start) {
-  var node = $start && $start[0];
-  while (node && node !== document) {
-    if (node.classList && node.classList.contains('proveedor')) {
-      return $(node);
-    }
-    node = node.parentNode;
-  }
-  return $(); // vacío si no se encontró
-}
 
 // ===============================
 //  INIT
 // ===============================
 $(document).ready(function () {
-  // Evitar submit accidental con Enter SOLO en inputs (no bloquea "Guardar")
+  // Evitar submit con Enter
   $('form').off('keypress.preventEnter').on('keypress.preventEnter', function (e) {
-    if (e.keyCode === 13 && e.target && e.target.tagName === 'INPUT') e.preventDefault();
+    if (e.keyCode === 13) e.preventDefault();
   });
 
+  // Flag global: si el usuario eligió manualmente un proveedor
   window.__seleccionManualProveedor__ = false;
 
-  // Respetar selección guardada
+  // 1) Respetar selección guardada
   var seleccionadoBD = $('#proveedor_designado').val();
   if (seleccionadoBD) {
     var $radioBD = $('.proveedor-designado-radio').filter(function () {
@@ -128,7 +112,7 @@ $(document).ready(function () {
       $radioBD.prop('checked', true);
       window.__seleccionManualProveedor__ = true;
 
-      var $bloque = findProveedorBlockStrict($radioBD);
+      var $bloque = $radioBD.closest('.proveedor');
       var nombre = $bloque.find('.nombre_proveedor').text().trim();
       if (!nombre) {
         nombre = $bloque.find('.proveedores option:selected').text().trim() || '';
@@ -138,7 +122,7 @@ $(document).ready(function () {
     }
   }
 
-  // Inicializar cálculos visibles
+  // 2) Inicializar cálculos visibles
   $('.proveedores').each(function () { $(this).trigger('change'); });
   $('.precio_lista').each(function () { $(this).trigger('change'); });
 
@@ -146,6 +130,7 @@ $(document).ready(function () {
     actualizarProveedorAsignado();
   }
   actualizarPrecioFinal();
+  // Sincronizar IVA del producto al arrancar
   syncIVAProductoConAsignado();
 
   // Botón Agregar Proveedor
@@ -175,7 +160,7 @@ $(document).ready(function () {
     // Radio desmarcado y sin valor
     $nuevo.find('.proveedor-designado-radio').prop('checked', false).val('');
 
-    // Botón eliminar (sin data-proveedor-id en nuevos)
+    // Botón eliminar
     if ($nuevo.find('.eliminar-proveedor').length === 0) {
       $nuevo.append(
         '<div class="form-group-crear">' +
@@ -206,7 +191,7 @@ $(document).ready(function () {
 $(document)
   .off('change.provSel', '.proveedores')
   .on('change.provSel', '.proveedores', function () {
-    var $wrap = findProveedorBlockStrict($(this));
+    var $wrap = $(this).closest('.proveedor');
     actualizarProveedor($(this));
     $wrap.find('.precio_lista').trigger('change');
 
@@ -223,9 +208,10 @@ $(document)
   .on('input change.precioLista', '.precio_lista', function () {
     actualizarPrecio($(this));
   })
+  // al cambiar IVA (select o input), recalcular todo y sincronizar IVA del producto
   .off('input change.iva', '.IVA')
   .on('input change.iva', '.IVA', function () {
-    var $wrap = findProveedorBlockStrict($(this));
+    var $wrap = $(this).closest('.proveedor');
     actualizarCostoNeto($wrap.find('.costo_neto'));
     if (!window.__seleccionManualProveedor__) {
       actualizarProveedorAsignado();
@@ -233,105 +219,44 @@ $(document)
     actualizarPrecioFinal();
     syncIVAProductoConAsignado();
   })
+  // cambiar utilidad recalcula precio de venta
   .off('input change.utilidad', '#utilidad')
   .on('input change.utilidad', '#utilidad', function () {
     actualizarPrecioFinal();
   });
 
 // ===============================
-//  ELIMINAR PROVEEDOR (ROBUSTO + LOGS)
+//  ELIMINAR PROVEEDOR
 // ===============================
 $(document)
   .off('click.eliminarProveedor', '.eliminar-proveedor')
-  .on('click.eliminarProveedor', async function (e) {
-    e.preventDefault();
+  .on('click.eliminarProveedor', async function () {
+    var $btn = $(this);
+    var $bloque = $btn.closest('.proveedor');
 
-    var $btn    = $(this);
-    var $bloque = findProveedorBlockStrict($btn);
-    var $form   = $btn.closest('form');
-
-    console.log('[ELIM] click. btn outerHTML:', $btn[0]?.outerHTML?.slice(0,200)+'...');
-    console.log('[ELIM] .proveedor count:', $('.proveedor').length);
-    console.log('[ELIM] bloque encontrado?', $bloque.length, $bloque[0]?.outerHTML?.slice(0,200)+'...');
-
-    // Resolver proveedorId (3 fuentes)
+    // buscar proveedorId desde 3 lugares
     var proveedorId = $btn.data('proveedor-id');
     if (!proveedorId) proveedorId = $bloque.data('proveedor-id');
-    if (!proveedorId) {
-      var $sel = $bloque.find('.proveedores');
-      proveedorId = $sel.length ? $sel.val() : '';
-    }
+    if (!proveedorId) proveedorId = $bloque.find('.proveedores').val();
+
     proveedorId = proveedorId ? String(proveedorId).trim() : '';
 
-    // Resolver productoId
-    var productoId = getProductoId($form);
+    var eraSeleccionado = $bloque.find('.proveedor-designado-radio').is(':checked');
+    var $form = $btn.closest('form');
+    var productoId = $('[name="id"]').val() || $('#id').val() || $('#producto_id').val() || '';
 
-    console.log('[ELIM] proveedorId=', proveedorId, '| productoId=', productoId);
+    // Quitar del DOM
+    $bloque.remove();
 
-    // Si no se encontró el bloque, como último recurso removemos el padre inmediato visual
-    if (!$bloque.length) {
-      console.warn('[ELIM] No se halló contenedor .proveedor. Fallback: remove padre inmediato del botón.');
-      var $padre = $btn.closest('.proveedor, .form-group-crear, .card, .card-body, div');
-      $padre.remove();
-      actualizarProveedorAsignado();
-      actualizarPrecioFinal();
-      syncIVAProductoConAsignado();
-      return;
+    // Si estaba seleccionado, reseteo selección manual
+    if (eraSeleccionado) {
+      window.__seleccionManualProveedor__ = false;
+      $('#proveedor_designado').val('');
+      $('.proveedor-designado-radio').prop('checked', false);
     }
 
-    // Si es bloque NUEVO (sin id proveedor) → solo remover del DOM
-    if (!proveedorId) {
-      console.log('[ELIM] bloque nuevo sin proveedorId → remove DOM (sin API).');
-      var eraSelNuevo = $bloque.find('.proveedor-designado-radio').is(':checked');
-      $bloque.remove();
-      if (eraSelNuevo) {
-        window.__seleccionManualProveedor__ = false;
-        $('#proveedor_designado').val('');
-        $('.proveedor-designado-radio').prop('checked', false);
-      }
-      actualizarProveedorAsignado();
-      actualizarPrecioFinal();
-      syncIVAProductoConAsignado();
-      return;
-    }
-
-    // Eliminación en caliente: DELETE → fallback POST; si fallan, marcar hidden
-    let eliminado = false;
-    try {
-      if (productoId) {
-        const url = `/productos/eliminarProveedor/${encodeURIComponent(proveedorId)}?productoId=${encodeURIComponent(productoId)}`;
-        console.log('[ELIM] DELETE →', url);
-        const resp = await fetch(url, { method: 'DELETE', credentials: 'same-origin' });
-        console.log('[ELIM] DELETE status:', resp.status, 'ok:', resp.ok);
-
-        if (!resp.ok) {
-          const body = await safeText(resp);
-          console.warn('[ELIM] DELETE no ok. body:', body);
-
-          console.log('[ELIM] POST fallback → /productos/eliminarProveedor');
-          const resp2 = await fetch('/productos/eliminarProveedor', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ productoId, proveedorId })
-          });
-          console.log('[ELIM] POST status:', resp2.status, 'ok:', resp2.ok);
-          if (!resp2.ok) {
-            const body2 = await safeText(resp2);
-            console.error('[ELIM] POST fallback falló. body:', body2);
-            throw new Error('POST fallback no aceptado');
-          }
-        }
-        eliminado = true;
-      } else {
-        console.warn('[ELIM] sin productoId visible → se marcará para eliminar al guardar.');
-      }
-    } catch (err) {
-      console.error('[ELIM] Error en API:', err && err.message ? err.message : err);
-    }
-
-    if (!eliminado) {
-      console.log('[ELIM] marcando hidden eliminar_proveedores[]');
+    // Fallback por formulario
+    if (proveedorId) {
       $('<input>', {
         type: 'hidden',
         name: 'eliminar_proveedores[]',
@@ -339,23 +264,24 @@ $(document)
       }).appendTo($form);
     }
 
-    var eraSeleccionado = $bloque.find('.proveedor-designado-radio').is(':checked');
-    $bloque.remove();
-
-    if (eraSeleccionado) {
-      window.__seleccionManualProveedor__ = false;
-      $('#proveedor_designado').val('');
-      $('.proveedor-designado-radio').prop('checked', false);
-    }
+    // Intento DELETE y, si falla, POST
+    try {
+      if (proveedorId && productoId) {
+        const resp = await fetch(`/productos/eliminarProveedor/${encodeURIComponent(proveedorId)}?productoId=${encodeURIComponent(productoId)}`, { method: 'DELETE' });
+        if (!resp.ok) {
+          await fetch('/productos/eliminarProveedor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productoId, proveedorId })
+          }).catch(()=>{});
+        }
+      }
+    } catch (_) { /* no bloquear UI */ }
 
     actualizarProveedorAsignado();
     actualizarPrecioFinal();
     syncIVAProductoConAsignado();
   });
-
-async function safeText(resp) {
-  try { return await resp.text(); } catch { return '(sin body)'; }
-}
 
 // ===============================
 //  ELECCIÓN MANUAL DEL PROVEEDOR
@@ -371,7 +297,7 @@ $(document)
     var proveedorId = $(this).val() || '';
     $('#proveedor_designado').val(proveedorId);
 
-    var $wrap = findProveedorBlockStrict($(this));
+    var $wrap = $(this).closest('.proveedor');
     var nombre = $wrap.find('.nombre_proveedor').text().trim();
     if (!nombre) {
       nombre = $wrap.find('.proveedores option:selected').text().trim() || '';
@@ -384,20 +310,20 @@ $(document)
   });
 
 // ===============================
-//  CÁLCULOS
+//  LÓGICA DE CÁLCULOS POR BLOQUE
 // ===============================
 function actualizarProveedor($select) {
-  var $wrap = findProveedorBlockStrict($select);
+  var $wrap = $select.closest('.proveedor');
   var $opt = $select.find('option:selected');
 
   var nombreProveedor = $opt.text() || '';
   var descuento = toNumber($opt.data('descuento'));
   $wrap.find('.nombre_proveedor').text(nombreProveedor);
 
-  // Radio: value = proveedor seleccionado
+  // Alinear value del radio con el proveedor seleccionado en el <select>
   $wrap.find('.proveedor-designado-radio').val($select.val() || '');
 
-  // hidden descuento
+  // hidden descuento por compatibilidad
   var $hiddenDesc = $wrap.find('.descuentos_proveedor_id');
   if ($hiddenDesc.length === 0) {
     $hiddenDesc = $('<input>', { type: 'hidden', class: 'descuentos_proveedor_id', name: 'descuentos_proveedor_id[]', value: 0 });
@@ -411,12 +337,12 @@ function actualizarProveedor($select) {
   var $lblPL = $wrap.find('.label-precio-lista');
   var $lblDesc = $wrap.find('.label-descuento');
   if ($lblCodigo.length) $lblCodigo.text('Código' + suf);
-  if ($lblPL.length)    $lblPL.text('Precio de Lista' + suf);
-  if ($lblDesc.length)  $lblDesc.text('Descuento' + suf);
+  if ($lblPL.length) $lblPL.text('Precio de Lista' + suf);
+  if ($lblDesc.length) $lblDesc.text('Descuento' + suf);
 }
 
 function actualizarPrecio($precioLista) {
-  var $wrap = findProveedorBlockStrict($precioLista);
+  var $wrap = $precioLista.closest('.proveedor');
 
   var pl = toNumber($precioLista.val());
   var desc = toNumber($wrap.find('.descuentos_proveedor_id').val());
@@ -440,7 +366,7 @@ function actualizarPrecio($precioLista) {
 function actualizarCostoNeto($costoNeto) {
   if (!$costoNeto || !$costoNeto.length) return;
 
-  var $wrap = findProveedorBlockStrict($costoNeto);
+  var $wrap = $costoNeto.closest('.proveedor');
   var cn = toNumber($costoNeto.val());
   var $costoIVA = asegurarHidden($wrap, 'costo_iva', 'costo_iva[]', 0);
 
@@ -449,6 +375,9 @@ function actualizarCostoNeto($costoNeto) {
   $costoIVA.val(Math.ceil(cIVA));
 }
 
+// =======================================
+//  SELECCIÓN DEL PROVEEDOR ASIGNADO
+// =======================================
 function getProveedorConCostoIvaMasBajo() {
   var $ganador = null;
   var costoIvaMasBajo = Infinity;
@@ -469,11 +398,10 @@ function getProveedorConCostoIvaMasBajo() {
 function actualizarProveedorAsignado() {
   var $radioChecked = $('.proveedor-designado-radio:checked');
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
-    var $p = findProveedorBlockStrict($radioChecked);
-    var nombreManual = $p.find('.nombre_proveedor').text().trim();
+    var nombreManual = $radioChecked.closest('.proveedor').find('.nombre_proveedor').text().trim();
     if (!nombreManual) {
-      nombreManual = $p.find('.proveedores option:selected').text().trim() || '';
-      $p.find('.nombre_proveedor').text(nombreManual);
+      nombreManual = $radioChecked.closest('.proveedor').find('.proveedores option:selected').text().trim() || '';
+      $radioChecked.closest('.proveedor').find('.nombre_proveedor').text(nombreManual);
     }
     $('#proveedorAsignado').text(nombreManual);
     $('#proveedor_designado').val($radioChecked.val() || '');
@@ -506,12 +434,15 @@ function actualizarProveedorAsignado() {
   $('#proveedorAsignado').text(nombre);
 }
 
+// ===============================
+//  PRECIO FINAL (UTILIDAD GLOBAL)
+// ===============================
 function actualizarPrecioFinal() {
   var $proveedor;
 
   var $radioChecked = $('.proveedor-designado-radio:checked');
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
-    $proveedor = findProveedorBlockStrict($radioChecked);
+    $proveedor = $radioChecked.closest('.proveedor');
   } else {
     $proveedor = getProveedorConCostoIvaMasBajo();
   }
@@ -529,16 +460,20 @@ function actualizarPrecioFinal() {
   $('#precio_venta').val(precioFinal);
 
   actualizarProveedorAsignado();
+  // Importantísimo: mantener IVA del producto sincronizado
   syncIVAProductoConAsignado();
 }
 
+// ===============================
+//  SYNC IVA PRODUCTO (hidden name="IVA")
+// ===============================
 function syncIVAProductoConAsignado() {
   var $ivaProd = asegurarHiddenIVAProducto();
 
   var $proveedor;
   var $radioChecked = $('.proveedor-designado-radio:checked');
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
-    $proveedor = findProveedorBlockStrict($radioChecked);
+    $proveedor = $radioChecked.closest('.proveedor');
   } else {
     $proveedor = getProveedorConCostoIvaMasBajo();
   }
@@ -553,9 +488,3 @@ function syncIVAProductoConAsignado() {
   console.log('syncIVA → IVA_producto=', ivaSel);
 }
 
-// ===============================
-//  LOGGER GLOBAL DE ERRORES
-// ===============================
-window.addEventListener('error', function (e) {
-  console.error('[JS ERROR]', e.message, e.filename + ':' + e.lineno + ':' + e.colno);
-});
