@@ -51,7 +51,7 @@ $('#marca').off('change.cargarModelos').on('change.cargarModelos', function () {
 });
 
 // ===============================
-//  HELPERS NÚMEROS / HIDDENS / ID
+//  HELPERS
 // ===============================
 function toNumber(val) {
   if (val == null) return 0;
@@ -76,7 +76,6 @@ function asegurarHidden($wrap, cls, name, defVal) {
   }
   return $el;
 }
-// Nuevo: hidden IVA del producto (un solo valor)
 function asegurarHiddenIVAProducto() {
   var $form = $('form.contenido-editar');
   if ($form.length === 0) $form = $('form'); // fallback
@@ -87,14 +86,35 @@ function asegurarHiddenIVAProducto() {
   }
   return $ivaProd;
 }
-// Obtener productId de forma robusta
 function getProductoId($context) {
   var $scope = $context && $context.length ? $context : $(document);
-  var pid =
-    $scope.find('#producto_id').val() ||         // si existiera
-    $scope.find('#id').val() ||                  // si existiera
-    $scope.find('[name="id"]').val() || '';      // ← el tuyo
-  return pid;
+  return (
+    $scope.find('#producto_id').val() ||
+    $scope.find('#id').val() ||
+    $scope.find('[name="id"]').val() || ''
+  );
+}
+
+// Intenta encontrar el bloque del proveedor de forma muy robusta
+function findProveedorBlock($start) {
+  var $b = $start.closest('.proveedor');
+  if ($b.length) return $b;
+
+  // Ancestro con data-proveedor-id
+  $b = $start.closest('[data-proveedor-id]');
+  if ($b.length) return $b;
+
+  // Ancestro que contenga un select .proveedores
+  $b = $start.closest(':has(select.proveedores)');
+  if ($b.length) return $b;
+
+  // Último recurso: sube un poco y busca un div con clase aproximada
+  $b = $start.parents().filter(function () {
+    var $t = $(this);
+    return $t.is('div') && ($t.hasClass('proveedor') || $t.find('select.proveedores').length);
+  }).first();
+
+  return $b;
 }
 
 // ===============================
@@ -106,10 +126,9 @@ $(document).ready(function () {
     if (e.keyCode === 13) e.preventDefault();
   });
 
-  // Flag global: si el usuario eligió manualmente un proveedor
   window.__seleccionManualProveedor__ = false;
 
-  // 1) Respetar selección guardada
+  // Respetar selección guardada
   var seleccionadoBD = $('#proveedor_designado').val();
   if (seleccionadoBD) {
     var $radioBD = $('.proveedor-designado-radio').filter(function () {
@@ -119,7 +138,7 @@ $(document).ready(function () {
       $radioBD.prop('checked', true);
       window.__seleccionManualProveedor__ = true;
 
-      var $bloque = $radioBD.closest('.proveedor');
+      var $bloque = findProveedorBlock($radioBD);
       var nombre = $bloque.find('.nombre_proveedor').text().trim();
       if (!nombre) {
         nombre = $bloque.find('.proveedores option:selected').text().trim() || '';
@@ -129,7 +148,7 @@ $(document).ready(function () {
     }
   }
 
-  // 2) Inicializar cálculos visibles
+  // Inicializar cálculos visibles
   $('.proveedores').each(function () { $(this).trigger('change'); });
   $('.precio_lista').each(function () { $(this).trigger('change'); });
 
@@ -137,7 +156,6 @@ $(document).ready(function () {
     actualizarProveedorAsignado();
   }
   actualizarPrecioFinal();
-  // Sincronizar IVA del producto al arrancar
   syncIVAProductoConAsignado();
 
   // Botón Agregar Proveedor
@@ -198,7 +216,7 @@ $(document).ready(function () {
 $(document)
   .off('change.provSel', '.proveedores')
   .on('change.provSel', '.proveedores', function () {
-    var $wrap = $(this).closest('.proveedor');
+    var $wrap = findProveedorBlock($(this));
     actualizarProveedor($(this));
     $wrap.find('.precio_lista').trigger('change');
 
@@ -215,10 +233,9 @@ $(document)
   .on('input change.precioLista', '.precio_lista', function () {
     actualizarPrecio($(this));
   })
-  // al cambiar IVA (select o input), recalcular todo y sincronizar IVA del producto
   .off('input change.iva', '.IVA')
   .on('input change.iva', '.IVA', function () {
-    var $wrap = $(this).closest('.proveedor');
+    var $wrap = findProveedorBlock($(this));
     actualizarCostoNeto($wrap.find('.costo_neto'));
     if (!window.__seleccionManualProveedor__) {
       actualizarProveedorAsignado();
@@ -226,38 +243,51 @@ $(document)
     actualizarPrecioFinal();
     syncIVAProductoConAsignado();
   })
-  // cambiar utilidad recalcula precio de venta
   .off('input change.utilidad', '#utilidad')
   .on('input change.utilidad', '#utilidad', function () {
     actualizarPrecioFinal();
   });
 
 // ===============================
-//  ELIMINAR PROVEEDOR (CON LOGS)
+//  ELIMINAR PROVEEDOR (ROBUSTO + LOGS)
 // ===============================
 $(document)
   .off('click.eliminarProveedor', '.eliminar-proveedor')
   .on('click.eliminarProveedor', async function (e) {
     e.preventDefault();
+    e.stopPropagation();
 
     var $btn    = $(this);
-    var $bloque = $btn.closest('.proveedor');
+    var $bloque = findProveedorBlock($btn);
     var $form   = $btn.closest('form');
+
+    // Logs de diagnóstico
+    console.log('[ELIM] Botón clicado. Tiene data-proveedor-id?:', $btn.data('proveedor-id'));
+    console.log('[ELIM] $bloque encontrado?', $bloque.length, $bloque.get(0) ? $bloque.get(0).outerHTML.slice(0, 160) + '...' : '(no hallado)');
 
     // Resolver proveedorId (3 fuentes)
     var proveedorId = $btn.data('proveedor-id');
     if (!proveedorId) proveedorId = $bloque.data('proveedor-id');
-    if (!proveedorId) proveedorId = $bloque.find('.proveedores').val();
+    if (!proveedorId) {
+      var $sel = $bloque.find('.proveedores');
+      proveedorId = $sel.length ? $sel.val() : '';
+    }
     proveedorId = proveedorId ? String(proveedorId).trim() : '';
 
     // Resolver productoId
     var productoId = getProductoId($form);
 
-    console.log('[ELIM] Click eliminar → proveedorId=', proveedorId, ' | productoId=', productoId);
+    console.log('[ELIM] Click eliminar → proveedorId=', proveedorId, '| productoId=', productoId);
 
-    // Si NO hay proveedorId => bloque nuevo (no existe en DB)
+    // Si no hay contenedor, aborto (evito remover cualquier cosa incorrecta)
+    if (!$bloque.length) {
+      console.warn('[ELIM] No se halló bloque contenedor para este botón. Revisá que el botón esté dentro del <div class="proveedor"> correspondiente.');
+      return;
+    }
+
+    // Caso: bloque "nuevo" (sin proveedorId real) → remover únicamente del DOM
     if (!proveedorId) {
-      console.log('[ELIM] Bloque nuevo sin proveedorId en DB, sólo removiendo del DOM.');
+      console.log('[ELIM] Bloque nuevo sin proveedorId en DB, removiendo del DOM.');
       var eraSelNuevo = $bloque.find('.proveedor-designado-radio').is(':checked');
       $bloque.remove();
       if (eraSelNuevo) {
@@ -271,6 +301,7 @@ $(document)
       return;
     }
 
+    // Eliminación vía API (DELETE → fallback POST) o marcado hidden
     let eliminado = false;
     try {
       if (productoId) {
@@ -286,7 +317,7 @@ $(document)
         if (!resp.ok) {
           const txt = await safeText(resp);
           console.warn('[ELIM] DELETE no ok. body:', txt);
-          // Fallback a POST
+
           console.log('[ELIM] Intentando POST fallback → /productos/eliminarProveedor');
           const resp2 = await fetch('/productos/eliminarProveedor', {
             method: 'POST',
@@ -319,7 +350,7 @@ $(document)
       }).appendTo($form);
     }
 
-    // Remover del DOM y recalcular UI
+    // Ahora sí, quitar del DOM y recalcular UI
     var eraSeleccionado = $bloque.find('.proveedor-designado-radio').is(':checked');
     $bloque.remove();
 
@@ -352,7 +383,7 @@ $(document)
     var proveedorId = $(this).val() || '';
     $('#proveedor_designado').val(proveedorId);
 
-    var $wrap = $(this).closest('.proveedor');
+    var $wrap = findProveedorBlock($(this));
     var nombre = $wrap.find('.nombre_proveedor').text().trim();
     if (!nombre) {
       nombre = $wrap.find('.proveedores option:selected').text().trim() || '';
@@ -365,20 +396,20 @@ $(document)
   });
 
 // ===============================
-//  LÓGICA DE CÁLCULOS POR BLOQUE
+//  CÁLCULOS
 // ===============================
 function actualizarProveedor($select) {
-  var $wrap = $select.closest('.proveedor');
+  var $wrap = findProveedorBlock($select);
   var $opt = $select.find('option:selected');
 
   var nombreProveedor = $opt.text() || '';
   var descuento = toNumber($opt.data('descuento'));
   $wrap.find('.nombre_proveedor').text(nombreProveedor);
 
-  // Alinear value del radio con el proveedor seleccionado en el <select>
+  // Radio: value = proveedor seleccionado
   $wrap.find('.proveedor-designado-radio').val($select.val() || '');
 
-  // hidden descuento por compatibilidad
+  // hidden descuento
   var $hiddenDesc = $wrap.find('.descuentos_proveedor_id');
   if ($hiddenDesc.length === 0) {
     $hiddenDesc = $('<input>', { type: 'hidden', class: 'descuentos_proveedor_id', name: 'descuentos_proveedor_id[]', value: 0 });
@@ -392,12 +423,12 @@ function actualizarProveedor($select) {
   var $lblPL = $wrap.find('.label-precio-lista');
   var $lblDesc = $wrap.find('.label-descuento');
   if ($lblCodigo.length) $lblCodigo.text('Código' + suf);
-  if ($lblPL.length) $lblPL.text('Precio de Lista' + suf);
-  if ($lblDesc.length) $lblDesc.text('Descuento' + suf);
+  if ($lblPL.length)    $lblPL.text('Precio de Lista' + suf);
+  if ($lblDesc.length)  $lblDesc.text('Descuento' + suf);
 }
 
 function actualizarPrecio($precioLista) {
-  var $wrap = $precioLista.closest('.proveedor');
+  var $wrap = findProveedorBlock($precioLista);
 
   var pl = toNumber($precioLista.val());
   var desc = toNumber($wrap.find('.descuentos_proveedor_id').val());
@@ -421,7 +452,7 @@ function actualizarPrecio($precioLista) {
 function actualizarCostoNeto($costoNeto) {
   if (!$costoNeto || !$costoNeto.length) return;
 
-  var $wrap = $costoNeto.closest('.proveedor');
+  var $wrap = findProveedorBlock($costoNeto);
   var cn = toNumber($costoNeto.val());
   var $costoIVA = asegurarHidden($wrap, 'costo_iva', 'costo_iva[]', 0);
 
@@ -430,9 +461,6 @@ function actualizarCostoNeto($costoNeto) {
   $costoIVA.val(Math.ceil(cIVA));
 }
 
-// =======================================
-//  SELECCIÓN DEL PROVEEDOR ASIGNADO
-// =======================================
 function getProveedorConCostoIvaMasBajo() {
   var $ganador = null;
   var costoIvaMasBajo = Infinity;
@@ -453,10 +481,11 @@ function getProveedorConCostoIvaMasBajo() {
 function actualizarProveedorAsignado() {
   var $radioChecked = $('.proveedor-designado-radio:checked');
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
-    var nombreManual = $radioChecked.closest('.proveedor').find('.nombre_proveedor').text().trim();
+    var $p = findProveedorBlock($radioChecked);
+    var nombreManual = $p.find('.nombre_proveedor').text().trim();
     if (!nombreManual) {
-      nombreManual = $radioChecked.closest('.proveedor').find('.proveedores option:selected').text().trim() || '';
-      $radioChecked.closest('.proveedor').find('.nombre_proveedor').text(nombreManual);
+      nombreManual = $p.find('.proveedores option:selected').text().trim() || '';
+      $p.find('.nombre_proveedor').text(nombreManual);
     }
     $('#proveedorAsignado').text(nombreManual);
     $('#proveedor_designado').val($radioChecked.val() || '');
@@ -489,15 +518,12 @@ function actualizarProveedorAsignado() {
   $('#proveedorAsignado').text(nombre);
 }
 
-// ===============================
-//  PRECIO FINAL (UTILIDAD GLOBAL)
-// ===============================
 function actualizarPrecioFinal() {
   var $proveedor;
 
   var $radioChecked = $('.proveedor-designado-radio:checked');
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
-    $proveedor = $radioChecked.closest('.proveedor');
+    $proveedor = findProveedorBlock($radioChecked);
   } else {
     $proveedor = getProveedorConCostoIvaMasBajo();
   }
@@ -515,20 +541,16 @@ function actualizarPrecioFinal() {
   $('#precio_venta').val(precioFinal);
 
   actualizarProveedorAsignado();
-  // Importantísimo: mantener IVA del producto sincronizado
   syncIVAProductoConAsignado();
 }
 
-// ===============================
-//  SYNC IVA PRODUCTO (hidden name="IVA_producto")
-// ===============================
 function syncIVAProductoConAsignado() {
   var $ivaProd = asegurarHiddenIVAProducto();
 
   var $proveedor;
   var $radioChecked = $('.proveedor-designado-radio:checked');
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
-    $proveedor = $radioChecked.closest('.proveedor');
+    $proveedor = findProveedorBlock($radioChecked);
   } else {
     $proveedor = getProveedorConCostoIvaMasBajo();
   }
