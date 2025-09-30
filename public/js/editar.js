@@ -76,10 +76,9 @@ function asegurarHidden($wrap, cls, name, defVal) {
   }
   return $el;
 }
-// Hidden IVA del producto (un solo valor)
 function asegurarHiddenIVAProducto() {
   var $form = $('form.contenido-editar');
-  if ($form.length === 0) $form = $('form'); // fallback
+  if ($form.length === 0) $form = $('form');
   var $ivaProd = $form.find('#iva_producto');
   if ($ivaProd.length === 0) {
     $ivaProd = $('<input>', { type: 'hidden', id: 'iva_producto', name: 'IVA_producto', value: 21 });
@@ -92,15 +91,17 @@ function asegurarHiddenIVAProducto() {
 //  INIT
 // ===============================
 $(document).ready(function () {
-  // Evitar submit con Enter en cualquier input (no afecta botones)
-  $('form').off('keypress.preventEnter').on('keypress.preventEnter', function (e) {
-    if (e.keyCode === 13) e.preventDefault();
+  // Evitar submit con Enter SOLO dentro de inputs/textareas (no afecta botones)
+  $('form').off('keydown.preventEnter').on('keydown.preventEnter', function (e) {
+    if ((e.key === 'Enter' || e.keyCode === 13) &&
+        (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+      e.preventDefault();
+    }
   });
 
-  // Flag global: si el usuario eligió manualmente un proveedor
   window.__seleccionManualProveedor__ = false;
 
-  // 1) Respetar selección guardada
+  // Respetar selección guardada
   var seleccionadoBD = $('#proveedor_designado').val();
   if (seleccionadoBD) {
     var $radioBD = $('.proveedor-designado-radio').filter(function () {
@@ -120,7 +121,7 @@ $(document).ready(function () {
     }
   }
 
-  // 2) Inicializar cálculos visibles
+  // Inicializar cálculos visibles
   $('.proveedores').each(function () { $(this).trigger('change'); });
   $('.precio_lista').each(function () { $(this).trigger('change'); });
 
@@ -149,12 +150,12 @@ $(document).ready(function () {
     $nuevo.find('[id]').removeAttr('id');
     $nuevo.find('label[for]').removeAttr('for');
 
-    // Reset labels
+    // Labels base
     $nuevo.find('.label-codigo').text('Código');
     $nuevo.find('.label-precio-lista').text('Precio de Lista');
     $nuevo.find('.label-descuento').text('Descuento');
 
-    // Radio desmarcado y sin valor
+    // Radio desmarcado
     $nuevo.find('.proveedor-designado-radio').prop('checked', false).val('');
 
     // Botón eliminar (nuevos sin data-proveedor-id)
@@ -221,25 +222,33 @@ $(document)
   });
 
 // ===============================
-//  ELIMINAR PROVEEDOR (simple y robusto)
+//  ELIMINAR PROVEEDOR (DOM-first, sin “this”)
 // ===============================
 $(document)
   .off('click.eliminarProveedor', '.eliminar-proveedor')
   .on('click.eliminarProveedor', function (e) {
-    e.preventDefault();
+    // NO confíes en “this”: usa el target real del evento
+    var btn = e.target && e.target.closest ? e.target.closest('.eliminar-proveedor') : null;
+    if (!btn) {
+      console.warn('[ELIM] No se encontró el botón por e.target.closest');
+      return;
+    }
+    var $btn = $(btn);
 
-    var $btn    = $(this);
-    var $bloque = $btn.closest('.proveedor');
-    var $form   = $btn.closest('form');
+    // Subí al contenedor .proveedor usando DOM nativo (y luego jQuery)
+    var provNode = btn.closest('.proveedor');
+    var $bloque  = provNode ? $(provNode) : $();
 
-    console.log('[ELIM] click → this=', this && this.tagName, '| .proveedor encontrado =', $bloque.length);
+    console.log('[ELIM] target=', btn.tagName, '| .proveedor encontrado =', $bloque.length);
 
     if (!$bloque.length) {
-      console.warn('[ELIM] No se encontró contenedor .proveedor. Verificá que el botón esté DENTRO de la tarjeta del proveedor.');
+      console.warn('[ELIM] No se encontró contenedor .proveedor. Verificá que el botón esté DENTRO del bloque.');
       return;
     }
 
-    // Resolver proveedorId en orden: botón → bloque → select
+    var $form = $btn.closest('form');
+
+    // proveedorId: botón → bloque → select
     var proveedorId =
       ($btn.attr('data-proveedor-id') || '').trim() ||
       ($bloque.attr('data-proveedor-id') || '').trim() ||
@@ -248,7 +257,7 @@ $(document)
     var productoId = ($('[name="id"]').val() || $('#id').val() || $('#producto_id').val() || '').trim();
     console.log('[ELIM] proveedorId=', proveedorId, '| productoId=', productoId);
 
-    // Si hay proveedorId real, marcar para eliminar al guardar
+    // Si es proveedor existente, marcar hidden para que el backend lo borre al Guardar
     if (proveedorId) {
       $('<input>', {
         type: 'hidden',
@@ -260,7 +269,7 @@ $(document)
       console.log('[ELIM] bloque nuevo (sin proveedorId en DB) → sólo remuevo del DOM.');
     }
 
-    // Si el bloque estaba seleccionado como proveedor asignado, reseteo selección
+    // Si estaba seleccionado como proveedor asignado, reseteo
     var eraSeleccionado = $bloque.find('.proveedor-designado-radio').is(':checked');
 
     // Remover del DOM
@@ -273,7 +282,6 @@ $(document)
       $('.proveedor-designado-radio').prop('checked', false);
     }
 
-    // Recalcular UI
     actualizarProveedorAsignado();
     actualizarPrecioFinal();
     syncIVAProductoConAsignado();
@@ -483,3 +491,10 @@ function syncIVAProductoConAsignado() {
   $ivaProd.val(ivaSel);
   console.log('syncIVA → IVA_producto=', ivaSel);
 }
+
+// ===============================
+//  LOGGER GLOBAL
+// ===============================
+window.addEventListener('error', function (e) {
+  console.error('[JS ERROR]', e.message, e.filename + ':' + e.lineno + ':' + e.colno);
+});
