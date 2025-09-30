@@ -82,7 +82,6 @@ function asegurarHiddenIVAProducto() {
   if ($form.length === 0) $form = $('form'); // fallback
   var $ivaProd = $form.find('#iva_producto');
   if ($ivaProd.length === 0) {
-    // 👇 nombre SIN colisión
     $ivaProd = $('<input>', { type: 'hidden', id: 'iva_producto', name: 'IVA_producto', value: 21 });
     $form.append($ivaProd);
   }
@@ -91,12 +90,11 @@ function asegurarHiddenIVAProducto() {
 // Obtener productId de forma robusta
 function getProductoId($context) {
   var $scope = $context && $context.length ? $context : $(document);
-  return (
-    $scope.find('#producto_id').val() ||
-    $scope.find('#id').val() ||
-    $scope.find('[name="id"]').val() ||
-    ''
-  );
+  var pid =
+    $scope.find('#producto_id').val() ||         // si existiera
+    $scope.find('#id').val() ||                  // si existiera
+    $scope.find('[name="id"]').val() || '';      // ← el tuyo
+  return pid;
 }
 
 // ===============================
@@ -235,11 +233,13 @@ $(document)
   });
 
 // ===============================
-//  ELIMINAR PROVEEDOR (CORREGIDO)
+//  ELIMINAR PROVEEDOR (CON LOGS)
 // ===============================
 $(document)
   .off('click.eliminarProveedor', '.eliminar-proveedor')
-  .on('click.eliminarProveedor', async function () {
+  .on('click.eliminarProveedor', async function (e) {
+    e.preventDefault();
+
     var $btn    = $(this);
     var $bloque = $btn.closest('.proveedor');
     var $form   = $btn.closest('form');
@@ -253,56 +253,65 @@ $(document)
     // Resolver productoId
     var productoId = getProductoId($form);
 
+    console.log('[ELIM] Click eliminar → proveedorId=', proveedorId, ' | productoId=', productoId);
+
     // Si NO hay proveedorId => bloque nuevo (no existe en DB)
-    // => sólo remover del DOM
     if (!proveedorId) {
+      console.log('[ELIM] Bloque nuevo sin proveedorId en DB, sólo removiendo del DOM.');
       var eraSelNuevo = $bloque.find('.proveedor-designado-radio').is(':checked');
       $bloque.remove();
-
       if (eraSelNuevo) {
         window.__seleccionManualProveedor__ = false;
         $('#proveedor_designado').val('');
         $('.proveedor-designado-radio').prop('checked', false);
       }
-
       actualizarProveedorAsignado();
       actualizarPrecioFinal();
       syncIVAProductoConAsignado();
       return;
     }
 
-    // Confirmación opcional (descomentá si usás SweetAlert)
-    // if (window.Swal) {
-    //   const ok = await Swal.fire({ title:'Eliminar proveedor', text:'¿Seguro?', icon:'warning', showCancelButton:true })
-    //     .then(r => r.isConfirmed);
-    //   if (!ok) return;
-    // }
-
-    // Primero intentamos DELETE; si falla, fallback a POST;
-    // si aún falla o no hay productoId, marcamos hidden para eliminar al guardar.
     let eliminado = false;
     try {
       if (productoId) {
         const url = `/productos/eliminarProveedor/${encodeURIComponent(proveedorId)}?productoId=${encodeURIComponent(productoId)}`;
-        const resp = await fetch(url, { method: 'DELETE' });
+        console.log('[ELIM] Intentando DELETE →', url);
 
+        const resp = await fetch(url, {
+          method: 'DELETE',
+          credentials: 'same-origin'
+        });
+
+        console.log('[ELIM] Respuesta DELETE → status:', resp.status, 'ok:', resp.ok);
         if (!resp.ok) {
-          // Fallback por si DELETE no pasa por proxy/host
+          const txt = await safeText(resp);
+          console.warn('[ELIM] DELETE no ok. body:', txt);
+          // Fallback a POST
+          console.log('[ELIM] Intentando POST fallback → /productos/eliminarProveedor');
           const resp2 = await fetch('/productos/eliminarProveedor', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
             body: JSON.stringify({ productoId, proveedorId })
           });
-          if (!resp2.ok) throw new Error('POST fallback no aceptado');
+          console.log('[ELIM] Respuesta POST → status:', resp2.status, 'ok:', resp2.ok);
+          if (!resp2.ok) {
+            const txt2 = await safeText(resp2);
+            console.error('[ELIM] POST fallback falló. body:', txt2);
+            throw new Error('POST fallback no aceptado');
+          }
         }
         eliminado = true;
+      } else {
+        console.warn('[ELIM] No se detectó productoId en el form. Marco para eliminar al guardar.');
       }
     } catch (err) {
-      console.warn('No se pudo eliminar vía API, marcaré para eliminar al guardar:', err?.message || err);
+      console.error('[ELIM] Error en eliminación vía API:', err && err.message ? err.message : err);
     }
 
-    // Si no se pudo eliminar en caliente, marco hidden para el controlador de "Guardar"
     if (!eliminado) {
+      // Marcamos para eliminar al guardar
+      console.log('[ELIM] Marcando hidden eliminar_proveedores[] y removiendo del DOM.');
       $('<input>', {
         type: 'hidden',
         name: 'eliminar_proveedores[]',
@@ -310,7 +319,7 @@ $(document)
       }).appendTo($form);
     }
 
-    // Ahora sí: quitar del DOM y recalcular UI
+    // Remover del DOM y recalcular UI
     var eraSeleccionado = $bloque.find('.proveedor-designado-radio').is(':checked');
     $bloque.remove();
 
@@ -324,6 +333,10 @@ $(document)
     actualizarPrecioFinal();
     syncIVAProductoConAsignado();
   });
+
+async function safeText(resp) {
+  try { return await resp.text(); } catch { return '(sin body)'; }
+}
 
 // ===============================
 //  ELECCIÓN MANUAL DEL PROVEEDOR
