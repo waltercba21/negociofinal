@@ -95,35 +95,34 @@ function getProductoId($context) {
   );
 }
 
-// Intenta encontrar el bloque del proveedor de forma muy robusta
+// 🔎 Localizador robusto del bloque del proveedor
 function findProveedorBlock($start) {
+  // 1) Camino normal
   var $b = $start.closest('.proveedor');
   if ($b.length) return $b;
 
-  // Ancestro con data-proveedor-id
+  // 2) El .proveedor que contenga al botón (por si hay wrappers extra)
+  var $c = $('.proveedor').has($start).first();
+  if ($c.length) return $c;
+
+  // 3) Ancestro con data-proveedor-id
   $b = $start.closest('[data-proveedor-id]');
   if ($b.length) return $b;
 
-  // Ancestro que contenga un select .proveedores
+  // 4) Ancestro que contenga un select .proveedores
   $b = $start.closest(':has(select.proveedores)');
   if ($b.length) return $b;
 
-  // Último recurso: sube un poco y busca un div con clase aproximada
-  $b = $start.parents().filter(function () {
-    var $t = $(this);
-    return $t.is('div') && ($t.hasClass('proveedor') || $t.find('select.proveedores').length);
-  }).first();
-
-  return $b;
+  return $start.closest('div'); // último recurso (evitar null)
 }
 
 // ===============================
 //  INIT
 // ===============================
 $(document).ready(function () {
-  // Evitar submit con Enter
+  // Evitar submit con Enter en inputs (no afecta botones)
   $('form').off('keypress.preventEnter').on('keypress.preventEnter', function (e) {
-    if (e.keyCode === 13) e.preventDefault();
+    if (e.keyCode === 13 && e.target.tagName === 'INPUT') e.preventDefault();
   });
 
   window.__seleccionManualProveedor__ = false;
@@ -185,7 +184,7 @@ $(document).ready(function () {
     // Radio desmarcado y sin valor
     $nuevo.find('.proveedor-designado-radio').prop('checked', false).val('');
 
-    // Botón eliminar
+    // Botón eliminar (sin data-proveedor-id en nuevos)
     if ($nuevo.find('.eliminar-proveedor').length === 0) {
       $nuevo.append(
         '<div class="form-group-crear">' +
@@ -255,15 +254,14 @@ $(document)
   .off('click.eliminarProveedor', '.eliminar-proveedor')
   .on('click.eliminarProveedor', async function (e) {
     e.preventDefault();
-    e.stopPropagation();
 
     var $btn    = $(this);
     var $bloque = findProveedorBlock($btn);
     var $form   = $btn.closest('form');
 
-    // Logs de diagnóstico
-    console.log('[ELIM] Botón clicado. Tiene data-proveedor-id?:', $btn.data('proveedor-id'));
-    console.log('[ELIM] $bloque encontrado?', $bloque.length, $bloque.get(0) ? $bloque.get(0).outerHTML.slice(0, 160) + '...' : '(no hallado)');
+    console.log('[ELIM] click. data-proveedor-id(btn)=', $btn.data('proveedor-id'));
+    console.log('[ELIM] .proveedor count:', $('.proveedor').length);
+    console.log('[ELIM] bloque encontrado?', $bloque.length);
 
     // Resolver proveedorId (3 fuentes)
     var proveedorId = $btn.data('proveedor-id');
@@ -277,17 +275,21 @@ $(document)
     // Resolver productoId
     var productoId = getProductoId($form);
 
-    console.log('[ELIM] Click eliminar → proveedorId=', proveedorId, '| productoId=', productoId);
+    console.log('[ELIM] proveedorId=', proveedorId, '| productoId=', productoId);
 
-    // Si no hay contenedor, aborto (evito remover cualquier cosa incorrecta)
     if (!$bloque.length) {
-      console.warn('[ELIM] No se halló bloque contenedor para este botón. Revisá que el botón esté dentro del <div class="proveedor"> correspondiente.');
+      console.warn('[ELIM] No se halló contenedor .proveedor. Removiendo contenedor inmediato por fallback.');
+      // Fallback último: sacar el bloque visual más cercano de edición
+      $btn.closest('.form-group-crear').parent().remove();
+      actualizarProveedorAsignado();
+      actualizarPrecioFinal();
+      syncIVAProductoConAsignado();
       return;
     }
 
-    // Caso: bloque "nuevo" (sin proveedorId real) → remover únicamente del DOM
+    // Si es bloque NUEVO (sin id proveedor) → solo remover del DOM
     if (!proveedorId) {
-      console.log('[ELIM] Bloque nuevo sin proveedorId en DB, removiendo del DOM.');
+      console.log('[ELIM] bloque nuevo sin proveedorId → remove DOM (sin API).');
       var eraSelNuevo = $bloque.find('.proveedor-designado-radio').is(':checked');
       $bloque.remove();
       if (eraSelNuevo) {
@@ -301,48 +303,43 @@ $(document)
       return;
     }
 
-    // Eliminación vía API (DELETE → fallback POST) o marcado hidden
+    // Eliminación en caliente: DELETE → fallback POST; si fallan, marcar hidden
     let eliminado = false;
     try {
       if (productoId) {
         const url = `/productos/eliminarProveedor/${encodeURIComponent(proveedorId)}?productoId=${encodeURIComponent(productoId)}`;
-        console.log('[ELIM] Intentando DELETE →', url);
+        console.log('[ELIM] DELETE →', url);
+        const resp = await fetch(url, { method: 'DELETE', credentials: 'same-origin' });
+        console.log('[ELIM] DELETE status:', resp.status, 'ok:', resp.ok);
 
-        const resp = await fetch(url, {
-          method: 'DELETE',
-          credentials: 'same-origin'
-        });
-
-        console.log('[ELIM] Respuesta DELETE → status:', resp.status, 'ok:', resp.ok);
         if (!resp.ok) {
-          const txt = await safeText(resp);
-          console.warn('[ELIM] DELETE no ok. body:', txt);
+          const body = await safeText(resp);
+          console.warn('[ELIM] DELETE no ok. body:', body);
 
-          console.log('[ELIM] Intentando POST fallback → /productos/eliminarProveedor');
+          console.log('[ELIM] POST fallback → /productos/eliminarProveedor');
           const resp2 = await fetch('/productos/eliminarProveedor', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
             body: JSON.stringify({ productoId, proveedorId })
           });
-          console.log('[ELIM] Respuesta POST → status:', resp2.status, 'ok:', resp2.ok);
+          console.log('[ELIM] POST status:', resp2.status, 'ok:', resp2.ok);
           if (!resp2.ok) {
-            const txt2 = await safeText(resp2);
-            console.error('[ELIM] POST fallback falló. body:', txt2);
+            const body2 = await safeText(resp2);
+            console.error('[ELIM] POST fallback falló. body:', body2);
             throw new Error('POST fallback no aceptado');
           }
         }
         eliminado = true;
       } else {
-        console.warn('[ELIM] No se detectó productoId en el form. Marco para eliminar al guardar.');
+        console.warn('[ELIM] sin productoId visible → se marcará para eliminar al guardar.');
       }
     } catch (err) {
-      console.error('[ELIM] Error en eliminación vía API:', err && err.message ? err.message : err);
+      console.error('[ELIM] Error en API:', err && err.message ? err.message : err);
     }
 
     if (!eliminado) {
-      // Marcamos para eliminar al guardar
-      console.log('[ELIM] Marcando hidden eliminar_proveedores[] y removiendo del DOM.');
+      console.log('[ELIM] marcando hidden eliminar_proveedores[]');
       $('<input>', {
         type: 'hidden',
         name: 'eliminar_proveedores[]',
@@ -350,7 +347,6 @@ $(document)
       }).appendTo($form);
     }
 
-    // Ahora sí, quitar del DOM y recalcular UI
     var eraSeleccionado = $bloque.find('.proveedor-designado-radio').is(':checked');
     $bloque.remove();
 
@@ -470,7 +466,7 @@ function getProveedorConCostoIvaMasBajo() {
     var val = $wrap.find('.costo_iva').val();
     var costoIva = toNumber(val);
     if (!isNaN(costoIva) && costoIva < costoIvaMasBajo) {
-      costoIvaMasBajo = costoIva;
+      costoIvaMasBajo = costoIvaMasBajo = costoIva; // typo fix + asignación
       $ganador = $wrap;
     }
   });
