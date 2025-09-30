@@ -51,7 +51,7 @@ $('#marca').off('change.cargarModelos').on('change.cargarModelos', function () {
 });
 
 // ===============================
-//  HELPERS NÚMERICOS
+//  HELPERS NÚMEROS / HIDDENS / ID
 // ===============================
 function toNumber(val) {
   if (val == null) return 0;
@@ -88,7 +88,16 @@ function asegurarHiddenIVAProducto() {
   }
   return $ivaProd;
 }
-
+// Obtener productId de forma robusta
+function getProductoId($context) {
+  var $scope = $context && $context.length ? $context : $(document);
+  return (
+    $scope.find('#producto_id').val() ||
+    $scope.find('#id').val() ||
+    $scope.find('[name="id"]').val() ||
+    ''
+  );
+}
 
 // ===============================
 //  INIT
@@ -226,37 +235,74 @@ $(document)
   });
 
 // ===============================
-//  ELIMINAR PROVEEDOR
+//  ELIMINAR PROVEEDOR (CORREGIDO)
 // ===============================
 $(document)
   .off('click.eliminarProveedor', '.eliminar-proveedor')
   .on('click.eliminarProveedor', async function () {
-    var $btn = $(this);
+    var $btn    = $(this);
     var $bloque = $btn.closest('.proveedor');
+    var $form   = $btn.closest('form');
 
-    // buscar proveedorId desde 3 lugares
+    // Resolver proveedorId (3 fuentes)
     var proveedorId = $btn.data('proveedor-id');
     if (!proveedorId) proveedorId = $bloque.data('proveedor-id');
     if (!proveedorId) proveedorId = $bloque.find('.proveedores').val();
-
     proveedorId = proveedorId ? String(proveedorId).trim() : '';
 
-    var eraSeleccionado = $bloque.find('.proveedor-designado-radio').is(':checked');
-    var $form = $btn.closest('form');
-    var productoId = $('[name="id"]').val() || $('#id').val() || $('#producto_id').val() || '';
+    // Resolver productoId
+    var productoId = getProductoId($form);
 
-    // Quitar del DOM
-    $bloque.remove();
+    // Si NO hay proveedorId => bloque nuevo (no existe en DB)
+    // => sólo remover del DOM
+    if (!proveedorId) {
+      var eraSelNuevo = $bloque.find('.proveedor-designado-radio').is(':checked');
+      $bloque.remove();
 
-    // Si estaba seleccionado, reseteo selección manual
-    if (eraSeleccionado) {
-      window.__seleccionManualProveedor__ = false;
-      $('#proveedor_designado').val('');
-      $('.proveedor-designado-radio').prop('checked', false);
+      if (eraSelNuevo) {
+        window.__seleccionManualProveedor__ = false;
+        $('#proveedor_designado').val('');
+        $('.proveedor-designado-radio').prop('checked', false);
+      }
+
+      actualizarProveedorAsignado();
+      actualizarPrecioFinal();
+      syncIVAProductoConAsignado();
+      return;
     }
 
-    // Fallback por formulario
-    if (proveedorId) {
+    // Confirmación opcional (descomentá si usás SweetAlert)
+    // if (window.Swal) {
+    //   const ok = await Swal.fire({ title:'Eliminar proveedor', text:'¿Seguro?', icon:'warning', showCancelButton:true })
+    //     .then(r => r.isConfirmed);
+    //   if (!ok) return;
+    // }
+
+    // Primero intentamos DELETE; si falla, fallback a POST;
+    // si aún falla o no hay productoId, marcamos hidden para eliminar al guardar.
+    let eliminado = false;
+    try {
+      if (productoId) {
+        const url = `/productos/eliminarProveedor/${encodeURIComponent(proveedorId)}?productoId=${encodeURIComponent(productoId)}`;
+        const resp = await fetch(url, { method: 'DELETE' });
+
+        if (!resp.ok) {
+          // Fallback por si DELETE no pasa por proxy/host
+          const resp2 = await fetch('/productos/eliminarProveedor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productoId, proveedorId })
+          });
+          if (!resp2.ok) throw new Error('POST fallback no aceptado');
+        }
+        eliminado = true;
+      }
+    } catch (err) {
+      console.warn('No se pudo eliminar vía API, marcaré para eliminar al guardar:', err?.message || err);
+    }
+
+    // Si no se pudo eliminar en caliente, marco hidden para el controlador de "Guardar"
+    if (!eliminado) {
       $('<input>', {
         type: 'hidden',
         name: 'eliminar_proveedores[]',
@@ -264,19 +310,15 @@ $(document)
       }).appendTo($form);
     }
 
-    // Intento DELETE y, si falla, POST
-    try {
-      if (proveedorId && productoId) {
-        const resp = await fetch(`/productos/eliminarProveedor/${encodeURIComponent(proveedorId)}?productoId=${encodeURIComponent(productoId)}`, { method: 'DELETE' });
-        if (!resp.ok) {
-          await fetch('/productos/eliminarProveedor', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productoId, proveedorId })
-          }).catch(()=>{});
-        }
-      }
-    } catch (_) { /* no bloquear UI */ }
+    // Ahora sí: quitar del DOM y recalcular UI
+    var eraSeleccionado = $bloque.find('.proveedor-designado-radio').is(':checked');
+    $bloque.remove();
+
+    if (eraSeleccionado) {
+      window.__seleccionManualProveedor__ = false;
+      $('#proveedor_designado').val('');
+      $('.proveedor-designado-radio').prop('checked', false);
+    }
 
     actualizarProveedorAsignado();
     actualizarPrecioFinal();
@@ -465,7 +507,7 @@ function actualizarPrecioFinal() {
 }
 
 // ===============================
-//  SYNC IVA PRODUCTO (hidden name="IVA")
+//  SYNC IVA PRODUCTO (hidden name="IVA_producto")
 // ===============================
 function syncIVAProductoConAsignado() {
   var $ivaProd = asegurarHiddenIVAProducto();
@@ -487,4 +529,3 @@ function syncIVAProductoConAsignado() {
   $ivaProd.val(ivaSel);
   console.log('syncIVA → IVA_producto=', ivaSel);
 }
-
