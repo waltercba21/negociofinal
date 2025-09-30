@@ -1708,29 +1708,32 @@ obtenerDescuentosProveedor: function(conexion) {
       });
   });
 },
-retornarDatosProveedores: function(conexion, productoId) {
-    return new Promise((resolve, reject) => {
-        const query = `
-            SELECT DISTINCT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento,
-                   p.costo_neto, p.costo_iva, p.utilidad, p.precio_venta
-            FROM producto_proveedor AS pp
-            INNER JOIN productos AS p ON pp.producto_id = p.id
-            LEFT JOIN (
-                SELECT proveedor_id, MAX(descuento) AS descuento
-                FROM descuentos_proveedor
-                GROUP BY proveedor_id
-            ) AS dp ON pp.proveedor_id = dp.proveedor_id
-            WHERE pp.producto_id = ?
-        `;
-        conexion.query(query, [productoId], (error, results) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(results);
-            }
-        });
+// producto.js
+retornarDatosProveedores: function (conexion, producto_id) {
+  return new Promise((resolve, reject) => {
+    const sql = `
+      SELECT
+        pp.producto_id,
+        pp.proveedor_id,
+        pp.precio_lista,
+        pp.codigo,
+        pp.iva,                                -- 👈 IVA del vínculo
+        pr.nombre AS proveedor_nombre,
+        COALESCE(dp.descuento, 0) AS descuento -- si manejás descuento por proveedor
+      FROM producto_proveedor pp
+      JOIN proveedores pr ON pr.id = pp.proveedor_id
+      LEFT JOIN descuentos_proveedor dp
+        ON dp.proveedor_id = pp.proveedor_id
+      WHERE pp.producto_id = ?
+      ORDER BY pp.proveedor_id ASC
+    `;
+    conexion.query(sql, [producto_id], (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows || []);
     });
+  });
 },
+
 
 eliminarProveedor: function (conexion, proveedorId, productoId) {
   const pid = Number(productoId) || 0;

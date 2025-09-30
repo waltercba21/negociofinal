@@ -705,72 +705,88 @@ guardar: async function (req, res) {
             res.status(500).json({ success: false, error: error.message });
         }
     },
-    editar: function(req, res) {
-        let productoResult;
-        let responseSent = false;
-        producto.retornarDatosId(conexion, req.params.id).then(result => {
-            if (!result) {
-                res.status(404).send("No se encontró el producto");
-                responseSent = true;
-                return;
-            }
-            productoResult = result;
-            productoResult.precio_lista = Math.round(productoResult.precio_lista);
-            productoResult.costo_neto = Math.round(productoResult.costo_neto);
-            productoResult.costo_iva = Math.round(productoResult.costo_iva);
-            productoResult.utilidad = Math.round(productoResult.utilidad);
-            productoResult.precio_venta = Math.round(productoResult.precio_venta);
-            productoResult.calidad_original_fitam = result.calidad_original_fitam;
-            productoResult.calidad_vic = result.calidad_vic; 
-            productoResult.paginaActual = req.query.pagina;
-            productoResult.busqueda = req.query.busqueda;   
+editar: function(req, res) {
+  let productoResult;
+  let responseSent = false;
 
-            producto.retornarDatosProveedores(conexion, req.params.id).then(productoProveedoresResult => {
-                productoProveedoresResult.forEach(productoProveedorResult => {
-                    productoProveedorResult.precio_lista = Math.floor(productoProveedorResult.precio_lista);
-                    productoProveedorResult.descuento = Math.floor(productoProveedorResult.descuento);
-                    productoProveedorResult.costo_neto = Math.floor(productoProveedorResult.costo_neto);
-                });
-                Promise.all([
-                    producto.obtenerCategorias(conexion),
-                    producto.obtenerMarcas(conexion),
-                    producto.obtenerProveedores(conexion),
-                    producto.obtenerModelosPorMarca(conexion, productoResult.marca),
-                    producto.obtenerDescuentosProveedor(conexion),
-                    producto.obtenerStock(conexion, req.params.id) 
-                ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult, stockResult]) => {
-                    console.log('🔁 GET /productos/editar/:id');
-                    console.log('🧩 req.query.pagina:', req.query.pagina);
-                    console.log('🧩 req.query.busqueda:', req.query.busqueda);
-                    console.log('📦 productoResult.paginaActual:', productoResult.paginaActual);
-                    console.log('📦 productoResult.busqueda:', productoResult.busqueda);
+  producto.retornarDatosId(conexion, req.params.id).then(result => {
+    if (!result) {
+      res.status(404).send("No se encontró el producto");
+      responseSent = true;
+      return;
+    }
 
-                    res.render('editar', {
-                        producto: productoResult,
-                        productoProveedores: productoProveedoresResult,
-                        categorias: categoriasResult,
-                        marcas: marcasResult,
-                        proveedores: proveedoresResult,
-                        modelos: modelosResult,
-                        descuentosProveedor: descuentosProveedoresResult,
-                        stock: stockResult
-                    });
-                }).catch(error => {
-                    if (!responseSent) {
-                        res.status(500).send("Error al obtener los datos: " + error.message);
-                    }
-                });
-            }).catch(error => {
-                if (!responseSent) {
-                    res.status(500).send("Error al obtener los datos de producto_proveedor: " + error.message);
-                }
-            });
-        }).catch(error => {
-            if (!responseSent) {
-                res.status(500).send("Error al obtener los datos del producto: " + error.message);
-            }
-        });
-    },    
+    // Copia y normalización suave (no tocamos IVA aquí)
+    productoResult = { ...result };
+    productoResult.precio_lista  = Math.round(Number(productoResult.precio_lista  || 0));
+    productoResult.costo_neto    = Math.round(Number(productoResult.costo_neto    || 0));
+    productoResult.costo_iva     = Math.round(Number(productoResult.costo_iva     || 0));
+    productoResult.utilidad      = Math.round(Number(productoResult.utilidad      || 0));
+    productoResult.precio_venta  = Math.round(Number(productoResult.precio_venta  || 0));
+    productoResult.calidad_original_fitam = result.calidad_original_fitam;
+    productoResult.calidad_vic    = result.calidad_vic;
+
+    // params de navegación
+    productoResult.paginaActual = req.query.pagina;
+    productoResult.busqueda     = req.query.busqueda;
+
+    // Traer proveedores del producto (DEBE incluir pp.iva)
+    return producto.retornarDatosProveedores(conexion, req.params.id);
+
+  }).then(productoProveedoresResult => {
+    if (responseSent) return;
+
+    // Normalización de filas proveedor-producto
+    productoProveedoresResult.forEach(pp => {
+      pp.precio_lista = Math.floor(Number(pp.precio_lista || 0));
+      if (isFinite(pp.descuento))  pp.descuento  = Math.floor(Number(pp.descuento));
+      if (isFinite(pp.costo_neto)) pp.costo_neto = Math.floor(Number(pp.costo_neto));
+
+      // 👇 Asegurar IVA-numérico por proveedor (tolerar "10,5")
+      const ivaRaw = (pp.iva !== undefined && pp.iva !== null)
+        ? pp.iva
+        : (productoResult.IVA ?? 21);
+      pp.iva = Number(String(ivaRaw).replace(',', '.'));
+      if (!Number.isFinite(pp.iva) || pp.iva <= 0) pp.iva = 21;
+    });
+
+    console.log('[GET /editar] IVA por proveedor ->',
+      productoProveedoresResult.map(pp => ({ prov: pp.proveedor_id, iva: pp.iva })));
+
+    // Cargas auxiliares
+    return Promise.all([
+      producto.obtenerCategorias(conexion),
+      producto.obtenerMarcas(conexion),
+      producto.obtenerProveedores(conexion),
+      producto.obtenerModelosPorMarca(conexion, productoResult.marca), // (siempre usaste esto)
+      producto.obtenerDescuentosProveedor(conexion),
+      producto.obtenerStock(conexion, req.params.id)
+    ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult, stockResult]) => {
+      if (responseSent) return;
+      console.log('🔁 GET /productos/editar/:id');
+      console.log('🧩 req.query.pagina:', req.query.pagina);
+      console.log('🧩 req.query.busqueda:', req.query.busqueda);
+
+      res.render('editar', {
+        producto: productoResult,
+        productoProveedores: productoProveedoresResult, // 👈 usamos este en EJS
+        categorias: categoriasResult,
+        marcas: marcasResult,
+        proveedores: proveedoresResult,
+        modelos: modelosResult,
+        descuentosProveedor: descuentosProveedoresResult,
+        stock: stockResult
+      });
+    });
+
+  }).catch(error => {
+    if (!responseSent) {
+      console.error(error);
+      res.status(500).send("Error al obtener los datos: " + error.message);
+    }
+  });
+},
+
 actualizar: async function (req, res) {
   console.log("===== Inicio del controlador actualizar =====");
   try {

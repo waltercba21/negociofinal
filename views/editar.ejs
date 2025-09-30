@@ -354,7 +354,8 @@
                     <input class="costo_neto form-control" type="number" name="costo_neto[]" value="<%= productoProveedor.costo_neto %>" readonly>
                   </div>
 
-                  <% const _ivaProv = Number(productoProveedor.iva ?? 21); %>
+                 <% const _ivaProv = Number(String(productoProveedor.iva ?? producto.IVA ?? 21).replace(',', '.')) || 21; %>
+
 
                   <div class="form-group-crear">
                     <label>IVA</label>
