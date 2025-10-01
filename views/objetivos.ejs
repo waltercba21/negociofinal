@@ -1,0 +1,179 @@
+<%- include('./layouts/head.ejs') %>
+<%- include('./layouts/header.ejs') %>
+
+<body>
+  <style>
+    /* ===== Estilos base del tablero de Objetivos (look "tablero") ===== */
+    .af-obj {
+      --af-gap: 16px;
+      --af-card-bg: #0b1324;
+      --af-card-br: 14px;
+      --af-card-shadow: 0 10px 30px rgba(0,0,0,.25);
+      --af-glow: 0 0 0 rgba(0,255,163,.0);
+      color: #e8eefc;
+      background: radial-gradient(1200px 500px at 20% -10%, #111b35 0%, #0a1122 60%, #070d1a 100%);
+      min-height: calc(100vh - 120px);
+      padding-bottom: 24px;
+    }
+    .af-obj__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--af-gap);
+    }
+    .af-obj__card {
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--af-card-br);
+      box-shadow: var(--af-card-shadow), var(--af-glow);
+      backdrop-filter: blur(6px);
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .af-obj__title {
+      margin: 0 0 10px 0;
+      font-weight: 800;
+      letter-spacing: .3px;
+      color: #9ac7ff;
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
+    }
+    .af-obj__kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+      gap: var(--af-gap);
+      margin-top: 10px;
+    }
+    .af-obj__kpi {
+      background: #0f1a33;
+      border: 1px solid rgba(131,196,255,.18);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .af-obj__kpi .lbl { font-size: .85rem; color: #9fb4d9; }
+    .af-obj__kpi .val { font-size: 1.25rem; font-weight: 800; color: #e6f1ff; }
+    .af-obj__kpi .tgt { font-size: .8rem; color: #78e6b5; }
+
+    @media (max-width: 900px) {
+      .af-obj__kpis { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .af-obj__charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: var(--af-gap);
+      margin-top: 12px;
+    }
+    .af-obj__foot {
+      display:flex; gap:10px; justify-content:flex-end; margin-top:10px;
+    }
+  </style>
+
+  <main class="container af-obj py-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h4 class="m-0" style="color:#b7d3ff; font-weight:800;">🎯 Panel de Objetivos</h4>
+      <div class="af-obj__foot">
+        <a href="/administracion" class="btn btn-outline-light btn-sm">← Volver a Administración</a>
+      </div>
+    </div>
+
+    <!-- KPIs principales -->
+    <section class="af-obj__card">
+      <h5 class="af-obj__title">Indicadores Clave</h5>
+      <div class="af-obj__kpis">
+        <div class="af-obj__kpi">
+          <span class="lbl">Balance Diario</span>
+          <span class="val" id="kpiDiario">$ <%= (kpis && kpis.diario) || 0 %></span>
+          <span class="tgt" id="kpiDiarioMeta">Meta: $ 0</span>
+        </div>
+        <div class="af-obj__kpi">
+          <span class="lbl">Balance Semanal</span>
+          <span class="val" id="kpiSemanal">$ <%= (kpis && kpis.semanal) || 0 %></span>
+          <span class="tgt" id="kpiSemanalMeta">Meta: $ 0</span>
+        </div>
+        <div class="af-obj__kpi">
+          <span class="lbl">Balance Mensual</span>
+          <span class="val" id="kpiMensual">$ <%= (kpis && kpis.mensual) || 0 %></span>
+          <span class="tgt" id="kpiMensualMeta">Meta: $ 0</span>
+        </div>
+        <div class="af-obj__kpi">
+          <span class="lbl">Balance Anual</span>
+          <span class="val" id="kpiAnual">$ <%= (kpis && kpis.anual) || 0 %></span>
+          <span class="tgt" id="kpiAnualMeta">Meta: $ 0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contenedores para charts -->
+    <section class="af-obj__charts">
+      <div class="af-obj__card">
+        <h5 class="af-obj__title">Evolución Diario</h5>
+        <canvas id="chartDiario" height="140"></canvas>
+      </div>
+      <div class="af-obj__card">
+        <h5 class="af-obj__title">Evolución Semanal</h5>
+        <canvas id="chartSemanal" height="140"></canvas>
+      </div>
+      <div class="af-obj__card">
+        <h5 class="af-obj__title">Evolución Mensual</h5>
+        <canvas id="chartMensual" height="140"></canvas>
+      </div>
+      <div class="af-obj__card">
+        <h5 class="af-obj__title">Evolución Anual</h5>
+        <canvas id="chartAnual" height="140"></canvas>
+      </div>
+    </section>
+
+    <!-- Reservado para widgets futuros: gastos fijos, sueldo, compras a proveedores, etc. -->
+    <section class="af-obj__card mt-3">
+      <h5 class="af-obj__title">Siguientes pasos</h5>
+      <ul class="mb-0">
+        <li>Conectar compras a proveedores (facturas/presupuestos) para “Total Compras”.</li>
+        <li>Conectar ventas A/B (comprobantes de mostrador/presupuestos) para “Total Ventas”.</li>
+        <li>Definir metas diarias/semanales/mensuales (tabla <code>objetivos</code> o settings).</li>
+        <li>Configurar gastos fijos: luz, agua, gas, sueldos, alquiler, etc.</li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- Chart.js (CDN para prototipo inicial) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Pequeño demo para que veas el tablero "vivo" (datos mock).
+    // Luego esto se reemplaza por fetch('/administracion/api/objetivos?range=...') con tus reales.
+    const makeLine = (id, lbl) => {
+      const ctx = document.getElementById(id);
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],
+          datasets: [{
+            label: lbl,
+            data: [12, 19, 3, 5, 2, 3, 9],
+            tension: .35,
+            borderWidth: 2,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false }},
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,.06)'}},
+            y: { grid: { color: 'rgba(255,255,255,.06)'}, ticks: { callback: v => '$ ' + v } }
+          }
+        }
+      });
+    };
+
+    makeLine('chartDiario', 'Diario');
+    makeLine('chartSemanal', 'Semanal');
+    makeLine('chartMensual', 'Mensual');
+    makeLine('chartAnual', 'Anual');
+  </script>
+
+  <%- include('./layouts/footer.ejs') %>
+</body>

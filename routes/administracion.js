@@ -64,4 +64,6 @@ router.delete('/api/presupuesto/:id', administracionController.eliminarPresupues
 
 router.get('/pdf/deuda-pendiente', administracionController.generarPDFDeudaPendiente);
 
+router.get('/objetivos', administracionController.objetivos);
+
 module.exports = router;

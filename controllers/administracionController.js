@@ -791,6 +791,19 @@ generarPDFDeudaPendiente : async (req, res) => {
     console.error('❌ Error en PDF deuda pendiente:', err);
     res.status(500).send('Error interno al generar el PDF');
   }
-}
+},
+objetivos: (req, res) => {
+  // Más adelante podés inyectar métricas ya calculadas
+  res.render('objetivos', {
+    // Ejemplos de placeholders para arrancar (opcional):
+    kpis: {
+      diario: 0,
+      semanal: 0,
+      mensual: 0,
+      anual: 0
+    }
+  });
+},
+
    
 }
