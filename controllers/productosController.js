@@ -1934,15 +1934,20 @@ actualizarPreciosExcel: async (req, res) => {
 
   try {
     const proveedor_id = req.body.proveedor;
-    const file = req.files[0];
+    const file = req.files && req.files[0];
     let productosActualizados = [];
 
     if (!proveedor_id || !file) {
       return res.status(400).send('Proveedor y archivo son requeridos.');
     }
 
+    // 🚩 ID del proveedor "DISTRIMAR OFERTAS"
+    const PROVEEDOR_OFERTAS_ID = 24; // si cambiara en tu DB, ajustalo aquí
+
     const workbook = xlsx.readFile(file.path);
     const sheet_name_list = workbook.SheetNames;
+
+    // 🔢 Códigos que vinieron esta vez en el Excel (para detectar “faltantes”)
     const codigosProcesados = new Set();
 
     for (const sheet_name of sheet_name_list) {
@@ -1976,7 +1981,7 @@ actualizarPreciosExcel: async (req, res) => {
         }
         codigosProcesados.add(codigo);
 
-        // 🔎 Consultar precio anterior real antes de actualizar
+        // 🔎 Precio anterior real antes de actualizar
         const precioAnterior = await new Promise(resolve => {
           const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
           conexion.query(sql, [proveedor_id, codigo], (err, resQuery) => {
@@ -1985,11 +1990,11 @@ actualizarPreciosExcel: async (req, res) => {
           });
         });
 
-        // Comparar con todos los códigos similares
+        // Comparación por códigos “relacionados” (opcional, conservado de tu lógica actual)
         const codigosRelacionados = await new Promise(resolve => {
           const sql = `
-            SELECT DISTINCT codigo, precio_lista 
-            FROM producto_proveedor 
+            SELECT DISTINCT codigo, precio_lista
+            FROM producto_proveedor
             WHERE proveedor_id = ? AND codigo LIKE ?
           `;
           conexion.query(sql, [proveedor_id, `${codigo}%`], (err, resQuery) => {
@@ -2003,6 +2008,7 @@ actualizarPreciosExcel: async (req, res) => {
 
         console.log(`➡️ Actualizando precio: código=${codigo}, nuevo=${precio}, anterior=${precioAnterior} | mismoPrecio=${mismoPrecio}`);
 
+        // Tu método del modelo que hace el update + devuelve filas afectadas
         const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
 
         if (!Array.isArray(resultado)) {
@@ -2015,7 +2021,7 @@ actualizarPreciosExcel: async (req, res) => {
             producto_id: p.producto_id,
             codigo: p.codigo,
             nombre: p.nombre,
-            precio_lista_antiguo: precioAnterior, // ✅ correcto ahora
+            precio_lista_antiguo: precioAnterior,
             precio_lista_nuevo: precio,
             precio_venta: p.precio_venta || 0,
             sin_cambio: mismoPrecio
@@ -2024,20 +2030,60 @@ actualizarPreciosExcel: async (req, res) => {
       }
     }
 
-    // 🧹 Eliminar duplicados
+    // 🧹 Dedup (por seguridad)
     productosActualizados = productosActualizados.filter(
       (value, index, self) =>
         index === self.findIndex(t =>
-          t.codigo === value.codigo &&
-          t.producto_id === value.producto_id
+          t.codigo === value.codigo && t.producto_id === value.producto_id
         )
     );
 
+    // 🧾 Ofertas faltantes: si subiste Excel del proveedor de OFERTAS,
+    // listamos todos los codigos actualmente guardados para ese proveedor
+    // que NO vinieron en este Excel nuevo.
+    let ofertasFaltantes = [];
+    if (Number(proveedor_id) === PROVEEDOR_OFERTAS_ID) {
+      const [rows] = await conexion.promise().query(`
+        SELECT
+          pp.producto_id,
+          pp.codigo,
+          pp.precio_lista AS precio_lista_oferta,
+          p.nombre,
+          p.precio_venta,
+          p.oferta
+        FROM producto_proveedor pp
+        JOIN productos p ON p.id = pp.producto_id
+        WHERE pp.proveedor_id = ?
+      `, [proveedor_id]);
+
+      // Filtrar los que no llegaron en la nueva actualización
+      ofertasFaltantes = (rows || []).filter(r => {
+        const cod = (r.codigo || '').toString().trim();
+        return cod && !codigosProcesados.has(cod);
+      }).map(r => ({
+        producto_id: r.producto_id,
+        codigo: r.codigo,
+        nombre: r.nombre,
+        precio_lista_oferta: Number(r.precio_lista_oferta || 0),
+        precio_venta: Number(r.precio_venta || 0),
+        oferta_flag: Number(r.oferta) === 1 ? 'SI' : 'NO'
+      }));
+
+      console.log(`📌 Ofertas faltantes detectadas: ${ofertasFaltantes.length}`);
+    }
+
+    // Log final
     console.log("✅ Lista final de productos actualizados:");
     console.log(JSON.stringify(productosActualizados, null, 2));
 
+    // Eliminar archivo temporal
     fs.unlinkSync(file.path);
-    res.render('productosActualizados', { productos: productosActualizados });
+
+    // 👉 Mandamos ambos listados a la vista
+    res.render('productosActualizados', {
+      productos: productosActualizados,
+      ofertasFaltantes
+    });
 
   } catch (error) {
     console.error("❌ Error en actualizarPreciosExcel:", error);

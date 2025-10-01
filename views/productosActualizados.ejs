@@ -3,6 +3,7 @@
 <body>
   <main>
     <h1>Productos Actualizados</h1>
+
     <table>
       <thead>
         <tr>
@@ -16,7 +17,7 @@
         </tr>
       </thead>
       <tbody>
-        <% productos.forEach(producto => {
+        <% (productos || []).forEach(producto => {
           let viejo = parseFloat(producto.precio_lista_antiguo || 0);
           let nuevo = parseFloat(producto.precio_lista_nuevo || 0);
           let diferencia = viejo > 0 ? ((nuevo - viejo) / viejo) * 100 : 0;
@@ -36,13 +37,46 @@
         <% }); %>
       </tbody>
     </table>
-    <p>Total de productos actualizados: <%= productos.length %></p>
+
+    <p>Total de productos actualizados: <%= (productos || []).length %></p>
+
+    <% if (ofertasFaltantes && ofertasFaltantes.length) { %>
+      <hr style="margin: 30px 0;">
+      <h2>⚠️ Productos que <u>NO</u> vinieron en el último Excel de <strong>DISTRIMAR OFERTAS</strong></h2>
+      <p style="margin-top:6px">
+        Revisalos: probablemente debas quitarles la bandera de oferta y volver al precio de lista habitual.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Precio Lista (OFERTA) en DB</th>
+            <th>Precio de Venta Actual</th>
+            <th>Marcado como Oferta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% ofertasFaltantes.forEach(p => { %>
+            <tr>
+              <td><%= p.codigo %></td>
+              <td><%= p.nombre %></td>
+              <td>$<%= Number(p.precio_lista_oferta || 0).toLocaleString('es-AR') %></td>
+              <td>$<%= Number(p.precio_venta || 0).toLocaleString('es-AR') %></td>
+              <td><%= p.oferta_flag %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+
+      <p style="margin-top: 8px">Total fuera de la nueva lista de OFERTAS: <strong><%= ofertasFaltantes.length %></strong></p>
+    <% } %>
   </main>
+
   <div style="margin-top: 20px; text-align: center;">
-  <a href="/productos/panelControl" class="btn btn-primary">
-    ← Volver al Panel de Control
-  </a>
-</div>
+    <a href="/productos/panelControl" class="btn btn-primary">← Volver al Panel de Control</a>
+  </div>
 
   <%- include ./layouts/footer.ejs %>
 </body>
