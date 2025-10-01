@@ -1925,138 +1925,185 @@ actualizarPreciosExcel: async (req, res) => {
     }
 
     const numero = parseFloat(original);
-    if (numero > 100000) {
-      console.warn(`⚠️ Precio posiblemente mal interpretado: ${valor} → ${numero}`);
-    }
-
     return numero;
   }
 
-  try {
-    const proveedor_id = req.body.proveedor;
-    const file = req.files && req.files[0];
-    let productosActualizados = [];
+  // 👉 redondeo final como en front: a la centena más cercana (>=50 hacia arriba)
+  function redondearAlCentenar(n) {
+    const resto = n % 100;
+    return resto < 50 ? (n - resto) : (n + (100 - resto));
+  }
 
+  try {
+    const proveedor_id = Number(req.body.proveedor);
+    const file = req.files && req.files[0];
     if (!proveedor_id || !file) {
       return res.status(400).send('Proveedor y archivo son requeridos.');
     }
 
-    // 🚩 ID del proveedor "DISTRIMAR OFERTAS"
-    const PROVEEDOR_OFERTAS_ID = 24; // si cambiara en tu DB, ajustalo aquí
+    const PROVEEDOR_OFERTAS_ID = 24; // DISTRIMAR OFERTAS (ajustable)
+
+    // Para armar salida
+    let productosActualizados = [];
+    // Para detectar “faltantes” (sólo si es OFERTAS)
+    const codigosProcesados = new Set();
+    // Para aplicar “respeto a proveedor asignado” al final, por producto
+    const productosTocados = new Set(); // product_id que sufrieron cambios de este proveedor
 
     const workbook = xlsx.readFile(file.path);
-    const sheet_name_list = workbook.SheetNames;
+    const sheets = workbook.SheetNames;
 
-    // 🔢 Códigos que vinieron esta vez en el Excel (para detectar “faltantes”)
-    const codigosProcesados = new Set();
-
-    for (const sheet_name of sheet_name_list) {
-      const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name]);
-      console.log(`📄 Hoja: "${sheet_name}" con ${data.length} filas`);
+    for (const sheet of sheets) {
+      const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
 
       for (const row of data) {
         const claves = Object.keys(row);
-        const codigoColumn = claves.find(key => normalizarClave(key).includes('codigo'));
-        const precioColumn = claves.find(key => normalizarClave(key).includes('precio'));
+        const codigoColumn = claves.find(k => normalizarClave(k).includes('codigo'));
+        const precioColumn = claves.find(k => normalizarClave(k).includes('precio'));
+        if (!codigoColumn || !precioColumn) continue;
 
-        if (!codigoColumn || !precioColumn) {
-          console.warn(`⚠️ No se detectó columna válida de código o precio`);
-          continue;
-        }
+        const codigoRaw = (row[codigoColumn] ?? '').toString().trim();
+        const precio = limpiarPrecio(row[precioColumn]);
+        if (!codigoRaw || !Number.isFinite(precio) || precio <= 0) continue;
 
-        const codigoRaw = row[codigoColumn];
-        const precioRaw = row[precioColumn];
-        if (!codigoRaw || !precioRaw) continue;
+        if (codigosProcesados.has(codigoRaw)) continue;
+        if (proveedor_id === PROVEEDOR_OFERTAS_ID) codigosProcesados.add(codigoRaw);
 
-        const codigo = codigoRaw.toString().trim();
-        const precio = limpiarPrecio(precioRaw);
-        if (!codigo || isNaN(precio) || precio <= 0) {
-          console.warn(`⚠️ Código o precio inválido: código="${codigo}", precio="${precio}"`);
-          continue;
-        }
-
-        if (codigosProcesados.has(codigo)) {
-          console.log(`🔁 Código ${codigo} ya procesado en este lote, se omite.`);
-          continue;
-        }
-        codigosProcesados.add(codigo);
-
-        // 🔎 Precio anterior real antes de actualizar
+        // Precio anterior (para mostrar diferencia)
         const precioAnterior = await new Promise(resolve => {
-          const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id = ? AND codigo = ? LIMIT 1`;
-          conexion.query(sql, [proveedor_id, codigo], (err, resQuery) => {
-            if (err || resQuery.length === 0) return resolve(0);
-            resolve(resQuery[0].precio_lista);
+          const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id=? AND codigo=? LIMIT 1`;
+          conexion.query(sql, [proveedor_id, codigoRaw], (err, r) => {
+            if (err || r.length === 0) return resolve(0);
+            resolve(Number(r[0].precio_lista || 0));
           });
         });
 
-        // Comparación por códigos “relacionados” (opcional, conservado de tu lógica actual)
-        const codigosRelacionados = await new Promise(resolve => {
-          const sql = `
-            SELECT DISTINCT codigo, precio_lista
-            FROM producto_proveedor
-            WHERE proveedor_id = ? AND codigo LIKE ?
-          `;
-          conexion.query(sql, [proveedor_id, `${codigo}%`], (err, resQuery) => {
-            if (err || resQuery.length === 0) return resolve([]);
-            resolve(resQuery);
+        // Actualizar fila(s) del proveedor + devolver info de productos tocados
+        // (tu modelo ya lo hacía; mantenemos esa firma)
+        const resultado = await producto.actualizarPreciosPDF(precio, codigoRaw, proveedor_id);
+
+        if (Array.isArray(resultado) && resultado.length) {
+          resultado.forEach(p => {
+            productosActualizados.push({
+              producto_id: p.producto_id,
+              codigo: p.codigo,
+              nombre: p.nombre,
+              precio_lista_antiguo: precioAnterior,
+              precio_lista_nuevo: precio,
+              precio_venta: p.precio_venta || 0,
+              sin_cambio: Math.abs((precioAnterior || 0) - precio) < 0.01
+            });
+            // marcar producto para el paso final de “respeto asignado”
+            productosTocados.add(Number(p.producto_id));
           });
-        });
-
-        const algunoDiferente = codigosRelacionados.some(p => Math.abs(precio - p.precio_lista) >= 0.01);
-        const mismoPrecio = !algunoDiferente;
-
-        console.log(`➡️ Actualizando precio: código=${codigo}, nuevo=${precio}, anterior=${precioAnterior} | mismoPrecio=${mismoPrecio}`);
-
-        // Tu método del modelo que hace el update + devuelve filas afectadas
-        const resultado = await producto.actualizarPreciosPDF(precio, codigo, proveedor_id);
-
-        if (!Array.isArray(resultado)) {
-          console.warn(`❌ No se pudo actualizar el producto con código ${codigo}`);
-          continue;
         }
-
-        resultado.forEach(p => {
-          productosActualizados.push({
-            producto_id: p.producto_id,
-            codigo: p.codigo,
-            nombre: p.nombre,
-            precio_lista_antiguo: precioAnterior,
-            precio_lista_nuevo: precio,
-            precio_venta: p.precio_venta || 0,
-            sin_cambio: mismoPrecio
-          });
-        });
       }
     }
 
-    // 🧹 Dedup (por seguridad)
+    // Dedup de “productosActualizados” por (producto_id, codigo)
     productosActualizados = productosActualizados.filter(
-      (value, index, self) =>
-        index === self.findIndex(t =>
-          t.codigo === value.codigo && t.producto_id === value.producto_id
-        )
+      (v, i, s) => i === s.findIndex(t => t.producto_id === v.producto_id && t.codigo === v.codigo)
     );
 
-    // 🧾 Ofertas faltantes: si subiste Excel del proveedor de OFERTAS,
-    // listamos todos los codigos actualmente guardados para ese proveedor
-    // que NO vinieron en este Excel nuevo.
-    let ofertasFaltantes = [];
-    if (Number(proveedor_id) === PROVEEDOR_OFERTAS_ID) {
-      const [rows] = await conexion.promise().query(`
-        SELECT
-          pp.producto_id,
-          pp.codigo,
-          pp.precio_lista AS precio_lista_oferta,
-          p.nombre,
-          p.precio_venta,
-          p.oferta
-        FROM producto_proveedor pp
-        JOIN productos p ON p.id = pp.producto_id
-        WHERE pp.proveedor_id = ?
-      `, [proveedor_id]);
+    // =========================
+    //  RESPETAR PROVEEDOR ASIGNADO
+    // =========================
+    // Regla:
+    //  - Si el producto tiene productos.proveedor_id (asignado manualmente con tu radio)
+    //  - Y el proveedor del Excel NO es ese, NO recalculamos precio de venta con el más barato.
+    //  - En cambio, recalculamos precio_venta tomando el costo del proveedor ASIGNADO.
+    //
+    // Nota: si el asignado es el mismo proveedor del Excel, el comportamiento actual se mantiene.
+    if (productosTocados.size > 0) {
+      const ids = Array.from(productosTocados);
+      // Traer datos necesarios (asignado, utilidad, etc.)
+      const [rowsProd] = await conexion.promise().query(
+        `SELECT id, proveedor_id AS asignado_id, utilidad
+           FROM productos
+          WHERE id IN (${ids.map(()=>'?').join(',')})`,
+        ids
+      );
 
-      // Filtrar los que no llegaron en la nueva actualización
+      // Hacemos un mapa rápido: producto_id -> {asignado_id, utilidad}
+      const mapProd = new Map();
+      (rowsProd || []).forEach(r => {
+        mapProd.set(Number(r.id), {
+          asignado_id: Number(r.asignado_id || 0),
+          utilidad: Number(r.utilidad || 0)
+        });
+      });
+
+      // Para los que tengan asignado y sea distinto al proveedor del Excel, recalcular
+      // usando el costo (con IVA) del proveedor asignado.
+      // Suponemos que `producto_proveedor` guarda `costo_iva` (si tu modelo no lo guarda,
+      // podés calcularlo con (precio_lista - desc%) * (1 + IVA/100). Si lo preferís, lo
+      // recalculo abajo con IVA+descuento a partir de columnas existentes.)
+      for (const prodId of ids) {
+        const meta = mapProd.get(prodId);
+        if (!meta || !meta.asignado_id) continue;
+
+        // Si el Excel es del mismo proveedor asignado, dejamos el comportamiento estándar.
+        if (meta.asignado_id === proveedor_id) continue;
+
+        // Traemos precio_lista, descuento y IVA del proveedor ASIGNADO
+        const [ppRows] = await conexion.promise().query(
+          `SELECT pp.precio_lista, pp.codigo, 
+                  COALESCE(pp.iva, 21)       AS iva,
+                  COALESCE(pp.costo_neto, 0) AS costo_neto,
+                  COALESCE(pp.costo_iva, 0)  AS costo_iva,
+                  COALESCE(d.descuento, 0)   AS descuento
+             FROM producto_proveedor pp
+        LEFT JOIN descuentos_proveedor d 
+               ON d.proveedor_id = pp.proveedor_id
+            WHERE pp.producto_id=? AND pp.proveedor_id=? 
+            LIMIT 1`,
+          [prodId, meta.asignado_id]
+        );
+
+        if (!ppRows || ppRows.length === 0) {
+          // No hay fila del proveedor asignado: no tocamos el precio_venta
+          continue;
+        }
+
+        const pp = ppRows[0];
+        const iva = Number(String(pp.iva).toString().replace(',', '.')) || 21;
+        const descuento = Number(pp.descuento || 0);
+
+        // Recalcular costo_neto / costo_iva si no están (o están en 0)
+        let costoNeto = Number(pp.costo_neto || 0);
+        if (!costoNeto || costoNeto <= 0) {
+          const pl = Number(pp.precio_lista || 0);
+          costoNeto = pl - (pl * descuento / 100);
+        }
+        let costoIVA = Number(pp.costo_iva || 0);
+        if (!costoIVA || costoIVA <= 0) {
+          costoIVA = costoNeto + (costoNeto * iva / 100);
+        }
+
+        // precio_venta = costoIVA * (1 + utilidad/100) y redondeo tipo front
+        let nuevoPV = costoIVA + (costoIVA * (meta.utilidad || 0) / 100);
+        nuevoPV = Math.ceil(redondearAlCentenar(nuevoPV));
+
+        // Actualizar SOLO precio_venta del producto (no tocamos proveedor_id ni IVA aquí)
+        await conexion.promise().query(
+          `UPDATE productos SET precio_venta=? WHERE id=?`,
+          [nuevoPV, prodId]
+        );
+      }
+    }
+
+    // =========================
+    //  OFERTAS FALTANTES (si proveedor=24)
+    // =========================
+    let ofertasFaltantes = [];
+    if (proveedor_id === PROVEEDOR_OFERTAS_ID) {
+      const [rows] = await conexion.promise().query(`
+        SELECT pp.producto_id, pp.codigo, pp.precio_lista AS precio_lista_oferta,
+               p.nombre, p.precio_venta, p.oferta
+          FROM producto_proveedor pp
+          JOIN productos p ON p.id = pp.producto_id
+         WHERE pp.proveedor_id = ?`, [proveedor_id]);
+
       ofertasFaltantes = (rows || []).filter(r => {
         const cod = (r.codigo || '').toString().trim();
         return cod && !codigosProcesados.has(cod);
@@ -2068,29 +2115,22 @@ actualizarPreciosExcel: async (req, res) => {
         precio_venta: Number(r.precio_venta || 0),
         oferta_flag: Number(r.oferta) === 1 ? 'SI' : 'NO'
       }));
-
-      console.log(`📌 Ofertas faltantes detectadas: ${ofertasFaltantes.length}`);
     }
 
-    // Log final
-    console.log("✅ Lista final de productos actualizados:");
-    console.log(JSON.stringify(productosActualizados, null, 2));
+    // Limpieza temp
+    try { fs.unlinkSync(file.path); } catch {}
 
-    // Eliminar archivo temporal
-    fs.unlinkSync(file.path);
-
-    // 👉 Mandamos ambos listados a la vista
+    // Render con ambos listados
     res.render('productosActualizados', {
       productos: productosActualizados,
       ofertasFaltantes
     });
 
   } catch (error) {
-    console.error("❌ Error en actualizarPreciosExcel:", error);
+    console.error('❌ Error en actualizarPreciosExcel:', error);
     res.status(500).send(error.message);
   }
 },
-
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
