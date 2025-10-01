@@ -1979,7 +1979,6 @@ actualizarPreciosExcel: async (req, res) => {
         });
 
         // Actualizar fila(s) del proveedor + devolver info de productos tocados
-        // (tu modelo ya lo hacía; mantenemos esa firma)
         const resultado = await producto.actualizarPreciosPDF(precio, codigoRaw, proveedor_id);
 
         if (Array.isArray(resultado) && resultado.length) {
@@ -2006,83 +2005,68 @@ actualizarPreciosExcel: async (req, res) => {
     );
 
     // =========================
-    //  RESPETAR PROVEEDOR ASIGNADO
+    //  RESPETAR PROVEEDOR ASIGNADO (sin columnas pp.costo_*)
     // =========================
     // Regla:
     //  - Si el producto tiene productos.proveedor_id (asignado manualmente con tu radio)
-    //  - Y el proveedor del Excel NO es ese, NO recalculamos precio de venta con el más barato.
-    //  - En cambio, recalculamos precio_venta tomando el costo del proveedor ASIGNADO.
-    //
-    // Nota: si el asignado es el mismo proveedor del Excel, el comportamiento actual se mantiene.
+    //  - Y el proveedor del Excel NO es ese, NO recalculamos precio_venta con el más barato.
+    //  - En cambio, recalculamos precio_venta tomando el costo del proveedor ASIGNADO:
+    //      costoNeto = precio_lista_asignado - (descuento% de ese proveedor)
+    //      costoIVA  = costoNeto * (1 + IVA_producto/100)
+    //      pv        = costoIVA * (1 + utilidad/100)  (redondeo a centena)
     if (productosTocados.size > 0) {
       const ids = Array.from(productosTocados);
-      // Traer datos necesarios (asignado, utilidad, etc.)
+
+      // Traer proveedor asignado + utilidad + IVA guardado en productos
       const [rowsProd] = await conexion.promise().query(
-        `SELECT id, proveedor_id AS asignado_id, utilidad
+        `SELECT id, proveedor_id AS asignado_id, utilidad, COALESCE(IVA,21) AS IVA
            FROM productos
           WHERE id IN (${ids.map(()=>'?').join(',')})`,
         ids
       );
 
-      // Hacemos un mapa rápido: producto_id -> {asignado_id, utilidad}
       const mapProd = new Map();
       (rowsProd || []).forEach(r => {
         mapProd.set(Number(r.id), {
           asignado_id: Number(r.asignado_id || 0),
-          utilidad: Number(r.utilidad || 0)
+          utilidad   : Number(r.utilidad || 0),
+          IVA        : Number(r.IVA || 21)
         });
       });
 
-      // Para los que tengan asignado y sea distinto al proveedor del Excel, recalcular
-      // usando el costo (con IVA) del proveedor asignado.
-      // Suponemos que `producto_proveedor` guarda `costo_iva` (si tu modelo no lo guarda,
-      // podés calcularlo con (precio_lista - desc%) * (1 + IVA/100). Si lo preferís, lo
-      // recalculo abajo con IVA+descuento a partir de columnas existentes.)
       for (const prodId of ids) {
         const meta = mapProd.get(prodId);
         if (!meta || !meta.asignado_id) continue;
 
-        // Si el Excel es del mismo proveedor asignado, dejamos el comportamiento estándar.
+        // Si el Excel es del mismo proveedor asignado, dejamos el comportamiento estándar
         if (meta.asignado_id === proveedor_id) continue;
 
-        // Traemos precio_lista, descuento y IVA del proveedor ASIGNADO
+        // Traer precio_lista del proveedor ASIGNADO + DESCUENTO desde descuentos_proveedor (si existe)
         const [ppRows] = await conexion.promise().query(
-          `SELECT pp.precio_lista, pp.codigo, 
-                  COALESCE(pp.iva, 21)       AS iva,
-                  COALESCE(pp.costo_neto, 0) AS costo_neto,
-                  COALESCE(pp.costo_iva, 0)  AS costo_iva,
-                  COALESCE(d.descuento, 0)   AS descuento
-             FROM producto_proveedor pp
-        LEFT JOIN descuentos_proveedor d 
-               ON d.proveedor_id = pp.proveedor_id
-            WHERE pp.producto_id=? AND pp.proveedor_id=? 
-            LIMIT 1`,
+          `SELECT 
+              pp.precio_lista,
+              COALESCE(dp.descuento, 0) AS descuento
+           FROM producto_proveedor pp
+      LEFT JOIN descuentos_proveedor dp 
+             ON dp.proveedor_id = pp.proveedor_id
+          WHERE pp.producto_id = ? AND pp.proveedor_id = ?
+          LIMIT 1`,
           [prodId, meta.asignado_id]
         );
+        if (!ppRows || ppRows.length === 0) continue;
 
-        if (!ppRows || ppRows.length === 0) {
-          // No hay fila del proveedor asignado: no tocamos el precio_venta
-          continue;
-        }
+        const pl   = Number(ppRows[0].precio_lista || 0);
+        const desc = Number(ppRows[0].descuento || 0);
+        if (!(pl > 0)) continue;
 
-        const pp = ppRows[0];
-        const iva = Number(String(pp.iva).toString().replace(',', '.')) || 21;
-        const descuento = Number(pp.descuento || 0);
+        const costoNeto = pl - (pl * desc / 100);
+        const costoIVA  = costoNeto + (costoNeto * (meta.IVA || 21) / 100);
 
-        // Recalcular costo_neto / costo_iva si no están (o están en 0)
-        let costoNeto = Number(pp.costo_neto || 0);
-        if (!costoNeto || costoNeto <= 0) {
-          const pl = Number(pp.precio_lista || 0);
-          costoNeto = pl - (pl * descuento / 100);
-        }
-        let costoIVA = Number(pp.costo_iva || 0);
-        if (!costoIVA || costoIVA <= 0) {
-          costoIVA = costoNeto + (costoNeto * iva / 100);
-        }
-
-        // precio_venta = costoIVA * (1 + utilidad/100) y redondeo tipo front
         let nuevoPV = costoIVA + (costoIVA * (meta.utilidad || 0) / 100);
-        nuevoPV = Math.ceil(redondearAlCentenar(nuevoPV));
+        // redondeo a la centena como en el front (>=50 hacia arriba)
+        const resto = nuevoPV % 100;
+        nuevoPV = (resto < 50) ? (nuevoPV - resto) : (nuevoPV + (100 - resto));
+        nuevoPV = Math.ceil(nuevoPV);
 
         // Actualizar SOLO precio_venta del producto (no tocamos proveedor_id ni IVA aquí)
         await conexion.promise().query(
@@ -2131,6 +2115,7 @@ actualizarPreciosExcel: async (req, res) => {
     res.status(500).send(error.message);
   }
 },
+
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
