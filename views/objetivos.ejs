@@ -116,6 +116,40 @@
 
 <!-- ===== SCRIPT ===== -->
 <script>
+  // === Formateo de etiquetas (fechas) ===
+  function formatearEtiqueta(lbl, periodo){
+    if (!lbl) return '-';
+
+    // ISO 'YYYY-MM-DD' o string con 'T...Z'
+    const isoDateMatch = /^\d{4}-\d{2}-\d{2}/.test(lbl) || /T\d{2}:\d{2}:\d{2}/.test(lbl);
+    if (isoDateMatch) {
+      const d = new Date(lbl);
+      if (!isNaN(d)) {
+        const dd = String(d.getDate()).padStart(2,'0');
+        const mm = String(d.getMonth()+1).padStart(2,'0');
+        const yy = d.getFullYear();
+        return `${dd}/${mm}/${yy}`;
+      }
+    }
+
+    // 'YYYY-MM' → 'MM/YYYY'
+    if (/^\d{4}-\d{2}$/.test(lbl)) {
+      const [y,m] = lbl.split('-');
+      return `${m}/${y}`;
+    }
+
+    // 'YYYY'
+    if (/^\d{4}$/.test(lbl)) return lbl;
+
+    // 'YYYY-Wxx' → 'Sem xx / YYYY'
+    if (/^\d{4}-W\d{2}$/.test(lbl)) {
+      const [y,w] = lbl.split('-W');
+      return `Sem ${w} / ${y}`;
+    }
+
+    return lbl;
+  }
+
   // ====== Config Chart ======
   let chartSerie = null; // instancia del chart para destruir/crear al actualizar
   const defaultBar = 'rgba(99, 132, 255, 0.6)';
@@ -176,9 +210,9 @@
   const $totTotal   = document.getElementById('totTotal');
 
   // Contenedor y elementos del gráfico
-  const $tablaWrap    = document.getElementById('tablaWrap');     // contenedor de la sección
-  const $resumenSerie = document.getElementById('resumenSerie');  // resumen max/min
-  const $chartCanvas  = document.getElementById('chartSerie');    // canvas
+  const $tablaWrap    = document.getElementById('tablaWrap');
+  const $resumenSerie = document.getElementById('resumenSerie');
+  const $chartCanvas  = document.getElementById('chartSerie');
 
   // ====== Relleno selects ======
   (function fillYearMonth(){
@@ -277,11 +311,12 @@
         $totTotal.textContent = money(data.totales.TOTAL);
       }
 
-      // ===== Gráfico (barras) — SOLO serie del tipo seleccionado (o TOTAL si AMBOS)
+      // ===== Serie y etiquetas =====
       const labels = data.series.labels || [];
       const serie  = (tipo === 'A') ? (data.series.A||[])
-                    : (tipo === 'B') ? (data.series.B||[])
-                    : (data.series.TOTAL||[]);
+                  : (tipo === 'B') ? (data.series.B||[])
+                  : (data.series.TOTAL||[]);
+      const labelsFmt = labels.map(l => formatearEtiqueta(l, periodo));
 
       // Mostrar contenedor
       $tablaWrap.style.display  = '';
@@ -304,20 +339,20 @@
           i === iMax ? maxBar : (i === iMin ? minBar : defaultBar)
         );
 
-        // Resumen arriba del gráfico
-        const maxLabel = labels[iMax] ?? '-';
-        const minLabel = labels[iMin] ?? '-';
+        // Resumen arriba del gráfico (¡formateado!)
+        const maxLabel = labelsFmt[iMax] ?? '-';
+        const minLabel = labelsFmt[iMin] ?? '-';
         $resumenSerie.textContent = `Máximo: ${maxLabel} (${money(maxVal)}) · Mínimo: ${minLabel} (${money(minVal)})`;
 
         // Destruir chart previo si existe
         if (chartSerie) { chartSerie.destroy(); }
 
-        // Crear gráfico
+        // Crear gráfico (con labels formateadas)
         const ctx = $chartCanvas.getContext('2d');
         chartSerie = new Chart(ctx, {
           type: 'bar',
           data: {
-            labels,
+            labels: labelsFmt,
             datasets: [{
               label: `Compras (${tipo === 'TOTAL' ? 'AMBOS' : tipo})`,
               data: serie,
@@ -353,6 +388,7 @@
   // Inicio
   onPeriodoChange();
 </script>
+
 
 
   <%- include('./layouts/footer.ejs') %>
