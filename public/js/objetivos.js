@@ -413,3 +413,136 @@
   if ($vBtnBuscar) $vBtnBuscar.addEventListener('click', buscarVentas);
   onPeriodoChangeVentas();
 
+  // ============================== GASTOS ================================
+  let gChart = null;
+
+  // DOM GASTOS
+  const $gCategoria = document.getElementById('g-categoria');
+  const $gPeriodo   = document.getElementById('g-periodo');
+  const $gSub       = document.getElementById('g-subfiltros');
+  const $gBoxSem    = document.getElementById('g-boxSemanal');
+  const $gAnSem     = document.getElementById('g-anSem');
+  const $gMesSem    = document.getElementById('g-mesSem');
+  const $gSemanaMes = document.getElementById('g-semanaMes');
+  const $gBoxMen    = document.getElementById('g-boxMensual');
+  const $gAnMen     = document.getElementById('g-anMen');
+  const $gMesMen    = document.getElementById('g-mesMen');
+  const $gBoxAnu    = document.getElementById('g-boxAnual');
+  const $gAnAnu     = document.getElementById('g-anAnu');
+  const $gBtn       = document.getElementById('g-btnBuscar');
+
+  const $gError     = document.getElementById('g-error');
+  const $gRes       = document.getElementById('g-resultados');
+  const $gLblRango  = document.getElementById('g-lblRango');
+  const $gLblCat    = document.getElementById('g-lblCat');
+  const $gKpi       = document.getElementById('g-kpiTotal');
+
+  const $gWrap      = document.getElementById('g-tablaWrap');
+  const $gResumen   = document.getElementById('g-resumenSerie');
+  const $gCanvas    = document.getElementById('g-chartSerie');
+
+  // Relleno años/meses GASTOS
+  (function gFillYM(){
+    const now = new Date();
+    const thisYear = now.getFullYear();
+    const years = []; for (let y=thisYear; y>=thisYear-6; y--) years.push(y);
+
+    [$gAnSem, $gAnMen, $gAnAnu].forEach(sel => { if (sel) sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join(''); });
+    const meses = Array.from({length:12}, (_,i)=>i+1);
+    [$gMesSem, $gMesMen].forEach(sel => { if (sel) sel.innerHTML = meses.map(m=>`<option value="${m}">${(m+'').padStart(2,'0')}</option>`).join(''); });
+
+    if ($gAnSem) $gAnSem.value=thisYear; if ($gAnMen) $gAnMen.value=thisYear; if ($gAnAnu) $gAnAnu.value=thisYear;
+    if ($gMesSem) $gMesSem.value = now.getMonth()+1; if ($gMesMen) $gMesMen.value = now.getMonth()+1;
+  })();
+
+  function onPeriodoChangeGastos(){
+    const p = $gPeriodo ? $gPeriodo.value : '';
+    hide($gSub); hide($gBoxSem); hide($gBoxMen); hide($gBoxAnu);
+    if (!p) return;
+    show($gSub);
+    if (p==='semanal') show($gBoxSem);
+    if (p==='mensual') show($gBoxMen);
+    if (p==='anual')   show($gBoxAnu);
+  }
+  if ($gPeriodo) $gPeriodo.addEventListener('change', onPeriodoChangeGastos);
+
+  async function buscarGastos(){
+    hide($gError); setText($gError,'');
+    hide($gRes); hide($gWrap);
+
+    const periodo = $gPeriodo ? $gPeriodo.value : '';
+    if (!periodo) return;
+
+    const categoria = $gCategoria ? $gCategoria.value : '';
+
+    let desde='', hasta='', labelRango='';
+    if (periodo === 'semanal') {
+      const r = weekRangeOfMonth(parseInt($gAnSem.value,10), parseInt($gMesSem.value,10), parseInt($gSemanaMes.value,10));
+      ({desde, hasta, labelRango} = r);
+    } else if (periodo === 'mensual') {
+      const r = monthRange(parseInt($gAnMen.value,10), parseInt($gMesMen.value,10));
+      ({desde, hasta, labelRango} = r);
+    } else if (periodo === 'anual') {
+      const r = yearRange(parseInt($gAnAnu.value,10));
+      ({desde, hasta, labelRango} = r);
+    }
+
+    try{
+      const qs = new URLSearchParams({ periodo, categoria, desde, hasta }).toString();
+      const res = await fetch(`/administracion/api/objetivos-gastos?${qs}`);
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Error al calcular series.');
+
+      // KPIs
+      setText($gLblRango, labelRango || (data.series?.etiquetas?.[0] || '-'));
+      setText($gLblCat, categoria || 'TODAS');
+      setText($gKpi, money(data.totales?.TOTAL || 0));
+
+      // Serie
+      const labels = data.series?.etiquetas || [];
+      const serie  = data.series?.TOTAL || [];
+
+      show($gWrap);
+      if (!labels.length) {
+        if (gChart) { gChart.destroy(); gChart = null; }
+        setText($gResumen, 'Sin datos para los filtros seleccionados.');
+      } else {
+        let maxVal=-Infinity, minVal=Infinity, iMax=-1, iMin=-1;
+        for (let i=0;i<serie.length;i++){
+          const v = Number(serie[i]||0);
+          if (v>maxVal){maxVal=v;iMax=i;}
+          if (v<minVal){minVal=v;iMin=i;}
+        }
+        const labelsFmt = labels.map(l => formatearEtiqueta(l, periodo));
+        const bgColors = serie.map((_, i) => i===iMax? 'rgba(52, 211, 153, 0.85)' : (i===iMin? 'rgba(248, 113, 113, 0.85)' : 'rgba(99, 132, 255, 0.6)'));
+        setText($gResumen, `Máximo: ${labelsFmt[iMax] ?? '-'} (${money(maxVal)}) · Mínimo: ${labelsFmt[iMin] ?? '-'} (${money(minVal)})`);
+
+        if (gChart) gChart.destroy();
+        const ctx = $gCanvas.getContext('2d');
+        gChart = new Chart(ctx, {
+          type: 'bar',
+          data: { labels: labelsFmt, datasets: [{ label: `Gastos ${categoria || 'TODAS'}`, data: serie, backgroundColor: bgColors, borderWidth: 1 }] },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (c) => money(c.parsed.y) } }
+            },
+            scales: {
+              x: { ticks: { color: '#e7eefc' }, grid: { color: 'rgba(255,255,255,0.08)' }, border:{ color:'rgba(255,255,255,0.20)' } },
+              y: { beginAtZero: true, ticks: { color: '#e7eefc', callback: v => money(v) }, grid:{ color:'rgba(255,255,255,0.08)' }, border:{ color:'rgba(255,255,255,0.20)' } }
+            },
+            datasets: { bar: { categoryPercentage: 0.7, barPercentage: 0.9, maxBarThickness: 32 } }
+          }
+        });
+      }
+
+      show($gRes);
+    } catch(e){
+      console.error(e);
+      setText($gError, `❌ ${e.message}`); show($gError);
+    }
+  }
+  if ($gBtn) $gBtn.addEventListener('click', buscarGastos);
+  onPeriodoChangeGastos();

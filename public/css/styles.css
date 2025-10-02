@@ -1683,10 +1683,10 @@ tfoot td {
 /* === Grid de “cajas” lado a lado (2 columnas fijas) === */
 .obj-console main{ padding:16px !important; }
 .obj-console .obj-panels{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(360px, 1fr));
-  gap: 24px;
-  align-items: start;
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap:24px;
+  align-items:start;
 }
 
 /* Card visual de cada caja (Compras/Ventas) */
