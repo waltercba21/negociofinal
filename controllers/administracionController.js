@@ -808,40 +808,36 @@ apiObjetivosCompras: (req, res) => {
   const periodo = (req.query.periodo || 'diario').toLowerCase();
   const tipo    = (req.query.tipo || 'TOTAL').toUpperCase();
 
-  // 1) Totales del periodo actual (para KPI)
-  administracion.obtenerTotalesPeriodoCompras(periodo, (errT, totales) => {
+  const fechas = {
+    desde: req.query.desde || null, // formato 'YYYY-MM-DD'
+    hasta: req.query.hasta || null
+  };
+  if (fechas.desde && !fechas.hasta) fechas.hasta = fechas.desde;
+
+  administracion.obtenerTotalesPeriodoCompras(periodo, fechas, (errT, totales) => {
     if (errT) {
-      console.error('[apiObjetivosCompras] Error en totales:', errT);
-      return res.status(500).json({ ok: false, error: 'Error al calcular totales del periodo' });
+      console.error('[apiObjetivosCompras] Totales:', errT);
+      return res.status(500).json({ ok: false, error: 'Error al calcular totales' });
     }
-
-    // 2) Series históricas (para los gráficos)
-    administracion.obtenerSeriesCompras(periodo, (errS, series) => {
+    administracion.obtenerSeriesCompras(periodo, fechas, (errS, series) => {
       if (errS) {
-        console.error('[apiObjetivosCompras] Error en series:', errS);
-        return res.status(500).json({ ok: false, error: 'Error al calcular series históricas' });
+        console.error('[apiObjetivosCompras] Series:', errS);
+        return res.status(500).json({ ok: false, error: 'Error al calcular series' });
       }
-
-      // Selección del tipo pedido (A/B/TOTAL)
       const dataSerie = series[tipo] || series.TOTAL;
       const kpi = { totalPeriodo: (totales[tipo] != null ? totales[tipo] : totales.TOTAL) };
-
       return res.json({
         ok: true,
-        periodo,
-        tipo,
-        kpi,
+        periodo, tipo, kpi,
         series: {
           labels: series.etiquetas,
           data: dataSerie,
-          A: series.A,
-          B: series.B,
-          TOTAL: series.TOTAL
+          A: series.A, B: series.B, TOTAL: series.TOTAL
         },
         totales
       });
     });
   });
 },
-   
+
 }

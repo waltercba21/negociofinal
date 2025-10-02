@@ -4,41 +4,26 @@
 <body>
   <style>
     :root {
-      --bg: #0b1120;
-      --card: #0f172a;
-      --muted: #94a3b8;
-      --text: #e2e8f0;
-      --accent: #60a5fa;
-      --success: #34d399;
-      --danger: #f87171;
-      --border: rgba(148,163,184,.18);
-      --shadow: 0 10px 30px rgba(0,0,0,.25);
-      --radius: 14px;
-      --gap: 16px;
+      --bg: #0b1120; --card: #0f172a; --muted: #94a3b8; --text: #e2e8f0; --border: rgba(148,163,184,.18);
+      --radius: 14px; --gap: 16px; --shadow: 0 10px 30px rgba(0,0,0,.25);
     }
     body { background: var(--bg); color: var(--text); }
     .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; }
-
     .card { background: var(--card); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
     .title { font-weight: 800; color: #c7ddff; margin: 0 0 10px 0; letter-spacing: .2px; display:flex; align-items:center; gap:8px; }
-    .tag { font-size:.75rem; padding:2px 8px; border-radius:999px; background:#0b172e; border:1px solid var(--border); color:#a9c7ef; }
-
     .grid { display:grid; gap: var(--gap); }
-    .grid-2 { grid-template-columns: 1fr; }
-    .grid-3 { grid-template-columns: 1fr; }
-    @media (min-width: 992px) {
-      .grid-2 { grid-template-columns: 1fr 1fr; }
-      .grid-3 { grid-template-columns: repeat(3, 1fr); }
-    }
+    .grid-2 { grid-template-columns: 1fr; } .grid-3 { grid-template-columns: 1fr; }
+    @media (min-width: 992px) { .grid-2 { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: repeat(3,1fr); } }
 
     .toolbar { display:grid; gap:12px; grid-template-columns: 1fr; }
-    @media (min-width:768px){ .toolbar { grid-template-columns: 1fr 1fr auto; align-items:end; } }
-
+    @media (min-width:992px){ .toolbar{ grid-template-columns: 1fr 1fr 1fr 1fr auto; align-items:end; } }
     .segment { display:flex; gap:8px; background:#0c1a34; border:1px solid var(--border); border-radius:999px; padding:6px; flex-wrap:wrap; }
     .segment input { display:none; }
     .pill { cursor:pointer; padding:8px 12px; border-radius:999px; color:#bcd3ff; font-weight:700; }
     .segment input:checked + .pill { background:#11264d; border:1px solid #6fb2ff; color:#e8f2ff; }
-
+    .form { display:grid; gap:8px; }
+    .form label { font-size:.85rem; color:#a5c1ea; }
+    .form input[type="date"]{ background:#0c1a34; border:1px solid var(--border); color:#e8f2ff; border-radius:10px; padding:8px 10px; outline:none; }
     .btn { background:#2563eb; border:none; color:white; border-radius:10px; padding:10px 14px; font-weight:700; }
     .btn-outline { background:transparent; border:1px solid var(--border); color:#cfe2ff; }
 
@@ -46,9 +31,9 @@
     .kpi .lbl { color: var(--muted); font-size:.9rem; }
     .kpi .val { font-size:1.6rem; font-weight:800; }
     .kpi .sub { color:#9ee1bf; font-size:.85rem; }
+
     .badge { font-size:.75rem; padding:3px 8px; border-radius:999px; background:#0b172e; border:1px solid var(--border); color:#a2bce6; display:inline-block; }
     .badge.win { background: rgba(52,199,89,.15); border-color: rgba(52,199,89,.35); color:#a7f3c7; }
-    .badge.loss{ background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.35); color:#ffb3ad; }
 
     .skeleton { height: 220px; border-radius:12px; background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.02), rgba(255,255,255,.05)); position:relative; overflow:hidden; }
     .skeleton::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); animation: sh 1.2s infinite; }
@@ -78,6 +63,7 @@
             <label><input type="radio" name="periodo" value="anual"><span class="pill">Anual</span></label>
           </div>
         </div>
+
         <div>
           <div class="title" style="font-size:.95rem; margin-bottom:6px;">Tipo</div>
           <div class="segment" id="segTipo">
@@ -86,27 +72,36 @@
             <label><input type="radio" name="tipo" value="B"><span class="pill">B — Presupuestos</span></label>
           </div>
         </div>
-        <div style="display:grid"><button id="btnAplicar" class="btn">Aplicar filtros</button></div>
+
+        <div class="form">
+          <label for="fDesde">Desde</label>
+          <input id="fDesde" type="date">
+        </div>
+        <div class="form">
+          <label for="fHasta">Hasta</label>
+          <input id="fHasta" type="date">
+        </div>
+
+        <div style="display:grid">
+          <button id="btnBuscar" class="btn">Buscar</button>
+        </div>
       </div>
     </section>
 
     <!-- KPIs -->
     <section class="grid grid-3" style="margin-top:12px;">
       <div class="kpi">
-        <div class="lbl">Total del periodo <span class="badge" id="lblPeriodo">–</span> <span class="badge" id="lblTipo">–</span></div>
+        <div class="lbl">Total del periodo/rango <span class="badge" id="lblPeriodo">–</span> <span class="badge" id="lblTipo">–</span></div>
         <div class="val" id="kpiTotal">$ 0</div>
         <div class="sub" id="kpiDetalle">A: $ 0 · B: $ 0 · Total: $ 0</div>
       </div>
       <div class="kpi">
         <div class="lbl">Ganador A vs B</div>
         <div class="val" id="kpiGanador">–</div>
-        <div>
-          <span class="badge" id="badgeDiff">Dif: $ 0</span>
-          <span class="badge" id="badgePct">0%</span>
-        </div>
+        <div><span class="badge" id="badgeDiff">Dif: $ 0</span> <span class="badge" id="badgePct">0%</span></div>
       </div>
       <div class="kpi">
-        <div class="lbl">Serie</div>
+        <div class="lbl">Último punto de la serie</div>
         <div class="val" id="kpiUltimo">$ 0</div>
         <div class="sub" id="kpiEtiqueta">–</div>
       </div>
@@ -115,12 +110,12 @@
     <!-- Charts -->
     <section class="grid grid-2" style="margin-top:12px;">
       <div class="card">
-        <div class="title">Participación A vs B <span class="tag">Donut</span></div>
+        <div class="title">Participación A vs B</div>
         <div id="skDonut" class="skeleton"></div>
         <canvas id="chartDonut" height="220" style="display:none;"></canvas>
       </div>
       <div class="card">
-        <div class="title">Evolución del periodo <span class="tag">Línea</span></div>
+        <div class="title">Evolución</div>
         <div id="skLine" class="skeleton"></div>
         <canvas id="chartLine" height="220" style="display:none;"></canvas>
       </div>
@@ -132,64 +127,63 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const $ = s => document.querySelector(s);
-    const money = n => Number(n||0).toLocaleString('es-AR',{style:'currency', currency:'ARS', maximumFractionDigits:0});
-    const show = (el, on=true) => { if(!el) return; el.style.display = on ? '' : 'none'; }
+    const money = n => Number(n||0).toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0});
+    const show = (el,on=true)=>{ if(!el) return; el.style.display = on ? '' : 'none'; }
 
     let donut, line;
+    const periodoSel = () => document.querySelector('input[name="periodo"]:checked').value;
+    const tipoSel    = () => document.querySelector('input[name="tipo"]:checked').value;
 
-    function periodoSel() { return document.querySelector('input[name="periodo"]:checked').value; }
-    function tipoSel() { return document.querySelector('input[name="tipo"]:checked').value; }
-
-    function setLoading(on){
-      show($('#skDonut'), on); show($('#skLine'), on);
-      show($('#chartDonut'), !on); show($('#chartLine'), !on);
-    }
+    function setLoading(on){ show($('#skDonut'),on); show($('#skLine'),on); show($('#chartDonut'),!on); show($('#chartLine'),!on); }
 
     async function cargar() {
-      setLoading(true);
-      $('#err').style.display = 'none';
+      setLoading(true); $('#err').style.display='none';
+
       const periodo = periodoSel();
-      const tipo = tipoSel();
-      $('#lblPeriodo').textContent = periodo.toUpperCase();
-      $('#lblTipo').textContent = tipo;
+      const tipo    = tipoSel();
+      const desde   = $('#fDesde').value || '';
+      const hasta   = $('#fHasta').value || '';
+
+      $('#lblPeriodo').textContent = desde && hasta ? `${desde} → ${hasta}`.toUpperCase() : periodo.toUpperCase();
+      $('#lblTipo').textContent    = tipo;
+
+      const qs = new URLSearchParams({ periodo, tipo });
+      if (desde) qs.set('desde', desde);
+      if (hasta) qs.set('hasta', hasta);
 
       try {
-        const r = await fetch(`/administracion/api/objetivos-compras?periodo=${encodeURIComponent(periodo)}&tipo=${encodeURIComponent(tipo)}`);
+        const r = await fetch(`/administracion/api/objetivos-compras?${qs.toString()}`);
         const data = await r.json();
         if (!data.ok) throw new Error(data.error || 'Error API');
 
         // KPIs
-        $('#kpiTotal').textContent = money(data.kpi.totalPeriodo);
+        $('#kpiTotal').textContent   = money(data.kpi.totalPeriodo);
         $('#kpiDetalle').textContent = `A: ${money(data.totales.A)} · B: ${money(data.totales.B)} · Total: ${money(data.totales.TOTAL)}`;
 
         const labels = data.series.labels;
         const serie  = data.series.data || [];
         const ultimo = serie.length ? serie[serie.length-1] : 0;
         const etiq   = labels.length ? labels[labels.length-1] : '–';
-        $('#kpiUltimo').textContent = money(ultimo);
-        $('#kpiEtiqueta').textContent = etiq;
+        $('#kpiUltimo').textContent  = money(ultimo);
+        $('#kpiEtiqueta').textContent= etiq;
 
-        // Ganador A vs B
+        // Ganador
         const A = Number(data.totales.A||0), B = Number(data.totales.B||0);
-        let ganador = 'Empate', diff=0, diffPct='0%';
-        if (A > B) { ganador = 'A — Facturas'; diff = A-B; diffPct = `+${((diff/(B||1))*100).toFixed(1)}%`; }
-        if (B > A) { ganador = 'B — Presupuestos'; diff = B-A; diffPct = `+${((diff/(A||1))*100).toFixed(1)}%`; }
+        let ganador='Empate', diff=0, pct='0%';
+        if (A > B) { ganador='A — Facturas'; diff=A-B; pct=`+${((diff/(B||1))*100).toFixed(1)}%`; }
+        else if (B > A) { ganador='B — Presupuestos'; diff=B-A; pct=`+${((diff/(A||1))*100).toFixed(1)}%`; }
         $('#kpiGanador').textContent = ganador;
-        $('#badgeDiff').textContent = `Dif: ${money(diff)}`;
-        $('#badgePct').textContent  = diffPct;
-        $('#badgeDiff').className = 'badge ' + (diff>0 ? 'win':'');
-        $('#badgePct').className  = 'badge ' + (diff>0 ? 'win':'');
+        $('#badgeDiff').textContent  = `Dif: ${money(diff)}`;
+        $('#badgePct').textContent   = pct;
+        $('#badgeDiff').className = 'badge ' + (diff>0?'win':'');
+        $('#badgePct').className  = 'badge ' + (diff>0?'win':'');
 
         // Charts
         if (donut) donut.destroy();
         donut = new Chart($('#chartDonut').getContext('2d'), {
           type:'doughnut',
-          data:{ labels:['A (Facturas)','B (Presupuestos)'], datasets:[{ data:[A,B] }]},
-          options:{
-            responsive:true,
-            cutout:'60%',
-            plugins:{ legend:{labels:{color:'#cfe2ff'} } }
-          }
+          data:{ labels:['A (Facturas)','B (Presupuestos)'], datasets:[{ data:[A,B] }] },
+          options:{ responsive:true, cutout:'60%', plugins:{ legend:{ labels:{ color:'#cfe2ff' } } } }
         });
 
         if (line) line.destroy();
@@ -208,13 +202,11 @@
 
         setLoading(false);
       } catch (e) {
-        console.error(e);
-        $('#err').style.display = 'block';
-        setLoading(false);
+        console.error(e); $('#err').style.display='block'; setLoading(false);
       }
     }
 
-    $('#btnAplicar').addEventListener('click', cargar);
+    $('#btnBuscar').addEventListener('click', cargar);
     document.addEventListener('DOMContentLoaded', cargar);
   </script>
 
