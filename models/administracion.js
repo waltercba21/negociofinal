@@ -1,6 +1,6 @@
 const pool = require('../config/conexion');
-const conexion = require('../config/conexion')
 
+// ================== Productos (sin cambios funcionales) ==================
 function obtenerProductosFactura(facturaId) {
   return new Promise((resolve, reject) => {
     pool.query(`
@@ -28,13 +28,15 @@ function obtenerProductosPresupuesto(presupuestoId) {
     });
   });
 }
+
 // ====== OBJETIVOS: helpers de periodo / etiquetas / SQL ======
+// ⚠️ Cambiado: ANUAL ahora es MONTH con 12 puntos (para 12 barras enero..diciembre)
 function _configuracionPeriodo(periodo) {
   switch ((periodo || '').toLowerCase()) {
     case 'diario':  return { puntos: 7,  grupo: 'DAY'   };
     case 'semanal': return { puntos: 12, grupo: 'WEEK'  };
     case 'mensual': return { puntos: 12, grupo: 'MONTH' };
-    case 'anual':   return { puntos: 5,  grupo: 'YEAR'  };
+    case 'anual':   return { puntos: 12, grupo: 'MONTH' }; // <- antes YEAR(5), ahora MONTH(12)
     default:        return { puntos: 7,  grupo: 'DAY'   };
   }
 }
@@ -74,6 +76,7 @@ function _armarEtiquetas(now, puntos, grupo) {
   }
   return etiquetas;
 }
+
 function _mapearSeries(filas, etiquetas) {
   const mapa = new Map();
   for (const f of filas || []) mapa.set(f.bucket, Number(f.total || 0));
@@ -97,10 +100,10 @@ function _whereFecha(feTableAlias, periodo, fechas) {
   return { whereSql: _wherePeriodo[p] || _wherePeriodo.diario, params: [] };
 }
 
-// Series (agrupación) – usamos misma expresión en SELECT y GROUP BY
+// ================== Series COMPRAS ==================
 function _sqlSerieFacturas(grupo, puntos, fechas) {
   if (fechas && fechas.desde && fechas.hasta) {
-    // serie en rango → agrupamos por día
+    // rango explícito → agrupación diaria (el front puede reagrupar a meses si es anual)
     return {
       sql: `
         SELECT DATE(fecha) AS bucket, SUM(importe_factura) AS total
@@ -125,19 +128,18 @@ function _sqlSerieFacturas(grupo, puntos, fechas) {
     };
   }
   if (grupo === 'WEEK') {
-  return {
-    sql: `
-      SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket,
-             SUM(importe_factura) AS total
-      FROM facturas
-      WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY
-      GROUP BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
-      ORDER BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
-    `,
-    params: []
-  };
-}
-
+    return {
+      sql: `
+        SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket,
+               SUM(importe_factura) AS total
+        FROM facturas
+        WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY
+        GROUP BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+        ORDER BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+      `,
+      params: []
+    };
+  }
   if (grupo === 'MONTH') {
     return {
       sql: `
@@ -150,6 +152,7 @@ function _sqlSerieFacturas(grupo, puntos, fechas) {
       params: []
     };
   }
+  // (grupo YEAR ya no se usa cuando 'anual' => MONTH)
   return {
     sql: `
       SELECT DATE_FORMAT(fecha, '%Y') AS bucket, SUM(importe_factura) AS total
@@ -161,6 +164,7 @@ function _sqlSerieFacturas(grupo, puntos, fechas) {
     params: []
   };
 }
+
 function _sqlSeriePresupuestos(grupo, puntos, fechas) {
   if (fechas && fechas.desde && fechas.hasta) {
     return {
@@ -187,18 +191,18 @@ function _sqlSeriePresupuestos(grupo, puntos, fechas) {
     };
   }
   if (grupo === 'WEEK') {
-  return {
-    sql: `
-      SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket,
-             SUM(importe) AS total
-      FROM presupuestos
-      WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY
-      GROUP BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
-      ORDER BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
-    `,
-    params: []
-  };
-}
+    return {
+      sql: `
+        SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket,
+               SUM(importe) AS total
+        FROM presupuestos
+        WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY
+        GROUP BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+        ORDER BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+      `,
+      params: []
+    };
+  }
   if (grupo === 'MONTH') {
     return {
       sql: `
@@ -258,7 +262,6 @@ function _sqlSerieFacturasMostrador(grupo, puntos, fechas) {
       params
     };
   }
-  // YEAR
   return {
     sql: `
       SELECT YEAR(fecha) AS bucket, SUM(total) AS total
@@ -298,7 +301,6 @@ function _sqlSeriePresupuestosMostrador(grupo, puntos, fechas) {
       params
     };
   }
-  // YEAR
   return {
     sql: `
       SELECT YEAR(fecha) AS bucket, SUM(total) AS total
@@ -311,12 +313,12 @@ function _sqlSeriePresupuestosMostrador(grupo, puntos, fechas) {
   };
 }
 
-// Mismo configurador que usaste en Compras
+// ⚠️ Cambiado: ANUAL ahora es MONTH con 12 puntos (para 12 barras enero..diciembre)
 function _configuracionPeriodoVentas(periodo) {
   const p = (periodo || 'mensual').toLowerCase();
-  if (p === 'semanal') return { puntos: 12, grupo: 'WEEK' };
-  if (p === 'anual')   return { puntos: 5,  grupo: 'YEAR' };
-  return { puntos: 12, grupo: 'MONTH' }; // mensual por defecto
+  if (p === 'semanal') return { puntos: 12, grupo: 'WEEK'  };
+  if (p === 'anual')   return { puntos: 12, grupo: 'MONTH' }; // <- antes YEAR(5)
+  return { puntos: 12, grupo: 'MONTH' };
 }
 
 module.exports ={
