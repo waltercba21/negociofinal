@@ -1410,6 +1410,11 @@ tfoot td {
    Namespace: .obj-console
    ========================================================================= */
 
+/* =========================================================================
+   OBJETIVOS — Consola (scoped, sin responsive)
+   Namespace: .obj-console
+   ========================================================================= */
+
 /* ---------- Variables y base del wrapper ---------- */
 .obj-console{
   --obj-bg: #0b1220;
@@ -1451,19 +1456,29 @@ tfoot td {
     linear-gradient(90deg, var(--obj-grid) 1px, transparent 1px) 0 0/24px 24px;
 }
 
+/* ---------- Forzamos apilado VERTICAL en la vista ---------- */
+.obj-console main{
+  padding: 16px !important;
+  display: grid;                 /* 1 columna, separación pareja */
+  grid-template-columns: 1fr;
+  gap: 24px;                     /* separación clara entre bloques */
+}
+.obj-console, .obj-console > *{ flex: none !important; } /* neutraliza flex-row externo */
+.obj-console main > *{ width: 100%; display: block; }
+
 /* ---------- Titulares (scoped) ---------- */
 .obj-console h2{
   display:inline-flex; align-items:center; gap:10px;
-  font-weight:800; letter-spacing:.4px; margin:8px 0 10px;
+  font-weight:800; letter-spacing:.4px; margin:0 0 2px;
 }
 .obj-console h2::before{
   content:"◎"; color:var(--obj-accent); text-shadow:0 0 8px rgba(0,224,199,.55);
 }
 .obj-console h3{
-  font-weight:700; color:#f7fbff; margin:6px 0 10px;
+  font-weight:700; color:#f7fbff; margin:4px 0 8px;
 }
 
-/* ---------- Paneles y separación vertical ---------- */
+/* ---------- Paneles con separación vertical ---------- */
 .obj-console section{
   position:relative;
   background:
@@ -1473,7 +1488,6 @@ tfoot td {
   border-radius:var(--obj-r-xl);
   box-shadow:var(--obj-sh-1), var(--obj-sh-2);
   padding:16px;
-  margin: 0 0 24px 0;   /* separación vertical clara */
 }
 .obj-console section::before{
   content:"";
@@ -1482,14 +1496,11 @@ tfoot td {
   border-top-left-radius:var(--obj-r-xl); border-top-right-radius:var(--obj-r-xl);
 }
 
-/* Asegura apilado vertical aunque algo externo sea flex-row */
-.obj-console, .obj-console > *{ flex:none !important; }
-
 /* ---------- Separadores y estados ---------- */
 .obj-console hr{
-  border:none; height:1px; margin:16px 0;
+  border:none; height:1px; 
   background:linear-gradient(90deg, transparent, #2b3c66, transparent);
-  opacity:.65;
+  opacity:.65; margin: 0;
 }
 .obj-console #estado, .obj-console #v-estado{
   font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono","Courier New", monospace;
@@ -1543,46 +1554,49 @@ tfoot td {
   text-shadow:0 0 8px rgba(0,224,199,.5);
 }
 
-/* ---------- GRILLA de filtros (COMPRAS y VENTAS) ---------- */
-/* Normaliza márgenes inline del EJS para evitar desalineados */
-.obj-console #boxSemanal label,
-.obj-console #boxMensual label,
-.obj-console #boxAnual label,
-.obj-console #v-boxSemanal label,
-.obj-console #v-boxMensual label,
-.obj-console #v-boxAnual label{
-  margin:0 !important;
+/* ---------- TOP filtros: “Tipo” y “Período” alineados como “Año” ---------- */
+.obj-console section > div > label{
+  /* fuerza el mismo patrón visual que ‘Año’ */
+  display: grid;
+  grid-template-columns: 140px minmax(200px, 1fr); /* etiqueta + control */
+  align-items: center;
+  gap: 10px;
+  margin: 0 !important;          /* elimina margin-inline del HTML */
+  font-weight: 700;               /* mismo peso que “Año” */
+  color: var(--obj-text-dim);
+}
+.obj-console section > div > label > select{
+  width: 100%; min-width: 0; justify-self: stretch;
 }
 
-/* Contenedor de subfiltros: grilla base */
+/* ---------- GRILLA de subfiltros (COMPRAS y VENTAS) ---------- */
 .obj-console #subfiltros,
 .obj-console #v-subfiltros{
   display:grid;
   grid-template-columns: repeat(12, 1fr);
   gap:12px;
-  margin-top:10px; /* conserva tu intención original */
+  margin-top:10px;
 }
-
-/* Cada bloque (semanal/mensual/anual) ocupa fila completa y dentro ordena pares etiqueta+control */
+/* Cada bloque (semanal/mensual/anual) ocupa fila completa y ordena pares etiqueta+control */
 .obj-console #boxSemanal,
 .obj-console #boxMensual,
 .obj-console #boxAnual,
 .obj-console #v-boxSemanal,
 .obj-console #v-boxMensual,
 .obj-console #v-boxAnual{
-  grid-column: 1 / -1;   /* 12/12 columnas */
+  grid-column: 1 / -1;
   display:grid;
   grid-template-columns: repeat(12, 1fr);
   gap:12px;
 }
-
-/* Cada label = 4 columnas: etiqueta + control alineados */
+/* Neutraliza márgenes inline del EJS (p.ej. “margin-left:8px;”) */
 .obj-console #boxSemanal > label,
 .obj-console #boxMensual > label,
 .obj-console #boxAnual > label,
 .obj-console #v-boxSemanal > label,
 .obj-console #v-boxMensual > label,
 .obj-console #v-boxAnual > label{
+  margin: 0 !important;
   grid-column: span 4;                  /* 3 items por fila */
   display:grid;
   grid-template-columns: 140px minmax(180px, 1fr); /* etiqueta + control */
@@ -1591,16 +1605,24 @@ tfoot td {
   color:var(--obj-text-dim);
   font-weight:700;
 }
+.obj-console #boxSemanal > label > select,
+.obj-console #boxMensual > label > select,
+.obj-console #boxAnual > label > select,
+.obj-console #v-boxSemanal > label > select,
+.obj-console #v-boxMensual > label > select,
+.obj-console #v-boxAnual > label > select{
+  width:100%; min-width:0; justify-self: stretch;
+}
 
 /* Botonera: su propia fila para evitar solapes */
 .obj-console #subfiltros > div:last-child,
 .obj-console #v-subfiltros > div:last-child{
   grid-column: 1 / -1;
-  margin:0 !important;  /* neutraliza el inline margin-top */
+  margin:0 !important;
 }
 .obj-console #btnBuscar,
 .obj-console #v-btnBuscar{
-  position:relative; z-index:1;   /* por si algún plugin usa overlays */
+  position:relative; z-index:1;
 }
 
 /* ---------- KPIs / badges ---------- */
@@ -1627,10 +1649,10 @@ tfoot td {
 
 /* ---------- Zona de gráficos ---------- */
 .obj-console #tablaWrap, .obj-console #v-tablaWrap{
-  min-height:320px; margin-top:10px;
+  min-height:320px; margin-top:4px;
 }
 .obj-console #resumenSerie, .obj-console #v-resumenSerie{
-  margin:6px 0 10px 0; font-size:14px; color:#cbd6f6;
+  margin:6px 0 8px; font-size:14px; color:#cbd6f6;
   font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono","Courier New", monospace;
   background:rgba(255,255,255,.02); border:1px solid #2b3c66;
   border-radius:var(--obj-r-md); padding:8px 10px;
@@ -1652,11 +1674,12 @@ tfoot td {
   background:rgba(0,224,199,.12); border:1px solid rgba(0,224,199,.35); letter-spacing:1px;
 }
 
-/* ---------- Accesibilidad puntual ---------- */
+/* ---------- Accesibilidad ---------- */
 .obj-console :focus-visible{
   outline:2px solid var(--obj-accent); outline-offset:2px;
 }
 
+/* ---------- --------------------------------------- *
 
 
 /* GRID 4 TARJETAS */

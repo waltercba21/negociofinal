@@ -344,7 +344,7 @@
     async function buscarCompras(){
       $error.style.display='none'; $error.textContent='';
       $resultados.style.display='none'; $tablaWrap.style.display='none';
-      $estado.textContent='Buscando…';
+      $estado.textContent = '';
 
       const periodo = $periodo.value;
       if(!periodo){ $estado.textContent='Seleccione un periodo.'; return; }
@@ -522,22 +522,22 @@
       $vBoxSem.style.display = 'none';
       $vBoxMen.style.display = 'none';
       $vBoxAnu.style.display = 'none';
-      if(!p){ $vEstado.textContent='Seleccione un periodo para comenzar…'; return; }
+      if(!p){ $vEstado.textContent = '';; return; }
       $vSubfiltros.style.display = '';
       if (p === 'semanal') $vBoxSem.style.display = '';
       if (p === 'mensual') $vBoxMen.style.display = '';
       if (p === 'anual')   $vBoxAnu.style.display = '';
-      $vEstado.textContent = 'Complete los campos y presione Buscar.';
+      $vEstado.textContent = '';
     }
     $vPeriodo.addEventListener('change', onPeriodoChangeVentas);
 
     async function buscarVentas(){
       $vError.style.display='none'; $vError.textContent='';
       $vResultados.style.display='none'; $vTablaWrap.style.display='none';
-      $vEstado.textContent='Buscando…';
+      $vEstado.textContent = '';;
 
       const periodo = $vPeriodo.value;
-      if(!periodo){ $vEstado.textContent='Seleccione un periodo.'; return; }
+      if(!periodo){ $vEstado.textContent = ''; return; }
 
       let desde='', hasta='', labelRango='';
       if (periodo === 'semanal') {
@@ -637,10 +637,10 @@
         }
 
         $vResultados.style.display = '';
-        $vEstado.textContent = `Listo (${labels.length} barra(s)).`;
+        $vEstado.textContent = '';
       }catch(e){
         console.error(e);
-        $vEstado.textContent='Error.';
+        $vEstado.textContent = '';
         $vError.textContent = `❌ ${e.message}`;
         $vError.style.display='block';
       }
