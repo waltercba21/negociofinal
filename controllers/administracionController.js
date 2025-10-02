@@ -937,5 +937,45 @@ listarGastos: (req, res) => {
     res.json(rows || []);
   });
 },
+apiObjetivosGastos: (req, res) => {
+  const periodo   = (req.query.periodo || 'mensual').toLowerCase();
+  const categoria = (req.query.categoria || '').trim() || null;
+
+  const fechas = {
+    desde: req.query.desde || null,
+    hasta: req.query.hasta || null
+  };
+  if (fechas.desde && !fechas.hasta) fechas.hasta = fechas.desde;
+
+  try {
+    // 1) Totales
+    administracion.obtenerTotalesPeriodoGastos(periodo, fechas, categoria, (errTot, totales) => {
+      if (errTot) {
+        console.error('[apiObjetivosGastos] Totales:', errTot);
+        return res.status(500).json({ ok: false, error: 'Error al calcular totales.' });
+      }
+
+      // 2) Series
+      administracion.obtenerSeriesGastos(periodo, fechas, categoria, (errSer, series) => {
+        if (errSer) {
+          console.error('[apiObjetivosGastos] Series:', errSer);
+          return res.status(500).json({ ok: false, error: 'Error al calcular series.' });
+        }
+
+        return res.json({
+          ok: true,
+          periodo,
+          categoria: categoria || 'TODAS',
+          totales,     // { TOTAL: number }
+          series       // { etiquetas:[], TOTAL:[] }
+        });
+      });
+    });
+  } catch (e) {
+    console.error('[apiObjetivosGastos] Excepción:', e);
+    res.status(500).json({ ok: false, error: 'Error inesperado.' });
+  }
+},
+
 
 }

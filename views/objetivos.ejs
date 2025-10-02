@@ -209,6 +209,104 @@
       </section>
     </article>
   </div>
+
+  <!-- ========== CARD: GASTOS ========== -->
+<article class="obj-card" id="card-gastos">
+  <h2>Objetivos — Gastos</h2>
+
+  <section class="obj-section">
+    <div style="margin-bottom:8px;">
+      <label>Categoría:
+        <select id="g-categoria">
+          <option value="">TODAS</option>
+          <option>luz</option>
+          <option>agua</option>
+          <option>gas</option>
+          <option>municipalidad</option>
+          <option>rentas provincia</option>
+          <option>contador</option>
+          <option>empleados</option>
+          <option>alquiler</option>
+          <option>internet</option>
+          <option>limpieza</option>
+          <option>seguro</option>
+          <option>otros</option>
+        </select>
+      </label>
+    </div>
+
+    <div style="margin-bottom:8px;">
+      <label>Periodo:
+        <select id="g-periodo">
+          <option value="" selected hidden>Seleccione…</option>
+          <option value="semanal">Semanal</option>
+          <option value="mensual">Mensual</option>
+          <option value="anual">Anual</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- Subfiltros (idéntico esquema que Compras/Ventas) -->
+    <div id="g-subfiltros" style="display:none; margin-top:10px;">
+      <!-- Semanal -->
+      <div id="g-boxSemanal" style="display:none;">
+        <label>Año:
+          <select id="g-anSem"></select>
+        </label>
+        <label style="margin-left:8px;">Mes:
+          <select id="g-mesSem"></select>
+        </label>
+        <label style="margin-left:8px;">Semana:
+          <select id="g-semanaMes">
+            <option value="1">Semana 1 (1–7)</option>
+            <option value="2">Semana 2 (8–14)</option>
+            <option value="3">Semana 3 (15–21)</option>
+            <option value="4">Semana 4 (22–28)</option>
+            <option value="5">Semana 5 (29–fin)</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Mensual -->
+      <div id="g-boxMensual" style="display:none;">
+        <label>Año:
+          <select id="g-anMen"></select>
+        </label>
+        <label style="margin-left:8px;">Mes:
+          <select id="g-mesMen"></select>
+        </label>
+      </div>
+
+      <!-- Anual -->
+      <div id="g-boxAnual" style="display:none;">
+        <label>Año:
+          <select id="g-anAnu"></select>
+        </label>
+      </div>
+
+      <div style="margin-top:10px;">
+        <button id="g-btnBuscar">Buscar</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="g-error" style="color:red; display:none;"></div>
+
+  <section id="g-resultados" class="obj-section" style="display:none;">
+    <h3>Resultados</h3>
+    <p><strong>Rango:</strong> <span id="g-lblRango">-</span> — <strong>Categoría:</strong> <span id="g-lblCat">-</span></p>
+    <p><strong>Total del periodo:</strong> <span id="g-kpiTotal">0</span></p>
+  </section>
+
+  <section id="g-tablaWrap" class="obj-section" style="display:none; min-height:320px; margin-top:10px;">
+    <h3>Serie seleccionada (Gastos)</h3>
+    <div id="g-resumenSerie" style="margin:6px 0 10px 0; font-size:14px;"></div>
+    <div style="height:260px;">
+      <canvas id="g-chartSerie" style="width:100%; height:100%;"></canvas>
+    </div>
+  </section>
+</article>
+
 </main>
 
 </div>

@@ -1090,6 +1090,102 @@ listarGastos: function (desde, hasta, categoria, callback) {
 
   sql += ` ORDER BY fecha DESC, id DESC LIMIT 500`;
   pool.query(sql, params, callback);
-}
+},
+// Totales del periodo o rango (GASTOS)
+obtenerTotalesPeriodoGastos: function (periodo, fechas, categoria, callback) {
+  try {
+    const wf = _whereFecha('', periodo, fechas); // reutiliza las mismas reglas de fecha
+    let sql = `SELECT COALESCE(SUM(monto),0) AS total FROM gastos WHERE ${wf.whereSql}`;
+    const params = [...wf.params];
+    if (categoria && categoria.trim() !== '') { sql += ' AND categoria = ?'; params.push(categoria); }
+
+    pool.query(sql, params, (err, rows) => {
+      if (err) return callback(err);
+      const total = Number(rows?.[0]?.total || 0);
+      callback(null, { TOTAL: total });
+    });
+  } catch (e) {
+    callback(e);
+  }
+},
+
+// Series por periodo (GASTOS)
+obtenerSeriesGastos: function (periodo, fechas, categoria, callback) {
+  try {
+    const { puntos, grupo } = _configuracionPeriodo(periodo);
+    const catSql = (categoria && categoria.trim() !== '') ? ' AND categoria = ? ' : '';
+    const catParams = (categoria && categoria.trim() !== '') ? [categoria] : [];
+
+    // Si viene rango explícito, agrupamos por día (el front puede re-mapear si lo desea)
+    if (fechas && fechas.desde && fechas.hasta) {
+      const sql = `
+        SELECT DATE(fecha) AS bucket, SUM(monto) AS total
+        FROM gastos
+        WHERE fecha BETWEEN ? AND ? ${catSql}
+        GROUP BY DATE(fecha)
+        ORDER BY DATE(fecha)
+      `;
+      return pool.query(sql, [fechas.desde, fechas.hasta, ...catParams], (err, rows) => {
+        if (err) return callback(err);
+        const etiquetas = (rows || []).map(r => String(r.bucket));
+        const TOTAL = (rows || []).map(r => Number(r.total || 0));
+        callback(null, { etiquetas, TOTAL });
+      });
+    }
+
+    // Sin fechas manuales → agrupación por grupo calculado
+    let sql = '';
+    let params = [];
+
+    if (grupo === 'DAY') {
+      sql = `
+        SELECT DATE(fecha) AS bucket, SUM(monto) AS total
+        FROM gastos
+        WHERE fecha >= CURDATE() - INTERVAL ${puntos - 1} DAY ${catSql}
+        GROUP BY DATE(fecha)
+        ORDER BY DATE(fecha)
+      `;
+      params = catParams;
+    } else if (grupo === 'WEEK') {
+      sql = `
+        SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha,1),2,'0')) AS bucket, SUM(monto) AS total
+        FROM gastos
+        WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY ${catSql}
+        GROUP BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha,1),2,'0'))
+        ORDER BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha,1),2,'0'))
+      `;
+      params = catParams;
+    } else if (grupo === 'MONTH') {
+      sql = `
+        SELECT DATE_FORMAT(fecha,'%Y-%m') AS bucket, SUM(monto) AS total
+        FROM gastos
+        WHERE fecha >= DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} MONTH, '%Y-%m-01') ${catSql}
+        GROUP BY DATE_FORMAT(fecha,'%Y-%m')
+        ORDER BY DATE_FORMAT(fecha,'%Y-%m')
+      `;
+      params = catParams;
+    } else {
+      // fallback YEAR si alguna vez es necesario
+      sql = `
+        SELECT DATE_FORMAT(fecha,'%Y') AS bucket, SUM(monto) AS total
+        FROM gastos
+        WHERE fecha >= DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} YEAR, '%Y-01-01') ${catSql}
+        GROUP BY DATE_FORMAT(fecha,'%Y')
+        ORDER BY DATE_FORMAT(fecha,'%Y')
+      `;
+      params = catParams;
+    }
+
+    pool.query(sql, params, (err, rows) => {
+      if (err) return callback(err);
+      const etiquetas = (rows || []).map(r => String(r.bucket));
+      const TOTAL = (rows || []).map(r => Number(r.total || 0));
+      callback(null, { etiquetas, TOTAL });
+    });
+  } catch (e) {
+    callback(e);
+  }
+},
+
 
 }
