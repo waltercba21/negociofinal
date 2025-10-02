@@ -4,203 +4,213 @@
 <body>
   <div class="obj-console" data-vista="objetivos">
   <main style="padding:16px;">
-    <h2>Objetivos — Compras</h2>
-    <!-- ===== Filtros COMPRAS ===== -->
-    <section>
-      <!-- Tipo -->
-      <div style="margin-bottom:8px;">
-        <label>Tipo:
-          <select id="tipo">
-            <option value="TOTAL">AMBOS (A + B)</option>
-            <option value="A">A (Facturas)</option>
-            <option value="B">B (Presupuestos)</option>
-          </select>
-        </label>
-      </div>
+  <div class="obj-panels">
+    <!-- ========== CARD: COMPRAS ========== -->
+    <article class="obj-card" id="card-compras">
+      <h2>Objetivos — Compras</h2>
 
-      <!-- Periodo -->
-      <div style="margin-bottom:8px;">
-        <label>Periodo:
-          <select id="periodo">
-            <option value="" selected hidden>Seleccione…</option>
-            <option value="semanal">Semanal</option>
-            <option value="mensual">Mensual</option>
-            <option value="anual">Anual</option>
-          </select>
-        </label>
-      </div>
-
-      <!-- Subfiltros -->
-      <div id="subfiltros" style="display:none; margin-top:10px;">
-        <!-- Semanal -->
-        <div id="boxSemanal" style="display:none;">
-          <label>Año:
-            <select id="anSem"></select>
-          </label>
-          <label style="margin-left:8px;">Mes:
-            <select id="mesSem"></select>
-          </label>
-          <label style="margin-left:8px;">Semana:
-            <select id="semanaMes">
-              <option value="1">Semana 1 (1–7)</option>
-              <option value="2">Semana 2 (8–14)</option>
-              <option value="3">Semana 3 (15–21)</option>
-              <option value="4">Semana 4 (22–28)</option>
-              <option value="5">Semana 5 (29–fin)</option>
+      <!-- ===== Filtros COMPRAS ===== -->
+      <section class="obj-section">
+        <!-- Tipo -->
+        <div style="margin-bottom:8px;">
+          <label>Tipo:
+            <select id="tipo">
+              <option value="TOTAL">AMBOS (A + B)</option>
+              <option value="A">A (Facturas)</option>
+              <option value="B">B (Presupuestos)</option>
             </select>
           </label>
         </div>
 
-        <!-- Mensual -->
-        <div id="boxMensual" style="display:none;">
-          <label>Año:
-            <select id="anMen"></select>
-          </label>
-          <label style="margin-left:8px;">Mes:
-            <select id="mesMen"></select>
-          </label>
-        </div>
-
-        <!-- Anual -->
-        <div id="boxAnual" style="display:none;">
-          <label>Año:
-            <select id="anAnu"></select>
-          </label>
-        </div>
-
-        <div style="margin-top:10px;">
-          <button id="btnBuscar">Buscar</button>
-        </div>
-      </div>
-    </section>
-
-    <hr style="margin:16px 0;">
-    <div id="estado">Seleccione un periodo para comenzar…</div>
-    <div id="error" style="color:red; display:none;"></div>
-    <hr style="margin:16px 0;">
-
-    <!-- ===== Resultados COMPRAS ===== -->
-    <section id="resultados" style="display:none;">
-      <h3>Resultados</h3>
-      <p><strong>Rango:</strong> <span id="lblRango">-</span> — <strong>Tipo:</strong> <span id="lblTipo">-</span></p>
-      <p><strong>Total del periodo:</strong> <span id="kpiTotal">0</span></p>
-      <p>
-        <strong>Detalle totales:</strong>
-        <span id="wrapA">A (Facturas): <span id="totA">0</span></span> ·
-        <span id="wrapB">B (Presupuestos): <span id="totB">0</span></span> ·
-        <span id="wrapTOTAL">TOTAL: <span id="totTotal">0</span></span>
-      </p>
-    </section>
-
-    <!-- ===== Serie COMPRAS (Gráfico) ===== -->
-    <section id="tablaWrap" style="display:none; min-height:320px; margin-top:10px;">
-      <h3>Serie seleccionada</h3>
-      <div id="resumenSerie" style="margin:6px 0 10px 0; font-size:14px;"></div>
-      <div style="height:260px;">
-        <canvas id="chartSerie" style="width:100%; height:100%;"></canvas>
-      </div>
-    </section>
-
-    <!-- ============================================================ -->
-    <hr style="margin:24px 0;">
-    <h2>Objetivos — Ventas</h2>
-
-    <!-- ===== Filtros VENTAS ===== -->
-    <section>
-      <!-- Tipo -->
-      <div style="margin-bottom:8px;">
-        <label>Tipo:
-          <select id="v-tipo">
-            <option value="TOTAL">AMBOS (A + B)</option>
-            <option value="A">A (Facturas)</option>
-            <option value="B">B (Presupuestos)</option>
-          </select>
-        </label>
-      </div>
-
-      <!-- Periodo -->
-      <div style="margin-bottom:8px;">
-        <label>Periodo:
-          <select id="v-periodo">
-            <option value="" selected hidden>Seleccione…</option>
-            <option value="semanal">Semanal</option>
-            <option value="mensual">Mensual</option>
-            <option value="anual">Anual</option>
-          </select>
-        </label>
-      </div>
-
-      <!-- Subfiltros -->
-      <div id="v-subfiltros" style="display:none; margin-top:10px;">
-        <!-- Semanal -->
-        <div id="v-boxSemanal" style="display:none;">
-          <label>Año:
-            <select id="v-anSem"></select>
-          </label>
-          <label style="margin-left:8px;">Mes:
-            <select id="v-mesSem"></select>
-          </label>
-          <label style="margin-left:8px;">Semana:
-            <select id="v-semanaMes">
-              <option value="1">Semana 1 (1–7)</option>
-              <option value="2">Semana 2 (8–14)</option>
-              <option value="3">Semana 3 (15–21)</option>
-              <option value="4">Semana 4 (22–28)</option>
-              <option value="5">Semana 5 (29–fin)</option>
+        <!-- Periodo -->
+        <div style="margin-bottom:8px;">
+          <label>Periodo:
+            <select id="periodo">
+              <option value="" selected hidden>Seleccione…</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensual">Mensual</option>
+              <option value="anual">Anual</option>
             </select>
           </label>
         </div>
 
-        <!-- Mensual -->
-        <div id="v-boxMensual" style="display:none;">
-          <label>Año:
-            <select id="v-anMen"></select>
-          </label>
-          <label style="margin-left:8px;">Mes:
-            <select id="v-mesMen"></select>
+        <!-- Subfiltros -->
+        <div id="subfiltros" style="display:none; margin-top:10px;">
+          <!-- Semanal -->
+          <div id="boxSemanal" style="display:none;">
+            <label>Año:
+              <select id="anSem"></select>
+            </label>
+            <label style="margin-left:8px;">Mes:
+              <select id="mesSem"></select>
+            </label>
+            <label style="margin-left:8px;">Semana:
+              <select id="semanaMes">
+                <option value="1">Semana 1 (1–7)</option>
+                <option value="2">Semana 2 (8–14)</option>
+                <option value="3">Semana 3 (15–21)</option>
+                <option value="4">Semana 4 (22–28)</option>
+                <option value="5">Semana 5 (29–fin)</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Mensual -->
+          <div id="boxMensual" style="display:none;">
+            <label>Año:
+              <select id="anMen"></select>
+            </label>
+            <label style="margin-left:8px;">Mes:
+              <select id="mesMen"></select>
+            </label>
+          </div>
+
+          <!-- Anual -->
+          <div id="boxAnual" style="display:none;">
+            <label>Año:
+              <select id="anAnu"></select>
+            </label>
+          </div>
+
+          <div style="margin-top:10px;">
+            <button id="btnBuscar">Buscar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- (Ocultamos estado por CSS; si querés, eliminá las dos líneas siguientes) -->
+      <!-- <hr style="margin:16px 0;"> -->
+      <!-- <div id="estado">Seleccione un periodo para comenzar…</div> -->
+      <div id="error" style="color:red; display:none;"></div>
+      <!-- <hr style="margin:16px 0;"> -->
+
+      <!-- ===== Resultados COMPRAS ===== -->
+      <section id="resultados" class="obj-section" style="display:none;">
+        <h3>Resultados</h3>
+        <p><strong>Rango:</strong> <span id="lblRango">-</span> — <strong>Tipo:</strong> <span id="lblTipo">-</span></p>
+        <p><strong>Total del periodo:</strong> <span id="kpiTotal">0</span></p>
+        <p>
+          <strong>Detalle totales:</strong>
+          <span id="wrapA">A (Facturas): <span id="totA">0</span></span> ·
+          <span id="wrapB">B (Presupuestos): <span id="totB">0</span></span> ·
+          <span id="wrapTOTAL">TOTAL: <span id="totTotal">0</span></span>
+        </p>
+      </section>
+
+      <!-- ===== Serie COMPRAS (Gráfico) ===== -->
+      <section id="tablaWrap" class="obj-section" style="display:none; min-height:320px; margin-top:10px;">
+        <h3>Serie seleccionada</h3>
+        <div id="resumenSerie" style="margin:6px 0 10px 0; font-size:14px;"></div>
+        <div style="height:260px;">
+          <canvas id="chartSerie" style="width:100%; height:100%;"></canvas>
+        </div>
+      </section>
+    </article>
+
+    <!-- ========== CARD: VENTAS ========== -->
+    <article class="obj-card" id="card-ventas">
+      <h2>Objetivos — Ventas</h2>
+
+      <!-- ===== Filtros VENTAS ===== -->
+      <section class="obj-section">
+        <!-- Tipo -->
+        <div style="margin-bottom:8px;">
+          <label>Tipo:
+            <select id="v-tipo">
+              <option value="TOTAL">AMBOS (A + B)</option>
+              <option value="A">A (Facturas)</option>
+              <option value="B">B (Presupuestos)</option>
+            </select>
           </label>
         </div>
 
-        <!-- Anual -->
-        <div id="v-boxAnual" style="display:none;">
-          <label>Año:
-            <select id="v-anAnu"></select>
+        <!-- Periodo -->
+        <div style="margin-bottom:8px;">
+          <label>Periodo:
+            <select id="v-periodo">
+              <option value="" selected hidden>Seleccione…</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensual">Mensual</option>
+              <option value="anual">Anual</option>
+            </select>
           </label>
         </div>
 
-        <div style="margin-top:10px;">
-          <button id="v-btnBuscar">Buscar</button>
+        <!-- Subfiltros -->
+        <div id="v-subfiltros" style="display:none; margin-top:10px;">
+          <!-- Semanal -->
+          <div id="v-boxSemanal" style="display:none;">
+            <label>Año:
+              <select id="v-anSem"></select>
+            </label>
+            <label style="margin-left:8px;">Mes:
+              <select id="v-mesSem"></select>
+            </label>
+            <label style="margin-left:8px;">Semana:
+              <select id="v-semanaMes">
+                <option value="1">Semana 1 (1–7)</option>
+                <option value="2">Semana 2 (8–14)</option>
+                <option value="3">Semana 3 (15–21)</option>
+                <option value="4">Semana 4 (22–28)</option>
+                <option value="5">Semana 5 (29–fin)</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Mensual -->
+          <div id="v-boxMensual" style="display:none;">
+            <label>Año:
+              <select id="v-anMen"></select>
+            </label>
+            <label style="margin-left:8px;">Mes:
+              <select id="v-mesMen"></select>
+            </label>
+          </div>
+
+          <!-- Anual -->
+          <div id="v-boxAnual" style="display:none;">
+            <label>Año:
+              <select id="v-anAnu"></select>
+            </label>
+          </div>
+
+          <div style="margin-top:10px;">
+            <button id="v-btnBuscar">Buscar</button>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <hr style="margin:16px 0;">
-    <div id="v-estado">Seleccione un periodo para comenzar…</div>
-    <div id="v-error" style="color:red; display:none;"></div>
-    <hr style="margin:16px 0;">
+      <!-- (Ocultamos estado por CSS; si querés, eliminá las dos líneas siguientes) -->
+      <!-- <hr style="margin:16px 0;"> -->
+      <!-- <div id="v-estado">Seleccione un periodo para comenzar…</div> -->
+      <div id="v-error" style="color:red; display:none;"></div>
+      <!-- <hr style="margin:16px 0;"> -->
 
-    <!-- ===== Resultados VENTAS ===== -->
-    <section id="v-resultados" style="display:none;">
-      <h3>Resultados</h3>
-      <p><strong>Rango:</strong> <span id="v-lblRango">-</span> — <strong>Tipo:</strong> <span id="v-lblTipo">-</span></p>
-      <p><strong>Total del periodo:</strong> <span id="v-kpiTotal">0</span></p>
-      <p>
-        <strong>Detalle totales:</strong>
-        <span id="v-wrapA">A (Facturas): <span id="v-totA">0</span></span> ·
-        <span id="v-wrapB">B (Presupuestos): <span id="v-totB">0</span></span> ·
-        <span id="v-wrapTOTAL">TOTAL: <span id="v-totTotal">0</span></span>
-      </p>
-    </section>
+      <!-- ===== Resultados VENTAS ===== -->
+      <section id="v-resultados" class="obj-section" style="display:none;">
+        <h3>Resultados</h3>
+        <p><strong>Rango:</strong> <span id="v-lblRango">-</span> — <strong>Tipo:</strong> <span id="v-lblTipo">-</span></p>
+        <p><strong>Total del periodo:</strong> <span id="v-kpiTotal">0</span></p>
+        <p>
+          <strong>Detalle totales:</strong>
+          <span id="v-wrapA">A (Facturas): <span id="v-totA">0</span></span> ·
+          <span id="v-wrapB">B (Presupuestos): <span id="v-totB">0</span></span> ·
+          <span id="v-wrapTOTAL">TOTAL: <span id="v-totTotal">0</span></span>
+        </p>
+      </section>
 
-    <!-- ===== Serie VENTAS (Gráfico) ===== -->
-    <section id="v-tablaWrap" style="display:none; min-height:320px; margin-top:10px;">
-      <h3>Serie seleccionada (Ventas)</h3>
-      <div id="v-resumenSerie" style="margin:6px 0 10px 0; font-size:14px;"></div>
-      <div style="height:260px;">
-        <canvas id="v-chartSerie" style="width:100%; height:100%;"></canvas>
-      </div>
-    </section>
-  </main>
+      <!-- ===== Serie VENTAS (Gráfico) ===== -->
+      <section id="v-tablaWrap" class="obj-section" style="display:none; min-height:320px; margin-top:10px;">
+        <h3>Serie seleccionada (Ventas)</h3>
+        <div id="v-resumenSerie" style="margin:6px 0 10px 0; font-size:14px;"></div>
+        <div style="height:260px;">
+          <canvas id="v-chartSerie" style="width:100%; height:100%;"></canvas>
+        </div>
+      </section>
+    </article>
+  </div>
+</main>
+
 </div>
   <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

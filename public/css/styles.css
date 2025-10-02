@@ -1674,12 +1674,48 @@ tfoot td {
   background:rgba(0,224,199,.12); border:1px solid rgba(0,224,199,.35); letter-spacing:1px;
 }
 
-/* ---------- Accesibilidad ---------- */
 .obj-console :focus-visible{
   outline:2px solid var(--obj-accent); outline-offset:2px;
 }
 .obj-console #estado,
 .obj-console #v-estado { display:none !important; }
+
+/* === Grid de “cajas” lado a lado (2 columnas fijas) === */
+.obj-console main{ padding:16px !important; }
+.obj-console .obj-panels{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(360px, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+/* Card visual de cada caja (Compras/Ventas) */
+.obj-console .obj-card{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)),
+    linear-gradient(180deg, var(--obj-panel), var(--obj-panel-2));
+  border: 1px solid var(--obj-border);
+  border-radius: var(--obj-r-xl);
+  box-shadow: var(--obj-sh-1), var(--obj-sh-2);
+  padding: 16px;
+}
+
+/* Dentro del card, aplanamos los “section” para que sean módulos ligeros */
+.obj-console .obj-card .obj-section{
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0 0 14px 0;
+}
+
+/* Títulos dentro del card con margen respirable */
+.obj-console .obj-card h2{ margin-bottom: 10px; }
+.obj-console .obj-card h3{ margin: 6px 0 10px; }
+
+/* Oculta por completo los contenedores de estado residuales */
+.obj-console #estado,
+.obj-console #v-estado{ display:none !important; }
 
 
 /* ---------- --------------------------------------- *
