@@ -28,7 +28,134 @@ function obtenerProductosPresupuesto(presupuestoId) {
     });
   });
 }
+function _configuracionPeriodo(periodo) {
+  switch ((periodo || '').toLowerCase()) {
+    case 'diario':  return { puntos: 7,  grupo: 'DAY'   };
+    case 'semanal': return { puntos: 12, grupo: 'WEEK'  };
+    case 'mensual': return { puntos: 12, grupo: 'MONTH' };
+    case 'anual':   return { puntos: 5,  grupo: 'YEAR'  };
+    default:        return { puntos: 7,  grupo: 'DAY'   };
+  }
+}
 
+function _armarEtiquetas(now, puntos, grupo) {
+  const etiquetas = [];
+  const pad = (n) => String(n).padStart(2, '0');
+  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  for (let i = puntos - 1; i >= 0; i--) {
+    const dt = new Date(base);
+    if (grupo === 'DAY') {
+      dt.setDate(base.getDate() - i);
+      etiquetas.push(`${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`);
+    } else if (grupo === 'WEEK') {
+      const copy = new Date(base);
+      copy.setDate(base.getDate() - i * 7);
+      const unoEne = new Date(copy.getFullYear(), 0, 1);
+      const semana = Math.ceil((((copy - unoEne) / 86400000) + unoEne.getDay() + 1) / 7);
+      etiquetas.push(`${copy.getFullYear()}-W${pad(semana)}`);
+    } else if (grupo === 'MONTH') {
+      const copy = new Date(base.getFullYear(), base.getMonth(), 1);
+      copy.setMonth(copy.getMonth() - i);
+      etiquetas.push(`${copy.getFullYear()}-${pad(copy.getMonth() + 1)}`);
+    } else if (grupo === 'YEAR') {
+      const copy = new Date(base.getFullYear(), 0, 1);
+      copy.setFullYear(copy.getFullYear() - i);
+      etiquetas.push(`${copy.getFullYear()}`);
+    }
+  }
+  return etiquetas;
+}
+
+function _mapearSeries(filas, etiquetas) {
+  const mapa = new Map();
+  for (const f of filas || []) {
+    mapa.set(f.bucket, Number(f.total || 0));
+  }
+  return etiquetas.map(lbl => mapa.get(lbl) || 0);
+}
+
+const _wherePeriodoFacturas = {
+  diario:  `WHERE fecha = CURDATE()`,
+  semanal: `WHERE YEARWEEK(fecha,1) = YEARWEEK(CURDATE(),1)`,
+  mensual: `WHERE YEAR(fecha)=YEAR(CURDATE()) AND MONTH(fecha)=MONTH(CURDATE())`,
+  anual:   `WHERE YEAR(fecha)=YEAR(CURDATE())`
+};
+const _wherePeriodoPresupuestos = { ..._wherePeriodoFacturas };
+
+function _sqlFacturasSerie(grupo, puntos) {
+  if (grupo === 'DAY') {
+    return `
+      SELECT DATE(fecha) AS bucket, SUM(importe_factura) AS total
+      FROM facturas
+      WHERE fecha >= (CURDATE() - INTERVAL ${puntos - 1} DAY)
+      GROUP BY DATE(fecha)
+      ORDER BY DATE(fecha)
+    `;
+  }
+  if (grupo === 'WEEK') {
+    return `
+      SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket, SUM(importe_factura) AS total
+      FROM facturas
+      WHERE YEARWEEK(fecha,1) >= YEARWEEK(CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY, 1)
+      GROUP BY YEAR(fecha), WEEK(fecha,1)
+      ORDER BY YEAR(fecha), WEEK(fecha,1)
+    `;
+  }
+  if (grupo === 'MONTH') {
+    return `
+      SELECT DATE_FORMAT(fecha, '%Y-%m') AS bucket, SUM(importe_factura) AS total
+      FROM facturas
+      WHERE fecha >= (DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} MONTH, '%Y-%m-01'))
+      GROUP BY DATE_FORMAT(fecha, '%Y-%m')
+      ORDER BY DATE_FORMAT(fecha, '%Y-%m')
+    `;
+  }
+  return `
+    SELECT DATE_FORMAT(fecha, '%Y') AS bucket, SUM(importe_factura) AS total
+    FROM facturas
+    WHERE fecha >= DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} YEAR, '%Y-01-01')
+    GROUP BY DATE_FORMAT(fecha, '%Y')
+    ORDER BY DATE_FORMAT(fecha, '%Y')
+  `;
+}
+
+function _sqlPresupuestosSerie(grupo, puntos) {
+  if (grupo === 'DAY') {
+    return `
+      SELECT DATE(fecha) AS bucket, SUM(importe) AS total
+      FROM presupuestos
+      WHERE fecha >= (CURDATE() - INTERVAL ${puntos - 1} DAY)
+      GROUP BY DATE(fecha)
+      ORDER BY DATE(fecha)
+    `;
+  }
+  if (grupo === 'WEEK') {
+    return `
+      SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket, SUM(importe) AS total
+      FROM presupuestos
+      WHERE YEARWEEK(fecha,1) >= YEARWEEK(CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY, 1)
+      GROUP BY YEAR(fecha), WEEK(fecha,1)
+      ORDER BY YEAR(fecha), WEEK(fecha,1)
+    `;
+  }
+  if (grupo === 'MONTH') {
+    return `
+      SELECT DATE_FORMAT(fecha, '%Y-%m') AS bucket, SUM(importe) AS total
+      FROM presupuestos
+      WHERE fecha >= (DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} MONTH, '%Y-%m-01'))
+      GROUP BY DATE_FORMAT(fecha, '%Y-%m')
+      ORDER BY DATE_FORMAT(fecha, '%Y-%m')
+    `;
+  }
+  return `
+    SELECT DATE_FORMAT(fecha, '%Y') AS bucket, SUM(importe) AS total
+    FROM presupuestos
+    WHERE fecha >= DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} YEAR, '%Y-01-01')
+    GROUP BY DATE_FORMAT(fecha, '%Y')
+    ORDER BY DATE_FORMAT(fecha, '%Y')
+  `;
+}
 
 module.exports ={
   getProveedores : function(callback) {
@@ -619,7 +746,79 @@ deleteFacturaById: function(id, callback) {
     });
   });
 },
+obtenerTotalesPeriodoCompras: function (periodo, callback) {
+  try {
+    const p  = (periodo || 'diario').toLowerCase();
+    const wf = _wherePeriodoFacturas[p]     || _wherePeriodoFacturas.diario;
+    const wp = _wherePeriodoPresupuestos[p] || _wherePeriodoPresupuestos.diario;
 
+    // Hacemos las dos consultas en paralelo y sincronizamos
+    let hecho = 0;
+    let A = 0, B = 0;
+    let errorGuardado = null;
+
+    pool.query(`SELECT COALESCE(SUM(importe_factura),0) AS total FROM facturas ${wf}`, (errF, rowsF) => {
+      if (errF) errorGuardado = errF;
+      else A = Number((rowsF && rowsF[0] && rowsF[0].total) || 0);
+      if (++hecho === 2) {
+        if (errorGuardado) return callback(errorGuardado);
+        return callback(null, { A, B, TOTAL: A + B });
+      }
+    });
+
+    pool.query(`SELECT COALESCE(SUM(importe),0) AS total FROM presupuestos ${wp}`, (errP, rowsP) => {
+      if (errP) errorGuardado = errP;
+      else B = Number((rowsP && rowsP[0] && rowsP[0].total) || 0);
+      if (++hecho === 2) {
+        if (errorGuardado) return callback(errorGuardado);
+        return callback(null, { A, B, TOTAL: A + B });
+      }
+    });
+  } catch (e) {
+    callback(e);
+  }
+},
+
+// ====== OBJETIVOS: Series históricas (labels + A, B, TOTAL) ======
+obtenerSeriesCompras: function (periodo, callback) {
+  try {
+    const { puntos, grupo } = _configuracionPeriodo(periodo);
+    const etiquetas = _armarEtiquetas(new Date(), puntos, grupo);
+
+    const sqlA = _sqlFacturasSerie(grupo, puntos);
+    const sqlB = _sqlPresupuestosSerie(grupo, puntos);
+
+    let hecho = 0;
+    let filasA = [], filasB = [];
+    let errorGuardado = null;
+
+    pool.query(sqlA, (errA, rowsA) => {
+      if (errA) errorGuardado = errA;
+      else filasA = rowsA || [];
+      if (++hecho === 2) {
+        if (errorGuardado) return callback(errorGuardado);
+        const serieA = _mapearSeries(filasA, etiquetas);
+        const serieB = _mapearSeries(filasB, etiquetas);
+        const serieTotal = serieA.map((v, i) => v + serieB[i]);
+        return callback(null, { etiquetas, A: serieA, B: serieB, TOTAL: serieTotal });
+      }
+    });
+
+    pool.query(sqlB, (errB, rowsB) => {
+      if (errB) errorGuardado = errB;
+      else filasB = rowsB || [];
+      if (++hecho === 2) {
+        if (errorGuardado) return callback(errorGuardado);
+        const serieA = _mapearSeries(filasA, etiquetas);
+        const serieB = _mapearSeries(filasB, etiquetas);
+        const serieTotal = serieA.map((v, i) => v + serieB[i]);
+        return callback(null, { etiquetas, A: serieA, B: serieB, TOTAL: serieTotal });
+      }
+    });
+  } catch (e) {
+    callback(e);
+  }
+},
 
 
       

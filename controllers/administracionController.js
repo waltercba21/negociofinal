@@ -804,6 +804,44 @@ objetivos: (req, res) => {
     }
   });
 },
+apiObjetivosCompras: (req, res) => {
+  const periodo = (req.query.periodo || 'diario').toLowerCase();
+  const tipo    = (req.query.tipo || 'TOTAL').toUpperCase();
 
+  // 1) Totales del periodo actual (para KPI)
+  administracion.obtenerTotalesPeriodoCompras(periodo, (errT, totales) => {
+    if (errT) {
+      console.error('[apiObjetivosCompras] Error en totales:', errT);
+      return res.status(500).json({ ok: false, error: 'Error al calcular totales del periodo' });
+    }
+
+    // 2) Series históricas (para los gráficos)
+    administracion.obtenerSeriesCompras(periodo, (errS, series) => {
+      if (errS) {
+        console.error('[apiObjetivosCompras] Error en series:', errS);
+        return res.status(500).json({ ok: false, error: 'Error al calcular series históricas' });
+      }
+
+      // Selección del tipo pedido (A/B/TOTAL)
+      const dataSerie = series[tipo] || series.TOTAL;
+      const kpi = { totalPeriodo: (totales[tipo] != null ? totales[tipo] : totales.TOTAL) };
+
+      return res.json({
+        ok: true,
+        periodo,
+        tipo,
+        kpi,
+        series: {
+          labels: series.etiquetas,
+          data: dataSerie,
+          A: series.A,
+          B: series.B,
+          TOTAL: series.TOTAL
+        },
+        totales
+      });
+    });
+  });
+},
    
 }

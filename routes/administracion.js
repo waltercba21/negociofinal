@@ -66,4 +66,7 @@ router.get('/pdf/deuda-pendiente', administracionController.generarPDFDeudaPendi
 
 router.get('/objetivos', administracionController.objetivos);
 
+// API Objetivos (compras A/B/TOTAL por periodo)
+router.get('/api/objetivos-compras', administracionController.apiObjetivosCompras);
+
 module.exports = router;
