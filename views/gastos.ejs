@@ -1,8 +1,7 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <%- include('layouts/head') %>
   <meta charset="utf-8"/>
   <title>Gastos</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -20,7 +19,7 @@
   </style>
 </head>
 <body>
-  <% include ./partials/header %>
+  <%- include('layouts/header') %>
 
   <div class="gastos-container">
     <h2>Registrar gasto</h2>
@@ -135,6 +134,7 @@
       });
     })();
   </script>
+
+  <%- include('layouts/footer') %>
 </body>
-<%- include ./layouts/footer.ejs %>
 </html>
