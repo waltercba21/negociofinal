@@ -99,204 +99,261 @@
     <hr style="margin:16px 0;">
 
     <!-- ===== Tabla (solo serie seleccionada o TOTAL si AMBOS) ===== -->
-    <section id="tablaWrap" style="display:none;">
-      <h3>Serie seleccionada</h3>
-      <table id="tablaSeries" border="1" cellpadding="6" cellspacing="0">
-        <thead>
-          <tr>
-            <th>Etiqueta</th>
-            <th>Serie (según Tipo)</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+   <!-- ===== Serie seleccionada (Gráfico) ===== -->
+<section id="tablaWrap" style="display:none;">
+  <h3>Serie seleccionada</h3>
+
+  <!-- Resumen min/max -->
+  <div id="resumenSerie" style="margin:6px 0 10px 0; font-size:14px;">
+    <!-- acá se completa por JS: “Máximo: 2025-01 ($ 123) · Mínimo: 2025-05 ($ 10)” -->
+  </div>
+
+  <!-- Canvas del gráfico -->
+  <canvas id="chartSerie" height="220"></canvas>
+</section>
   </main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- ===== SCRIPT ===== -->
-  <script>
-    // ====== Helpers de fechas ======
-    function pad(n){ return String(n).padStart(2,'0'); }
-    function lastDayOfMonth(year, month1to12){ return new Date(year, month1to12, 0).getDate(); }
-    function weekRangeOfMonth(year, month1to12, weekIndex1to5){
-      const startDay = (weekIndex1to5 - 1) * 7 + 1;
-      const endDay   = Math.min(weekIndex1to5 * 7, lastDayOfMonth(year, month1to12));
-      const desde = `${year}-${pad(month1to12)}-${pad(startDay)}`;
-      const hasta = `${year}-${pad(month1to12)}-${pad(endDay)}`;
-      return { desde, hasta, label: `Semana ${weekIndex1to5} (${desde} → ${hasta})` };
+<!-- ===== SCRIPT ===== -->
+<script>
+  // ====== Config Chart ======
+  let chartSerie = null; // instancia del chart para destruir/crear al actualizar
+  const defaultBar = 'rgba(99, 132, 255, 0.6)';
+  const maxBar     = 'rgba(52, 211, 153, 0.85)';  // verde para máximo
+  const minBar     = 'rgba(248, 113, 113, 0.85)'; // rojo para mínimo
+
+  // ====== Helpers de fechas ======
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function lastDayOfMonth(year, month1to12){ return new Date(year, month1to12, 0).getDate(); }
+  function weekRangeOfMonth(year, month1to12, weekIndex1to5){
+    const startDay = (weekIndex1to5 - 1) * 7 + 1;
+    const endDay   = Math.min(weekIndex1to5 * 7, lastDayOfMonth(year, month1to12));
+    const desde = `${year}-${pad(month1to12)}-${pad(startDay)}`;
+    const hasta = `${year}-${pad(month1to12)}-${pad(endDay)}`;
+    return { desde, hasta, label: `Semana ${weekIndex1to5} (${desde} → ${hasta})` };
+  }
+  function monthRange(year, month1to12){
+    const desde = `${year}-${pad(month1to12)}-01`;
+    const hasta = `${year}-${pad(month1to12)}-${pad(lastDayOfMonth(year, month1to12))}`;
+    return { desde, hasta, label: `${year}-${pad(month1to12)}` };
+  }
+  function yearRange(year){ return { desde: `${year}-01-01`, hasta: `${year}-12-31`, label: `${year}` }; }
+  function money(n){ return Number(n || 0).toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}); }
+
+  // ====== DOM ======
+  const $tipo       = document.getElementById('tipo');
+  const $periodo    = document.getElementById('periodo');
+  const $subfiltros = document.getElementById('subfiltros');
+  // semanal
+  const $boxSem     = document.getElementById('boxSemanal');
+  const $anSem      = document.getElementById('anSem');
+  const $mesSem     = document.getElementById('mesSem');
+  const $semanaMes  = document.getElementById('semanaMes');
+  // mensual
+  const $boxMen     = document.getElementById('boxMensual');
+  const $anMen      = document.getElementById('anMen');
+  const $mesMen     = document.getElementById('mesMen');
+  // anual
+  const $boxAnu     = document.getElementById('boxAnual');
+  const $anAnu      = document.getElementById('anAnu');
+
+  const $btnBuscar  = document.getElementById('btnBuscar');
+
+  const $estado     = document.getElementById('estado');
+  const $error      = document.getElementById('error');
+
+  const $resultados = document.getElementById('resultados');
+  const $lblRango   = document.getElementById('lblRango');
+  const $lblTipo    = document.getElementById('lblTipo');
+  const $kpiTotal   = document.getElementById('kpiTotal');
+
+  // Wrappers de totales
+  const $wrapA      = document.getElementById('wrapA');
+  const $wrapB      = document.getElementById('wrapB');
+  const $wrapTOTAL  = document.getElementById('wrapTOTAL');
+  const $totA       = document.getElementById('totA');
+  const $totB       = document.getElementById('totB');
+  const $totTotal   = document.getElementById('totTotal');
+
+  // Contenedor y elementos del gráfico
+  const $tablaWrap    = document.getElementById('tablaWrap');     // contenedor de la sección
+  const $resumenSerie = document.getElementById('resumenSerie');  // resumen max/min
+  const $chartCanvas  = document.getElementById('chartSerie');    // canvas
+
+  // ====== Relleno selects ======
+  (function fillYearMonth(){
+    const now = new Date();
+    const thisYear = now.getFullYear();
+    const years = [];
+    for(let y=thisYear; y>=thisYear-6; y--) years.push(y);
+
+    [$anSem,$anMen,$anAnu].forEach(sel=>{
+      sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+    });
+
+    const meses = Array.from({length:12}, (_,i)=>i+1);
+    [$mesSem,$mesMen].forEach(sel=>{
+      sel.innerHTML = meses.map(m=>`<option value="${m}">${pad(m)}</option>`).join('');
+    });
+
+    $anSem.value = thisYear; $anMen.value = thisYear; $anAnu.value = thisYear;
+    $mesSem.value = now.getMonth()+1; $mesMen.value = now.getMonth()+1;
+  })();
+
+  // ====== Mostrar/ocultar subfiltros ======
+  function onPeriodoChange(){
+    const p = $periodo.value;
+
+    $subfiltros.style.display = 'none';
+    $boxSem.style.display = 'none';
+    $boxMen.style.display = 'none';
+    $boxAnu.style.display = 'none';
+
+    if(!p){ $estado.textContent='Seleccione un periodo para comenzar…'; return; }
+
+    $subfiltros.style.display = '';
+    if (p === 'semanal') $boxSem.style.display = '';
+    if (p === 'mensual') $boxMen.style.display = '';
+    if (p === 'anual')   $boxAnu.style.display = '';
+
+    $estado.textContent = 'Complete los campos y presione Buscar.';
+  }
+  $periodo.addEventListener('change', onPeriodoChange);
+
+  // ====== Buscar ======
+  async function buscar(){
+    $error.style.display='none'; $error.textContent='';
+    $resultados.style.display='none'; $tablaWrap.style.display='none';
+    $estado.textContent='Buscando…';
+
+    const periodo = $periodo.value;
+    if(!periodo){ $estado.textContent='Seleccione un periodo.'; return; }
+
+    // desde / hasta
+    let desde='', hasta='', labelRango='';
+    if (periodo === 'semanal') {
+      const r = weekRangeOfMonth(parseInt($anSem.value,10), parseInt($mesSem.value,10), parseInt($semanaMes.value,10));
+      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+    } else if (periodo === 'mensual') {
+      const r = monthRange(parseInt($anMen.value,10), parseInt($mesMen.value,10));
+      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+    } else if (periodo === 'anual') {
+      const r = yearRange(parseInt($anAnu.value,10));
+      desde = r.desde; hasta = r.hasta; labelRango = r.label;
     }
-    function monthRange(year, month1to12){
-      const desde = `${year}-${pad(month1to12)}-01`;
-      const hasta = `${year}-${pad(month1to12)}-${pad(lastDayOfMonth(year, month1to12))}`;
-      return { desde, hasta, label: `${year}-${pad(month1to12)}` };
-    }
-    function yearRange(year){ return { desde: `${year}-01-01`, hasta: `${year}-12-31`, label: `${year}` }; }
-    function money(n){ return Number(n || 0).toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}); }
 
-    // ====== DOM ======
-    const $tipo       = document.getElementById('tipo');
-    const $periodo    = document.getElementById('periodo');
-    const $subfiltros = document.getElementById('subfiltros');
-    // semanal
-    const $boxSem     = document.getElementById('boxSemanal');
-    const $anSem      = document.getElementById('anSem');
-    const $mesSem     = document.getElementById('mesSem');
-    const $semanaMes  = document.getElementById('semanaMes');
-    // mensual
-    const $boxMen     = document.getElementById('boxMensual');
-    const $anMen      = document.getElementById('anMen');
-    const $mesMen     = document.getElementById('mesMen');
-    // anual
-    const $boxAnu     = document.getElementById('boxAnual');
-    const $anAnu      = document.getElementById('anAnu');
+    const tipo = $tipo.value; // 'A' | 'B' | 'TOTAL'
 
-    const $btnBuscar  = document.getElementById('btnBuscar');
+    try{
+      const qs = new URLSearchParams({ periodo, tipo, desde, hasta }).toString();
+      const res = await fetch(`/administracion/api/objetivos-compras?${qs}`);
+      const data = await res.json();
+      if(!res.ok || !data.ok) throw new Error(data.error || 'Error al calcular series.');
 
-    const $estado     = document.getElementById('estado');
-    const $error      = document.getElementById('error');
+      // Cabecera
+      $lblRango.textContent = labelRango;
+      $lblTipo.textContent  = (tipo === 'TOTAL' ? 'AMBOS' : tipo);
 
-    const $resultados = document.getElementById('resultados');
-    const $lblRango   = document.getElementById('lblRango');
-    const $lblTipo    = document.getElementById('lblTipo');
-    const $kpiTotal   = document.getElementById('kpiTotal');
+      // Reset visibilidad totales
+      $wrapA.style.display = '';
+      $wrapB.style.display = '';
+      $wrapTOTAL.style.display = '';
 
-    // Wrappers de totales
-    const $wrapA      = document.getElementById('wrapA');
-    const $wrapB      = document.getElementById('wrapB');
-    const $wrapTOTAL  = document.getElementById('wrapTOTAL');
-    const $totA       = document.getElementById('totA');
-    const $totB       = document.getElementById('totB');
-    const $totTotal   = document.getElementById('totTotal');
-
-    const $tablaWrap  = document.getElementById('tablaWrap');
-    const $tablaBody  = document.querySelector('#tablaSeries tbody');
-
-    // ====== Relleno selects ======
-    (function fillYearMonth(){
-      const now = new Date();
-      const thisYear = now.getFullYear();
-      const years = [];
-      for(let y=thisYear; y>=thisYear-6; y--) years.push(y);
-
-      [$anSem,$anMen,$anAnu].forEach(sel=>{
-        sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
-      });
-
-      const meses = Array.from({length:12}, (_,i)=>i+1);
-      [$mesSem,$mesMen].forEach(sel=>{
-        sel.innerHTML = meses.map(m=>`<option value="${m}">${pad(m)}</option>`).join('');
-      });
-
-      $anSem.value = thisYear; $anMen.value = thisYear; $anAnu.value = thisYear;
-      $mesSem.value = now.getMonth()+1; $mesMen.value = now.getMonth()+1;
-    })();
-
-    // ====== Mostrar/ocultar subfiltros ======
-    function onPeriodoChange(){
-      const p = $periodo.value;
-
-      $subfiltros.style.display = 'none';
-      $boxSem.style.display = 'none';
-      $boxMen.style.display = 'none';
-      $boxAnu.style.display = 'none';
-
-      if(!p){ $estado.textContent='Seleccione un periodo para comenzar…'; return; }
-
-      $subfiltros.style.display = '';
-      if (p === 'semanal') $boxSem.style.display = '';
-      if (p === 'mensual') $boxMen.style.display = '';
-      if (p === 'anual')   $boxAnu.style.display = '';
-
-      $estado.textContent = 'Complete los campos y presione Buscar.';
-    }
-    $periodo.addEventListener('change', onPeriodoChange);
-
-    // ====== Buscar ======
-    async function buscar(){
-      $error.style.display='none'; $error.textContent='';
-      $resultados.style.display='none'; $tablaWrap.style.display='none';
-      $estado.textContent='Buscando…';
-
-      const periodo = $periodo.value;
-      if(!periodo){ $estado.textContent='Seleccione un periodo.'; return; }
-
-      // desde / hasta
-      let desde='', hasta='', labelRango='';
-      if (periodo === 'semanal') {
-        const r = weekRangeOfMonth(parseInt($anSem.value,10), parseInt($mesSem.value,10), parseInt($semanaMes.value,10));
-        desde = r.desde; hasta = r.hasta; labelRango = r.label;
-      } else if (periodo === 'mensual') {
-        const r = monthRange(parseInt($anMen.value,10), parseInt($mesMen.value,10));
-        desde = r.desde; hasta = r.hasta; labelRango = r.label;
-      } else if (periodo === 'anual') {
-        const r = yearRange(parseInt($anAnu.value,10));
-        desde = r.desde; hasta = r.hasta; labelRango = r.label;
+      // KPIs y detalle según tipo
+      if (tipo === 'A') {
+        $kpiTotal.textContent = money(data.totales.A);
+        $totA.textContent     = money(data.totales.A);
+        $wrapB.style.display  = 'none';
+        $wrapTOTAL.style.display = 'none';
+      } else if (tipo === 'B') {
+        $kpiTotal.textContent = money(data.totales.B);
+        $totB.textContent     = money(data.totales.B);
+        $wrapA.style.display  = 'none';
+        $wrapTOTAL.style.display = 'none';
+      } else { // AMBOS
+        $kpiTotal.textContent = money(data.totales.TOTAL);
+        $totA.textContent     = money(data.totales.A);
+        $totB.textContent     = money(data.totales.B);
+        $totTotal.textContent = money(data.totales.TOTAL);
       }
 
-      const tipo = $tipo.value; // 'A' | 'B' | 'TOTAL'
-
-      try{
-        const qs = new URLSearchParams({ periodo, tipo, desde, hasta }).toString();
-        const res = await fetch(`/administracion/api/objetivos-compras?${qs}`);
-        const data = await res.json();
-        if(!res.ok || !data.ok) throw new Error(data.error || 'Error al calcular series.');
-
-        // Cabecera
-        $lblRango.textContent = labelRango;
-        $lblTipo.textContent  = (tipo === 'TOTAL' ? 'AMBOS' : tipo);
-
-        // Reset visibilidad
-        $wrapA.style.display = '';
-        $wrapB.style.display = '';
-        $wrapTOTAL.style.display = '';
-
-        // KPIs y detalle según tipo
-        if (tipo === 'A') {
-          $kpiTotal.textContent = money(data.totales.A);
-          $totA.textContent     = money(data.totales.A);
-          $wrapB.style.display  = 'none';
-          $wrapTOTAL.style.display = 'none';
-        } else if (tipo === 'B') {
-          $kpiTotal.textContent = money(data.totales.B);
-          $totB.textContent     = money(data.totales.B);
-          $wrapA.style.display  = 'none';
-          $wrapTOTAL.style.display = 'none';
-        } else { // AMBOS
-          $kpiTotal.textContent = money(data.totales.TOTAL);
-          $totA.textContent     = money(data.totales.A);
-          $totB.textContent     = money(data.totales.B);
-          $totTotal.textContent = money(data.totales.TOTAL);
-        }
-
-        // Tabla — SOLO serie del tipo seleccionado (o TOTAL si AMBOS)
-        const labels = data.series.labels || [];
-        const serie = (tipo === 'A') ? (data.series.A||[])
+      // ===== Gráfico (barras) — SOLO serie del tipo seleccionado (o TOTAL si AMBOS)
+      const labels = data.series.labels || [];
+      const serie  = (tipo === 'A') ? (data.series.A||[])
                     : (tipo === 'B') ? (data.series.B||[])
                     : (data.series.TOTAL||[]);
-        $tablaBody.innerHTML = '';
-        for (let i=0; i<labels.length; i++){
-          const tr = document.createElement('tr');
-          const td1= document.createElement('td'); td1.textContent = labels[i] ?? '';
-          const td2= document.createElement('td'); td2.textContent = money(serie[i] ?? 0);
-          tr.appendChild(td1); tr.appendChild(td2);
-          $tablaBody.appendChild(tr);
+
+      // Mostrar contenedor
+      $tablaWrap.style.display  = '';
+
+      // Sin datos → mensaje y limpiar gráfico
+      if (!labels.length) {
+        if (chartSerie) { chartSerie.destroy(); chartSerie = null; }
+        $resumenSerie.textContent = 'Sin datos para los filtros seleccionados.';
+      } else {
+        // calcular max/min
+        let maxVal = -Infinity, minVal = Infinity, iMax = -1, iMin = -1;
+        for (let i = 0; i < serie.length; i++) {
+          const v = Number(serie[i] || 0);
+          if (v > maxVal) { maxVal = v; iMax = i; }
+          if (v < minVal) { minVal = v; iMin = i; }
         }
 
-        $resultados.style.display = '';
-        $tablaWrap.style.display  = '';
-        $estado.textContent = `Listo (${labels.length} fila(s)).`;
-      }catch(e){
-        console.error(e);
-        $estado.textContent='Error.';
-        $error.textContent = `❌ ${e.message}`;
-        $error.style.display='block';
-      }
-    }
-    document.getElementById('btnBuscar').addEventListener('click', buscar);
+        // Colores por barra (resalta max/min)
+        const bgColors = serie.map((_, i) =>
+          i === iMax ? maxBar : (i === iMin ? minBar : defaultBar)
+        );
 
-    // Inicio
-    onPeriodoChange();
-  </script>
+        // Resumen arriba del gráfico
+        const maxLabel = labels[iMax] ?? '-';
+        const minLabel = labels[iMin] ?? '-';
+        $resumenSerie.textContent = `Máximo: ${maxLabel} (${money(maxVal)}) · Mínimo: ${minLabel} (${money(minVal)})`;
+
+        // Destruir chart previo si existe
+        if (chartSerie) { chartSerie.destroy(); }
+
+        // Crear gráfico
+        const ctx = $chartCanvas.getContext('2d');
+        chartSerie = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: `Compras (${tipo === 'TOTAL' ? 'AMBOS' : tipo})`,
+              data: serie,
+              backgroundColor: bgColors,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (ctx) => money(ctx.parsed.y) } }
+            },
+            scales: {
+              x: { ticks: { color: '#333' } },
+              y: { ticks: { callback: v => money(v) } }
+            }
+          }
+        });
+      }
+
+      $resultados.style.display = '';
+      $estado.textContent = `Listo (${labels.length} fila(s)).`;
+    }catch(e){
+      console.error(e);
+      $estado.textContent='Error.';
+      $error.textContent = `❌ ${e.message}`;
+      $error.style.display='block';
+    }
+  }
+  document.getElementById('btnBuscar').addEventListener('click', buscar);
+
+  // Inicio
+  onPeriodoChange();
+</script>
+
 
   <%- include('./layouts/footer.ejs') %>
 </body>
