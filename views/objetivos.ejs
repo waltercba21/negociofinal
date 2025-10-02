@@ -438,9 +438,18 @@
               tooltip: { callbacks: { label: (c) => money(c.parsed.y) } }
             },
             scales: {
-              x: { ticks: { color: '#333' } },
-              y: { beginAtZero: true, ticks: { callback: v => money(v) } }
-            },
+  x: {
+    ticks: { color: '#e7eefc' },                      // etiquetas bajo el gráfico (BLANCO)
+    grid:  { color: 'rgba(255,255,255,0.08)' },       // líneas verticales suaves
+    border:{ color: 'rgba(255,255,255,0.20)' }        // eje X
+  },
+  y: {
+    beginAtZero: true,
+    ticks: { color: '#e7eefc', callback: v => money(v) }, // valores del eje Y (BLANCO)
+    grid:  { color: 'rgba(255,255,255,0.08)' },           // líneas horizontales suaves
+    border:{ color: 'rgba(255,255,255,0.20)' }            // eje Y
+  }
+},
             datasets: { bar: { categoryPercentage: 0.7, barPercentage: 0.9, maxBarThickness: 32 } }
           }
         });
@@ -628,9 +637,18 @@
               tooltip: { callbacks: { label: (c) => money(c.parsed.y) } }
             },
             scales: {
-              x: { ticks: { color: '#333' } },
-              y: { beginAtZero: true, ticks: { callback: v => money(v) } }
-            },
+  x: {
+    ticks: { color: '#e7eefc' },                      // etiquetas bajo el gráfico (BLANCO)
+    grid:  { color: 'rgba(255,255,255,0.08)' },       // líneas verticales suaves
+    border:{ color: 'rgba(255,255,255,0.20)' }        // eje X
+  },
+  y: {
+    beginAtZero: true,
+    ticks: { color: '#e7eefc', callback: v => money(v) }, // valores del eje Y (BLANCO)
+    grid:  { color: 'rgba(255,255,255,0.08)' },           // líneas horizontales suaves
+    border:{ color: 'rgba(255,255,255,0.20)' }            // eje Y
+  }
+},
             datasets: { bar: { categoryPercentage: 0.7, barPercentage: 0.9, maxBarThickness: 32 } }
           }
         });
