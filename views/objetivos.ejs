@@ -2,212 +2,196 @@
 <%- include('./layouts/header.ejs') %>
 
 <body>
-  <style>
-    :root {
-      --bg: #0b1120; --card: #0f172a; --muted: #94a3b8; --text: #e2e8f0; --border: rgba(148,163,184,.18);
-      --radius: 14px; --gap: 16px; --shadow: 0 10px 30px rgba(0,0,0,.25);
-    }
-    body { background: var(--bg); color: var(--text); }
-    .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; }
-    .card { background: var(--card); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
-    .title { font-weight: 800; color: #c7ddff; margin: 0 0 10px 0; letter-spacing: .2px; display:flex; align-items:center; gap:8px; }
-    .grid { display:grid; gap: var(--gap); }
-    .grid-2 { grid-template-columns: 1fr; } .grid-3 { grid-template-columns: 1fr; }
-    @media (min-width: 992px) { .grid-2 { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: repeat(3,1fr); } }
+  <main style="padding:16px;">
+    <h2>Objetivos — Compras (versión básica funcional)</h2>
 
-    .toolbar { display:grid; gap:12px; grid-template-columns: 1fr; }
-    @media (min-width:992px){ .toolbar{ grid-template-columns: 1fr 1fr 1fr 1fr auto; align-items:end; } }
-    .segment { display:flex; gap:8px; background:#0c1a34; border:1px solid var(--border); border-radius:999px; padding:6px; flex-wrap:wrap; }
-    .segment input { display:none; }
-    .pill { cursor:pointer; padding:8px 12px; border-radius:999px; color:#bcd3ff; font-weight:700; }
-    .segment input:checked + .pill { background:#11264d; border:1px solid #6fb2ff; color:#e8f2ff; }
-    .form { display:grid; gap:8px; }
-    .form label { font-size:.85rem; color:#a5c1ea; }
-    .form input[type="date"]{ background:#0c1a34; border:1px solid var(--border); color:#e8f2ff; border-radius:10px; padding:8px 10px; outline:none; }
-    .btn { background:#2563eb; border:none; color:white; border-radius:10px; padding:10px 14px; font-weight:700; }
-    .btn-outline { background:transparent; border:1px solid var(--border); color:#cfe2ff; }
-
-    .kpi { background:#0e1b36; border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:6px; min-height:110px; }
-    .kpi .lbl { color: var(--muted); font-size:.9rem; }
-    .kpi .val { font-size:1.6rem; font-weight:800; }
-    .kpi .sub { color:#9ee1bf; font-size:.85rem; }
-
-    .badge { font-size:.75rem; padding:3px 8px; border-radius:999px; background:#0b172e; border:1px solid var(--border); color:#a2bce6; display:inline-block; }
-    .badge.win { background: rgba(52,199,89,.15); border-color: rgba(52,199,89,.35); color:#a7f3c7; }
-
-    .skeleton { height: 220px; border-radius:12px; background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.02), rgba(255,255,255,.05)); position:relative; overflow:hidden; }
-    .skeleton::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); animation: sh 1.2s infinite; }
-    @keyframes sh { from{transform:translateX(-100%);} to{transform:translateX(100%);} }
-
-    .err { position:fixed; right:16px; bottom:16px; background: rgba(255,82,82,.1); border:1px solid rgba(255,82,82,.35); color:#ffb6b6; border-radius:10px; padding:10px 12px; display:none; z-index:999; }
-  </style>
-
-  <div class="wrap">
-    <!-- Header -->
-    <div class="grid">
-      <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-        <h4 class="title">🎯 Objetivos — Compras</h4>
-        <a href="/administracion" class="btn btn-outline">← Volver</a>
+    <!-- ===== Filtros básicos ===== -->
+    <section>
+      <div>
+        <label>Periodo:
+          <select id="periodo">
+            <option value="diario">diario</option>
+            <option value="semanal">semanal</option>
+            <option value="mensual">mensual</option>
+            <option value="anual">anual</option>
+          </select>
+        </label>
       </div>
-    </div>
 
-    <!-- Filtros -->
-    <section class="card" style="margin-top:12px;">
-      <div class="toolbar">
-        <div>
-          <div class="title" style="font-size:.95rem; margin-bottom:6px;">Periodo</div>
-          <div class="segment" id="segPeriodo">
-            <label><input type="radio" name="periodo" value="diario" checked><span class="pill">Diario</span></label>
-            <label><input type="radio" name="periodo" value="semanal"><span class="pill">Semanal</span></label>
-            <label><input type="radio" name="periodo" value="mensual"><span class="pill">Mensual</span></label>
-            <label><input type="radio" name="periodo" value="anual"><span class="pill">Anual</span></label>
-          </div>
-        </div>
+      <div style="margin-top:6px;">
+        <label>Tipo:
+          <select id="tipo">
+            <option value="TOTAL">TOTAL</option>
+            <option value="A">A (Facturas)</option>
+            <option value="B">B (Presupuestos)</option>
+          </select>
+        </label>
+      </div>
 
-        <div>
-          <div class="title" style="font-size:.95rem; margin-bottom:6px;">Tipo</div>
-          <div class="segment" id="segTipo">
-            <label><input type="radio" name="tipo" value="TOTAL" checked><span class="pill">TOTAL</span></label>
-            <label><input type="radio" name="tipo" value="A"><span class="pill">A — Facturas</span></label>
-            <label><input type="radio" name="tipo" value="B"><span class="pill">B — Presupuestos</span></label>
-          </div>
-        </div>
+      <div style="margin-top:6px;">
+        <label>Desde: <input id="desde" type="date"></label>
+        <label style="margin-left:8px;">Hasta: <input id="hasta" type="date"></label>
+      </div>
 
-        <div class="form">
-          <label for="fDesde">Desde</label>
-          <input id="fDesde" type="date">
-        </div>
-        <div class="form">
-          <label for="fHasta">Hasta</label>
-          <input id="fHasta" type="date">
-        </div>
-
-        <div style="display:grid">
-          <button id="btnBuscar" class="btn">Buscar</button>
-        </div>
+      <div style="margin-top:10px;">
+        <button id="btnBuscar">Buscar</button>
       </div>
     </section>
 
-    <!-- KPIs -->
-    <section class="grid grid-3" style="margin-top:12px;">
-      <div class="kpi">
-        <div class="lbl">Total del periodo/rango <span class="badge" id="lblPeriodo">–</span> <span class="badge" id="lblTipo">–</span></div>
-        <div class="val" id="kpiTotal">$ 0</div>
-        <div class="sub" id="kpiDetalle">A: $ 0 · B: $ 0 · Total: $ 0</div>
-      </div>
-      <div class="kpi">
-        <div class="lbl">Ganador A vs B</div>
-        <div class="val" id="kpiGanador">–</div>
-        <div><span class="badge" id="badgeDiff">Dif: $ 0</span> <span class="badge" id="badgePct">0%</span></div>
-      </div>
-      <div class="kpi">
-        <div class="lbl">Último punto de la serie</div>
-        <div class="val" id="kpiUltimo">$ 0</div>
-        <div class="sub" id="kpiEtiqueta">–</div>
-      </div>
+    <hr style="margin:16px 0;">
+
+    <!-- ===== Estado / mensajes ===== -->
+    <div id="estado">Esperando búsqueda…</div>
+    <div id="error" style="color:red; display:none;"></div>
+
+    <hr style="margin:16px 0;">
+
+    <!-- ===== KPIs mínimos ===== -->
+    <section>
+      <h3>Resultados</h3>
+      <p><strong>Periodo/Tipo:</strong> <span id="lblPeriodo">-</span> / <span id="lblTipo">-</span></p>
+      <p><strong>Total del periodo (según Tipo):</strong> <span id="kpiTotal">0</span></p>
+      <p>
+        <strong>Detalle totales:</strong>
+        A (Facturas): <span id="totA">0</span> ·
+        B (Presupuestos): <span id="totB">0</span> ·
+        TOTAL: <span id="totTotal">0</span>
+      </p>
     </section>
 
-    <!-- Charts -->
-    <section class="grid grid-2" style="margin-top:12px;">
-      <div class="card">
-        <div class="title">Participación A vs B</div>
-        <div id="skDonut" class="skeleton"></div>
-        <canvas id="chartDonut" height="220" style="display:none;"></canvas>
-      </div>
-      <div class="card">
-        <div class="title">Evolución</div>
-        <div id="skLine" class="skeleton"></div>
-        <canvas id="chartLine" height="220" style="display:none;"></canvas>
-      </div>
+    <hr style="margin:16px 0;">
+
+    <!-- ===== Tabla de series ===== -->
+    <section>
+      <h3>Series</h3>
+      <p>La tabla muestra las etiquetas devueltas por la API y los valores de A, B y TOTAL. La columna “Serie Seleccionada” muestra la serie del tipo elegido (TOTAL/A/B).</p>
+
+      <table id="tablaSeries" border="1" cellpadding="6" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Etiqueta</th>
+            <th>A (Facturas)</th>
+            <th>B (Presupuestos)</th>
+            <th>TOTAL</th>
+            <th>Serie Seleccionada</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- filas generadas por JS -->
+        </tbody>
+      </table>
     </section>
-  </div>
+  </main>
 
-  <div id="err" class="err">❌ Error cargando datos</div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    const $ = s => document.querySelector(s);
-    const money = n => Number(n||0).toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0});
-    const show = (el,on=true)=>{ if(!el) return; el.style.display = on ? '' : 'none'; }
+    // ===== Helpers básicos =====
+    function qs(params) {
+      const sp = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') sp.set(k, v); });
+      return sp.toString();
+    }
+    function money(n) {
+      return Number(n || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+    }
 
-    let donut, line;
-    const periodoSel = () => document.querySelector('input[name="periodo"]:checked').value;
-    const tipoSel    = () => document.querySelector('input[name="tipo"]:checked').value;
+    // ===== Referencias DOM =====
+    const $periodo = document.getElementById('periodo');
+    const $tipo    = document.getElementById('tipo');
+    const $desde   = document.getElementById('desde');
+    const $hasta   = document.getElementById('hasta');
+    const $btn     = document.getElementById('btnBuscar');
 
-    function setLoading(on){ show($('#skDonut'),on); show($('#skLine'),on); show($('#chartDonut'),!on); show($('#chartLine'),!on); }
+    const $estado  = document.getElementById('estado');
+    const $error   = document.getElementById('error');
 
-    async function cargar() {
-      setLoading(true); $('#err').style.display='none';
+    const $lblPeriodo = document.getElementById('lblPeriodo');
+    const $lblTipo    = document.getElementById('lblTipo');
+    const $kpiTotal   = document.getElementById('kpiTotal');
+    const $totA       = document.getElementById('totA');
+    const $totB       = document.getElementById('totB');
+    const $totTotal   = document.getElementById('totTotal');
 
-      const periodo = periodoSel();
-      const tipo    = tipoSel();
-      const desde   = $('#fDesde').value || '';
-      const hasta   = $('#fHasta').value || '';
+    const $tablaBody  = document.querySelector('#tablaSeries tbody');
 
-      $('#lblPeriodo').textContent = desde && hasta ? `${desde} → ${hasta}`.toUpperCase() : periodo.toUpperCase();
-      $('#lblTipo').textContent    = tipo;
+    // ===== Cargar datos =====
+    async function buscar() {
+      // estado
+      $error.style.display = 'none';
+      $error.textContent = '';
+      $estado.textContent = 'Buscando…';
 
-      const qs = new URLSearchParams({ periodo, tipo });
-      if (desde) qs.set('desde', desde);
-      if (hasta) qs.set('hasta', hasta);
+      // params
+      const periodo = $periodo.value;
+      const tipo    = $tipo.value;
+      const desde   = $desde.value;
+      const hasta   = $hasta.value;
+
+      const params = { periodo, tipo };
+      if (desde) params.desde = desde;
+      if (hasta) params.hasta = hasta;
 
       try {
-        const r = await fetch(`/administracion/api/objetivos-compras?${qs.toString()}`);
-        const data = await r.json();
-        if (!data.ok) throw new Error(data.error || 'Error API');
+        const url = `/administracion/api/objetivos-compras?${qs(params)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data && data.error ? data.error : 'Error desconocido en API');
+        }
+
+        // pintar encabezados
+        $lblPeriodo.textContent = (desde && hasta) ? `${desde} → ${hasta}` : periodo;
+        $lblTipo.textContent    = tipo;
 
         // KPIs
-        $('#kpiTotal').textContent   = money(data.kpi.totalPeriodo);
-        $('#kpiDetalle').textContent = `A: ${money(data.totales.A)} · B: ${money(data.totales.B)} · Total: ${money(data.totales.TOTAL)}`;
+        $kpiTotal.textContent = money(data.kpi.totalPeriodo);
+        $totA.textContent     = money(data.totales.A);
+        $totB.textContent     = money(data.totales.B);
+        $totTotal.textContent = money(data.totales.TOTAL);
 
-        const labels = data.series.labels;
-        const serie  = data.series.data || [];
-        const ultimo = serie.length ? serie[serie.length-1] : 0;
-        const etiq   = labels.length ? labels[labels.length-1] : '–';
-        $('#kpiUltimo').textContent  = money(ultimo);
-        $('#kpiEtiqueta').textContent= etiq;
+        // Tabla series
+        const labels = data.series.labels || [];
+        const serieA = data.series.A || [];
+        const serieB = data.series.B || [];
+        const serieT = data.series.TOTAL || [];
+        const serieSel = (tipo === 'A') ? serieA : (tipo === 'B') ? serieB : serieT;
 
-        // Ganador
-        const A = Number(data.totales.A||0), B = Number(data.totales.B||0);
-        let ganador='Empate', diff=0, pct='0%';
-        if (A > B) { ganador='A — Facturas'; diff=A-B; pct=`+${((diff/(B||1))*100).toFixed(1)}%`; }
-        else if (B > A) { ganador='B — Presupuestos'; diff=B-A; pct=`+${((diff/(A||1))*100).toFixed(1)}%`; }
-        $('#kpiGanador').textContent = ganador;
-        $('#badgeDiff').textContent  = `Dif: ${money(diff)}`;
-        $('#badgePct').textContent   = pct;
-        $('#badgeDiff').className = 'badge ' + (diff>0?'win':'');
-        $('#badgePct').className  = 'badge ' + (diff>0?'win':'');
+        // limpiar
+        $tablaBody.innerHTML = '';
 
-        // Charts
-        if (donut) donut.destroy();
-        donut = new Chart($('#chartDonut').getContext('2d'), {
-          type:'doughnut',
-          data:{ labels:['A (Facturas)','B (Presupuestos)'], datasets:[{ data:[A,B] }] },
-          options:{ responsive:true, cutout:'60%', plugins:{ legend:{ labels:{ color:'#cfe2ff' } } } }
-        });
+        for (let i = 0; i < labels.length; i++) {
+          const tr = document.createElement('tr');
 
-        if (line) line.destroy();
-        line = new Chart($('#chartLine').getContext('2d'), {
-          type:'line',
-          data:{ labels, datasets:[{ label:`Compras (${data.tipo})`, data: serie, tension:.35, borderWidth:2, fill:true }] },
-          options:{
-            responsive:true,
-            plugins:{ legend:{ display:false } },
-            scales:{
-              x:{ ticks:{ color:'#cfe2ff' }, grid:{ color:'rgba(255,255,255,.06)' } },
-              y:{ ticks:{ color:'#cfe2ff', callback:v=>money(v) }, grid:{ color:'rgba(255,255,255,.06)' } }
-            }
-          }
-        });
+          // celdas
+          const tdLbl = document.createElement('td');   tdLbl.textContent = labels[i] ?? '';
+          const tdA   = document.createElement('td');   tdA.textContent   = money(serieA[i] ?? 0);
+          const tdB   = document.createElement('td');   tdB.textContent   = money(serieB[i] ?? 0);
+          const tdT   = document.createElement('td');   tdT.textContent   = money(serieT[i] ?? 0);
+          const tdS   = document.createElement('td');   tdS.textContent   = money(serieSel[i] ?? 0);
 
-        setLoading(false);
+          tr.appendChild(tdLbl);
+          tr.appendChild(tdA);
+          tr.appendChild(tdB);
+          tr.appendChild(tdT);
+          tr.appendChild(tdS);
+
+          $tablaBody.appendChild(tr);
+        }
+
+        $estado.textContent = 'Listo.';
       } catch (e) {
-        console.error(e); $('#err').style.display='block'; setLoading(false);
+        console.error(e);
+        $estado.textContent = 'Error.';
+        $error.textContent = `❌ ${e.message}`;
+        $error.style.display = 'block';
       }
     }
 
-    $('#btnBuscar').addEventListener('click', cargar);
-    document.addEventListener('DOMContentLoaded', cargar);
+    // botón
+    $btn.addEventListener('click', buscar);
+
+    // carga inicial (opcional: descomentar si querés que cargue de entrada)
+    // document.addEventListener('DOMContentLoaded', buscar);
   </script>
 
   <%- include('./layouts/footer.ejs') %>
