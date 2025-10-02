@@ -3,58 +3,91 @@
 
 <body>
   <main style="padding:16px;">
-    <h2>Objetivos — Compras (versión básica funcional)</h2>
+    <h2>Objetivos — Compras (básico funcional)</h2>
 
-    <!-- ===== Filtros básicos ===== -->
+    <!-- ===== Filtros ===== -->
     <section>
+      <!-- 1) Periodo -->
       <div>
         <label>Periodo:
           <select id="periodo">
-            <option value="diario">diario</option>
-            <option value="semanal">semanal</option>
-            <option value="mensual">mensual</option>
-            <option value="anual">anual</option>
+            <option value="" selected hidden>Seleccione…</option>
+            <option value="semanal">Semanal</option>
+            <option value="mensual">Mensual</option>
+            <option value="anual">Anual</option>
           </select>
         </label>
       </div>
 
-      <div style="margin-top:6px;">
-        <label>Tipo:
-          <select id="tipo">
-            <option value="TOTAL">TOTAL</option>
-            <option value="A">A (Facturas)</option>
-            <option value="B">B (Presupuestos)</option>
-          </select>
-        </label>
+      <!-- 2) Contenedor de subfiltros (se muestra según periodo) -->
+      <div id="subfiltros" style="display:none; margin-top:10px;">
+        <!-- Semanal -->
+        <div id="boxSemanal" style="display:none;">
+          <label>Año:
+            <select id="anSem"></select>
+          </label>
+          <label style="margin-left:8px;">Mes:
+            <select id="mesSem"></select>
+          </label>
+          <label style="margin-left:8px;">Semana:
+            <select id="semanaMes">
+              <!-- Semana 1..5 (1–7, 8–14, 15–21, 22–28, 29–fin) -->
+              <option value="1">Semana 1 (1–7)</option>
+              <option value="2">Semana 2 (8–14)</option>
+              <option value="3">Semana 3 (15–21)</option>
+              <option value="4">Semana 4 (22–28)</option>
+              <option value="5">Semana 5 (29–fin)</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Mensual -->
+        <div id="boxMensual" style="display:none;">
+          <label>Año:
+            <select id="anMen"></select>
+          </label>
+          <label style="margin-left:8px;">Mes:
+            <select id="mesMen"></select>
+          </label>
+        </div>
+
+        <!-- Anual -->
+        <div id="boxAnual" style="display:none;">
+          <label>Año:
+            <select id="anAnu"></select>
+          </label>
+        </div>
+
+        <!-- Tipo A/B (se muestra en todos los casos) -->
+        <div style="margin-top:8px;">
+          <label>Tipo:
+            <select id="tipo">
+              <option value="A">A (Facturas)</option>
+              <option value="B">B (Presupuestos)</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Botón Buscar -->
+        <div style="margin-top:10px;">
+          <button id="btnBuscar">Buscar</button>
+        </div>
       </div>
-
-      <div style="margin-top:6px;">
-        <label>Desde: <input id="desde" type="date"></label>
-        <label style="margin-left:8px;">Hasta: <input id="hasta" type="date"></label>
-      </div>
-
-      <div style="margin-top:10px;">
-  <button id="btnBuscar">Buscar</button>
-  <label style="margin-left:10px;">
-    <input type="checkbox" id="chkSoloSeleccion"> Mostrar solo serie seleccionada
-  </label>
-</div>
-
     </section>
 
     <hr style="margin:16px 0;">
 
     <!-- ===== Estado / mensajes ===== -->
-    <div id="estado">Esperando búsqueda…</div>
+    <div id="estado">Seleccione un periodo para comenzar…</div>
     <div id="error" style="color:red; display:none;"></div>
 
     <hr style="margin:16px 0;">
 
     <!-- ===== KPIs mínimos ===== -->
-    <section>
+    <section id="resultados" style="display:none;">
       <h3>Resultados</h3>
-      <p><strong>Periodo/Tipo:</strong> <span id="lblPeriodo">-</span> / <span id="lblTipo">-</span></p>
-      <p><strong>Total del periodo (según Tipo):</strong> <span id="kpiTotal">0</span></p>
+      <p><strong>Rango:</strong> <span id="lblRango">-</span> — <strong>Tipo:</strong> <span id="lblTipo">-</span></p>
+      <p><strong>Total del periodo:</strong> <span id="kpiTotal">0</span></p>
       <p>
         <strong>Detalle totales:</strong>
         A (Facturas): <span id="totA">0</span> ·
@@ -65,186 +98,200 @@
 
     <hr style="margin:16px 0;">
 
-    <!-- ===== Tabla de series ===== -->
-    <section>
-      <h3>Series</h3>
-      <p>La tabla muestra las etiquetas devueltas por la API y los valores de A, B y TOTAL. La columna “Serie Seleccionada” muestra la serie del tipo elegido (TOTAL/A/B).</p>
-
+    <!-- ===== Tabla (solo serie seleccionada) ===== -->
+    <section id="tablaWrap" style="display:none;">
+      <h3>Serie seleccionada</h3>
       <table id="tablaSeries" border="1" cellpadding="6" cellspacing="0">
         <thead>
           <tr>
             <th>Etiqueta</th>
-            <th>A (Facturas)</th>
-            <th>B (Presupuestos)</th>
-            <th>TOTAL</th>
-            <th>Serie Seleccionada</th>
+            <th>Serie (según Tipo)</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- filas generadas por JS -->
-        </tbody>
+        <tbody></tbody>
       </table>
     </section>
   </main>
 
- <script>
-  // ===== Helpers básicos =====
-  function qs(params) {
-    const sp = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') sp.set(k, v); });
-    return sp.toString();
-  }
-  function money(n) {
-    return Number(n || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
-  }
-
-  // ===== Referencias DOM =====
-  const $periodo = document.getElementById('periodo');
-  const $tipo    = document.getElementById('tipo');
-  const $desde   = document.getElementById('desde');
-  const $hasta   = document.getElementById('hasta');
-  const $btn     = document.getElementById('btnBuscar');
-  const $soloSel = document.getElementById('chkSoloSeleccion'); // <— checkbox opcional
-
-  const $estado  = document.getElementById('estado');
-  const $error   = document.getElementById('error');
-
-  const $lblPeriodo = document.getElementById('lblPeriodo');
-  const $lblTipo    = document.getElementById('lblTipo');
-  const $kpiTotal   = document.getElementById('kpiTotal');
-  const $totA       = document.getElementById('totA');
-  const $totB       = document.getElementById('totB');
-  const $totTotal   = document.getElementById('totTotal');
-
-  const $tabla      = document.getElementById('tablaSeries');
-  const $tablaHead  = $tabla.querySelector('thead tr');
-  const $tablaBody  = $tabla.querySelector('tbody');
-
-  // ===== Cargar datos =====
-  async function buscar() {
-    // estado
-    $error.style.display = 'none';
-    $error.textContent = '';
-    $estado.textContent = 'Buscando…';
-
-    // params
-    const periodo = $periodo.value;
-    const tipo    = $tipo.value;
-    const desde   = $desde.value;
-    const hasta   = $hasta.value;
-    const soloSel = $soloSel ? $soloSel.checked : false;
-
-    // (opcional) si no querés permitir "diario", mostramos aviso rápido
-    if (periodo === 'diario') {
-      $estado.textContent = 'El periodo diario no se utiliza para comparativas. Elegí semanal, mensual o anual.';
-      // Si igual querés consultar diario, eliminá el return de abajo:
-      return;
+  <!-- ===== SCRIPT ===== -->
+  <script>
+    // ====== Helpers de fechas ======
+    function pad(n){ return String(n).padStart(2,'0'); }
+    function lastDayOfMonth(year, month1to12){
+      return new Date(year, month1to12, 0).getDate(); // month1to12: 1..12
+    }
+    function weekRangeOfMonth(year, month1to12, weekIndex1to5){
+      // Semana 1: 1–7, 2: 8–14, 3: 15–21, 4: 22–28, 5: 29–fin
+      const startDay = (weekIndex1to5 - 1) * 7 + 1;
+      const endDay = Math.min(weekIndex1to5 * 7, lastDayOfMonth(year, month1to12));
+      const desde = `${year}-${pad(month1to12)}-${pad(startDay)}`;
+      const hasta = `${year}-${pad(month1to12)}-${pad(endDay)}`;
+      return { desde, hasta, label: `Semana ${weekIndex1to5} (${desde} → ${hasta})` };
+    }
+    function monthRange(year, month1to12){
+      const desde = `${year}-${pad(month1to12)}-01`;
+      const hasta = `${year}-${pad(month1to12)}-${pad(lastDayOfMonth(year, month1to12))}`;
+      return { desde, hasta, label: `${year}-${pad(month1to12)}` };
+    }
+    function yearRange(year){
+      return { desde: `${year}-01-01`, hasta: `${year}-12-31`, label: `${year}` };
+    }
+    function money(n){
+      return Number(n || 0).toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0});
     }
 
-    const params = { periodo, tipo };
-    if (desde) params.desde = desde;
-    if (hasta) params.hasta = hasta;
+    // ====== DOM ======
+    const $periodo   = document.getElementById('periodo');
+    const $subfiltros= document.getElementById('subfiltros');
+    // semanal
+    const $boxSem    = document.getElementById('boxSemanal');
+    const $anSem     = document.getElementById('anSem');
+    const $mesSem    = document.getElementById('mesSem');
+    const $semanaMes = document.getElementById('semanaMes');
+    // mensual
+    const $boxMen    = document.getElementById('boxMensual');
+    const $anMen     = document.getElementById('anMen');
+    const $mesMen    = document.getElementById('mesMen');
+    // anual
+    const $boxAnu    = document.getElementById('boxAnual');
+    const $anAnu     = document.getElementById('anAnu');
 
-    try {
-      const url = `/administracion/api/objetivos-compras?${qs(params)}`;
-      const res = await fetch(url);
-      const data = await res.json();
+    const $tipo      = document.getElementById('tipo');
+    const $btnBuscar = document.getElementById('btnBuscar');
 
-      if (!res.ok || !data.ok) {
-        throw new Error(data && data.error ? data.error : 'Error desconocido en API');
+    const $estado    = document.getElementById('estado');
+    const $error     = document.getElementById('error');
+
+    const $resultados= document.getElementById('resultados');
+    const $lblRango  = document.getElementById('lblRango');
+    const $lblTipo   = document.getElementById('lblTipo');
+    const $kpiTotal  = document.getElementById('kpiTotal');
+    const $totA      = document.getElementById('totA');
+    const $totB      = document.getElementById('totB');
+    const $totTotal  = document.getElementById('totTotal');
+
+    const $tablaWrap = document.getElementById('tablaWrap');
+    const $tablaBody = document.querySelector('#tablaSeries tbody');
+
+    // ====== Relleno de selects de año/mes ======
+    (function fillYearMonth(){
+      const now = new Date();
+      const thisYear = now.getFullYear();
+      const years = [];
+      for(let y=thisYear; y>=thisYear-6; y--) years.push(y); // últimos 7 años
+
+      // años
+      [$anSem,$anMen,$anAnu].forEach(sel=>{
+        sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+      });
+
+      // meses 1..12
+      const meses = Array.from({length:12}, (_,i)=>i+1);
+      [$mesSem,$mesMen].forEach(sel=>{
+        sel.innerHTML = meses.map(m=>`<option value="${m}">${pad(m)}</option>`).join('');
+      });
+
+      // default: año/mes actuales
+      $anSem.value = thisYear; $anMen.value = thisYear; $anAnu.value = thisYear;
+      $mesSem.value = now.getMonth()+1; $mesMen.value = now.getMonth()+1;
+    })();
+
+    // ====== Mostrar/ocultar subfiltros según periodo ======
+    function onPeriodoChange(){
+      const p = $periodo.value;
+      // ocultar todo
+      $subfiltros.style.display = 'none';
+      $boxSem.style.display = 'none';
+      $boxMen.style.display = 'none';
+      $boxAnu.style.display = 'none';
+
+      if(!p){ $estado.textContent='Seleccione un periodo para comenzar…'; return; }
+
+      // mostrar contenedor general + bloque correspondiente
+      $subfiltros.style.display = '';
+      if (p === 'semanal') { $boxSem.style.display = ''; }
+      if (p === 'mensual') { $boxMen.style.display = ''; }
+      if (p === 'anual')   { $boxAnu.style.display = ''; }
+
+      $estado.textContent = 'Complete los campos y presione Buscar.';
+    }
+    $periodo.addEventListener('change', onPeriodoChange);
+
+    // ====== Buscar (calcula desde/hasta y consulta API) ======
+    async function buscar(){
+      $error.style.display='none'; $error.textContent='';
+      $resultados.style.display='none'; $tablaWrap.style.display='none';
+      $estado.textContent='Buscando…';
+
+      const periodo = $periodo.value;
+      if(!periodo){ $estado.textContent='Seleccione un periodo.'; return; }
+
+      // calcular desde/hasta según periodo
+      let desde='', hasta='', labelRango='';
+      if (periodo === 'semanal') {
+        const year = parseInt($anSem.value,10);
+        const month= parseInt($mesSem.value,10);
+        const w    = parseInt($semanaMes.value,10);
+        const r = weekRangeOfMonth(year, month, w);
+        desde = r.desde; hasta = r.hasta; labelRango = r.label;
+      } else if (periodo === 'mensual') {
+        const year = parseInt($anMen.value,10);
+        const month= parseInt($mesMen.value,10);
+        const r = monthRange(year, month);
+        desde = r.desde; hasta = r.hasta; labelRango = r.label;
+      } else if (periodo === 'anual') {
+        const year = parseInt($anAnu.value,10);
+        const r = yearRange(year);
+        desde = r.desde; hasta = r.hasta; labelRango = r.label;
       }
 
-      // pintar encabezados KPI
-      $lblPeriodo.textContent = (desde && hasta) ? `${desde} → ${hasta}` : periodo;
-      $lblTipo.textContent    = tipo;
+      const tipo = $tipo.value; // 'A' o 'B'
 
-      // KPIs
-      $kpiTotal.textContent = money(data.kpi.totalPeriodo);
-      $totA.textContent     = money(data.totales.A);
-      $totB.textContent     = money(data.totales.B);
-      $totTotal.textContent = money(data.totales.TOTAL);
+      // construir URL
+      const q = new URLSearchParams({ periodo, tipo, desde, hasta }).toString();
+      const url = `/administracion/api/objetivos-compras?${q}`;
 
-      // Series
-      const labels = data.series.labels || [];
-      const serieA = data.series.A || [];
-      const serieB = data.series.B || [];
-      const serieT = data.series.TOTAL || [];
-      const serieSel = (tipo === 'A') ? serieA : (tipo === 'B') ? serieB : serieT;
+      try{
+        const res = await fetch(url);
+        const data = await res.json();
+        if(!res.ok || !data.ok) throw new Error(data.error || 'Error al calcular series.');
 
-      // Encabezado dinámico
-      if (soloSel) {
-        $tablaHead.innerHTML = `
-          <th>Etiqueta</th>
-          <th>Serie (${tipo})</th>
-        `;
-      } else {
-        $tablaHead.innerHTML = `
-          <th>Etiqueta</th>
-          <th>A (Facturas)</th>
-          <th>B (Presupuestos)</th>
-          <th>TOTAL</th>
-          <th>Serie Seleccionada</th>
-        `;
-      }
+        // pintar KPIs
+        $lblRango.textContent = labelRango;
+        $lblTipo.textContent  = tipo;
 
-      // limpiar cuerpo
-      $tablaBody.innerHTML = '';
+        $kpiTotal.textContent = money(data.kpi.totalPeriodo);
+        $totA.textContent     = money(data.totales.A);
+        $totB.textContent     = money(data.totales.B);
+        $totTotal.textContent = money(data.totales.TOTAL);
 
-      if (!labels.length) {
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.colSpan = soloSel ? 2 : 5;
-        td.textContent = 'Sin datos para los filtros seleccionados.';
-        tr.appendChild(td);
-        $tablaBody.appendChild(tr);
-        $estado.textContent = 'Listo (0 filas).';
-        return;
-      }
-
-      // generar filas
-      for (let i = 0; i < labels.length; i++) {
-        const tr = document.createElement('tr');
-
-        const tdLbl = document.createElement('td');
-        tdLbl.textContent = labels[i] ?? '';
-        tr.appendChild(tdLbl);
-
-        if (soloSel) {
-          const tdS = document.createElement('td');
-          tdS.textContent = money(serieSel[i] ?? 0);
-          tr.appendChild(tdS);
-        } else {
-          const tdA = document.createElement('td'); tdA.textContent = money(serieA[i] ?? 0);
-          const tdB = document.createElement('td'); tdB.textContent = money(serieB[i] ?? 0);
-          const tdT = document.createElement('td'); tdT.textContent = money(serieT[i] ?? 0);
-          const tdS = document.createElement('td'); tdS.textContent = money(serieSel[i] ?? 0);
-          tr.appendChild(tdA); tr.appendChild(tdB); tr.appendChild(tdT); tr.appendChild(tdS);
+        // tabla: SOLO serie seleccionada (pedido)
+        const labels = data.series.labels || [];
+        const serie  = (tipo === 'A') ? (data.series.A||[]) : (data.series.B||[]);
+        $tablaBody.innerHTML = '';
+        for (let i=0; i<labels.length; i++){
+          const tr = document.createElement('tr');
+          const td1= document.createElement('td'); td1.textContent = labels[i] ?? '';
+          const td2= document.createElement('td'); td2.textContent = money(serie[i] ?? 0);
+          tr.appendChild(td1); tr.appendChild(td2);
+          $tablaBody.appendChild(tr);
         }
 
-        $tablaBody.appendChild(tr);
+        $resultados.style.display = '';
+        $tablaWrap.style.display = '';
+        $estado.textContent = `Listo (${labels.length} fila(s)).`;
+      }catch(e){
+        console.error(e);
+        $estado.textContent='Error.';
+        $error.textContent = `❌ ${e.message}`;
+        $error.style.display='block';
       }
-
-      $estado.textContent = `Listo (${labels.length} fila(s)).`;
-    } catch (e) {
-      console.error(e);
-      $estado.textContent = 'Error.';
-      $error.textContent = `❌ ${e.message}`;
-      $error.style.display = 'block';
     }
-  }
+    document.getElementById('btnBuscar').addEventListener('click', buscar);
 
-  // eventos
-  $btn.addEventListener('click', buscar);
-  if ($soloSel) $soloSel.addEventListener('change', () => {
-    // re-render rápido si ya hay datos en pantalla: simulamos click en Buscar
-    // (si preferís no recargar, podés almacenar el último data en memoria)
-    // buscar();
-  });
-
-  // carga inicial (si querés que inicie vacío, dejalo comentado)
-  // document.addEventListener('DOMContentLoaded', buscar);
-</script>
-
+    // Inicio: todo oculto, esperamos elección de periodo
+    onPeriodoChange();
+  </script>
 
   <%- include('./layouts/footer.ejs') %>
 </body>
