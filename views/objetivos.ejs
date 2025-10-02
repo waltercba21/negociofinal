@@ -117,8 +117,16 @@
 <!-- ===== SCRIPT ===== -->
 <script>
   // === Formateo de etiquetas (fechas) ===
+  const NOMBRES_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   function formatearEtiqueta(lbl, periodo){
     if (!lbl) return '-';
+
+    // Si el periodo es ANUAL y las etiquetas vienen como 'YYYY-MM' → nombre del mes
+    if (periodo === 'anual' && /^\d{4}-\d{2}$/.test(lbl)) {
+      const [,m] = lbl.split('-');
+      const idx = Math.max(1, Math.min(12, parseInt(m,10))) - 1;
+      return NOMBRES_MESES[idx];
+    }
 
     // ISO 'YYYY-MM-DD' o string con 'T...Z'
     const isoDateMatch = /^\d{4}-\d{2}-\d{2}/.test(lbl) || /T\d{2}:\d{2}:\d{2}/.test(lbl);
@@ -311,11 +319,32 @@
         $totTotal.textContent = money(data.totales.TOTAL);
       }
 
-      // ===== Serie y etiquetas =====
-      const labels = data.series.labels || [];
-      const serie  = (tipo === 'A') ? (data.series.A||[])
-                  : (tipo === 'B') ? (data.series.B||[])
-                  : (data.series.TOTAL||[]);
+      // ===== Serie desde API =====
+      let labels = data.series.labels || [];
+      let serie  = (tipo === 'A') ? (data.series.A||[])
+                : (tipo === 'B') ? (data.series.B||[])
+                : (data.series.TOTAL||[]);
+
+      // ===== Corrección para ANUAL: 12 meses (enero..diciembre) ordenados =====
+      if (periodo === 'anual') {
+        const year = parseInt($anAnu.value, 10);
+        const monthKeys = Array.from({length:12}, (_,i)=> `${year}-${pad(i+1)}`);
+        const acc = new Map(monthKeys.map(k => [k, 0]));
+
+        // Si la API devolvió días sueltos (YYYY-MM-DD), agrego por mes; si devolvió YYYY-MM, sumo directo
+        for (let i = 0; i < labels.length; i++) {
+          const raw = labels[i] || '';
+          const key = raw.slice(0,7); // YYYY-MM
+          if (acc.has(key)) {
+            acc.set(key, acc.get(key) + Number(serie[i] || 0));
+          }
+        }
+
+        labels = monthKeys;
+        serie  = monthKeys.map(k => acc.get(k) || 0);
+      }
+
+      // Etiquetas formateadas para eje X y resumen
       const labelsFmt = labels.map(l => formatearEtiqueta(l, periodo));
 
       // Mostrar contenedor
@@ -339,7 +368,7 @@
           i === iMax ? maxBar : (i === iMin ? minBar : defaultBar)
         );
 
-        // Resumen arriba del gráfico (¡formateado!)
+        // Resumen arriba del gráfico (formateado)
         const maxLabel = labelsFmt[iMax] ?? '-';
         const minLabel = labelsFmt[iMin] ?? '-';
         $resumenSerie.textContent = `Máximo: ${maxLabel} (${money(maxVal)}) · Mínimo: ${minLabel} (${money(minVal)})`;
@@ -348,7 +377,7 @@
         if (chartSerie) { chartSerie.destroy(); }
 
         // Crear gráfico (con labels formateadas)
-        const ctx = $chartCanvas.getContext('2d');
+        const ctx = document.getElementById('chartSerie').getContext('2d');
         chartSerie = new Chart(ctx, {
           type: 'bar',
           data: {
@@ -375,7 +404,7 @@
       }
 
       $resultados.style.display = '';
-      $estado.textContent = `Listo (${labels.length} fila(s)).`;
+      $estado.textContent = `Listo (${labels.length} barra(s)).`;
     }catch(e){
       console.error(e);
       $estado.textContent='Error.';
@@ -388,8 +417,6 @@
   // Inicio
   onPeriodoChange();
 </script>
-
-
 
   <%- include('./layouts/footer.ejs') %>
 </body>
