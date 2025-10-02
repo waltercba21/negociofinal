@@ -1,45 +1,16 @@
-  // ==== Constantes para formateo ====
+// ==== Constantes y helpers ====
   const NOMBRES_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-  // === Formateo de etiquetas (fechas) ===
-  function formatearEtiqueta(lbl, periodo){
-    if (!lbl) return '-';
+  const pad = n => String(n).padStart(2,'0');
+  const lastDayOfMonth = (year, month1to12) => new Date(year, month1to12, 0).getDate();
+  const money = n => Number(n || 0).toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0});
 
-    // Anual con buckets YYYY-MM => nombre de mes
-    if (periodo === 'anual' && /^\d{4}-\d{2}$/.test(lbl)) {
-      const [,m] = lbl.split('-');
-      const idx = Math.max(1, Math.min(12, parseInt(m,10))) - 1;
-      return NOMBRES_MESES[idx];
-    }
+  // Helpers seguros contra null
+  const show    = (el, visible=true) => { if (el) el.style.display = visible ? '' : 'none'; };
+  const hide    = el => show(el, false);
+  const setText = (el, txt='') => { if (el) el.textContent = txt; };
 
-    // ISO 'YYYY-MM-DD' o con 'T...Z'
-    const isoDateMatch = /^\d{4}-\d{2}-\d{2}/.test(lbl) || /T\d{2}:\d{2}:\d{2}/.test(lbl);
-    if (isoDateMatch) {
-      const d = new Date(lbl);
-      if (!isNaN(d)) {
-        const dd = String(d.getDate()).padStart(2,'0');
-        const mm = String(d.getMonth()+1).padStart(2,'0');
-        const yy = d.getFullYear();
-        return `${dd}/${mm}/${yy}`;
-      }
-    }
-
-    // 'YYYY-MM' => 'MM/YYYY'
-    if (/^\d{4}-\d{2}$/.test(lbl)) {
-      const [y,m] = lbl.split('-');
-      return `${m}/${y}`;
-    }
-
-    if (/^\d{4}$/.test(lbl)) return lbl;                     // 'YYYY'
-    if (/^\d{4}-W\d{2}$/.test(lbl)) {                        // 'YYYY-Wxx'
-      const [y,w] = lbl.split('-W'); return `Sem ${w} / ${y}`;
-    }
-    return lbl;
-  }
-
-  // ==== Helpers de fecha y dinero ====
-  function pad(n){ return String(n).padStart(2,'0'); }
-  function lastDayOfMonth(year, month1to12){ return new Date(year, month1to12, 0).getDate(); }
+  // Rango de fechas
   function weekRangeOfMonth(year, month1to12, weekIndex1to5){
     const startDay = (weekIndex1to5 - 1) * 7 + 1;
     const endDay   = Math.min(weekIndex1to5 * 7, lastDayOfMonth(year, month1to12));
@@ -52,16 +23,35 @@
     const hasta = `${year}-${pad(month1to12)}-${pad(lastDayOfMonth(year, month1to12))}`;
     return { desde, hasta, label: `${year}-${pad(month1to12)}` };
   }
-  function yearRange(year){ return { desde: `${year}-01-01`, hasta: `${year}-12-31`, label: `${year}` }; }
-  function money(n){ return Number(n || 0).toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}); }
+  const yearRange = year => ({ desde: `${year}-01-01`, hasta: `${year}-12-31`, label: `${year}` });
+
+  // Etiquetas de fecha legibles
+  function formatearEtiqueta(lbl, periodo){
+    if (!lbl) return '-';
+    if (periodo === 'anual' && /^\d{4}-\d{2}$/.test(lbl)) {
+      const [,m] = lbl.split('-'); const idx = Math.max(1, Math.min(12, parseInt(m,10))) - 1;
+      return NOMBRES_MESES[idx];
+    }
+    const isoDateMatch = /^\d{4}-\d{2}-\d{2}/.test(lbl) || /T\d{2}:\d{2}:\d{2}/.test(lbl);
+    if (isoDateMatch) {
+      const d = new Date(lbl);
+      if (!isNaN(d)) return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+    }
+    if (/^\d{4}-\d{2}$/.test(lbl)) { const [y,m]=lbl.split('-'); return `${m}/${y}`; }
+    if (/^\d{4}$/.test(lbl)) return lbl;
+    if (/^\d{4}-W\d{2}$/.test(lbl)) { const [y,w]=lbl.split('-W'); return `Sem ${w} / ${y}`; }
+    return lbl;
+  }
+
+  // Colores de barras
+  const defaultBar = 'rgba(99, 132, 255, 0.6)';
+  const maxBar     = 'rgba(52, 211, 153, 0.85)';
+  const minBar     = 'rgba(248, 113, 113, 0.85)';
 
   // =====================================================================
   // ============================ COMPRAS ================================
   // =====================================================================
   let chartSerie = null;
-  const defaultBar = 'rgba(99, 132, 255, 0.6)';
-  const maxBar     = 'rgba(52, 211, 153, 0.85)';
-  const minBar     = 'rgba(248, 113, 113, 0.85)';
 
   // DOM COMPRAS
   const $tipo       = document.getElementById('tipo');
@@ -78,7 +68,7 @@
   const $anAnu      = document.getElementById('anAnu');
   const $btnBuscar  = document.getElementById('btnBuscar');
 
-  const $estado     = document.getElementById('estado');
+  const $estado     = document.getElementById('estado'); // puede no existir
   const $error      = document.getElementById('error');
 
   const $resultados = document.getElementById('resultados');
@@ -97,60 +87,56 @@
   const $resumenSerie = document.getElementById('resumenSerie');
   const $chartCanvas  = document.getElementById('chartSerie');
 
-  // Relleno años/meses COMPRAS
+  // Años/meses COMPRAS
   (function fillYearMonthCompras(){
     const now = new Date();
     const thisYear = now.getFullYear();
-    const years = [];
-    for(let y=thisYear; y>=thisYear-6; y--) years.push(y);
+    const years = []; for(let y=thisYear; y>=thisYear-6; y--) years.push(y);
 
     [$anSem,$anMen,$anAnu].forEach(sel=>{
-      sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+      if (sel) sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
     });
     const meses = Array.from({length:12}, (_,i)=>i+1);
     [$mesSem,$mesMen].forEach(sel=>{
-      sel.innerHTML = meses.map(m=>`<option value="${m}">${pad(m)}</option>`).join('');
+      if (sel) sel.innerHTML = meses.map(m=>`<option value="${m}">${pad(m)}</option>`).join('');
     });
 
-    $anSem.value = thisYear; $anMen.value = thisYear; $anAnu.value = thisYear;
-    $mesSem.value = now.getMonth()+1; $mesMen.value = now.getMonth()+1;
+    if ($anSem) $anSem.value = thisYear; if ($anMen) $anMen.value = thisYear; if ($anAnu) $anAnu.value = thisYear;
+    if ($mesSem) $mesSem.value = now.getMonth()+1; if ($mesMen) $mesMen.value = now.getMonth()+1;
   })();
 
   function onPeriodoChangeCompras(){
-    const p = $periodo.value;
-    $subfiltros.style.display = 'none';
-    $boxSem.style.display = 'none';
-    $boxMen.style.display = 'none';
-    $boxAnu.style.display = 'none';
-    if(!p){ $estado.textContent=''; return; }
-    $subfiltros.style.display = '';
-    if (p === 'semanal') $boxSem.style.display = '';
-    if (p === 'mensual') $boxMen.style.display = '';
-    if (p === 'anual')   $boxAnu.style.display = '';
-    $estado.textContent = '';
+    const p = $periodo ? $periodo.value : '';
+    hide($subfiltros); hide($boxSem); hide($boxMen); hide($boxAnu);
+    if(!p){ setText($estado, ''); return; }
+    show($subfiltros);
+    if (p === 'semanal') show($boxSem);
+    if (p === 'mensual') show($boxMen);
+    if (p === 'anual')   show($boxAnu);
+    setText($estado, '');
   }
-  $periodo.addEventListener('change', onPeriodoChangeCompras);
+  if ($periodo) $periodo.addEventListener('change', onPeriodoChangeCompras);
 
   async function buscarCompras(){
-    $error.style.display='none'; $error.textContent='';
-    $resultados.style.display='none'; $tablaWrap.style.display='none';
-    $estado.textContent = '';
+    hide($error); setText($error,'');
+    hide($resultados); hide($tablaWrap);
+    setText($estado, '');
 
-    const periodo = $periodo.value;
-    if(!periodo){ $estado.textContent=''; return; }
+    const periodo = $periodo ? $periodo.value : '';
+    if(!periodo){ setText($estado,''); return; }
 
     let desde='', hasta='', labelRango='';
     if (periodo === 'semanal') {
       const r = weekRangeOfMonth(parseInt($anSem.value,10), parseInt($mesSem.value,10), parseInt($semanaMes.value,10));
-      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+      ({desde, hasta, labelRango} = r);
     } else if (periodo === 'mensual') {
       const r = monthRange(parseInt($anMen.value,10), parseInt($mesMen.value,10));
-      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+      ({desde, hasta, labelRango} = r);
     } else if (periodo === 'anual') {
       const r = yearRange(parseInt($anAnu.value,10));
-      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+      ({desde, hasta, labelRango} = r);
     }
-    const tipo = $tipo.value;
+    const tipo = $tipo ? $tipo.value : 'TOTAL';
 
     try{
       const qs = new URLSearchParams({ periodo, tipo, desde, hasta }).toString();
@@ -159,24 +145,22 @@
       if(!res.ok || !data.ok) throw new Error(data.error || 'Error al calcular series.');
 
       // KPIs
-      $lblRango.textContent = labelRango;
-      $lblTipo.textContent  = (tipo === 'TOTAL' ? 'AMBOS' : tipo);
-      $wrapA.style.display=''; $wrapB.style.display=''; $wrapTOTAL.style.display='';
+      setText($lblRango, labelRango);
+      setText($lblTipo,  (tipo === 'TOTAL' ? 'AMBOS' : tipo));
+      show($wrapA); show($wrapB); show($wrapTOTAL);
       if (tipo === 'A') {
-        $kpiTotal.textContent = money(data.totales.A);
-        $totA.textContent     = money(data.totales.A);
-        $wrapB.style.display  = 'none';
-        $wrapTOTAL.style.display = 'none';
+        setText($kpiTotal, money(data.totales.A));
+        setText($totA,     money(data.totales.A));
+        hide($wrapB); hide($wrapTOTAL);
       } else if (tipo === 'B') {
-        $kpiTotal.textContent = money(data.totales.B);
-        $totB.textContent     = money(data.totales.B);
-        $wrapA.style.display  = 'none';
-        $wrapTOTAL.style.display = 'none';
+        setText($kpiTotal, money(data.totales.B));
+        setText($totB,     money(data.totales.B));
+        hide($wrapA); hide($wrapTOTAL);
       } else {
-        $kpiTotal.textContent = money(data.totales.TOTAL);
-        $totA.textContent     = money(data.totales.A);
-        $totB.textContent     = money(data.totales.B);
-        $totTotal.textContent = money(data.totales.TOTAL);
+        setText($kpiTotal, money(data.totales.TOTAL));
+        setText($totA,     money(data.totales.A));
+        setText($totB,     money(data.totales.B));
+        setText($totTotal, money(data.totales.TOTAL));
       }
 
       // Serie
@@ -185,7 +169,7 @@
                 : (tipo === 'B') ? (data.series.B||[])
                 : (data.series.TOTAL||[]);
 
-      // Anual: 12 meses exactos y ordenados
+      // Anual normalizado a 12 meses
       if (periodo === 'anual') {
         const year = parseInt($anAnu.value, 10);
         const monthKeys = Array.from({length:12}, (_,i)=> `${year}-${String(i+1).padStart(2,'0')}`);
@@ -199,10 +183,10 @@
       }
 
       const labelsFmt = labels.map(l => formatearEtiqueta(l, periodo));
-      $tablaWrap.style.display  = '';
+      show($tablaWrap);
       if (!labels.length) {
         if (chartSerie) { chartSerie.destroy(); chartSerie = null; }
-        $resumenSerie.textContent = 'Sin datos para los filtros seleccionados.';
+        setText($resumenSerie, 'Sin datos para los filtros seleccionados.');
       } else {
         let maxVal=-Infinity, minVal=Infinity, iMax=-1, iMin=-1;
         for (let i=0;i<serie.length;i++){
@@ -213,7 +197,7 @@
         const bgColors = serie.map((_, i) => i===iMax? maxBar : (i===iMin? minBar : defaultBar));
         const maxLabel = labelsFmt[iMax] ?? '-';
         const minLabel = labelsFmt[iMin] ?? '-';
-        $resumenSerie.textContent = `Máximo: ${maxLabel} (${money(maxVal)}) · Mínimo: ${minLabel} (${money(minVal)})`;
+        setText($resumenSerie, `Máximo: ${maxLabel} (${money(maxVal)}) · Mínimo: ${minLabel} (${money(minVal)})`);
 
         if (chartSerie) chartSerie.destroy();
         const ctx = $chartCanvas.getContext('2d');
@@ -228,33 +212,23 @@
               tooltip: { callbacks: { label: (c) => money(c.parsed.y) } }
             },
             scales: {
-  x: {
-    ticks: { color: '#e7eefc' },                      // etiquetas bajo el gráfico (BLANCO)
-    grid:  { color: 'rgba(255,255,255,0.08)' },       // líneas verticales suaves
-    border:{ color: 'rgba(255,255,255,0.20)' }        // eje X
-  },
-  y: {
-    beginAtZero: true,
-    ticks: { color: '#e7eefc', callback: v => money(v) }, // valores del eje Y (BLANCO)
-    grid:  { color: 'rgba(255,255,255,0.08)' },           // líneas horizontales suaves
-    border:{ color: 'rgba(255,255,255,0.20)' }            // eje Y
-  }
-},
+              x: { ticks: { color: '#e7eefc' }, grid: { color: 'rgba(255,255,255,0.08)' }, border:{ color:'rgba(255,255,255,0.20)' } },
+              y: { beginAtZero: true, ticks: { color: '#e7eefc', callback: v => money(v) }, grid:{ color:'rgba(255,255,255,0.08)' }, border:{ color:'rgba(255,255,255,0.20)' } }
+            },
             datasets: { bar: { categoryPercentage: 0.7, barPercentage: 0.9, maxBarThickness: 32 } }
           }
         });
       }
 
-      $resultados.style.display = '';
-      $estado.textContent = ''; // (antes mostraba "Listo (...) barra(s)")
+      show($resultados);
+      setText($estado, '');
     }catch(e){
       console.error(e);
-      $estado.textContent='';   // sin mensaje en estado
-      $error.textContent = `❌ ${e.message}`;
-      $error.style.display='block';
+      setText($estado,'');
+      setText($error, `❌ ${e.message}`); show($error);
     }
   }
-  document.getElementById('btnBuscar').addEventListener('click', buscarCompras);
+  if ($btnBuscar) $btnBuscar.addEventListener('click', buscarCompras);
   onPeriodoChangeCompras();
 
   // =====================================================================
@@ -277,7 +251,7 @@
   const $vAnAnu      = document.getElementById('v-anAnu');
   const $vBtnBuscar  = document.getElementById('v-btnBuscar');
 
-  const $vEstado     = document.getElementById('v-estado');
+  const $vEstado     = document.getElementById('v-estado'); // puede no existir
   const $vError      = document.getElementById('v-error');
 
   const $vResultados = document.getElementById('v-resultados');
@@ -296,60 +270,56 @@
   const $vResumenSerie = document.getElementById('v-resumenSerie');
   const $vChartCanvas  = document.getElementById('v-chartSerie');
 
-  // Relleno años/meses VENTAS
+  // Años/meses VENTAS
   (function vFillYearMonth(){
     const now = new Date();
-       const thisYear = now.getFullYear();
-    const years = [];
-    for(let y=thisYear; y>=thisYear-6; y--) years.push(y);
+    const thisYear = now.getFullYear();
+    const years = []; for(let y=thisYear; y>=thisYear-6; y--) years.push(y);
 
     [$vAnSem,$vAnMen,$vAnAnu].forEach(sel=>{
-      sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+      if (sel) sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
     });
     const meses = Array.from({length:12}, (_,i)=>i+1);
     [$vMesSem,$vMesMen].forEach(sel=>{
-      sel.innerHTML = meses.map(m=>`<option value="${m}">${pad(m)}</option>`).join('');
+      if (sel) sel.innerHTML = meses.map(m=>`<option value="${m}">${pad(m)}</option>`).join('');
     });
 
-    $vAnSem.value = thisYear; $vAnMen.value = thisYear; $vAnAnu.value = thisYear;
-    $vMesSem.value = now.getMonth()+1; $vMesMen.value = now.getMonth()+1;
+    if ($vAnSem) $vAnSem.value = thisYear; if ($vAnMen) $vAnMen.value = thisYear; if ($vAnAnu) $vAnAnu.value = thisYear;
+    if ($vMesSem) $vMesSem.value = now.getMonth()+1; if ($vMesMen) $vMesMen.value = now.getMonth()+1;
   })();
 
   function onPeriodoChangeVentas(){
-    const p = $vPeriodo.value;
-    $vSubfiltros.style.display = 'none';
-    $vBoxSem.style.display = 'none';
-    $vBoxMen.style.display = 'none';
-    $vBoxAnu.style.display = 'none';
-    if(!p){ $vEstado.textContent = ''; return; }
-    $vSubfiltros.style.display = '';
-    if (p === 'semanal') $vBoxSem.style.display = '';
-    if (p === 'mensual') $vBoxMen.style.display = '';
-    if (p === 'anual')   $vBoxAnu.style.display = '';
-    $vEstado.textContent = '';
+    const p = $vPeriodo ? $vPeriodo.value : '';
+    hide($vSubfiltros); hide($vBoxSem); hide($vBoxMen); hide($vBoxAnu);
+    if(!p){ setText($vEstado, ''); return; }
+    show($vSubfiltros);
+    if (p === 'semanal') show($vBoxSem);
+    if (p === 'mensual') show($vBoxMen);
+    if (p === 'anual')   show($vBoxAnu);
+    setText($vEstado, '');
   }
-  $vPeriodo.addEventListener('change', onPeriodoChangeVentas);
+  if ($vPeriodo) $vPeriodo.addEventListener('change', onPeriodoChangeVentas);
 
   async function buscarVentas(){
-    $vError.style.display='none'; $vError.textContent='';
-    $vResultados.style.display='none'; $vTablaWrap.style.display='none';
-    $vEstado.textContent = '';
+    hide($vError); setText($vError,'');
+    hide($vResultados); hide($vTablaWrap);
+    setText($vEstado, '');
 
-    const periodo = $vPeriodo.value;
-    if(!periodo){ $vEstado.textContent = ''; return; }
+    const periodo = $vPeriodo ? $vPeriodo.value : '';
+    if(!periodo){ setText($vEstado, ''); return; }
 
     let desde='', hasta='', labelRango='';
     if (periodo === 'semanal') {
       const r = weekRangeOfMonth(parseInt($vAnSem.value,10), parseInt($vMesSem.value,10), parseInt($vSemanaMes.value,10));
-      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+      ({desde, hasta, labelRango} = r);
     } else if (periodo === 'mensual') {
       const r = monthRange(parseInt($vAnMen.value,10), parseInt($vMesMen.value,10));
-      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+      ({desde, hasta, labelRango} = r);
     } else if (periodo === 'anual') {
       const r = yearRange(parseInt($vAnAnu.value,10));
-      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+      ({desde, hasta, labelRango} = r);
     }
-    const tipo = $vTipo.value;
+    const tipo = $vTipo ? $vTipo.value : 'TOTAL';
 
     try{
       const qs = new URLSearchParams({ periodo, tipo, desde, hasta }).toString();
@@ -358,24 +328,22 @@
       if(!res.ok || !data.ok) throw new Error(data.error || 'Error al calcular series.');
 
       // KPIs
-      $vLblRango.textContent = labelRango;
-      $vLblTipo.textContent  = (tipo === 'TOTAL' ? 'AMBOS' : tipo);
-      $vWrapA.style.display=''; $vWrapB.style.display=''; $vWrapTOTAL.style.display='';
+      setText($vLblRango, labelRango);
+      setText($vLblTipo,  (tipo === 'TOTAL' ? 'AMBOS' : tipo));
+      show($vWrapA); show($vWrapB); show($vWrapTOTAL);
       if (tipo === 'A') {
-        $vKpiTotal.textContent = money(data.totales.A);
-        $vTotA.textContent     = money(data.totales.A);
-        $vWrapB.style.display  = 'none';
-        $vWrapTOTAL.style.display = 'none';
+        setText($vKpiTotal, money(data.totales.A));
+        setText($vTotA,     money(data.totales.A));
+        hide($vWrapB); hide($vWrapTOTAL);
       } else if (tipo === 'B') {
-        $vKpiTotal.textContent = money(data.totales.B);
-        $vTotB.textContent     = money(data.totales.B);
-        $vWrapA.style.display  = 'none';
-        $vWrapTOTAL.style.display = 'none';
+        setText($vKpiTotal, money(data.totales.B));
+        setText($vTotB,     money(data.totales.B));
+        hide($vWrapA); hide($vWrapTOTAL);
       } else {
-        $vKpiTotal.textContent = money(data.totales.TOTAL);
-        $vTotA.textContent     = money(data.totales.A);
-        $vTotB.textContent     = money(data.totales.B);
-        $vTotTotal.textContent = money(data.totales.TOTAL);
+        setText($vKpiTotal, money(data.totales.TOTAL));
+        setText($vTotA,     money(data.totales.A));
+        setText($vTotB,     money(data.totales.B));
+        setText($vTotTotal, money(data.totales.TOTAL));
       }
 
       // Serie
@@ -384,7 +352,6 @@
                 : (tipo === 'B') ? (data.series.B||[])
                 : (data.series.TOTAL||[]);
 
-      // Anual: 12 meses exactos y ordenados
       if (periodo === 'anual') {
         const year = parseInt($vAnAnu.value, 10);
         const monthKeys = Array.from({length:12}, (_,i)=> `${year}-${String(i+1).padStart(2,'0')}`);
@@ -398,10 +365,10 @@
       }
 
       const labelsFmt = labels.map(l => formatearEtiqueta(l, periodo));
-      $vTablaWrap.style.display  = '';
+      show($vTablaWrap);
       if (!labels.length) {
         if (vChart) { vChart.destroy(); vChart = null; }
-        $vResumenSerie.textContent = 'Sin datos para los filtros seleccionados.';
+        setText($vResumenSerie, 'Sin datos para los filtros seleccionados.');
       } else {
         let maxVal=-Infinity, minVal=Infinity, iMax=-1, iMin=-1;
         for (let i=0;i<serie.length;i++){
@@ -412,7 +379,7 @@
         const bgColors = serie.map((_, i) => i===iMax? maxBar : (i===iMin? minBar : defaultBar));
         const maxLabel = labelsFmt[iMax] ?? '-';
         const minLabel = labelsFmt[iMin] ?? '-';
-        $vResumenSerie.textContent = `Máximo: ${maxLabel} (${money(maxVal)}) · Mínimo: ${minLabel} (${money(minVal)})`;
+        setText($vResumenSerie, `Máximo: ${maxLabel} (${money(maxVal)}) · Mínimo: ${minLabel} (${money(minVal)})`);
 
         if (vChart) vChart.destroy();
         const ctx = $vChartCanvas.getContext('2d');
@@ -427,31 +394,22 @@
               tooltip: { callbacks: { label: (c) => money(c.parsed.y) } }
             },
             scales: {
-  x: {
-    ticks: { color: '#e7eefc' },                      // etiquetas bajo el gráfico (BLANCO)
-    grid:  { color: 'rgba(255,255,255,0.08)' },       // líneas verticales suaves
-    border:{ color: 'rgba(255,255,255,0.20)' }        // eje X
-  },
-  y: {
-    beginAtZero: true,
-    ticks: { color: '#e7eefc', callback: v => money(v) }, // valores del eje Y (BLANCO)
-    grid:  { color: 'rgba(255,255,255,0.08)' },           // líneas horizontales suaves
-    border:{ color: 'rgba(255,255,255,0.20)' }            // eje Y
-  }
-},
+              x: { ticks: { color: '#e7eefc' }, grid: { color: 'rgba(255,255,255,0.08)' }, border:{ color:'rgba(255,255,255,0.20)' } },
+              y: { beginAtZero: true, ticks: { color: '#e7eefc', callback: v => money(v) }, grid:{ color:'rgba(255,255,255,0.08)' }, border:{ color:'rgba(255,255,255,0.20)' } }
+            },
             datasets: { bar: { categoryPercentage: 0.7, barPercentage: 0.9, maxBarThickness: 32 } }
           }
         });
       }
 
-      $vResultados.style.display = '';
-      $vEstado.textContent = ''; // (antes podía mostrar "Listo (...) barra(s)")
+      show($vResultados);
+      setText($vEstado, '');
     }catch(e){
       console.error(e);
-      $vEstado.textContent = '';
-      $vError.textContent = `❌ ${e.message}`;
-      $vError.style.display='block';
+      setText($vEstado, '');
+      setText($vError, `❌ ${e.message}`); show($vError);
     }
   }
-  document.getElementById('v-btnBuscar').addEventListener('click', buscarVentas);
+  if ($vBtnBuscar) $vBtnBuscar.addEventListener('click', buscarVentas);
   onPeriodoChangeVentas();
+
