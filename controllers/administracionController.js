@@ -883,5 +883,59 @@ apiObjetivosVentas: function (req, res) {
     res.status(500).json({ ok: false, error: 'Error inesperado.' });
   }
 },
+// ====== GASTOS ======
+gastos: (req, res) => {
+  const hoy = formatDate(new Date());
+  // Traigo últimos 30 días por defecto para mostrar en tabla
+  const desde = formatDate(new Date(Date.now() - 29 * 24 * 60 * 60 * 1000));
+  const hasta = hoy;
+
+  administracion.listarGastos(desde, hasta, null, (err, rows) => {
+    if (err) {
+      console.error("❌ Error al listar gastos:", err);
+      return res.status(500).send("Error al listar gastos");
+    }
+    // Lista base de categorías (rápida)
+    const categorias = [
+      'luz','agua','gas','municipalidad','rentas provincia',
+      'contador','empleados','alquiler','internet','limpieza','seguro','otros'
+    ];
+    res.render('gastos', { hoy, gastos: rows || [], categorias });
+  });
+},
+
+postGasto: (req, res) => {
+  const data = {
+    categoria: (req.body.categoria || '').trim(),
+    fecha: req.body.fecha,
+    monto: parseFloat(req.body.monto || 0) || 0,
+    descripcion: (req.body.descripcion || '').trim(),
+    administrador: req.body.administrador || (req.user?.nombre || 'admin')
+  };
+
+  if (!data.categoria || !data.fecha || !data.monto) {
+    return res.status(400).send('Faltan datos obligatorios (categoria, fecha, monto)');
+  }
+
+  administracion.insertGasto(data, (err, result) => {
+    if (err) {
+      console.error("❌ Error al guardar gasto:", err);
+      return res.status(500).send("Error al guardar gasto");
+    }
+    // Si la vista lo envía vía fetch, devolvemos JSON; si es form normal, redirect
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.json({ ok: true, insertId: result.insertId });
+    }
+    res.redirect('/administracion/gastos');
+  });
+},
+
+listarGastos: (req, res) => {
+  const { desde, hasta, categoria } = req.query;
+  administracion.listarGastos(desde || null, hasta || null, categoria || null, (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Error al obtener gastos' });
+    res.json(rows || []);
+  });
+},
 
 }
