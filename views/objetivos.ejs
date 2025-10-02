@@ -34,8 +34,12 @@
       </div>
 
       <div style="margin-top:10px;">
-        <button id="btnBuscar">Buscar</button>
-      </div>
+  <button id="btnBuscar">Buscar</button>
+  <label style="margin-left:10px;">
+    <input type="checkbox" id="chkSoloSeleccion"> Mostrar solo serie seleccionada
+  </label>
+</div>
+
     </section>
 
     <hr style="margin:16px 0;">
@@ -83,116 +87,164 @@
     </section>
   </main>
 
-  <script>
-    // ===== Helpers básicos =====
-    function qs(params) {
-      const sp = new URLSearchParams();
-      Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') sp.set(k, v); });
-      return sp.toString();
+ <script>
+  // ===== Helpers básicos =====
+  function qs(params) {
+    const sp = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') sp.set(k, v); });
+    return sp.toString();
+  }
+  function money(n) {
+    return Number(n || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+  }
+
+  // ===== Referencias DOM =====
+  const $periodo = document.getElementById('periodo');
+  const $tipo    = document.getElementById('tipo');
+  const $desde   = document.getElementById('desde');
+  const $hasta   = document.getElementById('hasta');
+  const $btn     = document.getElementById('btnBuscar');
+  const $soloSel = document.getElementById('chkSoloSeleccion'); // <— checkbox opcional
+
+  const $estado  = document.getElementById('estado');
+  const $error   = document.getElementById('error');
+
+  const $lblPeriodo = document.getElementById('lblPeriodo');
+  const $lblTipo    = document.getElementById('lblTipo');
+  const $kpiTotal   = document.getElementById('kpiTotal');
+  const $totA       = document.getElementById('totA');
+  const $totB       = document.getElementById('totB');
+  const $totTotal   = document.getElementById('totTotal');
+
+  const $tabla      = document.getElementById('tablaSeries');
+  const $tablaHead  = $tabla.querySelector('thead tr');
+  const $tablaBody  = $tabla.querySelector('tbody');
+
+  // ===== Cargar datos =====
+  async function buscar() {
+    // estado
+    $error.style.display = 'none';
+    $error.textContent = '';
+    $estado.textContent = 'Buscando…';
+
+    // params
+    const periodo = $periodo.value;
+    const tipo    = $tipo.value;
+    const desde   = $desde.value;
+    const hasta   = $hasta.value;
+    const soloSel = $soloSel ? $soloSel.checked : false;
+
+    // (opcional) si no querés permitir "diario", mostramos aviso rápido
+    if (periodo === 'diario') {
+      $estado.textContent = 'El periodo diario no se utiliza para comparativas. Elegí semanal, mensual o anual.';
+      // Si igual querés consultar diario, eliminá el return de abajo:
+      return;
     }
-    function money(n) {
-      return Number(n || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
-    }
 
-    // ===== Referencias DOM =====
-    const $periodo = document.getElementById('periodo');
-    const $tipo    = document.getElementById('tipo');
-    const $desde   = document.getElementById('desde');
-    const $hasta   = document.getElementById('hasta');
-    const $btn     = document.getElementById('btnBuscar');
+    const params = { periodo, tipo };
+    if (desde) params.desde = desde;
+    if (hasta) params.hasta = hasta;
 
-    const $estado  = document.getElementById('estado');
-    const $error   = document.getElementById('error');
+    try {
+      const url = `/administracion/api/objetivos-compras?${qs(params)}`;
+      const res = await fetch(url);
+      const data = await res.json();
 
-    const $lblPeriodo = document.getElementById('lblPeriodo');
-    const $lblTipo    = document.getElementById('lblTipo');
-    const $kpiTotal   = document.getElementById('kpiTotal');
-    const $totA       = document.getElementById('totA');
-    const $totB       = document.getElementById('totB');
-    const $totTotal   = document.getElementById('totTotal');
-
-    const $tablaBody  = document.querySelector('#tablaSeries tbody');
-
-    // ===== Cargar datos =====
-    async function buscar() {
-      // estado
-      $error.style.display = 'none';
-      $error.textContent = '';
-      $estado.textContent = 'Buscando…';
-
-      // params
-      const periodo = $periodo.value;
-      const tipo    = $tipo.value;
-      const desde   = $desde.value;
-      const hasta   = $hasta.value;
-
-      const params = { periodo, tipo };
-      if (desde) params.desde = desde;
-      if (hasta) params.hasta = hasta;
-
-      try {
-        const url = `/administracion/api/objetivos-compras?${qs(params)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!res.ok || !data.ok) {
-          throw new Error(data && data.error ? data.error : 'Error desconocido en API');
-        }
-
-        // pintar encabezados
-        $lblPeriodo.textContent = (desde && hasta) ? `${desde} → ${hasta}` : periodo;
-        $lblTipo.textContent    = tipo;
-
-        // KPIs
-        $kpiTotal.textContent = money(data.kpi.totalPeriodo);
-        $totA.textContent     = money(data.totales.A);
-        $totB.textContent     = money(data.totales.B);
-        $totTotal.textContent = money(data.totales.TOTAL);
-
-        // Tabla series
-        const labels = data.series.labels || [];
-        const serieA = data.series.A || [];
-        const serieB = data.series.B || [];
-        const serieT = data.series.TOTAL || [];
-        const serieSel = (tipo === 'A') ? serieA : (tipo === 'B') ? serieB : serieT;
-
-        // limpiar
-        $tablaBody.innerHTML = '';
-
-        for (let i = 0; i < labels.length; i++) {
-          const tr = document.createElement('tr');
-
-          // celdas
-          const tdLbl = document.createElement('td');   tdLbl.textContent = labels[i] ?? '';
-          const tdA   = document.createElement('td');   tdA.textContent   = money(serieA[i] ?? 0);
-          const tdB   = document.createElement('td');   tdB.textContent   = money(serieB[i] ?? 0);
-          const tdT   = document.createElement('td');   tdT.textContent   = money(serieT[i] ?? 0);
-          const tdS   = document.createElement('td');   tdS.textContent   = money(serieSel[i] ?? 0);
-
-          tr.appendChild(tdLbl);
-          tr.appendChild(tdA);
-          tr.appendChild(tdB);
-          tr.appendChild(tdT);
-          tr.appendChild(tdS);
-
-          $tablaBody.appendChild(tr);
-        }
-
-        $estado.textContent = 'Listo.';
-      } catch (e) {
-        console.error(e);
-        $estado.textContent = 'Error.';
-        $error.textContent = `❌ ${e.message}`;
-        $error.style.display = 'block';
+      if (!res.ok || !data.ok) {
+        throw new Error(data && data.error ? data.error : 'Error desconocido en API');
       }
+
+      // pintar encabezados KPI
+      $lblPeriodo.textContent = (desde && hasta) ? `${desde} → ${hasta}` : periodo;
+      $lblTipo.textContent    = tipo;
+
+      // KPIs
+      $kpiTotal.textContent = money(data.kpi.totalPeriodo);
+      $totA.textContent     = money(data.totales.A);
+      $totB.textContent     = money(data.totales.B);
+      $totTotal.textContent = money(data.totales.TOTAL);
+
+      // Series
+      const labels = data.series.labels || [];
+      const serieA = data.series.A || [];
+      const serieB = data.series.B || [];
+      const serieT = data.series.TOTAL || [];
+      const serieSel = (tipo === 'A') ? serieA : (tipo === 'B') ? serieB : serieT;
+
+      // Encabezado dinámico
+      if (soloSel) {
+        $tablaHead.innerHTML = `
+          <th>Etiqueta</th>
+          <th>Serie (${tipo})</th>
+        `;
+      } else {
+        $tablaHead.innerHTML = `
+          <th>Etiqueta</th>
+          <th>A (Facturas)</th>
+          <th>B (Presupuestos)</th>
+          <th>TOTAL</th>
+          <th>Serie Seleccionada</th>
+        `;
+      }
+
+      // limpiar cuerpo
+      $tablaBody.innerHTML = '';
+
+      if (!labels.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = soloSel ? 2 : 5;
+        td.textContent = 'Sin datos para los filtros seleccionados.';
+        tr.appendChild(td);
+        $tablaBody.appendChild(tr);
+        $estado.textContent = 'Listo (0 filas).';
+        return;
+      }
+
+      // generar filas
+      for (let i = 0; i < labels.length; i++) {
+        const tr = document.createElement('tr');
+
+        const tdLbl = document.createElement('td');
+        tdLbl.textContent = labels[i] ?? '';
+        tr.appendChild(tdLbl);
+
+        if (soloSel) {
+          const tdS = document.createElement('td');
+          tdS.textContent = money(serieSel[i] ?? 0);
+          tr.appendChild(tdS);
+        } else {
+          const tdA = document.createElement('td'); tdA.textContent = money(serieA[i] ?? 0);
+          const tdB = document.createElement('td'); tdB.textContent = money(serieB[i] ?? 0);
+          const tdT = document.createElement('td'); tdT.textContent = money(serieT[i] ?? 0);
+          const tdS = document.createElement('td'); tdS.textContent = money(serieSel[i] ?? 0);
+          tr.appendChild(tdA); tr.appendChild(tdB); tr.appendChild(tdT); tr.appendChild(tdS);
+        }
+
+        $tablaBody.appendChild(tr);
+      }
+
+      $estado.textContent = `Listo (${labels.length} fila(s)).`;
+    } catch (e) {
+      console.error(e);
+      $estado.textContent = 'Error.';
+      $error.textContent = `❌ ${e.message}`;
+      $error.style.display = 'block';
     }
+  }
 
-    // botón
-    $btn.addEventListener('click', buscar);
+  // eventos
+  $btn.addEventListener('click', buscar);
+  if ($soloSel) $soloSel.addEventListener('change', () => {
+    // re-render rápido si ya hay datos en pantalla: simulamos click en Buscar
+    // (si preferís no recargar, podés almacenar el último data en memoria)
+    // buscar();
+  });
 
-    // carga inicial (opcional: descomentar si querés que cargue de entrada)
-    // document.addEventListener('DOMContentLoaded', buscar);
-  </script>
+  // carga inicial (si querés que inicie vacío, dejalo comentado)
+  // document.addEventListener('DOMContentLoaded', buscar);
+</script>
+
 
   <%- include('./layouts/footer.ejs') %>
 </body>

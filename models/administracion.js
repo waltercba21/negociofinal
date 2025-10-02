@@ -125,17 +125,19 @@ function _sqlSerieFacturas(grupo, puntos, fechas) {
     };
   }
   if (grupo === 'WEEK') {
-    return {
-      sql: `
-        SELECT DATE_FORMAT(fecha, '%x-W%v') AS bucket, SUM(importe_factura) AS total
-        FROM facturas
-        WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY
-        GROUP BY DATE_FORMAT(fecha, '%x-W%v')
-        ORDER BY DATE_FORMAT(fecha, '%x-W%v')
-      `,
-      params: []
-    };
-  }
+  return {
+    sql: `
+      SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket,
+             SUM(importe_factura) AS total
+      FROM facturas
+      WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY
+      GROUP BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+      ORDER BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+    `,
+    params: []
+  };
+}
+
   if (grupo === 'MONTH') {
     return {
       sql: `
@@ -185,17 +187,18 @@ function _sqlSeriePresupuestos(grupo, puntos, fechas) {
     };
   }
   if (grupo === 'WEEK') {
-    return {
-      sql: `
-        SELECT DATE_FORMAT(fecha, '%x-W%v') AS bucket, SUM(importe) AS total
-        FROM presupuestos
-        WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY
-        GROUP BY DATE_FORMAT(fecha, '%x-W%v')
-        ORDER BY DATE_FORMAT(fecha, '%x-W%v')
-      `,
-      params: []
-    };
-  }
+  return {
+    sql: `
+      SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket,
+             SUM(importe) AS total
+      FROM presupuestos
+      WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY
+      GROUP BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+      ORDER BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+    `,
+    params: []
+  };
+}
   if (grupo === 'MONTH') {
     return {
       sql: `
@@ -833,44 +836,52 @@ obtenerTotalesPeriodoCompras: function (periodo, fechas, callback) {
     callback(e);
   }
 },
-
-// Series (por periodo o rango; si pasa rango → día a día)
 obtenerSeriesCompras: function (periodo, fechas, callback) {
   try {
     const { puntos, grupo } = _configuracionPeriodo(periodo);
-    const etiquetas = _armarEtiquetas(new Date(), puntos, grupo);
 
     const fA = _sqlSerieFacturas(grupo, puntos, fechas);
     const fB = _sqlSeriePresupuestos(grupo, puntos, fechas);
 
-    let hecho = 0; let filasA = [], filasB = []; let errorGuardado = null;
+    let hecho = 0;
+    let filasA = [], filasB = [];
+    let errorGuardado = null;
+
+    const finSiListo = () => {
+      if (++hecho < 2) return;
+      if (errorGuardado) return callback(errorGuardado);
+
+      // 1) Etiquetas = unión ordenada de todos los buckets
+      const set = new Set();
+      (filasA || []).forEach(r => set.add(r.bucket));
+      (filasB || []).forEach(r => set.add(r.bucket));
+      const etiquetas = Array.from(set).sort();
+
+      // 2) Mapas A/B por bucket
+      const mapA = new Map((filasA || []).map(r => [r.bucket, Number(r.total || 0)]));
+      const mapB = new Map((filasB || []).map(r => [r.bucket, Number(r.total || 0)]));
+
+      // 3) Series alineadas
+      const serieA = etiquetas.map(lbl => mapA.get(lbl) || 0);
+      const serieB = etiquetas.map(lbl => mapB.get(lbl) || 0);
+      const serieTotal = serieA.map((v, i) => v + serieB[i]);
+
+      callback(null, { etiquetas, A: serieA, B: serieB, TOTAL: serieTotal });
+    };
 
     pool.query(fA.sql, fA.params, (errA, rowsA) => {
       if (errA) errorGuardado = errA; else filasA = rowsA || [];
-      if (++hecho === 2) {
-        if (errorGuardado) return callback(errorGuardado);
-        const serieA = _mapearSeries(filasA, fA.params.length ? _armarEtiquetas(new Date(), filasA.length || 1, 'DAY') : etiquetas);
-        const serieB = _mapearSeries(filasB, fB.params.length ? _armarEtiquetas(new Date(), filasB.length || 1, 'DAY') : etiquetas);
-        const labels = fA.params.length ? filasA.map(r => r.bucket) : etiquetas; // si es rango, tomamos labels del query
-        const serieTotal = serieA.map((v, i) => v + (serieB[i] || 0));
-        return callback(null, { etiquetas: labels, A: serieA, B: serieB, TOTAL: serieTotal });
-      }
+      finSiListo();
     });
 
     pool.query(fB.sql, fB.params, (errB, rowsB) => {
       if (errB) errorGuardado = errB; else filasB = rowsB || [];
-      if (++hecho === 2) {
-        if (errorGuardado) return callback(errorGuardado);
-        const serieA = _mapearSeries(filasA, fA.params.length ? _armarEtiquetas(new Date(), filasA.length || 1, 'DAY') : etiquetas);
-        const serieB = _mapearSeries(filasB, fB.params.length ? _armarEtiquetas(new Date(), filasB.length || 1, 'DAY') : etiquetas);
-        const labels = fA.params.length ? filasA.map(r => r.bucket) : etiquetas;
-        const serieTotal = serieA.map((v, i) => v + (serieB[i] || 0));
-        return callback(null, { etiquetas: labels, A: serieA, B: serieB, TOTAL: serieTotal });
-      }
+      finSiListo();
     });
   } catch (e) {
     callback(e);
   }
 },
+
       
 }
