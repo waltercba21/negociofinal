@@ -223,6 +223,101 @@ function _sqlSeriePresupuestos(grupo, puntos, fechas) {
   };
 }
 
+// ====== HELPERS SQL VENTAS ======
+function _sqlWhereFechasVentas(fechas) {
+  if (fechas && fechas.desde && fechas.hasta) {
+    return { where: ' WHERE fecha BETWEEN ? AND ? ', params: [fechas.desde, fechas.hasta] };
+  }
+  return { where: '', params: [] };
+}
+
+function _sqlSerieFacturasMostrador(grupo, puntos, fechas) {
+  const { where, params } = _sqlWhereFechasVentas(fechas);
+  if (grupo === 'WEEK') {
+    return {
+      sql: `
+        SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket,
+               SUM(total) AS total
+        FROM facturas_mostrador
+        ${where || `WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY`}
+        GROUP BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+        ORDER BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+      `,
+      params
+    };
+  }
+  if (grupo === 'MONTH') {
+    return {
+      sql: `
+        SELECT DATE_FORMAT(fecha,'%Y-%m') AS bucket, SUM(total) AS total
+        FROM facturas_mostrador
+        ${where || `WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1)} MONTH`}
+        GROUP BY DATE_FORMAT(fecha,'%Y-%m')
+        ORDER BY DATE_FORMAT(fecha,'%Y-%m')
+      `,
+      params
+    };
+  }
+  // YEAR
+  return {
+    sql: `
+      SELECT YEAR(fecha) AS bucket, SUM(total) AS total
+      FROM facturas_mostrador
+      ${where || `WHERE fecha >= DATE_SUB(CURDATE(), INTERVAL ${(puntos - 1)} YEAR)`}
+      GROUP BY YEAR(fecha)
+      ORDER BY YEAR(fecha)
+    `,
+    params
+  };
+}
+
+function _sqlSeriePresupuestosMostrador(grupo, puntos, fechas) {
+  const { where, params } = _sqlWhereFechasVentas(fechas);
+  if (grupo === 'WEEK') {
+    return {
+      sql: `
+        SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket,
+               SUM(total) AS total
+        FROM presupuestos_mostrador
+        ${where || `WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY`}
+        GROUP BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+        ORDER BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0'))
+      `,
+      params
+    };
+  }
+  if (grupo === 'MONTH') {
+    return {
+      sql: `
+        SELECT DATE_FORMAT(fecha,'%Y-%m') AS bucket, SUM(total) AS total
+        FROM presupuestos_mostrador
+        ${where || `WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1)} MONTH`}
+        GROUP BY DATE_FORMAT(fecha,'%Y-%m')
+        ORDER BY DATE_FORMAT(fecha,'%Y-%m')
+      `,
+      params
+    };
+  }
+  // YEAR
+  return {
+    sql: `
+      SELECT YEAR(fecha) AS bucket, SUM(total) AS total
+      FROM presupuestos_mostrador
+      ${where || `WHERE fecha >= DATE_SUB(CURDATE(), INTERVAL ${(puntos - 1)} YEAR)`}
+      GROUP BY YEAR(fecha)
+      ORDER BY YEAR(fecha)
+    `,
+    params
+  };
+}
+
+// Mismo configurador que usaste en Compras
+function _configuracionPeriodoVentas(periodo) {
+  const p = (periodo || 'mensual').toLowerCase();
+  if (p === 'semanal') return { puntos: 12, grupo: 'WEEK' };
+  if (p === 'anual')   return { puntos: 5,  grupo: 'YEAR' };
+  return { puntos: 12, grupo: 'MONTH' }; // mensual por defecto
+}
 
 module.exports ={
   getProveedores : function(callback) {
@@ -882,6 +977,90 @@ obtenerSeriesCompras: function (periodo, fechas, callback) {
     callback(e);
   }
 },
+// ====== TOTALES PERIODO (VENTAS) ======
+obtenerTotalesPeriodoVentas: function (periodo, fechas, callback) {
+  try {
+    const { where, params } = _sqlWhereFechasVentas(fechas);
 
+    // A (Facturas de mostrador)
+    const sqlA = `
+      SELECT COALESCE(SUM(total),0) AS total
+      FROM facturas_mostrador
+      ${where}
+    `;
+    // B (Presupuestos de mostrador)
+    const sqlB = `
+      SELECT COALESCE(SUM(total),0) AS total
+      FROM presupuestos_mostrador
+      ${where}
+    `;
+
+    let hechos = 0;
+    let totA = 0, totB = 0;
+    let errorGuardado = null;
+
+    const fin = () => {
+      if (++hechos < 2) return;
+      if (errorGuardado) return callback(errorGuardado);
+      callback(null, { A: totA, B: totB, TOTAL: totA + totB });
+    };
+
+    pool.query(sqlA, params, (errA, rA) => {
+      if (errA) errorGuardado = errA; else totA = Number(rA?.[0]?.total || 0);
+      fin();
+    });
+    pool.query(sqlB, params, (errB, rB) => {
+      if (errB) errorGuardado = errB; else totB = Number(rB?.[0]?.total || 0);
+      fin();
+    });
+  } catch (e) {
+    callback(e);
+  }
+},
+
+// ====== SERIES (VENTAS) ======
+obtenerSeriesVentas: function (periodo, fechas, callback) {
+  try {
+    const { puntos, grupo } = _configuracionPeriodoVentas(periodo);
+
+    const fA = _sqlSerieFacturasMostrador(grupo, puntos, fechas);
+    const fB = _sqlSeriePresupuestosMostrador(grupo, puntos, fechas);
+
+    let hecho = 0;
+    let filasA = [], filasB = [];
+    let errorGuardado = null;
+
+    const finSiListo = () => {
+      if (++hecho < 2) return;
+      if (errorGuardado) return callback(errorGuardado);
+
+      // Unir buckets y alinear
+      const set = new Set();
+      (filasA || []).forEach(r => set.add(String(r.bucket)));
+      (filasB || []).forEach(r => set.add(String(r.bucket)));
+      const etiquetas = Array.from(set).sort();
+
+      const mapA = new Map((filasA || []).map(r => [String(r.bucket), Number(r.total || 0)]));
+      const mapB = new Map((filasB || []).map(r => [String(r.bucket), Number(r.total || 0)]));
+
+      const serieA = etiquetas.map(lbl => mapA.get(lbl) || 0);
+      const serieB = etiquetas.map(lbl => mapB.get(lbl) || 0);
+      const serieT = serieA.map((v, i) => v + (serieB[i] || 0));
+
+      callback(null, { etiquetas, A: serieA, B: serieB, TOTAL: serieT });
+    };
+
+    pool.query(fA.sql, fA.params, (errA, rowsA) => {
+      if (errA) errorGuardado = errA; else filasA = rowsA || [];
+      finSiListo();
+    });
+    pool.query(fB.sql, fB.params, (errB, rowsB) => {
+      if (errB) errorGuardado = errB; else filasB = rowsB || [];
+      finSiListo();
+    });
+  } catch (e) {
+    callback(e);
+  }
+},
       
 }

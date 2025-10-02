@@ -111,6 +111,106 @@
   <!-- Canvas del gráfico -->
   <canvas id="chartSerie" height="220"></canvas>
 </section>
+
+<hr style="margin:24px 0;">
+<h2>Objetivos — Ventas</h2>
+
+<section>
+  <!-- Tipo -->
+  <div style="margin-bottom:8px;">
+    <label>Tipo:
+      <select id="v-tipo">
+        <option value="TOTAL">AMBOS (A + B)</option>
+        <option value="A">A (Facturas)</option>
+        <option value="B">B (Presupuestos)</option>
+      </select>
+    </label>
+  </div>
+
+  <!-- Periodo -->
+  <div style="margin-bottom:8px;">
+    <label>Periodo:
+      <select id="v-periodo">
+        <option value="" selected hidden>Seleccione…</option>
+        <option value="semanal">Semanal</option>
+        <option value="mensual">Mensual</option>
+        <option value="anual">Anual</option>
+      </select>
+    </label>
+  </div>
+
+  <!-- Subfiltros -->
+  <div id="v-subfiltros" style="display:none; margin-top:10px;">
+    <!-- Semanal -->
+    <div id="v-boxSemanal" style="display:none;">
+      <label>Año:
+        <select id="v-anSem"></select>
+      </label>
+      <label style="margin-left:8px;">Mes:
+        <select id="v-mesSem"></select>
+      </label>
+      <label style="margin-left:8px;">Semana:
+        <select id="v-semanaMes">
+          <option value="1">Semana 1 (1–7)</option>
+          <option value="2">Semana 2 (8–14)</option>
+          <option value="3">Semana 3 (15–21)</option>
+          <option value="4">Semana 4 (22–28)</option>
+          <option value="5">Semana 5 (29–fin)</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- Mensual -->
+    <div id="v-boxMensual" style="display:none;">
+      <label>Año:
+        <select id="v-anMen"></select>
+      </label>
+      <label style="margin-left:8px;">Mes:
+        <select id="v-mesMen"></select>
+      </label>
+    </div>
+
+    <!-- Anual -->
+    <div id="v-boxAnual" style="display:none;">
+      <label>Año:
+        <select id="v-anAnu"></select>
+      </label>
+    </div>
+
+    <!-- Botón -->
+    <div style="margin-top:10px;">
+      <button id="v-btnBuscar">Buscar</button>
+    </div>
+  </div>
+</section>
+
+<hr style="margin:16px 0;">
+
+<div id="v-estado">Seleccione un periodo para comenzar…</div>
+<div id="v-error" style="color:red; display:none;"></div>
+
+<hr style="margin:16px 0;">
+
+<section id="v-resultados" style="display:none;">
+  <h3>Resultados</h3>
+  <p><strong>Rango:</strong> <span id="v-lblRango">-</span> — <strong>Tipo:</strong> <span id="v-lblTipo">-</span></p>
+  <p><strong>Total del periodo:</strong> <span id="v-kpiTotal">0</span></p>
+  <p>
+    <strong>Detalle totales:</strong>
+    <span id="v-wrapA">A (Facturas): <span id="v-totA">0</span></span> ·
+    <span id="v-wrapB">B (Presupuestos): <span id="v-totB">0</span></span> ·
+    <span id="v-wrapTOTAL">TOTAL: <span id="v-totTotal">0</span></span>
+  </p>
+</section>
+
+<hr style="margin:16px 0;">
+
+<section id="v-tablaWrap" style="display:none;">
+  <h3>Serie seleccionada (Ventas)</h3>
+  <div id="v-resumenSerie" style="margin:6px 0 10px 0; font-size:14px;"></div>
+  <canvas id="v-chartSerie" height="220"></canvas>
+</section>
+
   </main>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -416,6 +516,204 @@
 
   // Inicio
   onPeriodoChange();
+</script>
+<script>
+  // ====== Ventas: refs DOM ======
+  const $vTipo       = document.getElementById('v-tipo');
+  const $vPeriodo    = document.getElementById('v-periodo');
+  const $vSubfiltros = document.getElementById('v-subfiltros');
+  const $vBoxSem     = document.getElementById('v-boxSemanal');
+  const $vAnSem      = document.getElementById('v-anSem');
+  const $vMesSem     = document.getElementById('v-mesSem');
+  const $vSemanaMes  = document.getElementById('v-semanaMes');
+  const $vBoxMen     = document.getElementById('v-boxMensual');
+  const $vAnMen      = document.getElementById('v-anMen');
+  const $vMesMen     = document.getElementById('v-mesMen');
+  const $vBoxAnu     = document.getElementById('v-boxAnual');
+  const $vAnAnu      = document.getElementById('v-anAnu');
+
+  const $vBtnBuscar  = document.getElementById('v-btnBuscar');
+
+  const $vEstado     = document.getElementById('v-estado');
+  const $vError      = document.getElementById('v-error');
+
+  const $vResultados = document.getElementById('v-resultados');
+  const $vLblRango   = document.getElementById('v-lblRango');
+  const $vLblTipo    = document.getElementById('v-lblTipo');
+  const $vKpiTotal   = document.getElementById('v-kpiTotal');
+
+  const $vWrapA      = document.getElementById('v-wrapA');
+  const $vWrapB      = document.getElementById('v-wrapB');
+  const $vWrapTOTAL  = document.getElementById('v-wrapTOTAL');
+  const $vTotA       = document.getElementById('v-totA');
+  const $vTotB       = document.getElementById('v-totB');
+  const $vTotTotal   = document.getElementById('v-totTotal');
+
+  const $vTablaWrap    = document.getElementById('v-tablaWrap');
+  const $vResumenSerie = document.getElementById('v-resumenSerie');
+  const $vChartCanvas  = document.getElementById('v-chartSerie');
+
+  let vChart = null;
+
+  // Relleno selects (años/meses) para VENTAS
+  (function vFillYearMonth(){
+    const now = new Date();
+    const thisYear = now.getFullYear();
+    const years = [];
+    for(let y=thisYear; y>=thisYear-6; y--) years.push(y);
+
+    [$vAnSem,$vAnMen,$vAnAnu].forEach(sel=>{
+      sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+    });
+
+    const meses = Array.from({length:12}, (_,i)=>i+1);
+    [$vMesSem,$vMesMen].forEach(sel=>{
+      sel.innerHTML = meses.map(m=>`<option value="${m}">${String(m).padStart(2,'0')}</option>`).join('');
+    });
+
+    $vAnSem.value = thisYear; $vAnMen.value = thisYear; $vAnAnu.value = thisYear;
+    $vMesSem.value = now.getMonth()+1; $vMesMen.value = now.getMonth()+1;
+  })();
+
+  function onPeriodoChangeVentas(){
+    const p = $vPeriodo.value;
+    $vSubfiltros.style.display = 'none';
+    $vBoxSem.style.display = 'none';
+    $vBoxMen.style.display = 'none';
+    $vBoxAnu.style.display = 'none';
+
+    if(!p){ $vEstado.textContent='Seleccione un periodo para comenzar…'; return; }
+
+    $vSubfiltros.style.display = '';
+    if (p === 'semanal') $vBoxSem.style.display = '';
+    if (p === 'mensual') $vBoxMen.style.display = '';
+    if (p === 'anual')   $vBoxAnu.style.display = '';
+
+    $vEstado.textContent = 'Complete los campos y presione Buscar.';
+  }
+  $vPeriodo.addEventListener('change', onPeriodoChangeVentas);
+
+  async function buscarVentas(){
+    $vError.style.display='none'; $vError.textContent='';
+    $vResultados.style.display='none'; $vTablaWrap.style.display='none';
+    $vEstado.textContent='Buscando…';
+
+    const periodo = $vPeriodo.value;
+    if(!periodo){ $vEstado.textContent='Seleccione un periodo.'; return; }
+
+    // desde/hasta
+    let desde='', hasta='', labelRango='';
+    if (periodo === 'semanal') {
+      const r = weekRangeOfMonth(parseInt($vAnSem.value,10), parseInt($vMesSem.value,10), parseInt($vSemanaMes.value,10));
+      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+    } else if (periodo === 'mensual') {
+      const r = monthRange(parseInt($vAnMen.value,10), parseInt($vMesMen.value,10));
+      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+    } else if (periodo === 'anual') {
+      const r = yearRange(parseInt($vAnAnu.value,10));
+      desde = r.desde; hasta = r.hasta; labelRango = r.label;
+    }
+
+    const tipo = $vTipo.value;
+
+    try{
+      const qs = new URLSearchParams({ periodo, tipo, desde, hasta }).toString();
+      const res = await fetch(`/administracion/api/objetivos-ventas?${qs}`);
+      const data = await res.json();
+      if(!res.ok || !data.ok) throw new Error(data.error || 'Error al calcular series.');
+
+      // Cabecera
+      $vLblRango.textContent = labelRango;
+      $vLblTipo.textContent  = (tipo === 'TOTAL' ? 'AMBOS' : tipo);
+
+      // Reset visibilidad totales
+      $vWrapA.style.display = '';
+      $vWrapB.style.display = '';
+      $vWrapTOTAL.style.display = '';
+
+      if (tipo === 'A') {
+        $vKpiTotal.textContent = money(data.totales.A);
+        $vTotA.textContent     = money(data.totales.A);
+        $vWrapB.style.display  = 'none';
+        $vWrapTOTAL.style.display = 'none';
+      } else if (tipo === 'B') {
+        $vKpiTotal.textContent = money(data.totales.B);
+        $vTotB.textContent     = money(data.totales.B);
+        $vWrapA.style.display  = 'none';
+        $vWrapTOTAL.style.display = 'none';
+      } else {
+        $vKpiTotal.textContent = money(data.totales.TOTAL);
+        $vTotA.textContent     = money(data.totales.A);
+        $vTotB.textContent     = money(data.totales.B);
+        $vTotTotal.textContent = money(data.totales.TOTAL);
+      }
+
+      // Serie
+      let labels = data.series.labels || [];
+      let serie  = (tipo === 'A') ? (data.series.A||[])
+                : (tipo === 'B') ? (data.series.B||[])
+                : (data.series.TOTAL||[]);
+
+      // Corrección anual: 12 meses ordenados
+      if (periodo === 'anual') {
+        const year = parseInt($vAnAnu.value, 10);
+        const monthKeys = Array.from({length:12}, (_,i)=> `${year}-${String(i+1).padStart(2,'0')}`);
+        const acc = new Map(monthKeys.map(k => [k, 0]));
+        for (let i = 0; i < labels.length; i++) {
+          const key = String(labels[i] || '').slice(0,7);
+          if (acc.has(key)) acc.set(key, acc.get(key) + Number(serie[i] || 0));
+        }
+        labels = monthKeys;
+        serie  = monthKeys.map(k => acc.get(k) || 0);
+      }
+
+      const labelsFmt = labels.map(l => formatearEtiqueta(l, periodo));
+
+      // Mostrar contenedor
+      $vTablaWrap.style.display  = '';
+
+      if (!labels.length) {
+        if (vChart) { vChart.destroy(); vChart = null; }
+        $vResumenSerie.textContent = 'Sin datos para los filtros seleccionados.';
+      } else {
+        // max/min
+        let maxVal = -Infinity, minVal = Infinity, iMax = -1, iMin = -1;
+        for (let i = 0; i < serie.length; i++) {
+          const v = Number(serie[i] || 0);
+          if (v > maxVal) { maxVal = v; iMax = i; }
+          if (v < minVal) { minVal = v; iMin = i; }
+        }
+        const bgColors = serie.map((_, i) => i === iMax ? maxBar : (i === iMin ? minBar : defaultBar));
+        const maxLabel = labelsFmt[iMax] ?? '-';
+        const minLabel = labelsFmt[iMin] ?? '-';
+        $vResumenSerie.textContent = `Máximo: ${maxLabel} (${money(maxVal)}) · Mínimo: ${minLabel} (${money(minVal)})`;
+
+        if (vChart) { vChart.destroy(); }
+        const ctx = $vChartCanvas.getContext('2d');
+        vChart = new Chart(ctx, {
+          type: 'bar',
+          data: { labels: labelsFmt, datasets: [{ label: `Ventas (${tipo === 'TOTAL' ? 'AMBOS' : tipo})`, data: serie, backgroundColor: bgColors, borderWidth: 1 }] },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => money(c.parsed.y) } } },
+            scales: { x: { ticks: { color: '#333' } }, y: { ticks: { callback: v => money(v) } } }
+          }
+        });
+      }
+
+      $vResultados.style.display = '';
+      $vEstado.textContent = `Listo (${labels.length} barra(s)).`;
+    }catch(e){
+      console.error(e);
+      $vEstado.textContent='Error.';
+      $vError.textContent = `❌ ${e.message}`;
+      $vError.style.display='block';
+    }
+  }
+  $vBtnBuscar.addEventListener('click', buscarVentas);
+
+  // Inicio bloque ventas
+  onPeriodoChangeVentas();
 </script>
 
   <%- include('./layouts/footer.ejs') %>

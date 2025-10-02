@@ -839,5 +839,49 @@ apiObjetivosCompras: (req, res) => {
     });
   });
 },
+apiObjetivosVentas: function (req, res) {
+  const periodo = (req.query.periodo || 'mensual').toLowerCase();
+  const tipo    = (req.query.tipo || 'TOTAL').toUpperCase();
+  const fechas  = (req.query.desde && req.query.hasta) ? { desde: req.query.desde, hasta: req.query.hasta } : null;
+
+  try {
+    // 1) Totales del período
+    administracion.obtenerTotalesPeriodoVentas(periodo, fechas, (errTot, totales) => {
+      if (errTot) {
+        console.error('[apiObjetivosVentas] Error en totales:', errTot);
+        return res.status(500).json({ ok: false, error: 'Error al calcular totales.' });
+      }
+
+      // 2) Series
+      administracion.obtenerSeriesVentas(periodo, fechas, (errSer, seriesRaw) => {
+        if (errSer) {
+          console.error('[apiObjetivosVentas] Error en series:', errSer);
+          return res.status(500).json({ ok: false, error: 'Error al calcular series.' });
+        }
+
+        // Normalizar estructura de respuesta a la de compras
+        const labels = (seriesRaw.etiquetas || []);
+        const series = {
+          labels,
+          A: seriesRaw.A || [],
+          B: seriesRaw.B || [],
+          TOTAL: seriesRaw.TOTAL || []
+        };
+
+        // KPI: según tipo pedido
+        const kpi = {
+          totalPeriodo: (tipo === 'A') ? totales.A
+                         : (tipo === 'B') ? totales.B
+                         : totales.TOTAL
+        };
+
+        res.json({ ok: true, totales, series, kpi });
+      });
+    });
+  } catch (e) {
+    console.error('[apiObjetivosVentas] Excepción:', e);
+    res.status(500).json({ ok: false, error: 'Error inesperado.' });
+  }
+},
 
 }

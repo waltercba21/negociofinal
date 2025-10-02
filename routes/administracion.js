@@ -69,4 +69,7 @@ router.get('/objetivos', administracionController.objetivos);
 // API Objetivos (compras A/B/TOTAL por periodo)
 router.get('/api/objetivos-compras', administracionController.apiObjetivosCompras);
 
+// API Objetivos (ventas A/B/TOTAL por periodo)
+router.get('/api/objetivos-ventas', administracionController.apiObjetivosVentas);
+
 module.exports = router;
