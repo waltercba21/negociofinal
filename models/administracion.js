@@ -37,23 +37,30 @@ function _configuracionPeriodo(periodo) {
     default:        return { puntos: 7,  grupo: 'DAY'   };
   }
 }
-
 function _armarEtiquetas(now, puntos, grupo) {
   const etiquetas = [];
   const pad = (n) => String(n).padStart(2, '0');
   const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+  function isoWeek(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    // Jueves determina el "año ISO"
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return { isoYear: d.getUTCFullYear(), isoWeek: weekNo };
+  }
+
   for (let i = puntos - 1; i >= 0; i--) {
     const dt = new Date(base);
     if (grupo === 'DAY') {
       dt.setDate(base.getDate() - i);
-      etiquetas.push(`${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`);
+      etiquetas.push(`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`);
     } else if (grupo === 'WEEK') {
-      const copy = new Date(base);
-      copy.setDate(base.getDate() - i * 7);
-      const unoEne = new Date(copy.getFullYear(), 0, 1);
-      const semana = Math.ceil((((copy - unoEne) / 86400000) + unoEne.getDay() + 1) / 7);
-      etiquetas.push(`${copy.getFullYear()}-W${pad(semana)}`);
+      dt.setDate(base.getDate() - (i * 7));
+      const { isoYear, isoWeek } = isoWeek(dt);
+      etiquetas.push(`${isoYear}-W${pad(isoWeek)}`); // ¡match con DATE_FORMAT('%x-W%v')!
     } else if (grupo === 'MONTH') {
       const copy = new Date(base.getFullYear(), base.getMonth(), 1);
       copy.setMonth(copy.getMonth() - i);
@@ -66,6 +73,7 @@ function _armarEtiquetas(now, puntos, grupo) {
   }
   return etiquetas;
 }
+
 
 function _mapearSeries(filas, etiquetas) {
   const mapa = new Map();
@@ -85,32 +93,35 @@ const _wherePeriodoPresupuestos = { ..._wherePeriodoFacturas };
 
 function _sqlFacturasSerie(grupo, puntos) {
   if (grupo === 'DAY') {
+    // últimos N días (incluye hoy)
     return `
       SELECT DATE(fecha) AS bucket, SUM(importe_factura) AS total
       FROM facturas
-      WHERE fecha >= (CURDATE() - INTERVAL ${puntos - 1} DAY)
+      WHERE fecha >= CURDATE() - INTERVAL ${puntos - 1} DAY
       GROUP BY DATE(fecha)
       ORDER BY DATE(fecha)
     `;
   }
   if (grupo === 'WEEK') {
+    // usamos ISO week: %x (ISO week-year) y %v (ISO week number)
     return `
-      SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket, SUM(importe_factura) AS total
+      SELECT DATE_FORMAT(fecha, '%x-W%v') AS bucket, SUM(importe_factura) AS total
       FROM facturas
-      WHERE YEARWEEK(fecha,1) >= YEARWEEK(CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY, 1)
-      GROUP BY YEAR(fecha), WEEK(fecha,1)
-      ORDER BY YEAR(fecha), WEEK(fecha,1)
+      WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY
+      GROUP BY DATE_FORMAT(fecha, '%x-W%v')
+      ORDER BY DATE_FORMAT(fecha, '%x-W%v')
     `;
   }
   if (grupo === 'MONTH') {
     return `
       SELECT DATE_FORMAT(fecha, '%Y-%m') AS bucket, SUM(importe_factura) AS total
       FROM facturas
-      WHERE fecha >= (DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} MONTH, '%Y-%m-01'))
+      WHERE fecha >= DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} MONTH, '%Y-%m-01')
       GROUP BY DATE_FORMAT(fecha, '%Y-%m')
       ORDER BY DATE_FORMAT(fecha, '%Y-%m')
     `;
   }
+  // YEAR
   return `
     SELECT DATE_FORMAT(fecha, '%Y') AS bucket, SUM(importe_factura) AS total
     FROM facturas
@@ -125,25 +136,25 @@ function _sqlPresupuestosSerie(grupo, puntos) {
     return `
       SELECT DATE(fecha) AS bucket, SUM(importe) AS total
       FROM presupuestos
-      WHERE fecha >= (CURDATE() - INTERVAL ${puntos - 1} DAY)
+      WHERE fecha >= CURDATE() - INTERVAL ${puntos - 1} DAY
       GROUP BY DATE(fecha)
       ORDER BY DATE(fecha)
     `;
   }
   if (grupo === 'WEEK') {
     return `
-      SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 1), 2, '0')) AS bucket, SUM(importe) AS total
+      SELECT DATE_FORMAT(fecha, '%x-W%v') AS bucket, SUM(importe) AS total
       FROM presupuestos
-      WHERE YEARWEEK(fecha,1) >= YEARWEEK(CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY, 1)
-      GROUP BY YEAR(fecha), WEEK(fecha,1)
-      ORDER BY YEAR(fecha), WEEK(fecha,1)
+      WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY
+      GROUP BY DATE_FORMAT(fecha, '%x-W%v')
+      ORDER BY DATE_FORMAT(fecha, '%x-W%v')
     `;
   }
   if (grupo === 'MONTH') {
     return `
       SELECT DATE_FORMAT(fecha, '%Y-%m') AS bucket, SUM(importe) AS total
       FROM presupuestos
-      WHERE fecha >= (DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} MONTH, '%Y-%m-01'))
+      WHERE fecha >= DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} MONTH, '%Y-%m-01')
       GROUP BY DATE_FORMAT(fecha, '%Y-%m')
       ORDER BY DATE_FORMAT(fecha, '%Y-%m')
     `;

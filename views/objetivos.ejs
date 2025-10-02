@@ -3,255 +3,159 @@
 
 <body>
   <style>
-    /* ===== Base tablero ===== */
-    .af-obj {
-      --af-gap: 16px;
-      --af-card-br: 14px;
-      --af-card-shadow: 0 10px 30px rgba(0,0,0,.25);
-      color: #e8eefc;
-      background: radial-gradient(1200px 500px at 20% -10%, #111b35 0%, #0a1122 60%, #070d1a 100%);
-      min-height: calc(100vh - 120px);
-      padding-bottom: 24px;
+    :root {
+      --bg: #0b1120;
+      --card: #0f172a;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --accent: #60a5fa;
+      --success: #34d399;
+      --danger: #f87171;
+      --border: rgba(148,163,184,.18);
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --radius: 14px;
+      --gap: 16px;
     }
-    .af-obj__card {
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: var(--af-card-br);
-      box-shadow: var(--af-card-shadow);
-      backdrop-filter: blur(6px);
-      padding: 16px;
-      position: relative;
-      overflow: hidden;
-    }
-    .af-obj__title {
-      margin: 0 0 10px 0;
-      font-weight: 800;
-      letter-spacing: .3px;
-      color: #9ac7ff;
-      font-size: clamp(1rem, 1.6vw, 1.2rem);
-      display:flex; align-items:center; gap:8px;
-    }
-    .af-obj__title .tag { font-size:.75rem; padding:2px 8px; border-radius:999px; background:#0f1a33; border:1px solid rgba(131,196,255,.18); color:#9fb4d9;}
+    body { background: var(--bg); color: var(--text); }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; }
 
-    /* ===== Toolbar filtros ===== */
-    .af-toolbar { display:grid; gap:12px; grid-template-columns: 1fr; }
-    @media (min-width: 992px) { .af-toolbar { grid-template-columns: 1fr 1fr auto; align-items: end; } }
-    .af-segment {
-      display: inline-flex; gap: 6px; padding: 6px; border-radius: 999px;
-      background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
-    }
-    .af-segment input { display:none; }
-    .af-pill {
-      user-select:none; cursor:pointer; padding:8px 12px; border-radius:999px; font-weight:700; font-size:.9rem; color:#b7d3ff;
-      border:1px solid transparent; transition: all .15s ease;
-    }
-    .af-segment input:checked + .af-pill {
-      background:#0f1a33; border-color: rgba(131,196,255,.35); color:#e6f1ff; box-shadow: 0 6px 18px rgba(0,0,0,.25), inset 0 0 16px rgba(123,196,255,.12);
+    .card { background: var(--card); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
+    .title { font-weight: 800; color: #c7ddff; margin: 0 0 10px 0; letter-spacing: .2px; display:flex; align-items:center; gap:8px; }
+    .tag { font-size:.75rem; padding:2px 8px; border-radius:999px; background:#0b172e; border:1px solid var(--border); color:#a9c7ef; }
+
+    .grid { display:grid; gap: var(--gap); }
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    @media (min-width: 992px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
     }
 
-    .af-apply-btn { width:100%; }
-    @media (min-width: 992px) { .af-apply-btn { width:auto; } }
+    .toolbar { display:grid; gap:12px; grid-template-columns: 1fr; }
+    @media (min-width:768px){ .toolbar { grid-template-columns: 1fr 1fr auto; align-items:end; } }
 
-    /* ===== KPIs ===== */
-    .af-kpis { display:grid; gap: var(--af-gap); grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-    .af-kpi {
-      background:#0f1a33; border:1px solid rgba(131,196,255,.18); border-radius: 12px; padding: 12px;
-      display:flex; flex-direction:column; gap:6px; min-height:105px;
-    }
-    .af-kpi .lbl { font-size:.85rem; color:#9fb4d9; display:flex; align-items:center; gap:6px; }
-    .af-kpi .val { font-size:1.4rem; font-weight: 800; color:#e6f1ff; }
-    .af-kpi .sub { font-size:.8rem; color:#78e6b5; }
-    .af-kpi .badges { display:flex; gap:8px; flex-wrap:wrap; }
-    .af-badge {
-      font-size:.75rem; padding:3px 8px; border-radius:999px; background:#0b172e; border:1px solid rgba(131,196,255,.18); color:#a2bce6;
-    }
-    .af-badge--win { background: rgba(52,199,89,.15); border-color: rgba(52,199,89,.35); color:#a7f3c7; }
-    .af-badge--loss { background: rgba(255,69,58,.12); border-color: rgba(255,69,58,.35); color:#ffb3ad; }
+    .segment { display:flex; gap:8px; background:#0c1a34; border:1px solid var(--border); border-radius:999px; padding:6px; flex-wrap:wrap; }
+    .segment input { display:none; }
+    .pill { cursor:pointer; padding:8px 12px; border-radius:999px; color:#bcd3ff; font-weight:700; }
+    .segment input:checked + .pill { background:#11264d; border:1px solid #6fb2ff; color:#e8f2ff; }
 
-    /* ===== Charts grid ===== */
-    .af-charts { display:grid; gap: var(--af-gap); grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .btn { background:#2563eb; border:none; color:white; border-radius:10px; padding:10px 14px; font-weight:700; }
+    .btn-outline { background:transparent; border:1px solid var(--border); color:#cfe2ff; }
 
-    /* ===== Skeletons ===== */
-    .skeleton { position: relative; overflow:hidden; background:linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.03), rgba(255,255,255,.06)); min-height:120px; border-radius:12px; }
-    .skeleton::after {
-      content:""; position:absolute; inset:0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
-      animation: shimmer 1.2s infinite;
-    }
-    @keyframes shimmer { 0% { transform:translateX(-100%);} 100%{ transform:translateX(100%);} }
+    .kpi { background:#0e1b36; border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:6px; min-height:110px; }
+    .kpi .lbl { color: var(--muted); font-size:.9rem; }
+    .kpi .val { font-size:1.6rem; font-weight:800; }
+    .kpi .sub { color:#9ee1bf; font-size:.85rem; }
+    .badge { font-size:.75rem; padding:3px 8px; border-radius:999px; background:#0b172e; border:1px solid var(--border); color:#a2bce6; display:inline-block; }
+    .badge.win { background: rgba(52,199,89,.15); border-color: rgba(52,199,89,.35); color:#a7f3c7; }
+    .badge.loss{ background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.35); color:#ffb3ad; }
 
-    /* ===== Toast error ===== */
-    .toast-err {
-      position: fixed; right: 16px; bottom: 16px; z-index: 9999;
-      background: rgba(255, 82, 82, .08); color: #ffb6b6; border: 1px solid rgba(255, 82, 82, .35);
-      border-radius: 10px; padding: 10px 12px; backdrop-filter: blur(4px);
-    }
+    .skeleton { height: 220px; border-radius:12px; background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.02), rgba(255,255,255,.05)); position:relative; overflow:hidden; }
+    .skeleton::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); animation: sh 1.2s infinite; }
+    @keyframes sh { from{transform:translateX(-100%);} to{transform:translateX(100%);} }
+
+    .err { position:fixed; right:16px; bottom:16px; background: rgba(255,82,82,.1); border:1px solid rgba(255,82,82,.35); color:#ffb6b6; border-radius:10px; padding:10px 12px; display:none; z-index:999; }
   </style>
 
-  <main class="container af-obj py-3">
+  <div class="wrap">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h4 class="m-0" style="color:#b7d3ff; font-weight:800;">🎯 Panel de Objetivos</h4>
-      <div>
-        <a href="/administracion" class="btn btn-outline-light btn-sm">← Volver a Administración</a>
+    <div class="grid">
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+        <h4 class="title">🎯 Objetivos — Compras</h4>
+        <a href="/administracion" class="btn btn-outline">← Volver</a>
       </div>
     </div>
 
-    <!-- Toolbar de filtros -->
-    <section class="af-obj__card mb-2">
-      <div class="af-toolbar">
-        <!-- Periodo -->
+    <!-- Filtros -->
+    <section class="card" style="margin-top:12px;">
+      <div class="toolbar">
         <div>
-          <div class="af-obj__title">Periodo</div>
-          <div class="af-segment" id="segPeriodo" role="tablist" aria-label="Periodo">
-            <label>
-              <input type="radio" name="periodo" value="diario" checked />
-              <span class="af-pill">Diario</span>
-            </label>
-            <label>
-              <input type="radio" name="periodo" value="semanal" />
-              <span class="af-pill">Semanal</span>
-            </label>
-            <label>
-              <input type="radio" name="periodo" value="mensual" />
-              <span class="af-pill">Mensual</span>
-            </label>
-            <label>
-              <input type="radio" name="periodo" value="anual" />
-              <span class="af-pill">Anual</span>
-            </label>
+          <div class="title" style="font-size:.95rem; margin-bottom:6px;">Periodo</div>
+          <div class="segment" id="segPeriodo">
+            <label><input type="radio" name="periodo" value="diario" checked><span class="pill">Diario</span></label>
+            <label><input type="radio" name="periodo" value="semanal"><span class="pill">Semanal</span></label>
+            <label><input type="radio" name="periodo" value="mensual"><span class="pill">Mensual</span></label>
+            <label><input type="radio" name="periodo" value="anual"><span class="pill">Anual</span></label>
           </div>
         </div>
-
-        <!-- Tipo A/B/TOTAL -->
         <div>
-          <div class="af-obj__title">Tipo</div>
-          <div class="af-segment" id="segTipo" role="tablist" aria-label="Tipo de compras">
-            <label>
-              <input type="radio" name="tipo" value="TOTAL" checked />
-              <span class="af-pill">TOTAL</span>
-            </label>
-            <label>
-              <input type="radio" name="tipo" value="A" />
-              <span class="af-pill">A — Facturas</span>
-            </label>
-            <label>
-              <input type="radio" name="tipo" value="B" />
-              <span class="af-pill">B — Presupuestos</span>
-            </label>
+          <div class="title" style="font-size:.95rem; margin-bottom:6px;">Tipo</div>
+          <div class="segment" id="segTipo">
+            <label><input type="radio" name="tipo" value="TOTAL" checked><span class="pill">TOTAL</span></label>
+            <label><input type="radio" name="tipo" value="A"><span class="pill">A — Facturas</span></label>
+            <label><input type="radio" name="tipo" value="B"><span class="pill">B — Presupuestos</span></label>
           </div>
         </div>
-
-        <!-- Acción -->
-        <div class="d-grid">
-          <button id="btnAplicar" class="btn btn-primary af-apply-btn">Aplicar filtros</button>
-        </div>
+        <div style="display:grid"><button id="btnAplicar" class="btn">Aplicar filtros</button></div>
       </div>
     </section>
 
     <!-- KPIs -->
-    <section class="af-obj__card mb-2">
-      <h5 class="af-obj__title">
-        Indicadores Clave
-        <span class="tag" id="lblPeriodo">–</span>
-        <span class="tag" id="lblTipo">–</span>
-      </h5>
-      <div class="af-kpis">
-        <div class="af-kpi">
-          <div class="lbl">Total del periodo</div>
-          <div class="val" id="kpiTotal">$ 0</div>
-          <div class="sub" id="kpiDetalle">A: $ 0 · B: $ 0 · Total: $ 0</div>
-          <div class="badges">
-            <span class="af-badge" id="badgeProm">Promedio serie: $ 0</span>
-            <span class="af-badge" id="badgeMax">Máximo: $ 0</span>
-          </div>
+    <section class="grid grid-3" style="margin-top:12px;">
+      <div class="kpi">
+        <div class="lbl">Total del periodo <span class="badge" id="lblPeriodo">–</span> <span class="badge" id="lblTipo">–</span></div>
+        <div class="val" id="kpiTotal">$ 0</div>
+        <div class="sub" id="kpiDetalle">A: $ 0 · B: $ 0 · Total: $ 0</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">Ganador A vs B</div>
+        <div class="val" id="kpiGanador">–</div>
+        <div>
+          <span class="badge" id="badgeDiff">Dif: $ 0</span>
+          <span class="badge" id="badgePct">0%</span>
         </div>
-        <div class="af-kpi">
-          <div class="lbl">Comparativa A vs B <small style="opacity:.7">(ganador)</small></div>
-          <div class="val" id="kpiGanador">–</div>
-          <div class="badges">
-            <span class="af-badge" id="badgeDiff">Dif: $ 0</span>
-            <span class="af-badge" id="badgePct">+0%</span>
-          </div>
-        </div>
-        <div class="af-kpi">
-          <div class="lbl">Último punto de la serie</div>
-          <div class="val" id="kpiUltimo">$ 0</div>
-          <div class="sub" id="kpiEtiqueta">–</div>
-        </div>
-        <div class="af-kpi">
-          <div class="lbl">Estado</div>
-          <div class="val" id="kpiEstado">Cargando…</div>
-          <div class="sub">Refrescar con “Aplicar filtros”</div>
-        </div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">Serie</div>
+        <div class="val" id="kpiUltimo">$ 0</div>
+        <div class="sub" id="kpiEtiqueta">–</div>
       </div>
     </section>
 
     <!-- Charts -->
-    <section class="af-charts">
-      <div class="af-obj__card">
-        <h5 class="af-obj__title">Participación A vs B <span class="tag">donut</span></h5>
-        <div class="skeleton" id="skDonut"></div>
-        <canvas id="chartDonut" height="140" style="display:none;"></canvas>
+    <section class="grid grid-2" style="margin-top:12px;">
+      <div class="card">
+        <div class="title">Participación A vs B <span class="tag">Donut</span></div>
+        <div id="skDonut" class="skeleton"></div>
+        <canvas id="chartDonut" height="220" style="display:none;"></canvas>
       </div>
-
-      <div class="af-obj__card">
-        <h5 class="af-obj__title">Evolución del periodo <span class="tag">línea</span></h5>
-        <div class="skeleton" id="skLinea"></div>
-        <canvas id="chartCompras" height="140" style="display:none;"></canvas>
-      </div>
-
-      <div class="af-obj__card">
-        <h5 class="af-obj__title">A vs B (serie temporal) <span class="tag">apiladas</span></h5>
-        <div class="skeleton" id="skStack"></div>
-        <canvas id="chartStack" height="140" style="display:none;"></canvas>
+      <div class="card">
+        <div class="title">Evolución del periodo <span class="tag">Línea</span></div>
+        <div id="skLine" class="skeleton"></div>
+        <canvas id="chartLine" height="220" style="display:none;"></canvas>
       </div>
     </section>
-  </main>
-
-  <!-- Toast de error -->
-  <div class="toast-err" id="toastErr" style="display:none;">
-    ❌ Error cargando datos. Intentá de nuevo.
   </div>
 
-  <!-- Chart.js -->
+  <div id="err" class="err">❌ Error cargando datos</div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    // ===== Utils =====
-    const $ = (sel) => document.querySelector(sel);
-    const money = (n) => Number(n||0).toLocaleString('es-AR', { style:'currency', currency:'ARS', maximumFractionDigits: 0 });
-    const pct = (n) => `${(Number(n||0)).toFixed(1)}%`;
-    const show = (el, v=true) => { if(!el) return; el.style.display = v ? '' : 'none'; }
+    const $ = s => document.querySelector(s);
+    const money = n => Number(n||0).toLocaleString('es-AR',{style:'currency', currency:'ARS', maximumFractionDigits:0});
+    const show = (el, on=true) => { if(!el) return; el.style.display = on ? '' : 'none'; }
 
-    // ===== Estado Charts =====
-    let donutChart, lineChart, stackChart;
+    let donut, line;
 
-    function skeleton(on=true) {
-      show($('#skDonut'), on); show($('#skLinea'), on); show($('#skStack'), on);
-      show($('#chartDonut'), !on); show($('#chartCompras'), !on); show($('#chartStack'), !on);
-      $('#kpiEstado').textContent = on ? 'Cargando…' : 'Listo';
+    function periodoSel() { return document.querySelector('input[name="periodo"]:checked').value; }
+    function tipoSel() { return document.querySelector('input[name="tipo"]:checked').value; }
+
+    function setLoading(on){
+      show($('#skDonut'), on); show($('#skLine'), on);
+      show($('#chartDonut'), !on); show($('#chartLine'), !on);
     }
 
-    function getPeriodo() {
-      return document.querySelector('[name="periodo"]:checked').value;
-    }
-    function getTipo() {
-      return document.querySelector('[name="tipo"]:checked').value;
-    }
-
-    // ===== Render principal =====
-    async function cargarObjetivos() {
-      skeleton(true);
-      $('#toastErr').style.display = 'none';
-
-      const periodo = getPeriodo();
-      const tipo = getTipo();
+    async function cargar() {
+      setLoading(true);
+      $('#err').style.display = 'none';
+      const periodo = periodoSel();
+      const tipo = tipoSel();
       $('#lblPeriodo').textContent = periodo.toUpperCase();
       $('#lblTipo').textContent = tipo;
 
       try {
-        const res = await fetch(`/administracion/api/objetivos-compras?periodo=${encodeURIComponent(periodo)}&tipo=${encodeURIComponent(tipo)}`);
-        const data = await res.json();
+        const r = await fetch(`/administracion/api/objetivos-compras?periodo=${encodeURIComponent(periodo)}&tipo=${encodeURIComponent(tipo)}`);
+        const data = await r.json();
         if (!data.ok) throw new Error(data.error || 'Error API');
 
         // KPIs
@@ -260,110 +164,58 @@
 
         const labels = data.series.labels;
         const serie  = data.series.data || [];
-        const ultimo = serie.length ? serie[serie.length - 1] : 0;
-        const etiq   = labels.length ? labels[labels.length - 1] : '–';
-
+        const ultimo = serie.length ? serie[serie.length-1] : 0;
+        const etiq   = labels.length ? labels[labels.length-1] : '–';
         $('#kpiUltimo').textContent = money(ultimo);
         $('#kpiEtiqueta').textContent = etiq;
 
-        const prom = (serie.reduce((a,b)=>a+b,0) / (serie.length || 1));
-        const max  = Math.max(...serie, 0);
-        $('#badgeProm').textContent = `Promedio serie: ${money(prom)}`;
-        $('#badgeMax').textContent = `Máximo: ${money(max)}`;
-
         // Ganador A vs B
-        const A = Number(data.totales.A || 0);
-        const B = Number(data.totales.B || 0);
-        let ganador = 'Empate';
-        let diff = 0, diffPct = 0, winBadgeClass = '';
-        if (A > B) { ganador = 'Gana A (Facturas)'; diff = A - B; diffPct = (diff / (B || 1)) * 100; winBadgeClass = 'af-badge--win'; }
-        else if (B > A) { ganador = 'Gana B (Presupuestos)'; diff = B - A; diffPct = (diff / (A || 1)) * 100; winBadgeClass = 'af-badge--win'; }
+        const A = Number(data.totales.A||0), B = Number(data.totales.B||0);
+        let ganador = 'Empate', diff=0, diffPct='0%';
+        if (A > B) { ganador = 'A — Facturas'; diff = A-B; diffPct = `+${((diff/(B||1))*100).toFixed(1)}%`; }
+        if (B > A) { ganador = 'B — Presupuestos'; diff = B-A; diffPct = `+${((diff/(A||1))*100).toFixed(1)}%`; }
         $('#kpiGanador').textContent = ganador;
-        const badgeDiff = $('#badgeDiff'), badgePct = $('#badgePct');
-        badgeDiff.textContent = `Dif: ${money(diff)}`;
-        badgePct.textContent = (diff === 0) ? '0%' : `+${diffPct.toFixed(1)}%`;
-        badgeDiff.className = 'af-badge ' + (diff>0 ? 'af-badge--win' : ''); // si 0 queda neutro
-        badgePct.className  = 'af-badge ' + (diff>0 ? 'af-badge--win' : '');
+        $('#badgeDiff').textContent = `Dif: ${money(diff)}`;
+        $('#badgePct').textContent  = diffPct;
+        $('#badgeDiff').className = 'badge ' + (diff>0 ? 'win':'');
+        $('#badgePct').className  = 'badge ' + (diff>0 ? 'win':'');
 
-        // ===== Donut A vs B =====
-        const donutData = {
-          labels: ['A (Facturas)', 'B (Presupuestos)'],
-          datasets: [{ data: [A, B] }]
-        };
-        if (donutChart) donutChart.destroy();
-        donutChart = new Chart($('#chartDonut').getContext('2d'), {
-          type: 'doughnut',
-          data: donutData,
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { display: true, labels: { color:'#bcd3ff' } },
-              tooltip: {
-                callbacks: { label: (ctx) => `${ctx.label}: ${money(ctx.parsed)} (${pct( (ctx.parsed / (A+B || 1))*100 )})` }
-              }
-            },
-            cutout: '65%'
+        // Charts
+        if (donut) donut.destroy();
+        donut = new Chart($('#chartDonut').getContext('2d'), {
+          type:'doughnut',
+          data:{ labels:['A (Facturas)','B (Presupuestos)'], datasets:[{ data:[A,B] }]},
+          options:{
+            responsive:true,
+            cutout:'60%',
+            plugins:{ legend:{labels:{color:'#cfe2ff'} } }
           }
         });
 
-        // ===== Línea evolución (tipo seleccionado TOTAL/A/B) =====
-        if (lineChart) lineChart.destroy();
-        lineChart = new Chart($('#chartCompras').getContext('2d'), {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              label: `Compras (${data.tipo})`,
-              data: serie,
-              tension: .35,
-              borderWidth: 2,
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color:'#bcd3ff'} },
-              y: { grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color:'#bcd3ff', callback: v => money(v) } }
+        if (line) line.destroy();
+        line = new Chart($('#chartLine').getContext('2d'), {
+          type:'line',
+          data:{ labels, datasets:[{ label:`Compras (${data.tipo})`, data: serie, tension:.35, borderWidth:2, fill:true }] },
+          options:{
+            responsive:true,
+            plugins:{ legend:{ display:false } },
+            scales:{
+              x:{ ticks:{ color:'#cfe2ff' }, grid:{ color:'rgba(255,255,255,.06)' } },
+              y:{ ticks:{ color:'#cfe2ff', callback:v=>money(v) }, grid:{ color:'rgba(255,255,255,.06)' } }
             }
           }
         });
 
-        // ===== Barras apiladas A vs B (misma serie temporal) =====
-        if (stackChart) stackChart.destroy();
-        stackChart = new Chart($('#chartStack').getContext('2d'), {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [
-              { label: 'A (Facturas)', data: data.series.A, stack: 'compras' },
-              { label: 'B (Presupuestos)', data: data.series.B, stack: 'compras' }
-            ]
-          },
-          options: {
-            responsive: true,
-            plugins: { legend: { display: true, labels: { color:'#bcd3ff' } } },
-            scales: {
-              x: { stacked: true, grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color:'#bcd3ff' } },
-              y: { stacked: true, grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color:'#bcd3ff', callback: v => money(v) } }
-            }
-          }
-        });
-
-        skeleton(false);
-      } catch (err) {
-        console.error(err);
-        $('#toastErr').style.display = 'block';
-        skeleton(false);
-        $('#kpiEstado').textContent = 'Error';
+        setLoading(false);
+      } catch (e) {
+        console.error(e);
+        $('#err').style.display = 'block';
+        setLoading(false);
       }
     }
 
-    // Eventos
-    document.getElementById('btnAplicar').addEventListener('click', cargarObjetivos);
-    // Auto-load on mount
-    document.addEventListener('DOMContentLoaded', () => cargarObjetivos());
+    $('#btnAplicar').addEventListener('click', cargar);
+    document.addEventListener('DOMContentLoaded', cargar);
   </script>
 
   <%- include('./layouts/footer.ejs') %>
