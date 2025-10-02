@@ -1717,6 +1717,42 @@ tfoot td {
 .obj-console #estado,
 .obj-console #v-estado{ display:none !important; }
 
+/* --- main no arma grilla, la grilla vive en .obj-panels --- */
+.obj-console main{
+  padding:16px !important;
+  display:block;          /* <— quitar cualquier grid/flex previo */
+}
+
+/* --- grilla de cards --- */
+.obj-console .obj-panels{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap:24px;
+  align-items:start;
+}
+
+/* --- por si quedó alguna regla vieja que forzaba 1 columna o width 100% --- */
+.obj-console main > *{
+  width:auto;             /* <— evita que un hijo se fuerce a 100% */
+  display:initial;        /* <— levanta “display:block” global si lo había */
+}
+
+/* --- cada card como “caja” --- */
+.obj-console .obj-card{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)),
+    linear-gradient(180deg, var(--obj-panel), var(--obj-panel-2));
+  border: 1px solid var(--obj-border);
+  border-radius: var(--obj-r-xl);
+  box-shadow: var(--obj-sh-1), var(--obj-sh-2);
+  padding: 16px;
+}
+
+/* --- limpiar duplicados u overrides viejos --- */
+.obj-console, 
+.obj-console > *{
+  flex: initial !important;   /* en vez de none, para no romper layout externo */
+}
 
 /* ---------- --------------------------------------- *
 
