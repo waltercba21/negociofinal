@@ -1405,6 +1405,258 @@ tfoot td {
     max-width: 300px;
   }
 }
+/*------------ VISTA DE OBJETIVOS ------------- */
+
+/* =========================================================================
+   OBJETIVOS — NASA Mission Console (scoped)
+   Namespace: .obj-console  → no pisa estilos globales del proyecto
+   ========================================================================= */
+
+.obj-console{
+  --obj-bg: #0b1220;
+  --obj-panel: #111a2e;
+  --obj-panel-2: #0e1730;
+  --obj-border: #20325e;
+  --obj-grid: rgba(255,255,255,.03);
+
+  /* Paleta Autofaros + consola */
+  --obj-primary: #003f7d;
+  --obj-accent:  #00e0c7;
+  --obj-warn:    #d90429;
+  --obj-muted:   #9fb0cb;
+  --obj-ok:      #34d399;
+  --obj-low:     #f87171;
+
+  --obj-text: #e7eefc;
+  --obj-text-dim: #c8d3ea;
+
+  --obj-r-xl: 16px;
+  --obj-r-lg: 12px;
+  --obj-r-md: 10px;
+
+  --obj-sh-1: 0 10px 30px rgba(0,0,0,.35);
+  --obj-sh-2: 0 2px 0 rgba(255,255,255,.04) inset, 0 1px 0 rgba(255,255,255,.06);
+
+  position: relative;
+  background: radial-gradient(1200px 800px at 20% -10%, #0f1a33 0%, var(--obj-bg) 55%) fixed;
+  color: var(--obj-text);
+  padding: 20px;
+  border-radius: var(--obj-r-xl);
+}
+
+/* HUD grid sutil */
+.obj-console::before{
+  content:"";
+  position: absolute; inset:0;
+  background:
+    linear-gradient(var(--obj-grid) 1px, transparent 1px) 0 0/24px 24px,
+    linear-gradient(90deg, var(--obj-grid) 1px, transparent 1px) 0 0/24px 24px;
+  pointer-events:none;
+  border-radius: inherit;
+}
+
+/* ================= Panels / wrappers (solo dentro de la vista) ================ */
+.obj-console .obj-panel{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)),
+    linear-gradient(180deg, var(--obj-panel), var(--obj-panel-2));
+  border: 1px solid var(--obj-border);
+  border-radius: var(--obj-r-xl);
+  box-shadow: var(--obj-sh-1), var(--obj-sh-2);
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.obj-console .obj-panel::before{
+  content: "";
+  position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--obj-accent), transparent);
+  opacity: .6; border-top-left-radius: var(--obj-r-xl); border-top-right-radius: var(--obj-r-xl);
+}
+
+/* Titulares internos (sin tocar h2 globales) */
+.obj-console .obj-title{
+  display: inline-flex; align-items: center; gap: 10px;
+  font-weight: 800; letter-spacing: .4px; margin: 4px 0 12px;
+}
+.obj-console .obj-title::before{
+  content:"◎"; color: var(--obj-accent); text-shadow: 0 0 8px rgba(0,224,199,.55);
+}
+
+/* ================== Controles (scoped) ================== */
+.obj-console :where(select, button){
+  appearance:none; outline:none;
+  border: 1px solid #2b3c66;
+  background: #0c1834;
+  color: var(--obj-text);
+  padding: 10px 12px;
+  border-radius: var(--obj-r-md);
+  font-weight: 600; letter-spacing:.2px;
+  transition: transform .06s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+}
+.obj-console select{
+  min-width: 180px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.08)), #0c1834;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #9fb6df 50%),
+    linear-gradient(135deg, #9fb6df 50%, transparent 50%),
+    linear-gradient(90deg, rgba(255,255,255,.08), rgba(255,255,255,0));
+  background-position: calc(100% - 18px) 16px, calc(100% - 12px) 16px, 0 0;
+  background-size: 6px 6px, 6px 6px, auto;
+  background-repeat: no-repeat; padding-right: 34px;
+}
+.obj-console select:focus{
+  border-color: var(--obj-accent); box-shadow: 0 0 0 3px rgba(0,224,199,.15);
+}
+.obj-console button{
+  text-transform: uppercase; font-size: 13px; letter-spacing: .7px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.12)),
+    linear-gradient(90deg, #044b94, var(--obj-primary));
+  border-color: #165aa4;
+}
+.obj-console button:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,63,125,.35), 0 0 0 3px rgba(0,224,199,.12) inset;
+}
+
+/* Botón buscar (manteniendo tus IDs, pero aislados) */
+.obj-console :where(#btnBuscar, #v-btnBuscar)::before{
+  content:"▶"; margin-right:8px; color: var(--obj-accent);
+  text-shadow: 0 0 8px rgba(0,224,199,.5);
+}
+
+/* Variantes */
+.obj-console .obj-btn--warn{
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.12)), linear-gradient(90deg, #ff3a3a, var(--obj-warn));
+  border-color:#b31229;
+}
+.obj-console .obj-btn--ghost{
+  background: rgba(255,255,255,.02); border-color:#2b3c66;
+}
+
+/* ================== Estados / mensajes (scoped) ================== */
+.obj-console :where(#estado, #v-estado){
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+  color: var(--obj-muted);
+  background: rgba(0,0,0,.25);
+  border: 1px dashed #2b3c66;
+  padding: 10px 12px; border-radius: var(--obj-r-md);
+}
+.obj-console :where(#error, #v-error){
+  color: #ffd2d2; background: rgba(217,4,41,.12);
+  border: 1px solid rgba(217,4,41,.35);
+  padding:10px 12px; border-radius: var(--obj-r-md);
+}
+
+/* ================== KPIs / badges (scoped) ================== */
+.obj-console :where(#kpiTotal, #v-kpiTotal){
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+  font-size: 28px; font-weight: 800; color: var(--obj-accent);
+  text-shadow: 0 0 12px rgba(0,224,199,.35);
+}
+.obj-console :where(#wrapA, #v-wrapA),
+.obj-console :where(#wrapB, #v-wrapB),
+.obj-console :where(#wrapTOTAL, #v-wrapTOTAL){
+  padding: 4px 8px; border-radius: 999px; display:inline-flex; align-items:center; gap:6px;
+  border: 1px solid transparent; background: rgba(255,255,255,.06);
+  font-weight:700;
+}
+.obj-console :where(#wrapA, #v-wrapA){
+  background: rgba(52,211,153,.12); border-color: rgba(52,211,153,.35); color: var(--obj-ok);
+}
+.obj-console :where(#wrapB, #v-wrapB){
+  background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.35); color: var(--obj-low);
+}
+.obj-console :where(#wrapTOTAL, #v-wrapTOTAL){
+  background: rgba(0,63,125,.18); border-color: rgba(0,63,125,.45); color: #a4c7ff;
+}
+
+/* ================== Layout de filtros (grids suaves) ================ */
+.obj-console :where(#subfiltros, #v-subfiltros){
+  display:grid; grid-template-columns: repeat(12, 1fr); gap:12px;
+}
+.obj-console :where(#boxSemanal, #boxMensual, #boxAnual,
+                    #v-boxSemanal, #v-boxMensual, #v-boxAnual){
+  display:grid; grid-template-columns: repeat(12, 1fr); gap:12px; margin-top:6px;
+}
+.obj-console :where(#boxSemanal > label, #boxMensual > label, #boxAnual > label,
+                    #v-boxSemanal > label, #v-boxMensual > label, #v-boxAnual > label){
+  grid-column: span 4; color: var(--obj-text-dim); font-weight:700;
+}
+.obj-console :where(#btnBuscar, #v-btnBuscar){ grid-column: span 12; }
+
+/* ================== Contenedor de charts (scoped) ================== */
+.obj-console :where(#tablaWrap, #v-tablaWrap){
+  min-height: 340px; margin-top: 12px;
+}
+.obj-console :where(#resumenSerie, #v-resumenSerie){
+  font-size: 13px; color: #cbd6f6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+  background: rgba(255,255,255,.02); border: 1px solid #2b3c66;
+  border-radius: var(--obj-r-md); padding: 8px 10px;
+}
+.obj-console canvas{
+  display:block; width:100%!important; height:100%!important;
+  background:
+    radial-gradient(800px 300px at 50% 0%, rgba(0,224,199,.08), transparent 70%),
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
+  border: 1px solid #20325e; border-radius: var(--obj-r-lg);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02), 0 8px 24px rgba(0,0,0,.35);
+}
+
+/* Indicador LIVE en headers dentro del wrap (si usás <h3>) */
+.obj-console :where(#tablaWrap h3, #v-tablaWrap h3)::after{
+  content:" LIVE";
+  font: 700 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+  color:#9deee5; margin-left:8px; padding:2px 6px; border-radius:4px;
+  background: rgba(0,224,199,.12); border:1px solid rgba(0,224,199,.35); letter-spacing:1px;
+}
+
+/* ================== Accesibilidad (scoped) ================== */
+.obj-console :focus-visible{
+  outline: 2px solid var(--obj-accent); outline-offset:2px;
+}
+
+/* ================== Responsive ================== */
+@media (max-width: 980px){
+  .obj-console :where(#boxSemanal > label, #boxMensual > label, #boxAnual > label,
+                      #v-boxSemanal > label, #v-boxMensual > label, #v-boxAnual > label){
+    grid-column: span 6;
+  }
+}
+@media (max-width: 640px){
+  .obj-console :where(#boxSemanal > label, #boxMensual > label, #boxAnual > label,
+                      #v-boxSemanal > label, #v-boxMensual > label, #v-boxAnual > label){
+    grid-column: span 12;
+  }
+  .obj-console select{ min-width:100%; }
+  .obj-console button{ width:100%; justify-content:center; }
+}
+
+/* ================== Opcional: modo claro solo para esta vista ================== */
+.obj-console.is-light{
+  --obj-bg:#f5f7fb; --obj-panel:#ffffff; --obj-panel-2:#f8fafc; --obj-border:#cbd5e1;
+  --obj-text:#10223a; --obj-text-dim:#42506a; --obj-grid:rgba(0,0,0,.035);
+}
+.obj-console.is-light{
+  background: linear-gradient(180deg, #f5f7fb, #eaf1ff);
+}
+.obj-console.is-light .obj-panel{
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+  box-shadow: 0 10px 30px rgba(27,43,69,.08), inset 0 2px 0 rgba(255,255,255,.6);
+}
+.obj-console.is-light :where(#estado, #v-estado){
+  background: #f2f5ff; border-color:#c9d7ff; color:#223a66;
+}
+.obj-console.is-light canvas{
+  background:
+    radial-gradient(800px 300px at 50% 0%, rgba(0,63,125,.08), transparent 70%),
+    linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,0));
+  border-color:#d5e3ff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.02), 0 8px 24px rgba(0,0,0,.08);
+}
+
 
 
 /* GRID 4 TARJETAS */
