@@ -1,3 +1,8 @@
+function prettifyRangeText(s) {
+  return String(s || '')
+    .replace(/\d{4}-\d{2}-\d{2}/g, (m) => { const [y,mm,dd] = m.split('-'); return `${dd}/${mm}/${y}`; });
+}
+
 // ==== Constantes y helpers ====
   const NOMBRES_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -25,23 +30,49 @@
   }
   const yearRange = year => ({ desde: `${year}-01-01`, hasta: `${year}-12-31`, label: `${year}` });
 
-  // Etiquetas de fecha legibles
-  function formatearEtiqueta(lbl, periodo){
-    if (!lbl) return '-';
-    if (periodo === 'anual' && /^\d{4}-\d{2}$/.test(lbl)) {
-      const [,m] = lbl.split('-'); const idx = Math.max(1, Math.min(12, parseInt(m,10))) - 1;
-      return NOMBRES_MESES[idx];
-    }
-    const isoDateMatch = /^\d{4}-\d{2}-\d{2}/.test(lbl) || /T\d{2}:\d{2}:\d{2}/.test(lbl);
-    if (isoDateMatch) {
-      const d = new Date(lbl);
-      if (!isNaN(d)) return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
-    }
-    if (/^\d{4}-\d{2}$/.test(lbl)) { const [y,m]=lbl.split('-'); return `${m}/${y}`; }
-    if (/^\d{4}$/.test(lbl)) return lbl;
-    if (/^\d{4}-W\d{2}$/.test(lbl)) { const [y,w]=lbl.split('-W'); return `Sem ${w} / ${y}`; }
-    return lbl;
+function toDMY(d) {
+  const date = (d instanceof Date) ? d : new Date(d);
+  if (isNaN(date)) return String(d);
+  return `${pad(date.getDate())}/${pad(date.getMonth()+1)}/${date.getFullYear()}`;
+}
+
+function formatearEtiqueta(lbl, periodo){
+  if (lbl == null) return '-';
+
+  // Si ya es Date o timestamp → DD/MM/YYYY
+  if (lbl instanceof Date) return toDMY(lbl);
+  if (typeof lbl === 'number') return toDMY(new Date(lbl));
+
+  // 'YYYY-MM' (anual) → nombre de mes
+  if (periodo === 'anual' && /^\d{4}-\d{2}$/.test(lbl)) {
+    const [,m] = String(lbl).split('-');
+    const idx = Math.max(1, Math.min(12, parseInt(m,10))) - 1;
+    return NOMBRES_MESES[idx];
   }
+
+  // ISO 'YYYY-MM-DD...' → DD/MM/YYYY
+  if (/^\d{4}-\d{2}-\d{2}/.test(lbl)) {
+    return toDMY(String(lbl).slice(0,10));
+  }
+
+  // 'YYYY-MM' → 'MM/YYYY'
+  if (/^\d{4}-\d{2}$/.test(lbl)) {
+    const [y,m] = String(lbl).split('-');
+    return `${m}/${y}`;
+  }
+
+  if (/^\d{4}$/.test(lbl)) return String(lbl);
+  if (/^\d{4}-W\d{2}$/.test(lbl)) {
+    const [y,w] = String(lbl).split('-W'); return `Sem ${w} / ${y}`;
+  }
+
+  // Fallback: si se puede parsear como fecha → DD/MM/YYYY
+  const maybe = new Date(lbl);
+  if (!isNaN(maybe)) return toDMY(maybe);
+
+  return String(lbl);
+}
+
 
   // Colores de barras
   const defaultBar = 'rgba(99, 132, 255, 0.6)';
@@ -494,7 +525,9 @@
       if (!res.ok || !data.ok) throw new Error(data.error || 'Error al calcular series.');
 
       // KPIs
-      setText($gLblRango, labelRango || (data.series?.etiquetas?.[0] || '-'));
+      const firstLabelFmt = (data.series?.etiquetas?.[0] != null) ? formatearEtiqueta(data.series.etiquetas[0], periodo) : '-';
+setText($gLblRango, prettifyRangeText(labelRango || firstLabelFmt));
+
       setText($gLblCat, categoria || 'TODAS');
       setText($gKpi, money(data.totales?.TOTAL || 0));
 
@@ -513,7 +546,8 @@
           if (v>maxVal){maxVal=v;iMax=i;}
           if (v<minVal){minVal=v;iMin=i;}
         }
-        const labelsFmt = labels.map(l => formatearEtiqueta(l, periodo));
+        const labelsFmt = (labels || []).map(l => formatearEtiqueta(l, periodo));
+
         const bgColors = serie.map((_, i) => i===iMax? 'rgba(52, 211, 153, 0.85)' : (i===iMin? 'rgba(248, 113, 113, 0.85)' : 'rgba(99, 132, 255, 0.6)'));
         setText($gResumen, `Máximo: ${labelsFmt[iMax] ?? '-'} (${money(maxVal)}) · Mínimo: ${labelsFmt[iMin] ?? '-'} (${money(minVal)})`);
 
