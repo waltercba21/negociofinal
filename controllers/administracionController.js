@@ -939,24 +939,20 @@ listarGastos: (req, res) => {
 },
 apiObjetivosGastos: (req, res) => {
   const periodo   = (req.query.periodo || 'mensual').toLowerCase();
+  const tipo      = (req.query.tipo || 'TOTAL').toUpperCase(); // 'A' | 'B' | 'TOTAL'
   const categoria = (req.query.categoria || '').trim() || null;
 
-  const fechas = {
-    desde: req.query.desde || null,
-    hasta: req.query.hasta || null
-  };
+  const fechas = { desde: req.query.desde || null, hasta: req.query.hasta || null };
   if (fechas.desde && !fechas.hasta) fechas.hasta = fechas.desde;
 
   try {
-    // 1) Totales
-    administracion.obtenerTotalesPeriodoGastos(periodo, fechas, categoria, (errTot, totales) => {
+    administracion.obtenerTotalesPeriodoGastos(periodo, fechas, tipo, categoria, (errTot, totales) => {
       if (errTot) {
         console.error('[apiObjetivosGastos] Totales:', errTot);
         return res.status(500).json({ ok: false, error: 'Error al calcular totales.' });
       }
 
-      // 2) Series
-      administracion.obtenerSeriesGastos(periodo, fechas, categoria, (errSer, series) => {
+      administracion.obtenerSeriesGastos(periodo, fechas, tipo, categoria, (errSer, series) => {
         if (errSer) {
           console.error('[apiObjetivosGastos] Series:', errSer);
           return res.status(500).json({ ok: false, error: 'Error al calcular series.' });
@@ -964,10 +960,9 @@ apiObjetivosGastos: (req, res) => {
 
         return res.json({
           ok: true,
-          periodo,
-          categoria: categoria || 'TODAS',
-          totales,     // { TOTAL: number }
-          series       // { etiquetas:[], TOTAL:[] }
+          periodo, tipo, categoria: categoria || 'TODAS',
+          totales,   // {A,B,TOTAL} o {A} / {B}
+          series     // {etiquetas, A,B,TOTAL} o {etiquetas, A} / {etiquetas, B}
         });
       });
     });

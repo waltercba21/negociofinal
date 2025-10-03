@@ -1091,96 +1091,119 @@ listarGastos: function (desde, hasta, categoria, callback) {
   sql += ` ORDER BY fecha DESC, id DESC LIMIT 500`;
   pool.query(sql, params, callback);
 },
-// Totales del periodo o rango (GASTOS)
-obtenerTotalesPeriodoGastos: function (periodo, fechas, categoria, callback) {
+obtenerTotalesPeriodoGastos(periodo, fechas, tipo, categoria, callback) {
   try {
-    const wf = _whereFecha('', periodo, fechas); // reutiliza las mismas reglas de fecha
-    let sql = `SELECT COALESCE(SUM(monto),0) AS total FROM gastos WHERE ${wf.whereSql}`;
-    const params = [...wf.params];
-    if (categoria && categoria.trim() !== '') { sql += ' AND categoria = ?'; params.push(categoria); }
+    const wf = _whereFecha('', periodo, fechas);
+    const whereBase = `WHERE ${wf.whereSql}`;
+    const paramsBase = [...wf.params];
 
-    pool.query(sql, params, (err, rows) => {
+    const catSql = (categoria && categoria.trim() !== '') ? ' AND categoria = ? ' : '';
+    const catParams = (categoria && categoria.trim() !== '') ? [categoria] : [];
+
+    // Si piden un solo tipo (A o B)
+    if (tipo === 'A' || tipo === 'B') {
+      const sql = `SELECT COALESCE(SUM(monto),0) AS total
+                   FROM gastos ${whereBase} AND tipo = ? ${catSql}`;
+      const params = [...paramsBase, tipo, ...catParams];
+      return pool.query(sql, params, (err, rows) => {
+        if (err) return callback(err);
+        const total = Number(rows?.[0]?.total || 0);
+        callback(null, { [tipo]: total });
+      });
+    }
+
+    // TOTAL + desglose A/B
+    const sql = `
+      SELECT tipo, COALESCE(SUM(monto),0) AS total
+      FROM gastos
+      ${whereBase} ${catSql}
+      GROUP BY tipo
+    `;
+    pool.query(sql, [...paramsBase, ...catParams], (err, rows) => {
       if (err) return callback(err);
-      const total = Number(rows?.[0]?.total || 0);
-      callback(null, { TOTAL: total });
+      const A = Number((rows || []).find(r => r.tipo === 'A')?.total || 0);
+      const B = Number((rows || []).find(r => r.tipo === 'B')?.total || 0);
+      callback(null, { A, B, TOTAL: A + B });
     });
   } catch (e) {
     callback(e);
   }
 },
 
-// Series por periodo (GASTOS)
-obtenerSeriesGastos: function (periodo, fechas, categoria, callback) {
+// === SERIES (GASTOS A/B/TOTAL) ===
+obtenerSeriesGastos(periodo, fechas, tipo, categoria, callback) {
   try {
     const { puntos, grupo } = _configuracionPeriodo(periodo);
     const catSql = (categoria && categoria.trim() !== '') ? ' AND categoria = ? ' : '';
     const catParams = (categoria && categoria.trim() !== '') ? [categoria] : [];
 
-    // Si viene rango explícito, agrupamos por día (el front puede re-mapear si lo desea)
+    const selectBucket = (grupo === 'DAY')   ? `DATE(fecha)`
+                        : (grupo === 'WEEK')  ? `CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha,1),2,'0'))`
+                        : (grupo === 'MONTH') ? `DATE_FORMAT(fecha,'%Y-%m')`
+                        :                        `DATE_FORMAT(fecha,'%Y')`;
+
+    let whereRango = '';
     if (fechas && fechas.desde && fechas.hasta) {
+      whereRango = `fecha BETWEEN ? AND ?`;
+    } else if (grupo === 'DAY') {
+      whereRango = `fecha >= CURDATE() - INTERVAL ${puntos - 1} DAY`;
+    } else if (grupo === 'WEEK') {
+      whereRango = `fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY`;
+    } else if (grupo === 'MONTH') {
+      whereRango = `fecha >= DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} MONTH, '%Y-%m-01')`;
+    } else {
+      whereRango = `fecha >= DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} YEAR, '%Y-01-01')`;
+    }
+
+    // Un tipo específico (A o B)
+    if (tipo === 'A' || tipo === 'B') {
       const sql = `
-        SELECT DATE(fecha) AS bucket, SUM(monto) AS total
+        SELECT ${selectBucket} AS bucket, SUM(monto) AS total
         FROM gastos
-        WHERE fecha BETWEEN ? AND ? ${catSql}
-        GROUP BY DATE(fecha)
-        ORDER BY DATE(fecha)
+        WHERE ${whereRango} AND tipo = ? ${catSql}
+        GROUP BY ${selectBucket}
+        ORDER BY ${selectBucket}
       `;
-      return pool.query(sql, [fechas.desde, fechas.hasta, ...catParams], (err, rows) => {
+      const baseParams = (fechas?.desde && fechas?.hasta)
+        ? [fechas.desde, fechas.hasta] : [];
+      const params = [...baseParams, tipo, ...catParams];
+
+      return pool.query(sql, params, (err, rows) => {
         if (err) return callback(err);
         const etiquetas = (rows || []).map(r => String(r.bucket));
-        const TOTAL = (rows || []).map(r => Number(r.total || 0));
-        callback(null, { etiquetas, TOTAL });
+        const serie = (rows || []).map(r => Number(r.total || 0));
+        callback(null, { etiquetas, [tipo]: serie });
       });
     }
 
-    // Sin fechas manuales → agrupación por grupo calculado
-    let sql = '';
-    let params = [];
-
-    if (grupo === 'DAY') {
-      sql = `
-        SELECT DATE(fecha) AS bucket, SUM(monto) AS total
-        FROM gastos
-        WHERE fecha >= CURDATE() - INTERVAL ${puntos - 1} DAY ${catSql}
-        GROUP BY DATE(fecha)
-        ORDER BY DATE(fecha)
-      `;
-      params = catParams;
-    } else if (grupo === 'WEEK') {
-      sql = `
-        SELECT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha,1),2,'0')) AS bucket, SUM(monto) AS total
-        FROM gastos
-        WHERE fecha >= CURDATE() - INTERVAL ${(puntos - 1) * 7} DAY ${catSql}
-        GROUP BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha,1),2,'0'))
-        ORDER BY CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha,1),2,'0'))
-      `;
-      params = catParams;
-    } else if (grupo === 'MONTH') {
-      sql = `
-        SELECT DATE_FORMAT(fecha,'%Y-%m') AS bucket, SUM(monto) AS total
-        FROM gastos
-        WHERE fecha >= DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} MONTH, '%Y-%m-01') ${catSql}
-        GROUP BY DATE_FORMAT(fecha,'%Y-%m')
-        ORDER BY DATE_FORMAT(fecha,'%Y-%m')
-      `;
-      params = catParams;
-    } else {
-      // fallback YEAR si alguna vez es necesario
-      sql = `
-        SELECT DATE_FORMAT(fecha,'%Y') AS bucket, SUM(monto) AS total
-        FROM gastos
-        WHERE fecha >= DATE_FORMAT(CURDATE() - INTERVAL ${puntos - 1} YEAR, '%Y-01-01') ${catSql}
-        GROUP BY DATE_FORMAT(fecha,'%Y')
-        ORDER BY DATE_FORMAT(fecha,'%Y')
-      `;
-      params = catParams;
-    }
+    // TOTAL con desglose A/B
+    const sql = `
+      SELECT ${selectBucket} AS bucket, tipo, SUM(monto) AS total
+      FROM gastos
+      WHERE ${whereRango} ${catSql}
+      GROUP BY ${selectBucket}, tipo
+      ORDER BY ${selectBucket}
+    `;
+    const baseParams = (fechas?.desde && fechas?.hasta)
+      ? [fechas.desde, fechas.hasta] : [];
+    const params = [...baseParams, ...catParams];
 
     pool.query(sql, params, (err, rows) => {
       if (err) return callback(err);
-      const etiquetas = (rows || []).map(r => String(r.bucket));
-      const TOTAL = (rows || []).map(r => Number(r.total || 0));
-      callback(null, { etiquetas, TOTAL });
+
+      // pivot por bucket
+      const map = new Map(); // bucket -> { A:0, B:0 }
+      (rows || []).forEach(r => {
+        const k = String(r.bucket);
+        if (!map.has(k)) map.set(k, { A:0, B:0 });
+        map.get(k)[r.tipo] += Number(r.total || 0);
+      });
+      const etiquetas = [...map.keys()];
+      const A = etiquetas.map(k => map.get(k).A);
+      const B = etiquetas.map(k => map.get(k).B);
+      const TOTAL = etiquetas.map((_, i) => A[i] + B[i]);
+
+      callback(null, { etiquetas, A, B, TOTAL });
     });
   } catch (e) {
     callback(e);
