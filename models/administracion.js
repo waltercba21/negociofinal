@@ -1209,6 +1209,38 @@ obtenerSeriesGastos(periodo, fechas, tipo, categoria, callback) {
     callback(e);
   }
 },
+// Modificar la función insertGasto para incluir el campo tipo
+insertGasto: function (data, callback) {
+  const { categoria, tipo, fecha, monto, descripcion, administrador } = data;
+  const sql = `
+    INSERT INTO gastos (categoria, tipo, fecha, monto, descripcion, administrador)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
+  const params = [categoria, tipo, fecha, monto, descripcion || null, administrador || null];
+  pool.query(sql, params, (err, result) => {
+    if (err) return callback(err);
+    callback(null, { insertId: result.insertId });
+  });
+},
+
+// Modificar la función listarGastos para seleccionar también el campo tipo
+listarGastos: function (desde, hasta, categoria, callback) {
+  let sql = `SELECT id, categoria, tipo, fecha, monto, descripcion, administrador, creado_en
+             FROM gastos WHERE 1=1`;
+  const params = [];
+  if (desde) { sql += ` AND fecha >= ?`; params.push(desde); }
+  if (hasta) { sql += ` AND fecha <= ?`; params.push(hasta); }
+  if (categoria && categoria.trim() !== '') {
+    sql += ` AND categoria = ?`; params.push(categoria);
+  }
+  sql += ` ORDER BY fecha DESC, id DESC LIMIT 500`;
+  pool.query(sql, params, callback);
+},
+deleteGasto: function(id, callback) {
+  const sql = 'DELETE FROM gastos WHERE id = ?';
+  pool.query(sql, [id], callback);
+},
+
 
 
 }

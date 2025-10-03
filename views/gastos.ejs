@@ -117,36 +117,44 @@
     </p>
 
     <h3 style="margin-top: 26px;">Últimos 30 días</h3>
-    <table>
-      <thead>
+  <table>
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Categoría</th>
+      <th>Tipo</th>
+      <th>Descripción</th>
+      <th style="text-align: right;">Monto</th>
+      <th>Acciones</th> <!-- Nueva columna para acciones -->
+    </tr>
+  </thead>
+  <tbody>
+    <% if ((gastos || []).length === 0) { %>
+      <tr><td colspan="6">Sin registros recientes.</td></tr>
+    <% } else { %>
+      <% gastos.forEach(g => { %>
         <tr>
-          <th>Fecha</th>
-          <th>Categoría</th>
-          <th>Tipo</th>
-          <th>Descripción</th>
-          <th style="text-align: right;">Monto</th>
+          <td><%= new Date(g.fecha).toLocaleDateString('es-AR') %></td>
+          <td><%= g.categoria %></td>
+          <td><%= g.tipo %></td>
+          <td><%= g.descripcion || '' %></td>
+          <td class="monto" style="text-align: right;">
+            $ <%= Number(g.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 }) %>
+          </td>
+          <td>
+            <!-- Formulario para eliminar, con confirmación -->
+            <form action="/administracion/gastos/<%= g.id %>/eliminar" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este gasto?');">
+              <button type="submit" style="background: #d9534f; color: #fff; border: none; padding: 5px 8px; border-radius: 5px; cursor: pointer;">
+                Eliminar
+              </button>
+            </form>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        <% if ((gastos || []).length === 0) { %>
-          <tr>
-            <td colspan="5">Sin registros recientes.</td>
-          </tr>
-        <% } else { %>
-          <% gastos.forEach(g => { %>
-            <tr>
-              <td><%= new Date(g.fecha).toLocaleDateString('es-AR') %></td>
-              <td><%= g.categoria %></td>
-              <td><%= g.tipo %></td>
-              <td><%= g.descripcion || '' %></td>
-              <td class="monto" style="text-align: right;">
-                $ <%= Number(g.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 }) %>
-              </td>
-            </tr>
-          <% }) %>
-        <% } %>
-      </tbody>
-    </table>
+      <% }) %>
+    <% } %>
+  </tbody>
+</table>
+
   </div>
 
   <script>

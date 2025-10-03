@@ -903,10 +903,10 @@ gastos: (req, res) => {
     res.render('gastos', { hoy, gastos: rows || [], categorias });
   });
 },
-
 postGasto: (req, res) => {
   const data = {
     categoria: (req.body.categoria || '').trim(),
+    tipo: req.body.tipo,  // 👉 Agregar este campo para capturar el tipo
     fecha: req.body.fecha,
     monto: parseFloat(req.body.monto || 0) || 0,
     descripcion: (req.body.descripcion || '').trim(),
@@ -922,13 +922,22 @@ postGasto: (req, res) => {
       console.error("❌ Error al guardar gasto:", err);
       return res.status(500).send("Error al guardar gasto");
     }
-    // Si la vista lo envía vía fetch, devolvemos JSON; si es form normal, redirect
-    if (req.xhr || req.headers.accept?.includes('application/json')) {
-      return res.json({ ok: true, insertId: result.insertId });
-    }
+    // ... (resto del código)
     res.redirect('/administracion/gastos');
   });
 },
+eliminarGasto: (req, res) => {
+  const id = req.params.id;
+  administracion.deleteGasto(id, (err) => {
+    if (err) {
+      console.error("❌ Error al eliminar gasto:", err);
+      return res.status(500).send("Error al eliminar gasto");
+    }
+    // Redirigir de nuevo a la vista de gastos una vez eliminado
+    res.redirect('/administracion/gastos');
+  });
+},
+
 
 listarGastos: (req, res) => {
   const { desde, hasta, categoria } = req.query;

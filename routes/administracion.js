@@ -78,5 +78,6 @@ router.post('/gastos', administracionController.postGasto);
 router.get('/api/gastos', administracionController.listarGastos);
 // GET /administracion/api/objetivos-gastos
 router.get('/api/objetivos-gastos', administracionController.apiObjetivosGastos);
+router.post('/gastos/:id/eliminar', administracionController.eliminarGasto);
 
 module.exports = router;
