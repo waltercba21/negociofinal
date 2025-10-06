@@ -123,10 +123,11 @@ function mostrarProductos(productos) {
         : producto.calidad_vic ? 'CALIDAD VIC'
         : ''
     );
-    // === NUEVO: datasets para simulación y detección de base ===
+    // === Datasets para simulación y detección de base ===
     card.dataset.productoId = producto.id;
     card.dataset.precioVenta = producto.precio_venta;
     card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // <- clave
+    card.dataset.utilidad = Number(producto.utilidad) || 0; // <- NUEVO: para cálculo exacto
 
     let imagenesHTML = '';
     (producto.imagenes || []).forEach((imagen, i) => {
@@ -305,7 +306,6 @@ function formatearNumero(num) {
 }
 
 // ============== Helpers numéricos ==============
-// Reemplazá la función toNumberSafe por esta
 function toNumberSafe(v) {
   if (v == null) return 0;
   if (typeof v === 'number' && Number.isFinite(v)) return v;
@@ -326,7 +326,6 @@ function toNumberSafe(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
-
 /* =========================
    Siguiente proveedor (con base asignada por ID)
    ========================= */
@@ -339,8 +338,24 @@ async function _getOrInitState(productoId){
   if (state) return state;
 
   const r = await fetch(`/productos/api/proveedores/${productoId}`);
-  const lista = await r.json();
-  state = { lista: Array.isArray(lista) ? lista : [], idx: 0, first: true, baseIdx: 0 };
+  let lista = await r.json();
+
+  // 🔧 Normalización: costo_iva y codigo
+  if (!Array.isArray(lista)) lista = [];
+  lista = lista.map(p => {
+    const costo =
+      p.costo_iva ?? p.costoIva ?? p.costo_con_iva ?? p.precio_costo_con_iva ??
+      p.precioCostoConIva ?? p.costo_final ?? p.costo ?? 0;
+    const codigo =
+      p.codigo ?? p.codigo_proveedor ?? p.cod_proveedor ?? p.codigoProveedor ?? p.cod ?? '-';
+    return {
+      ...p,
+      costo_iva: toNumberSafe(costo),
+      codigo
+    };
+  });
+
+  state = { lista, idx: 0, first: true, baseIdx: 0 };
 
   if (state.lista.length) {
     // Buscar card para obtener el proveedor asignado por ID
@@ -349,7 +364,7 @@ async function _getOrInitState(productoId){
     const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
 
     if (asignadoId) {
-      const byId = state.lista.findIndex(p => Number(p.id) === asignadoId);
+      const byId = state.lista.findIndex(p => Number(p.id ?? p.proveedor_id) === asignadoId);
       if (byId >= 0) {
         state.baseIdx = byId;
         state.idx = byId;
@@ -387,7 +402,6 @@ function _renderProveedor(productoId, data) {
   }
 }
 
-// === REEMPLAZAR _renderSimulacion ===
 function _renderSimulacion(productoId, precioVentaSimulado){
   const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
   if (!nodo) return;
@@ -397,8 +411,6 @@ function _renderSimulacion(productoId, precioVentaSimulado){
     nodo.textContent = '';
   }
 }
-
-
 
 function _inicializarProveedorActual(producto) {
   if (!isAdminUser) return;
@@ -430,7 +442,8 @@ contenedorProductos.addEventListener('click', async (ev) => {
   if (!productoId) return;
 
   const cardEl = btn.closest('.card');
-  const precioVentaOriginal = toNumberSafe(cardEl?.dataset?.precioVenta);
+  const utilidadPct = toNumberSafe(cardEl?.dataset?.utilidad) || 0;
+  const u = utilidadPct / 100;
 
   const st = await _getOrInitState(productoId);
   if (!st.lista || !st.lista.length) {
@@ -467,14 +480,11 @@ contenedorProductos.addEventListener('click', async (ev) => {
   const provNuevo = st.lista[st.idx];
   _renderProveedor(productoId, provNuevo);
 
-  // Calcular precio simulado usando SIEMPRE la base del proveedor asignado
-  const costoAsignado = toNumberSafe(st.lista[st.baseIdx]?.costo_iva);
-  const costoNuevo    = toNumberSafe(provNuevo?.costo_iva);
+  // Calcular precio simulado con utilidad (regla de negocio exacta)
+  const costoNuevo = toNumberSafe(provNuevo?.costo_iva);
 
-  if (costoAsignado > 0 && costoNuevo > 0 && precioVentaOriginal > 0) {
-    const markup = precioVentaOriginal / costoAsignado;
-    const precioSimulado = Math.round(markup * costoNuevo);
-
+  if (costoNuevo > 0 && u >= 0) {
+    const precioSimulado = Math.round(costoNuevo * (1 + u));
     // Si volvimos al asignado, limpiar simulación; si no, mostrarla.
     if (st.idx === st.baseIdx) {
       _renderSimulacion(productoId, null);
@@ -487,5 +497,3 @@ contenedorProductos.addEventListener('click', async (ev) => {
 
   // MUY IMPORTANTE: no tocar el precio principal de la card.
 }, { passive: true });
-
-
