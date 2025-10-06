@@ -685,8 +685,6 @@ if (req.files && req.files.length > 0) {
     )
   );
 }
-
-
     console.log("===== Fin guardar (OK) =====");
     return res.redirect("/productos/panelControl");
   } catch (error) {

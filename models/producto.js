@@ -1717,12 +1717,17 @@ retornarDatosProveedores: function (conexion, producto_id) {
         pp.proveedor_id,
         pp.precio_lista,
         pp.codigo,
-        pp.iva,                                -- 👈 IVA del vínculo
+        pp.iva,                                 -- si tu tabla lo tiene
         pr.nombre AS proveedor_nombre,
-        COALESCE(dp.descuento, 0) AS descuento -- si manejás descuento por proveedor
+        COALESCE(dp.descuento, 0) AS descuento
       FROM producto_proveedor pp
-      JOIN proveedores pr ON pr.id = pp.proveedor_id
-      LEFT JOIN descuentos_proveedor dp
+      JOIN proveedores pr 
+        ON pr.id = pp.proveedor_id
+      LEFT JOIN (
+        SELECT proveedor_id, MAX(descuento) AS descuento
+        FROM descuentos_proveedor
+        GROUP BY proveedor_id
+      ) dp
         ON dp.proveedor_id = pp.proveedor_id
       WHERE pp.producto_id = ?
       ORDER BY pp.proveedor_id ASC
@@ -1733,7 +1738,6 @@ retornarDatosProveedores: function (conexion, producto_id) {
     });
   });
 },
-
 
 eliminarProveedor: function (conexion, proveedorId, productoId) {
   const pid = Number(productoId) || 0;
