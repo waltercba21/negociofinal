@@ -467,13 +467,14 @@ lista: async function (req, res) {
           });
         }
       },      
-   buscar: async (req, res) => {
+ buscar: async (req, res) => {
   try {
     const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
     req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
 
     const limite = req.query.limite ? parseInt(req.query.limite) : 100;
 
+    // Productos por filtros
     const productos = await producto.obtenerPorFiltros(
       conexion,
       categoria_id,
@@ -483,22 +484,56 @@ lista: async function (req, res) {
       limite
     );
 
+    // Imágenes (si hay IDs)
     const productoIds = productos.map(p => p.id);
-    const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
+    const todasLasImagenes = productoIds.length
+      ? await producto.obtenerImagenesProducto(conexion, productoIds)
+      : [];
 
+    // Enriquecer cada producto
     for (const prod of productos) {
-      // Agregar imágenes
+      // Imágenes del producto
       prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
 
-      // Obtener todos los proveedores del producto
-      const proveedores = await producto.obtenerProveedoresPorProducto(conexion, prod.id);
+      // Todos los proveedores del producto
+      const proveedores = await producto.obtenerProveedoresPorProducto(conexion, prod.id) || [];
       prod.proveedores = proveedores;
 
-      // Buscar el proveedor más barato (si tenés esta lógica)
-      const proveedorMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
+      // Proveedor asignado (por ID en el propio producto)
+      let provAsignado = null;
+      if (prod.proveedor_id != null) {
+        // algunos modelos devuelven 'id', otros 'proveedor_id' dentro del objeto proveedor
+        provAsignado = proveedores.find(p =>
+          Number(p.id ?? p.proveedor_id) === Number(prod.proveedor_id)
+        ) || null;
+      }
 
-      prod.proveedor_nombre = proveedorMasBarato?.proveedor_nombre || 'Sin proveedor';
-      prod.codigo_proveedor = proveedorMasBarato?.codigo_proveedor || '-';
+      // Fallback: proveedor más barato si no hay asignado o no aparece en la lista
+      let provMasBarato = null;
+      try {
+        provMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
+      } catch (_) {
+        provMasBarato = null;
+      }
+
+      const provParaCard = provAsignado || provMasBarato || null;
+
+      // Campos para la card
+      prod.proveedor_nombre = provParaCard?.proveedor_nombre
+        ?? provParaCard?.nombre_proveedor
+        ?? provParaCard?.nombre
+        ?? 'Sin proveedor';
+
+      // el código del proveedor puede venir como 'codigo' o 'codigo_proveedor'
+      prod.codigo_proveedor = provParaCard?.codigo
+        ?? provParaCard?.codigo_proveedor
+        ?? '-';
+
+      // Exportar explícitamente el asignado para que el front lo priorice
+      prod.proveedor_asignado_id = prod.proveedor_id ?? null;
+
+      // Enviar utilidad cruda para cálculo exacto en el front
+      prod.utilidad = Number(prod.utilidad) || 0;
     }
 
     res.json(productos);
