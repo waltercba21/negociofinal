@@ -83,11 +83,6 @@ function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosList
   return filas;
 }
 
-// ==============================
-// LEGACY: Upsert crudo (NO guarda IVA/desc/costos)
-// Úsalo solo si la tabla no tiene esas columnas o en otros flujos viejos.
-// En el flujo de editar usamos el UPSERT completo dentro del controlador.
-// ==============================
 async function upsertProductoProveedorRaw(con, row) {
   const sql = `
     INSERT INTO producto_proveedor
@@ -677,15 +672,20 @@ guardar: async function (req, res) {
     }
 
     // 4) Imágenes nuevas (si llegan)
-    if (req.files && req.files.length > 0) {
-      console.log("[GUARDAR] Cant. imágenes:", req.files.length);
-      await Promise.all(
-        req.files.map(f => producto.insertarImagenProducto(conexion, {
-          producto_id: productoId,
-          imagen: f.filename
-        }))
-      );
-    }
+   // Dentro del try/catch del controlador guardar, después de obtener productoId:
+if (req.files && req.files.length > 0) {
+  console.log("[GUARDAR] Cant. imágenes:", req.files.length);
+  await Promise.all(
+    req.files.map(f =>
+      producto.insertarImagenProducto(conexion, {
+        producto_id: productoId,
+        imagen: f.filename,
+        // posicion: si querés, podés enviar i+1
+      })
+    )
+  );
+}
+
 
     console.log("===== Fin guardar (OK) =====");
     return res.redirect("/productos/panelControl");

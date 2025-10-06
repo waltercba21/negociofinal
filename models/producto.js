@@ -1762,26 +1762,14 @@ eliminarProveedor: function (conexion, proveedorId, productoId) {
     });
   });
 },
-
-
-insertarImagenProducto: function (conexion, datos) {
-    return new Promise((resolve, reject) => {
-      const producto_id = Number(datos.producto_id) || 0;
-      const imagen = (datos.imagen || '').trim();
-      if (!producto_id || !imagen) {
-        return reject(new Error('producto_id e imagen son obligatorios'));
-      }
-
-      const sql = `
-        INSERT INTO producto_imagen (producto_id, imagen)
-        VALUES (?, ?)
-      `;
-      conexion.query(sql, [producto_id, imagen], (error, results) => {
-        if (error) return reject(error);
-        resolve(results);
-      });
-    });
-  },
+// models/producto.js (o donde esté)
+insertarImagenProducto(conexion, { producto_id, imagen, posicion = null }) {
+  const sql = `
+    INSERT INTO imagenes_producto (producto_id, imagen, posicion)
+    VALUES (?, ?, ?)
+  `;
+  return conexion.promise().query(sql, [producto_id, imagen, posicion]);
+},
    obtenerProveedoresDeProducto: function (conexion, producto_id) {
     return new Promise((resolve, reject) => {
       const pid = Number(producto_id) || 0;
