@@ -1,7 +1,7 @@
 /* ==========================================
    DEBUG helpers
 ========================================== */
-const DBG = true; // ponelo en false si no querés ver logs en producción
+const DBG = true; // false para silenciar
 function dbg(...args){ if(DBG) console.log(...args); }
 function dbgTable(obj){ if(DBG && obj) console.table(obj); }
 
@@ -72,14 +72,12 @@ function formatearNumero(num) {
 
 function _getUtilidadDeCard(cardEl) {
   let u = toNumberSafe((cardEl?.dataset?.utilidad ?? '').toString().trim());
-  // admitir 0,30 -> 30
-  if (u > 0 && u < 1) u = u * 100;
+  if (u > 0 && u < 1) u = u * 100;  // admitir 0,30 -> 30
   if (u < 0) u = 0;
   if (u > 100) u = 100;
   return u;
 }
 
-// redondeo a centenar (como en editar.js)
 function _redondearAlCentenar(valor) {
   const n = Math.round(toNumberSafe(valor));
   const resto = n % 100;
@@ -87,48 +85,84 @@ function _redondearAlCentenar(valor) {
 }
 
 /* ==========================================
+   Detección flexible de claves
+========================================== */
+function _pickKeyCI(obj, candidates) {
+  // devuelve el primer valor > 0 cuya clave coincida case-insensitivamente
+  const map = {};
+  for (const k of Object.keys(obj || {})) map[k.toLowerCase()] = k;
+  for (const alias of candidates) {
+    const k = map[alias.toLowerCase()];
+    if (k != null && obj[k] != null) return obj[k];
+  }
+  return undefined;
+}
+
+/* ==========================================
    Normalizador de proveedores
-   (guardamos costo_iva, costo_neto y iva del registro
-   para poder decidir correctamente por proveedor)
 ========================================== */
 function _normalizeProviders(listaRaw) {
   if (!Array.isArray(listaRaw)) return [];
-  const lista = listaRaw.map(p => {
+
+  const COSTO_IVA_KEYS = [
+    'costo_iva','costoIva','costo_con_iva','costoConIva',
+    'precio_costo_con_iva','precioCostoConIva','precioCostoConIVA',
+    'precio_con_iva','precioConIva','precioConIVA',
+    'costo_final','costoFinal','costoFinalConIva','costo_final_con_iva'
+  ];
+  const COSTO_NETO_KEYS = [
+    'costo_neto','costoNeto','precio_costo_neto','precioCostoNeto','costo'
+  ];
+  const IVA_KEYS = [
+    'iva','iva_porcentaje','iva_porcent','alicuota_iva','ivaPercent','alicuotaIva'
+  ];
+  const LISTA_KEYS = [
+    'lista','precio_lista','precioLista','precioDeLista','precio_de_lista'
+  ];
+  const DTO_KEYS = [
+    'descuento','dto','bonif','bonificacion','descuento1'
+  ];
+
+  const lista = (listaRaw || []).map(p => {
+    // nombre proveedor, código, ids
     const codigo =
       p.codigo ?? p.codigo_proveedor ?? p.cod_proveedor ?? p.codigoProveedor ?? p.cod ?? '-';
-
     const provId = (p.id != null ? p.id : p.proveedor_id);
-
     const nombre =
       p.proveedor_nombre ?? p.nombre_proveedor ?? p.nombre ?? p.proveedor ?? '';
 
-    // tomar campos originales por si sirven
-    const costoNetoRaw = p.costo_neto ?? p.costo ?? p.precio_costo_neto;
-    const ivaRaw       = p.iva ?? p.iva_porcentaje ?? p.iva_porcent ?? p.alicuota_iva ?? p.ivaPercent;
-
-    // costo con IVA directo
-    const costoIVAkeys = [
-      'costo_iva','costoIva','costo_con_iva','precio_costo_con_iva','precioCostoConIva',
-      'costo_final','costoConIva','precioConIva'
-    ];
-    let costoIva = 0;
-    for (const k of costoIVAkeys) {
-      if (p[k] != null) { costoIva = toNumberSafe(p[k]); break; }
+    // detectar costo_iva directo por claves + fallback por coincidencia flexible
+    let costoIvaDirecto = _pickKeyCI(p, COSTO_IVA_KEYS);
+    if (costoIvaDirecto === undefined && p) {
+      // búsqueda heurística: cualquier clave que contenga "iva" y ("costo" o "precio")
+      for (const k of Object.keys(p)) {
+        const lk = k.toLowerCase();
+        if (lk.includes('iva') && (lk.includes('costo') || lk.includes('precio'))) {
+          costoIvaDirecto = p[k];
+          break;
+        }
+      }
     }
 
+    const costoNetoRaw = _pickKeyCI(p, COSTO_NETO_KEYS);
+    const ivaRaw       = _pickKeyCI(p, IVA_KEYS);
+    const listaRawV    = _pickKeyCI(p, LISTA_KEYS);
+    const dtoRaw       = _pickKeyCI(p, DTO_KEYS);
+
     const costoNeto = toNumberSafe(costoNetoRaw);
-    let ivaPct = toNumberSafe(ivaRaw);
+    let ivaPct      = toNumberSafe(ivaRaw);
     if (ivaPct > 0 && ivaPct < 1) ivaPct *= 100; // 0,105 -> 10.5
 
     const prov = {
       ...p,
       proveedor_id_norm: Number(provId) || null,
       proveedor_nombre: nombre,
-      codigo: codigo,
-      // guardamos ambos por si hay que reconstruir
-      costo_iva: toNumberSafe(costoIva),
+      codigo,
+      costo_iva: toNumberSafe(costoIvaDirecto),
       costo_neto: costoNeto,
-      iva: ivaPct
+      iva: ivaPct,
+      precio_lista: toNumberSafe(listaRawV),
+      descuento: toNumberSafe(dtoRaw)
     };
     return prov;
   });
@@ -141,6 +175,8 @@ function _normalizeProviders(listaRaw) {
     costo_iva: x.costo_iva,
     costo_neto: x.costo_neto,
     iva: x.iva,
+    lista: x.precio_lista,
+    dto: x.descuento,
     proveedor_id_norm: x.proveedor_id_norm
   })));
 
@@ -151,7 +187,6 @@ function _normalizeProviders(listaRaw) {
    Orden por costo (asc)
 ========================================== */
 function _sortedIdxByCosto(lista){
-  // Ordena por costo_iva>0; empuja al final los sin costo válido
   const withCost = [], noCost = [];
   lista.forEach((p, i) => {
     const c = toNumberSafe(p.costo_iva);
@@ -197,24 +232,24 @@ async function _getOrInitState(productoId){
     }
     state.idx = state.baseIdx;
 
-    // Derivar IVA BASE desde el proveedor asignado:
-    // prioridad: si ese registro trae IVA -> usarlo; si no, intentar deducir de costo_iva / costo_neto
+    // IVA BASE:
+    // 1) si el asignado trae iva explícito, usarlo
+    // 2) si no, deducir de costo_iva / costo_neto
     const base = state.lista[state.baseIdx] || {};
     let ivaPctBase = 0;
 
-    if (base && toNumberSafe(base.iva) > 0) {
+    if (toNumberSafe(base.iva) > 0) {
       ivaPctBase = toNumberSafe(base.iva);
       if (ivaPctBase > 0 && ivaPctBase < 1) ivaPctBase *= 100;
     } else {
       const costoIvaBase  = toNumberSafe(base.costo_iva);
       const costoNetoBase = toNumberSafe(base.costo_neto);
       if (costoIvaBase > 0 && costoNetoBase > 0) {
-        const factor = costoIvaBase / costoNetoBase; // ej: 1.105
-        ivaPctBase = (factor - 1) * 100;             // ej: 10.5
+        const factor = costoIvaBase / costoNetoBase;
+        ivaPctBase = (factor - 1) * 100;
       }
     }
 
-    // clamp
     if (ivaPctBase < 0) ivaPctBase = 0;
     if (ivaPctBase > 100) ivaPctBase = 100;
     state.ivaPctBase = Math.round(ivaPctBase * 10) / 10; // 1 decimal
@@ -495,7 +530,7 @@ function mostrarProductos(productos) {
       });
     }
 
-    _initProveedorButton(producto.id); // obtiene y fija base/orden/cycle
+    _initProveedorButton(producto.id);
   });
 }
 
@@ -580,18 +615,31 @@ contenedorProductos.addEventListener('click', async (ev) => {
   _renderProveedor(productoId, provNuevo);
 
   // === costo_iva a usar ===
-  // 1) si el proveedor trae costo_iva válido, usar directo
-  // 2) si no, reconstruir con costo_neto * (1 + ivaProveedor/100) si ese proveedor trae IVA
-  // 3) si tampoco trae IVA, usar IVA del proveedor asignado (ivaPctBase)
+  // 1) si el proveedor trae costo_iva válido, usarlo directo
+  // 2) si no, reconstruir:
+  //    a) si trae IVA propio (10.5 o 21), usar ese
+  //    b) si no trae IVA, usar IVA del asignado (ivaPctBase)
+  //    c) si hay lista+dto, calcular neto como lista*(1-dto%)
   let costoNuevo = toNumberSafe(provNuevo?.costo_iva);
 
   if (!(costoNuevo > 0)) {
-    const neto = toNumberSafe(provNuevo?.costo_neto ?? provNuevo?.costo ?? 0);
+    // intentar neto desde lista y dto
+    let neto = toNumberSafe(provNuevo?.costo_neto ?? provNuevo?.costo ?? 0);
+    if (!(neto > 0)) {
+      const lista = toNumberSafe(provNuevo?.precio_lista);
+      const dto   = toNumberSafe(provNuevo?.descuento);
+      if (lista > 0) {
+        neto = Math.round(lista * (1 - (dto/100)));
+      }
+    }
+
     if (neto > 0) {
       let ivaPct = toNumberSafe(provNuevo?.iva);
       if (ivaPct > 0 && ivaPct < 1) ivaPct *= 100;
-      if (!(ivaPct > 0)) ivaPct = Number(st.ivaPctBase) || 0; // fallback a IVA base
+      if (!(ivaPct > 0)) ivaPct = Number(st.ivaPctBase) || 0;
+
       costoNuevo = Math.round(neto * (1 + ivaPct / 100));
+
       console.log('🧪 RECONSTRUIDO costo_iva', {
         proveedor: provNuevo?.proveedor_nombre,
         neto,
@@ -601,7 +649,7 @@ contenedorProductos.addEventListener('click', async (ev) => {
     }
   }
 
-  // === CÁLCULO EXACTO: precio = costo_iva * (1 + utilidad/100), redondeado a centenar
+  // === precio final = costo_iva * (1 + utilidad/100), redondeado a centenar
   if (costoNuevo > 0) {
     const precioBruto = costoNuevo * (1 + u);
     const precioRedondeado = _redondearAlCentenar(precioBruto);
@@ -625,7 +673,7 @@ contenedorProductos.addEventListener('click', async (ev) => {
 }, { passive: true });
 
 /* ==========================================
-   Delegado de clicks (analytics)
+   Delegado de clicks (analytics adicionales)
 ========================================== */
 contenedorProductos.addEventListener('click', (ev) => {
   const btn = ev.target.closest('.agregar-carrito');
