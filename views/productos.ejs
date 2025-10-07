@@ -61,7 +61,9 @@
   <%= producto.calidad_vic ? 'calidad_vic' : '' %>
   <%= producto.oferta ? 'producto-oferta' : '' %>"
   data-label="<%= producto.oferta ? 'OFERTA' : (producto.calidad_original ? 'CALIDAD FITAM' : (producto.calidad_vic ? 'CALIDAD VIC' : '')) %>"
-  data-precio-venta="<%= producto.precio_venta %>">
+  data-precio-venta="<%= producto.precio_venta %>"
+  data-proveedor-asignado-id="<%= producto.proveedor_id %>"
+  data-utilidad="<%= producto.utilidad %>">
 
 
       <div class="cover-card">

@@ -131,7 +131,7 @@ function mostrarProductos(productos) {
     card.dataset.productoId = producto.id;
     card.dataset.precioVenta = producto.precio_venta;
     card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // ID asignado
-    card.dataset.utilidad = (producto.utilidad ?? 0);               // utilidad cruda
+    card.dataset.utilidad = (producto.utilidad ?? 0);               // utilidad cruda (30, "30", "0,30", etc.)
 
     let imagenesHTML = '';
     (producto.imagenes || []).forEach((imagen, i) => {
@@ -325,6 +325,7 @@ function toNumberSafe(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
+// utilidad 0..100; admite “0,30” → 30
 function _getUtilidadDeCard(cardEl) {
   let u = toNumberSafe((cardEl?.dataset?.utilidad ?? '').toString().trim());
   if (u > 0 && u < 1) u = u * 100;
@@ -333,7 +334,14 @@ function _getUtilidadDeCard(cardEl) {
   return u;
 }
 
-// ============== Normalizador de proveedores (lista) ==============
+// redondeo a centenar (mismo criterio que editar.js)
+function _redondearAlCentenar(valor) {
+  const n = toNumberSafe(valor);
+  const resto = n % 100;
+  return (resto < 50) ? (n - resto) : (n + (100 - resto));
+}
+
+// ============== Normalizador de proveedores ==============
 function _normalizeProviders(listaRaw) {
   if (!Array.isArray(listaRaw)) return [];
   return listaRaw.map(p => {
@@ -341,7 +349,7 @@ function _normalizeProviders(listaRaw) {
     const provId = (p.id != null ? p.id : p.proveedor_id);
     const nombre = p.proveedor_nombre ?? p.nombre_proveedor ?? p.nombre ?? p.proveedor ?? '';
 
-    // intento directo costo con IVA
+    // costo con IVA directo
     const costoIVAkeys = [
       'costo_iva','costoIva','costo_con_iva','precio_costo_con_iva','precioCostoConIva',
       'costo_final','costoConIva','precioConIva'
@@ -352,7 +360,7 @@ function _normalizeProviders(listaRaw) {
     let costoIva = 0;
     for (const k of costoIVAkeys) if (p[k] != null) { costoIva = toNumberSafe(p[k]); break; }
 
-    // reconstruir si hace falta
+    // reconstrucción si falta
     if (!costoIva || costoIva <= 0) {
       let neto = 0, iva = 0;
       for (const k of costoNetoKeys) if (p[k] != null) { neto = toNumberSafe(p[k]); break; }
@@ -371,12 +379,11 @@ function _normalizeProviders(listaRaw) {
   });
 }
 
-
 /* =========================
    Siguiente proveedor (estado por producto)
    ========================= */
 
-// productoId -> { lista, baseIdx, idx, first, orden, orderCycle, cyclePos }
+// productoId -> { lista, baseIdx, cycle, pos }
 const _cacheProveedores = new Map();
 
 async function _getOrInitState(productoId){
@@ -393,7 +400,7 @@ async function _getOrInitState(productoId){
     // hallar base por ID asignado; si no, por nombre renderizado en la card
     const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
     const cardEl   = provSpan ? provSpan.closest('.card') : null;
-    const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
+    const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || cardEl?.dataset?.proveedorAsignadoid || 0);
 
     if (asignadoId) {
       const byId = lista.findIndex(p => Number(p.proveedor_id_norm) === asignadoId);
@@ -404,10 +411,11 @@ async function _getOrInitState(productoId){
       st.baseIdx = byName >= 0 ? byName : 0;
     }
 
+    // orden por costo ascendente; el ciclo es: [base, ...resto]
     const orden = _sortedIdxByCosto(lista);
     const resto = orden.filter(i => i !== st.baseIdx);
-    st.cycle = [st.baseIdx, ...resto]; // base primero, luego los demás en orden
-    st.pos = 0; // pos=0 => estás parado en el asignado (lo que SSR ya muestra)
+    st.cycle = [st.baseIdx, ...resto];
+    st.pos = 0; // pos=0 => asignado (lo que ya muestra la card SSR)
   }
 
   _cacheProveedores.set(productoId, st);
@@ -433,8 +441,9 @@ function _renderSimulacion(productoId, precio){
     ? `Precio venta: $${formatearNumero(precio)}`
     : '';
 }
+
+// precio exacto desde costo_iva + utilidad (%), redondeado a centenar
 function _precioVentaDesde(prov, utilidadPct){
-  // costo_iva sólido
   let costo = toNumberSafe(prov?.costo_iva);
   if (!costo || costo <= 0) {
     const neto = toNumberSafe(prov?.costo_neto ?? prov?.costo ?? 0);
@@ -445,13 +454,12 @@ function _precioVentaDesde(prov, utilidadPct){
   if (!costo || costo <= 0) return null;
 
   let u = toNumberSafe(utilidadPct);
-  if (u > 0 && u < 1) u = u * 100;  // admitir 0,30 -> 30
+  if (u > 0 && u < 1) u = u * 100;
   if (u < 0) u = 0;
   if (u > 100) u = 100;
 
-  // redondeo a decenas (tu UI muestra $72.600, $91.000, $59.700)
   const bruto = costo * (1 + (u/100));
-  return Math.round(bruto / 100) * 100; // redondeo a 100s
+  return _redondearAlCentenar(bruto);
 }
 
 async function _initProveedorButton(productoId){
@@ -463,6 +471,7 @@ async function _initProveedorButton(productoId){
     btn.style.display = 'none';
   }
 }
+
 contenedorProductos.addEventListener('click', async (ev) => {
   const btn = ev.target.closest('.btn-siguiente-proveedor');
   if (!btn || !isAdminUser) return;
@@ -471,26 +480,25 @@ contenedorProductos.addEventListener('click', async (ev) => {
   if (!productoId) return;
 
   const cardEl = btn.closest('.card');
-  const utilidad = cardEl ? cardEl.dataset.utilidad : 0;
+  // toma utilidad también de SSR (productos.ejs)
+  const utilidad = cardEl ? (cardEl.dataset.utilidad ?? 0) : 0;
 
   const st = await _getOrInitState(productoId);
   if (!st.lista || !st.cycle || st.cycle.length < 2) {
-    // si no hay “siguientes”, oculto botón
     btn.style.display = 'none';
     return;
   }
 
-  // avanzar en el ciclo
+  // avanzar en el ciclo: de base→siguiente→siguiente...
   st.pos = (st.pos + 1) % st.cycle.length;
   const idx = st.cycle[st.pos];
   const prov = st.lista[idx];
 
   _cacheProveedores.set(productoId, st);
 
-  // pintar proveedor/código + “Mostrando X de N”
   _renderProveedor(productoId, prov);
 
-  // si estoy parado en el asignado (pos=0), no muestro simulación
+  // si estoy parado en asignado (pos=0), no muestro simulación
   if (st.pos === 0) {
     _renderSimulacion(productoId, null);
   } else {
@@ -498,4 +506,3 @@ contenedorProductos.addEventListener('click', async (ev) => {
     _renderSimulacion(productoId, precio);
   }
 }, { passive: true });
-
