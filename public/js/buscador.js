@@ -1,21 +1,28 @@
-/* ======================================================
-   Buscador + Render de cards + “Siguiente proveedor”
-   (con simulación de precio para admins)
-   ====================================================== */
+/* ==========================================
+   DEBUG helpers
+========================================== */
+const DBG = true; // poné false para silenciar logs
+function dbg(...args){ if(DBG) console.log(...args); }
+function dbgTable(obj){ if(DBG && obj) console.table(obj); }
 
+/* ==========================================
+   Estado global / selectors
+========================================== */
 let productosOriginales = [];
 let timer;
 
-const entradaBusqueda   = document.getElementById('entradaBusqueda');
+const entradaBusqueda = document.getElementById('entradaBusqueda');
 const contenedorProductos = document.getElementById('contenedor-productos');
-const botonLimpiar      = document.getElementById('botonLimpiar');
+const botonLimpiar = document.getElementById('botonLimpiar');
 
-const isAdminUser     = document.body.getAttribute('data-is-admin-user') === 'true';
-const isUserLoggedIn  = document.body.getAttribute('data-is-user-logged-in') === 'true';
+const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
+const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
 
 let lastLogAt = 0; // debounce para analytics
 
-/* =================== Analytics helpers =================== */
+/* ==========================================
+   Analytics helpers
+========================================== */
 function logBusquedaTexto(q, origen = 'texto') {
   if (!q || q.length < 3) return;
   fetch('/analytics/busquedas', {
@@ -24,57 +31,254 @@ function logBusquedaTexto(q, origen = 'texto') {
     body: JSON.stringify({ q, origen })
   }).catch(() => {});
 }
+
 function logBusquedaProducto(producto_id, qActual) {
   if (!producto_id) return;
   fetch('/analytics/busqueda-producto', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ producto_id: Number(producto_id), q: qActual || null })
+    body: JSON.stringify({
+      producto_id: Number(producto_id),
+      q: qActual || null
+    })
   }).catch(() => {});
 }
 
-/* ================ Carga inicial sin filtros ================= */
-window.onload = async () => {
-  try {
-    const respuesta = await fetch('/productos/api/buscar');
-    productosOriginales = await respuesta.json();
-  } catch (e) {
-    console.error('Error precargando productos:', e);
+/* ==========================================
+   Helpers numéricos / formato
+========================================== */
+function toNumberSafe(v) {
+  if (v == null) return 0;
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+
+  let s = String(v).trim();
+
+  // Caso 1.234,56 => 1234.56
+  if (s.includes('.') && s.includes(',')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (s.includes(',')) {
+    s = s.replace(',', '.');
   }
-};
 
-/* ============== Delegado clicks en cards (1 sola vez) ============== */
-contenedorProductos.addEventListener('click', (ev) => {
-  const btn  = ev.target.closest('.agregar-carrito');
-  const link = ev.target.closest('.card-link');
-  if (!btn && !link) return;
+  s = s.replace(/%/g, '');
 
-  let productoId = null;
-
-  if (btn) productoId = btn.dataset?.id;
-  if (!productoId && link && link.getAttribute('href')) {
-    const m = link.getAttribute('href').match(/\/productos\/(\d+)/);
-    if (m) productoId = m[1];
-  }
-  if (!productoId) return;
-
-  const qActual = (entradaBusqueda?.value || '').trim();
-  logBusquedaProducto(productoId, qActual);
-}, { passive: true });
-
-/* =================== Botón limpiar =================== */
-if (botonLimpiar) {
-  entradaBusqueda.addEventListener('input', () => {
-    botonLimpiar.style.display = entradaBusqueda.value.trim() !== '' ? 'block' : 'none';
-  });
-  botonLimpiar.addEventListener('click', () => {
-    entradaBusqueda.value = '';
-    botonLimpiar.style.display = 'none';
-    contenedorProductos.innerHTML = '';
-  });
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : 0;
 }
 
-/* ============== Búsqueda con debounce + log texto ============== */
+function formatearNumero(num) {
+  return Math.floor(Number(num) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+function _getUtilidadDeCard(cardEl) {
+  let u = toNumberSafe((cardEl?.dataset?.utilidad ?? '').toString().trim());
+  if (u > 0 && u < 1) u = u * 100;  // admitir 0,30 -> 30
+  if (u < 0) u = 0;
+  if (u > 100) u = 100;
+  return u;
+}
+
+// redondeo a centenar (como en editar.js)
+function _redondearAlCentenar(valor) {
+  const n = Math.round(toNumberSafe(valor));
+  const resto = n % 100;
+  return (resto < 50) ? (n - resto) : (n + (100 - resto));
+}
+
+/* ==========================================
+   Detección flexible de claves
+   (solo para encontrar el "Precio de costo con IVA" real)
+========================================== */
+function _pickKeyCI(obj, candidates) {
+  const map = {};
+  for (const k of Object.keys(obj || {})) map[k.toLowerCase()] = k;
+  for (const alias of candidates) {
+    const k = map[alias.toLowerCase()];
+    if (k != null && obj[k] != null) return obj[k];
+  }
+  return undefined;
+}
+
+/* ==========================================
+   Normalizador de proveedores
+   (IMPORTANTE: NO reconstruimos nada; tomamos "costo_iva" tal cual)
+========================================== */
+// ===== Reemplazá COMPLETO este normalizador =====
+function _normalizeProviders(listaRaw) {
+  if (!Array.isArray(listaRaw)) return [];
+
+  // 1) Prioridades explícitas (mapean 1:1 a "Precio de costo con IVA" que usás en Editar)
+  const EXACT_FIRST = [
+    'precio_costo_con_iva','precioCostoConIva','precioCostoConIVA',
+    'costo_iva','costoIva',
+    'costo_con_iva','costoConIva',
+    'costo_final','costoFinal','costo_final_con_iva','costoFinalConIva'
+  ];
+
+  // 2) Filtro flexible: aceptar SOLO claves que incluyan *costo* e *iva*
+  function pickCostoIva(obj) {
+    const keys = Object.keys(obj || {});
+    // (a) exact-first
+    for (const kPref of EXACT_FIRST) {
+      const real = keys.find(k => k.toLowerCase() === kPref.toLowerCase());
+      if (real && obj[real] != null) return obj[real];
+    }
+    // (b) heurística estricta: debe contener "costo" y "iva" (NO "precio_con_iva")
+    for (const k of keys) {
+      const lk = k.toLowerCase();
+      if (lk.includes('costo') && lk.includes('iva')) {
+        return obj[k];
+      }
+    }
+    return undefined;
+  }
+
+  // extras informativos (no afectan el cálculo)
+  const COD_KEYS = ['codigo','codigo_proveedor','cod','codigoProveedor','cod_proveedor'];
+  const NOMBRE_PROV_KEYS = ['proveedor_nombre','nombre_proveedor','proveedor','nombre'];
+
+  function _pickKeyCI(obj, candidates) {
+    const map = {};
+    for (const k of Object.keys(obj || {})) map[k.toLowerCase()] = k;
+    for (const alias of candidates) {
+      const k = map[alias.toLowerCase()];
+      if (k != null && obj[k] != null) return obj[k];
+    }
+    return undefined;
+  }
+
+  const lista = (listaRaw || []).map(p => {
+    const costoIvaRaw  = pickCostoIva(p); // 👈 clave: NO lee "precio_con_iva"
+    const codigoRaw    = _pickKeyCI(p, COD_KEYS);
+    const nombreRaw    = _pickKeyCI(p, NOMBRE_PROV_KEYS);
+    const provId = (p.id != null ? p.id : p.proveedor_id);
+
+    return {
+      ...p,
+      proveedor_id_norm: Number(provId) || null,
+      proveedor_nombre: String(nombreRaw ?? '').trim(),
+      codigo: String(codigoRaw ?? '-').trim(),
+      costo_iva: toNumberSafe(costoIvaRaw) // ← el único usado para calcular precio
+    };
+  });
+
+  dbg('🧭 PROVEEDORES (costo_iva correcto):');
+  dbgTable(lista.map((x, idx) => ({
+    idx,
+    proveedor: x.proveedor_nombre,
+    codigo: x.codigo,
+    costo_iva: x.costo_iva,
+    proveedor_id_norm: x.proveedor_id_norm
+  })));
+
+  return lista;
+}
+
+
+/* ==========================================
+   Orden por costo (asc)
+========================================== */
+function _sortedIdxByCosto(lista){
+  const withCost = [], noCost = [];
+  lista.forEach((p, i) => {
+    const c = toNumberSafe(p.costo_iva);
+    (c > 0 ? withCost : noCost).push({ i, c });
+  });
+  withCost.sort((a,b) => a.c - b.c);
+  return [...withCost.map(x => x.i), ...noCost.map(x => x.i)];
+}
+
+/* ==========================================
+   Estado/rotación por producto
+========================================== */
+// productoId -> { lista, baseIdx, idx, first, orden, orderCycle, cyclePos }
+const _cacheProveedores = new Map();
+
+async function _getOrInitState(productoId){
+  let state = _cacheProveedores.get(productoId);
+  if (state) return state;
+
+  const r = await fetch(`/productos/api/proveedores/${productoId}`);
+  let listaRaw = await r.json();
+
+  dbg('📥 /productos/api/proveedores/', productoId, '=>', Array.isArray(listaRaw) ? listaRaw.length : 0);
+
+  const lista = _normalizeProviders(listaRaw);
+
+  state = { lista, idx: 0, first: true, baseIdx: 0, orden: [], orderCycle: [], cyclePos: -1 };
+
+  if (state.lista.length) {
+    // Buscar card para obtener el proveedor asignado por ID (SSR)
+    const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
+    const cardEl = provSpan ? provSpan.closest('.card') : null;
+    const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
+
+    // localizar baseIdx
+    if (asignadoId) {
+      const byId = state.lista.findIndex(p => Number(p.proveedor_id_norm ?? p.id ?? p.proveedor_id) === asignadoId);
+      state.baseIdx = byId >= 0 ? byId : 0;
+    } else {
+      const nombreAsignado = (provSpan?.textContent || '').trim();
+      const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
+      state.baseIdx = byName >= 0 ? byName : 0;
+    }
+    state.idx = state.baseIdx;
+
+    // Orden y ciclo (sin base)
+    state.orden = _sortedIdxByCosto(state.lista);
+    state.orderCycle = state.orden.filter(i => i !== state.baseIdx);
+    if (!state.orderCycle.length) state.orderCycle = [state.baseIdx];
+    state.cyclePos = -1;
+
+    console.log('🎯 BASE DETECTADA', {
+      productoId, baseIdx: state.baseIdx,
+      baseNombre: state.lista[state.baseIdx]?.proveedor_nombre,
+    });
+    dbg('📑 ORDEN', state.orden, ' | CYCLE (sin base):', state.orderCycle);
+  }
+
+  _cacheProveedores.set(productoId, state);
+  return state;
+}
+
+/* ==========================================
+   Render helpers
+========================================== */
+function _renderProveedor(productoId, data) {
+  const spanNombre = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
+  const spanCodigo = document.querySelector(`.prov-codigo[data-producto-id="${productoId}"]`);
+  const smallIdx   = document.querySelector(`.prov-idx[data-producto-id="${productoId}"]`);
+  if (spanNombre) spanNombre.textContent = data?.proveedor_nombre || 'Sin proveedor';
+  if (spanCodigo) spanCodigo.textContent = data?.codigo || '-';
+  if (smallIdx) {
+    const st = _cacheProveedores.get(productoId);
+    const pos = (st?.idx ?? 0) + 1;
+    const total = st?.lista?.length || 0;
+    smallIdx.textContent = total > 0 ? `Mostrando ${pos} de ${total}` : '';
+  }
+  dbg('🖼️ RENDER proveedor', { productoId, proveedor: data?.proveedor_nombre, codigo: data?.codigo });
+}
+
+function _renderSimulacion(productoId, precioVentaSimulado){
+  const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
+  if (!nodo) return;
+  if (Number.isFinite(precioVentaSimulado) && precioVentaSimulado > 0) {
+    nodo.textContent = `Precio venta: $${formatearNumero(precioVentaSimulado)}`;
+  } else {
+    nodo.textContent = '';
+  }
+  dbg('🧾 RENDER precio simulado', { productoId, precioVentaSimulado });
+}
+
+/* ==========================================
+   UI / Render de productos
+========================================== */
+window.onload = async () => {
+  const respuesta = await fetch('/productos/api/buscar');
+  productosOriginales = await respuesta.json();
+  dbg('📦 productosOriginales cargados:', productosOriginales?.length);
+};
+
 entradaBusqueda.addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
@@ -89,19 +293,15 @@ entradaBusqueda.addEventListener('input', (e) => {
     contenedorProductos.innerHTML = '';
 
     if (busqueda) {
-      try {
-        const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
-        const respuesta = await fetch(url);
-        const productos = await respuesta.json();
-        mostrarProductos(productos);
-      } catch (err) {
-        console.error('Error en búsqueda:', err);
-      }
+      const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
+      const respuesta = await fetch(url);
+      const productos = await respuesta.json();
+      dbg('🔎 /productos/api/buscar =>', productos?.length, 'items');
+      mostrarProductos(productos);
     }
   }, 300);
 });
 
-/* ================== Render de resultados ================== */
 function mostrarProductos(productos) {
   contenedorProductos.innerHTML = '';
 
@@ -131,20 +331,27 @@ function mostrarProductos(productos) {
         : producto.calidad_vic ? 'CALIDAD VIC'
         : ''
     );
+    // datasets necesarios para simulación/rotación
+    card.dataset.productoId = producto.id;
+    card.dataset.precioVenta = producto.precio_venta;
+    card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // ID asignado
+    card.dataset.utilidad = (producto.utilidad ?? 0);
 
-    // datasets clave para simulación/rotación
-    card.dataset.productoId          = producto.id;
-    card.dataset.precioVenta         = producto.precio_venta;
-    card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // si no viene, se hace fallback por nombre
+    dbg('🧾 Card SSR', producto.id, {
+      proveedorAsignadoId: card.dataset.proveedorAsignadoId,
+      utilidad: card.dataset.utilidad,
+      precioVentaSSR: card.dataset.precioVenta
+    });
 
-    // Galería
-    const imagenesHTML = (producto.imagenes || [])
-      .map((imagen, i) => `
+    // galería
+    let imagenesHTML = '';
+    (producto.imagenes || []).forEach((imagen, i) => {
+      imagenesHTML += `
         <img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen.imagen}" alt="${producto.nombre}">
-      `)
-      .join('');
+      `;
+    });
 
-    // Info stock / acciones
+    // info stock / acciones
     let stockInfo = '';
     if (isUserLoggedIn) {
       if (isAdminUser) {
@@ -161,9 +368,7 @@ function mostrarProductos(productos) {
           <div class="semaforo-stock">
             <i class="fa-solid fa-thumbs-${producto.stock_actual >= producto.stock_minimo ? 'up verde' : 'down rojo'}"></i>
             <span class="texto-semaforo">
-              ${producto.stock_actual >= producto.stock_minimo
-                ? 'PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA'
-                : 'PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
+              ${producto.stock_actual >= producto.stock_minimo ? 'PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA' : 'PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
             </span>
           </div>
           <div class="cantidad-producto">
@@ -181,35 +386,6 @@ function mostrarProductos(productos) {
         `;
       }
     }
-
-    // Bloque admin (proveedor/código + botón + simulación)
-    const adminProveedorHTML = isAdminUser ? `
-      <div class="codigo-admin">
-        <p>
-          <strong>Proveedor:</strong>
-          <span class="prov-nombre" data-producto-id="${producto.id}">
-            ${producto.proveedor_nombre || 'Sin proveedor'}
-          </span>
-        </p>
-        <p>
-          <strong>Código:</strong>
-          <span class="prov-codigo" data-producto-id="${producto.id}">
-            ${producto.codigo_proveedor || '-'}
-          </span>
-        </p>
-        <div class="prov-actions">
-          <button type="button"
-                  class="btn-siguiente-proveedor"
-                  data-producto-id="${producto.id}">
-            Siguiente proveedor
-          </button>
-          <small class="prov-idx"
-                 data-producto-id="${producto.id}"
-                 style="display:block;opacity:.7;margin-top:4px"></small>
-        </div>
-        <p class="prov-simulacion" data-producto-id="${producto.id}" style="margin-top:6px;font-weight:700;"></p>
-      </div>
-    ` : '';
 
     card.innerHTML = `
       <div class="cover-card">
@@ -233,7 +409,34 @@ function mostrarProductos(productos) {
       <div class="categoria-producto"><h6 class="categoria">${producto.categoria_nombre || 'Sin categoría'}</h6></div>
       <div class="precio-producto"><p class="precio">$${formatearNumero(producto.precio_venta || 0)}</p></div>
 
-      ${adminProveedorHTML}
+     ${isAdminUser ? `
+        <div class="codigo-admin">
+          <p>
+            <strong>Proveedor:</strong>
+            <span class="prov-nombre" data-producto-id="${producto.id}">
+              ${producto.proveedor_nombre || 'Sin proveedor'}
+            </span>
+          </p>
+          <p>
+            <strong>Código:</strong>
+            <span class="prov-codigo" data-producto-id="${producto.id}">
+              ${producto.codigo_proveedor || '-'}
+            </span>
+          </p>
+          <div class="prov-actions">
+            <button type="button"
+                    class="btn-siguiente-proveedor"
+                    data-producto-id="${producto.id}">
+              Siguiente proveedor
+            </button>
+            <small class="prov-idx"
+                   data-producto-id="${producto.id}"
+                   style="display:block;opacity:.7;margin-top:4px"></small>
+          </div>
+          <p class="prov-simulacion" data-producto-id="${producto.id}" style="margin-top:6px;font-weight:700;"></p>
+        </div>
+      ` : ''}
+
       ${stockInfo}
 
       <div class="acciones-compartir">
@@ -256,8 +459,8 @@ function mostrarProductos(productos) {
 
     // Validación de cantidad (solo usuarios comunes logueados)
     if (!isAdminUser && isUserLoggedIn) {
-      const botonAgregar   = card.querySelector('.agregar-carrito');
-      const inputCantidad  = card.querySelector('.cantidad-input');
+      const botonAgregar = card.querySelector('.agregar-carrito');
+      const inputCantidad = card.querySelector('.cantidad-input');
       const stockDisponible = parseInt(producto.stock_actual);
 
       botonAgregar.addEventListener('click', (e) => {
@@ -297,13 +500,10 @@ function mostrarProductos(productos) {
       });
     }
 
-    // Inicializaciones proveedor por producto
-    _inicializarProveedorActual(producto);
-    _initProveedorButton(producto.id);
+    _initProveedorButton(producto.id); // prepara estado/ciclo
   });
 }
 
-/* =================== Carrusel =================== */
 function moverCarrusel(index, direccion) {
   const carousel = document.getElementById(`carousel-${index}`);
   const imagenes = carousel.querySelectorAll('.carousel__image');
@@ -314,115 +514,9 @@ function moverCarrusel(index, direccion) {
   imagenes[activa].classList.remove('hidden');
 }
 
-/* =================== Helpers numéricos =================== */
-function formatearNumero(num) {
-  return Math.floor(Number(num) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
-function toNumberSafe(v) {
-  if (v == null) return 0;
-  if (typeof v === 'number' && Number.isFinite(v)) return v;
-
-  let s = String(v).trim();
-
-  // 1.234,56  ->  1234.56
-  if (s.includes('.') && s.includes(',')) {
-    s = s.replace(/\./g, '').replace(',', '.');
-  } else if (s.includes(',')) {
-    s = s.replace(',', '.'); // 1234,56 -> 1234.56
-  }
-
-  const n = parseFloat(s);
-  return Number.isFinite(n) ? n : 0;
-}
-
-/* =========================================================
-   LÓGICA: “Siguiente proveedor” + simulación de precio
-   ========================================================= */
-
-// Orden auxiliar por costo ascendente (usa costo_iva numérico)
-function _sortedIdxByCosto(lista){
-  return lista
-    .map((p, i) => ({ i, c: toNumberSafe(p.costo_iva) }))
-    .sort((a,b) => a.c - b.c)
-    .map(x => x.i);
-}
-
-// Cache por producto: { lista, idx, first, baseIdx }
-const _cacheProveedores = new Map();
-
-async function _getOrInitState(productoId){
-  let state = _cacheProveedores.get(productoId);
-  if (state) return state;
-
-  const r     = await fetch(`/productos/api/proveedores/${productoId}`);
-  const lista = await r.json();
-  state = { lista: Array.isArray(lista) ? lista : [], idx: 0, first: true, baseIdx: 0 };
-
-  if (state.lista.length) {
-    // Detectar proveedor asignado (por ID si vino; si no, por nombre de la card)
-    const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
-    const cardEl   = provSpan ? provSpan.closest('.card') : null;
-    const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
-
-    if (asignadoId) {
-      const byId = state.lista.findIndex(p => Number(p.id) === asignadoId);
-      if (byId >= 0) {
-        state.baseIdx = byId;
-        state.idx     = byId;
-      } else {
-        const nombreAsignado = (provSpan?.textContent || '').trim();
-        const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
-        state.baseIdx = byName >= 0 ? byName : 0;
-        state.idx     = state.baseIdx;
-      }
-    } else {
-      const nombreAsignado = (provSpan?.textContent || '').trim();
-      const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
-      state.baseIdx = byName >= 0 ? byName : 0;
-      state.idx     = state.baseIdx;
-    }
-  }
-
-  _cacheProveedores.set(productoId, state);
-  return state;
-}
-
-function _renderProveedor(productoId, data) {
-  const spanNombre = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
-  const spanCodigo = document.querySelector(`.prov-codigo[data-producto-id="${productoId}"]`);
-  const smallIdx   = document.querySelector(`.prov-idx[data-producto-id="${productoId}"]`);
-  if (spanNombre) spanNombre.textContent = data?.proveedor_nombre || 'Sin proveedor';
-  if (spanCodigo) spanCodigo.textContent = data?.codigo || '-';
-  if (smallIdx) {
-    const st = _cacheProveedores.get(productoId);
-    const pos   = (st?.idx ?? 0) + 1;
-    const total = st?.lista?.length || 0;
-    smallIdx.textContent = total > 0 ? `Mostrando ${pos} de ${total}` : '';
-  }
-}
-
-function _renderSimulacion(productoId, precioVentaSimulado){
-  const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
-  if (!nodo) return;
-  if (Number.isFinite(precioVentaSimulado) && precioVentaSimulado > 0) {
-    nodo.textContent = `Precio venta: $${formatearNumero(precioVentaSimulado)}`;
-  } else {
-    nodo.textContent = '';
-  }
-}
-
-function _inicializarProveedorActual(producto) {
-  if (!isAdminUser) return;
-  const st = _cacheProveedores.get(producto.id);
-  if (!st || !st.lista?.length) return;
-
-  const actualNombre = (document.querySelector(`.prov-nombre[data-producto-id="${producto.id}"]`)?.textContent || '').trim();
-  const idx = st.lista.findIndex(p => (p.proveedor_nombre || '').trim() === actualNombre);
-  st.idx = idx >= 0 ? idx : st.idx;
-  _cacheProveedores.set(producto.id, st);
-  _renderProveedor(producto.id, st.lista[st.idx]);
-}
-
+/* ==========================================
+   Init botón “Siguiente proveedor”
+========================================== */
 async function _initProveedorButton(productoId){
   if (!isAdminUser) return;
   const btn = document.querySelector(`.btn-siguiente-proveedor[data-producto-id="${productoId}"]`);
@@ -433,7 +527,9 @@ async function _initProveedorButton(productoId){
   }
 }
 
-/* ============ Listener: botón “Siguiente proveedor” (admins) ============ */
+/* ==========================================
+   Listener del botón “Siguiente proveedor”
+========================================== */
 contenedorProductos.addEventListener('click', async (ev) => {
   const btn = ev.target.closest('.btn-siguiente-proveedor');
   if (!btn || !isAdminUser) return;
@@ -442,50 +538,116 @@ contenedorProductos.addEventListener('click', async (ev) => {
   if (!productoId) return;
 
   const cardEl = btn.closest('.card');
-  const precioVentaOriginal = toNumberSafe(cardEl?.dataset?.precioVenta);
+  const utilidadPct = _getUtilidadDeCard(cardEl);
+  const u = utilidadPct / 100;
+
+  console.groupCollapsed(`🔁 CLICK NEXT | producto ${productoId}`);
+  dbg('🔧 utilidad leída de card:', utilidadPct, '%');
 
   const st = await _getOrInitState(productoId);
   if (!st.lista || !st.lista.length) {
+    console.groupEnd();
     Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
     return;
   }
   if (st.lista.length < 2) {
+    console.groupEnd();
     btn.style.display = 'none';
     return;
   }
 
-  // Elegir siguiente índice (1er clic: ir al más barato/segundo más barato según base)
+  // Primer click: ir al primer alternativo del ciclo (no base)
   let nextIdx;
   if (st.first) {
-    const orden = _sortedIdxByCosto(st.lista);
-    const cheapestIdx = orden[0];
-    const secondIdx   = orden[1] ?? cheapestIdx;
-    nextIdx = (st.baseIdx === cheapestIdx) ? secondIdx : cheapestIdx;
+    st.cyclePos = 0;
+    nextIdx = st.orderCycle[st.cyclePos];
     st.first = false;
   } else {
-    nextIdx = (st.idx + 1) % st.lista.length;
+    st.cyclePos = (st.cyclePos + 1) % st.orderCycle.length;
+    nextIdx = st.orderCycle[st.cyclePos];
   }
 
-  // Actualizar estado y render
+  // Guard: si por error cae en base y hay más de 1 alternativo, avanzar
+  if (nextIdx === st.baseIdx && st.orderCycle.length > 1) {
+    st.cyclePos = (st.cyclePos + 1) % st.orderCycle.length;
+    nextIdx = st.orderCycle[st.cyclePos];
+    dbg('⚠️ nextIdx == baseIdx, avanzamos a', nextIdx);
+  }
+
+  dbg('🔁 ROTACIÓN', { baseIdx: st.baseIdx, idxActual: st.idx, nextIdx, cyclePos: st.cyclePos });
+
+  // ACTUALIZAR ESTADO PRIMERO
   st.idx = nextIdx;
   _cacheProveedores.set(productoId, st);
 
-  const provNuevo = st.lista[st.idx];
-  _renderProveedor(productoId, provNuevo);
+  // OBTENER EL PROVEEDOR ACTUAL (el que se va a mostrar)
+  const provActual = st.lista[st.idx];
 
-  // Simulación: mantener el MARKUP de la base sobre costo_iva actual
-  const costoAsignado = toNumberSafe(st.lista[st.baseIdx]?.costo_iva);
-  const costoNuevo    = toNumberSafe(provNuevo?.costo_iva);
+  // RENDER DEL PROVEEDOR ACTUAL
+  _renderProveedor(productoId, provActual);
 
-  if (costoAsignado > 0 && costoNuevo > 0 && precioVentaOriginal > 0) {
-    const markup = precioVentaOriginal / costoAsignado; // factor margen (utilidad + posibles ajustes previos)
-    const precioSimulado = Math.round(markup * costoNuevo);
+  // TOMAR EL "PRECIO DE COSTO CON IVA" DEL PROVEEDOR ACTUAL (SIN RECONSTRUIR NADA)
+  const costoConIva = toNumberSafe(provActual?.costo_iva);
 
-    // Si volvimos a la base, no mostramos simulación
-    _renderSimulacion(productoId, st.idx === st.baseIdx ? null : precioSimulado);
+  // CALCULAR PRECIO (solo utilidad sobre ese costo)
+  if (costoConIva > 0 && u >= 0) {
+    const precioBruto = costoConIva * (1 + u);
+    const precioRedondeado = _redondearAlCentenar(precioBruto);
+
+    console.log('🧮 PRECIO (solo utilidad sobre costo con IVA REAL)', {
+      proveedor: provActual?.proveedor_nombre,
+      codigo: provActual?.codigo,
+      costo_con_iva: costoConIva,
+      utilidadPct,
+      precioRedondeado
+    });
+
+    // Si volvimos al asignado, podés ocultarlo si preferís; acá lo mostramos siempre que no sea base
+    if (st.idx === st.baseIdx) {
+      // Mostrar u ocultar a gusto. Yo prefiero ocultarlo para no confundir:
+      _renderSimulacion(productoId, null);
+    } else {
+      _renderSimulacion(productoId, precioRedondeado);
+    }
   } else {
+    console.warn('❌ costo_con_iva ausente o inválido en el proveedor actual. No se puede simular precio.', provActual);
     _renderSimulacion(productoId, null);
   }
 
-  // Importante: NO tocar el precio principal de la card; sólo mostramos simulación.
+  console.groupEnd();
 }, { passive: true });
+
+/* ==========================================
+   Delegado de clicks (analytics)
+========================================== */
+contenedorProductos.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.agregar-carrito');
+  const link = ev.target.closest('.card-link');
+  if (!btn && !link) return;
+
+  let productoId = null;
+
+  if (btn) productoId = btn.dataset?.id;
+  if (!productoId && link && link.getAttribute('href')) {
+    const m = link.getAttribute('href').match(/\/productos\/(\d+)/);
+    if (m) productoId = m[1];
+  }
+  if (!productoId) return;
+
+  const qActual = (entradaBusqueda?.value || '').trim();
+  logBusquedaProducto(productoId, qActual);
+}, { passive: true });
+
+/* ==========================================
+   Botón limpiar
+========================================== */
+if (botonLimpiar) {
+  entradaBusqueda.addEventListener('input', () => {
+    botonLimpiar.style.display = entradaBusqueda.value.trim() !== '' ? 'block' : 'none';
+  });
+  botonLimpiar.addEventListener('click', () => {
+    entradaBusqueda.value = '';
+    botonLimpiar.style.display = 'none';
+    contenedorProductos.innerHTML = '';
+  });
+}
