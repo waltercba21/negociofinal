@@ -1,3 +1,15 @@
+/* ==========================================
+   DEBUG helpers
+========================================== */
+const DBG = true; // ponelo en false si no querés ver logs en producción
+
+function dbg(...args){ if(DBG) console.log(...args); }
+function dbgTable(obj){ if(DBG && obj) console.table(obj); }
+
+/* ==========================================
+   Código original + instrumentación
+========================================== */
+
 let productosOriginales = [];
 let timer;
 
@@ -19,12 +31,25 @@ function logBusquedaTexto(q, origen = 'texto') {
     body: JSON.stringify({ q, origen })
   }).catch(() => {});
 }
+function _sortedIdxByCosto(lista){
+  // Ordena por costo>0; empuja al final los sin costo válido
+  const withCost = [], noCost = [];
+  lista.forEach((p, i) => {
+    const c = toNumberSafe(p.costo_iva);
+    (c > 0 ? withCost : noCost).push({ i, c });
+  });
+  withCost.sort((a,b) => a.c - b.c);
+  return [...withCost.map(x => x.i), ...noCost.map(x => x.i)];
+}
 function logBusquedaProducto(producto_id, qActual) {
   if (!producto_id) return;
   fetch('/analytics/busqueda-producto', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ producto_id: Number(producto_id), q: qActual || null })
+    body: JSON.stringify({
+      producto_id: Number(producto_id),
+      q: qActual || null
+    })
   }).catch(() => {});
 }
 
@@ -32,6 +57,7 @@ function logBusquedaProducto(producto_id, qActual) {
 window.onload = async () => {
   const respuesta = await fetch('/productos/api/buscar');
   productosOriginales = await respuesta.json();
+  dbg('📦 productosOriginales cargados:', productosOriginales?.length);
 };
 
 // ===== Listener delegado de clicks en cards (UNA sola vez) =====
@@ -83,6 +109,7 @@ entradaBusqueda.addEventListener('input', (e) => {
       const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
       const respuesta = await fetch(url);
       const productos = await respuesta.json();
+      dbg('🔎 /productos/api/buscar =>', productos?.length, 'items');
       mostrarProductos(productos);
     }
   }, 300);
@@ -117,11 +144,17 @@ function mostrarProductos(productos) {
         : producto.calidad_vic ? 'CALIDAD VIC'
         : ''
     );
-    // === datasets para la simulación/rotación ===
+    // === datasets para simulación y detección de base ===
     card.dataset.productoId = producto.id;
     card.dataset.precioVenta = producto.precio_venta;
-    card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // ID asignado
-    card.dataset.utilidad = (producto.utilidad ?? 0);               // FIX: utilidad para cálculos
+    card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // base asignada
+    card.dataset.utilidad = Number(producto.utilidad) ?? 0;
+
+    dbg('🧾 Card SSR', producto.id, {
+      proveedorAsignadoId: card.dataset.proveedorAsignadoId,
+      utilidad: card.dataset.utilidad,
+      precioVentaSSR: card.dataset.precioVenta
+    });
 
     let imagenesHTML = '';
     (producto.imagenes || []).forEach((imagen, i) => {
@@ -279,7 +312,7 @@ function mostrarProductos(productos) {
       });
     }
 
-    _initProveedorButton(producto.id);
+    _initProveedorButton(producto.id); // obtiene y fija base/orden/ordenCycle
   });
 }
 
@@ -297,49 +330,108 @@ function formatearNumero(num) {
   return Math.floor(Number(num) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-// ================= Helpers numéricos =================
+// ============== Helpers numéricos ==============
 function toNumberSafe(v) {
   if (v == null) return 0;
   if (typeof v === 'number' && Number.isFinite(v)) return v;
 
   let s = String(v).trim();
 
+  // Si trae ambos signos (.) y (,) asumimos miles con punto y decimales con coma: 1.234,56
   if (s.includes('.') && s.includes(',')) {
-    s = s.replace(/\./g, '').replace(',', '.');
+    s = s.replace(/\./g, '').replace(',', '.'); // -> 1234.56
   } else if (s.includes(',')) {
+    // Solo comas: 1234,56 -> 1234.56
     s = s.replace(',', '.');
   }
+
+  // Quitar % si lo hubiera
   s = s.replace(/%/g, '');
 
   const n = parseFloat(s);
   return Number.isFinite(n) ? n : 0;
 }
+
+// === Utilidad: leer SIEMPRE de la card y normalizar a 0..100 (%)
 function _getUtilidadDeCard(cardEl) {
-  let u = toNumberSafe((cardEl?.dataset?.utilidad ?? '').toString().trim());
-  if (u > 0 && u < 1) u = u * 100; // 0,30 -> 30
+  let uRaw = (cardEl?.dataset?.utilidad ?? '').toString().trim();
+  let u = toNumberSafe(uRaw);
+  if (u > 0 && u < 1) u = u * 100;
   if (u < 0) u = 0;
   if (u > 100) u = 100;
   return u;
 }
+
+// redondeo a centenar como en editar
 function _redondearAlCentenar(valor) {
-  const n = Math.round(toNumberSafe(valor)); // entero
+  const n = Math.round(toNumberSafe(valor));
   const resto = n % 100;
   return (resto < 50) ? (n - resto) : (n + (100 - resto));
 }
 
-// ============== Orden por costo (asc) ==============
-function _sortedIdxByCosto(lista){
-  return lista
-    .map((p, i) => ({ i, c: toNumberSafe(p.costo_iva) }))
-    .sort((a,b) => a.c - b.c)
-    .map(x => x.i);
+// ============== Normalizador de proveedores (lista) ==============
+function _normalizeProviders(listaRaw) {
+  if (!Array.isArray(listaRaw)) return [];
+  const lista = listaRaw.map(p => {
+    const codigo =
+      p.codigo ?? p.codigo_proveedor ?? p.cod_proveedor ?? p.codigoProveedor ?? p.cod ?? '-';
+
+    const provId = (p.id != null ? p.id : p.proveedor_id);
+
+    const nombre =
+      p.proveedor_nombre ?? p.nombre_proveedor ?? p.nombre ?? p.proveedor ?? '';
+
+    // costos
+    const costoIVAkeys = [
+      'costo_iva','costoIva','costo_con_iva','precio_costo_con_iva','precioCostoConIva',
+      'costo_final','costoConIva','precioConIva'
+    ];
+    const costoNetoKeys = ['costo_neto','costoNeto','precio_costo_neto','precioCostoNeto','costo'];
+    const ivaKeys = ['iva','iva_porcentaje','iva_porcent','ivaPercent','alicuota_iva'];
+
+    // intentar obtener costo_iva directo
+    let costoIva = 0;
+    for (const k of costoIVAkeys) {
+      if (p[k] != null) { costoIva = toNumberSafe(p[k]); break; }
+    }
+    // si no hay, intentar reconstruir: costo_neto + IVA
+    if (!costoIva || costoIva <= 0) {
+      let costoNeto = 0, ivaPct = 0;
+      for (const k of costoNetoKeys) if (p[k] != null) { costoNeto = toNumberSafe(p[k]); break; }
+      for (const k of ivaKeys)      if (p[k] != null) { ivaPct    = toNumberSafe(p[k]); break; }
+      if (ivaPct > 0 && ivaPct < 1) ivaPct = ivaPct * 100;
+      if (costoNeto > 0) {
+        const mul = 1 + (ivaPct/100);
+        costoIva = Math.round(costoNeto * mul);
+      }
+    }
+
+    return {
+      ...p,
+      proveedor_id_norm: Number(provId) || null,
+      proveedor_nombre: nombre,
+      codigo: codigo,
+      costo_iva: toNumberSafe(costoIva)
+    };
+  });
+
+  dbg('🧭 PROVEEDORES (normalizados):');
+  dbgTable(lista.map((x, idx) => ({
+    idx,
+    proveedor: x.proveedor_nombre,
+    codigo: x.codigo,
+    costo_iva: x.costo_iva,
+    proveedor_id_norm: x.proveedor_id_norm
+  })));
+
+  return lista;
 }
 
 /* =========================
    Siguiente proveedor (con base asignada por ID)
    ========================= */
 
-// productoId -> { lista, baseIdx, idx, first }
+// productoId -> { lista, baseIdx, idx, first, orden, orderCycle, cyclePos }
 const _cacheProveedores = new Map();
 
 async function _getOrInitState(productoId){
@@ -347,26 +439,12 @@ async function _getOrInitState(productoId){
   if (state) return state;
 
   const r = await fetch(`/productos/api/proveedores/${productoId}`);
-  let lista = await r.json();
+  let listaRaw = await r.json();
 
-  // ==== normalizar costo_iva si hace falta (neto + IVA) ====
-  lista = (Array.isArray(lista) ? lista : []).map(p => {
-    let costoIva = toNumberSafe(p.costo_iva ?? p.costoIva ?? p.costo_con_iva ?? p.precio_costo_con_iva ?? p.costo_final ?? p.precioConIva);
-    if (!costoIva || costoIva <= 0) {
-      const neto = toNumberSafe(p.costo_neto ?? p.costo ?? p.precio_costo_neto);
-      let iva = toNumberSafe(p.iva ?? p.iva_porcentaje ?? p.alicuota_iva);
-      if (iva > 0 && iva < 1) iva = iva * 100;
-      if (neto > 0) costoIva = neto * (1 + iva/100);
-    }
-    return {
-      ...p,
-      proveedor_nombre: p.proveedor_nombre ?? p.nombre_proveedor ?? p.nombre ?? '',
-      codigo: p.codigo ?? p.codigo_proveedor ?? p.cod ?? '-',
-      costo_iva: costoIva
-    };
-  });
+  dbg('📥 /productos/api/proveedores/', productoId, '=>', Array.isArray(listaRaw) ? listaRaw.length : 0);
+  const lista = _normalizeProviders(listaRaw);
 
-  state = { lista, idx: 0, first: true, baseIdx: 0 };
+  state = { lista, idx: 0, first: true, baseIdx: 0, orden: [], orderCycle: [], cyclePos: -1 };
 
   if (state.lista.length) {
     // Buscar card para obtener el proveedor asignado por ID
@@ -374,25 +452,30 @@ async function _getOrInitState(productoId){
     const cardEl = provSpan ? provSpan.closest('.card') : null;
     const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
 
+    let baseIdx = 0;
     if (asignadoId) {
-      const byId = state.lista.findIndex(p => Number(p.id ?? p.proveedor_id) === asignadoId);
-      if (byId >= 0) {
-        state.baseIdx = byId;
-        state.idx = byId;
-      } else {
-        // Fallback por nombre si no aparece en la lista
+      const byId = state.lista.findIndex(p => Number(p.proveedor_id_norm ?? p.id ?? p.proveedor_id) === asignadoId);
+      if (byId >= 0) baseIdx = byId;
+      else {
         const nombreAsignado = (provSpan?.textContent || '').trim();
         const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
-        state.baseIdx = byName >= 0 ? byName : 0;
-        state.idx = state.baseIdx;
+        baseIdx = byName >= 0 ? byName : 0;
       }
     } else {
-      // Sin ID disponible, intentar por nombre
       const nombreAsignado = (provSpan?.textContent || '').trim();
       const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
-      state.baseIdx = byName >= 0 ? byName : 0;
-      state.idx = state.baseIdx;
+      baseIdx = byName >= 0 ? byName : 0;
     }
+    state.baseIdx = baseIdx;
+    state.idx = baseIdx;
+
+    state.orden = _sortedIdxByCosto(state.lista);
+    state.orderCycle = state.orden.filter(i => i !== state.baseIdx);
+    if (!state.orderCycle.length) state.orderCycle = [state.baseIdx];
+    state.cyclePos = -1;
+
+    dbg('🎯 BASE DETECTADA', { productoId, baseIdx: state.baseIdx, baseNombre: state.lista[state.baseIdx]?.proveedor_nombre });
+    dbg('📑 ORDEN', state.orden, ' | CYCLE (sin base):', state.orderCycle);
   }
 
   _cacheProveedores.set(productoId, state);
@@ -411,9 +494,9 @@ function _renderProveedor(productoId, data) {
     const total = st?.lista?.length || 0;
     smallIdx.textContent = total > 0 ? `Mostrando ${pos} de ${total}` : '';
   }
+  dbg('🖼️ RENDER proveedor', { productoId, proveedor: data?.proveedor_nombre, codigo: data?.codigo });
 }
 
-// === REEMPLAZAR _renderSimulacion ===
 function _renderSimulacion(productoId, precioVentaSimulado){
   const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
   if (!nodo) return;
@@ -422,9 +505,12 @@ function _renderSimulacion(productoId, precioVentaSimulado){
   } else {
     nodo.textContent = '';
   }
+  dbg('🧾 RENDER precio simulado', { productoId, precioVentaSimulado });
 }
 
-// ===== Listener del botón “Siguiente proveedor” =====
+/* =========================
+   Listener del botón Siguiente proveedor
+   ========================= */
 contenedorProductos.addEventListener('click', async (ev) => {
   const btn = ev.target.closest('.btn-siguiente-proveedor');
   if (!btn || !isAdminUser) return;
@@ -433,58 +519,81 @@ contenedorProductos.addEventListener('click', async (ev) => {
   if (!productoId) return;
 
   const cardEl = btn.closest('.card');
-  const utilidadPct = _getUtilidadDeCard(cardEl); // FIX: ahora usamos utilidad real
+  const utilidadPct = _getUtilidadDeCard(cardEl);
   const u = utilidadPct / 100;
+
+  console.groupCollapsed(`🔁 CLICK NEXT | producto ${productoId}`);
+  dbg('🔧 utilidad leída de card:', utilidadPct, '%');
 
   const st = await _getOrInitState(productoId);
   if (!st.lista || !st.lista.length) {
+    console.groupEnd();
     Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
     return;
   }
   if (st.lista.length < 2) {
+    console.groupEnd();
     btn.style.display = 'none';
     return;
   }
 
-  // Elegir el índice a mostrar
   let nextIdx;
   if (st.first) {
-    // Ordenar por costo (asc)
-    const orden = _sortedIdxByCosto(st.lista);
-    const cheapestIdx = orden[0];
-    const secondIdx = orden[1] ?? cheapestIdx;
-
-    // Si el asignado YA es el más barato, 1er clic muestra el segundo más barato.
-    // Si no, 1er clic muestra el más barato.
-    nextIdx = (st.baseIdx === cheapestIdx) ? secondIdx : cheapestIdx;
+    // Primer click: ir al primer alternativo del ciclo (no base)
+    st.cyclePos = 0;
+    nextIdx = st.orderCycle[st.cyclePos];
     st.first = false;
   } else {
-    // Rotación cíclica normal a partir del actual
-    nextIdx = (st.idx + 1) % st.lista.length;
+    // Siguientes: avanzar el ciclo
+    st.cyclePos = (st.cyclePos + 1) % st.orderCycle.length;
+    nextIdx = st.orderCycle[st.cyclePos];
   }
 
-  // Actualizar estado antes de renderizar (para que el "Mostrando X de N" quede bien)
+  // Guard extra: por si orderCycle tuviera el base por algún error, saltar
+  if (nextIdx === st.baseIdx && st.orderCycle.length > 1) {
+    st.cyclePos = (st.cyclePos + 1) % st.orderCycle.length;
+    nextIdx = st.orderCycle[st.cyclePos];
+    dbg('⚠️ nextIdx == baseIdx, avanzamos a', nextIdx);
+  }
+
+  dbg('🔁 ROTACIÓN', { baseIdx: st.baseIdx, idxActual: st.idx, nextIdx, cyclePos: st.cyclePos });
+
+  // Actualizar estado
   st.idx = nextIdx;
   _cacheProveedores.set(productoId, st);
 
-  // Render proveedor/código
   const provNuevo = st.lista[st.idx];
   _renderProveedor(productoId, provNuevo);
 
-  // Calcular precio simulado usando UTILIDAD (no markup del asignado) — FIX
-  const costoNuevo = toNumberSafe(provNuevo?.costo_iva);
-  if (costoNuevo > 0 && u >= 0) {
-    const precioSimulado = _redondearAlCentenar(costoNuevo * (1 + u)); // igual que editar.js
+  // === costo_iva sólido (reconstruir si hace falta) ===
+  let costoNuevo = toNumberSafe(provNuevo?.costo_iva);
+  if (!costoNuevo || costoNuevo <= 0) {
+    const neto = toNumberSafe(provNuevo?.costo_neto ?? provNuevo?.costo ?? 0);
+    let ivaPct = toNumberSafe(provNuevo?.iva ?? provNuevo?.iva_porcentaje ?? 0);
+    if (ivaPct > 0 && ivaPct < 1) ivaPct = ivaPct * 100;
+    if (neto > 0) costoNuevo = Math.round(neto * (1 + ivaPct/100));
+  }
 
-    // Si volvimos al asignado, limpiar simulación; si no, mostrarla.
-    if (st.idx === st.baseIdx) {
-      _renderSimulacion(productoId, null);
-    } else {
-      _renderSimulacion(productoId, precioSimulado);
-    }
+  // === CÁLCULO EXACTO: precio = costo_iva * (1 + utilidad/100), redondeado a centenar
+  if (costoNuevo > 0) {
+    const precioBruto = costoNuevo * (1 + u);
+    const precioRedondeado = _redondearAlCentenar(precioBruto);
+
+    dbg('🧮 PRECIO', {
+      proveedor: provNuevo?.proveedor_nombre,
+      codigo: provNuevo?.codigo,
+      costo_iva: costoNuevo,
+      utilidadPct,
+      precioBruto,
+      precioRedondeado
+    });
+
+    _renderSimulacion(productoId, precioRedondeado);
   } else {
+    dbg('❌ costo_iva no válido para cálculo', provNuevo);
     _renderSimulacion(productoId, null);
   }
 
-  // MUY IMPORTANTE: no tocar el precio principal de la card.
+  console.groupEnd();
 }, { passive: true });
+
