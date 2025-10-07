@@ -117,12 +117,11 @@ function mostrarProductos(productos) {
         : producto.calidad_vic ? 'CALIDAD VIC'
         : ''
     );
-
     // === datasets para la simulación/rotación ===
     card.dataset.productoId = producto.id;
     card.dataset.precioVenta = producto.precio_venta;
     card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // ID asignado
-    card.dataset.utilidad = (producto.utilidad ?? 0);               // utilidad cruda (30, "30,0", etc.)
+    card.dataset.utilidad = (producto.utilidad ?? 0);               // FIX: utilidad para cálculos
 
     let imagenesHTML = '';
     (producto.imagenes || []).forEach((imagen, i) => {
@@ -304,8 +303,12 @@ function toNumberSafe(v) {
   if (typeof v === 'number' && Number.isFinite(v)) return v;
 
   let s = String(v).trim();
-  if (s.includes('.') && s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
-  else if (s.includes(',')) s = s.replace(',', '.');
+
+  if (s.includes('.') && s.includes(',')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (s.includes(',')) {
+    s = s.replace(',', '.');
+  }
   s = s.replace(/%/g, '');
 
   const n = parseFloat(s);
@@ -319,102 +322,81 @@ function _getUtilidadDeCard(cardEl) {
   return u;
 }
 function _redondearAlCentenar(valor) {
-  const n = Math.round(toNumberSafe(valor)); // llevar a entero primero
+  const n = Math.round(toNumberSafe(valor)); // entero
   const resto = n % 100;
   return (resto < 50) ? (n - resto) : (n + (100 - resto));
 }
 
-// ============== Normalizador de proveedores ==============
-function _normalizeProviders(listaRaw) {
-  if (!Array.isArray(listaRaw)) return [];
-  return listaRaw.map(p => {
-    const codigo = p.codigo ?? p.codigo_proveedor ?? p.cod_proveedor ?? p.codigoProveedor ?? p.cod ?? '-';
-    const provId = (p.id != null ? p.id : p.proveedor_id);
-    const nombre = p.proveedor_nombre ?? p.nombre_proveedor ?? p.nombre ?? p.proveedor ?? '';
-
-    // costo con IVA directo
-    const costoIVAkeys = [
-      'costo_iva','costoIva','costo_con_iva','precio_costo_con_iva','precioCostoConIva',
-      'costo_final','costoConIva','precioConIva'
-    ];
-    const costoNetoKeys = ['costo_neto','costoNeto','precio_costo_neto','precioCostoNeto','costo'];
-    const ivaKeys = ['iva','iva_porcentaje','iva_porcent','ivaPercent','alicuota_iva'];
-
-    let costoIva = 0;
-    for (const k of costoIVAkeys) if (p[k] != null) { costoIva = toNumberSafe(p[k]); break; }
-
-    // reconstrucción si falta
-    if (!costoIva || costoIva <= 0) {
-      let neto = 0, iva = 0;
-      for (const k of costoNetoKeys) if (p[k] != null) { neto = toNumberSafe(p[k]); break; }
-      for (const k of ivaKeys)      if (p[k] != null) { iva  = toNumberSafe(p[k]); break; }
-      if (iva > 0 && iva < 1) iva = iva * 100;
-      if (neto > 0) costoIva = neto * (1 + (iva/100));
-    }
-
-    return {
-      ...p,
-      proveedor_id_norm: Number(provId) || null,
-      proveedor_nombre: nombre,
-      codigo,
-      costo_iva: toNumberSafe(costoIva)
-    };
-  });
-}
-
-// ============== Orden por costo ==============
+// ============== Orden por costo (asc) ==============
 function _sortedIdxByCosto(lista){
-  const withCost = [], noCost = [];
-  lista.forEach((p, i) => {
-    const c = toNumberSafe(p.costo_iva);
-    (c > 0 ? withCost : noCost).push({ i, c });
-  });
-  withCost.sort((a,b) => a.c - b.c);
-  return [...withCost.map(x => x.i), ...noCost.map(x => x.i)];
+  return lista
+    .map((p, i) => ({ i, c: toNumberSafe(p.costo_iva) }))
+    .sort((a,b) => a.c - b.c)
+    .map(x => x.i);
 }
 
 /* =========================
-   Estado/rotación por producto
+   Siguiente proveedor (con base asignada por ID)
    ========================= */
-// productoId -> { lista, baseIdx, orden, cycle, pos }
+
+// productoId -> { lista, baseIdx, idx, first }
 const _cacheProveedores = new Map();
 
 async function _getOrInitState(productoId){
-  let st = _cacheProveedores.get(productoId);
-  if (st) return st;
+  let state = _cacheProveedores.get(productoId);
+  if (state) return state;
 
   const r = await fetch(`/productos/api/proveedores/${productoId}`);
   let lista = await r.json();
-  lista = _normalizeProviders(lista);
 
-  st = { lista, baseIdx: 0, orden: [], cycle: [], pos: -1 }; // pos=-1 => antes del primero “real”
+  // ==== normalizar costo_iva si hace falta (neto + IVA) ====
+  lista = (Array.isArray(lista) ? lista : []).map(p => {
+    let costoIva = toNumberSafe(p.costo_iva ?? p.costoIva ?? p.costo_con_iva ?? p.precio_costo_con_iva ?? p.costo_final ?? p.precioConIva);
+    if (!costoIva || costoIva <= 0) {
+      const neto = toNumberSafe(p.costo_neto ?? p.costo ?? p.precio_costo_neto);
+      let iva = toNumberSafe(p.iva ?? p.iva_porcentaje ?? p.alicuota_iva);
+      if (iva > 0 && iva < 1) iva = iva * 100;
+      if (neto > 0) costoIva = neto * (1 + iva/100);
+    }
+    return {
+      ...p,
+      proveedor_nombre: p.proveedor_nombre ?? p.nombre_proveedor ?? p.nombre ?? '',
+      codigo: p.codigo ?? p.codigo_proveedor ?? p.cod ?? '-',
+      costo_iva: costoIva
+    };
+  });
 
-  if (lista.length) {
-    // base por ID asignado o por nombre renderizado
+  state = { lista, idx: 0, first: true, baseIdx: 0 };
+
+  if (state.lista.length) {
+    // Buscar card para obtener el proveedor asignado por ID
     const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
-    const cardEl   = provSpan ? provSpan.closest('.card') : null;
-    const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || cardEl?.dataset?.proveedorAsignadoid || 0);
+    const cardEl = provSpan ? provSpan.closest('.card') : null;
+    const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
 
     if (asignadoId) {
-      const byId = lista.findIndex(p => Number(p.proveedor_id_norm) === asignadoId);
-      st.baseIdx = byId >= 0 ? byId : 0;
+      const byId = state.lista.findIndex(p => Number(p.id ?? p.proveedor_id) === asignadoId);
+      if (byId >= 0) {
+        state.baseIdx = byId;
+        state.idx = byId;
+      } else {
+        // Fallback por nombre si no aparece en la lista
+        const nombreAsignado = (provSpan?.textContent || '').trim();
+        const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
+        state.baseIdx = byName >= 0 ? byName : 0;
+        state.idx = state.baseIdx;
+      }
     } else {
+      // Sin ID disponible, intentar por nombre
       const nombreAsignado = (provSpan?.textContent || '').trim();
-      const byName = lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
-      st.baseIdx = byName >= 0 ? byName : 0;
+      const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
+      state.baseIdx = byName >= 0 ? byName : 0;
+      state.idx = state.baseIdx;
     }
-
-    // orden por costo; ciclo = SOLO proveedores distintos del asignado
-    st.orden = _sortedIdxByCosto(lista);
-    st.cycle = st.orden.filter(i => i !== st.baseIdx);
-
-    // si por algún motivo solo hay 1 proveedor, dejar ciclo con ese único
-    if (st.cycle.length === 0) st.cycle = [st.baseIdx];
-    st.pos = -1; // primer click llevará a cycle[0] (no al asignado)
   }
 
-  _cacheProveedores.set(productoId, st);
-  return st;
+  _cacheProveedores.set(productoId, state);
+  return state;
 }
 
 function _renderProveedor(productoId, data) {
@@ -425,48 +407,20 @@ function _renderProveedor(productoId, data) {
   if (spanCodigo) spanCodigo.textContent = data?.codigo || '-';
   if (smallIdx) {
     const st = _cacheProveedores.get(productoId);
-    // Mostrando: base es “0 de N” implicitamente; mostramos 1..N para el ciclo
-    const total = (st?.lista?.length || 0);
-    const mostrando = (st?.pos ?? -1) >= 0 ? ((st.pos + 1) % total) : 1;
-    smallIdx.textContent = total > 0 ? `Mostrando ${mostrando + (st.pos >= 0 ? 0 : 0)} de ${total}` : '';
+    const pos = (st?.idx ?? 0) + 1;
+    const total = st?.lista?.length || 0;
+    smallIdx.textContent = total > 0 ? `Mostrando ${pos} de ${total}` : '';
   }
 }
 
-function _renderSimulacion(productoId, precio){
+// === REEMPLAZAR _renderSimulacion ===
+function _renderSimulacion(productoId, precioVentaSimulado){
   const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
   if (!nodo) return;
-  nodo.textContent = (Number.isFinite(precio) && precio > 0)
-    ? `Precio venta: $${formatearNumero(precio)}`
-    : '';
-}
-
-// precio = costo_iva * (1 + utilidad/100), redondeado a centenar
-function _precioVentaDesde(prov, utilidadPct){
-  let costo = toNumberSafe(prov?.costo_iva);
-  if (!costo || costo <= 0) {
-    const neto = toNumberSafe(prov?.costo_neto ?? prov?.costo ?? 0);
-    let iva    = toNumberSafe(prov?.iva ?? prov?.iva_porcentaje ?? 0);
-    if (iva > 0 && iva < 1) iva = iva * 100;
-    if (neto > 0) costo = neto * (1 + iva/100);
-  }
-  if (!costo || costo <= 0) return null;
-
-  let u = toNumberSafe(utilidadPct);
-  if (u > 0 && u < 1) u = u * 100;
-  if (u < 0) u = 0;
-  if (u > 100) u = 100;
-
-  const bruto = costo * (1 + (u/100));
-  return _redondearAlCentenar(bruto);
-}
-
-async function _initProveedorButton(productoId){
-  if (!isAdminUser) return;
-  const btn = document.querySelector(`.btn-siguiente-proveedor[data-producto-id="${productoId}"]`);
-  if (!btn) return;
-  const st = await _getOrInitState(productoId);
-  if (!st.lista || st.lista.length < 2){
-    btn.style.display = 'none';
+  if (Number.isFinite(precioVentaSimulado) && precioVentaSimulado > 0) {
+    nodo.textContent = `Precio venta: $${formatearNumero(precioVentaSimulado)}`;
+  } else {
+    nodo.textContent = '';
   }
 }
 
@@ -479,24 +433,58 @@ contenedorProductos.addEventListener('click', async (ev) => {
   if (!productoId) return;
 
   const cardEl = btn.closest('.card');
-  const utilidad = _getUtilidadDeCard(cardEl); // SIEMPRE desde data-utilidad, sanitizada 0..100
+  const utilidadPct = _getUtilidadDeCard(cardEl); // FIX: ahora usamos utilidad real
+  const u = utilidadPct / 100;
 
   const st = await _getOrInitState(productoId);
-  if (!st.lista || !st.cycle || st.cycle.length === 0) {
+  if (!st.lista || !st.lista.length) {
+    Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
+    return;
+  }
+  if (st.lista.length < 2) {
     btn.style.display = 'none';
     return;
   }
 
-  // Primer click: pos = -1 -> 0 (primer alternativo al asignado).
-  st.pos = (st.pos + 1) % st.cycle.length;
-  const idx = st.cycle[st.pos];
-  const prov = st.lista[idx];
+  // Elegir el índice a mostrar
+  let nextIdx;
+  if (st.first) {
+    // Ordenar por costo (asc)
+    const orden = _sortedIdxByCosto(st.lista);
+    const cheapestIdx = orden[0];
+    const secondIdx = orden[1] ?? cheapestIdx;
+
+    // Si el asignado YA es el más barato, 1er clic muestra el segundo más barato.
+    // Si no, 1er clic muestra el más barato.
+    nextIdx = (st.baseIdx === cheapestIdx) ? secondIdx : cheapestIdx;
+    st.first = false;
+  } else {
+    // Rotación cíclica normal a partir del actual
+    nextIdx = (st.idx + 1) % st.lista.length;
+  }
+
+  // Actualizar estado antes de renderizar (para que el "Mostrando X de N" quede bien)
+  st.idx = nextIdx;
   _cacheProveedores.set(productoId, st);
 
-  // Pintar proveedor/código + “Mostrando X de N”
-  _renderProveedor(productoId, prov);
+  // Render proveedor/código
+  const provNuevo = st.lista[st.idx];
+  _renderProveedor(productoId, provNuevo);
 
-  // Calcular precio simulado SIEMPRE desde costo_iva + utilidad (%)
-  const precio = _precioVentaDesde(prov, utilidad);
-  _renderSimulacion(productoId, precio);
+  // Calcular precio simulado usando UTILIDAD (no markup del asignado) — FIX
+  const costoNuevo = toNumberSafe(provNuevo?.costo_iva);
+  if (costoNuevo > 0 && u >= 0) {
+    const precioSimulado = _redondearAlCentenar(costoNuevo * (1 + u)); // igual que editar.js
+
+    // Si volvimos al asignado, limpiar simulación; si no, mostrarla.
+    if (st.idx === st.baseIdx) {
+      _renderSimulacion(productoId, null);
+    } else {
+      _renderSimulacion(productoId, precioSimulado);
+    }
+  } else {
+    _renderSimulacion(productoId, null);
+  }
+
+  // MUY IMPORTANTE: no tocar el precio principal de la card.
 }, { passive: true });
