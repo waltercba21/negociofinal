@@ -20,7 +20,6 @@ function logBusquedaTexto(q, origen = 'texto') {
   }).catch(() => {});
 }
 function _sortedIdxByCosto(lista){
-  // Ordena por costo>0; empuja al final los sin costo válido
   const withCost = [], noCost = [];
   lista.forEach((p, i) => {
     const c = toNumberSafe(p.costo_iva);
@@ -342,7 +341,7 @@ function _normalizeProviders(listaRaw) {
     const provId = (p.id != null ? p.id : p.proveedor_id);
     const nombre = p.proveedor_nombre ?? p.nombre_proveedor ?? p.nombre ?? p.proveedor ?? '';
 
-    // costos: intento directo costo_iva
+    // intento directo costo con IVA
     const costoIVAkeys = [
       'costo_iva','costoIva','costo_con_iva','precio_costo_con_iva','precioCostoConIva',
       'costo_final','costoConIva','precioConIva'
@@ -353,14 +352,13 @@ function _normalizeProviders(listaRaw) {
     let costoIva = 0;
     for (const k of costoIVAkeys) if (p[k] != null) { costoIva = toNumberSafe(p[k]); break; }
 
+    // reconstruir si hace falta
     if (!costoIva || costoIva <= 0) {
-      let costoNeto = 0, ivaPct = 0;
-      for (const k of costoNetoKeys) if (p[k] != null) { costoNeto = toNumberSafe(p[k]); break; }
-      for (const k of ivaKeys)      if (p[k] != null) { ivaPct    = toNumberSafe(p[k]); break; }
-      if (costoNeto > 0) {
-        const mul = 1 + (ivaPct > 0 && ivaPct < 1 ? ivaPct : (ivaPct/100));
-        costoIva = Math.round(costoNeto * mul);
-      }
+      let neto = 0, iva = 0;
+      for (const k of costoNetoKeys) if (p[k] != null) { neto = toNumberSafe(p[k]); break; }
+      for (const k of ivaKeys)      if (p[k] != null) { iva  = toNumberSafe(p[k]); break; }
+      if (iva > 0 && iva < 1) iva = iva * 100;
+      if (neto > 0) costoIva = neto * (1 + (iva/100));
     }
 
     return {
@@ -373,6 +371,7 @@ function _normalizeProviders(listaRaw) {
   });
 }
 
+
 /* =========================
    Siguiente proveedor (estado por producto)
    ========================= */
@@ -381,46 +380,38 @@ function _normalizeProviders(listaRaw) {
 const _cacheProveedores = new Map();
 
 async function _getOrInitState(productoId){
-  let state = _cacheProveedores.get(productoId);
-  if (state) return state;
+  let st = _cacheProveedores.get(productoId);
+  if (st) return st;
 
   const r = await fetch(`/productos/api/proveedores/${productoId}`);
   let lista = await r.json();
   lista = _normalizeProviders(lista);
 
-  state = { lista, idx: 0, first: true, baseIdx: 0, orden: [], orderCycle: [], cyclePos: -1 };
+  st = { lista, baseIdx: 0, cycle: [], pos: 0 };
 
-  if (state.lista.length) {
-    // Base (asignado) por ID o por nombre mostrado en card
+  if (lista.length) {
+    // hallar base por ID asignado; si no, por nombre renderizado en la card
     const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
-    const cardEl = provSpan ? provSpan.closest('.card') : null;
+    const cardEl   = provSpan ? provSpan.closest('.card') : null;
     const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
 
     if (asignadoId) {
-      const byId = state.lista.findIndex(p => Number(p.proveedor_id_norm) === asignadoId);
-      if (byId >= 0) { state.baseIdx = byId; state.idx = byId; }
-      else {
-        const nombreAsignado = (provSpan?.textContent || '').trim();
-        const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
-        state.baseIdx = byName >= 0 ? byName : 0;
-        state.idx = state.baseIdx;
-      }
+      const byId = lista.findIndex(p => Number(p.proveedor_id_norm) === asignadoId);
+      st.baseIdx = byId >= 0 ? byId : 0;
     } else {
       const nombreAsignado = (provSpan?.textContent || '').trim();
-      const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
-      state.baseIdx = byName >= 0 ? byName : 0;
-      state.idx = state.baseIdx;
+      const byName = lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
+      st.baseIdx = byName >= 0 ? byName : 0;
     }
 
-    // Orden ascendente por costo + ciclo que EXCLUYE el asignado
-    state.orden = _sortedIdxByCosto(state.lista);
-    state.orderCycle = state.orden.filter(i => i !== state.baseIdx);
-    if (state.orderCycle.length === 0) state.orderCycle = state.orden.slice(); // fallback (1 proveedor)
-    state.cyclePos = -1; // antes del primero
+    const orden = _sortedIdxByCosto(lista);
+    const resto = orden.filter(i => i !== st.baseIdx);
+    st.cycle = [st.baseIdx, ...resto]; // base primero, luego los demás en orden
+    st.pos = 0; // pos=0 => estás parado en el asignado (lo que SSR ya muestra)
   }
 
-  _cacheProveedores.set(productoId, state);
-  return state;
+  _cacheProveedores.set(productoId, st);
+  return st;
 }
 
 function _renderProveedor(productoId, data) {
@@ -431,18 +422,36 @@ function _renderProveedor(productoId, data) {
   if (spanCodigo) spanCodigo.textContent = data?.codigo || '-';
   if (smallIdx) {
     const st = _cacheProveedores.get(productoId);
-    const pos = (st?.idx ?? 0) + 1;
-    const total = st?.lista?.length || 0;
-    smallIdx.textContent = total > 0 ? `Mostrando ${pos} de ${total}` : '';
+    smallIdx.textContent = (st && st.cycle.length) ? `Mostrando ${st.pos + 1} de ${st.cycle.length}` : '';
   }
 }
 
-function _renderSimulacion(productoId, precioVentaSimulado){
+function _renderSimulacion(productoId, precio){
   const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
   if (!nodo) return;
-  nodo.textContent = (Number.isFinite(precioVentaSimulado) && precioVentaSimulado > 0)
-    ? `Precio venta: $${formatearNumero(precioVentaSimulado)}`
+  nodo.textContent = (Number.isFinite(precio) && precio > 0)
+    ? `Precio venta: $${formatearNumero(precio)}`
     : '';
+}
+function _precioVentaDesde(prov, utilidadPct){
+  // costo_iva sólido
+  let costo = toNumberSafe(prov?.costo_iva);
+  if (!costo || costo <= 0) {
+    const neto = toNumberSafe(prov?.costo_neto ?? prov?.costo ?? 0);
+    let iva    = toNumberSafe(prov?.iva ?? prov?.iva_porcentaje ?? 0);
+    if (iva > 0 && iva < 1) iva = iva * 100;
+    if (neto > 0) costo = neto * (1 + iva/100);
+  }
+  if (!costo || costo <= 0) return null;
+
+  let u = toNumberSafe(utilidadPct);
+  if (u > 0 && u < 1) u = u * 100;  // admitir 0,30 -> 30
+  if (u < 0) u = 0;
+  if (u > 100) u = 100;
+
+  // redondeo a decenas (tu UI muestra $72.600, $91.000, $59.700)
+  const bruto = costo * (1 + (u/100));
+  return Math.round(bruto / 100) * 100; // redondeo a 100s
 }
 
 async function _initProveedorButton(productoId){
@@ -454,7 +463,6 @@ async function _initProveedorButton(productoId){
     btn.style.display = 'none';
   }
 }
-
 contenedorProductos.addEventListener('click', async (ev) => {
   const btn = ev.target.closest('.btn-siguiente-proveedor');
   if (!btn || !isAdminUser) return;
@@ -463,55 +471,31 @@ contenedorProductos.addEventListener('click', async (ev) => {
   if (!productoId) return;
 
   const cardEl = btn.closest('.card');
-  const utilidadPct = _getUtilidadDeCard(cardEl);
-  const u = utilidadPct / 100;
+  const utilidad = cardEl ? cardEl.dataset.utilidad : 0;
 
   const st = await _getOrInitState(productoId);
-  if (!st.lista || !st.lista.length) {
-    Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
-    return;
-  }
-  if (st.lista.length < 2) {
+  if (!st.lista || !st.cycle || st.cycle.length < 2) {
+    // si no hay “siguientes”, oculto botón
     btn.style.display = 'none';
     return;
   }
 
-  // ===== Ciclo sin asignado =====
-  if (st.first) {
-    st.cyclePos = 0; // primer item del ciclo (ya excluye baseIdx)
-    st.idx = st.orderCycle[st.cyclePos];
-    st.first = false;
-  } else {
-    st.cyclePos = (st.cyclePos + 1) % st.orderCycle.length;
-    st.idx = st.orderCycle[st.cyclePos];
-  }
-
-  // Seguridad: no permitir que el siguiente sea el asignado
-  if (st.idx === st.baseIdx && st.orderCycle.length > 1) {
-    st.cyclePos = (st.cyclePos + 1) % st.orderCycle.length;
-    st.idx = st.orderCycle[st.cyclePos];
-  }
+  // avanzar en el ciclo
+  st.pos = (st.pos + 1) % st.cycle.length;
+  const idx = st.cycle[st.pos];
+  const prov = st.lista[idx];
 
   _cacheProveedores.set(productoId, st);
 
-  // Render proveedor/código
-  const provNuevo = st.lista[st.idx];
-  _renderProveedor(productoId, provNuevo);
+  // pintar proveedor/código + “Mostrando X de N”
+  _renderProveedor(productoId, prov);
 
-  // === costo_iva sólido (reconstruir si hace falta) ===
-  let costoNuevo = toNumberSafe(provNuevo?.costo_iva);
-  if (!costoNuevo || costoNuevo <= 0) {
-    const neto = toNumberSafe(provNuevo?.costo_neto ?? provNuevo?.costo ?? 0);
-    let ivaPct = toNumberSafe(provNuevo?.iva ?? provNuevo?.iva_porcentaje ?? 0);
-    if (ivaPct > 0 && ivaPct < 1) ivaPct = ivaPct * 100;
-    if (neto > 0) costoNuevo = Math.round(neto * (1 + ivaPct/100));
-  }
-
-  // === Precio exacto: costo_iva * (1 + utilidad/100) ===
-  if (costoNuevo > 0) {
-    const precioSimulado = Math.round(costoNuevo * (1 + u));
-    _renderSimulacion(productoId, precioSimulado);
-  } else {
+  // si estoy parado en el asignado (pos=0), no muestro simulación
+  if (st.pos === 0) {
     _renderSimulacion(productoId, null);
+  } else {
+    const precio = _precioVentaDesde(prov, utilidad);
+    _renderSimulacion(productoId, precio);
   }
 }, { passive: true });
+
