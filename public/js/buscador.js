@@ -19,15 +19,6 @@ function logBusquedaTexto(q, origen = 'texto') {
     body: JSON.stringify({ q, origen })
   }).catch(() => {});
 }
-function _sortedIdxByCosto(lista){
-  const withCost = [], noCost = [];
-  lista.forEach((p, i) => {
-    const c = toNumberSafe(p.costo_iva);
-    (c > 0 ? withCost : noCost).push({ i, c });
-  });
-  withCost.sort((a,b) => a.c - b.c);
-  return [...withCost.map(x => x.i), ...noCost.map(x => x.i)];
-}
 function logBusquedaProducto(producto_id, qActual) {
   if (!producto_id) return;
   fetch('/analytics/busqueda-producto', {
@@ -127,11 +118,11 @@ function mostrarProductos(productos) {
         : ''
     );
 
-    // === Datasets clave para simulación/detección de base ===
+    // === datasets para la simulación/rotación ===
     card.dataset.productoId = producto.id;
     card.dataset.precioVenta = producto.precio_venta;
     card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // ID asignado
-    card.dataset.utilidad = (producto.utilidad ?? 0);               // utilidad cruda (30, "30", "0,30", etc.)
+    card.dataset.utilidad = (producto.utilidad ?? 0);               // utilidad cruda (30, "30,0", etc.)
 
     let imagenesHTML = '';
     (producto.imagenes || []).forEach((imagen, i) => {
@@ -289,7 +280,7 @@ function mostrarProductos(productos) {
       });
     }
 
-    _initProveedorButton(producto.id); // obtiene y fija base/orden/ordenCycle
+    _initProveedorButton(producto.id);
   });
 }
 
@@ -307,36 +298,28 @@ function formatearNumero(num) {
   return Math.floor(Number(num) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-// ============== Helpers numéricos ==============
+// ================= Helpers numéricos =================
 function toNumberSafe(v) {
   if (v == null) return 0;
   if (typeof v === 'number' && Number.isFinite(v)) return v;
 
   let s = String(v).trim();
-
-  if (s.includes('.') && s.includes(',')) {
-    s = s.replace(/\./g, '').replace(',', '.');
-  } else if (s.includes(',')) {
-    s = s.replace(',', '.');
-  }
+  if (s.includes('.') && s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  else if (s.includes(',')) s = s.replace(',', '.');
   s = s.replace(/%/g, '');
 
   const n = parseFloat(s);
   return Number.isFinite(n) ? n : 0;
 }
-
-// utilidad 0..100; admite “0,30” → 30
 function _getUtilidadDeCard(cardEl) {
   let u = toNumberSafe((cardEl?.dataset?.utilidad ?? '').toString().trim());
-  if (u > 0 && u < 1) u = u * 100;
+  if (u > 0 && u < 1) u = u * 100; // 0,30 -> 30
   if (u < 0) u = 0;
   if (u > 100) u = 100;
   return u;
 }
-
-// redondeo a centenar (mismo criterio que editar.js)
 function _redondearAlCentenar(valor) {
-  const n = toNumberSafe(valor);
+  const n = Math.round(toNumberSafe(valor)); // llevar a entero primero
   const resto = n % 100;
   return (resto < 50) ? (n - resto) : (n + (100 - resto));
 }
@@ -379,11 +362,21 @@ function _normalizeProviders(listaRaw) {
   });
 }
 
-/* =========================
-   Siguiente proveedor (estado por producto)
-   ========================= */
+// ============== Orden por costo ==============
+function _sortedIdxByCosto(lista){
+  const withCost = [], noCost = [];
+  lista.forEach((p, i) => {
+    const c = toNumberSafe(p.costo_iva);
+    (c > 0 ? withCost : noCost).push({ i, c });
+  });
+  withCost.sort((a,b) => a.c - b.c);
+  return [...withCost.map(x => x.i), ...noCost.map(x => x.i)];
+}
 
-// productoId -> { lista, baseIdx, cycle, pos }
+/* =========================
+   Estado/rotación por producto
+   ========================= */
+// productoId -> { lista, baseIdx, orden, cycle, pos }
 const _cacheProveedores = new Map();
 
 async function _getOrInitState(productoId){
@@ -394,10 +387,10 @@ async function _getOrInitState(productoId){
   let lista = await r.json();
   lista = _normalizeProviders(lista);
 
-  st = { lista, baseIdx: 0, cycle: [], pos: 0 };
+  st = { lista, baseIdx: 0, orden: [], cycle: [], pos: -1 }; // pos=-1 => antes del primero “real”
 
   if (lista.length) {
-    // hallar base por ID asignado; si no, por nombre renderizado en la card
+    // base por ID asignado o por nombre renderizado
     const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
     const cardEl   = provSpan ? provSpan.closest('.card') : null;
     const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || cardEl?.dataset?.proveedorAsignadoid || 0);
@@ -411,11 +404,13 @@ async function _getOrInitState(productoId){
       st.baseIdx = byName >= 0 ? byName : 0;
     }
 
-    // orden por costo ascendente; el ciclo es: [base, ...resto]
-    const orden = _sortedIdxByCosto(lista);
-    const resto = orden.filter(i => i !== st.baseIdx);
-    st.cycle = [st.baseIdx, ...resto];
-    st.pos = 0; // pos=0 => asignado (lo que ya muestra la card SSR)
+    // orden por costo; ciclo = SOLO proveedores distintos del asignado
+    st.orden = _sortedIdxByCosto(lista);
+    st.cycle = st.orden.filter(i => i !== st.baseIdx);
+
+    // si por algún motivo solo hay 1 proveedor, dejar ciclo con ese único
+    if (st.cycle.length === 0) st.cycle = [st.baseIdx];
+    st.pos = -1; // primer click llevará a cycle[0] (no al asignado)
   }
 
   _cacheProveedores.set(productoId, st);
@@ -430,7 +425,10 @@ function _renderProveedor(productoId, data) {
   if (spanCodigo) spanCodigo.textContent = data?.codigo || '-';
   if (smallIdx) {
     const st = _cacheProveedores.get(productoId);
-    smallIdx.textContent = (st && st.cycle.length) ? `Mostrando ${st.pos + 1} de ${st.cycle.length}` : '';
+    // Mostrando: base es “0 de N” implicitamente; mostramos 1..N para el ciclo
+    const total = (st?.lista?.length || 0);
+    const mostrando = (st?.pos ?? -1) >= 0 ? ((st.pos + 1) % total) : 1;
+    smallIdx.textContent = total > 0 ? `Mostrando ${mostrando + (st.pos >= 0 ? 0 : 0)} de ${total}` : '';
   }
 }
 
@@ -442,7 +440,7 @@ function _renderSimulacion(productoId, precio){
     : '';
 }
 
-// precio exacto desde costo_iva + utilidad (%), redondeado a centenar
+// precio = costo_iva * (1 + utilidad/100), redondeado a centenar
 function _precioVentaDesde(prov, utilidadPct){
   let costo = toNumberSafe(prov?.costo_iva);
   if (!costo || costo <= 0) {
@@ -472,6 +470,7 @@ async function _initProveedorButton(productoId){
   }
 }
 
+// ===== Listener del botón “Siguiente proveedor” =====
 contenedorProductos.addEventListener('click', async (ev) => {
   const btn = ev.target.closest('.btn-siguiente-proveedor');
   if (!btn || !isAdminUser) return;
@@ -480,29 +479,24 @@ contenedorProductos.addEventListener('click', async (ev) => {
   if (!productoId) return;
 
   const cardEl = btn.closest('.card');
-  // toma utilidad también de SSR (productos.ejs)
-  const utilidad = cardEl ? (cardEl.dataset.utilidad ?? 0) : 0;
+  const utilidad = _getUtilidadDeCard(cardEl); // SIEMPRE desde data-utilidad, sanitizada 0..100
 
   const st = await _getOrInitState(productoId);
-  if (!st.lista || !st.cycle || st.cycle.length < 2) {
+  if (!st.lista || !st.cycle || st.cycle.length === 0) {
     btn.style.display = 'none';
     return;
   }
 
-  // avanzar en el ciclo: de base→siguiente→siguiente...
+  // Primer click: pos = -1 -> 0 (primer alternativo al asignado).
   st.pos = (st.pos + 1) % st.cycle.length;
   const idx = st.cycle[st.pos];
   const prov = st.lista[idx];
-
   _cacheProveedores.set(productoId, st);
 
+  // Pintar proveedor/código + “Mostrando X de N”
   _renderProveedor(productoId, prov);
 
-  // si estoy parado en asignado (pos=0), no muestro simulación
-  if (st.pos === 0) {
-    _renderSimulacion(productoId, null);
-  } else {
-    const precio = _precioVentaDesde(prov, utilidad);
-    _renderSimulacion(productoId, precio);
-  }
+  // Calcular precio simulado SIEMPRE desde costo_iva + utilidad (%)
+  const precio = _precioVentaDesde(prov, utilidad);
+  _renderSimulacion(productoId, precio);
 }, { passive: true });
