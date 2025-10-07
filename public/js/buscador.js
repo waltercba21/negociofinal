@@ -123,11 +123,11 @@ function mostrarProductos(productos) {
         : producto.calidad_vic ? 'CALIDAD VIC'
         : ''
     );
-    // === Datasets para simulación y detección de base ===
+    // === datasets para simulación y detección de base ===
     card.dataset.productoId = producto.id;
     card.dataset.precioVenta = producto.precio_venta;
-    card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // <- clave
-    card.dataset.utilidad = Number(producto.utilidad) || 0; // <- NUEVO: para cálculo exacto
+    card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // base asignada
+    card.dataset.utilidad = Number(producto.utilidad) || 0; // NUEVO: utilidad cruda para cálculo exacto // FIX
 
     let imagenesHTML = '';
     (producto.imagenes || []).forEach((imagen, i) => {
@@ -326,11 +326,37 @@ function toNumberSafe(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
+// ============== Normalizador de proveedores (lista) ==============
+function _normalizeProviders(listaRaw) { // NUEVO
+  if (!Array.isArray(listaRaw)) return [];
+  return listaRaw.map(p => {
+    const costo =
+      p.costo_iva ?? p.costoIva ?? p.costo_con_iva ?? p.precio_costo_con_iva ??
+      p.precioCostoConIva ?? p.costo_final ?? p.costo ?? 0;
+
+    const codigo =
+      p.codigo ?? p.codigo_proveedor ?? p.cod_proveedor ?? p.codigoProveedor ?? p.cod ?? '-';
+
+    const provId = (p.id != null ? p.id : p.proveedor_id);
+
+    const nombre =
+      p.proveedor_nombre ?? p.nombre_proveedor ?? p.nombre ?? '';
+
+    return {
+      ...p,
+      proveedor_id_norm: Number(provId) || null,   // FIX: id normalizado para match con asignado
+      proveedor_nombre: nombre,
+      codigo: codigo,
+      costo_iva: toNumberSafe(costo)
+    };
+  });
+}
+
 /* =========================
    Siguiente proveedor (con base asignada por ID)
    ========================= */
 
-// productoId -> { lista: [], idx: number, first: true, baseIdx: number }
+// productoId -> { lista: [], idx: number, first: true, baseIdx: number, orden: number[], ordenPos: number }
 const _cacheProveedores = new Map();
 
 async function _getOrInitState(productoId){
@@ -340,22 +366,10 @@ async function _getOrInitState(productoId){
   const r = await fetch(`/productos/api/proveedores/${productoId}`);
   let lista = await r.json();
 
-  // 🔧 Normalización: costo_iva y codigo
-  if (!Array.isArray(lista)) lista = [];
-  lista = lista.map(p => {
-    const costo =
-      p.costo_iva ?? p.costoIva ?? p.costo_con_iva ?? p.precio_costo_con_iva ??
-      p.precioCostoConIva ?? p.costo_final ?? p.costo ?? 0;
-    const codigo =
-      p.codigo ?? p.codigo_proveedor ?? p.cod_proveedor ?? p.codigoProveedor ?? p.cod ?? '-';
-    return {
-      ...p,
-      costo_iva: toNumberSafe(costo),
-      codigo
-    };
-  });
+  // Normalización: costo_iva, codigo, id/nombre
+  lista = _normalizeProviders(lista); // FIX
 
-  state = { lista, idx: 0, first: true, baseIdx: 0 };
+  state = { lista, idx: 0, first: true, baseIdx: 0, orden: [], ordenPos: 0 };
 
   if (state.lista.length) {
     // Buscar card para obtener el proveedor asignado por ID
@@ -364,7 +378,8 @@ async function _getOrInitState(productoId){
     const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
 
     if (asignadoId) {
-      const byId = state.lista.findIndex(p => Number(p.id ?? p.proveedor_id) === asignadoId);
+      // FIX: comparar contra id o proveedor_id normalizado
+      const byId = state.lista.findIndex(p => Number(p.proveedor_id_norm) === asignadoId);
       if (byId >= 0) {
         state.baseIdx = byId;
         state.idx = byId;
@@ -382,6 +397,11 @@ async function _getOrInitState(productoId){
       state.baseIdx = byName >= 0 ? byName : 0;
       state.idx = state.baseIdx;
     }
+
+    // Orden por costo ascendente y posición dentro del orden
+    state.orden = _sortedIdxByCosto(state.lista);
+    state.ordenPos = state.orden.indexOf(state.idx);
+    if (state.ordenPos < 0) state.ordenPos = 0;
   }
 
   _cacheProveedores.set(productoId, state);
@@ -420,8 +440,10 @@ function _inicializarProveedorActual(producto) {
   const actualNombre = (document.querySelector(`.prov-nombre[data-producto-id="${producto.id}"]`)?.textContent || '').trim();
   const idx = st.lista.findIndex(p => (p.proveedor_nombre || '').trim() === actualNombre);
   st.idx = idx >= 0 ? idx : st.idx;
+  st.ordenPos = st.orden.indexOf(st.idx);
+  if (st.ordenPos < 0) st.ordenPos = 0;
   _cacheProveedores.set(producto.id, st);
-  _renderProveedor(producto.id, st.lista[st.idx]);
+  // OJO: no re-render acá para NO pisar lo que muestra el backend en la card
 }
 
 async function _initProveedorButton(productoId){
@@ -442,7 +464,7 @@ contenedorProductos.addEventListener('click', async (ev) => {
   if (!productoId) return;
 
   const cardEl = btn.closest('.card');
-  const utilidadPct = toNumberSafe(cardEl?.dataset?.utilidad) || 0;
+  const utilidadPct = toNumberSafe(cardEl?.dataset?.utilidad) || 0; // FIX: usar utilidad real
   const u = utilidadPct / 100;
 
   const st = await _getOrInitState(productoId);
@@ -455,36 +477,36 @@ contenedorProductos.addEventListener('click', async (ev) => {
     return;
   }
 
-  // Elegir el índice a mostrar
+  // ===== LÓGICA DE ROTACIÓN =====
+  // 1er clic: si el asignado YA es el más barato, mostrar el segundo más barato; si no, el más barato.
+  // Luego ciclar por el array ordenado por costo (st.orden), avanzando uno por vez.
   let nextIdx;
-  if (st.first) {
-    // Ordenar por costo (asc)
-    const orden = _sortedIdxByCosto(st.lista);
-    const cheapestIdx = orden[0];
-    const secondIdx = orden[1] ?? cheapestIdx;
 
-    // Si el asignado YA es el más barato, 1er clic muestra el segundo más barato.
-    // Si no, 1er clic muestra el más barato.
+  if (st.first) {
+    const cheapestIdx = st.orden[0];
+    const secondIdx   = st.orden[1] ?? cheapestIdx;
+
     nextIdx = (st.baseIdx === cheapestIdx) ? secondIdx : cheapestIdx;
+    st.idx = nextIdx;
+    st.ordenPos = st.orden.indexOf(st.idx);
     st.first = false;
   } else {
-    // Rotación cíclica normal a partir del actual
-    nextIdx = (st.idx + 1) % st.lista.length;
+    // Avanzar dentro del orden de costo ascendente:
+    st.ordenPos = (st.ordenPos + 1) % st.orden.length;
+    st.idx = st.orden[st.ordenPos];
+    nextIdx = st.idx;
   }
 
-  // Actualizar estado antes de renderizar (para que el "Mostrando X de N" quede bien)
-  st.idx = nextIdx;
   _cacheProveedores.set(productoId, st);
 
   // Render proveedor/código
-  const provNuevo = st.lista[st.idx];
+  const provNuevo = st.lista[nextIdx];
   _renderProveedor(productoId, provNuevo);
 
   // Calcular precio simulado con utilidad (regla de negocio exacta)
   const costoNuevo = toNumberSafe(provNuevo?.costo_iva);
-
   if (costoNuevo > 0 && u >= 0) {
-    const precioSimulado = Math.round(costoNuevo * (1 + u));
+    const precioSimulado = Math.round(costoNuevo * (1 + u)); // FIX: precio = costo_iva * (1 + utilidad/100)
     // Si volvimos al asignado, limpiar simulación; si no, mostrarla.
     if (st.idx === st.baseIdx) {
       _renderSimulacion(productoId, null);
