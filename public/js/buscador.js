@@ -103,40 +103,66 @@ function _pickKeyCI(obj, candidates) {
    Normalizador de proveedores
    (IMPORTANTE: NO reconstruimos nada; tomamos "costo_iva" tal cual)
 ========================================== */
+// ===== Reemplazá COMPLETO este normalizador =====
 function _normalizeProviders(listaRaw) {
   if (!Array.isArray(listaRaw)) return [];
 
-  // Alias comunes para "Precio de costo con IVA"
-  const COSTO_IVA_KEYS = [
+  // 1) Prioridades explícitas (mapean 1:1 a "Precio de costo con IVA" que usás en Editar)
+  const EXACT_FIRST = [
     'precio_costo_con_iva','precioCostoConIva','precioCostoConIVA',
-    'precio_con_iva','precioConIva','precioConIVA',
-    'costo_iva','costoIva','costo_con_iva','costoConIva',
+    'costo_iva','costoIva',
+    'costo_con_iva','costoConIva',
     'costo_final','costoFinal','costo_final_con_iva','costoFinalConIva'
   ];
 
-  // Campos informativos (NO usados para cálculo)
+  // 2) Filtro flexible: aceptar SOLO claves que incluyan *costo* e *iva*
+  function pickCostoIva(obj) {
+    const keys = Object.keys(obj || {});
+    // (a) exact-first
+    for (const kPref of EXACT_FIRST) {
+      const real = keys.find(k => k.toLowerCase() === kPref.toLowerCase());
+      if (real && obj[real] != null) return obj[real];
+    }
+    // (b) heurística estricta: debe contener "costo" y "iva" (NO "precio_con_iva")
+    for (const k of keys) {
+      const lk = k.toLowerCase();
+      if (lk.includes('costo') && lk.includes('iva')) {
+        return obj[k];
+      }
+    }
+    return undefined;
+  }
+
+  // extras informativos (no afectan el cálculo)
   const COD_KEYS = ['codigo','codigo_proveedor','cod','codigoProveedor','cod_proveedor'];
   const NOMBRE_PROV_KEYS = ['proveedor_nombre','nombre_proveedor','proveedor','nombre'];
 
+  function _pickKeyCI(obj, candidates) {
+    const map = {};
+    for (const k of Object.keys(obj || {})) map[k.toLowerCase()] = k;
+    for (const alias of candidates) {
+      const k = map[alias.toLowerCase()];
+      if (k != null && obj[k] != null) return obj[k];
+    }
+    return undefined;
+  }
+
   const lista = (listaRaw || []).map(p => {
-    const costoIvaRaw  = _pickKeyCI(p, COSTO_IVA_KEYS);
+    const costoIvaRaw  = pickCostoIva(p); // 👈 clave: NO lee "precio_con_iva"
     const codigoRaw    = _pickKeyCI(p, COD_KEYS);
     const nombreRaw    = _pickKeyCI(p, NOMBRE_PROV_KEYS);
-
-    // Ids
     const provId = (p.id != null ? p.id : p.proveedor_id);
 
-    const prov = {
+    return {
       ...p,
       proveedor_id_norm: Number(provId) || null,
       proveedor_nombre: String(nombreRaw ?? '').trim(),
       codigo: String(codigoRaw ?? '-').trim(),
-      costo_iva: toNumberSafe(costoIvaRaw)
+      costo_iva: toNumberSafe(costoIvaRaw) // ← el único usado para calcular precio
     };
-    return prov;
   });
 
-  dbg('🧭 PROVEEDORES (normalizados SOLO costo_iva real):');
+  dbg('🧭 PROVEEDORES (costo_iva correcto):');
   dbgTable(lista.map((x, idx) => ({
     idx,
     proveedor: x.proveedor_nombre,
@@ -147,6 +173,7 @@ function _normalizeProviders(listaRaw) {
 
   return lista;
 }
+
 
 /* ==========================================
    Orden por costo (asc)
