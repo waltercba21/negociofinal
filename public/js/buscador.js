@@ -98,7 +98,6 @@ function _pickKeyCI(obj, candidates) {
   }
   return undefined;
 }
-// ===== Reemplazo COMPLETO del normalizador =====
 function _normalizeProviders(listaRaw) {
   if (!Array.isArray(listaRaw)) return [];
 
@@ -108,18 +107,15 @@ function _normalizeProviders(listaRaw) {
     'costo_con_iva','costoConIva',
     'costo_final','costoFinal','costo_final_con_iva','costoFinalConIva'
   ];
-
-  // Claves alternativas para reconstruir si falta costo_iva
   const NET_KEYS = [
     'precio_costo_neto','precioCostoNeto','costo_neto','costoNeto',
     'neto','costo','precio_costo','precioCosto'
   ];
   const IVA_KEYS = ['iva','iva_porcentaje','porcentaje_iva','alicuotaIva','alicuota_iva'];
-
   const COD_KEYS = ['codigo','codigo_proveedor','cod','codigoProveedor','cod_proveedor'];
   const NOMBRE_PROV_KEYS = ['proveedor_nombre','nombre_proveedor','proveedor','nombre'];
 
-  function pick(obj, aliases) {
+  function pickExact(obj, aliases) {
     const map = {};
     for (const k of Object.keys(obj || {})) map[k.toLowerCase()] = k;
     for (const a of aliases) {
@@ -130,12 +126,12 @@ function _normalizeProviders(listaRaw) {
   }
 
   function pickCostoIvaDirect(obj) {
-    // (a) Prioridad por claves exactas
+    // (a) exact-first
     for (const kPref of EXACT_FIRST) {
       const real = Object.keys(obj).find(k => k.toLowerCase() === kPref.toLowerCase());
       if (real && obj[real] != null) return obj[real];
     }
-    // (b) Heurística: claves que contengan "costo" e "iva" (evita "precio_con_iva")
+    // (b) heurística “costo” + “iva”
     for (const k of Object.keys(obj)) {
       const lk = k.toLowerCase();
       if (lk.includes('costo') && lk.includes('iva')) return obj[k];
@@ -154,31 +150,59 @@ function _normalizeProviders(listaRaw) {
     return Number.isFinite(n) ? n : 0;
   }
 
-  return (listaRaw || []).map(p => {
-    // 1) Intentar costo con IVA ya calculado
-    let costoIva = toNumberSafePlus(pickCostoIvaDirect(p));
+  const lista = (listaRaw || []).map((p, idx) => {
+    const costoIvaBack = toNumberSafePlus(pickCostoIvaDirect(p));
+    const neto = toNumberSafePlus(pickExact(p, NET_KEYS));
+    let ivaPct = toNumberSafePlus(pickExact(p, IVA_KEYS)); // admite 10,5 o 0,105
+    if (ivaPct > 0 && ivaPct < 1.5) ivaPct = ivaPct * 100; // 0.105 -> 10.5
 
-    // 2) Si no viene, reconstruir: costo_neto + IVA del proveedor (10,5 / 21, etc.)
-    if (!(costoIva > 0)) {
-      const neto = toNumberSafePlus(pick(p, NET_KEYS));
-      let ivaPct = toNumberSafePlus(pick(p, IVA_KEYS));     // admite 10.5 o 0.105
-      if (ivaPct > 0 && ivaPct < 1.5) ivaPct = ivaPct * 100; // normalizar 0.105 -> 10.5
-      if (neto > 0) costoIva = neto * (1 + (ivaPct || 0) / 100);
+    // Recontrucción si falta o mismatch
+    let costoIva = costoIvaBack;
+    let costoIvaRecon = 0;
+    if (neto > 0 && ivaPct >= 0) {
+      costoIvaRecon = Math.round(neto * (1 + (ivaPct || 0) / 100));
+      if (!(costoIva > 0)) costoIva = costoIvaRecon;
     }
 
     const provId = (p.id != null ? p.id : p.proveedor_id);
-    const codigo = pick(p, COD_KEYS);
-    const nombreProv = pick(p, NOMBRE_PROV_KEYS);
+    const codigo = pickExact(p, COD_KEYS);
+    const nombreProv = pickExact(p, NOMBRE_PROV_KEYS);
+
+    // LOG de diagnóstico por proveedor
+    const delta = Math.abs((costoIvaBack || 0) - (costoIvaRecon || 0));
+    console.groupCollapsed(`🔎 Proveedor#${idx} ${String(nombreProv ?? '').trim()} — DIAGNÓSTICO IVA`);
+    console.log('Raw:', p);
+    console.table([{
+      neto,
+      ivaPct,
+      costoIvaBack,
+      costoIvaRecon,
+      usadoParaCalculo: costoIva
+    }]);
+    if (costoIvaBack > 0 && costoIvaRecon > 0 && delta >= 2) {
+      console.warn('⚠️ MISMATCH backend vs reconstruido (>= $2). Posible IVA mal aplicado en API.');
+    }
+    console.groupEnd();
 
     return {
       ...p,
       proveedor_id_norm: Number(provId) || null,
       proveedor_nombre: String(nombreProv ?? '').trim(),
       codigo: String(codigo ?? '-').trim(),
-      // único valor usado para simular precio de venta:
       costo_iva: toNumberSafePlus(costoIva)
     };
   });
+
+  console.groupCollapsed('🧭 PROVEEDORES normalizados (costo_iva ya validado)');
+  console.table(lista.map((x, i) => ({
+    i,
+    proveedor: x.proveedor_nombre,
+    codigo: x.codigo,
+    costo_iva: x.costo_iva
+  })));
+  console.groupEnd();
+
+  return lista;
 }
 
 /* ==========================================
