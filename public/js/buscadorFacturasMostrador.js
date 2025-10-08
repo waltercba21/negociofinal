@@ -1,3 +1,8 @@
+function fechaHoyYYYYMMDD(timeZone = 'America/Argentina/Cordoba') {
+  // en-CA devuelve 'YYYY-MM-DD' directamente
+  return new Date().toLocaleDateString('en-CA', { timeZone });
+}
+
 document.getElementById('invoice-form').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -163,9 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🔥 Establecer la fecha actual en el input de fecha y activar protección
     const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
     if (fechaPresupuestoInput) {
-        const today = new Date();
-        const formattedDate = today.toISOString().split('T')[0];
-        fechaPresupuestoInput.value = formattedDate;
+         fechaPresupuestoInput.value = fechaHoyYYYYMMDD();
 
         // ✅ Activar confirmación
         setupFechaProtegida(fechaPresupuestoInput, 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA DE LA FACTURA');
