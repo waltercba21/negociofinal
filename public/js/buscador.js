@@ -5,6 +5,15 @@ const DBG = true; // poné false para silenciar logs
 function dbg(...args){ if(DBG) console.log(...args); }
 function dbgTable(obj){ if(DBG && obj) console.table(obj); }
 
+// === Override de IVA por proveedor (si el endpoint no lo manda) ===
+// clave: nombre EXACTO que viene en proveedor_nombre del endpoint
+const IVA_PROVIDER_OVERRIDE = {
+  'DISTRIMAR': 10.5,
+  'DISTRIMAR OFERTAS': 10.5,
+  'DM LAMPARAS': 10.5,
+  // Agregá acá otros que correspondan...
+};
+
 /* ==========================================
    Estado global / selectors
 ========================================== */
@@ -107,11 +116,9 @@ function _normalizeProviders(listaRaw) {
     'costo_con_iva','costoConIva',
     'costo_final','costoFinal','costo_final_con_iva','costoFinalConIva'
   ];
-  const NET_KEYS = [
-    'precio_costo_neto','precioCostoNeto','costo_neto','costoNeto',
-    'neto','costo','precio_costo','precioCosto'
-  ];
   const IVA_KEYS = ['iva','iva_porcentaje','porcentaje_iva','alicuotaIva','alicuota_iva'];
+  const PRECIO_LISTA_KEYS = ['precio_lista','precioLista','lista'];
+  const DESC_KEYS = ['descuento','dto','descu','desc'];
   const COD_KEYS = ['codigo','codigo_proveedor','cod','codigoProveedor','cod_proveedor'];
   const NOMBRE_PROV_KEYS = ['proveedor_nombre','nombre_proveedor','proveedor','nombre'];
 
@@ -126,13 +133,12 @@ function _normalizeProviders(listaRaw) {
   }
 
   function pickCostoIvaDirect(obj) {
-    // (a) exact-first
+    const keys = Object.keys(obj || {});
     for (const kPref of EXACT_FIRST) {
-      const real = Object.keys(obj).find(k => k.toLowerCase() === kPref.toLowerCase());
+      const real = keys.find(k => k.toLowerCase() === kPref.toLowerCase());
       if (real && obj[real] != null) return obj[real];
     }
-    // (b) heurística “costo” + “iva”
-    for (const k of Object.keys(obj)) {
+    for (const k of keys) {
       const lk = k.toLowerCase();
       if (lk.includes('costo') && lk.includes('iva')) return obj[k];
     }
@@ -150,59 +156,64 @@ function _normalizeProviders(listaRaw) {
     return Number.isFinite(n) ? n : 0;
   }
 
-  const lista = (listaRaw || []).map((p, idx) => {
+  return (listaRaw || []).map((p, idx) => {
+    const nombreProv = String(pickExact(p, NOMBRE_PROV_KEYS) ?? '').trim();
     const costoIvaBack = toNumberSafePlus(pickCostoIvaDirect(p));
-    const neto = toNumberSafePlus(pickExact(p, NET_KEYS));
-    let ivaPct = toNumberSafePlus(pickExact(p, IVA_KEYS)); // admite 10,5 o 0,105
-    if (ivaPct > 0 && ivaPct < 1.5) ivaPct = ivaPct * 100; // 0.105 -> 10.5
 
-    // Recontrucción si falta o mismatch
-    let costoIva = costoIvaBack;
-    let costoIvaRecon = 0;
-    if (neto > 0 && ivaPct >= 0) {
-      costoIvaRecon = Math.round(neto * (1 + (ivaPct || 0) / 100));
-      if (!(costoIva > 0)) costoIva = costoIvaRecon;
+    // Reconstrucción de NETO desde lista + descuento (si existen)
+    const precioLista = toNumberSafePlus(pickExact(p, PRECIO_LISTA_KEYS));
+    let descPct = toNumberSafePlus(pickExact(p, DESC_KEYS)); // viene 60 o "60.00"
+    if (descPct > 0 && descPct < 1.5) descPct = descPct * 100; // por las dudas
+    const netoRecon = (precioLista > 0)
+      ? Math.round(precioLista * (1 - (descPct || 0) / 100))
+      : 0;
+
+    // IVA: prioridad: campo iva → override → inferencia desde costo_iva_back
+    let ivaPct = toNumberSafePlus(pickExact(p, IVA_KEYS));
+    if (ivaPct > 0 && ivaPct < 1.5) ivaPct = ivaPct * 100; // 0.105 -> 10.5
+    if (!(ivaPct > 0)) {
+      const override = IVA_PROVIDER_OVERRIDE[nombreProv];
+      if (override) ivaPct = override;
     }
+    if (!(ivaPct > 0) && netoRecon > 0 && costoIvaBack > 0) {
+      const factor = costoIvaBack / netoRecon;
+      const infer = (factor - 1) * 100; // p.ej. ≈ 21
+      ivaPct = Math.round(infer * 10) / 10; // redondeo a 0,1
+      console.warn(`ℹ️ IVA inferido desde backend para "${nombreProv}": ${ivaPct}% (usando costo_iva_back / netoRecon)`);
+    }
+
+    // Reconstrucción del costo con IVA con lo que tengamos
+    let costoIvaRecon = 0;
+    if (netoRecon > 0 && ivaPct >= 0) {
+      costoIvaRecon = Math.round(netoRecon * (1 + (ivaPct || 0) / 100));
+    }
+
+    // Preferimos el reconstruido si es válido
+    let costoIva = (costoIvaRecon > 0) ? costoIvaRecon : costoIvaBack;
 
     const provId = (p.id != null ? p.id : p.proveedor_id);
     const codigo = pickExact(p, COD_KEYS);
-    const nombreProv = pickExact(p, NOMBRE_PROV_KEYS);
 
-    // LOG de diagnóstico por proveedor
+    // Diagnóstico
     const delta = Math.abs((costoIvaBack || 0) - (costoIvaRecon || 0));
-    console.groupCollapsed(`🔎 Proveedor#${idx} ${String(nombreProv ?? '').trim()} — DIAGNÓSTICO IVA`);
-    console.log('Raw:', p);
+    console.groupCollapsed(`🔎 Proveedor#${idx} ${nombreProv} — DIAGNÓSTICO IVA`);
     console.table([{
-      neto,
-      ivaPct,
-      costoIvaBack,
-      costoIvaRecon,
-      usadoParaCalculo: costoIva
+      precioLista, descPct, netoRecon, ivaPct,
+      costoIvaBack, costoIvaRecon, usadoParaCalculo: costoIva
     }]);
     if (costoIvaBack > 0 && costoIvaRecon > 0 && delta >= 2) {
-      console.warn('⚠️ MISMATCH backend vs reconstruido (>= $2). Posible IVA mal aplicado en API.');
+      console.warn('⚠️ MISMATCH backend vs reconstruido (>= $2). Se usará el reconstruido.');
     }
     console.groupEnd();
 
     return {
       ...p,
       proveedor_id_norm: Number(provId) || null,
-      proveedor_nombre: String(nombreProv ?? '').trim(),
+      proveedor_nombre: nombreProv,
       codigo: String(codigo ?? '-').trim(),
       costo_iva: toNumberSafePlus(costoIva)
     };
   });
-
-  console.groupCollapsed('🧭 PROVEEDORES normalizados (costo_iva ya validado)');
-  console.table(lista.map((x, i) => ({
-    i,
-    proveedor: x.proveedor_nombre,
-    codigo: x.codigo,
-    costo_iva: x.costo_iva
-  })));
-  console.groupEnd();
-
-  return lista;
 }
 
 /* ==========================================
