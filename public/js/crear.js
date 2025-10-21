@@ -159,7 +159,8 @@ if (!window.__CREAR_INIT__) {
         if (!$contenedor.length) $contenedor = $wrap.find('select.IVA').closest('.form-group-crear');
         if (!$contenedor.length) $contenedor = $wrap; // último recurso
         $vis = $('<input>', {
-          type: 'text',
+          type: 'number',
+          step: '0.01',
           class: 'costo_iva_vis form-control',
           readonly: true
         });
@@ -376,11 +377,11 @@ if (!window.__CREAR_INIT__) {
     ================================= */
     function actualizarPrecioFinal() {
       var $p = getProveedorConCostoIvaMasBajo(); // elige por costo_iva (unidad)
-      if (!$p || !$p.length) return;
+      if (!$p || !$p.length) { console.log('[CREAR][PV] no hay proveedor ganador'); return; }
 
       // Hidden normalizado a unidad (siempre por unidad)
       var unitHidden = toNumber($p.find('.costo_iva').val());
-      if (!unitHidden) return;
+      if (!unitHidden) { console.log('[CREAR][PV] unitHidden=0'); return; }
 
       // Presentación real del bloque ganador y data precalculada
       var pres = ($p.data('presentacion') || ($p.find('.presentacion').val() || 'unidad')).toLowerCase();
@@ -400,7 +401,9 @@ if (!window.__CREAR_INIT__) {
       var utilidad = toNumber(utilRaw);
 
       var precioFinal = Math.ceil((base * (1 + utilidad / 100)) / 10) * 10;
-      $('#precio_venta').val(precioFinal);
+
+      // Establecer por id y también por name (por si alguna vez cambia el id)
+      $('#precio_venta, input[name="precio_venta"]').val(precioFinal).trigger('input').trigger('change');
 
       console.log('[CREAR][PV] presGanador=', pres, 'base=', base, 'utilidad=', utilidad, '→ PV=', precioFinal);
     }
@@ -409,6 +412,10 @@ if (!window.__CREAR_INIT__) {
        INICIALIZACIÓN
     ================================= */
     $(function () {
+      // DEBUG: chequear existencia de inputs clave
+      console.log('[CREAR][INIT] #precio_venta?', document.getElementById('precio_venta') ? 'OK' : 'NO');
+      console.log('[CREAR][INIT] name=precio_venta?', document.querySelector('input[name="precio_venta"]') ? 'OK' : 'NO');
+
       $('.proveedor').each(function () {
         var $w = $(this);
         var pres = ($w.find('.presentacion').val() || 'unidad').toLowerCase();
