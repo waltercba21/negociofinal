@@ -185,6 +185,37 @@ function factorDesdePresentacion(presentacion, factorFormulario) {
   return presentacion === 'juego' ? 0.5   // juego/par → mitad
                                   : 1.0;  // unidad
 }
+// --- calcula en servidor el costo c/IVA por UNIDAD para el índice i ---
+function costoConIVAPorUnidadFila(idx, body) {
+  // reutilizamos tus helpers existentes
+  const arr = (v) => Array.isArray(v) ? v : (v == null ? [] : [v]);
+
+  const costo_neto   = numF(arr(body.costo_neto)[idx] ?? body.costo_neto ?? 0);
+  const ivaSel       = numF(arr(body.IVA)[idx]        ?? body.IVA        ?? 21);
+  const presentacion = normalizarPresentacion(arr(body.presentacion)[idx] ?? body.presentacion);
+  const factor       = factorDesdePresentacion(presentacion, arr(body.factor_unidad)[idx] ?? body.factor_unidad);
+
+  const cnUnidad = costo_neto * (factor || 1);
+  const iva      = ivaSel || 21;
+
+  return Math.ceil(cnUnidad + (cnUnidad * iva / 100));
+}
+
+// --- elige el proveedor más barato normalizando a UNIDAD (robusto en backend) ---
+function pickCheapestProveedorIdServer(body) {
+  const provIds = Array.isArray(body.proveedores) ? body.proveedores
+                  : (body.proveedores ? [body.proveedores] : []);
+  let ganador = 0, min = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < provIds.length; i++) {
+    const pid = numInt(provIds[i]);
+    if (!pid) continue;
+
+    const costo = costoConIVAPorUnidadFila(i, body);
+    if (costo > 0 && costo < min) { min = costo; ganador = pid; }
+  }
+  return ganador || 0;
+}
 
 
 module.exports = {
