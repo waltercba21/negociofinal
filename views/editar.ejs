@@ -222,6 +222,78 @@
 @media (max-width: 992px){
   .container-editar .contenido-editar{ grid-template-columns: 1fr; }
 }
+/* ====== OVERRIDE LAYOUT ESTABLE (pegar al final del <style>) ====== */
+
+/* 1) Centrar el wrapper y evitar desbordes horizontales accidentales */
+.container-editar,
+.container-editar .card-body-editar,
+.container-editar .contenido-editar {
+  width: 100%;
+  box-sizing: border-box;
+}
+.container-editar {
+  max-width: 1440px;        /* ajustable a tu gusto */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 2) Grid principal: 3 columnas blindadas, sin corrimiento a la derecha */
+.container-editar .contenido-editar{
+  grid-template-columns: minmax(340px, 1fr) minmax(340px, 1fr) minmax(320px, 1fr);
+  gap: 20px;
+  align-items: start;
+  justify-items: stretch;
+  justify-content: stretch;
+  overflow: hidden; /* por si algún hijo intenta desbordar */
+}
+
+/* 3) Nada puede forzar el ancho del track */
+.container-editar .caracteristicas,
+.container-editar #proveedoresContainer,
+.container-editar .utilidades,
+.container-editar .form-group-crear,
+.container-editar .form-group-crear > *,
+.container-editar .proveedor,
+.container-editar .proveedor * {
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+/* 4) Proveedores: columnas fluidas sin huecos ni salto hacia la derecha */
+.container-editar #proveedoresContainer{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* rellena de izq→der */
+  gap: 16px;
+  justify-content: stretch;
+  justify-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 5) Inputs / selects nunca expanden el track */
+.container-editar .form-group-crear input,
+.container-editar .form-group-crear select,
+.container-editar .form-group-crear .form-control {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+/* 6) Breakpoints sólidos (evitan el “empujón” visual) */
+@media (max-width: 1280px){
+  .container-editar .contenido-editar{
+    grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr); /* 2 cols */
+  }
+}
+@media (max-width: 900px){
+  .container-editar .contenido-editar{
+    grid-template-columns: 1fr; /* 1 col stack */
+  }
+}
+
+/* 7) (Opcional) Si ves scroll-x mínimo que mueve todo:
+html, body { overflow-x: hidden; }
+*/
+
 </style>
 
 
