@@ -182,15 +182,16 @@
     await cargarModelos();
   });
 
-  // Init
-  (async () => {
-    try {
-      await cargarCategorias();
-      await cargarMarcas();
-      await cargarModelos();
-    } catch (e) {
-      console.error('Error inicializando catálogos:', e);
-      alert('No se pudieron cargar los catálogos.');
-    }
-  })();
+// Init
+(async () => {
+  try {
+    await cargarCategorias();
+    await cargarMarcas();
+    await cargarModelos();
+  } catch (e) {
+    console.warn('Catálogos: no se pudieron cargar inicialmente.', e);
+    // intencionalmente sin alert()
+  }
+})();
+
 })();

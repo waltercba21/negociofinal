@@ -199,6 +199,33 @@
       --af-col-min: 240px;            /* último ajuste para forzar 3 cols */
     }
   }
+  /* ===== Panel Catálogos: grid y sub-tarjetas ===== */
+.panel-catalogos { padding: 0; } /* ya es .af-card externo */
+.af-catgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--af-gap);
+  padding: var(--af-card-pad);
+}
+
+.af-subcard {
+  background: #f9fbff;
+  border: 1px solid rgba(31,72,126,.12);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.af-subcard .af-card__title {
+  font-size: clamp(0.92rem, 1.1vw, 1rem);
+  margin-bottom: 8px;
+}
+
+@media (max-width: 1366px) {
+  .af-catgrid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+
 </style>
 
   <!-- ========================= FIN ESTILOS AISLADOS ======================= -->
@@ -321,63 +348,58 @@
         </div>
       </div>
 
-      <!-- =============== CATALOGOS =============== -->
+<!-- =============== CATALOGOS =============== -->
 <section class="panel-catalogos af-card" data-af="catalogos">
   <h5 class="af-card__title">Catálogos (Categorías, Marcas, Modelos)</h5>
 
-  <div class="row g-3">
+  <div class="af-catgrid">
     <!-- CATEGORIAS -->
-    <div class="col-md-4">
-      <div class="af-card p-3">
-        <h6 class="af-card__title">Categorías</h6>
-        <div class="d-flex gap-2 mb-2">
-          <button id="btnNuevaCategoria" class="btn btn-sm btn-success">+ Nueva</button>
-          <button id="btnEditarCategoria" class="btn btn-sm btn-warning" disabled>Editar</button>
-          <button id="btnEliminarCategoria" class="btn btn-sm btn-danger" disabled>Eliminar</button>
-        </div>
-        <select id="selectCategoria" class="form-select">
-          <option value="">Cargando...</option>
-        </select>
+    <div class="af-subcard">
+      <h6 class="af-card__title">Categorías</h6>
+      <div class="d-flex gap-2 mb-2 flex-wrap">
+        <button id="btnNuevaCategoria" class="btn btn-sm btn-success">+ Nueva</button>
+        <button id="btnEditarCategoria" class="btn btn-sm btn-warning" disabled>Editar</button>
+        <button id="btnEliminarCategoria" class="btn btn-sm btn-danger" disabled>Eliminar</button>
       </div>
+      <select id="selectCategoria" class="form-select">
+        <option value="">Cargando...</option>
+      </select>
     </div>
 
     <!-- MARCAS -->
-    <div class="col-md-4">
-      <div class="af-card p-3">
-        <h6 class="af-card__title">Marcas</h6>
-        <div class="d-flex gap-2 mb-2">
-          <button id="btnNuevaMarca" class="btn btn-sm btn-success">+ Nueva</button>
-          <button id="btnEditarMarca" class="btn btn-sm btn-warning" disabled>Editar</button>
-          <button id="btnEliminarMarca" class="btn btn-sm btn-danger" disabled>Eliminar</button>
-        </div>
-        <select id="selectMarca" class="form-select">
-          <option value="">Cargando...</option>
-        </select>
+    <div class="af-subcard">
+      <h6 class="af-card__title">Marcas</h6>
+      <div class="d-flex gap-2 mb-2 flex-wrap">
+        <button id="btnNuevaMarca" class="btn btn-sm btn-success">+ Nueva</button>
+        <button id="btnEditarMarca" class="btn btn-sm btn-warning" disabled>Editar</button>
+        <button id="btnEliminarMarca" class="btn btn-sm btn-danger" disabled>Eliminar</button>
       </div>
+      <select id="selectMarca" class="form-select">
+        <option value="">Cargando...</option>
+      </select>
     </div>
 
     <!-- MODELOS -->
-    <div class="col-md-4">
-      <div class="af-card p-3">
-        <h6 class="af-card__title">Modelos</h6>
-        <div class="d-flex gap-2 mb-2">
-          <button id="btnNuevoModelo" class="btn btn-sm btn-success">+ Nuevo</button>
-          <button id="btnEditarModelo" class="btn btn-sm btn-warning" disabled>Editar</button>
-          <button id="btnEliminarModelo" class="btn btn-sm btn-danger" disabled>Eliminar</button>
-        </div>
-        <div class="mb-2">
-          <label class="form-label">Filtrar por marca</label>
-          <select id="filtroMarcaModelos" class="form-select">
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <select id="selectModelo" class="form-select">
-          <option value="">Cargando...</option>
+    <div class="af-subcard">
+      <h6 class="af-card__title">Modelos</h6>
+      <div class="d-flex gap-2 mb-2 flex-wrap">
+        <button id="btnNuevoModelo" class="btn btn-sm btn-success">+ Nuevo</button>
+        <button id="btnEditarModelo" class="btn btn-sm btn-warning" disabled>Editar</button>
+        <button id="btnEliminarModelo" class="btn btn-sm btn-danger" disabled>Eliminar</button>
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Filtrar por marca</label>
+        <select id="filtroMarcaModelos" class="form-select">
+          <option value="">Todas</option>
         </select>
       </div>
+      <select id="selectModelo" class="form-select">
+        <option value="">Cargando...</option>
+      </select>
     </div>
   </div>
 </section>
+
 
 <!-- ===== Modales Catálogos (mismo estilo que Proveedores) ===== -->
 <div class="modal fade af-modal" id="modalCategoria" tabindex="-1" aria-hidden="true">
