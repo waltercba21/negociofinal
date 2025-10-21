@@ -275,9 +275,6 @@ function recalcularConIVA($wrap){
   console.log('[CREAR][IVA] pres=',pres,'cn=',cn,'iva=',iva,'→ unit=',cIVA_unit,'visible=',cIVA_visible,'factor=',factor);
 }
 
-
-
-
     /* =======================================
        PROVEEDOR MÁS ECONÓMICO
     ======================================== */
