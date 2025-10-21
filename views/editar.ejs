@@ -148,23 +148,13 @@
   align-self: stretch !important;
   box-sizing: border-box !important;
 }
-/* Miniaturas */
+/* Miniaturas (EDITAR) */
 .container-editar .imagen-miniatura-contenedor{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
-.container-editar .imagen-miniatura-contenedor .imagen-miniatura{ width:80px; height:80px; }
-.container-editar .imagen-miniatura{
-  object-fit: cover;
-  border-radius: 6px;
-  box-shadow: var(--shadow);
-  border: 2px solid var(--border);
-}
-.container-editar .preview-img{ position: relative; cursor: pointer; }
-.container-editar .preview-img::after{
-  content: '✕';
-  position: absolute; top: 5px; right: 5px;
-  background: rgba(0,0,0,0.55); color:#fff;
-  padding: 2px 5px; border-radius: 50%;
-  font-size: 12px;
-}
+.thumb{ position:relative; width:90px; height:90px; border:2px solid var(--border); border-radius:8px; overflow:hidden; box-shadow:var(--shadow); cursor:grab; background:#111 }
+.thumb:active{ cursor:grabbing }
+.thumb img{ width:100%; height:100%; object-fit:cover; display:block }
+.badge-portada{ position:absolute; left:6px; top:6px; font-size:10px; font-weight:800; background:var(--primary); color:#fff; padding:3px 6px; border-radius:999px; box-shadow:var(--shadow); display:none }
+.thumb.is-cover .badge-portada{ display:inline-block }
 /* Botón + proveedor */
 .container-editar #addProveedor{
   background-color: #22A35A;
@@ -224,17 +214,26 @@
           <!-- Hidden preferencia del proveedor -->
           <input type="hidden" id="proveedor_designado" name="proveedor_designado" value="<%= producto.proveedor_id || '' %>">
 
+          <!-- 🔒 HIDDEN para imágenes (EDITAR) -->
+          <input type="hidden" id="portada_tipo" name="portada_tipo" value="existente"><!-- existente | nueva -->
+          <input type="hidden" id="portada_existente_id" name="portada_existente_id" value="<%= (producto && producto.portada_id) ? producto.portada_id : '' %>">
+          <input type="hidden" id="portada_nueva_index" name="portada_nueva_index" value="-1">
+          <div id="orden_existentes_container"></div> <!-- se rellenará con orden_imagenes_existentes[] -->
+          <div id="eliminar_imagenes_container"></div> <!-- se agregan eliminar_imagenes[] -->
+
           <!-- ============ CARACTERÍSTICAS ============ -->
           <div class="caracteristicas">
             <div class="form-group-crear">
-              <label for="imagen">Imagen</label>
+              <label for="imagen">Imágenes</label>
               <input id="imagen" class="form-control-file" type="file" name="archivos[]" multiple>
+              <div class="hint">• Clic: marcar portada • Doble-clic: eliminar • Arrastrar: reordenar</div>
 
               <div id="preview" class="imagen-miniatura-contenedor">
                 <% if (producto && producto.imagenes && producto.imagenes.length > 0) { %>
                   <% producto.imagenes.forEach((imagen) => { %>
-                    <div data-imagen-id="<%= imagen.id %>" class="preview-img">
-                      <img class="imagen-miniatura" src="<%= imagen.imagen %>" alt="Imagen del producto">
+                    <div class="thumb" data-type="existente" data-id="<%= imagen.id %>">
+                      <img src="<%= imagen.imagen %>" alt="Imagen del producto">
+                      <span class="badge-portada">PORTADA</span>
                     </div>
                   <% }); %>
                 <% } %>
@@ -355,7 +354,6 @@
                   </div>
 
                  <% const _ivaProv = Number(String(productoProveedor.iva ?? producto.IVA ?? 21).replace(',', '.')) || 21; %>
-
 
                   <div class="form-group-crear">
                     <label>IVA</label>
