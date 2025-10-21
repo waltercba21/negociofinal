@@ -180,19 +180,27 @@
                   <label for="costo_neto">Precio de costo (Neto):</label>
                   <input class="costo_neto form-control" type="number" step="0.01" name="costo_neto[]" value="0">
                 </div>
-
-                <div class="form-group-crear">
-  <label for="">IVA (visual):</label>
-  <input class="iva_display form-control" type="number" value="21" readonly>
+<div class="form-group-crear">
+  <label for="costo_neto">Precio de costo (Neto):</label>
+  <input class="costo_neto form-control" type="number" step="0.01" name="costo_neto[]" value="0">
 </div>
 
-                <div class="form-group-crear">
+<!-- ⟶ SOLO el select de IVA (sin input visual, sin hidden para IVA) -->
+<div class="form-group-crear">
   <label>IVA</label>
   <select class="IVA form-control" name="IVA[]">
     <option value="21" selected>21%</option>
     <option value="10.5">10,5%</option>
   </select>
 </div>
+
+<!-- ⟶ Mostrar y enviar el costo con IVA -->
+<div class="form-group-crear">
+  <label for="costo_iva_vis">Precio de costo (con IVA):</label>
+  <input class="costo_iva_vis form-control" type="number" step="0.01" readonly>
+  <input class="costo_iva" type="hidden" name="costo_iva[]" value="0">
+</div>
+
               </div>
 
               <!-- Botón + FUERA del bloque .proveedor (no se clona) -->
