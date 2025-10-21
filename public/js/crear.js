@@ -6,45 +6,169 @@ if (!window.__EDITAR_INIT__) {
 
   /* ================================
      PREVIEW DE IMÁGENES + SORTABLE
+     - Clic: marcar portada
+     - Doble-clic: eliminar
+     - Drag & drop: reordenar
+     - Mantiene el FileList sincronizado usando DataTransfer
   ================================= */
   (function initPreview() {
     var inputImagen = document.getElementById('imagen');
     if (!inputImagen) return;
 
-    inputImagen.addEventListener('change', function (e) {
-      var preview = document.getElementById('preview');
-      if (!preview) {
-        console.error('El elemento con id "preview" no existe.');
-        return;
-      }
+    // DataTransfer global para manipular archivos
+    var dt = new DataTransfer();
+    var $portadaHidden = document.getElementById('portada_index');
+    var $preview = document.getElementById('preview');
 
-      preview.innerHTML = '';
-      Array.from(e.target.files).forEach(function (file, index) {
+    function rebuildPreviewFromDT() {
+      $preview.innerHTML = '';
+      Array.from(dt.files).forEach(function (file, idx) {
+        var wrap = document.createElement('div');
+        wrap.className = 'thumb';
+        wrap.dataset.idx = String(idx);
+
         var img = document.createElement('img');
         img.src = URL.createObjectURL(file);
-        img.height = 100;
-        img.width = 100;
-        img.classList.add('preview-img');
-        img.dataset.id = index;
-        img.addEventListener('click', function () {
-          preview.removeChild(img);
-        });
-        preview.appendChild(img);
+        img.alt = file.name;
+
+        var badge = document.createElement('span');
+        badge.className = 'badge-portada';
+        badge.textContent = 'PORTADA';
+
+        wrap.appendChild(img);
+        wrap.appendChild(badge);
+        $preview.appendChild(wrap);
       });
 
+      // Asegurar una portada siempre
+      var portadaIdx = clampIndex(parseInt($portadaHidden.value, 10));
+      markCover(portadaIdx);
+
+      // (Re)inicializar Sortable
       if (typeof Sortable !== 'undefined' && Sortable) {
-        new Sortable(preview, {
+        if ($preview.__sortable) {
+          $preview.__sortable.destroy();
+          $preview.__sortable = null;
+        }
+        $preview.__sortable = new Sortable($preview, {
           animation: 150,
-          draggable: '.preview-img',
-          onEnd: function () {
-            Array.from(preview.children).forEach(function (img, idx) {
-              img.dataset.id = idx;
-            });
-          }
+          draggable: '.thumb',
+          onEnd: syncDTfromDOM // reordena dt según DOM
         });
       } else {
         console.error('Sortable no está definido. Por favor, importá la librería.');
       }
+    }
+
+    function clampIndex(n) {
+      if (isNaN(n) || n < 0) return 0;
+      if (n >= dt.files.length) return dt.files.length - 1;
+      return n;
+    }
+
+    function markCover(idx) {
+      Array.from($preview.children).forEach(function (node, i) {
+        if (i === idx) node.classList.add('is-cover');
+        else node.classList.remove('is-cover');
+      });
+      $portadaHidden.value = String(idx);
+    }
+
+    function syncInputFromDT() {
+      // reflejar dt en el input real
+      inputImagen.files = dt.files;
+    }
+
+    function syncDTfromDOM() {
+      // Reordena dt siguiendo el orden visual de .thumb
+      var order = Array.from($preview.children).map(function (node) {
+        return parseInt(node.dataset.idx, 10);
+      });
+
+      var newDT = new DataTransfer();
+      order.forEach(function (oldIdx) {
+        newDT.items.add(dt.files[oldIdx]);
+      });
+      dt = newDT;
+      // reseteo data-idx en DOM
+      Array.from($preview.children).forEach(function (node, i) {
+        node.dataset.idx = String(i);
+      });
+      // portada = primer elemento visible
+      markCover(0);
+      syncInputFromDT();
+    }
+
+    function removeAt(index) {
+      if (index < 0 || index >= dt.files.length) return;
+      var newDT = new DataTransfer();
+      Array.from(dt.files).forEach(function (f, i) {
+        if (i !== index) newDT.items.add(f);
+      });
+      dt = newDT;
+      syncInputFromDT();
+      rebuildPreviewFromDT();
+    }
+
+    function setCover(index) {
+      index = clampIndex(index);
+      // mover ese archivo a la posición 0 en dt
+      if (index === 0) {
+        markCover(0);
+        return;
+      }
+      var files = Array.from(dt.files);
+      var chosen = files[index];
+      files.splice(index, 1);
+      files.unshift(chosen);
+
+      var newDT = new DataTransfer();
+      files.forEach(f => newDT.items.add(f));
+      dt = newDT;
+      syncInputFromDT();
+      rebuildPreviewFromDT();
+      markCover(0);
+    }
+
+    // Eventos de clic/dblclick en el contenedor (delegación)
+    $preview.addEventListener('click', function (e) {
+      var thumb = e.target.closest('.thumb');
+      if (!thumb) return;
+      var idx = Array.from($preview.children).indexOf(thumb);
+      if (idx < 0) return;
+      // clic → portada
+      setCover(idx);
+    });
+
+    $preview.addEventListener('dblclick', function (e) {
+      var thumb = e.target.closest('.thumb');
+      if (!thumb) return;
+      var idx = Array.from($preview.children).indexOf(thumb);
+      if (idx < 0) return;
+      // doble-clic → eliminar
+      removeAt(idx);
+    });
+
+    // Cuando el usuario selecciona archivos
+    inputImagen.addEventListener('change', function (e) {
+      // si vuelve a abrir el diálogo, agrego a dt (no reemplazo)
+      var seleccion = Array.from(e.target.files || []);
+      if (seleccion.length === 0 && dt.files.length === 0) return;
+
+      // si querés que reemplace en lugar de agregar, descomentá:
+      // dt = new DataTransfer();
+
+      seleccion.forEach(f => dt.items.add(f));
+      syncInputFromDT();
+
+      // si no hay portada previa, por defecto la primera
+      if (dt.files.length > 0 && (isNaN(parseInt($portadaHidden.value, 10)) || parseInt($portadaHidden.value, 10) < 0)) {
+        $portadaHidden.value = '0';
+      }
+
+      rebuildPreviewFromDT();
+      // asegurar portada al primer elemento
+      markCover(0);
     });
   })();
 
@@ -96,7 +220,7 @@ if (!window.__EDITAR_INIT__) {
     $nuevo.find('.label-precio-lista').text('Precio de Lista');
     $nuevo.find('.label-descuento').text('Descuento');
 
-    // El clon NUNCA debe contener el botón + dentro (por si la plantilla lo tuviera por error)
+    // El clon NUNCA debe contener el botón + dentro
     $nuevo.find('#addProveedor').remove();
 
     // Insertar SIEMPRE justo antes del botón +
@@ -117,7 +241,6 @@ if (!window.__EDITAR_INIT__) {
     .off('change.provSel', '.proveedores')
     .on('change.provSel', '.proveedores', function () {
       actualizarProveedor($(this));
-      // Recalcular todo por si cambió el descuento
       var $wrap = $(this).closest('.proveedor');
       $wrap.find('.precio_lista').trigger('change');
       actualizarProveedorAsignado();
@@ -164,7 +287,7 @@ if (!window.__EDITAR_INIT__) {
     }
     $hiddenDesc.val(descuento);
 
-    // Actualizar labels (si existen por clase); fallback a label[for] dentro del bloque
+    // Actualizar labels
     var suf = nombreProveedor ? ' (' + nombreProveedor + ')' : '';
     var $lblCodigo = $wrap.find('.label-codigo');
     var $lblPL = $wrap.find('.label-precio-lista');
@@ -251,7 +374,6 @@ if (!window.__EDITAR_INIT__) {
     var nombre = '';
     if ($p && $p.length) {
       nombre = ($p.find('.nombre_proveedor').text() || '').trim();
-      // Si tenés un radio para “proveedor_designado”, lo marcamos
       $p.closest('.proveedor').find('.proveedor-designado-radio').prop('checked', true);
     }
     var cont = document.querySelector('#proveedorAsignado');
@@ -272,8 +394,7 @@ if (!window.__EDITAR_INIT__) {
     if (isNaN(utilidad)) utilidad = 0;
 
     var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
-    // redondeo a múltiplos de 10 hacia arriba
-    precioFinal = Math.ceil(precioFinal / 10) * 10;
+    precioFinal = Math.ceil(precioFinal / 10) * 10; // múltiplos de 10 hacia arriba
 
     $('#precio_venta').val(precioFinal);
   }

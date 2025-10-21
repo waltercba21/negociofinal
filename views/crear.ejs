@@ -19,22 +19,13 @@
 
     /* Tarjeta de proveedor */
     .proveedor{position:relative;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 16px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .2s ease,border-color .2s ease,transform .06s ease-in;padding-top:18px}
-
-    /* ✅ SOLO en tarjetas que tengan radio (vista EDITAR) mostramos el “pill” arriba a la derecha */
     .proveedor:has(.proveedor-designado-radio) { padding-top:58px; }
-    .proveedor:has(.proveedor-designado-radio) > .form-group-crear:first-child{
-      position:absolute;top:10px;right:10px;margin:0;align-items:flex-end
-    }
+    .proveedor:has(.proveedor-designado-radio) > .form-group-crear:first-child{position:absolute;top:10px;right:10px;margin:0;align-items:flex-end}
     .proveedor:has(.proveedor-designado-radio) > .form-group-crear:first-child label{
       display:inline-flex;align-items:center;gap:8px;background:var(--surface-muted);border:2px solid var(--border);
       border-radius:999px;padding:6px 10px;font-size:12px;color:var(--text);box-shadow:var(--shadow);user-select:none
     }
-
-    /* ✅ En CREAR (sin radio) el primer grupo es el select de proveedores → flujo normal */
-    .proveedor:not(:has(.proveedor-designado-radio)) > .form-group-crear:first-child{
-      position:static;margin-bottom:10px;align-items:stretch
-    }
-
+    .proveedor:not(:has(.proveedor-designado-radio)) > .form-group-crear:first-child{position:static;margin-bottom:10px;align-items:stretch}
     .proveedor:hover{box-shadow:var(--shadow-hover);border-color:var(--border-strong)}
     .proveedor-designado-radio{transform:scale(1.15);accent-color:var(--primary);margin:0}
     .proveedor:has(.proveedor-designado-radio:checked){border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,63,125,.1),var(--shadow-hover)}
@@ -48,7 +39,7 @@
     .form-group-crear input,.form-group-crear select{width:100%;max-width:100%;padding:10px 12px;font-size:13px;font-weight:600;text-align:left;background:var(--surface);border:2px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-inset);outline:none}
     .form-group-crear input:focus,.form-group-crear select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,63,125,.12),var(--shadow-inset)}
 
-    /* 🔒 Blindaje extra: el select de proveedores siempre como bloque ancho completo */
+    /* 🔒 Blindaje extra select proveedores */
     .proveedor .form-group-crear > select.proveedores{
       display:block !important;width:100% !important;max-width:100% !important;
       position:static !important;float:none !important;clear:both !important;
@@ -66,9 +57,12 @@
 
     /* Miniaturas */
     .imagen-miniatura-contenedor{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-    .imagen-miniatura{object-fit:cover;border-radius:6px;box-shadow:var(--shadow);border:2px solid var(--border);width:80px;height:80px}
-    .preview-img{position:relative;cursor:pointer}
-    .preview-img::after{content:'✕';position:absolute;top:5px;right:5px;background:rgba(0,0,0,.55);color:#fff;padding:2px 5px;border-radius:50%;font-size:12px}
+    .thumb{position:relative;width:90px;height:90px;border:2px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);cursor:grab;background:#111}
+    .thumb:active{cursor:grabbing}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .badge-portada{position:absolute;left:6px;top:6px;font-size:10px;font-weight:800;background:var(--primary);color:#fff;padding:3px 6px;border-radius:999px;box-shadow:var(--shadow);display:none}
+    .thumb.is-cover .badge-portada{display:inline-block}
+    .hint{font-size:12px;opacity:.85}
   </style>
   <!-- ======= /CSS ESPECÍFICO ======= -->
 
@@ -82,8 +76,11 @@
             <!-- Columna 1: Características -->
             <div class="caracteristicas">
               <div class="form-group-crear">
-                <label for="imagen">Imagen</label>
+                <label for="imagen">Imágenes</label>
                 <input id="imagen" class="form-control-file" type="file" name="archivos[]" multiple>
+                <!-- guardamos el índice de portada por si preferís leerlo en el server -->
+                <input type="hidden" id="portada_index" name="portada_index" value="0">
+                <div class="hint">• Clic: marcar portada • Doble-clic: eliminar • Arrastrar: reordenar</div>
               </div>
 
               <div id="preview" class="imagen-miniatura-contenedor"></div>
@@ -190,13 +187,12 @@
                 </div>
 
                 <div class="form-group-crear">
-  <label>IVA</label>
-  <select class="IVA form-control" name="IVA[]">
-    <option value="21" selected>21%</option>
-    <option value="10.5">10,5%</option>
-  </select>
-</div>
-
+                  <label>IVA</label>
+                  <select class="IVA form-control" name="IVA[]">
+                    <option value="21" selected>21%</option>
+                    <option value="10.5">10,5%</option>
+                  </select>
+                </div>
               </div>
 
               <!-- Botón + FUERA del bloque .proveedor (no se clona) -->
