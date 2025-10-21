@@ -6,83 +6,202 @@ if (!window.__CREAR_INIT__) {
 
   /* ================================
      PREVIEW DE IMÁGENES + SORTABLE
+     - Clic: marcar portada
+     - Doble-clic: eliminar
+     - Drag & drop: reordenar
+     - Mantiene el FileList sincronizado usando DataTransfer
   ================================= */
   (function initPreview() {
     var inputImagen = document.getElementById('imagen');
     var $portadaHidden = document.getElementById('portada_index');
     var $preview = document.getElementById('preview');
-    if (!inputImagen || !$portadaHidden || !$preview) return;
 
+    if (!inputImagen || !$portadaHidden || !$preview) {
+      // Si falta alguno de estos nodos, no inicializamos para evitar errores.
+      return;
+    }
+
+    // DataTransfer global para manipular archivos
     var dt = new DataTransfer();
 
-    function clampIndex(n){ if(isNaN(n)||n<0)return 0; if(n>=dt.files.length)return dt.files.length-1; return n; }
-    function markCover(idx){
-      Array.from($preview.children).forEach(function(node,i){
-        if(i===idx) node.classList.add('is-cover'); else node.classList.remove('is-cover');
+    // Utilidad: normalizar índices válidos
+    function clampIndex(n) {
+      if (isNaN(n) || n < 0) return 0;
+      if (n >= dt.files.length) return dt.files.length - 1;
+      return n;
+    }
+
+    // Marca visual de portada
+    function markCover(idx) {
+      Array.from($preview.children).forEach(function (node, i) {
+        if (i === idx) node.classList.add('is-cover');
+        else node.classList.remove('is-cover');
       });
-      $portadaHidden.value=String(idx);
+      $portadaHidden.value = String(idx);
     }
-    function syncInputFromDT(){ inputImagen.files = dt.files; }
-    function syncDTfromDOM(){
-      var order = Array.from($preview.children).map(function(node){ return parseInt(node.dataset.idx,10); });
-      var ndt = new DataTransfer();
-      order.forEach(function(oldIdx){ ndt.items.add(dt.files[oldIdx]); });
-      dt=ndt;
-      Array.from($preview.children).forEach(function(node,i){ node.dataset.idx=String(i); });
-      markCover(0); syncInputFromDT();
+
+    // Reflejar dt en el input real
+    function syncInputFromDT() {
+      inputImagen.files = dt.files;
     }
-    function removeAt(index){
-      if(index<0||index>=dt.files.length) return;
-      var ndt = new DataTransfer();
-      Array.from(dt.files).forEach(function(f,i){ if(i!==index) ndt.items.add(f); });
-      dt=ndt; syncInputFromDT(); rebuild();
-    }
-    function setCover(index){
-      index = clampIndex(index);
-      if(index===0){ markCover(0); return; }
-      var files = Array.from(dt.files);
-      var chosen = files[index]; files.splice(index,1); files.unshift(chosen);
-      var ndt = new DataTransfer(); files.forEach(function(f){ ndt.items.add(f); });
-      dt=ndt; syncInputFromDT(); rebuild(); markCover(0);
-    }
-    function rebuild(){
-      $preview.innerHTML='';
-      Array.from(dt.files).forEach(function(file,idx){
-        var wrap=document.createElement('div'); wrap.className='thumb'; wrap.dataset.idx=String(idx);
-        var img=document.createElement('img'); var url=URL.createObjectURL(file);
-        img.src=url; img.alt=file.name; img.onload=function(){ try{URL.revokeObjectURL(url);}catch(e){} };
-        var badge=document.createElement('span'); badge.className='badge-portada'; badge.textContent='PORTADA';
-        wrap.appendChild(img); wrap.appendChild(badge); $preview.appendChild(wrap);
+
+    // Reordena dt siguiendo el orden visual de .thumb
+    function syncDTfromDOM() {
+      var order = Array.from($preview.children).map(function (node) {
+        return parseInt(node.dataset.idx, 10);
       });
-      var portadaIdx = clampIndex(parseInt($portadaHidden.value,10)); markCover(portadaIdx);
 
-      if (typeof Sortable!=='undefined' && Sortable){
-        if ($preview.__sortable){ $preview.__sortable.destroy(); $preview.__sortable=null; }
-        $preview.__sortable = new Sortable($preview,{ animation:150, draggable:'.thumb', onEnd:syncDTfromDOM });
-      }
-    }
+      var newDT = new DataTransfer();
+      order.forEach(function (oldIdx) {
+        newDT.items.add(dt.files[oldIdx]);
+      });
+      dt = newDT;
 
-    var clickTimer=null, SINGLE=220;
-    $preview.addEventListener('click',function(e){
-      var t=e.target.closest('.thumb'); if(!t) return;
-      if(clickTimer) clearTimeout(clickTimer);
-      clickTimer=setTimeout(function(){ var i=Array.from($preview.children).indexOf(t); if(i>=0) setCover(i); clickTimer=null; },SINGLE);
-    });
-    $preview.addEventListener('dblclick',function(e){
-      var t=e.target.closest('.thumb'); if(!t) return;
-      if(clickTimer){ clearTimeout(clickTimer); clickTimer=null; }
-      var i=Array.from($preview.children).indexOf(t); if(i>=0) removeAt(i);
-    });
+      // Actualizo data-idx en DOM
+      Array.from($preview.children).forEach(function (node, i) {
+        node.dataset.idx = String(i);
+      });
 
-    inputImagen.addEventListener('change',function(e){
-      var sel=Array.from(e.target.files||[]); if(sel.length===0 && dt.files.length===0) return;
-      sel.forEach(function(f){ dt.items.add(f); });
+      // Por UX, al reordenar dejo como portada la primera visible
+      markCover(0);
       syncInputFromDT();
-      if (dt.files.length>0 && (isNaN(parseInt($portadaHidden.value,10)) || parseInt($portadaHidden.value,10)<0)){
-        $portadaHidden.value='0';
+    }
+
+    // Elimina archivo en índice
+    function removeAt(index) {
+      if (index < 0 || index >= dt.files.length) return;
+      var newDT = new DataTransfer();
+      Array.from(dt.files).forEach(function (f, i) {
+        if (i !== index) newDT.items.add(f);
+      });
+      dt = newDT;
+      syncInputFromDT();
+      rebuildPreviewFromDT();
+    }
+
+    // Setea portada moviendo ese archivo a la posición 0 de dt
+    function setCover(index) {
+      index = clampIndex(index);
+      if (index === 0) {
+        markCover(0);
+        return;
       }
-      rebuild(); markCover(0);
+      var files = Array.from(dt.files);
+      var chosen = files[index];
+      files.splice(index, 1);
+      files.unshift(chosen);
+
+      var newDT = new DataTransfer();
+      files.forEach(function (f) { newDT.items.add(f); });
+      dt = newDT;
+
+      syncInputFromDT();
+      rebuildPreviewFromDT();
+      markCover(0);
+    }
+
+    // Construye/reconstruye las miniaturas desde dt
+    function rebuildPreviewFromDT() {
+      $preview.innerHTML = '';
+
+      Array.from(dt.files).forEach(function (file, idx) {
+        var wrap = document.createElement('div');
+        wrap.className = 'thumb';
+        wrap.dataset.idx = String(idx);
+
+        var img = document.createElement('img');
+        var blobUrl = URL.createObjectURL(file);
+        img.src = blobUrl;
+        img.alt = file.name;
+
+        // ✅ revocar URL al terminar de cargar (evita glitches y pérdidas de memoria)
+        img.onload = function () {
+          try { URL.revokeObjectURL(blobUrl); } catch (e) {}
+        };
+
+        var badge = document.createElement('span');
+        badge.className = 'badge-portada';
+        badge.textContent = 'PORTADA';
+
+        wrap.appendChild(img);
+        wrap.appendChild(badge);
+        $preview.appendChild(wrap);
+      });
+
+      // Asegurar una portada siempre
+      var portadaIdx = clampIndex(parseInt($portadaHidden.value, 10));
+      markCover(portadaIdx);
+
+      // (Re)inicializar Sortable si está disponible
+      if (typeof Sortable !== 'undefined' && Sortable) {
+        if ($preview.__sortable) {
+          $preview.__sortable.destroy();
+          $preview.__sortable = null;
+        }
+        $preview.__sortable = new Sortable($preview, {
+          animation: 150,
+          draggable: '.thumb',
+          onEnd: syncDTfromDOM
+        });
+      }
+    }
+
+    // ✅ Diferenciar CLICK vs DBLCLICK
+    var clickTimer = null;
+    var SINGLE_CLICK_DELAY = 220; // ms
+
+    $preview.addEventListener('click', function (e) {
+      var thumb = e.target.closest('.thumb');
+      if (!thumb) return;
+
+      // Si se va a producir un doble-click, este timer será cancelado abajo
+      if (clickTimer) clearTimeout(clickTimer);
+      clickTimer = setTimeout(function () {
+        var idx = Array.from($preview.children).indexOf(thumb);
+        if (idx < 0) return;
+        setCover(idx);          // ⟵ solo click: marcar portada
+        clickTimer = null;
+      }, SINGLE_CLICK_DELAY);
     });
+
+    $preview.addEventListener('dblclick', function (e) {
+      var thumb = e.target.closest('.thumb');
+      if (!thumb) return;
+
+      // Cancelar el click simple pendiente
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+      }
+
+      var idx = Array.from($preview.children).indexOf(thumb);
+      if (idx < 0) return;
+
+      // ⟵ doble-click: eliminar
+      removeAt(idx);
+    });
+
+    // Cuando el usuario selecciona archivos
+    inputImagen.addEventListener('change', function (e) {
+      var seleccion = Array.from(e.target.files || []);
+      if (seleccion.length === 0 && dt.files.length === 0) return;
+
+      // Por defecto: agrego a dt (si preferís reemplazar, descomentá la línea siguiente)
+      // dt = new DataTransfer();
+
+      seleccion.forEach(function (f) { dt.items.add(f); });
+      syncInputFromDT();
+
+      // si no hay portada previa, por defecto la primera
+      if (dt.files.length > 0 && (isNaN(parseInt($portadaHidden.value, 10)) || parseInt($portadaHidden.value, 10) < 0)) {
+        $portadaHidden.value = '0';
+      }
+
+      rebuildPreviewFromDT();
+      // asegurar portada al primer elemento
+      markCover(0);
+    });
+
   })();
 
   /* ================================
@@ -102,64 +221,75 @@ if (!window.__CREAR_INIT__) {
     });
 
     /* ================================
-       UTILIDADES
+       UTILIDADES GENERALES
     ================================= */
-    // Evitar submit con Enter
-    $(document).off('keypress.preventEnter').on('keypress.preventEnter','form',function(e){
-      if (e.keyCode===13) e.preventDefault();
+    // Evitar submit con Enter en cualquier form
+    $(document).off('keypress.preventEnter').on('keypress.preventEnter', 'form', function (e) {
+      if (e.keyCode === 13) e.preventDefault();
     });
 
-    // Agregar proveedor
-    $(document).off('click.addProv','#addProveedor').on('click.addProv','#addProveedor',function(e){
-      e.preventDefault(); e.stopImmediatePropagation();
-      var $base=$('.proveedor').first(); if(!$base.length) return;
-      var $nuevo=$base.clone(false);
+    // Botón "+ Agregar proveedor" sin duplicaciones
+    $(document).off('click.addProv', '#addProveedor').on('click.addProv', '#addProveedor', function (e) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
 
-      // Limpiar valores
-      $nuevo.find('input').val('');
-      $nuevo.find('select').prop('selectedIndex',0);
+      var $base = $('.proveedor').first(); // plantilla
+      if ($base.length === 0) return;
+
+      // Clon SIN eventos para no duplicar handlers
+      var $nuevo = $base.clone(false);
+
+      // Limpiar valores del clon
+      $nuevo.find('input:not(.IVA)').val('');
+      $nuevo.find('select').prop('selectedIndex', 0);
       $nuevo.find('.nombre_proveedor').text('');
 
-      // Evitar ids/for duplicados
+      // Evitar IDs/for duplicados (si existieran)
       $nuevo.find('[id]').removeAttr('id');
       $nuevo.find('label[for]').removeAttr('for');
 
-      // Insertar antes del botón +
+      // Reset labels (por clase si existen)
+      $nuevo.find('.label-codigo').text('Código');
+      $nuevo.find('.label-precio-lista').text('Precio de Lista');
+      $nuevo.find('.label-descuento').text('Descuento');
+
+      // El clon NUNCA debe contener el botón + dentro
+      $nuevo.find('#addProveedor').remove();
+
+      // Insertar SIEMPRE justo antes del botón +
       $nuevo.insertBefore('#addProveedor');
 
-      // Disparar cálculos iniciales
+      // Inicializar valores/calculadora del bloque nuevo
       $nuevo.find('.proveedores').trigger('change');
-      $nuevo.find('.precio_lista').trigger('input');
-      $nuevo.find('select.IVA').trigger('change');
+      $nuevo.find('.precio_lista').trigger('change');
 
       actualizarProveedorAsignado();
       actualizarPrecioFinal();
     });
 
     /* =======================================
-       DELEGACIÓN DE EVENTOS
+       DELEGACIÓN DE EVENTOS PARA BLOQUES DINÁMICOS
     ======================================== */
     $(document)
       .off('change.provSel', '.proveedores')
       .on('change.provSel', '.proveedores', function () {
         actualizarProveedor($(this));
         var $wrap = $(this).closest('.proveedor');
-        $wrap.find('.precio_lista').trigger('input');
+        $wrap.find('.precio_lista').trigger('change');
+        actualizarProveedorAsignado();
       });
 
-    // Precio de lista cambia
     $(document)
       .off('input change.precioLista', '.precio_lista')
       .on('input change.precioLista', '.precio_lista', function () {
         actualizarPrecio($(this));
       });
 
-    // Cambia costo neto o IVA (del SELECT) → recalcular costo con IVA
     $(document)
-      .off('input change.costos', '.costo_neto, select.IVA')
-      .on('input change.costos', '.costo_neto, select.IVA', function () {
+      .off('input change.costos', '.costo_neto, .IVA')
+      .on('input change.costos', '.costo_neto, .IVA', function () {
         var $wrap = $(this).closest('.proveedor');
-        recalcularConIVA($wrap);
+        actualizarCostoNeto($wrap.find('.costo_neto'));
         actualizarProveedorAsignado();
         actualizarPrecioFinal();
       });
@@ -169,9 +299,36 @@ if (!window.__CREAR_INIT__) {
     });
 
     /* ================================
-       FUNCIONES DE CÁLCULO
+       FUNCIONES DE CÁLCULO POR BLOQUE
     ================================= */
-    function toNumber(v){ var n=parseFloat((v||'').toString().replace(',','.')); return isNaN(n)?0:n; }
+    function actualizarProveedor($select) {
+      var $wrap = $select.closest('.proveedor');
+      var $opt = $select.find('option:selected');
+
+      var nombreProveedor = ($opt.text() || '').trim();
+      var descuento = parseFloat($opt.data('descuento'));
+      if (isNaN(descuento)) descuento = 0;
+
+      // Mostrar nombre del proveedor
+      $wrap.find('.nombre_proveedor').text(nombreProveedor);
+
+      // Setear hidden descuento (crear si no existe)
+      var $hiddenDesc = $wrap.find('.descuentos_proveedor_id');
+      if ($hiddenDesc.length === 0) {
+        $hiddenDesc = $('<input>', { type: 'hidden', class: 'descuentos_proveedor_id', name: 'descuentos_proveedor_id[]', value: 0 });
+        $wrap.append($hiddenDesc);
+      }
+      $hiddenDesc.val(descuento);
+
+      // Actualizar labels
+      var suf = nombreProveedor ? ' (' + nombreProveedor + ')' : '';
+      var $lblCodigo = $wrap.find('.label-codigo');
+      var $lblPL = $wrap.find('.label-precio-lista');
+      var $lblDesc = $wrap.find('.label-descuento');
+      if ($lblCodigo.length) $lblCodigo.text('Código' + suf); else $wrap.find('label[for="codigo"]').text('Código' + suf);
+      if ($lblPL.length)     $lblPL.text('Precio de Lista' + suf); else $wrap.find('label[for="precio_lista"]').text('Precio de Lista' + suf);
+      if ($lblDesc.length)   $lblDesc.text('Descuento' + suf); else $wrap.find('label[for="descuentos_proveedor_id"]').text('Descuento' + suf);
+    }
 
     function asegurarHidden($wrap, cls, name, defVal) {
       var $el = $wrap.find('.' + cls);
@@ -182,111 +339,105 @@ if (!window.__CREAR_INIT__) {
       return $el;
     }
 
-    function actualizarProveedor($select){
-      var $wrap=$select.closest('.proveedor');
-      var $opt=$select.find('option:selected');
-      var nombre=($opt.text()||'').trim();
-      var desc=toNumber($opt.data('descuento'));
-
-      $wrap.find('.nombre_proveedor').text(nombre);
-
-      var $hiddenDesc = asegurarHidden($wrap,'descuentos_proveedor_id','descuentos_proveedor_id[]',0);
-      $hiddenDesc.val(desc);
-
-      // Etiquetas
-      var suf = nombre ? ' ('+nombre+')' : '';
-      var $lblCodigo=$wrap.find('.label-codigo'), $lblPL=$wrap.find('.label-precio-lista'), $lblDesc=$wrap.find('.label-descuento');
-      if ($lblCodigo.length) $lblCodigo.text('Código'+suf);
-      if ($lblPL.length)     $lblPL.text('Precio de Lista'+suf);
-      if ($lblDesc.length)   $lblDesc.text('Descuento'+suf);
-
-      // cada vez que cambia proveedor, recalculamos
-      $wrap.find('.precio_lista').trigger('input');
-      $wrap.find('select.IVA').trigger('change');
-    }
-
-    function actualizarPrecio($precioLista){
+    function actualizarPrecio($precioLista) {
       var $wrap = $precioLista.closest('.proveedor');
 
-      var pl   = toNumber($precioLista.val());
-      var desc = toNumber($wrap.find('.descuentos_proveedor_id').val());
-      if (!desc) {
-        var dOpt = toNumber($wrap.find('.proveedores option:selected').data('descuento'));
-        desc = dOpt || 0;
+      var pl = parseFloat($precioLista.val());
+      if (isNaN(pl)) pl = 0;
+
+      // descuento desde hidden o option
+      var desc = parseFloat($wrap.find('.descuentos_proveedor_id').val());
+      if (isNaN(desc)) {
+        desc = parseFloat($wrap.find('.proveedores option:selected').data('descuento'));
+        if (isNaN(desc)) desc = 0;
       }
 
-      var $costoNeto = asegurarHidden($wrap,'costo_neto','costo_neto[]',0);
+      var $costoNeto = asegurarHidden($wrap, 'costo_neto', 'costo_neto[]', 0);
+      var $iva      = asegurarHidden($wrap, 'IVA', 'IVA[]', 21);
+      var $costoIVA = asegurarHidden($wrap, 'costo_iva', 'costo_iva[]', 0);
+
       var costoNeto = pl - (pl * desc / 100);
       $costoNeto.val(Math.ceil(costoNeto));
 
-      console.log('[CREAR] PL=',pl,'desc=',desc,'→ neto=', $costoNeto.val());
+      var iva = parseFloat($iva.val());
+      if (isNaN(iva)) iva = 0;
 
-      // Con el neto puesto, calcular con IVA
-      recalcularConIVA($wrap);
+      var costoConIVA = costoNeto + (costoNeto * iva / 100);
+      $costoIVA.val(Math.ceil(costoConIVA));
+
+      actualizarProveedorAsignado();
+      actualizarPrecioFinal();
     }
 
-    function recalcularConIVA($wrap){
-      var cn  = toNumber($wrap.find('.costo_neto').val()) || toNumber($wrap.find('.costo_neto').prop('value')) || toNumber($wrap.find('.costo_neto').val());
-      var iva = toNumber($wrap.find('select.IVA').val()); // ⟵ SIEMPRE del SELECT
-      if (!iva) iva = 21;
+    function actualizarCostoNeto($costoNeto) {
+      if (!$costoNeto || !$costoNeto.length) return;
+      var $wrap = $costoNeto.closest('.proveedor');
 
-      var $costoIVAHidden = asegurarHidden($wrap,'costo_iva','costo_iva[]',0);
-      var $costoIVAvis    = $wrap.find('.costo_iva_vis');
-      if (!$costoIVAvis.length){
-        // si no existe el visible, no lo creo aquí; sólo el hidden
-        $costoIVAvis = $(); 
-      }
+      var cn = parseFloat($costoNeto.val());
+      if (isNaN(cn)) cn = 0;
+
+      var $iva = asegurarHidden($wrap, 'IVA', 'IVA[]', 21);
+      var $costoIVA = asegurarHidden($wrap, 'costo_iva', 'costo_iva[]', 0);
+
+      var iva = parseFloat($iva.val());
+      if (isNaN(iva)) iva = 0;
 
       var cIVA = cn + (cn * iva / 100);
-      cIVA = Math.ceil(cIVA); // mismo criterio que venías usando
-
-      $costoIVAHidden.val(cIVA);
-      if ($costoIVAvis.length) $costoIVAvis.val(cIVA);
-
-      console.log('[CREAR] neto=',cn,'iva=',iva,'→ c/IVA=',cIVA);
+      $costoIVA.val(Math.ceil(cIVA));
     }
 
     /* =======================================
        SELECCIÓN DEL PROVEEDOR MÁS ECONÓMICO
     ======================================== */
-    function getProveedorConCostoIvaMasBajo(){
-      var $g=null, min=Infinity;
-      $('.proveedor').each(function(){
-        var v=toNumber($(this).find('.costo_iva').val()); // hidden enviado
-        if(!isNaN(v) && v<min){ min=v; $g=$(this); }
+    function getProveedorConCostoIvaMasBajo() {
+      var $ganador = null;
+      var min = Infinity;
+      $('.proveedor').each(function () {
+        var v = parseFloat($(this).find('.costo_iva').val());
+        if (!isNaN(v) && v < min) {
+          min = v;
+          $ganador = $(this);
+        }
       });
-      return $g;
+      return $ganador;
     }
 
-    function actualizarProveedorAsignado(){
+    function actualizarProveedorAsignado() {
       var $p = getProveedorConCostoIvaMasBajo();
-      var nombre='';
-      if ($p && $p.length){
-        nombre = ($p.find('.nombre_proveedor').text()||'').trim();
+      var nombre = '';
+      if ($p && $p.length) {
+        nombre = ($p.find('.nombre_proveedor').text() || '').trim();
+        $p.closest('.proveedor').find('.proveedor-designado-radio').prop('checked', true);
       }
-      var el = document.getElementById('proveedorAsignado');
-      if (el) el.textContent = nombre;
+      var cont = document.querySelector('#proveedorAsignado');
+      if (cont) cont.textContent = nombre;
     }
 
     /* ================================
        PRECIO FINAL (UTILIDAD GLOBAL)
     ================================= */
-    function actualizarPrecioFinal(){
-      var $p = getProveedorConCostoIvaMasBajo(); if(!$p||!$p.length) return;
-      var costoConIVA = toNumber($p.find('.costo_iva').val()); if(!costoConIVA) return;
-      var utilidad = toNumber($('#utilidad').val());
+    function actualizarPrecioFinal() {
+      var $p = getProveedorConCostoIvaMasBajo();
+      if (!$p || !$p.length) return;
+
+      var costoConIVA = parseFloat($p.find('.costo_iva').val());
+      if (isNaN(costoConIVA)) return;
+
+      var utilidad = parseFloat($('#utilidad').val());
+      if (isNaN(utilidad)) utilidad = 0;
+
       var precioFinal = costoConIVA + (costoConIVA * utilidad / 100);
-      precioFinal = Math.ceil(precioFinal/10)*10;
+      precioFinal = Math.ceil(precioFinal / 10) * 10; // múltiplos de 10 hacia arriba
+
       $('#precio_venta').val(precioFinal);
     }
 
-    // Disparos iniciales
-    $(function(){
+    // Disparos iniciales si hay un primer bloque cargado
+    $(function () {
       $('.proveedores').first().trigger('change');
-      $('.precio_lista').first().trigger('input');
-      $('select.IVA').first().trigger('change');
+      $('.precio_lista').first().trigger('change');
       actualizarProveedorAsignado();
       actualizarPrecioFinal();
     });
-  } // jQuery
+  } // if (window.jQuery)
 }
