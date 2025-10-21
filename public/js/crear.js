@@ -274,6 +274,51 @@ function recalcularConIVA($wrap){
 
   console.log('[CREAR][IVA] pres=',pres,'cn=',cn,'iva=',iva,'→ unit=',cIVA_unit,'visible=',cIVA_visible,'factor=',factor);
 }
+function asegurarVisibleCostoIVA($wrap){
+  var $vis = $wrap.find('.costo_iva_vis');
+  if (!$vis.length) {
+    // Intentá ubicarlo en el contenedor del costo con IVA
+    // Si no tenés un contenedor específico, lo agregamos cerca del select IVA.
+    var $contenedor = $wrap.find('.campo-costo-iva');
+    if (!$contenedor.length) $contenedor = $wrap.find('select.IVA').closest('.form-group-crear');
+    if (!$contenedor.length) $contenedor = $wrap; // último recurso
+    $vis = $('<input>', {
+      type: 'text',
+      class: 'costo_iva_vis form-control',
+      readonly: true
+    });
+    $contenedor.append($vis);
+  }
+  return $vis;
+}
+$(document)
+  .off('change.presentacion', '.presentacion')
+  .on('change.presentacion', '.presentacion', function () {
+    var $wrap = $(this).closest('.proveedor');
+    var pres = ($(this).val() || 'unidad').toLowerCase();
+    var factor = (pres === 'juego') ? 0.5 : 1;
+
+    // sincronicemos todo lo necesario
+    asegurarHidden($wrap, 'factor_unidad', 'factor_unidad[]', factor).val(factor);
+    asegurarVisibleCostoIVA($wrap);
+
+    // 🔁 recalcular AHORA y actualizar todo lo derivado
+    recalcularConIVA($wrap);
+    actualizarProveedorAsignado();
+    actualizarPrecioFinal();
+  });
+$(function(){
+  $('.proveedor').each(function(){
+    var $w = $(this);
+    var pres = ($w.find('.presentacion').val() || 'unidad').toLowerCase();
+    var factor = (pres === 'juego') ? 0.5 : 1;
+    asegurarHidden($w,'factor_unidad','factor_unidad[]',factor).val(factor);
+    asegurarVisibleCostoIVA($w);
+    recalcularConIVA($w);
+  });
+  actualizarProveedorAsignado();
+  actualizarPrecioFinal();
+});
 
     /* =======================================
        PROVEEDOR MÁS ECONÓMICO
