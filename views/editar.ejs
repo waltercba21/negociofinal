@@ -497,6 +497,285 @@
 
   <!-- JS de edición -->
   <script src="/js/editar.js"></script>
+  <script>
+(function () {
+  // ----- NODOS BASE -----
+  var inputImagen   = document.getElementById('imagen');
+  var preview       = document.getElementById('preview');
+  var form          = (preview && preview.closest('form')) || document.querySelector('form');
+
+  if (!inputImagen || !preview || !form) return;
+
+  // ----- HIDDENs (creados si no existen) -----
+  function ensureHidden(id, name, val) {
+    var el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement('input');
+      el.type = 'hidden';
+      el.id = id;
+      el.name = name;
+      el.value = val;
+      form.appendChild(el);
+    }
+    return el;
+  }
+  var portadaTipo         = ensureHidden('portada_tipo', 'portada_tipo', 'existente'); // 'existente' | 'nueva'
+  var portadaExistenteId  = ensureHidden('portada_existente_id', 'portada_existente_id', '');
+  var portadaNuevaIndex   = ensureHidden('portada_nueva_index', 'portada_nueva_index', '-1');
+
+  var ordenWrap = document.getElementById('orden_existentes_container');
+  if (!ordenWrap) {
+    ordenWrap = document.createElement('div');
+    ordenWrap.id = 'orden_existentes_container';
+    ordenWrap.style.display = 'none';
+    form.appendChild(ordenWrap);
+  }
+
+  var eliminarWrap = document.getElementById('eliminar_imagenes_container');
+  if (!eliminarWrap) {
+    eliminarWrap = document.createElement('div');
+    eliminarWrap.id = 'eliminar_imagenes_container';
+    eliminarWrap.style.display = 'none';
+    form.appendChild(eliminarWrap);
+  }
+
+  // ----- MINI ESTILO LOCAL PARA LA CHAPITA PORTADA (no afecta el grid) -----
+  (function injectBadgeStyle(){
+    if (document.getElementById('editar-portada-style')) return;
+    var css = '.preview-img{position:relative;cursor:pointer}' +
+              '.badge-portada{position:absolute;left:6px;top:6px;font-size:10px;font-weight:800;background:var(--primary);color:#fff;padding:3px 6px;border-radius:999px;box-shadow:var(--shadow);display:none}' +
+              '.preview-img.is-cover .badge-portada{display:inline-block}';
+    var s = document.createElement('style');
+    s.id = 'editar-portada-style';
+    s.textContent = css;
+    document.head.appendChild(s);
+  })();
+
+  // ----- MARCAR EXISTENTES (del HTML viejo) -----
+  Array.from(preview.querySelectorAll('.preview-img')).forEach(function (node) {
+    var id = node.getAttribute('data-imagen-id');
+    if (id) {
+      node.dataset.type = 'existente';
+      node.dataset.id   = String(id);
+    }
+    // inyectar badge si no existe
+    if (!node.querySelector('.badge-portada')) {
+      var badge = document.createElement('span');
+      badge.className = 'badge-portada';
+      badge.textContent = 'PORTADA';
+      node.appendChild(badge);
+    }
+  });
+
+  // ----- DATATRANSFER PARA NUEVAS -----
+  var dt = new DataTransfer();
+  function syncInput() { inputImagen.files = dt.files; }
+
+  // ----- UTILIDADES -----
+  function markCoverNode(node){
+    Array.from(preview.children).forEach(function(n){ n.classList.remove('is-cover'); });
+    if (node) node.classList.add('is-cover');
+  }
+  function pushOrdenExistente(id){
+    var inp = document.createElement('input');
+    inp.type  = 'hidden';
+    inp.name  = 'orden_imagenes_existentes[]';
+    inp.value = String(id);
+    ordenWrap.appendChild(inp);
+  }
+  function rebuildOrdenExistentesHidden(){
+    ordenWrap.innerHTML = '';
+    Array.from(preview.children).forEach(function(n){
+      if (n.dataset.type === 'existente' && n.dataset.id) pushOrdenExistente(n.dataset.id);
+    });
+  }
+  function pushEliminarExistente(id){
+    var inp = document.createElement('input');
+    inp.type  = 'hidden';
+    inp.name  = 'eliminar_imagenes[]';
+    inp.value = String(id);
+    eliminarWrap.appendChild(inp);
+  }
+  function clampIndex(n){
+    if (isNaN(n) || n < 0) return 0;
+    if (n >= dt.files.length) return dt.files.length - 1;
+    return n;
+  }
+
+  // ----- PORTADA -----
+  function setCover(node){
+    if (!node) return;
+    markCoverNode(node);
+    if (node.dataset.type === 'existente') {
+      portadaTipo.value = 'existente';
+      portadaExistenteId.value = node.dataset.id || '';
+      portadaNuevaIndex.value = '-1';
+    } else { // nueva
+      portadaTipo.value = 'nueva';
+      var idx = clampIndex(parseInt(node.dataset.idx,10));
+      if (idx !== 0) {
+        var files = Array.from(dt.files);
+        var chosen = files[idx];
+        files.splice(idx,1);
+        files.unshift(chosen);
+        var ndt = new DataTransfer();
+        files.forEach(function(f){ ndt.items.add(f); });
+        dt = ndt;
+        syncInput();
+        // reasignar índices visibles de nuevas
+        var k=0;
+        Array.from(preview.children).forEach(function(n){
+          if (n.dataset.type === 'nueva') n.dataset.idx = String(k++);
+        });
+      }
+      portadaNuevaIndex.value = '0';
+      portadaExistenteId.value = '';
+    }
+  }
+
+  // ----- NUEVAS: crear thumbs y anexar al final -----
+  function appendNewThumbs(){
+    // limpio las previas nuevas y las reconstruyo según dt
+    Array.from(preview.querySelectorAll('.preview-img[data-type="nueva"]')).forEach(function(n){ n.remove(); });
+    Array.from(dt.files).forEach(function(file, idx){
+      var wrap = document.createElement('div');
+      wrap.className = 'preview-img';
+      wrap.dataset.type = 'nueva';
+      wrap.dataset.idx  = String(idx);
+
+      var img = document.createElement('img');
+      img.className = 'imagen-miniatura';
+      var u = URL.createObjectURL(file);
+      img.src = u;
+      img.alt = file.name;
+      img.onload = function(){ try{ URL.revokeObjectURL(u); }catch(e){} };
+
+      var badge = document.createElement('span');
+      badge.className = 'badge-portada';
+      badge.textContent = 'PORTADA';
+
+      wrap.appendChild(img);
+      wrap.appendChild(badge);
+      preview.appendChild(wrap);
+    });
+  }
+
+  // ----- CLICK vs DBLCLICK -----
+  var clickTimer = null, SINGLE_DELAY = 220;
+
+  preview.addEventListener('click', function(e){
+    var item = e.target.closest('.preview-img');
+    if (!item) return;
+    if (clickTimer) clearTimeout(clickTimer);
+    clickTimer = setTimeout(function(){
+      setCover(item); // clic => portada
+      clickTimer = null;
+    }, SINGLE_DELAY);
+  });
+
+  preview.addEventListener('dblclick', function(e){
+    var item = e.target.closest('.preview-img');
+    if (!item) return;
+    if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+
+    if (item.dataset.type === 'existente') {
+      var id = item.dataset.id;
+      if (id) pushEliminarExistente(id);
+      item.remove();
+      rebuildOrdenExistentesHidden();
+      // si era portada, reasigno a primera visible
+      if (!preview.querySelector('.preview-img.is-cover')) {
+        var first = preview.querySelector('.preview-img');
+        if (first) setCover(first);
+      }
+      // mantener sortable coherente
+      ensureSortable();
+    } else {
+      // nueva
+      var idx = parseInt(item.dataset.idx,10);
+      if (!isNaN(idx)) {
+        var ndt = new DataTransfer();
+        Array.from(dt.files).forEach(function(f,i){ if (i!==idx) ndt.items.add(f); });
+        dt = ndt;
+        syncInput();
+        item.remove();
+        // reasignar idx visibles
+        var k=0;
+        Array.from(preview.children).forEach(function(n){
+          if (n.dataset.type === 'nueva') n.dataset.idx = String(k++);
+        });
+        if (!preview.querySelector('.preview-img.is-cover')) {
+          var first2 = preview.querySelector('.preview-img');
+          if (first2) setCover(first2);
+        }
+        ensureSortable();
+      }
+    }
+  });
+
+  // ----- INPUT CHANGE: adjuntar nuevas -----
+  inputImagen.addEventListener('change', function(e){
+    var files = Array.from(e.target.files || []);
+    if (files.length === 0 && dt.files.length === 0) return;
+    files.forEach(function(f){ dt.items.add(f); });
+    syncInput();
+    appendNewThumbs();
+    ensureSortable();
+
+    // portada por defecto si no hay
+    if (!preview.querySelector('.preview-img.is-cover')) {
+      var first = preview.querySelector('.preview-img');
+      if (first) setCover(first);
+    }
+    rebuildOrdenExistentesHidden();
+  });
+
+  // ----- SORTABLE -----
+  function ensureSortable(){
+    if (typeof Sortable === 'undefined' || !Sortable) return;
+    if (preview.__sortable) { preview.__sortable.destroy(); preview.__sortable = null; }
+    preview.__sortable = new Sortable(preview, {
+      animation: 150,
+      draggable: '.preview-img',
+      onEnd: function(){
+        rebuildOrdenExistentesHidden(); // orden de existentes
+        // reordenar nuevas en dt según DOM
+        var orderNew = [];
+        Array.from(preview.children).forEach(function(n){
+          if (n.dataset.type === 'nueva') orderNew.push(parseInt(n.dataset.idx,10));
+        });
+        var ndt = new DataTransfer();
+        orderNew.forEach(function(oldIdx){
+          if (dt.files[oldIdx]) ndt.items.add(dt.files[oldIdx]);
+        });
+        dt = ndt;
+        // reasignar idx visibles
+        var k=0;
+        Array.from(preview.children).forEach(function(n){
+          if (n.dataset.type === 'nueva') n.dataset.idx = String(k++);
+        });
+        syncInput();
+
+        // mantener la marca de portada donde corresponda
+        var currentCover = (portadaTipo.value === 'existente' && portadaExistenteId.value)
+          ? preview.querySelector('.preview-img[data-type="existente"][data-id="'+portadaExistenteId.value+'"]')
+          : preview.querySelector('.preview-img[data-type="nueva"][data-idx="'+portadaNuevaIndex.value+'"]');
+        if (currentCover) markCoverNode(currentCover);
+      }
+    });
+  }
+
+  // ----- INIT -----
+  rebuildOrdenExistentesHidden();
+  ensureSortable();
+  // portada visual por defecto si existe algo
+  (function initCover(){
+    var first = preview.querySelector('.preview-img');
+    if (first) setCover(first);
+  })();
+
+})();
+</script>
 
   <script>
     // Si al entrar la marca ya está seleccionada, refrescamos modelos por marca
