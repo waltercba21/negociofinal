@@ -148,7 +148,7 @@
   align-self: stretch !important;
   box-sizing: border-box !important;
 }
-/* Miniaturas */
+/* Miniaturas (original) */
 .container-editar .imagen-miniatura-contenedor{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
 .container-editar .imagen-miniatura-contenedor .imagen-miniatura{ width:80px; height:80px; }
 .container-editar .imagen-miniatura{
@@ -165,43 +165,19 @@
   padding: 2px 5px; border-radius: 50%;
   font-size: 12px;
 }
-/* Botón + proveedor */
-.container-editar #addProveedor{
-  background-color: #22A35A;
-  color: white;
-  border: 2px solid #1e8c4d;
-  padding: 10px 16px;
-  font-size: 14px;
-  line-height: 1;
-  border-radius: 999px;
-  cursor: pointer;
+
+/* 🔹 Agregado mínimo para mostrar la chapita PORTADA sin alterar layout */
+.badge-portada{
+  position: absolute;
+  left: 6px; top: 6px;
+  font-size: 10px; font-weight: 800;
+  background: var(--primary); color:#fff;
+  padding: 3px 6px; border-radius: 999px;
   box-shadow: var(--shadow);
-  transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
-  justify-self: center;
+  display: none;
 }
-.container-editar #addProveedor:hover{
-  background-color: #2EDB77;
-  color: #0b1729;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-hover);
-}
-/* Botonera */
-.container-editar .botones-crear{
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 20px;
-}
-.container-editar .botones-crear .btn{
-  padding: 10px 16px;
-  font-size: 14px;
-  border-radius: 10px;
-  font-weight: 800;
-  box-shadow: var(--shadow);
-  border: 2px solid var(--primary-600);
-  background: var(--primary);
-  color: #fff;
-}
+.preview-img.is-cover .badge-portada{ display:inline-block; }
+
 /* Responsive */
 @media (max-width: 992px){
   .container-editar .contenido-editar{ grid-template-columns: 1fr; }
@@ -224,6 +200,13 @@
           <!-- Hidden preferencia del proveedor -->
           <input type="hidden" id="proveedor_designado" name="proveedor_designado" value="<%= producto.proveedor_id || '' %>">
 
+          <!-- 🔒 HIDDEN para imágenes (nuevo) -->
+          <input type="hidden" id="portada_tipo" name="portada_tipo" value="existente"><!-- existente | nueva -->
+          <input type="hidden" id="portada_existente_id" name="portada_existente_id" value="<%= (producto && producto.portada_id) ? producto.portada_id : '' %>">
+          <input type="hidden" id="portada_nueva_index" name="portada_nueva_index" value="-1">
+          <div id="orden_existentes_container"></div> <!-- orden_imagenes_existentes[] -->
+          <div id="eliminar_imagenes_container"></div> <!-- eliminar_imagenes[] -->
+
           <!-- ============ CARACTERÍSTICAS ============ -->
           <div class="caracteristicas">
             <div class="form-group-crear">
@@ -233,8 +216,9 @@
               <div id="preview" class="imagen-miniatura-contenedor">
                 <% if (producto && producto.imagenes && producto.imagenes.length > 0) { %>
                   <% producto.imagenes.forEach((imagen) => { %>
-                    <div data-imagen-id="<%= imagen.id %>" class="preview-img">
+                    <div class="preview-img" data-type="existente" data-id="<%= imagen.id %>">
                       <img class="imagen-miniatura" src="<%= imagen.imagen %>" alt="Imagen del producto">
+                      <span class="badge-portada">PORTADA</span>
                     </div>
                   <% }); %>
                 <% } %>
@@ -355,7 +339,6 @@
                   </div>
 
                  <% const _ivaProv = Number(String(productoProveedor.iva ?? producto.IVA ?? 21).replace(',', '.')) || 21; %>
-
 
                   <div class="form-group-crear">
                     <label>IVA</label>
