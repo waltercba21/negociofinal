@@ -306,7 +306,14 @@
             </div>
 
             <% if (productoProveedores && productoProveedores.length > 0) { %>
-              <% productoProveedores.forEach(function(productoProveedor) { %>
+              <% productoProveedores.forEach(function(productoProveedor) { 
+                 const _ivaProv = Number(String(productoProveedor.iva ?? producto.IVA ?? 21).replace(',', '.')) || 21;
+                 const _pres    = (productoProveedor.presentacion || 'unidad').toLowerCase();
+                 const _factor  = _pres === 'juego' ? 0.5 : 1;
+                 const _civaSrv = (typeof productoProveedor.costo_iva === 'number'
+                                   ? productoProveedor.costo_iva
+                                   : parseFloat(productoProveedor.costo_iva || 0));
+              %>
                 <div class="proveedor" data-proveedor-id="<%= productoProveedor.proveedor_id %>">
                   <!-- Pill radio -->
                   <div class="form-group-crear">
@@ -354,9 +361,6 @@
                     <input class="costo_neto form-control" type="number" name="costo_neto[]" value="<%= productoProveedor.costo_neto %>" readonly>
                   </div>
 
-                 <% const _ivaProv = Number(String(productoProveedor.iva ?? producto.IVA ?? 21).replace(',', '.')) || 21; %>
-
-
                   <div class="form-group-crear">
                     <label>IVA</label>
                     <select class="IVA form-control" name="IVA[]">
@@ -365,13 +369,25 @@
                     </select>
                   </div>
 
+                  <!-- NUEVO: Presentación del precio -->
                   <div class="form-group-crear">
-                    <label>Precio de costo con IVA</label>
-                    <input class="costo_iva form-control" type="number" name="costo_iva[]" step="0.01"
-                           value="<%= (typeof productoProveedor.costo_iva === 'number'
-                                    ? productoProveedor.costo_iva
-                                    : parseFloat(productoProveedor.costo_iva || 0)).toFixed(2) %>">
+                    <label>Presentación del precio</label>
+                    <select class="presentacion form-control" name="presentacion[]">
+                      <option value="unidad" <%= _pres === 'unidad' ? 'selected' : '' %>>Unidad</option>
+                      <option value="juego"  <%= _pres === 'juego'  ? 'selected' : '' %>>Juego (par)</option>
+                    </select>
+                    <small>Si es "juego", se divide a la mitad (por unidad) para comparar y calcular.</small>
+                    <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="<%= _factor %>">
                   </div>
+
+                  <!-- Visible (por UNIDAD) -->
+                  <div class="form-group-crear campo-costo-iva">
+                    <label>Costo con IVA (por unidad)</label>
+                    <input class="costo_iva_vis form-control" type="number" step="0.01" value="">
+                  </div>
+
+                  <!-- Hidden normalizado a UNIDAD -->
+                  <input class="costo_iva" type="hidden" name="costo_iva[]" value="<%= isFinite(_civaSrv) ? _civaSrv.toFixed(2) : '0.00' %>">
 
                   <div class="form-group-crear">
                     <button class="eliminar-proveedor btn btn-outline-danger" type="button" data-proveedor-id="<%= productoProveedor.proveedor_id %>">
@@ -382,6 +398,12 @@
               <% }); %>
             <% } else { %>
               <!-- Plantilla base si no hay proveedores -->
+              <% 
+                const _ivaProv0 = Number(String(producto.IVA ?? 21).replace(',', '.')) || 21;
+                const _pres0    = 'unidad';
+                const _factor0  = 1;
+                const _civaSrv0 = 0;
+              %>
               <div class="proveedor" data-proveedor-id="">
                 <div class="form-group-crear">
                   <label class="radio-elige-proveedor">
@@ -417,21 +439,36 @@
 
                 <div class="form-group-crear">
                   <label>Precio de costo (Neto)</label>
-                  <input type="number" class="costo_neto form-control" name="costo_neto[]" value="0" readonly>
+                  <input class="costo_neto form-control" type="number" name="costo_neto[]" value="0" readonly>
                 </div>
 
                 <div class="form-group-crear">
                   <label>IVA</label>
                   <select class="IVA form-control" name="IVA[]">
-                    <option value="21" selected>21%</option>
-                    <option value="10.5">10,5%</option>
+                    <option value="21"   <%= _ivaProv0 === 21 ? 'selected' : '' %>>21%</option>
+                    <option value="10.5" <%= _ivaProv0 === 10.5 ? 'selected' : '' %>>10,5%</option>
                   </select>
                 </div>
 
+                <!-- NUEVO: Presentación del precio -->
                 <div class="form-group-crear">
-                  <label>Precio de costo con IVA</label>
-                  <input class="costo_iva form-control" type="number" name="costo_iva[]" step="0.01" value="0.00">
+                  <label>Presentación del precio</label>
+                  <select class="presentacion form-control" name="presentacion[]">
+                    <option value="unidad" <%= _pres0 === 'unidad' ? 'selected' : '' %>>Unidad</option>
+                    <option value="juego"  <%= _pres0 === 'juego'  ? 'selected' : '' %>>Juego (par)</option>
+                  </select>
+                  <small>Si es "juego", se divide a la mitad (por unidad) para comparar y calcular.</small>
+                  <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="<%= _factor0 %>">
                 </div>
+
+                <!-- Visible (por UNIDAD) -->
+                <div class="form-group-crear campo-costo-iva">
+                  <label>Costo con IVA (por unidad)</label>
+                  <input class="costo_iva_vis form-control" type="number" step="0.01" value="" readonly>
+                </div>
+
+                <!-- Hidden normalizado a UNIDAD -->
+                <input class="costo_iva" type="hidden" name="costo_iva[]" value="<%= _civaSrv0.toFixed(2) %>">
 
                 <div class="form-group-crear">
                   <button class="eliminar-proveedor btn btn-outline-danger" type="button">
@@ -489,6 +526,8 @@
   </main>
 
   <%- include ./layouts/footer.ejs %>
+</body>
+
 
   <!-- Libs -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
