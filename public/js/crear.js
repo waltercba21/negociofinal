@@ -239,41 +239,46 @@ if (!window.__CREAR_INIT__) {
       recalcularConIVA($wrap);
     }
 function recalcularConIVA($wrap){
-  var cn   = toNumber($wrap.find('.costo_neto').val());   // neto SIN IVA (como lo ingresó el proveedor)
+  var cn   = toNumber($wrap.find('.costo_neto').val());   // neto SIN IVA (ingreso proveedor)
   var iva  = toNumber($wrap.find('select.IVA').val());    // 21 o 10.5
   if (!iva) iva = 21;
 
   var pres = ($wrap.find('.presentacion').val() || 'unidad').toLowerCase();
 
-  var cnUnidad, cIVA_unit, cIVA_visible, factor;
+  var cnUnidad, cIVA_unit, cIVA_visible, cIVA_par, factor;
 
   if (pres === 'juego') {
-    // El neto viene como JUEGO (par) → normalizamos a unidad para comparar
-    factor    = 0.5;
-    cnUnidad  = cn * factor;                               // mitad
-    cIVA_unit = Math.ceil(cnUnidad * (1 + iva / 100));     // hidden (comparación por unidad)
-    cIVA_visible = Math.ceil(cn * (1 + iva / 100));        // mostrar PAR al admin
+    // Neto viene como JUEGO (par)
+    factor     = 0.5;
+    cnUnidad   = cn * factor;
+    cIVA_unit  = Math.ceil(cnUnidad * (1 + iva / 100));  // hidden/compare (por unidad)
+    cIVA_par   = Math.ceil(cn * (1 + iva / 100));        // par para mostrar / PV cuando sea juego
+    cIVA_visible = cIVA_par;                             // mostrás PAR
   } else {
-    // El neto viene como UNIDAD (lo más común)
-    factor    = 1;
-    cnUnidad  = cn;                                        // ya es por unidad
-    cIVA_unit = Math.ceil(cnUnidad * (1 + iva / 100));     // hidden y visible
-    cIVA_visible = cIVA_unit;                              // mostrar UNIDAD al admin
+    // Neto viene como UNIDAD
+    factor     = 1;
+    cnUnidad   = cn;
+    cIVA_unit  = Math.ceil(cnUnidad * (1 + iva / 100));  // hidden/compare (por unidad)
+    cIVA_par   = Math.ceil((cnUnidad * 2) * (1 + iva / 100)); // por si necesitás par
+    cIVA_visible = cIVA_unit;                             // mostrás UNIDAD
   }
 
-  // Hidden normalizado a UNIDAD para elegir proveedor
-  var $costoIVAHidden = asegurarHidden($wrap,'costo_iva','costo_iva[]',0);
-  $costoIVAHidden.val(cIVA_unit);
+  // Hidden normalizado a UNIDAD (para elegir proveedor más barato)
+  asegurarHidden($wrap,'costo_iva','costo_iva[]',0).val(cIVA_unit);
 
   // Visible para el admin
   var $costoIVAvis = $wrap.find('.costo_iva_vis');
   if ($costoIVAvis.length) $costoIVAvis.val(cIVA_visible);
 
-  // Guardamos factor para backend
+  // Guardamos factor y ambos costos en data-attrs para que PV no tenga que adivinar
   asegurarHidden($wrap,'factor_unidad','factor_unidad[]',factor).val(factor);
+  $wrap.data('civa_unit', cIVA_unit);
+  $wrap.data('civa_par',  cIVA_par);
+  $wrap.data('presentacion', pres);
 
-  console.log('[CREAR][IVA] pres=',pres,'cn=',cn,'iva=',iva,'→ unit=',cIVA_unit,'visible=',cIVA_visible,'factor=',factor);
+  console.log('[CREAR][IVA] pres=',pres,'cn=',cn,'iva=',iva,'→ unit=',cIVA_unit,'par=',cIVA_par,'visible=',cIVA_visible,'factor=',factor);
 }
+
 function asegurarVisibleCostoIVA($wrap){
   var $vis = $wrap.find('.costo_iva_vis');
   if (!$vis.length) {
@@ -295,17 +300,12 @@ $(document)
   .off('change.presentacion', '.presentacion')
   .on('change.presentacion', '.presentacion', function () {
     var $wrap = $(this).closest('.proveedor');
-    var pres = ($(this).val() || 'unidad').toLowerCase();
-    var factor = (pres === 'juego') ? 0.5 : 1;
-
-    asegurarHidden($wrap, 'factor_unidad', 'factor_unidad[]', factor).val(factor);
-    asegurarVisibleCostoIVA($wrap);
-
-    // recalcular YA, y luego proveedor asignado + PV
-    recalcularConIVA($wrap);
-    actualizarProveedorAsignado();
-    actualizarPrecioFinal();
+    asegurarVisibleCostoIVA($wrap);  // por si el input visible no existía
+    recalcularConIVA($wrap);         // recalcula y guarda data
+    actualizarProveedorAsignado();   // puede cambiar el ganador si mueve precios
+    actualizarPrecioFinal();         // PV según presentación del ganador
   });
+
 
 
 $(function(){
@@ -344,23 +344,35 @@ $(function(){
        PRECIO FINAL (UTILIDAD GLOBAL)
     ================================= */
 function actualizarPrecioFinal(){
-  var $p = getProveedorConCostoIvaMasBajo();
+  var $p = getProveedorConCostoIvaMasBajo(); // elige por costo_iva (unidad)
   if(!$p || !$p.length) return;
 
-  // Hidden normalizado a UNIDAD (siempre por unidad)
-  var costoUnit = toNumber($p.find('.costo_iva').val());
-  if(!costoUnit) return;
+  // Lo normalizado a unidad (hidden)
+  var unitHidden = toNumber($p.find('.costo_iva').val());
+  if(!unitHidden) return;
 
-  // Si la presentación del proveedor ganador es "juego",
-  // la base para el PV debe ser el PAR (unidad * 2)
-  var pres = ($p.find('.presentacion').val() || 'unidad').toLowerCase();
-  var base = (pres === 'juego') ? (costoUnit * 2) : costoUnit;
+  // Presentación real del bloque ganador y data precalculada
+  var pres = ($p.data('presentacion') || ($p.find('.presentacion').val() || 'unidad')).toLowerCase();
+  var civaUnitData = toNumber($p.data('civa_unit'));
+  var civaParData  = toNumber($p.data('civa_par'));
+
+  // Base para PV:
+  // - si el ganador es "juego" → base = PAR
+  // - si es "unidad" → base = UNIDAD
+  var base;
+  if (pres === 'juego') {
+    base = civaParData || (unitHidden * 2);   // fallback por las dudas
+  } else {
+    base = civaUnitData || unitHidden;
+  }
 
   var utilidad = toNumber($('#utilidad').val());
-  // Redondeo como ya venías haciendo (a la decena superior)
   var precioFinal = Math.ceil((base * (1 + utilidad / 100)) / 10) * 10;
 
   $('#precio_venta').val(precioFinal);
+
+  console.log('[CREAR][PV] presGanador=',pres,'base=',base,'utilidad=',utilidad,'→ PV=',precioFinal);
 }
+
   } 
 }
