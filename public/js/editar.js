@@ -19,7 +19,6 @@ if (!window.__EDITAR_INIT__) {
 
     if (!inputImagen || !$preview) return;
 
-    // Crea los hidden faltantes si no existieran
     function ensureHidden(id, defaultVal) {
       var el = document.getElementById(id);
       if (!el) {
@@ -49,13 +48,10 @@ if (!window.__EDITAR_INIT__) {
       (document.querySelector('form') || document.body).appendChild(eliminarContainer);
     }
 
-    // DataTransfer para nuevas
     var dt = new DataTransfer();
 
     function markCoverNode(node) {
-      Array.from($preview.children).forEach(function (n) {
-        n.classList.remove('is-cover');
-      });
+      Array.from($preview.children).forEach(function (n) { n.classList.remove('is-cover'); });
       if (node) node.classList.add('is-cover');
     }
     function clearOrdenExistentesHidden() {
@@ -82,34 +78,24 @@ if (!window.__EDITAR_INIT__) {
       if (n >= dt.files.length) return dt.files.length - 1;
       return n;
     }
-    function syncInputFromDT() {
-      inputImagen.files = dt.files;
-    }
+    function syncInputFromDT() { inputImagen.files = dt.files; }
     function rebuildOrdenExistentesHidden() {
       clearOrdenExistentesHidden();
       Array.from($preview.children).forEach(function (node) {
-        if (node.dataset.type === 'existente') {
-          pushOrdenExistente(node.dataset.id);
-        }
+        if (node.dataset.type === 'existente') pushOrdenExistente(node.dataset.id);
       });
     }
     function reorderNewFilesFromDOM() {
       var orderNew = [];
       Array.from($preview.children).forEach(function (node) {
-        if (node.dataset.type === 'nueva') {
-          orderNew.push(parseInt(node.dataset.idx, 10));
-        }
+        if (node.dataset.type === 'nueva') orderNew.push(parseInt(node.dataset.idx, 10));
       });
       var newDT = new DataTransfer();
-      orderNew.forEach(function (oldIdx) {
-        if (dt.files[oldIdx]) newDT.items.add(dt.files[oldIdx]);
-      });
+      orderNew.forEach(function (oldIdx) { if (dt.files[oldIdx]) newDT.items.add(dt.files[oldIdx]); });
       dt = newDT;
       var k = 0;
       Array.from($preview.children).forEach(function (node) {
-        if (node.dataset.type === 'nueva') {
-          node.dataset.idx = String(k++);
-        }
+        if (node.dataset.type === 'nueva') node.dataset.idx = String(k++);
       });
       syncInputFromDT();
     }
@@ -165,10 +151,7 @@ if (!window.__EDITAR_INIT__) {
     }
     function ensureSortable() {
       if (typeof Sortable === 'undefined' || !Sortable) return;
-      if ($preview.__sortable) {
-        $preview.__sortable.destroy();
-        $preview.__sortable = null;
-      }
+      if ($preview.__sortable) { $preview.__sortable.destroy(); $preview.__sortable = null; }
       $preview.__sortable = new Sortable($preview, {
         animation: 150,
         draggable: '.thumb, .preview-img',
@@ -202,7 +185,6 @@ if (!window.__EDITAR_INIT__) {
       }
     }
 
-    // Preparar existentes del DOM
     Array.from($preview.querySelectorAll('.preview-img, .thumb')).forEach(function (node) {
       if (!node.classList.contains('preview-img')) node.classList.add('preview-img');
       if (!node.querySelector('.badge-portada')) {
@@ -218,31 +200,19 @@ if (!window.__EDITAR_INIT__) {
       }
     });
 
-    // Eventos click / dblclick
     var clickTimer = null, SINGLE_CLICK_DELAY = 220;
     $preview.addEventListener('click', function (e) {
-      var thumb = e.target.closest('.thumb, .preview-img');
-      if (!thumb) return;
+      var thumb = e.target.closest('.thumb, .preview-img'); if (!thumb) return;
       if (clickTimer) clearTimeout(clickTimer);
-      clickTimer = setTimeout(function () {
-        setCover(thumb);
-        clickTimer = null;
-      }, SINGLE_CLICK_DELAY);
+      clickTimer = setTimeout(function () { setCover(thumb); clickTimer = null; }, SINGLE_CLICK_DELAY);
     });
     $preview.addEventListener('dblclick', function (e) {
-      var thumb = e.target.closest('.thumb, .preview-img');
-      if (!thumb) return;
+      var thumb = e.target.closest('.thumb, .preview-img'); if (!thumb) return;
       if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
       var type = thumb.dataset.type;
       if (type === 'existente') {
         var id = thumb.dataset.id;
-        if (id) {
-          var inp = document.createElement('input');
-          inp.type = 'hidden';
-          inp.name = 'eliminar_imagenes[]';
-          inp.value = String(id);
-          eliminarContainer.appendChild(inp);
-        }
+        if (id) pushEliminarExistente(id);
         thumb.remove();
         rebuildOrdenExistentesHidden();
         var portadaNode = findPortadaNode();
@@ -293,7 +263,7 @@ if (!window.__EDITAR_INIT__) {
 
   /* ===========================================================
      RESTO DE LA LÓGICA (proveedores, IVA, utilidad, presentación)
-     — Adaptada para soportar Unidad / Juego
+     — Unidad / Juego (par) con normalización a unidad
   ============================================================ */
 
   // Helpers
@@ -315,18 +285,11 @@ if (!window.__EDITAR_INIT__) {
     return $el;
   }
   function asegurarVisibleCostoIVA($wrap) {
-    // Crea un input visible separado para mostrar costo con IVA (por unidad)
     var $vis = $wrap.find('.costo_iva_vis');
     if (!$vis.length) {
       var $contenedor = $wrap.find('.costo_iva').closest('.form-group-crear');
       if (!$contenedor.length) $contenedor = $wrap;
-      $vis = $('<input>', {
-        type: 'number',
-        step: '0.01',
-        class: 'costo_iva_vis form-control',
-        readonly: true
-      });
-      // Añadimos una etiqueta aclaratoria si no existe
+      $vis = $('<input>', { type: 'number', step: '0.01', class: 'costo_iva_vis form-control', readonly: true });
       if (!$contenedor.find('.label-costo-iva-vis').length) {
         $('<label class="label-costo-iva-vis">Costo con IVA (por unidad)</label>').insertBefore($vis);
       }
@@ -335,7 +298,6 @@ if (!window.__EDITAR_INIT__) {
     return $vis;
   }
   function ensurePresentacionSelect($wrap) {
-    // Inserta (si no existe) el select Presentación: Unidad / Juego
     var $pres = $wrap.find('select.presentacion');
     if ($pres.length) return $pres;
 
@@ -351,25 +313,9 @@ if (!window.__EDITAR_INIT__) {
 
     $grp.append($label).append($sel);
     $grp.append('<small>Si es "juego", se divide a la mitad (por unidad).</small>');
-
     $grp.insertAfter($pivot);
 
-    // Hidden factor_unidad (1 | 0.5) para backend
     asegurarHidden($wrap, 'factor_unidad', 'factor_unidad[]', 1);
-
-    // Handlers
-    $(document)
-      .off('change.presentacion', $sel)
-      .on('change.presentacion', $sel, function () {
-        var $w = $(this).closest('.proveedor');
-        var factor = ($(this).val() === 'juego') ? 0.5 : 1;
-        $w.find('.factor_unidad').val(factor);
-        // Recalcula todo con la nueva presentación
-        recalcularConIVA($w);
-        if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
-        actualizarPrecioFinal();
-        syncIVAProductoConAsignado();
-      });
 
     return $sel;
   }
@@ -382,7 +328,6 @@ if (!window.__EDITAR_INIT__) {
   $(function(){
     console.log('[EDITAR][INIT]');
 
-    // Evitar Enter
     $('form').off('keydown.preventEnter').on('keydown.preventEnter', function(e){
       if ((e.key === 'Enter' || e.keyCode === 13) &&
           (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
@@ -392,7 +337,6 @@ if (!window.__EDITAR_INIT__) {
 
     window.__seleccionManualProveedor__ = false;
 
-    // Respeta proveedor_designado inicial
     var seleccionadoBD = $('#proveedor_designado').val();
     if (seleccionadoBD) {
       var $radioBD = $('.proveedor-designado-radio').filter(function () {
@@ -401,7 +345,6 @@ if (!window.__EDITAR_INIT__) {
       if ($radioBD.length) {
         $radioBD.prop('checked', true);
         window.__seleccionManualProveedor__ = true;
-
         var $bloque = $radioBD.closest('.proveedor');
         var nombre = $bloque.find('.nombre_proveedor').text().trim();
         if (!nombre) {
@@ -412,15 +355,10 @@ if (!window.__EDITAR_INIT__) {
       }
     }
 
-    // Por cada proveedor, asegurar Presentación + visibles + recálculo
     $('.proveedor').each(function () {
       var $w = $(this);
-
-      // Asegurar select Presentación y visible costo IVA
       ensurePresentacionSelect($w);
       asegurarVisibleCostoIVA($w);
-
-      // Si venís con costo_neto/IVA cargados, recalculamos a formato nuevo
       $w.find('.precio_lista').trigger('change'); // dispara neto → con IVA (y present.)
     });
 
@@ -454,6 +392,26 @@ if (!window.__EDITAR_INIT__) {
     .on('input change.iva', '.IVA', function () {
       var $wrap = $(this).closest('.proveedor');
       recalcularConIVA($wrap);
+      if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
+      actualizarPrecioFinal();
+      syncIVAProductoConAsignado();
+    })
+    // 🔴 Handler clave: Presentación Unidad/Juego
+    .off('change.presentacion', '.presentacion')
+    .on('change.presentacion', '.presentacion', function () {
+      var $w = $(this).closest('.proveedor');
+      var pres = ($(this).val() || 'unidad').toLowerCase();
+      var factor = (pres === 'juego') ? 0.5 : 1;
+
+      console.log('[EDITAR][PRES] cambio →', pres, 'factor=', factor,
+                  'provId=', $w.data('proveedor-id'));
+
+      // sincronizar hidden factor
+      asegurarHidden($w, 'factor_unidad', 'factor_unidad[]', factor).val(factor);
+
+      // recalcular con override por si hubiera rarezas del DOM
+      recalcularConIVA($w, pres);
+
       if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
       actualizarPrecioFinal();
       syncIVAProductoConAsignado();
@@ -512,7 +470,6 @@ if (!window.__EDITAR_INIT__) {
   function actualizarPrecio($precioLista) {
     var $wrap = $precioLista.closest('.proveedor');
 
-    // Asegurar que existan los nuevos elementos
     ensurePresentacionSelect($wrap);
     asegurarVisibleCostoIVA($wrap);
 
@@ -525,25 +482,23 @@ if (!window.__EDITAR_INIT__) {
 
     console.log('[EDITAR][NETO] PL=', pl, 'desc=', desc, '→ neto=', $costoNeto.val());
 
-    // Luego, costo con IVA (aplicará presentación)
     recalcularConIVA($wrap);
   }
 
-  // ⟶ COSTO con IVA
-  // Hidden costo_iva[] SIEMPRE en UNIDAD (para comparar y backend).
-  // Visible (costo_iva_vis) también por UNIDAD.
-  // Si Presentación = "juego", se divide a la mitad.
-  function recalcularConIVA($wrap) {
+  // ⟶ COSTO con IVA (hidden por unidad, visible por unidad)
+  //    Si Presentación = "juego" → divide a la mitad
+  function recalcularConIVA($wrap, presOverride) {
     ensurePresentacionSelect($wrap);
     asegurarVisibleCostoIVA($wrap);
 
-    var cn  = toNumber($wrap.find('.costo_neto').val()); // neto SIN IVA, como llega del proveedor
+    var cn  = toNumber($wrap.find('.costo_neto').val()); // neto SIN IVA
     var iva = getIVA($wrap);
     if (!iva) iva = 21;
 
-    var pres = ($wrap.find('.presentacion').val() || 'unidad').toLowerCase();
+    var presSel = ($wrap.find('.presentacion').val() || 'unidad').toLowerCase();
+    var pres = (presOverride || presSel);
 
-    var cIVA_unit; // costo con IVA por unidad (si "juego" → divide a la mitad)
+    var cIVA_unit;
     if (pres === 'juego') {
       var cnUnidad = cn * 0.5;
       cIVA_unit = Math.ceil(cnUnidad * (1 + iva / 100));
@@ -552,17 +507,12 @@ if (!window.__EDITAR_INIT__) {
       cIVA_unit = Math.ceil(cnUnidad2 * (1 + iva / 100));
     }
 
-    // Hidden (por unidad)
     asegurarHidden($wrap, 'costo_iva', 'costo_iva[]', 0).val(cIVA_unit);
-
-    // Visible (por unidad)
     $wrap.find('.costo_iva_vis').val(cIVA_unit);
 
-    // Factor (para backend)
     var factor = (pres === 'juego') ? 0.5 : 1;
     asegurarHidden($wrap, 'factor_unidad', 'factor_unidad[]', factor).val(factor);
 
-    // Guardamos data útil
     $wrap.data('presentacion', pres);
     $wrap.data('civa_unit', cIVA_unit);
 
@@ -595,7 +545,6 @@ if (!window.__EDITAR_INIT__) {
 
     var $proveedor = getProveedorConCostoIvaMasBajo();
     var nombre = '';
-
     $('.proveedor-designado-radio').prop('checked', false);
 
     if ($proveedor && $proveedor.length) {
@@ -630,8 +579,7 @@ if (!window.__EDITAR_INIT__) {
     }
     if (!$proveedor || !$proveedor.length) return;
 
-    // Base SIEMPRE por unidad (si "juego", ya se dividió a la mitad)
-    var baseUnit = toNumber($proveedor.find('.costo_iva').val());
+    var baseUnit = toNumber($proveedor.find('.costo_iva').val()); // SIEMPRE unidad
     if (!baseUnit) return;
 
     var utilidad = toNumber($('#utilidad').val());
