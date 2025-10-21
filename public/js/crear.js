@@ -291,13 +291,26 @@ function recalcularConIVA($wrap){
     /* ================================
        PRECIO FINAL (UTILIDAD GLOBAL)
     ================================= */
-    function actualizarPrecioFinal(){
-      var $p = getProveedorConCostoIvaMasBajo(); if(!$p||!$p.length) return;
-      var costoConIVA = toNumber($p.find('.costo_iva').val()); if(!costoConIVA) return;
-      var utilidad = toNumber($('#utilidad').val());
-      var precioFinal = Math.ceil((costoConIVA + (costoConIVA * utilidad / 100))/10)*10;
-      $('#precio_venta').val(precioFinal);
-    }
+function actualizarPrecioFinal(){
+  var $p = getProveedorConCostoIvaMasBajo();
+  if(!$p || !$p.length) return;
+
+  // Hidden normalizado a UNIDAD (siempre por unidad)
+  var costoUnit = toNumber($p.find('.costo_iva').val());
+  if(!costoUnit) return;
+
+  // Si la presentación del proveedor ganador es "juego",
+  // la base para el PV debe ser el PAR (unidad * 2)
+  var pres = ($p.find('.presentacion').val() || 'unidad').toLowerCase();
+  var base = (pres === 'juego') ? (costoUnit * 2) : costoUnit;
+
+  var utilidad = toNumber($('#utilidad').val());
+  // Redondeo como ya venías haciendo (a la decena superior)
+  var precioFinal = Math.ceil((base * (1 + utilidad / 100)) / 10) * 10;
+
+  $('#precio_venta').val(precioFinal);
+}
+
 
     // Disparos iniciales
     $(function(){
