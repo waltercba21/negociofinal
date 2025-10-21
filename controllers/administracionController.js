@@ -980,6 +980,102 @@ apiObjetivosGastos: (req, res) => {
     res.status(500).json({ ok: false, error: 'Error inesperado.' });
   }
 },
+// ===== CATALOGOS =====
+getCategorias: (req, res) => {
+  administracion.listarCategorias((err, rows) => {
+    if (err) return res.status(500).json({ error: 'Error al listar categorías' });
+    res.json(rows || []);
+  });
+},
+crearCategoria: (req, res) => {
+  const nombre = (req.body.nombre || '').trim();
+  if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
+  administracion.crearCategoria(nombre, (err, r) => {
+    if (err) return res.status(500).json({ error: 'Error al crear categoría' });
+    res.json({ ok: true, id: r.insertId });
+  });
+},
+editarCategoria: (req, res) => {
+  const id = req.params.id;
+  const nombre = (req.body.nombre || '').trim();
+  if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
+  administracion.actualizarCategoria(id, nombre, (err) => {
+    if (err) return res.status(500).json({ error: 'Error al actualizar categoría' });
+    res.json({ ok: true });
+  });
+},
+eliminarCategoria: (req, res) => {
+  const id = req.params.id;
+  administracion.eliminarCategoria(id, (err) => {
+    if (err) return res.status(500).json({ error: 'Error al eliminar categoría' });
+    res.json({ ok: true });
+  });
+},
+
+getMarcas: (req, res) => {
+  administracion.listarMarcas((err, rows) => {
+    if (err) return res.status(500).json({ error: 'Error al listar marcas' });
+    res.json(rows || []);
+  });
+},
+crearMarca: (req, res) => {
+  const nombre = (req.body.nombre || '').trim();
+  if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
+  administracion.crearMarca(nombre, (err, r) => {
+    if (err) return res.status(500).json({ error: 'Error al crear marca' });
+    res.json({ ok: true, id: r.insertId });
+  });
+},
+editarMarca: (req, res) => {
+  const id = req.params.id;
+  const nombre = (req.body.nombre || '').trim();
+  if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
+  administracion.actualizarMarca(id, nombre, (err) => {
+    if (err) return res.status(500).json({ error: 'Error al actualizar marca' });
+    res.json({ ok: true });
+  });
+},
+eliminarMarca: (req, res) => {
+  const id = req.params.id;
+  administracion.eliminarMarca(id, (err) => {
+    if (err) return res.status(500).json({ error: 'Error al eliminar marca' });
+    res.json({ ok: true });
+  });
+},
+
+getModelos: (req, res) => {
+  const marcaId = req.query.marca_id || null;
+  administracion.listarModelos(marcaId, (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Error al listar modelos' });
+    res.json(rows || []);
+  });
+},
+crearModelo: (req, res) => {
+  const nombre = (req.body.nombre || '').trim();
+  const marca_id = req.body.marca_id;
+  if (!nombre || !marca_id) return res.status(400).json({ error: 'Nombre y marca_id requeridos' });
+  administracion.crearModelo({ nombre, marca_id }, (err, r) => {
+    if (err) return res.status(500).json({ error: 'Error al crear modelo' });
+    res.json({ ok: true, id: r.insertId });
+  });
+},
+editarModelo: (req, res) => {
+  const id = req.params.id;
+  const nombre = (req.body.nombre || '').trim();
+  const marca_id = req.body.marca_id;
+  if (!nombre || !marca_id) return res.status(400).json({ error: 'Nombre y marca_id requeridos' });
+  administracion.actualizarModelo(id, { nombre, marca_id }, (err) => {
+    if (err) return res.status(500).json({ error: 'Error al actualizar modelo' });
+    res.json({ ok: true });
+  });
+},
+eliminarModelo: (req, res) => {
+  const id = req.params.id;
+  administracion.eliminarModelo(id, (err) => {
+    if (err) return res.status(500).json({ error: 'Error al eliminar modelo' });
+    res.json({ ok: true });
+  });
+},
 
 
 }

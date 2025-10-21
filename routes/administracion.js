@@ -80,4 +80,24 @@ router.get('/api/gastos', administracionController.listarGastos);
 router.get('/api/objetivos-gastos', administracionController.apiObjetivosGastos);
 router.post('/gastos/:id/eliminar', administracionController.eliminarGasto);
 
+// === API Catálogos ===
+// Categorías
+router.get('/api/categorias', administracionController.getCategorias);
+router.post('/api/categorias', administracionController.crearCategoria);
+router.put('/api/categorias/:id', administracionController.editarCategoria);
+router.delete('/api/categorias/:id', administracionController.eliminarCategoria);
+
+// Marcas
+router.get('/api/marcas', administracionController.getMarcas);
+router.post('/api/marcas', administracionController.crearMarca);
+router.put('/api/marcas/:id', administracionController.editarMarca);
+router.delete('/api/marcas/:id', administracionController.eliminarMarca);
+
+// Modelos (opcional: filtrar por marca_id)
+router.get('/api/modelos', administracionController.getModelos);
+router.post('/api/modelos', administracionController.crearModelo);
+router.put('/api/modelos/:id', administracionController.editarModelo);
+router.delete('/api/modelos/:id', administracionController.eliminarModelo);
+
+
 module.exports = router;

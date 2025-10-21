@@ -1240,6 +1240,53 @@ deleteGasto: function(id, callback) {
   const sql = 'DELETE FROM gastos WHERE id = ?';
   pool.query(sql, [id], callback);
 },
+// =============== CATALOGOS: Categorías, Marcas, Modelos ===============
+listarCategorias : function(callback) {
+  pool.query('SELECT id, nombre FROM categorias ORDER BY nombre ASC', callback);
+},
+crearCategoria : function(nombre, callback) {
+  pool.query('INSERT INTO categorias (nombre) VALUES (?)', [nombre], callback);
+},
+actualizarCategoria : function(id, nombre, callback) {
+  pool.query('UPDATE categorias SET nombre=? WHERE id=?', [nombre, id], callback);
+},
+eliminarCategoria : function(id, callback) {
+  pool.query('DELETE FROM categorias WHERE id=?', [id], callback);
+},
+
+listarMarcas : function(callback) {
+  pool.query('SELECT id, nombre FROM marcas ORDER BY nombre ASC', callback);
+},
+crearMarca : function(nombre, callback) {
+  pool.query('INSERT INTO marcas (nombre) VALUES (?)', [nombre], callback);
+},
+actualizarMarca : function(id, nombre, callback) {
+  pool.query('UPDATE marcas SET nombre=? WHERE id=?', [nombre, id], callback);
+},
+eliminarMarca : function(id, callback) {
+  pool.query('DELETE FROM marcas WHERE id=?', [id], callback);
+},
+// modelos: admite filtro por marca_id (opcional)
+listarModelos : function(marcaId, callback) {
+  let sql = `
+    SELECT m.id, m.nombre, m.marca_id, ma.nombre AS marca
+    FROM modelos m
+    JOIN marcas ma ON ma.id = m.marca_id
+  `;
+  const params = [];
+  if (marcaId) { sql += ' WHERE m.marca_id = ?'; params.push(marcaId); }
+  sql += ' ORDER BY ma.nombre ASC, m.nombre ASC';
+  pool.query(sql, params, callback);
+},
+crearModelo : function({ nombre, marca_id }, callback) {
+  pool.query('INSERT INTO modelos (nombre, marca_id) VALUES (?, ?)', [nombre, marca_id], callback);
+},
+actualizarModelo : function(id, { nombre, marca_id }, callback) {
+  pool.query('UPDATE modelos SET nombre=?, marca_id=? WHERE id=?', [nombre, marca_id, id], callback);
+},
+eliminarModelo : function(id, callback) {
+  pool.query('DELETE FROM modelos WHERE id=?', [id], callback);
+},
 
 
 

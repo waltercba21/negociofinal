@@ -321,6 +321,135 @@
         </div>
       </div>
 
+      <!-- =============== CATALOGOS =============== -->
+<section class="panel-catalogos af-card" data-af="catalogos">
+  <h5 class="af-card__title">Catálogos (Categorías, Marcas, Modelos)</h5>
+
+  <div class="row g-3">
+    <!-- CATEGORIAS -->
+    <div class="col-md-4">
+      <div class="af-card p-3">
+        <h6 class="af-card__title">Categorías</h6>
+        <div class="d-flex gap-2 mb-2">
+          <button id="btnNuevaCategoria" class="btn btn-sm btn-success">+ Nueva</button>
+          <button id="btnEditarCategoria" class="btn btn-sm btn-warning" disabled>Editar</button>
+          <button id="btnEliminarCategoria" class="btn btn-sm btn-danger" disabled>Eliminar</button>
+        </div>
+        <select id="selectCategoria" class="form-select">
+          <option value="">Cargando...</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- MARCAS -->
+    <div class="col-md-4">
+      <div class="af-card p-3">
+        <h6 class="af-card__title">Marcas</h6>
+        <div class="d-flex gap-2 mb-2">
+          <button id="btnNuevaMarca" class="btn btn-sm btn-success">+ Nueva</button>
+          <button id="btnEditarMarca" class="btn btn-sm btn-warning" disabled>Editar</button>
+          <button id="btnEliminarMarca" class="btn btn-sm btn-danger" disabled>Eliminar</button>
+        </div>
+        <select id="selectMarca" class="form-select">
+          <option value="">Cargando...</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- MODELOS -->
+    <div class="col-md-4">
+      <div class="af-card p-3">
+        <h6 class="af-card__title">Modelos</h6>
+        <div class="d-flex gap-2 mb-2">
+          <button id="btnNuevoModelo" class="btn btn-sm btn-success">+ Nuevo</button>
+          <button id="btnEditarModelo" class="btn btn-sm btn-warning" disabled>Editar</button>
+          <button id="btnEliminarModelo" class="btn btn-sm btn-danger" disabled>Eliminar</button>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Filtrar por marca</label>
+          <select id="filtroMarcaModelos" class="form-select">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <select id="selectModelo" class="form-select">
+          <option value="">Cargando...</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Modales Catálogos (mismo estilo que Proveedores) ===== -->
+<div class="modal fade af-modal" id="modalCategoria" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formCategoria" class="modal-content">
+      <div class="modal-header modal-proveedor-header">
+        <h5 class="modal-title">Categoría</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="categoriaId">
+        <div class="mb-3">
+          <label class="form-label">Nombre</label>
+          <input class="form-control" id="categoriaNombre" required>
+        </div>
+      </div>
+      <div class="modal-footer modal-proveedor-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-success">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade af-modal" id="modalMarca" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formMarca" class="modal-content">
+      <div class="modal-header modal-proveedor-header">
+        <h5 class="modal-title">Marca</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="marcaId">
+        <div class="mb-3">
+          <label class="form-label">Nombre</label>
+          <input class="form-control" id="marcaNombre" required>
+        </div>
+      </div>
+      <div class="modal-footer modal-proveedor-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-success">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade af-modal" id="modalModelo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formModelo" class="modal-content">
+      <div class="modal-header modal-proveedor-header">
+        <h5 class="modal-title">Modelo</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modeloId">
+        <div class="mb-3">
+          <label class="form-label">Marca</label>
+          <select id="modeloMarcaId" class="form-select" required></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Nombre</label>
+          <input class="form-control" id="modeloNombre" required>
+        </div>
+      </div>
+      <div class="modal-footer modal-proveedor-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-success">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
       <!-- =============== FACTURAS =============== -->
       <section class="panel-facturas af-card" data-af="facturas">
         <h5 class="af-card__title">Registrar Factura</h5>
@@ -656,4 +785,6 @@
   <script src="/js/facturasAdministracion.js"></script>
   <script src="/js/presupuestosAdministracion.js"></script>
   <script src="/js/listadosDocumentos.js"></script>
+  <script src="/js/catalogosAdmin.js"></script>
+
 </body>
