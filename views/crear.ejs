@@ -167,25 +167,22 @@
                 </div>
 
                 <div class="form-group-crear">
-                  <label class="label-precio-lista" for="precio_lista">Precio de Lista:</label>
-                  <input class="precio_lista form-control" type="number" step="0.01" name="precio_lista[]">
-                </div>
+  <label class="label-precio-lista" for="precio_lista">Precio de Lista:</label>
+  <input class="precio_lista form-control" type="number" step="0.01" name="precio_lista[]">
+</div>
 
-                <div class="form-group-crear">
-                  <label class="label-descuento" for="descuentos_proveedor_id">Descuentos Proveedor:</label>
-                  <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
-                </div>
+<div class="form-group-crear">
+  <label class="label-descuento" for="descuentos_proveedor_id">Descuentos Proveedor:</label>
+  <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
+</div>
 
-                <div class="form-group-crear">
-                  <label for="costo_neto">Precio de costo (Neto):</label>
-                  <input class="costo_neto form-control" type="number" step="0.01" name="costo_neto[]" value="0">
-                </div>
+<!-- 👇 SOLO UNO: este es el que se muestra y viaja -->
 <div class="form-group-crear">
   <label for="costo_neto">Precio de costo (Neto):</label>
   <input class="costo_neto form-control" type="number" step="0.01" name="costo_neto[]" value="0">
 </div>
 
-<!-- ⟶ SOLO el select de IVA (sin input visual, sin hidden para IVA) -->
+<!-- IVA SOLO como select -->
 <div class="form-group-crear">
   <label>IVA</label>
   <select class="IVA form-control" name="IVA[]">
@@ -194,12 +191,13 @@
   </select>
 </div>
 
-<!-- ⟶ Mostrar y enviar el costo con IVA -->
+<!-- Costo con IVA: visible + hidden que viaja -->
 <div class="form-group-crear">
   <label for="costo_iva_vis">Precio de costo (con IVA):</label>
   <input class="costo_iva_vis form-control" type="number" step="0.01" readonly>
   <input class="costo_iva" type="hidden" name="costo_iva[]" value="0">
 </div>
+
 
               </div>
 
