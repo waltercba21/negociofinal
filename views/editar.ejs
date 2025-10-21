@@ -26,22 +26,34 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
-/* Tres columnas (características | proveedores | utilidades) */
+
+/* ========= 🔧 GRID 3 columnas “a prueba de corrimientos” ========= */
 .container-editar .contenido-editar{
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  /* Evita huecos: tracks fijos que se adaptan y no permiten overflow */
+  grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1.2fr);
   gap: 20px;
   width: 100%;
+  /* Asegura que los ítems ocupen de IZQ→DER sin centrados raros */
+  justify-content: stretch;
+  align-items: start;
+  justify-items: stretch;
 }
+
+/* Los 3 contenedores principales NUNCA deben desbordar su columna */
 .container-editar .caracteristicas,
 .container-editar #proveedoresContainer,
 .container-editar .utilidades{
+  min-width: 0;                 /* <- clave para evitar desbordes en grid */
   background: var(--surface);
   border: 2px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 16px;
+  box-sizing: border-box;       /* que el padding/borde no “ensanche” */
+  margin: 0;                    /* sin márgenes que rompan el track */
 }
+
 /* Inputs/Selects (reutiliza clases del JS) */
 .container-editar .form-group-crear{
   margin-bottom: 14px;
@@ -49,6 +61,7 @@
   flex-direction: column;
   gap: 6px;
   align-items: stretch;
+  min-width: 0;                 /* <- evita forzar ancho por textos largos */
 }
 .container-editar .form-group-crear label{
   display: block;
@@ -69,6 +82,7 @@
   border-radius: 10px;
   box-shadow: var(--shadow-inset);
   outline: none;
+  min-width: 0;                 /* <- inputs no expanden el track */
 }
 .container-editar .form-group-crear input:focus,
 .container-editar .form-group-crear select:focus,
@@ -76,13 +90,19 @@
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0,63,125,0.12), var(--shadow-inset);
 }
-/* Grilla de proveedores */
+
+/* ========= 🔧 GRID de proveedores “fluido y sin huecos” ========= */
 .container-editar #proveedoresContainer{
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  /* auto-fit + minmax asegura columnas completas sin espacios a la izquierda */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
   align-items: start;
+  justify-items: stretch;
+  width: 100%;
+  min-width: 0;
 }
+
 /* Tarjeta proveedor + “pill” radio */
 .container-editar .proveedor{
   position: relative;
@@ -96,6 +116,7 @@
   gap: 10px;
   transition: box-shadow .2s ease, border-color .2s ease, transform .06s ease-in;
   padding-top: 58px; /* espacio para pill del radio */
+  min-width: 0;
 }
 .container-editar .proveedor:hover{
   box-shadow: var(--shadow-hover);
@@ -130,6 +151,7 @@
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0,63,125,0.10), var(--shadow-hover);
 }
+
 /* FIX: select Proveedores ancho completo y sin solapar */
 .container-editar .proveedor .form-group-crear > label.label-proveedor{
   display: block;
@@ -148,6 +170,7 @@
   align-self: stretch !important;
   box-sizing: border-box !important;
 }
+
 /* Miniaturas (EDITAR) */
 .container-editar .imagen-miniatura-contenedor{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
 .thumb{ position:relative; width:90px; height:90px; border:2px solid var(--border); border-radius:8px; overflow:hidden; box-shadow:var(--shadow); cursor:grab; background:#111 }
@@ -155,6 +178,7 @@
 .thumb img{ width:100%; height:100%; object-fit:cover; display:block }
 .badge-portada{ position:absolute; left:6px; top:6px; font-size:10px; font-weight:800; background:var(--primary); color:#fff; padding:3px 6px; border-radius:999px; box-shadow:var(--shadow); display:none }
 .thumb.is-cover .badge-portada{ display:inline-block }
+
 /* Botón + proveedor */
 .container-editar #addProveedor{
   background-color: #22A35A;
@@ -175,6 +199,7 @@
   transform: translateY(-1px);
   box-shadow: var(--shadow-hover);
 }
+
 /* Botonera */
 .container-editar .botones-crear{
   display: flex;
@@ -192,11 +217,13 @@
   background: var(--primary);
   color: #fff;
 }
+
 /* Responsive */
 @media (max-width: 992px){
   .container-editar .contenido-editar{ grid-template-columns: 1fr; }
 }
 </style>
+
 
 <body>
   <main>
