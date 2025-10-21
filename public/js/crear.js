@@ -239,29 +239,41 @@ if (!window.__CREAR_INIT__) {
       recalcularConIVA($wrap);
     }
 
-    // ⟶ COSTO con IVA (visible + hidden), normalizado a UNIDAD
-    function recalcularConIVA($wrap){
-      var cn  = toNumber($wrap.find('.costo_neto').val());  // visible (neto sin IVA)
-      var iva = toNumber($wrap.find('select.IVA').val());   // select
-      if (!iva) iva = 21;
+function recalcularConIVA($wrap){
+  var cn  = toNumber($wrap.find('.costo_neto').val());  // neto sin IVA (del proveedor)
+  var iva = toNumber($wrap.find('select.IVA').val());
+  if (!iva) iva = 21;
 
-      // factor según presentación
-      var factor = getFactor($wrap);
-      asegurarHidden($wrap,'factor_unidad','factor_unidad[]',factor).val(factor);
+  var pres = ($wrap.find('.presentacion').val() || 'unidad').toLowerCase();
+  var factor = (pres === 'juego') ? 0.5 : 1; // ⟶ normalizamos a UNIDAD para la lógica interna
 
-      // normalización a unidad: si "juego", mitad; si "unidad", igual
-      var cnUnidad = cn * factor;
+  // 1) Costo por UNIDAD (normalizado)
+  var cnUnidad = cn * factor;
 
-      var $costoIVAHidden = asegurarHidden($wrap,'costo_iva','costo_iva[]',0); // hidden que viaja
-      var $costoIVAvis    = $wrap.find('.costo_iva_vis');                      // visible (readonly)
+  // 2) c/IVA por UNIDAD (este viaja oculto y se usa para comparar proveedores)
+  var cIVA_unit = Math.ceil(cnUnidad + (cnUnidad * iva / 100));
 
-      // IVA aplicado sobre el costo por UNIDAD
-      var cIVA = Math.ceil(cnUnidad + (cnUnidad * iva / 100));
-      $costoIVAHidden.val(cIVA);
-      if ($costoIVAvis.length) $costoIVAvis.val(cIVA);
+  // 3) c/IVA VISIBLE según presentación del proveedor
+  //    - si el proveedor vende por JUEGO (par), el admin quiere ver el JUEGO completo
+  //    - si vende por UNIDAD, muestra la UNIDAD
+  var cIVA_visible = (pres === 'juego')
+    ? Math.ceil(cIVA_unit * 2) // mostrar el PAR
+    : cIVA_unit;               // mostrar la UNIDAD
 
-      console.log('[CREAR][IVA] neto=',cn,'factor',factor,'→ netoUnidad=',cnUnidad,'iva=',iva,'→ c/IVA=',cIVA);
-    }
+  // Hidden que viaja (normalizado a UNIDAD)
+  var $costoIVAHidden = asegurarHidden($wrap,'costo_iva','costo_iva[]',0);
+  $costoIVAHidden.val(cIVA_unit);
+
+  // Visible para el admin
+  var $costoIVAvis = $wrap.find('.costo_iva_vis');
+  if ($costoIVAvis.length) $costoIVAvis.val(cIVA_visible);
+
+  // Guardamos también el factor_unidad por si el usuario no tocó el select
+  asegurarHidden($wrap,'factor_unidad','factor_unidad[]',factor).val(factor);
+
+  console.log('[CREAR][IVA] pres=',pres,'neto=',cn,'→ unidad=',cnUnidad,'iva=',iva,'→ cIVA_unit=',cIVA_unit,'| visible=',cIVA_visible);
+}
+
 
     /* =======================================
        PROVEEDOR MÁS ECONÓMICO
