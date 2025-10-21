@@ -20,156 +20,83 @@ if (!window.__EDITAR_INIT__) {
     var $portadaHidden = document.getElementById('portada_index');
     var $preview = document.getElementById('preview');
 
-    function rebuildPreviewFromDT() {
-      $preview.innerHTML = '';
-      Array.from(dt.files).forEach(function (file, idx) {
-        var wrap = document.createElement('div');
-        wrap.className = 'thumb';
-        wrap.dataset.idx = String(idx);
+function rebuildPreviewFromDT() {
+  $preview.innerHTML = '';
+  Array.from(dt.files).forEach(function (file, idx) {
+    var wrap = document.createElement('div');
+    wrap.className = 'thumb';
+    wrap.dataset.idx = String(idx);
 
-        var img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        img.alt = file.name;
+    var img = document.createElement('img');
+    const blobUrl = URL.createObjectURL(file);
+    img.src = blobUrl;
+    img.alt = file.name;
+    // ✅ revocar URL al terminar de cargar (evita artefactos y pérdidas de memoria)
+    img.onload = function() {
+      try { URL.revokeObjectURL(blobUrl); } catch(e) {}
+    };
 
-        var badge = document.createElement('span');
-        badge.className = 'badge-portada';
-        badge.textContent = 'PORTADA';
+    var badge = document.createElement('span');
+    badge.className = 'badge-portada';
+    badge.textContent = 'PORTADA';
 
-        wrap.appendChild(img);
-        wrap.appendChild(badge);
-        $preview.appendChild(wrap);
-      });
+    wrap.appendChild(img);
+    wrap.appendChild(badge);
+    $preview.appendChild(wrap);
+  });
 
-      // Asegurar una portada siempre
-      var portadaIdx = clampIndex(parseInt($portadaHidden.value, 10));
-      markCover(portadaIdx);
+  var portadaIdx = clampIndex(parseInt($portadaHidden.value, 10));
+  markCover(portadaIdx);
 
-      // (Re)inicializar Sortable
-      if (typeof Sortable !== 'undefined' && Sortable) {
-        if ($preview.__sortable) {
-          $preview.__sortable.destroy();
-          $preview.__sortable = null;
-        }
-        $preview.__sortable = new Sortable($preview, {
-          animation: 150,
-          draggable: '.thumb',
-          onEnd: syncDTfromDOM // reordena dt según DOM
-        });
-      } else {
-        console.error('Sortable no está definido. Por favor, importá la librería.');
-      }
+  if (typeof Sortable !== 'undefined' && Sortable) {
+    if ($preview.__sortable) {
+      $preview.__sortable.destroy();
+      $preview.__sortable = null;
     }
-
-    function clampIndex(n) {
-      if (isNaN(n) || n < 0) return 0;
-      if (n >= dt.files.length) return dt.files.length - 1;
-      return n;
-    }
-
-    function markCover(idx) {
-      Array.from($preview.children).forEach(function (node, i) {
-        if (i === idx) node.classList.add('is-cover');
-        else node.classList.remove('is-cover');
-      });
-      $portadaHidden.value = String(idx);
-    }
-
-    function syncInputFromDT() {
-      // reflejar dt en el input real
-      inputImagen.files = dt.files;
-    }
-
-    function syncDTfromDOM() {
-      // Reordena dt siguiendo el orden visual de .thumb
-      var order = Array.from($preview.children).map(function (node) {
-        return parseInt(node.dataset.idx, 10);
-      });
-
-      var newDT = new DataTransfer();
-      order.forEach(function (oldIdx) {
-        newDT.items.add(dt.files[oldIdx]);
-      });
-      dt = newDT;
-      // reseteo data-idx en DOM
-      Array.from($preview.children).forEach(function (node, i) {
-        node.dataset.idx = String(i);
-      });
-      // portada = primer elemento visible
-      markCover(0);
-      syncInputFromDT();
-    }
-
-    function removeAt(index) {
-      if (index < 0 || index >= dt.files.length) return;
-      var newDT = new DataTransfer();
-      Array.from(dt.files).forEach(function (f, i) {
-        if (i !== index) newDT.items.add(f);
-      });
-      dt = newDT;
-      syncInputFromDT();
-      rebuildPreviewFromDT();
-    }
-
-    function setCover(index) {
-      index = clampIndex(index);
-      // mover ese archivo a la posición 0 en dt
-      if (index === 0) {
-        markCover(0);
-        return;
-      }
-      var files = Array.from(dt.files);
-      var chosen = files[index];
-      files.splice(index, 1);
-      files.unshift(chosen);
-
-      var newDT = new DataTransfer();
-      files.forEach(f => newDT.items.add(f));
-      dt = newDT;
-      syncInputFromDT();
-      rebuildPreviewFromDT();
-      markCover(0);
-    }
-
-    // Eventos de clic/dblclick en el contenedor (delegación)
-    $preview.addEventListener('click', function (e) {
-      var thumb = e.target.closest('.thumb');
-      if (!thumb) return;
-      var idx = Array.from($preview.children).indexOf(thumb);
-      if (idx < 0) return;
-      // clic → portada
-      setCover(idx);
+    $preview.__sortable = new Sortable($preview, {
+      animation: 150,
+      draggable: '.thumb',
+      onEnd: syncDTfromDOM
     });
+  } else {
+    console.error('Sortable no está definido. Por favor, importá la librería.');
+  }
+}
 
-    $preview.addEventListener('dblclick', function (e) {
-      var thumb = e.target.closest('.thumb');
-      if (!thumb) return;
-      var idx = Array.from($preview.children).indexOf(thumb);
-      if (idx < 0) return;
-      // doble-clic → eliminar
-      removeAt(idx);
-    });
+// ✅ Diferenciar CLICK vs DBLCLICK
+let clickTimer = null;
+const SINGLE_CLICK_DELAY = 220; // ms
 
-    // Cuando el usuario selecciona archivos
-    inputImagen.addEventListener('change', function (e) {
-      // si vuelve a abrir el diálogo, agrego a dt (no reemplazo)
-      var seleccion = Array.from(e.target.files || []);
-      if (seleccion.length === 0 && dt.files.length === 0) return;
+$preview.addEventListener('click', function (e) {
+  const thumb = e.target.closest('.thumb');
+  if (!thumb) return;
 
-      // si querés que reemplace en lugar de agregar, descomentá:
-      // dt = new DataTransfer();
+  // Si se va a producir un doble-click, este timer será cancelado abajo
+  if (clickTimer) clearTimeout(clickTimer);
+  clickTimer = setTimeout(function () {
+    const idx = Array.from($preview.children).indexOf(thumb);
+    if (idx < 0) return;
+    setCover(idx);          // ⟵ solo click: marcar portada
+    clickTimer = null;
+  }, SINGLE_CLICK_DELAY);
+});
 
-      seleccion.forEach(f => dt.items.add(f));
-      syncInputFromDT();
+$preview.addEventListener('dblclick', function (e) {
+  const thumb = e.target.closest('.thumb');
+  if (!thumb) return;
 
-      // si no hay portada previa, por defecto la primera
-      if (dt.files.length > 0 && (isNaN(parseInt($portadaHidden.value, 10)) || parseInt($portadaHidden.value, 10) < 0)) {
-        $portadaHidden.value = '0';
-      }
+  // Cancelar el click simple pendiente
+  if (clickTimer) {
+    clearTimeout(clickTimer);
+    clickTimer = null;
+  }
 
-      rebuildPreviewFromDT();
-      // asegurar portada al primer elemento
-      markCover(0);
-    });
+  const idx = Array.from($preview.children).indexOf(thumb);
+  if (idx < 0) return;
+
+  // ⟵ doble-click: eliminar
+  removeAt(idx);
+});
   })();
 
   /* ================================
