@@ -1266,26 +1266,43 @@ actualizarMarca : function(id, nombre, callback) {
 eliminarMarca : function(id, callback) {
   pool.query('DELETE FROM marcas WHERE id=?', [id], callback);
 },
-// modelos: admite filtro por marca_id (opcional)
 listarModelos : function(marcaId, callback) {
   let sql = `
-    SELECT m.id, m.nombre, m.marca_id, ma.nombre AS marca
+    SELECT 
+      m.id, 
+      m.nombre, 
+      m.id_marca AS marca_id,     -- 👈 alias para que el front siga recibiendo "marca_id"
+      ma.nombre AS marca
     FROM modelos m
-    JOIN marcas ma ON ma.id = m.marca_id
+    JOIN marcas ma ON ma.id = m.id_marca
   `;
   const params = [];
-  if (marcaId) { sql += ' WHERE m.marca_id = ?'; params.push(marcaId); }
+  if (marcaId) { 
+    sql += ' WHERE m.id_marca = ?';  // 👈 filtro correcto
+    params.push(marcaId); 
+  }
   sql += ' ORDER BY ma.nombre ASC, m.nombre ASC';
   pool.query(sql, params, callback);
 },
+
 crearModelo : function({ nombre, marca_id }, callback) {
-  pool.query('INSERT INTO modelos (nombre, marca_id) VALUES (?, ?)', [nombre, marca_id], callback);
+  // 👇 grabamos en la columna real de la tabla: id_marca
+  pool.query(
+    'INSERT INTO modelos (nombre, id_marca) VALUES (?, ?)',
+    [nombre, marca_id],
+    callback
+  );
 },
 actualizarModelo : function(id, { nombre, marca_id }, callback) {
-  pool.query('UPDATE modelos SET nombre=?, marca_id=? WHERE id=?', [nombre, marca_id, id], callback);
+  // 👇 actualizamos la columna real: id_marca
+  pool.query(
+    'UPDATE modelos SET nombre = ?, id_marca = ? WHERE id = ?',
+    [nombre, marca_id, id],
+    callback
+  );
 },
 eliminarModelo : function(id, callback) {
-  pool.query('DELETE FROM modelos WHERE id=?', [id], callback);
+  pool.query('DELETE FROM modelos WHERE id = ?', [id], callback);
 },
 
 
