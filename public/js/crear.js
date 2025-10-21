@@ -92,6 +92,26 @@ if (!window.__CREAR_INIT__) {
       if (e.keyCode===13) e.preventDefault();
     });
 
+    function toNumber(v){ var n=parseFloat((v||'').toString().replace(',','.')); return isNaN(n)?0:n; }
+
+    function asegurarHidden($wrap, cls, name, defVal) {
+      var $el = $wrap.find('.' + cls);
+      if ($el.length === 0) {
+        $el = $('<input>', { type: 'hidden', class: cls, name: name, value: defVal });
+        $wrap.append($el);
+      }
+      return $el;
+    }
+
+    // === NUEVO: factor por presentación (unidad/juego) ===
+    function getFactor($wrap){
+      // Si existe select .presentacion (EJS), lo usamos; si no, por compatibilidad asumimos 1
+      var presSel = $wrap.find('.presentacion');
+      var pres = presSel.length ? (presSel.val()||'unidad').toLowerCase() : 'unidad';
+      if (pres === 'juego') return 0.5; // par → mitad por unidad
+      return 1; // unidad (o futuros tipos si los agregás: caja x10 → 0.1, etc.)
+    }
+
     // Agregar proveedor
     $(document).off('click.addProv','#addProveedor').on('click.addProv','#addProveedor',function(e){
       e.preventDefault(); e.stopImmediatePropagation();
@@ -107,12 +127,22 @@ if (!window.__CREAR_INIT__) {
       $nuevo.find('[id]').removeAttr('id');
       $nuevo.find('label[for]').removeAttr('for');
 
+      // Asegurar hidden de factor_unidad en el clon
+      asegurarHidden($nuevo,'factor_unidad','factor_unidad[]',1);
+
       $nuevo.insertBefore('#addProveedor');
 
       // Inicializa cálculos del bloque nuevo
       $nuevo.find('.proveedores').trigger('change');
       $nuevo.find('.precio_lista').trigger('input');
       $nuevo.find('select.IVA').trigger('change');
+
+      // Si tiene select .presentacion, forzamos el valor por defecto (Unidad) y sincronizamos factor
+      var $pres=$nuevo.find('.presentacion');
+      if ($pres.length){
+        $pres.val('unidad');
+        $nuevo.find('.factor_unidad').val(1);
+      }
 
       actualizarProveedorAsignado();
       actualizarPrecioFinal();
@@ -121,6 +151,7 @@ if (!window.__CREAR_INIT__) {
     /* =======================================
        DELEGACIÓN DE EVENTOS
     ======================================== */
+    // Proveedor seleccionado
     $(document)
       .off('change.provSel', '.proveedores')
       .on('change.provSel', '.proveedores', function () {
@@ -129,21 +160,38 @@ if (!window.__CREAR_INIT__) {
         $wrap.find('.precio_lista').trigger('input'); // recalcula neto y luego con IVA
       });
 
+    // Precio de lista cambia → recalcular neto
     $(document)
       .off('input change.precioLista', '.precio_lista')
       .on('input change.precioLista', '.precio_lista', function () {
         actualizarPrecio($(this)); // calcula costo_neto visible
       });
 
+    // Costo neto / IVA cambia → recalcular con IVA, asignar proveedor y PV
     $(document)
       .off('input change.costos', '.costo_neto, select.IVA')
       .on('input change.costos', '.costo_neto, select.IVA', function () {
         var $wrap = $(this).closest('.proveedor');
-        recalcularConIVA($wrap);  // usa costo_neto visible + iva del select
+        recalcularConIVA($wrap);
         actualizarProveedorAsignado();
         actualizarPrecioFinal();
       });
 
+    // === NUEVO: Presentación cambia → sincroniza factor y recálculos
+    $(document)
+      .off('change.presentacion', '.presentacion')
+      .on('change.presentacion', '.presentacion', function () {
+        var $wrap = $(this).closest('.proveedor');
+        var factor = getFactor($wrap);
+        asegurarHidden($wrap,'factor_unidad','factor_unidad[]',factor).val(factor);
+        // Recalcular cadena completa
+        $wrap.find('.precio_lista').trigger('input'); // recalcula neto
+        $wrap.find('select.IVA').trigger('change');   // recalcula con IVA
+        actualizarProveedorAsignado();
+        actualizarPrecioFinal();
+      });
+
+    // Utilidad global
     $('#utilidad').off('input change.util').on('input change.util', function () {
       actualizarPrecioFinal();
     });
@@ -151,17 +199,6 @@ if (!window.__CREAR_INIT__) {
     /* ================================
        FUNCIONES DE CÁLCULO
     ================================= */
-    function toNumber(v){ var n=parseFloat((v||'').toString().replace(',','.')); return isNaN(n)?0:n; }
-
-    function asegurarHidden($wrap, cls, name, defVal) {
-      var $el = $wrap.find('.' + cls);
-      if ($el.length === 0) {
-        $el = $('<input>', { type: 'hidden', class: cls, name: name, value: defVal });
-        $wrap.append($el);
-      }
-      return $el;
-    }
-
     function actualizarProveedor($select){
       var $wrap=$select.closest('.proveedor');
       var $opt=$select.find('option:selected');
@@ -198,24 +235,32 @@ if (!window.__CREAR_INIT__) {
 
       console.log('[CREAR][NETO] PL=',pl,'desc=',desc,'→ neto=', $costoNetoVis.val());
 
-      // luego, costo con IVA
+      // luego, costo con IVA (aplicará factor_unidad)
       recalcularConIVA($wrap);
     }
 
-    // ⟶ COSTO con IVA (visible + hidden)
+    // ⟶ COSTO con IVA (visible + hidden), normalizado a UNIDAD
     function recalcularConIVA($wrap){
-      var cn  = toNumber($wrap.find('.costo_neto').val());  // visible
+      var cn  = toNumber($wrap.find('.costo_neto').val());  // visible (neto sin IVA)
       var iva = toNumber($wrap.find('select.IVA').val());   // select
       if (!iva) iva = 21;
+
+      // factor según presentación
+      var factor = getFactor($wrap);
+      asegurarHidden($wrap,'factor_unidad','factor_unidad[]',factor).val(factor);
+
+      // normalización a unidad: si "juego", mitad; si "unidad", igual
+      var cnUnidad = cn * factor;
 
       var $costoIVAHidden = asegurarHidden($wrap,'costo_iva','costo_iva[]',0); // hidden que viaja
       var $costoIVAvis    = $wrap.find('.costo_iva_vis');                      // visible (readonly)
 
-      var cIVA = Math.ceil(cn + (cn * iva / 100));
+      // IVA aplicado sobre el costo por UNIDAD
+      var cIVA = Math.ceil(cnUnidad + (cnUnidad * iva / 100));
       $costoIVAHidden.val(cIVA);
       if ($costoIVAvis.length) $costoIVAvis.val(cIVA);
 
-      console.log('[CREAR][IVA] neto=',cn,'iva=',iva,'→ c/IVA=',cIVA);
+      console.log('[CREAR][IVA] neto=',cn,'factor',factor,'→ netoUnidad=',cnUnidad,'iva=',iva,'→ c/IVA=',cIVA);
     }
 
     /* =======================================
@@ -224,7 +269,7 @@ if (!window.__CREAR_INIT__) {
     function getProveedorConCostoIvaMasBajo(){
       var $g=null, min=Infinity;
       $('.proveedor').each(function(){
-        var v=toNumber($(this).find('.costo_iva').val()); // hidden enviado
+        var v=toNumber($(this).find('.costo_iva').val()); // hidden enviado (ya normalizado a unidad)
         if(!isNaN(v) && v<min){ min=v; $g=$(this); }
       });
       return $g;
@@ -250,6 +295,13 @@ if (!window.__CREAR_INIT__) {
 
     // Disparos iniciales
     $(function(){
+      // Asegurar que cada bloque proveedor tenga su hidden de factor_unidad
+      $('.proveedor').each(function(){
+        var $wrap=$(this);
+        var factor = getFactor($wrap); // si no hay select, será 1
+        asegurarHidden($wrap,'factor_unidad','factor_unidad[]',factor).val(factor);
+      });
+
       $('.proveedores').first().trigger('change');
       $('.precio_lista').first().trigger('input');
       $('select.IVA').first().trigger('change');

@@ -82,21 +82,24 @@ function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosList
   }
   return filas;
 }
-
 async function upsertProductoProveedorRaw(con, row) {
   const sql = `
     INSERT INTO producto_proveedor
-      (producto_id, proveedor_id, precio_lista, codigo)
-    VALUES (?, ?, ?, ?)
+      (producto_id, proveedor_id, precio_lista, codigo, presentacion, factor_unidad)
+    VALUES (?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
-      precio_lista = VALUES(precio_lista),
-      codigo      = VALUES(codigo)
+      precio_lista  = VALUES(precio_lista),
+      codigo        = VALUES(codigo),
+      presentacion  = VALUES(presentacion),
+      factor_unidad = VALUES(factor_unidad)
   `;
   const params = [
     Number(row.producto_id),
     Number(row.proveedor_id),
     Number(row.precio_lista) || 0,
-    row.codigo || null
+    row.codigo || null,
+    normalizarPresentacion(row.presentacion),
+    Number(row.factor_unidad) || 1
   ];
 
   if (con.promise && typeof con.promise === 'function') {
@@ -128,41 +131,59 @@ function pickCheapestProveedorId(body) {
   return ganador || 0;
 }
 
-// ==============================
-// Filas completas producto_proveedor (GUARDA TODO)
-// Alinear índices de los arrays del form y normalizar tipos
-// ==============================
 function buildProveedorRows(productoId, body) {
-  const provIds   = toArray(body.proveedores);              // proveedor_id[]
-  const codigos   = toArray(body.codigo);                   // codigo[]
-  const plistas   = toArray(body.precio_lista);             // precio_lista[]
-  const descs     = toArray(body.descuentos_proveedor_id);  // descuento[] (%)
-  const cnnetos   = toArray(body.costo_neto);               // costo_neto[]
-  const ivas      = toArray(body.IVA);                      // IVA[] (21 / 10.5)
-  const civas     = toArray(body.costo_iva);                // costo_iva[]
+  const provIds     = toArray(body.proveedores);              // proveedor_id[]
+  const codigos     = toArray(body.codigo);                   // codigo[]
+  const plistas     = toArray(body.precio_lista);             // precio_lista[]
+  const descs       = toArray(body.descuentos_proveedor_id);  // descuento[] (%)
+  const cnnetos     = toArray(body.costo_neto);               // costo_neto[]
+  const ivas        = toArray(body.IVA);                      // IVA[] (21 / 10.5)
+  const civas       = toArray(body.costo_iva);                // costo_iva[]
+  const presentacs  = toArray(body.presentacion);             // presentacion[]: unidad/juego
+  const factores    = toArray(body.factor_unidad);            // factor_unidad[] (hidden)
 
   const filas = [];
   const len = Math.max(
     provIds.length, codigos.length, plistas.length,
-    descs.length, cnnetos.length, ivas.length, civas.length
+    descs.length, cnnetos.length, ivas.length, civas.length,
+    presentacs.length, factores.length
   );
 
   for (let i = 0; i < len; i++) {
     const proveedor_id = numInt(provIds[i]);
     if (!proveedor_id) continue;
 
+    const presentacion = normalizarPresentacion(presentacs[i]);
+    const factor_unidad = factorDesdePresentacion(presentacion, factores[i]);
+
     filas.push({
-      producto_id: Number(productoId),
+      producto_id : Number(productoId),
       proveedor_id,
-      codigo: strOrNull(codigos[i]) || '',
+      codigo      : strOrNull(codigos[i]) || '',
       precio_lista: numF(plistas[i]),
-      descuento: numF(descs[i]),     // %
-      costo_neto: numF(cnnetos[i]),
-      iva: numF(ivas[i]),            // 21 o 10.5
-      costo_iva: numF(civas[i])
+      descuento   : numF(descs[i]),     // %
+      costo_neto  : numF(cnnetos[i]),
+      iva         : numF(ivas[i]),      // 21 o 10.5
+      costo_iva   : numF(civas[i]),     // ya viene normalizado por el front
+      presentacion,
+      factor_unidad
     });
   }
   return filas;
+}
+
+// Presentación normalizada
+function normalizarPresentacion(v) {
+  const s = (v ?? 'unidad').toString().trim().toLowerCase();
+  return s === 'juego' ? 'juego' : 'unidad';
+}
+
+// Si viene factor en el form lo usamos; si no, derivamos por presentación
+function factorDesdePresentacion(presentacion, factorFormulario) {
+  const f = parseFloat(factorFormulario);
+  if (!isNaN(f) && f > 0) return f;      // respeta el hidden que envía el front
+  return presentacion === 'juego' ? 0.5   // juego/par → mitad
+                                  : 1.0;  // unidad
 }
 
 
@@ -648,8 +669,6 @@ lista: async function (req, res) {
   }
 },
 guardar: async function (req, res) {
-  console.log("===== Inicio del controlador guardar =====");
-
   try {
     // 1) Insertar PRODUCTO (escalares)
     const datosProducto = {
@@ -667,68 +686,65 @@ guardar: async function (req, res) {
       calidad_original: req.body.calidad_original ? 1 : 0,
       calidad_vic: req.body.calidad_vic ? 1 : 0
     };
-    console.log("[GUARDAR] datosProducto:", datosProducto);
-
     const ins = await producto.insertarProducto(conexion, datosProducto);
     const productoId = ins && ins.insertId;
-    console.log("[GUARDAR] productoId:", productoId);
     if (!productoId) throw new Error('No se obtuvo insertId al crear el producto');
 
-    // 2) Proveedores → UPSERT (solo columnas reales)
+    // 2) Proveedores → UPSERT (incluye presentacion + factor_unidad)
     const filas = buildProveedorRows(productoId, req.body);
-    console.log("[GUARDAR] filas producto_proveedor:", filas.length, filas[0] || '(sin filas)');
 
     for (let i = 0; i < filas.length; i++) {
       const row = filas[i];
       const sql = `
         INSERT INTO producto_proveedor
-          (producto_id, proveedor_id, precio_lista, codigo)
-        VALUES (?, ?, ?, ?)
+          (producto_id, proveedor_id, precio_lista, codigo, presentacion, factor_unidad)
+        VALUES (?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
-          precio_lista = VALUES(precio_lista),
-          codigo      = VALUES(codigo)
+          precio_lista  = VALUES(precio_lista),
+          codigo        = VALUES(codigo),
+          presentacion  = VALUES(presentacion),
+          factor_unidad = VALUES(factor_unidad)
       `;
-      const params = [row.producto_id, row.proveedor_id, row.precio_lista, row.codigo];
-      console.log(`[GUARDAR] UPSERT fila ${i}:`, params);
+      const params = [
+        row.producto_id,
+        row.proveedor_id,
+        row.precio_lista,
+        row.codigo,
+        row.presentacion,
+        row.factor_unidad
+      ];
       await conexion.promise().query(sql, params);
     }
 
-    // 3) Proveedor asignado: prioridad manual; si no hay, más barato por costo_iva[]
+    // 3) Proveedor asignado: prioridad manual; si no hay, más barato (normalizado a unidad)
     let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
-    console.log("[GUARDAR] proveedor_designado recibido:", req.body.proveedor_designado, "→", proveedorAsignado);
     if (!proveedorAsignado) {
-      proveedorAsignado = pickCheapestProveedorId(req.body);
-      console.log("[GUARDAR] proveedor más barato por costo_iva[]:", proveedorAsignado);
+      proveedorAsignado = pickCheapestProveedorIdServer(req.body);
     }
 
     if (proveedorAsignado) {
       await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
-      console.log("[GUARDAR] productos.proveedor_id actualizado a:", proveedorAsignado);
     }
 
-    // 4) Imágenes nuevas (si llegan)
-   // Dentro del try/catch del controlador guardar, después de obtener productoId:
-if (req.files && req.files.length > 0) {
-  console.log("[GUARDAR] Cant. imágenes:", req.files.length);
-  await Promise.all(
-    req.files.map(f =>
-      producto.insertarImagenProducto(conexion, {
-        producto_id: productoId,
-        imagen: f.filename,
-        // posicion: si querés, podés enviar i+1
-      })
-    )
-  );
-}
-    console.log("===== Fin guardar (OK) =====");
+    // 4) Imágenes (igual que ya tenías)
+    if (req.files && req.files.length > 0) {
+      await Promise.all(
+        req.files.map(f =>
+          producto.insertarImagenProducto(conexion, {
+            producto_id: productoId,
+            imagen: f.filename
+            // posicion: si querés, podés enviar i+1
+          })
+        )
+      );
+    }
+
     return res.redirect("/productos/panelControl");
   } catch (error) {
-    console.error("===== Error durante la ejecución en guardar =====");
-    console.error(error);
+    console.error('[CREAR][GUARDAR] Error:', error);
     return res.status(500).send("Error: " + error.message);
   }
 },
-
     eliminarSeleccionados : async (req, res) => { 
         const { ids } = req.body;
         try {

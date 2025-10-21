@@ -176,6 +176,18 @@
   <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
 </div>
 
+<!-- Presentación de precio del proveedor -->
+<div class="form-group-crear">
+  <label for="presentacion">Presentación del precio</label>
+  <select class="presentacion form-control" name="presentacion[]">
+    <option value="unidad" selected>Unidad</option>
+    <option value="juego">Juego (par)</option>
+  </select>
+  <!-- viaja al backend y se recalcula en tiempo real -->
+  <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="1">
+  <div class="hint">Se normaliza para comparar por unidad. Si es "juego", toma la mitad.</div>
+</div>
+
 <!-- 👇 SOLO UNO: este es el que se muestra y viaja -->
 <div class="form-group-crear">
   <label for="costo_neto">Precio de costo (Neto):</label>
