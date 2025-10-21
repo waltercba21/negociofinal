@@ -950,16 +950,96 @@ actualizar: async function (req, res) {
     await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado || null, IVA: ivaProducto });
     console.log('[ACTUALIZAR] productos.proveedor_id =', proveedorAsignado, ' | productos.IVA =', ivaProducto);
 
-    // 5) Imágenes nuevas (si hay)
-    if (req.files && req.files.length > 0) {
-      console.log("[ACTUALIZAR] Cant. imágenes nuevas:", req.files.length);
-      await Promise.all(
-        req.files.map(f => producto.insertarImagenProducto(conexion, {
-          producto_id: productoId,
-          imagen: f.filename
-        }))
+    // 5) Imágenes: eliminar, ordenar, portada e insertar nuevas  ✅ SIEMPRE SE EJECUTA
+{
+  const path = require('path');
+  const fs   = require('fs');
+
+  // 5.a) ELIMINAR imágenes existentes marcadas
+  const aEliminarImgs = toArray(req.body.eliminar_imagenes).map(numInt).filter(Boolean);
+  if (aEliminarImgs.length) {
+    try {
+      const [rows] = await conexion.promise().query(
+        'SELECT imagen FROM producto_imagenes WHERE id IN (?) AND producto_id=?',
+        [aEliminarImgs, productoId]
+      );
+      (rows || []).forEach(r => {
+        try { fs.unlinkSync(path.join(__dirname, '..', 'public', r.imagen)); } catch (_) {}
+      });
+    } catch (_) {}
+
+    await conexion.promise().query(
+      'DELETE FROM producto_imagenes WHERE id IN (?) AND producto_id=?',
+      [aEliminarImgs, productoId]
+    );
+  }
+
+  // 5.b) ORDENAR imágenes existentes (si viene el orden)
+  const ordenExistentes = toArray(req.body.orden_imagenes_existentes).map(numInt).filter(Boolean);
+  if (ordenExistentes.length) {
+    const updates = [];
+    let pos = 1;
+    for (const imgId of ordenExistentes) {
+      updates.push(conexion.promise().query(
+        'UPDATE producto_imagenes SET posicion=? WHERE id=? AND producto_id=?',
+        [pos++, imgId, productoId]
+      ));
+    }
+    await Promise.all(updates);
+  }
+
+  // 5.c) INSERTAR imágenes nuevas (solo si hay archivos)
+  let nuevasIds = [];
+  if (req.files && req.files.length > 0) {
+    for (const f of req.files) {
+      const r = await producto.insertarImagenProducto(conexion, {
+        producto_id: productoId,
+        imagen: f.filename
+        // posicion: (ordenExistentes.length + nuevasIds.length + 1) // si usás columna
+      });
+      const insertId = r?.insertId || (Array.isArray(r) && r[0]?.insertId) || null;
+      if (insertId) nuevasIds.push(insertId);
+    }
+  }
+
+  // 5.d) PORTADA (debe correrse SIEMPRE, haya o no archivos nuevos)
+  const portadaTipo        = (req.body.portada_tipo || 'existente').trim();
+  const portadaExistenteId = numInt(req.body.portada_existente_id);
+  const portadaNuevaIndex  = numInt(req.body.portada_nueva_index); // 0 si la movimos al frente
+
+  try {
+    await conexion.promise().query(
+      'UPDATE producto_imagenes SET portada=0 WHERE producto_id=?',
+      [productoId]
+    );
+
+    if (portadaTipo === 'existente' && portadaExistenteId) {
+      await conexion.promise().query(
+        'UPDATE producto_imagenes SET portada=1 WHERE id=? AND producto_id=?',
+        [portadaExistenteId, productoId]
+      );
+    } else if (portadaTipo === 'nueva' && nuevasIds.length > 0) {
+      const nuevaCoverId = nuevasIds[Math.max(0, Math.min(portadaNuevaIndex, nuevasIds.length - 1))] || nuevasIds[0];
+      await conexion.promise().query(
+        'UPDATE producto_imagenes SET portada=1 WHERE id=? AND producto_id=?',
+        [nuevaCoverId, productoId]
+      );
+    } else {
+      // Fallback: si no vino nada, deja portada la primera por posición/id
+      await conexion.promise().query(
+        `UPDATE producto_imagenes 
+           SET portada=1 
+         WHERE producto_id=? 
+         ORDER BY COALESCE(posicion, id) ASC 
+         LIMIT 1`,
+        [productoId]
       );
     }
+  } catch (e) {
+    console.warn('[ACTUALIZAR] Portada/orden no aplicado (¿faltan columnas?)', e.message);
+  }
+}
+
 
     // Redirección
     const pagina = req.body.pagina || 1;
