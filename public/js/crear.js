@@ -298,15 +298,16 @@ $(document)
     var pres = ($(this).val() || 'unidad').toLowerCase();
     var factor = (pres === 'juego') ? 0.5 : 1;
 
-    // sincronicemos todo lo necesario
     asegurarHidden($wrap, 'factor_unidad', 'factor_unidad[]', factor).val(factor);
     asegurarVisibleCostoIVA($wrap);
 
-    // 🔁 recalcular AHORA y actualizar todo lo derivado
+    // recalcular YA, y luego proveedor asignado + PV
     recalcularConIVA($wrap);
     actualizarProveedorAsignado();
     actualizarPrecioFinal();
   });
+
+
 $(function(){
   $('.proveedor').each(function(){
     var $w = $(this);
@@ -361,22 +362,5 @@ function actualizarPrecioFinal(){
 
   $('#precio_venta').val(precioFinal);
 }
-
-
-    // Disparos iniciales
-    $(function(){
-      // Asegurar que cada bloque proveedor tenga su hidden de factor_unidad
-      $('.proveedor').each(function(){
-        var $wrap=$(this);
-        var factor = getFactor($wrap); // si no hay select, será 1
-        asegurarHidden($wrap,'factor_unidad','factor_unidad[]',factor).val(factor);
-      });
-
-      $('.proveedores').first().trigger('change');
-      $('.precio_lista').first().trigger('input');
-      $('select.IVA').first().trigger('change');
-      actualizarProveedorAsignado();
-      actualizarPrecioFinal();
-    });
-  } // jQuery
+  } 
 }
