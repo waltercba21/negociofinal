@@ -238,41 +238,35 @@ if (!window.__CREAR_INIT__) {
       // luego, costo con IVA (aplicará factor_unidad)
       recalcularConIVA($wrap);
     }
-
 function recalcularConIVA($wrap){
-  var cn  = toNumber($wrap.find('.costo_neto').val());  // neto sin IVA (del proveedor)
-  var iva = toNumber($wrap.find('select.IVA').val());
+  // Neto que sale de PL - %desc (lo interpretamos como precio del PAR/juego)
+  var cn_par  = toNumber($wrap.find('.costo_neto').val()); 
+  var iva     = toNumber($wrap.find('select.IVA').val());
   if (!iva) iva = 21;
 
+  // Cálculos base (sin redondeos raros intermedios)
+  var cIVA_par  = Math.ceil(cn_par * (1 + iva / 100));           // precio del JUEGO con IVA
+  var cIVA_unit = Math.ceil((cn_par * 0.5) * (1 + iva / 100));    // precio por UNIDAD con IVA
+
+  // Presentación pedida por el admin para ESTE proveedor
   var pres = ($wrap.find('.presentacion').val() || 'unidad').toLowerCase();
-  var factor = (pres === 'juego') ? 0.5 : 1; // ⟶ normalizamos a UNIDAD para la lógica interna
 
-  // 1) Costo por UNIDAD (normalizado)
-  var cnUnidad = cn * factor;
-
-  // 2) c/IVA por UNIDAD (este viaja oculto y se usa para comparar proveedores)
-  var cIVA_unit = Math.ceil(cnUnidad + (cnUnidad * iva / 100));
-
-  // 3) c/IVA VISIBLE según presentación del proveedor
-  //    - si el proveedor vende por JUEGO (par), el admin quiere ver el JUEGO completo
-  //    - si vende por UNIDAD, muestra la UNIDAD
-  var cIVA_visible = (pres === 'juego')
-    ? Math.ceil(cIVA_unit * 2) // mostrar el PAR
-    : cIVA_unit;               // mostrar la UNIDAD
-
-  // Hidden que viaja (normalizado a UNIDAD)
+  // 🔒 Hidden normalizado a UNIDAD: siempre lo guardamos por unidad para comparar proveedores
   var $costoIVAHidden = asegurarHidden($wrap,'costo_iva','costo_iva[]',0);
   $costoIVAHidden.val(cIVA_unit);
 
-  // Visible para el admin
+  // 👀 Visible según lo que seleccionó el admin
   var $costoIVAvis = $wrap.find('.costo_iva_vis');
+  var cIVA_visible = (pres === 'juego') ? cIVA_par : cIVA_unit;
   if ($costoIVAvis.length) $costoIVAvis.val(cIVA_visible);
 
-  // Guardamos también el factor_unidad por si el usuario no tocó el select
+  // Guardamos también el factor_unidad por coherencia backend (unidad=0.5 del par)
+  var factor = 0.5; // porque normalizamos SIEMPRE a UNIDAD desde el PAR
   asegurarHidden($wrap,'factor_unidad','factor_unidad[]',factor).val(factor);
 
-  console.log('[CREAR][IVA] pres=',pres,'neto=',cn,'→ unidad=',cnUnidad,'iva=',iva,'→ cIVA_unit=',cIVA_unit,'| visible=',cIVA_visible);
+  console.log('[CREAR][IVA] cn_par=',cn_par,'iva=',iva,'→ par=',cIVA_par,'unit=',cIVA_unit,'pres=',pres,'visible=',cIVA_visible);
 }
+
 
 
     /* =======================================
