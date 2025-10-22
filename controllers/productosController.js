@@ -866,22 +866,10 @@ editar: function(req, res) {
     }
   });
 },
-
 actualizar: async function (req, res) {
-  console.log("===== Inicio del controlador actualizar =====");
   try {
     const productoId = numInt(req.params.id || req.body.id);
     if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
-
-    // --- LOG de lo que llega del form (clave para diagnosticar) ---
-    console.log('[ACTUALIZAR][INPUT] proveedores   =', toArray(req.body.proveedores));
-    console.log('[ACTUALIZAR][INPUT] IVA[]        =', toArray(req.body.IVA));
-    console.log('[ACTUALIZAR][INPUT] IVA_producto =', req.body.IVA_producto);
-    console.log('[ACTUALIZAR][INPUT] costo_iva[]  =', toArray(req.body.costo_iva));
-    console.log('[ACTUALIZAR][INPUT] precio_lista[] =', toArray(req.body.precio_lista));
-    console.log('[ACTUALIZAR][INPUT] codigo[]     =', toArray(req.body.codigo));
-    console.log('[ACTUALIZAR][INPUT] proveedor_designado (hidden)=', req.body.proveedor_designado);
-
     // 1) Datos escalares del producto (SIN tocar IVA todavía)
     const datosProducto = {
       id               : productoId,
@@ -898,66 +886,92 @@ actualizar: async function (req, res) {
       oferta           : Number(req.body.oferta) === 1 ? 1 : 0,
       calidad_original : req.body.calidad_original ? 1 : 0,
       calidad_vic      : req.body.calidad_vic ? 1 : 0
-      // ⚠️ No seteamos IVA acá: se hace más abajo según proveedor designado/hidden
     };
-    console.log('[ACTUALIZAR] datosProducto (sin IVA aún)=', datosProducto);
     await producto.actualizar(conexion, datosProducto);
 
     // 2) Eliminar proveedores marcados (si vinieron)
     const aEliminarProv = toArray(req.body.eliminar_proveedores).map(numInt).filter(Boolean);
-    console.log('[ACTUALIZAR] eliminar_proveedores[] =', aEliminarProv);
     if (aEliminarProv.length){
       const sqlDel = `
         DELETE FROM producto_proveedor
         WHERE producto_id = ? AND proveedor_id IN (${aEliminarProv.map(()=>'?').join(',')})
       `;
-      console.log('[ACTUALIZAR][SQL] DELETE producto_proveedor', { sql: sqlDel, params: [productoId, ...aEliminarProv] });
       await conexion.promise().query(sqlDel, [productoId, ...aEliminarProv]);
     }
 
-    // 3) UPSERT de producto_proveedor (precio_lista / codigo / iva POR PROVEEDOR)
-    const provIds = toArray(req.body.proveedores);
-    const codigos = toArray(req.body.codigo);
-    const plist   = toArray(req.body.precio_lista);
-    const arrIVA  = toArray(req.body.IVA); // <-- IVA por card/proveedor
+    // 3) UPSERT de producto_proveedor (INCLUYENDO presentacion, factor_unidad, costo_neto, descuento, costo_iva)
+    const provIds    = toArray(req.body.proveedores);
+    const codigos    = toArray(req.body.codigo);
+    const plist      = toArray(req.body.precio_lista);
+    const arrDesc    = toArray(req.body.descuentos_proveedor_id);   // % (desde el select o hidden)
+    const arrCNeto   = toArray(req.body.costo_neto);                // neto (sin IVA)
+    const arrIVA     = toArray(req.body.IVA);                       // 21 / 10.5
+    const arrPres    = toArray(req.body.presentacion);              // 'unidad' | 'juego'
+    const arrFactor  = toArray(req.body.factor_unidad);             // 1 | 0.5
+    const arrCIva    = toArray(req.body.costo_iva);                 // c/IVA por UNIDAD (normalizado por el front)
+
+    const normalizarPres = (v) => {
+      const s = (v ?? 'unidad').toString().trim().toLowerCase();
+      return s === 'juego' ? 'juego' : 'unidad';
+    };
+    const normalizarIVA = (v) => {
+      const n = Number(String(v ?? '').replace(',', '.'));
+      return Number.isFinite(n) && n > 0 ? n : 21;
+    };
+    const normalizarFactor = (pres, f) => {
+      const nf = Number(f);
+      if (Number.isFinite(nf) && nf > 0) return nf;
+      return pres === 'juego' ? 0.5 : 1;
+    };
 
     const sqlUpsert = `
       INSERT INTO producto_proveedor
-        (producto_id, proveedor_id, precio_lista, codigo, iva)
-      VALUES (?, ?, ?, ?, ?)
+        (producto_id, proveedor_id, precio_lista, codigo, iva, presentacion, factor_unidad, costo_neto, descuento, costo_iva)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
-        precio_lista = VALUES(precio_lista),
-        codigo       = VALUES(codigo),
-        iva          = VALUES(iva)
+        precio_lista  = VALUES(precio_lista),
+        codigo        = VALUES(codigo),
+        iva           = VALUES(iva),
+        presentacion  = VALUES(presentacion),
+        factor_unidad = VALUES(factor_unidad),
+        costo_neto    = VALUES(costo_neto),
+        descuento     = VALUES(descuento),
+        costo_iva     = VALUES(costo_iva)
     `;
 
-    const filas = Math.max(provIds.length, codigos.length, plist.length, arrIVA.length);
+    const filas = Math.max(
+      provIds.length, codigos.length, plist.length, arrDesc.length,
+      arrCNeto.length, arrIVA.length, arrPres.length, arrFactor.length, arrCIva.length
+    );
+
     for (let i = 0; i < filas; i++){
       const proveedor_id = numInt(provIds[i]);
       if (!proveedor_id) continue;
 
       const precio_lista = numOr0(plist[i]);
       const codigo       = (codigos[i] == null || String(codigos[i]).trim()==='') ? null : String(codigos[i]).trim();
-      const iva          = (function(v){
-        const n = Number(String(v ?? '').toString().replace(',', '.')); // tolerar "10,5"
-        return Number.isFinite(n) && n > 0 ? n : 21;
-      })(arrIVA[i]);
+      const descuento    = numOr0(arrDesc[i]); 
+      const costo_neto   = numOr0(arrCNeto[i]);
+      const iva          = normalizarIVA(arrIVA[i]);
+      const presentacion = normalizarPres(arrPres[i]);
+      const factor       = normalizarFactor(presentacion, arrFactor[i]);
+      const costo_iva    = numOr0(arrCIva[i]);  
 
-      const params = [ productoId, proveedor_id, precio_lista, codigo, iva ];
-      console.log(`[ACTUALIZAR][SQL] UPSERT fila ${i}:`, params);
+      const params = [
+        productoId, proveedor_id,
+        precio_lista, codigo, iva, presentacion, factor, costo_neto, descuento, costo_iva
+      ];
       await conexion.promise().query(sqlUpsert, params);
     }
 
     // 4) Determinar proveedor asignado y el IVA que se guarda en productos (referencia/fallback)
-    const arrCIva   = toArray(req.body.costo_iva);
     let proveedorAsignado = numInt(req.body.proveedor_designado) || 0;
-    console.log('[ACTUALIZAR] proveedor_designado (pre) =', proveedorAsignado);
 
     if (!proveedorAsignado) {
       let bestIdx = -1, best = Number.POSITIVE_INFINITY;
       for (let i=0;i<Math.max(provIds.length, arrCIva.length);i++){
         const pid = numInt(provIds[i]);
-        const ci  = numOr0(arrCIva[i]);
+        const ci  = numOr0(arrCIva[i]); // ya viene por UNIDAD
         if (pid && ci>0 && ci<best){ best=ci; bestIdx=i; proveedorAsignado=pid; }
       }
       if (!proveedorAsignado) {
@@ -966,39 +980,29 @@ actualizar: async function (req, res) {
           if (pid){ proveedorAsignado = pid; break; }
         }
       }
-      console.log('[ACTUALIZAR] proveedor_designado (auto)=', proveedorAsignado);
     }
 
-    // Priorizar el hidden "IVA_producto" sincronizado por el JS
     const ivaProductoHidden = numOr0(req.body.IVA_producto);
-    console.log('[ACTUALIZAR] IVA_producto (hidden)=', ivaProductoHidden);
-
     let ivaProducto = 21;
     if (ivaProductoHidden > 0) {
       ivaProducto = ivaProductoHidden;
-      console.log('[ACTUALIZAR] IVA elegido por hidden =', ivaProducto);
     } else if (proveedorAsignado) {
       let idx = provIds.findIndex(v => numInt(v) === proveedorAsignado);
       if (idx < 0) idx = 0;
       const ivaIdxRaw = arrIVA[idx] ?? 21;
       ivaProducto = Number(String(ivaIdxRaw).replace(',', '.')) || 21;
-      console.log('[ACTUALIZAR] IVA elegido por índice =', ivaProducto, '(idx=', idx, ')');
     } else {
       const iva0 = arrIVA[0] ?? 21;
       ivaProducto = Number(String(iva0).replace(',', '.')) || 21;
-      console.log('[ACTUALIZAR] IVA elegido default/primero =', ivaProducto);
     }
 
     await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado || null, IVA: ivaProducto });
-    console.log('[ACTUALIZAR] productos.proveedor_id =', proveedorAsignado, ' | productos.IVA =', ivaProducto);
-
-    // 5) IMÁGENES (tabla: imagenes_producto con columnas: id, producto_id, imagen, posicion)
+    // 5) IMÁGENES (igual a lo que ya tenías)
     {
       const path = require('path');
       const fs   = require('fs');
       const IMG_TABLE = 'imagenes_producto';
 
-      // 5.a) ELIMINAR imágenes existentes marcadas
       const aEliminarImgs = toArray(req.body.eliminar_imagenes).map(numInt).filter(Boolean);
       const delSet = new Set(aEliminarImgs);
       if (aEliminarImgs.length) {
@@ -1025,17 +1029,12 @@ actualizar: async function (req, res) {
           `DELETE FROM ${IMG_TABLE} WHERE id IN (${aEliminarImgs.map(()=>'?').join(',')}) AND producto_id=?`,
           [...aEliminarImgs, productoId]
         );
-        console.log('[ACTUALIZAR] Eliminadas imágenes:', aEliminarImgs);
       }
 
-      // 5.b) ORDEN de EXISTENTES que quedaron (según hidden del front)
-      //     ignoramos ids que fueron eliminados en este request
       let ordenExistentes = toArray(req.body.orden_imagenes_existentes).map(numInt).filter(Boolean).filter(id => !delSet.has(id));
 
-      // 5.c) INSERTAR imágenes nuevas en el orden que llegan (DT ya movió la portada nueva al frente)
       let nuevasIds = [];
       if (req.files && req.files.length > 0) {
-        console.log("[ACTUALIZAR] Cant. imágenes nuevas:", req.files.length);
         for (const f of req.files) {
           const r = await producto.insertarImagenProducto(conexion, {
             producto_id: productoId,
@@ -1046,31 +1045,23 @@ actualizar: async function (req, res) {
         }
       }
 
-      // 5.d) Construir ORDEN FINAL solo con 'posicion' (no hay columna portada)
       const portadaTipo        = (req.body.portada_tipo || 'existente').trim();
       const portadaExistenteId = numInt(req.body.portada_existente_id);
-      const portadaNuevaIndex  = numInt(req.body.portada_nueva_index); // 0 si la movimos al frente
+      const portadaNuevaIndex  = numInt(req.body.portada_nueva_index);
 
       let finalOrder = [];
-
       if (portadaTipo === 'existente' && portadaExistenteId) {
-        // portada existente adelante, luego el resto respetando orden
         const resto = ordenExistentes.filter(id => id !== portadaExistenteId);
         finalOrder = [portadaExistenteId, ...resto, ...nuevasIds];
       } else if (portadaTipo === 'nueva' && nuevasIds.length > 0) {
-        // primera NUEVA (índice 0) adelante, luego existentes en su orden, luego el resto de nuevas
         const portadaNuevaId = nuevasIds[Math.max(0, Math.min(portadaNuevaIndex, nuevasIds.length - 1))] || nuevasIds[0];
         const otrasNuevas = nuevasIds.filter(id => id !== portadaNuevaId);
         finalOrder = [portadaNuevaId, ...ordenExistentes, ...otrasNuevas];
       } else {
-        // sin info de portada: respetar orden existentes y luego todas las nuevas
         finalOrder = [...ordenExistentes, ...nuevasIds];
       }
 
-      // Si no quedó ninguna imagen (eliminaron todas), no hacemos updates de posicion
       if (finalOrder.length > 0) {
-        // 5.e) Asignar posiciones consecutivas empezando en 1
-        //     (si la fila no existe porque la eliminaron antes, el UPDATE no afectará filas)
         let pos = 1;
         for (const imgId of finalOrder) {
           await conexion.promise().query(
@@ -1083,15 +1074,10 @@ actualizar: async function (req, res) {
         console.log('[ACTUALIZAR] El producto quedó sin imágenes.');
       }
     }
-
-    // Redirección
     const pagina = req.body.pagina || 1;
     const busqueda = req.body.busqueda ? encodeURIComponent(req.body.busqueda) : '';
-    console.log("===== Fin actualizar (OK) =====");
     return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
   } catch (error) {
-    console.error("===== Error durante la ejecución en actualizar =====");
-    console.error(error);
     return res.status(500).send("Error: " + error.message);
   }
 },

@@ -1708,7 +1708,6 @@ obtenerDescuentosProveedor: function(conexion) {
       });
   });
 },
-// producto.js
 retornarDatosProveedores: function (conexion, producto_id) {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -1717,11 +1716,16 @@ retornarDatosProveedores: function (conexion, producto_id) {
         pp.proveedor_id,
         pp.precio_lista,
         pp.codigo,
-        pp.iva,                                 -- si tu tabla lo tiene
-        pr.nombre AS proveedor_nombre,
-        COALESCE(dp.descuento, 0) AS descuento
+        pp.iva,                                  -- IVA por proveedor (10.5 / 21)
+        COALESCE(pp.presentacion, 'unidad') AS presentacion,
+        COALESCE(pp.factor_unidad, 1.0)  AS factor_unidad,
+        COALESCE(pp.costo_neto, 0.00)    AS costo_neto,  -- neto SIN IVA (ya con descuento)
+        COALESCE(pp.costo_iva, 0.00)     AS costo_iva,   -- CON IVA por UNIDAD (normalizado)
+        -- Priorizar el descuento guardado en pp sobre el de la tabla de descuentos
+        COALESCE(pp.descuento, dp.descuento, 0.00) AS descuento,
+        pr.nombre AS proveedor_nombre
       FROM producto_proveedor pp
-      JOIN proveedores pr 
+      JOIN proveedores pr
         ON pr.id = pp.proveedor_id
       LEFT JOIN (
         SELECT proveedor_id, MAX(descuento) AS descuento
@@ -1730,7 +1734,7 @@ retornarDatosProveedores: function (conexion, producto_id) {
       ) dp
         ON dp.proveedor_id = pp.proveedor_id
       WHERE pp.producto_id = ?
-      ORDER BY pp.proveedor_id ASC
+      ORDER BY pr.nombre ASC, pp.proveedor_id ASC
     `;
     conexion.query(sql, [producto_id], (err, rows) => {
       if (err) return reject(err);
