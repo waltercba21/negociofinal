@@ -396,7 +396,7 @@ if (!window.__EDITAR_INIT__) {
       actualizarPrecioFinal();
       syncIVAProductoConAsignado();
     })
-    // 🔴 Handler clave: Presentación Unidad/Juego
+    // 🔴 Handler: Presentación Unidad/Juego
     .off('change.presentacion', '.presentacion')
     .on('change.presentacion', '.presentacion', function () {
       var $w = $(this).closest('.proveedor');
@@ -438,6 +438,110 @@ if (!window.__EDITAR_INIT__) {
       }
       $('#proveedorAsignado').text(nombre);
 
+      actualizarPrecioFinal();
+      syncIVAProductoConAsignado();
+    })
+    // +++ NUEVO: Agregar proveedor +++
+    .off('click.addProv', '#addProveedor')
+    .on('click.addProv', '#addProveedor', function () {
+      var $container = $('#proveedoresContainer');
+      // Tomamos el HTML de opciones del primer select de proveedores
+      var optsHTML = ($('.proveedores').first().html() || '<option value="">Selecciona proveedor...</option>');
+
+      // Construimos la card
+      var $card = $(`
+        <div class="proveedor" data-proveedor-id="">
+          <div class="form-group-crear">
+            <label class="radio-elige-proveedor">
+              <input type="radio" name="proveedor_designado_radio" class="proveedor-designado-radio" value="">
+              Usar este proveedor
+            </label>
+          </div>
+
+          <div class="form-group-crear">
+            <label class="label-proveedor">Proveedor <span class="nombre_proveedor"></span></label>
+            <select class="proveedores form-control" name="proveedores[]">
+              ${optsHTML}
+            </select>
+          </div>
+
+          <div class="form-group-crear">
+            <label class="label-codigo">Código</label>
+            <input class="codigo form-control" type="text" name="codigo[]" value="">
+          </div>
+
+          <div class="form-group-crear">
+            <label class="label-precio-lista">Precio de Lista</label>
+            <input class="precio_lista form-control" type="number" step="0.01" name="precio_lista[]" value="">
+          </div>
+
+          <div class="form-group-crear">
+            <label class="label-descuento">Descuento</label>
+            <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
+          </div>
+
+          <div class="form-group-crear">
+            <label>Precio de costo (Neto)</label>
+            <input class="costo_neto form-control" type="number" name="costo_neto[]" value="0" readonly>
+          </div>
+
+          <div class="form-group-crear">
+            <label>IVA</label>
+            <select class="IVA form-control" name="IVA[]">
+              <option value="21" selected>21%</option>
+              <option value="10.5">10,5%</option>
+            </select>
+          </div>
+
+          <div class="form-group-crear">
+            <label>Presentación del precio</label>
+            <select class="presentacion form-control" name="presentacion[]">
+              <option value="unidad" selected>Unidad</option>
+              <option value="juego">Juego (par)</option>
+            </select>
+            <small>Si es "juego", se divide a la mitad (por unidad) para comparar y calcular.</small>
+            <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="1">
+          </div>
+
+          <div class="form-group-crear campo-costo-iva">
+            <label>Costo con IVA (por unidad)</label>
+            <input class="costo_iva_vis form-control" type="number" step="0.01" value="" readonly>
+          </div>
+
+          <input class="costo_iva" type="hidden" name="costo_iva[]" value="0">
+
+          <div class="form-group-crear">
+            <button class="eliminar-proveedor btn btn-outline-danger" type="button">Eliminar proveedor</button>
+          </div>
+        </div>
+      `);
+
+      // Anexar y inicializar
+      $container.find('#addProveedor').closest('.form-group-crear').before($card);
+
+      // Setear proveedor a vacío y actualizar labels
+      var $sel = $card.find('.proveedores');
+      $sel.val($sel.find('option:first').val() || '');
+      actualizarProveedor($sel);
+
+      // Asegurar elementos auxiliares y calcular
+      ensurePresentacionSelect($card);
+      asegurarVisibleCostoIVA($card);
+
+      // Disparar cálculo (neto → IVA → normalización)
+      $card.find('.precio_lista').trigger('change');
+
+      // Recalcular proveedor asignado/IVA producto/PV si no hay selección manual
+      if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
+      actualizarPrecioFinal();
+      syncIVAProductoConAsignado();
+    })
+    // +++ NUEVO: Eliminar proveedor +++
+    .off('click.delProv', '.eliminar-proveedor')
+    .on('click.delProv', '.eliminar-proveedor', function () {
+      var $card = $(this).closest('.proveedor');
+      $card.remove();
+      if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
       actualizarPrecioFinal();
       syncIVAProductoConAsignado();
     });
