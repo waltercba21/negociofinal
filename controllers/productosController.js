@@ -867,10 +867,33 @@ editar: function(req, res) {
   });
 },
 actualizar: async function (req, res) {
+  console.log("===== Inicio del controlador actualizar =====");
   try {
     const productoId = numInt(req.params.id || req.body.id);
     if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
-    // 1) Datos escalares del producto (SIN tocar IVA todavía)
+
+    // ---------- LOG de entrada ----------
+    const provIds   = toArray(req.body.proveedores);            // definido arriba y reutilizado en toda la fn
+    const codigos   = toArray(req.body.codigo);
+    const plist     = toArray(req.body.precio_lista);
+    const arrIVA    = toArray(req.body.IVA);
+    const arrPres   = toArray(req.body.presentacion);
+    const arrFactor = toArray(req.body.factor_unidad);
+    const arrCNeto  = toArray(req.body.costo_neto);             // neto SIN IVA (front)
+    const arrCIva   = toArray(req.body.costo_iva);              // CON IVA por UNIDAD (front)
+
+    console.log('[ACTUALIZAR][INPUT] proveedores        =', provIds);
+    console.log('[ACTUALIZAR][INPUT] precio_lista[]     =', plist);
+    console.log('[ACTUALIZAR][INPUT] codigo[]           =', codigos);
+    console.log('[ACTUALIZAR][INPUT] IVA[]              =', arrIVA);
+    console.log('[ACTUALIZAR][INPUT] presentacion[]     =', arrPres);
+    console.log('[ACTUALIZAR][INPUT] factor_unidad[]    =', arrFactor);
+    console.log('[ACTUALIZAR][INPUT] costo_neto[]       =', arrCNeto);
+    console.log('[ACTUALIZAR][INPUT] costo_iva[] (unit) =', arrCIva);
+    console.log('[ACTUALIZAR][INPUT] IVA_producto       =', req.body.IVA_producto);
+    console.log('[ACTUALIZAR][INPUT] proveedor_designado(hidden)=', req.body.proveedor_designado);
+
+    // ---------- 1) Datos escalares del producto ----------
     const datosProducto = {
       id               : productoId,
       nombre           : req.body.nombre ?? null,
@@ -886,101 +909,138 @@ actualizar: async function (req, res) {
       oferta           : Number(req.body.oferta) === 1 ? 1 : 0,
       calidad_original : req.body.calidad_original ? 1 : 0,
       calidad_vic      : req.body.calidad_vic ? 1 : 0
+      // IVA del producto lo seteamos más abajo
     };
+    console.log('[ACTUALIZAR] datosProducto (sin IVA aún)=', datosProducto);
     await producto.actualizar(conexion, datosProducto);
 
-    // 2) Eliminar proveedores marcados (si vinieron)
+    // ---------- 2) Eliminar proveedores marcados ----------
     const aEliminarProv = toArray(req.body.eliminar_proveedores).map(numInt).filter(Boolean);
+    console.log('[ACTUALIZAR] eliminar_proveedores[] =', aEliminarProv);
     if (aEliminarProv.length){
       const sqlDel = `
         DELETE FROM producto_proveedor
         WHERE producto_id = ? AND proveedor_id IN (${aEliminarProv.map(()=>'?').join(',')})
       `;
+      console.log('[ACTUALIZAR][SQL] DELETE producto_proveedor', { sql: sqlDel, params: [productoId, ...aEliminarProv] });
       await conexion.promise().query(sqlDel, [productoId, ...aEliminarProv]);
     }
 
-// 3) UPSERT de producto_proveedor (SIN guardar descuento ni costos aquí)
-const provIds    = toArray(req.body.proveedores);
-const codigos    = toArray(req.body.codigo);
-const plist      = toArray(req.body.precio_lista);
-const arrIVA     = toArray(req.body.IVA);             // 21 / 10.5
-const arrPres    = toArray(req.body.presentacion);    // 'unidad' | 'juego'
-const arrFactor  = toArray(req.body.factor_unidad);   // 1 | 0.5
+    // ---------- 3) UPSERT producto_proveedor (sin descuento ni costos) ----------
+    const normalizarPres = (v) => {
+      const s = (v ?? 'unidad').toString().trim().toLowerCase();
+      return s === 'juego' ? 'juego' : 'unidad';
+    };
+    const normalizarIVA = (v) => {
+      const n = Number(String(v ?? '').replace(',', '.'));
+      return Number.isFinite(n) && n > 0 ? n : 21;
+    };
+    const normalizarFactor = (pres, f) => {
+      const nf = Number(f);
+      if (Number.isFinite(nf) && nf > 0) return nf;
+      return pres === 'juego' ? 0.5 : 1;
+    };
 
-const normalizarPres = (v) => {
-  const s = (v ?? 'unidad').toString().trim().toLowerCase();
-  return s === 'juego' ? 'juego' : 'unidad';
-};
-const normalizarIVA = (v) => {
-  const n = Number(String(v ?? '').replace(',', '.'));
-  return Number.isFinite(n) && n > 0 ? n : 21;
-};
-const normalizarFactor = (pres, f) => {
-  const nf = Number(f);
-  if (Number.isFinite(nf) && nf > 0) return nf;
-  return pres === 'juego' ? 0.5 : 1;
-};
+    const sqlUpsert = `
+      INSERT INTO producto_proveedor
+        (producto_id, proveedor_id, precio_lista, codigo, iva, presentacion, factor_unidad)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        precio_lista  = VALUES(precio_lista),
+        codigo        = VALUES(codigo),
+        iva           = VALUES(iva),
+        presentacion  = VALUES(presentacion),
+        factor_unidad = VALUES(factor_unidad)
+    `;
 
-const sqlUpsert = `
-  INSERT INTO producto_proveedor
-    (producto_id, proveedor_id, precio_lista, codigo, iva, presentacion, factor_unidad)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
-  ON DUPLICATE KEY UPDATE
-    precio_lista  = VALUES(precio_lista),
-    codigo        = VALUES(codigo),
-    iva           = VALUES(iva),
-    presentacion  = VALUES(presentacion),
-    factor_unidad = VALUES(factor_unidad)
-`;
+    const filas = Math.max(provIds.length, codigos.length, plist.length, arrIVA.length, arrPres.length, arrFactor.length);
+    for (let i = 0; i < filas; i++){
+      const proveedor_id = numInt(provIds[i]);
+      if (!proveedor_id) continue;
 
-const filas = Math.max(provIds.length, codigos.length, plist.length, arrIVA.length, arrPres.length, arrFactor.length);
-for (let i = 0; i < filas; i++){
-  const proveedor_id = numInt(provIds[i]);
-  if (!proveedor_id) continue;
+      const precio_lista = numOr0(plist[i]);
+      const codigo       = (codigos[i] == null || String(codigos[i]).trim()==='') ? null : String(codigos[i]).trim();
+      const iva          = normalizarIVA(arrIVA[i]);
+      const presentacion = normalizarPres(arrPres[i]);
+      const factor       = normalizarFactor(presentacion, arrFactor[i]);
 
-  const precio_lista = numOr0(plist[i]);
-  const codigo       = (codigos[i] == null || String(codigos[i]).trim()==='') ? null : String(codigos[i]).trim();
-  const iva          = normalizarIVA(arrIVA[i]);
-  const presentacion = normalizarPres(arrPres[i]);
-  const factor       = normalizarFactor(presentacion, arrFactor[i]);
+      const params = [ productoId, proveedor_id, precio_lista, codigo, iva, presentacion, factor ];
+      console.log(`[ACTUALIZAR][SQL] UPSERT fila ${i}:`, params);
+      await conexion.promise().query(sqlUpsert, params);
+    }
 
-  const params = [ productoId, proveedor_id, precio_lista, codigo, iva, presentacion, factor ];
-  console.log(`[ACTUALIZAR][SQL] UPSERT fila ${i}:`, params);
-  await conexion.promise().query(sqlUpsert, params);
-}
-// 4.b) ACTUALIZAR costos en la tabla productos (por UNIDAD) del proveedor asignado
-const arrCNeto = toArray(req.body.costo_neto);   // viene del front (neto SIN IVA)
-const arrCIva  = toArray(req.body.costo_iva);    // viene del front (CON IVA por UNIDAD)
-const arrPres2 = toArray(req.body.presentacion);
-const arrFact2 = toArray(req.body.factor_unidad);
+    // ---------- 4) Proveedor asignado + IVA del producto ----------
+    let proveedorAsignado = numInt(req.body.proveedor_designado) || 0;
+    console.log('[ACTUALIZAR] proveedor_designado (pre) =', proveedorAsignado);
 
-let idxAsignado = provIds.findIndex(v => numInt(v) === (proveedorAsignado || 0));
-if (idxAsignado < 0) {
-  // si no lo encontramos (raro), cae al primero válido
-  idxAsignado = Math.max(0, provIds.findIndex(v => numInt(v)));
-}
+    // si no hay manual, elegir por menor costo_iva (ya normalizado a UNIDAD por el front)
+    if (!proveedorAsignado) {
+      let bestIdx = -1, best = Number.POSITIVE_INFINITY;
+      for (let i=0;i<Math.max(provIds.length, arrCIva.length);i++){
+        const pid = numInt(provIds[i]);
+        const ci  = numOr0(arrCIva[i]);
+        if (pid && ci>0 && ci<best){ best=ci; bestIdx=i; proveedorAsignado=pid; }
+      }
+      if (!proveedorAsignado) {
+        // fallback: primer proveedor válido
+        for (let i=0;i<provIds.length;i++){
+          const pid = numInt(provIds[i]);
+          if (pid){ proveedorAsignado = pid; break; }
+        }
+      }
+      console.log('[ACTUALIZAR] proveedor_designado (auto)=', proveedorAsignado);
+    }
 
-const presAsig   = (idxAsignado >= 0) ? String(arrPres2[idxAsignado] || 'unidad').toLowerCase() : 'unidad';
-const factorAsig = (idxAsignado >= 0) ? (Number(arrFact2[idxAsignado]) || (presAsig === 'juego' ? 0.5 : 1)) : 1;
+    // IVA del producto (hidden seteado por el front al proveedor ganador)
+    const ivaProductoHidden = numOr0(req.body.IVA_producto);
+    console.log('[ACTUALIZAR] IVA_producto (hidden)=', ivaProductoHidden);
 
-// neto que vino del front (SIN IVA) → normalizar a unidad si era juego
-const cnRaw      = (idxAsignado >= 0) ? numOr0(arrCNeto[idxAsignado]) : 0;
-const cnUnidad   = Math.ceil(cnRaw * factorAsig);
+    let ivaProducto = 21;
+    if (ivaProductoHidden > 0) {
+      ivaProducto = ivaProductoHidden;
+      console.log('[ACTUALIZAR] IVA elegido por hidden =', ivaProducto);
+    } else if (proveedorAsignado) {
+      let idx = provIds.findIndex(v => numInt(v) === proveedorAsignado);
+      if (idx < 0) idx = 0;
+      const ivaIdxRaw = arrIVA[idx] ?? 21;
+      ivaProducto = Number(String(ivaIdxRaw).replace(',', '.')) || 21;
+      console.log('[ACTUALIZAR] IVA elegido por índice =', ivaProducto, '(idx=', idx, ')');
+    } else {
+      const iva0 = arrIVA[0] ?? 21;
+      ivaProducto = Number(String(iva0).replace(',', '.')) || 21;
+      console.log('[ACTUALIZAR] IVA elegido default/primero =', ivaProducto);
+    }
 
-// con IVA ya viene normalizado por UNIDAD desde el front (hidden costo_iva[])
-const civaUnidad = (idxAsignado >= 0) ? Math.ceil(numOr0(arrCIva[idxAsignado])) : 0;
+    await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado || null, IVA: ivaProducto });
+    console.log('[ACTUALIZAR] productos.proveedor_id =', proveedorAsignado, ' | productos.IVA =', ivaProducto);
 
-console.log('[ACTUALIZAR] costos asignado → idx=', idxAsignado,
-            'pres=', presAsig, 'factor=', factorAsig,
-            'costo_neto(unidad)=', cnUnidad, 'costo_iva(unidad)=', civaUnidad);
+    // ---------- 4.b) ACTUALIZAR costos en tabla productos (por UNIDAD) del proveedor asignado ----------
+    // OJO: acá usamos proveedorAsignado y provIds ya definidos arriba
+    let idxAsignado = provIds.findIndex(v => numInt(v) === (proveedorAsignado || 0));
+    if (idxAsignado < 0) {
+      idxAsignado = Math.max(0, provIds.findIndex(v => numInt(v))); // primer válido
+    }
 
-await producto.actualizar(conexion, {
-  id: productoId,
-  costo_neto: cnUnidad,
-  costo_iva : civaUnidad
-});
+    const presAsig   = (idxAsignado >= 0) ? String(arrPres[idxAsignado] || 'unidad').toLowerCase() : 'unidad';
+    const factorAsig = (idxAsignado >= 0)
+      ? (Number(arrFactor[idxAsignado]) || (presAsig === 'juego' ? 0.5 : 1))
+      : 1;
 
-    // 5) IMÁGENES (igual a lo que ya tenías)
+    const cnRaw      = (idxAsignado >= 0) ? numOr0(arrCNeto[idxAsignado]) : 0; // SIN IVA
+    const cnUnidad   = Math.ceil(cnRaw * factorAsig);                           // normalizar a UNIDAD si era juego
+    const civaUnidad = (idxAsignado >= 0) ? Math.ceil(numOr0(arrCIva[idxAsignado])) : 0; // CON IVA por UNIDAD (ya normalizado por front)
+
+    console.log('[ACTUALIZAR] costos asignado → idx=', idxAsignado,
+                'pres=', presAsig, 'factor=', factorAsig,
+                'costo_neto(unidad)=', cnUnidad, 'costo_iva(unidad)=', civaUnidad);
+
+    await producto.actualizar(conexion, {
+      id: productoId,
+      costo_neto: cnUnidad,
+      costo_iva : civaUnidad
+    });
+
+    // ---------- 5) IMÁGENES (igual que ya tenías) ----------
     {
       const path = require('path');
       const fs   = require('fs');
@@ -1012,12 +1072,14 @@ await producto.actualizar(conexion, {
           `DELETE FROM ${IMG_TABLE} WHERE id IN (${aEliminarImgs.map(()=>'?').join(',')}) AND producto_id=?`,
           [...aEliminarImgs, productoId]
         );
+        console.log('[ACTUALIZAR] Eliminadas imágenes:', aEliminarImgs);
       }
 
       let ordenExistentes = toArray(req.body.orden_imagenes_existentes).map(numInt).filter(Boolean).filter(id => !delSet.has(id));
 
       let nuevasIds = [];
       if (req.files && req.files.length > 0) {
+        console.log("[ACTUALIZAR] Cant. imágenes nuevas:", req.files.length);
         for (const f of req.files) {
           const r = await producto.insertarImagenProducto(conexion, {
             producto_id: productoId,
@@ -1057,10 +1119,15 @@ await producto.actualizar(conexion, {
         console.log('[ACTUALIZAR] El producto quedó sin imágenes.');
       }
     }
+
+    // ---------- Redirect ----------
     const pagina = req.body.pagina || 1;
     const busqueda = req.body.busqueda ? encodeURIComponent(req.body.busqueda) : '';
+    console.log("===== Fin actualizar (OK) =====");
     return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
   } catch (error) {
+    console.error("===== Error durante la ejecución en actualizar =====");
+    console.error(error);
     return res.status(500).send("Error: " + error.message);
   }
 },
