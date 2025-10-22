@@ -1716,16 +1716,13 @@ retornarDatosProveedores: function (conexion, producto_id) {
         pp.proveedor_id,
         pp.precio_lista,
         pp.codigo,
-        pp.iva,                                  -- IVA por proveedor (10.5 / 21)
+        pp.iva,
         COALESCE(pp.presentacion, 'unidad') AS presentacion,
-        COALESCE(pp.factor_unidad, 1.0)  AS factor_unidad,
-        COALESCE(pp.costo_neto, 0.00)    AS costo_neto,  -- neto SIN IVA (ya con descuento)
-        COALESCE(pp.costo_iva, 0.00)     AS costo_iva,   -- CON IVA por UNIDAD (normalizado)
-        -- Priorizar el descuento guardado en pp sobre el de la tabla de descuentos
-        COALESCE(pp.descuento, dp.descuento, 0.00) AS descuento,
+        COALESCE(pp.factor_unidad, 1.0)    AS factor_unidad,
+        COALESCE(dp.descuento, 0.00)       AS descuento,
         pr.nombre AS proveedor_nombre
       FROM producto_proveedor pp
-      JOIN proveedores pr
+      JOIN proveedores pr 
         ON pr.id = pp.proveedor_id
       LEFT JOIN (
         SELECT proveedor_id, MAX(descuento) AS descuento

@@ -899,104 +899,87 @@ actualizar: async function (req, res) {
       await conexion.promise().query(sqlDel, [productoId, ...aEliminarProv]);
     }
 
-    // 3) UPSERT de producto_proveedor (INCLUYENDO presentacion, factor_unidad, costo_neto, descuento, costo_iva)
-    const provIds    = toArray(req.body.proveedores);
-    const codigos    = toArray(req.body.codigo);
-    const plist      = toArray(req.body.precio_lista);
-    const arrDesc    = toArray(req.body.descuentos_proveedor_id);   // % (desde el select o hidden)
-    const arrCNeto   = toArray(req.body.costo_neto);                // neto (sin IVA)
-    const arrIVA     = toArray(req.body.IVA);                       // 21 / 10.5
-    const arrPres    = toArray(req.body.presentacion);              // 'unidad' | 'juego'
-    const arrFactor  = toArray(req.body.factor_unidad);             // 1 | 0.5
-    const arrCIva    = toArray(req.body.costo_iva);                 // c/IVA por UNIDAD (normalizado por el front)
+// 3) UPSERT de producto_proveedor (SIN guardar descuento ni costos aquí)
+const provIds    = toArray(req.body.proveedores);
+const codigos    = toArray(req.body.codigo);
+const plist      = toArray(req.body.precio_lista);
+const arrIVA     = toArray(req.body.IVA);             // 21 / 10.5
+const arrPres    = toArray(req.body.presentacion);    // 'unidad' | 'juego'
+const arrFactor  = toArray(req.body.factor_unidad);   // 1 | 0.5
 
-    const normalizarPres = (v) => {
-      const s = (v ?? 'unidad').toString().trim().toLowerCase();
-      return s === 'juego' ? 'juego' : 'unidad';
-    };
-    const normalizarIVA = (v) => {
-      const n = Number(String(v ?? '').replace(',', '.'));
-      return Number.isFinite(n) && n > 0 ? n : 21;
-    };
-    const normalizarFactor = (pres, f) => {
-      const nf = Number(f);
-      if (Number.isFinite(nf) && nf > 0) return nf;
-      return pres === 'juego' ? 0.5 : 1;
-    };
+const normalizarPres = (v) => {
+  const s = (v ?? 'unidad').toString().trim().toLowerCase();
+  return s === 'juego' ? 'juego' : 'unidad';
+};
+const normalizarIVA = (v) => {
+  const n = Number(String(v ?? '').replace(',', '.'));
+  return Number.isFinite(n) && n > 0 ? n : 21;
+};
+const normalizarFactor = (pres, f) => {
+  const nf = Number(f);
+  if (Number.isFinite(nf) && nf > 0) return nf;
+  return pres === 'juego' ? 0.5 : 1;
+};
 
-    const sqlUpsert = `
-      INSERT INTO producto_proveedor
-        (producto_id, proveedor_id, precio_lista, codigo, iva, presentacion, factor_unidad, costo_neto, descuento, costo_iva)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        precio_lista  = VALUES(precio_lista),
-        codigo        = VALUES(codigo),
-        iva           = VALUES(iva),
-        presentacion  = VALUES(presentacion),
-        factor_unidad = VALUES(factor_unidad),
-        costo_neto    = VALUES(costo_neto),
-        descuento     = VALUES(descuento),
-        costo_iva     = VALUES(costo_iva)
-    `;
+const sqlUpsert = `
+  INSERT INTO producto_proveedor
+    (producto_id, proveedor_id, precio_lista, codigo, iva, presentacion, factor_unidad)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+  ON DUPLICATE KEY UPDATE
+    precio_lista  = VALUES(precio_lista),
+    codigo        = VALUES(codigo),
+    iva           = VALUES(iva),
+    presentacion  = VALUES(presentacion),
+    factor_unidad = VALUES(factor_unidad)
+`;
 
-    const filas = Math.max(
-      provIds.length, codigos.length, plist.length, arrDesc.length,
-      arrCNeto.length, arrIVA.length, arrPres.length, arrFactor.length, arrCIva.length
-    );
+const filas = Math.max(provIds.length, codigos.length, plist.length, arrIVA.length, arrPres.length, arrFactor.length);
+for (let i = 0; i < filas; i++){
+  const proveedor_id = numInt(provIds[i]);
+  if (!proveedor_id) continue;
 
-    for (let i = 0; i < filas; i++){
-      const proveedor_id = numInt(provIds[i]);
-      if (!proveedor_id) continue;
+  const precio_lista = numOr0(plist[i]);
+  const codigo       = (codigos[i] == null || String(codigos[i]).trim()==='') ? null : String(codigos[i]).trim();
+  const iva          = normalizarIVA(arrIVA[i]);
+  const presentacion = normalizarPres(arrPres[i]);
+  const factor       = normalizarFactor(presentacion, arrFactor[i]);
 
-      const precio_lista = numOr0(plist[i]);
-      const codigo       = (codigos[i] == null || String(codigos[i]).trim()==='') ? null : String(codigos[i]).trim();
-      const descuento    = numOr0(arrDesc[i]); 
-      const costo_neto   = numOr0(arrCNeto[i]);
-      const iva          = normalizarIVA(arrIVA[i]);
-      const presentacion = normalizarPres(arrPres[i]);
-      const factor       = normalizarFactor(presentacion, arrFactor[i]);
-      const costo_iva    = numOr0(arrCIva[i]);  
+  const params = [ productoId, proveedor_id, precio_lista, codigo, iva, presentacion, factor ];
+  console.log(`[ACTUALIZAR][SQL] UPSERT fila ${i}:`, params);
+  await conexion.promise().query(sqlUpsert, params);
+}
+// 4.b) ACTUALIZAR costos en la tabla productos (por UNIDAD) del proveedor asignado
+const arrCNeto = toArray(req.body.costo_neto);   // viene del front (neto SIN IVA)
+const arrCIva  = toArray(req.body.costo_iva);    // viene del front (CON IVA por UNIDAD)
+const arrPres2 = toArray(req.body.presentacion);
+const arrFact2 = toArray(req.body.factor_unidad);
 
-      const params = [
-        productoId, proveedor_id,
-        precio_lista, codigo, iva, presentacion, factor, costo_neto, descuento, costo_iva
-      ];
-      await conexion.promise().query(sqlUpsert, params);
-    }
+let idxAsignado = provIds.findIndex(v => numInt(v) === (proveedorAsignado || 0));
+if (idxAsignado < 0) {
+  // si no lo encontramos (raro), cae al primero válido
+  idxAsignado = Math.max(0, provIds.findIndex(v => numInt(v)));
+}
 
-    // 4) Determinar proveedor asignado y el IVA que se guarda en productos (referencia/fallback)
-    let proveedorAsignado = numInt(req.body.proveedor_designado) || 0;
+const presAsig   = (idxAsignado >= 0) ? String(arrPres2[idxAsignado] || 'unidad').toLowerCase() : 'unidad';
+const factorAsig = (idxAsignado >= 0) ? (Number(arrFact2[idxAsignado]) || (presAsig === 'juego' ? 0.5 : 1)) : 1;
 
-    if (!proveedorAsignado) {
-      let bestIdx = -1, best = Number.POSITIVE_INFINITY;
-      for (let i=0;i<Math.max(provIds.length, arrCIva.length);i++){
-        const pid = numInt(provIds[i]);
-        const ci  = numOr0(arrCIva[i]); // ya viene por UNIDAD
-        if (pid && ci>0 && ci<best){ best=ci; bestIdx=i; proveedorAsignado=pid; }
-      }
-      if (!proveedorAsignado) {
-        for (let i=0;i<provIds.length;i++){
-          const pid = numInt(provIds[i]);
-          if (pid){ proveedorAsignado = pid; break; }
-        }
-      }
-    }
+// neto que vino del front (SIN IVA) → normalizar a unidad si era juego
+const cnRaw      = (idxAsignado >= 0) ? numOr0(arrCNeto[idxAsignado]) : 0;
+const cnUnidad   = Math.ceil(cnRaw * factorAsig);
 
-    const ivaProductoHidden = numOr0(req.body.IVA_producto);
-    let ivaProducto = 21;
-    if (ivaProductoHidden > 0) {
-      ivaProducto = ivaProductoHidden;
-    } else if (proveedorAsignado) {
-      let idx = provIds.findIndex(v => numInt(v) === proveedorAsignado);
-      if (idx < 0) idx = 0;
-      const ivaIdxRaw = arrIVA[idx] ?? 21;
-      ivaProducto = Number(String(ivaIdxRaw).replace(',', '.')) || 21;
-    } else {
-      const iva0 = arrIVA[0] ?? 21;
-      ivaProducto = Number(String(iva0).replace(',', '.')) || 21;
-    }
+// con IVA ya viene normalizado por UNIDAD desde el front (hidden costo_iva[])
+const civaUnidad = (idxAsignado >= 0) ? Math.ceil(numOr0(arrCIva[idxAsignado])) : 0;
 
-    await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado || null, IVA: ivaProducto });
+console.log('[ACTUALIZAR] costos asignado → idx=', idxAsignado,
+            'pres=', presAsig, 'factor=', factorAsig,
+            'costo_neto(unidad)=', cnUnidad, 'costo_iva(unidad)=', civaUnidad);
+
+await producto.actualizar(conexion, {
+  id: productoId,
+  costo_neto: cnUnidad,
+  costo_iva : civaUnidad
+});
+
     // 5) IMÁGENES (igual a lo que ya tenías)
     {
       const path = require('path');
