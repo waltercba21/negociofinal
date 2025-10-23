@@ -1473,7 +1473,6 @@ generarPDF: async function (req, res) {
   const PDFDocument = require('pdfkit');
   const streamBuffers = require('stream-buffers');
 
-  // Buffer para enviar el PDF como attachment
   const buffer = new streamBuffers.WritableStreamBuffer({
     initialSize: 1024 * 1024,
     incrementAmount: 1024 * 1024
@@ -1482,7 +1481,7 @@ generarPDF: async function (req, res) {
   const doc = new PDFDocument({ margin: 30 });
   doc.pipe(buffer);
 
-  // Normalización de parámetros (permitimos "TODOS" y "Mostrar Todas")
+  // Normalización de parámetros
   const proveedorIdRaw = req.query.proveedor;
   const categoriaIdRaw  = req.query.categoria;
 
@@ -1490,7 +1489,7 @@ generarPDF: async function (req, res) {
   const categoriaId  = (!categoriaIdRaw  || categoriaIdRaw === '' || categoriaIdRaw === 'TODAS') ? null : categoriaIdRaw;
 
   try {
-    // Nombres bonitos para cabecera
+    // Nombres bonitos
     const proveedores = await producto.obtenerProveedores(conexion);
     const categorias  = await producto.obtenerCategorias(conexion);
 
@@ -1503,16 +1502,16 @@ generarPDF: async function (req, res) {
     // Título
     const titulo = `Lista de precios - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`;
     doc.fontSize(16).text(titulo, { align: 'center', width: doc.page.width - 60 });
-    doc.moveDown(1.5);
+    doc.moveDown(1.2);
 
-    // Traer productos (usa tu método existente, que ya filtra si vienen IDs)
+    // 🔑 Traer productos (ahora el modelo acepta proveedor=null para "solo categoría")
     let productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
 
-    // Deduplicar por código/ID (por seguridad)
+    // Deduplicar por código/ID (defensivo)
     if (Array.isArray(productos)) {
       const vistos = new Set();
       productos = productos.filter(p => {
-        const key = `${p.codigo_proveedor || ''}::${p.nombre}`;
+        const key = `${p.id || ''}::${p.codigo_proveedor || ''}`;
         if (vistos.has(key)) return false;
         vistos.add(key);
         return true;
@@ -1521,7 +1520,6 @@ generarPDF: async function (req, res) {
       productos = [];
     }
 
-    // Si no hay resultados
     if (!productos.length) {
       doc.fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
       doc.end();
@@ -1534,62 +1532,76 @@ generarPDF: async function (req, res) {
       return;
     }
 
-    // Helpers
+    // ===== Helpers de layout / formato =====
+    const fmtAr = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 });
+
     const formatearMoneda = (n) => {
       const num = Number(n);
       if (!Number.isFinite(num)) return 'N/A';
-      // Formato simple sin separadores raros
-      return '$' + num.toFixed(2);
+      return fmtAr.format(num);
     };
 
-    // Encabezado
+    // Coordenadas/anchos (ajustadas: Descripción más a la izquierda y más ancha)
+    const X_COD   = 40,  W_COD = 100;
+    const X_DESC  = 150, W_DESC = 280;   // ← más a la izquierda y más ancha que antes
+    const X_PLIST = 430, W_PLIST = 80;
+    const X_PVENT = 515, W_PVENT = 80;
+
     const drawHeader = () => {
       doc.fontSize(10).fillColor('black');
       const y = doc.y;
-      doc.text('Código',           40,  y, { width: 120 });
-      doc.text('Descripción',     165,  y, { width: 260 });
-      doc.text('Precio de lista', 430,  y, { width: 80, align: 'right' });
-      doc.text('Precio de venta', 515,  y, { width: 80, align: 'right' });
-      doc.moveDown(1.2);
+      doc.text('Código',           X_COD,  y, { width: W_COD });
+      doc.text('Descripción',      X_DESC, y, { width: W_DESC });
+      doc.text('Precio de lista',  X_PLIST, y, { width: W_PLIST, align: 'right' });
+      doc.text('Precio de venta',  X_PVENT, y, { width: W_PVENT, align: 'right' });
+      doc.moveDown(0.8);
       doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke();
-      doc.moveDown(0.6);
+      doc.moveDown(0.4);
     };
 
-    const ensurePage = (nextRowHeight = 18) => {
-      if (doc.y + nextRowHeight > doc.page.height - doc.page.margins.bottom) {
+    // ensurePage ahora acepta alto de próxima fila
+    const ensurePage = (rowH = 18) => {
+      const bottom = doc.page.height - doc.page.margins.bottom;
+      if (doc.y + rowH > bottom) {
         doc.addPage();
         drawHeader();
       }
     };
 
-    // Pintar encabezado inicial
     drawHeader();
 
-    // Filas
+    // ===== Filas con alto dinámico (evita solapado de renglones) =====
     productos.forEach(p => {
-      ensurePage();
+      const nombre = p.nombre || '-';
+      const codigo = p.codigo_proveedor || '-';
       const precioLista = formatearMoneda(p.precio_lista);
       const precioVenta = formatearMoneda(p.precio_venta);
 
-      doc.fontSize(8).fillColor('black');
+      // Calculamos el alto que ocupará la descripción
+      const descHeight = doc.heightOfString(nombre, { width: W_DESC, align: 'left' });
+      const baseRowH = 16;                     // alto mínimo de fila
+      const rowH = Math.max(baseRowH, descHeight);
+
+      ensurePage(rowH + 4);                    // +4 de padding inferior
+
       const y = doc.y;
+      doc.fontSize(8).fillColor('black');
 
-      doc.text(p.codigo_proveedor || '-', 40,  y, { width: 120 });
-      doc.text(p.nombre || '-',            165, y, { width: 260 });
-      doc.text(precioLista,                430, y, { width: 80, align: 'right' });
-      doc.text(precioVenta,                515, y, { width: 80, align: 'right' });
+      doc.text(codigo,       X_COD,  y, { width: W_COD });
+      doc.text(nombre,       X_DESC, y, { width: W_DESC });
+      doc.text(precioLista,  X_PLIST, y, { width: W_PLIST, align: 'right' });
+      doc.text(precioVenta,  X_PVENT, y, { width: W_PVENT, align: 'right' });
 
-      doc.moveDown(0.6);
+      // Avanzamos en Y manualmente según el alto de la fila
+      doc.y = y + rowH + 4;
     });
 
-    // Fin
     doc.end();
   } catch (error) {
     console.error('❌ Error en generarPDF:', error);
     return res.status(500).send('Error al generar el PDF');
   }
 
-  // Enviar el archivo
   buffer.on('finish', function () {
     const pdfData = buffer.getContents();
     res.setHeader('Content-Type', 'application/pdf');
@@ -1597,6 +1609,7 @@ generarPDF: async function (req, res) {
     res.send(pdfData);
   });
 },
+
 getProductosPorCategoria : async (req, res) => {
     const categoriaId = req.query.categoria;
     producto.obtenerProductosPorCategoria(categoriaId, (error, productos) => {

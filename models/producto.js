@@ -1106,32 +1106,39 @@ contarProductos: function(conexion, callback) {
       }
   });
 },  
-obtenerProductosPorProveedorYCategoria: function(conexion, proveedor, categoria) {
+obtenerProductosPorProveedorYCategoria: function (conexion, proveedor, categoria) {
+  // Normalizo parámetros para facilitar las condiciones
+  const prov = (!proveedor || proveedor === 'TODOS') ? null : proveedor;
+  const cat  = (!categoria || categoria === 'TODAS') ? null : categoria;
+
+  // Usamos LEFT JOIN para no excluir productos sin filas en producto_proveedor
+  // y GROUP BY para tener una sola fila por producto cuando no se filtró proveedor.
+  // MIN(pp.precio_lista) y MIN(pp.codigo) funcionan:
+  //  - Si hay proveedor → solo queda ese proveedor por el WHERE, el MIN no cambia nada.
+  //  - Si NO hay proveedor → trae todos los proveedores y toma el mínimo precio por producto.
+  //    (Si preferís otra estrategia, ej. máximo o “cualquiera”, cambiás la agregación).
   let query = `
-      SELECT 
-          p.id,                                     -- ✅ necesario para deduplicar
-          pp.codigo AS codigo_proveedor, 
-          p.nombre, 
-          pp.precio_lista, 
-          p.precio_venta, 
-          p.stock_minimo, 
-          p.stock_actual
-      FROM productos p
-      INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-      WHERE 1=1
+    SELECT
+      p.id,
+      p.nombre,
+      MIN(pp.codigo)         AS codigo_proveedor,
+      MIN(pp.precio_lista)   AS precio_lista,
+      p.precio_venta,
+      p.stock_minimo,
+      p.stock_actual
+    FROM productos p
+    LEFT JOIN producto_proveedor pp
+      ON pp.producto_id = p.id
+    WHERE 1=1
+      AND ( ? IS NULL OR pp.proveedor_id = ? )
+      AND ( ? IS NULL OR p.categoria_id = ? )
+    GROUP BY
+      p.id, p.nombre, p.precio_venta, p.stock_minimo, p.stock_actual
+    ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
   `;
 
-  const params = [];
-  if (proveedor && proveedor !== 'TODOS') {
-      query += ` AND pp.proveedor_id = ?`;
-      params.push(proveedor);
-  }
-  if (categoria && categoria !== 'TODAS') {
-      query += ` AND p.categoria_id = ?`;
-      params.push(categoria);
-  }
-
-  query += ` ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC`;
+  // Params: proveedor para las dos primeras ?, categoría para las dos siguientes ?
+  const params = [prov, prov, cat, cat];
 
   const queryPromise = require('util').promisify(conexion.query).bind(conexion);
   return queryPromise(query, params);
