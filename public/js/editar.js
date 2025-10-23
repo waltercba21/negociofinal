@@ -441,14 +441,12 @@ if (!window.__EDITAR_INIT__) {
       actualizarPrecioFinal();
       syncIVAProductoConAsignado();
     })
-    // +++ NUEVO: Agregar proveedor +++
+    // +++ Agregar proveedor +++
     .off('click.addProv', '#addProveedor')
     .on('click.addProv', '#addProveedor', function () {
       var $container = $('#proveedoresContainer');
-      // Tomamos el HTML de opciones del primer select de proveedores
       var optsHTML = ($('.proveedores').first().html() || '<option value="">Selecciona proveedor...</option>');
 
-      // Construimos la card
       var $card = $(`
         <div class="proveedor" data-proveedor-id="">
           <div class="form-group-crear">
@@ -516,31 +514,46 @@ if (!window.__EDITAR_INIT__) {
         </div>
       `);
 
-      // Anexar y inicializar
       $container.find('#addProveedor').closest('.form-group-crear').before($card);
 
-      // Setear proveedor a vacío y actualizar labels
       var $sel = $card.find('.proveedores');
       $sel.val($sel.find('option:first').val() || '');
       actualizarProveedor($sel);
 
-      // Asegurar elementos auxiliares y calcular
       ensurePresentacionSelect($card);
       asegurarVisibleCostoIVA($card);
-
-      // Disparar cálculo (neto → IVA → normalización)
       $card.find('.precio_lista').trigger('change');
 
-      // Recalcular proveedor asignado/IVA producto/PV si no hay selección manual
       if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
       actualizarPrecioFinal();
       syncIVAProductoConAsignado();
     })
-    // +++ NUEVO: Eliminar proveedor +++
+    // +++ Eliminar proveedor +++
     .off('click.delProv', '.eliminar-proveedor')
     .on('click.delProv', '.eliminar-proveedor', function () {
+      var $form = $('form.contenido-editar').length ? $('form.contenido-editar') : $('form');
       var $card = $(this).closest('.proveedor');
+
+      // si existía (tiene proveedor_id asignado) agregamos hidden para borrar en DB
+      var provId = $card.data('proveedor-id');
+      if (!provId) {
+        // fallback: si no tiene data, intento con el valor del select (por si estaba set)
+        provId = $card.find('.proveedores').val();
+      }
+      if (provId) {
+        $('<input>', { type: 'hidden', name: 'eliminar_proveedores[]', value: String(provId) }).appendTo($form);
+      }
+
+      // si era el proveedor seleccionado manualmente, reseteo esa preferencia
+      if ($card.find('.proveedor-designado-radio').is(':checked')) {
+        window.__seleccionManualProveedor__ = false;
+        $('#proveedor_designado').val('');
+      }
+
+      // quitar del DOM
       $card.remove();
+
+      // recalcular todo
       if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
       actualizarPrecioFinal();
       syncIVAProductoConAsignado();
@@ -555,7 +568,10 @@ if (!window.__EDITAR_INIT__) {
     var descuento = toNumber($opt.data('descuento'));
     $wrap.find('.nombre_proveedor').text(nombreProveedor);
 
-    $wrap.find('.proveedor-designado-radio').val($select.val() || '');
+    // actualizar value del radio y data-proveedor-id de la card
+    var val = $select.val() || '';
+    $wrap.find('.proveedor-designado-radio').val(val);
+    if (val) { $wrap.attr('data-proveedor-id', val); }
 
     var $hiddenDesc = $wrap.find('.descuentos_proveedor_id');
     if ($hiddenDesc.length === 0) {
