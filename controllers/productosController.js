@@ -13,10 +13,10 @@ const adminEmails = ['walter@autofaros.com.ar'];
 
 function normalizarClave(texto) {
   return texto
-    .normalize("NFD")                        // separa acentos
-    .replace(/[\u0300-\u036f]/g, "")         // quita diacríticos
-    .replace(/\s+/g, '')                     // quita espacios
-    .toLowerCase();                          // a minúsculas
+    .normalize("NFD")                        
+    .replace(/[\u0300-\u036f]/g, "")         
+    .replace(/\s+/g, '')                     
+    .toLowerCase();                          
 }
 
 const productosPorPagina = 10;
@@ -28,7 +28,51 @@ function toArray(v) {
   if (v === undefined || v === null) return [];
   return [v];
 }
+function encontrarColumna(claves, candidatos /* array de strings */) {
+  const normKeys = claves.map(k => ({ raw: k, norm: normalizarClave(k) }));
+  const targets = candidatos.map(c => normalizarClave(c));
 
+  // 1) match exacto con cualquier candidato
+  for (const t of targets) {
+    const hit = normKeys.find(k => k.norm === t);
+    if (hit) return hit.raw;
+  }
+  // 2) fallback: includes (por ej. "precio" dentro de "preciolista")
+  for (const t of targets) {
+    const hit = normKeys.find(k => k.norm.includes(t));
+    if (hit) return hit.raw;
+  }
+  return null;
+}
+
+function limpiarPrecio(valor) {
+  if (valor === null || valor === undefined || valor === '') return 0;
+  if (typeof valor === 'number') return Math.round(valor * 100) / 100;
+
+  let original = valor.toString().trim();
+  original = original.replace(/\$/g, '').replace(/\s+/g, '');
+
+  if (original.includes('.') && original.includes(',')) {
+    original = original.replace(/\./g, '').replace(',', '.');
+  } else if (original.includes(',') && !original.includes('.')) {
+    original = original.replace(',', '.');
+  }
+
+  // Limitar decimales a 2
+  if (original.includes('.')) {
+    const [entero, decimal] = original.split('.');
+    if (decimal.length > 2) original = `${entero}.${decimal.substring(0, 2)}`;
+  }
+
+  const numero = parseFloat(original);
+  return Number.isFinite(numero) ? numero : 0;
+}
+
+// 👉 redondeo final como en front: a la centena más cercana (>=50 hacia arriba)
+function redondearAlCentenar(n) {
+  const resto = n % 100;
+  return resto < 50 ? (n - resto) : (n + (100 - resto));
+}
 function numOr0(v) {
   // Soporta "10,5" y "10.5"
   if (v === undefined || v === null || v === '') return 0;
@@ -2097,48 +2141,7 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 }, 
-actualizarPreciosExcel: async (req, res) => {
-  function normalizarClave(texto) {
-    return texto
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, '')
-      .toLowerCase();
-  }
-
-  function limpiarPrecio(valor) {
-    if (!valor) return 0;
-    let original = valor.toString().trim();
-
-    if (typeof valor === 'number') {
-      return Math.round(valor * 100) / 100;
-    }
-
-    original = original.replace(/\$/g, '').replace(/\s+/g, '');
-
-    if (original.includes('.') && original.includes(',')) {
-      original = original.replace(/\./g, '').replace(',', '.');
-    } else if (original.includes(',') && !original.includes('.')) {
-      original = original.replace(',', '.');
-    }
-
-    if (original.includes('.')) {
-      const [entero, decimal] = original.split('.');
-      if (decimal.length > 2) {
-        original = `${entero}.${decimal.substring(0, 2)}`;
-      }
-    }
-
-    const numero = parseFloat(original);
-    return numero;
-  }
-
-  // 👉 redondeo final como en front: a la centena más cercana (>=50 hacia arriba)
-  function redondearAlCentenar(n) {
-    const resto = n % 100;
-    return resto < 50 ? (n - resto) : (n + (100 - resto));
-  }
-
+actualizarPreciosExcel : async (req, res) => {
   try {
     const proveedor_id = Number(req.body.proveedor);
     const file = req.files && req.files[0];
@@ -2146,14 +2149,23 @@ actualizarPreciosExcel: async (req, res) => {
       return res.status(400).send('Proveedor y archivo son requeridos.');
     }
 
+    // Si querés usar el nombre del proveedor en el PDF:
+    let proveedorNombre = '';
+    try {
+      const [provRow] = await conexion.promise().query(
+        'SELECT nombre FROM proveedores WHERE id=? LIMIT 1',
+        [proveedor_id]
+      );
+      proveedorNombre = (provRow && provRow[0] && provRow[0].nombre) ? provRow[0].nombre : '';
+    } catch {}
+
     const PROVEEDOR_OFERTAS_ID = 24; // DISTRIMAR OFERTAS (ajustable)
 
-    // Para armar salida
     let productosActualizados = [];
-    // Para detectar “faltantes” (sólo si es OFERTAS)
-    const codigosProcesados = new Set();
-    // Para aplicar “respeto a proveedor asignado” al final, por producto
-    const productosTocados = new Set(); // product_id que sufrieron cambios de este proveedor
+    const codigosProcesados = new Set(); // sólo para OFERTAS “faltantes”
+    const productosTocados = new Set();  // product_id con update
+    const nuevosProductos = [];          // ← los que NO existen en DB
+    const codigosNuevosSet = new Set();  // para no duplicar “nuevos”
 
     const workbook = xlsx.readFile(file.path);
     const sheets = workbook.SheetNames;
@@ -2163,18 +2175,25 @@ actualizarPreciosExcel: async (req, res) => {
 
       for (const row of data) {
         const claves = Object.keys(row);
-        const codigoColumn = claves.find(k => normalizarClave(k).includes('codigo'));
-        const precioColumn = claves.find(k => normalizarClave(k).includes('precio'));
+
+        // Columnas robustas
+        const codigoColumn = encontrarColumna(claves, ['codigo', 'código', 'cod.', 'cod']);
+        const precioColumn = encontrarColumna(claves, ['precio', 'importe', 'valor']);
+        const descColumn   = encontrarColumna(claves, ['descripcion', 'descripción', 'detalle', 'producto', 'nombre']);
+
         if (!codigoColumn || !precioColumn) continue;
 
         const codigoRaw = (row[codigoColumn] ?? '').toString().trim();
-        const precio = limpiarPrecio(row[precioColumn]);
+        const precio    = limpiarPrecio(row[precioColumn]);
+        const descRaw   = descColumn ? (row[descColumn] ?? '').toString().trim() : '';
+
         if (!codigoRaw || !Number.isFinite(precio) || precio <= 0) continue;
 
+        // Para OFERTAS: evitar repetir mismo código
         if (codigosProcesados.has(codigoRaw)) continue;
         if (proveedor_id === PROVEEDOR_OFERTAS_ID) codigosProcesados.add(codigoRaw);
 
-        // Precio anterior (para mostrar diferencia)
+        // Traigo precio anterior (si existía)
         const precioAnterior = await new Promise(resolve => {
           const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id=? AND codigo=? LIMIT 1`;
           conexion.query(sql, [proveedor_id, codigoRaw], (err, r) => {
@@ -2183,10 +2202,11 @@ actualizarPreciosExcel: async (req, res) => {
           });
         });
 
-        // Actualizar fila(s) del proveedor + devolver info de productos tocados
+        // Actualizar fila(s) del proveedor + info de productos tocados
         const resultado = await producto.actualizarPreciosPDF(precio, codigoRaw, proveedor_id);
 
         if (Array.isArray(resultado) && resultado.length) {
+          // Coincidió en DB → es existente
           resultado.forEach(p => {
             productosActualizados.push({
               producto_id: p.producto_id,
@@ -2197,32 +2217,33 @@ actualizarPreciosExcel: async (req, res) => {
               precio_venta: p.precio_venta || 0,
               sin_cambio: Math.abs((precioAnterior || 0) - precio) < 0.01
             });
-            // marcar producto para el paso final de “respeto asignado”
             productosTocados.add(Number(p.producto_id));
           });
+        } else {
+          // ❗No hubo match en DB → candidato a “producto nuevo”
+          if (!codigosNuevosSet.has(codigoRaw)) {
+            codigosNuevosSet.add(codigoRaw);
+            nuevosProductos.push({
+              codigo: codigoRaw,
+              descripcion: descRaw || '(sin descripción)',
+              precio: precio
+            });
+          }
         }
       }
     }
 
-    // Dedup de “productosActualizados” por (producto_id, codigo)
+    // Dedup por (producto_id, codigo)
     productosActualizados = productosActualizados.filter(
       (v, i, s) => i === s.findIndex(t => t.producto_id === v.producto_id && t.codigo === v.codigo)
     );
 
     // =========================
-    //  RESPETAR PROVEEDOR ASIGNADO (sin columnas pp.costo_*)
+    //  RESPETAR PROVEEDOR ASIGNADO
     // =========================
-    // Regla:
-    //  - Si el producto tiene productos.proveedor_id (asignado manualmente con tu radio)
-    //  - Y el proveedor del Excel NO es ese, NO recalculamos precio_venta con el más barato.
-    //  - En cambio, recalculamos precio_venta tomando el costo del proveedor ASIGNADO:
-    //      costoNeto = precio_lista_asignado - (descuento% de ese proveedor)
-    //      costoIVA  = costoNeto * (1 + IVA_producto/100)
-    //      pv        = costoIVA * (1 + utilidad/100)  (redondeo a centena)
     if (productosTocados.size > 0) {
       const ids = Array.from(productosTocados);
 
-      // Traer proveedor asignado + utilidad + IVA guardado en productos
       const [rowsProd] = await conexion.promise().query(
         `SELECT id, proveedor_id AS asignado_id, utilidad, COALESCE(IVA,21) AS IVA
            FROM productos
@@ -2242,11 +2263,9 @@ actualizarPreciosExcel: async (req, res) => {
       for (const prodId of ids) {
         const meta = mapProd.get(prodId);
         if (!meta || !meta.asignado_id) continue;
+        if (meta.asignado_id === proveedor_id) continue; // mismo proveedor → comportamiento estándar
 
-        // Si el Excel es del mismo proveedor asignado, dejamos el comportamiento estándar
-        if (meta.asignado_id === proveedor_id) continue;
-
-        // Traer precio_lista del proveedor ASIGNADO + DESCUENTO desde descuentos_proveedor (si existe)
+        // Traer precio_lista del proveedor ASIGNADO + descuento
         const [ppRows] = await conexion.promise().query(
           `SELECT 
               pp.precio_lista,
@@ -2266,14 +2285,13 @@ actualizarPreciosExcel: async (req, res) => {
 
         const costoNeto = pl - (pl * desc / 100);
         const costoIVA  = costoNeto + (costoNeto * (meta.IVA || 21) / 100);
+        let nuevoPV     = costoIVA + (costoIVA * (meta.utilidad || 0) / 100);
 
-        let nuevoPV = costoIVA + (costoIVA * (meta.utilidad || 0) / 100);
         // redondeo a la centena como en el front (>=50 hacia arriba)
         const resto = nuevoPV % 100;
         nuevoPV = (resto < 50) ? (nuevoPV - resto) : (nuevoPV + (100 - resto));
         nuevoPV = Math.ceil(nuevoPV);
 
-        // Actualizar SOLO precio_venta del producto (no tocamos proveedor_id ni IVA aquí)
         await conexion.promise().query(
           `UPDATE productos SET precio_venta=? WHERE id=?`,
           [nuevoPV, prodId]
@@ -2309,10 +2327,20 @@ actualizarPreciosExcel: async (req, res) => {
     // Limpieza temp
     try { fs.unlinkSync(file.path); } catch {}
 
-    // Render con ambos listados
+    // ✅ Guardamos para el PDF de “PRODUCTOS NUEVOS”
+    if (!req.session) req.session = {};
+    req.session.nuevosProductos = {
+      proveedor_id,
+      proveedor_nombre: proveedorNombre,
+      fecha: new Date(),
+      items: nuevosProductos // [{codigo, descripcion, precio}]
+    };
+
+    // Render con listados + cantidad de nuevos para mostrar el botón
     res.render('productosActualizados', {
       productos: productosActualizados,
-      ofertasFaltantes
+      ofertasFaltantes,
+      cantidadNuevos: nuevosProductos.length
     });
 
   } catch (error) {
@@ -2320,7 +2348,68 @@ actualizarPreciosExcel: async (req, res) => {
     res.status(500).send(error.message);
   }
 },
+descargarPDFNuevos : async (req, res) => {
+  try {
+    const data = req.session && req.session.nuevosProductos;
+    if (!data || !data.items || data.items.length === 0) {
+      return res.status(404).send('No hay productos nuevos detectados en la última importación.');
+    }
 
+    const proveedor = data.proveedor_nombre || `Proveedor_${data.proveedor_id}`;
+    const fecha = new Date(data.fecha || Date.now());
+    const yyyy = fecha.getFullYear();
+    const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dd = String(fecha.getDate()).padStart(2, '0');
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="PRODUCTOS_NUEVOS_${proveedor.replace(/\s+/g,'_')}_${yyyy}-${mm}-${dd}.pdf"`
+    );
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    doc.pipe(res);
+
+    // Título
+    doc.fontSize(16).text('PRODUCTOS NUEVOS', { align: 'center' });
+    doc.moveDown(0.3);
+    doc.fontSize(11).text(`Proveedor: ${proveedor}`, { align: 'center' });
+    doc.text(`Fecha: ${dd}/${mm}/${yyyy}`, { align: 'center' });
+    doc.moveDown(1);
+
+    // Encabezados de tabla
+    const colX = { codigo: 40, descrip: 170, precio: 480 };
+    const rowHeight = 20;
+
+    doc.fontSize(11).text('Código', colX.codigo, doc.y, { width: 120, continued: false });
+    doc.text('Descripción', colX.descrip, doc.y, { width: 290 });
+    doc.text('Precio', colX.precio, doc.y, { width: 100, align: 'right' });
+    doc.moveTo(40, doc.y + 5).lineTo(555, doc.y + 5).stroke();
+    doc.moveDown(0.5);
+
+    // Filas
+    data.items.forEach(item => {
+      const precioFmt = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.precio || 0);
+      const yStart = doc.y;
+      // Código
+      doc.fontSize(10).text(item.codigo || '', colX.codigo, yStart, { width: 120 });
+      // Descripción (ajusta altura)
+      const descHeight = doc.heightOfString(item.descripcion || '', { width: 290 });
+      doc.text(item.descripcion || '', colX.descrip, yStart, { width: 290 });
+      // Precio
+      doc.text(`$ ${precioFmt}`, colX.precio, yStart, { width: 100, align: 'right' });
+
+      const h = Math.max(rowHeight, descHeight);
+      doc.moveDown(h / 14); // ajuste fino para mantener separación visual
+      if (doc.y > 760) doc.addPage();
+    });
+
+    doc.end();
+  } catch (err) {
+    console.error('❌ Error al generar PDF de nuevos:', err);
+    res.status(500).send('Error al generar PDF.');
+  }
+},
   seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
       const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);

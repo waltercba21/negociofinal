@@ -4,6 +4,21 @@
   <main>
     <h1>Productos Actualizados</h1>
 
+    <!-- Botonera superior -->
+    <div style="display:flex; gap:10px; align-items:center; margin: 10px 0 20px;">
+      <a href="/productos/panelControl" class="btn btn-primary">← Volver al Panel de Control</a>
+
+      <% if (typeof cantidadNuevos !== 'undefined' && Number(cantidadNuevos) > 0) { %>
+        <a href="/productos/actualizados/nuevos.pdf" class="btn btn-secondary">
+          📄 PRODUCTOS NUEVOS (<%= cantidadNuevos %>)
+        </a>
+      <% } else { %>
+        <button class="btn btn-secondary" disabled title="No se detectaron productos nuevos">
+          📄 PRODUCTOS NUEVOS (0)
+        </button>
+      <% } %>
+    </div>
+
     <table>
       <thead>
         <tr>
