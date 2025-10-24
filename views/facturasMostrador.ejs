@@ -42,48 +42,6 @@
           <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
           <div id="resultadosBusqueda"></div>
         </div>
-
-        <!-- === Buscador por selectores (categoría / marca / modelo) === -->
-<section id="buscador-selectores" class="buscador-selectores">
-  <div class="selectores-grid">
-    <div>
-      <label for="selector-categoria">Categoría</label>
-      <select id="selector-categoria">
-        <option value="">Seleccioná una categoría</option>
-      </select>
-    </div>
-    <div>
-      <label for="selector-marca">Marca</label>
-      <select id="selector-marca">
-        <option value="">Seleccioná una marca</option>
-      </select>
-    </div>
-    <div>
-      <label for="selector-modelo">Modelo</label>
-      <select id="selector-modelo" disabled>
-        <option value="">Seleccioná un modelo</option>
-      </select>
-    </div>
-    <div style="align-self:end;">
-      <button type="button" id="btn-buscar-selectores" class="btn-primary-presupuestos">Buscar</button>
-    </div>
-  </div>
-</section>
-
-<!-- === Modal resultados selectores === -->
-<div id="modal-selectores" class="modal-selectores" style="display:none;">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Resultados de la búsqueda</h3>
-      <button type="button" id="modal-close">&times;</button>
-    </div>
-    <div class="modal-body" id="modal-resultados">
-      <!-- Se llena dinámicamente -->
-    </div>
-  </div>
-</div>
-
-
         <div id="invoice-items">
           <table id="tabla-factura">
               <thead>
@@ -136,7 +94,5 @@
    </main>
    <%- include ./layouts/footer.ejs %>
    <script src="/js/buscadorFacturasMostrador.js"></script>
-   <script src="/js/selectoresMostrador.js"></script>
-
    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body> 
