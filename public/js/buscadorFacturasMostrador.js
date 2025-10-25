@@ -133,27 +133,42 @@ const ModalBusqueda = (() => {
   const cEl   = document.getElementById('modal-busqueda-count');
 
   function open(query, productos) {
-    // Orden z-index para evitar “pantalla negra”
-    const backdrop = modal.querySelector('.modal-backdrop');
-    const dialog   = modal.querySelector('.modal-dialog');
-    if (backdrop) backdrop.style.zIndex = '1';
-    if (dialog)   dialog.style.zIndex   = '2';
+  const modal    = document.getElementById('modal-busqueda');
+  const backdrop = modal.querySelector('.modal-backdrop');
+  // dentro del IIFE de ModalBusqueda, tras crear const modal...
+const dialog = document.querySelector('#modal-busqueda .modal-dialog');
+if (dialog) {
+  dialog.addEventListener('click', (e) => {
+    e.stopPropagation();   // evita que burbujee al backdrop
+  });
+}
 
-    qEl.textContent = query ? `Coincidencias para: “${query}”` : 'Resultados';
-    cEl.textContent = `(${productos.length} ítems)`;
+  const grid     = document.getElementById('modal-resultados-grid');
 
-    grid.innerHTML = '';
-    productos.forEach(p => grid.appendChild(cardFromProducto(p)));
+  // z-index explícito (blindaje)
+  if (backdrop) backdrop.style.zIndex = '10000';
+  if (dialog)   dialog.style.zIndex   = '10001';
 
-    modal.classList.add('abierto');
-    modal.setAttribute('aria-hidden', 'false');
+  // texto cabecera
+  qEl.textContent = query ? `Coincidencias para: “${query}”` : 'Resultados';
+  cEl.textContent = `(${productos.length} ítems)`;
 
-    // Bloquear scroll del body mientras el modal esté abierto
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
+  // tarjetas
+  grid.innerHTML = '';
+  productos.forEach(p => grid.appendChild(cardFromProducto(p)));
 
-    setTimeout(() => grid.focus(), 0);
-  }
+  // abrir
+  modal.classList.add('abierto');
+  modal.setAttribute('aria-hidden', 'false');
+
+  // bloquear scroll página
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+
+  // foco al grid para rueda/teclado
+  setTimeout(() => grid.focus(), 0);
+}
+
 
   function close() {
     modal.classList.remove('abierto');
