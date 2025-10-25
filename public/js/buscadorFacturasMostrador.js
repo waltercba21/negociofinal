@@ -1,137 +1,105 @@
 function fechaHoyYYYYMMDD(timeZone = 'America/Argentina/Cordoba') {
-  // en-CA devuelve 'YYYY-MM-DD' directamente
   return new Date().toLocaleDateString('en-CA', { timeZone });
 }
 
+// Evitar Enter que envía el form, pero permitimos Enter en el buscador
 document.getElementById('invoice-form').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        return false;
-    }
+  const isSearch = e.target && e.target.id === 'entradaBusqueda';
+  if (e.key === 'Enter' && !isSearch) {
+    e.preventDefault();
+    return false;
+  }
 });
 
 document.getElementById('invoice-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
+  e.preventDefault();
 
-    // Validar que al menos un método de pago esté seleccionado
-    const metodosPagoSeleccionados = document.querySelector('input[name="metodosPago"]:checked');
-    if (!metodosPagoSeleccionados) {
-        Swal.fire({
-            title: 'Error',
-            text: 'Debe seleccionar un método de pago antes de continuar.',
-            icon: 'warning',
-            confirmButtonText: 'Entendido'
-        });
-        return;
+  // Validación método de pago
+  const metodosPagoSeleccionados = document.querySelector('input[name="metodosPago"]:checked');
+  if (!metodosPagoSeleccionados) {
+    Swal.fire({ title: 'Error', text: 'Debe seleccionar un método de pago antes de continuar.', icon: 'warning', confirmButtonText: 'Entendido' });
+    return;
+  }
+
+  const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+  const invoiceItems = [];
+
+  for (let i = 0; i < filasFactura.length; i++) {
+    const codigo = filasFactura[i].cells[1].textContent.trim();
+    const descripcion = filasFactura[i].cells[2].textContent.trim();
+    const precioInput = filasFactura[i].cells[3].querySelector('input').value;
+    let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
+    let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value);
+    const stock = parseInt(filasFactura[i].cells[5].textContent.trim());
+
+    precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
+    cantidad = !isNaN(cantidad) ? cantidad : 1;
+
+    if (cantidad > stock) {
+      Swal.fire({ title: 'Stock insuficiente', text: `No hay stock suficiente para el producto en la fila ${i + 1}. Tiene ${stock}, y desea facturar ${cantidad}.`, icon: 'error', confirmButtonText: 'Entendido' });
+      return;
     }
 
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    const invoiceItems = [];
+    const subtotal = precio_unitario * cantidad;
 
-    for (let i = 0; i < filasFactura.length; i++) {
-        const codigo = filasFactura[i].cells[1].textContent.trim();
-        const descripcion = filasFactura[i].cells[2].textContent.trim();
-        const precioInput = filasFactura[i].cells[3].querySelector('input').value;
-        let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
-        let cantidad = parseInt(filasFactura[i].cells[4].querySelector('input').value);
-        const stock = parseInt(filasFactura[i].cells[5].textContent.trim());
-
-        precio_unitario = !isNaN(precio_unitario) ? precio_unitario : 0;
-        cantidad = !isNaN(cantidad) ? cantidad : 1;
-
-        if (cantidad > stock) {
-            Swal.fire({
-                title: 'Stock insuficiente',
-                text: `No hay stock suficiente para el producto en la fila ${i + 1}. Tiene ${stock}, y desea facturar ${cantidad}.`,
-                icon: 'error',
-                confirmButtonText: 'Entendido'
-            });
-            return;
-        }
-
-        const subtotal = precio_unitario * cantidad;
-
-        if (codigo !== '' && descripcion !== '' && precio_unitario > 0 && cantidad > 0) {
-            invoiceItems.push({
-                producto_id: codigo,
-                descripcion,
-                precio_unitario,
-                cantidad,
-                subtotal
-            });
-        }
+    if (codigo !== '' && descripcion !== '' && precio_unitario > 0 && cantidad > 0) {
+      invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
     }
+  }
 
-    if (invoiceItems.length === 0) {
-        Swal.fire({
-            title: 'Error',
-            text: 'Debe agregar al menos un producto válido antes de continuar.',
-            icon: 'error',
-            confirmButtonText: 'Entendido'
-        });
-        return;
+  if (invoiceItems.length === 0) {
+    Swal.fire({ title: 'Error', text: 'Debe agregar al menos un producto válido antes de continuar.', icon: 'error', confirmButtonText: 'Entendido' });
+    return;
+  }
+
+  const totalFacturaElement = document.getElementById('total-amount');
+  let totalFactura = '0';
+  if (totalFacturaElement) {
+    totalFactura = totalFacturaElement.value.replace(/\./g, '').replace(',', '.').replace('$', '').trim();
+  }
+
+  const fechaFacturaElement = document.getElementById('fecha-presupuesto');
+  const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
+
+  try {
+    const response = await fetch('/productos/procesarFormularioFacturas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombreCliente: document.getElementById('nombre-cliente').value.trim(),
+        fechaPresupuesto: fechaFactura,
+        totalPresupuesto: totalFactura,
+        invoiceItems,
+        metodosPago: metodosPagoSeleccionados.value
+      })
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      Swal.fire({ title: '¡Factura guardada!', text: data.message, icon: 'success', confirmButtonText: 'Ir a productos' })
+      .then(() => { window.location.href = '/productos'; });
+    } else {
+      throw new Error(data.error || 'Error al procesar el formulario');
     }
-
-    const totalFacturaElement = document.getElementById('total-amount');
-    let totalFactura = '0';
-    if (totalFacturaElement) {
-        totalFactura = totalFacturaElement.value.replace(/\./g, '').replace(',', '.').replace('$', '').trim();
-    }
-
-    const fechaFacturaElement = document.getElementById('fecha-presupuesto');
-    const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
-
-    try {
-        const response = await fetch('/productos/procesarFormularioFacturas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                nombreCliente: document.getElementById('nombre-cliente').value.trim(),
-                fechaPresupuesto: fechaFactura,
-                totalPresupuesto: totalFactura,
-                invoiceItems,
-                metodosPago: metodosPagoSeleccionados.value
-            })
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-            Swal.fire({
-                title: '¡Factura guardada!',
-                text: data.message,
-                icon: 'success',
-                confirmButtonText: 'Ir a productos'
-            }).then(() => {
-                window.location.href = '/productos';
-            });
-        } else {
-            throw new Error(data.error || 'Error al procesar el formulario');
-        }
-    } catch (error) {
-        console.error('Error al enviar el formulario:', error);
-        Swal.fire({
-            title: 'Error',
-            text: 'Error al enviar formulario: ' + error.message,
-            icon: 'error',
-            confirmButtonText: 'Entendido'
-        });
-    }
+  } catch (error) {
+    console.error('Error al enviar el formulario:', error);
+    Swal.fire({ title: 'Error', text: 'Error al enviar formulario: ' + error.message, icon: 'error', confirmButtonText: 'Entendido' });
+  }
 });
 
 // --- Protege la fecha contra cambios no intencionales ---
 function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA') {
   if (!fechaInput) return;
 
-  let base = fechaInput.value;     // fecha original (día de actividad)
-  let prev = base;                 // última fecha antes del cambio
+  let base = fechaInput.value;
+  let prev = base;
 
-  // Guardar el valor previo al empezar a editar/abrir el datepicker
   fechaInput.addEventListener('focus', () => { prev = fechaInput.value; });
-  fechaInput.addEventListener('mousedown', () => { prev = fechaInput.value; }); // para abrir el datepicker
+  fechaInput.addEventListener('mousedown', () => { prev = fechaInput.value; });
 
   async function confirmarCambio() {
     const nueva = fechaInput.value;
-    if (!nueva || nueva === prev) return; // no hubo cambio real
+    if (!nueva || nueva === prev) return;
 
     const { isConfirmed } = await Swal.fire({
       title: '⚠️ Atención',
@@ -145,10 +113,10 @@ function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR L
     });
 
     if (isConfirmed) {
-      base = nueva; // aceptar y actualizar base
+      base = nueva;
       fechaInput.dispatchEvent(new Event('change'));
     } else {
-      fechaInput.value = prev; // revertir
+      fechaInput.value = prev;
       fechaInput.dispatchEvent(new Event('change'));
     }
   }
@@ -165,19 +133,25 @@ const ModalBusqueda = (() => {
   const cEl   = document.getElementById('modal-busqueda-count');
 
   function open(query, productos) {
-    // Texto de encabezado
+    // Orden z-index para evitar “pantalla negra”
+    const backdrop = modal.querySelector('.modal-backdrop');
+    const dialog   = modal.querySelector('.modal-dialog');
+    if (backdrop) backdrop.style.zIndex = '1';
+    if (dialog)   dialog.style.zIndex   = '2';
+
     qEl.textContent = query ? `Coincidencias para: “${query}”` : 'Resultados';
     cEl.textContent = `(${productos.length} ítems)`;
 
-    // Poblar grid
     grid.innerHTML = '';
     productos.forEach(p => grid.appendChild(cardFromProducto(p)));
 
-    // Abrir modal
     modal.classList.add('abierto');
     modal.setAttribute('aria-hidden', 'false');
 
-    // Foco accesible
+    // Bloquear scroll del body mientras el modal esté abierto
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
     setTimeout(() => grid.focus(), 0);
   }
 
@@ -185,6 +159,10 @@ const ModalBusqueda = (() => {
     modal.classList.remove('abierto');
     modal.setAttribute('aria-hidden', 'true');
     grid.innerHTML = '';
+
+    // Restaurar scroll
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
   }
 
   function cardFromProducto(producto) {
@@ -192,14 +170,13 @@ const ModalBusqueda = (() => {
     el.className = 'card-prod';
     el.tabIndex = 0;
 
-    // Datos seguros
     const codigo = producto.codigo ?? '';
     const nombre = producto.nombre ?? '';
     const precio = producto.precio_venta ?? 0;
     const stock  = producto.stock_actual ?? 0;
     const img    = (producto.imagenes && producto.imagenes[0] && producto.imagenes[0].imagen)
-                  ? '/uploads/productos/' + producto.imagenes[0].imagen
-                  : '';
+      ? '/uploads/productos/' + producto.imagenes[0].imagen
+      : '';
 
     el.dataset.codigo = codigo;
     el.dataset.nombre = nombre;
@@ -207,14 +184,12 @@ const ModalBusqueda = (() => {
     el.dataset.stock_actual = stock;
     if (img) el.dataset.imagen = img;
 
-    // Thumb
     const thumb = document.createElement('img');
     thumb.className = 'card-thumb';
     thumb.src = img || '';
     thumb.alt = nombre || 'Producto';
     if (!img) thumb.style.display = 'none';
 
-    // Body
     const body = document.createElement('div');
     body.className = 'card-body';
 
@@ -232,11 +207,8 @@ const ModalBusqueda = (() => {
     const bPrecio = document.createElement('span');
     bPrecio.className = 'badge';
     try {
-      bPrecio.textContent = parseFloat(precio).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    } catch {
-      bPrecio.textContent = precio;
-
-    }
+      bPrecio.textContent = parseFloat(precio).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+    } catch { bPrecio.textContent = precio; }
 
     const bStock = document.createElement('span');
     bStock.className = 'badge';
@@ -252,7 +224,6 @@ const ModalBusqueda = (() => {
     el.appendChild(thumb);
     el.appendChild(body);
 
-    // Click / Enter para agregar
     function pick() {
       agregarProductoATabla(
         el.dataset.codigo,
@@ -265,289 +236,221 @@ const ModalBusqueda = (() => {
     }
 
     el.addEventListener('click', pick);
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') pick();
-    });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') pick(); });
 
     return el;
   }
 
-  // Cerrar por botones/overlay
+  // Botones y fondo para cerrar
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', close);
   });
-  // Esc para cerrar
   document.addEventListener('keydown', (e) => {
-    const modalVisible = modal.classList.contains('abierto');
-    if (modalVisible && e.key === 'Escape') close();
+    const visible = modal.classList.contains('abierto');
+    if (visible && e.key === 'Escape') close();
   });
 
   return { open, close };
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
-    Swal.fire({
-        title: 'Está en la sección de Facturas',
-        text: 'Recuerde que está realizando una factura, no un presupuesto.',
-        icon: 'info',
-        confirmButtonText: 'Entendido'
-    });
+  Swal.fire({
+    title: 'Está en la sección de Facturas',
+    text: 'Recuerde que está realizando una factura, no un presupuesto.',
+    icon: 'info',
+    confirmButtonText: 'Entendido'
+  });
 
-    // 🔥 Establecer la fecha actual en el input de fecha y activar protección
-    const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
-    if (fechaPresupuestoInput) {
-         fechaPresupuestoInput.value = fechaHoyYYYYMMDD();
+  const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
+  if (fechaPresupuestoInput) {
+    fechaPresupuestoInput.value = fechaHoyYYYYMMDD();
+    setupFechaProtegida(fechaPresupuestoInput, 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA DE LA FACTURA');
+  }
 
-        // ✅ Activar confirmación
-        setupFechaProtegida(fechaPresupuestoInput, 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA DE LA FACTURA');
+  const entradaBusqueda = document.getElementById('entradaBusqueda');
+  const resultadosBusqueda = document.getElementById('resultadosBusqueda'); // legacy oculto
+  if (resultadosBusqueda) {
+    resultadosBusqueda.innerHTML = '';
+    resultadosBusqueda.style.display = 'none';
+  }
+
+  // ✅ Ahora NO abrimos el modal al tipear.
+  //   El usuario puede escribir frases largas sin perder el foco.
+
+  // Enter para abrir modal con resultados
+  entradaBusqueda.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const query = (entradaBusqueda.value || '').trim();
+    if (!query) return;
+
+    try {
+      const url = '/productos/api/buscar?q=' + encodeURIComponent(query);
+      const respuesta = await fetch(url);
+      const productos = await respuesta.json();
+      ModalBusqueda.open(query, Array.isArray(productos) ? productos : []);
+    } catch (err) {
+      console.error('[BUSCADOR] Error buscando productos (Enter):', err);
+      Swal.fire('Error', 'No se pudieron cargar los resultados de búsqueda', 'error');
     }
+  });
 
-    const entradaBusqueda = document.getElementById('entradaBusqueda');
-    const resultadosBusqueda = document.getElementById('resultadosBusqueda'); // (no se usa en UI nueva)
-    let debounceId;
-
-    // === Nueva UX: al tipear, mostrar modal con mini tarjetas ===
-    entradaBusqueda.addEventListener('keyup', async (e) => {
-        const query = e.target.value || '';
-        // Limpio resultados del contenedor viejo (queda oculto)
-        resultadosBusqueda.innerHTML = '';
-        resultadosBusqueda.style.display = 'none';
-
-        clearTimeout(debounceId);
-        // Pequeño debounce para reducir llamadas
-        debounceId = setTimeout(async () => {
-          // Si la query está vacía, no hago nada
-          if (!query.trim()) {
-            return;
-          }
-          try {
-            const url = '/productos/api/buscar?q=' + encodeURIComponent(query.trim());
-            const respuesta = await fetch(url);
-            const productos = await respuesta.json();
-
-            // Abrir modal con resultados (aunque sea 1) para evitar confusiones
-            ModalBusqueda.open(query.trim(), Array.isArray(productos) ? productos : []);
-          } catch (err) {
-            console.error('[BUSCADOR] Error buscando productos:', err);
-            Swal.fire('Error', 'No se pudieron cargar los resultados de búsqueda', 'error');
-          }
-        }, 220);
-    });
-
-    // BONUS: Enter en el campo fuerza la apertura del modal (si hay texto)
-    entradaBusqueda.addEventListener('keydown', async (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const query = entradaBusqueda.value || '';
-        if (!query.trim()) return;
-        try {
-          const url = '/productos/api/buscar?q=' + encodeURIComponent(query.trim());
-          const respuesta = await fetch(url);
-          const productos = await respuesta.json();
-          ModalBusqueda.open(query.trim(), Array.isArray(productos) ? productos : []);
-        } catch (err) {
-          console.error('[BUSCADOR] Error buscando productos (Enter):', err);
-          Swal.fire('Error', 'No se pudieron cargar los resultados de búsqueda', 'error');
-        }
+  // (Opcional) Si agregás un botón “Buscar”, se soporta aquí:
+  const btnBuscar = document.getElementById('btnBuscarBuscador');
+  if (btnBuscar) {
+    btnBuscar.addEventListener('click', async () => {
+      const query = (entradaBusqueda.value || '').trim();
+      if (!query) return;
+      try {
+        const url = '/productos/api/buscar?q=' + encodeURIComponent(query);
+        const respuesta = await fetch(url);
+        const productos = await respuesta.json();
+        ModalBusqueda.open(query, Array.isArray(productos) ? productos : []);
+      } catch (err) {
+        console.error('[BUSCADOR] Error buscando productos (click):', err);
+        Swal.fire('Error', 'No se pudieron cargar los resultados de búsqueda', 'error');
       }
     });
-
-    // Mantengo listeners “legacy” del contenedor antiguo, pero desactivados visualmente
-    resultadosBusqueda.addEventListener('mouseleave', () => {
-        resultadosBusqueda.style.display = 'none';
-    });
-    resultadosBusqueda.addEventListener('mouseenter', () => {
-        resultadosBusqueda.style.display = 'none';
-    });
+  }
 });
 
 function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
-    const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
-    const filas = tablaFactura.rows;
+  const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
+  const filas = tablaFactura.rows;
+  let filaDisponible = null;
 
-    let filaDisponible = null;
+  for (let i = 0; i < filas.length; i++) {
+    if (!filas[i].cells[1].textContent.trim()) { filaDisponible = filas[i]; break; }
+  }
+  if (!filaDisponible) {
+    Swal.fire("Límite alcanzado", "Solo se pueden agregar hasta 10 productos.", "warning");
+    return;
+  }
 
-    // Buscar la primera fila vacía disponible
-    for (let i = 0; i < filas.length; i++) {
-        if (!filas[i].cells[1].textContent.trim()) {
-            filaDisponible = filas[i];
-            break;
-        }
-    }
+  const cellImagen = filaDisponible.cells[0];
+  const imgElement = cellImagen.querySelector("img");
+  if (imagenProducto && imgElement) {
+    imgElement.src = imagenProducto;
+    imgElement.style.display = "block";
+  } else if (imgElement) {
+    imgElement.style.display = "none";
+    imgElement.removeAttribute('src');
+  }
 
-    if (!filaDisponible) {
-        Swal.fire("Límite alcanzado", "Solo se pueden agregar hasta 10 productos.", "warning");
-        return;
-    }
+  filaDisponible.cells[1].textContent = codigoProducto || '';
+  filaDisponible.cells[2].textContent = nombreProducto || '';
 
-    // Agregar datos a la fila encontrada
-    const cellImagen = filaDisponible.cells[0];
-    const imgElement = cellImagen.querySelector("img");
-    if (imagenProducto && imgElement) {
-        imgElement.src = imagenProducto;
-        imgElement.style.display = "block";
-    } else if (imgElement) {
-        imgElement.style.display = "none";
-        imgElement.removeAttribute('src');
-    }
+  const inputPrecio = filaDisponible.cells[3].querySelector("input");
+  if (inputPrecio) {
+    const pv = parseFloat(precioVenta) || 0;
+    inputPrecio.value = pv.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+    inputPrecio.disabled = false;
+  }
 
-    filaDisponible.cells[1].textContent = codigoProducto || '';
-    filaDisponible.cells[2].textContent = nombreProducto || '';
+  const inputCantidad = filaDisponible.cells[4].querySelector("input");
+  if (inputCantidad) {
+    inputCantidad.value = 1;
+    inputCantidad.disabled = false;
+    inputCantidad.addEventListener('input', function () { updateSubtotal(filaDisponible); }, { once: true });
+  }
 
-    const inputPrecio = filaDisponible.cells[3].querySelector("input");
-    if (inputPrecio) {
-        const pv = parseFloat(precioVenta) || 0;
-        inputPrecio.value = pv.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-        inputPrecio.disabled = false;
-    }
+  filaDisponible.cells[5].textContent = (parseInt(stockActual) || 0);
 
-    const inputCantidad = filaDisponible.cells[4].querySelector("input");
-    if (inputCantidad) {
-        inputCantidad.value = 1;
-        inputCantidad.disabled = false;
-        inputCantidad.addEventListener('input', function () {
-            updateSubtotal(filaDisponible);
-        }, { once: true }); // se asegura de no duplicar listeners
-    }
+  const subtotalInicial = (parseFloat(precioVenta) || 0) * 1;
+  filaDisponible.cells[6].textContent = subtotalInicial.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
 
-    filaDisponible.cells[5].textContent = (parseInt(stockActual) || 0);
+  calcularTotal();
 
-    const subtotalInicial = (parseFloat(precioVenta) || 0) * 1;
-    filaDisponible.cells[6].textContent = subtotalInicial.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-    // 🔥 Llamar a calcularTotal() inmediatamente para mostrar el precio final
-    calcularTotal();
-
-    // Activar el botón de eliminar
-    const botonEliminar = filaDisponible.cells[7].querySelector("button");
-    if (botonEliminar) {
-        botonEliminar.style.display = "block";
-        botonEliminar.classList.add("boton-eliminar-factura");
-        botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
-        // Evitar múltiples listeners acumulados
-        botonEliminar.replaceWith(botonEliminar.cloneNode(true));
-        const nuevoBoton = filaDisponible.cells[7].querySelector("button");
-        nuevoBoton.addEventListener("click", function () {
-            filaDisponible.cells[1].textContent = "";
-            filaDisponible.cells[2].textContent = "";
-            if (inputPrecio) inputPrecio.value = "";
-            if (inputCantidad) inputCantidad.value = "";
-            filaDisponible.cells[5].textContent = "";
-            filaDisponible.cells[6].textContent = "";
-            if (imgElement) {
-              imgElement.style.display = "none";
-              imgElement.removeAttribute('src');
-            }
-            nuevoBoton.style.display = "none";
-            calcularTotal();
-        });
-    }
+  const botonEliminar = filaDisponible.cells[7].querySelector("button");
+  if (botonEliminar) {
+    botonEliminar.style.display = "block";
+    botonEliminar.classList.add("boton-eliminar-factura");
+    botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
+    botonEliminar.replaceWith(botonEliminar.cloneNode(true));
+    const nuevoBoton = filaDisponible.cells[7].querySelector("button");
+    nuevoBoton.addEventListener("click", function () {
+      filaDisponible.cells[1].textContent = "";
+      filaDisponible.cells[2].textContent = "";
+      if (inputPrecio) inputPrecio.value = "";
+      if (inputCantidad) inputCantidad.value = "";
+      filaDisponible.cells[5].textContent = "";
+      filaDisponible.cells[6].textContent = "";
+      if (imgElement) { imgElement.style.display = "none"; imgElement.removeAttribute('src'); }
+      nuevoBoton.style.display = "none";
+      calcularTotal();
+    });
+  }
 }
 
 function updateSubtotal(row, verificarStock = true) {
-    const inputPrecio = row.cells[3].querySelector('input');
-    const inputCantidad = row.cells[4].querySelector('input');
-    const stockActualCell = row.cells[5];
+  const inputPrecio = row.cells[3].querySelector('input');
+  const inputCantidad = row.cells[4].querySelector('input');
+  const stockActualCell = row.cells[5];
 
-    if (!inputPrecio || !inputCantidad || !stockActualCell) {
-        console.error("Error: No se encontraron los elementos necesarios en la fila.");
-        return;
+  if (!inputPrecio || !inputCantidad || !stockActualCell) {
+    console.error("Error: No se encontraron los elementos necesarios en la fila.");
+    return;
+  }
+
+  let precio = parseFloat(inputPrecio.value.replace(/\$|\./g, '').replace(',', '.'));
+  let cantidad = parseInt(inputCantidad.value);
+  let stockActual = parseInt(stockActualCell.textContent.replace(/\$|\./g, '').replace(',', '.'));
+
+  precio = !isNaN(precio) ? precio : 0;
+  cantidad = !isNaN(cantidad) ? cantidad : 1;
+  stockActual = !isNaN(stockActual) ? stockActual : 0;
+
+  const subtotal = precio * cantidad;
+  row.cells[6].textContent = subtotal.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+
+  if (verificarStock && document.activeElement === inputCantidad) {
+    if (cantidad > stockActual) {
+      Swal.fire({ title: 'ALERTA', text: 'NO HAY STOCK DISPONIBLE. Solo hay ' + stockActual + ' unidades en stock.', icon: 'error', confirmButtonText: 'Entendido' });
+      inputCantidad.value = stockActual > 0 ? stockActual : 1;
+      cantidad = parseInt(inputCantidad.value);
     }
 
-    let precio = parseFloat(inputPrecio.value.replace(/\$|\./g, '').replace(',', '.'));
-    let cantidad = parseInt(inputCantidad.value);
-    let stockActual = parseInt(stockActualCell.textContent.replace(/\$|\./g, '').replace(',', '.'));
+    const stockRestante = stockActual - cantidad;
+    const stockMinimo = 5;
 
-    precio = !isNaN(precio) ? precio : 0;
-    cantidad = !isNaN(cantidad) ? cantidad : 1;
-    stockActual = !isNaN(stockActual) ? stockActual : 0;
-
-    const subtotal = precio * cantidad;
-    row.cells[6].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-
-    // 🔥 Validar stock SOLO cuando se modifica la cantidad, NO cuando se cambia el precio
-    if (verificarStock && document.activeElement === inputCantidad) {
-        if (cantidad > stockActual) {
-            Swal.fire({
-                title: 'ALERTA',
-                text: 'NO HAY STOCK DISPONIBLE. Solo hay ' + stockActual + ' unidades en stock.',
-                icon: 'error',
-                confirmButtonText: 'Entendido'
-            });
-            inputCantidad.value = stockActual > 0 ? stockActual : 1;
-            cantidad = parseInt(inputCantidad.value);
-        }
-
-        const stockRestante = stockActual - cantidad;
-        const stockMinimo = 5;
-
-        if (stockRestante <= stockMinimo && stockRestante >= 0) {
-            Swal.fire({
-                title: 'ALERTA',
-                text: 'LLEGANDO AL LIMITE DE STOCK. Quedan ' + stockRestante + ' unidades disponibles.',
-                icon: 'warning',
-                confirmButtonText: 'Entendido'
-            });
-        }
+    if (stockRestante <= stockMinimo && stockRestante >= 0) {
+      Swal.fire({ title: 'ALERTA', text: 'LLEGANDO AL LIMITE DE STOCK. Quedan ' + stockRestante + ' unidades disponibles.', icon: 'warning', confirmButtonText: 'Entendido' });
     }
+  }
 
-    calcularTotal(); // Recalcular total después de actualizar el subtotal
+  calcularTotal();
 }
 
 function calcularTotal() {
-    const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
-    let total = 0;
+  const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+  let total = 0;
 
-    for (let i = 0; i < filasFactura.length; i++) {
-        let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
-        subtotal = !isNaN(subtotal) ? subtotal : 0;
-        total += subtotal;
-    }
+  for (let i = 0; i < filasFactura.length; i++) {
+    let subtotal = parseFloat(filasFactura[i].cells[6].textContent.replace(/\$|\./g, '').replace(',', '.'));
+    subtotal = !isNaN(subtotal) ? subtotal : 0;
+    total += subtotal;
+  }
 
-    const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
-    const interesAmountInput = document.getElementById('interes-amount');
-    const totalAmountInput = document.getElementById('total-amount'); // 🔥 Este es el que se modificará directamente
+  const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
+  const interesAmountInput = document.getElementById('interes-amount');
+  const totalAmountInput = document.getElementById('total-amount');
 
-    let interes = 0;
+  let interes = 0;
+  if (creditoCheckbox && creditoCheckbox.checked) {
+    interes = total * 0.15;
+    total += interes;
+  }
 
-    if (creditoCheckbox && creditoCheckbox.checked) {
-        interes = total * 0.15; // Interés del 15%
-        total += interes; // 🔥 Se aplica el interés directamente al total
-    }
-
-    interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
-    totalAmountInput.value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+  interesAmountInput.value = interes.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+  totalAmountInput.value = total.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
 }
 
-// 🔥 Asociar eventos a los inputs de cantidad y precio para actualizar dinámicamente
-document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
-    const inputCantidad = row.cells[4].querySelector('input');
-    const inputPrecio = row.cells[3].querySelector('input');
-
-    if (inputCantidad) {
-        inputCantidad.addEventListener('input', function () {
-            updateSubtotal(row);
-        });
-    }
-
-    if (inputPrecio) {
-        inputPrecio.addEventListener('input', function () {
-            updateSubtotal(row, false); // 🔥 Evita la validación de stock cuando se cambia el precio
-        });
-    }
-});
-
-// 🔥 Actualizar el total cuando se cambian los métodos de pago
-document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
-    checkbox.addEventListener('change', calcularTotal);
-});
-
-// 🔒 Bloquea Enter en todos los inputs excepto en la búsqueda
+// Bloquea Enter fuera del buscador
 document.querySelectorAll('input:not(#entradaBusqueda)').forEach(input => {
-    input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            return false;
-        }
-    });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      return false;
+    }
+  });
 });
