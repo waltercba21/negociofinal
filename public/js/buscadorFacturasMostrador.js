@@ -165,81 +165,109 @@ const ModalBusqueda = (() => {
     document.body.style.overflow = '';
   }
 
-  function cardFromProducto(producto) {
-    const el = document.createElement('div');
-    el.className = 'card-prod';
-    el.tabIndex = 0;
+function cardFromProducto(producto) {
+  const el = document.createElement('div');
+  el.className = 'card-prod';
+  el.tabIndex = 0;
 
-    const codigo = producto.codigo ?? '';
-    const nombre = producto.nombre ?? '';
-    const precio = producto.precio_venta ?? 0;
-    const stock  = producto.stock_actual ?? 0;
-    const img    = (producto.imagenes && producto.imagenes[0] && producto.imagenes[0].imagen)
-      ? '/uploads/productos/' + producto.imagenes[0].imagen
-      : '';
+  // Normalizo posibles campos que devuelva tu API
+  const id     = producto.id ?? producto.producto_id ?? '';
+  const codigo = producto.codigo ?? producto.codigo_proveedor ?? '';
+  const nombre = producto.nombre ?? producto.descripcion ?? '';
+  const precio = producto.precio_venta ?? producto.precio ?? 0;
+  const stock  = producto.stock_actual ?? producto.stock ?? 0;
+  const img    = (producto.imagenes && producto.imagenes[0] && producto.imagenes[0].imagen)
+    ? '/uploads/productos/' + producto.imagenes[0].imagen
+    : '';
 
-    el.dataset.codigo = codigo;
-    el.dataset.nombre = nombre;
-    el.dataset.precio_venta = precio;
-    el.dataset.stock_actual = stock;
-    if (img) el.dataset.imagen = img;
+  // Guardamos TODO lo útil en data-*
+  el.dataset.id            = id;
+  el.dataset.codigo        = codigo;
+  el.dataset.nombre        = nombre;
+  el.dataset.precio_venta  = precio;
+  el.dataset.stock_actual  = stock;
+  if (img) el.dataset.imagen = img;
 
-    const thumb = document.createElement('img');
-    thumb.className = 'card-thumb';
-    thumb.src = img || '';
-    thumb.alt = nombre || 'Producto';
-    if (!img) thumb.style.display = 'none';
+  // Thumb
+  const thumb = document.createElement('img');
+  thumb.className = 'card-thumb';
+  thumb.src = img || '';
+  thumb.alt = nombre || 'Producto';
+  if (!img) thumb.style.display = 'none';
 
-    const body = document.createElement('div');
-    body.className = 'card-body';
+  // Body (más rico)
+  const body = document.createElement('div');
+  body.className = 'card-body';
 
-    const title = document.createElement('div');
-    title.className = 'card-title';
-    title.textContent = nombre;
+  const title = document.createElement('div');
+  title.className = 'card-title';
+  title.textContent = nombre;
 
-    const meta = document.createElement('div');
-    meta.className = 'card-meta';
+  // Precio grande
+  const price = document.createElement('div');
+  price.className = 'price-strong';
+  try { price.textContent = parseFloat(precio).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }); }
+  catch { price.textContent = precio; }
 
-    const bCodigo = document.createElement('span');
-    bCodigo.className = 'badge';
-    bCodigo.textContent = codigo || 's/ código';
+  // Metas: código y stock
+  const meta = document.createElement('div');
+  meta.className = 'card-meta';
 
-    const bPrecio = document.createElement('span');
-    bPrecio.className = 'badge';
-    try {
-      bPrecio.textContent = parseFloat(precio).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-    } catch { bPrecio.textContent = precio; }
+  const bCodigo = document.createElement('span');
+  bCodigo.className = 'badge';
+  bCodigo.textContent = codigo ? `Código: ${codigo}` : 'Sin código';
 
-    const bStock = document.createElement('span');
-    bStock.className = 'badge';
-    bStock.textContent = `Stock: ${stock}`;
+  const bStock = document.createElement('span');
+  bStock.className = 'badge';
+  bStock.textContent = `Stock: ${stock}`;
 
-    meta.appendChild(bCodigo);
-    meta.appendChild(bPrecio);
-    meta.appendChild(bStock);
+  meta.appendChild(bCodigo);
+  meta.appendChild(bStock);
 
-    body.appendChild(title);
-    body.appendChild(meta);
+  body.appendChild(title);
+  body.appendChild(price);
+  body.appendChild(meta);
 
-    el.appendChild(thumb);
-    el.appendChild(body);
+  el.appendChild(thumb);
+  el.appendChild(body);
 
-    function pick() {
-      agregarProductoATabla(
-        el.dataset.codigo,
-        el.dataset.nombre,
-        el.dataset.precio_venta,
-        el.dataset.stock_actual,
-        el.dataset.imagen
-      );
-      close();
-    }
-
-    el.addEventListener('click', pick);
-    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') pick(); });
-
-    return el;
+  // Acción primaria: pick
+  function pick() {
+    // Usamos id como producto_id (back-end lo espera), y en descripción anexamos el código visible
+    agregarProductoATabla(
+      el.dataset.id || el.dataset.codigo || '',            // producto_id preferido
+      el.dataset.nombre + (el.dataset.codigo ? ` (${el.dataset.codigo})` : ''),
+      el.dataset.precio_venta,
+      el.dataset.stock_actual,
+      el.dataset.imagen
+    );
+    ModalBusqueda.close();
   }
+
+  el.addEventListener('click', pick);
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter') pick(); });
+
+  return el;
+}
+// Delegación de eventos en el grid (back-up sólido)
+(function(){
+  const grid = document.getElementById('modal-resultados-grid');
+  if (!grid) return;
+  grid.addEventListener('click', (e) => {
+    const card = e.target.closest('.card-prod');
+    if (!card) return;
+    // Simulamos el pick de la tarjeta
+    agregarProductoATabla(
+      card.dataset.id || card.dataset.codigo || '',
+      (card.dataset.nombre || '') + (card.dataset.codigo ? ` (${card.dataset.codigo})` : ''),
+      card.dataset.precio_venta,
+      card.dataset.stock_actual,
+      card.dataset.imagen
+    );
+    ModalBusqueda.close();
+  });
+})();
+
 
   // Botones y fondo para cerrar
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
