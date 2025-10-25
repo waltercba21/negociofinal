@@ -157,6 +157,134 @@ function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR L
   fechaInput.addEventListener('input', confirmarCambio);
 }
 
+// =================== MODAL: helpers ===================
+const ModalBusqueda = (() => {
+  const modal = document.getElementById('modal-busqueda');
+  const grid  = document.getElementById('modal-resultados-grid');
+  const qEl   = document.getElementById('modal-busqueda-query');
+  const cEl   = document.getElementById('modal-busqueda-count');
+
+  function open(query, productos) {
+    // Texto de encabezado
+    qEl.textContent = query ? `Coincidencias para: “${query}”` : 'Resultados';
+    cEl.textContent = `(${productos.length} ítems)`;
+
+    // Poblar grid
+    grid.innerHTML = '';
+    productos.forEach(p => grid.appendChild(cardFromProducto(p)));
+
+    // Abrir modal
+    modal.classList.add('abierto');
+    modal.setAttribute('aria-hidden', 'false');
+
+    // Foco accesible
+    setTimeout(() => grid.focus(), 0);
+  }
+
+  function close() {
+    modal.classList.remove('abierto');
+    modal.setAttribute('aria-hidden', 'true');
+    grid.innerHTML = '';
+  }
+
+  function cardFromProducto(producto) {
+    const el = document.createElement('div');
+    el.className = 'card-prod';
+    el.tabIndex = 0;
+
+    // Datos seguros
+    const codigo = producto.codigo ?? '';
+    const nombre = producto.nombre ?? '';
+    const precio = producto.precio_venta ?? 0;
+    const stock  = producto.stock_actual ?? 0;
+    const img    = (producto.imagenes && producto.imagenes[0] && producto.imagenes[0].imagen)
+                  ? '/uploads/productos/' + producto.imagenes[0].imagen
+                  : '';
+
+    el.dataset.codigo = codigo;
+    el.dataset.nombre = nombre;
+    el.dataset.precio_venta = precio;
+    el.dataset.stock_actual = stock;
+    if (img) el.dataset.imagen = img;
+
+    // Thumb
+    const thumb = document.createElement('img');
+    thumb.className = 'card-thumb';
+    thumb.src = img || '';
+    thumb.alt = nombre || 'Producto';
+    if (!img) thumb.style.display = 'none';
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'card-body';
+
+    const title = document.createElement('div');
+    title.className = 'card-title';
+    title.textContent = nombre;
+
+    const meta = document.createElement('div');
+    meta.className = 'card-meta';
+
+    const bCodigo = document.createElement('span');
+    bCodigo.className = 'badge';
+    bCodigo.textContent = codigo || 's/ código';
+
+    const bPrecio = document.createElement('span');
+    bPrecio.className = 'badge';
+    try {
+      bPrecio.textContent = parseFloat(precio).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    } catch {
+      bPrecio.textContent = precio;
+
+    }
+
+    const bStock = document.createElement('span');
+    bStock.className = 'badge';
+    bStock.textContent = `Stock: ${stock}`;
+
+    meta.appendChild(bCodigo);
+    meta.appendChild(bPrecio);
+    meta.appendChild(bStock);
+
+    body.appendChild(title);
+    body.appendChild(meta);
+
+    el.appendChild(thumb);
+    el.appendChild(body);
+
+    // Click / Enter para agregar
+    function pick() {
+      agregarProductoATabla(
+        el.dataset.codigo,
+        el.dataset.nombre,
+        el.dataset.precio_venta,
+        el.dataset.stock_actual,
+        el.dataset.imagen
+      );
+      close();
+    }
+
+    el.addEventListener('click', pick);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') pick();
+    });
+
+    return el;
+  }
+
+  // Cerrar por botones/overlay
+  document.querySelectorAll('[data-close-modal]').forEach(btn => {
+    btn.addEventListener('click', close);
+  });
+  // Esc para cerrar
+  document.addEventListener('keydown', (e) => {
+    const modalVisible = modal.classList.contains('abierto');
+    if (modalVisible && e.key === 'Escape') close();
+  });
+
+  return { open, close };
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     Swal.fire({
         title: 'Está en la sección de Facturas',
@@ -175,87 +303,61 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const entradaBusqueda = document.getElementById('entradaBusqueda');
-    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
-    let timeoutId;
+    const resultadosBusqueda = document.getElementById('resultadosBusqueda'); // (no se usa en UI nueva)
+    let debounceId;
 
+    // === Nueva UX: al tipear, mostrar modal con mini tarjetas ===
     entradaBusqueda.addEventListener('keyup', async (e) => {
-        const busqueda = e.target.value;
+        const query = e.target.value || '';
+        // Limpio resultados del contenedor viejo (queda oculto)
         resultadosBusqueda.innerHTML = '';
+        resultadosBusqueda.style.display = 'none';
 
-        if (!busqueda.trim()) {
-            resultadosBusqueda.style.display = 'none';
+        clearTimeout(debounceId);
+        // Pequeño debounce para reducir llamadas
+        debounceId = setTimeout(async () => {
+          // Si la query está vacía, no hago nada
+          if (!query.trim()) {
             return;
+          }
+          try {
+            const url = '/productos/api/buscar?q=' + encodeURIComponent(query.trim());
+            const respuesta = await fetch(url);
+            const productos = await respuesta.json();
+
+            // Abrir modal con resultados (aunque sea 1) para evitar confusiones
+            ModalBusqueda.open(query.trim(), Array.isArray(productos) ? productos : []);
+          } catch (err) {
+            console.error('[BUSCADOR] Error buscando productos:', err);
+            Swal.fire('Error', 'No se pudieron cargar los resultados de búsqueda', 'error');
+          }
+        }, 220);
+    });
+
+    // BONUS: Enter en el campo fuerza la apertura del modal (si hay texto)
+    entradaBusqueda.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const query = entradaBusqueda.value || '';
+        if (!query.trim()) return;
+        try {
+          const url = '/productos/api/buscar?q=' + encodeURIComponent(query.trim());
+          const respuesta = await fetch(url);
+          const productos = await respuesta.json();
+          ModalBusqueda.open(query.trim(), Array.isArray(productos) ? productos : []);
+        } catch (err) {
+          console.error('[BUSCADOR] Error buscando productos (Enter):', err);
+          Swal.fire('Error', 'No se pudieron cargar los resultados de búsqueda', 'error');
         }
-
-        const url = '/productos/api/buscar?q=' + busqueda;
-
-        const respuesta = await fetch(url);
-        const productos = await respuesta.json();
-
-        productos.forEach((producto) => {
-            const resultado = document.createElement('div');
-            resultado.classList.add('resultado-busqueda');
-            resultado.dataset.codigo = producto.codigo;
-            resultado.dataset.nombre = producto.nombre;
-            resultado.dataset.precio_venta = producto.precio_venta;
-            resultado.dataset.stock_actual = producto.stock_actual;
-
-            if (producto.imagenes && producto.imagenes.length > 0) {
-                resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
-            }
-
-            const contenedor = document.createElement('div');
-            contenedor.classList.add('resultado-contenedor');
-
-            if (producto.imagenes && producto.imagenes.length > 0) {
-                const imagen = document.createElement('img');
-                imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
-                imagen.classList.add('miniatura');
-                contenedor.appendChild(imagen);
-            }
-
-            const nombreProducto = document.createElement('span');
-            nombreProducto.textContent = producto.nombre;
-            contenedor.appendChild(nombreProducto);
-
-            resultado.appendChild(contenedor);
-
-            resultado.addEventListener('mouseenter', function () {
-                const resultados = document.querySelectorAll('.resultado-busqueda');
-                resultados.forEach(r => r.classList.remove('hover-activo'));
-                this.classList.add('hover-activo');
-            });
-
-            resultado.addEventListener('mouseleave', function () {
-                this.classList.remove('hover-activo');
-            });
-
-            // Asociar el evento click directamente a cada resultado
-            resultado.addEventListener('click', function () {
-                console.log("Producto seleccionado:", this.dataset);
-                const codigoProducto = this.dataset.codigo;
-                const nombreProducto = this.dataset.nombre;
-                const precioVenta = this.dataset.precio_venta;
-                const stockActual = this.dataset.stock_actual;
-                const imagenProducto = this.dataset.imagen;
-                console.log(`Intentando agregar producto: ${codigoProducto}, ${nombreProducto}`);
-                agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
-            });
-
-            resultadosBusqueda.appendChild(resultado);
-            resultadosBusqueda.style.display = 'block';
-        });
+      }
     });
 
+    // Mantengo listeners “legacy” del contenedor antiguo, pero desactivados visualmente
     resultadosBusqueda.addEventListener('mouseleave', () => {
-        timeoutId = setTimeout(() => {
-            resultadosBusqueda.style.display = 'none';
-        }, 300);
+        resultadosBusqueda.style.display = 'none';
     });
-
     resultadosBusqueda.addEventListener('mouseenter', () => {
-        clearTimeout(timeoutId);
-        resultadosBusqueda.style.display = 'block';
+        resultadosBusqueda.style.display = 'none';
     });
 });
 
@@ -278,22 +380,24 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
         return;
     }
 
-    console.log("Fila disponible encontrada:", filaDisponible);
-
     // Agregar datos a la fila encontrada
     const cellImagen = filaDisponible.cells[0];
     const imgElement = cellImagen.querySelector("img");
     if (imagenProducto && imgElement) {
         imgElement.src = imagenProducto;
         imgElement.style.display = "block";
+    } else if (imgElement) {
+        imgElement.style.display = "none";
+        imgElement.removeAttribute('src');
     }
 
-    filaDisponible.cells[1].textContent = codigoProducto;
-    filaDisponible.cells[2].textContent = nombreProducto;
+    filaDisponible.cells[1].textContent = codigoProducto || '';
+    filaDisponible.cells[2].textContent = nombreProducto || '';
 
     const inputPrecio = filaDisponible.cells[3].querySelector("input");
     if (inputPrecio) {
-        inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+        const pv = parseFloat(precioVenta) || 0;
+        inputPrecio.value = pv.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
         inputPrecio.disabled = false;
     }
 
@@ -303,11 +407,13 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
         inputCantidad.disabled = false;
         inputCantidad.addEventListener('input', function () {
             updateSubtotal(filaDisponible);
-        });
+        }, { once: true }); // se asegura de no duplicar listeners
     }
 
-    filaDisponible.cells[5].textContent = stockActual;
-    filaDisponible.cells[6].textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+    filaDisponible.cells[5].textContent = (parseInt(stockActual) || 0);
+
+    const subtotalInicial = (parseFloat(precioVenta) || 0) * 1;
+    filaDisponible.cells[6].textContent = subtotalInicial.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
     // 🔥 Llamar a calcularTotal() inmediatamente para mostrar el precio final
     calcularTotal();
@@ -318,20 +424,24 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
         botonEliminar.style.display = "block";
         botonEliminar.classList.add("boton-eliminar-factura");
         botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
-        botonEliminar.addEventListener("click", function () {
+        // Evitar múltiples listeners acumulados
+        botonEliminar.replaceWith(botonEliminar.cloneNode(true));
+        const nuevoBoton = filaDisponible.cells[7].querySelector("button");
+        nuevoBoton.addEventListener("click", function () {
             filaDisponible.cells[1].textContent = "";
             filaDisponible.cells[2].textContent = "";
             if (inputPrecio) inputPrecio.value = "";
             if (inputCantidad) inputCantidad.value = "";
             filaDisponible.cells[5].textContent = "";
             filaDisponible.cells[6].textContent = "";
-            imgElement.style.display = "none";
-            botonEliminar.style.display = "none";
+            if (imgElement) {
+              imgElement.style.display = "none";
+              imgElement.removeAttribute('src');
+            }
+            nuevoBoton.style.display = "none";
             calcularTotal();
         });
     }
-
-    console.log("Producto agregado correctamente a la tabla.");
 }
 
 function updateSubtotal(row, verificarStock = true) {
