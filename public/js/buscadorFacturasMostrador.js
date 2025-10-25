@@ -368,19 +368,24 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
   filaDisponible.cells[1].textContent = codigoProducto || '';
   filaDisponible.cells[2].textContent = nombreProducto || '';
 
-  const inputPrecio = filaDisponible.cells[3].querySelector("input");
-  if (inputPrecio) {
-    const pv = parseFloat(precioVenta) || 0;
-    inputPrecio.value = pv.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-    inputPrecio.disabled = false;
-  }
+ // 🔥 También recalculamos si el precio es editable por el vendedor
+const inputPrecio = filaDisponible.cells[3].querySelector("input");
+if (inputPrecio) {
+  // Cambios en precio NO verifican stock
+  inputPrecio.addEventListener('input', function () {
+    updateSubtotal(filaDisponible, false);
+  });
+}
 
   const inputCantidad = filaDisponible.cells[4].querySelector("input");
-  if (inputCantidad) {
-    inputCantidad.value = 1;
-    inputCantidad.disabled = false;
-    inputCantidad.addEventListener('input', function () { updateSubtotal(filaDisponible); }, { once: true });
-  }
+ if (inputCantidad) {
+  inputCantidad.value = 1;
+  inputCantidad.disabled = false;
+  // Recalcula siempre que cambie la cantidad (y valida stock)
+  inputCantidad.addEventListener('input', function () {
+    updateSubtotal(filaDisponible, true);
+  });
+}
 
   filaDisponible.cells[5].textContent = (parseInt(stockActual) || 0);
 
