@@ -40,10 +40,8 @@
 
         <div class="buscador">
           <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
-          <!-- El contenedor de resultados original se mantiene por compatibilidad, pero no se usa en la nueva UI -->
-          <div id="resultadosBusqueda" style="display:none;"></div>
+          <div id="resultadosBusqueda"></div>
         </div>
-
         <div id="invoice-items">
           <table id="tabla-factura">
               <thead>
@@ -94,102 +92,7 @@
       </div>
     </form>
    </main>
-
-   <!-- ============ MODAL DE RESULTADOS DE BÚSQUEDA ============ -->
-   <div id="modal-busqueda" class="modal-busqueda" aria-hidden="true">
-     <div class="modal-backdrop" data-close-modal></div>
-     <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-busqueda-titulo">
-       <div class="modal-header">
-         <h3 id="modal-busqueda-titulo">Resultados de búsqueda</h3>
-         <button class="modal-close" type="button" title="Cerrar (Esc)" data-close-modal>&times;</button>
-       </div>
-       <div class="modal-subheader">
-         <span id="modal-busqueda-query">Mostrando coincidencias…</span>
-         <span id="modal-busqueda-count"></span>
-       </div>
-       <div id="modal-resultados-grid" class="modal-grid" tabindex="0" aria-label="Resultados"></div>
-       <div class="modal-footer">
-         <button class="modal-close-btn" type="button" data-close-modal>Cerrar</button>
-       </div>
-     </div>
-   </div>
-
-<style>
-/* ==================== MODAL DE BÚSQUEDA — BASE ==================== */
-.modal-busqueda{position:fixed;inset:0;display:none;z-index:9999}
-.modal-busqueda.abierto{display:block}
-.modal-busqueda .modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:1}
-.modal-busqueda .modal-dialog{
-  position:relative; margin:4vh auto; width:min(1200px,96vw);
-  background:#fff; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.35);
-  max-height:92vh; display:flex; flex-direction:column; overflow:hidden; z-index:2
-}
-.modal-busqueda .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e5e7eb}
-.modal-busqueda .modal-header h3{margin:0;font-size:1.15rem}
-.modal-busqueda .modal-close{font-size:28px;line-height:1;background:transparent;border:0;cursor:pointer}
-.modal-busqueda .modal-subheader{display:flex;gap:12px;align-items:center;padding:10px 20px;color:#334155;font-size:.95rem;border-bottom:1px dashed #e5e7eb}
-
-/* El contenedor scrolleable real del modal */
-.modal-busqueda .modal-grid{
-  padding:16px 18px;
-  display:grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap:16px;
-  overflow:auto;                 /* ← hace scroll dentro del modal */
-  -webkit-overflow-scrolling:touch;
-  touch-action: pan-y;
-  background:#fff;
-  max-height: calc(92vh - 56px - 44px - 58px); /* header + subheader + footer aprox */
-}
-
-/* ====== Tarjeta de producto (más grande y legible) ====== */
-.modal-busqueda .card-prod{
-  border:1px solid #cbd5e1; border-radius:14px; padding:14px;
-  display:grid; grid-template-columns:96px 1fr; gap:12px;
-  cursor:pointer; background:#fff;
-  transition:transform .08s ease, box-shadow .08s ease, border-color .08s ease;
-}
-.modal-busqueda .card-prod:hover{
-  transform:translateY(-2px); box-shadow:0 10px 25px rgba(2,6,23,.12); border-color:#94a3b8;
-}
-.modal-busqueda .card-thumb{
-  width:96px; height:96px; border-radius:12px; object-fit:cover; background:#f1f5f9; align-self:center
-}
-.modal-busqueda .card-body{display:flex;flex-direction:column;gap:6px;min-width:0}
-.modal-busqueda .card-title{
-  color:#0b1324; font-weight:700; font-size:1rem; line-height:1.25;
-  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-}
-.modal-busqueda .price-strong{font-size:1.05rem; font-weight:800; color:#0f172a}
-.modal-busqueda .card-meta{font-size:.92rem; color:#111827; display:flex; gap:8px; flex-wrap:wrap}
-.modal-busqueda .badge{
-  background:#e9eef5; color:#0f172a; font-weight:600; border-radius:8px; padding:2px 8px; font-size:.85rem; border:1px solid #d0d7e2
-}
-
-.modal-busqueda .modal-footer{padding:10px 16px; border-top:1px solid #e5e7eb; display:flex; justify-content:flex-end}
-.modal-busqueda .modal-close-btn{background:#eee;border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
-
-/* ==================== DARK MODE (sólo dentro del modal) ==================== */
-@media (prefers-color-scheme: dark){
-  .modal-busqueda .modal-dialog{background:#0b1020}
-  .modal-busqueda .modal-header{border-bottom:1px solid #1f2937}
-  .modal-busqueda .modal-header h3{color:#e5e7eb}
-  .modal-busqueda .modal-subheader{color:#cbd5e1;border-bottom:1px dashed #1f2937}
-  .modal-busqueda .modal-grid{background:#0b1020}
-  .modal-busqueda .card-prod{background:#0f172a; border:1px solid #334155}
-  .modal-busqueda .card-prod:hover{box-shadow:0 10px 25px rgba(0,0,0,.45)}
-  .modal-busqueda .card-thumb{background:#111827}
-  .modal-busqueda .card-title{color:#ffffff}
-  .modal-busqueda .price-strong{color:#fff}
-  .modal-busqueda .card-meta{color:#e5e7eb}
-  .modal-busqueda .badge{background:#0ea5e9; color:#001018; border:0}
-}
-</style>
-
-
-
-
    <%- include ./layouts/footer.ejs %>
    <script src="/js/buscadorFacturasMostrador.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</body>
+</body> 
