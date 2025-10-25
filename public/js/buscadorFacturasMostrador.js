@@ -454,3 +454,13 @@ document.querySelectorAll('input:not(#entradaBusqueda)').forEach(input => {
     }
   });
 });
+// Guard de arranque: aseguro modal cerrado y scroll normal
+document.addEventListener('DOMContentLoaded', () => {
+  const m = document.getElementById('modal-busqueda');
+  if (m) {
+    m.classList.remove('abierto');
+    m.setAttribute('aria-hidden', 'true');
+  }
+  document.documentElement.style.overflow = '';
+  document.body.style.overflow = '';
+});
