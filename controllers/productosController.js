@@ -2141,7 +2141,10 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 }, 
-actualizarPreciosExcel : async (req, res) => {
+// ===============================
+// Controlador: actualizarPreciosExcel
+// ===============================
+actualizarPreciosExcel: async (req, res) => {
   try {
     const proveedor_id = Number(req.body.proveedor);
     const file = req.files && req.files[0];
@@ -2149,7 +2152,80 @@ actualizarPreciosExcel : async (req, res) => {
       return res.status(400).send('Proveedor y archivo son requeridos.');
     }
 
-    // Si querés usar el nombre del proveedor en el PDF:
+    // ===== Helpers robustos (locales al controlador) =====
+    const quitarAcentos = (txt = '') =>
+      txt.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const norm = (txt = '') => quitarAcentos(String(txt).trim().toLowerCase());
+
+    function encontrarColumna(claves = [], candidatos = []) {
+      const set = claves.map(c => ({ raw: c, n: norm(c) }));
+      for (const cand of candidatos) {
+        const nCand = norm(cand);
+        const hit = set.find(k =>
+          k.n === nCand ||
+          k.n.includes(nCand) ||
+          nCand.includes(k.n)
+        );
+        if (hit) return hit.raw;
+      }
+      return null;
+    }
+
+    function limpiarPrecio(valor) {
+      if (valor === null || valor === undefined) return 0;
+      if (typeof valor === 'number' && Number.isFinite(valor)) {
+        return Math.round((valor + Number.EPSILON) * 100) / 100;
+      }
+      let s = String(valor).trim();
+
+      // eliminar símbolos y espacios
+      s = s.replace(/\$/g, '').replace(/\s+/g, '');
+
+      // Si el formato es “1.234,56” (coma decimal), convertir
+      const comaDec = /,\d{1,2}$/.test(s);
+      if (comaDec) {
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else {
+        // formato “1234.56” → sacar separadores de miles si los hay
+        const partes = s.split('.');
+        if (partes.length > 2) {
+          const decimales = partes.pop();
+          s = partes.join('') + '.' + decimales;
+        }
+      }
+
+      const n = Number(s);
+      if (!Number.isFinite(n) || n <= 0) return 0;
+      return Math.round((n + Number.EPSILON) * 100) / 100;
+    }
+
+    const str = (x) => (x ?? '').toString().trim();
+    const incluye = (haystack, needle) =>
+      str(haystack).toUpperCase().includes(str(needle).toUpperCase());
+
+    /**
+     * Detecta si una fila importada corresponde a lista cuyos precios vienen "por juego".
+     * Reglas para MYL/BAIML:
+     *  - Nombre proveedor == 'MYL'
+     *  - y (nombre de hoja incluye 'BAIML' || código empieza con 'BAIML' || descripción incluye 'BAIML')
+     * Devuelve { factor: 1|0.5, presentacion: 'unidad'|'juego' }
+     */
+    function detectarPresentacionFila({ proveedorNombre, sheetName, codigo, descripcion }) {
+      const esMYL = str(proveedorNombre).toUpperCase() === 'MYL';
+      const esBAIML =
+        incluye(sheetName, 'BAIML') ||
+        str(codigo).toUpperCase().startsWith('BAIML') ||
+        incluye(descripcion, 'BAIML');
+
+      if (esMYL && esBAIML) {
+        // BAIML viene por par/juego → normalizamos a unidad
+        return { factor: 0.5, presentacion: 'juego' };
+      }
+      return { factor: 1, presentacion: 'unidad' };
+    }
+
+    // ===== Traer nombre del proveedor (opcional para PDF y detección) =====
     let proveedorNombre = '';
     try {
       const [provRow] = await conexion.promise().query(
@@ -2159,14 +2235,17 @@ actualizarPreciosExcel : async (req, res) => {
       proveedorNombre = (provRow && provRow[0] && provRow[0].nombre) ? provRow[0].nombre : '';
     } catch {}
 
+    // ===== Constantes =====
     const PROVEEDOR_OFERTAS_ID = 24; // DISTRIMAR OFERTAS (ajustable)
 
+    // ===== Acumuladores =====
     let productosActualizados = [];
-    const codigosProcesados = new Set(); // sólo para OFERTAS “faltantes”
+    const codigosProcesados = new Set(); // para ofertas
     const productosTocados = new Set();  // product_id con update
-    const nuevosProductos = [];          // ← los que NO existen en DB
-    const codigosNuevosSet = new Set();  // para no duplicar “nuevos”
+    const nuevosProductos = [];          // nuevos no matcheados en DB
+    const codigosNuevosSet = new Set();  // evitar duplicados en nuevos
 
+    // ===== Leer Excel =====
     const workbook = xlsx.readFile(file.path);
     const sheets = workbook.SheetNames;
 
@@ -2177,23 +2256,33 @@ actualizarPreciosExcel : async (req, res) => {
         const claves = Object.keys(row);
 
         // Columnas robustas
-        const codigoColumn = encontrarColumna(claves, ['codigo', 'código', 'cod.', 'cod']);
-        const precioColumn = encontrarColumna(claves, ['precio', 'importe', 'valor']);
+        const codigoColumn = encontrarColumna(claves, ['codigo', 'código', 'cod.', 'cod', 'item', 'articulo', 'artículo']);
+        const precioColumn = encontrarColumna(claves, ['precio', 'importe', 'valor', 'unitario', 'p.unit']);
         const descColumn   = encontrarColumna(claves, ['descripcion', 'descripción', 'detalle', 'producto', 'nombre']);
 
         if (!codigoColumn || !precioColumn) continue;
 
-        const codigoRaw = (row[codigoColumn] ?? '').toString().trim();
-        const precio    = limpiarPrecio(row[precioColumn]);
-        const descRaw   = descColumn ? (row[descColumn] ?? '').toString().trim() : '';
+        const codigoRaw = str(row[codigoColumn]);
+        const precioBruto = limpiarPrecio(row[precioColumn]);
+        const descRaw   = descColumn ? str(row[descColumn]) : '';
 
-        if (!codigoRaw || !Number.isFinite(precio) || precio <= 0) continue;
+        if (!codigoRaw || !Number.isFinite(precioBruto) || precioBruto <= 0) continue;
 
         // Para OFERTAS: evitar repetir mismo código
         if (codigosProcesados.has(codigoRaw)) continue;
         if (proveedor_id === PROVEEDOR_OFERTAS_ID) codigosProcesados.add(codigoRaw);
 
-        // Traigo precio anterior (si existía)
+        // ====== NORMALIZACIÓN A "POR UNIDAD" (PATCH BAIML/MYL) ======
+        const { factor, presentacion } = detectarPresentacionFila({
+          proveedorNombre,
+          sheetName   : sheet,
+          codigo      : codigoRaw,
+          descripcion : descRaw
+        });
+        const precioNormalizado = Math.round((precioBruto * factor + Number.EPSILON) * 100) / 100;
+        // ============================================================
+
+        // Traigo precio anterior (si existía) para el reporte
         const precioAnterior = await new Promise(resolve => {
           const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id=? AND codigo=? LIMIT 1`;
           conexion.query(sql, [proveedor_id, codigoRaw], (err, r) => {
@@ -2202,31 +2291,33 @@ actualizarPreciosExcel : async (req, res) => {
           });
         });
 
-        // Actualizar fila(s) del proveedor + info de productos tocados
-        const resultado = await producto.actualizarPreciosPDF(precio, codigoRaw, proveedor_id);
+        // Actualizar fila(s) del proveedor (usa precio ya normalizado "por unidad")
+        const resultado = await producto.actualizarPreciosPDF(precioNormalizado, codigoRaw, proveedor_id);
 
         if (Array.isArray(resultado) && resultado.length) {
-          // Coincidió en DB → es existente
+          // Coincidió en DB → existente
           resultado.forEach(p => {
             productosActualizados.push({
               producto_id: p.producto_id,
               codigo: p.codigo,
               nombre: p.nombre,
               precio_lista_antiguo: precioAnterior,
-              precio_lista_nuevo: precio,
+              precio_lista_nuevo: precioNormalizado, // ya por unidad
               precio_venta: p.precio_venta || 0,
-              sin_cambio: Math.abs((precioAnterior || 0) - precio) < 0.01
+              presentacion_detectada: presentacion,  // útil para auditar
+              sin_cambio: Math.abs((precioAnterior || 0) - precioNormalizado) < 0.01
             });
             productosTocados.add(Number(p.producto_id));
           });
         } else {
-          // ❗No hubo match en DB → candidato a “producto nuevo”
+          // No hubo match en DB → posible “producto nuevo”
           if (!codigosNuevosSet.has(codigoRaw)) {
             codigosNuevosSet.add(codigoRaw);
             nuevosProductos.push({
               codigo: codigoRaw,
               descripcion: descRaw || '(sin descripción)',
-              precio: precio
+              precio: precioNormalizado,            // ya por unidad
+              presentacion_detectada: presentacion  // info de auditoría
             });
           }
         }
@@ -2263,7 +2354,7 @@ actualizarPreciosExcel : async (req, res) => {
       for (const prodId of ids) {
         const meta = mapProd.get(prodId);
         if (!meta || !meta.asignado_id) continue;
-        if (meta.asignado_id === proveedor_id) continue; // mismo proveedor → comportamiento estándar
+        if (meta.asignado_id === proveedor_id) continue; // mismo proveedor → estándar
 
         // Traer precio_lista del proveedor ASIGNADO + descuento
         const [ppRows] = await conexion.promise().query(
@@ -2279,7 +2370,7 @@ actualizarPreciosExcel : async (req, res) => {
         );
         if (!ppRows || ppRows.length === 0) continue;
 
-        const pl   = Number(ppRows[0].precio_lista || 0);
+        const pl   = Number(ppRows[0].precio_lista || 0); // ya está por unidad en nuestra base
         const desc = Number(ppRows[0].descuento || 0);
         if (!(pl > 0)) continue;
 
@@ -2287,7 +2378,7 @@ actualizarPreciosExcel : async (req, res) => {
         const costoIVA  = costoNeto + (costoNeto * (meta.IVA || 21) / 100);
         let nuevoPV     = costoIVA + (costoIVA * (meta.utilidad || 0) / 100);
 
-        // redondeo a la centena como en el front (>=50 hacia arriba)
+        // redondeo a la centena (>=50 hacia arriba)
         const resto = nuevoPV % 100;
         nuevoPV = (resto < 50) ? (nuevoPV - resto) : (nuevoPV + (100 - resto));
         nuevoPV = Math.ceil(nuevoPV);
@@ -2312,7 +2403,7 @@ actualizarPreciosExcel : async (req, res) => {
          WHERE pp.proveedor_id = ?`, [proveedor_id]);
 
       ofertasFaltantes = (rows || []).filter(r => {
-        const cod = (r.codigo || '').toString().trim();
+        const cod = str(r.codigo);
         return cod && !codigosProcesados.has(cod);
       }).map(r => ({
         producto_id: r.producto_id,
@@ -2327,16 +2418,16 @@ actualizarPreciosExcel : async (req, res) => {
     // Limpieza temp
     try { fs.unlinkSync(file.path); } catch {}
 
-    // ✅ Guardamos para el PDF de “PRODUCTOS NUEVOS”
+    // Guardar “PRODUCTOS NUEVOS” en sesión para el PDF
     if (!req.session) req.session = {};
     req.session.nuevosProductos = {
       proveedor_id,
       proveedor_nombre: proveedorNombre,
       fecha: new Date(),
-      items: nuevosProductos // [{codigo, descripcion, precio}]
+      items: nuevosProductos // [{codigo, descripcion, precio, presentacion_detectada}]
     };
 
-    // Render con listados + cantidad de nuevos para mostrar el botón
+    // Render de resultados
     res.render('productosActualizados', {
       productos: productosActualizados,
       ofertasFaltantes,
@@ -2348,6 +2439,7 @@ actualizarPreciosExcel : async (req, res) => {
     res.status(500).send(error.message);
   }
 },
+
 descargarPDFNuevos : async (req, res) => {
   try {
     const data = req.session && req.session.nuevosProductos;
