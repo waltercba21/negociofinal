@@ -563,49 +563,49 @@ lista: async function (req, res) {
           });
         }
       },      
- buscar: async (req, res) => {
+buscar: async (req, res) => {
   try {
     const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
-    req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
 
+    // paginación (solo controlador)
     const pagina    = Math.max(1, parseInt(req.query.pagina || '1', 10));
     const porPagina = Math.min(60, Math.max(10, parseInt(req.query.porPagina || '20', 10)));
     const offset    = (pagina - 1) * porPagina;
 
-    // Paginado por filtros (nuevo método)
-    const { items, total } = await producto.obtenerPorFiltrosPaginado(
+    // 1) Traer TODO con tu modelo (sin LIMIT) para contar y luego cortar
+    //    NOTA: pasamos `undefined` en `limite` para que tu modelo NO agregue LIMIT
+    const todos = await producto.obtenerPorFiltros(
       conexion,
-      { categoria: categoria_id, marca: marca_id, modelo: modelo_id, busqueda_nombre },
-      offset,
-      porPagina
+      categoria_id,
+      marca_id,
+      modelo_id,
+      busqueda_nombre,
+      undefined
     );
 
-    // Imágenes (batch)
-    const productoIds = items.map(p => p.id);
-    const todasLasImagenes = productoIds.length
-      ? await producto.obtenerImagenesProducto(conexion, productoIds)
-      : [];
+    const total        = Array.isArray(todos) ? todos.length : 0;
+    const totalPaginas = total ? Math.max(1, Math.ceil(total / porPagina)) : 0;
 
-    // Enriquecer cada item
+    // 2) Cortar a la página solicitada
+    const items = total ? todos.slice(offset, offset + porPagina) : [];
+
+    // 3) Enriquecer SOLO la página (proveedores y proveedor a mostrar)
     for (const prod of items) {
-      // Imágenes
-      prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
-
-      // Proveedores del producto
+      // (Tus imágenes ya vienen agrupadas desde el modelo: prod.imagenes)
       const proveedores = await producto.obtenerProveedoresPorProducto(conexion, prod.id) || [];
       prod.proveedores = proveedores;
 
-      // Proveedor asignado vs más barato
       let provAsignado = null;
       if (prod.proveedor_id != null) {
         provAsignado = proveedores.find(p =>
           Number(p.id ?? p.proveedor_id) === Number(prod.proveedor_id)
         ) || null;
       }
+
       let provMasBarato = null;
-      try {
-        provMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
-      } catch (_) {}
+      try { provMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id); }
+      catch { /* noop */ }
+
       const provParaCard = provAsignado || provMasBarato || null;
 
       prod.proveedor_nombre = provParaCard?.proveedor_nombre
@@ -619,18 +619,20 @@ lista: async function (req, res) {
 
       prod.proveedor_asignado_id = prod.proveedor_id ?? null;
       prod.utilidad = Number(prod.utilidad) || 0;
+      // precio_venta ya viene en prod (si lo tenés en la SELECT de tu modelo)
     }
 
-    res.json({
+    return res.json({
       items,
       total,
       pagina,
       porPagina,
-      totalPaginas: total ? Math.max(1, Math.ceil(total / porPagina)) : 0
+      totalPaginas
     });
+
   } catch (error) {
     console.error("❌ Error en /productos/api/buscar:", error);
-    res.status(500).json({ items: [], total: 0, pagina: 1, porPagina: 20, totalPaginas: 0 });
+    return res.status(500).json({ items: [], total: 0, pagina: 1, porPagina: 20, totalPaginas: 0 });
   }
 },
     detalle: async function (req, res) {

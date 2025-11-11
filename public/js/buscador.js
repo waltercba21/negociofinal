@@ -40,6 +40,14 @@ function logBusquedaTexto(q, origen = 'texto') {
     body: JSON.stringify({ q, origen })
   }).catch(() => {});
 }
+// en tu buscador.js
+async function cargarPaginaBusqueda(pag = 1){
+  const url = `/productos/api/buscar?q=${encodeURIComponent(qActual)}&pagina=${pag}&porPagina=${porPagina}`;
+  const r = await fetch(url);
+  const data = await r.json(); // { items, total, pagina, porPagina, totalPaginas }
+  mostrarProductos(data.items);
+  renderPaginador(data.pagina, data.totalPaginas);
+}
 
 function logBusquedaProducto(producto_id, qActual) {
   if (!producto_id) return;
