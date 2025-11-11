@@ -1,33 +1,24 @@
 /* ==========================================
-   DEBUG helpers
-========================================== */
-const DBG = true; // poné false para silenciar logs
-function dbg(...args){ if(DBG) console.log(...args); }
-function dbgTable(obj){ if(DBG && obj) console.table(obj); }
-
-// === Override de IVA por proveedor (si el endpoint no lo manda) ===
-// clave: nombre EXACTO que viene en proveedor_nombre del endpoint
-const IVA_PROVIDER_OVERRIDE = {
-  'DISTRIMAR': 10.5,
-  'DISTRIMAR OFERTAS': 10.5,
-  'DM LAMPARAS': 10.5,
-  // Agregá acá otros que correspondan...
-};
-
-/* ==========================================
    Estado global / selectors
 ========================================== */
 let productosOriginales = [];
 let timer;
 
-const entradaBusqueda = document.getElementById('entradaBusqueda');
-const contenedorProductos = document.getElementById('contenedor-productos');
-const botonLimpiar = document.getElementById('botonLimpiar');
+const entradaBusqueda      = document.getElementById('entradaBusqueda');
+const contenedorProductos  = document.getElementById('contenedor-productos');
+const botonLimpiar         = document.getElementById('botonLimpiar');
+const paginadorBusqueda    = document.getElementById('paginador-busqueda'); // <div id="paginador-busqueda"></div> en la vista
 
-const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
+const isAdminUser    = document.body.getAttribute('data-is-admin-user') === 'true';
 const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
 
 let lastLogAt = 0; // debounce para analytics
+
+// Estado de búsqueda/paginación
+let qActual       = '';
+let paginaActual  = 1;
+let totalPaginas  = 0;
+let porPagina     = 20;
 
 /* ==========================================
    Analytics helpers
@@ -40,316 +31,127 @@ function logBusquedaTexto(q, origen = 'texto') {
     body: JSON.stringify({ q, origen })
   }).catch(() => {});
 }
-// en tu buscador.js
-async function cargarPaginaBusqueda(pag = 1){
-  const url = `/productos/api/buscar?q=${encodeURIComponent(qActual)}&pagina=${pag}&porPagina=${porPagina}`;
-  const r = await fetch(url);
-  const data = await r.json(); // { items, total, pagina, porPagina, totalPaginas }
-  mostrarProductos(data.items);
-  renderPaginador(data.pagina, data.totalPaginas);
-}
 
 function logBusquedaProducto(producto_id, qActual) {
   if (!producto_id) return;
   fetch('/analytics/busqueda-producto', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      producto_id: Number(producto_id),
-      q: qActual || null
-    })
+    body: JSON.stringify({ producto_id: Number(producto_id), q: qActual || null })
   }).catch(() => {});
 }
 
 /* ==========================================
-   Helpers numéricos / formato
+   Búsqueda con paginación (nuevo) + fallback
 ========================================== */
-function toNumberSafe(v) {
-  if (v == null) return 0;
-  if (typeof v === 'number' && Number.isFinite(v)) return v;
-
-  let s = String(v).trim();
-
-  // Caso 1.234,56 => 1234.56
-  if (s.includes('.') && s.includes(',')) {
-    s = s.replace(/\./g, '').replace(',', '.');
-  } else if (s.includes(',')) {
-    s = s.replace(',', '.');
+async function cargarPaginaBusqueda(pag = 1) {
+  if (!qActual || qActual.length < 3) {
+    contenedorProductos.innerHTML = '';
+    if (paginadorBusqueda) paginadorBusqueda.innerHTML = '';
+    return;
   }
 
-  s = s.replace(/%/g, '');
-
-  const n = parseFloat(s);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function formatearNumero(num) {
-  return Math.floor(Number(num) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
-
-function _getUtilidadDeCard(cardEl) {
-  let u = toNumberSafe((cardEl?.dataset?.utilidad ?? '').toString().trim());
-  if (u > 0 && u < 1) u = u * 100;  // admitir 0,30 -> 30
-  if (u < 0) u = 0;
-  if (u > 100) u = 100;
-  return u;
-}
-
-// redondeo a centenar (como en editar.js)
-function _redondearAlCentenar(valor) {
-  const n = Math.round(toNumberSafe(valor));
-  const resto = n % 100;
-  return (resto < 50) ? (n - resto) : (n + (100 - resto));
-}
-
-/* ==========================================
-   Detección flexible de claves
-   (solo para encontrar el "Precio de costo con IVA" real)
-========================================== */
-function _pickKeyCI(obj, candidates) {
-  const map = {};
-  for (const k of Object.keys(obj || {})) map[k.toLowerCase()] = k;
-  for (const alias of candidates) {
-    const k = map[alias.toLowerCase()];
-    if (k != null && obj[k] != null) return obj[k];
-  }
-  return undefined;
-}
-function _normalizeProviders(listaRaw) {
-  if (!Array.isArray(listaRaw)) return [];
-
-  const EXACT_FIRST = [
-    'precio_costo_con_iva','precioCostoConIva','precioCostoConIVA',
-    'costo_iva','costoIva',
-    'costo_con_iva','costoConIva',
-    'costo_final','costoFinal','costo_final_con_iva','costoFinalConIva'
-  ];
-  const IVA_KEYS = ['iva','iva_porcentaje','porcentaje_iva','alicuotaIva','alicuota_iva'];
-  const PRECIO_LISTA_KEYS = ['precio_lista','precioLista','lista'];
-  const DESC_KEYS = ['descuento','dto','descu','desc'];
-  const COD_KEYS = ['codigo','codigo_proveedor','cod','codigoProveedor','cod_proveedor'];
-  const NOMBRE_PROV_KEYS = ['proveedor_nombre','nombre_proveedor','proveedor','nombre'];
-
-  function pickExact(obj, aliases) {
-    const map = {};
-    for (const k of Object.keys(obj || {})) map[k.toLowerCase()] = k;
-    for (const a of aliases) {
-      const real = map[a.toLowerCase()];
-      if (real != null && obj[real] != null) return obj[real];
+  // 1) Intento con endpoint paginado
+  try {
+    const r = await fetch(`/productos/api/buscar-paginado?q=${encodeURIComponent(qActual)}&pagina=${pag}&porPagina=${porPagina}`);
+    const data = await r.json(); // { items, total, pagina, porPagina, totalPaginas }
+    if (data && Array.isArray(data.items)) {
+      paginaActual = Number(data.pagina || 1);
+      totalPaginas = Number(data.totalPaginas || 0);
+      DBG && console.log('🔎 buscar-paginado =>', data.items.length, 'items / pag', paginaActual, '/', totalPaginas);
+      mostrarProductos(data.items);
+      renderPaginador();
+      return;
     }
-    return undefined;
+  } catch (e) {
+    DBG && console.warn('buscar-paginado falló, voy a fallback', e);
   }
 
-  function pickCostoIvaDirect(obj) {
-    const keys = Object.keys(obj || {});
-    for (const kPref of EXACT_FIRST) {
-      const real = keys.find(k => k.toLowerCase() === kPref.toLowerCase());
-      if (real && obj[real] != null) return obj[real];
-    }
-    for (const k of keys) {
-      const lk = k.toLowerCase();
-      if (lk.includes('costo') && lk.includes('iva')) return obj[k];
-    }
-    return undefined;
+  // 2) Fallback al endpoint viejo que devuelve array (sin paginado)
+  try {
+    const r2 = await fetch(`/productos/api/buscar?q=${encodeURIComponent(qActual)}&limite=${porPagina}`);
+    const arr = await r2.json(); // array
+    paginaActual = 1;
+    totalPaginas = 1;
+    DBG && console.log('🔎 buscar (fallback) =>', Array.isArray(arr) ? arr.length : 0, 'items');
+    mostrarProductos(Array.isArray(arr) ? arr : []);
+    if (paginadorBusqueda) paginadorBusqueda.innerHTML = '';
+  } catch (e2) {
+    DBG && console.error('fallback /productos/api/buscar error', e2);
+    mostrarProductos([]);
+    if (paginadorBusqueda) paginadorBusqueda.innerHTML = '';
   }
-
-  function toNumberSafePlus(v) {
-    if (v == null) return 0;
-    if (typeof v === 'number' && Number.isFinite(v)) return v;
-    let s = String(v).trim();
-    if (s.includes('.') && s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
-    else if (s.includes(',')) s = s.replace(',', '.');
-    s = s.replace(/%/g, '');
-    const n = parseFloat(s);
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  return (listaRaw || []).map((p, idx) => {
-    const nombreProv = String(pickExact(p, NOMBRE_PROV_KEYS) ?? '').trim();
-    const costoIvaBack = toNumberSafePlus(pickCostoIvaDirect(p));
-
-    // Reconstrucción de NETO desde lista + descuento (si existen)
-    const precioLista = toNumberSafePlus(pickExact(p, PRECIO_LISTA_KEYS));
-    let descPct = toNumberSafePlus(pickExact(p, DESC_KEYS)); // viene 60 o "60.00"
-    if (descPct > 0 && descPct < 1.5) descPct = descPct * 100; // por las dudas
-    const netoRecon = (precioLista > 0)
-      ? Math.round(precioLista * (1 - (descPct || 0) / 100))
-      : 0;
-
-    // IVA: prioridad: campo iva → override → inferencia desde costo_iva_back
-    let ivaPct = toNumberSafePlus(pickExact(p, IVA_KEYS));
-    if (ivaPct > 0 && ivaPct < 1.5) ivaPct = ivaPct * 100; // 0.105 -> 10.5
-    if (!(ivaPct > 0)) {
-      const override = IVA_PROVIDER_OVERRIDE[nombreProv];
-      if (override) ivaPct = override;
-    }
-    if (!(ivaPct > 0) && netoRecon > 0 && costoIvaBack > 0) {
-      const factor = costoIvaBack / netoRecon;
-      const infer = (factor - 1) * 100; // p.ej. ≈ 21
-      ivaPct = Math.round(infer * 10) / 10; // redondeo a 0,1
-      console.warn(`ℹ️ IVA inferido desde backend para "${nombreProv}": ${ivaPct}% (usando costo_iva_back / netoRecon)`);
-    }
-
-    // Reconstrucción del costo con IVA con lo que tengamos
-    let costoIvaRecon = 0;
-    if (netoRecon > 0 && ivaPct >= 0) {
-      costoIvaRecon = Math.round(netoRecon * (1 + (ivaPct || 0) / 100));
-    }
-
-    // Preferimos el reconstruido si es válido
-    let costoIva = (costoIvaRecon > 0) ? costoIvaRecon : costoIvaBack;
-
-    const provId = (p.id != null ? p.id : p.proveedor_id);
-    const codigo = pickExact(p, COD_KEYS);
-
-    // Diagnóstico
-    const delta = Math.abs((costoIvaBack || 0) - (costoIvaRecon || 0));
-    console.groupCollapsed(`🔎 Proveedor#${idx} ${nombreProv} — DIAGNÓSTICO IVA`);
-    console.table([{
-      precioLista, descPct, netoRecon, ivaPct,
-      costoIvaBack, costoIvaRecon, usadoParaCalculo: costoIva
-    }]);
-    if (costoIvaBack > 0 && costoIvaRecon > 0 && delta >= 2) {
-      console.warn('⚠️ MISMATCH backend vs reconstruido (>= $2). Se usará el reconstruido.');
-    }
-    console.groupEnd();
-
-    return {
-      ...p,
-      proveedor_id_norm: Number(provId) || null,
-      proveedor_nombre: nombreProv,
-      codigo: String(codigo ?? '-').trim(),
-      costo_iva: toNumberSafePlus(costoIva)
-    };
-  });
 }
 
-/* ==========================================
-   Orden por costo (asc)
-========================================== */
-function _sortedIdxByCosto(lista){
-  const withCost = [], noCost = [];
-  lista.forEach((p, i) => {
-    const c = toNumberSafe(p.costo_iva);
-    (c > 0 ? withCost : noCost).push({ i, c });
-  });
-  withCost.sort((a,b) => a.c - b.c);
-  return [...withCost.map(x => x.i), ...noCost.map(x => x.i)];
-}
+function renderPaginador() {
+  if (!paginadorBusqueda) return;
+  if (!totalPaginas || totalPaginas <= 1) {
+    paginadorBusqueda.innerHTML = '';
+    return;
+  }
+  const html = `
+    <nav aria-label="Paginación búsqueda">
+      <ul class="pagination justify-content-center">
+        <li class="page-item ${paginaActual===1?'disabled':''}">
+          <a class="page-link" data-goto="${paginaActual-1}" href="#">«</a>
+        </li>
+        ${Array.from({length: totalPaginas}, (_,i)=>i+1).map(i=>`
+          <li class="page-item ${i===paginaActual?'active':''}">
+            <a class="page-link" data-goto="${i}" href="#">${i}</a>
+          </li>`).join('')}
+        <li class="page-item ${paginaActual===totalPaginas?'disabled':''}">
+          <a class="page-link" data-goto="${paginaActual+1}" href="#">»</a>
+        </li>
+      </ul>
+    </nav>`;
+  paginadorBusqueda.innerHTML = html;
 
-/* ==========================================
-   Estado/rotación por producto
-========================================== */
-// productoId -> { lista, baseIdx, idx, first, orden, orderCycle, cyclePos }
-const _cacheProveedores = new Map();
-
-async function _getOrInitState(productoId){
-  let state = _cacheProveedores.get(productoId);
-  if (state) return state;
-
-  const r = await fetch(`/productos/api/proveedores/${productoId}`);
-  let listaRaw = await r.json();
-
-  dbg('📥 /productos/api/proveedores/', productoId, '=>', Array.isArray(listaRaw) ? listaRaw.length : 0);
-
-  const lista = _normalizeProviders(listaRaw);
-
-  state = { lista, idx: 0, first: true, baseIdx: 0, orden: [], orderCycle: [], cyclePos: -1 };
-
-  if (state.lista.length) {
-    // Buscar card para obtener el proveedor asignado por ID (SSR)
-    const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
-    const cardEl = provSpan ? provSpan.closest('.card') : null;
-    const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
-
-    // localizar baseIdx
-    if (asignadoId) {
-      const byId = state.lista.findIndex(p => Number(p.proveedor_id_norm ?? p.id ?? p.proveedor_id) === asignadoId);
-      state.baseIdx = byId >= 0 ? byId : 0;
-    } else {
-      const nombreAsignado = (provSpan?.textContent || '').trim();
-      const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
-      state.baseIdx = byName >= 0 ? byName : 0;
-    }
-    state.idx = state.baseIdx;
-
-    // Orden y ciclo (sin base)
-    state.orden = _sortedIdxByCosto(state.lista);
-    state.orderCycle = state.orden.filter(i => i !== state.baseIdx);
-    if (!state.orderCycle.length) state.orderCycle = [state.baseIdx];
-    state.cyclePos = -1;
-
-    console.log('🎯 BASE DETECTADA', {
-      productoId, baseIdx: state.baseIdx,
-      baseNombre: state.lista[state.baseIdx]?.proveedor_nombre,
+  paginadorBusqueda.querySelectorAll('a.page-link').forEach(a => {
+    a.addEventListener('click', ev => {
+      ev.preventDefault();
+      const goto = Number(a.dataset.goto);
+      if (!Number.isFinite(goto) || goto < 1 || goto > totalPaginas) return;
+      cargarPaginaBusqueda(goto);
     });
-    dbg('📑 ORDEN', state.orden, ' | CYCLE (sin base):', state.orderCycle);
-  }
-
-  _cacheProveedores.set(productoId, state);
-  return state;
-}
-
-/* ==========================================
-   Render helpers
-========================================== */
-function _renderProveedor(productoId, data) {
-  const spanNombre = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
-  const spanCodigo = document.querySelector(`.prov-codigo[data-producto-id="${productoId}"]`);
-  const smallIdx   = document.querySelector(`.prov-idx[data-producto-id="${productoId}"]`);
-  if (spanNombre) spanNombre.textContent = data?.proveedor_nombre || 'Sin proveedor';
-  if (spanCodigo) spanCodigo.textContent = data?.codigo || '-';
-  if (smallIdx) {
-    const st = _cacheProveedores.get(productoId);
-    const pos = (st?.idx ?? 0) + 1;
-    const total = st?.lista?.length || 0;
-    smallIdx.textContent = total > 0 ? `Mostrando ${pos} de ${total}` : '';
-  }
-  dbg('🖼️ RENDER proveedor', { productoId, proveedor: data?.proveedor_nombre, codigo: data?.codigo });
-}
-
-function _renderSimulacion(productoId, precioVentaSimulado){
-  const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
-  if (!nodo) return;
-  if (Number.isFinite(precioVentaSimulado) && precioVentaSimulado > 0) {
-    nodo.textContent = `Precio venta: $${formatearNumero(precioVentaSimulado)}`;
-  } else {
-    nodo.textContent = '';
-  }
-  dbg('🧾 RENDER precio simulado', { productoId, precioVentaSimulado });
+  });
 }
 
 /* ==========================================
    UI / Render de productos
 ========================================== */
 window.onload = async () => {
-  const respuesta = await fetch('/productos/api/buscar');
-  productosOriginales = await respuesta.json();
-  dbg('📦 productosOriginales cargados:', productosOriginales?.length);
+  // Si querés precargar algo al inicio, dejá esto; si no, podés omitirlo.
+  try {
+    const respuesta = await fetch('/productos/api/buscar?limite=20');
+    productosOriginales = await respuesta.json();
+    DBG && console.log('📦 productosOriginales cargados:', Array.isArray(productosOriginales) ? productosOriginales.length : 0);
+    // mostrarProductos(productosOriginales); // opcional
+  } catch {}
 };
 
 entradaBusqueda.addEventListener('input', (e) => {
   clearTimeout(timer);
   timer = setTimeout(async () => {
-    const busqueda = e.target.value.trim();
+    qActual = e.target.value.trim();
 
     const now = Date.now();
-    if (busqueda.length >= 3 && (now - lastLogAt > 1200)) {
+    if (qActual.length >= 3 && (now - lastLogAt > 1200)) {
       lastLogAt = now;
-      logBusquedaTexto(busqueda, 'texto');
+      logBusquedaTexto(qActual, 'texto');
     }
 
     contenedorProductos.innerHTML = '';
+    paginaActual = 1;
+    totalPaginas = 0;
 
-    if (busqueda) {
-      const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
-      const respuesta = await fetch(url);
-      const productos = await respuesta.json();
-      dbg('🔎 /productos/api/buscar =>', productos?.length, 'items');
-      mostrarProductos(productos);
+    if (qActual.length >= 3) {
+      await cargarPaginaBusqueda(1);
+    } else {
+      if (paginadorBusqueda) paginadorBusqueda.innerHTML = '';
     }
   }, 300);
 });
+
 
 function mostrarProductos(productos) {
   contenedorProductos.innerHTML = '';

@@ -563,35 +563,109 @@ lista: async function (req, res) {
           });
         }
       },      
-buscar: async (req, res) => {
+ buscar: async (req, res) => {
+  try {
+    const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
+    req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
+
+    const limite = req.query.limite ? parseInt(req.query.limite) : 100;
+
+    // Productos por filtros
+    const productos = await producto.obtenerPorFiltros(
+      conexion,
+      categoria_id,
+      marca_id,
+      modelo_id,
+      busqueda_nombre,
+      limite
+    );
+
+    // Imágenes (si hay IDs)
+    const productoIds = productos.map(p => p.id);
+    const todasLasImagenes = productoIds.length
+      ? await producto.obtenerImagenesProducto(conexion, productoIds)
+      : [];
+
+    // Enriquecer cada producto
+    for (const prod of productos) {
+      // Imágenes del producto
+      prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
+
+      // Todos los proveedores del producto
+      const proveedores = await producto.obtenerProveedoresPorProducto(conexion, prod.id) || [];
+      prod.proveedores = proveedores;
+
+      // Proveedor asignado (por ID en el propio producto)
+      let provAsignado = null;
+      if (prod.proveedor_id != null) {
+        // algunos modelos devuelven 'id', otros 'proveedor_id' dentro del objeto proveedor
+        provAsignado = proveedores.find(p =>
+          Number(p.id ?? p.proveedor_id) === Number(prod.proveedor_id)
+        ) || null;
+      }
+
+      // Fallback: proveedor más barato si no hay asignado o no aparece en la lista
+      let provMasBarato = null;
+      try {
+        provMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
+      } catch (_) {
+        provMasBarato = null;
+      }
+
+      const provParaCard = provAsignado || provMasBarato || null;
+
+      // Campos para la card
+      prod.proveedor_nombre = provParaCard?.proveedor_nombre
+        ?? provParaCard?.nombre_proveedor
+        ?? provParaCard?.nombre
+        ?? 'Sin proveedor';
+
+      // el código del proveedor puede venir como 'codigo' o 'codigo_proveedor'
+      prod.codigo_proveedor = provParaCard?.codigo
+        ?? provParaCard?.codigo_proveedor
+        ?? '-';
+
+      // Exportar explícitamente el asignado para que el front lo priorice
+      prod.proveedor_asignado_id = prod.proveedor_id ?? null;
+
+      // Enviar utilidad cruda para cálculo exacto en el front
+      prod.utilidad = Number(prod.utilidad) || 0;
+    }
+
+    res.json(productos);
+  } catch (error) {
+    console.error("❌ Error en /productos/api/buscar:", error);
+    res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
+  }
+},
+// controllers/productosApiController.js
+buscarPaginado: async (req, res) => {
   try {
     const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
 
-    // paginación (solo controlador)
     const pagina    = Math.max(1, parseInt(req.query.pagina || '1', 10));
     const porPagina = Math.min(60, Math.max(10, parseInt(req.query.porPagina || '20', 10)));
     const offset    = (pagina - 1) * porPagina;
 
-    // 1) Traer TODO con tu modelo (sin LIMIT) para contar y luego cortar
-    //    NOTA: pasamos `undefined` en `limite` para que tu modelo NO agregue LIMIT
+    // Usamos TU modelo existente (sin LIMIT) y paginamos en memoria
     const todos = await producto.obtenerPorFiltros(
       conexion,
       categoria_id,
       marca_id,
       modelo_id,
       busqueda_nombre,
-      undefined
+      undefined // <- sin límite
     );
 
-    const total        = Array.isArray(todos) ? todos.length : 0;
-    const totalPaginas = total ? Math.max(1, Math.ceil(total / porPagina)) : 0;
-
-    // 2) Cortar a la página solicitada
+    const total = Array.isArray(todos) ? todos.length : 0;
     const items = total ? todos.slice(offset, offset + porPagina) : [];
 
-    // 3) Enriquecer SOLO la página (proveedores y proveedor a mostrar)
+    // Enriquecemos SOLO la página
+    const ids = items.map(p => p.id);
+    const imgs = ids.length ? await producto.obtenerImagenesProducto(conexion, ids) : [];
     for (const prod of items) {
-      // (Tus imágenes ya vienen agrupadas desde el modelo: prod.imagenes)
+      prod.imagenes = imgs.filter(img => img.producto_id === prod.id);
+
       const proveedores = await producto.obtenerProveedoresPorProducto(conexion, prod.id) || [];
       prod.proveedores = proveedores;
 
@@ -601,11 +675,8 @@ buscar: async (req, res) => {
           Number(p.id ?? p.proveedor_id) === Number(prod.proveedor_id)
         ) || null;
       }
-
       let provMasBarato = null;
-      try { provMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id); }
-      catch { /* noop */ }
-
+      try { provMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id); } catch {}
       const provParaCard = provAsignado || provMasBarato || null;
 
       prod.proveedor_nombre = provParaCard?.proveedor_nombre
@@ -619,22 +690,21 @@ buscar: async (req, res) => {
 
       prod.proveedor_asignado_id = prod.proveedor_id ?? null;
       prod.utilidad = Number(prod.utilidad) || 0;
-      // precio_venta ya viene en prod (si lo tenés en la SELECT de tu modelo)
     }
 
-    return res.json({
+    res.json({
       items,
       total,
       pagina,
       porPagina,
-      totalPaginas
+      totalPaginas: total ? Math.max(1, Math.ceil(total / porPagina)) : 0
     });
-
-  } catch (error) {
-    console.error("❌ Error en /productos/api/buscar:", error);
-    return res.status(500).json({ items: [], total: 0, pagina: 1, porPagina: 20, totalPaginas: 0 });
+  } catch (e) {
+    console.error('❌ /productos/api/buscar-paginado', e);
+    res.status(500).json({ items: [], total: 0, pagina: 1, porPagina: 20, totalPaginas: 0 });
   }
 },
+
     detalle: async function (req, res) {
         const id = req.params.id;
       
@@ -2137,6 +2207,9 @@ actualizarPrecios: function(req, res) {
         res.status(500).send('Error: ' + error.message);
     });
 }, 
+// ===============================
+// Controlador: actualizarPreciosExcel
+// ===============================
 actualizarPreciosExcel: async (req, res) => {
   try {
     const proveedor_id = Number(req.body.proveedor);
@@ -2145,9 +2218,10 @@ actualizarPreciosExcel: async (req, res) => {
       return res.status(400).send('Proveedor y archivo son requeridos.');
     }
 
-    // ===== Helpers =====
+    // ===== Helpers robustos (locales al controlador) =====
     const quitarAcentos = (txt = '') =>
       txt.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
     const norm = (txt = '') => quitarAcentos(String(txt).trim().toLowerCase());
 
     function encontrarColumna(claves = [], candidatos = []) {
@@ -2170,25 +2244,54 @@ actualizarPreciosExcel: async (req, res) => {
         return Math.round((valor + Number.EPSILON) * 100) / 100;
       }
       let s = String(valor).trim();
+
+      // eliminar símbolos y espacios
       s = s.replace(/\$/g, '').replace(/\s+/g, '');
+
+      // Si el formato es “1.234,56” (coma decimal), convertir
       const comaDec = /,\d{1,2}$/.test(s);
       if (comaDec) {
         s = s.replace(/\./g, '').replace(',', '.');
       } else {
+        // formato “1234.56” → sacar separadores de miles si los hay
         const partes = s.split('.');
         if (partes.length > 2) {
           const decimales = partes.pop();
           s = partes.join('') + '.' + decimales;
         }
       }
+
       const n = Number(s);
       if (!Number.isFinite(n) || n <= 0) return 0;
       return Math.round((n + Number.EPSILON) * 100) / 100;
     }
 
     const str = (x) => (x ?? '').toString().trim();
+    const incluye = (haystack, needle) =>
+      str(haystack).toUpperCase().includes(str(needle).toUpperCase());
 
-    // ===== Datos proveedor (opcional para reporte) =====
+    /**
+     * Detecta si una fila importada corresponde a lista cuyos precios vienen "por juego".
+     * Reglas para MYL/BAIML:
+     *  - Nombre proveedor == 'MYL'
+     *  - y (nombre de hoja incluye 'BAIML' || código empieza con 'BAIML' || descripción incluye 'BAIML')
+     * Devuelve { factor: 1|0.5, presentacion: 'unidad'|'juego' }
+     */
+    function detectarPresentacionFila({ proveedorNombre, sheetName, codigo, descripcion }) {
+      const esMYL = str(proveedorNombre).toUpperCase() === 'MYL';
+      const esBAIML =
+        incluye(sheetName, 'BAIML') ||
+        str(codigo).toUpperCase().startsWith('BAIML') ||
+        incluye(descripcion, 'BAIML');
+
+      if (esMYL && esBAIML) {
+        // BAIML viene por par/juego → normalizamos a unidad
+        return { factor: 0.5, presentacion: 'juego' };
+      }
+      return { factor: 1, presentacion: 'unidad' };
+    }
+
+    // ===== Traer nombre del proveedor (opcional para PDF y detección) =====
     let proveedorNombre = '';
     try {
       const [provRow] = await conexion.promise().query(
@@ -2199,14 +2302,14 @@ actualizarPreciosExcel: async (req, res) => {
     } catch {}
 
     // ===== Constantes =====
-    const PROVEEDOR_OFERTAS_ID = 24; // DISTRIMAR OFERTAS
+    const PROVEEDOR_OFERTAS_ID = 24; // DISTRIMAR OFERTAS (ajustable)
 
     // ===== Acumuladores =====
     let productosActualizados = [];
-    const codigosProcesados = new Set(); // ofertas
+    const codigosProcesados = new Set(); // para ofertas
     const productosTocados = new Set();  // product_id con update
-    const nuevosProductos = [];          // no matcheados
-    const codigosNuevosSet = new Set();
+    const nuevosProductos = [];          // nuevos no matcheados en DB
+    const codigosNuevosSet = new Set();  // evitar duplicados en nuevos
 
     // ===== Leer Excel =====
     const workbook = xlsx.readFile(file.path);
@@ -2225,17 +2328,27 @@ actualizarPreciosExcel: async (req, res) => {
 
         if (!codigoColumn || !precioColumn) continue;
 
-        const codigoRaw   = str(row[codigoColumn]);
-        const precioBruto = limpiarPrecio(row[precioColumn]);  // <-- se respeta tal cual
-        const descRaw     = descColumn ? str(row[descColumn]) : '';
+        const codigoRaw = str(row[codigoColumn]);
+        const precioBruto = limpiarPrecio(row[precioColumn]);
+        const descRaw   = descColumn ? str(row[descColumn]) : '';
 
         if (!codigoRaw || !Number.isFinite(precioBruto) || precioBruto <= 0) continue;
 
-        // OFERTAS: evitar repetir
+        // Para OFERTAS: evitar repetir mismo código
         if (codigosProcesados.has(codigoRaw)) continue;
         if (proveedor_id === PROVEEDOR_OFERTAS_ID) codigosProcesados.add(codigoRaw);
 
-        // Precio anterior (para reporte)
+        // ====== NORMALIZACIÓN A "POR UNIDAD" (PATCH BAIML/MYL) ======
+        const { factor, presentacion } = detectarPresentacionFila({
+          proveedorNombre,
+          sheetName   : sheet,
+          codigo      : codigoRaw,
+          descripcion : descRaw
+        });
+        const precioNormalizado = Math.round((precioBruto * factor + Number.EPSILON) * 100) / 100;
+        // ============================================================
+
+        // Traigo precio anterior (si existía) para el reporte
         const precioAnterior = await new Promise(resolve => {
           const sql = `SELECT precio_lista FROM producto_proveedor WHERE proveedor_id=? AND codigo=? LIMIT 1`;
           conexion.query(sql, [proveedor_id, codigoRaw], (err, r) => {
@@ -2244,29 +2357,33 @@ actualizarPreciosExcel: async (req, res) => {
           });
         });
 
-        // Actualizar en producto_proveedor (graba el precio de lista tal cual Excel)
-        const resultado = await producto.actualizarPreciosPDF(precioBruto, codigoRaw, proveedor_id);
+        // Actualizar fila(s) del proveedor (usa precio ya normalizado "por unidad")
+        const resultado = await producto.actualizarPreciosPDF(precioNormalizado, codigoRaw, proveedor_id);
 
         if (Array.isArray(resultado) && resultado.length) {
+          // Coincidió en DB → existente
           resultado.forEach(p => {
             productosActualizados.push({
               producto_id: p.producto_id,
               codigo: p.codigo,
               nombre: p.nombre,
               precio_lista_antiguo: precioAnterior,
-              precio_lista_nuevo: precioBruto,
+              precio_lista_nuevo: precioNormalizado, // ya por unidad
               precio_venta: p.precio_venta || 0,
-              sin_cambio: Math.abs((precioAnterior || 0) - precioBruto) < 0.01
+              presentacion_detectada: presentacion,  // útil para auditar
+              sin_cambio: Math.abs((precioAnterior || 0) - precioNormalizado) < 0.01
             });
             productosTocados.add(Number(p.producto_id));
           });
         } else {
+          // No hubo match en DB → posible “producto nuevo”
           if (!codigosNuevosSet.has(codigoRaw)) {
             codigosNuevosSet.add(codigoRaw);
             nuevosProductos.push({
               codigo: codigoRaw,
               descripcion: descRaw || '(sin descripción)',
-              precio: precioBruto
+              precio: precioNormalizado,            // ya por unidad
+              presentacion_detectada: presentacion  // info de auditoría
             });
           }
         }
@@ -2279,8 +2396,7 @@ actualizarPreciosExcel: async (req, res) => {
     );
 
     // =========================
-    //  RE-CÁLCULO PRECIO_VENTA SIEMPRE con proveedor asignado
-    //  (aplica factor según presentacion en producto_proveedor)
+    //  RESPETAR PROVEEDOR ASIGNADO
     // =========================
     if (productosTocados.size > 0) {
       const ids = Array.from(productosTocados);
@@ -2304,13 +2420,13 @@ actualizarPreciosExcel: async (req, res) => {
       for (const prodId of ids) {
         const meta = mapProd.get(prodId);
         if (!meta || !meta.asignado_id) continue;
+        if (meta.asignado_id === proveedor_id) continue; // mismo proveedor → estándar
 
-        // Traer precio_lista + presentacion + descuento del PROVEEDOR ASIGNADO
+        // Traer precio_lista del proveedor ASIGNADO + descuento
         const [ppRows] = await conexion.promise().query(
           `SELECT 
               pp.precio_lista,
-              COALESCE(pp.presentacion,'unidad') AS presentacion,
-              COALESCE(dp.descuento, 0)         AS descuento
+              COALESCE(dp.descuento, 0) AS descuento
            FROM producto_proveedor pp
       LEFT JOIN descuentos_proveedor dp 
              ON dp.proveedor_id = pp.proveedor_id
@@ -2320,15 +2436,11 @@ actualizarPreciosExcel: async (req, res) => {
         );
         if (!ppRows || ppRows.length === 0) continue;
 
-        const pl           = Number(ppRows[0].precio_lista || 0);
-        const presentacion = String(ppRows[0].presentacion || 'unidad').toLowerCase();
-        const factorUnidad = presentacion === 'juego' ? 0.5 : 1; // << clave
-        const plUnidad     = pl * factorUnidad;
-        const desc         = Number(ppRows[0].descuento || 0);
+        const pl   = Number(ppRows[0].precio_lista || 0); // ya está por unidad en nuestra base
+        const desc = Number(ppRows[0].descuento || 0);
+        if (!(pl > 0)) continue;
 
-        if (!(plUnidad > 0)) continue;
-
-        const costoNeto = plUnidad - (plUnidad * desc / 100);
+        const costoNeto = pl - (pl * desc / 100);
         const costoIVA  = costoNeto + (costoNeto * (meta.IVA || 21) / 100);
         let nuevoPV     = costoIVA + (costoIVA * (meta.utilidad || 0) / 100);
 
@@ -2372,16 +2484,16 @@ actualizarPreciosExcel: async (req, res) => {
     // Limpieza temp
     try { fs.unlinkSync(file.path); } catch {}
 
-    // Guardar nuevos para PDF
+    // Guardar “PRODUCTOS NUEVOS” en sesión para el PDF
     if (!req.session) req.session = {};
     req.session.nuevosProductos = {
       proveedor_id,
       proveedor_nombre: proveedorNombre,
       fecha: new Date(),
-      items: nuevosProductos
+      items: nuevosProductos // [{codigo, descripcion, precio, presentacion_detectada}]
     };
 
-    // Render
+    // Render de resultados
     res.render('productosActualizados', {
       productos: productosActualizados,
       ofertasFaltantes,
