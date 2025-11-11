@@ -568,77 +568,71 @@ lista: async function (req, res) {
     const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
     req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
 
-    const limite = req.query.limite ? parseInt(req.query.limite) : 100;
+    const pagina    = Math.max(1, parseInt(req.query.pagina || '1', 10));
+    const porPagina = Math.min(60, Math.max(10, parseInt(req.query.porPagina || '20', 10)));
+    const offset    = (pagina - 1) * porPagina;
 
-    // Productos por filtros
-    const productos = await producto.obtenerPorFiltros(
+    // Paginado por filtros (nuevo método)
+    const { items, total } = await producto.obtenerPorFiltrosPaginado(
       conexion,
-      categoria_id,
-      marca_id,
-      modelo_id,
-      busqueda_nombre,
-      limite
+      { categoria: categoria_id, marca: marca_id, modelo: modelo_id, busqueda_nombre },
+      offset,
+      porPagina
     );
 
-    // Imágenes (si hay IDs)
-    const productoIds = productos.map(p => p.id);
+    // Imágenes (batch)
+    const productoIds = items.map(p => p.id);
     const todasLasImagenes = productoIds.length
       ? await producto.obtenerImagenesProducto(conexion, productoIds)
       : [];
 
-    // Enriquecer cada producto
-    for (const prod of productos) {
-      // Imágenes del producto
+    // Enriquecer cada item
+    for (const prod of items) {
+      // Imágenes
       prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
 
-      // Todos los proveedores del producto
+      // Proveedores del producto
       const proveedores = await producto.obtenerProveedoresPorProducto(conexion, prod.id) || [];
       prod.proveedores = proveedores;
 
-      // Proveedor asignado (por ID en el propio producto)
+      // Proveedor asignado vs más barato
       let provAsignado = null;
       if (prod.proveedor_id != null) {
-        // algunos modelos devuelven 'id', otros 'proveedor_id' dentro del objeto proveedor
         provAsignado = proveedores.find(p =>
           Number(p.id ?? p.proveedor_id) === Number(prod.proveedor_id)
         ) || null;
       }
-
-      // Fallback: proveedor más barato si no hay asignado o no aparece en la lista
       let provMasBarato = null;
       try {
         provMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
-      } catch (_) {
-        provMasBarato = null;
-      }
-
+      } catch (_) {}
       const provParaCard = provAsignado || provMasBarato || null;
 
-      // Campos para la card
       prod.proveedor_nombre = provParaCard?.proveedor_nombre
         ?? provParaCard?.nombre_proveedor
         ?? provParaCard?.nombre
         ?? 'Sin proveedor';
 
-      // el código del proveedor puede venir como 'codigo' o 'codigo_proveedor'
       prod.codigo_proveedor = provParaCard?.codigo
         ?? provParaCard?.codigo_proveedor
         ?? '-';
 
-      // Exportar explícitamente el asignado para que el front lo priorice
       prod.proveedor_asignado_id = prod.proveedor_id ?? null;
-
-      // Enviar utilidad cruda para cálculo exacto en el front
       prod.utilidad = Number(prod.utilidad) || 0;
     }
 
-    res.json(productos);
+    res.json({
+      items,
+      total,
+      pagina,
+      porPagina,
+      totalPaginas: total ? Math.max(1, Math.ceil(total / porPagina)) : 0
+    });
   } catch (error) {
     console.error("❌ Error en /productos/api/buscar:", error);
-    res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
+    res.status(500).json({ items: [], total: 0, pagina: 1, porPagina: 20, totalPaginas: 0 });
   }
 },
-
     detalle: async function (req, res) {
         const id = req.params.id;
       

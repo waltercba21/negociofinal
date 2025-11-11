@@ -11,9 +11,79 @@ function parseDecimal(v, def = null) {
   const n = Number(String(v).replace(',', '.'));
   return Number.isFinite(n) ? n : def;
 }
+function _construirFiltroYParams({ categoria, marca, modelo, busqueda_nombre }) {
+  let where = ' WHERE 1=1 ';
+  const params = [];
+
+  if (categoria) {
+    where += ' AND p.categoria_id = ?';
+    params.push(Number(categoria));
+  }
+  if (marca && marca !== '' && !isNaN(parseInt(marca))) {
+    where += ' AND p.marca_id = ?';
+    params.push(parseInt(marca));
+  }
+  if (modelo && modelo !== '' && !isNaN(parseInt(modelo))) {
+    where += ' AND p.modelo_id = ?';
+    params.push(parseInt(modelo));
+  }
+  if (busqueda_nombre && typeof busqueda_nombre === 'string') {
+    const palabras = busqueda_nombre.split(' ').filter(Boolean);
+    for (const palabra of palabras) {
+      where += ' AND (p.nombre LIKE ? OR pp.codigo LIKE ?)';
+      params.push(`%${palabra}%`, `%${palabra}%`);
+    }
+  }
+
+  return { where, params };
+}
 
 module.exports ={
-    
+    obtenerPorFiltrosPaginado: async function (conexion, filtros, offset, limit) {
+  const { where, params } = _construirFiltroYParams(filtros);
+
+  // 1) total de IDs distintos (evita inflar por joins de imágenes/proveedores)
+  const sqlTotal = `
+    SELECT COUNT(DISTINCT p.id) AS total
+    FROM productos p
+    LEFT JOIN producto_proveedor pp ON p.id = pp.producto_id
+    ${where}
+  `;
+  const [rowsTotal] = await conexion.query(sqlTotal, params);
+  const total = rowsTotal?.[0]?.total ? Number(rowsTotal[0].total) : 0;
+
+  if (!total) return { items: [], total: 0 };
+
+  // 2) Página de IDs (orden por nombre)
+  const sqlIds = `
+    SELECT DISTINCT p.id
+    FROM productos p
+    LEFT JOIN producto_proveedor pp ON p.id = pp.producto_id
+    ${where}
+    ORDER BY p.nombre ASC
+    LIMIT ? OFFSET ?
+  `;
+  const paramsIds = params.slice();
+  paramsIds.push(Number(limit), Number(offset));
+  const [rowsIds] = await conexion.query(sqlIds, paramsIds);
+  const ids = rowsIds.map(r => r.id);
+
+  if (!ids.length) return { items: [], total };
+
+  // 3) Traer datos base de productos + categoría (sin joins que dupliquen filas)
+  const sqlProd = `
+    SELECT p.*,
+           c.nombre AS categoria_nombre
+    FROM productos p
+    LEFT JOIN categorias c ON p.categoria_id = c.id
+    WHERE p.id IN (${ids.map(() => '?').join(',')})
+    ORDER BY p.nombre ASC
+  `;
+  const [rowsProd] = await conexion.query(sqlProd, ids);
+
+  // Nota: imágenes y proveedores se resuelven arriba, en el controlador (batch).
+  return { items: rowsProd, total };
+},
     obtener: function (conexion, pagina, callback) {
         const offset = (pagina - 1) * 20;
         const consulta = `
