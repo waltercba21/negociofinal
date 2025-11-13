@@ -3,6 +3,11 @@ function fechaHoyYYYYMMDD(timeZone = 'America/Argentina/Cordoba') {
   return new Date().toLocaleDateString('en-CA', { timeZone });
 }
 
+function formatCurrencyCL(valor) {
+  const num = Number(valor) || 0;
+  return num.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+}
+
 document.getElementById('invoice-form').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -27,6 +32,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
     const filasFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     const invoiceItems = [];
+    let totalSinInteres = 0;
 
     for (let i = 0; i < filasFactura.length; i++) {
         const codigo = filasFactura[i].cells[1].textContent.trim();
@@ -59,6 +65,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
                 cantidad,
                 subtotal
             });
+            totalSinInteres += subtotal;
         }
     }
 
@@ -75,18 +82,97 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     const totalFacturaElement = document.getElementById('total-amount');
     let totalFactura = '0';
     if (totalFacturaElement) {
-        totalFactura = totalFacturaElement.value.replace(/\./g, '').replace(',', '.').replace('$', '').trim();
+        totalFactura = totalFacturaElement.value
+            .replace(/\./g, '')
+            .replace(',', '.')
+            .replace('$', '')
+            .trim();
     }
 
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
 
+    const nombreClienteInput = document.getElementById('nombre-cliente');
+    const nombreCliente = nombreClienteInput ? nombreClienteInput.value.trim() : '';
+
+    // Cálculo de interés y total para mostrar en el resumen
+    let interesCalculado = 0;
+    if (metodosPagoSeleccionados.value === 'CREDITO') {
+        interesCalculado = totalSinInteres * 0.15;
+    }
+    const totalConInteres = totalSinInteres + interesCalculado;
+
+    // Armar HTML del detalle de productos para el modal
+    const filasHTML = invoiceItems.map((item, index) => `
+        <tr>
+            <td>${index + 1}</td>
+            <td>${item.producto_id}</td>
+            <td>${item.descripcion}</td>
+            <td>${formatCurrencyCL(item.precio_unitario)}</td>
+            <td>${item.cantidad}</td>
+            <td>${formatCurrencyCL(item.subtotal)}</td>
+        </tr>
+    `).join('');
+
+    const resumenHTML = `
+        <div class="resumen-factura-modal">
+            <p><strong>Vendedor:</strong> ${nombreCliente || '-'}</p>
+            <p><strong>Fecha:</strong> ${fechaFactura || fechaHoyYYYYMMDD()}</p>
+            <p><strong>Método de pago:</strong> ${metodosPagoSeleccionados.value}</p>
+            <hr>
+            <div style="max-height:300px;overflow:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+                    <thead>
+                        <tr>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">#</th>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">Código</th>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">Descripción</th>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">P. Unitario</th>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">Cant.</th>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filasHTML}
+                    </tbody>
+                </table>
+            </div>
+            <hr>
+            <p><strong>Total sin interés:</strong> ${formatCurrencyCL(totalSinInteres)}</p>
+            <p><strong>Interés:</strong> ${formatCurrencyCL(interesCalculado)}</p>
+            <p><strong>Total a cobrar:</strong> ${formatCurrencyCL(totalConInteres)}</p>
+            <p style="margin-top:8px;font-size:0.85rem;color:#666;">
+                Revise los datos antes de guardar. Si algo está mal, presione "Revisar".
+            </p>
+        </div>
+    `;
+
+    // Confirmación previa al guardado
+    const { isConfirmed } = await Swal.fire({
+        title: 'Confirmar datos de la factura',
+        html: resumenHTML,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Revisar',
+        reverseButtons: true,
+        width: '80%',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    });
+
+    if (!isConfirmed) {
+        // El usuario quiere revisar antes de guardar
+        return;
+    }
+
+    // Enviar al backend solo si confirmó
     try {
         const response = await fetch('/productos/procesarFormularioFacturas', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                nombreCliente: document.getElementById('nombre-cliente').value.trim(),
+                nombreCliente: nombreCliente,
                 fechaPresupuesto: fechaFactura,
                 totalPresupuesto: totalFactura,
                 invoiceItems,
