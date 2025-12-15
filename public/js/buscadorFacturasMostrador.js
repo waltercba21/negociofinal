@@ -201,43 +201,41 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     }
 });
 
-// --- Protege la fecha contra cambios no intencionales (FIX REAL) ---
+
+// --- Protege la fecha contra cambios no intencionales (FIX DEFINITIVO) ---
+// ✅ NO muestra SweetAlert durante el uso del calendario.
+// ✅ Pregunta en BLUR (cuando el usuario termina de elegir).
 function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA') {
   if (!fechaInput) return;
 
-  // ✅ evita que se inicialice dos veces (por doble script o doble llamada)
+  // evita doble init
   if (fechaInput.dataset.fechaProtegida === '1') return;
   fechaInput.dataset.fechaProtegida = '1';
 
-  let prev = (fechaInput.value || '').trim();
-  let confirmando = false;
-  let revirtiendo = false;
+  let aceptada = (fechaInput.value || '').trim(); // fecha "confirmada"
+  let enConfirmacion = false;
 
-  // Guardar el valor antes de que el usuario abra/empiece a interactuar
-  const guardarPrevio = () => {
-    prev = (fechaInput.value || '').trim();
+  // si el usuario entra y estaba vacía, fijamos aceptada al valor actual
+  const syncAceptada = () => {
+    const v = (fechaInput.value || '').trim();
+    if (v) aceptada = v;
   };
 
-  // pointerdown/mousedown cubre más browsers/controles nativos
-  fechaInput.addEventListener('pointerdown', guardarPrevio, true);
-  fechaInput.addEventListener('mousedown', guardarPrevio, true);
-  fechaInput.addEventListener('focusin', guardarPrevio, true);
+  // Cuando enfoca, guardamos la aceptada actual
+  fechaInput.addEventListener('focus', syncAceptada, true);
 
-  fechaInput.addEventListener('change', async (e) => {
-    if (revirtiendo) { revirtiendo = false; return; }
-    if (confirmando) return;
+  // En blur (cuando termina), si cambió, preguntamos
+  fechaInput.addEventListener('blur', async () => {
+    if (enConfirmacion) return;
 
     const nueva = (fechaInput.value || '').trim();
-    if (!nueva || nueva === prev) return;
+    if (!nueva || nueva === aceptada) return;
 
-    confirmando = true;
-
-    // ✅ clave: si hay otro listener que pisa el valor, lo frenamos acá
-    e.stopImmediatePropagation();
+    enConfirmacion = true;
 
     const res = await Swal.fire({
       title: '⚠️ Atención',
-      text: `${mensaje}.`,
+      text: `${mensaje}. ¿Confirmás cambiar de ${aceptada} a ${nueva}?`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, cambiar',
@@ -248,16 +246,13 @@ function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR L
     });
 
     if (res.isConfirmed) {
-      prev = nueva;
-      // ✅ fuerza el valor en el próximo tick (por si otro script lo pisa)
-      setTimeout(() => { fechaInput.value = nueva; }, 0);
+      aceptada = nueva;
     } else {
-      const volver = prev;
-      revirtiendo = true;
-      setTimeout(() => { fechaInput.value = volver; }, 0);
+      // revertimos sin re-disparar nada raro
+      fechaInput.value = aceptada;
     }
 
-    confirmando = false;
+    enConfirmacion = false;
   }, true);
 }
 
@@ -269,7 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmButtonText: 'Entendido'
     });
 
-    // 🔥 Establecer la fecha actual SOLO si está vacía (si no, pisás fechas existentes)
     const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
     if (fechaPresupuestoInput) {
         if (!fechaPresupuestoInput.value) {
