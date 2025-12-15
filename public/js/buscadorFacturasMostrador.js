@@ -161,10 +161,7 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
         allowEscapeKey: false
     });
 
-    if (!isConfirmed) {
-        // El usuario quiere revisar antes de guardar
-        return;
-    }
+    if (!isConfirmed) return;
 
     // Enviar al backend solo si confirmó
     try {
@@ -204,51 +201,64 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     }
 });
 
-// --- Protege la fecha contra cambios no intencionales (FIX) ---
+// --- Protege la fecha contra cambios no intencionales (FIX REAL) ---
 function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA') {
   if (!fechaInput) return;
 
-  let base = fechaInput.value; // fecha habitual/actual aceptada
-  let prev = base;             // valor previo real (antes de abrir el datepicker)
+  // ✅ evita que se inicialice dos veces (por doble script o doble llamada)
+  if (fechaInput.dataset.fechaProtegida === '1') return;
+  fechaInput.dataset.fechaProtegida = '1';
 
-  let bloqueando = false;      // evita re-entradas
-  let ignorarSiguiente = false; // evita que el "revert" dispare otra confirmación
+  let prev = (fechaInput.value || '').trim();
+  let confirmando = false;
+  let revirtiendo = false;
 
-  // Guardar el valor previo al empezar a editar/abrir el datepicker
-  const guardarPrevio = () => { prev = fechaInput.value; };
-  fechaInput.addEventListener('focus', guardarPrevio);
-  fechaInput.addEventListener('mousedown', guardarPrevio);
+  // Guardar el valor antes de que el usuario abra/empiece a interactuar
+  const guardarPrevio = () => {
+    prev = (fechaInput.value || '').trim();
+  };
 
-  fechaInput.addEventListener('change', async () => {
-    if (ignorarSiguiente) { ignorarSiguiente = false; return; }
-    if (bloqueando) return;
+  // pointerdown/mousedown cubre más browsers/controles nativos
+  fechaInput.addEventListener('pointerdown', guardarPrevio, true);
+  fechaInput.addEventListener('mousedown', guardarPrevio, true);
+  fechaInput.addEventListener('focusin', guardarPrevio, true);
+
+  fechaInput.addEventListener('change', async (e) => {
+    if (revirtiendo) { revirtiendo = false; return; }
+    if (confirmando) return;
 
     const nueva = (fechaInput.value || '').trim();
-    if (!nueva || nueva === prev) return; // no hubo cambio real
+    if (!nueva || nueva === prev) return;
 
-    bloqueando = true;
+    confirmando = true;
 
-    const { isConfirmed } = await Swal.fire({
+    // ✅ clave: si hay otro listener que pisa el valor, lo frenamos acá
+    e.stopImmediatePropagation();
+
+    const res = await Swal.fire({
       title: '⚠️ Atención',
-      text: `${mensaje}. La fecha habitual es ${base}.`,
+      text: `${mensaje}.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, cambiar',
       cancelButtonText: 'No, mantener',
       reverseButtons: true,
-      focusCancel: true
+      allowOutsideClick: false,
+      allowEscapeKey: false
     });
 
-    if (isConfirmed) {
-      base = nueva;
-      prev = nueva; // IMPORTANTÍSIMO: actualizar prev para no re-preguntar
+    if (res.isConfirmed) {
+      prev = nueva;
+      // ✅ fuerza el valor en el próximo tick (por si otro script lo pisa)
+      setTimeout(() => { fechaInput.value = nueva; }, 0);
     } else {
-      ignorarSiguiente = true;
-      fechaInput.value = prev; // revertir a la anterior
+      const volver = prev;
+      revirtiendo = true;
+      setTimeout(() => { fechaInput.value = volver; }, 0);
     }
 
-    bloqueando = false;
-  }, true); // capture: se ejecuta antes que otros listeners
+    confirmando = false;
+  }, true);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -259,12 +269,12 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmButtonText: 'Entendido'
     });
 
-    // 🔥 Establecer la fecha actual en el input de fecha y activar protección
+    // 🔥 Establecer la fecha actual SOLO si está vacía (si no, pisás fechas existentes)
     const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
     if (fechaPresupuestoInput) {
-        fechaPresupuestoInput.value = fechaHoyYYYYMMDD();
-
-        // ✅ Activar confirmación
+        if (!fechaPresupuestoInput.value) {
+            fechaPresupuestoInput.value = fechaHoyYYYYMMDD();
+        }
         setupFechaProtegida(fechaPresupuestoInput, 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA DE LA FACTURA');
     }
 
@@ -324,15 +334,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.classList.remove('hover-activo');
             });
 
-            // Asociar el evento click directamente a cada resultado
             resultado.addEventListener('click', function () {
-                console.log("Producto seleccionado:", this.dataset);
                 const codigoProducto = this.dataset.codigo;
                 const nombreProducto = this.dataset.nombre;
                 const precioVenta = this.dataset.precio_venta;
                 const stockActual = this.dataset.stock_actual;
                 const imagenProducto = this.dataset.imagen;
-                console.log(`Intentando agregar producto: ${codigoProducto}, ${nombreProducto}`);
                 agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
             });
 
@@ -359,7 +366,6 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
 
     let filaDisponible = null;
 
-    // Buscar la primera fila vacía disponible
     for (let i = 0; i < filas.length; i++) {
         if (!filas[i].cells[1].textContent.trim()) {
             filaDisponible = filas[i];
@@ -372,9 +378,6 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
         return;
     }
 
-    console.log("Fila disponible encontrada:", filaDisponible);
-
-    // Agregar datos a la fila encontrada
     const cellImagen = filaDisponible.cells[0];
     const imgElement = cellImagen.querySelector("img");
     if (imagenProducto && imgElement) {
@@ -403,10 +406,8 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     filaDisponible.cells[5].textContent = stockActual;
     filaDisponible.cells[6].textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
-    // 🔥 Llamar a calcularTotal() inmediatamente para mostrar el precio final
     calcularTotal();
 
-    // Activar el botón de eliminar
     const botonEliminar = filaDisponible.cells[7].querySelector("button");
     if (botonEliminar) {
         botonEliminar.style.display = "block";
@@ -424,8 +425,6 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
             calcularTotal();
         });
     }
-
-    console.log("Producto agregado correctamente a la tabla.");
 }
 
 function updateSubtotal(row, verificarStock = true) {
@@ -433,10 +432,7 @@ function updateSubtotal(row, verificarStock = true) {
     const inputCantidad = row.cells[4].querySelector('input');
     const stockActualCell = row.cells[5];
 
-    if (!inputPrecio || !inputCantidad || !stockActualCell) {
-        console.error("Error: No se encontraron los elementos necesarios en la fila.");
-        return;
-    }
+    if (!inputPrecio || !inputCantidad || !stockActualCell) return;
 
     let precio = parseFloat(inputPrecio.value.replace(/\$|\./g, '').replace(',', '.'));
     let cantidad = parseInt(inputCantidad.value);
@@ -449,7 +445,6 @@ function updateSubtotal(row, verificarStock = true) {
     const subtotal = precio * cantidad;
     row.cells[6].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
-    // 🔥 Validar stock SOLO cuando se modifica la cantidad, NO cuando se cambia el precio
     if (verificarStock && document.activeElement === inputCantidad) {
         if (cantidad > stockActual) {
             Swal.fire({
@@ -475,7 +470,7 @@ function updateSubtotal(row, verificarStock = true) {
         }
     }
 
-    calcularTotal(); // Recalcular total después de actualizar el subtotal
+    calcularTotal();
 }
 
 function calcularTotal() {
@@ -490,20 +485,19 @@ function calcularTotal() {
 
     const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
     const interesAmountInput = document.getElementById('interes-amount');
-    const totalAmountInput = document.getElementById('total-amount'); // 🔥 Este es el que se modificará directamente
+    const totalAmountInput = document.getElementById('total-amount');
 
     let interes = 0;
 
     if (creditoCheckbox && creditoCheckbox.checked) {
-        interes = total * 0.15; // Interés del 15%
-        total += interes; // 🔥 Se aplica el interés directamente al total
+        interes = total * 0.15;
+        total += interes;
     }
 
     interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
     totalAmountInput.value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
 
-// 🔥 Asociar eventos a los inputs de cantidad y precio para actualizar dinámicamente
 document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
     const inputCantidad = row.cells[4].querySelector('input');
     const inputPrecio = row.cells[3].querySelector('input');
@@ -516,17 +510,15 @@ document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
 
     if (inputPrecio) {
         inputPrecio.addEventListener('input', function () {
-            updateSubtotal(row, false); // 🔥 Evita la validación de stock cuando se cambia el precio
+            updateSubtotal(row, false);
         });
     }
 });
 
-// 🔥 Actualizar el total cuando se cambian los métodos de pago
 document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
     checkbox.addEventListener('change', calcularTotal);
 });
 
-// 🔒 Bloquea Enter en todos los inputs excepto en la búsqueda
 document.querySelectorAll('input:not(#entradaBusqueda)').forEach(input => {
     input.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
