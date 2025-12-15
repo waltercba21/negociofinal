@@ -204,20 +204,29 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     }
 });
 
-// --- Protege la fecha contra cambios no intencionales ---
+// --- Protege la fecha contra cambios no intencionales (FIX) ---
 function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA') {
   if (!fechaInput) return;
 
-  let base = fechaInput.value;     // fecha original (día de actividad)
-  let prev = base;                 // última fecha antes del cambio
+  let base = fechaInput.value; // fecha habitual/actual aceptada
+  let prev = base;             // valor previo real (antes de abrir el datepicker)
+
+  let bloqueando = false;      // evita re-entradas
+  let ignorarSiguiente = false; // evita que el "revert" dispare otra confirmación
 
   // Guardar el valor previo al empezar a editar/abrir el datepicker
-  fechaInput.addEventListener('focus', () => { prev = fechaInput.value; });
-  fechaInput.addEventListener('mousedown', () => { prev = fechaInput.value; }); // para abrir el datepicker
+  const guardarPrevio = () => { prev = fechaInput.value; };
+  fechaInput.addEventListener('focus', guardarPrevio);
+  fechaInput.addEventListener('mousedown', guardarPrevio);
 
-  async function confirmarCambio() {
-    const nueva = fechaInput.value;
+  fechaInput.addEventListener('change', async () => {
+    if (ignorarSiguiente) { ignorarSiguiente = false; return; }
+    if (bloqueando) return;
+
+    const nueva = (fechaInput.value || '').trim();
     if (!nueva || nueva === prev) return; // no hubo cambio real
+
+    bloqueando = true;
 
     const { isConfirmed } = await Swal.fire({
       title: '⚠️ Atención',
@@ -231,16 +240,15 @@ function setupFechaProtegida(fechaInput, mensaje = 'CUIDADO: ESTÁ POR CAMBIAR L
     });
 
     if (isConfirmed) {
-      base = nueva; // aceptar y actualizar base
-      fechaInput.dispatchEvent(new Event('change'));
+      base = nueva;
+      prev = nueva; // IMPORTANTÍSIMO: actualizar prev para no re-preguntar
     } else {
-      fechaInput.value = prev; // revertir
-      fechaInput.dispatchEvent(new Event('change'));
+      ignorarSiguiente = true;
+      fechaInput.value = prev; // revertir a la anterior
     }
-  }
 
-  fechaInput.addEventListener('change', confirmarCambio);
-  fechaInput.addEventListener('input', confirmarCambio);
+    bloqueando = false;
+  }, true); // capture: se ejecuta antes que otros listeners
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -254,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🔥 Establecer la fecha actual en el input de fecha y activar protección
     const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
     if (fechaPresupuestoInput) {
-         fechaPresupuestoInput.value = fechaHoyYYYYMMDD();
+        fechaPresupuestoInput.value = fechaHoyYYYYMMDD();
 
         // ✅ Activar confirmación
         setupFechaProtegida(fechaPresupuestoInput, 'CUIDADO: ESTÁ POR CAMBIAR LA FECHA DE LA FACTURA');
