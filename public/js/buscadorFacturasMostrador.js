@@ -104,48 +104,48 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 
   // Armar HTML del detalle de productos para el modal
   const filasHTML = invoiceItems.map((item, index) => `
-    <tr>
-      <td>${index + 1}</td>
-      <td>${item.producto_id}</td>
-      <td>${item.descripcion}</td>
-      <td>${formatCurrencyCL(item.precio_unitario)}</td>
-      <td>${item.cantidad}</td>
-      <td>${formatCurrencyCL(item.subtotal)}</td>
-    </tr>
-  `).join('');
+        <tr>
+            <td>${index + 1}</td>
+            <td>${item.producto_id}</td>
+            <td>${item.descripcion}</td>
+            <td>${formatCurrencyCL(item.precio_unitario)}</td>
+            <td>${item.cantidad}</td>
+            <td>${formatCurrencyCL(item.subtotal)}</td>
+        </tr>
+    `).join('');
 
   const resumenHTML = `
-    <div class="resumen-factura-modal">
-      <p><strong>Vendedor:</strong> ${nombreCliente || '-'}</p>
-      <p><strong>Fecha:</strong> ${fechaFactura || fechaHoyYYYYMMDD()}</p>
-      <p><strong>Método de pago:</strong> ${metodosPagoSeleccionados.value}</p>
-      <hr>
-      <div style="max-height:300px;overflow:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
-          <thead>
-            <tr>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">#</th>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">Código</th>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">Descripción</th>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">P. Unitario</th>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">Cant.</th>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filasHTML}
-          </tbody>
-        </table>
-      </div>
-      <hr>
-      <p><strong>Total sin interés:</strong> ${formatCurrencyCL(totalSinInteres)}</p>
-      <p><strong>Interés:</strong> ${formatCurrencyCL(interesCalculado)}</p>
-      <p><strong>Total a cobrar:</strong> ${formatCurrencyCL(totalConInteres)}</p>
-      <p style="margin-top:8px;font-size:0.85rem;color:#666;">
-        Revise los datos antes de guardar. Si algo está mal, presione "Revisar".
-      </p>
-    </div>
-  `;
+        <div class="resumen-factura-modal">
+            <p><strong>Vendedor:</strong> ${nombreCliente || '-'}</p>
+            <p><strong>Fecha:</strong> ${fechaFactura || fechaHoyYYYYMMDD()}</p>
+            <p><strong>Método de pago:</strong> ${metodosPagoSeleccionados.value}</p>
+            <hr>
+            <div style="max-height:300px;overflow:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+                    <thead>
+                        <tr>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">#</th>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">Código</th>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">Descripción</th>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">P. Unitario</th>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">Cant.</th>
+                            <th style="border-bottom:1px solid #ccc;padding:4px;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filasHTML}
+                    </tbody>
+                </table>
+            </div>
+            <hr>
+            <p><strong>Total sin interés:</strong> ${formatCurrencyCL(totalSinInteres)}</p>
+            <p><strong>Interés:</strong> ${formatCurrencyCL(interesCalculado)}</p>
+            <p><strong>Total a cobrar:</strong> ${formatCurrencyCL(totalConInteres)}</p>
+            <p style="margin-top:8px;font-size:0.85rem;color:#666;">
+                Revise los datos antes de guardar. Si algo está mal, presione "Revisar".
+            </p>
+        </div>
+    `;
 
   // Confirmación previa al guardado
   const { isConfirmed } = await Swal.fire({
@@ -161,7 +161,9 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
     allowEscapeKey: false
   });
 
-  if (!isConfirmed) return;
+  if (!isConfirmed) {
+    return;
+  }
 
   // Enviar al backend solo si confirmó
   try {
@@ -202,14 +204,13 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  // ✅ Sin SweetAlert al entrar
-
-  // ✅ Fecha por defecto solo si está vacía (y SIN protecciones ni alertas)
+  // 🔥 Establecer la fecha actual SOLO si está vacía (no pisa fechas existentes)
   const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
   if (fechaPresupuestoInput) {
     if (!fechaPresupuestoInput.value) {
       fechaPresupuestoInput.value = fechaHoyYYYYMMDD();
     }
+    // ✅ SIN setupFechaProtegida -> no hay alertas al cambiar fecha/mes
   }
 
   const entradaBusqueda = document.getElementById('entradaBusqueda');
@@ -268,12 +269,15 @@ document.addEventListener('DOMContentLoaded', () => {
         this.classList.remove('hover-activo');
       });
 
+      // Asociar el evento click directamente a cada resultado
       resultado.addEventListener('click', function () {
+        console.log("Producto seleccionado:", this.dataset);
         const codigoProducto = this.dataset.codigo;
         const nombreProducto = this.dataset.nombre;
         const precioVenta = this.dataset.precio_venta;
         const stockActual = this.dataset.stock_actual;
         const imagenProducto = this.dataset.imagen;
+        console.log(`Intentando agregar producto: ${codigoProducto}, ${nombreProducto}`);
         agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto);
       });
 
@@ -300,6 +304,7 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
 
   let filaDisponible = null;
 
+  // Buscar la primera fila vacía disponible
   for (let i = 0; i < filas.length; i++) {
     if (!filas[i].cells[1].textContent.trim()) {
       filaDisponible = filas[i];
@@ -312,6 +317,9 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     return;
   }
 
+  console.log("Fila disponible encontrada:", filaDisponible);
+
+  // Agregar datos a la fila encontrada
   const cellImagen = filaDisponible.cells[0];
   const imgElement = cellImagen.querySelector("img");
   if (imagenProducto && imgElement) {
@@ -340,8 +348,10 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
   filaDisponible.cells[5].textContent = stockActual;
   filaDisponible.cells[6].textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
+  // 🔥 Llamar a calcularTotal() inmediatamente para mostrar el precio final
   calcularTotal();
 
+  // Activar el botón de eliminar
   const botonEliminar = filaDisponible.cells[7].querySelector("button");
   if (botonEliminar) {
     botonEliminar.style.display = "block";
@@ -359,6 +369,8 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
       calcularTotal();
     });
   }
+
+  console.log("Producto agregado correctamente a la tabla.");
 }
 
 function updateSubtotal(row, verificarStock = true) {
@@ -366,7 +378,10 @@ function updateSubtotal(row, verificarStock = true) {
   const inputCantidad = row.cells[4].querySelector('input');
   const stockActualCell = row.cells[5];
 
-  if (!inputPrecio || !inputCantidad || !stockActualCell) return;
+  if (!inputPrecio || !inputCantidad || !stockActualCell) {
+    console.error("Error: No se encontraron los elementos necesarios en la fila.");
+    return;
+  }
 
   let precio = parseFloat(inputPrecio.value.replace(/\$|\./g, '').replace(',', '.'));
   let cantidad = parseInt(inputCantidad.value);
@@ -379,6 +394,7 @@ function updateSubtotal(row, verificarStock = true) {
   const subtotal = precio * cantidad;
   row.cells[6].textContent = subtotal.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
+  // 🔥 Validar stock SOLO cuando se modifica la cantidad, NO cuando se cambia el precio
   if (verificarStock && document.activeElement === inputCantidad) {
     if (cantidad > stockActual) {
       Swal.fire({
@@ -404,7 +420,7 @@ function updateSubtotal(row, verificarStock = true) {
     }
   }
 
-  calcularTotal();
+  calcularTotal(); // Recalcular total después de actualizar el subtotal
 }
 
 function calcularTotal() {
@@ -419,19 +435,20 @@ function calcularTotal() {
 
   const creditoCheckbox = document.querySelector('input[name="metodosPago"][value="CREDITO"]');
   const interesAmountInput = document.getElementById('interes-amount');
-  const totalAmountInput = document.getElementById('total-amount');
+  const totalAmountInput = document.getElementById('total-amount'); // 🔥 Este es el que se modificará directamente
 
   let interes = 0;
 
   if (creditoCheckbox && creditoCheckbox.checked) {
-    interes = total * 0.15;
-    total += interes;
+    interes = total * 0.15; // Interés del 15%
+    total += interes; // 🔥 Se aplica el interés directamente al total
   }
 
   interesAmountInput.value = interes.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
   totalAmountInput.value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
 
+// 🔥 Asociar eventos a los inputs de cantidad y precio para actualizar dinámicamente
 document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
   const inputCantidad = row.cells[4].querySelector('input');
   const inputPrecio = row.cells[3].querySelector('input');
@@ -444,15 +461,17 @@ document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
 
   if (inputPrecio) {
     inputPrecio.addEventListener('input', function () {
-      updateSubtotal(row, false);
+      updateSubtotal(row, false); // 🔥 Evita la validación de stock cuando se cambia el precio
     });
   }
 });
 
+// 🔥 Actualizar el total cuando se cambian los métodos de pago
 document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
   checkbox.addEventListener('change', calcularTotal);
 });
 
+// 🔒 Bloquea Enter en todos los inputs excepto en la búsqueda
 document.querySelectorAll('input:not(#entradaBusqueda)').forEach(input => {
   input.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
