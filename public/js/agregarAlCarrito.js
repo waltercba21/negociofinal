@@ -1,207 +1,145 @@
-// /public/js/agregarAlCarrito.js
-document.addEventListener("DOMContentLoaded", () => {
-  const contenedor = document.getElementById("contenedor-productos");
-  if (!contenedor) return;
+document.getElementById("contenedor-productos").addEventListener("click", (e) => {
+    if (e.target.classList.contains("agregar-carrito")) {
+        console.log("➡️ Botón 'Agregar al carrito' clickeado");
 
-  // Estimación local (evita superar stock con múltiples clicks en ESTA página)
-  // OJO: la validación real e infalible es la del backend (/carrito/agregar).
-  const carritoEstimado = new Map(); // productoId(string) -> cantidad agregada desde esta página
+        // Obtener información del producto
+        const tarjetaProducto = e.target.closest(".card");
+        const cantidadInput = tarjetaProducto.querySelector(".cantidad-input");
+        const cantidad = parseInt(cantidadInput?.value) || 1;
+        const nombreProducto = e.target.dataset.nombre;
+        const idProducto = e.target.dataset.id;
+        const precioProducto = e.target.dataset.precio;
 
-  const getEnCarritoEstimado = (id) => carritoEstimado.get(String(id)) || 0;
-  const sumarEnCarritoEstimado = (id, delta) => {
-    const key = String(id);
-    carritoEstimado.set(key, getEnCarritoEstimado(key) + (Number(delta) || 0));
-  };
+        // Depuración: Verificar los datos recolectados
+        console.log("📊 Datos del producto:", {
+            idProducto,
+            cantidad,
+            nombreProducto,
+            precioProducto
+        });
 
-  const notify = ({ title, text, icon = "info" }) => {
-    if (window.Swal?.fire) {
-      return Swal.fire({
-        title,
-        text,
-        icon,
-        confirmButtonText: "OK",
-      });
-    }
-    // fallback
-    alert(`${title}\n\n${text}`);
-  };
+       // Validar que los datos esenciales estén presentes
+if (!idProducto || !precioProducto || isNaN(cantidad) || cantidad <= 0) {
+    console.error("❌ Error: Datos incompletos o inválidos");
 
-  const readJsonSafe = async (resp) => {
-    try {
-      return await resp.json();
-    } catch {
-      return null;
-    }
-  };
-
-  const refrescarGloboCarrito = () => {
-    fetch("/carrito/cantidad")
-      .then((r) => r.json())
-      .then((d) => {
-        const globo = document.getElementById("carrito-notificacion");
-        if (!globo) return;
-        const n = d?.cantidadTotal ?? 0;
-        globo.style.display = n > 0 ? "flex" : "none";
-        globo.textContent = n;
-      })
-      .catch(() => {});
-  };
-
-  const parseIntSafe = (v) => {
-    const n = parseInt(v, 10);
-    return Number.isFinite(n) ? n : NaN;
-  };
-
-  const getDatosDesdeBtn = (btn) => {
-    const id = btn?.dataset?.id;
-    const nombre = btn?.dataset?.nombre || "Producto";
-    const precio = btn?.dataset?.precio;
-
-    const stock = parseIntSafe(btn?.dataset?.stock);
-    const stockMin = parseIntSafe(btn?.dataset?.stockmin);
-
-    return { id, nombre, precio, stock, stockMin };
-  };
-
-  // Clamp visual del input (y ajusta al stock restante estimado)
-  document.addEventListener("input", (e) => {
-    const input = e.target;
-    if (!input.classList?.contains("cantidad-input")) return;
-
-    const card = input.closest(".card");
-    const btn = card?.querySelector(".agregar-carrito");
-    if (!btn) return;
-
-    const { id, stock, stockMin } = getDatosDesdeBtn(btn);
-
-    // Si es "pulgar abajo", no clamp (está disabled normalmente)
-    if (!Number.isNaN(stock) && !Number.isNaN(stockMin) && stock < stockMin) return;
-
-    // Max por stock (si lo tenemos) y además por lo ya agregado estimado
-    let max = Number.isNaN(stock) ? parseIntSafe(input.getAttribute("max")) : stock;
-    if (!Number.isNaN(max) && id) {
-      const restanteEstimado = max - getEnCarritoEstimado(id);
-      max = Math.max(0, restanteEstimado);
-    }
-
-    let v = parseIntSafe(input.value);
-    if (Number.isNaN(v)) v = 0;
-
-    if (!Number.isNaN(max)) {
-      if (v > max) input.value = String(max);
-    }
-    if (v < 0) input.value = "0";
-  });
-
-  contenedor.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".agregar-carrito");
-    if (!btn) return;
-
-    // Si está disabled, el click suele no disparar, pero por las dudas:
-    if (btn.disabled) return;
-
-    const card = btn.closest(".card");
-    const input = card?.querySelector(".cantidad-input");
-
-    const { id, nombre, precio, stock, stockMin } = getDatosDesdeBtn(btn);
-    const cantidad = parseIntSafe(input?.value);
-
-    // Validación básica
-    if (!id || !precio || !Number.isFinite(cantidad) || cantidad <= 0) {
-      notify({
+    Swal.fire({
         title: "Cantidad inválida",
         text: "Debes ingresar una cantidad mayor a 0 para continuar.",
         icon: "error",
-      });
-      return;
-    }
+        confirmButtonText: "OK",
+    });
 
-    // Regla "pulgar abajo" => no compra inmediata
-    if (!Number.isNaN(stock) && !Number.isNaN(stockMin) && stock < stockMin) {
-      notify({
-        title: "Producto sin stock inmediato",
-        text: "Este producto está pendiente de ingreso o a pedido. Comunicate con nosotros al 3513820440.",
-        icon: "warning",
-      });
-      return;
-    }
+    return; // ❌ Detener el proceso si la cantidad es incorrecta
+}
 
-    // Límite por stock (si el stock viene en data-stock)
-    if (!Number.isNaN(stock)) {
-      const yaAgregado = getEnCarritoEstimado(id);
-      const restante = stock - yaAgregado;
+// Validar que la cantidad no supere el stock (si está disponible en el dataset)
+const stockDisponible = parseInt(e.target.dataset.stock);
+if (!isNaN(stockDisponible) && cantidad > stockDisponible) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Cantidades no disponibles',
+        text: 'Si deseas más unidades comunicate con nosotros 3513820440',
+    });
 
-      if (restante <= 0) {
-        notify({
-          title: "Stock alcanzado",
-          text: "Ya agregaste la cantidad máxima disponible de este producto.",
-          icon: "warning",
+    const inputCantidad = tarjetaProducto.querySelector(".cantidad-input");
+    if (inputCantidad) inputCantidad.value = stockDisponible;
+    return;
+}
+
+
+        fetch('/carrito/agregar', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_producto: idProducto, cantidad: cantidad, precio: precioProducto })
+        })
+        .then(response => {
+            console.log("📩 Respuesta del servidor recibida:", response);
+            if (!response.ok) {
+                throw new Error(`Error del servidor: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("✅ Producto agregado con éxito:", data);
+            mostrarNotificacion(`${cantidad} ${nombreProducto} agregado(s) al carrito`);
+            
+            // Llamamos a la función para actualizar el globo
+            obtenerCantidadCarrito();
+        })
+        .catch(error => {
+            console.error("❌ Error al agregar el producto al carrito:", error);
+            Swal.fire({
+                title: "Error",
+                text: "Hubo un problema al agregar el producto al carrito.",
+                icon: "error",
+                confirmButtonText: "OK",
+            });
         });
-        return;
-      }
-
-      if (cantidad > restante) {
-        notify({
-          title: "Cantidades no disponibles",
-          text: `Solo podés agregar ${restante} unidad(es) más. Si necesitás más, comunicate al 3513820440.`,
-          icon: "warning",
-        });
-        if (input) input.value = String(restante);
-        return;
-      }
+        
     }
-
-    try {
-      const resp = await fetch("/carrito/agregar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_producto: id, cantidad, precio }),
-      });
-
-      const data = await readJsonSafe(resp);
-
-      if (!resp.ok) {
-        // Tu backend suele responder { error: "..." } (y a veces { message: "..." })
-        const msg =
-          data?.error ||
-          data?.message ||
-          "Hubo un problema al agregar el producto al carrito.";
-
-        // 401 => no logueado, 409 => stock
-        const icon = resp.status === 409 ? "warning" : resp.status === 401 ? "info" : "error";
-
-        notify({
-          title: resp.status === 409 ? "Stock insuficiente" : "Error",
-          text: msg,
-          icon,
-        });
-
-        // Si backend manda maxAgregable, ayudamos al usuario
-        if (resp.status === 409 && input && Number.isFinite(parseIntSafe(data?.maxAgregable))) {
-          input.value = String(parseIntSafe(data.maxAgregable));
-        }
-
-        return;
-      }
-
-      // OK
-      sumarEnCarritoEstimado(id, cantidad);
-
-      notify({
-        title: "¡Producto agregado!",
-        text: `${cantidad} ${nombre} agregado(s) al carrito`,
-        icon: "success",
-      });
-
-      refrescarGloboCarrito();
-
-      if (input) input.value = "1";
-    } catch (err) {
-      notify({
-        title: "Error",
-        text: err?.message || "Hubo un problema al agregar el producto al carrito.",
-        icon: "error",
-      });
-    }
-  });
 });
+
+// Función para mostrar la notificación con SweetAlert
+function mostrarNotificacion(mensaje) {
+    Swal.fire({
+        title: "¡Producto agregado!",
+        text: mensaje,
+        icon: "success",
+        confirmButtonText: "OK",
+    });
+}
+
+// Función para obtener la cantidad total del carrito y actualizar el globo de notificación
+function obtenerCantidadCarrito() {
+    console.log("📡 Solicitando cantidad total del carrito...");
+    
+    fetch('/carrito/cantidad')  // Llamamos a la ruta correcta del backend
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error del servidor: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("🛒 Cantidad total obtenida:", data);
+            if (data && data.cantidadTotal !== undefined) {
+                actualizarGloboNotificacion(data.cantidadTotal);
+            } else {
+                console.error("⚠️ Error: Respuesta inesperada del servidor", data);
+            }
+        })
+        .catch(error => {
+            console.error("❌ Error al obtener la cantidad del carrito:", error);
+        });
+}
+
+
+// Función para actualizar el globo de notificación con la cantidad de productos
+function actualizarGloboNotificacion(cantidad) {
+    console.log(`🔵 Actualizando globo de notificación con cantidad: ${cantidad}`);
+    const globo = document.getElementById('carrito-notificacion');
+
+    if (globo) {
+        if (cantidad > 0) {
+            globo.textContent = cantidad;
+
+            // 🔥 En lugar de display: inline-block, usa flex para que el contenido siempre se centre
+            globo.style.display = 'flex'; 
+            globo.style.justifyContent = 'center';
+            globo.style.alignItems = 'center';
+            globo.style.minWidth = "20px"; // Asegura que el globo tenga tamaño suficiente
+            globo.style.minHeight = "20px";
+            globo.style.padding = "2px"; // Evita que los números grandes se salgan
+            globo.style.fontSize = "12px"; // Ajusta el tamaño del texto
+            globo.style.textAlign = "center";
+
+            // 🔄 Forzar reflow/repaint para asegurarse de que se aplican los estilos
+            globo.offsetHeight;
+        } else {
+            globo.style.display = 'none'; // Ocultar si el carrito está vacío
+        }
+    } else {
+        console.error("⚠️ No se encontró el elemento de notificación del carrito.");
+    }
+}
+
