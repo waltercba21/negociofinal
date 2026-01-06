@@ -69,8 +69,11 @@ app.use((req, res, next) => {
   res.locals.producto = null;
   res.locals.isLogged = !!req.session.usuario;
   res.locals.userLogged = req.session.usuario || {};
+
+  res.locals.cantidadCarrito = 0; // <- para que header.ejs nunca rompa
   next();
 });
+
 
 // --- Rutas ---
 app.use('/', indexRouter);
