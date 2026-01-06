@@ -622,3 +622,45 @@ if (botonLimpiar) {
     contenedorProductos.innerHTML = '';
   });
 }
+// ✅ INIT BUSCADOR (faltaba)
+console.log('[AF][BUSCADOR] cargado');
+
+function normTxt(t = '') {
+  return String(t)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('[AF][BUSCADOR] DOM ready', {
+    entradaBusqueda: !!entradaBusqueda,
+    contenedorProductos: !!contenedorProductos
+  });
+
+  if (!entradaBusqueda || !contenedorProductos) return;
+
+  await cargarProductos();
+  console.log('[AF][BUSCADOR] productos cargados:', productosOriginales.length);
+
+  entradaBusqueda.addEventListener('input', () => {
+    const q = entradaBusqueda.value;
+    debounceBuscar(() => {
+      const qq = normTxt(q);
+
+      if (!qq) {
+        contenedorProductos.innerHTML = '';
+        return;
+      }
+
+      const filtrados = (productosOriginales || []).filter(p => {
+        const nombre = normTxt(p?.nombre);
+        const cat = normTxt(p?.categoria_nombre);
+        return nombre.includes(qq) || cat.includes(qq);
+      });
+
+      renderProductos(filtrados);
+    }, 250);
+  });
+});
