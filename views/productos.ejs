@@ -274,5 +274,44 @@ function moverCarrusel(index, direccion) {
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<script>
+  // === AUTOFAROS DEBUG (HTML) ===
+  console.log('[AF][HTML] productos.ejs cargó', {
+    isUserLoggedIn: document.body.dataset.isUserLoggedIn,
+    isAdminUser: document.body.dataset.isAdminUser,
+  });
+
+  const btns = Array.from(document.querySelectorAll('#contenedor-productos .agregar-carrito')).slice(0, 10);
+  console.log('[AF][HTML] botones .agregar-carrito encontrados:', btns.length);
+
+  console.table(btns.map(b => ({
+    id: b.dataset.id,
+    nombre: (b.dataset.nombre || '').slice(0, 30),
+    stock: b.dataset.stock,
+    stockmin: b.dataset.stockmin,
+    disabled: b.disabled
+  })));
+
+  // Debug global de fetch (para ver SI se llama /carrito/agregar y cuántas veces)
+  (function(){
+    if (window.__afFetchDebug) return;
+    window.__afFetchDebug = true;
+    const _fetch = window.fetch.bind(window);
+    window.fetch = async (...args) => {
+      const url = args?.[0];
+      const opts = args?.[1];
+      if (typeof url === 'string' && url.includes('/carrito/')) {
+        console.log('[AF][FETCH] ->', url, opts?.method || 'GET', opts?.body || '');
+      }
+      const resp = await _fetch(...args);
+      if (typeof url === 'string' && url.includes('/carrito/')) {
+        console.log('[AF][FETCH] <-', url, resp.status);
+      }
+      return resp;
+    };
+    console.log('[AF][HTML] fetch debug ON');
+  })();
+</script>
+
 </body>
 </html>
