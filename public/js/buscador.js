@@ -198,164 +198,53 @@ function _normalizeProviders(listaRaw) {
     const delta = Math.abs((costoIvaBack || 0) - (costoIvaRecon || 0));
     console.groupCollapsed(`🔎 Proveedor#${idx} ${nombreProv} — DIAGNÓSTICO IVA`);
     console.table([{
-      precioLista, descPct, netoRecon, ivaPct,
-      costoIvaBack, costoIvaRecon, usadoParaCalculo: costoIva
+      nombreProv,
+      costoIvaBack,
+      precioLista,
+      descPct,
+      netoRecon,
+      ivaPct,
+      costoIvaRecon,
+      costoIvaFinal: costoIva,
+      delta
     }]);
-    if (costoIvaBack > 0 && costoIvaRecon > 0 && delta >= 2) {
-      console.warn('⚠️ MISMATCH backend vs reconstruido (>= $2). Se usará el reconstruido.');
-    }
     console.groupEnd();
 
     return {
       ...p,
-      proveedor_id_norm: Number(provId) || null,
+      proveedor_id: provId,
       proveedor_nombre: nombreProv,
-      codigo: String(codigo ?? '-').trim(),
-      costo_iva: toNumberSafePlus(costoIva)
+      codigo: codigo,
+      costo_iva: costoIva,
+      iva: ivaPct
     };
   });
 }
 
 /* ==========================================
-   Orden por costo (asc)
+   Carga inicial / debounce
 ========================================== */
-function _sortedIdxByCosto(lista){
-  const withCost = [], noCost = [];
-  lista.forEach((p, i) => {
-    const c = toNumberSafe(p.costo_iva);
-    (c > 0 ? withCost : noCost).push({ i, c });
-  });
-  withCost.sort((a,b) => a.c - b.c);
-  return [...withCost.map(x => x.i), ...noCost.map(x => x.i)];
-}
-
-/* ==========================================
-   Estado/rotación por producto
-========================================== */
-// productoId -> { lista, baseIdx, idx, first, orden, orderCycle, cyclePos }
-const _cacheProveedores = new Map();
-
-async function _getOrInitState(productoId){
-  let state = _cacheProveedores.get(productoId);
-  if (state) return state;
-
-  const r = await fetch(`/productos/api/proveedores/${productoId}`);
-  let listaRaw = await r.json();
-
-  dbg('📥 /productos/api/proveedores/', productoId, '=>', Array.isArray(listaRaw) ? listaRaw.length : 0);
-
-  const lista = _normalizeProviders(listaRaw);
-
-  state = { lista, idx: 0, first: true, baseIdx: 0, orden: [], orderCycle: [], cyclePos: -1 };
-
-  if (state.lista.length) {
-    // Buscar card para obtener el proveedor asignado por ID (SSR)
-    const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
-    const cardEl = provSpan ? provSpan.closest('.card') : null;
-    const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
-
-    // localizar baseIdx
-    if (asignadoId) {
-      const byId = state.lista.findIndex(p => Number(p.proveedor_id_norm ?? p.id ?? p.proveedor_id) === asignadoId);
-      state.baseIdx = byId >= 0 ? byId : 0;
-    } else {
-      const nombreAsignado = (provSpan?.textContent || '').trim();
-      const byName = state.lista.findIndex(p => (p.proveedor_nombre || '').trim() === nombreAsignado);
-      state.baseIdx = byName >= 0 ? byName : 0;
-    }
-    state.idx = state.baseIdx;
-
-    // Orden y ciclo (sin base)
-    state.orden = _sortedIdxByCosto(state.lista);
-    state.orderCycle = state.orden.filter(i => i !== state.baseIdx);
-    if (!state.orderCycle.length) state.orderCycle = [state.baseIdx];
-    state.cyclePos = -1;
-
-    console.log('🎯 BASE DETECTADA', {
-      productoId, baseIdx: state.baseIdx,
-      baseNombre: state.lista[state.baseIdx]?.proveedor_nombre,
-    });
-    dbg('📑 ORDEN', state.orden, ' | CYCLE (sin base):', state.orderCycle);
+async function cargarProductos() {
+  try {
+    const response = await fetch('/productos/api');
+    if (!response.ok) throw new Error('Error al cargar productos');
+    const data = await response.json();
+    productosOriginales = data.productos || [];
+  } catch (err) {
+    console.error(err);
   }
-
-  _cacheProveedores.set(productoId, state);
-  return state;
 }
 
-/* ==========================================
-   Render helpers
-========================================== */
-function _renderProveedor(productoId, data) {
-  const spanNombre = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
-  const spanCodigo = document.querySelector(`.prov-codigo[data-producto-id="${productoId}"]`);
-  const smallIdx   = document.querySelector(`.prov-idx[data-producto-id="${productoId}"]`);
-  if (spanNombre) spanNombre.textContent = data?.proveedor_nombre || 'Sin proveedor';
-  if (spanCodigo) spanCodigo.textContent = data?.codigo || '-';
-  if (smallIdx) {
-    const st = _cacheProveedores.get(productoId);
-    const pos = (st?.idx ?? 0) + 1;
-    const total = st?.lista?.length || 0;
-    smallIdx.textContent = total > 0 ? `Mostrando ${pos} de ${total}` : '';
-  }
-  dbg('🖼️ RENDER proveedor', { productoId, proveedor: data?.proveedor_nombre, codigo: data?.codigo });
-}
-
-function _renderSimulacion(productoId, precioVentaSimulado){
-  const nodo = document.querySelector(`.prov-simulacion[data-producto-id="${productoId}"]`);
-  if (!nodo) return;
-  if (Number.isFinite(precioVentaSimulado) && precioVentaSimulado > 0) {
-    nodo.textContent = `Precio venta: $${formatearNumero(precioVentaSimulado)}`;
-  } else {
-    nodo.textContent = '';
-  }
-  dbg('🧾 RENDER precio simulado', { productoId, precioVentaSimulado });
-}
-
-/* ==========================================
-   UI / Render de productos
-========================================== */
-window.onload = async () => {
-  const respuesta = await fetch('/productos/api/buscar');
-  productosOriginales = await respuesta.json();
-  dbg('📦 productosOriginales cargados:', productosOriginales?.length);
-};
-
-entradaBusqueda.addEventListener('input', (e) => {
+function debounceBuscar(callback, delay = 300) {
   clearTimeout(timer);
-  timer = setTimeout(async () => {
-    const busqueda = e.target.value.trim();
+  timer = setTimeout(callback, delay);
+}
 
-    const now = Date.now();
-    if (busqueda.length >= 3 && (now - lastLogAt > 1200)) {
-      lastLogAt = now;
-      logBusquedaTexto(busqueda, 'texto');
-    }
-
-    contenedorProductos.innerHTML = '';
-
-    if (busqueda) {
-      const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
-      const respuesta = await fetch(url);
-      const productos = await respuesta.json();
-      dbg('🔎 /productos/api/buscar =>', productos?.length, 'items');
-      mostrarProductos(productos);
-    }
-  }, 300);
-});
-
-function mostrarProductos(productos) {
+/* ==========================================
+   Render principal
+========================================== */
+function renderProductos(productos) {
   contenedorProductos.innerHTML = '';
-
-  if (!Array.isArray(productos) || productos.length === 0) {
-    const contenedorVacio = document.createElement('div');
-    contenedorVacio.className = 'no-result';
-    contenedorVacio.innerHTML = `
-      <img src="/images/noEncontrado.png" alt="Producto no encontrado" class="imagen-no-result">
-      <p>No se encontraron productos. Probá con otros filtros o palabras clave.</p>
-    `;
-    contenedorProductos.appendChild(contenedorVacio);
-    return;
-  }
 
   productos.forEach((producto, index) => {
     const card = document.createElement('div');
@@ -393,6 +282,12 @@ function mostrarProductos(productos) {
     });
 
     // info stock / acciones
+    const stockActualNum = parseInt(producto.stock_actual, 10);
+    const stockMinNum = parseInt(producto.stock_minimo, 10);
+    const puedeComprar = (Number.isFinite(stockActualNum) && Number.isFinite(stockMinNum))
+      ? (stockActualNum >= stockMinNum && stockActualNum > 0)
+      : false;
+
     let stockInfo = '';
     if (isUserLoggedIn) {
       if (isAdminUser) {
@@ -405,21 +300,31 @@ function mostrarProductos(productos) {
           </div>
         `;
       } else {
+        const stockMax = Number.isFinite(stockActualNum) ? stockActualNum : 0;
+        const stockMinSafe = Number.isFinite(stockMinNum) ? stockMinNum : 0;
+
         stockInfo = `
           <div class="semaforo-stock">
-            <i class="fa-solid fa-thumbs-${producto.stock_actual >= producto.stock_minimo ? 'up verde' : 'down rojo'}"></i>
+            <i class="fa-solid fa-thumbs-${puedeComprar ? 'up verde' : 'down rojo'}"></i>
             <span class="texto-semaforo">
-              ${producto.stock_actual >= producto.stock_minimo ? 'PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA' : 'PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
+              ${puedeComprar ? 'PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA' : 'PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
             </span>
           </div>
           <div class="cantidad-producto">
-            <input type="number" class="cantidad-input" value="0" min="0" id="input-cantidad-${producto.id}">
+            <input type="number"
+                   class="cantidad-input"
+                   value="${puedeComprar ? 1 : 0}"
+                   min="${puedeComprar ? 1 : 0}"
+                   max="${stockMax}"
+                   id="input-cantidad-${producto.id}"
+                   ${puedeComprar ? '' : 'disabled'}>
             <button class="agregar-carrito"
+              ${puedeComprar ? '' : 'disabled'}
               data-id="${producto.id}" 
               data-nombre="${producto.nombre}" 
               data-precio="${producto.precio_venta}" 
-              data-stock="${producto.stock_actual}" 
-              data-stockmin="${producto.stock_minimo}">
+              data-stock="${stockMax}" 
+              data-stockmin="${stockMinSafe}">
               Agregar al carrito
             </button>
             <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
@@ -502,43 +407,68 @@ function mostrarProductos(productos) {
     if (!isAdminUser && isUserLoggedIn) {
       const botonAgregar = card.querySelector('.agregar-carrito');
       const inputCantidad = card.querySelector('.cantidad-input');
-      const stockDisponible = parseInt(producto.stock_actual);
 
-      botonAgregar.addEventListener('click', (e) => {
-        e.preventDefault();
+      const stockDisponible = Number.isFinite(stockActualNum) ? stockActualNum : 0;
+      const stockMinimo = Number.isFinite(stockMinNum) ? stockMinNum : 0;
+      const puedeComprarLocal = (stockDisponible >= stockMinimo && stockDisponible > 0);
 
-        const cantidad = parseInt(inputCantidad.value);
+      if (inputCantidad) {
+        inputCantidad.max = String(stockDisponible);
+      }
 
-        if (!inputCantidad.value || isNaN(cantidad) || cantidad <= 0) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Cantidad inválida',
-            text: 'Debes ingresar una cantidad mayor a 0 para continuar.',
-          });
-          return;
-        }
+      if (botonAgregar) {
+        botonAgregar.addEventListener('click', (e) => {
+          e.preventDefault();
+          const cantidad = parseInt(inputCantidad?.value, 10);
 
-        if (cantidad > stockDisponible) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Cantidades no disponibles',
-            text: 'Si deseas más unidades comunicate con nosotros 3513820440',
-          });
-          inputCantidad.value = stockDisponible;
-          return;
-        }
-
-        const eventoAgregar = new CustomEvent('agregarAlCarritoDesdeBuscador', {
-          detail: {
-            id: producto.id,
-            nombre: producto.nombre,
-            precio: producto.precio_venta,
-            cantidad: cantidad
+          // Si no puede comprar, frená y evitá que el handler global agregue igual
+          if (!puedeComprarLocal) {
+            e.preventDefault();
+            e.stopPropagation();
+            Swal.fire({
+              icon: 'warning',
+              title: 'Producto sin stock inmediato',
+              text: 'Este producto está pendiente de ingreso o a pedido. Comunicate con nosotros 3513820440',
+            });
+            return;
           }
-        });
 
-        document.dispatchEvent(eventoAgregar);
-      });
+          if (!inputCantidad?.value || isNaN(cantidad) || cantidad <= 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            Swal.fire({
+              icon: 'error',
+              title: 'Cantidad inválida',
+              text: 'Debes ingresar una cantidad mayor a 0 para continuar.',
+            });
+            return;
+          }
+
+          if (cantidad > stockDisponible) {
+            e.preventDefault();
+            e.stopPropagation();
+            Swal.fire({
+              icon: 'warning',
+              title: 'Cantidades no disponibles',
+              text: `Solo hay ${stockDisponible} unidad(es) disponibles para entrega inmediata. Si necesitás más, comunicate con nosotros 3513820440`,
+            });
+            if (inputCantidad) inputCantidad.value = String(stockDisponible);
+            return;
+          }
+
+          const eventoAgregar = new CustomEvent('agregarAlCarritoDesdeBuscador', {
+            detail: {
+              id: producto.id,
+              nombre: producto.nombre,
+              precio: producto.precio_venta,
+              cantidad: cantidad
+            }
+          });
+
+          document.dispatchEvent(eventoAgregar);
+          // OJO: no frenamos propagación acá, para que agregarAlCarrito.js siga funcionando
+        });
+      }
     }
 
     _initProveedorButton(producto.id); // prepara estado/ciclo
