@@ -90,6 +90,20 @@ module.exports = {
         callback(null, productosConPrecios);
     });
 },
+obtenerProductoCarritoConStock: (idItemCarrito, callback) => {
+  const query = `
+    SELECT pc.id, pc.carrito_id, pc.producto_id, pc.cantidad,
+           p.stock_actual, p.stock_minimo
+    FROM productos_carrito pc
+    JOIN productos p ON p.id = pc.producto_id
+    WHERE pc.id = ?
+    LIMIT 1
+  `;
+  pool.query(query, [idItemCarrito], (error, rows) => {
+    if (error) return callback(error);
+    callback(null, rows && rows.length ? rows[0] : null);
+  });
+},
 
 obtenerProductoPorId: (id, callback) => {
     const query = 'SELECT * FROM productos_carrito WHERE id = ?';
@@ -102,7 +116,7 @@ obtenerProductoPorId: (id, callback) => {
 actualizarCantidad: (id, cantidad, callback) => {
     const query = 'UPDATE productos_carrito SET cantidad = ? WHERE id = ?';
     pool.query(query, [cantidad, id], callback);
-},
+}, 
 eliminarProductoPorId: (id, callback) => {
     const query = 'DELETE FROM productos_carrito WHERE id = ?';
     pool.query(query, [id], callback);

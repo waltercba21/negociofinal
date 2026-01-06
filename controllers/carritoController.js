@@ -150,86 +150,125 @@ module.exports = {
             });
         });
     },    
-    actualizarCantidad: (req, res) => {
-        const { id, accion } = req.body;
-    
-        // Validar si el usuario tiene sesión activa
-        if (!req.session || !req.session.usuario || !req.session.usuario.id) {
-            console.error('Error: Sesión no iniciada o usuario no definido.');
-            return res.status(401).json({ error: 'Sesión no válida. Inicia sesión nuevamente.' });
-        }
-    
-        console.log(`Actualizando producto con ID: ${id}, Acción: ${accion}`);
-    
-        // Verificar si el producto existe en el carrito
-        carrito.obtenerProductoPorId(id, (error, producto) => {
-            if (error) {
-                console.error('❌ Error al obtener el producto:', error);
-                return res.status(500).json({ error: 'Error al buscar el producto' });
-            }
-            if (!producto) {
-                console.error('⚠️ Producto no encontrado con ID:', id);
-                return res.status(404).json({ error: 'Producto no encontrado' });
-            }
-    
-            console.log('✅ Producto encontrado:', producto);
-    
-            // Calcular la nueva cantidad
-            let nuevaCantidad = producto.cantidad;
-            if (accion === 'aumentar') nuevaCantidad++;
-            if (accion === 'disminuir' && nuevaCantidad > 1) nuevaCantidad--;
-    
-            console.log(`🔢 Nueva cantidad calculada: ${nuevaCantidad}`);
-    
-            // Actualizar la cantidad en la base de datos
-            carrito.actualizarCantidad(id, nuevaCantidad, (error) => {
-                if (error) {
-                    console.error('❌ Error al actualizar la cantidad:', error);
-                    return res.status(500).json({ error: 'Error al actualizar la cantidad' });
-                }
-    
-                console.log(`✅ Cantidad actualizada con éxito: ${nuevaCantidad}`);
-    
-                // Obtener el carrito activo del usuario (corrección aquí)
-                carrito.obtenerCarritoActivo(req.session.usuario.id, (error, carritoActivo) => {
-                    if (error || !carritoActivo || carritoActivo.length === 0) {
-                        console.error('❌ Error al obtener el carrito activo:', error);
-                        return res.status(500).json({ error: 'Error al obtener el carrito' });
-                    }
-    
-                    const id_carrito = carritoActivo[0].id;
-    
-                    // Obtener los productos actualizados del carrito
-                    carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-                        if (error) {
-                            console.error('❌ Error al obtener productos del carrito:', error);
-                            return res.status(500).json({ error: 'Error al obtener productos' });
-                        }
-    
-                        // Calcular el total y la cantidad total de productos
-                        let totalCarrito = 0;
-                        productos.forEach(producto => {
-                            const precioVenta = parseFloat(producto.precio_venta);
-                            const cantidad = producto.cantidad;
-                            totalCarrito += precioVenta * cantidad; // Calculando el total con el precio y la cantidad
-                        });
-    
-                        const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0);
-                        console.log(`🛒 Cantidad total actualizada en el carrito: ${cantidadTotal}, Total del carrito: $${totalCarrito.toFixed(2)}`);
-    
-                        // Enviar la respuesta con los datos actualizados
-                        res.status(200).json({
-                            mensaje: 'Cantidad actualizada',
-                            nuevaCantidad,
-                            cantidadTotal,
-                            totalCarrito: totalCarrito.toFixed(2), // Enviar el total del carrito
-                            productos: productos // Incluir los productos actualizados
-                        });
-                    });
-                });
-            });
+actualizarCantidad: (req, res) => {
+  const { id, accion } = req.body;
+
+  // Validar si el usuario tiene sesión activa
+  if (!req.session || !req.session.usuario || !req.session.usuario.id) {
+    console.error('Error: Sesión no iniciada o usuario no definido.');
+    return res.status(401).json({ error: 'Sesión no válida. Inicia sesión nuevamente.' });
+  }
+
+  if (!id || !accion || !['aumentar', 'disminuir'].includes(accion)) {
+    return res.status(400).json({ error: 'Datos inválidos.' });
+  }
+
+  console.log(`Actualizando producto con ID: ${id}, Acción: ${accion}`);
+
+  // Verificar si el producto existe en el carrito (con stock)
+  carrito.obtenerProductoCarritoConStock(id, (error, producto) => {
+    if (error) {
+      console.error('❌ Error al obtener el producto:', error);
+      return res.status(500).json({ error: 'Error al buscar el producto' });
+    }
+    if (!producto) {
+      console.error('⚠️ Producto no encontrado con ID:', id);
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    console.log('✅ Producto encontrado:', producto);
+
+    const cantidadActual = Number(producto.cantidad) || 0;
+    const stockActual = Number(producto.stock_actual) || 0;
+    const stockMinimo = Number(producto.stock_minimo) || 0;
+
+    // Calcular la nueva cantidad
+    let nuevaCantidad = cantidadActual;
+    if (accion === 'aumentar') nuevaCantidad = cantidadActual + 1;
+    if (accion === 'disminuir') nuevaCantidad = Math.max(1, cantidadActual - 1);
+
+    console.log(`🔢 Nueva cantidad calculada: ${nuevaCantidad}`);
+
+    // ✅ VALIDACIÓN STOCK (solo aplica al aumentar)
+    if (accion === 'aumentar') {
+      // Si está “pulgar abajo” (stock_actual < stock_minimo) NO permitimos aumentar
+      if (stockActual < stockMinimo) {
+        return res.status(409).json({
+          error: 'Producto pendiente de ingreso o a pedido. Comunicate con nosotros.',
+          nuevaCantidad: cantidadActual,
+          stockDisponible: stockActual
         });
-    },
+      }
+
+      // Si no hay stock real
+      if (stockActual <= 0) {
+        return res.status(409).json({
+          error: 'No hay stock disponible para este producto.',
+          nuevaCantidad: cantidadActual,
+          stockDisponible: stockActual
+        });
+      }
+
+      // Tope por stock real
+      if (nuevaCantidad > stockActual) {
+        return res.status(409).json({
+          error: `Stock disponible: ${stockActual}. Si necesitás más, comunicate con nosotros.`,
+          nuevaCantidad: cantidadActual,
+          stockDisponible: stockActual
+        });
+      }
+    }
+
+    // Actualizar la cantidad en la base de datos
+    carrito.actualizarCantidad(id, nuevaCantidad, (error) => {
+      if (error) {
+        console.error('❌ Error al actualizar la cantidad:', error);
+        return res.status(500).json({ error: 'Error al actualizar la cantidad' });
+      }
+
+      console.log(`✅ Cantidad actualizada con éxito: ${nuevaCantidad}`);
+
+      // Obtener el carrito activo del usuario
+      carrito.obtenerCarritoActivo(req.session.usuario.id, (error, carritoActivo) => {
+        if (error || !carritoActivo || carritoActivo.length === 0) {
+          console.error('❌ Error al obtener el carrito activo:', error);
+          return res.status(500).json({ error: 'Error al obtener el carrito' });
+        }
+
+        const id_carrito = carritoActivo[0].id;
+
+        // Obtener los productos actualizados del carrito
+        carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+          if (error) {
+            console.error('❌ Error al obtener productos del carrito:', error);
+            return res.status(500).json({ error: 'Error al obtener productos' });
+          }
+
+          // Calcular el total y la cantidad total de productos
+          let totalCarrito = 0;
+          productos.forEach((p) => {
+            const precioVenta = parseFloat(p.precio_venta) || 0;
+            const cant = Number(p.cantidad) || 0;
+            totalCarrito += precioVenta * cant;
+          });
+
+          const cantidadTotal = productos.reduce((acc, p) => acc + (Number(p.cantidad) || 0), 0);
+          console.log(`🛒 Cantidad total actualizada en el carrito: ${cantidadTotal}, Total del carrito: $${totalCarrito.toFixed(2)}`);
+
+          // Enviar la respuesta con los datos actualizados
+          res.status(200).json({
+            mensaje: 'Cantidad actualizada',
+            nuevaCantidad,
+            cantidadTotal,
+            totalCarrito: totalCarrito.toFixed(2),
+            productos
+          });
+        });
+      });
+    });
+  });
+},
+
     obtenerCantidadCarrito: (req, res) => {
         const id_usuario = req.session.usuario.id;
     
