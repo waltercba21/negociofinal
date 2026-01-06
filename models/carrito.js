@@ -90,6 +90,26 @@ module.exports = {
         callback(null, productosConPrecios);
     });
 },
+obtenerStockProducto: (producto_id, callback) => {
+  const query = `SELECT id, stock_actual, stock_minimo FROM productos WHERE id = ? LIMIT 1`;
+  pool.query(query, [producto_id], (error, rows) => {
+    if (error) return callback(error);
+    callback(null, rows && rows.length ? rows[0] : null);
+  });
+},
+
+obtenerItemEnCarrito: (carrito_id, producto_id, callback) => {
+  const query = `
+    SELECT id, cantidad
+    FROM productos_carrito
+    WHERE carrito_id = ? AND producto_id = ?
+    LIMIT 1
+  `;
+  pool.query(query, [carrito_id, producto_id], (error, rows) => {
+    if (error) return callback(error);
+    callback(null, rows && rows.length ? rows[0] : null);
+  });
+},
 obtenerProductoCarritoConStock: (idItemCarrito, callback) => {
   const query = `
     SELECT pc.id, pc.carrito_id, pc.producto_id, pc.cantidad,

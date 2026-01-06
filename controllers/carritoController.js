@@ -35,57 +35,130 @@ module.exports = {
             }
         });
     },
-    agregarProductoCarrito : (req, res) => {
-        const { id_producto, cantidad } = req.body;
-        const id_usuario = req.session.usuario.id;
-    
-        // Primero, obtenemos el carrito activo del usuario
-        carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
-            if (error) {
-                console.error('Error al obtener carrito:', error);
-                return res.status(500).json({ error: 'Error al obtener carrito' });
-            }
-    
-            let id_carrito;
-    
-            if (!carritoActivo || carritoActivo.length === 0) {
-                // Si el usuario no tiene carrito, creamos uno nuevo
-                carrito.crearCarrito(id_usuario, (error, nuevoCarritoId) => {
-                    if (error) {
-                        console.error('Error al crear carrito:', error);
-                        return res.status(500).json({ error: 'Error al crear carrito' });
-                    }
-    
-                    id_carrito = nuevoCarritoId;
-                    agregarProducto(id_carrito);
-                });
-            } else {
-                // Si el usuario ya tiene un carrito, usamos su ID
-                id_carrito = carritoActivo[0].id;
-                agregarProducto(id_carrito);
-            }
-        });
-    
-        function agregarProducto(id_carrito) {
-            carrito.agregarProductoCarrito(id_carrito, id_producto, cantidad, (error) => {
-                if (error) {
-                    console.error('Error al agregar producto:', error);
-                    return res.status(500).json({ error: 'Error al agregar producto al carrito' });
-                }
-    
-                carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-                    if (error) {
-                        console.error('Error al obtener productos:', error);
-                        return res.status(500).json({ error: 'Error al obtener productos' });
-                    }
-    
-                    const cantidadTotal = productos.reduce((acc, producto) => acc + producto.cantidad, 0);
-                    console.log(`🛒 Nueva cantidad total del carrito: ${cantidadTotal}`);
-                    res.status(200).json({ cantidadTotal });
-                });
-            });
+  agregarProductoCarrito: (req, res) => {
+  const { id_producto, cantidad } = req.body;
+
+  // Validar sesión
+  if (!req.session || !req.session.usuario || !req.session.usuario.id) {
+    return res.status(401).json({ error: 'Sesión no válida. Inicia sesión nuevamente.' });
+  }
+
+  const id_usuario = req.session.usuario.id;
+  const productoId = Number(id_producto);
+  const cantSolicitada = Number(cantidad);
+
+  if (!productoId || !Number.isFinite(cantSolicitada) || cantSolicitada <= 0) {
+    return res.status(400).json({ error: 'Datos inválidos.' });
+  }
+
+  // 1) Obtener carrito activo del usuario
+  carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
+    if (error) {
+      console.error('Error al obtener carrito:', error);
+      return res.status(500).json({ error: 'Error al obtener carrito' });
+    }
+
+    if (!carritoActivo || carritoActivo.length === 0) {
+      // Crear carrito si no existe
+      carrito.crearCarrito(id_usuario, (error, nuevoCarritoId) => {
+        if (error) {
+          console.error('Error al crear carrito:', error);
+          return res.status(500).json({ error: 'Error al crear carrito' });
         }
-    },
+        agregarConValidacion(nuevoCarritoId);
+      });
+    } else {
+      agregarConValidacion(carritoActivo[0].id);
+    }
+  });
+
+  function agregarConValidacion(id_carrito) {
+    // 2) Traer stock real del producto
+    carrito.obtenerStockProducto(productoId, (error, prod) => {
+      if (error) {
+        console.error('Error al obtener stock del producto:', error);
+        return res.status(500).json({ error: 'Error al verificar stock' });
+      }
+      if (!prod) {
+        return res.status(404).json({ error: 'Producto no encontrado' });
+      }
+
+      const stockActual = Number(prod.stock_actual) || 0;
+      const stockMinimo = Number(prod.stock_minimo) || 0;
+
+      // Pulgar abajo => no compra inmediata
+      if (stockActual < stockMinimo) {
+        return res.status(409).json({
+          error: 'Producto pendiente de ingreso o a pedido. Comunicate con nosotros.',
+          stockDisponible: stockActual
+        });
+      }
+
+      if (stockActual <= 0) {
+        return res.status(409).json({
+          error: 'No hay stock disponible para este producto.',
+          stockDisponible: stockActual
+        });
+      }
+
+      // 3) Ver si ya existe en el carrito para evitar acumulación por múltiples clicks
+      carrito.obtenerItemEnCarrito(id_carrito, productoId, (error, item) => {
+        if (error) {
+          console.error('Error al obtener item del carrito:', error);
+          return res.status(500).json({ error: 'Error al verificar carrito' });
+        }
+
+        const yaEnCarrito = item ? Number(item.cantidad) || 0 : 0;
+        const nuevaCantidadTotal = yaEnCarrito + cantSolicitada;
+
+        if (nuevaCantidadTotal > stockActual) {
+          const maxAgregable = Math.max(0, stockActual - yaEnCarrito);
+          return res.status(409).json({
+            error: `Stock disponible: ${stockActual}. Solo podés agregar ${maxAgregable} unidad(es) más.`,
+            stockDisponible: stockActual,
+            maxAgregable
+          });
+        }
+
+        // 4) Insert o Update
+        if (item) {
+          // ya existe: update
+          carrito.actualizarCantidad(item.id, nuevaCantidadTotal, (error) => {
+            if (error) {
+              console.error('Error al actualizar cantidad:', error);
+              return res.status(500).json({ error: 'Error al agregar producto al carrito' });
+            }
+            responderCarrito(id_carrito);
+          });
+        } else {
+          // no existe: insert
+          carrito.agregarProductoCarrito(id_carrito, productoId, cantSolicitada, (error) => {
+            if (error) {
+              console.error('Error al agregar producto:', error);
+              return res.status(500).json({ error: 'Error al agregar producto al carrito' });
+            }
+            responderCarrito(id_carrito);
+          });
+        }
+      });
+    });
+  }
+
+  function responderCarrito(id_carrito) {
+    carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+      if (error) {
+        console.error('Error al obtener productos:', error);
+        return res.status(500).json({ error: 'Error al obtener productos' });
+      }
+
+      const cantidadTotal = productos.reduce((acc, p) => acc + (Number(p.cantidad) || 0), 0);
+      console.log(`🛒 Nueva cantidad total del carrito: ${cantidadTotal}`);
+
+      return res.status(200).json({ cantidadTotal });
+    });
+  }
+},
+
     obtenerCarritoID: (req, res) => {
         const id_usuario = req.session.usuario.id;
     

@@ -1,35 +1,95 @@
+// /public/js/agregarAlCarrito.js
 document.addEventListener("DOMContentLoaded", () => {
   const contenedor = document.getElementById("contenedor-productos");
   if (!contenedor) return;
 
-  // Estimado local (evita superar stock con múltiples clicks desde esta página)
-  // Para que sea 100% infalible, igual hay que validar en el backend.
-  const carritoEstimado = new Map(); // id -> cantidad
+  // Estimación local (evita superar stock con múltiples clicks en ESTA página)
+  // OJO: la validación real e infalible es la del backend (/carrito/agregar).
+  const carritoEstimado = new Map(); // productoId(string) -> cantidad agregada desde esta página
 
-  const getEnCarrito = (id) => carritoEstimado.get(String(id)) || 0;
-  const sumarEnCarrito = (id, delta) =>
-    carritoEstimado.set(String(id), getEnCarrito(id) + (Number(delta) || 0));
+  const getEnCarritoEstimado = (id) => carritoEstimado.get(String(id)) || 0;
+  const sumarEnCarritoEstimado = (id, delta) => {
+    const key = String(id);
+    carritoEstimado.set(key, getEnCarritoEstimado(key) + (Number(delta) || 0));
+  };
 
-  // Clamp visual del input
+  const notify = ({ title, text, icon = "info" }) => {
+    if (window.Swal?.fire) {
+      return Swal.fire({
+        title,
+        text,
+        icon,
+        confirmButtonText: "OK",
+      });
+    }
+    // fallback
+    alert(`${title}\n\n${text}`);
+  };
+
+  const readJsonSafe = async (resp) => {
+    try {
+      return await resp.json();
+    } catch {
+      return null;
+    }
+  };
+
+  const refrescarGloboCarrito = () => {
+    fetch("/carrito/cantidad")
+      .then((r) => r.json())
+      .then((d) => {
+        const globo = document.getElementById("carrito-notificacion");
+        if (!globo) return;
+        const n = d?.cantidadTotal ?? 0;
+        globo.style.display = n > 0 ? "flex" : "none";
+        globo.textContent = n;
+      })
+      .catch(() => {});
+  };
+
+  const parseIntSafe = (v) => {
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : NaN;
+  };
+
+  const getDatosDesdeBtn = (btn) => {
+    const id = btn?.dataset?.id;
+    const nombre = btn?.dataset?.nombre || "Producto";
+    const precio = btn?.dataset?.precio;
+
+    const stock = parseIntSafe(btn?.dataset?.stock);
+    const stockMin = parseIntSafe(btn?.dataset?.stockmin);
+
+    return { id, nombre, precio, stock, stockMin };
+  };
+
+  // Clamp visual del input (y ajusta al stock restante estimado)
   document.addEventListener("input", (e) => {
     const input = e.target;
     if (!input.classList?.contains("cantidad-input")) return;
 
     const card = input.closest(".card");
     const btn = card?.querySelector(".agregar-carrito");
+    if (!btn) return;
 
-    const stock = btn ? parseInt(btn.dataset.stock, 10) : NaN;
-    const min = btn ? parseInt(btn.dataset.stockmin, 10) : NaN;
+    const { id, stock, stockMin } = getDatosDesdeBtn(btn);
 
-    if (!isNaN(stock) && !isNaN(min) && stock < min) return;
+    // Si es "pulgar abajo", no clamp (está disabled normalmente)
+    if (!Number.isNaN(stock) && !Number.isNaN(stockMin) && stock < stockMin) return;
 
-    const max = !isNaN(stock) ? stock : parseInt(input.getAttribute("max"), 10);
-    if (isNaN(max)) return;
+    // Max por stock (si lo tenemos) y además por lo ya agregado estimado
+    let max = Number.isNaN(stock) ? parseIntSafe(input.getAttribute("max")) : stock;
+    if (!Number.isNaN(max) && id) {
+      const restanteEstimado = max - getEnCarritoEstimado(id);
+      max = Math.max(0, restanteEstimado);
+    }
 
-    let v = parseInt(input.value, 10);
-    if (isNaN(v)) v = 0;
+    let v = parseIntSafe(input.value);
+    if (Number.isNaN(v)) v = 0;
 
-    if (v > max) input.value = String(max);
+    if (!Number.isNaN(max)) {
+      if (v > max) input.value = String(max);
+    }
     if (v < 0) input.value = "0";
   });
 
@@ -37,59 +97,56 @@ document.addEventListener("DOMContentLoaded", () => {
     const btn = e.target.closest(".agregar-carrito");
     if (!btn) return;
 
+    // Si está disabled, el click suele no disparar, pero por las dudas:
+    if (btn.disabled) return;
+
     const card = btn.closest(".card");
     const input = card?.querySelector(".cantidad-input");
 
-    const nombre = btn.dataset.nombre;
-    const id = btn.dataset.id;
-    const precio = btn.dataset.precio;
+    const { id, nombre, precio, stock, stockMin } = getDatosDesdeBtn(btn);
+    const cantidad = parseIntSafe(input?.value);
 
-    const stock = parseInt(btn.dataset.stock, 10);
-    const stockMin = parseInt(btn.dataset.stockmin, 10);
-
-    const cantidad = parseInt(input?.value, 10);
-
-    if (!id || !precio || !Number.isInteger(cantidad) || cantidad <= 0) {
-      Swal.fire({
+    // Validación básica
+    if (!id || !precio || !Number.isFinite(cantidad) || cantidad <= 0) {
+      notify({
         title: "Cantidad inválida",
         text: "Debes ingresar una cantidad mayor a 0 para continuar.",
         icon: "error",
-        confirmButtonText: "OK",
       });
       return;
     }
 
-    // pulgar abajo => no compra
-    if (!isNaN(stock) && !isNaN(stockMin) && stock < stockMin) {
-      Swal.fire({
-        icon: "warning",
+    // Regla "pulgar abajo" => no compra inmediata
+    if (!Number.isNaN(stock) && !Number.isNaN(stockMin) && stock < stockMin) {
+      notify({
         title: "Producto sin stock inmediato",
-        text: "Este producto está a pedido. Comunicate con nosotros al 3513820440.",
+        text: "Este producto está pendiente de ingreso o a pedido. Comunicate con nosotros al 3513820440.",
+        icon: "warning",
       });
       return;
     }
 
-    // evita pasar stock acumulando
-    if (!isNaN(stock)) {
-      const yaAgregado = getEnCarrito(id);
-      const maxCompra = stock - yaAgregado;
+    // Límite por stock (si el stock viene en data-stock)
+    if (!Number.isNaN(stock)) {
+      const yaAgregado = getEnCarritoEstimado(id);
+      const restante = stock - yaAgregado;
 
-      if (maxCompra <= 0) {
-        Swal.fire({
-          icon: "warning",
+      if (restante <= 0) {
+        notify({
           title: "Stock alcanzado",
-          text: "Ya tenés en el carrito la cantidad máxima disponible de este producto.",
+          text: "Ya agregaste la cantidad máxima disponible de este producto.",
+          icon: "warning",
         });
         return;
       }
 
-      if (cantidad > maxCompra) {
-        Swal.fire({
-          icon: "warning",
+      if (cantidad > restante) {
+        notify({
           title: "Cantidades no disponibles",
-          text: `Solo podés agregar ${maxCompra} unidad(es) más. Si necesitás más, comunicate al 3513820440.`,
+          text: `Solo podés agregar ${restante} unidad(es) más. Si necesitás más, comunicate al 3513820440.`,
+          icon: "warning",
         });
-        if (input) input.value = String(maxCompra);
+        if (input) input.value = String(restante);
         return;
       }
     }
@@ -101,45 +158,49 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ id_producto: id, cantidad, precio }),
       });
 
+      const data = await readJsonSafe(resp);
+
       if (!resp.ok) {
-        let msg = "Hubo un problema al agregar el producto al carrito.";
-        try {
-          const err = await resp.json();
-          if (err?.message) msg = err.message;
-        } catch {}
-        throw new Error(msg);
+        // Tu backend suele responder { error: "..." } (y a veces { message: "..." })
+        const msg =
+          data?.error ||
+          data?.message ||
+          "Hubo un problema al agregar el producto al carrito.";
+
+        // 401 => no logueado, 409 => stock
+        const icon = resp.status === 409 ? "warning" : resp.status === 401 ? "info" : "error";
+
+        notify({
+          title: resp.status === 409 ? "Stock insuficiente" : "Error",
+          text: msg,
+          icon,
+        });
+
+        // Si backend manda maxAgregable, ayudamos al usuario
+        if (resp.status === 409 && input && Number.isFinite(parseIntSafe(data?.maxAgregable))) {
+          input.value = String(parseIntSafe(data.maxAgregable));
+        }
+
+        return;
       }
 
-      await resp.json();
+      // OK
+      sumarEnCarritoEstimado(id, cantidad);
 
-      sumarEnCarrito(id, cantidad);
-
-      Swal.fire({
+      notify({
         title: "¡Producto agregado!",
         text: `${cantidad} ${nombre} agregado(s) al carrito`,
         icon: "success",
-        confirmButtonText: "OK",
       });
 
-      // refresca globo
-      fetch("/carrito/cantidad")
-        .then((r) => r.json())
-        .then((d) => {
-          const globo = document.getElementById("carrito-notificacion");
-          if (!globo) return;
-          const n = d?.cantidadTotal ?? 0;
-          globo.style.display = n > 0 ? "flex" : "none";
-          globo.textContent = n;
-        })
-        .catch(() => {});
+      refrescarGloboCarrito();
 
       if (input) input.value = "1";
     } catch (err) {
-      Swal.fire({
+      notify({
         title: "Error",
         text: err?.message || "Hubo un problema al agregar el producto al carrito.",
         icon: "error",
-        confirmButtonText: "OK",
       });
     }
   });
