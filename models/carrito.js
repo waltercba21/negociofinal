@@ -2,14 +2,59 @@ const pool = require('../config/conexion');
 
 module.exports = {
     obtenerCarritoActivo: (usuario_id, callback) => {
-        const query = 'SELECT id, estado FROM carritos WHERE usuario_id = ?';
-        pool.query(query, [usuario_id], (error, resultados) => {
-            if (error) {
-                return callback(error);
-            }
-            callback(null, resultados);
-        });
-    },
+  const query = `
+    SELECT id, estado, tipo_envio, direccion, actualizado_en
+    FROM carritos
+    WHERE usuario_id = ? AND estado = 'activo'
+    ORDER BY id DESC
+    LIMIT 1
+  `;
+  pool.query(query, [usuario_id], (error, resultados) => {
+    if (error) return callback(error);
+    callback(null, resultados); // array (0 o 1)
+  });
+},
+obtenerPedidosUsuario: (usuario_id, callback) => {
+  const query = `
+    SELECT
+      c.id AS id_carrito,
+      c.estado,
+      c.actualizado_en AS fecha_compra,
+      IFNULL(SUM(pc.cantidad), 0) AS unidades,
+      IFNULL(SUM(pc.cantidad * p.precio_venta), 0) AS total
+    FROM carritos c
+    LEFT JOIN productos_carrito pc ON pc.carrito_id = c.id
+    LEFT JOIN productos p ON p.id = pc.producto_id
+    WHERE c.usuario_id = ? AND c.estado <> 'activo'
+    GROUP BY c.id, c.estado, c.actualizado_en
+    ORDER BY c.actualizado_en DESC
+    LIMIT 30
+  `;
+  pool.query(query, [usuario_id], (error, rows) => {
+    if (error) return callback(error);
+    callback(null, rows || []);
+  });
+},
+obtenerPedidoUsuarioPorId: (usuario_id, id_carrito, callback) => {
+  const query = `
+    SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra
+    FROM carritos
+    WHERE id = ? AND usuario_id = ?
+    LIMIT 1
+  `;
+  pool.query(query, [id_carrito, usuario_id], (error, rows) => {
+    if (error) return callback(error);
+    callback(null, rows && rows.length ? rows[0] : null);
+  });
+},
+cerrarCarrito: (id_carrito, nuevoEstado, callback) => {
+  const query = `
+    UPDATE carritos
+    SET estado = ?, actualizado_en = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `;
+  pool.query(query, [nuevoEstado, id_carrito], callback);
+},
     crearCarrito: (usuario_id, callback) => {
         const query = 'INSERT INTO carritos (usuario_id) VALUES (?)';
         pool.query(query, [usuario_id], (error, resultados) => {
@@ -249,31 +294,18 @@ actualizarEstado: (id_carrito, nuevoEstado, callback) => {
         });
     },    
     obtenerUltimoPedido: (usuario_id, callback) => {
-        console.log(`🔍 Buscando el último carrito para el usuario: ${usuario_id}`);
-
-        const query = `
-            SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra
-            FROM carritos
-            WHERE usuario_id = ?
-            ORDER BY actualizado_en DESC
-            LIMIT 1;
-        `;
-
-        pool.query(query, [usuario_id], (error, resultados) => {
-            if (error) {
-                console.error("❌ Error al obtener el último carrito:", error);
-                return callback(error);
-            }
-
-            if (resultados.length === 0) {
-                console.warn("⚠️ No se encontró un carrito finalizado para el usuario:", usuario_id);
-                return callback(null, []);
-            }
-
-            console.log("✅ Último carrito obtenido:", resultados[0]);
-            callback(null, resultados);
-        });
-    }
+  const query = `
+    SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra
+    FROM carritos
+    WHERE usuario_id = ? AND estado <> 'activo'
+    ORDER BY actualizado_en DESC
+    LIMIT 1
+  `;
+  pool.query(query, [usuario_id], (error, resultados) => {
+    if (error) return callback(error);
+    callback(null, resultados || []);
+  });
+},
     
     
     

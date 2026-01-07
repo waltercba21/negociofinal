@@ -2,69 +2,166 @@
 <%- include('./layouts/header.ejs') %>
 
 <body>
-    <main class="carrito-container">
-        <h1>🛍️ Mi Carrito</h1>
+  <main class="carrito-container">
+    <h1>✅ Pago confirmado</h1>
 
-        <% if (productos.length > 0) { %>
-            <table class="carrito-tabla">
-                <thead>
-                    <tr>
-                        <th>Imagen</th>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                        <th>Sub-Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% productos.forEach(function(producto) { %>
-                        <tr>
-                            <td><img src="/uploads/productos/<%= producto.imagen || 'default.jpg' %>" class="imagen-miniatura"></td>
-                            <td><%= producto.nombre %></td>
-                            <td><%= producto.cantidad %></td>
-                            <td>$<%= producto.precio_venta.toFixed(2) %></td>
-                            <td>$<%= producto.total.toFixed(2) %></td>
-                        </tr>
-                    <% }) %>
-                    <tr class="carrito-total">
-                        <td colspan="3"></td>
-                        <td><strong>Total</strong></td>
-                        <td>$<%= total %></td>
-                    </tr>
-                </tbody>
-            </table>
+    <% if (pedidoId) { %>
+      <p style="margin:6px 0 18px 0; opacity:.85;">
+        Número de pedido: <strong>#<%= pedidoId %></strong>
+      </p>
+    <% } %>
+
+    <% if (productos && productos.length > 0) { %>
+      <table class="carrito-tabla">
+        <thead>
+          <tr>
+            <th>Imagen</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Sub-Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% productos.forEach(function(producto) { %>
+            <tr>
+              <td>
+                <img src="/uploads/productos/<%= producto.imagen || 'default.jpg' %>" class="imagen-miniatura" alt="<%= producto.nombre %>">
+              </td>
+              <td><%= producto.nombre %></td>
+              <td><%= producto.cantidad %></td>
+              <td>$<%= Number(producto.precio_venta || 0).toFixed(2) %></td>
+              <td>$<%= Number(producto.total || 0).toFixed(2) %></td>
+            </tr>
+          <% }) %>
+
+          <tr class="carrito-total">
+            <td colspan="3"></td>
+            <td><strong>Total</strong></td>
+            <td>$<%= total %></td>
+          </tr>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p class="carrito-vacio">No encontramos productos para mostrar.</p>
+    <% } %>
+
+    <% if (estadoCarrito) { %>
+      <div class="estado-pedido">
+        <h2>📦 Estado del pedido</h2>
+        <p>Estado actual: <strong><%= estadoCarrito %></strong></p>
+
+        <% if (estadoCarrito === "preparación") { %>
+          <p>🛒 Tu pedido está listo para retirar en nuestro local.</p>
+        <% } else if (estadoCarrito === "listo para entrega") { %>
+          <p>🚚 En breve recibirás tu pedido en tu domicilio.</p>
+        <% } else if (estadoCarrito === "pendiente") { %>
+          <p>⏳ Estamos procesando tu compra.</p>
         <% } %>
+      </div>
+    <% } %>
 
-        <% if (estadoCarrito) { %>
-            <div class="estado-pedido">
-                <h2>📦 Tu pedido está en proceso</h2>
-                <p>Estado actual: <strong><%= estadoCarrito %></strong></p>
-                <% if (estadoCarrito === "preparación") { %>
-                    <p>🛒 Puedes pasar a retirarlo en nuestro local.</p>
-                <% } else if (estadoCarrito === "listo para entrega") { %>
-                    <p>🚚 En breve recibirás tu pedido en tu domicilio.</p>
-                <% } %>
-            </div>
-        <% } else { %>
-            <p class="carrito-vacio">No tienes productos en tu carrito.</p>
-        <% } %>
-        <button id="descargar-comprobante" class="btn-finalizar">📄 Descargar Comprobante</button>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
+      <a href="/carrito" class="btn-finalizar" style="text-decoration:none;">
+        🛒 Volver al carrito
+      </a>
 
-        <script>
-            document.getElementById("descargar-comprobante").addEventListener("click", async function () {
-                const response = await fetch("/carrito/comprobante");
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "comprobante_autofaros.pdf";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            });
-        </script>
-        
-    </main>
+      <button
+        id="descargar-comprobante"
+        class="btn-finalizar"
+        <%= pedidoId ? '' : 'disabled' %>>
+        📄 Descargar comprobante
+      </button>
+    </div>
 
-    <%- include('./layouts/footer.ejs') %>
+    <hr style="margin:22px 0; opacity:.25;">
+
+    <h2 style="margin-bottom:10px;">🧾 Tus comprobantes</h2>
+    <p style="margin-top:-6px; opacity:.75;">
+      Podés volver cuando quieras y descargar tus comprobantes desde el carrito.
+    </p>
+
+    <!-- Si querés mostrar historial acá, pasá "pedidos" desde el controlador.
+         Si no lo pasás, este bloque no se renderiza. -->
+    <% if (typeof pedidos !== 'undefined' && pedidos && pedidos.length > 0) { %>
+      <table class="carrito-tabla">
+        <thead>
+          <tr>
+            <th>Pedido</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Unidades</th>
+            <th>Total</th>
+            <th>Comprobante</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pedidos.forEach(function(p) { %>
+            <tr>
+              <td>#<%= p.id_carrito %></td>
+              <td><%= p.fecha_compra ? new Date(p.fecha_compra).toLocaleDateString('es-AR') : '-' %></td>
+              <td><%= p.estado %></td>
+              <td><%= Number(p.unidades || 0) %></td>
+              <td>$<%= Number(p.total || 0).toFixed(2) %></td>
+              <td>
+                <a class="btn-finalizar"
+                   style="text-decoration:none; padding:8px 12px; font-size:.9rem;"
+                   href="/carrito/comprobante/<%= p.id_carrito %>">
+                  📄 Descargar
+                </a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p style="opacity:.75; margin-top:8px;">
+        No hay historial para mostrar acá. (Lo vas a ver siempre en <a href="/carrito">/carrito</a>)
+      </p>
+    <% } %>
+
+    <script>
+      (function () {
+        const btn = document.getElementById("descargar-comprobante");
+        if (!btn) return;
+
+        const pedidoId = "<%= pedidoId ? pedidoId : '' %>";
+
+        btn.addEventListener("click", async function () {
+          try {
+            if (!pedidoId) {
+              alert("No pudimos identificar el pedido para descargar el comprobante.");
+              return;
+            }
+
+            const response = await fetch(`/carrito/comprobante/${pedidoId}`);
+            if (!response.ok) {
+              let msg = "No se pudo descargar el comprobante.";
+              try {
+                const d = await response.json();
+                if (d && d.error) msg = d.error;
+              } catch (e) {}
+              alert(msg);
+              return;
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `comprobante_autofaros_${pedidoId}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          } catch (e) {
+            alert("Ocurrió un error al descargar el comprobante.");
+          }
+        });
+      })();
+    </script>
+
+  </main>
+
+  <%- include('./layouts/footer.ejs') %>
 </body>

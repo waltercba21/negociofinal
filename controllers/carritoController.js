@@ -226,54 +226,62 @@ module.exports = {
             res.json({ success: true, carrito_id: carritos[0].id });
         });
     },
-    verCarrito: (req, res) => {
-        if (!req.session || !req.session.usuario || !req.session.usuario.id) {
-            return res.status(401).send('Debes iniciar sesión para acceder al carrito');
-        }
-    
-        const id_usuario = req.session.usuario.id;
-    
-        carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
-            if (error) {
-                console.error('Error al obtener el carrito:', error);
-                return res.status(500).send('Error al obtener el carrito');
-            }
-    
-            if (!carritoActivo || carritoActivo.length === 0) {
-                return res.render('carrito', { 
-                    productos: [], 
-                    cantidadProductosCarrito: 0, 
-                    total: 0, 
-                    cantidadCarrito: 0,
-                    estadoCarrito: null // Agregar estadoCarrito como null para evitar errores en la vista
-                });
-            }
-    
-            const id_carrito = carritoActivo[0].id;
-            const estadoCarrito = carritoActivo[0].estado; // Extraer el estado del carrito
-    
-            carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-                if (error) {
-                    console.error('Error al obtener los productos del carrito:', error);
-                    return res.status(500).send('Error al obtener los productos del carrito');
-                }
-    
-                console.log('Productos cargados en el carrito:', productos);
-                const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0); 
-                const cantidadUnica = productos.length; 
-    
-                const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
-    
-                res.render('carrito', { 
-                    productos, 
-                    cantidadProductosCarrito: cantidadTotal,
-                    total, 
-                    cantidadCarrito: cantidadUnica,
-                    estadoCarrito 
-                });
-            });
+   verCarrito: (req, res) => {
+  if (!req.session || !req.session.usuario || !req.session.usuario.id) {
+    return res.status(401).send("Debes iniciar sesión para acceder al carrito");
+  }
+
+  const id_usuario = req.session.usuario.id;
+
+  carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
+    if (error) {
+      console.error("Error al obtener el carrito:", error);
+      return res.status(500).send("Error al obtener el carrito");
+    }
+
+    carrito.obtenerPedidosUsuario(id_usuario, (err2, pedidos) => {
+      if (err2) {
+        console.error("Error al obtener pedidos del usuario:", err2);
+        pedidos = [];
+      }
+
+      if (!carritoActivo || carritoActivo.length === 0) {
+        return res.render("carrito", {
+          productos: [],
+          cantidadProductosCarrito: 0,
+          total: 0,
+          cantidadCarrito: 0,
+          estadoCarrito: null,
+          pedidos
         });
-    },    
+      }
+
+      const id_carrito = carritoActivo[0].id;
+      const estadoCarrito = carritoActivo[0].estado;
+
+      carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+        if (error) {
+          console.error("Error al obtener los productos del carrito:", error);
+          return res.status(500).send("Error al obtener los productos del carrito");
+        }
+
+        const cantidadTotal = productos.reduce((acc, p) => acc + (Number(p.cantidad) || 0), 0);
+        const cantidadUnica = productos.length;
+        const total = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0).toFixed(2);
+
+        return res.render("carrito", {
+          productos,
+          cantidadProductosCarrito: cantidadTotal,
+          total,
+          cantidadCarrito: cantidadUnica,
+          estadoCarrito,
+          pedidos
+        });
+      });
+    });
+  });
+},
+
 actualizarCantidad: (req, res) => {
   const { id, accion } = req.body;
 
@@ -667,149 +675,179 @@ actualizarCantidad: (req, res) => {
         }
     },    
     finalizarCompra: async (req, res) => {
-        try {
-            const id_usuario = req.session.usuario.id;
-        
-            console.log("📌 [DEBUG] Iniciando proceso de finalización de compra para usuario:", id_usuario);
-        
-            // Obtener carrito activo del usuario
-            const carritos = await new Promise((resolve, reject) => {
-                carrito.obtenerCarritoActivo(id_usuario, (error, result) => {
-                    if (error) {
-                        console.error("❌ [ERROR] No se pudo obtener el carrito:", error);
-                        reject(error);
-                    } else {
-                        resolve(result);
-                    }
-                });
-            });
-    
-            if (!carritos || carritos.length === 0) {
-                console.warn("⚠️ [WARN] No hay un carrito activo para este usuario.");
-                return res.redirect("/carrito");
-            }
-    
-            const id_carrito = carritos[0].id;
-            console.log("🛒 [DEBUG] Carrito activo encontrado con ID:", id_carrito);
-    
-            // Obtener tipo de envío
-            const tipoEnvio = carritos[0].tipo_envio;
-            let nuevoEstado = "pendiente"; // Estado por defecto
-    
-            if (tipoEnvio === "local") {
-                nuevoEstado = "preparación"; // Pedido listo para retiro
-            } else if (tipoEnvio === "delivery") {
-                nuevoEstado = "listo para entrega"; // Pedido será enviado
-            }
-    
-            // **Vaciar carrito antes de cambiar estado**
-            console.log("🛒 [DEBUG] Llamando a `vaciarCarrito` antes de actualizar estado...");
-            await new Promise((resolve, reject) => {
-                carrito.vaciarCarrito(id_carrito, (error, result) => {
-                    if (error) {
-                        console.error("❌ [ERROR] Fallo al vaciar el carrito:", error);
-                        reject(error);
-                    } else {
-                        console.log("✅ [INFO] Productos eliminados del carrito:", result.affectedRows);
-                        resolve(result.affectedRows > 0);
-                    }
-                });
-            });
-    
-            // **Verificar que el carrito realmente está vacío**
-            const productosRestantes = await new Promise((resolve, reject) => {
-                carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-                    if (error) {
-                        console.error("❌ [ERROR] No se pudieron obtener los productos del carrito tras vaciarlo:", error);
-                        reject(error);
-                    } else {
-                        resolve(productos);
-                    }
-                });
-            });
-    
-            if (productosRestantes.length > 0) {
-                console.warn("⚠️ [WARN] Algunos productos no se eliminaron. Reintentando...");
-                await new Promise((resolve, reject) => {
-                    carrito.vaciarCarrito(id_carrito, (error, result) => {
-                        if (error) {
-                            console.error("❌ [ERROR] Segundo intento fallido al vaciar el carrito:", error);
-                            reject(error);
-                        } else {
-                            console.log("✅ [INFO] Carrito vaciado correctamente en segundo intento.");
-                            resolve(result);
-                        }
-                    });
-                });
-            } else {
-                console.log("✅ [INFO] Verificación confirmada: Carrito vacío.");
-            }
-    
-            // **Actualizar estado del carrito después de vaciarlo**
-            await new Promise((resolve, reject) => {
-                carrito.actualizarEstado(id_carrito, nuevoEstado, (error, result) => {
-                    if (error) {
-                        console.error("❌ [ERROR] No se pudo actualizar el estado del carrito:", error);
-                        reject(error);
-                    } else {
-                        console.log("✅ [INFO] Estado del carrito actualizado a:", nuevoEstado);
-                        resolve(result);
-                    }
-                });
-            });
-    
-            // 🔔 Emitir notificación en tiempo real a los administradores
-            io.emit('nuevoPedido', {
-                mensaje: `📦 Nuevo pedido recibido (${id_carrito})`,
-                id_carrito,
-                usuario: id_usuario,
-                estado: nuevoEstado,
-            });
-    
-            console.log("✅ [INFO] Redirigiendo a la vista de pago exitoso...");
-            res.redirect("/carrito/pago-exito");
-    
-        } catch (error) {
-            console.error("❌ [ERROR] en `finalizarCompra`:", error);
-            res.status(500).json({ error: "Error al finalizar la compra" });
-        }
-    },    
-    
-    vistaPagoExitoso: async (req, res) => {
-        try {
-            const id_usuario = req.session.usuario.id;
-    
-            // Obtener carrito activo con su estado
-            const carritos = await new Promise((resolve, reject) => {
-                carrito.obtenerCarritoActivo(id_usuario, (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                });
-            });
-    
-            if (!carritos || carritos.length === 0) {
-                return res.render('pagoExito', { productos: [], estadoCarrito: null, total: 0 });
-            }
-    
-            const id_carrito = carritos[0].id;
-            const estadoCarrito = carritos[0].estado || "pendiente"; // Estado del carrito
-    
-            // Obtener productos del carrito
-            const productos = await new Promise((resolve, reject) => {
-                carrito.obtenerProductosCarrito(id_carrito, (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                });
-            });
-    
-            const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
-    
-            res.render('pagoExito', { productos, estadoCarrito, total });
-        } catch (error) {
-            console.error("❌ Error al cargar la vista de pago exitoso:", error);
-            res.status(500).send("Error al cargar la página de pago exitoso.");
-        }
-    },
+  try {
+    const id_usuario = req.session.usuario.id;
+
+    const carritos = await new Promise((resolve, reject) => {
+      carrito.obtenerCarritoActivo(id_usuario, (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      });
+    });
+
+    if (!carritos || carritos.length === 0) {
+      return res.redirect("/carrito");
+    }
+
+    const id_carrito = carritos[0].id;
+
+    // Definir estado según tipo_envio (si lo usás)
+    const tipoEnvio = carritos[0].tipo_envio;
+    let nuevoEstado = "pendiente";
+    if (tipoEnvio === "local") nuevoEstado = "preparación";
+    if (tipoEnvio === "delivery") nuevoEstado = "listo para entrega";
+
+    // ✅ Cerrar pedido (NO borrar items)
+    await new Promise((resolve, reject) => {
+      carrito.cerrarCarrito(id_carrito, nuevoEstado, (error) => {
+        if (error) reject(error);
+        else resolve();
+      });
+    });
+
+    // ✅ Crear un carrito nuevo vacío para que el usuario siga comprando
+    await new Promise((resolve, reject) => {
+      carrito.crearCarrito(id_usuario, (error) => {
+        if (error) reject(error);
+        else resolve();
+      });
+    });
+
+    // guardo el id del pedido para mostrarlo en pago-exito/comprobante
+    req.session.ultimoPedidoId = id_carrito;
+
+    io.emit("nuevoPedido", {
+      mensaje: `📦 Nuevo pedido recibido (${id_carrito})`,
+      id_carrito,
+      usuario: id_usuario,
+      estado: nuevoEstado,
+    });
+
+    return res.redirect(`/carrito/pago-exito?pedido=${id_carrito}`);
+  } catch (error) {
+    console.error("❌ [ERROR] en `finalizarCompra`:", error);
+    res.status(500).json({ error: "Error al finalizar la compra" });
+  }
+},
+ vistaPagoExitoso: async (req, res) => {
+  try {
+    const id_usuario = req.session.usuario.id;
+    const pedidoId = Number(req.query.pedido) || Number(req.session.ultimoPedidoId);
+
+    let pedido = null;
+
+    if (pedidoId) {
+      pedido = await new Promise((resolve, reject) => {
+        carrito.obtenerPedidoUsuarioPorId(id_usuario, pedidoId, (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+    }
+
+    // fallback: último pedido NO activo
+    if (!pedido) {
+      const ult = await new Promise((resolve, reject) => {
+        carrito.obtenerUltimoPedido(id_usuario, (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+      pedido = ult && ult.length ? ult[0] : null;
+    }
+
+    if (!pedido) {
+      return res.render("pagoExito", { productos: [], estadoCarrito: null, total: 0, pedidoId: null });
+    }
+
+    const productos = await new Promise((resolve, reject) => {
+      carrito.obtenerProductosCarrito(pedido.id_carrito, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+
+    const total = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0).toFixed(2);
+
+    return res.render("pagoExito", {
+      productos,
+      estadoCarrito: pedido.estado,
+      total,
+      pedidoId: pedido.id_carrito
+    });
+  } catch (error) {
+    console.error("❌ Error al cargar la vista de pago exitoso:", error);
+    res.status(500).send("Error al cargar la página de pago exitoso.");
+  }
+},
+generarComprobante: async (req, res) => {
+  try {
+    const id_usuario = req.session.usuario.id;
+    const idPedido = Number(req.params.id);
+
+    let pedido = null;
+
+    if (idPedido) {
+      pedido = await new Promise((resolve, reject) => {
+        carrito.obtenerPedidoUsuarioPorId(id_usuario, idPedido, (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+    } else {
+      const ult = await new Promise((resolve, reject) => {
+        carrito.obtenerUltimoPedido(id_usuario, (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+      pedido = ult && ult.length ? ult[0] : null;
+    }
+
+    if (!pedido) {
+      return res.status(404).json({ error: "No se encontró un pedido." });
+    }
+
+    const productos = await new Promise((resolve, reject) => {
+      carrito.obtenerProductosCarrito(pedido.id_carrito, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+
+    const doc = new PDFDocument();
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=comprobante_${pedido.id_carrito}.pdf`);
+    doc.pipe(res);
+
+    doc.fontSize(20).text("AUTOFAROS", { align: "center" });
+    doc.fontSize(14).text("COMPROBANTE DE COMPRA", { align: "center" });
+    doc.fontSize(10).text("NO VÁLIDO COMO FACTURA", { align: "center" });
+
+    doc.moveDown().fontSize(12).text(`Fecha: ${pedido.fecha_compra ? new Date(pedido.fecha_compra).toLocaleDateString() : "-"}`);
+    doc.text(`Número de Pedido: ${pedido.id_carrito}`);
+    doc.text(`Estado: ${pedido.estado}`);
+    if (pedido.tipo_envio) doc.text(`Tipo de Envío: ${pedido.tipo_envio}`);
+    if (pedido.direccion) doc.text(`Dirección: ${pedido.direccion}`);
+
+    doc.moveDown();
+    doc.fontSize(12).text("Productos:", { underline: true });
+
+    productos.forEach((p, i) => {
+      doc.text(`${i + 1}. ${p.nombre} - ${p.cantidad} x $${p.precio_venta} = $${p.total}`);
+    });
+
+    const totalCompra = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0).toFixed(2);
+    doc.moveDown();
+    doc.text(`Total: $${totalCompra}`, { bold: true });
+
+    doc.end();
+  } catch (error) {
+    console.error("❌ Error al generar el comprobante:", error);
+    res.status(500).json({ error: "Error al generar el comprobante" });
+  }
+},
+
     obtenerPedidosPendientes: (req, res) => {
         carrito.obtenerCantidadPedidosPendientes((error, cantidad) => {
             if (error) {

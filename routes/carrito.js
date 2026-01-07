@@ -1,57 +1,63 @@
-    const express = require('express');
-    const router = express.Router();
-    const carritoController = require('../controllers/carritoController');
+const express = require('express');
+const router = express.Router();
+const carritoController = require('../controllers/carritoController');
 
-    function autenticarUsuario(req, res, next) {
-        if (!req.session || !req.session.usuario || !req.session.usuario.id) {
-            return res.redirect('/login'); // Redirige si no está autenticado
-        }
-        next();
-    }
-    
-    // Ruta para ver el carrito de compras
-    router.get('/', autenticarUsuario, carritoController.verCarrito);
-    // Ruta para crear un carrito (si no existe uno activo)
-    router.get('/crear', carritoController.crearCarrito);
-    // Ruta para obtener el ID del carrito activo en formato JSON
-    router.get('/activo', autenticarUsuario, carritoController.obtenerCarritoID);
+function autenticarUsuario(req, res, next) {
+  if (!req.session || !req.session.usuario || !req.session.usuario.id) {
+    return res.redirect('/login');
+  }
+  next();
+}
 
-    // Ruta para agregar un producto al carrito
-    router.post('/agregar', carritoController.agregarProductoCarrito);
+// Ver carrito
+router.get('/', autenticarUsuario, carritoController.verCarrito);
 
+// Crear carrito (si lo usás manualmente)
+router.get('/crear', autenticarUsuario, carritoController.crearCarrito);
 
-    router.post('/actualizar', carritoController.actualizarCantidad);
-    
-    // Ruta para obtener la cantidad total del carrito
-    router.get('/cantidad', autenticarUsuario, carritoController.obtenerCantidadCarrito);
+// Obtener ID carrito activo JSON
+router.get('/activo', autenticarUsuario, carritoController.obtenerCarritoID);
 
-    // Ruta para elegir el envio del pedido del carrito
-    router.get ('/envio', carritoController.envio);
-    router.post('/envio', autenticarUsuario, carritoController.guardarEnvio);
-    router.post('/envio/actualizar', autenticarUsuario, carritoController.actualizarDireccionEnvio);
+// Agregar producto
+router.post('/agregar', autenticarUsuario, carritoController.agregarProductoCarrito);
 
+// Actualizar cantidad
+router.post('/actualizar', autenticarUsuario, carritoController.actualizarCantidad);
 
-    // Ruta para continuar a la confirmacion de datos
-    router.get ('/confirmarDatos', carritoController.confirmarDatos);
-    
-    // Ruta para eliminar un producto del carrito
-    router.post('/eliminar', carritoController.eliminarProducto);
+// Cantidad total del carrito
+router.get('/cantidad', autenticarUsuario, carritoController.obtenerCantidadCarrito);
 
-    // Ruta para finalizar la compra
-    router.get('/finalizar', carritoController.finalizarCompra);
+// Envío
+router.get('/envio', autenticarUsuario, carritoController.envio);
+router.post('/envio', autenticarUsuario, carritoController.guardarEnvio);
+router.post('/envio/actualizar', autenticarUsuario, carritoController.actualizarDireccionEnvio);
 
-    router.get('/pago', autenticarUsuario, carritoController.vistaPago)
-    router.post('/pago', autenticarUsuario, carritoController.procesarPago);
+// Confirmar datos
+router.get('/confirmarDatos', autenticarUsuario, carritoController.confirmarDatos);
 
-    router.get('/pago-exito', autenticarUsuario, carritoController.vistaPagoExitoso);
-    
-    router.get('/pago-error', (req, res) => {
-        res.render('pagoError', { mensaje: "Hubo un error en el pago. Intenta nuevamente." });
-    });
-    
-    router.get('/pago-pendiente', (req, res) => {
-        res.render('pagoPendiente', { mensaje: "Tu pago está pendiente de aprobación." });
-    });
-    router.get("/comprobante", autenticarUsuario, carritoController.generarComprobante);
+// Eliminar producto
+router.post('/eliminar', autenticarUsuario, carritoController.eliminarProducto);
 
-    module.exports = router;
+// Finalizar compra
+router.get('/finalizar', autenticarUsuario, carritoController.finalizarCompra);
+
+// Pago
+router.get('/pago', autenticarUsuario, carritoController.vistaPago);
+router.post('/pago', autenticarUsuario, carritoController.procesarPago);
+
+// Resultado pago
+router.get('/pago-exito', autenticarUsuario, carritoController.vistaPagoExitoso);
+
+router.get('/pago-error', autenticarUsuario, (req, res) => {
+  res.render('pagoError', { mensaje: "Hubo un error en el pago. Intenta nuevamente." });
+});
+
+router.get('/pago-pendiente', autenticarUsuario, (req, res) => {
+  res.render('pagoPendiente', { mensaje: "Tu pago está pendiente de aprobación." });
+});
+
+// ✅ Comprobantes (seguro)
+router.get('/comprobante', autenticarUsuario, carritoController.generarComprobante);       // último pedido
+router.get('/comprobante/:id', autenticarUsuario, carritoController.generarComprobante);  // pedido específico
+
+module.exports = router;
