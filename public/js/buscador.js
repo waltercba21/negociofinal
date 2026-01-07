@@ -405,21 +405,33 @@ function mostrarProductos(productos) {
           </div>
         `;
       } else {
+        const stockActualNum = Number(producto.stock_actual) || 0;
+        const stockMinNum = Number(producto.stock_minimo) || 0;
+        const puedeComprar = stockActualNum >= stockMinNum && stockActualNum > 0;
+
         stockInfo = `
           <div class="semaforo-stock">
-            <i class="fa-solid fa-thumbs-${producto.stock_actual >= producto.stock_minimo ? 'up verde' : 'down rojo'}"></i>
+            <i class="fa-solid fa-thumbs-${puedeComprar ? 'up verde' : 'down rojo'}"></i>
             <span class="texto-semaforo">
-              ${producto.stock_actual >= producto.stock_minimo ? 'PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA' : 'PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
+              ${puedeComprar ? 'PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA' : 'PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
             </span>
           </div>
           <div class="cantidad-producto">
-            <input type="number" class="cantidad-input" value="0" min="0" id="input-cantidad-${producto.id}">
+            <input type="number"
+                   class="cantidad-input"
+                   value="${puedeComprar ? 1 : 0}"
+                   min="${puedeComprar ? 1 : 0}"
+                   max="${stockActualNum}"
+                   step="1"
+                   id="input-cantidad-${producto.id}"
+                   ${puedeComprar ? '' : 'disabled'}>
             <button class="agregar-carrito"
+              ${puedeComprar ? '' : 'disabled'}
               data-id="${producto.id}" 
               data-nombre="${producto.nombre}" 
               data-precio="${producto.precio_venta}" 
-              data-stock="${producto.stock_actual}" 
-              data-stockmin="${producto.stock_minimo}">
+              data-stock="${stockActualNum}" 
+              data-stockmin="${stockMinNum}">
               Agregar al carrito
             </button>
             <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
@@ -498,47 +510,53 @@ function mostrarProductos(productos) {
 
     contenedorProductos.appendChild(card);
 
-    // Validación de cantidad (solo usuarios comunes logueados)
+    // ✅ Validación de cantidad (solo usuarios comunes logueados)
+    // Importante: si hay error, frenamos el evento para que NO llegue a agregarAlCarrito.js
     if (!isAdminUser && isUserLoggedIn) {
       const botonAgregar = card.querySelector('.agregar-carrito');
       const inputCantidad = card.querySelector('.cantidad-input');
-      const stockDisponible = parseInt(producto.stock_actual);
+      const stockDisponible = Number(producto.stock_actual) || 0;
 
-      botonAgregar.addEventListener('click', (e) => {
-        e.preventDefault();
+      if (botonAgregar && inputCantidad) {
+        botonAgregar.addEventListener('click', (e) => {
+          const cantidad = parseInt(inputCantidad.value, 10);
 
-        const cantidad = parseInt(inputCantidad.value);
+          // Si está disabled, no hacemos nada
+          if (botonAgregar.disabled || inputCantidad.disabled) return;
 
-        if (!inputCantidad.value || isNaN(cantidad) || cantidad <= 0) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Cantidad inválida',
-            text: 'Debes ingresar una cantidad mayor a 0 para continuar.',
-          });
-          return;
-        }
+          if (!inputCantidad.value || isNaN(cantidad) || cantidad <= 0) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Cantidad inválida',
+              text: 'Debes ingresar una cantidad mayor a 0 para continuar.',
+            });
 
-        if (cantidad > stockDisponible) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Cantidades no disponibles',
-            text: 'Si deseas más unidades comunicate con nosotros 3513820440',
-          });
-          inputCantidad.value = stockDisponible;
-          return;
-        }
-
-        const eventoAgregar = new CustomEvent('agregarAlCarritoDesdeBuscador', {
-          detail: {
-            id: producto.id,
-            nombre: producto.nombre,
-            precio: producto.precio_venta,
-            cantidad: cantidad
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return;
           }
-        });
 
-        document.dispatchEvent(eventoAgregar);
-      });
+          if (cantidad > stockDisponible) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'No hay stock suficiente',
+              text: `Estás intentando agregar ${cantidad} unidad(es), pero actualmente tenemos ${stockDisponible} disponible(s) para entrega inmediata. Si necesitás más, comunicate al 3513820440.`,
+            });
+
+            // Opcional: sugerir el máximo
+            inputCantidad.value = String(stockDisponible);
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return;
+          }
+
+          // ✅ Si está OK, NO hacemos preventDefault ni stop:
+          // dejamos que lo maneje agregarAlCarrito.js
+        });
+      }
     }
 
     _initProveedorButton(producto.id); // prepara estado/ciclo
@@ -643,9 +661,7 @@ contenedorProductos.addEventListener('click', async (ev) => {
       precioRedondeado
     });
 
-    // Si volvimos al asignado, podés ocultarlo si preferís; acá lo mostramos siempre que no sea base
     if (st.idx === st.baseIdx) {
-      // Mostrar u ocultar a gusto. Yo prefiero ocultarlo para no confundir:
       _renderSimulacion(productoId, null);
     } else {
       _renderSimulacion(productoId, precioRedondeado);
