@@ -153,17 +153,30 @@
             </span>
           </div>
           <div class="cantidad-producto">
-            <input type="number" class="cantidad-input" value="0" min="0">
-            <button class="agregar-carrito"
-              data-id="<%= producto.id %>"
-              data-nombre="<%= producto.nombre %>"
-              data-precio="<%= producto.precio_venta %>"
-              data-stock="<%= producto.stock_actual %>"
-              data-stockmin="<%= producto.stock_minimo %>">
-              Agregar al carrito
-            </button>
-            <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
-          </div>
+            <% const puedeComprar = (producto.stock_actual >= producto.stock_minimo) && (producto.stock_actual > 0); %>
+
+<div class="cantidad-producto">
+  <input type="number"
+         class="cantidad-input"
+         value="<%= puedeComprar ? 1 : 0 %>"
+         min="<%= puedeComprar ? 1 : 0 %>"
+         max="<%= producto.stock_actual %>"
+         step="1"
+         <%= puedeComprar ? '' : 'disabled' %>>
+
+  <button class="agregar-carrito"
+          <%= puedeComprar ? '' : 'disabled' %>
+          data-id="<%= producto.id %>"
+          data-nombre="<%= producto.nombre %>"
+          data-precio="<%= producto.precio_venta %>"
+          data-stock="<%= producto.stock_actual %>"
+          data-stockmin="<%= producto.stock_minimo %>">
+    Agregar al carrito
+  </button>
+
+  <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
+</div>
+
 
           <div class="acciones-compartir">
             <!-- WhatsApp -->
