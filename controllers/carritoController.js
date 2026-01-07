@@ -35,12 +35,19 @@ module.exports = {
             }
         });
     },
-  agregarProductoCarrito: (req, res) => {
+ agregarProductoCarrito: (req, res) => {
   const { id_producto, cantidad } = req.body;
+
+  console.log("🧪 [CTRL] /carrito/agregar HIT", {
+    body: req.body,
+    userId: req.session?.usuario?.id,
+    userEmail: req.session?.usuario?.email,
+  });
 
   // Validar sesión
   if (!req.session || !req.session.usuario || !req.session.usuario.id) {
-    return res.status(401).json({ error: 'Sesión no válida. Inicia sesión nuevamente.' });
+    console.log("🧪 [CTRL] sesión inválida");
+    return res.status(401).json({ error: "Sesión no válida. Inicia sesión nuevamente." });
   }
 
   const id_usuario = req.session.usuario.id;
@@ -48,95 +55,138 @@ module.exports = {
   const cantSolicitada = Number(cantidad);
 
   if (!productoId || !Number.isFinite(cantSolicitada) || cantSolicitada <= 0) {
-    return res.status(400).json({ error: 'Datos inválidos.' });
+    console.log("🧪 [CTRL] datos inválidos", { productoId, cantSolicitada });
+    return res.status(400).json({ error: "Datos inválidos." });
   }
+
+  console.log("🧪 [CTRL] datos OK", { id_usuario, productoId, cantSolicitada });
 
   // 1) Obtener carrito activo del usuario
   carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
     if (error) {
-      console.error('Error al obtener carrito:', error);
-      return res.status(500).json({ error: 'Error al obtener carrito' });
+      console.error("🧪 [CTRL] error obtenerCarritoActivo:", error);
+      return res.status(500).json({ error: "Error al obtener carrito" });
     }
 
+    console.log("🧪 [CTRL] obtenerCarritoActivo ->", carritoActivo);
+
     if (!carritoActivo || carritoActivo.length === 0) {
-      // Crear carrito si no existe
+      console.log("🧪 [CTRL] no hay carrito, creando...");
       carrito.crearCarrito(id_usuario, (error, nuevoCarritoId) => {
         if (error) {
-          console.error('Error al crear carrito:', error);
-          return res.status(500).json({ error: 'Error al crear carrito' });
+          console.error("🧪 [CTRL] error crearCarrito:", error);
+          return res.status(500).json({ error: "Error al crear carrito" });
         }
+        console.log("🧪 [CTRL] carrito creado:", { nuevoCarritoId });
         agregarConValidacion(nuevoCarritoId);
       });
     } else {
-      agregarConValidacion(carritoActivo[0].id);
+      const id_carrito = carritoActivo[0].id;
+      console.log("🧪 [CTRL] usando carrito existente:", { id_carrito });
+      agregarConValidacion(id_carrito);
     }
   });
 
   function agregarConValidacion(id_carrito) {
+    console.log("🧪 [CTRL] validar stock para", { id_carrito, productoId, cantSolicitada });
+
     // 2) Traer stock real del producto
     carrito.obtenerStockProducto(productoId, (error, prod) => {
       if (error) {
-        console.error('Error al obtener stock del producto:', error);
-        return res.status(500).json({ error: 'Error al verificar stock' });
+        console.error("🧪 [CTRL] error obtenerStockProducto:", error);
+        return res.status(500).json({ error: "Error al verificar stock" });
       }
       if (!prod) {
-        return res.status(404).json({ error: 'Producto no encontrado' });
+        console.log("🧪 [CTRL] producto no encontrado en DB", { productoId });
+        return res.status(404).json({ error: "Producto no encontrado" });
       }
 
       const stockActual = Number(prod.stock_actual) || 0;
       const stockMinimo = Number(prod.stock_minimo) || 0;
 
+      console.log("🧪 [CTRL] stock DB:", { productoId, stockActual, stockMinimo });
+
       // Pulgar abajo => no compra inmediata
       if (stockActual < stockMinimo) {
+        console.log("🧪 [CTRL] 409 pulgar abajo", { stockActual, stockMinimo });
         return res.status(409).json({
-          error: 'Producto pendiente de ingreso o a pedido. Comunicate con nosotros.',
-          stockDisponible: stockActual
+          error:
+            "Producto pendiente de ingreso o a pedido. Comunicate con nosotros al 3513820440.",
+          stockDisponible: stockActual,
         });
       }
 
       if (stockActual <= 0) {
+        console.log("🧪 [CTRL] 409 sin stock", { stockActual });
         return res.status(409).json({
-          error: 'No hay stock disponible para este producto.',
-          stockDisponible: stockActual
+          error: "No hay stock disponible para este producto.",
+          stockDisponible: stockActual,
         });
       }
 
-      // 3) Ver si ya existe en el carrito para evitar acumulación por múltiples clicks
+      // 3) Ver si ya existe en el carrito
       carrito.obtenerItemEnCarrito(id_carrito, productoId, (error, item) => {
         if (error) {
-          console.error('Error al obtener item del carrito:', error);
-          return res.status(500).json({ error: 'Error al verificar carrito' });
+          console.error("🧪 [CTRL] error obtenerItemEnCarrito:", error);
+          return res.status(500).json({ error: "Error al verificar carrito" });
         }
+
+        console.log("🧪 [CTRL] item en carrito:", item);
 
         const yaEnCarrito = item ? Number(item.cantidad) || 0 : 0;
         const nuevaCantidadTotal = yaEnCarrito + cantSolicitada;
 
+        console.log("🧪 [CTRL] cantidad calc:", {
+          yaEnCarrito,
+          cantSolicitada,
+          nuevaCantidadTotal,
+          stockActual,
+        });
+
         if (nuevaCantidadTotal > stockActual) {
           const maxAgregable = Math.max(0, stockActual - yaEnCarrito);
+          console.log("🧪 [CTRL] 409 excede stock", {
+            stockActual,
+            yaEnCarrito,
+            cantSolicitada,
+            maxAgregable,
+          });
+
           return res.status(409).json({
-            error: `Stock disponible: ${stockActual}. Solo podés agregar ${maxAgregable} unidad(es) más.`,
+            error: `No hay stock suficiente: intentaste agregar ${cantSolicitada} unidad(es) y el stock disponible para entrega inmediata es ${stockActual}. Solo podés agregar ${maxAgregable} unidad(es) más. Si necesitás más, comunicate al 3513820440.`,
             stockDisponible: stockActual,
-            maxAgregable
+            maxAgregable,
           });
         }
 
         // 4) Insert o Update
         if (item) {
-          // ya existe: update
+          console.log("🧪 [CTRL] update cantidad", {
+            itemId: item.id,
+            nuevaCantidadTotal,
+          });
+
           carrito.actualizarCantidad(item.id, nuevaCantidadTotal, (error) => {
             if (error) {
-              console.error('Error al actualizar cantidad:', error);
-              return res.status(500).json({ error: 'Error al agregar producto al carrito' });
+              console.error("🧪 [CTRL] error actualizarCantidad:", error);
+              return res.status(500).json({ error: "Error al agregar producto al carrito" });
             }
+            console.log("🧪 [CTRL] update OK");
             responderCarrito(id_carrito);
           });
         } else {
-          // no existe: insert
+          console.log("🧪 [CTRL] insert producto_carrito", {
+            id_carrito,
+            productoId,
+            cantSolicitada,
+          });
+
           carrito.agregarProductoCarrito(id_carrito, productoId, cantSolicitada, (error) => {
             if (error) {
-              console.error('Error al agregar producto:', error);
-              return res.status(500).json({ error: 'Error al agregar producto al carrito' });
+              console.error("🧪 [CTRL] error agregarProductoCarrito(modelo):", error);
+              return res.status(500).json({ error: "Error al agregar producto al carrito" });
             }
+            console.log("🧪 [CTRL] insert OK");
             responderCarrito(id_carrito);
           });
         }
@@ -147,17 +197,18 @@ module.exports = {
   function responderCarrito(id_carrito) {
     carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
       if (error) {
-        console.error('Error al obtener productos:', error);
-        return res.status(500).json({ error: 'Error al obtener productos' });
+        console.error("🧪 [CTRL] error obtenerProductosCarrito:", error);
+        return res.status(500).json({ error: "Error al obtener productos" });
       }
 
       const cantidadTotal = productos.reduce((acc, p) => acc + (Number(p.cantidad) || 0), 0);
-      console.log(`🛒 Nueva cantidad total del carrito: ${cantidadTotal}`);
+      console.log("🧪 [CTRL] respuesta OK", { id_carrito, cantidadTotal });
 
       return res.status(200).json({ cantidadTotal });
     });
   }
 },
+
 
     obtenerCarritoID: (req, res) => {
         const id_usuario = req.session.usuario.id;

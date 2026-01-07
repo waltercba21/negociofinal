@@ -19,29 +19,52 @@ module.exports = {
             callback(null, resultados.insertId);
         });
     },
-    agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
-        const queryPrecio = 'SELECT precio_venta FROM productos WHERE id = ?';
+agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
+  console.log("🧪 HIT MODELO carrito.agregarProductoCarrito", {
+    id_carrito,
+    id_producto,
+    cantidad
+  });
 
-        pool.query(queryPrecio, [id_producto], (error, resultados) => {
-            if (error) {
-                return callback(error);
-            }
+  const queryPrecio = "SELECT precio_venta FROM productos WHERE id = ?";
 
-            if (resultados.length > 0) {
-                const precio = resultados[0].precio_venta;
-                const query = 'INSERT INTO productos_carrito (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)';
+  pool.query(queryPrecio, [id_producto], (error, resultados) => {
+    if (error) {
+      console.log("🧪 ERROR queryPrecio", error);
+      return callback(error);
+    }
 
-                pool.query(query, [id_carrito, id_producto, cantidad], (error, resultados) => {
-                    if (error) {
-                        return callback(error);
-                    }
-                    callback(null, resultados);
-                });
-            } else {
-                callback(new Error('Producto no encontrado'));
-            }
+    if (resultados.length > 0) {
+      const precio = resultados[0].precio_venta;
+
+      console.log("🧪 Producto encontrado en MODELO", {
+        id_producto,
+        precio
+      });
+
+      const query =
+        "INSERT INTO productos_carrito (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)";
+
+      pool.query(query, [id_carrito, id_producto, cantidad], (error, resultados) => {
+        if (error) {
+          console.log("🧪 ERROR INSERT productos_carrito", error);
+          return callback(error);
+        }
+
+        console.log("🧪 INSERT OK productos_carrito", {
+          insertId: resultados?.insertId,
+          affectedRows: resultados?.affectedRows
         });
-    },
+
+        callback(null, resultados);
+      });
+    } else {
+      console.log("🧪 Producto NO encontrado en MODELO", { id_producto });
+      callback(new Error("Producto no encontrado"));
+    }
+  });
+},
+
   obtenerProductosCarrito: (id_carrito, callback) => {
     const query = `
         SELECT pc.id, p.nombre, pc.cantidad, p.precio_venta, 
