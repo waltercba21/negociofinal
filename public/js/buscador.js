@@ -510,51 +510,92 @@ function mostrarProductos(productos) {
 
     contenedorProductos.appendChild(card);
 
-    // ✅ Validación de cantidad (solo usuarios comunes logueados)
-    // Importante: si hay error, frenamos el evento para que NO llegue a agregarAlCarrito.js
+    /* ===========================================================
+       ✅ FIX STOCK (USUARIO COMÚN LOGUEADO)
+       - NO clamp silencioso
+       - Si pide más que stock: confirm (agregar máximo o cancelar)
+       - Si confirma: seteamos el input al máximo y re-disparamos click
+       - Si cancela: se cancela el agregado
+       - No tocamos otras funcionalidades del archivo
+    ============================================================ */
     if (!isAdminUser && isUserLoggedIn) {
       const botonAgregar = card.querySelector('.agregar-carrito');
       const inputCantidad = card.querySelector('.cantidad-input');
       const stockDisponible = Number(producto.stock_actual) || 0;
 
       if (botonAgregar && inputCantidad) {
-        botonAgregar.addEventListener('click', (e) => {
-          const cantidad = parseInt(inputCantidad.value, 10);
+        botonAgregar.addEventListener('click', async (e) => {
+          // bypass para el click re-disparado
+          if (botonAgregar.dataset.afBypassClick === '1') {
+            botonAgregar.dataset.afBypassClick = '0';
+            return; // dejar pasar al agregarAlCarrito.js
+          }
 
           // Si está disabled, no hacemos nada
           if (botonAgregar.disabled || inputCantidad.disabled) return;
 
+          const cantidad = parseInt(inputCantidad.value, 10);
+
+          // inválida
           if (!inputCantidad.value || isNaN(cantidad) || cantidad <= 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
             Swal.fire({
               icon: 'error',
               title: 'Cantidad inválida',
               text: 'Debes ingresar una cantidad mayor a 0 para continuar.',
             });
-
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
             return;
           }
 
-          if (cantidad > stockDisponible) {
+          // sin stock
+          if (stockDisponible <= 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
             Swal.fire({
               icon: 'warning',
-              title: 'No hay stock suficiente',
-              text: `Estás intentando agregar ${cantidad} unidad(es), pero actualmente tenemos ${stockDisponible} disponible(s) para entrega inmediata. Si necesitás más, comunicate al 3513820440.`,
+              title: 'Sin stock disponible',
+              text: 'No hay stock disponible para este producto. Si necesitás, comunicate al 3513820440.',
             });
-
-            // Opcional: sugerir el máximo
-            inputCantidad.value = String(stockDisponible);
-
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
             return;
           }
 
-          // ✅ Si está OK, NO hacemos preventDefault ni stop:
-          // dejamos que lo maneje agregarAlCarrito.js
+          // pide más que stock => preguntar
+          if (cantidad > stockDisponible) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            const r = await Swal.fire({
+              icon: 'warning',
+              title: 'Stock insuficiente',
+              text: `Pediste ${cantidad} unidad(es), pero tenemos ${stockDisponible} disponible(s). ¿Querés agregar ${stockDisponible} (máximo disponible)?`,
+              showCancelButton: true,
+              confirmButtonText: `Sí, agregar ${stockDisponible}`,
+              cancelButtonText: 'Cancelar',
+            });
+
+            if (!r.isConfirmed) return;
+
+            // setear máximo y re-disparar el click para que lo maneje agregarAlCarrito.js
+            inputCantidad.value = String(stockDisponible);
+
+            // marcar para evitar analytics duplicado (ver listener delegado más abajo)
+            botonAgregar.dataset.afProgClick = '1';
+
+            // bypass para este mismo handler
+            botonAgregar.dataset.afBypassClick = '1';
+
+            // disparar el click real
+            botonAgregar.click();
+            return;
+          }
+
+          // ✅ Si está OK, no hacemos nada: dejamos que el click llegue a agregarAlCarrito.js
         });
       }
     }
@@ -681,6 +722,12 @@ contenedorProductos.addEventListener('click', (ev) => {
   const btn = ev.target.closest('.agregar-carrito');
   const link = ev.target.closest('.card-link');
   if (!btn && !link) return;
+
+  // ✅ Evitar analytics duplicado por click re-disparado (confirm stock)
+  if (btn && btn.dataset?.afProgClick === '1') {
+    btn.dataset.afProgClick = '0';
+    return;
+  }
 
   let productoId = null;
 
