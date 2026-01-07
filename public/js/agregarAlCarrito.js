@@ -1,23 +1,26 @@
-// /public/js/agregarAlCarrito.js
-// VERSION: 2026-01-07 (anti-clamp + confirm 409)
+// public/js/agregarAlCarrito.js
+// AF v2026-01-07: NO clamp automático, pregunta si quiere agregar máximo, y maneja clicks dentro del botón.
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ AF agregarAlCarrito.js cargado (VERSION 2026-01-07)");
+  console.log("[AF] agregarAlCarrito.js cargado v2026-01-07");
 
   const contenedor = document.getElementById("contenedor-productos");
-  if (!contenedor) return;
+  if (!contenedor) {
+    console.warn("[AF] No existe #contenedor-productos (no se bindea agregarAlCarrito.js)");
+    return;
+  }
 
-  // Guardamos lo que el usuario TIPEA, en CAPTURE y solo si esTrusted.
-  // Esto evita que otro JS que "clampa" el input nos pise el valor pedido.
+  // Guardamos lo que el usuario TIPEA (para mostrar “pediste X” aunque alguien cambie el value)
   contenedor.addEventListener(
     "input",
     (ev) => {
       const input = ev.target?.closest?.(".cantidad-input");
       if (!input) return;
       if (!ev.isTrusted) return; // ignorar cambios programáticos
-      input.dataset.afUserRequested = String(input.value ?? "");
+      input.dataset.afRequested = String(input.value ?? "");
+      console.log("[AF] input isTrusted -> afRequested =", input.dataset.afRequested);
     },
-    true // CAPTURE
+    true
   );
 
   const parseIntSafe = (v) => {
@@ -25,190 +28,163 @@ document.addEventListener("DOMContentLoaded", () => {
     return Number.isFinite(n) ? n : NaN;
   };
 
-  const readBodySafe = async (resp) => {
-    let text = "";
+  const readJsonSafe = async (resp) => {
     try {
-      text = await resp.text();
+      return await resp.json();
     } catch {
-      return { data: null, text: "" };
-    }
-    if (!text) return { data: null, text: "" };
-    try {
-      return { data: JSON.parse(text), text };
-    } catch {
-      return { data: null, text };
+      return null;
     }
   };
 
-  const notify = ({ title, text, icon = "info" }) => {
-    if (window.Swal?.fire) {
-      return Swal.fire({ title, text, icon, confirmButtonText: "OK" });
-    }
+  const swalOk = ({ title, text, icon }) => {
+    if (window.Swal?.fire) return Swal.fire({ title, text, icon, confirmButtonText: "OK" });
     alert(`${title}\n\n${text}`);
     return Promise.resolve();
   };
 
-  const confirmSwal = async ({ title, text, confirmText, cancelText, icon = "warning" }) => {
+  const swalConfirm = async ({ title, text, confirmText }) => {
     if (window.Swal?.fire) {
       const r = await Swal.fire({
         title,
         text,
-        icon,
+        icon: "warning",
         showCancelButton: true,
         confirmButtonText: confirmText,
-        cancelButtonText: cancelText,
+        cancelButtonText: "Cancelar",
       });
       return !!r.isConfirmed;
     }
     return confirm(`${title}\n\n${text}`);
   };
 
-  const refrescarGloboCarrito = () => {
-    fetch("/carrito/cantidad")
-      .then((r) => r.json())
-      .then((d) => {
-        const globo = document.getElementById("carrito-notificacion");
-        if (!globo) return;
-        const n = d?.cantidadTotal ?? 0;
-        globo.style.display = n > 0 ? "flex" : "none";
-        globo.textContent = n;
-      })
-      .catch(() => {});
+  const actualizarGlobo = async () => {
+    try {
+      const r = await fetch("/carrito/cantidad");
+      const d = await r.json();
+      const globo = document.getElementById("carrito-notificacion");
+      if (!globo) return;
+      const n = Number(d?.cantidadTotal) || 0;
+      globo.style.display = n > 0 ? "flex" : "none";
+      globo.textContent = n;
+      console.log("[AF] globo actualizado:", n);
+    } catch (e) {
+      console.warn("[AF] no se pudo actualizar globo:", e);
+    }
   };
 
-  async function postAgregar({ id, cantidad, precio }) {
-    const resp = await fetch("/carrito/agregar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_producto: id, cantidad, precio }),
-    });
-    const { data, text } = await readBodySafe(resp);
-    return { resp, data, text };
-  }
-
-  // CAPTURE click para cortar otros handlers que puedan clamplear o agregar por su cuenta
   contenedor.addEventListener(
     "click",
     async (e) => {
-      const btn = e.target.closest(".agregar-carrito");
+      const btn = e.target.closest(".agregar-carrito"); // ✅ permite click en iconos dentro
       if (!btn) return;
 
-      // Cortamos otros listeners (incluido buscador.js viejo, etc.)
       e.preventDefault();
-      e.stopPropagation();
-
-      console.log("➡️ Botón 'Agregar al carrito' clickeado (AF handler)");
-
-      if (btn.disabled) return;
 
       const card = btn.closest(".card");
       const input = card?.querySelector(".cantidad-input");
 
-      const id = btn.dataset.id;
-      const nombre = btn.dataset.nombre || "Producto";
-      const precio = btn.dataset.precio;
+      const idProducto = btn.dataset.id;
+      const nombreProducto = btn.dataset.nombre || "Producto";
+      const precioProducto = btn.dataset.precio;
 
-      // 👇 usamos SIEMPRE lo que el usuario tipeó (afUserRequested)
-      const cantidadPedida = parseIntSafe(input?.dataset?.afUserRequested ?? input?.value);
+      const stockDisponible = parseIntSafe(btn.dataset.stock);
 
-      console.log("📊 Datos del producto:", {
-        idProducto: id,
-        cantidadPedida,
-        nombreProducto: nombre,
-        precioProducto: precio,
-        inputValueActual: input?.value,
-        afUserRequested: input?.dataset?.afUserRequested,
+      const cantTyped = input?.dataset?.afRequested;
+      const cantFromInput = input?.value;
+
+      const cantSolicitada = parseIntSafe(cantTyped ?? cantFromInput);
+
+      console.log("[AF] CLICK agregar:", {
+        idProducto,
+        nombreProducto,
+        precioProducto,
+        stockDisponible,
+        cantTyped,
+        cantFromInput,
+        cantSolicitada,
       });
 
-      if (!id || !precio || !Number.isFinite(cantidadPedida) || cantidadPedida <= 0) {
-        await notify({
+      if (!idProducto || !precioProducto || !Number.isFinite(cantSolicitada) || cantSolicitada <= 0) {
+        await swalOk({
           title: "Cantidad inválida",
-          text: "Debes ingresar una cantidad mayor a 0 para continuar.",
+          text: "Ingresá una cantidad mayor a 0.",
           icon: "error",
         });
         return;
       }
 
+      // ✅ Si tenemos stock y pidió más: preguntamos (NO clamp automático)
+      let cantidadAEnviar = cantSolicitada;
+
+      if (Number.isFinite(stockDisponible) && stockDisponible >= 0 && cantSolicitada > stockDisponible) {
+        const ok = await swalConfirm({
+          title: "Stock insuficiente",
+          text: `Pediste ${cantSolicitada} unidad(es), pero hay ${stockDisponible} disponible(s). ¿Querés agregar ${stockDisponible} (máximo disponible)?`,
+          confirmText: `Sí, agregar ${stockDisponible}`,
+        });
+
+        if (!ok) {
+          console.log("[AF] usuario canceló agregar máximo");
+          return;
+        }
+
+        cantidadAEnviar = stockDisponible;
+      }
+
+      // Evitar doble click mientras responde
+      if (btn.disabled) return;
       btn.disabled = true;
 
       try {
-        // 1) Intento REAL con lo que pidió el usuario (ej: 20)
-        const r1 = await postAgregar({ id, cantidad: cantidadPedida, precio });
+        const payload = { id_producto: idProducto, cantidad: cantidadAEnviar, precio: precioProducto };
+        console.log("[AF][FETCH] -> /carrito/agregar POST", payload);
 
-        if (r1.resp.ok) {
-          await notify({
-            title: "¡Producto agregado!",
-            text: `${cantidadPedida} ${nombre} agregado(s) al carrito`,
-            icon: "success",
+        const resp = await fetch("/carrito/agregar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await readJsonSafe(resp);
+
+        console.log("[AF][FETCH] <- /carrito/agregar", resp.status, data);
+
+        if (!resp.ok) {
+          const msg = data?.error || `No se pudo agregar el producto. (HTTP ${resp.status})`;
+          await swalOk({
+            title: resp.status === 409 ? "Stock insuficiente" : "Error",
+            text: msg,
+            icon: resp.status === 409 ? "warning" : "error",
           });
-
-          refrescarGloboCarrito();
-          if (input) {
-            input.value = "1";
-            input.dataset.afUserRequested = "1";
-          }
           return;
         }
 
-        // 2) Si backend dice 409 -> mostrar explicación y ofrecer máximo disponible
-        if (r1.resp.status === 409) {
-          const maxAgregable = Number(r1.data?.maxAgregable);
-          const stockDisponible = Number(r1.data?.stockDisponible);
+        // ✅ OK: mensaje claro si pidió más pero confirmó máximo
+        const msgOk =
+          cantidadAEnviar !== cantSolicitada
+            ? `Pediste ${cantSolicitada}. Se agregaron ${cantidadAEnviar} (máximo disponible) de ${nombreProducto}.`
+            : `${cantidadAEnviar} ${nombreProducto} agregado(s) al carrito.`;
 
-          if (Number.isFinite(maxAgregable) && maxAgregable > 0) {
-            const ok = await confirmSwal({
-              title: "Stock insuficiente",
-              text: `Pediste ${cantidadPedida} unidad(es), pero hay ${stockDisponible} disponible(s). ¿Querés agregar ${maxAgregable} (máximo disponible)?`,
-              confirmText: `Sí, agregar ${maxAgregable}`,
-              cancelText: "No, cancelar",
-              icon: "warning",
-            });
+        await swalOk({ title: "¡Producto agregado!", text: msgOk, icon: "success" });
 
-            if (!ok) return;
+        await actualizarGlobo();
 
-            // 3) Segundo POST con máximo (ej: 8)
-            const r2 = await postAgregar({ id, cantidad: maxAgregable, precio });
-
-            if (r2.resp.ok) {
-              await notify({
-                title: "¡Producto agregado!",
-                text: `Pediste ${cantidadPedida}. Se agregaron ${maxAgregable} (máximo disponible) de ${nombre}.`,
-                icon: "success",
-              });
-
-              refrescarGloboCarrito();
-              if (input) {
-                input.value = "1";
-                input.dataset.afUserRequested = "1";
-              }
-              return;
-            }
-
-            const msg2 = r2.data?.error || r2.text || "No se pudo agregar el producto.";
-            await notify({ title: "Error", text: msg2, icon: "error" });
-            return;
-          }
-
-          // maxAgregable = 0 o no viene: mostrar mensaje real del backend
-          const msg = r1.data?.error || r1.text || "Stock insuficiente.";
-          await notify({ title: "Stock insuficiente", text: msg, icon: "warning" });
-          return;
+        // reset input a 1 (y también el afRequested)
+        if (input) {
+          input.value = "1";
+          input.dataset.afRequested = "1";
         }
-
-        // Otros errores
-        const msg = r1.data?.error || r1.text || `Hubo un problema al agregar. (HTTP ${r1.resp.status})`;
-        await notify({ title: "Error", text: msg, icon: "error" });
       } catch (err) {
-        console.error("❌ Error al agregar el producto al carrito:", err);
-        await notify({
+        console.error("[AF] Error agregando:", err);
+        await swalOk({
           title: "Error",
-          text: err?.message || "Hubo un problema al agregar el producto al carrito.",
+          text: "Hubo un problema al agregar el producto al carrito.",
           icon: "error",
         });
       } finally {
         btn.disabled = false;
       }
     },
-    true // CAPTURE
+    true
   );
 });
