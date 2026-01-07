@@ -62,13 +62,13 @@ document.getElementById("contenedor-productos").addEventListener("click", async 
   }
 
   // ✅ Validar tope por stock real
-  if (Number.isFinite(stockDisponible) && cantidad > stockDisponible) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cantidades no disponibles",
-      text: `Stock disponible: ${stockDisponible}. Si necesitás más unidades comunicate con nosotros 3513820440.`,
-      confirmButtonText: "OK",
-    });
+if (Number.isFinite(stockDisponible) && cantidad > stockDisponible) {
+  Swal.fire({
+    icon: "warning",
+    title: "No hay stock suficiente",
+    text: `Estás intentando agregar ${cantidad} unidad(es), pero actualmente tenemos ${stockDisponible} en stock para entrega inmediata. Si necesitás más, comunicate con nosotros al 3513820440.`,
+    confirmButtonText: "OK",
+  });
 
     if (cantidadInput) cantidadInput.value = String(stockDisponible);
     return;
