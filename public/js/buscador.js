@@ -5,6 +5,8 @@ const DBG = true; // poné false para silenciar logs
 function dbg(...args){ if(DBG) console.log(...args); }
 function dbgTable(obj){ if(DBG && obj) console.table(obj); }
 
+console.log("[AF] buscador.js cargado v2026-01-07b");
+
 // === Override de IVA por proveedor (si el endpoint no lo manda) ===
 // clave: nombre EXACTO que viene en proveedor_nombre del endpoint
 const IVA_PROVIDER_OVERRIDE = {
@@ -232,7 +234,6 @@ function _sortedIdxByCosto(lista){
 /* ==========================================
    Estado/rotación por producto
 ========================================== */
-// productoId -> { lista, baseIdx, idx, first, orden, orderCycle, cyclePos }
 const _cacheProveedores = new Map();
 
 async function _getOrInitState(productoId){
@@ -249,12 +250,10 @@ async function _getOrInitState(productoId){
   state = { lista, idx: 0, first: true, baseIdx: 0, orden: [], orderCycle: [], cyclePos: -1 };
 
   if (state.lista.length) {
-    // Buscar card para obtener el proveedor asignado por ID (SSR)
     const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
     const cardEl = provSpan ? provSpan.closest('.card') : null;
     const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
 
-    // localizar baseIdx
     if (asignadoId) {
       const byId = state.lista.findIndex(p => Number(p.proveedor_id_norm ?? p.id ?? p.proveedor_id) === asignadoId);
       state.baseIdx = byId >= 0 ? byId : 0;
@@ -265,7 +264,6 @@ async function _getOrInitState(productoId){
     }
     state.idx = state.baseIdx;
 
-    // Orden y ciclo (sin base)
     state.orden = _sortedIdxByCosto(state.lista);
     state.orderCycle = state.orden.filter(i => i !== state.baseIdx);
     if (!state.orderCycle.length) state.orderCycle = [state.baseIdx];
@@ -372,17 +370,11 @@ function mostrarProductos(productos) {
         : producto.calidad_vic ? 'CALIDAD VIC'
         : ''
     );
-    // datasets necesarios para simulación/rotación
+
     card.dataset.productoId = producto.id;
     card.dataset.precioVenta = producto.precio_venta;
-    card.dataset.proveedorAsignadoId = producto.proveedor_id || ''; // ID asignado
+    card.dataset.proveedorAsignadoId = producto.proveedor_id || '';
     card.dataset.utilidad = (producto.utilidad ?? 0);
-
-    dbg('🧾 Card SSR', producto.id, {
-      proveedorAsignadoId: card.dataset.proveedorAsignadoId,
-      utilidad: card.dataset.utilidad,
-      precioVentaSSR: card.dataset.precioVenta
-    });
 
     // galería
     let imagenesHTML = '';
@@ -510,97 +502,7 @@ function mostrarProductos(productos) {
 
     contenedorProductos.appendChild(card);
 
-    /* ===========================================================
-       ✅ FIX STOCK (USUARIO COMÚN LOGUEADO)
-       - NO clamp silencioso
-       - Si pide más que stock: confirm (agregar máximo o cancelar)
-       - Si confirma: seteamos el input al máximo y re-disparamos click
-       - Si cancela: se cancela el agregado
-       - No tocamos otras funcionalidades del archivo
-    ============================================================ */
-    if (!isAdminUser && isUserLoggedIn) {
-      const botonAgregar = card.querySelector('.agregar-carrito');
-      const inputCantidad = card.querySelector('.cantidad-input');
-      const stockDisponible = Number(producto.stock_actual) || 0;
-
-      if (botonAgregar && inputCantidad) {
-        botonAgregar.addEventListener('click', async (e) => {
-          // bypass para el click re-disparado
-          if (botonAgregar.dataset.afBypassClick === '1') {
-            botonAgregar.dataset.afBypassClick = '0';
-            return; // dejar pasar al agregarAlCarrito.js
-          }
-
-          // Si está disabled, no hacemos nada
-          if (botonAgregar.disabled || inputCantidad.disabled) return;
-
-          const cantidad = parseInt(inputCantidad.value, 10);
-
-          // inválida
-          if (!inputCantidad.value || isNaN(cantidad) || cantidad <= 0) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-
-            Swal.fire({
-              icon: 'error',
-              title: 'Cantidad inválida',
-              text: 'Debes ingresar una cantidad mayor a 0 para continuar.',
-            });
-            return;
-          }
-
-          // sin stock
-          if (stockDisponible <= 0) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-
-            Swal.fire({
-              icon: 'warning',
-              title: 'Sin stock disponible',
-              text: 'No hay stock disponible para este producto. Si necesitás, comunicate al 3513820440.',
-            });
-            return;
-          }
-
-          // pide más que stock => preguntar
-          if (cantidad > stockDisponible) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-
-            const r = await Swal.fire({
-              icon: 'warning',
-              title: 'Stock insuficiente',
-              text: `Pediste ${cantidad} unidad(es), pero tenemos ${stockDisponible} disponible(s). ¿Querés agregar ${stockDisponible} (máximo disponible)?`,
-              showCancelButton: true,
-              confirmButtonText: `Sí, agregar ${stockDisponible}`,
-              cancelButtonText: 'Cancelar',
-            });
-
-            if (!r.isConfirmed) return;
-
-            // setear máximo y re-disparar el click para que lo maneje agregarAlCarrito.js
-            inputCantidad.value = String(stockDisponible);
-
-            // marcar para evitar analytics duplicado (ver listener delegado más abajo)
-            botonAgregar.dataset.afProgClick = '1';
-
-            // bypass para este mismo handler
-            botonAgregar.dataset.afBypassClick = '1';
-
-            // disparar el click real
-            botonAgregar.click();
-            return;
-          }
-
-          // ✅ Si está OK, no hacemos nada: dejamos que el click llegue a agregarAlCarrito.js
-        });
-      }
-    }
-
-    _initProveedorButton(producto.id); // prepara estado/ciclo
+    _initProveedorButton(producto.id);
   });
 }
 
@@ -641,22 +543,16 @@ contenedorProductos.addEventListener('click', async (ev) => {
   const utilidadPct = _getUtilidadDeCard(cardEl);
   const u = utilidadPct / 100;
 
-  console.groupCollapsed(`🔁 CLICK NEXT | producto ${productoId}`);
-  dbg('🔧 utilidad leída de card:', utilidadPct, '%');
-
   const st = await _getOrInitState(productoId);
   if (!st.lista || !st.lista.length) {
-    console.groupEnd();
     Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
     return;
   }
   if (st.lista.length < 2) {
-    console.groupEnd();
     btn.style.display = 'none';
     return;
   }
 
-  // Primer click: ir al primer alternativo del ciclo (no base)
   let nextIdx;
   if (st.first) {
     st.cyclePos = 0;
@@ -667,40 +563,22 @@ contenedorProductos.addEventListener('click', async (ev) => {
     nextIdx = st.orderCycle[st.cyclePos];
   }
 
-  // Guard: si por error cae en base y hay más de 1 alternativo, avanzar
   if (nextIdx === st.baseIdx && st.orderCycle.length > 1) {
     st.cyclePos = (st.cyclePos + 1) % st.orderCycle.length;
     nextIdx = st.orderCycle[st.cyclePos];
-    dbg('⚠️ nextIdx == baseIdx, avanzamos a', nextIdx);
   }
 
-  dbg('🔁 ROTACIÓN', { baseIdx: st.baseIdx, idxActual: st.idx, nextIdx, cyclePos: st.cyclePos });
-
-  // ACTUALIZAR ESTADO PRIMERO
   st.idx = nextIdx;
   _cacheProveedores.set(productoId, st);
 
-  // OBTENER EL PROVEEDOR ACTUAL (el que se va a mostrar)
   const provActual = st.lista[st.idx];
-
-  // RENDER DEL PROVEEDOR ACTUAL
   _renderProveedor(productoId, provActual);
 
-  // TOMAR EL "PRECIO DE COSTO CON IVA" DEL PROVEEDOR ACTUAL (SIN RECONSTRUIR NADA)
   const costoConIva = toNumberSafe(provActual?.costo_iva);
 
-  // CALCULAR PRECIO (solo utilidad sobre ese costo)
   if (costoConIva > 0 && u >= 0) {
     const precioBruto = costoConIva * (1 + u);
     const precioRedondeado = _redondearAlCentenar(precioBruto);
-
-    console.log('🧮 PRECIO (solo utilidad sobre costo con IVA REAL)', {
-      proveedor: provActual?.proveedor_nombre,
-      codigo: provActual?.codigo,
-      costo_con_iva: costoConIva,
-      utilidadPct,
-      precioRedondeado
-    });
 
     if (st.idx === st.baseIdx) {
       _renderSimulacion(productoId, null);
@@ -708,11 +586,8 @@ contenedorProductos.addEventListener('click', async (ev) => {
       _renderSimulacion(productoId, precioRedondeado);
     }
   } else {
-    console.warn('❌ costo_con_iva ausente o inválido en el proveedor actual. No se puede simular precio.', provActual);
     _renderSimulacion(productoId, null);
   }
-
-  console.groupEnd();
 }, { passive: true });
 
 /* ==========================================
@@ -723,14 +598,7 @@ contenedorProductos.addEventListener('click', (ev) => {
   const link = ev.target.closest('.card-link');
   if (!btn && !link) return;
 
-  // ✅ Evitar analytics duplicado por click re-disparado (confirm stock)
-  if (btn && btn.dataset?.afProgClick === '1') {
-    btn.dataset.afProgClick = '0';
-    return;
-  }
-
   let productoId = null;
-
   if (btn) productoId = btn.dataset?.id;
   if (!productoId && link && link.getAttribute('href')) {
     const m = link.getAttribute('href').match(/\/productos\/(\d+)/);
