@@ -1,19 +1,20 @@
 const pool = require('../config/conexion');
 
 module.exports = {
-    obtenerCarritoActivo: (usuario_id, callback) => {
+obtenerCarritoActivo: (usuario_id, callback) => {
   const query = `
     SELECT id, estado, tipo_envio, direccion, actualizado_en
     FROM carritos
-    WHERE usuario_id = ? AND estado = 'activo'
+    WHERE usuario_id = ? AND estado = 'pendiente'
     ORDER BY id DESC
     LIMIT 1
   `;
   pool.query(query, [usuario_id], (error, resultados) => {
     if (error) return callback(error);
-    callback(null, resultados); // array (0 o 1)
+    callback(null, resultados);
   });
 },
+
 obtenerPedidosUsuario: (usuario_id, callback) => {
   const query = `
     SELECT
@@ -55,15 +56,17 @@ cerrarCarrito: (id_carrito, nuevoEstado, callback) => {
   `;
   pool.query(query, [nuevoEstado, id_carrito], callback);
 },
-    crearCarrito: (usuario_id, callback) => {
-        const query = 'INSERT INTO carritos (usuario_id) VALUES (?)';
-        pool.query(query, [usuario_id], (error, resultados) => {
-            if (error) {
-                return callback(error);
-            }
-            callback(null, resultados.insertId);
-        });
-    },
+crearCarrito: (usuario_id, callback) => {
+  const query = `
+    INSERT INTO carritos (usuario_id, estado, actualizado_en)
+    VALUES (?, 'pendiente', CURRENT_TIMESTAMP)
+  `;
+  pool.query(query, [usuario_id], (error, resultados) => {
+    if (error) return callback(error);
+    callback(null, resultados.insertId);
+  });
+},
+
 agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
   console.log("🧪 HIT MODELO carrito.agregarProductoCarrito", {
     id_carrito,
