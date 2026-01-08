@@ -5,16 +5,15 @@ obtenerCarritoActivo: (usuario_id, callback) => {
   const query = `
     SELECT id, estado, tipo_envio, direccion, actualizado_en
     FROM carritos
-    WHERE usuario_id = ? AND estado = 'pendiente'
+    WHERE usuario_id = ? AND estado = 'carrito'
     ORDER BY id DESC
     LIMIT 1
   `;
   pool.query(query, [usuario_id], (error, resultados) => {
     if (error) return callback(error);
-    callback(null, resultados);
+    callback(null, resultados || []);
   });
 },
-
 obtenerPedidosUsuario: (usuario_id, callback) => {
   const query = `
     SELECT
@@ -26,7 +25,7 @@ obtenerPedidosUsuario: (usuario_id, callback) => {
     FROM carritos c
     LEFT JOIN productos_carrito pc ON pc.carrito_id = c.id
     LEFT JOIN productos p ON p.id = pc.producto_id
-    WHERE c.usuario_id = ? AND c.estado <> 'pendiente'
+    WHERE c.usuario_id = ? AND c.estado <> 'carrito'
     GROUP BY c.id, c.estado, c.actualizado_en
     ORDER BY c.actualizado_en DESC
     LIMIT 30
@@ -36,12 +35,11 @@ obtenerPedidosUsuario: (usuario_id, callback) => {
     callback(null, rows || []);
   });
 },
-
 obtenerPedidoUsuarioPorId: (usuario_id, id_carrito, callback) => {
   const query = `
     SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra
     FROM carritos
-    WHERE id = ? AND usuario_id = ?
+    WHERE id = ? AND usuario_id = ? AND es_pedido = 1
     LIMIT 1
   `;
   pool.query(query, [id_carrito, usuario_id], (error, rows) => {
@@ -52,7 +50,7 @@ obtenerPedidoUsuarioPorId: (usuario_id, id_carrito, callback) => {
 cerrarCarrito: (id_carrito, nuevoEstado, callback) => {
   const query = `
     UPDATE carritos
-    SET estado = ?, actualizado_en = CURRENT_TIMESTAMP
+    SET estado = ?, es_pedido = 1, actualizado_en = NOW()
     WHERE id = ?
   `;
   pool.query(query, [nuevoEstado, id_carrito], callback);
@@ -60,14 +58,13 @@ cerrarCarrito: (id_carrito, nuevoEstado, callback) => {
 crearCarrito: (usuario_id, callback) => {
   const query = `
     INSERT INTO carritos (usuario_id, estado, actualizado_en)
-    VALUES (?, 'pendiente', CURRENT_TIMESTAMP)
+    VALUES (?, 'carrito', NOW())
   `;
-  pool.query(query, [usuario_id], (error, resultados) => {
+  pool.query(query, [usuario_id], (error, result) => {
     if (error) return callback(error);
-    callback(null, resultados.insertId);
+    callback(null, result.insertId);
   });
 },
-
 agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
   console.log("🧪 HIT MODELO carrito.agregarProductoCarrito", {
     id_carrito,
