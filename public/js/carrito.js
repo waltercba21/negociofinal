@@ -53,17 +53,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!tablaCarrito) return [];
     return Array.from(tablaCarrito.querySelectorAll("tbody tr"));
   }
+const fmtARS = (n) => new Intl.NumberFormat('es-AR').format(Math.round(Number(n) || 0));
+const parseARS = (s) => Number(String(s).replace(/[^\d]/g, '')) || 0; // "$37.200" -> 37200
+function actualizarTotalCarrito() {
+  let total = 0;
+  if (!tablaCarrito) return;
 
-  function actualizarTotalCarrito() {
-    let total = 0;
-    if (!tablaCarrito) return;
+  tablaCarrito.querySelectorAll(".subtotal").forEach((cell) => {
+    total += parseARS(cell.textContent);
+  });
 
-    tablaCarrito.querySelectorAll(".subtotal").forEach((cell) => {
-      total += parseFloat(String(cell.textContent).replace("$", "").trim()) || 0;
-    });
+  if (totalCarritoElement) totalCarritoElement.value = `$${fmtARS(total)}`;
+}
 
-    if (totalCarritoElement) totalCarritoElement.value = `$${total.toFixed(2)}`;
-  }
 
   function verificarCarritoVacio() {
     const filas = getFilasProductosCarrito();
