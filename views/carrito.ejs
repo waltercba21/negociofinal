@@ -203,7 +203,12 @@
     border: 1px solid var(--af-border);
     box-shadow: none;
   }
-  .btn-mini:hover{ background: rgba(15,23,42,.04); }
+  .btn-mini:hover,
+.btn-mini:focus{
+  color: var(--af-text) !important;
+  background: rgba(15,23,42,.04) !important;
+}
+
 
   /* Badges estado (tu código, levemente retocado) */
   .badge-estado{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:800;font-size:.85rem;line-height:1;white-space:nowrap}
@@ -326,15 +331,15 @@
         <% if (pedidos && pedidos.length > 0) { %>
           <table class="carrito-tabla">
             <thead>
-              <tr>
-                <th>Pedido</th>
-                <th>Fecha</th>
-                <th>Estado</th>
-                <th>Unidades</th>
-                <th>Total</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
+  <tr>
+    <th>N° Pedido</th>
+    <th>Fecha</th>
+    <th>Estado</th>
+    <th>Total</th>
+    <th>Resumen</th>
+  </tr>
+</thead>
+
             <tbody>
               <% pedidos.forEach(function(p) { 
                    const est = (p.estado || '').toLowerCase();
@@ -348,19 +353,16 @@
                   <td>#<%= p.id_carrito %></td>
                   <td><%= p.fecha_compra ? new Date(p.fecha_compra).toLocaleDateString('es-AR') : '-' %></td>
                   <td><span class="<%= badgeClass %>"><%= p.estado %></span></td>
-                  <td><%= Number(p.unidades || 0) %></td>
                   <td>$<%= Number(p.total || 0).toFixed(2) %></td>
                   <td>
                     <div class="acciones-pedido">
-                      <a class="btn-finalizar btn-mini"
-                         href="/carrito/pago-exito?pedido=<%= p.id_carrito %>">
-                        Ver detalle
-                      </a>
+                      <a class="btn-mini" href="/carrito/pago-exito?pedido=<%= p.id_carrito %>">
+  Ver detalle
+</a>
 
-                      <a class="btn-finalizar btn-mini"
-                         href="/carrito/comprobante/<%= p.id_carrito %>">
-                        📄 Comprobante
-                      </a>
+<a class="btn-mini" href="/carrito/comprobante/<%= p.id_carrito %>">
+  📄 Comprobante
+</a>
                     </div>
                   </td>
                 </tr>
