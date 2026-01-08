@@ -1,16 +1,15 @@
 // public/js/carrito.js
-// AF v2026-01-08: carrito (eliminar + +/-) con mensajes claros y sin romper pedidos
+// AF v2026-01-08b: total ARS robusto (usa data-subtotal) + no rompe lo existente
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("[AF] ✅ carrito.js cargado (v2026-01-08)");
+  console.log("[AF] ✅ carrito.js cargado (v2026-01-08b)");
 
   const contenedorCarrito = document.getElementById("contenedor-carrito");
   const mensajeCarritoVacio = document.getElementById("mensaje-carrito-vacio");
   const botonContinuarEnvio = document.getElementById("continuar-envio");
   const totalCarritoElement = document.getElementById("total-carrito");
 
-  // OJO: en tu carrito.ejs también existe otra tabla con clase "carrito-tabla" (mis pedidos).
-  // Por eso SIEMPRE limitamos búsquedas al contenedor del carrito activo.
+  // Importante: hay otra tabla .carrito-tabla abajo (mis pedidos). Limitamos al contenedor del carrito.
   const tablaCarrito = contenedorCarrito
     ? contenedorCarrito.querySelector("table.carrito-tabla")
     : null;
@@ -60,14 +59,12 @@ document.addEventListener("DOMContentLoaded", () => {
       Math.round(Number(n) || 0)
     );
 
-  // Soporta: "$37.200" / "$37.200,50" / "18600.00" / "$37,200.00"
+  // Fallback si algún subtotal no trae data-subtotal
   const parseARS = (input) => {
     if (input === null || input === undefined) return 0;
-
     let s = String(input).trim();
     if (!s) return 0;
 
-    // deja solo dígitos, punto, coma y signo menos
     s = s.replace(/\s/g, "").replace(/[^\d.,-]/g, "");
     if (!s || s === "-" || s === "," || s === ".") return 0;
 
@@ -77,20 +74,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let n = 0;
 
     if (s.includes(",")) {
-      // es-AR típico: puntos miles + coma decimal
-      // 37.200,50 -> 37200.50
       const normalized = s.replace(/\./g, "").replace(",", ".");
       n = parseFloat(normalized);
     } else if (s.includes(".")) {
       const parts = s.split(".");
-      if (parts.length > 2) {
-        // 1.234.567 -> 1234567
-        n = parseFloat(parts.join(""));
-      } else {
-        // 37.200 (miles) vs 18600.00 (decimales)
+      if (parts.length > 2) n = parseFloat(parts.join(""));
+      else {
         const dec = parts[1] ?? "";
-        if (dec.length === 3) n = parseFloat(parts.join("")); // miles
-        else n = parseFloat(s); // decimales
+        n = dec.length === 3 ? parseFloat(parts.join("")) : parseFloat(s);
       }
     } else {
       n = parseFloat(s);
@@ -101,15 +92,21 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   function actualizarTotalCarrito() {
-    if (!tablaCarrito) return;
+    if (!tablaCarrito || !totalCarritoElement) return;
 
     let total = 0;
+
+    // ✅ Preferimos sumar el valor crudo (evita parsear "$37.200")
     tablaCarrito.querySelectorAll(".subtotal").forEach((cell) => {
-      total += parseARS(cell.textContent);
+      const raw = cell.dataset && cell.dataset.subtotal;
+      if (raw !== undefined && raw !== null && raw !== "") {
+        total += Number(raw) || 0;
+      } else {
+        total += parseARS(cell.textContent);
+      }
     });
 
-    // total en pesos (sin centavos)
-    if (totalCarritoElement) totalCarritoElement.value = `$${fmtARS(total)}`;
+    totalCarritoElement.value = `$${fmtARS(total)}`;
   }
 
   function verificarCarritoVacio() {
@@ -129,7 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function buildErrorMessage(status, data, rawText) {
-    // 409 => stock / conflicto
     if (status === 409) {
       if (data?.error) return data.error;
       const stock = Number(data?.stockDisponible);
@@ -142,8 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function eliminarProducto(id, boton) {
-    console.log("[AF] 🗑 eliminarProducto ->", { id });
-
     const ok = await confirmFire("¿Eliminar producto?", "Este producto será eliminado del carrito.");
     if (!ok) return;
 
@@ -155,7 +149,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const { data, text } = await readBodySafe(resp);
-      console.log("[AF][FETCH] <- /carrito/eliminar", { status: resp.status, data, text });
 
       if (!resp.ok) {
         throw new Error(buildErrorMessage(resp.status, data, text) || "No se pudo eliminar el producto.");
@@ -167,14 +160,11 @@ document.addEventListener("DOMContentLoaded", () => {
       actualizarTotalCarrito();
       verificarCarritoVacio();
     } catch (err) {
-      console.error("[AF] ❌ Error al eliminar:", err);
       alertFire("Error", err.message || "No se pudo eliminar el producto.", "error");
     }
   }
 
   async function actualizarCantidad(id, accion) {
-    console.log("[AF] 🔄 actualizarCantidad ->", { id, accion });
-
     try {
       const resp = await fetch("/carrito/actualizar", {
         method: "POST",
@@ -183,7 +173,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const { data, text } = await readBodySafe(resp);
-      console.log("[AF][FETCH] <- /carrito/actualizar", { status: resp.status, data, text });
 
       if (!resp.ok) {
         const msg = buildErrorMessage(resp.status, data, text);
@@ -195,15 +184,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Simple y seguro para no romper nada: recargamos
+      // Mantenemos tu comportamiento actual
       window.location.reload();
     } catch (err) {
-      console.error("[AF] ❌ Error al actualizar cantidad:", err);
       alertFire("Error", "No se pudo actualizar la cantidad.", "error");
     }
   }
 
-  // Delegación de eventos: elimina y +/- en un solo listener
   document.addEventListener("click", (e) => {
     const btnEliminar = e.target.closest(".btn-eliminar");
     if (btnEliminar) {
@@ -229,7 +216,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Estado inicial
   actualizarTotalCarrito();
   verificarCarritoVacio();
 });

@@ -291,8 +291,14 @@
     </button>
   </div>
 </td>
-<td class="precio">$<%= fmtARS(producto.precio_venta) %></td>
-<td class="subtotal">$<%= fmtARS(producto.total) %></td>
+<td class="precio" data-precio="<%= producto.precio_venta %>">
+  $<%= fmtARS(producto.precio_venta) %>
+</td>
+
+<td class="subtotal" data-subtotal="<%= producto.total %>">
+  $<%= fmtARS(producto.total) %>
+</td>
+
 
 
                             <td>
