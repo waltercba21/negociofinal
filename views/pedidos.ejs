@@ -6,7 +6,6 @@
     <div class="pedidos-admin">
       <h2 class="titulo-pedidos">Pedidos Recibidos</h2>
 
-      <!-- Tabla de pedidos -->
       <table class="tabla-pedidos">
         <thead>
           <tr>
@@ -19,31 +18,53 @@
         </thead>
         <tbody>
           <% if (pedidos.length > 0) { %>
-            <% pedidos.forEach(pedido => { %>
+            <% pedidos.forEach(pedido => { 
+              const est = (pedido.estado || '').toLowerCase();
+            %>
+
+              <% // Si todavía te llegan carritos abiertos desde backend, los ocultamos como “parche”:
+                 // Ideal: filtrarlo en el controlador/modelo (WHERE estado <> 'carrito')
+                 if (est === 'carrito') { %>
+                <% return; %>
+              <% } %>
+
               <tr>
                 <td><%= pedido.id_pedido %></td>
                 <td><%= pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-AR') : '' %></td>
                 <td><%= pedido.cliente %></td>
                 <td><%= pedido.estado %></td>
+
                 <td style="display:flex; gap:8px; flex-wrap:wrap;">
                   <button class="btn-ver-detalle" data-carrito-id="<%= pedido.id_pedido %>">🛠 Ver Detalle</button>
 
-                  <!-- ✅ NUEVO: confirmar (aceptar) pedido -->
-                  <button onclick='confirmarPedido("<%= pedido.id_pedido %>")'>✅ Confirmar</button>
+                  <% if (est === 'pendiente') { %>
+                    <button onclick='confirmarPedido("<%= pedido.id_pedido %>")'>✅ Confirmar</button>
+                  <% } %>
 
-                  <button onclick='prepararPedido("<%= pedido.id_pedido %>")'>📦 Preparar</button>
-                  <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
+                  <% if (est === 'preparación') { %>
+                    <button onclick='prepararPedido("<%= pedido.id_pedido %>")'>📦 Preparar</button>
+                    <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
+                  <% } %>
+
+                  <% if (est === 'listo para entrega') { %>
+                    <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
+                  <% } %>
+
+                  <% if (est === 'finalizado') { %>
+                    <span style="padding:6px 10px;border-radius:999px;font-weight:700;background:#d4edda;color:#155724;">
+                      ✅ FINALIZADO
+                    </span>
+                  <% } %>
                 </td>
               </tr>
             <% }) %>
           <% } else { %>
-            <tr><td colspan="6">No hay pedidos pendientes.</td></tr>
+            <tr><td colspan="5">No hay pedidos.</td></tr>
           <% } %>
         </tbody>
       </table>
     </div>
 
-    <!-- MODAL EMERGENTE (detalle pedido) -->
     <div id="modal-preparar" class="modal">
       <div class="modal-contenido">
         <span class="cerrar-modal" onclick="cerrarModal()">&times;</span>
@@ -62,9 +83,7 @@
               <th>Subtotal</th>
             </tr>
           </thead>
-          <tbody id="detalle-productos">
-            <!-- Se insertan con JS -->
-          </tbody>
+          <tbody id="detalle-productos"></tbody>
         </table>
 
         <p class="total-final">Total: <span id="total-final"></span></p>
@@ -73,97 +92,25 @@
   </main>
 
   <%- include('./layouts/footer.ejs') %>
-
-  <!-- Asegurar SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
-    /* ✅ FIX UX: modal visible */
-    .modal{
-      display:none;
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.55);
-      z-index:9999;
-      padding:24px;
-      overflow:auto;
-    }
-    .modal-contenido{
-      background:#fff;
-      color:#111;
-      max-width:980px;
-      margin:40px auto;
-      padding:18px 18px 12px 18px;
-      border-radius:12px;
-      box-shadow:0 10px 30px rgba(0,0,0,.35);
-    }
-    .cerrar-modal{
-      float:right;
-      cursor:pointer;
-      font-size:26px;
-      line-height:1;
-      padding:6px 10px;
-      border-radius:8px;
-    }
-    .cerrar-modal:hover{ background:rgba(0,0,0,.06); }
-    .tabla-detalle{
-      width:100%;
-      border-collapse:collapse;
-      background:#fff;
-    }
-    .tabla-detalle th, .tabla-detalle td{
-      border:1px solid rgba(0,0,0,.12);
-      padding:8px;
-      vertical-align:top;
-    }
-    .total-final{ margin-top:10px; font-weight:700; }
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;padding:24px;overflow:auto;}
+    .modal-contenido{background:#fff;color:#111;max-width:980px;margin:40px auto;padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+    .cerrar-modal{float:right;cursor:pointer;font-size:26px;line-height:1;padding:6px 10px;border-radius:8px;}
+    .cerrar-modal:hover{background:rgba(0,0,0,.06);}
+    .tabla-detalle{width:100%;border-collapse:collapse;background:#fff;}
+    .tabla-detalle th,.tabla-detalle td{border:1px solid rgba(0,0,0,.12);padding:8px;vertical-align:top;}
+    .total-final{margin-top:10px;font-weight:700;}
   </style>
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      // Socket.io listener (admin)
-      if (typeof io !== 'undefined') {
-        if (!window.socket) {
-          window.socket = io();
-          socket.on("nuevoPedido", (data) => {
-            const pedidoId = data.id_pedido || data.id_carrito || data.id;
-            Swal.fire({
-              title: '📦 Nuevo pedido recibido',
-              text: `Pedido #${pedidoId} - Estado: "${data.estado}"`,
-              icon: 'info',
-              confirmButtonText: 'Ver pedidos',
-              showCancelButton: true,
-              cancelButtonText: 'Cerrar',
-              timer: 7000,
-              timerProgressBar: true
-            }).then((result) => {
-              if (result.isConfirmed) window.location.href = '/pedidos';
-            });
-          });
-
-          // (opcional) si tu backend emite cambios de estado
-          socket.on("pedidoActualizado", (data) => {
-            const pedidoId = data.id_pedido || data.id_carrito || data.id;
-            Swal.fire({
-              title: '🔔 Pedido actualizado',
-              text: `Pedido #${pedidoId} - Estado: "${data.estado}"`,
-              icon: data.estado === "finalizado" ? 'success' : 'info',
-              timer: 4500,
-              timerProgressBar: true
-            });
-          });
-        }
-      } else {
-        console.warn("❌ Socket.IO no está disponible");
-      }
-
-      // Modal detalle
       function cerrarModal() {
         document.getElementById("modal-preparar").style.display = "none";
       }
       window.cerrarModal = cerrarModal;
 
-      // Cerrar modal clickeando fuera
       document.getElementById("modal-preparar").addEventListener("click", (e) => {
         if (e.target.id === "modal-preparar") cerrarModal();
       });
@@ -177,14 +124,11 @@
             const data = await response.json();
 
             const cuerpoTabla = document.querySelector('#detalle-productos');
-            const nombreCliente = document.getElementById('nombre-cliente');
-            const fechaPedido = document.getElementById('fecha-pedido');
-            const totalFinal = document.getElementById('total-final');
-
             cuerpoTabla.innerHTML = '';
-            nombreCliente.textContent = data.cliente || '-';
-            fechaPedido.textContent = data.fecha || '-';
-            totalFinal.textContent = `$${Number(data.total || 0).toLocaleString('es-AR')}`;
+
+            document.getElementById('nombre-cliente').textContent = data.cliente || '-';
+            document.getElementById('fecha-pedido').textContent = data.fecha || '-';
+            document.getElementById('total-final').textContent = `$${Number(data.total || 0).toLocaleString('es-AR')}`;
 
             (data.productos || []).forEach(producto => {
               const fila = document.createElement('tr');
@@ -200,67 +144,48 @@
 
             document.getElementById("modal-preparar").style.display = "block";
           } catch (err) {
-            console.error('❌ Error al obtener detalle del pedido:', err);
             Swal.fire('Error', 'No se pudo cargar el detalle del pedido.', 'error');
           }
         });
       });
 
-      // Helpers fetch JSON con errores claros
       async function postJson(url) {
         const res = await fetch(url, { method: 'POST' });
         let data = null;
         try { data = await res.json(); } catch (_) {}
-        if (!res.ok) {
-          const msg = (data && data.error) ? data.error : `Error HTTP ${res.status}`;
-          throw new Error(msg);
-        }
+        if (!res.ok) throw new Error((data && data.error) ? data.error : `Error HTTP ${res.status}`);
         return data || {};
       }
 
-      // ✅ NUEVO: confirmar pedido
       window.confirmarPedido = async function(id) {
         try {
           const data = await postJson(`/pedidos/confirmar/${id}`);
-          Swal.fire('Pedido confirmado', data.mensaje || 'El pedido fue confirmado.', 'success');
-          setTimeout(() => location.reload(), 1200);
+          Swal.fire('Pedido confirmado', data.mensaje || 'OK', 'success');
+          setTimeout(() => location.reload(), 900);
         } catch (err) {
-          console.error('❌ Error al confirmar pedido:', err);
-          Swal.fire('Error', err.message || 'No se pudo confirmar el pedido.', 'error');
+          Swal.fire('Error', err.message || 'No se pudo confirmar.', 'error');
         }
       }
 
-      // Preparar pedido
       window.prepararPedido = async function(id) {
         try {
           const data = await postJson(`/pedidos/marcar-preparado/${id}`);
-          Swal.fire('En preparación', data.mensaje || 'Pedido marcado como en preparación.', 'info');
-
-          // PDF preparación (si existe)
-          const ventanaPDF = window.open(`/pedidos/${id}/pdf-preparacion`, '_blank');
-          if (ventanaPDF) {
-            ventanaPDF.onload = () => ventanaPDF.print();
-          }
-
-          setTimeout(() => location.reload(), 1500);
+          Swal.fire('En preparación', data.mensaje || 'OK', 'info');
+          setTimeout(() => location.reload(), 900);
         } catch (err) {
-          console.error('❌ Error al preparar pedido:', err);
-          Swal.fire('Error', err.message || 'No se pudo marcar como en preparación.', 'error');
+          Swal.fire('Error', err.message || 'No se pudo preparar.', 'error');
         }
       }
 
-      // Finalizar pedido
       window.finalizarPedido = async function(id) {
         try {
           const data = await postJson(`/pedidos/finalizar/${id}`);
-          Swal.fire('Pedido finalizado', data.mensaje || 'Pedido finalizado correctamente.', 'success');
-          setTimeout(() => location.reload(), 1200);
+          Swal.fire('Pedido finalizado', data.mensaje || 'OK', 'success');
+          setTimeout(() => location.reload(), 900);
         } catch (err) {
-          console.error('❌ Error al finalizar pedido:', err);
-          Swal.fire('Error', err.message || 'No se pudo finalizar el pedido.', 'error');
+          Swal.fire('Error', err.message || 'No se pudo finalizar.', 'error');
         }
       }
     });
   </script>
-
 </body>

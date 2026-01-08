@@ -2,20 +2,21 @@ const express = require('express');
 const router = express.Router();
 const pedidosController = require('../controllers/pedidosController');
 
-// Ruta para obtener la cantidad de pedidos pendientes (para la notificación en el header)
+// Notificación en header (cantidad)
 router.get('/cantidad', pedidosController.obtenerPedidosPendientes);
 
-// Ruta para ver todos los pedidos (con opción de filtrado)
+// Ver pedidos (filtrados)
 router.get('/', pedidosController.obtenerPedidos);
 
-// Ruta para cambiar el estado a "preparación"
-router.post('/marcar-preparado/:id', pedidosController.marcarPedidoComoPreparado);
+// ✅ NUEVO: confirmar pedido
+router.post('/confirmar/:id', pedidosController.confirmarPedido);
 
-// Ruta para cambiar el estado a "finalizado"
+// Preparación / Finalizado
+router.post('/marcar-preparado/:id', pedidosController.marcarPedidoComoPreparado);
 router.post('/finalizar/:id', pedidosController.marcarPedidoComoFinalizado);
 
+// Detalle + PDF
 router.get('/:id/detalle', pedidosController.obtenerDetallePedido);
-
 router.get('/:id/pdf-preparacion', pedidosController.generarPDFPreparacion);
 
 module.exports = router;
