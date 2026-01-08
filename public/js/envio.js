@@ -7,7 +7,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const inputDireccion = document.getElementById("direccion");
     const btnBuscarDireccion = document.getElementById("buscar-direccion");
     const btnContinuarPago = document.getElementById("continuar-pago");
+    const infoRetiroLocal = document.getElementById("info-retiro-local"); // ✅ nuevo
+
     let mapa, marcador;
+
+    // ✅ Dirección del local (texto visible + popup del mapa)
+    const direccionLocal = "IGUALDAD 88, Centro, Córdoba";
 
     // Ubicación predeterminada
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
@@ -29,31 +34,29 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     // Inicializar Mapa con cuadrante verde
-// Modificación en la función inicializarMapa()
-function inicializarMapa() {
-    if (!mapa) {
-        mapa = L.map("mapa").setView(ubicacionLocal, 14);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(mapa);
+    function inicializarMapa() {
+        if (!mapa) {
+            mapa = L.map("mapa").setView(ubicacionLocal, 14);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(mapa);
 
-        // Agregar el área de entrega al mapa
-        L.geoJSON(areaCbaCapital, {
-            style: {
-                color: "green",
-                fillColor: "#32CD32",
-                fillOpacity: 0.3
-            }
-        }).addTo(mapa);
+            // Agregar el área de entrega al mapa
+            L.geoJSON(areaCbaCapital, {
+                style: {
+                    color: "green",
+                    fillColor: "#32CD32",
+                    fillOpacity: 0.3
+                }
+            }).addTo(mapa);
+        }
+
+        // ✅ Forzar la actualización del tamaño después de un pequeño retraso
+        setTimeout(() => {
+            mapa.invalidateSize();
+            console.log("🗺️ Mapa actualizado correctamente.");
+        }, 500);
     }
-
-    // ✅ Forzar la actualización del tamaño después de un pequeño retraso
-    setTimeout(() => {
-        mapa.invalidateSize();
-        console.log("🗺️ Mapa actualizado correctamente.");
-    }, 500);
-}
-
 
     // Actualizar marcador en el mapa
     function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
@@ -68,7 +71,7 @@ function inicializarMapa() {
         const mensaje = dentroDeZona
             ? `<b>Dirección:</b> ${direccion}`
             : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
-        
+
         marcador.bindPopup(mensaje).openPopup();
         mapa.setView([lat, lng], 14);
     }
@@ -84,22 +87,26 @@ function inicializarMapa() {
     tipoEnvioRadios.forEach(radio => {
         radio.addEventListener("change", function () {
             console.log(`📌 Tipo de envío seleccionado: ${this.value}`);
+
             if (!mapa) {
-                inicializarMapa();  // Asegurarse de que el mapa se inicializa
+                inicializarMapa();
             }
-    
+
             mapaContainer.classList.remove("hidden");
-    
+
             if (this.value === "delivery") {
                 datosEnvio.classList.remove("hidden");
-                inputDireccion.value = ""; // Reiniciar el input de dirección si se cambia
+                inputDireccion.value = "";
+                if (infoRetiroLocal) infoRetiroLocal.classList.add("hidden");
             } else {
                 datosEnvio.classList.add("hidden");
-                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, "Retiro en local", true);
+                if (infoRetiroLocal) infoRetiroLocal.classList.remove("hidden");
+
+                // ✅ ahora muestra la dirección real del local
+                actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, direccionLocal, true);
             }
         });
     });
-    
 
     // Evento para buscar dirección
     btnBuscarDireccion.addEventListener("click", function () {
@@ -119,14 +126,19 @@ function inicializarMapa() {
                     return;
                 }
 
-                const resultado = data.find(entry => 
+                const resultado = data.find(entry =>
                     (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") && entry.address.state === "Córdoba"
                 );
 
                 if (!resultado) {
                     mostrarAlerta("Dirección fuera de Córdoba Capital", "Ingrese una dirección válida dentro de Córdoba Capital.");
                 } else {
-                    actualizarMarcador(parseFloat(resultado.lat), parseFloat(resultado.lon), direccion, esUbicacionValida(resultado.lat, resultado.lon));
+                    actualizarMarcador(
+                        parseFloat(resultado.lat),
+                        parseFloat(resultado.lon),
+                        direccion,
+                        esUbicacionValida(resultado.lat, resultado.lon)
+                    );
                     console.log("📌 Dirección validada:", direccion);
                 }
             })
@@ -138,67 +150,66 @@ function inicializarMapa() {
 
     btnContinuarPago.addEventListener("click", function (event) {
         event.preventDefault();
-    
+
         const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked")?.value;
         if (!tipoEnvio) {
             mostrarAlerta("Seleccione un tipo de envío", "Debe elegir una opción de envío antes de continuar.");
             return;
         }
-    
+
         const direccion = inputDireccion.value.trim();
         if (tipoEnvio === "delivery" && direccion === "") {
             mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
             return;
         }
-    
-        const datosEnvio = {
+
+        const datosEnvioPayload = {
             tipo_envio: tipoEnvio,
-            direccion: tipoEnvio === "delivery" ? direccion : "Retiro en local"
+            // ✅ si es local, guardamos la dirección real (igual se identifica por tipo_envio)
+            direccion: tipoEnvio === "delivery" ? direccion : direccionLocal
         };
-    
+
         fetch("/carrito/envio", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datosEnvio)
+            body: JSON.stringify(datosEnvioPayload)
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.confirmarCambio) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Dirección registrada previamente',
-                    text: `Tiene la dirección "${data.direccionExistente}" predefinida. ¿Desea cambiarla por "${data.direccionNueva}"?`,
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, actualizar',
-                    cancelButtonText: 'No, mantener'
-                }).then(result => {
-                    if (result.isConfirmed) {
-                        fetch("/carrito/envio/actualizar", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ direccion: data.direccionNueva })
-                        })
-                        .then(response => response.json())
-                        .then(updateData => {
-                            if (updateData.success) {
-                                Swal.fire("Actualizado", "Su dirección ha sido actualizada.", "success")
-                                .then(() => window.location.href = "/carrito/confirmarDatos");
-                            }
-                        });
-                    } else {
-                        window.location.href = "/carrito/confirmarDatos";
-                    }
-                });
-            } else if (data.success) {
-                window.location.href = "/carrito/confirmarDatos";
-            }
-        })
-        .catch(error => {
-            mostrarAlerta("Error", "No se pudo conectar con el servidor.");
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (data.confirmarCambio) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Dirección registrada previamente',
+                        text: `Tiene la dirección "${data.direccionExistente}" predefinida. ¿Desea cambiarla por "${data.direccionNueva}"?`,
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, actualizar',
+                        cancelButtonText: 'No, mantener'
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            fetch("/carrito/envio/actualizar", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ direccion: data.direccionNueva })
+                            })
+                                .then(response => response.json())
+                                .then(updateData => {
+                                    if (updateData.success) {
+                                        Swal.fire("Actualizado", "Su dirección ha sido actualizada.", "success")
+                                            .then(() => window.location.href = "/carrito/confirmarDatos");
+                                    }
+                                });
+                        } else {
+                            window.location.href = "/carrito/confirmarDatos";
+                        }
+                    });
+                } else if (data.success) {
+                    window.location.href = "/carrito/confirmarDatos";
+                }
+            })
+            .catch(() => {
+                mostrarAlerta("Error", "No se pudo conectar con el servidor.");
+            });
     });
-    
-    
 
     // Función para mostrar alertas con SweetAlert
     function mostrarAlerta(titulo, mensaje) {
@@ -213,6 +224,7 @@ function inicializarMapa() {
     // Ocultar elementos iniciales
     mapaContainer.classList.add("hidden");
     datosEnvio.classList.add("hidden");
+    if (infoRetiroLocal) infoRetiroLocal.classList.add("hidden");
 
     console.log("✅ Inicialización del script completada.");
 });

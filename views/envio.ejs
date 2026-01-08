@@ -39,37 +39,41 @@
                 <input type="radio" name="tipo-envio" value="local">
                 <i class="fas fa-store"></i> Retiro por el local
             </label>
+
+            <!-- ✅ NUEVO: mostrar dirección del local -->
+            <div id="info-retiro-local" class="hidden">
+                <p>📍 Dirección del local: <strong>IGUALDAD 88, Centro, Córdoba</strong></p>
+            </div>
         
             <label class="opcion-envio">
                 <input type="radio" name="tipo-envio" value="delivery">
                 <i class="fas fa-motorcycle"></i> Envío Delivery
             </label>
+
             <div id="direccion-predefinida" class="hidden">
                 <p>📍 Tiene la dirección <span id="direccion-guardada"></span> predefinida para la entrega.</p>
             </div>
            
-        <!-- Contenedor del spinner con la leyenda -->
+            <!-- Contenedor del spinner con la leyenda -->
             <div id="spinner">
-             <div class="spinner"></div>
+                <div class="spinner"></div>
                 <p id="spinner-text">BUSCANDO...</p>
             </div>
+
             <div id="datos-envio" class="hidden">
                 <input type="text" id="direccion" placeholder="Escriba su dirección">
                 <button id="buscar-direccion">Buscar</button>
             </div>
+
             <div id="mapa-container" class="hidden">
                 <div id="mapa" style="height: 400px;"></div>
             </div>
         </div>
         
-        
-
         <div id="mapa-container" class="hidden">
             <h3>📍 Ubicación</h3>
             <div id="mapa" style="height: 400px;"></div>
         </div>
-         
-        
 
         <div> 
             <button id="continuar-pago" class="btn-finalizar">Continuar con el Pago</button>
@@ -84,15 +88,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
     <script>
          document.addEventListener("DOMContentLoaded", function () {
-        fetch("/carrito/envio")
-        .then(response => response.json())
-        .then(data => {
-            if (data.direccion) {
-                document.getElementById("direccion-guardada").textContent = data.direccion;
-                document.getElementById("direccion-predefinida").classList.remove("hidden");
-            }
+            fetch("/carrito/envio")
+            .then(response => response.json())
+            .then(data => {
+                if (data.direccion) {
+                    document.getElementById("direccion-guardada").textContent = data.direccion;
+                    document.getElementById("direccion-predefinida").classList.remove("hidden");
+                }
+            });
         });
-    });
     </script>
 
 </body>
