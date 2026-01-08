@@ -6,14 +6,223 @@
         <h1>🛍️ Mi Carrito</h1>
 
         <style>
-          .badge-estado{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:.85rem;line-height:1;white-space:nowrap}
-          .badge-prep{background:#fff3cd;color:#856404}
-          .badge-entrega{background:#d1ecf1;color:#0c5460}
-          .badge-final{background:#d4edda;color:#155724}
-          .badge-otro{background:#eee;color:#444}
-          .acciones-pedido{display:flex;gap:8px;flex-wrap:wrap}
-          .btn-mini{padding:8px 12px;font-size:.9rem;text-decoration:none;display:inline-block}
-        </style>
+  :root{
+    --af-bg:#f6f8fb;
+    --af-card:#ffffff;
+    --af-text:#0f172a;
+    --af-muted:#64748b;
+    --af-border:#e5e7eb;
+    --af-primary:#1d4ed8;
+    --af-danger:#ef4444;
+    --af-shadow: 0 12px 30px rgba(2,6,23,.08);
+  }
+
+  /* Layout general */
+  .carrito-container{
+    max-width: 980px;
+    margin: 32px auto;
+    padding: 0 16px;
+    color: var(--af-text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+
+  .carrito-container h1{
+    margin: 0 0 18px 0;
+    font-size: 28px;
+    font-weight: 800;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  /* Card del carrito */
+  #contenedor-carrito{
+    background: var(--af-card);
+    border: 1px solid var(--af-border);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: var(--af-shadow);
+  }
+
+  /* Tabla moderna */
+  .carrito-tabla{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid var(--af-border);
+    background: #fff;
+  }
+
+  .carrito-tabla thead th{
+    background: #0b1220;
+    color: #fff;
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 14px 12px;
+  }
+
+  .carrito-tabla tbody td{
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--af-border);
+    vertical-align: middle;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .carrito-tabla tbody tr:last-child td{ border-bottom: none; }
+  .carrito-tabla tbody tr:hover{ background: rgba(15,23,42,.03); }
+
+  .imagen-miniatura{
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    border-radius: 12px;
+    border: 1px solid var(--af-border);
+    background: #fff;
+    padding: 6px;
+  }
+
+  .precio, .subtotal{
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-weight: 900;
+  }
+  .subtotal{ color: var(--af-primary); }
+
+  /* Controles cantidad */
+  .qty{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border: 1px solid var(--af-border);
+    border-radius: 999px;
+    background: #f8fafc;
+  }
+
+  .qty .cantidad{
+    min-width: 34px;
+    text-align: center;
+    font-weight: 900;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .btn-cantidad{
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--af-border);
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn-cantidad:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(2,6,23,.10);
+  }
+  .btn-cantidad:active{ transform: translateY(0); }
+
+  /* Eliminar */
+  .btn-eliminar{
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid rgba(239,68,68,.25);
+    background: rgba(239,68,68,.10);
+    color: var(--af-danger);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .btn-eliminar:hover{ background: rgba(239,68,68,.16); }
+
+  /* Footer: total + CTA alineados */
+  .carrito-footer{
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .total-container{
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #total-carrito{
+    width: 190px;
+    padding: 10px 12px;
+    border: 1px solid var(--af-border);
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 16px;
+    background: #fff;
+  }
+
+  .btn-finalizar{
+    padding: 12px 18px;
+    border-radius: 14px;
+    font-weight: 900;
+    border: none;
+    background: var(--af-primary);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 12px 20px rgba(29,78,216,.20);
+    transition: transform .12s ease, filter .12s ease;
+  }
+  .btn-finalizar:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+  .btn-finalizar:active{ transform: translateY(0); }
+
+  /* Mis pedidos (botones chicos como secundarios) */
+  .acciones-pedido{display:flex;gap:8px;flex-wrap:wrap}
+  .btn-mini{
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: .9rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    background: transparent;
+    color: var(--af-text);
+    border: 1px solid var(--af-border);
+    box-shadow: none;
+  }
+  .btn-mini:hover{ background: rgba(15,23,42,.04); }
+
+  /* Badges estado (tu código, levemente retocado) */
+  .badge-estado{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:800;font-size:.85rem;line-height:1;white-space:nowrap}
+  .badge-prep{background:#fff3cd;color:#856404}
+  .badge-entrega{background:#d1ecf1;color:#0c5460}
+  .badge-final{background:#d4edda;color:#155724}
+  .badge-otro{background:#eee;color:#444}
+
+  /* Mobile */
+  @media (max-width: 640px){
+    .carrito-tabla thead{ display:none; }
+    .carrito-tabla, .carrito-tabla tbody, .carrito-tabla tr, .carrito-tabla td{ display:block; width:100%; }
+    .carrito-tabla tr{ border-bottom: 1px solid var(--af-border); padding: 10px 0; }
+    .carrito-tabla td{ border: none; padding: 10px 12px; display:flex; justify-content:space-between; gap:12px; }
+    .carrito-tabla td:last-child{ justify-content:flex-end; }
+    .imagen-miniatura{ width:48px; height:48px; }
+    #total-carrito{ width: 160px; }
+  }
+</style>
+
 
         <div class="progreso-compra">
             <div class="paso-container">
@@ -60,10 +269,19 @@
                             </td>
                             <td><%= producto.nombre %></td>
                             <td>
-                                <button class="btn-cantidad disminuir" data-id="<%= producto.id %>">➖</button>
-                                <span class="cantidad"><%= producto.cantidad %></span>
-                                <button class="btn-cantidad aumentar" data-id="<%= producto.id %>">➕</button>
-                            </td>
+  <div class="qty" role="group" aria-label="Cantidad">
+    <button class="btn-cantidad disminuir" data-id="<%= producto.id %>" aria-label="Disminuir">
+      <i class="fas fa-minus"></i>
+    </button>
+
+    <span class="cantidad" aria-live="polite"><%= producto.cantidad %></span>
+
+    <button class="btn-cantidad aumentar" data-id="<%= producto.id %>" aria-label="Aumentar">
+      <i class="fas fa-plus"></i>
+    </button>
+  </div>
+</td>
+
                             <td class="precio">$<%= Number(producto.precio_venta || 0).toFixed(2) %></td>
                             <td class="subtotal">$<%= Number(producto.total || 0).toFixed(2) %></td>
                             <td>
@@ -76,13 +294,18 @@
                 </tbody>
             </table>
 
-            <div class="total-container">
-                <label><strong>Total del pedido:</strong></label>
-                <input type="text" id="total-carrito" value="$<%= total %>" readonly>
-            </div>
+            <div class="carrito-footer">
+  <div class="total-container">
+    <label><strong>Total del pedido:</strong></label>
+    <input type="text" id="total-carrito" value="$<%= total %>" readonly>
+  </div>
 
-            <button id="continuar-envio" class="btn-finalizar">Continuar con el Envío</button>
-        </div>
+  <button id="continuar-envio" class="btn-finalizar">
+    Continuar con el Envío
+  </button>
+</div>
+
+        </div>  
 
         <!-- Mensaje de carrito vacío -->
         <div id="mensaje-carrito-vacio" <%= productos.length === 0 ? '' : 'style="display:none;"' %>>
