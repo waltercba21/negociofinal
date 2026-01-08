@@ -53,19 +53,64 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!tablaCarrito) return [];
     return Array.from(tablaCarrito.querySelectorAll("tbody tr"));
   }
-const fmtARS = (n) => new Intl.NumberFormat('es-AR').format(Math.round(Number(n) || 0));
-const parseARS = (s) => Number(String(s).replace(/[^\d]/g, '')) || 0; // "$37.200" -> 37200
-function actualizarTotalCarrito() {
-  let total = 0;
-  if (!tablaCarrito) return;
 
-  tablaCarrito.querySelectorAll(".subtotal").forEach((cell) => {
-    total += parseARS(cell.textContent);
-  });
+  // ======= DINERO ARS (sin centavos) =======
+  const fmtARS = (n) =>
+    new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 }).format(
+      Math.round(Number(n) || 0)
+    );
 
-  if (totalCarritoElement) totalCarritoElement.value = `$${fmtARS(total)}`;
-}
+  // Soporta: "$37.200" / "$37.200,50" / "18600.00" / "$37,200.00"
+  const parseARS = (input) => {
+    if (input === null || input === undefined) return 0;
 
+    let s = String(input).trim();
+    if (!s) return 0;
+
+    // deja solo dígitos, punto, coma y signo menos
+    s = s.replace(/\s/g, "").replace(/[^\d.,-]/g, "");
+    if (!s || s === "-" || s === "," || s === ".") return 0;
+
+    const negative = s.includes("-");
+    s = s.replace(/-/g, "");
+
+    let n = 0;
+
+    if (s.includes(",")) {
+      // es-AR típico: puntos miles + coma decimal
+      // 37.200,50 -> 37200.50
+      const normalized = s.replace(/\./g, "").replace(",", ".");
+      n = parseFloat(normalized);
+    } else if (s.includes(".")) {
+      const parts = s.split(".");
+      if (parts.length > 2) {
+        // 1.234.567 -> 1234567
+        n = parseFloat(parts.join(""));
+      } else {
+        // 37.200 (miles) vs 18600.00 (decimales)
+        const dec = parts[1] ?? "";
+        if (dec.length === 3) n = parseFloat(parts.join("")); // miles
+        else n = parseFloat(s); // decimales
+      }
+    } else {
+      n = parseFloat(s);
+    }
+
+    if (!Number.isFinite(n)) return 0;
+    return negative ? -n : n;
+  };
+
+  function actualizarTotalCarrito() {
+    if (!tablaCarrito) return;
+
+    let total = 0;
+    tablaCarrito.querySelectorAll(".subtotal").forEach((cell) => {
+      total += parseARS(cell.textContent);
+    });
+
+    // total en pesos (sin centavos)
+    if (totalCarritoElement) totalCarritoElement.value = `$${fmtARS(total)}`;
+  }
 
   function verificarCarritoVacio() {
     const filas = getFilasProductosCarrito();
@@ -75,7 +120,7 @@ function actualizarTotalCarrito() {
       if (contenedorCarrito) contenedorCarrito.style.display = "none";
       if (botonContinuarEnvio) botonContinuarEnvio.style.display = "none";
       if (mensajeCarritoVacio) mensajeCarritoVacio.style.display = "block";
-      if (totalCarritoElement) totalCarritoElement.value = "$0.00";
+      if (totalCarritoElement) totalCarritoElement.value = "$0";
     } else {
       if (contenedorCarrito) contenedorCarrito.style.display = "block";
       if (botonContinuarEnvio) botonContinuarEnvio.style.display = "block";
@@ -142,7 +187,11 @@ function actualizarTotalCarrito() {
 
       if (!resp.ok) {
         const msg = buildErrorMessage(resp.status, data, text);
-        alertFire(resp.status === 409 ? "Stock máximo alcanzado" : "Error", msg, resp.status === 409 ? "warning" : "error");
+        alertFire(
+          resp.status === 409 ? "Stock máximo alcanzado" : "Error",
+          msg,
+          resp.status === 409 ? "warning" : "error"
+        );
         return;
       }
 
