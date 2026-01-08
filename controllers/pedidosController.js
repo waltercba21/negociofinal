@@ -30,35 +30,46 @@ module.exports = {
       res.json({ cantidad });
     });
   },
+// ✅ confirmar pedido (pendiente -> confirmado) + descontar stock
+confirmarPedido: (req, res) => {
+  const id_pedido = Number(req.params.id);
 
-  // ✅ NUEVO: confirmar pedido (pendiente -> confirmado)
-  confirmarPedido: (req, res) => {
-    const id_pedido = Number(req.params.id);
+  pedidos.obtenerPedidoPorId(id_pedido, (err, pedido) => {
+    if (err) return res.status(500).json({ error: "Error al buscar el pedido" });
+    if (!pedido) return res.status(404).json({ error: "Pedido no encontrado" });
 
-    pedidos.obtenerPedidoPorId(id_pedido, (err, pedido) => {
-      if (err) return res.status(500).json({ error: "Error al buscar el pedido" });
-      if (!pedido) return res.status(404).json({ error: "Pedido no encontrado" });
+    const est = (pedido.estado || '').toLowerCase();
 
-      const est = (pedido.estado || '').toLowerCase();
+    if (est === 'finalizado') {
+      return res.status(409).json({ error: "El pedido ya está finalizado." });
+    }
+    if (est === 'carrito') {
+      return res.status(409).json({ error: "Este aún es un carrito abierto, no un pedido." });
+    }
+    if (est !== 'pendiente') {
+      return res.status(409).json({ error: `No se puede confirmar desde estado: ${pedido.estado}` });
+    }
 
-      if (est === 'finalizado') {
-        return res.status(409).json({ error: "El pedido ya está finalizado." });
+    // ✅ NUEVO: confirma y descuenta stock en transacción
+    pedidos.confirmarPedidoYDescontarStock(id_pedido, (errorTx) => {
+      if (errorTx) {
+        if (errorTx.code === 'STOCK_INSUFICIENTE') {
+          return res.status(409).json({
+            error: "No hay stock suficiente para confirmar el pedido.",
+            detalle: errorTx.detalle
+          });
+        }
+        if (errorTx.code === 'SIN_ITEMS') {
+          return res.status(409).json({ error: "El pedido no tiene productos." });
+        }
+        return res.status(500).json({ error: "Error al confirmar el pedido y descontar stock." });
       }
-      if (est === 'carrito') {
-        return res.status(409).json({ error: "Este aún es un carrito abierto, no un pedido." });
-      }
-      if (est !== 'pendiente') {
-        return res.status(409).json({ error: `No se puede confirmar desde estado: ${pedido.estado}` });
-      }
 
-      pedidos.actualizarEstadoPedido(id_pedido, "confirmado", (error2) => {
-        if (error2) return res.status(500).json({ error: "Error al confirmar el pedido" });
-
-        emitirEstado(req, { id_pedido, estado: "confirmado", usuario_id: pedido.usuario_id });
-        return res.json({ mensaje: "Pedido confirmado" });
-      });
+      emitirEstado(req, { id_pedido, estado: "confirmado", usuario_id: pedido.usuario_id });
+      return res.json({ mensaje: "Pedido confirmado y stock descontado." });
     });
-  },
+  });
+},
 
   marcarPedidoComoPreparado: (req, res) => {
     const id_pedido = Number(req.params.id);
