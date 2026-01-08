@@ -268,6 +268,10 @@
                     </tr>
                 </thead>
                 <tbody>
+                  <%
+  const fmtARS = (n) => new Intl.NumberFormat('es-AR').format(Math.round(Number(n) || 0));
+%>
+
                     <% productos.forEach(function(producto) { %>
                         <tr>
                             <td>
@@ -287,9 +291,10 @@
     </button>
   </div>
 </td>
+<td class="precio">$<%= fmtARS(producto.precio_venta) %></td>
+<td class="subtotal">$<%= fmtARS(producto.total) %></td>
 
-                            <td class="precio">$<%= Number(producto.precio_venta || 0).toFixed(2) %></td>
-                            <td class="subtotal">$<%= Number(producto.total || 0).toFixed(2) %></td>
+
                             <td>
                                 <button class="btn-eliminar" data-id="<%= producto.id %>">
                                     <i class="fas fa-trash-alt"></i>
@@ -303,7 +308,8 @@
             <div class="carrito-footer">
   <div class="total-container">
     <label><strong>Total del pedido:</strong></label>
-    <input type="text" id="total-carrito" value="$<%= total %>" readonly>
+    <input type="text" id="total-carrito" value="$<%= fmtARS(total) %>" readonly>
+
   </div>
 
   <button id="continuar-envio" class="btn-finalizar">
@@ -353,7 +359,8 @@
                   <td>#<%= p.id_carrito %></td>
                   <td><%= p.fecha_compra ? new Date(p.fecha_compra).toLocaleDateString('es-AR') : '-' %></td>
                   <td><span class="<%= badgeClass %>"><%= p.estado %></span></td>
-                  <td>$<%= Number(p.total || 0).toFixed(2) %></td>
+                  <td>$<%= fmtARS(p.total) %></td>
+
                   <td>
                     <div class="acciones-pedido">
                       <a class="btn-mini" href="/carrito/pago-exito?pedido=<%= p.id_carrito %>">
