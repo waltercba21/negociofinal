@@ -110,5 +110,94 @@ module.exports = {
       if (error) return callback(error);
       callback(null, resultados);
     });
-  }
+  },
+  confirmarPedidoYDescontarStock: (id_pedido, callback) => {
+  pool.getConnection((err, conn) => {
+    if (err) return callback(err);
+
+    const rollback = (e) => conn.rollback(() => {
+      conn.release();
+      callback(e);
+    });
+
+    conn.beginTransaction((errTx) => {
+      if (errTx) return rollback(errTx);
+
+      // 1) bloquear el carrito/pedido
+      const qCarrito = `
+        SELECT id, estado
+        FROM carritos
+        WHERE id = ?
+        FOR UPDATE
+      `;
+      conn.query(qCarrito, [id_pedido], (e1, rowsC) => {
+        if (e1) return rollback(e1);
+        if (!rowsC || !rowsC.length) return rollback(Object.assign(new Error("Pedido no encontrado"), { code: "NO_EXISTE" }));
+
+        const est = String(rowsC[0].estado || '').toLowerCase();
+        if (est !== 'pendiente') return rollback(Object.assign(new Error("No está pendiente"), { code: "NO_PENDIENTE" }));
+
+        // 2) items + lock stock productos
+        const qItems = `
+          SELECT pc.producto_id, pc.cantidad, p.stock_actual
+          FROM productos_carrito pc
+          JOIN productos p ON p.id = pc.producto_id
+          WHERE pc.carrito_id = ?
+          FOR UPDATE
+        `;
+        conn.query(qItems, [id_pedido], (e2, items) => {
+          if (e2) return rollback(e2);
+          if (!items || !items.length) return rollback(Object.assign(new Error("Sin items"), { code: "SIN_ITEMS" }));
+
+          // 3) validar stock
+          for (const it of items) {
+            const stock = Number(it.stock_actual) || 0;
+            const cant = Number(it.cantidad) || 0;
+            if (cant <= 0) return rollback(Object.assign(new Error("Cantidad inválida"), { code: "CANT_INVALIDA" }));
+            if (stock < cant) {
+              return rollback(Object.assign(new Error("Stock insuficiente"), {
+                code: "STOCK_INSUFICIENTE",
+                detalle: { producto_id: it.producto_id, stock_actual: stock, solicitado: cant }
+              }));
+            }
+          }
+
+          // 4) descontar stock
+          let i = 0;
+          const next = () => {
+            if (i >= items.length) {
+              // 5) confirmar pedido
+              const qUpd = `
+                UPDATE carritos
+                SET estado = 'confirmado', actualizado_en = NOW()
+                WHERE id = ?
+              `;
+              return conn.query(qUpd, [id_pedido], (e5) => {
+                if (e5) return rollback(e5);
+                conn.commit((eCommit) => {
+                  if (eCommit) return rollback(eCommit);
+                  conn.release();
+                  callback(null);
+                });
+              });
+            }
+
+            const it = items[i++];
+            conn.query(
+              `UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?`,
+              [it.cantidad, it.producto_id],
+              (e4) => {
+                if (e4) return rollback(e4);
+                next();
+              }
+            );
+          };
+
+          next();
+        });
+      });
+    });
+  });
+},
+
 };
