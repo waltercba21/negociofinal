@@ -26,7 +26,7 @@ obtenerPedidosUsuario: (usuario_id, callback) => {
     FROM carritos c
     LEFT JOIN productos_carrito pc ON pc.carrito_id = c.id
     LEFT JOIN productos p ON p.id = pc.producto_id
-    WHERE c.usuario_id = ? AND c.estado <> 'activo'
+    WHERE c.usuario_id = ? AND c.estado <> 'pendiente'
     GROUP BY c.id, c.estado, c.actualizado_en
     ORDER BY c.actualizado_en DESC
     LIMIT 30
@@ -36,6 +36,7 @@ obtenerPedidosUsuario: (usuario_id, callback) => {
     callback(null, rows || []);
   });
 },
+
 obtenerPedidoUsuarioPorId: (usuario_id, id_carrito, callback) => {
   const query = `
     SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra

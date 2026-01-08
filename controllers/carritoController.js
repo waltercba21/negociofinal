@@ -674,14 +674,15 @@ actualizarCantidad: (req, res) => {
             res.status(500).json({ error: "Error al procesar el pago" });
         }
     },    
-    finalizarCompra: async (req, res) => {
+finalizarCompra: async (req, res) => {
   try {
     const id_usuario = req.session.usuario.id;
 
+    // 1) Obtener carrito ACTIVO (= pendiente)
     const carritos = await new Promise((resolve, reject) => {
       carrito.obtenerCarritoActivo(id_usuario, (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
+        if (error) return reject(error);
+        resolve(result);
       });
     });
 
@@ -691,29 +692,44 @@ actualizarCantidad: (req, res) => {
 
     const id_carrito = carritos[0].id;
 
-    // Definir estado según tipo_envio (si lo usás)
+    // 2) Validar que tenga productos (si está vacío, no finalizar)
+    const productos = await new Promise((resolve, reject) => {
+      carrito.obtenerProductosCarrito(id_carrito, (error, rows) => {
+        if (error) return reject(error);
+        resolve(rows || []);
+      });
+    });
+
+    if (productos.length === 0) {
+      return res.redirect("/carrito");
+    }
+
+    // 3) Definir estado final del pedido (NO puede ser 'pendiente')
     const tipoEnvio = carritos[0].tipo_envio;
-    let nuevoEstado = "pendiente";
-    if (tipoEnvio === "local") nuevoEstado = "preparación";
+
+    // Si tipo_envio aún no está definido, podés mandarlo a "preparación" por defecto
+    let nuevoEstado = "preparación";
+
     if (tipoEnvio === "delivery") nuevoEstado = "listo para entrega";
+    if (tipoEnvio === "local") nuevoEstado = "preparación";
 
     // ✅ Cerrar pedido (NO borrar items)
     await new Promise((resolve, reject) => {
       carrito.cerrarCarrito(id_carrito, nuevoEstado, (error) => {
-        if (error) reject(error);
-        else resolve();
+        if (error) return reject(error);
+        resolve();
       });
     });
 
-    // ✅ Crear un carrito nuevo vacío para que el usuario siga comprando
+    // ✅ Crear un carrito nuevo vacío (pendiente) para seguir comprando
     await new Promise((resolve, reject) => {
       carrito.crearCarrito(id_usuario, (error) => {
-        if (error) reject(error);
-        else resolve();
+        if (error) return reject(error);
+        resolve();
       });
     });
 
-    // guardo el id del pedido para mostrarlo en pago-exito/comprobante
+    // Guardar pedido para comprobante/vista pago éxito
     req.session.ultimoPedidoId = id_carrito;
 
     io.emit("nuevoPedido", {
@@ -726,9 +742,10 @@ actualizarCantidad: (req, res) => {
     return res.redirect(`/carrito/pago-exito?pedido=${id_carrito}`);
   } catch (error) {
     console.error("❌ [ERROR] en `finalizarCompra`:", error);
-    res.status(500).json({ error: "Error al finalizar la compra" });
+    return res.status(500).json({ error: "Error al finalizar la compra" });
   }
 },
+
  vistaPagoExitoso: async (req, res) => {
   try {
     const id_usuario = req.session.usuario.id;

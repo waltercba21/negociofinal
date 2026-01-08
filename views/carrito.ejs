@@ -5,6 +5,16 @@
     <main class="carrito-container">
         <h1>🛍️ Mi Carrito</h1>
 
+        <style>
+          .badge-estado{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:.85rem;line-height:1;white-space:nowrap}
+          .badge-prep{background:#fff3cd;color:#856404}
+          .badge-entrega{background:#d1ecf1;color:#0c5460}
+          .badge-final{background:#d4edda;color:#155724}
+          .badge-otro{background:#eee;color:#444}
+          .acciones-pedido{display:flex;gap:8px;flex-wrap:wrap}
+          .btn-mini{padding:8px 12px;font-size:.9rem;text-decoration:none;display:inline-block}
+        </style>
+
         <div class="progreso-compra">
             <div class="paso-container">
                 <div class="paso activo">
@@ -29,7 +39,7 @@
             </div>
         </div>
 
-        <!-- Contenedor del carrito -->
+        <!-- Contenedor del carrito (carrito activo = pendiente) -->
         <div id="contenedor-carrito" <%= productos.length === 0 ? 'style="display:none;"' : '' %>>
             <table class="carrito-tabla">
                 <thead>
@@ -45,15 +55,17 @@
                 <tbody>
                     <% productos.forEach(function(producto) { %>
                         <tr>
-                            <td><img src="/uploads/productos/<%= producto.imagen || 'default.jpg' %>" class="imagen-miniatura"></td>
+                            <td>
+                              <img src="/uploads/productos/<%= producto.imagen || 'default.jpg' %>" class="imagen-miniatura">
+                            </td>
                             <td><%= producto.nombre %></td>
                             <td>
                                 <button class="btn-cantidad disminuir" data-id="<%= producto.id %>">➖</button>
                                 <span class="cantidad"><%= producto.cantidad %></span>
                                 <button class="btn-cantidad aumentar" data-id="<%= producto.id %>">➕</button>
                             </td>
-                            <td class="precio">$<%= producto.precio_venta.toFixed(2) %></td>
-                            <td class="subtotal">$<%= producto.total.toFixed(2) %></td>
+                            <td class="precio">$<%= Number(producto.precio_venta || 0).toFixed(2) %></td>
+                            <td class="subtotal">$<%= Number(producto.total || 0).toFixed(2) %></td>
                             <td>
                                 <button class="btn-eliminar" data-id="<%= producto.id %>">
                                     <i class="fas fa-trash-alt"></i>
@@ -64,7 +76,6 @@
                 </tbody>
             </table>
 
-            <!-- Contenedor del total -->
             <div class="total-container">
                 <label><strong>Total del pedido:</strong></label>
                 <input type="text" id="total-carrito" value="$<%= total %>" readonly>
@@ -74,11 +85,67 @@
         </div>
 
         <!-- Mensaje de carrito vacío -->
-        <div id="mensaje-carrito-vacio" style="display: none;">
+        <div id="mensaje-carrito-vacio" <%= productos.length === 0 ? '' : 'style="display:none;"' %>>
             <p style="text-align: center; font-size: 1.2rem; color: #888;">
                 🛒 CARRITO DE COMPRAS VACÍO
             </p>
         </div>
+
+        <!-- ✅ Apartado: Pedidos del usuario (historial + estado + comprobante) -->
+        <hr style="margin:24px 0; opacity:.25;">
+
+        <h2 style="margin:0 0 8px 0;">📦 Mis pedidos</h2>
+        <p style="margin:0 0 14px 0; opacity:.75;">
+          Acá podés ver el estado de tus compras y descargar el comprobante cuando lo necesites.
+        </p>
+
+        <% if (pedidos && pedidos.length > 0) { %>
+          <table class="carrito-tabla">
+            <thead>
+              <tr>
+                <th>Pedido</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Unidades</th>
+                <th>Total</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% pedidos.forEach(function(p) { 
+                   const est = (p.estado || '').toLowerCase();
+                   const badgeClass =
+                     est === 'preparación' ? 'badge-estado badge-prep' :
+                     est === 'listo para entrega' ? 'badge-estado badge-entrega' :
+                     est === 'finalizado' ? 'badge-estado badge-final' :
+                     'badge-estado badge-otro';
+              %>
+                <tr>
+                  <td>#<%= p.id_carrito %></td>
+                  <td><%= p.fecha_compra ? new Date(p.fecha_compra).toLocaleDateString('es-AR') : '-' %></td>
+                  <td><span class="<%= badgeClass %>"><%= p.estado %></span></td>
+                  <td><%= Number(p.unidades || 0) %></td>
+                  <td>$<%= Number(p.total || 0).toFixed(2) %></td>
+                  <td>
+                    <div class="acciones-pedido">
+                      <a class="btn-finalizar btn-mini"
+                         href="/carrito/pago-exito?pedido=<%= p.id_carrito %>">
+                        Ver detalle
+                      </a>
+
+                      <a class="btn-finalizar btn-mini"
+                         href="/carrito/comprobante/<%= p.id_carrito %>">
+                        📄 Comprobante
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } else { %>
+          <p style="opacity:.75;">Todavía no tenés pedidos anteriores.</p>
+        <% } %>
 
         <!-- Cargar SweetAlert2 antes que carrito.js -->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
