@@ -146,21 +146,23 @@
     justify-content: center;
     cursor: pointer;
   }
-  .btn-eliminar:hover{ background: rgba(239,68,68,.16); }
+.btn-eliminar:hover{ background: rgba(239,68,68,.16); }
+
 .carrito-footer{
   margin-top: 16px;
   display: flex;
-  align-items: center;
-  justify-content: center;   /* <-- centra todo */
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;   /* <-- apila */
+  align-items: center;      /* <-- centra */
+  justify-content: center;
+  gap: 12px;
 }
 
 .total-container{
-  justify-content: center;   /* <-- centra label + input */
+  justify-content: center;
 }
-
-
+.btn-finalizar{
+  width: 260px;             /* opcional: mismo ancho prolijo */
+}
   #total-carrito{
     width: 190px;
     padding: 10px 12px;
