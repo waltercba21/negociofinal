@@ -17,46 +17,42 @@ document.addEventListener("DOMContentLoaded", function () {
     // Ubicación predeterminada
     const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
-    // Área válida para la entrega
-    const areaCbaCapital = {
-        "type": "Feature",
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [[
-                [-64.174512, -31.372190],
-                [-64.141308, -31.426028],
-                [-64.204045, -31.465101],
-                [-64.244475, -31.396353],
-                [-64.2204030946718, -31.364278427615925],
-                [-64.174512, -31.372190]
-            ]]
-        }
-    };
+  // ✅ Zona delivery: círculo (ajustá el radio hasta que coincida con circunvalación)
+const RADIO_CIRCUNVALACION_KM = 8.5; // probá 8.0 / 8.5 / 9.0
+const areaCbaCapital = turf.circle(
+  [ubicacionLocal.lng, ubicacionLocal.lat],
+  RADIO_CIRCUNVALACION_KM,
+  { steps: 128, units: "kilometers" }
+);
+// Inicializar Mapa con zona verde (círculo)
+function inicializarMapa() {
+  if (!mapa) {
+    mapa = L.map("mapa").setView(ubicacionLocal, 14);
 
-    // Inicializar Mapa con cuadrante verde
-    function inicializarMapa() {
-        if (!mapa) {
-            mapa = L.map("mapa").setView(ubicacionLocal, 14);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(mapa);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(mapa);
 
-            // Agregar el área de entrega al mapa
-            L.geoJSON(areaCbaCapital, {
-                style: {
-                    color: "green",
-                    fillColor: "#32CD32",
-                    fillOpacity: 0.3
-                }
-            }).addTo(mapa);
-        }
+    // ✅ Agregar el área de entrega al mapa
+    const capaZona = L.geoJSON(areaCbaCapital, {
+      style: {
+        color: "green",
+        fillColor: "#32CD32",
+        fillOpacity: 0.3,
+      },
+    }).addTo(mapa);
 
-        // ✅ Forzar la actualización del tamaño después de un pequeño retraso
-        setTimeout(() => {
-            mapa.invalidateSize();
-            console.log("🗺️ Mapa actualizado correctamente.");
-        }, 500);
-    }
+    // ✅ Encajar el mapa a la zona (se ve perfecto)
+    mapa.fitBounds(capaZona.getBounds());
+  }
+
+  // Forzar la actualización del tamaño después de un pequeño retraso
+  setTimeout(() => {
+    mapa.invalidateSize();
+    console.log("🗺️ Mapa actualizado correctamente.");
+  }, 500);
+}
+
 
     // Actualizar marcador en el mapa
     function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
@@ -76,12 +72,11 @@ document.addEventListener("DOMContentLoaded", function () {
         mapa.setView([lat, lng], 14);
     }
 
-    // Validar si la ubicación está dentro de la zona permitida
-    function esUbicacionValida(lat, lng) {
-        const punto = turf.point([lng, lat]);
-        const poligono = turf.polygon(areaCbaCapital.geometry.coordinates);
-        return turf.booleanPointInPolygon(punto, poligono);
-    }
+   function esUbicacionValida(lat, lng) {
+  const punto = turf.point([lng, lat]);
+  return turf.booleanPointInPolygon(punto, areaCbaCapital);
+}
+
 
     // Evento al cambiar el tipo de envío
     tipoEnvioRadios.forEach(radio => {
