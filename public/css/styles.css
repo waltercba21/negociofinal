@@ -2251,28 +2251,6 @@ tfoot td {
   gap: 20px;
   margin-top: 20px;
 }
-.uber-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:8px 14px;
-  border-radius:999px;
-  background:#000;
-  color:#fff;
-  font-weight:800;
-  letter-spacing:.08em;
-  font-size:12px;
-  margin-top:10px;
-}
-.uber-dot{
-  width:10px;height:10px;border-radius:999px;background:#fff;display:inline-block;
-}
-.delivery-costo{
-  margin-top:8px;
-  opacity:.85;
-  font-size:14px;
-}
-.hidden{ display:none !important; }
 
 .opcion-envio {
   display: flex;
