@@ -51,6 +51,21 @@
         <i class="fas fa-motorcycle"></i> Envío Delivery
       </label>
 
+      <!-- Badge estilo Uber (no muestra costo todavía) -->
+      <div id="uber-badge" class="uber-badge hidden" title="Envío por Uber">
+        <span class="uber-dot"></span> UBER
+      </div>
+
+      <!-- Hint UX -->
+      <div id="delivery-hint" class="hidden" style="margin-top:8px;opacity:.8;font-size:14px;">
+        Podés <b>buscar</b> tu dirección o <b>mover el pin</b> en el mapa para marcar el punto de entrega.
+      </div>
+
+      <!-- Costo: oculto hasta validar dentro del área -->
+      <div id="delivery-costo" class="delivery-costo hidden">
+        Envío por Uber: <strong id="delivery-costo-valor"></strong>
+      </div>
+
       <div id="direccion-predefinida" class="hidden">
         <p>📍 Tiene la dirección <span id="direccion-guardada"></span> predefinida para la entrega.</p>
       </div>
@@ -61,7 +76,7 @@
       </div>
 
       <div id="datos-envio" class="hidden">
-        <input type="text" id="direccion" placeholder="Escriba su dirección">
+        <input type="text" id="direccion" placeholder="Ej: Jujuy 1510">
         <button id="buscar-direccion">Buscar</button>
       </div>
 
@@ -93,7 +108,6 @@
     });
   </script>
 
-  <!-- ✅ ÚLTIMO + cache-busting -->
-  <script src="/js/envio.js?v=20260108-7"></script>
-
+  <!-- ✅ cache-busting (subí el número si el navegador cachea) -->
+  <script src="/js/envio.js?v=20260109-1"></script>
 </body>
