@@ -77,9 +77,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-pip/1.1.0/leaflet-pip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
 
-  <!-- ✅ SIEMPRE al final -->
-  <script src="/js/envio.js"></script>
-
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       fetch("/carrito/envio")
@@ -92,4 +89,7 @@
         });
     });
   </script>
+
+  <!-- ✅ SIEMPRE ÚLTIMO -->
+  <script src="/js/envio.js"></script>
 </body>

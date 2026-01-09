@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("📌 envio.js (CIRCULO REAL) cargado");
+  console.log("✅ envio.js CIRCULO LEAFLET activo");
 
   const tipoEnvioRadios = document.querySelectorAll("input[name='tipo-envio']");
   const mapaContainer = document.getElementById("mapa-container");
@@ -10,93 +10,87 @@ document.addEventListener("DOMContentLoaded", function () {
   const infoRetiroLocal = document.getElementById("info-retiro-local");
   const spinner = document.getElementById("spinner");
 
-  let mapa, marcador, capaZona;
+  let mapa = null;
+  let marcador = null;
+  let circuloZona = null;
 
-  // Dirección del local
   const direccionLocal = "IGUALDAD 88, Centro, Córdoba";
-
-  // Centro de referencia (cerca del centro)
   const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
-  // ✅ Radio aproximado circunvalación (ajustalo a gusto)
+  // ✅ Ajustá este radio hasta que te coincida con circunvalación
   const RADIO_CIRCUNVALACION_M = 8500; // 8.5 km
 
   function inicializarMapa() {
     if (mapa) return;
 
+    // importante: el container debe estar visible antes
     mapa = L.map("mapa").setView([ubicacionLocal.lat, ubicacionLocal.lng], 13);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(mapa);
 
-    // ✅ CÍRCULO REAL (no diamante)
-    capaZona = L.circle([ubicacionLocal.lat, ubicacionLocal.lng], {
+    // ✅ Círculo REAL
+    circuloZona = L.circle([ubicacionLocal.lat, ubicacionLocal.lng], {
       radius: RADIO_CIRCUNVALACION_M,
       color: "green",
       fillColor: "#32CD32",
       fillOpacity: 0.3,
     }).addTo(mapa);
 
-    mapa.fitBounds(capaZona.getBounds());
-  }
+    mapa.fitBounds(circuloZona.getBounds());
 
-  function refrescarMapaSize() {
-    if (!mapa) return;
     setTimeout(() => {
       mapa.invalidateSize();
-      // mantener zona visible
-      if (capaZona) mapa.fitBounds(capaZona.getBounds());
+      console.log("🗺️ Mapa actualizado correctamente.");
     }, 200);
+  }
+
+  function esUbicacionValida(lat, lng) {
+    const centro = L.latLng(ubicacionLocal.lat, ubicacionLocal.lng);
+    const punto = L.latLng(parseFloat(lat), parseFloat(lng));
+    return centro.distanceTo(punto) <= RADIO_CIRCUNVALACION_M; // metros
   }
 
   function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
     if (!mapa) return;
 
-    if (marcador) marcador.setLatLng([lat, lng]);
-    else marcador = L.marker([lat, lng]).addTo(mapa);
+    const ll = [parseFloat(lat), parseFloat(lng)];
+
+    if (marcador) marcador.setLatLng(ll);
+    else marcador = L.marker(ll).addTo(mapa);
 
     const mensaje = dentroDeZona
       ? `<b>Dirección:</b> ${direccion}`
       : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
 
     marcador.bindPopup(mensaje).openPopup();
-    mapa.setView([lat, lng], 14);
+    mapa.setView(ll, 14);
   }
 
-  // ✅ Validación por distancia al centro (círculo perfecto)
-  function esUbicacionValida(lat, lng) {
-    const centro = L.latLng(ubicacionLocal.lat, ubicacionLocal.lng);
-    const punto = L.latLng(parseFloat(lat), parseFloat(lng));
-    const distancia = centro.distanceTo(punto); // metros
-    return distancia <= RADIO_CIRCUNVALACION_M;
-  }
-
-  // Cambio de tipo envío
   tipoEnvioRadios.forEach(radio => {
     radio.addEventListener("change", function () {
-      console.log(`📌 Tipo de envío: ${this.value}`);
+      console.log(`📌 Tipo de envío seleccionado: ${this.value}`);
 
-      // ✅ Primero mostrar contenedor, luego inicializar para evitar bugs de tamaño
+      // ✅ mostrar antes de crear el mapa
       mapaContainer.classList.remove("hidden");
       inicializarMapa();
-      refrescarMapaSize();
 
       if (this.value === "delivery") {
         datosEnvio.classList.remove("hidden");
         inputDireccion.value = "";
         if (infoRetiroLocal) infoRetiroLocal.classList.add("hidden");
-        if (marcador) marcador.remove(), (marcador = null);
-        if (capaZona) mapa.fitBounds(capaZona.getBounds());
+
+        if (circuloZona) mapa.fitBounds(circuloZona.getBounds());
       } else {
         datosEnvio.classList.add("hidden");
         if (infoRetiroLocal) infoRetiroLocal.classList.remove("hidden");
+
         actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, direccionLocal, true);
       }
     });
   });
 
-  // Buscar dirección (Nominatim)
   btnBuscarDireccion.addEventListener("click", function () {
     const direccion = inputDireccion.value.trim();
     if (!direccion) {
@@ -105,8 +99,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (spinner) spinner.classList.remove("hidden");
+    console.log("🔍 Buscando dirección:", direccion);
 
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=ar&q=${encodeURIComponent(direccion + ", Córdoba, Argentina")}`)
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ", Córdoba, Argentina")}&addressdetails=1&limit=5`)
       .then(r => r.json())
       .then(data => {
         if (!Array.isArray(data) || data.length === 0) {
@@ -114,13 +109,19 @@ document.addEventListener("DOMContentLoaded", function () {
           return;
         }
 
-        const r0 = data[0];
-        const lat = parseFloat(r0.lat);
-        const lon = parseFloat(r0.lon);
+        const resultado = data.find(entry =>
+          (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") &&
+          entry.address.state === "Córdoba"
+        ) || data[0];
+
+        const lat = parseFloat(resultado.lat);
+        const lon = parseFloat(resultado.lon);
 
         actualizarMarcador(lat, lon, direccion, esUbicacionValida(lat, lon));
+        console.log("📌 Dirección validada:", direccion);
       })
-      .catch(() => {
+      .catch(error => {
+        console.error("❌ Error en la búsqueda de dirección:", error);
         mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda. Intente nuevamente.");
       })
       .finally(() => {
@@ -145,13 +146,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const payload = {
       tipo_envio: tipoEnvio,
-      direccion: tipoEnvio === "delivery" ? direccion : direccionLocal,
+      direccion: tipoEnvio === "delivery" ? direccion : direccionLocal
     };
 
     fetch("/carrito/envio", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     })
       .then(r => r.json())
       .then(data => {
@@ -162,19 +163,19 @@ document.addEventListener("DOMContentLoaded", function () {
             text: `Tiene la dirección "${data.direccionExistente}" predefinida. ¿Desea cambiarla por "${data.direccionNueva}"?`,
             showCancelButton: true,
             confirmButtonText: "Sí, actualizar",
-            cancelButtonText: "No, mantener",
+            cancelButtonText: "No, mantener"
           }).then(result => {
             if (result.isConfirmed) {
               fetch("/carrito/envio/actualizar", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ direccion: data.direccionNueva }),
+                body: JSON.stringify({ direccion: data.direccionNueva })
               })
                 .then(r => r.json())
                 .then(u => {
                   if (u.success) {
                     Swal.fire("Actualizado", "Su dirección ha sido actualizada.", "success")
-                      .then(() => (window.location.href = "/carrito/confirmarDatos"));
+                      .then(() => window.location.href = "/carrito/confirmarDatos");
                   }
                 });
             } else {
@@ -193,7 +194,7 @@ document.addEventListener("DOMContentLoaded", function () {
       icon: "error",
       title: titulo,
       text: mensaje,
-      confirmButtonText: "Aceptar",
+      confirmButtonText: "Aceptar"
     });
   }
 
@@ -202,4 +203,6 @@ document.addEventListener("DOMContentLoaded", function () {
   datosEnvio.classList.add("hidden");
   if (infoRetiroLocal) infoRetiroLocal.classList.add("hidden");
   if (spinner) spinner.classList.add("hidden");
+
+  console.log("✅ Inicialización del script completada.");
 });
