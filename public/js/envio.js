@@ -15,7 +15,8 @@ document.addEventListener("DOMContentLoaded", function () {
   let circuloZona = null;
 
   const direccionLocal = "IGUALDAD 88, Centro, Córdoba";
-  const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
+  const ubicacionLocal = { lat: -31.407473534930432, lng: -64.1830 };
+
 
   // Ajustá hasta que te coincida con circunvalación
   const RADIO_CIRCUNVALACION_M = 5800; 
