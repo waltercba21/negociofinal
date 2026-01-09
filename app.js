@@ -56,7 +56,23 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(cookieParser());
 
-// --- Estáticos ---
+// =====================================================
+// ✅ ESTÁTICOS
+// 1) Forzamos /js con no-cache (evita “versión vieja”)
+// 2) Después servimos el resto del /public normal
+// =====================================================
+app.use('/js', express.static(path.join(__dirname, 'public/js'), {
+  etag: true,
+  lastModified: true,
+  maxAge: 0,
+  setHeaders: (res) => {
+    // evita que el navegador/edge se quede con un JS viejo
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}));
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -69,19 +85,9 @@ app.use((req, res, next) => {
   res.locals.producto = null;
   res.locals.isLogged = !!req.session.usuario;
   res.locals.userLogged = req.session.usuario || {};
-
   res.locals.cantidadCarrito = 0; // <- para que header.ejs nunca rompa
   next();
-});express.static
-app.use('/js', express.static(path.join(__dirname, 'public/js'), {
-  etag: true,
-  lastModified: true,
-  maxAge: '0', // o '5m' si querés algo de cache
-  setHeaders: (res) => {
-    res.setHeader('Cache-Control', 'no-cache');
-  }
-}));
-
+});
 
 // --- Rutas ---
 app.use('/', indexRouter);
