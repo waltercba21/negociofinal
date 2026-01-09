@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("✅ envio.js CIRCULO LEAFLET activo");
+  console.log("✅ envio.js NUEVO (CIRCULO REAL) v20260108-1");
 
   const tipoEnvioRadios = document.querySelectorAll("input[name='tipo-envio']");
   const mapaContainer = document.getElementById("mapa-container");
@@ -17,20 +17,20 @@ document.addEventListener("DOMContentLoaded", function () {
   const direccionLocal = "IGUALDAD 88, Centro, Córdoba";
   const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
-  // ✅ Ajustá este radio hasta que te coincida con circunvalación
+  // Ajustá hasta que te coincida con circunvalación
   const RADIO_CIRCUNVALACION_M = 8500; // 8.5 km
 
   function inicializarMapa() {
     if (mapa) return;
 
-    // importante: el container debe estar visible antes
+    // el contenedor debe estar visible antes de crear el mapa
     mapa = L.map("mapa").setView([ubicacionLocal.lat, ubicacionLocal.lng], 13);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(mapa);
 
-    // ✅ Círculo REAL
+    // ✅ CÍRCULO REAL (no diamante)
     circuloZona = L.circle([ubicacionLocal.lat, ubicacionLocal.lng], {
       radius: RADIO_CIRCUNVALACION_M,
       color: "green",
@@ -39,17 +39,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }).addTo(mapa);
 
     mapa.fitBounds(circuloZona.getBounds());
+  }
 
+  function refrescarMapa() {
+    if (!mapa) return;
     setTimeout(() => {
       mapa.invalidateSize();
-      console.log("🗺️ Mapa actualizado correctamente.");
+      if (circuloZona) mapa.fitBounds(circuloZona.getBounds());
+      console.log("🗺️ Mapa actualizado correctamente (NUEVO).");
     }, 200);
   }
 
   function esUbicacionValida(lat, lng) {
     const centro = L.latLng(ubicacionLocal.lat, ubicacionLocal.lng);
     const punto = L.latLng(parseFloat(lat), parseFloat(lng));
-    return centro.distanceTo(punto) <= RADIO_CIRCUNVALACION_M; // metros
+    return centro.distanceTo(punto) <= RADIO_CIRCUNVALACION_M;
   }
 
   function actualizarMarcador(lat, lng, direccion, dentroDeZona) {
@@ -70,22 +74,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
   tipoEnvioRadios.forEach(radio => {
     radio.addEventListener("change", function () {
-      console.log(`📌 Tipo de envío seleccionado: ${this.value}`);
+      console.log(`📌 Tipo de envío seleccionado: ${this.value} (NUEVO)`);
 
-      // ✅ mostrar antes de crear el mapa
+      // ✅ mostrar primero
       mapaContainer.classList.remove("hidden");
+
+      // ✅ luego inicializar
       inicializarMapa();
+      refrescarMapa();
 
       if (this.value === "delivery") {
         datosEnvio.classList.remove("hidden");
         inputDireccion.value = "";
         if (infoRetiroLocal) infoRetiroLocal.classList.add("hidden");
-
-        if (circuloZona) mapa.fitBounds(circuloZona.getBounds());
       } else {
         datosEnvio.classList.add("hidden");
         if (infoRetiroLocal) infoRetiroLocal.classList.remove("hidden");
-
         actualizarMarcador(ubicacionLocal.lat, ubicacionLocal.lng, direccionLocal, true);
       }
     });
@@ -94,35 +98,31 @@ document.addEventListener("DOMContentLoaded", function () {
   btnBuscarDireccion.addEventListener("click", function () {
     const direccion = inputDireccion.value.trim();
     if (!direccion) {
-      mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
+      Swal.fire({ icon: "error", title: "Ingrese una dirección", text: "Por favor, ingrese una dirección válida." });
       return;
     }
 
     if (spinner) spinner.classList.remove("hidden");
-    console.log("🔍 Buscando dirección:", direccion);
+    console.log("🔍 Buscando dirección (NUEVO):", direccion);
 
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ", Córdoba, Argentina")}&addressdetails=1&limit=5`)
       .then(r => r.json())
       .then(data => {
         if (!Array.isArray(data) || data.length === 0) {
-          mostrarAlerta("No se encontraron resultados.", "Intente con otra dirección.");
+          Swal.fire({ icon: "error", title: "No se encontraron resultados.", text: "Intente con otra dirección." });
           return;
         }
 
-        const resultado = data.find(entry =>
-          (entry.address.city === "Córdoba" || entry.address.town === "Córdoba") &&
-          entry.address.state === "Córdoba"
-        ) || data[0];
-
-        const lat = parseFloat(resultado.lat);
-        const lon = parseFloat(resultado.lon);
+        const r0 = data[0];
+        const lat = parseFloat(r0.lat);
+        const lon = parseFloat(r0.lon);
 
         actualizarMarcador(lat, lon, direccion, esUbicacionValida(lat, lon));
-        console.log("📌 Dirección validada:", direccion);
+        console.log("📌 Dirección validada (NUEVO):", direccion);
       })
-      .catch(error => {
-        console.error("❌ Error en la búsqueda de dirección:", error);
-        mostrarAlerta("Error de conexión", "Hubo un error en la búsqueda. Intente nuevamente.");
+      .catch(err => {
+        console.error("❌ Error búsqueda (NUEVO):", err);
+        Swal.fire({ icon: "error", title: "Error de conexión", text: "Hubo un error en la búsqueda. Intente nuevamente." });
       })
       .finally(() => {
         if (spinner) spinner.classList.add("hidden");
@@ -134,25 +134,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const tipoEnvio = document.querySelector("input[name='tipo-envio']:checked")?.value;
     if (!tipoEnvio) {
-      mostrarAlerta("Seleccione un tipo de envío", "Debe elegir una opción de envío antes de continuar.");
+      Swal.fire({ icon: "error", title: "Seleccione un tipo de envío", text: "Debe elegir una opción de envío antes de continuar." });
       return;
     }
 
     const direccion = inputDireccion.value.trim();
     if (tipoEnvio === "delivery" && !direccion) {
-      mostrarAlerta("Ingrese una dirección", "Por favor, ingrese una dirección válida.");
+      Swal.fire({ icon: "error", title: "Ingrese una dirección", text: "Por favor, ingrese una dirección válida." });
       return;
     }
 
     const payload = {
       tipo_envio: tipoEnvio,
-      direccion: tipoEnvio === "delivery" ? direccion : direccionLocal
+      direccion: tipoEnvio === "delivery" ? direccion : direccionLocal,
     };
 
     fetch("/carrito/envio", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     })
       .then(r => r.json())
       .then(data => {
@@ -163,13 +163,13 @@ document.addEventListener("DOMContentLoaded", function () {
             text: `Tiene la dirección "${data.direccionExistente}" predefinida. ¿Desea cambiarla por "${data.direccionNueva}"?`,
             showCancelButton: true,
             confirmButtonText: "Sí, actualizar",
-            cancelButtonText: "No, mantener"
+            cancelButtonText: "No, mantener",
           }).then(result => {
             if (result.isConfirmed) {
               fetch("/carrito/envio/actualizar", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ direccion: data.direccionNueva })
+                body: JSON.stringify({ direccion: data.direccionNueva }),
               })
                 .then(r => r.json())
                 .then(u => {
@@ -186,23 +186,12 @@ document.addEventListener("DOMContentLoaded", function () {
           window.location.href = "/carrito/confirmarDatos";
         }
       })
-      .catch(() => mostrarAlerta("Error", "No se pudo conectar con el servidor."));
+      .catch(() => Swal.fire({ icon: "error", title: "Error", text: "No se pudo conectar con el servidor." }));
   });
-
-  function mostrarAlerta(titulo, mensaje) {
-    Swal.fire({
-      icon: "error",
-      title: titulo,
-      text: mensaje,
-      confirmButtonText: "Aceptar"
-    });
-  }
 
   // Estado inicial
   mapaContainer.classList.add("hidden");
   datosEnvio.classList.add("hidden");
   if (infoRetiroLocal) infoRetiroLocal.classList.add("hidden");
   if (spinner) spinner.classList.add("hidden");
-
-  console.log("✅ Inicialización del script completada.");
 });

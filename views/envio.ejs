@@ -11,18 +11,23 @@
           <i class="fas fa-shopping-cart"></i>
           <span>CARRITO</span>
         </div>
+
         <div class="barra activa"></div>
+
         <div class="paso activo">
           <i class="fas fa-truck"></i>
           <span>ENVÍO</span>
         </div>
+
         <div class="barra"></div>
+
         <div class="paso">
           <i class="fas fa-check-circle"></i>
           <span>CONFIRMAR DATOS</span>
-          <div class="barra"></div>
         </div>
+
         <div class="barra"></div>
+
         <div class="paso">
           <i class="fas fa-credit-card"></i>
           <span>PAGO</span>
@@ -74,13 +79,11 @@
   <%- include ./layouts/footer.ejs %>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-pip/1.1.0/leaflet-pip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       fetch("/carrito/envio")
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
           if (data.direccion) {
             document.getElementById("direccion-guardada").textContent = data.direccion;
@@ -90,6 +93,6 @@
     });
   </script>
 
-  <!-- ✅ SIEMPRE ÚLTIMO -->
-  <script src="/js/envio.js"></script>
+  <!-- ✅ ÚLTIMO + cache-busting -->
+  <script src="/js/envio.js?v=20260108-1"></script>
 </body>
