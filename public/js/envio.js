@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const ubicacionLocal = { lat: -31.407473534930432, lng: -64.18164561932392 };
 
   // Ajustá hasta que te coincida con circunvalación
-  const RADIO_CIRCUNVALACION_M = 5000; 
+  const RADIO_CIRCUNVALACION_M = 5800; 
   function inicializarMapa() {
     if (mapa) return;
 
