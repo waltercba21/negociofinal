@@ -2,99 +2,94 @@
 <%- include ./layouts/header.ejs %>
 
 <body>
-    <main class="carrito-container">
-        <h1>🚚 Seleccionar Envío</h1>
-        
-        <div class="progreso-compra">
+  <main class="carrito-container">
+    <h1>🚚 Seleccionar Envío</h1>
 
-            <div class="paso-container">
-
-                <div class="paso completado">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>CARRITO</span>
-                </div>
-                <div class="barra activa"></div>
-                <div class="paso activo">
-                    <i class="fas fa-truck"></i>
-                    <span>ENVÍO</span>
-                </div>
-                <div class="barra"></div>
-                <div class="paso">
-                    <i class="fas fa-check-circle"></i>
-                    <span>CONFIRMAR DATOS</span>
-                <div class="barra"></div>
-                </div>
-                <div class="barra"></div>
-                <div class="paso">
-                    <i class="fas fa-credit-card"></i>
-                    <span>PAGO</span>
-                </div>
-                
-            </div>
-
+    <div class="progreso-compra">
+      <div class="paso-container">
+        <div class="paso completado">
+          <i class="fas fa-shopping-cart"></i>
+          <span>CARRITO</span>
         </div>
-
-        <div class="envio-opciones">
-            <label class="opcion-envio">
-  <input type="radio" name="tipo-envio" value="local">
-  <i class="fas fa-store"></i> Retiro por el local
-  <small style="display:block;opacity:.8;">Igualdad 88, Centro, Córdoba</small>
-</label>
-
-
-            <!-- ✅ NUEVO: mostrar dirección del local -->
-            <div id="info-retiro-local" class="hidden">
-                <p>📍 Dirección del local: <strong>Igualdad 88, Centro, Córdoba</strong></p>
-            </div>
-        
-            <label class="opcion-envio">
-                <input type="radio" name="tipo-envio" value="delivery">
-                <i class="fas fa-motorcycle"></i> Envío Delivery
-            </label>
-
-            <div id="direccion-predefinida" class="hidden">
-                <p>📍 Tiene la dirección <span id="direccion-guardada"></span> predefinida para la entrega.</p>
-            </div>
-           
-            <!-- Contenedor del spinner con la leyenda -->
-            <div id="spinner">
-                <div class="spinner"></div>
-                <p id="spinner-text">BUSCANDO...</p>
-            </div>
-
-            <div id="datos-envio" class="hidden">
-                <input type="text" id="direccion" placeholder="Escriba su dirección">
-                <button id="buscar-direccion">Buscar</button>
-            </div>
-
-        
-        <div id="mapa-container" class="hidden">
-            <h3>📍 Ubicación</h3>
-            <div id="mapa" style="height: 400px;"></div>
+        <div class="barra activa"></div>
+        <div class="paso activo">
+          <i class="fas fa-truck"></i>
+          <span>ENVÍO</span>
         </div>
-
-        <div> 
-            <button id="continuar-pago" class="btn-finalizar">Continuar con el Pago</button>
+        <div class="barra"></div>
+        <div class="paso">
+          <i class="fas fa-check-circle"></i>
+          <span>CONFIRMAR DATOS</span>
+          <div class="barra"></div>
         </div>
-        
-    </main>
+        <div class="barra"></div>
+        <div class="paso">
+          <i class="fas fa-credit-card"></i>
+          <span>PAGO</span>
+        </div>
+      </div>
+    </div>
 
-    <%- include ./layouts/footer.ejs %>
-    <script src="/js/envio.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-pip/1.1.0/leaflet-pip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
-    <script>
-         document.addEventListener("DOMContentLoaded", function () {
-            fetch("/carrito/envio")
-            .then(response => response.json())
-            .then(data => {
-                if (data.direccion) {
-                    document.getElementById("direccion-guardada").textContent = data.direccion;
-                    document.getElementById("direccion-predefinida").classList.remove("hidden");
-                }
-            });
+    <div class="envio-opciones">
+      <label class="opcion-envio">
+        <input type="radio" name="tipo-envio" value="local">
+        <i class="fas fa-store"></i> Retiro por el local
+        <small style="display:block;opacity:.8;">Igualdad 88, Centro, Córdoba</small>
+      </label>
+
+      <div id="info-retiro-local" class="hidden">
+        <p>📍 Dirección del local: <strong>Igualdad 88, Centro, Córdoba</strong></p>
+      </div>
+
+      <label class="opcion-envio">
+        <input type="radio" name="tipo-envio" value="delivery">
+        <i class="fas fa-motorcycle"></i> Envío Delivery
+      </label>
+
+      <div id="direccion-predefinida" class="hidden">
+        <p>📍 Tiene la dirección <span id="direccion-guardada"></span> predefinida para la entrega.</p>
+      </div>
+
+      <div id="spinner" class="hidden">
+        <div class="spinner"></div>
+        <p id="spinner-text">BUSCANDO...</p>
+      </div>
+
+      <div id="datos-envio" class="hidden">
+        <input type="text" id="direccion" placeholder="Escriba su dirección">
+        <button id="buscar-direccion">Buscar</button>
+      </div>
+
+      <div id="mapa-container" class="hidden">
+        <h3>📍 Ubicación</h3>
+        <div id="mapa" style="height: 400px;"></div>
+      </div>
+    </div>
+
+    <div>
+      <button id="continuar-pago" class="btn-finalizar">Continuar con el Pago</button>
+    </div>
+  </main>
+
+  <%- include ./layouts/footer.ejs %>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-pip/1.1.0/leaflet-pip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+
+  <!-- ✅ SIEMPRE al final -->
+  <script src="/js/envio.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      fetch("/carrito/envio")
+        .then(response => response.json())
+        .then(data => {
+          if (data.direccion) {
+            document.getElementById("direccion-guardada").textContent = data.direccion;
+            document.getElementById("direccion-predefinida").classList.remove("hidden");
+          }
         });
-    </script>
-
+    });
+  </script>
 </body>
