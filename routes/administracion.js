@@ -15,6 +15,7 @@ var storage = multer.diskStorage({
 var upload = multer({ storage: storage });
 
 router.get('/', administracionController.administracion);
+
 router.get('/facturas', administracionController.facturas); 
 router.post('/facturas', upload.single('comprobante_pago'), administracionController.postFactura);
 router.get('/listadoFacturas', administracionController.listadoFacturas);
@@ -27,7 +28,6 @@ router.get('/facturas/proveedor', administracionController.generarPDFProveedor);
 
 router.post('/api/facturas', upload.single('comprobante_pago'), administracionController.postFactura);
 router.post('/api/factura/productos', administracionController.guardarItemsFactura);
-
 
 // API Proveedores
 router.get('/api/proveedores', administracionController.getProveedoresAPI);
@@ -49,6 +49,14 @@ router.get('/api/presupuesto/:id', administracionController.getPresupuestoById);
 // Actualizar
 router.put('/api/factura/:id', administracionController.actualizarFactura);
 router.put('/api/presupuesto/:id', administracionController.actualizarPresupuesto);
+
+// ✅ NOTAS DE CRÉDITO (A)
+router.post('/api/notas-credito', administracionController.postNotaCredito);
+router.get('/api/notas-credito', administracionController.listarNotasCreditoAPI);
+router.get('/api/notas-credito/:id', administracionController.getNotaCreditoByIdAPI);
+router.put('/api/notas-credito/:id', administracionController.actualizarNotaCredito);
+router.delete('/api/notas-credito/:id', administracionController.eliminarNotaCredito);
+router.get('/api/verificar-nota-credito-duplicada', administracionController.verificarNotaCreditoDuplicadaAPI);
 
 // ✅ Estas primero
 router.get('/pdf/resumen/facturas', administracionController.generarResumenFacturasPDF);
@@ -98,6 +106,5 @@ router.get('/api/modelos', administracionController.getModelos);
 router.post('/api/modelos', administracionController.crearModelo);
 router.put('/api/modelos/:id', administracionController.editarModelo);
 router.delete('/api/modelos/:id', administracionController.eliminarModelo);
-
 
 module.exports = router;

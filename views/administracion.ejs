@@ -587,6 +587,74 @@
         </div>
       </div>
 
+      <!-- =============== NOTAS DE CRÉDITO =============== -->
+<section class="panel-notas-credito af-card" data-af="notas-credito">
+  <h5 class="af-card__title">Registrar Nota de Crédito</h5>
+
+  <div class="mb-3">
+    <label for="notaCreditoProveedor" class="form-label">Proveedor</label>
+    <select id="notaCreditoProveedor" class="form-select">
+      <option value="">Seleccionar proveedor...</option>
+      <% proveedores.forEach(p => { %>
+        <option value="<%= p.id %>"><%= p.nombre %></option>
+      <% }) %>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="notaCreditoFecha" class="form-label">Fecha Nota de Crédito</label>
+    <input type="date" id="notaCreditoFecha" class="form-control">
+  </div>
+
+  <div class="mb-3">
+    <label for="notaCreditoNumero" class="form-label">Número de Nota de Crédito</label>
+    <input type="text" id="notaCreditoNumero" class="form-control" placeholder="Ej: 001-00001234">
+  </div>
+
+  <div class="mb-3">
+    <label for="notaCreditoFacturaNumero" class="form-label">Corresponde a Factura Nº</label>
+    <input type="text" id="notaCreditoFacturaNumero" class="form-control" placeholder="Ej: 001-00005678">
+  </div>
+
+  <div class="mb-3">
+    <label for="notaCreditoTipo" class="form-label">Tipo de Nota de Crédito</label>
+    <select id="notaCreditoTipo" class="form-select">
+      <option value="">Seleccionar tipo...</option>
+      <option value="descuento">Por descuento</option>
+      <option value="devolucion_mercaderia">Por devolución de mercadería</option>
+      <option value="diferencia_precio">Por diferencia de precio</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="notaCreditoIVA" class="form-label">IVA</label>
+    <select id="notaCreditoIVA" class="form-select">
+      <option value="">Seleccionar IVA...</option>
+      <option value="21">21%</option>
+      <option value="10.5">10.5%</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="notaCreditoImporteTotal" class="form-label">Importe total (con IVA)</label>
+    <input type="number" step="0.01" id="notaCreditoImporteTotal" class="form-control">
+  </div>
+
+  <div class="mb-3">
+    <label for="notaCreditoAdministrador" class="form-label">Administrador</label>
+    <select id="notaCreditoAdministrador" class="form-select" required>
+      <option value="">Seleccionar administrador...</option>
+      <option value="GERARDO">GERARDO</option>
+      <option value="CHACHO">CHACHO</option>
+      <option value="WALTER">WALTER</option>
+    </select>
+  </div>
+
+  <div class="d-flex justify-content-end mt-3">
+    <button id="btnGuardarNotaCredito" class="btn btn-success">Guardar Nota de Crédito</button>
+  </div>
+</section>
+
       <!-- =============== PRESUPUESTOS =============== -->
       <section class="panel-presupuestos af-card" data-af="presupuestos">
         <h5 class="af-card__title">Registrar Presupuesto</h5>
@@ -808,5 +876,7 @@
   <script src="/js/presupuestosAdministracion.js"></script>
   <script src="/js/listadosDocumentos.js"></script>
   <script src="/js/catalogosAdmin.js"></script>
+  <script src="/js/notasCreditoAdministracion.js"></script>
+
 
 </body>

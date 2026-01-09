@@ -1304,6 +1304,136 @@ actualizarModelo : function(id, { nombre, marca_id }, callback) {
 eliminarModelo : function(id, callback) {
   pool.query('DELETE FROM modelos WHERE id = ?', [id], callback);
 },
+// ================== NOTAS DE CRÉDITO (A) ==================
+insertNotaCredito: function (nota, callback) {
+  const {
+    id_proveedor,
+    fecha,
+    numero_nota_credito,
+    numero_factura,
+    tipo,            // 'descuento' | 'devolucion_mercaderia' | 'diferencia_precio'
+    iva,             // '21' | '10.5'
+    importe_total,
+    id_factura       // opcional (si existe la columna)
+  } = nota;
+
+  const datos = {
+    id_proveedor,
+    fecha,
+    numero_nota_credito,
+    numero_factura,
+    tipo,
+    iva,
+    importe_total
+  };
+
+  // Solo lo manda si viene (y si tu tabla tiene esa columna)
+  if (id_factura !== undefined && id_factura !== null && id_factura !== '') {
+    datos.id_factura = id_factura;
+  }
+
+  pool.query('INSERT INTO notas_credito SET ?', datos, function (err, results) {
+    if (err) return callback(err);
+    callback(null, { insertId: results.insertId });
+  });
+},
+
+getNotasCredito: function (callback) {
+  const sql = `
+    SELECT nc.*, p.nombre AS nombre_proveedor
+    FROM notas_credito nc
+    LEFT JOIN proveedores p ON p.id = nc.id_proveedor
+    ORDER BY nc.fecha DESC, nc.id DESC
+    LIMIT 500
+  `;
+  pool.query(sql, callback);
+},
+
+getNotaCreditoById: function (id, callback) {
+  const sql = `
+    SELECT nc.*, p.nombre AS nombre_proveedor
+    FROM notas_credito nc
+    LEFT JOIN proveedores p ON p.id = nc.id_proveedor
+    WHERE nc.id = ?
+    LIMIT 1
+  `;
+  pool.query(sql, [id], (err, rows) => {
+    if (err) return callback(err);
+    callback(null, rows?.[0] || null);
+  });
+},
+
+updateNotaCreditoById: function (id, datos, callback) {
+  const {
+    id_proveedor,
+    fecha,
+    numero_nota_credito,
+    numero_factura,
+    tipo,
+    iva,
+    importe_total,
+    id_factura // opcional
+  } = datos;
+
+  const campos = {
+    id_proveedor,
+    fecha,
+    numero_nota_credito,
+    numero_factura,
+    tipo,
+    iva,
+    importe_total
+  };
+
+  if (id_factura !== undefined) campos.id_factura = id_factura;
+
+  pool.query('UPDATE notas_credito SET ? WHERE id = ?', [campos, id], callback);
+},
+
+deleteNotaCreditoById: function (id, callback) {
+  pool.query('DELETE FROM notas_credito WHERE id = ?', [id], callback);
+},
+
+verificarNotaCreditoDuplicada: function (proveedorId, fecha, numeroNC, callback) {
+  const sql = `
+    SELECT id
+    FROM notas_credito
+    WHERE id_proveedor = ? AND fecha = ? AND numero_nota_credito = ?
+    LIMIT 1
+  `;
+  pool.query(sql, [proveedorId, fecha, numeroNC], callback);
+},
+
+filtrarNotasCredito: function (filtros, callback) {
+  const {
+    proveedor,
+    desde,
+    hasta,
+    condicionTipo,     // tipo
+    condicionIVA,      // iva
+    numeroNC,          // numero_nota_credito
+    numeroFactura      // numero_factura
+  } = filtros || {};
+
+  let sql = `
+    SELECT nc.*, p.nombre AS nombre_proveedor
+    FROM notas_credito nc
+    LEFT JOIN proveedores p ON p.id = nc.id_proveedor
+    WHERE 1=1
+  `;
+  const params = [];
+
+  if (proveedor && String(proveedor).trim() !== '') { sql += ' AND nc.id_proveedor = ?'; params.push(proveedor); }
+  if (desde) { sql += ' AND nc.fecha >= ?'; params.push(desde); }
+  if (hasta) { sql += ' AND nc.fecha <= ?'; params.push(hasta); }
+  if (condicionTipo && String(condicionTipo).trim() !== '') { sql += ' AND nc.tipo = ?'; params.push(condicionTipo); }
+  if (condicionIVA && String(condicionIVA).trim() !== '') { sql += ' AND nc.iva = ?'; params.push(condicionIVA); }
+  if (numeroNC && String(numeroNC).trim() !== '') { sql += ' AND nc.numero_nota_credito = ?'; params.push(numeroNC); }
+  if (numeroFactura && String(numeroFactura).trim() !== '') { sql += ' AND nc.numero_factura = ?'; params.push(numeroFactura); }
+
+  sql += ' ORDER BY nc.fecha DESC, nc.id DESC LIMIT 500';
+  pool.query(sql, params, callback);
+},
 
 
 

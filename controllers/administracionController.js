@@ -1076,6 +1076,159 @@ eliminarModelo: (req, res) => {
     res.json({ ok: true });
   });
 },
+// ================== NOTAS DE CRÉDITO ==================
+postNotaCredito: (req, res) => {
+  const data = {
+    id_proveedor: Number(req.body.id_proveedor || 0),
+    fecha: req.body.fecha,
+    numero_nota_credito: (req.body.numero_nota_credito || '').trim(),
+    numero_factura: (req.body.numero_factura || '').trim(),
+    tipo: (req.body.tipo || '').trim(), // 'descuento' | 'devolucion_mercaderia' | 'diferencia_precio'
+    iva: (req.body.iva || '').trim(),   // '21' | '10.5'
+    importe_total: parseFloat(req.body.importe_total || 0) || 0
+  };
+
+  // opcional si lo mandás desde el front y tu tabla lo tiene
+  if (req.body.id_factura !== undefined && req.body.id_factura !== null && req.body.id_factura !== '') {
+    data.id_factura = Number(req.body.id_factura);
+  }
+
+  const tiposValidos = ['descuento', 'devolucion_mercaderia', 'diferencia_precio'];
+  const ivasValidos = ['21', '10.5'];
+
+  if (!data.id_proveedor || !data.fecha || !data.numero_nota_credito || !data.numero_factura) {
+    return res.status(400).json({ error: 'Faltan datos obligatorios' });
+  }
+  if (!tiposValidos.includes(data.tipo)) {
+    return res.status(400).json({ error: 'Tipo de nota de crédito inválido' });
+  }
+  if (!ivasValidos.includes(data.iva)) {
+    return res.status(400).json({ error: 'IVA inválido' });
+  }
+  if (!(data.importe_total > 0)) {
+    return res.status(400).json({ error: 'El importe total debe ser mayor a 0' });
+  }
+
+  // (opcional) chequeo duplicado
+  if (typeof administracion.verificarNotaCreditoDuplicada === 'function') {
+    administracion.verificarNotaCreditoDuplicada(
+      data.id_proveedor,
+      data.fecha,
+      data.numero_nota_credito,
+      (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Error al verificar duplicado' });
+        if (rows && rows.length > 0) return res.status(409).json({ error: 'Nota de crédito duplicada' });
+
+        administracion.insertNotaCredito(data, (a, b) => {
+          // soporta ambos estilos de callback (por si lo dejaste como en facturas o como en mi snippet)
+          const errIns = (a && a.code) ? a : (b && b.code) ? b : null;
+          if (errIns) {
+            console.error('❌ Error al insertar nota de crédito:', errIns);
+            return res.status(500).json({ error: 'Error al crear nota de crédito' });
+          }
+          const insertId =
+            (a && a.insertId) ? a.insertId :
+            (b && b.insertId) ? b.insertId :
+            (typeof a === 'number') ? a :
+            (typeof b === 'number') ? b :
+            null;
+
+          return res.json({ message: 'Nota de crédito creada exitosamente', insertId });
+        });
+      }
+    );
+  } else {
+    administracion.insertNotaCredito(data, (err, info) => {
+      if (err) {
+        console.error('❌ Error al insertar nota de crédito:', err);
+        return res.status(500).json({ error: 'Error al crear nota de crédito' });
+      }
+      res.json({ message: 'Nota de crédito creada exitosamente', insertId: info?.insertId || null });
+    });
+  }
+},
+
+listarNotasCreditoAPI: (req, res) => {
+  const filtros = {
+    proveedor: req.query.proveedor || '',
+    desde: req.query.desde || null,
+    hasta: req.query.hasta || null,
+    condicionTipo: req.query.tipo || '',
+    condicionIVA: req.query.iva || '',
+    numeroNC: req.query.numeroNC || '',
+    numeroFactura: req.query.numeroFactura || ''
+  };
+
+  const hayFiltros = Object.values(filtros).some(v => v !== null && String(v).trim() !== '');
+
+  const fn = (hayFiltros && typeof administracion.filtrarNotasCredito === 'function')
+    ? administracion.filtrarNotasCredito
+    : administracion.getNotasCredito;
+
+  if (!fn) return res.status(500).json({ error: 'Modelo de notas de crédito no disponible' });
+
+  if (fn === administracion.filtrarNotasCredito) {
+    return fn.call(administracion, filtros, (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Error al listar notas de crédito' });
+      res.json(rows || []);
+    });
+  }
+
+  fn.call(administracion, (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Error al listar notas de crédito' });
+    res.json(rows || []);
+  });
+},
+
+getNotaCreditoByIdAPI: (req, res) => {
+  const id = req.params.id;
+  administracion.getNotaCreditoById(id, (err, nota) => {
+    if (err) return res.status(500).json({ error: 'Error al buscar nota de crédito' });
+    if (!nota) return res.status(404).json({ error: 'Nota de crédito no encontrada' });
+    res.json(nota);
+  });
+},
+
+actualizarNotaCredito: (req, res) => {
+  const id = req.params.id;
+
+  const datos = {
+    id_proveedor: Number(req.body.id_proveedor || 0),
+    fecha: req.body.fecha,
+    numero_nota_credito: (req.body.numero_nota_credito || '').trim(),
+    numero_factura: (req.body.numero_factura || '').trim(),
+    tipo: (req.body.tipo || '').trim(),
+    iva: (req.body.iva || '').trim(),
+    importe_total: parseFloat(req.body.importe_total || 0) || 0
+  };
+
+  if (req.body.id_factura !== undefined) datos.id_factura = req.body.id_factura === '' ? null : Number(req.body.id_factura);
+
+  administracion.updateNotaCreditoById(id, datos, (err) => {
+    if (err) return res.status(500).json({ error: 'Error al actualizar nota de crédito' });
+    res.json({ message: 'Nota de crédito actualizada correctamente' });
+  });
+},
+
+eliminarNotaCredito: (req, res) => {
+  const id = req.params.id;
+  administracion.deleteNotaCreditoById(id, (err) => {
+    if (err) return res.status(500).json({ error: 'Error al eliminar nota de crédito' });
+    res.json({ message: 'Nota de crédito eliminada correctamente' });
+  });
+},
+
+verificarNotaCreditoDuplicadaAPI: (req, res) => {
+  const { proveedor, fecha, numero } = req.query;
+  if (!proveedor || !fecha || !numero) {
+    return res.status(400).json({ error: 'Faltan parámetros' });
+  }
+
+  administracion.verificarNotaCreditoDuplicada(proveedor, fecha, numero, (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Error al verificar duplicado' });
+    res.json({ existe: (rows || []).length > 0 });
+  });
+},
 
 
 }
