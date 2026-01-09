@@ -72,7 +72,15 @@ app.use((req, res, next) => {
 
   res.locals.cantidadCarrito = 0; // <- para que header.ejs nunca rompa
   next();
-});
+});express.static
+app.use('/js', express.static(path.join(__dirname, 'public/js'), {
+  etag: true,
+  lastModified: true,
+  maxAge: '0', // o '5m' si querés algo de cache
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-cache');
+  }
+}));
 
 
 // --- Rutas ---
