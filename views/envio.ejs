@@ -50,6 +50,15 @@
         <input type="radio" name="tipo-envio" value="delivery">
         <i class="fas fa-motorcycle"></i> Envío Delivery
       </label>
+      <!-- Badge estilo Uber (sin mostrar costo aún) -->
+<div id="uber-badge" class="uber-badge hidden" title="Envío por Uber">
+  <span class="uber-dot"></span> UBER
+</div>
+
+<!-- Costo: oculto hasta que valide dirección -->
+<div id="delivery-costo" class="delivery-costo hidden">
+  Envío por Uber: <strong id="delivery-costo-valor"></strong>
+</div>
 
       <div id="direccion-predefinida" class="hidden">
         <p>📍 Tiene la dirección <span id="direccion-guardada"></span> predefinida para la entrega.</p>
