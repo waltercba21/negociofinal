@@ -1,7 +1,5 @@
 (() => {
   function getAdminPrefix() {
-    // Si el router está montado en /administracion, esto arma bien las URLs.
-    // Si no lo está, queda sin prefijo.
     return window.location.pathname.startsWith('/administracion') ? '/administracion' : '';
   }
 
@@ -43,21 +41,23 @@
         importe_total: Number.parseFloat(importeEl?.value || '0') || 0
       };
 
-      // Validaciones mínimas
       if (!data.id_proveedor || !data.fecha || !data.numero_nota_credito || !data.numero_factura) {
         alert('Faltan datos obligatorios.');
         return;
       }
+
       const tiposValidos = ['descuento', 'devolucion_mercaderia', 'diferencia_precio'];
       if (!tiposValidos.includes(data.tipo)) {
         alert('Tipo de nota de crédito inválido.');
         return;
       }
+
       const ivasValidos = ['21', '10.5'];
       if (!ivasValidos.includes(data.iva)) {
         alert('IVA inválido.');
         return;
       }
+
       if (!(data.importe_total > 0)) {
         alert('El importe total debe ser mayor a 0.');
         return;
@@ -69,7 +69,7 @@
         btn.disabled = true;
         btn.textContent = 'Guardando...';
 
-        // Chequeo duplicado (si existe el endpoint)
+        // (opcional) chequeo duplicado (si existe endpoint)
         try {
           const q = new URLSearchParams({
             proveedor: String(data.id_proveedor),
@@ -89,19 +89,27 @@
               return;
             }
           }
-          // si no ok, lo ignoramos para no bloquear el guardado
         } catch {
-          // ignorar si falla
+          // no bloquear el guardado
         }
 
-        // Crear
+        // ✅ ENVIAR COMO FORM URLENCODED (compat con express.urlencoded)
+        const body = new URLSearchParams();
+        body.set('id_proveedor', String(data.id_proveedor));
+        body.set('fecha', data.fecha);
+        body.set('numero_nota_credito', data.numero_nota_credito);
+        body.set('numero_factura', data.numero_factura);
+        body.set('tipo', data.tipo);
+        body.set('iva', data.iva);
+        body.set('importe_total', String(data.importe_total));
+
         const res = await fetch(`${prefix}/api/notas-credito`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Accept': 'application/json'
           },
-          body: JSON.stringify(data)
+          body: body.toString()
         });
 
         if (!res.ok) {
@@ -113,14 +121,13 @@
         const out = await res.json().catch(() => ({}));
         alert(out?.message || 'Nota de crédito creada exitosamente.');
 
-        // Reset básico
+        // reset
         if (fechaEl) fechaEl.value = '';
         if (numeroEl) numeroEl.value = '';
         if (facturaNumeroEl) facturaNumeroEl.value = '';
         if (tipoEl) tipoEl.value = '';
         if (ivaEl) ivaEl.value = '';
         if (importeEl) importeEl.value = '';
-        // proveedor lo dejo seleccionado a propósito
       } catch (err) {
         console.error(err);
         alert('Error al guardar la Nota de Crédito.');
