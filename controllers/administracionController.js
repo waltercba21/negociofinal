@@ -605,7 +605,24 @@ guardarItemsPresupuesto: async (req, res) => {
   }
 },
 listarDocumentos: (req, res) => {
-  const { tipo, proveedor, fechaDesde, fechaHasta, condicion, numero } = req.query;
+  const { tipo } = req.query;
+
+  // ✅ Si piden Notas de Crédito, usar el endpoint correcto
+  if (tipo === 'nota_credito') {
+    // Adaptamos los nombres de query del buscador (documentos) -> (notas-credito)
+    req.query.proveedor = req.query.proveedor || '';
+    req.query.desde = req.query.fechaDesde || null;
+    req.query.hasta = req.query.fechaHasta || null;
+
+    // El buscador tiene solo "numero": lo mapeamos a numeroNC
+    req.query.numeroNC = (req.query.numero || '').trim();
+    req.query.numeroFactura = ''; // si luego agregás campo, lo conectamos
+
+    return module.exports.listarNotasCreditoAPI(req, res);
+  }
+
+  // ✅ Si no, sigue como siempre (facturas/presupuestos)
+  const { proveedor, fechaDesde, fechaHasta, condicion, numero } = req.query;
 
   administracion.obtenerDocumentosFiltrados(
     tipo,
@@ -619,11 +636,11 @@ listarDocumentos: (req, res) => {
         console.error('❌ Error en listarDocumentos:', err);
         return res.status(500).json({ error: 'Error al obtener documentos' });
       }
-
       res.json(resultados);
     }
   );
 },
+
 getFacturaById: (req, res) => {
   administracion.obtenerFacturaPorId(req.params.id, (err, datos) => {
     if (err) return res.status(500).json({ error: 'Error al buscar factura' });

@@ -756,37 +756,49 @@ editarPresupuesto: function (id, datos, callback) {
 obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, condicion, numero, callback) {
   const filtrosFactura = [];
   const filtrosPresupuesto = [];
+  const filtrosNC = [];
 
-  if (proveedor && proveedor.trim() !== '') {
+  // -------- proveedor --------
+  if (proveedor && String(proveedor).trim() !== '') {
     filtrosFactura.push(`f.id_proveedor = ${pool.escape(proveedor)}`);
     filtrosPresupuesto.push(`pz.id_proveedor = ${pool.escape(proveedor)}`);
+    filtrosNC.push(`nc.id_proveedor = ${pool.escape(proveedor)}`);
   }
 
-  if (condicion && condicion.trim() !== '') {
+  // -------- condicion (NC no tiene) --------
+  if (condicion && String(condicion).trim() !== '') {
     filtrosFactura.push(`f.condicion = ${pool.escape(condicion)}`);
     filtrosPresupuesto.push(`pz.condicion = ${pool.escape(condicion)}`);
+    // NC: no aplica
   }
 
+  // -------- fechas --------
   if (fechaDesde) {
     filtrosFactura.push(`f.fecha >= ${pool.escape(fechaDesde)}`);
     filtrosPresupuesto.push(`pz.fecha >= ${pool.escape(fechaDesde)}`);
+    filtrosNC.push(`nc.fecha >= ${pool.escape(fechaDesde)}`);
   }
 
   if (fechaHasta) {
     filtrosFactura.push(`f.fecha <= ${pool.escape(fechaHasta)}`);
     filtrosPresupuesto.push(`pz.fecha <= ${pool.escape(fechaHasta)}`);
+    filtrosNC.push(`nc.fecha <= ${pool.escape(fechaHasta)}`);
   }
 
-  if (numero && numero.trim() !== '') {
+  // -------- numero --------
+  if (numero && String(numero).trim() !== '') {
     filtrosFactura.push(`f.numero_factura = ${pool.escape(numero)}`);
     filtrosPresupuesto.push(`pz.numero_presupuesto = ${pool.escape(numero)}`);
+    filtrosNC.push(`nc.numero_nota_credito = ${pool.escape(numero)}`);
   }
 
   const whereFactura = filtrosFactura.length ? `WHERE ${filtrosFactura.join(' AND ')}` : '';
   const wherePresupuesto = filtrosPresupuesto.length ? `WHERE ${filtrosPresupuesto.join(' AND ')}` : '';
+  const whereNC = filtrosNC.length ? `WHERE ${filtrosNC.join(' AND ')}` : '';
 
   const consultas = [];
 
+  // FACTURAS
   if (!tipo || tipo === 'factura') {
     consultas.push(`
       SELECT 
@@ -804,6 +816,7 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
     `);
   }
 
+  // PRESUPUESTOS
   if (!tipo || tipo === 'presupuesto') {
     consultas.push(`
       SELECT 
@@ -821,7 +834,32 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
     `);
   }
 
-  const sqlFinal = consultas.join(' UNION ALL ') + ' ORDER BY fecha_pago ASC';
+  // NOTAS DE CRÉDITO
+  if (!tipo || tipo === 'nota_credito') {
+    consultas.push(`
+      SELECT
+        'nota_credito' AS tipo,
+        nc.id,
+        nc.numero_nota_credito AS numero,
+        nc.fecha,
+        NULL AS fecha_pago,
+        NULL AS condicion,
+        nc.importe_total AS importe,
+        COALESCE(pn.nombre, 'SIN PROVEEDOR') AS nombre_proveedor
+      FROM notas_credito nc
+      LEFT JOIN proveedores pn ON pn.id = nc.id_proveedor
+      ${whereNC}
+    `);
+  }
+
+  // ✅ evita SQL inválida si tipo no coincide con nada
+  if (!consultas.length) return callback(null, []);
+
+  // ✅ Orden compatible con los 3 (NC no tiene fecha_pago)
+  const sqlFinal = `
+    ${consultas.join(' UNION ALL ')}
+    ORDER BY fecha DESC, id DESC
+  `;
 
   pool.query(sqlFinal, callback);
 },
