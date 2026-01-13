@@ -1,8 +1,9 @@
+<body class="body-index">  
 <% var pageCss = '/css/pages/index.css' %>
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
 
-  <body class="body-index">  
+  
     <main>
       <div class="peliculas-recomendadas contenedor">
           <div class="contenedor-principal">
@@ -88,8 +89,8 @@
                           </div>
                       </div>
                   </div>
-                  <button role="button" id="flecha-derecha" class="flecha-derecha"><i class="fa-solid fa-angle-right"></i></button>
               </div>
+              <button role="button" id="flecha-derecha" class="flecha-derecha"><i class="fa-solid fa-angle-right"></i></button>
           </div>
       </div>
   
@@ -178,28 +179,5 @@
     
     <%- include ./layouts/footer.ejs %>
     <script src="js/index.js"></script> 
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-  const contenedor = document.querySelector(".contenedor-productos-ultimos");
-  const tarjetas = document.querySelectorAll(".card-ultimo");
-
-  if (window.innerWidth <= 768 && tarjetas.length > 1) {
-    let index = 0;
-    const total = tarjetas.length;
-
-    // Asegura que cada tarjeta tenga ancho completo
-    tarjetas.forEach((tarjeta) => {
-      tarjeta.style.minWidth = "100%";
-    });
-
-    // Desliza automáticamente cada 4 segundos
-    setInterval(() => {
-      index = (index + 1) % total;
-      contenedor.style.transform = `translateX(-${index * 100}%)`;
-    }, 4000);
-  }
-});
-      </script>
-      
 </body>
 </html>

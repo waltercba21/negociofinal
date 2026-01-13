@@ -1,210 +1,391 @@
-/* === HOME (pages/index) === */
-.body-index main{ margin-bottom:100px; }
+/* ================== HOME / INDEX (rediseño UX) ================== */
+.body-index main{ margin-bottom: 90px; }
 
-/* Bloque títulos/controles (si lo usás en Home) */
-.body-index .contenedor-titulos-controles{
-  display:flex; flex-direction:row-reverse; justify-content:space-between; align-items:end; margin-top:20px;
+/* ---------- Carrusel categorías: “peek + label visible” ---------- */
+.body-index .peliculas-recomendadas{
+  margin: 26px 0 34px;
 }
 
-/* ===== Carrusel principal ===== */
-.body-index .peliculas-recomendadas{ margin-top:50px; margin-bottom:70px; }
-.body-index .peliculas-recomendadas .contenedor-principal{ display:flex; align-items:center; position:relative; }
-.body-index .peliculas-recomendadas .contenedor-principal .flecha-izquierda,
-.body-index .peliculas-recomendadas .contenedor-principal .flecha-derecha{
-  position:absolute; border:none; background:rgba(51,51,51,.8); border-radius:10px; animation:pulsar 2s infinite;
-  height:30%; top:calc(50% - 20%); line-height:40px; width:30px; color:#ced4da; cursor:pointer; z-index:500; transition:.2s ease all;
-}
-.body-index .peliculas-recomendadas .contenedor-principal .flecha-izquierda i,
-.body-index .peliculas-recomendadas .contenedor-principal .flecha-derecha i{ font-size:30px; }
-@keyframes pulsar{ 0%{transform:scale(1);} 50%{transform:scale(1.1);} 100%{transform:scale(1);} }
-.body-index .peliculas-recomendadas .contenedor-principal .flecha-izquierda:hover,
-.body-index .peliculas-recomendadas .contenedor-principal .flecha-derecha:hover{ background:rgba(0,63,125,.8); }
-.body-index .peliculas-recomendadas .contenedor-principal .flecha-izquierda{ left:0; }
-.body-index .peliculas-recomendadas .contenedor-principal .flecha-derecha{ right:0; }
-
-.body-index .peliculas-recomendadas .contenedor-carrousel{ width:100%; padding:20px 0; overflow:hidden; scroll-behavior:smooth; }
-.body-index .peliculas-recomendadas .contenedor-carrousel .carrousel{ display:flex; flex-wrap:nowrap; }
-.body-index .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula{ min-width:35%; transition:.3s ease all; box-shadow:5px 5px 10px rgba(0,0,0,.3); }
-.body-index .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula img{ width:100%; height:100%; object-fit:cover; }
-.body-index .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula.hover{ transform:scale(1.2); transform-origin:center; }
-
-.body-index .pelicula{ position:relative; width:100%; height:50vh; background-color:#000; }
-.body-index .pelicula:hover .tarjeta-texto{ display:block; }
-.body-index .tarjeta-texto{
-  position:absolute; display:none; inset:0; background:rgba(0,0,0,.6); text-align:center; padding-top:30%;
-  font-size:40px; font-weight:900; color:#eee; transition:2000ms; cursor:pointer;
+/* contenedor del carrusel */
+.body-index .peliculas-recomendadas .contenedor-principal{
+  position: relative;
 }
 
-/* ===== Contenedor principal: Últimos + Ofertas ===== */
+/* el scroller real (tu JS usa .contenedor-carrousel para scrollLeft) */
+.body-index .peliculas-recomendadas .contenedor-carrousel{
+  position: relative;
+  width: 100%;
+  overflow-x: auto;           /* permite wheel/trackpad */
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 64px;
+  scroll-behavior: smooth;
+  padding: 12px 58px;         /* deja “peek” + espacio flechas */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.body-index .peliculas-recomendadas .contenedor-carrousel::-webkit-scrollbar{ display:none; }
+
+/* fade lateral: indica que hay más contenido (sin agregar HTML) */
+.body-index .peliculas-recomendadas .contenedor-carrousel::before,
+.body-index .peliculas-recomendadas .contenedor-carrousel::after{
+  content:"";
+  position:absolute;
+  top: 0; bottom: 0;
+  width: 58px;
+  pointer-events:none;
+  z-index: 3;
+}
+.body-index .peliculas-recomendadas .contenedor-carrousel::before{
+  left: 0;
+  background: linear-gradient(to right, rgba(255,255,255,.95), rgba(255,255,255,0));
+}
+.body-index .peliculas-recomendadas .contenedor-carrousel::after{
+  right: 0;
+  background: linear-gradient(to left, rgba(255,255,255,.95), rgba(255,255,255,0));
+}
+
+/* fila */
+.body-index .peliculas-recomendadas .contenedor-carrousel .carrousel{
+  display:flex;
+  gap: 16px;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+/* item */
+.body-index .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula{
+  position: relative;
+  flex: 0 0 clamp(280px, 52vw, 640px); /* “uncontained”: 1 grande + peek */
+  height: clamp(200px, 42vh, 520px);
+  border-radius: 22px;
+  overflow: hidden;
+  scroll-snap-align: center;
+  box-shadow: 0 16px 40px rgba(2,6,23,.18);
+  background: #0b1220;
+  transform: translateZ(0);
+  transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+}
+
+/* imagen */
+.body-index .peliculas-recomendadas .pelicula img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.03);
+  transition: transform 240ms ease;
+}
+
+/* label SIEMPRE visible (no depende de hover) */
+.body-index .peliculas-recomendadas .tarjeta-texto{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  inset: auto 0 0 0;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding: 16px 18px 18px;
+  background: linear-gradient(to top, rgba(2,6,23,.72), rgba(2,6,23,0));
+  cursor:pointer;
+  z-index: 2;
+}
+.body-index .peliculas-recomendadas .tarjeta-texto p{
+  margin:0;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: clamp(15px, 2.2vw, 26px);
+  color:#fff;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(15,23,42,.42);
+  border: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* micro-interacciones (desktop) */
+@media (hover:hover){
+  .body-index .peliculas-recomendadas .pelicula:hover{
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 22px 56px rgba(2,6,23,.22);
+  }
+  .body-index .peliculas-recomendadas .pelicula:hover img{
+    transform: scale(1.09);
+  }
+
+  /* “coverflow” suave en hover: difumina hermanos (sin JS) */
+  .body-index .peliculas-recomendadas .carrousel:has(.pelicula:hover) .pelicula{
+    filter: saturate(.92) opacity(.72);
+    transform: scale(.94);
+  }
+  .body-index .peliculas-recomendadas .carrousel:has(.pelicula:hover) .pelicula:hover{
+    filter: none;
+    opacity: 1;
+    transform: translateY(-2px) scale(1.02);
+  }
+}
+
+/* Flechas: más visibles y modernas (44x44) */
+.body-index #flecha-izquierda,
+.body-index #flecha-derecha{
+  position:absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,.12);
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 14px 34px rgba(2,6,23,.16);
+  color: #003f7d;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+.body-index #flecha-izquierda{ left: 10px; }
+.body-index #flecha-derecha{ right: 10px; }
+
+.body-index #flecha-izquierda i,
+.body-index #flecha-derecha i{ font-size: 22px; }
+
+@media (hover:hover){
+  .body-index #flecha-izquierda:hover,
+  .body-index #flecha-derecha:hover{
+    background: rgba(0,63,125,.10);
+    box-shadow: 0 18px 44px rgba(2,6,23,.20);
+    transform: translateY(-50%) scale(1.06);
+  }
+}
+
+/* ---------- Sección “Últimos” + “Ofertas”: look más premium ---------- */
 .body-index .contenedor-principal-productos{
-  display:flex; flex-direction:row; justify-content:space-between; gap:20px; margin:50px 0;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 34px 0;
 }
 
-/* --- Últimos agregados --- */
-.body-index .contenedor-ultimos{
-  flex:1; max-width:48%; display:flex; flex-direction:column; border:1px solid #ddd; border-radius:20px;
-  box-shadow:0 4px 8px rgba(0,0,0,.5); padding:10px; position:relative; margin-right:20px; background:#fff; overflow:hidden;
-}
-.body-index .titulo-ultimos{ text-align:center; color:#003f7d; font-weight:bold; font-size:20px; margin-bottom:15px; }
-.body-index .contenedor-productos-ultimos{
-  display:flex; flex-wrap:wrap; justify-content:center; gap:40px; margin:0 auto; transition:transform .3s ease;
-}
-.body-index .card-ultimo{
-  flex:0 0 auto; width:100%; max-width:150px; margin:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.2); transition:transform .3s ease, box-shadow .3s ease;
-  display:flex; flex-direction:column; justify-content:space-between; background:#fff; border-radius:10px; overflow:hidden;
-}
-.body-index .card-ultimo:hover{ transform:translateY(-3px); box-shadow:0 6px 12px rgba(0,0,0,.3); }
-.body-index .cover-card-ultimo{ width:100%; height:160px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-.body-index .cover-card-ultimo img{ max-width:100%; max-height:100%; object-fit:contain; }
-.body-index .titulo-producto-ultimo{ display:flex; justify-content:center; align-items:center; min-height:40px; padding:0 5px; text-align:center; }
-.body-index .nombre-ultimo{
-  font-size:13px; font-weight:bold; color:#003f7d; line-height:1.2; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
-  line-clamp:3; overflow:hidden; text-overflow:ellipsis; height:3.6em;
-}
-.body-index .categoria-producto-ultimo{ display:flex; justify-content:center; align-items:center; }
-.body-index .categoria-ultimo{ font-size:10px; font-weight:bold; color:#1f487e; margin:4px 0; }
-.body-index .precio-producto-ultimo{ display:flex; justify-content:center; align-items:center; }
-.body-index .precio-ultimo{ font-weight:bold; font-size:14px; color:#d90429; margin:0; }
-
-/* --- Ofertas carrusel --- */
+/* cajas */
+.body-index .contenedor-ultimos,
 .body-index .contenedor-ofertas{
-  flex:1; max-width:48%; display:flex; flex-direction:column; border:1px solid #ddd; border-radius:20px;
-  box-shadow:0 4px 8px rgba(0,0,0,.5); padding:10px; position:relative; margin-right:20px; background:#fff;
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 22px;
+  box-shadow: 0 16px 44px rgba(2,6,23,.12);
+  padding: 14px;
+  overflow:hidden;
 }
-.body-index .ofertas-productos h2{
-  text-align:center; color:#003f7d; font-weight:bold; font-size:20px; margin-bottom:15px;
-}
-.body-index .card-oferta{
-  flex:0 0 auto; width:100%; max-width:150px; margin:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.2); transition:.3s; display:flex; flex-direction:column; justify-content:space-between;
-  background:#fff; border-radius:10px; overflow:hidden;
-}
-.body-index .cover-card-oferta{ height:160px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-.body-index .cover-card-oferta img{ max-width:100%; max-height:100%; object-fit:contain; }
-.body-index .titulo-producto-oferta{ display:flex; justify-content:center; align-items:center; min-height:40px; padding:0 5px; text-align:center; }
-.body-index .titulo-producto-oferta h3{
-  font-size:13px; font-weight:bold; color:#003f7d; line-height:1.2;
-  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; line-clamp:3; overflow:hidden; text-overflow:ellipsis; height:3.6em; margin:0;
-}
-.body-index .categoria-producto-oferta{ display:flex; justify-content:center; align-items:center; }
-.body-index .categoria-producto-oferta h5{ font-size:10px; font-weight:bold; color:#1f487e; margin:4px 0; }
-.body-index .precio-producto-oferta{ display:flex; justify-content:center; align-items:center; }
-.body-index .precio-producto-oferta p{ font-weight:bold; font-size:14px; color:#d90429; margin:0; }
 
+/* títulos */
+.body-index .titulo-ultimos,
+.body-index .ofertas-productos h2{
+  margin: 4px 0 12px;
+  text-align: left;
+  font-weight: 900;
+  letter-spacing: .02em;
+  color:#003f7d;
+  font-size: 18px;
+}
+
+/* grids internos: más orden visual */
+.body-index .contenedor-productos-ultimos{
+  display:flex;
+  flex-wrap: wrap;
+  justify-content:flex-start;
+  gap: 14px;
+  transition: transform .3s ease;
+}
+
+/* cards (últimos y ofertas) */
+.body-index .card-ultimo,
+.body-index .card-oferta{
+  width: 100%;
+  max-width: 185px;
+  border-radius: 16px;
+  border: 1px solid rgba(15,23,42,.08);
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 10px 24px rgba(2,6,23,.10);
+  overflow:hidden;
+
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+/* imagen centrada, más “producto” */
+.body-index .cover-card-ultimo,
+.body-index .cover-card-oferta{
+  height: 170px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(180deg, rgba(0,63,125,.06), rgba(255,255,255,0));
+}
+.body-index .cover-card-ultimo img,
+.body-index .cover-card-oferta img{
+  max-width: 92%;
+  max-height: 92%;
+  object-fit: contain;
+  transition: transform 220ms ease;
+}
+
+@media (hover:hover){
+  .body-index .card-ultimo:hover,
+  .body-index .card-oferta:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(2,6,23,.14);
+  }
+  .body-index .card-ultimo:hover img,
+  .body-index .card-oferta:hover img{
+    transform: scale(1.04);
+  }
+}
+
+/* texto */
+.body-index .titulo-producto-ultimo,
+.body-index .titulo-producto-oferta{
+  padding: 10px 10px 6px;
+  text-align:left;
+  min-height: 56px;
+  display:flex;
+  align-items:flex-start;
+}
+.body-index .nombre-ultimo,
+.body-index .titulo-producto-oferta h3{
+  margin:0;
+  font-size: 13px;
+  font-weight: 900;
+  color:#0f172a;
+  line-height: 1.25;
+  display:-webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow:hidden;
+}
+
+/* separador más sutil */
+.body-index hr{
+  border: 0;
+  height: 1px;
+  background: rgba(15,23,42,.08);
+  margin: 0 10px;
+}
+
+/* categoría + precio */
+.body-index .categoria-producto-ultimo,
+.body-index .categoria-producto-oferta{
+  padding: 8px 10px 0;
+  text-align:left;
+}
+.body-index .categoria-ultimo,
+.body-index .categoria-producto-oferta h5{
+  margin:0;
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(15,23,42,.62);
+}
+
+.body-index .precio-producto-ultimo,
+.body-index .precio-producto-oferta{
+  padding: 8px 10px 12px;
+  text-align:left;
+}
+.body-index .precio-ultimo,
+.body-index .precio-producto-oferta p{
+  margin:0;
+  font-size: 16px;
+  font-weight: 950;
+  color:#d90429;
+}
+
+/* ofertas: contenedor carrusel más limpio */
 .body-index .contenedor-carrousel-ofertas{
-  display:flex; align-items:center; justify-content:center; width:100%; overflow:hidden;
+  display:flex;
+  align-items:center;
+  gap: 10px;
 }
 .body-index .contenedor-productos-ofertas{
-  display:flex; overflow:hidden; margin:0 auto; gap:60px; flex:1; flex-wrap:nowrap;
-  transition:transform .3s ease; width:max-content; justify-content:center;
+  display:flex;
+  gap: 14px;
+  flex:1;
+  justify-content:flex-start;
+  align-items:stretch;
+  overflow:hidden;
+  transition: transform .3s ease;
 }
+
+/* flechas ofertas más pro */
 .body-index .flecha-izquierda-ofertas,
 .body-index .flecha-derecha-ofertas{
-  background:#003f7d; color:#fff; border:none; border-radius:50%; padding:10px; cursor:pointer; font-size:20px;
-  display:flex; align-items:center; justify-content:center; z-index:1;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: rgba(255,255,255,.92);
+  color:#003f7d;
+  box-shadow: 0 14px 34px rgba(2,6,23,.14);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
-.body-index .flecha-izquierda-ofertas{ left:10px; }
-.body-index .flecha-derecha-ofertas{ right:10px; }
+@media (hover:hover){
+  .body-index .flecha-izquierda-ofertas:hover,
+  .body-index .flecha-derecha-ofertas:hover{
+    background: rgba(0,63,125,.10);
+    transform: scale(1.06);
+    box-shadow: 0 18px 44px rgba(2,6,23,.18);
+  }
+}
 
-/* ------------------ RESPONSIVE HOME (index) ------------------ */
-@media screen and (max-width: 768px) {
-  /* Carrusel principal */
-  .body-index .peliculas-recomendadas .contenedor-carrousel .carrousel{
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+/* ---------- RESPONSIVE: menos scroll vertical, más swipe ---------- */
+@media (max-width: 768px){
+  /* categorías: NO grilla; swipe horizontal con “peek” */
+  .body-index .peliculas-recomendadas{ margin: 18px 0 22px; }
+  .body-index .peliculas-recomendadas .contenedor-carrousel{
+    padding: 10px 16px;     /* peek más corto */
+    scroll-padding: 16px;
   }
-  .body-index .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula{
-    min-width: 0;
-    position: relative;
+  .body-index .peliculas-recomendadas .contenedor-carrousel::before,
+  .body-index .peliculas-recomendadas .contenedor-carrousel::after{
+    width: 24px;
   }
-  .body-index .indicadores,
+  .body-index .peliculas-recomendadas .pelicula{
+    flex-basis: 86%;
+    height: 210px;          /* corta el scroll vertical */
+    border-radius: 18px;
+  }
   .body-index #flecha-izquierda,
-  .body-index #flecha-derecha {
-    display: none;
+  .body-index #flecha-derecha{
+    display:none;           /* el “peek” ya indica que hay más */
   }
-  .body-index .pelicula {
-    width: 100%;
-    height: 30vh;
-  }
-  .body-index .imagen-carrusel {
-    height: 100%;
-    object-fit: cover;
-  }
-  .body-index .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula .tarjeta-texto {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    transform: translateY(-50%);
-    text-align: center;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
+  .body-index .peliculas-recomendadas .tarjeta-texto p{
+    font-size: 15px;
+    padding: 9px 12px;
   }
 
-  /* Contenedor principal: Últimos + Ofertas */
-  .body-index .contenedor-principal-productos {
-    flex-direction: column;
-    gap: 10px;
-    padding: 10px;
-  }
-  .body-index .ultimos-productos,
-  .body-index .contenedor-ofertas {
-    max-width: 100%;
-    margin: 0;
-    padding: 10px;
+  /* últimos + ofertas en una columna */
+  .body-index .contenedor-principal-productos{
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 0 10px;
   }
 
-  /* Ofertas (carrusel horizontal con snap) */
-  .body-index .contenedor-productos-ofertas {
-    flex-wrap: nowrap;
-    overflow-x: scroll;
-    gap: 20px;
-    scroll-snap-type: x mandatory;
+  /* cards un poco más grandes para dedo */
+  .body-index .card-ultimo,
+  .body-index .card-oferta{
+    max-width: 210px;
   }
-  .body-index .card-oferta {
-    min-width: 250px;
-    flex: 0 0 auto;
-    scroll-snap-align: center;
-    padding: 10px;
-  }
-  .body-index .flecha-izquierda-ofertas,
-  .body-index .flecha-derecha-ofertas {
-    display: none;
-  }
+}
 
-  /* Últimos agregados (carrusel horizontal con snap) */
-  .body-index .contenedor-ultimos {
-    max-width: 100%;
-    margin-right: 0;
-  }
-  .body-index .contenedor-productos-ultimos {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    gap: 10px;
-  }
-  .body-index .card-ultimo {
-    flex: 0 0 80%;
-    max-width: 80%;
-    scroll-snap-align: start;
-    padding: 10px;
-  }
-
-  /* Tipos y tamaños en tarjetas home */
-  .body-index .titulo-producto-ultimo h3,
-  .body-index .titulo-producto-oferta h3 {
-    font-size: 14px;
-  }
-  .body-index .precio-producto-ultimo p,
-  .body-index .precio-producto-oferta p {
-    font-size: 12px;
-  }
+/* reduce motion */
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; scroll-behavior:auto !important; }
 }
