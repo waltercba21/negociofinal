@@ -1,98 +1,181 @@
-<header>
-  <a href="/">
-    <img class="logo" src="/uploads/productos/logo.png" alt="LOGO" />
-  </a>
+<header class="af-header">
+  <div class="af-header__bar">
+    <a class="af-brand" href="/" aria-label="AUTOFAROS - Inicio">
+      <img class="af-logo" src="/uploads/productos/logo.png" alt="AUTOFAROS" />
+    </a>
 
-  <button class="hamburger" onclick="toggleMenu()">☰</button>
+    <!-- Buscador (desktop) -->
+    <form class="af-search" action="/productos" method="GET" role="search" aria-label="Buscar productos">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" name="q" placeholder="Buscar H4, ópticas, barras LED..." />
+      <button class="af-search__btn" type="submit">Buscar</button>
+    </form>
 
-  <nav class="navbar">
-    <a class="nav-link" href="/">INICIO</a>
-    <a class="nav-link" href="/productos">PRODUCTOS</a>
+    <div class="af-actions">
+      <% if (isLogged) { %>
+        <a class="af-iconbtn" href="/users/profile" aria-label="Mi cuenta">
+          <i class="fa-solid fa-user"></i>
+        </a>
+      <% } else { %>
+        <a class="af-btn af-btn--ghost" href="/users/login">Ingresar</a>
+      <% } %>
 
-    <% if (!isAdminUser) { %>  <!-- ✅ Solo se muestra si NO es administrador -->
-      <a class="nav-link" href="/productos/ofertas">OFERTAS</a>
-      <a class="nav-link" href="https://wa.me/+543513820440/" target="_blank">WHATSAPP</a>
-      <a class="nav-link" href="#" onclick="abrirMapa(); return false;">UBICACIÓN</a>
-    <% } %>
+      <% if (!isAdminUser) { %>
+        <a href="/carrito" class="af-iconbtn" aria-label="Carrito">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span id="carrito-notificacion" class="af-badge"
+            <% if (cantidadCarrito <= 0) { %> style="display:none" <% } %>>
+            <%= cantidadCarrito %>
+          </span>
+        </a>
+      <% } %>
 
-    <% if (isAdminUser) { %>  <!-- ✅ Solo se muestra para Administradores -->
-      <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
-      <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
-      <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
-      <!-- ✅ NUEVO: Gastos -->
-      <a class="nav-link" href="/administracion/gastos" id="gastos-btn">GASTOS</a>
-      
-      <!-- ✅ Botón para Administración -->
-      <a class="nav-link" href="/administracion" id="admin-btn">
-        ADMINISTRACIÓN
+      <button class="af-iconbtn af-hamburger" type="button" onclick="toggleMenu(true)" aria-label="Abrir menú">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Buscador (mobile) -->
+  <div class="af-search--mobile">
+    <form class="af-search" action="/productos" method="GET" role="search" aria-label="Buscar productos (móvil)">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" name="q" placeholder="Buscar rápido (H4, 9005, óptica...)"/>
+      <button class="af-search__btn" type="submit">Buscar</button>
+    </form>
+  </div>
+
+  <!-- Backdrop -->
+  <div class="af-backdrop" onclick="toggleMenu(false)" aria-hidden="true"></div>
+
+  <!-- Drawer -->
+  <nav class="af-drawer" aria-label="Menú">
+    <div class="af-drawer__top">
+      <div class="af-drawer__title">
+        Menú
+        <% if (isLogged) { %>
+          <div><small>Hola <%= userLogged.nombre %></small></div>
+        <% } %>
+      </div>
+
+      <button class="af-iconbtn" type="button" onclick="toggleMenu(false)" aria-label="Cerrar menú">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="af-drawer__list">
+      <a class="af-drawer__link" href="/">
+        INICIO <i class="fa-solid fa-chevron-right"></i>
       </a>
 
-      <!-- ✅ Botón para Pedidos con notificación -->
-      <a class="nav-link pedidos-icon" href="/pedidos" id="pedidos-btn">
-        PEDIDOS
-        <span id="pedido-notificacion" class="pedido-alerta" style="display: none;">0</span>
+      <a class="af-drawer__link" href="/productos">
+        PRODUCTOS <i class="fa-solid fa-chevron-right"></i>
       </a>
-    <% } %>
+
+      <% if (!isAdminUser) { %>
+        <a class="af-drawer__link" href="/productos/ofertas">
+          OFERTAS <i class="fa-solid fa-chevron-right"></i>
+        </a>
+
+        <a class="af-drawer__link" href="https://wa.me/+543513820440/" target="_blank">
+          WHATSAPP <i class="fa-solid fa-chevron-right"></i>
+        </a>
+
+        <a class="af-drawer__link" href="#" onclick="abrirMapa(); return false;">
+          UBICACIÓN <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      <% } %>
+
+      <% if (isAdminUser) { %>
+        <a class="af-drawer__link" href="/productos/panelControl">
+          PANEL CONTROL <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        <a class="af-drawer__link" href="/productos/presupuestoMostrador">
+          PRESUPUESTO <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        <a class="af-drawer__link" href="/productos/facturasMostrador">
+          FACTURAS <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        <a class="af-drawer__link" href="/administracion/gastos" id="gastos-btn">
+          GASTOS <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        <a class="af-drawer__link" href="/administracion" id="admin-btn">
+          ADMINISTRACIÓN <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        <a class="af-drawer__link" href="/pedidos" id="pedidos-btn">
+          PEDIDOS
+          <span id="pedido-notificacion" class="af-badge" style="display:none;">0</span>
+        </a>
+      <% } %>
+    </div>
+
+    <div class="af-drawer__footer">
+      <% if (isLogged) { %>
+        <a class="af-btn af-btn--soft" href="/users/profile">Mi perfil</a>
+
+        <a class="af-btn af-btn--ghost" href="/users/logout">
+          <i class="fa-solid fa-right-from-bracket"></i> Salir
+        </a>
+      <% } else { %>
+        <a class="af-btn af-btn--primary" href="/users/login">Iniciar sesión</a>
+        <a class="af-btn af-btn--soft" href="/users/register">Registrarme</a>
+      <% } %>
+    </div>
   </nav>
 
-  <div class="icons">
-    <% if (isLogged) { %>
-      <div class="logueado"> 
-        <a href="/users/profile"> 
-          <p>Hola <%= userLogged.nombre %> </p> 
-        </a>
+  <!-- Bottom nav (solo no-admin) -->
+  <% if (!isAdminUser) { %>
+    <nav class="af-bottomnav" aria-label="Accesos rápidos">
+      <a class="af-bottomnav__item" href="/">
+        <i class="fa-solid fa-house"></i><span>Inicio</span>
+      </a>
+      <a class="af-bottomnav__item" href="/productos">
+        <i class="fa-solid fa-boxes-stacked"></i><span>Productos</span>
+      </a>
+      <a class="af-bottomnav__item" href="/productos/ofertas">
+        <i class="fa-solid fa-tags"></i><span>Ofertas</span>
+      </a>
+      <a class="af-bottomnav__item" href="https://wa.me/+543513820440/" target="_blank">
+        <i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span>
+      </a>
+    </nav>
+  <% } %>
 
-        <% if (!isAdminUser) { %>  <!-- ✅ Solo se muestra si NO es administrador -->
-          <a href="/carrito" class="carrito-icon">
-            <i class="fa-solid fa-cart-shopping"></i>
-            <span id="carrito-notificacion" class="cantidad-alerta" 
-                  <% if (cantidadCarrito <= 0) { %> style="display: none;" <% } %>>
-                <%= cantidadCarrito %>
-            </span>
-          </a>
-        <% } %>          
-      
-        <a href="/users/logout">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          <span>Salir</span> 
-        </a>
-      </div>
-    <% } else { %>
-      <a href="/users/login">Iniciar Sesión</a>
-      <a class="register-link" href="/users/register">Registrarme</a>
-    <% } %>  
-</div>
-
-
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-
+  <!-- Socket (tu lógica existente, sin romper IDs) -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script>
-      const socket = io();
+    function toggleMenu(open){
+      const willOpen = (typeof open === 'boolean') ? open : !document.body.classList.contains('af-menu-open');
+      document.body.classList.toggle('af-menu-open', willOpen);
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') toggleMenu(false);
+    });
 
-      socket.on('connect', () => {
-      });
+    const socket = io();
 
-      socket.on('actualizarNotificacion', (data) => {
-          actualizarPedidosPendientes();
-      });
-
-      async function actualizarPedidosPendientes() {
-          try {
-              const response = await fetch('/pedidos/cantidad');  
-              const data = await response.json();
-
-              const notificacion = document.getElementById("pedido-notificacion");
-              if (data.cantidad > 0) {
-                  notificacion.textContent = data.cantidad;
-                  notificacion.style.display = "flex";
-              } else {
-                  notificacion.style.display = "none";
-              }
-          } catch (error) {
-              console.error("❌ Error al obtener pedidos pendientes:", error);
-          }
-      }
-
+    socket.on('actualizarNotificacion', () => {
       actualizarPedidosPendientes();
+    });
+
+    async function actualizarPedidosPendientes() {
+      try {
+        const response = await fetch('/pedidos/cantidad');
+        const data = await response.json();
+
+        const notificacion = document.getElementById("pedido-notificacion");
+        if (!notificacion) return;
+
+        if (data.cantidad > 0) {
+          notificacion.textContent = data.cantidad;
+          notificacion.style.display = "flex";
+        } else {
+          notificacion.style.display = "none";
+        }
+      } catch (error) {
+        console.error("❌ Error al obtener pedidos pendientes:", error);
+      }
+    }
+    actualizarPedidosPendientes();
   </script>
 </header>

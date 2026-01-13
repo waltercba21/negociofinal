@@ -2,55 +2,57 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#003f7d" />
+
   <title><%= (typeof producto !== 'undefined' && producto) ? producto.nombre : 'AUTOFAROS' %></title>
 
-<!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
-<meta property="og:type" content="product" />
-<meta property="og:title" content="<%= producto ? producto.nombre : 'AUTOFAROS' %>" />
-<meta property="og:description" content="<%= producto ? producto.descripcion || 'Repuestos de iluminación para tu auto al mejor precio' : 'AUTOFAROS - Iluminación automotriz' %>" />
-<meta property="og:image" content="<%= (producto && producto.imagenes && producto.imagenes.length > 0) ? 'https://www.autofaros.com.ar/uploads/productos/' + producto.imagenes[0].imagen : 'https://www.autofaros.com.ar/images/default-share.jpg' %>" />
-<meta property="og:url" content="<%= producto ? 'https://www.autofaros.com.ar/productos/' + producto.id : 'https://www.autofaros.com.ar' %>" />
+  <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+  <meta property="og:type" content="product" />
+  <meta property="og:title" content="<%= producto ? producto.nombre : 'AUTOFAROS' %>" />
+  <meta property="og:description" content="<%= producto ? producto.descripcion || 'Repuestos de iluminación para tu auto al mejor precio' : 'AUTOFAROS - Iluminación automotriz' %>" />
+  <meta property="og:image" content="<%= (producto && producto.imagenes && producto.imagenes.length > 0) ? 'https://www.autofaros.com.ar/uploads/productos/' + producto.imagenes[0].imagen : 'https://www.autofaros.com.ar/images/default-share.jpg' %>" />
+  <meta property="og:url" content="<%= producto ? 'https://www.autofaros.com.ar/productos/' + producto.id : 'https://www.autofaros.com.ar' %>" />
 
-<!-- Twitter Card (recomendado) -->
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="<%= producto ? producto.nombre : 'AUTOFAROS' %>" />
-<meta name="twitter:description" content="<%= producto ? producto.descripcion || 'Repuestos de iluminación para tu auto al mejor precio' : 'AUTOFAROS - Iluminación automotriz' %>" />
-<meta name="twitter:image" content="<%= (producto && producto.imagenes && producto.imagenes.length > 0) ? 'https://www.autofaros.com.ar/uploads/productos/' + producto.imagenes[0].imagen : 'https://www.autofaros.com.ar/images/default-share.jpg' %>" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="<%= producto ? producto.nombre : 'AUTOFAROS' %>" />
+  <meta name="twitter:description" content="<%= producto ? producto.descripcion || 'Repuestos de iluminación para tu auto al mejor precio' : 'AUTOFAROS - Iluminación automotriz' %>" />
+  <meta name="twitter:image" content="<%= (producto && producto.imagenes && producto.imagenes.length > 0) ? 'https://www.autofaros.com.ar/uploads/productos/' + producto.imagenes[0].imagen : 'https://www.autofaros.com.ar/images/default-share.jpg' %>" />
 
- <!-- Favicon -->
- <link rel="icon" type="image/ico" href="/images/favicon.ico" sizes="150x150" />
+  <!-- Favicon -->
+  <link rel="icon" type="image/ico" href="/images/favicon.ico" sizes="150x150" />
 
-  <!-- CSS -->
+  <!-- (Dejo tus CSS por compatibilidad global. En esta v1 los “pisamos” con <style> abajo) -->
   <link rel="stylesheet" href="/css/styles.css" />
-    <!-- +++ NUEVO: layout siempre +++ -->
   <link rel="stylesheet" href="/css/layout/header.css" />
   <link rel="stylesheet" href="/css/layout/footer.css" />
 
-  <!-- +++ NUEVO: por-vista, si la vista define pageCss +++ -->
   <% if (typeof pageCss !== 'undefined' && pageCss) { %>
     <link rel="stylesheet" href="<%= pageCss %>">
   <% } %>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" crossorigin="anonymous" />
   <link href="http://fonts.cdnfonts.com/css/versa" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
   <!-- JS -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-<HASH>" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
   <script src="https://kit.fontawesome.com/95919219af.js" crossorigin="anonymous"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7CZ53J6STJ"></script>
   <script src="https://sdk.mercadopago.com/js/v2"></script>
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- SweetAlert -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Socket.io -->
-<script src="/socket.io/socket.io.js"></script>
+  <!-- Socket.io -->
+  <script src="/socket.io/socket.io.js"></script>
 
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -58,4 +60,262 @@
     gtag('js', new Date());
     gtag('config', 'G-7CZ53J6STJ');
   </script>
+
+  <!-- ====== AUTOFAROS v1 (Mobile-first) ====== -->
+  <style>
+    :root{
+      --af-blue:#003f7d;
+      --af-red:#d90429;
+      --af-bg:#f6f7fb;
+      --af-surface:#ffffff;
+      --af-text:#0f172a;
+      --af-muted:#64748b;
+      --af-border: rgba(15,23,42,.10);
+      --af-radius:18px;
+      --af-radius-sm:14px;
+      --af-shadow: 0 12px 30px rgba(2,8,23,.10);
+      --af-shadow-sm: 0 6px 18px rgba(2,8,23,.08);
+      --af-tap:44px;
+      --af-max: 1200px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: Montserrat, system-ui,-apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--af-bg);
+      color: var(--af-text);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    a{ color:inherit; text-decoration:none; }
+    img{ max-width:100%; display:block; }
+    button,input,select{ font:inherit; }
+    .af-container{ width:min(var(--af-max), calc(100% - 28px)); margin-inline:auto; }
+    .af-sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+
+    /* Botones */
+    .af-btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      min-height: var(--af-tap);
+      padding: .65rem 1rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-weight: 700;
+      letter-spacing: .2px;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .af-btn:active{ transform: translateY(1px) scale(.99); }
+    .af-btn--primary{
+      background: linear-gradient(135deg, var(--af-blue), #0b63c7);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(0,63,125,.22);
+    }
+    .af-btn--primary:hover{ box-shadow: 0 14px 28px rgba(0,63,125,.26); }
+    .af-btn--soft{
+      background: rgba(0,63,125,.10);
+      color: var(--af-blue);
+      border-color: rgba(0,63,125,.18);
+    }
+    .af-btn--ghost{
+      background: transparent;
+      color: var(--af-blue);
+      border-color: rgba(0,63,125,.25);
+    }
+
+    /* Icon buttons */
+    .af-iconbtn{
+      position:relative;
+      width: var(--af-tap);
+      height: var(--af-tap);
+      border-radius: 999px;
+      border: 1px solid var(--af-border);
+      background: rgba(255,255,255,.85);
+      display:inline-flex; align-items:center; justify-content:center;
+      box-shadow: var(--af-shadow-sm);
+      transition: transform .15s ease, box-shadow .15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .af-iconbtn:hover{ box-shadow: var(--af-shadow); transform: translateY(-1px); }
+    .af-iconbtn:active{ transform: translateY(0); }
+
+    .af-badge{
+      position:absolute;
+      top:-6px; right:-6px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: var(--af-red);
+      color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-size: 12px;
+      font-weight: 800;
+      border: 2px solid var(--af-bg);
+    }
+
+    /* ===== Header / Drawer / BottomNav ===== */
+    .af-header{
+      position: sticky;
+      top: 0;
+      z-index: 3000;
+      background: rgba(246,247,251,.86);
+      border-bottom: 1px solid var(--af-border);
+      backdrop-filter: blur(12px);
+    }
+    .af-header__bar{
+      display:flex; align-items:center; gap:12px;
+      padding: 10px 14px;
+    }
+    .af-brand{ display:flex; align-items:center; gap:10px; }
+    .af-logo{ height: 34px; width:auto; object-fit:contain; }
+    .af-actions{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+
+    .af-search{
+      flex: 1;
+      display:flex; align-items:center; gap:10px;
+      height: var(--af-tap);
+      border-radius: 999px;
+      border: 1px solid var(--af-border);
+      background: rgba(255,255,255,.92);
+      padding: 0 12px;
+      box-shadow: var(--af-shadow-sm);
+      min-width: 240px;
+    }
+    .af-search i{ color: var(--af-muted); }
+    .af-search input{
+      flex:1;
+      border:0; outline:0;
+      background:transparent;
+      font-weight:600;
+    }
+    .af-search__btn{
+      border:0;
+      background: rgba(0,63,125,.10);
+      color: var(--af-blue);
+      border-radius: 999px;
+      padding: .45rem .8rem;
+      font-weight:800;
+      min-height: calc(var(--af-tap) - 10px);
+    }
+
+    .af-search--mobile{
+      display:none;
+      padding: 0 14px 12px;
+    }
+    .af-search--mobile .af-search{ width:100%; min-width:0; }
+
+    .af-backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(2,8,23,.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+      z-index: 3500;
+    }
+    .af-drawer{
+      position: fixed;
+      top: 0; right: 0;
+      height: 100dvh;
+      width: min(86vw, 360px);
+      background: var(--af-surface);
+      transform: translateX(105%);
+      transition: transform .22s ease;
+      z-index: 3600;
+      box-shadow: -20px 0 50px rgba(2,8,23,.20);
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+    body.af-menu-open .af-backdrop{ opacity: 1; pointer-events:auto; }
+    body.af-menu-open .af-drawer{ transform: translateX(0); }
+
+    .af-drawer__top{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--af-border);
+    }
+    .af-drawer__title{ font-weight: 900; letter-spacing:.3px; }
+    .af-drawer__list{ display:flex; flex-direction:column; gap:8px; padding-top: 8px; }
+    .af-drawer__link{
+      display:flex; align-items:center; justify-content:space-between;
+      min-height: var(--af-tap);
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--af-border);
+      background: #fff;
+      box-shadow: var(--af-shadow-sm);
+      font-weight: 800;
+    }
+    .af-drawer__link small{ font-weight:700; color: var(--af-muted); }
+    .af-drawer__footer{
+      margin-top:auto;
+      padding-top: 10px;
+      border-top: 1px solid var(--af-border);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .af-bottomnav{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 12px;
+      width: min(560px, calc(100% - 24px));
+      height: 64px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--af-border);
+      box-shadow: 0 18px 40px rgba(2,8,23,.18);
+      display:none;
+      align-items:center;
+      justify-content:space-around;
+      gap: 6px;
+      z-index: 2900;
+      backdrop-filter: blur(12px);
+      padding: 0 10px;
+    }
+    .af-bottomnav__item{
+      position: relative;
+      width: 25%;
+      height: 52px;
+      border-radius: 18px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap: 3px;
+      font-weight: 800;
+      color: var(--af-muted);
+      transition: background .15s ease, transform .15s ease, color .15s ease;
+    }
+    .af-bottomnav__item i{ font-size: 18px; }
+    .af-bottomnav__item span{ font-size: 11px; line-height: 1; }
+    .af-bottomnav__item:active{ transform: scale(.98); }
+    .af-bottomnav__item:hover{ background: rgba(0,63,125,.08); color: var(--af-blue); }
+
+    /* Helpers */
+    .af-has-bottomnav{ padding-bottom: 92px; }
+
+    /* Responsivo */
+    @media (max-width: 980px){
+      .af-search{ display:none; }
+      .af-search--mobile{ display:block; }
+      .af-bottomnav{ display:flex; }
+      .af-logo{ height: 32px; }
+    }
+    @media (min-width: 981px){
+      .af-iconbtn.af-hamburger{ display:none; }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
 </head>
