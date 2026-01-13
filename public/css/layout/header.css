@@ -1,143 +1,299 @@
-/* === HEADER (layout) === */
-header {
-  height: 100px;
+/* ================== HEADER UI (reemplazo completo) ================== */
+:root{
+  --brand: #1F487E;
+  --brand2: #003f7d;
+  --accent: #d90429;
+  --text: #0f172a;
+  --muted: rgba(15,23,42,.72);
+
+  --surface: rgba(255,255,255,.86);
+  --border: rgba(15,23,42,.10);
+
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+
+  --tap: 44px; /* target táctil */
+  --shadow: 0 14px 40px rgba(2,6,23,.12);
+  --shadow2: 0 10px 26px rgba(2,6,23,.10);
+  --t: 180ms cubic-bezier(.2,.8,.2,1);
+}
+
+*{ box-sizing:border-box; }
+header{
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  /* layout moderno */
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+
+  padding: 10px 18px;
+  min-height: 74px;
+
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow2);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Logo: se adapta, sin romper el header */
+header > a{ display:flex; align-items:center; }
+header .logo{
+  height: clamp(44px, 5vw, 64px);
+  width: auto;
+  display:block;
+}
+
+/* ================== NAV DESKTOP ================== */
+header .navbar{
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  box-shadow: 0px 0px 25px rgba(189, 189, 189, 0.52);
-  background-color: #ffffff;
-  position: relative;
-  z-index: 10;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap; /* evita que “se rompa” en pantallas medianas */
 }
-.hamburger {
-  font-size: 1.5rem;
-  display: none;
-  background: linear-gradient(to bottom, #4c8fbd, #003f7d);
-  border: none;
-  cursor: pointer;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 5px;
-  box-shadow: 0px 5px 3px rgba(0, 0, 0, 0.2);
-  transition: all 0.1s ease-in-out;
-  text-shadow: 0px 2px 3px rgba(0,0,0,0.3);
-  position: relative;
-}
-.hamburger:active {
-  top: 3px;
-  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.2);
-}
-header .logo{ height: 200px; }
 
-header .navbar a {
-  font-size: 14px;
-  padding: 0 .9rem;
-  text-decoration: none;
-  color: #1F487E;
-  font-family: "Montserrat";
-  font-weight: bold;
-  z-index: 10;
+header .navbar a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  min-height: var(--tap);
+  padding: 0 14px;
+
+  font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: .02em;
+
+  color: var(--brand);
+  text-decoration:none;
+
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+
+  transition: background var(--t), transform var(--t), box-shadow var(--t), border-color var(--t), color var(--t);
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
 }
-.navbar .nav-link-factura{ color: #b80220; }
-.navbar .nav-link:hover { color: #d90429; }
 
-.icons{ display:flex; justify-content:center; align-items:center; }
+header .navbar .nav-link-factura{ color: #b80220; }
 
+@media (hover:hover){
+  header .navbar a:hover{
+    background: rgba(31,72,126,.08);
+    border-color: rgba(31,72,126,.14);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(2,6,23,.08);
+  }
+}
+header .navbar a:active{ transform: translateY(0px) scale(.99); }
+
+/* ================== ICONOS / ACCIONES ================== */
+.icons{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap: 10px;
+}
+
+/* Evita el “width:70%” que te deforma todo */
 header .icons a{
-  display:flex; flex-direction:row; width:70%;
-  font-size:14px; font-weight:bold; text-decoration:none; color:#1F487E;
-  margin:10px 50px 10px 0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+
+  min-height: var(--tap);
+  padding: 0 12px;
+
+  font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--brand);
+  text-decoration:none;
+
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: rgba(255,255,255,.6);
+  box-shadow: 0 8px 18px rgba(2,6,23,.06);
+
+  transition: transform var(--t), box-shadow var(--t), background var(--t), border-color var(--t), color var(--t);
 }
-header .icons a:hover { color: var(--Red); }
+
+@media (hover:hover){
+  header .icons a:hover{
+    background: rgba(31,72,126,.08);
+    border-color: rgba(31,72,126,.18);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow2);
+  }
+}
 
 header .icons .register-link{
-  border-radius:5px; background-color:#1F487E; color:#fff !important;
-  padding:.5rem 1rem; cursor:pointer; top:-4px;
+  color: #fff !important;
+  border: 1px solid rgba(0,0,0,.05);
+  background: linear-gradient(180deg, #4c8fbd, var(--brand2));
+  box-shadow: 0 14px 30px rgba(0,63,125,.22);
 }
-header .icons .register-link:hover{ transition:.2s ease; background-color:#d90429; }
-
-header .logueado{ display:flex; align-items:center; gap:10px; }
-header .icons .logueado a{ position:relative; margin-right:10px; }
-header .icons .logueado a i{ position:relative; margin-top:0; font-size:24px; vertical-align:middle; }
-header .icons .logueado a span{ margin-left:5px; }
-header .logueado img{ width:60px; height:60px; border-radius:100%; }
-
-header .icons p{ font-size:15px; align-items:flex-start; }
-
-/* Notificación de pedidos (badge) */
-.pedidos-icon{ position:relative; display:inline-block; }
-.pedido-alerta{
-  position:absolute; top:-5px; right:-10px; background-color:#d90429; color:#fff;
-  border-radius:50%; width:22px; height:22px; display:flex; justify-content:center; align-items:center;
-  font-size:14px; font-weight:bold; box-shadow:0 0 5px rgba(0,0,0,.2);
+@media (hover:hover){
+  header .icons .register-link:hover{
+    background: linear-gradient(180deg, var(--accent), #b80220);
+    box-shadow: 0 16px 34px rgba(217,4,41,.22);
+  }
 }
 
-/* Carrito badge */
-.carrito-icon{ position:relative; display:inline-block; }
-.cantidad-alerta{
-  position:absolute; top:-8px; right:-8px; background:red; color:#fff;
-  border-radius:50%; width:20px; height:20px; display:flex; justify-content:center; align-items:center;
-  font-size:12px; font-weight:bold;
+header .logueado{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+header .icons .logueado a{ position:relative; padding: 0 12px; }
+header .icons .logueado a i{ font-size: 20px; line-height: 1; }
+
+/* Saludo más limpio */
+header .icons p{
+  margin:0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
 }
 
-/* ------------------ RESPONSIVE HEADER ------------------ */
-@media screen and (max-width: 768px) {
-  header {
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    height: auto;
+/* ================== BADGES ================== */
+.pedidos-icon, .carrito-icon{ position:relative; }
+.pedido-alerta, .cantidad-alerta{
+  position:absolute;
+  top: -6px;
+  right: -6px;
+
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius: 999px;
+  background: var(--accent);
+  color:#fff;
+  font-size: 12px;
+  font-weight: 900;
+
+  box-shadow: 0 12px 22px rgba(217,4,41,.22);
+  border: 2px solid rgba(255,255,255,.95);
+}
+
+/* ================== HAMBURGER ================== */
+.hamburger{
+  display:none;
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 0 12px;
+
+  border-radius: 14px;
+  border: 1px solid rgba(15,23,42,.12);
+  background: rgba(255,255,255,.65);
+  box-shadow: 0 10px 22px rgba(2,6,23,.10);
+
+  cursor:pointer;
+  color: var(--brand2);
+  font-size: 20px;
+  font-weight: 900;
+
+  transition: transform var(--t), box-shadow var(--t), background var(--t), border-color var(--t);
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover:hover){
+  .hamburger:hover{
+    background: rgba(31,72,126,.08);
+    border-color: rgba(31,72,126,.18);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow2);
   }
-  header .logo,
-  .logo {
-    width: 200px;
-    height: auto;
-    display: block;
-    margin-bottom: 10px;
+}
+header.open .hamburger{
+  background: rgba(217,4,41,.10);
+  border-color: rgba(217,4,41,.22);
+  color: var(--accent);
+}
+
+/* ================== RESPONSIVE REAL ================== */
+@media (max-width: 920px){
+  /* top row: logo | icons | hamburger */
+  header{
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    padding: 10px 12px;
+    min-height: 70px;
   }
 
-  header .navbar {
+  .hamburger{ display:inline-flex; align-items:center; justify-content:center; }
+
+  /* icons siempre visibles (acciones clave) */
+  .icons{ justify-content:flex-end; gap: 8px; }
+
+  /* reduce “ruido” */
+  header .icons p{ display:none; }
+  header .icons .logueado a span{ display:none; } /* oculta texto "Salir" en mobile */
+
+  /* NAV colapsable tipo “drawer vertical” */
+  header .navbar{
+    grid-column: 1 / -1;
+    justify-content: stretch;
+
     flex-direction: column;
-    align-items: center;
-  }
-  header .navbar a {
-    padding: .5rem 0;
+    align-items: stretch;
+    gap: 8px;
+
+    padding: 0;
+    margin: 0;
+
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transform: translateY(-6px);
+    transition: max-height 260ms ease, opacity 200ms ease, transform 220ms ease;
+
+    border-top: 1px solid var(--border);
   }
 
-  .icons {
-    width: 100%;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  header .icons a {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    margin-right: 0;
-    margin-bottom: .5rem;
-    text-align: center;
+  header.open .navbar{
+    padding: 10px 0 6px;
+    max-height: 520px; /* suficiente para admin */
+    opacity: 1;
+    transform: translateY(0);
   }
 
-  header .icons .logueado {
-    flex-direction: column;
-    align-items: center;
+  header .navbar a{
+    justify-content:flex-start;
+    padding: 0 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(15,23,42,.10);
+    background: rgba(255,255,255,.62);
+    box-shadow: 0 10px 20px rgba(2,6,23,.06);
   }
-  header .icons .logueado a {
-    margin-right: 0;
-    margin-bottom: .5rem;
-  }
+}
 
-  /* Menú hamburguesa y toggles */
-  .navbar, .icons { display: none; }
-  header.open .navbar,
-  header.open .icons {
-    display: flex;
-    justify-content: center;
-  }
-  .hamburger {
-    margin-top: 20px;
-    display: block;
-    align-self: center;
-  }
+/* Extra: pantallas muy chicas */
+@media (max-width: 380px){
+  header .logo{ height: 42px; }
+  header .icons a{ padding: 0 10px; }
+}
+
+/* Accesibilidad básica */
+:focus-visible{
+  outline: 2px solid rgba(31,72,126,.55);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; }
 }
