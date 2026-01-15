@@ -263,11 +263,12 @@
   font-weight: 900;
   color:#0f172a;
   line-height: 1.25;
-  display:-webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow:hidden;
+
+  /* “3 líneas” aprox sin warnings */
+  max-height: calc(1.25em * 3);
+  overflow: hidden;
 }
+
 
 /* separador más sutil */
 .body-index hr{
