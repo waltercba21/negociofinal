@@ -320,3 +320,30 @@ header.open .hamburger{
 @media (prefers-reduced-motion: reduce){
   *{ transition:none !important; }
 }
+/* ===== FIX logo grande sin ensanchar header (PEGAR AL FINAL) ===== */
+header{
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: clip;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+}
+
+header > a,
+header .navbar,
+header .icons{
+  min-width: 0;
+}
+
+header .logo{
+  height: clamp(80px, 6.5vw, 118px) !important;
+  max-width: 260px !important;
+  width: auto !important;
+  object-fit: contain;
+}
+
+@media (max-width: 920px){
+  header .logo{
+    height: 64px !important;
+    max-width: 70vw !important;
+  }
+}
