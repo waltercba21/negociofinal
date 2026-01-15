@@ -36,9 +36,6 @@ header{
 
   padding: 12px 18px;
 
-  /* un poco más alto para que el logo respire */
-  min-height: 86px;
-
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow2);
@@ -49,11 +46,6 @@ header{
 
 /* Logo: más visible */
 header > a{ display:flex; align-items:center; }
-header .logo{
-  height: clamp(58px, 6vw, 88px);
-  width: auto;
-  display:block;
-}
 
 /* ================== NAV DESKTOP ================== */
 header .navbar{
