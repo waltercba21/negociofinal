@@ -53,8 +53,9 @@ header > a{
 header .logo{
   /* ✅ evita que “se vaya a pantalla completa” */
   display:block;
+  height: clamp(68px, 5vw, 96px);
   width: auto;
-  max-width: min(280px, 46vw);
+  max-width: min(360px, 52vw);
   object-fit: contain;
 }
 
