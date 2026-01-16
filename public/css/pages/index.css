@@ -459,3 +459,21 @@
     height: 210px;
   }
 }
+
+/* FIX: si el label va debajo, el item NO puede tener altura fija */
+.body-index .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula{
+  height: auto !important;   /* evita que recorte el banner */
+}
+
+/* el link no debe forzar 100% de alto */
+.body-index .peliculas-recomendadas .pelicula-link{
+  height: auto;
+}
+
+/* mobile: también estaba fijado a 210px en otra regla */
+@media (max-width: 768px){
+  .body-index .peliculas-recomendadas .pelicula{
+    height: auto !important;
+  }
+}
+
