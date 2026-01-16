@@ -9,7 +9,7 @@
 
   <!-- ================== BUSCADOR EN HEADER ================== -->
   <form class="header-search" action="/productos" method="GET" role="search" autocomplete="off">
-    <div class="buscador-con-icono header-search__inner">
+    <div class="buscador-con-icono">
       <i class="fas fa-search"></i>
 
       <input
@@ -24,34 +24,6 @@
       </button>
     </div>
   </form>
-
-  <!-- CSS mínimo para que SE VEA aunque el header sea flex/space-between -->
-  <style>
-    .header-search{
-      flex: 1 1 420px;
-      max-width: 560px;
-      margin: 0 12px;
-      min-width: 220px;
-    }
-    .header-search__inner{
-      width: 100%;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .header-search input{
-      width: 100%;
-      min-width: 160px;
-    }
-    /* en mobile lo bajamos abajo del todo para que no rompa el nav */
-    @media (max-width: 768px){
-      .header-search{
-        flex: 1 1 100%;
-        max-width: none;
-        margin: 10px 0 0;
-      }
-    }
-  </style>
 
   <script>
     (function () {
@@ -129,19 +101,14 @@
   </div>
 
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-
   <script>
     const socket = io();
-
-    socket.on('actualizarNotificacion', () => {
-      actualizarPedidosPendientes();
-    });
+    socket.on('actualizarNotificacion', () => { actualizarPedidosPendientes(); });
 
     async function actualizarPedidosPendientes() {
       try {
         const response = await fetch('/pedidos/cantidad');
         const data = await response.json();
-
         const notificacion = document.getElementById("pedido-notificacion");
         if (!notificacion) return;
 
@@ -155,7 +122,6 @@
         console.error("❌ Error al obtener pedidos pendientes:", error);
       }
     }
-
     actualizarPedidosPendientes();
   </script>
 </header>

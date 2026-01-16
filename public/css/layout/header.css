@@ -658,3 +658,63 @@ header form.header-search .boton-limpiar{
     color: #d90429 !important;
   }
 }
+/* ===== BUSCADOR HEADER: centrado + blanco/azul + sin doble contenedor ===== */
+header form.header-search{
+  grid-column: 1 / -1 !important;
+  grid-area: search !important;
+  width: 100% !important;
+  max-width: 100% !important;
+
+  display: flex !important;
+  justify-content: center !important;
+
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 10px 0 0 !important;
+}
+
+header form.header-search .buscador-con-icono{
+  width: min(820px, calc(100% - 24px)) !important;
+  margin: 0 auto !important;
+
+  background: #fff !important;
+  border: 1px solid rgba(0,63,125,.22) !important;
+  box-shadow: 0 12px 28px rgba(2,6,23,.14) !important;
+  border-radius: 999px !important;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+header form.header-search input{
+  flex: 1 1 auto;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #003f7d !important;
+}
+
+header form.header-search input::placeholder{
+  color: rgba(0,63,125,.55) !important;
+}
+
+header form.header-search .buscador-con-icono i{
+  color: rgba(0,63,125,.75) !important;
+}
+
+header form.header-search .boton-limpiar{
+  background: transparent !important;
+  color: rgba(0,63,125,.70) !important;
+}
+
+@media (hover:hover){
+  header form.header-search .boton-limpiar:hover{
+    background: rgba(0,63,125,.08) !important;
+    color: #d90429 !important;
+  }
+}
