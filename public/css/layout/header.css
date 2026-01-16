@@ -1,4 +1,4 @@
-/* ================== HEADER (limpio/optimizado) ================== */
+/* ================== HEADER (rebuild estable) ================== */
 :root{
   --brand:#1F487E;
   --brand2:#003f7d;
@@ -24,10 +24,10 @@ header{
   overflow-x: clip;
 
   display: grid;
-  grid-template-columns: max-content max-content minmax(0,1fr) max-content;
+  grid-template-columns: max-content minmax(0,1fr) max-content;
   grid-template-areas:
-    "logo hamb nav icons"
-    "search search search search";
+    "logo nav icons"
+    "search search search";
   gap: 12px 14px;
   align-items: center;
 
@@ -36,6 +36,10 @@ header{
   background: linear-gradient(135deg, rgba(2,6,23,.96), rgba(17,24,39,.92), rgba(2,6,23,.96));
   border-bottom: 1px solid rgba(255,255,255,.10);
   box-shadow: 0 16px 46px rgba(2,6,23,.40);
+
+  /* evita blur raro en iconos (lupa) */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 header::before{
@@ -55,10 +59,10 @@ header > *{ position:relative; z-index:1; min-width:0; }
 
 /* grid areas */
 header > a{ grid-area: logo; }
-.hamburger{ grid-area: hamb; }
 header .navbar{ grid-area: nav; }
 header .icons{ grid-area: icons; }
 header .header-search{ grid-area: search; }
+.hamburger{ display:none; } /* desktop oculto */
 
 /* ================== LOGO ================== */
 header > a{
@@ -100,12 +104,18 @@ header .logo{
     drop-shadow(10px 0 18px rgba(217,4,41,.28));
 }
 
-/* ================== BUSCADOR ================== */
+/* ================== BUSCADOR (sin doble contenedor) ================== */
 header form.header-search{
   width: 100%;
   display:flex;
   justify-content:center;
   margin-top: 6px;
+
+  /* reset por si hay estilos globales */
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
 header .header-search .buscador-con-icono{
@@ -114,7 +124,7 @@ header .header-search .buscador-con-icono{
   align-items:center;
   gap: 10px;
 
-  padding: 7px 12px;           /* más bajo */
+  padding: 6px 12px;        /* más bajo */
   border-radius: 999px;
 
   background: #fff;
@@ -126,12 +136,14 @@ header .header-search .buscador-con-icono i{
   display:inline-flex;
   align-items:center;
   justify-content:center;
+
   width: 20px;
   height: 20px;
 
-  color: var(--brand2);        /* sin opacidad => “más nítido” */
+  color: var(--brand2);
   font-size: 18px;
   line-height: 1;
+
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
 }
@@ -140,12 +152,18 @@ header .header-search input{
   flex: 1 1 auto;
   min-width: 120px;
 
-  height: 34px;                /* centra vertical */
-  line-height: 34px;
+  height: 32px;
+  line-height: 32px;
 
-  border:0;
-  outline:0;
-  background: transparent;
+  /* reset fuerte para evitar “input dentro de input” visual */
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  appearance: none;
+  -webkit-appearance: none;
 
   font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Arial;
   font-size: 14px;
@@ -155,12 +173,13 @@ header .header-search input{
 
 header .header-search input::placeholder{
   color: rgba(0,63,125,.55);
+  font-weight: 600;
 }
 
 header .header-search .boton-limpiar{
   display:none;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border:0;
   background: transparent;
   border-radius: 999px;
@@ -231,6 +250,7 @@ header .navbar .nav-link-factura{ color:#ff3b57; }
   align-items:center;
   justify-content:flex-end;
   gap: 10px;
+  flex-wrap: nowrap;
 }
 
 header .icons a{
@@ -256,15 +276,6 @@ header .icons a{
   transition: transform var(--t), box-shadow var(--t), background var(--t), color var(--t);
 }
 
-@media (hover:hover){
-  header .icons a:hover{
-    background: rgba(255,255,255,.14);
-    color: var(--accent);
-    box-shadow: var(--shadow-2);
-    transform: translateY(-1px);
-  }
-}
-
 header .icons .register-link{
   background: linear-gradient(180deg, rgba(217,4,41,.95), rgba(184,2,32,.95));
   color:#fff;
@@ -276,14 +287,11 @@ header .logueado{
   gap: 10px;
 }
 
-header .icons .logueado a{ position:relative; }
-header .icons .logueado a i{ font-size: 20px; line-height: 1; }
-
 header .icons p{
   margin:0;
   font-size: 13px;
   font-weight: 800;
-  color: rgba(255,255,255,.92); /* NO ocultar en mobile */
+  color: rgba(255,255,255,.92);
 }
 
 /* badges */
@@ -311,9 +319,10 @@ header .icons p{
   border: 2px solid rgba(255,255,255,.95);
 }
 
-/* ================== HAMBURGER ================== */
+/* ================== MOBILE ================== */
+.nav-auth{ display:none; }
+
 .hamburger{
-  display:none;
   min-width: var(--tap);
   min-height: var(--tap);
   border:0;
@@ -331,61 +340,84 @@ header .icons p{
 
 header.open .hamburger{ color: var(--accent); }
 
-/* auth dentro del menú (solo guest/mobile) */
-.nav-auth{ display:none; }
-
-/* ================== RESPONSIVE ================== */
 @media (max-width: 920px){
-  header{
+  /* --- Invitado: logo -> hamburger -> buscador -> menú --- */
+  header.is-guest{
     padding: 10px 12px;
-    grid-template-columns: 1fr max-content;
+    grid-template-columns: 1fr;
     grid-template-areas:
-      "logo logo"
-      "hamb icons"
-      "search search"
-      "nav nav";
+      "logo"
+      "hamb"
+      "search"
+      "nav";
     gap: 10px;
   }
 
-  header > a{ justify-self:center; padding: 6px 10px; border-radius: 16px; }
-  header .logo{ height: 58px; max-width: min(340px, 88vw); }
-
-  .hamburger{ display:inline-flex; align-items:center; justify-content:center; justify-self:start; }
-  .icons{ justify-self:end; gap: 8px; }
-
-  /* Guest: oculta icons (login/registro van al menú) */
-  header.is-guest .icons{ display:none; }
-  header.is-guest .nav-auth{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    margin-top:10px;
-    padding-top:10px;
-    border-top: 1px solid rgba(255,255,255,.10);
+  /* --- Logueado: logo -> icons -> hamburger -> buscador -> menú --- */
+  header.is-logged{
+    padding: 10px 12px;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "logo"
+      "icons"
+      "hamb"
+      "search"
+      "nav";
+    gap: 10px;
   }
 
-  /* Saludo visible pero compacto */
-  header .logueado a[href="/users/profile"]{
-    max-width: 140px;
+  header > a{
+    justify-self:center;
+    padding: 6px 10px;
+    border-radius: 16px;
+  }
+  header .logo{
+    height: 58px;
+    max-width: min(340px, 88vw);
+  }
+
+  /* hamburger siempre centrado (se elimina “pegado a la izquierda”) */
+  .hamburger{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    justify-self:center;
+  }
+
+  /* icons centrados debajo del logo (solo logged) */
+  header.is-logged .icons{
+    justify-self:center;
+    justify-content:center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* invitado: ocultar icons (login/registro van al menú) */
+  header.is-guest .icons{ display:none; }
+
+  /* saludo compacto */
+  header.is-logged .logueado a[href="/users/profile"]{
+    max-width: 160px;
     overflow:hidden;
   }
-  header .logueado a[href="/users/profile"] p{
+  header.is-logged .logueado a[href="/users/profile"] p{
     white-space: nowrap;
     overflow:hidden;
     text-overflow: ellipsis;
     font-size: 12.5px;
   }
 
-  /* Ocultar SOLO el texto "Salir" (no el badge del carrito) */
+  /* ocultar SOLO texto "Salir" (no badge) */
   header .logueado a[href="/users/logout"] span{ display:none; }
 
-  /* buscador un poco más bajo aún */
+  /* buscador más bajo aún */
   header .header-search .buscador-con-icono{ padding: 6px 10px; }
   header .header-search input{
-    height: 32px;
-    line-height: 32px;
+    height: 30px;
+    line-height: 30px;
     font-size: 13px;
   }
+  header .header-search input::placeholder{ font-size: 12px; }
 
   /* menú colapsable */
   header .navbar{
@@ -416,6 +448,16 @@ header.open .hamburger{ color: var(--accent); }
     justify-content:flex-start;
     padding: 0 14px;
     border-radius: 16px;
+  }
+
+  /* auth dentro del menú (solo guest) */
+  header.is-guest .nav-auth{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:10px;
+    padding-top:10px;
+    border-top: 1px solid rgba(255,255,255,.10);
   }
 }
 
