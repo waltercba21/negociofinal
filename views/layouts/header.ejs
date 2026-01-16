@@ -1,13 +1,12 @@
-<header>
+<header class="<%= isLogged ? 'is-logged' : 'is-guest' %>">
   <a href="/">
     <img class="logo" src="/uploads/productos/logo.png?v=2" alt="LOGO" />
   </a>
 
-  <button class="hamburger" onclick="toggleMenu()">☰</button>
+  <button class="hamburger" onclick="toggleMenu()" aria-label="Abrir menú">☰</button>
 
   <% const qHeader = (typeof req !== 'undefined' && req.query && req.query.q) ? String(req.query.q) : ''; %>
 
-  <!-- ================== BUSCADOR EN HEADER ================== -->
   <form class="header-search" action="/productos" method="GET" role="search" autocomplete="off">
     <div class="buscador-con-icono">
       <i class="fas fa-search"></i>
@@ -25,25 +24,6 @@
     </div>
   </form>
 
-  <script>
-    (function () {
-      const input = document.getElementById('headerEntradaBusqueda');
-      const clear = document.getElementById('headerBotonLimpiar');
-      if (!input || !clear) return;
-
-      const sync = () => { clear.style.display = input.value.trim() ? 'block' : 'none'; };
-      sync();
-
-      input.addEventListener('input', sync, { passive: true });
-      clear.addEventListener('click', () => {
-        input.value = '';
-        sync();
-        input.focus();
-      }, { passive: true });
-    })();
-  </script>
-  <!-- ======================================================= -->
-
   <nav class="navbar">
     <a class="nav-link" href="/">INICIO</a>
     <a class="nav-link" href="/productos">PRODUCTOS</a>
@@ -58,26 +38,27 @@
       <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
       <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
       <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
-
       <a class="nav-link" href="/administracion/gastos" id="gastos-btn">GASTOS</a>
-
-      <a class="nav-link" href="/administracion" id="admin-btn">
-        ADMINISTRACIÓN
-      </a>
-
+      <a class="nav-link" href="/administracion" id="admin-btn">ADMINISTRACIÓN</a>
       <a class="nav-link pedidos-icon" href="/pedidos" id="pedidos-btn">
         PEDIDOS
         <span id="pedido-notificacion" class="pedido-alerta" style="display: none;">0</span>
       </a>
+    <% } %>
+
+    <% if (!isLogged) { %>
+      <!-- SOLO mobile: auth dentro del menú -->
+      <div class="nav-auth">
+        <a class="nav-link" href="/users/login">Iniciar Sesión</a>
+        <a class="nav-link register-link" href="/users/register">Registrarme</a>
+      </div>
     <% } %>
   </nav>
 
   <div class="icons">
     <% if (isLogged) { %>
       <div class="logueado">
-        <a href="/users/profile">
-          <p>Hola <%= userLogged.nombre %></p>
-        </a>
+        <a href="/users/profile"><p>Hola <%= userLogged.nombre %></p></a>
 
         <% if (!isAdminUser) { %>
           <a href="/carrito" class="carrito-icon">
@@ -95,6 +76,7 @@
         </a>
       </div>
     <% } else { %>
+      <!-- En mobile se ocultan y se usan los del menú -->
       <a href="/users/login">Iniciar Sesión</a>
       <a class="register-link" href="/users/register">Registrarme</a>
     <% } %>
@@ -123,5 +105,22 @@
       }
     }
     actualizarPedidosPendientes();
+  </script>  
+  <script>
+    (function () {
+      const input = document.getElementById('headerEntradaBusqueda');
+      const clear = document.getElementById('headerBotonLimpiar');
+      if (!input || !clear) return;
+
+      const sync = () => { clear.style.display = input.value.trim() ? 'block' : 'none'; };
+      sync();
+
+      input.addEventListener('input', sync, { passive: true });
+      clear.addEventListener('click', () => {
+        input.value = '';
+        sync();
+        input.focus();
+      }, { passive: true });
+    })();
   </script>
 </header>

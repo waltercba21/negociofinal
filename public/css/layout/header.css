@@ -718,3 +718,69 @@ header form.header-search .boton-limpiar{
     color: #d90429 !important;
   }
 }
+/* ================== MOBILE RE-DESIGN (pegalo al final) ================== */
+.nav-auth{ display:none; }
+
+@media (max-width: 920px){
+  header{
+    /* 1) logo solo arriba, 2) hamburger debajo, 3) buscador, 4) nav */
+    grid-template-columns: 1fr max-content;
+    grid-template-areas:
+      "logo logo"
+      "hamb icons"
+      "search search"
+      "nav nav";
+    min-height: auto;
+  }
+
+  /* LOGO centrado real */
+  header > a{
+    justify-self: center;
+    justify-content: center;
+  }
+  header .logo{
+    height: 58px;
+    max-width: min(340px, 88vw);
+  }
+
+  /* hamburger abajo del logo */
+  .hamburger{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: start;
+    width: var(--tap);
+    padding: 0;
+  }
+
+  /* Invitado: no mostrar botones arriba (van dentro del menú) */
+  header.is-guest .icons{ display:none; }
+
+  /* Auth dentro del menú (solo mobile) */
+  header.is-guest .nav-auth{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,.10);
+  }
+  header.is-guest .navbar .nav-auth .register-link{
+    background: linear-gradient(180deg, rgba(217,4,41,.95), rgba(184,2,32,.95)) !important;
+    color:#fff !important;
+  }
+
+  /* BUSCADOR: menos alto + tipografía más chica */
+  header form.header-search{ margin: 6px 0 0 !important; }
+  header form.header-search .buscador-con-icono{
+    padding: 8px 12px !important;
+  }
+  header form.header-search input{
+    font-size: 13px !important;
+    font-weight: 700;
+  }
+  header form.header-search input::placeholder{
+    font-size: 12px !important;
+    font-weight: 600;
+  }
+}
