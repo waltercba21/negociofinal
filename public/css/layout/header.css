@@ -600,3 +600,61 @@ header .header-search .buscador-con-icono:focus-within{
   border-color: rgba(217,4,41,.45) !important;
   box-shadow: 0 16px 36px rgba(2,6,23,.18) !important;
 }
+/* ====== FIX FINAL BUSCADOR HEADER (centrado + 1 caja + blanco/azul) ====== */
+header form.header-search{
+  grid-column: 1 / -1 !important;     /* ocupa toda la fila del grid */
+  width: 100% !important;
+  justify-self: stretch !important;
+
+  display: flex !important;
+  justify-content: center !important;
+
+  /* el form NO debe verse como caja */
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 10px 0 0 !important;
+}
+
+/* SOLO esta caja se ve */
+header form.header-search .buscador-con-icono,
+header form.header-search .header-search__inner{
+  width: min(820px, calc(100% - 24px)) !important;
+  margin: 0 !important;
+
+  background: #fff !important;
+  border: 1px solid rgba(0,63,125,.22) !important;
+  box-shadow: 0 12px 28px rgba(2,6,23,.14) !important;
+  border-radius: 999px !important;
+}
+
+/* Evitar “segunda caja” del input */
+header form.header-search input{
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #003f7d !important; /* azul */
+}
+
+header form.header-search input::placeholder{
+  color: rgba(0,63,125,.55) !important;
+}
+
+header form.header-search .buscador-con-icono i{
+  color: rgba(0,63,125,.75) !important;
+}
+
+header form.header-search .boton-limpiar{
+  background: transparent !important;
+  color: rgba(0,63,125,.70) !important;
+}
+
+@media (hover:hover){
+  header form.header-search .boton-limpiar:hover{
+    background: rgba(0,63,125,.08) !important;
+    color: #d90429 !important;
+  }
+}
