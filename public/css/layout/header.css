@@ -26,13 +26,18 @@ header{
   top: 0;
   z-index: 1000;
 
+  /* evita que se ensanche */
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: clip;
+
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
   align-items: center;
   gap: 14px;
 
   padding: 12px 18px;
-  min-height: 84px;
+  min-height: 96px;
 
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -42,20 +47,24 @@ header{
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* ================== LOGO (FIX) ================== */
+/* permite que el centro se encoja y no haga overflow */
+header > a,
+header .navbar,
+header .icons{ min-width: 0; }
+
+/* ================== LOGO ================== */
 header > a{
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  min-width: 140px;
+  line-height: 0;
 }
 
 header .logo{
-  /* ✅ evita que “se vaya a pantalla completa” */
   display:block;
-  height: clamp(100px, 5vw, 150px);
+  height: 78px;              /* ✅ ideal desktop */
   width: auto;
-  max-width: min(500px, 52vw);
+  max-width: 340px;          /* ✅ no empuja todo */
   object-fit: contain;
 }
 
@@ -68,7 +77,6 @@ header .navbar{
   flex-wrap: wrap;
 }
 
-/* Botones: SIN borde, SOLO sombra */
 header .navbar a{
   display:inline-flex;
   align-items:center;
@@ -254,19 +262,18 @@ header.open .hamburger{
   header{
     gap: 10px;
     padding: 10px 12px;
-    min-height: 78px;
+    min-height: 82px;
   }
 
   .hamburger{ display:inline-flex; align-items:center; justify-content:center; }
-
   .icons{ justify-content:flex-end; gap: 8px; }
 
   header .icons p{ display:none; }
   header .icons .logueado a span{ display:none; }
 
   header .logo{
-    height: 56px;
-    max-width: 64vw;
+    height: 60px;     /* ✅ ideal mobile */
+    max-width: 72vw;
   }
 
   header .navbar{
@@ -300,14 +307,14 @@ header.open .hamburger{
     justify-content:flex-start;
     padding: 0 14px;
     border-radius: 16px;
-    border: none;               /* ✅ sin borde */
+    border: none;
     background: rgba(255,255,255,.78);
     box-shadow: 0 10px 20px rgba(2,6,23,.08);
   }
 }
 
 @media (max-width: 380px){
-  header .logo{ height: 52px; }
+  header .logo{ height: 56px; }
   header .icons a{ padding: 0 10px; }
 }
 
@@ -319,31 +326,4 @@ header.open .hamburger{
 }
 @media (prefers-reduced-motion: reduce){
   *{ transition:none !important; }
-}
-/* ===== FIX logo grande sin ensanchar header (PEGAR AL FINAL) ===== */
-header{
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: clip;
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
-}
-
-header > a,
-header .navbar,
-header .icons{
-  min-width: 0;
-}
-
-header .logo{
-  height: clamp(80px, 6.5vw, 118px) !important;
-  max-width: 260px !important;
-  width: auto !important;
-  object-fit: contain;
-}
-
-@media (max-width: 920px){
-  header .logo{
-    height: 64px !important;
-    max-width: 70vw !important;
-  }
 }
