@@ -390,3 +390,72 @@
 @media (prefers-reduced-motion: reduce){
   *{ transition:none !important; scroll-behavior:auto !important; }
 }
+/* ===== Carrusel categorías: banner debajo de la imagen ===== */
+.body-index .peliculas-recomendadas .contenedor-carrousel .carrousel .pelicula{
+  position: relative;
+  flex: 0 0 clamp(280px, 52vw, 640px);
+  border-radius: 22px;
+  overflow: hidden;
+  scroll-snap-align: center;
+  box-shadow: 0 16px 40px rgba(2,6,23,.18);
+  background: #fff;
+}
+
+.body-index .peliculas-recomendadas .pelicula-link{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.body-index .peliculas-recomendadas .pelicula-link img{
+  width: 100%;
+  height: clamp(200px, 42vh, 520px);
+  object-fit: cover;
+  display: block;
+  transform: none; /* evita zoom inicial */
+}
+
+.body-index .peliculas-recomendadas .tarjeta-texto{
+  position: static;          /* <- ya no va superpuesto */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 16px;
+  background: linear-gradient(90deg, rgba(0,63,125,.95), rgba(0,63,125,.78));
+}
+
+.body-index .peliculas-recomendadas .tarjeta-texto p{
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: clamp(14px, 2.2vw, 22px);
+  color: #fff;
+  text-align: center;
+}
+
+/* hover suave */
+@media (hover:hover){
+  .body-index .peliculas-recomendadas .pelicula:hover{
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 22px 56px rgba(2,6,23,.22);
+  }
+  .body-index .peliculas-recomendadas .pelicula:hover img{
+    transform: scale(1.06);
+    transition: transform 240ms ease;
+  }
+}
+
+/* mobile */
+@media (max-width: 768px){
+  .body-index .peliculas-recomendadas .pelicula{
+    flex-basis: 86%;
+    border-radius: 18px;
+  }
+  .body-index .peliculas-recomendadas .pelicula-link img{
+    height: 210px;
+  }
+}

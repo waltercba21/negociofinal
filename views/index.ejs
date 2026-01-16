@@ -11,11 +11,17 @@
               <div class="contenedor-carrousel">
                   <div class="carrousel">
                       <div class="pelicula">
-                          <a href="/productos?categoria=31"><img class="imagen-carrusel" data-categoria="31" src="uploads/productos/faros-led1.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>FAROS AUXILIARES LED</p>
-                          </div>
-                      </div>
+  <a class="pelicula-link" href="/productos?categoria=31">
+    <img class="imagen-carrusel"
+         data-categoria="31"
+         src="/uploads/productos/faros-led1.webp"
+         alt="FAROS AUXILIARES LED">
+    <div class="tarjeta-texto">
+      <p>FAROS AUXILIARES LED</p>
+    </div>
+  </a>
+</div>
+
                       <div class="pelicula">
                           <a href="/productos?categoria=30"><img class="imagen-carrusel" data-categoria="30" src="uploads/productos/faro-trasero-led1.webp" alt=""></a>
                           <div class="tarjeta-texto">
@@ -178,6 +184,7 @@
       </main>
     
     <%- include ./layouts/footer.ejs %>
-    <script src="js/index.js"></script> 
+    <script src="/js/index.js"></script>
+
 </body>
 </html>
