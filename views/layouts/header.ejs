@@ -1,34 +1,98 @@
 <header>
   <a href="/">
     <img class="logo" src="/uploads/productos/logo.png?v=2" alt="LOGO" />
-
   </a>
 
   <button class="hamburger" onclick="toggleMenu()">☰</button>
+
+  <% const qHeader = (typeof req !== 'undefined' && req.query && req.query.q) ? String(req.query.q) : ''; %>
+
+  <!-- ================== BUSCADOR EN HEADER ================== -->
+  <form class="header-search" action="/productos" method="GET" role="search" autocomplete="off">
+    <div class="buscador-con-icono header-search__inner">
+      <i class="fas fa-search"></i>
+
+      <input
+        type="text"
+        name="q"
+        id="headerEntradaBusqueda"
+        placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile"
+        value="<%= qHeader %>">
+
+      <button type="button" id="headerBotonLimpiar" class="boton-limpiar" aria-label="Limpiar búsqueda">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </form>
+
+  <!-- CSS mínimo para que SE VEA aunque el header sea flex/space-between -->
+  <style>
+    .header-search{
+      flex: 1 1 420px;
+      max-width: 560px;
+      margin: 0 12px;
+      min-width: 220px;
+    }
+    .header-search__inner{
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-search input{
+      width: 100%;
+      min-width: 160px;
+    }
+    /* en mobile lo bajamos abajo del todo para que no rompa el nav */
+    @media (max-width: 768px){
+      .header-search{
+        flex: 1 1 100%;
+        max-width: none;
+        margin: 10px 0 0;
+      }
+    }
+  </style>
+
+  <script>
+    (function () {
+      const input = document.getElementById('headerEntradaBusqueda');
+      const clear = document.getElementById('headerBotonLimpiar');
+      if (!input || !clear) return;
+
+      const sync = () => { clear.style.display = input.value.trim() ? 'block' : 'none'; };
+      sync();
+
+      input.addEventListener('input', sync, { passive: true });
+      clear.addEventListener('click', () => {
+        input.value = '';
+        sync();
+        input.focus();
+      }, { passive: true });
+    })();
+  </script>
+  <!-- ======================================================= -->
 
   <nav class="navbar">
     <a class="nav-link" href="/">INICIO</a>
     <a class="nav-link" href="/productos">PRODUCTOS</a>
 
-    <% if (!isAdminUser) { %>  <!-- ✅ Solo se muestra si NO es administrador -->
+    <% if (!isAdminUser) { %>
       <a class="nav-link" href="/productos/ofertas">OFERTAS</a>
       <a class="nav-link" href="https://wa.me/+543513820440/" target="_blank">WHATSAPP</a>
       <a class="nav-link" href="#" onclick="abrirMapa(); return false;">UBICACIÓN</a>
     <% } %>
 
-    <% if (isAdminUser) { %>  <!-- ✅ Solo se muestra para Administradores -->
+    <% if (isAdminUser) { %>
       <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
       <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
       <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
-      <!-- ✅ NUEVO: Gastos -->
+
       <a class="nav-link" href="/administracion/gastos" id="gastos-btn">GASTOS</a>
-      
-      <!-- ✅ Botón para Administración -->
+
       <a class="nav-link" href="/administracion" id="admin-btn">
         ADMINISTRACIÓN
       </a>
 
-      <!-- ✅ Botón para Pedidos con notificación -->
       <a class="nav-link pedidos-icon" href="/pedidos" id="pedidos-btn">
         PEDIDOS
         <span id="pedido-notificacion" class="pedido-alerta" style="display: none;">0</span>
@@ -38,62 +102,60 @@
 
   <div class="icons">
     <% if (isLogged) { %>
-      <div class="logueado"> 
-        <a href="/users/profile"> 
-          <p>Hola <%= userLogged.nombre %> </p> 
+      <div class="logueado">
+        <a href="/users/profile">
+          <p>Hola <%= userLogged.nombre %></p>
         </a>
 
-        <% if (!isAdminUser) { %>  <!-- ✅ Solo se muestra si NO es administrador -->
+        <% if (!isAdminUser) { %>
           <a href="/carrito" class="carrito-icon">
             <i class="fa-solid fa-cart-shopping"></i>
-            <span id="carrito-notificacion" class="cantidad-alerta" 
-                  <% if (cantidadCarrito <= 0) { %> style="display: none;" <% } %>>
-                <%= cantidadCarrito %>
+            <span id="carrito-notificacion" class="cantidad-alerta"
+              <% if (cantidadCarrito <= 0) { %> style="display: none;" <% } %>>
+              <%= cantidadCarrito %>
             </span>
           </a>
-        <% } %>          
-      
+        <% } %>
+
         <a href="/users/logout">
           <i class="fa-solid fa-right-from-bracket"></i>
-          <span>Salir</span> 
+          <span>Salir</span>
         </a>
       </div>
     <% } else { %>
       <a href="/users/login">Iniciar Sesión</a>
       <a class="register-link" href="/users/register">Registrarme</a>
-    <% } %>  
-</div>
+    <% } %>
+  </div>
 
-
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
   <script>
-      const socket = io();
+    const socket = io();
 
-      socket.on('connect', () => {
-      });
-
-      socket.on('actualizarNotificacion', (data) => {
-          actualizarPedidosPendientes();
-      });
-
-      async function actualizarPedidosPendientes() {
-          try {
-              const response = await fetch('/pedidos/cantidad');  
-              const data = await response.json();
-
-              const notificacion = document.getElementById("pedido-notificacion");
-              if (data.cantidad > 0) {
-                  notificacion.textContent = data.cantidad;
-                  notificacion.style.display = "flex";
-              } else {
-                  notificacion.style.display = "none";
-              }
-          } catch (error) {
-              console.error("❌ Error al obtener pedidos pendientes:", error);
-          }
-      }
-
+    socket.on('actualizarNotificacion', () => {
       actualizarPedidosPendientes();
+    });
+
+    async function actualizarPedidosPendientes() {
+      try {
+        const response = await fetch('/pedidos/cantidad');
+        const data = await response.json();
+
+        const notificacion = document.getElementById("pedido-notificacion");
+        if (!notificacion) return;
+
+        if (data.cantidad > 0) {
+          notificacion.textContent = data.cantidad;
+          notificacion.style.display = "flex";
+        } else {
+          notificacion.style.display = "none";
+        }
+      } catch (error) {
+        console.error("❌ Error al obtener pedidos pendientes:", error);
+      }
+    }
+
+    actualizarPedidosPendientes();
   </script>
 </header>
