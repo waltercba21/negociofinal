@@ -25,15 +25,14 @@ let timer;
 const entradaBusqueda = document.getElementById('entradaBusqueda');
 const contenedorProductos = document.getElementById('contenedor-productos');
 const botonLimpiar = document.getElementById('botonLimpiar');
+
+
 const CAN_INIT = !!(entradaBusqueda && contenedorProductos);
 const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
 const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
 
 let lastLogAt = 0; // debounce para analytics
 
-if (!CAN_INIT) {
-  console.log('[AF] buscador.js: esta vista no tiene #entradaBusqueda / #contenedor-productos. Skip.');
-}
 /* ==========================================
    Analytics helpers
 ========================================== */
@@ -315,11 +314,36 @@ function _renderSimulacion(productoId, precioVentaSimulado){
 /* ==========================================
    UI / Render de productos
 ========================================== */
-if (CAN_INIT) {
+if (!CAN_INIT) {
+  console.log('[AF] buscador.js: esta vista no tiene #entradaBusqueda / #contenedor-productos. Skip init.');
+} else {
+  // Guardamos el listado renderizado por el server para poder volver al estado inicial
+  const LISTADO_HTML_INICIAL = contenedorProductos.innerHTML;
+
+  const clearUrlQ = () => {
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('q')) {
+        url.searchParams.delete('q');
+        const newUrl = url.pathname + (url.search ? url.search : '');
+        window.history.replaceState({}, '', newUrl);
+      }
+    } catch (_) {}
+  };
+
+  const restoreListado = () => {
+    contenedorProductos.innerHTML = LISTADO_HTML_INICIAL;
+    clearUrlQ();
+  };
+
   window.addEventListener('load', async () => {
     const qParam = new URLSearchParams(window.location.search).get('q');
     const q = (qParam || '').trim();
 
+    // Estado inicial del botón limpiar
+    if (botonLimpiar) botonLimpiar.style.display = entradaBusqueda.value.trim() ? 'block' : 'none';
+
+    // Si venimos desde el header con ?q=..., ejecutar búsqueda y renderizar
     if (q) {
       entradaBusqueda.value = q;
       if (botonLimpiar) botonLimpiar.style.display = 'block';
@@ -333,30 +357,44 @@ if (CAN_INIT) {
       mostrarProductos(productos);
     }
   });
-}
 
-entradaBusqueda.addEventListener('input', (e) => {
-  clearTimeout(timer);
-  timer = setTimeout(async () => {
-    const busqueda = e.target.value.trim();
+  entradaBusqueda.addEventListener('input', (e) => {
+    const raw = (e.target?.value ?? '').toString();
+    if (botonLimpiar) botonLimpiar.style.display = raw.trim() ? 'block' : 'none';
 
-    const now = Date.now();
-    if (busqueda.length >= 3 && (now - lastLogAt > 1200)) {
-      lastLogAt = now;
-      logBusquedaTexto(busqueda, 'texto');
-    }
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const busqueda = raw.trim();
 
-    contenedorProductos.innerHTML = '';
+      const now = Date.now();
+      if (busqueda.length >= 3 && (now - lastLogAt > 1200)) {
+        lastLogAt = now;
+        logBusquedaTexto(busqueda, 'texto');
+      }
 
-    if (busqueda) {
+      if (!busqueda) {
+        restoreListado();
+        return;
+      }
+
       const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
       const respuesta = await fetch(url);
       const productos = await respuesta.json();
       dbg('🔎 /productos/api/buscar =>', productos?.length, 'items');
       mostrarProductos(productos);
-    }
-  }, 300);
-});
+    }, 300);
+  });
+
+  // Botón limpiar
+  if (botonLimpiar) {
+    botonLimpiar.addEventListener('click', () => {
+      entradaBusqueda.value = '';
+      botonLimpiar.style.display = 'none';
+      restoreListado();
+      entradaBusqueda.focus();
+    }, { passive: true });
+  }
+}
 
 function mostrarProductos(productos) {
   contenedorProductos.innerHTML = '';
@@ -549,7 +587,7 @@ async function _initProveedorButton(productoId){
 /* ==========================================
    Listener del botón “Siguiente proveedor”
 ========================================== */
-contenedorProductos.addEventListener('click', async (ev) => {
+if (CAN_INIT) contenedorProductos.addEventListener('click', async (ev) => {
   const btn = ev.target.closest('.btn-siguiente-proveedor');
   if (!btn || !isAdminUser) return;
 
@@ -610,7 +648,7 @@ contenedorProductos.addEventListener('click', async (ev) => {
 /* ==========================================
    Delegado de clicks (analytics)
 ========================================== */
-contenedorProductos.addEventListener('click', (ev) => {
+if (CAN_INIT) contenedorProductos.addEventListener('click', (ev) => {
   const btn = ev.target.closest('.agregar-carrito');
   const link = ev.target.closest('.card-link');
   if (!btn && !link) return;
@@ -627,16 +665,3 @@ contenedorProductos.addEventListener('click', (ev) => {
   logBusquedaProducto(productoId, qActual);
 }, { passive: true });
 
-/* ==========================================
-   Botón limpiar
-========================================== */
-if (botonLimpiar) {
-  entradaBusqueda.addEventListener('input', () => {
-    botonLimpiar.style.display = entradaBusqueda.value.trim() !== '' ? 'block' : 'none';
-  });
-  botonLimpiar.addEventListener('click', () => {
-    entradaBusqueda.value = '';
-    botonLimpiar.style.display = 'none';
-    contenedorProductos.innerHTML = '';
-  });
-}

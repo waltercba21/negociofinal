@@ -11,11 +11,9 @@
   <div class="contenedor-busqueda">
     <div class="buscador-con-icono">
       <i class="fas fa-search"></i>
-<% const q = (typeof req !== 'undefined' && req.query && req.query.q) ? String(req.query.q) : ''; %>
-<input type="text" id="entradaBusqueda" autocomplete="off"
-       placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile"
-       value="<%= q %>">
+      <% const q = (typeof req !== 'undefined' && req.query && req.query.q) ? String(req.query.q) : ''; %>
 
+      <input type="text" id="entradaBusqueda" autocomplete="off" placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" value="<%= q %>">
       <button type="button" id="botonLimpiar" class="boton-limpiar" aria-label="Limpiar búsqueda">
         <i class="fas fa-times"></i>
       </button>
