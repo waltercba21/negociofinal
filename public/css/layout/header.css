@@ -398,3 +398,55 @@ header .logo{
   header > a{ padding: 6px 10px; border-radius: 16px; }
   header > a::before{ inset: -14px; filter: blur(12px); }
 }
+/* ===== HEADER oscuro (degradé) + glow sutil ===== */
+header{
+  background: linear-gradient(135deg, rgba(2,6,23,.96), rgba(17,24,39,.92), rgba(2,6,23,.96)) !important;
+  border-bottom: 1px solid rgba(255,255,255,.10) !important;
+  box-shadow: 0 16px 46px rgba(2,6,23,.40) !important;
+}
+
+/* halo suave azul/rojo de fondo */
+header::before{
+  content:"";
+  position:absolute;
+  inset: 0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 45%, rgba(0,63,125,.35), transparent 55%),
+    radial-gradient(circle at 82% 45%, rgba(217,4,41,.28), transparent 60%);
+  filter: blur(18px);
+  opacity: .9;
+  z-index: 0;
+}
+header > *{ position: relative; z-index: 1; }
+
+/* textos en blanco/gris claro */
+header .navbar a,
+header .icons a,
+header .icons p{
+  color: rgba(255,255,255,.92) !important;
+}
+
+/* botones: oscuro “glass”, sin borde */
+header .navbar a,
+header .icons a{
+  background: rgba(255,255,255,.08) !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35) !important;
+}
+
+/* hover: texto rojo + fondo un poco más claro */
+@media (hover:hover){
+  header .navbar a:hover,
+  header .icons a:hover{
+    background: rgba(255,255,255,.14) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 18px 46px rgba(0,0,0,.45) !important;
+  }
+}
+
+/* CTA register se mantiene destacada */
+header .icons .register-link{
+  background: linear-gradient(180deg, rgba(217,4,41,.95), rgba(184,2,32,.95)) !important;
+  color:#fff !important;
+  box-shadow: 0 18px 46px rgba(217,4,41,.28) !important;
+}
