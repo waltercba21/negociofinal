@@ -1,190 +1,279 @@
-<body class="body-index">  
-<% var pageCss = '/css/pages/index.css' %>
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
+<body class="body-index">
+  <% var pageCss = '/css/pages/index.css' %>
+  <%- include ./layouts/head.ejs %>
+  <%- include ./layouts/header.ejs %>
 
-  
-    <main>
-      <div class="peliculas-recomendadas contenedor">
-          <div class="contenedor-principal">
-              <button role="button" id="flecha-izquierda" class="flecha-izquierda"><i class="fa-solid fa-angle-left"></i></button>
-              <div class="contenedor-carrousel">
-                  <div class="carrousel">
-                      <div class="pelicula">
-  <a class="pelicula-link" href="/productos?categoria=31">
-    <img class="imagen-carrusel"
-         data-categoria="31"
-         src="/uploads/productos/faros-led1.webp"
-         alt="FAROS AUXILIARES LED">
-    <div class="tarjeta-texto">
-      <p>FAROS AUXILIARES LED</p>
-    </div>
-  </a>
-</div>
+  <main>
+    <!-- ================== CARRUSEL CATEGORIAS ================== -->
+    <div class="peliculas-recomendadas contenedor">
+      <div class="contenedor-principal">
+        <button role="button" id="flecha-izquierda" class="flecha-izquierda">
+          <i class="fa-solid fa-angle-left"></i>
+        </button>
 
-                      <div class="pelicula">
-                          <a href="/productos?categoria=30"><img class="imagen-carrusel" data-categoria="30" src="uploads/productos/faro-trasero-led1.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>FAROS TRASEROS LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=25"><img class="imagen-carrusel" data-categoria="25" src="uploads/productos/opticas-led1.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>OPTICAS LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=28"><img class="imagen-carrusel" data-categoria="28" src="uploads/productos/lamparas-led1.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>LAMPARAS LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=2"><img class="imagen-carrusel" data-categoria="2" src="uploads/productos/lamparas1.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>LAMPARAS</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=15"><img class="imagen-carrusel" data-categoria="15" src="uploads/productos/16.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>FAROS AUXILIARES</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=16"><img class="imagen-carrusel" data-categoria="16" src="uploads/productos/14.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>BARRAS LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=5"><img class="imagen-carrusel" data-categoria="5" src="uploads/productos/10.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>FAROS LED</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=12"><img class="imagen-carrusel" data-categoria="12" src="uploads/productos/3.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>LINEA UNIVERSAL</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=13"><img class="imagen-carrusel" data-categoria="13" src="uploads/productos/2.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>LINEA CAMIONES</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=9"><img class="imagen-carrusel" data-categoria="9" src="uploads/productos/5.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>ESPEJOS UNIVERSALES</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=14"><img class="imagen-carrusel" data-categoria="14" src="uploads/productos/6.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>VIDRIOS DE ESPEJOS</p>
-                          </div>
-                      </div>
-                      <div class="pelicula">
-                          <a href="/productos?categoria=11"><img class="imagen-carrusel" data-categoria="11" src="uploads/productos/4.webp" alt=""></a>
-                          <div class="tarjeta-texto">
-                              <p>VIDRIOS DE OPTICAS</p>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-              <button role="button" id="flecha-derecha" class="flecha-derecha"><i class="fa-solid fa-angle-right"></i></button>
+        <div class="contenedor-carrousel">
+          <div class="carrousel">
+
+            <!-- 31 - FAROS AUXILIARES LED -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=31">
+                <img class="imagen-carrusel"
+                     data-categoria="31"
+                     src="/uploads/productos/faros-led1.webp"
+                     alt="FAROS AUXILIARES LED">
+                <div class="tarjeta-texto">
+                  <p>FAROS AUXILIARES LED</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 30 - FAROS TRASEROS LED -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=30">
+                <img class="imagen-carrusel"
+                     data-categoria="30"
+                     src="/uploads/productos/faro-trasero-led1.webp"
+                     alt="FAROS TRASEROS LED">
+                <div class="tarjeta-texto">
+                  <p>FAROS TRASEROS LED</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 25 - OPTICAS LED -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=25">
+                <img class="imagen-carrusel"
+                     data-categoria="25"
+                     src="/uploads/productos/opticas-led1.webp"
+                     alt="OPTICAS LED">
+                <div class="tarjeta-texto">
+                  <p>OPTICAS LED</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 28 - LAMPARAS LED -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=28">
+                <img class="imagen-carrusel"
+                     data-categoria="28"
+                     src="/uploads/productos/lamparas-led1.webp"
+                     alt="LAMPARAS LED">
+                <div class="tarjeta-texto">
+                  <p>LAMPARAS LED</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 2 - LAMPARAS -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=2">
+                <img class="imagen-carrusel"
+                     data-categoria="2"
+                     src="/uploads/productos/lamparas1.webp"
+                     alt="LAMPARAS">
+                <div class="tarjeta-texto">
+                  <p>LAMPARAS</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 15 - FAROS AUXILIARES -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=15">
+                <img class="imagen-carrusel"
+                     data-categoria="15"
+                     src="/uploads/productos/16.webp"
+                     alt="FAROS AUXILIARES">
+                <div class="tarjeta-texto">
+                  <p>FAROS AUXILIARES</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 16 - BARRAS LED -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=16">
+                <img class="imagen-carrusel"
+                     data-categoria="16"
+                     src="/uploads/productos/14.webp"
+                     alt="BARRAS LED">
+                <div class="tarjeta-texto">
+                  <p>BARRAS LED</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 5 - FAROS LED -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=5">
+                <img class="imagen-carrusel"
+                     data-categoria="5"
+                     src="/uploads/productos/10.webp"
+                     alt="FAROS LED">
+                <div class="tarjeta-texto">
+                  <p>FAROS LED</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 12 - LINEA UNIVERSAL -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=12">
+                <img class="imagen-carrusel"
+                     data-categoria="12"
+                     src="/uploads/productos/3.webp"
+                     alt="LINEA UNIVERSAL">
+                <div class="tarjeta-texto">
+                  <p>LINEA UNIVERSAL</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 13 - LINEA CAMIONES -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=13">
+                <img class="imagen-carrusel"
+                     data-categoria="13"
+                     src="/uploads/productos/2.webp"
+                     alt="LINEA CAMIONES">
+                <div class="tarjeta-texto">
+                  <p>LINEA CAMIONES</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 9 - ESPEJOS UNIVERSALES -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=9">
+                <img class="imagen-carrusel"
+                     data-categoria="9"
+                     src="/uploads/productos/5.webp"
+                     alt="ESPEJOS UNIVERSALES">
+                <div class="tarjeta-texto">
+                  <p>ESPEJOS UNIVERSALES</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 14 - VIDRIOS DE ESPEJOS -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=14">
+                <img class="imagen-carrusel"
+                     data-categoria="14"
+                     src="/uploads/productos/6.webp"
+                     alt="VIDRIOS DE ESPEJOS">
+                <div class="tarjeta-texto">
+                  <p>VIDRIOS DE ESPEJOS</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- 11 - VIDRIOS DE OPTICAS -->
+            <div class="pelicula">
+              <a class="pelicula-link" href="/productos?categoria=11">
+                <img class="imagen-carrusel"
+                     data-categoria="11"
+                     src="/uploads/productos/4.webp"
+                     alt="VIDRIOS DE OPTICAS">
+                <div class="tarjeta-texto">
+                  <p>VIDRIOS DE OPTICAS</p>
+                </div>
+              </a>
+            </div>
+
           </div>
+        </div>
+
+        <button role="button" id="flecha-derecha" class="flecha-derecha">
+          <i class="fa-solid fa-angle-right"></i>
+        </button>
       </div>
-  
-      <div class="contenedor-principal-productos">
-        
-        <div class="ultimos-productos contenedor-ultimos">
-          <h2 class="titulo-ultimos">ÚLTIMOS AGREGADOS</h2> <!-- ⬅ centrado desde CSS -->
-        
-          <div class="contenedor-productos-ultimos">
-            <% productos.forEach(function(producto) { %>
-              <div class="card-ultimo">
-                <div class="cover-card-ultimo">
-                  <% if (producto.imagen && producto.imagen.length > 0) { %>
-                    <img src="../../uploads/productos/<%= producto.imagen[0] %>" alt="<%= producto.nombre %>">
+    </div>
+
+    <!-- ================== ULTIMOS AGREGADOS ================== -->
+    <div class="contenedor-principal-productos">
+      <div class="ultimos-productos contenedor-ultimos">
+        <h2 class="titulo-ultimos">ÚLTIMOS AGREGADOS</h2>
+
+        <div class="contenedor-productos-ultimos">
+          <% productos.forEach(function(producto) { %>
+            <div class="card-ultimo">
+              <div class="cover-card-ultimo">
+                <% if (producto.imagen && producto.imagen.length > 0) { %>
+                  <img src="/uploads/productos/<%= producto.imagen[0] %>" alt="<%= producto.nombre %>">
+                <% } else { %>
+                  <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
+                <% } %>
+              </div>
+
+              <div class="titulo-producto-ultimo">
+                <h3 class="nombre-ultimo"><%= producto.nombre %></h3>
+              </div>
+
+              <hr>
+
+              <div class="categoria-producto-ultimo">
+                <h5 class="categoria-ultimo"><%= producto.categoria_nombre %></h5>
+              </div>
+
+              <div class="precio-producto-ultimo">
+                <p class="precio-ultimo">
+                  <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %>
+                </p>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+
+      <!-- ================== OFERTAS ================== -->
+      <div class="ofertas-productos contenedor-ofertas">
+        <h2>OFERTAS</h2>
+
+        <div class="contenedor-carrousel-ofertas">
+          <button class="flecha-izquierda-ofertas"><i class="fas fa-chevron-left"></i></button>
+
+          <div class="contenedor-productos-ofertas">
+            <% productosOferta.forEach(function(oferta) { %>
+              <div class="card-oferta">
+                <div class="cover-card-oferta">
+                  <% if (oferta.imagenes && oferta.imagenes.length > 0) { %>
+                    <img src="/uploads/productos/<%= oferta.imagenes[0] %>" alt="<%= oferta.nombre %>">
                   <% } else { %>
-                    <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
+                    <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
                   <% } %>
                 </div>
-        
-                <div class="titulo-producto-ultimo">
-                  <h3 class="nombre-ultimo"><%= producto.nombre %></h3>
+
+                <div class="titulo-producto-oferta">
+                  <h3 class="nombre-oferta"><%= oferta.nombre %></h3>
                 </div>
-        
+
                 <hr>
-        
-                <div class="categoria-producto-ultimo">
-                  <h5 class="categoria-ultimo"><%= producto.categoria_nombre %></h5>
+
+                <div class="categoria-producto-oferta">
+                  <h5 class="categoria-oferta"><%= oferta.categoria_nombre %></h5>
                 </div>
-        
-                <div class="precio-producto-ultimo">
-                  <p class="precio-ultimo">
-                    <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta) %>
+
+                <div class="precio-producto-oferta">
+                  <p class="precio-oferta">
+                    <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %>
                   </p>
                 </div>
               </div>
             <% }); %>
           </div>
+
+          <button class="flecha-derecha-ofertas"><i class="fas fa-chevron-right"></i></button>
         </div>
-        
-        
-        <div class="ofertas-productos contenedor-ofertas">
-         
-          <h2>OFERTAS</h2>
+      </div>
+    </div>
+  </main>
 
-          <div class="contenedor-carrousel-ofertas">
-            <button class="flecha-izquierda-ofertas"><i class="fas fa-chevron-left"></i></button>
-            
-            <div class="contenedor-productos-ofertas">
-              <% productosOferta.forEach(function(oferta) { %>
-                <div class="card-oferta">
-                  
-                  <div class="cover-card-oferta">
-                    <% if (oferta.imagenes && oferta.imagenes.length > 0) { %>
-                      <img src="../../uploads/productos/<%= oferta.imagenes[0] %>" alt="<%= oferta.nombre %>">
-                    <% } else { %>
-                      <img src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= oferta.nombre %>">
-                    <% } %>
-                  </div>
-          
-                  <div class="titulo-producto-oferta">
-                    <h3 class="nombre-oferta"><%= oferta.nombre %></h3>
-                  </div>
-          
-                  <hr>
-          
-                  <div class="categoria-producto-oferta">
-                    <h5 class="categoria-oferta"><%= oferta.categoria_nombre %></h5>
-                  </div>
-          
-                  <div class="precio-producto-oferta">
-                    <p class="precio-oferta">
-                      <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(oferta.precio_venta) %>
-                    </p>
-                  </div>
-                </div>
-              <% }); %>
-            </div>
-          
-            <button class="flecha-derecha-ofertas"><i class="fas fa-chevron-right"></i></button>
-          </div>
-          
-        </div>
+  <%- include ./layouts/footer.ejs %>
 
-          </div>
-      </main>
-    
-    <%- include ./layouts/footer.ejs %>
-    <script src="/js/index.js"></script>
-
+  <!-- tu app.js sirve /js desde public/js -->
+  <script src="/js/index.js"></script>
 </body>
 </html>
