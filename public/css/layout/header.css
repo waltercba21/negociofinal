@@ -545,3 +545,58 @@ header .icons .register-link{
   color:#fff !important;
   box-shadow: 0 18px 46px rgba(217,4,41,.28) !important;
 }
+/* ===== Fix buscador header: centrado + 1 contenedor + blanco/azul ===== */
+
+/* El form NO debe verse como caja (evita “doble contenedor”) */
+header .header-search{
+  display: flex;
+  justify-content: center;   /* ✅ centrado */
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 10px 0 0 !important;
+}
+
+/* Solo se ve ESTA caja (el buscador en sí) */
+header .header-search .buscador-con-icono{
+  width: min(820px, 100%);   /* ✅ centrado y responsive */
+  margin: 0 !important;
+
+  background: #fff !important;
+  border: 1px solid rgba(0,63,125,.18) !important;
+  box-shadow: 0 12px 28px rgba(2,6,23,.14) !important;
+
+  border-radius: 999px;
+}
+
+/* Icono / texto / placeholder en azul */
+header .header-search .buscador-con-icono i{
+  color: rgba(0,63,125,.75) !important;
+}
+
+header .header-search input{
+  color: var(--brand2) !important;
+}
+
+header .header-search input::placeholder{
+  color: rgba(0,63,125,.55) !important;
+}
+
+/* Botón limpiar en azul y hover rojo */
+header .header-search .boton-limpiar{
+  color: rgba(0,63,125,.70) !important;
+}
+
+@media (hover:hover){
+  header .header-search .boton-limpiar:hover{
+    background: rgba(0,63,125,.08) !important;
+    color: var(--accent) !important;
+  }
+}
+
+/* Focus: borde rojo suave */
+header .header-search .buscador-con-icono:focus-within{
+  border-color: rgba(217,4,41,.45) !important;
+  box-shadow: 0 16px 36px rgba(2,6,23,.18) !important;
+}
