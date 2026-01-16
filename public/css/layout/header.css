@@ -327,3 +327,24 @@ header.open .hamburger{
 @media (prefers-reduced-motion: reduce){
   *{ transition:none !important; }
 }
+/* ===== Hover nuevo: texto rojo + fondo neutro ===== */
+@media (hover:hover){
+  header .navbar a:hover{
+    background: rgba(255,255,255,.92);
+    color: var(--accent);
+    box-shadow: var(--shadow-2);
+    transform: translateY(-1px);
+  }
+
+  header .icons a:hover{
+    background: rgba(255,255,255,.92);
+    color: var(--accent);
+    box-shadow: var(--shadow-2);
+    transform: translateY(-1px);
+  }
+
+  /* Mantener CTA register como CTA (no cambiar a rojo texto) */
+  header .icons .register-link:hover{
+    color: #fff !important;
+  }
+}
