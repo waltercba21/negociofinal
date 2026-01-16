@@ -25,12 +25,15 @@ let timer;
 const entradaBusqueda = document.getElementById('entradaBusqueda');
 const contenedorProductos = document.getElementById('contenedor-productos');
 const botonLimpiar = document.getElementById('botonLimpiar');
-
+const CAN_INIT = !!(entradaBusqueda && contenedorProductos);
 const isAdminUser = document.body.getAttribute('data-is-admin-user') === 'true';
 const isUserLoggedIn = document.body.getAttribute('data-is-user-logged-in') === 'true';
 
 let lastLogAt = 0; // debounce para analytics
 
+if (!CAN_INIT) {
+  console.log('[AF] buscador.js: esta vista no tiene #entradaBusqueda / #contenedor-productos. Skip.');
+}
 /* ==========================================
    Analytics helpers
 ========================================== */
@@ -312,11 +315,7 @@ function _renderSimulacion(productoId, precioVentaSimulado){
 /* ==========================================
    UI / Render de productos
 ========================================== */
-window.onload = async () => {
-  const respuesta = await fetch('/productos/api/buscar');
-  productosOriginales = await respuesta.json();
-  dbg('📦 productosOriginales cargados:', productosOriginales?.length);
-};
+window.onload = async
 
 entradaBusqueda.addEventListener('input', (e) => {
   clearTimeout(timer);

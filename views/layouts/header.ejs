@@ -35,6 +35,42 @@
       </a>
     <% } %>
   </nav>
+    <% const qHeader = (typeof req !== 'undefined' && req.query && req.query.q) ? String(req.query.q) : ''; %>
+
+  <form class="header-search" action="/productos" method="GET" role="search" autocomplete="off">
+    <div class="buscador-con-icono header-search__inner">
+      <i class="fas fa-search"></i>
+
+      <input
+        type="text"
+        name="q"
+        id="headerEntradaBusqueda"
+        placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile"
+        value="<%= qHeader %>">
+
+      <button type="button" id="headerBotonLimpiar" class="boton-limpiar" aria-label="Limpiar búsqueda">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </form>
+
+  <script>
+    (function () {
+      const input = document.getElementById('headerEntradaBusqueda');
+      const clear = document.getElementById('headerBotonLimpiar');
+      if (!input || !clear) return;
+
+      const sync = () => { clear.style.display = input.value.trim() ? 'block' : 'none'; };
+      sync();
+
+      input.addEventListener('input', sync, { passive: true });
+      clear.addEventListener('click', () => {
+        input.value = '';
+        sync();
+        input.focus();
+      }, { passive: true });
+    })();
+  </script>
 
   <div class="icons">
     <% if (isLogged) { %>
