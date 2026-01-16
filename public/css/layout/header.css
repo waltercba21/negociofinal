@@ -348,3 +348,53 @@ header.open .hamburger{
     color: #fff !important;
   }
 }
+/* ===== Logo “encendido” con fondo oscuro (solo detrás del logo) ===== */
+header > a{
+  position: relative;
+  padding: 8px 14px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(2,6,23,.92), rgba(17,24,39,.78));
+  box-shadow:
+    0 14px 34px rgba(2,6,23,.22),
+    inset 0 1px 0 rgba(255,255,255,.10);
+  overflow: visible; /* permite el glow */
+}
+
+/* glow azul + rojo alrededor */
+header > a::before{
+  content:"";
+  position:absolute;
+  inset: -18px;              /* tamaño del halo */
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 22% 40%, rgba(0,63,125,.55), transparent 55%),
+    radial-gradient(circle at 78% 45%, rgba(217,4,41,.45), transparent 58%);
+  filter: blur(14px);
+  opacity: .95;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* brillo suave tipo “vidrio” */
+header > a::after{
+  content:"";
+  position:absolute;
+  inset: 1px;
+  border-radius: 17px;
+  background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0) 55%);
+  pointer-events:none;
+}
+
+/* glow del PNG (letras) */
+header .logo{
+  filter:
+    drop-shadow(0 10px 24px rgba(2,6,23,.22))
+    drop-shadow(-10px 0 18px rgba(0,63,125,.35))
+    drop-shadow(10px 0 18px rgba(217,4,41,.28));
+}
+
+/* mobile: menos padding para que no empuje */
+@media (max-width: 920px){
+  header > a{ padding: 6px 10px; border-radius: 16px; }
+  header > a::before{ inset: -14px; filter: blur(12px); }
+}
