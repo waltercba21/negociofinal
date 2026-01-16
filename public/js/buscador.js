@@ -315,7 +315,25 @@ function _renderSimulacion(productoId, precioVentaSimulado){
 /* ==========================================
    UI / Render de productos
 ========================================== */
-window.onload = async
+if (CAN_INIT) {
+  window.addEventListener('load', async () => {
+    const qParam = new URLSearchParams(window.location.search).get('q');
+    const q = (qParam || '').trim();
+
+    if (q) {
+      entradaBusqueda.value = q;
+      if (botonLimpiar) botonLimpiar.style.display = 'block';
+
+      if (q.length >= 3) logBusquedaTexto(q, 'header');
+
+      const url = `/productos/api/buscar?q=${encodeURIComponent(q)}`;
+      const r = await fetch(url);
+      const productos = await r.json();
+      dbg('🔎 /productos/api/buscar (init q) =>', productos?.length, 'items');
+      mostrarProductos(productos);
+    }
+  });
+}
 
 entradaBusqueda.addEventListener('input', (e) => {
   clearTimeout(timer);
