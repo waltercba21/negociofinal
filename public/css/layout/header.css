@@ -784,3 +784,52 @@ header form.header-search .boton-limpiar{
     font-weight: 600;
   }
 }
+/* ===== Ajustes finos (AL FINAL) ===== */
+
+/* 1) Evitar “borrosidad” (en Chrome/Android el backdrop-filter suele emborronar iconos) */
+header{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 2) Hamburguesa: más contraste + centrada cuando sos invitado */
+@media (max-width: 920px){
+  .hamburger{
+    background: rgba(255,255,255,.95) !important;
+    color: #003f7d !important;
+    box-shadow: 0 14px 34px rgba(0,0,0,.55) !important;
+    border: 1px solid rgba(255,255,255,.20) !important;
+  }
+
+  /* Invitado (sin icons): centrar hamburguesa y dejarla debajo del logo */
+  header.is-guest{
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "logo"
+      "hamb"
+      "search"
+      "nav" !important;
+  }
+  header.is-guest .hamburger{ justify-self: center !important; }
+}
+
+/* 3) Buscador: un poco más bajo (desktop y mobile) */
+header form.header-search .buscador-con-icono{
+  padding: 8px 12px !important;
+}
+@media (max-width: 920px){
+  header form.header-search .buscador-con-icono{
+    padding: 6px 10px !important;
+  }
+  header form.header-search .boton-limpiar{
+    min-width: 32px !important;
+    min-height: 32px !important;
+  }
+}
+
+/* 4) FontAwesome más nítido */
+header .header-search .buscador-con-icono i{
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
