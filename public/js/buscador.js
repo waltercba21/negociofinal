@@ -433,11 +433,23 @@ function mostrarProductos(productos) {
 
     // galería
     let imagenesHTML = '';
-    (producto.imagenes || []).forEach((imagen, i) => {
-      imagenesHTML += `
-        <img class="carousel__image ${i !== 0 ? 'hidden' : ''}" src="/uploads/productos/${imagen.imagen}" alt="${producto.nombre}">
-      `;
-    });
+    const imgsRaw = Array.isArray(producto.imagenes) ? producto.imagenes : [];
+
+   const files = imgsRaw
+  .map(x => (typeof x === 'string' ? x : (x?.imagen || x?.archivo || x?.url)))
+  .filter(Boolean);
+
+if (files.length === 0) files.push(''); // para que al menos haya 1 <img> y no rompa
+
+files.forEach((file, i) => {
+  const src = file ? `/uploads/productos/${file}` : '/images/noEncontrado.png';
+  imagenesHTML += `
+    <img class="carousel__image ${i !== 0 ? 'hidden' : ''}"
+         src="${src}"
+         alt="${producto.nombre}"
+         onerror="this.src='/images/noEncontrado.png'">
+  `;
+});
 
     // info stock / acciones
     let stockInfo = '';
@@ -563,13 +575,19 @@ function mostrarProductos(productos) {
 
 function moverCarrusel(index, direccion) {
   const carousel = document.getElementById(`carousel-${index}`);
+  if (!carousel) return;
+
   const imagenes = carousel.querySelectorAll('.carousel__image');
+  if (imagenes.length < 2) return;
+
   let activa = [...imagenes].findIndex(img => !img.classList.contains('hidden'));
+  if (activa < 0) activa = 0;
 
   imagenes[activa].classList.add('hidden');
-  activa = (activa + direccion + imagenes.length) % imagenes.length;
-  imagenes[activa].classList.remove('hidden');
+  const next = (activa + direccion + imagenes.length) % imagenes.length;
+  imagenes[next].classList.remove('hidden');
 }
+
 
 /* ==========================================
    Init botón “Siguiente proveedor”
