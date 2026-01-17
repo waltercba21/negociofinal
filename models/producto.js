@@ -2240,7 +2240,7 @@ obtenerProductosPorCategoriaPaginado(conexion, categoriaId, offset, limit) {
       LEFT JOIN imagenes_producto i ON p.id = i.producto_id
       WHERE p.categoria_id = ?
       GROUP BY p.id
-      ORDER BY p.id DESC
+      ORDER BY p.id DESC 
       LIMIT ? OFFSET ?`;
     // ② Total para paginador
     const sqlTotal = `SELECT COUNT(*) AS total FROM productos WHERE categoria_id = ?`;

@@ -19,7 +19,7 @@ function normalizarClave(texto) {
     .toLowerCase();                          
 }
 
-const productosPorPagina = 10;
+const productosPorPagina = 20;
 // ==============================
 // Helpers genéricos (compatibles)
 // ==============================
@@ -342,35 +342,24 @@ module.exports = {
       },      
 lista: async function (req, res) {
     try {
-      /** ───────────────────────────
-       * 1. Parámetros y validaciones
-       * ─────────────────────────── */
       const pagina    = req.query.pagina    ? Number(req.query.pagina)    : 1;
       const categoria = req.query.categoria ? Number(req.query.categoria) : undefined;
       const marca     = req.query.marca     ? Number(req.query.marca)     : undefined;
       const modelo    = req.query.modelo    ? Number(req.query.modelo)    : undefined;
-
-      console.log("\n🔎 Consulta recibida:", { pagina, categoria, marca, modelo });
 
       if (
         (categoria && isNaN(categoria)) ||
         (marca     && isNaN(marca))     ||
         (modelo    && isNaN(modelo))
       ) {
-        console.log("❌ Parámetros inválidos.");
         return res.status(400).send("Parámetros inválidos.");
       }
 
       const seHizoBusqueda  = !!(categoria || marca || modelo);
       let   productos       = [];
-      let   numeroDePaginas = 1;               // ← se recalcula cuando toca
+      let   numeroDePaginas = 1;  
 
-      /** ───────────────────────────
-       * 2. Consulta de productos
-       * ─────────────────────────── */
       if (seHizoBusqueda) {
-
-        /* ========= A) Solo CATEGORÍA ========= */
         if (categoria && !marca && !modelo) {
           const offset = (pagina - 1) * productosPorPagina;
 
@@ -384,12 +373,8 @@ lista: async function (req, res) {
 
         /* ========= B) Filtros combinados (marca / modelo) ========= */
         } else {
-          console.log(`📌 Filtros combinados — marca: ${marca} modelo: ${modelo}`);
 
           const offset = (pagina - 1) * productosPorPagina;
-
-          // Si aún no tienes un método paginado, implementa uno similar.
-          // Mientras tanto, este ejemplo supone que el método devuelve { productos, total }
           const { productos: listaFiltros, total } =
                 await producto.obtenerPorFiltrosPaginado(
                        conexion, { categoria, marca, modelo }, offset, productosPorPagina);
@@ -397,8 +382,6 @@ lista: async function (req, res) {
           productos       = listaFiltros;
           numeroDePaginas = Math.max(1, Math.ceil(total / productosPorPagina));
         }
-
-        /* ========= Carga de imágenes y proveedor más barato ========= */
         const productoIds = productos.map(p => p.id);
         if (productoIds.length) {
           const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
@@ -416,9 +399,6 @@ lista: async function (req, res) {
         console.log("🛑 Sin filtros: no se mostrarán productos.");
       }
 
-      /** ───────────────────────────
-       * 3. Cargar selectores y ordenar
-       * ─────────────────────────── */
       const [categorias, marcas] = await Promise.all([
         producto.obtenerCategorias(conexion),
         producto.obtenerMarcas(conexion),
@@ -428,7 +408,6 @@ lista: async function (req, res) {
         ? await producto.obtenerModelosPorMarca(conexion, marca)
         : [];
 
-      // Función de orden “inteligente” de modelos
       const normalizarModelo = (nombre) => {
         const partes = nombre.split("/");
         if (partes.length === 2 && !isNaN(partes[0]) && !isNaN(partes[1])) {
@@ -444,9 +423,6 @@ lista: async function (req, res) {
 
       const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
 
-      /** ───────────────────────────
-       * 4. Render de la vista
-       * ─────────────────────────── */
       res.render("productos", {
         productos,
         categorias,
@@ -468,7 +444,6 @@ lista: async function (req, res) {
     } catch (error) {
       console.error("❌ Error en productosController.lista:", error);
 
-      // Render de emergencia para no romper UX
       res.status(500).render("productos", {
         productos       : [],
         categorias      : [],
