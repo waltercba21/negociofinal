@@ -1,89 +1,140 @@
 <%- include('./layouts/head.ejs') %>
 <%- include('./layouts/header.ejs') %>
 
+<%
+  const productosList = Array.isArray(productos) ? productos : [];
+
+  const subtotal = Number(total) || 0;
+
+  // Este valor DEBE venir del backend cuando tipo_envio === 'delivery'
+  const costoEnvio =
+    (envio && envio.tipo_envio === 'delivery')
+      ? Number(envio.costo_envio || 0)
+      : 0;
+
+  const totalFinal = subtotal + costoEnvio;
+
+  const fmtARS = (n) =>
+    Number(n || 0).toLocaleString('es-AR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+%>
+
 <body>
-    <main class="carrito-container">
-        <div id="confirmar-datos">
-            <h2>Confirmar Datos</h2>
-            <div class="progreso-compra">
-                <div class="paso-container">
-                    <div class="paso completado">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>CARRITO</span>
-                    </div>
-                    <div class="barra"></div>
-                    <div class="paso">
-                        <i class="fas fa-truck"></i>
-                        <span>ENVÍO</span>
-                    </div>
-                    <div class="barra activa"></div>
-                    <div class="paso activo">
-                        <i class="fas fa-check-circle"></i>
-                        <span>CONFIRMAR DATOS</span>
-                    <div class="barra"></div>
-                    </div>
-                    <div class="barra"></div>
-                    <div class="paso">
-                        <i class="fas fa-credit-card"></i>
-                        <span>PAGO</span>
-                    </div>
-                </div>
-            </div>
+  <main class="carrito-container">
+    <div id="confirmar-datos">
+      <h2>Confirmar Datos</h2>
 
-            <% if (productos.length > 0) { %>
-                <table class="carrito-tabla">
-                    <thead>
-                        <tr>
-                            <th>Imagen</th>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Precio</th>
-                            <th>Sub-Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% productos.forEach(function(producto) { %>
-                            <tr>
-                                <td>
-                                    <img src="/uploads/productos/<%= producto.imagen || 'default.jpg' %>" 
-                                         alt="<%= producto.nombre %>" class="imagen-miniatura">
-                                </td>
-                                <td><%= producto.nombre %></td>
-                                <td><%= producto.cantidad %></td>
-                                <td>$<%= producto.precio_venta.toFixed(2) %></td>
-                                <td>$<%= producto.total.toFixed(2) %></td>
-                            </tr>
-                        <% }) %>
-                        <tr class="carrito-total">
-                            <td colspan="3"></td>
-                            <td><strong>Total</strong></td>
-                            <td id="total-carrito">$<%= total %></td>
-                        </tr>
-                    </tbody>
-                </table>
-            <% } else { %>
-                <p>No hay productos en tu carrito.</p>
-            <% } %>
+      <div class="progreso-compra">
+        <div class="paso-container">
+          <div class="paso completado">
+            <i class="fas fa-shopping-cart"></i>
+            <span>CARRITO</span>
+          </div>
 
-            <% if (envio) { %>
-                <div class="datos-envio">
-                    <h3>Datos de Envío</h3>
-                    <p><strong>Tipo de Envío:</strong> <%= envio.tipo_envio === 'delivery' ? 'Delivery a domicilio' : 'Retiro en local' %></p>
-                    <% if (envio.tipo_envio === 'delivery') { %>
-                        <p><strong>Dirección:</strong> <%= envio.direccion %></p>
-                    <% } %>
-                </div>
-            <% } else { %>
-                <p>No se ha seleccionado un método de envío.</p>
-            <% } %>
+          <div class="barra completada"></div>
 
-            <!-- Botón para ir a la vista de pago -->
-            <div class="boton-pago-container">
-                <a href="/carrito/pago" class="btn-finalizar">Ir a Pagar</a>
-            </div>
+          <div class="paso completado">
+            <i class="fas fa-truck"></i>
+            <span>ENVÍO</span>
+          </div>
 
+          <div class="barra activa"></div>
+
+          <div class="paso activo">
+            <i class="fas fa-check-circle"></i>
+            <span>CONFIRMAR DATOS</span>
+          </div>
+
+          <div class="barra"></div>
+
+          <div class="paso">
+            <i class="fas fa-credit-card"></i>
+            <span>PAGO</span>
+          </div>
         </div>
-    </main>
+      </div>
 
-    <%- include('./layouts/footer.ejs') %>
+      <!-- Resumen de envío -->
+      <section class="envio-resumen">
+        <h3>Datos de envío</h3>
+
+        <% if (envio && envio.tipo_envio === 'delivery') { %>
+          <p><strong>Método:</strong> Delivery a domicilio</p>
+          <p><strong>Dirección:</strong> <%= envio.direccion %></p>
+          <p><strong>Costo delivery:</strong> $<%= fmtARS(costoEnvio) %></p>
+        <% } else { %>
+          <p><strong>Método:</strong> Retiro por el local</p>
+        <% } %>
+      </section>
+
+      <% if (productosList.length > 0) { %>
+
+        <table class="carrito-tabla">
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio</th>
+              <th>Sub-Total</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% productosList.forEach(function(producto) { %>
+              <tr>
+                <td>
+                  <img
+                    src="/uploads/productos/<%= producto.imagen || 'default.jpg' %>"
+                    alt="<%= producto.nombre %>"
+                    class="imagen-miniatura"
+                  >
+                </td>
+                <td><%= producto.nombre %></td>
+                <td><%= producto.cantidad %></td>
+                <td>$<%= fmtARS(producto.precio_venta) %></td>
+                <td>$<%= fmtARS(producto.total) %></td>
+              </tr>
+            <% }) %>
+
+            <!-- Totales -->
+            <tr class="carrito-total">
+              <td colspan="3"></td>
+              <td><strong>Subtotal</strong></td>
+              <td id="subtotal-carrito">$<%= fmtARS(subtotal) %></td>
+            </tr>
+
+            <% if (envio && envio.tipo_envio === 'delivery') { %>
+              <tr class="carrito-total">
+                <td colspan="3"></td>
+                <td><strong>Delivery</strong></td>
+                <td id="costo-envio">$<%= fmtARS(costoEnvio) %></td>
+              </tr>
+            <% } %>
+
+            <tr class="carrito-total">
+              <td colspan="3"></td>
+              <td><strong>Total</strong></td>
+              <td id="total-final">$<%= fmtARS(totalFinal) %></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="boton-pago-container">
+          <a href="/carrito/pago" class="btn-finalizar">Ir a Pagar</a>
+        </div>
+
+      <% } else { %>
+        <p>No hay productos en tu carrito.</p>
+        <div class="boton-pago-container">
+          <a href="/carrito" class="btn-finalizar">Volver al carrito</a>
+        </div>
+      <% } %>
+
+    </div>
+  </main>
+
+  <%- include('./layouts/footer.ejs') %>
 </body>

@@ -1,93 +1,141 @@
 <%- include('./layouts/head.ejs') %>
 <%- include('./layouts/header.ejs') %>
 
+<%
+  const productosList = Array.isArray(productos) ? productos : [];
+
+  const subtotal = Number(subtotal ?? 0); // si el controller lo manda
+  const totalServer = Number(total ?? 0); // total final calculado en backend (ideal)
+  const costoEnvio = (envio && envio.tipo_envio === 'delivery')
+    ? Number(envio.costo_envio ?? 0)
+    : 0;
+
+  // fallback por si el controller aun no manda subtotal/total final:
+  const subtotalFallback = productosList.reduce((acc, p) => acc + (Number(p.total) || 0), 0);
+  const subtotalUsar = subtotal || subtotalFallback;
+  const totalFinal = totalServer || (subtotalUsar + costoEnvio);
+
+  const fmtARS = (n) =>
+    Number(n || 0).toLocaleString('es-AR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+%>
+
 <body>
-    <main class="carrito-container">
-        <h1>💳 Finalizar Pago</h1>
+  <main class="carrito-container">
+    <h1>💳 Finalizar Pago</h1>
 
-        <div class="progreso-compra">
-            <div class="paso-container">
-                <div class="paso completado">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>CARRITO</span>
-                </div>
-                <div class="barra"></div>
-                <div class="paso completado">
-                    <i class="fas fa-truck"></i>
-                    <span>ENVÍO</span>
-                </div>
-                <div class="barra"></div>
-                <div class="paso completado">
-                    <i class="fas fa-check-circle"></i>
-                    <span>CONFIRMAR DATOS</span>
-                </div>
-                <div class="barra activa"></div>
-                <div class="paso activo">
-                    <i class="fas fa-credit-card"></i>
-                    <span>PAGO</span>
-                </div>
-            </div>
+    <div class="progreso-compra">
+      <div class="paso-container">
+        <div class="paso completado">
+          <i class="fas fa-shopping-cart"></i>
+          <span>CARRITO</span>
         </div>
-
-        <% if (productos.length > 0) { %>
-            <table class="carrito-tabla">
-                <thead>
-                    <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                        <th>Sub-Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% productos.forEach(function(producto) { %>
-                        <tr>
-                            <td><%= producto.nombre %></td>
-                            <td><%= producto.cantidad %></td>
-                            <td>$<%= producto.precio_venta.toFixed(2) %></td>
-                            <td>$<%= producto.total.toFixed(2) %></td>
-                        </tr>
-                    <% }) %>
-                    <tr class="carrito-total">
-                        <td colspan="2"></td>
-                        <td><strong>Total a pagar:</strong></td>
-                        <td id="total-carrito">$<%= total %></td>
-                    </tr>
-                </tbody>
-            </table>
-        <% } else { %>
-            <p>No hay productos en tu carrito.</p>
-        <% } %>
-
-        <div id="wallet_container"></div>
-
-        <div class="mensaje-pago">
-            <p>🔹 Serás redirigido a Mercado Pago para completar tu compra.</p>
+        <div class="barra"></div>
+        <div class="paso completado">
+          <i class="fas fa-truck"></i>
+          <span>ENVÍO</span>
         </div>
-    </main>
+        <div class="barra"></div>
+        <div class="paso completado">
+          <i class="fas fa-check-circle"></i>
+          <span>CONFIRMAR DATOS</span>
+        </div>
+        <div class="barra activa"></div>
+        <div class="paso activo">
+          <i class="fas fa-credit-card"></i>
+          <span>PAGO</span>
+        </div>
+      </div>
+    </div>
 
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
-    <script>
-        fetch('/carrito/pago', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                if (data.preferenceId) {
-                    const mp = new MercadoPago('<%= process.env.MP_PUBLIC_KEY %>', { locale: 'es-AR' });
+    <!-- Resumen de envío -->
+    <section class="envio-resumen">
+      <h3>Datos de envío</h3>
 
-                    mp.bricks().create("wallet", "wallet_container", {
-                        initialization: {
-                            preferenceId: data.preferenceId
-                        }
-                    });
-                } else {
-                    alert('Error al generar la preferencia de pago.');
-                }
-            })
-            .catch(error => {
-                console.error("Error al obtener la preferencia:", error);
-                alert('Hubo un error al procesar el pago.');
-            });
-    </script>
+      <% if (envio && envio.tipo_envio === 'delivery') { %>
+        <p><strong>Método:</strong> Delivery a domicilio</p>
+        <p><strong>Dirección:</strong> <%= envio.direccion %></p>
+        <p><strong>Costo delivery:</strong> $<%= fmtARS(costoEnvio) %></p>
+      <% } else { %>
+        <p><strong>Método:</strong> Retiro por el local</p>
+      <% } %>
+    </section>
 
-    <%- include('./layouts/footer.ejs') %>
+    <% if (productosList.length > 0) { %>
+      <table class="carrito-tabla">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Sub-Total</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% productosList.forEach(function(producto) { %>
+            <tr>
+              <td><%= producto.nombre %></td>
+              <td><%= producto.cantidad %></td>
+              <td>$<%= fmtARS(producto.precio_venta) %></td>
+              <td>$<%= fmtARS(producto.total) %></td>
+            </tr>
+          <% }) %>
+
+          <tr class="carrito-total">
+            <td colspan="2"></td>
+            <td><strong>Subtotal:</strong></td>
+            <td>$<%= fmtARS(subtotalUsar) %></td>
+          </tr>
+
+          <% if (envio && envio.tipo_envio === 'delivery') { %>
+            <tr class="carrito-total">
+              <td colspan="2"></td>
+              <td><strong>Delivery:</strong></td>
+              <td>$<%= fmtARS(costoEnvio) %></td>
+            </tr>
+          <% } %>
+
+          <tr class="carrito-total">
+            <td colspan="2"></td>
+            <td><strong>Total a pagar:</strong></td>
+            <td id="total-carrito">$<%= fmtARS(totalFinal) %></td>
+          </tr>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p>No hay productos en tu carrito.</p>
+    <% } %>
+
+    <div id="wallet_container"></div>
+
+    <div class="mensaje-pago">
+      <p>🔹 Serás redirigido a Mercado Pago para completar tu compra.</p>
+    </div>
+  </main>
+
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+  <script>
+    fetch('/carrito/pago', { method: 'POST' })
+      .then(response => response.json())
+      .then(data => {
+        if (data.preferenceId) {
+          const mp = new MercadoPago('<%= process.env.MP_PUBLIC_KEY %>', { locale: 'es-AR' });
+
+          mp.bricks().create("wallet", "wallet_container", {
+            initialization: { preferenceId: data.preferenceId }
+          });
+        } else {
+          alert('Error al generar la preferencia de pago.');
+        }
+      })
+      .catch(error => {
+        console.error("Error al obtener la preferencia:", error);
+        alert('Hubo un error al procesar el pago.');
+      });
+  </script>
+
+  <%- include('./layouts/footer.ejs') %>
 </body>

@@ -447,47 +447,48 @@ actualizarCantidad: (req, res) => {
     envio: (req,res) => {
         res.render ('envio')
     },
-    guardarEnvio: (req, res) => {
-        console.log("📝 Datos recibidos en el servidor:", req.body);
-    
-        if (!req.body || !req.body.tipo_envio) {
-            return res.status(400).json({ error: "Debe seleccionar un tipo de envío." });
-        }
-    
-        const { tipo_envio, direccion } = req.body;
-        const id_usuario = req.session.usuario.id;
-    
-        carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
-            if (error) return res.status(500).json({ error: "Error al obtener carrito" });
-    
-            if (!carritos || carritos.length === 0) {
-                return res.status(400).json({ error: "No hay un carrito activo" });
-            }
-    
-            const id_carrito = carritos[0].id;
-    
-            // Verificar si hay una dirección previa
-            carrito.obtenerDireccionEnvio(id_carrito, (error, direccionExistente) => {
-                if (error) return res.status(500).json({ error: "Error al obtener dirección de envío" });
-    
-                if (direccionExistente && direccionExistente !== direccion) {
-                    return res.status(200).json({
-                        confirmarCambio: true,
-                        direccionExistente,
-                        direccionNueva: direccion
-                    });
-                }
-    
-                // Si no hay dirección previa, guardar la nueva directamente
-                carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (error) => {
-                    if (error) return res.status(500).json({ error: "Error al guardar envío" });
-    
-                    res.status(200).json({ success: true, mensaje: "✅ Envío guardado correctamente" });
-                });
-            });
+guardarEnvio: (req, res) => {
+  if (!req.body || !req.body.tipo_envio) {
+    return res.status(400).json({ error: "Debe seleccionar un tipo de envío." });
+  }
+
+  const id_usuario = req.session.usuario.id;
+  const tipo_envio = String(req.body.tipo_envio);
+  let direccion = req.body.direccion ? String(req.body.direccion).trim() : null;
+
+  if (tipo_envio === 'delivery' && (!direccion || direccion.length < 5)) {
+    return res.status(400).json({ error: "Debe ingresar una dirección válida para delivery." });
+  }
+
+  if (tipo_envio !== 'delivery') {
+    direccion = null; // retiro en local
+  }
+
+  carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
+    if (error) return res.status(500).json({ error: "Error al obtener carrito" });
+    if (!carritos || carritos.length === 0) return res.status(400).json({ error: "No hay un carrito activo" });
+
+    const id_carrito = carritos[0].id;
+
+    carrito.obtenerDireccionEnvio(id_carrito, (error, direccionExistente) => {
+      if (error) return res.status(500).json({ error: "Error al obtener dirección de envío" });
+
+      if (tipo_envio === 'delivery' && direccionExistente && direccionExistente !== direccion) {
+        return res.status(200).json({
+          confirmarCambio: true,
+          direccionExistente,
+          direccionNueva: direccion
         });
-    },
-    
+      }
+
+      carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (error) => {
+        if (error) return res.status(500).json({ error: "Error al guardar envío" });
+        return res.status(200).json({ success: true, mensaje: "✅ Envío guardado correctamente" });
+      });
+    });
+  });
+},
+
     actualizarDireccionEnvio: (req, res) => {
         const { direccion } = req.body;
         const id_usuario = req.session.usuario.id;
@@ -508,172 +509,127 @@ actualizarCantidad: (req, res) => {
             });
         });
     },
-    
-    
-    confirmarDatos: (req, res) => {
-        if (!req.session || !req.session.usuario || !req.session.usuario.id) {
-            return res.status(401).send("Debes iniciar sesión para acceder a esta página.");
-        }
-    
-        const id_usuario = req.session.usuario.id;
-    
-        carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
-            if (error) {
-                console.error("❌ Error al obtener el carrito:", error);
-                return res.status(500).send("Error al obtener el carrito");
-            }
-    
-            if (!carritos || carritos.length === 0) {
-                console.warn("⚠️ No hay un carrito activo para este usuario.");
-                return res.render("confirmarDatos", { 
-                    productos: [], 
-                    envio: null, 
-                    total: 0, 
-                    cantidadProductosCarrito: 0 
-                });
-            }
-    
-            const id_carrito = carritos[0].id;
-    
-            carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-                if (error) {
-                    console.error("❌ Error al obtener productos del carrito:", error);
-                    return res.status(500).send("Error al obtener productos del carrito");
-                }
-    
-                const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
-                const cantidadTotal = productos.reduce((acc, p) => acc + p.cantidad, 0); 
-    
-                carrito.obtenerEnvioCarrito(id_carrito, (error, envio) => {
-                    if (error) {
-                        console.error("❌ Error al obtener datos de envío:", error);
-                        return res.status(500).send("Error al obtener datos de envío");
-                    }
-    
-                    console.log("✅ Confirmar Datos - Productos:", productos);
-                    console.log("✅ Confirmar Datos - Envío:", envio);
-    
-                    res.render("confirmarDatos", {
-                        productos, 
-                        envio, 
-                        total, 
-                        cantidadProductosCarrito: cantidadTotal
-                    });
-                });
-            });
+   confirmarDatos: (req, res) => {
+  if (!req.session?.usuario?.id) return res.status(401).send("Debes iniciar sesión para acceder a esta página.");
+
+  const id_usuario = req.session.usuario.id;
+
+  carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
+    if (error) return res.status(500).send("Error al obtener el carrito");
+
+    if (!carritos || carritos.length === 0) {
+      return res.render("confirmarDatos", { productos: [], envio: null, total: 0, cantidadProductosCarrito: 0 });
+    }
+
+    const id_carrito = carritos[0].id;
+
+    carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+      if (error) return res.status(500).send("Error al obtener productos del carrito");
+
+      const subtotal = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0);
+      const total = subtotal.toFixed(2);
+      const cantidadTotal = productos.reduce((acc, p) => acc + (Number(p.cantidad) || 0), 0);
+
+      carrito.obtenerEnvioCarrito(id_carrito, (error, envio) => {
+        if (error) return res.status(500).send("Error al obtener datos de envío");
+
+        if (envio && envio.tipo_envio === 'delivery') envio.costo_envio = COSTO_DELIVERY;
+        if (envio && envio.tipo_envio !== 'delivery') envio.costo_envio = 0;
+
+        return res.render("confirmarDatos", { productos, envio, total, cantidadProductosCarrito: cantidadTotal });
+      });
+    });
+  });
+},
+vistaPago: (req, res) => {
+  const id_usuario = req.session.usuario.id;
+
+  carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
+    if (error) return res.status(500).send("Error al obtener el carrito");
+    if (!carritos || carritos.length === 0) return res.redirect('/carrito');
+
+    const id_carrito = carritos[0].id;
+
+    carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+      if (error) return res.status(500).send("Error al obtener productos");
+
+      carrito.obtenerEnvioCarrito(id_carrito, (error, envio) => {
+        if (error) return res.status(500).send("Error al obtener envío");
+        if (!envio || !envio.tipo_envio) return res.redirect('/carrito/envio');
+
+        const subtotal = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0);
+        const costoEnvio = (envio.tipo_envio === 'delivery') ? COSTO_DELIVERY : 0;
+        const total = (subtotal + costoEnvio).toFixed(2);
+
+        envio.costo_envio = costoEnvio;
+
+        return res.render('pago', {
+          productos,
+          envio,
+          subtotal: subtotal.toFixed(2),
+          total
         });
-    },
-    vistaPago: async (req, res) => {
-        const id_usuario = req.session.usuario.id;
-    
-        try {
-            carrito.obtenerCarritoActivo(id_usuario, async (error, carritos) => {
-                if (error) {
-                    console.error("❌ Error al obtener el carrito:", error);
-                    return res.status(500).send("Error al obtener el carrito");
-                }
-    
-                if (!carritos || carritos.length === 0) {
-                    console.warn("⚠️ No hay un carrito activo.");
-                    return res.redirect('/carrito'); // Redirigir al carrito si no hay productos
-                }
-    
-                const id_carrito = carritos[0].id;
-    
-                carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-                    if (error) {
-                        console.error("❌ Error al obtener productos:", error);
-                        return res.status(500).send("Error al obtener productos");
-                    }
-    
-                    const total = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
-    
-                    res.render('pago', {
-                        productos,
-                        total
-                    });
-                });
-            });
-        } catch (error) {
-            console.error("❌ Error inesperado en el servidor:", error);
-            res.status(500).send("Error interno del servidor");
-        }
-    },
-    procesarPago: async (req, res) => {
-        try {
-            const id_usuario = req.session.usuario.id;
-    
-            // Obtener carrito activo del usuario
-            const carritos = await new Promise((resolve, reject) => {
-                carrito.obtenerCarritoActivo(id_usuario, (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                });
-            });
-    
-            if (!carritos || carritos.length === 0) {
-                console.warn("⚠️ No hay un carrito activo.");
-                return res.status(400).json({ error: "No hay un carrito activo" });
-            }
-    
-            const id_carrito = carritos[0].id;
-    
-            // Obtener productos en el carrito
-            const productos = await new Promise((resolve, reject) => {
-                carrito.obtenerProductosCarrito(id_carrito, (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                });
-            });
-    
-            if (!productos || productos.length === 0) {
-                console.warn("⚠️ El carrito está vacío.");
-                return res.status(400).json({ error: "No hay productos en el carrito" });
-            }
-    
-            // Construir los items de la preferencia
-            const items = productos.map(prod => ({
-                title: prod.nombre,
-                unit_price: parseFloat(prod.precio_venta),
-                quantity: prod.cantidad,
-                currency_id: 'ARS'
-            }));
-    
-            // Verificar que el token de acceso esté disponible
-            if (!process.env.MP_ACCESS_TOKEN) {
-                console.error("❌ Error: MP_ACCESS_TOKEN no está configurado.");
-                return res.status(500).json({ error: "Error interno del servidor" });
-            }
-    
-            // Configurar Mercado Pago
-            const mercadopago = require('mercadopago');
-            mercadopago.configure({
-                access_token: process.env.MP_ACCESS_TOKEN
-            });
-    
-            // Crear preferencia de Mercado Pago
-            let preference = {
-                items: items,
-                back_urls: {
-                    success: "https://www.autofaros.com.ar/carrito/pago-exito",
-                    failure: "https://www.autofaros.com.ar/carrito/pago-error",
-                    pending: "https://www.autofaros.com.ar/carrito/pago-pendiente"
-                },
-                auto_return: "approved"
-            };
-            
-            console.log("🔍 Enviando preferencia a Mercado Pago:", JSON.stringify(preference, null, 2));
-    
-            const response = await mercadopago.preferences.create(preference);
-            
-            console.log("✅ Preferencia creada con ID:", response.body.id);
-            res.json({ preferenceId: response.body.id });
-    
-        } catch (error) {
-            console.error("❌ Error en `procesarPago`:", error);
-            res.status(500).json({ error: "Error al procesar el pago" });
-        }
-    },    
+      });
+    });
+  });
+},
+procesarPago: async (req, res) => {
+  try {
+    const id_usuario = req.session.usuario.id;
+
+    const carritos = await new Promise((resolve, reject) => {
+      carrito.obtenerCarritoActivo(id_usuario, (err, r) => err ? reject(err) : resolve(r));
+    });
+    if (!carritos || carritos.length === 0) return res.status(400).json({ error: "No hay un carrito activo" });
+
+    const id_carrito = carritos[0].id;
+
+    const productos = await new Promise((resolve, reject) => {
+      carrito.obtenerProductosCarrito(id_carrito, (err, r) => err ? reject(err) : resolve(r));
+    });
+    if (!productos || productos.length === 0) return res.status(400).json({ error: "No hay productos en el carrito" });
+
+    const envio = await new Promise((resolve, reject) => {
+      carrito.obtenerEnvioCarrito(id_carrito, (err, r) => err ? reject(err) : resolve(r));
+    });
+    if (!envio || !envio.tipo_envio) return res.status(400).json({ error: "Falta seleccionar envío" });
+
+    const items = productos.map(p => ({
+      title: p.nombre,
+      unit_price: Number(p.precio_venta),
+      quantity: Number(p.cantidad),
+      currency_id: "ARS"
+    }));
+
+    if (envio.tipo_envio === "delivery") {
+      items.push({
+        title: "Envío (Delivery)",
+        unit_price: COSTO_DELIVERY,
+        quantity: 1,
+        currency_id: "ARS"
+      });
+    }
+
+    const preference = {
+      items,
+      external_reference: String(id_carrito),
+      back_urls: {
+        success: "https://www.autofaros.com.ar/carrito/pago-exito",
+        failure: "https://www.autofaros.com.ar/carrito/pago-error",
+        pending: "https://www.autofaros.com.ar/carrito/pago-pendiente"
+      },
+      auto_return: "approved"
+    };
+
+    const response = await mercadopago.preferences.create(preference);
+    return res.json({ preferenceId: response.body.id });
+
+  } catch (error) {
+    console.error("❌ Error en `procesarPago`:", error);
+    return res.status(500).json({ error: "Error al procesar el pago" });
+  }
+},
+
 finalizarCompra: async (req, res) => {
   try {
     const id_usuario = req.session.usuario.id;

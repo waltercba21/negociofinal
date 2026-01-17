@@ -212,21 +212,30 @@ eliminarProductoPorId: (id, callback) => {
     pool.query(query, [id], callback);
 },
 guardarEnvio: (id_carrito, tipo_envio, direccion, callback) => {
-    const query = `
-        INSERT INTO envios (carrito_id, tipo_envio, direccion) 
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE tipo_envio = VALUES(tipo_envio), 
-                                direccion = VALUES(direccion);
-    `;
+  const qEnvio = `
+    INSERT INTO envios (carrito_id, tipo_envio, direccion)
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      tipo_envio = VALUES(tipo_envio),
+      direccion = VALUES(direccion)
+  `;
 
-    pool.query(query, [id_carrito, tipo_envio, direccion], (error, resultados) => {
-        if (error) {
-            console.error("❌ Error al guardar envío:", error);
-            return callback(error);
-        }
-        callback(null, resultados);
+  const qCarrito = `
+    UPDATE carritos
+    SET tipo_envio = ?, direccion = ?, actualizado_en = NOW()
+    WHERE id = ?
+  `;
+
+  pool.query(qEnvio, [id_carrito, tipo_envio, direccion ?? null], (err) => {
+    if (err) return callback(err);
+
+    pool.query(qCarrito, [tipo_envio, direccion ?? null, id_carrito], (err2, r2) => {
+      if (err2) return callback(err2);
+      return callback(null, r2);
     });
+  });
 },
+
 obtenerEnvioCarrito: (id_carrito, callback) => {
     const query = "SELECT tipo_envio, direccion FROM envios WHERE carrito_id = ?";
     pool.query(query, [id_carrito], (error, resultados) => {
@@ -241,21 +250,19 @@ obtenerDireccionEnvio: (id_carrito, callback) => {
         callback(null, resultados.length > 0 ? resultados[0].direccion : null);
     });
 },
-
 actualizarDireccionEnvio: (id_carrito, nuevaDireccion, callback) => {
-    const query = `
-        UPDATE envios 
-        SET direccion = ? 
-        WHERE carrito_id = ?
-    `;
-    pool.query(query, [nuevaDireccion, id_carrito], (error, resultados) => {
-        if (error) return callback(error);
-        callback(null, resultados);
+  const q1 = `UPDATE envios SET direccion = ? WHERE carrito_id = ?`;
+  const q2 = `UPDATE carritos SET direccion = ?, actualizado_en = NOW() WHERE id = ?`;
+
+  pool.query(q1, [nuevaDireccion, id_carrito], (err) => {
+    if (err) return callback(err);
+
+    pool.query(q2, [nuevaDireccion, id_carrito], (err2, r2) => {
+      if (err2) return callback(err2);
+      return callback(null, r2);
     });
-
+  });
 },
-
-
 finalizarCompra: (id_carrito, callback) => {
         const query = 'UPDATE carritos SET actualizado_en = CURRENT_TIMESTAMP WHERE id = ?';
         pool.query(query, [id_carrito], (error, resultados) => {
@@ -295,20 +302,20 @@ actualizarEstado: (id_carrito, nuevoEstado, callback) => {
             callback(null, resultados);
         });
     },    
-    obtenerUltimoPedido: (usuario_id, callback) => {
+obtenerUltimoPedido: (usuario_id, callback) => {
   const query = `
     SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra
     FROM carritos
-    WHERE usuario_id = ? AND estado <> 'activo'
+    WHERE usuario_id = ?
+      AND estado <> 'carrito'
+      AND es_pedido = 1
     ORDER BY actualizado_en DESC
     LIMIT 1
   `;
-  pool.query(query, [usuario_id], (error, resultados) => {
+  pool.query(query, [usuario_id], (error, rows) => {
     if (error) return callback(error);
-    callback(null, resultados || []);
+    callback(null, rows || []);
   });
 },
-    
-    
-    
+
 };
