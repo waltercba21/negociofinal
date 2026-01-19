@@ -495,15 +495,19 @@ guardarEnvio: (req, res) => {
     });
   });
 },
-
 actualizarDireccionEnvio: (req, res) => {
   const id_usuario = req.session.usuario.id;
 
   const tipo_envio = req.body.tipo_envio ? String(req.body.tipo_envio) : null;
-  const direccion = req.body.direccion ? String(req.body.direccion).trim() : null;
+  let direccion = req.body.direccion ? String(req.body.direccion).trim() : null;
 
   if (!tipo_envio) {
     return res.status(400).json({ error: "Falta tipo_envio." });
+  }
+
+  // si es retiro, la direccion debe ser null
+  if (tipo_envio !== "delivery") {
+    direccion = null;
   }
 
   carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
@@ -512,13 +516,9 @@ actualizarDireccionEnvio: (req, res) => {
 
     const id_carrito = carritos[0].id;
 
-    // Si es retiro, forzamos direccion null
-    const dirFinal = (tipo_envio === "delivery") ? direccion : null;
-
-    carrito.actualizarEnvio(id_carrito, tipo_envio, dirFinal, (err2) => {
+    carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (err2) => {
       if (err2) return res.status(500).json({ error: "Error al actualizar envío" });
-
-      return res.status(200).json({ success: true, mensaje: "✅ Envío actualizado correctamente" });
+      return res.status(200).json({ success: true });
     });
   });
 },

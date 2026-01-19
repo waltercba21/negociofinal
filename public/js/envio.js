@@ -343,11 +343,8 @@ document.addEventListener("DOMContentLoaded", function () {
             return fetch("/carrito/envio/actualizar", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                tipo_envio: "local",
-                direccion: direccionLocal,
-                costo_envio: 0,
-              }),
+              body: JSON.stringify({ tipo_envio: "local", direccion: null }),
+
             })
               .then((r2) => r2.json())
               .then((u) => {
@@ -373,7 +370,8 @@ document.addEventListener("DOMContentLoaded", function () {
               return fetch("/carrito/envio/actualizar", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ direccion: data.direccionNueva }),
+                body: JSON.stringify({ tipo_envio: "delivery", direccion: data.direccionNueva }),
+
               })
                 .then((r2) => r2.json())
                 .then((u) => {
