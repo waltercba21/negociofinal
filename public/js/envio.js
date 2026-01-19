@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("✅ envio.js ENVIO OPT v20260119-fix-local");
+  console.log("✅ envio.js ENVIO OPT v20260119-debug-trace");
 
   const tipoEnvioRadios = document.querySelectorAll("input[name='tipo-envio']");
   const mapaContainer = document.getElementById("mapa-container");
@@ -27,6 +27,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const RADIO_CIRCUNVALACION_M = 5800;
   const COSTO_DELIVERY = 5000;
   const CBA_VIEWBOX = { left: -64.30, top: -31.30, right: -64.05, bottom: -31.55 };
+
+  // Trace para seguir el flujo
+  const traceId = `env_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
   function fmtARS(n) {
     return "$" + Number(n).toLocaleString("es-AR");
@@ -218,7 +221,7 @@ document.addEventListener("DOMContentLoaded", function () {
   tipoEnvioRadios.forEach((radio) => {
     radio.addEventListener("change", async function () {
       const tipo = this.value;
-      console.log("📌 tipo_envio:", tipo);
+      console.log(`[${traceId}] 📌 change tipo_envio:`, tipo);
 
       mapaContainer?.classList.remove("hidden");
       inicializarMapa();
@@ -273,6 +276,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setSpinner(true);
 
     try {
+      console.log(`[${traceId}] 🔎 buscar direccion:`, direccion);
       const resp = await fetch(buildNominatimSearchURL(direccion));
       const data = await resp.json().catch(() => []);
 
@@ -309,6 +313,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const direccion = inputDireccion?.value?.trim() || "";
 
+    console.log(`[${traceId}] ▶ continuar`, {
+      tipoEnvio,
+      direccionInput: direccion,
+      deliveryValidado,
+      deliveryDentroZona
+    });
+
     if (tipoEnvio === "delivery") {
       if (!direccion) {
         Swal.fire({ icon: "error", title: "Ingrese una dirección", text: "Por favor, ingrese una dirección válida." });
@@ -325,9 +336,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const payload = {
+      traceId,
       tipo_envio: tipoEnvio,
-      direccion: tipoEnvio === "delivery" ? direccion : direccionLocal,
+      direccion: tipoEnvio === "delivery" ? direccion : null,
     };
+
+    console.log(`[${traceId}] 📤 POST /carrito/envio payload`, payload);
 
     fetch("/carrito/envio", {
       method: "POST",
@@ -336,28 +350,32 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((r) => r.json())
       .then((data) => {
+        console.log(`[${traceId}] ✅ resp /carrito/envio`, data);
+
+        // Si backend pide confirmación (solo debería pasar para delivery)
         if (data && data.confirmarCambio) {
 
-          // ✅ FIX: si es RETIRO, actualizar TAMBIÉN tipo_envio (y costo) para que confirmarDatos no muestre delivery
+          // Si por algún motivo llegara acá con local, forzamos actualización total
           if (tipoEnvio === "local") {
+            console.log(`[${traceId}] ⚠ confirmarCambio pero tipo=local -> forzar actualizar envio`);
             return fetch("/carrito/envio/actualizar", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ tipo_envio: "local", direccion: null }),
-
+              body: JSON.stringify({ traceId, tipo_envio: "local", direccion: null }),
             })
               .then((r2) => r2.json())
               .then((u) => {
+                console.log(`[${traceId}] ✅ resp /carrito/envio/actualizar`, u);
                 if (u && u.success) {
-                  window.location.href = "/carrito/confirmarDatos";
+                  const cid = u.id_carrito || data.id_carrito || "";
+                  window.location.href = `/carrito/confirmarDatos?carrito_id=${cid}&t=${Date.now()}`;
                 } else {
                   Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar el envío." });
                 }
-              })
-              .catch(() => Swal.fire({ icon: "error", title: "Error", text: "No se pudo conectar con el servidor." }));
+              });
           }
 
-          // ✅ delivery: confirmación normal
+          // delivery: confirmación normal
           return Swal.fire({
             icon: "warning",
             title: "Dirección registrada previamente",
@@ -367,29 +385,34 @@ document.addEventListener("DOMContentLoaded", function () {
             cancelButtonText: "No, mantener",
           }).then((result) => {
             if (result.isConfirmed) {
+              console.log(`[${traceId}] ✅ usuario confirmó actualizar dirección`);
               return fetch("/carrito/envio/actualizar", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ tipo_envio: "delivery", direccion: data.direccionNueva }),
-
+                body: JSON.stringify({ traceId, tipo_envio: "delivery", direccion: data.direccionNueva }),
               })
                 .then((r2) => r2.json())
                 .then((u) => {
+                  console.log(`[${traceId}] ✅ resp /carrito/envio/actualizar`, u);
                   if (u && u.success) {
-                    return Swal.fire("Actualizado", "Su dirección ha sido actualizada.", "success").then(() => {
-                      window.location.href = "/carrito/confirmarDatos";
-                    });
+                    const cid = u.id_carrito || data.id_carrito || "";
+                    window.location.href = `/carrito/confirmarDatos?carrito_id=${cid}&t=${Date.now()}`;
+                  } else {
+                    Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar la dirección." });
                   }
-                  Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar la dirección." });
                 });
             } else {
-              window.location.href = "/carrito/confirmarDatos";
+              console.log(`[${traceId}] ❎ usuario mantuvo dirección`);
+              const cid = data.id_carrito || "";
+              window.location.href = `/carrito/confirmarDatos?carrito_id=${cid}&t=${Date.now()}`;
             }
           });
         }
 
         if (data && data.success) {
-          window.location.href = "/carrito/confirmarDatos";
+          const cid = data.id_carrito || "";
+          console.log(`[${traceId}] ➜ redirect confirmarDatos carrito_id=`, cid);
+          window.location.href = `/carrito/confirmarDatos?carrito_id=${cid}&t=${Date.now()}`;
           return;
         }
 
@@ -399,7 +422,8 @@ document.addEventListener("DOMContentLoaded", function () {
           text: (data && data.message) ? data.message : "No se pudo guardar el envío.",
         });
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error(`[${traceId}] ❌ error fetch /carrito/envio`, err);
         Swal.fire({ icon: "error", title: "Error", text: "No se pudo conectar con el servidor." });
       });
   });
