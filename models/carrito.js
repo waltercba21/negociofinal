@@ -317,5 +317,22 @@ obtenerUltimoPedido: (usuario_id, callback) => {
     callback(null, rows || []);
   });
 },
+actualizarEnvio: (id_carrito, tipo_envio, direccion, callback) => {
+  const q1 = `
+    UPDATE envios
+    SET tipo_envio = ?, direccion = ?
+    WHERE carrito_id = ?
+  `;
+  const q2 = `
+    UPDATE carritos
+    SET tipo_envio = ?, direccion = ?, actualizado_en = NOW()
+    WHERE id = ?
+  `;
+
+  pool.query(q1, [tipo_envio, direccion ?? null, id_carrito], (err) => {
+    if (err) return callback(err);
+    pool.query(q2, [tipo_envio, direccion ?? null, id_carrito], callback);
+  });
+},
 
 };

@@ -458,12 +458,8 @@ guardarEnvio: (req, res) => {
   const tipo_envio = String(req.body.tipo_envio);
   let direccion = req.body.direccion ? String(req.body.direccion).trim() : null;
 
-  if (tipo_envio === 'delivery' && (!direccion || direccion.length < 5)) {
+  if (tipo_envio === "delivery" && (!direccion || direccion.length < 5)) {
     return res.status(400).json({ error: "Debe ingresar una dirección válida para delivery." });
-  }
-
-  if (tipo_envio !== 'delivery') {
-    direccion = null; // retiro en local
   }
 
   carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
@@ -472,10 +468,19 @@ guardarEnvio: (req, res) => {
 
     const id_carrito = carritos[0].id;
 
-    carrito.obtenerDireccionEnvio(id_carrito, (error, direccionExistente) => {
-      if (error) return res.status(500).json({ error: "Error al obtener dirección de envío" });
+    // ✅ RETIRO: guardamos directo sin confirmarCambio
+    if (tipo_envio !== "delivery") {
+      return carrito.guardarEnvio(id_carrito, tipo_envio, null, (errSave) => {
+        if (errSave) return res.status(500).json({ error: "Error al guardar envío" });
+        return res.status(200).json({ success: true, mensaje: "✅ Envío guardado correctamente" });
+      });
+    }
 
-      if (tipo_envio === 'delivery' && direccionExistente && direccionExistente !== direccion) {
+    // ✅ DELIVERY: confirmamos si cambia la dirección
+    carrito.obtenerDireccionEnvio(id_carrito, (errDir, direccionExistente) => {
+      if (errDir) return res.status(500).json({ error: "Error al obtener dirección de envío" });
+
+      if (direccionExistente && direccionExistente !== direccion) {
         return res.status(200).json({
           confirmarCambio: true,
           direccionExistente,
@@ -483,34 +488,41 @@ guardarEnvio: (req, res) => {
         });
       }
 
-      carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (error) => {
-        if (error) return res.status(500).json({ error: "Error al guardar envío" });
+      carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (errSave) => {
+        if (errSave) return res.status(500).json({ error: "Error al guardar envío" });
         return res.status(200).json({ success: true, mensaje: "✅ Envío guardado correctamente" });
       });
     });
   });
 },
 
-    actualizarDireccionEnvio: (req, res) => {
-        const { direccion } = req.body;
-        const id_usuario = req.session.usuario.id;
-    
-        carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
-            if (error) return res.status(500).json({ error: "Error al obtener carrito" });
-    
-            if (!carritos || carritos.length === 0) {
-                return res.status(400).json({ error: "No hay un carrito activo" });
-            }
-    
-            const id_carrito = carritos[0].id;
-    
-            carrito.actualizarDireccionEnvio(id_carrito, direccion, (error) => {
-                if (error) return res.status(500).json({ error: "Error al actualizar dirección" });
-    
-                res.status(200).json({ success: true, mensaje: "✅ Dirección actualizada correctamente" });
-            });
-        });
-    },
+actualizarDireccionEnvio: (req, res) => {
+  const id_usuario = req.session.usuario.id;
+
+  const tipo_envio = req.body.tipo_envio ? String(req.body.tipo_envio) : null;
+  const direccion = req.body.direccion ? String(req.body.direccion).trim() : null;
+
+  if (!tipo_envio) {
+    return res.status(400).json({ error: "Falta tipo_envio." });
+  }
+
+  carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
+    if (error) return res.status(500).json({ error: "Error al obtener carrito" });
+    if (!carritos || carritos.length === 0) return res.status(400).json({ error: "No hay un carrito activo" });
+
+    const id_carrito = carritos[0].id;
+
+    // Si es retiro, forzamos direccion null
+    const dirFinal = (tipo_envio === "delivery") ? direccion : null;
+
+    carrito.actualizarEnvio(id_carrito, tipo_envio, dirFinal, (err2) => {
+      if (err2) return res.status(500).json({ error: "Error al actualizar envío" });
+
+      return res.status(200).json({ success: true, mensaje: "✅ Envío actualizado correctamente" });
+    });
+  });
+},
+
    confirmarDatos: (req, res) => {
   if (!req.session?.usuario?.id) return res.status(401).send("Debes iniciar sesión para acceder a esta página.");
 
