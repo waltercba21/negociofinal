@@ -1,9 +1,318 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
+<%- include('./layouts/head.ejs') %>
+<%- include('./layouts/header.ejs') %>
 
 <body>
   <main class="carrito-container">
     <h1>🚚 Seleccionar Envío</h1>
+
+    <style>
+      :root{
+        --af-bg:#f6f8fb;
+        --af-card:#ffffff;
+        --af-text:#0f172a;
+        --af-muted:#64748b;
+        --af-border:#e5e7eb;
+        --af-primary:#1d4ed8;
+        --af-danger:#ef4444;
+        --af-shadow: 0 12px 30px rgba(2,6,23,.08);
+
+        --tap: 44px;
+        --radius: 18px;
+      }
+
+      body{ background: var(--af-bg); }
+
+      .carrito-container{
+        max-width: 980px;
+        margin: 28px auto;
+        padding: 0 16px 120px;
+        color: var(--af-text);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      }
+
+      .carrito-container h1{
+        margin: 0 0 18px 0;
+        font-size: 28px;
+        font-weight: 900;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:10px;
+        text-align:center;
+      }
+
+      /* Contenedor principal */
+      .envio-wrap{
+        background: var(--af-card);
+        border: 1px solid var(--af-border);
+        border-radius: var(--radius);
+        padding: 18px;
+        box-shadow: var(--af-shadow);
+      }
+
+      /* Cards opciones */
+      .envio-opciones{
+        display:flex;
+        flex-direction:column;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .opcion-envio{
+        display:flex;
+        align-items:flex-start;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--af-border);
+        border-radius: 16px;
+        background: #fff;
+        cursor:pointer;
+        transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+        position: relative;
+      }
+
+      .opcion-envio:hover{
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(2,6,23,.08);
+      }
+
+      .opcion-envio input[type="radio"]{
+        margin-top: 4px;
+        transform: scale(1.15);
+        accent-color: var(--af-primary);
+      }
+
+      .opcion-envio .icon{
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        border: 1px solid var(--af-border);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background: #f8fafc;
+        flex: 0 0 auto;
+      }
+
+      .opcion-envio .txt{
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .opcion-envio .titulo{
+        font-weight: 950;
+        font-size: 15px;
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      .opcion-envio .sub{
+        margin-top: 6px;
+        color: var(--af-muted);
+        font-weight: 800;
+        font-size: 13px;
+      }
+
+      /* “Seleccionado” (sin depender de JS: usamos :has si está) */
+      .opcion-envio:has(input:checked){
+        border-color: rgba(29,78,216,.45);
+        box-shadow: 0 12px 26px rgba(29,78,216,.10);
+        background: rgba(29,78,216,.03);
+      }
+
+      .hidden{ display:none !important; }
+
+      /* Secciones informativas */
+      .panel{
+        border: 1px solid var(--af-border);
+        border-radius: 16px;
+        background: #fff;
+        padding: 14px;
+      }
+      .panel h3{
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: 950;
+        display:flex;
+        align-items:center;
+        gap: 8px;
+      }
+      .panel p{ margin: 0; color: var(--af-muted); font-weight: 800; }
+
+      /* Uber badge */
+      .uber-badge{
+        display:inline-flex;
+        align-items:center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--af-border);
+        background: #0b1220;
+        color: #fff;
+        font-weight: 950;
+        letter-spacing: .08em;
+        width: fit-content;
+      }
+      .uber-dot{
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #fff;
+        display:inline-block;
+      }
+
+      .delivery-costo{
+        display:flex;
+        align-items:center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(29,78,216,.18);
+        background: rgba(29,78,216,.05);
+        font-weight: 900;
+      }
+      .delivery-costo strong{ font-variant-numeric: tabular-nums; color: var(--af-primary); }
+
+      /* Buscador dirección */
+      #datos-envio{
+        display:flex;
+        gap: 10px;
+        align-items:center;
+      }
+      #direccion{
+        flex: 1 1 auto;
+        min-height: var(--tap);
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--af-border);
+        background: #fff;
+        font-weight: 800;
+        outline: none;
+      }
+      #direccion:focus{
+        border-color: rgba(29,78,216,.45);
+        box-shadow: 0 0 0 4px rgba(29,78,216,.12);
+      }
+      #buscar-direccion{
+        min-height: var(--tap);
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: none;
+        background: var(--af-primary);
+        color: #fff;
+        font-weight: 950;
+        cursor:pointer;
+        box-shadow: 0 12px 20px rgba(29,78,216,.20);
+      }
+      #buscar-direccion:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+      #buscar-direccion:active{ transform: translateY(0); }
+
+      /* Spinner */
+      #spinner{
+        display:flex;
+        align-items:center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid var(--af-border);
+        background: #fff;
+      }
+      .spinner{
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        border: 3px solid rgba(15,23,42,.15);
+        border-top-color: rgba(15,23,42,.55);
+        animation: spin .8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      #spinner-text{ margin:0; font-weight: 950; color: var(--af-muted); }
+
+      /* Mapa */
+      #mapa-container h3{
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: 950;
+        display:flex;
+        align-items:center;
+        gap: 8px;
+      }
+      #mapa{
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--af-border);
+        box-shadow: 0 10px 22px rgba(2,6,23,.06);
+      }
+
+      /* CTA */
+      .cta-row{
+        margin-top: 16px;
+        display:flex;
+        justify-content:center;
+      }
+      .btn-finalizar{
+        width: 320px;
+        min-height: var(--tap);
+        padding: 12px 18px;
+        border-radius: 14px;
+        font-weight: 950;
+        border: none;
+        background: var(--af-primary);
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 12px 20px rgba(29,78,216,.20);
+        transition: transform .12s ease, filter .12s ease;
+      }
+      .btn-finalizar:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+      .btn-finalizar:active{ transform: translateY(0); }
+
+      /* Sticky CTA mobile */
+      .sticky-checkout{
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999;
+        background: rgba(246,248,251,.92);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(229,231,235,.9);
+        padding: 10px 12px;
+      }
+      .sticky-checkout__inner{
+        max-width: 980px;
+        margin: 0 auto;
+        display:flex;
+        align-items:center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .sticky-note{
+        display:flex;
+        flex-direction:column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .sticky-note small{ color: var(--af-muted); font-weight: 900; }
+      .sticky-note strong{ font-weight: 950; white-space: nowrap; }
+
+      .desktop-only{ display:block; }
+      .mobile-only{ display:none; }
+
+      @media (max-width: 640px){
+        .carrito-container{ padding: 0 14px 140px; }
+        .envio-wrap{ padding: 14px; }
+
+        .desktop-only{ display:none; }
+        .mobile-only{ display:block; }
+
+        #datos-envio{ flex-direction:column; align-items:stretch; }
+        #buscar-direccion{ width: 100%; }
+        .btn-finalizar{ width: 100%; }
+
+        .cta-row{ display:none; } /* usamos sticky */
+      }
+    </style>
 
     <div class="progreso-compra">
       <div class="paso-container">
@@ -35,68 +344,128 @@
       </div>
     </div>
 
-    <div class="envio-opciones">
-      <label class="opcion-envio">
-        <input type="radio" name="tipo-envio" value="local">
-        <i class="fas fa-store"></i> Retiro por el local
-        <small style="display:block;opacity:.8;">Igualdad 88, Centro, Córdoba</small>
-      </label>
+    <div class="envio-wrap">
+      <div class="envio-opciones">
 
-      <div id="info-retiro-local" class="hidden">
-        <p>📍 Dirección del local: <strong>Igualdad 88, Centro, Córdoba</strong></p>
+        <!-- Opción: Retiro -->
+        <label class="opcion-envio">
+          <input type="radio" name="tipo-envio" value="local">
+          <span class="icon"><i class="fas fa-store"></i></span>
+          <span class="txt">
+            <p class="titulo">Retiro por el local</p>
+            <div class="sub">Igualdad 88, Centro, Córdoba</div>
+          </span>
+        </label>
+
+        <div id="info-retiro-local" class="panel hidden">
+          <h3><i class="fas fa-map-marker-alt"></i> Dirección</h3>
+          <p><strong>Igualdad 88, Centro, Córdoba</strong></p>
+        </div>
+
+        <!-- Opción: Delivery -->
+        <label class="opcion-envio">
+          <input type="radio" name="tipo-envio" value="delivery">
+          <span class="icon"><i class="fas fa-motorcycle"></i></span>
+          <span class="txt">
+            <p class="titulo">Envío Delivery</p>
+            <div class="sub">Buscá tu dirección o mové el pin para marcar la entrega</div>
+          </span>
+        </label>
+
+        <div class="panel hidden" id="panel-delivery">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <div id="uber-badge" class="uber-badge" title="Envío por Uber">
+              <span class="uber-dot"></span> UBER
+            </div>
+
+            <div id="delivery-costo" class="delivery-costo hidden">
+              Envío por Uber:
+              <strong id="delivery-costo-valor"></strong>
+            </div>
+          </div>
+
+          <div id="delivery-hint" style="margin-top:10px;opacity:.85;font-weight:800;color:var(--af-muted);">
+            Tip: si la búsqueda te trae otra ciudad, mové el pin en el mapa para ajustar el punto exacto.
+          </div>
+
+          <div id="direccion-predefinida" class="hidden" style="margin-top:10px;color:var(--af-muted);font-weight:800;">
+            📍 Tenés la dirección <span id="direccion-guardada" style="font-weight:950;color:var(--af-text)"></span> guardada.
+          </div>
+
+          <div id="spinner" class="hidden" style="margin-top:12px;">
+            <div class="spinner"></div>
+            <p id="spinner-text">BUSCANDO...</p>
+          </div>
+
+          <div id="datos-envio" class="hidden" style="margin-top:12px;">
+            <input type="text" id="direccion" placeholder="Ej: Jujuy 1510">
+            <button id="buscar-direccion"><i class="fas fa-search" style="margin-right:8px"></i>Buscar</button>
+          </div>
+
+          <div id="mapa-container" class="hidden" style="margin-top:14px;">
+            <h3>📍 Ubicación</h3>
+            <div id="mapa" style="height: 420px;"></div>
+          </div>
+        </div>
+
       </div>
 
-      <label class="opcion-envio">
-        <input type="radio" name="tipo-envio" value="delivery">
-        <i class="fas fa-motorcycle"></i> Envío Delivery
-      </label>
-
-      <!-- Badge estilo Uber (no muestra costo todavía) -->
-      <div id="uber-badge" class="uber-badge hidden" title="Envío por Uber">
-        <span class="uber-dot"></span> UBER
-      </div>
-
-      <!-- Hint UX -->
-      <div id="delivery-hint" class="hidden" style="margin-top:8px;opacity:.8;font-size:14px;">
-        Podés <b>buscar</b> tu dirección o <b>mover el pin</b> en el mapa para marcar el punto de entrega.
-      </div>
-
-      <!-- Costo: oculto hasta validar dentro del área -->
-      <div id="delivery-costo" class="delivery-costo hidden">
-        Envío por Uber: <strong id="delivery-costo-valor"></strong>
-      </div>
-
-      <div id="direccion-predefinida" class="hidden">
-        <p>📍 Tiene la dirección <span id="direccion-guardada"></span> predefinida para la entrega.</p>
-      </div>
-
-      <div id="spinner" class="hidden">
-        <div class="spinner"></div>
-        <p id="spinner-text">BUSCANDO...</p>
-      </div>
-
-      <div id="datos-envio" class="hidden">
-        <input type="text" id="direccion" placeholder="Ej: Jujuy 1510">
-        <button id="buscar-direccion">Buscar</button>
-      </div>
-
-      <div id="mapa-container" class="hidden">
-        <h3>📍 Ubicación</h3>
-        <div id="mapa" style="height: 400px;"></div>
+      <div class="cta-row">
+        <button id="continuar-pago" class="btn-finalizar">
+          Continuar con el Pago <i class="fas fa-arrow-right" style="margin-left:8px"></i>
+        </button>
       </div>
     </div>
 
-    <div>
-      <button id="continuar-pago" class="btn-finalizar">Continuar con el Pago</button>
+    <!-- Sticky CTA (solo mobile) -->
+    <div class="sticky-checkout mobile-only">
+      <div class="sticky-checkout__inner">
+        <div class="sticky-note">
+          <small>Siguiente paso</small>
+          <strong>Confirmar datos</strong>
+        </div>
+        <button id="continuar-pago-mobile" class="btn-finalizar">
+          Continuar <i class="fas fa-arrow-right" style="margin-left:8px"></i>
+        </button>
+      </div>
     </div>
+
   </main>
 
-  <%- include ./layouts/footer.ejs %>
+  <%- include('./layouts/footer.ejs') %>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
+    // UI: mostrar/ocultar paneles según opción, sin romper tu envio.js
     document.addEventListener("DOMContentLoaded", function () {
+      const radios = document.querySelectorAll('input[name="tipo-envio"]');
+      const infoLocal = document.getElementById('info-retiro-local');
+      const panelDelivery = document.getElementById('panel-delivery');
+
+      function syncPanels(){
+        const sel = document.querySelector('input[name="tipo-envio"]:checked')?.value;
+
+        if(sel === 'local'){
+          infoLocal.classList.remove('hidden');
+          panelDelivery.classList.add('hidden');
+        }else if(sel === 'delivery'){
+          infoLocal.classList.add('hidden');
+          panelDelivery.classList.remove('hidden');
+
+          // Mostrar inputs del delivery (tu JS igual puede manejarlo)
+          document.getElementById('datos-envio')?.classList.remove('hidden');
+          document.getElementById('mapa-container')?.classList.remove('hidden');
+        }else{
+          infoLocal.classList.add('hidden');
+          panelDelivery.classList.add('hidden');
+        }
+      }
+
+      radios.forEach(r => r.addEventListener('change', syncPanels));
+      syncPanels();
+
+      // Dirección predefinida (lo que ya tenías)
       fetch("/carrito/envio")
         .then(r => r.json())
         .then(data => {
@@ -104,10 +473,20 @@
             document.getElementById("direccion-guardada").textContent = data.direccion;
             document.getElementById("direccion-predefinida").classList.remove("hidden");
           }
-        });
+        })
+        .catch(() => {});
     });
+
+    // Mobile CTA -> reutiliza el botón real
+    (function(){
+      const btnDesktop = document.getElementById('continuar-pago');
+      const btnMobile  = document.getElementById('continuar-pago-mobile');
+      if(btnDesktop && btnMobile){
+        btnMobile.addEventListener('click', () => btnDesktop.click());
+      }
+    })();
   </script>
 
-  <!-- ✅ cache-busting (subí el número si el navegador cachea) -->
-  <script src="/js/envio.js?v=20260109-1"></script>
+  <!-- ✅ cache-busting -->
+  <script src="/js/envio.js?v=20260119-1"></script>
 </body>
