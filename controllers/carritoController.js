@@ -450,7 +450,10 @@ actualizarCantidad: (req, res) => {
         res.render ('envio')
     },
 guardarEnvio: (req, res) => {
+  const traceId = req.body?.traceId || `srv_${Date.now()}`;
+
   if (!req.body || !req.body.tipo_envio) {
+    console.log(`[${traceId}] ❌ guardarEnvio: falta tipo_envio`, req.body);
     return res.status(400).json({ error: "Debe seleccionar un tipo de envío." });
   }
 
@@ -458,43 +461,54 @@ guardarEnvio: (req, res) => {
   const tipo_envio = String(req.body.tipo_envio);
   let direccion = req.body.direccion ? String(req.body.direccion).trim() : null;
 
+  console.log(`[${traceId}] ▶ guardarEnvio body`, { id_usuario, tipo_envio, direccion });
+
   if (tipo_envio === "delivery" && (!direccion || direccion.length < 5)) {
+    console.log(`[${traceId}] ❌ guardarEnvio: dirección inválida`);
     return res.status(400).json({ error: "Debe ingresar una dirección válida para delivery." });
   }
 
   carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
-    if (error) return res.status(500).json({ error: "Error al obtener carrito" });
-    if (!carritos || carritos.length === 0) return res.status(400).json({ error: "No hay un carrito activo" });
-
-    const id_carrito = carritos[0].id;
-
-    // ✅ RETIRO: guardamos directo sin confirmarCambio
-    if (tipo_envio !== "delivery") {
-      return carrito.guardarEnvio(id_carrito, tipo_envio, null, (errSave) => {
-        if (errSave) return res.status(500).json({ error: "Error al guardar envío" });
-        return res.status(200).json({ success: true, mensaje: "✅ Envío guardado correctamente" });
-      });
+    if (error) {
+      console.log(`[${traceId}] ❌ obtenerCarritoActivo error`, error);
+      return res.status(500).json({ error: "Error al obtener carrito" });
+    }
+    if (!carritos || carritos.length === 0) {
+      console.log(`[${traceId}] ❌ no hay carrito activo`);
+      return res.status(400).json({ error: "No hay un carrito activo" });
     }
 
-    // ✅ DELIVERY: confirmamos si cambia la dirección
-    carrito.obtenerDireccionEnvio(id_carrito, (errDir, direccionExistente) => {
-      if (errDir) return res.status(500).json({ error: "Error al obtener dirección de envío" });
+    const id_carrito = carritos[0].id;
+    console.log(`[${traceId}] ✅ carrito activo`, carritos[0]);
 
-      if (direccionExistente && direccionExistente !== direccion) {
-        return res.status(200).json({
-          confirmarCambio: true,
-          direccionExistente,
-          direccionNueva: direccion
-        });
+    // retiro => direccion null
+    if (tipo_envio !== "delivery") {
+      direccion = null;
+    }
+
+    carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (errSave) => {
+      if (errSave) {
+        console.log(`[${traceId}] ❌ guardarEnvio(modelo) error`, errSave);
+        return res.status(500).json({ error: "Error al guardar envío" });
       }
 
-      carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (errSave) => {
-        if (errSave) return res.status(500).json({ error: "Error al guardar envío" });
-        return res.status(200).json({ success: true, mensaje: "✅ Envío guardado correctamente" });
+      // leer lo guardado para verificar
+      carrito.obtenerEnvioCarrito(id_carrito, (errE, envioDB) => {
+        if (errE) console.log(`[${traceId}] ⚠ obtenerEnvioCarrito error`, errE);
+
+        console.log(`[${traceId}] ✅ envio guardado DB`, { id_carrito, envioDB });
+
+        return res.status(200).json({
+          success: true,
+          id_carrito,
+          envioDB: envioDB || null,
+          mensaje: "✅ Envío guardado correctamente"
+        });
       });
     });
   });
 },
+
 actualizarDireccionEnvio: (req, res) => {
   const id_usuario = req.session.usuario.id;
 
