@@ -5,6 +5,8 @@ const { io } = require('../app');
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
+const COSTO_DELIVERY = 5000;
+
 
 console.log("✅ Módulo 'carrito' cargado correctamente.");
 
