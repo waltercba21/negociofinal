@@ -88,30 +88,30 @@
     <% } %>
   </div>
 
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script>
-    const socket = io();
-    socket.on('actualizarNotificacion', () => { actualizarPedidosPendientes(); });
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+  const socket = io();
 
-    async function actualizarPedidosPendientes() {
-      try {
-        const response = await fetch('/pedidos/cantidad');
-        const data = await response.json();
-        const notificacion = document.getElementById("pedido-notificacion");
-        if (!notificacion) return;
+  const headerEl = document.querySelector('header[data-usuario-id]');
+  const usuarioId = headerEl ? headerEl.dataset.usuarioId : '';
 
-        if (data.cantidad > 0) {
-          notificacion.textContent = data.cantidad;
-          notificacion.style.display = "flex";
-        } else {
-          notificacion.style.display = "none";
-        }
-      } catch (error) {
-        console.error("❌ Error al obtener pedidos pendientes:", error);
-      }
+  if (usuarioId) {
+    socket.emit('register', { usuarioId: Number(usuarioId) });
+  }
+
+  socket.on('pedidoActualizado', (data) => {
+    alert(`Pedido #${data.id_pedido} → ${data.estado}`);
+  });
+
+  // Admin (dejalo, pero solo si existe la función)
+  socket.on('actualizarNotificacion', () => {
+    if (typeof actualizarPedidosPendientes === 'function') {
+      actualizarPedidosPendientes();
     }
-    actualizarPedidosPendientes();
-  </script>  
+  });
+</script>
+
+
   <script>
     (function () {
       const input = document.getElementById('headerEntradaBusqueda');

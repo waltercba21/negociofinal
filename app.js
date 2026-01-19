@@ -103,11 +103,16 @@ app.use('/reportes', reportesRoutes);
 // --- WebSockets ---
 io.on('connection', (socket) => {
   console.log('🔌 Cliente conectado');
-  socket.on('disconnect', () => console.log('❌ Cliente desconectado'));
-  socket.on('nuevoPedido', (data) => {
-    console.log("🔔 'nuevoPedido' recibido:", data);
+
+  socket.on('register', ({ usuarioId }) => {
+    if (!usuarioId) return;
+    socket.join(`usuario_${usuarioId}`);
+    console.log(`✅ socket unido a usuario_${usuarioId}`);
   });
+
+  socket.on('disconnect', () => console.log('❌ Cliente desconectado'));
 });
+
 
 // --- 404 y 500 (sin vistas para evitar errores) ---
 app.use((req, res) => {
