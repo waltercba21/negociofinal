@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("✅ envio.js ENVIO OPT v20260109-1 (fix cierre)");
+  console.log("✅ envio.js ENVIO OPT v20260119-fix-local");
 
   const tipoEnvioRadios = document.querySelectorAll("input[name='tipo-envio']");
   const mapaContainer = document.getElementById("mapa-container");
@@ -19,30 +19,15 @@ document.addEventListener("DOMContentLoaded", function () {
   let marcador = null;
   let circuloZona = null;
 
-  // Estado de validación delivery
   let deliveryValidado = false;
   let deliveryDentroZona = false;
 
-  // =========================
-  // CONFIG (ajustable)
-  // =========================
   const direccionLocal = "IGUALDAD 88, Centro, Córdoba";
-
-  // Centro del círculo (movelo si querés)
   const ubicacionCentro = { lat: -31.407473534930432, lng: -64.1830 };
-
-  // Radio (metros)
   const RADIO_CIRCUNVALACION_M = 5800;
-
-  // Costo delivery
   const COSTO_DELIVERY = 5000;
-
-  // Restringir búsqueda a Córdoba Capital (viewbox: left,top,right,bottom)
   const CBA_VIEWBOX = { left: -64.30, top: -31.30, right: -64.05, bottom: -31.55 };
 
-  // =========================
-  // Helpers UI
-  // =========================
   function fmtARS(n) {
     return "$" + Number(n).toLocaleString("es-AR");
   }
@@ -76,19 +61,13 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
-  // =========================
-  // Nominatim (CBA only)
-  // =========================
   function buildNominatimSearchURL(q) {
     const u = new URL("https://nominatim.openstreetmap.org/search");
     u.searchParams.set("format", "json");
     u.searchParams.set("addressdetails", "1");
     u.searchParams.set("limit", "5");
     u.searchParams.set("countrycodes", "ar");
-    u.searchParams.set(
-      "viewbox",
-      `${CBA_VIEWBOX.left},${CBA_VIEWBOX.top},${CBA_VIEWBOX.right},${CBA_VIEWBOX.bottom}`
-    );
+    u.searchParams.set("viewbox", `${CBA_VIEWBOX.left},${CBA_VIEWBOX.top},${CBA_VIEWBOX.right},${CBA_VIEWBOX.bottom}`);
     u.searchParams.set("bounded", "1");
     u.searchParams.set("q", q);
     return u.toString();
@@ -108,11 +87,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function pickCordobaCapitalResult(list) {
     if (!Array.isArray(list) || list.length === 0) return null;
 
-    const norm = (s) =>
-      String(s || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+    const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
     const exact = list.find((e) => {
       const a = e.address || {};
@@ -136,7 +111,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const city = String(a.city || a.town || a.municipality || a.city_district || "").toLowerCase();
       const state = String(a.state || "").toLowerCase();
 
-      // filtro suave: si no menciona Córdoba, no lo usamos
       if (state && !state.includes("córdoba") && !state.includes("cordoba")) return null;
       if (city && city !== "córdoba" && city !== "cordoba") return null;
 
@@ -149,15 +123,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // =========================
-  // Mapa
-  // =========================
   function inicializarMapa() {
     if (mapa) return;
 
     mapa = L.map("mapa").setView([ubicacionCentro.lat, ubicacionCentro.lng], 13);
 
-    // tiles más modernos
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
       subdomains: "abcd",
@@ -173,7 +143,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     mapa.fitBounds(circuloZona.getBounds());
 
-    // Click para marcar punto (solo delivery)
     mapa.on("click", async (e) => {
       if (getTipoEnvioSeleccionado() !== "delivery") return;
       await setPuntoDelivery(e.latlng.lat, e.latlng.lng, { completarInput: true });
@@ -200,7 +169,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!marcador) {
       marcador = L.marker(ll, { draggable: !!draggable }).addTo(mapa);
 
-      // dragend -> valida y reverse
       marcador.on("dragend", async () => {
         if (getTipoEnvioSeleccionado() !== "delivery") return;
         const p = marcador.getLatLng();
@@ -232,11 +200,11 @@ document.addEventListener("DOMContentLoaded", function () {
     asegurarMarcador(lat, lng, true);
 
     let dir = inputDireccion?.value?.trim() || "Ubicación seleccionada";
-    if (completarInput && inputDireccion) {
+    if (completarInput) {
       const rev = await reverseGeocodeCordoba(lat, lng);
       if (rev) {
         dir = rev;
-        inputDireccion.value = rev;
+        if (inputDireccion) inputDireccion.value = rev;
       }
     }
 
@@ -247,15 +215,12 @@ document.addEventListener("DOMContentLoaded", function () {
     else ocultarCostoDelivery();
   }
 
-  // =========================
-  // Eventos UI
-  // =========================
   tipoEnvioRadios.forEach((radio) => {
     radio.addEventListener("change", async function () {
       const tipo = this.value;
       console.log("📌 tipo_envio:", tipo);
 
-      if (mapaContainer) mapaContainer.classList.remove("hidden");
+      mapaContainer?.classList.remove("hidden");
       inicializarMapa();
       refrescarMapa();
 
@@ -263,33 +228,30 @@ document.addEventListener("DOMContentLoaded", function () {
         deliveryValidado = false;
         deliveryDentroZona = false;
 
-        if (datosEnvio) datosEnvio.classList.remove("hidden");
-        if (infoRetiroLocal) infoRetiroLocal.classList.add("hidden");
+        datosEnvio?.classList.remove("hidden");
+        infoRetiroLocal?.classList.add("hidden");
 
-        if (uberBadge) uberBadge.classList.remove("hidden");
-        if (deliveryHint) deliveryHint.classList.remove("hidden");
+        uberBadge?.classList.remove("hidden");
+        deliveryHint?.classList.remove("hidden");
 
         ocultarCostoDelivery();
 
-        // pin inicial draggable (pero NO validamos hasta que el usuario lo mueva/click/busque)
         asegurarMarcador(ubicacionCentro.lat, ubicacionCentro.lng, true);
         actualizarPopup("Mové el pin o buscá tu dirección", true);
         deliveryValidado = false;
       } else {
-        if (datosEnvio) datosEnvio.classList.add("hidden");
-        if (infoRetiroLocal) infoRetiroLocal.classList.remove("hidden");
+        datosEnvio?.classList.add("hidden");
+        infoRetiroLocal?.classList.remove("hidden");
 
-        if (uberBadge) uberBadge.classList.add("hidden");
-        if (deliveryHint) deliveryHint.classList.add("hidden");
+        uberBadge?.classList.add("hidden");
+        deliveryHint?.classList.add("hidden");
 
         ocultarCostoDelivery();
 
-        // importante: limpiar input para que no quede “dirección delivery” visible
         if (inputDireccion) inputDireccion.value = "";
         deliveryValidado = false;
         deliveryDentroZona = false;
 
-        // pin local fijo
         asegurarMarcador(ubicacionCentro.lat, ubicacionCentro.lng, false);
         actualizarPopup(direccionLocal, true);
         mapa.setView([ubicacionCentro.lat, ubicacionCentro.lng], 14);
@@ -311,7 +273,6 @@ document.addEventListener("DOMContentLoaded", function () {
     setSpinner(true);
 
     try {
-      // viewbox ya restringe a CBA
       const resp = await fetch(buildNominatimSearchURL(direccion));
       const data = await resp.json().catch(() => []);
 
@@ -375,29 +336,31 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((r) => r.json())
       .then((data) => {
-        // ✅ Si el server pide confirmación de cambio de dirección
         if (data && data.confirmarCambio) {
-          // ✅ Si es RETIRO, forzamos la dirección del local sin preguntar
+
+          // ✅ FIX: si es RETIRO, actualizar TAMBIÉN tipo_envio (y costo) para que confirmarDatos no muestre delivery
           if (tipoEnvio === "local") {
             return fetch("/carrito/envio/actualizar", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ direccion: direccionLocal }),
+              body: JSON.stringify({
+                tipo_envio: "local",
+                direccion: direccionLocal,
+                costo_envio: 0,
+              }),
             })
               .then((r2) => r2.json())
               .then((u) => {
                 if (u && u.success) {
                   window.location.href = "/carrito/confirmarDatos";
                 } else {
-                  Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar la dirección." });
+                  Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar el envío." });
                 }
               })
-              .catch(() =>
-                Swal.fire({ icon: "error", title: "Error", text: "No se pudo conectar con el servidor." })
-              );
+              .catch(() => Swal.fire({ icon: "error", title: "Error", text: "No se pudo conectar con el servidor." }));
           }
 
-          // ✅ Si es DELIVERY, sí preguntamos
+          // ✅ delivery: confirmación normal
           return Swal.fire({
             icon: "warning",
             title: "Dirección registrada previamente",
@@ -427,7 +390,6 @@ document.addEventListener("DOMContentLoaded", function () {
           });
         }
 
-        // ✅ Caso normal
         if (data && data.success) {
           window.location.href = "/carrito/confirmarDatos";
           return;
@@ -444,9 +406,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   });
 
-  // =========================
-  // Estado inicial
-  // =========================
   mapaContainer?.classList.add("hidden");
   datosEnvio?.classList.add("hidden");
   infoRetiroLocal?.classList.add("hidden");
