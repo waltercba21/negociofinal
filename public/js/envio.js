@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("✅ envio.js ENVIO OPT v20260109-1");
+  console.log("✅ envio.js ENVIO OPT v20260109-1 (fix cierre)");
 
   const tipoEnvioRadios = document.querySelectorAll("input[name='tipo-envio']");
   const mapaContainer = document.getElementById("mapa-container");
@@ -85,7 +85,10 @@ document.addEventListener("DOMContentLoaded", function () {
     u.searchParams.set("addressdetails", "1");
     u.searchParams.set("limit", "5");
     u.searchParams.set("countrycodes", "ar");
-    u.searchParams.set("viewbox", `${CBA_VIEWBOX.left},${CBA_VIEWBOX.top},${CBA_VIEWBOX.right},${CBA_VIEWBOX.bottom}`);
+    u.searchParams.set(
+      "viewbox",
+      `${CBA_VIEWBOX.left},${CBA_VIEWBOX.top},${CBA_VIEWBOX.right},${CBA_VIEWBOX.bottom}`
+    );
     u.searchParams.set("bounded", "1");
     u.searchParams.set("q", q);
     return u.toString();
@@ -105,7 +108,11 @@ document.addEventListener("DOMContentLoaded", function () {
   function pickCordobaCapitalResult(list) {
     if (!Array.isArray(list) || list.length === 0) return null;
 
-    const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 
     const exact = list.find((e) => {
       const a = e.address || {};
@@ -150,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     mapa = L.map("mapa").setView([ubicacionCentro.lat, ubicacionCentro.lng], 13);
 
-    // ✅ tiles más modernos
+    // tiles más modernos
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
       subdomains: "abcd",
@@ -208,6 +215,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function actualizarPopup(direccion, ok) {
+    if (!marcador) return;
     const mensaje = ok
       ? `<b>Dirección:</b> ${direccion}`
       : `<b>Dirección:</b> ${direccion}<br><span style='color:red;'>⛔ Fuera del área de entrega</span>`;
@@ -223,8 +231,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     asegurarMarcador(lat, lng, true);
 
-    let dir = inputDireccion.value?.trim() || "Ubicación seleccionada";
-    if (completarInput) {
+    let dir = inputDireccion?.value?.trim() || "Ubicación seleccionada";
+    if (completarInput && inputDireccion) {
       const rev = await reverseGeocodeCordoba(lat, lng);
       if (rev) {
         dir = rev;
@@ -247,7 +255,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const tipo = this.value;
       console.log("📌 tipo_envio:", tipo);
 
-      mapaContainer.classList.remove("hidden");
+      if (mapaContainer) mapaContainer.classList.remove("hidden");
       inicializarMapa();
       refrescarMapa();
 
@@ -255,7 +263,7 @@ document.addEventListener("DOMContentLoaded", function () {
         deliveryValidado = false;
         deliveryDentroZona = false;
 
-        datosEnvio.classList.remove("hidden");
+        if (datosEnvio) datosEnvio.classList.remove("hidden");
         if (infoRetiroLocal) infoRetiroLocal.classList.add("hidden");
 
         if (uberBadge) uberBadge.classList.remove("hidden");
@@ -263,12 +271,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         ocultarCostoDelivery();
 
-        // Poner un pin inicial draggable (pero NO validamos hasta que el usuario lo mueva/click/busque)
+        // pin inicial draggable (pero NO validamos hasta que el usuario lo mueva/click/busque)
         asegurarMarcador(ubicacionCentro.lat, ubicacionCentro.lng, true);
         actualizarPopup("Mové el pin o buscá tu dirección", true);
-        deliveryValidado = false; // importante: sigue sin validación
+        deliveryValidado = false;
       } else {
-        datosEnvio.classList.add("hidden");
+        if (datosEnvio) datosEnvio.classList.add("hidden");
         if (infoRetiroLocal) infoRetiroLocal.classList.remove("hidden");
 
         if (uberBadge) uberBadge.classList.add("hidden");
@@ -276,7 +284,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         ocultarCostoDelivery();
 
-        // Pin local fijo
+        // importante: limpiar input para que no quede “dirección delivery” visible
+        if (inputDireccion) inputDireccion.value = "";
+        deliveryValidado = false;
+        deliveryDentroZona = false;
+
+        // pin local fijo
         asegurarMarcador(ubicacionCentro.lat, ubicacionCentro.lng, false);
         actualizarPopup(direccionLocal, true);
         mapa.setView([ubicacionCentro.lat, ubicacionCentro.lng], 14);
@@ -285,7 +298,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   btnBuscarDireccion?.addEventListener("click", async function () {
-    const direccion = inputDireccion.value.trim();
+    const direccion = inputDireccion?.value?.trim() || "";
     if (!direccion) {
       Swal.fire({ icon: "error", title: "Ingrese una dirección", text: "Por favor, ingrese una dirección válida." });
       return;
@@ -298,7 +311,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setSpinner(true);
 
     try {
-      // ✅ NO agregamos “Argentina/Córdoba” acá: el viewbox ya lo restringe a CBA
+      // viewbox ya restringe a CBA
       const resp = await fetch(buildNominatimSearchURL(direccion));
       const data = await resp.json().catch(() => []);
 
@@ -311,7 +324,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const lat = parseFloat(r0.lat);
       const lon = parseFloat(r0.lon);
 
-      // doble seguridad
       if (!isInsideViewbox(lat, lon)) {
         Swal.fire({ icon: "error", title: "Fuera de Córdoba Capital", text: "Esa dirección no está dentro del área de búsqueda." });
         return;
@@ -334,7 +346,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    const direccion = inputDireccion.value.trim();
+    const direccion = inputDireccion?.value?.trim() || "";
 
     if (tipoEnvio === "delivery") {
       if (!direccion) {
@@ -363,8 +375,30 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((r) => r.json())
       .then((data) => {
-        if (data.confirmarCambio) {
-          Swal.fire({
+        // ✅ Si el server pide confirmación de cambio de dirección
+        if (data && data.confirmarCambio) {
+          // ✅ Si es RETIRO, forzamos la dirección del local sin preguntar
+          if (tipoEnvio === "local") {
+            return fetch("/carrito/envio/actualizar", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ direccion: direccionLocal }),
+            })
+              .then((r2) => r2.json())
+              .then((u) => {
+                if (u && u.success) {
+                  window.location.href = "/carrito/confirmarDatos";
+                } else {
+                  Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar la dirección." });
+                }
+              })
+              .catch(() =>
+                Swal.fire({ icon: "error", title: "Error", text: "No se pudo conectar con el servidor." })
+              );
+          }
+
+          // ✅ Si es DELIVERY, sí preguntamos
+          return Swal.fire({
             icon: "warning",
             title: "Dirección registrada previamente",
             text: `Tiene la dirección "${data.direccionExistente}" predefinida. ¿Desea cambiarla por "${data.direccionNueva}"?`,
@@ -373,31 +407,46 @@ document.addEventListener("DOMContentLoaded", function () {
             cancelButtonText: "No, mantener",
           }).then((result) => {
             if (result.isConfirmed) {
-              fetch("/carrito/envio/actualizar", {
+              return fetch("/carrito/envio/actualizar", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ direccion: data.direccionNueva }),
               })
-                .then((r) => r.json())
+                .then((r2) => r2.json())
                 .then((u) => {
-                  if (u.success) {
-                    Swal.fire("Actualizado", "Su dirección ha sido actualizada.", "success").then(
-                      () => (window.location.href = "/carrito/confirmarDatos")
-                    );
+                  if (u && u.success) {
+                    return Swal.fire("Actualizado", "Su dirección ha sido actualizada.", "success").then(() => {
+                      window.location.href = "/carrito/confirmarDatos";
+                    });
                   }
+                  Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar la dirección." });
                 });
             } else {
               window.location.href = "/carrito/confirmarDatos";
             }
           });
-        } else if (data.success) {
-          window.location.href = "/carrito/confirmarDatos";
         }
+
+        // ✅ Caso normal
+        if (data && data.success) {
+          window.location.href = "/carrito/confirmarDatos";
+          return;
+        }
+
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: (data && data.message) ? data.message : "No se pudo guardar el envío.",
+        });
       })
-      .catch(() => Swal.fire({ icon: "error", title: "Error", text: "No se pudo conectar con el servidor." }));
+      .catch(() => {
+        Swal.fire({ icon: "error", title: "Error", text: "No se pudo conectar con el servidor." });
+      });
   });
 
+  // =========================
   // Estado inicial
+  // =========================
   mapaContainer?.classList.add("hidden");
   datosEnvio?.classList.add("hidden");
   infoRetiroLocal?.classList.add("hidden");
