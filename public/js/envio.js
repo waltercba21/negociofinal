@@ -1,12 +1,19 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("✅ envio.js ENVIO OPT v20260119-debug-trace");
+  console.log("✅ envio.js ENVIO OPT v20260119-debug-trace+mobilefix");
 
+  // =========================
+  // ELEMENTOS
+  // =========================
   const tipoEnvioRadios = document.querySelectorAll("input[name='tipo-envio']");
   const mapaContainer = document.getElementById("mapa-container");
   const datosEnvio = document.getElementById("datos-envio");
   const inputDireccion = document.getElementById("direccion");
   const btnBuscarDireccion = document.getElementById("buscar-direccion");
+
+  // OJO: hay 2 botones en el EJS (desktop + mobile)
   const btnContinuarPago = document.getElementById("continuar-pago");
+  const btnContinuarPagoMobile = document.getElementById("continuar-pago-mobile");
+
   const infoRetiroLocal = document.getElementById("info-retiro-local");
   const spinner = document.getElementById("spinner");
 
@@ -15,22 +22,63 @@ document.addEventListener("DOMContentLoaded", function () {
   const deliveryCostoValor = document.getElementById("delivery-costo-valor");
   const deliveryHint = document.getElementById("delivery-hint");
 
+  // =========================
+  // DEBUG INIT
+  // =========================
+  const traceId = `env_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+  console.log(`[${traceId}] 🔧 DOM ready`);
+  console.log(`[${traceId}] 🔧 botones`, {
+    continuarDesktop: !!btnContinuarPago,
+    continuarMobile: !!btnContinuarPagoMobile,
+    radios: tipoEnvioRadios.length,
+    inputDireccion: !!inputDireccion,
+    btnBuscarDireccion: !!btnBuscarDireccion,
+    mapaContainer: !!mapaContainer,
+  });
+
+  // Captura de clicks global (para saber qué botón estás tocando realmente)
+  document.addEventListener(
+    "click",
+    (e) => {
+      const t = e.target;
+      const btn = t && t.closest ? t.closest("#continuar-pago, #continuar-pago-mobile") : null;
+      if (btn) {
+        console.log(`[${traceId}] 🖱 CLICK CAPTURADO`, {
+          id: btn.id,
+          tag: btn.tagName,
+          typeAttr: btn.getAttribute("type"),
+        });
+      }
+    },
+    true
+  );
+
+  // =========================
+  // MAPA / ESTADO
+  // =========================
   let mapa = null;
   let marcador = null;
   let circuloZona = null;
 
+  // Estado de validación delivery
   let deliveryValidado = false;
   let deliveryDentroZona = false;
 
+  // =========================
+  // CONFIG
+  // =========================
   const direccionLocal = "IGUALDAD 88, Centro, Córdoba";
   const ubicacionCentro = { lat: -31.407473534930432, lng: -64.1830 };
   const RADIO_CIRCUNVALACION_M = 5800;
   const COSTO_DELIVERY = 5000;
+
+  // Restringir búsqueda a Córdoba Capital (viewbox: left,top,right,bottom)
   const CBA_VIEWBOX = { left: -64.30, top: -31.30, right: -64.05, bottom: -31.55 };
 
-  // Trace para seguir el flujo
-  const traceId = `env_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-
+  // =========================
+  // HELPERS UI
+  // =========================
   function fmtARS(n) {
     return "$" + Number(n).toLocaleString("es-AR");
   }
@@ -64,13 +112,19 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
+  // =========================
+  // NOMINATIM
+  // =========================
   function buildNominatimSearchURL(q) {
     const u = new URL("https://nominatim.openstreetmap.org/search");
     u.searchParams.set("format", "json");
     u.searchParams.set("addressdetails", "1");
     u.searchParams.set("limit", "5");
     u.searchParams.set("countrycodes", "ar");
-    u.searchParams.set("viewbox", `${CBA_VIEWBOX.left},${CBA_VIEWBOX.top},${CBA_VIEWBOX.right},${CBA_VIEWBOX.bottom}`);
+    u.searchParams.set(
+      "viewbox",
+      `${CBA_VIEWBOX.left},${CBA_VIEWBOX.top},${CBA_VIEWBOX.right},${CBA_VIEWBOX.bottom}`
+    );
     u.searchParams.set("bounded", "1");
     u.searchParams.set("q", q);
     return u.toString();
@@ -90,13 +144,20 @@ document.addEventListener("DOMContentLoaded", function () {
   function pickCordobaCapitalResult(list) {
     if (!Array.isArray(list) || list.length === 0) return null;
 
-    const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 
     const exact = list.find((e) => {
       const a = e.address || {};
       const city = norm(a.city || a.town || a.municipality || a.city_district);
       const state = norm(a.state);
-      return (city === "cordoba" || city === "cordoba capital" || city === "cordoba, cordoba") && state.includes("cordoba");
+      return (
+        (city === "cordoba" || city === "cordoba capital" || city === "cordoba, cordoba") &&
+        state.includes("cordoba")
+      );
     });
 
     return exact || list[0];
@@ -126,8 +187,16 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // =========================
+  // MAPA
+  // =========================
   function inicializarMapa() {
     if (mapa) return;
+
+    if (typeof L === "undefined") {
+      console.warn(`[${traceId}] ⚠ Leaflet (L) no está definido. No se inicializa mapa.`);
+      return;
+    }
 
     mapa = L.map("mapa").setView([ubicacionCentro.lat, ubicacionCentro.lng], 13);
 
@@ -150,6 +219,8 @@ document.addEventListener("DOMContentLoaded", function () {
       if (getTipoEnvioSeleccionado() !== "delivery") return;
       await setPuntoDelivery(e.latlng.lat, e.latlng.lng, { completarInput: true });
     });
+
+    console.log(`[${traceId}] 🗺 mapa inicializado`);
   }
 
   function refrescarMapa() {
@@ -167,6 +238,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function asegurarMarcador(lat, lng, draggable) {
+    if (!mapa) return;
     const ll = [parseFloat(lat), parseFloat(lng)];
 
     if (!marcador) {
@@ -195,6 +267,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function setPuntoDelivery(lat, lng, { completarInput }) {
     inicializarMapa();
+    if (!mapa) return;
 
     const ok = esUbicacionValida(lat, lng);
     deliveryValidado = true;
@@ -216,10 +289,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (ok) mostrarCostoDelivery();
     else ocultarCostoDelivery();
+
+    console.log(`[${traceId}] 📍 setPuntoDelivery`, { lat, lng, ok, dir });
   }
 
+  // =========================
+  // UI: CHANGE TIPO ENVIO
+  // =========================
   tipoEnvioRadios.forEach((radio) => {
-    radio.addEventListener("change", async function () {
+    radio.addEventListener("change", function () {
       const tipo = this.value;
       console.log(`[${traceId}] 📌 change tipo_envio:`, tipo);
 
@@ -239,9 +317,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         ocultarCostoDelivery();
 
-        asegurarMarcador(ubicacionCentro.lat, ubicacionCentro.lng, true);
-        actualizarPopup("Mové el pin o buscá tu dirección", true);
-        deliveryValidado = false;
+        if (mapa) {
+          asegurarMarcador(ubicacionCentro.lat, ubicacionCentro.lng, true);
+          actualizarPopup("Mové el pin o buscá tu dirección", true);
+        }
       } else {
         datosEnvio?.classList.add("hidden");
         infoRetiroLocal?.classList.remove("hidden");
@@ -251,19 +330,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
         ocultarCostoDelivery();
 
+        // importante: limpiar input para no confundir
         if (inputDireccion) inputDireccion.value = "";
         deliveryValidado = false;
         deliveryDentroZona = false;
 
-        asegurarMarcador(ubicacionCentro.lat, ubicacionCentro.lng, false);
-        actualizarPopup(direccionLocal, true);
-        mapa.setView([ubicacionCentro.lat, ubicacionCentro.lng], 14);
+        if (mapa) {
+          asegurarMarcador(ubicacionCentro.lat, ubicacionCentro.lng, false);
+          actualizarPopup(direccionLocal, true);
+          mapa.setView([ubicacionCentro.lat, ubicacionCentro.lng], 14);
+        }
       }
     });
   });
 
+  // =========================
+  // BUSCAR DIRECCION
+  // =========================
   btnBuscarDireccion?.addEventListener("click", async function () {
     const direccion = inputDireccion?.value?.trim() || "";
+    console.log(`[${traceId}] 🔎 click buscar-direccion`, { direccion });
+
     if (!direccion) {
       Swal.fire({ icon: "error", title: "Ingrese una dirección", text: "Por favor, ingrese una dirección válida." });
       return;
@@ -272,11 +359,9 @@ document.addEventListener("DOMContentLoaded", function () {
     deliveryValidado = false;
     deliveryDentroZona = false;
     ocultarCostoDelivery();
-
     setSpinner(true);
 
     try {
-      console.log(`[${traceId}] 🔎 buscar direccion:`, direccion);
       const resp = await fetch(buildNominatimSearchURL(direccion));
       const data = await resp.json().catch(() => []);
 
@@ -296,29 +381,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
       await setPuntoDelivery(lat, lon, { completarInput: false });
     } catch (e) {
+      console.error(`[${traceId}] ❌ error buscar direccion`, e);
       Swal.fire({ icon: "error", title: "Error", text: "No se pudo buscar la dirección." });
     } finally {
       setSpinner(false);
     }
   });
 
-  btnContinuarPago?.addEventListener("click", function (event) {
+  // =========================
+  // CONTINUAR (UNIFICADO desktop+mobile)
+  // =========================
+  function onContinuar(event) {
     event.preventDefault();
 
+    const fromId = event?.target?.closest?.("#continuar-pago, #continuar-pago-mobile")?.id || "unknown";
     const tipoEnvio = getTipoEnvioSeleccionado();
+    const direccion = inputDireccion?.value?.trim() || "";
+
+    console.log(`[${traceId}] ▶ continuar`, {
+      from: fromId,
+      tipoEnvio,
+      direccionInput: direccion,
+      deliveryValidado,
+      deliveryDentroZona,
+    });
+
     if (!tipoEnvio) {
       Swal.fire({ icon: "error", title: "Seleccione un tipo de envío", text: "Debe elegir una opción de envío antes de continuar." });
       return;
     }
-
-    const direccion = inputDireccion?.value?.trim() || "";
-
-    console.log(`[${traceId}] ▶ continuar`, {
-      tipoEnvio,
-      direccionInput: direccion,
-      deliveryValidado,
-      deliveryDentroZona
-    });
 
     if (tipoEnvio === "delivery") {
       if (!direccion) {
@@ -352,30 +443,8 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((data) => {
         console.log(`[${traceId}] ✅ resp /carrito/envio`, data);
 
-        // Si backend pide confirmación (solo debería pasar para delivery)
         if (data && data.confirmarCambio) {
-
-          // Si por algún motivo llegara acá con local, forzamos actualización total
-          if (tipoEnvio === "local") {
-            console.log(`[${traceId}] ⚠ confirmarCambio pero tipo=local -> forzar actualizar envio`);
-            return fetch("/carrito/envio/actualizar", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ traceId, tipo_envio: "local", direccion: null }),
-            })
-              .then((r2) => r2.json())
-              .then((u) => {
-                console.log(`[${traceId}] ✅ resp /carrito/envio/actualizar`, u);
-                if (u && u.success) {
-                  const cid = u.id_carrito || data.id_carrito || "";
-                  window.location.href = `/carrito/confirmarDatos?carrito_id=${cid}&t=${Date.now()}`;
-                } else {
-                  Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar el envío." });
-                }
-              });
-          }
-
-          // delivery: confirmación normal
+          // Solo debería pasar en delivery, pero lo manejamos igual
           return Swal.fire({
             icon: "warning",
             title: "Dirección registrada previamente",
@@ -389,28 +458,28 @@ document.addEventListener("DOMContentLoaded", function () {
               return fetch("/carrito/envio/actualizar", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ traceId, tipo_envio: "delivery", direccion: data.direccionNueva }),
+                body: JSON.stringify({
+                  traceId,
+                  tipo_envio: "delivery",
+                  direccion: data.direccionNueva,
+                }),
               })
                 .then((r2) => r2.json())
                 .then((u) => {
                   console.log(`[${traceId}] ✅ resp /carrito/envio/actualizar`, u);
-                  if (u && u.success) {
-                    const cid = u.id_carrito || data.id_carrito || "";
-                    window.location.href = `/carrito/confirmarDatos?carrito_id=${cid}&t=${Date.now()}`;
-                  } else {
-                    Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar la dirección." });
-                  }
+                  const cid = u?.id_carrito || data?.id_carrito || "";
+                  window.location.href = `/carrito/confirmarDatos?carrito_id=${cid}&t=${Date.now()}`;
                 });
             } else {
               console.log(`[${traceId}] ❎ usuario mantuvo dirección`);
-              const cid = data.id_carrito || "";
+              const cid = data?.id_carrito || "";
               window.location.href = `/carrito/confirmarDatos?carrito_id=${cid}&t=${Date.now()}`;
             }
           });
         }
 
         if (data && data.success) {
-          const cid = data.id_carrito || "";
+          const cid = data?.id_carrito || "";
           console.log(`[${traceId}] ➜ redirect confirmarDatos carrito_id=`, cid);
           window.location.href = `/carrito/confirmarDatos?carrito_id=${cid}&t=${Date.now()}`;
           return;
@@ -426,8 +495,12 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error(`[${traceId}] ❌ error fetch /carrito/envio`, err);
         Swal.fire({ icon: "error", title: "Error", text: "No se pudo conectar con el servidor." });
       });
-  });
+  }
 
+  btnContinuarPago?.addEventListener("click", onContinuar);
+  btnContinuarPagoMobile?.addEventListener("click", onContinuar);
+
+  // Estado inicial
   mapaContainer?.classList.add("hidden");
   datosEnvio?.classList.add("hidden");
   infoRetiroLocal?.classList.add("hidden");
