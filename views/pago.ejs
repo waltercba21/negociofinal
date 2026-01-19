@@ -30,6 +30,299 @@
   <main class="carrito-container">
     <h1>💳 Finalizar Pago</h1>
 
+    <style>
+      :root{
+        --af-bg:#f6f8fb;
+        --af-card:#ffffff;
+        --af-text:#0f172a;
+        --af-muted:#64748b;
+        --af-border:#e5e7eb;
+        --af-primary:#1d4ed8;
+        --af-shadow: 0 12px 30px rgba(2,6,23,.08);
+
+        --tap: 44px;
+        --radius: 18px;
+      }
+
+      body{ background: var(--af-bg); }
+
+      .carrito-container{
+        max-width: 980px;
+        margin: 28px auto;
+        padding: 0 16px 140px; /* espacio sticky */
+        color: var(--af-text);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      }
+
+      .carrito-container h1{
+        margin: 0 0 18px 0;
+        font-size: 28px;
+        font-weight: 900;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:10px;
+        text-align:center;
+      }
+
+      .wrap{
+        background: var(--af-card);
+        border: 1px solid var(--af-border);
+        border-radius: var(--radius);
+        padding: 18px;
+        box-shadow: var(--af-shadow);
+      }
+
+      .desktop-only{ display:block; }
+      .mobile-only{ display:none; }
+
+      /* ===== Resumen envío ===== */
+      .envio-resumen{
+        border: 1px solid var(--af-border);
+        border-radius: 16px;
+        background: #fff;
+        padding: 14px;
+        margin-bottom: 14px;
+      }
+      .envio-resumen h3{
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: 950;
+        display:flex;
+        align-items:center;
+        gap: 8px;
+      }
+      .envio-grid{
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .envio-item{
+        border: 1px solid var(--af-border);
+        border-radius: 14px;
+        padding: 12px;
+        background: #f8fafc;
+      }
+      .envio-item small{
+        display:block;
+        color: var(--af-muted);
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+      .envio-item div{
+        font-weight: 950;
+        word-break: break-word;
+      }
+
+      .uber-badge{
+        display:inline-flex;
+        align-items:center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--af-border);
+        background: #0b1220;
+        color: #fff;
+        font-weight: 950;
+        letter-spacing: .08em;
+        width: fit-content;
+      }
+      .uber-dot{ width:10px;height:10px;border-radius:999px;background:#fff;display:inline-block; }
+
+      /* ===== Tabla (desktop) ===== */
+      .carrito-tabla{
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        border-radius: 14px;
+        border: 1px solid var(--af-border);
+        background: #fff;
+      }
+      .carrito-tabla thead th{
+        background: #0b1220;
+        color: #fff;
+        font-weight: 900;
+        font-size: 12px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        padding: 14px 12px;
+      }
+      .carrito-tabla tbody td{
+        padding: 14px 12px;
+        border-bottom: 1px solid var(--af-border);
+        vertical-align: middle;
+        font-weight: 800;
+        font-size: 14px;
+      }
+      .carrito-tabla tbody tr:last-child td{ border-bottom:none; }
+
+      .money{
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        font-weight: 950;
+      }
+      .carrito-total td{
+        background: rgba(15,23,42,.02);
+        font-weight: 950;
+      }
+      #total-carrito{ color: var(--af-primary); }
+
+      /* ===== Mobile: cards ===== */
+      .cart-cards{ display:flex; flex-direction:column; gap: 12px; }
+
+      .cart-card{
+        border: 1px solid var(--af-border);
+        background:#fff;
+        border-radius: 16px;
+        box-shadow: 0 10px 22px rgba(2,6,23,.06);
+        padding: 12px;
+      }
+      .cart-card__name{
+        font-weight: 950;
+        font-size: 14px;
+        line-height: 1.2;
+        margin: 2px 0 8px 0;
+        word-break: break-word;
+      }
+      .cart-row{
+        display:flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-weight: 900;
+        color: var(--af-muted);
+        font-size: 12px;
+        padding: 6px 0;
+      }
+      .cart-row strong{
+        color: var(--af-text);
+        font-weight: 950;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .divider{
+        height: 1px;
+        background: var(--af-border);
+        margin: 6px 0;
+        opacity:.9;
+      }
+
+      .totals-card{
+        border: 1px solid rgba(29,78,216,.18);
+        background: rgba(29,78,216,.05);
+        border-radius: 16px;
+        padding: 12px;
+      }
+      .totals-line{
+        display:flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-weight: 900;
+        color: var(--af-muted);
+        padding: 6px 0;
+      }
+      .totals-line strong{
+        color: var(--af-text);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .totals-line.total strong{ color: var(--af-primary); font-size: 16px; }
+
+      /* ===== Pago / Wallet ===== */
+      .pago-card{
+        margin-top: 14px;
+        border: 1px solid var(--af-border);
+        border-radius: 16px;
+        background:#fff;
+        padding: 14px;
+      }
+      .pago-card h3{
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: 950;
+        display:flex;
+        align-items:center;
+        gap: 8px;
+      }
+
+      #wallet_container{
+        min-height: 56px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      }
+
+      .mensaje-pago{
+        margin-top: 10px;
+        color: var(--af-muted);
+        font-weight: 800;
+      }
+
+      /* Loading */
+      .loading{
+        display:flex;
+        align-items:center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid var(--af-border);
+        background: #fff;
+      }
+      .spinner{
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        border: 3px solid rgba(15,23,42,.15);
+        border-top-color: rgba(15,23,42,.55);
+        animation: spin .8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* Sticky CTA mobile */
+      .sticky-checkout{
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999;
+        background: rgba(246,248,251,.92);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(229,231,235,.9);
+        padding: 10px 12px;
+      }
+      .sticky-checkout__inner{
+        max-width: 980px;
+        margin: 0 auto;
+        display:flex;
+        align-items:center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .sticky-total{
+        display:flex;
+        flex-direction:column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .sticky-total small{ color: var(--af-muted); font-weight: 900; }
+      .sticky-total strong{
+        font-weight: 950;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        color: var(--af-primary);
+      }
+
+      @media (max-width: 640px){
+        .carrito-container{ padding: 0 14px 160px; }
+        .wrap{ padding: 14px; }
+
+        .desktop-only{ display:none; }
+        .mobile-only{ display:block; }
+
+        .envio-grid{ grid-template-columns: 1fr; }
+      }
+    </style>
+
     <div class="progreso-compra">
       <div class="paso-container">
         <div class="paso completado">
@@ -54,78 +347,186 @@
       </div>
     </div>
 
-    <!-- Resumen de envío -->
-    <section class="envio-resumen">
-      <h3>Datos de envío</h3>
+    <div class="wrap">
 
-      <% if (envio && envio.tipo_envio === 'delivery') { %>
-        <p><strong>Método:</strong> Delivery a domicilio</p>
-        <p><strong>Dirección:</strong> <%= envio.direccion %></p>
-        <p><strong>Costo delivery:</strong> $<%= fmtARS(costoEnvioValue) %></p>
+      <!-- Resumen de envío -->
+      <section class="envio-resumen">
+        <h3>📦 Datos de envío</h3>
+
+        <% if (envio && envio.tipo_envio === 'delivery') { %>
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+            <div class="uber-badge" title="Envío por Uber">
+              <span class="uber-dot"></span> UBER
+            </div>
+          </div>
+
+          <div class="envio-grid">
+            <div class="envio-item">
+              <small>Método</small>
+              <div>Delivery a domicilio</div>
+            </div>
+            <div class="envio-item">
+              <small>Dirección</small>
+              <div><%= envio.direccion %></div>
+            </div>
+            <div class="envio-item">
+              <small>Costo delivery</small>
+              <div>$<%= fmtARS(costoEnvioValue) %></div>
+            </div>
+            <div class="envio-item">
+              <small>Total a pagar</small>
+              <div style="color:var(--af-primary)">$<%= fmtARS(totalFinal) %></div>
+            </div>
+          </div>
+        <% } else { %>
+          <div class="envio-grid">
+            <div class="envio-item">
+              <small>Método</small>
+              <div>Retiro por el local</div>
+            </div>
+            <div class="envio-item">
+              <small>Dirección</small>
+              <div>Igualdad 88, Centro, Córdoba</div>
+            </div>
+            <div class="envio-item">
+              <small>Costo</small>
+              <div>$0,00</div>
+            </div>
+            <div class="envio-item">
+              <small>Total a pagar</small>
+              <div style="color:var(--af-primary)">$<%= fmtARS(totalFinal) %></div>
+            </div>
+          </div>
+        <% } %>
+      </section>
+
+      <% if (productosList.length > 0) { %>
+
+        <!-- ===== Desktop (tabla) ===== -->
+        <div class="desktop-only">
+          <table class="carrito-tabla">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Sub-Total</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% productosList.forEach(function(producto) { %>
+                <tr>
+                  <td><%= producto.nombre %></td>
+                  <td><%= producto.cantidad %></td>
+                  <td class="money">$<%= fmtARS(producto.precio_venta) %></td>
+                  <td class="money">$<%= fmtARS(producto.total) %></td>
+                </tr>
+              <% }) %>
+
+              <tr class="carrito-total">
+                <td colspan="2"></td>
+                <td><strong>Subtotal:</strong></td>
+                <td class="money">$<%= fmtARS(subtotalUsar) %></td>
+              </tr>
+
+              <% if (envio && envio.tipo_envio === 'delivery') { %>
+                <tr class="carrito-total">
+                  <td colspan="2"></td>
+                  <td><strong>Delivery:</strong></td>
+                  <td class="money">$<%= fmtARS(costoEnvioValue) %></td>
+                </tr>
+              <% } %>
+
+              <tr class="carrito-total">
+                <td colspan="2"></td>
+                <td><strong>Total a pagar:</strong></td>
+                <td id="total-carrito" class="money">$<%= fmtARS(totalFinal) %></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ===== Mobile (cards) ===== -->
+        <div class="mobile-only">
+          <div class="cart-cards">
+            <% productosList.forEach(function(producto) { %>
+              <article class="cart-card">
+                <div class="cart-card__name"><%= producto.nombre %></div>
+                <div class="cart-row"><span><i class="fas fa-cubes"></i> Cantidad</span><strong><%= producto.cantidad %></strong></div>
+                <div class="cart-row"><span><i class="fas fa-tag"></i> Precio</span><strong>$<%= fmtARS(producto.precio_venta) %></strong></div>
+                <div class="divider"></div>
+                <div class="cart-row"><span><i class="fas fa-receipt"></i> Subtotal</span><strong>$<%= fmtARS(producto.total) %></strong></div>
+              </article>
+            <% }) %>
+
+            <div class="totals-card">
+              <div class="totals-line">
+                <span>Subtotal</span>
+                <strong>$<%= fmtARS(subtotalUsar) %></strong>
+              </div>
+
+              <% if (envio && envio.tipo_envio === 'delivery') { %>
+                <div class="totals-line">
+                  <span>Delivery</span>
+                  <strong>$<%= fmtARS(costoEnvioValue) %></strong>
+                </div>
+              <% } %>
+
+              <div class="totals-line total">
+                <span>Total</span>
+                <strong>$<%= fmtARS(totalFinal) %></strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Pago ===== -->
+        <section class="pago-card">
+          <h3>💰 Pago con Mercado Pago</h3>
+
+          <div id="mp-loading" class="loading">
+            <div class="spinner"></div>
+            <strong style="color:var(--af-muted)">Generando link de pago…</strong>
+          </div>
+
+          <div id="wallet_container"></div>
+
+          <div class="mensaje-pago">
+            <p style="margin:0;">🔹 Serás redirigido a Mercado Pago para completar tu compra.</p>
+          </div>
+        </section>
+
       <% } else { %>
-        <p><strong>Método:</strong> Retiro por el local</p>
+        <p style="opacity:.75;font-weight:900;">No hay productos en tu carrito.</p>
       <% } %>
-    </section>
 
-    <% if (productosList.length > 0) { %>
-      <table class="carrito-tabla">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Cantidad</th>
-            <th>Precio</th>
-            <th>Sub-Total</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <% productosList.forEach(function(producto) { %>
-            <tr>
-              <td><%= producto.nombre %></td>
-              <td><%= producto.cantidad %></td>
-              <td>$<%= fmtARS(producto.precio_venta) %></td>
-              <td>$<%= fmtARS(producto.total) %></td>
-            </tr>
-          <% }) %>
-
-          <tr class="carrito-total">
-            <td colspan="2"></td>
-            <td><strong>Subtotal:</strong></td>
-            <td>$<%= fmtARS(subtotalUsar) %></td>
-          </tr>
-
-          <% if (envio && envio.tipo_envio === 'delivery') { %>
-            <tr class="carrito-total">
-              <td colspan="2"></td>
-              <td><strong>Delivery:</strong></td>
-              <td>$<%= fmtARS(costoEnvioValue) %></td>
-            </tr>
-          <% } %>
-
-          <tr class="carrito-total">
-            <td colspan="2"></td>
-            <td><strong>Total a pagar:</strong></td>
-            <td id="total-carrito">$<%= fmtARS(totalFinal) %></td>
-          </tr>
-        </tbody>
-      </table>
-    <% } else { %>
-      <p>No hay productos en tu carrito.</p>
-    <% } %>
-
-    <div id="wallet_container"></div>
-
-    <div class="mensaje-pago">
-      <p>🔹 Serás redirigido a Mercado Pago para completar tu compra.</p>
     </div>
+
+    <!-- Sticky footer (solo mobile): muestra total y deja el wallet visible arriba -->
+    <div class="sticky-checkout mobile-only">
+      <div class="sticky-checkout__inner">
+        <div class="sticky-total">
+          <small>Total</small>
+          <strong>$<%= fmtARS(totalFinal) %></strong>
+        </div>
+        <div style="color:var(--af-muted);font-weight:900;font-size:12px;white-space:nowrap;">
+          Pagá con MP ↑
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script src="https://sdk.mercadopago.com/js/v2"></script>
   <script>
     fetch('/carrito/pago', { method: 'POST' })
-      .then(response => response.json())
+      .then(r => r.json())
       .then(data => {
-        if (data.preferenceId) {
+        const loading = document.getElementById('mp-loading');
+        if (loading) loading.style.display = 'none';
+
+        if (data && data.preferenceId) {
           const mp = new MercadoPago('<%= process.env.MP_PUBLIC_KEY %>', { locale: 'es-AR' });
 
           mp.bricks().create("wallet", "wallet_container", {
@@ -135,8 +536,10 @@
           alert('Error al generar la preferencia de pago.');
         }
       })
-      .catch(error => {
-        console.error("Error al obtener la preferencia:", error);
+      .catch(err => {
+        const loading = document.getElementById('mp-loading');
+        if (loading) loading.style.display = 'none';
+        console.error("Error al obtener la preferencia:", err);
         alert('Hubo un error al procesar el pago.');
       });
   </script>
