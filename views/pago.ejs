@@ -4,16 +4,20 @@
 <%
   const productosList = Array.isArray(productos) ? productos : [];
 
-  const subtotal = Number(subtotal ?? 0); // si el controller lo manda
-  const totalServer = Number(total ?? 0); // total final calculado en backend (ideal)
-  const costoEnvio = (envio && envio.tipo_envio === 'delivery')
-    ? Number(envio.costo_envio ?? 0)
-    : 0;
+  // OJO: no usar "const subtotal = ..." porque pisa la variable que viene del render
+  const subtotalValue = Number((typeof subtotal !== 'undefined') ? subtotal : 0);
+  const totalValue = Number((typeof total !== 'undefined') ? total : 0);
 
-  // fallback por si el controller aun no manda subtotal/total final:
+  const costoEnvioValue =
+    (envio && envio.tipo_envio === 'delivery')
+      ? Number(envio.costo_envio ?? 0)
+      : 0;
+
+  // fallback por si el controller aún no manda subtotal/total:
   const subtotalFallback = productosList.reduce((acc, p) => acc + (Number(p.total) || 0), 0);
-  const subtotalUsar = subtotal || subtotalFallback;
-  const totalFinal = totalServer || (subtotalUsar + costoEnvio);
+
+  const subtotalUsar = subtotalValue || subtotalFallback;
+  const totalFinal = totalValue || (subtotalUsar + costoEnvioValue);
 
   const fmtARS = (n) =>
     Number(n || 0).toLocaleString('es-AR', {
@@ -57,7 +61,7 @@
       <% if (envio && envio.tipo_envio === 'delivery') { %>
         <p><strong>Método:</strong> Delivery a domicilio</p>
         <p><strong>Dirección:</strong> <%= envio.direccion %></p>
-        <p><strong>Costo delivery:</strong> $<%= fmtARS(costoEnvio) %></p>
+        <p><strong>Costo delivery:</strong> $<%= fmtARS(costoEnvioValue) %></p>
       <% } else { %>
         <p><strong>Método:</strong> Retiro por el local</p>
       <% } %>
@@ -94,7 +98,7 @@
             <tr class="carrito-total">
               <td colspan="2"></td>
               <td><strong>Delivery:</strong></td>
-              <td>$<%= fmtARS(costoEnvio) %></td>
+              <td>$<%= fmtARS(costoEnvioValue) %></td>
             </tr>
           <% } %>
 
