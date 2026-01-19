@@ -1,4 +1,6 @@
-<header class="<%= isLogged ? 'is-logged' : 'is-guest' %>">
+<header class="<%= isLogged ? 'is-logged' : 'is-guest' %>"
+        data-usuario-id="<%= (userLogged && userLogged.id) ? userLogged.id : '' %>">
+
   <a href="/">
     <img class="logo" src="/uploads/productos/logo.png?v=2" alt="LOGO" />
   </a>
