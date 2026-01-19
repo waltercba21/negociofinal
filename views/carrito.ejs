@@ -2,395 +2,716 @@
 <%- include('./layouts/header.ejs') %>
 
 <body>
-    <main class="carrito-container">
-        <h1>🛍️ Mi Carrito</h1>
+  <main class="carrito-container">
+    <h1>🛍️ Mi Carrito</h1>
 
-        <style>
-  :root{
-    --af-bg:#f6f8fb;
-    --af-card:#ffffff;
-    --af-text:#0f172a;
-    --af-muted:#64748b;
-    --af-border:#e5e7eb;
-    --af-primary:#1d4ed8;
-    --af-danger:#ef4444;
-    --af-shadow: 0 12px 30px rgba(2,6,23,.08);
-  }
+    <style>
+      :root{
+        --af-bg:#f6f8fb;
+        --af-card:#ffffff;
+        --af-text:#0f172a;
+        --af-muted:#64748b;
+        --af-border:#e5e7eb;
+        --af-primary:#1d4ed8;
+        --af-danger:#ef4444;
+        --af-shadow: 0 12px 30px rgba(2,6,23,.08);
 
-  /* Layout general */
-  .carrito-container{
-    max-width: 980px;
-    margin: 32px auto;
-    padding: 0 16px;
-    color: var(--af-text);
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  }
-.carrito-container h1{
-  margin: 0 0 18px 0;
-  font-size: 28px;
-  font-weight: 800;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  text-align:center;
-  width: 100%;
-}
+        --tap: 44px;
+        --radius: 18px;
+      }
 
+      body{ background: var(--af-bg); }
 
-  /* Card del carrito */
-  #contenedor-carrito{
-    background: var(--af-card);
-    border: 1px solid var(--af-border);
-    border-radius: 18px;
-    padding: 18px;
-    box-shadow: var(--af-shadow);
-  }
+      /* Layout general */
+      .carrito-container{
+        max-width: 980px;
+        margin: 28px auto;
+        padding: 0 16px 120px; /* deja espacio para sticky bar en mobile */
+        color: var(--af-text);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      }
 
-  /* Tabla moderna */
-  .carrito-tabla{
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    overflow: hidden;
-    border-radius: 14px;
-    border: 1px solid var(--af-border);
-    background: #fff;
-  }
+      .carrito-container h1{
+        margin: 0 0 18px 0;
+        font-size: 28px;
+        font-weight: 900;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:10px;
+        text-align:center;
+        width: 100%;
+      }
 
-  .carrito-tabla thead th{
-    background: #0b1220;
-    color: #fff;
-    font-weight: 800;
-    font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    padding: 14px 12px;
-  }
+      /* Card del carrito (contenedor) */
+      #contenedor-carrito{
+        background: var(--af-card);
+        border: 1px solid var(--af-border);
+        border-radius: var(--radius);
+        padding: 18px;
+        box-shadow: var(--af-shadow);
+      }
 
-  .carrito-tabla tbody td{
-    padding: 14px 12px;
-    border-bottom: 1px solid var(--af-border);
-    vertical-align: middle;
-    font-weight: 700;
-    font-size: 14px;
-  }
+      /* Helpers */
+      .desktop-only{ display:block; }
+      .mobile-only{ display:none; }
 
-  .carrito-tabla tbody tr:last-child td{ border-bottom: none; }
-  .carrito-tabla tbody tr:hover{ background: rgba(15,23,42,.03); }
+      /* Tabla moderna (desktop) */
+      .carrito-tabla{
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        border-radius: 14px;
+        border: 1px solid var(--af-border);
+        background: #fff;
+      }
 
-  .imagen-miniatura{
-    width: 56px;
-    height: 56px;
-    object-fit: contain;
-    border-radius: 12px;
-    border: 1px solid var(--af-border);
-    background: #fff;
-    padding: 6px;
-  }
+      .carrito-tabla thead th{
+        background: #0b1220;
+        color: #fff;
+        font-weight: 900;
+        font-size: 12px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        padding: 14px 12px;
+      }
 
-  .precio, .subtotal{
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    font-weight: 900;
-  }
-  .subtotal{ color: var(--af-primary); }
+      .carrito-tabla tbody td{
+        padding: 14px 12px;
+        border-bottom: 1px solid var(--af-border);
+        vertical-align: middle;
+        font-weight: 800;
+        font-size: 14px;
+      }
 
-  /* Controles cantidad */
-  .qty{
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 10px;
-    border: 1px solid var(--af-border);
-    border-radius: 999px;
-    background: #f8fafc;
-  }
+      .carrito-tabla tbody tr:last-child td{ border-bottom: none; }
+      .carrito-tabla tbody tr:hover{ background: rgba(15,23,42,.03); }
 
-  .qty .cantidad{
-    min-width: 34px;
-    text-align: center;
-    font-weight: 900;
-    font-size: 16px;
-    line-height: 1;
-  }
+      .imagen-miniatura{
+        width: 56px;
+        height: 56px;
+        object-fit: contain;
+        border-radius: 12px;
+        border: 1px solid var(--af-border);
+        background: #fff;
+        padding: 6px;
+      }
 
-  .btn-cantidad{
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    border: 1px solid var(--af-border);
-    background: #fff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform .12s ease, box-shadow .12s ease;
-  }
-  .btn-cantidad:hover{
-    transform: translateY(-1px);
-    box-shadow: 0 8px 16px rgba(2,6,23,.10);
-  }
-  .btn-cantidad:active{ transform: translateY(0); }
+      .precio, .subtotal{
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        font-weight: 950;
+      }
+      .subtotal{ color: var(--af-primary); }
 
-  /* Eliminar */
-  .btn-eliminar{
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    border: 1px solid rgba(239,68,68,.25);
-    background: rgba(239,68,68,.10);
-    color: var(--af-danger);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-.btn-eliminar:hover{ background: rgba(239,68,68,.16); }
+      /* Controles cantidad */
+      .qty{
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 10px;
+        border: 1px solid var(--af-border);
+        border-radius: 999px;
+        background: #f8fafc;
+      }
 
-.carrito-footer{
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;   /* <-- apila */
-  align-items: center;      /* <-- centra */
-  justify-content: center;
-  gap: 12px;
-}
+      .qty .cantidad{
+        min-width: 34px;
+        text-align: center;
+        font-weight: 950;
+        font-size: 16px;
+        line-height: 1;
+      }
 
-.total-container{
-  justify-content: center;
-}
-.btn-finalizar{
-  width: 260px;             /* opcional: mismo ancho prolijo */
-}
-  #total-carrito{
-    width: 190px;
-    padding: 10px 12px;
-    border: 1px solid var(--af-border);
-    border-radius: 12px;
-    font-weight: 900;
-    font-size: 16px;
-    background: #fff;
-  }
+      .btn-cantidad{
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        border: 1px solid var(--af-border);
+        background: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      }
+      .btn-cantidad:hover{
+        transform: translateY(-1px);
+        box-shadow: 0 8px 16px rgba(2,6,23,.10);
+      }
+      .btn-cantidad:active{ transform: translateY(0); }
 
-  .btn-finalizar{
-    padding: 12px 18px;
-    border-radius: 14px;
-    font-weight: 900;
-    border: none;
-    background: var(--af-primary);
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 0 12px 20px rgba(29,78,216,.20);
-    transition: transform .12s ease, filter .12s ease;
-  }
-  .btn-finalizar:hover{ filter: brightness(1.05); transform: translateY(-1px); }
-  .btn-finalizar:active{ transform: translateY(0); }
+      /* Eliminar */
+      .btn-eliminar{
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        border: 1px solid rgba(239,68,68,.25);
+        background: rgba(239,68,68,.10);
+        color: var(--af-danger);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .btn-eliminar:hover{ background: rgba(239,68,68,.16); }
 
-  /* Mis pedidos (botones chicos como secundarios) */
-  .acciones-pedido{display:flex;gap:8px;flex-wrap:wrap}
-  .btn-mini{
-    padding: 10px 12px;
-    border-radius: 12px;
-    font-size: .9rem;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 800;
-    background: transparent;
-    color: var(--af-text);
-    border: 1px solid var(--af-border);
-    box-shadow: none;
-  }
-  .btn-mini:hover,
-.btn-mini:focus{
-  color: var(--af-text) !important;
-  background: rgba(15,23,42,.04) !important;
-}
+      /* Footer (desktop) */
+      .carrito-footer{
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
 
+      .total-container{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
 
-  /* Badges estado (tu código, levemente retocado) */
-  .badge-estado{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:800;font-size:.85rem;line-height:1;white-space:nowrap}
-  .badge-prep{background:#fff3cd;color:#856404}
-  .badge-entrega{background:#d1ecf1;color:#0c5460}
-  .badge-final{background:#d4edda;color:#155724}
-  .badge-otro{background:#eee;color:#444}
+      #total-carrito{
+        width: 190px;
+        padding: 10px 12px;
+        border: 1px solid var(--af-border);
+        border-radius: 12px;
+        font-weight: 950;
+        font-size: 16px;
+        background: #fff;
+      }
 
-  /* Mobile */
-  @media (max-width: 640px){
-    .carrito-tabla thead{ display:none; }
-    .carrito-tabla, .carrito-tabla tbody, .carrito-tabla tr, .carrito-tabla td{ display:block; width:100%; }
-    .carrito-tabla tr{ border-bottom: 1px solid var(--af-border); padding: 10px 0; }
-    .carrito-tabla td{ border: none; padding: 10px 12px; display:flex; justify-content:space-between; gap:12px; }
-    .carrito-tabla td:last-child{ justify-content:flex-end; }
-    .imagen-miniatura{ width:48px; height:48px; }
-    #total-carrito{ width: 160px; }
-  }
-</style>
+      .btn-finalizar{
+        width: 260px;
+        min-height: var(--tap);
+        padding: 12px 18px;
+        border-radius: 14px;
+        font-weight: 950;
+        border: none;
+        background: var(--af-primary);
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 12px 20px rgba(29,78,216,.20);
+        transition: transform .12s ease, filter .12s ease;
+      }
+      .btn-finalizar:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+      .btn-finalizar:active{ transform: translateY(0); }
 
+      /* Mis pedidos (desktop) */
+      .acciones-pedido{display:flex;gap:8px;flex-wrap:wrap}
+      .btn-mini{
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size: .9rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 900;
+        background: transparent;
+        color: var(--af-text);
+        border: 1px solid var(--af-border);
+      }
+      .btn-mini:hover, .btn-mini:focus{
+        color: var(--af-text) !important;
+        background: rgba(15,23,42,.04) !important;
+      }
 
-        <div class="progreso-compra">
-            <div class="paso-container">
-                <div class="paso activo">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>CARRITO</span>
+      /* Badges estado */
+      .badge-estado{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:.85rem;line-height:1;white-space:nowrap}
+      .badge-prep{background:#fff3cd;color:#856404}
+      .badge-entrega{background:#d1ecf1;color:#0c5460}
+      .badge-final{background:#d4edda;color:#155724}
+      .badge-otro{background:#eee;color:#444}
+
+      /* ===================== MOBILE UX (cards) ===================== */
+      @media (max-width: 640px){
+        .desktop-only{ display:none; }
+        .mobile-only{ display:block; }
+
+        .carrito-container{ padding: 0 14px 140px; }
+        #contenedor-carrito{ padding: 14px; }
+
+        /* Cards list */
+        .cart-cards{
+          display:flex;
+          flex-direction:column;
+          gap: 12px;
+        }
+
+        .cart-card{
+          border: 1px solid var(--af-border);
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 10px 22px rgba(2,6,23,.06);
+          padding: 12px;
+        }
+
+        .cart-card__top{
+          display:flex;
+          gap: 12px;
+          align-items:flex-start;
+        }
+
+        .cart-card__img{
+          width: 64px;
+          height: 64px;
+          border-radius: 14px;
+          border: 1px solid var(--af-border);
+          background:#fff;
+          object-fit: contain;
+          padding: 8px;
+          flex: 0 0 auto;
+        }
+
+        .cart-card__info{
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+
+        .cart-card__name{
+          font-weight: 950;
+          font-size: 14px;
+          line-height: 1.2;
+          margin: 2px 0 6px 0;
+          word-break: break-word;
+        }
+
+        .cart-card__meta{
+          display:flex;
+          align-items:center;
+          justify-content: space-between;
+          gap: 10px;
+          color: var(--af-muted);
+          font-weight: 800;
+          font-size: 12px;
+        }
+
+        .cart-card__price{
+          color: var(--af-text);
+          font-weight: 950;
+          font-variant-numeric: tabular-nums;
+          white-space: nowrap;
+        }
+
+        .cart-card__divider{
+          height: 1px;
+          background: var(--af-border);
+          margin: 10px 0;
+          opacity: .9;
+        }
+
+        .cart-card__row{
+          display:flex;
+          align-items:center;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        .cart-card__label{
+          color: var(--af-muted);
+          font-weight: 900;
+          font-size: 12px;
+          display:flex;
+          align-items:center;
+          gap: 8px;
+          white-space: nowrap;
+        }
+
+        .cart-card__subtotal{
+          font-weight: 950;
+          color: var(--af-primary);
+          font-variant-numeric: tabular-nums;
+          white-space: nowrap;
+        }
+
+        /* Stepper más “touch” */
+        .qty{
+          padding: 6px 8px;
+          gap: 8px;
+        }
+        .btn-cantidad{
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+        }
+        .qty .cantidad{
+          min-width: 28px;
+          font-size: 16px;
+        }
+
+        .btn-eliminar{
+          width: 44px;
+          height: 44px;
+          border-radius: 14px;
+        }
+
+        /* Sticky checkout bar */
+        .sticky-checkout{
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 999;
+          background: rgba(246,248,251,.92);
+          backdrop-filter: blur(10px);
+          border-top: 1px solid rgba(229,231,235,.9);
+          padding: 10px 12px;
+        }
+
+        .sticky-checkout__inner{
+          max-width: 980px;
+          margin: 0 auto;
+          display:flex;
+          align-items:center;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        .sticky-total{
+          display:flex;
+          flex-direction:column;
+          gap: 2px;
+          min-width: 0;
+        }
+
+        .sticky-total small{
+          color: var(--af-muted);
+          font-weight: 900;
+        }
+
+        .sticky-total strong{
+          font-weight: 950;
+          font-variant-numeric: tabular-nums;
+          white-space: nowrap;
+        }
+
+        .sticky-checkout .btn-finalizar{
+          width: auto;
+          flex: 0 0 auto;
+          padding: 12px 14px;
+          border-radius: 14px;
+        }
+
+        /* Mis pedidos en cards */
+        .orders-cards{ display:flex; flex-direction:column; gap: 12px; }
+        .order-card{
+          border: 1px solid var(--af-border);
+          background:#fff;
+          border-radius: 16px;
+          box-shadow: 0 10px 22px rgba(2,6,23,.06);
+          padding: 12px;
+        }
+        .order-card__top{
+          display:flex;
+          align-items:flex-start;
+          justify-content: space-between;
+          gap: 10px;
+        }
+        .order-card__id{
+          font-weight: 950;
+        }
+        .order-card__meta{
+          margin-top: 6px;
+          color: var(--af-muted);
+          font-weight: 800;
+          font-size: 12px;
+          display:flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .order-card__actions{
+          margin-top: 10px;
+          display:flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+
+    <div class="progreso-compra">
+      <div class="paso-container">
+        <div class="paso activo">
+          <i class="fas fa-shopping-cart"></i>
+          <span>CARRITO</span>
+        </div>
+        <div class="barra activa"></div>
+        <div class="paso">
+          <i class="fas fa-truck"></i>
+          <span>ENVÍO</span>
+        </div>
+        <div class="barra"></div>
+        <div class="paso">
+          <i class="fas fa-check-circle"></i>
+          <span>CONFIRMAR DATOS</span>
+        </div>
+        <div class="barra"></div>
+        <div class="paso">
+          <i class="fas fa-credit-card"></i>
+          <span>PAGO</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenedor del carrito (carrito activo = pendiente) -->
+    <div id="contenedor-carrito" <%= productos.length === 0 ? 'style="display:none;"' : '' %>>
+
+      <%
+        const fmtARS = (n) => new Intl.NumberFormat('es-AR').format(Math.round(Number(n) || 0));
+      %>
+
+      <!-- ================= DESKTOP (tabla) ================= -->
+      <div class="desktop-only">
+        <table class="carrito-tabla">
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio</th>
+              <th>Sub-Total</th>
+              <th>Eliminar</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% productos.forEach(function(producto) { %>
+              <tr>
+                <td>
+                  <img src="/uploads/productos/<%= producto.imagen || 'default.jpg' %>" class="imagen-miniatura">
+                </td>
+
+                <td><%= producto.nombre %></td>
+
+                <td>
+                  <div class="qty" role="group" aria-label="Cantidad">
+                    <button class="btn-cantidad disminuir" data-id="<%= producto.id %>" aria-label="Disminuir">
+                      <i class="fas fa-minus"></i>
+                    </button>
+
+                    <span class="cantidad" data-id="<%= producto.id %>" aria-live="polite"><%= producto.cantidad %></span>
+
+                    <button class="btn-cantidad aumentar" data-id="<%= producto.id %>" aria-label="Aumentar">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                </td>
+
+                <td class="precio" data-id="<%= producto.id %>" data-precio="<%= producto.precio_venta %>">
+                  $<%= fmtARS(producto.precio_venta) %>
+                </td>
+
+                <td class="subtotal" data-id="<%= producto.id %>" data-subtotal="<%= producto.total %>">
+                  $<%= fmtARS(producto.total) %>
+                </td>
+
+                <td>
+                  <button class="btn-eliminar" data-id="<%= producto.id %>" aria-label="Eliminar">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+
+        <div class="carrito-footer">
+          <div class="total-container">
+            <label><strong>Total del pedido:</strong></label>
+            <input type="text" id="total-carrito" value="$<%= fmtARS(total) %>" readonly>
+          </div>
+
+          <button id="continuar-envio" class="btn-finalizar">
+            Continuar con el Envío
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= MOBILE (cards) ================= -->
+      <div class="mobile-only">
+        <div class="cart-cards">
+          <% productos.forEach(function(producto) { %>
+            <article class="cart-card" data-id="<%= producto.id %>">
+              <div class="cart-card__top">
+                <img class="cart-card__img" src="/uploads/productos/<%= producto.imagen || 'default.jpg' %>" alt="<%= producto.nombre %>">
+
+                <div class="cart-card__info">
+                  <div class="cart-card__name"><%= producto.nombre %></div>
+
+                  <div class="cart-card__meta">
+                    <span><i class="fas fa-tag"></i> Precio</span>
+                    <span class="cart-card__price precio" data-id="<%= producto.id %>" data-precio="<%= producto.precio_venta %>">
+                      $<%= fmtARS(producto.precio_venta) %>
+                    </span>
+                  </div>
                 </div>
-                <div class="barra activa"></div>
-                <div class="paso">
-                    <i class="fas fa-truck"></i>
-                    <span>ENVÍO</span>
+
+                <button class="btn-eliminar" data-id="<%= producto.id %>" aria-label="Eliminar">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+
+              <div class="cart-card__divider"></div>
+
+              <div class="cart-card__row">
+                <div class="cart-card__label">
+                  <i class="fas fa-cubes"></i> Cantidad
                 </div>
-                <div class="barra"></div>
-                <div class="paso">
-                    <i class="fas fa-check-circle"></i>
-                    <span>CONFIRMAR DATOS</span>
+
+                <div class="qty" role="group" aria-label="Cantidad">
+                  <button class="btn-cantidad disminuir" data-id="<%= producto.id %>" aria-label="Disminuir">
+                    <i class="fas fa-minus"></i>
+                  </button>
+
+                  <span class="cantidad" data-id="<%= producto.id %>" aria-live="polite"><%= producto.cantidad %></span>
+
+                  <button class="btn-cantidad aumentar" data-id="<%= producto.id %>" aria-label="Aumentar">
+                    <i class="fas fa-plus"></i>
+                  </button>
                 </div>
-                <div class="barra"></div>
-                <div class="paso">
-                    <i class="fas fa-credit-card"></i>
-                    <span>PAGO</span>
+              </div>
+
+              <div class="cart-card__divider"></div>
+
+              <div class="cart-card__row">
+                <div class="cart-card__label">
+                  <i class="fas fa-receipt"></i> Subtotal
                 </div>
+
+                <div class="cart-card__subtotal subtotal" data-id="<%= producto.id %>" data-subtotal="<%= producto.total %>">
+                  $<%= fmtARS(producto.total) %>
+                </div>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+
+        <!-- Sticky checkout bar -->
+        <div class="sticky-checkout">
+          <div class="sticky-checkout__inner">
+            <div class="sticky-total">
+              <small>Total</small>
+              <strong id="total-carrito-mobile">$<%= fmtARS(total) %></strong>
             </div>
+
+            <button id="continuar-envio-mobile" class="btn-finalizar">
+              Envío <i class="fas fa-arrow-right" style="margin-left:8px"></i>
+            </button>
+          </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Contenedor del carrito (carrito activo = pendiente) -->
-        <div id="contenedor-carrito" <%= productos.length === 0 ? 'style="display:none;"' : '' %>>
-            <table class="carrito-tabla">
-                <thead>
-                    <tr>
-                        <th>Imagen</th>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                        <th>Sub-Total</th>
-                        <th>Eliminar</th>
-                    </tr>
-                </thead>
-                <tbody>
-                  <%
-  const fmtARS = (n) => new Intl.NumberFormat('es-AR').format(Math.round(Number(n) || 0));
-%>
+    <!-- Mensaje de carrito vacío -->
+    <div id="mensaje-carrito-vacio" <%= productos.length === 0 ? '' : 'style="display:none;"' %>>
+      <p style="text-align: center; font-size: 1.2rem; color: #888; font-weight:900;">
+        🛒 CARRITO DE COMPRAS VACÍO
+      </p>
+    </div>
 
-                    <% productos.forEach(function(producto) { %>
-                        <tr>
-                            <td>
-                              <img src="/uploads/productos/<%= producto.imagen || 'default.jpg' %>" class="imagen-miniatura">
-                            </td>
-                            <td><%= producto.nombre %></td>
-                            <td>
-  <div class="qty" role="group" aria-label="Cantidad">
-    <button class="btn-cantidad disminuir" data-id="<%= producto.id %>" aria-label="Disminuir">
-      <i class="fas fa-minus"></i>
-    </button>
+    <!-- ✅ Apartado: Pedidos del usuario (historial + estado + comprobante) -->
+    <hr style="margin:24px 0; opacity:.25;">
 
-    <span class="cantidad" aria-live="polite"><%= producto.cantidad %></span>
+    <h2 style="margin:0 0 8px 0;">📦 Mis pedidos</h2>
+    <p style="margin:0 0 14px 0; opacity:.75;">
+      Acá podés ver el estado de tus compras y descargar el comprobante cuando lo necesites.
+    </p>
 
-    <button class="btn-cantidad aumentar" data-id="<%= producto.id %>" aria-label="Aumentar">
-      <i class="fas fa-plus"></i>
-    </button>
-  </div>
-</td>
-<td class="precio" data-precio="<%= producto.precio_venta %>">
-  $<%= fmtARS(producto.precio_venta) %>
-</td>
+    <% if (pedidos && pedidos.length > 0) { %>
 
-<td class="subtotal" data-subtotal="<%= producto.total %>">
-  $<%= fmtARS(producto.total) %>
-</td>
+      <!-- Desktop: tabla -->
+      <div class="desktop-only">
+        <table class="carrito-tabla">
+          <thead>
+            <tr>
+              <th>N° Pedido</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Total</th>
+              <th>Resumen</th>
+            </tr>
+          </thead>
 
+          <tbody>
+            <% pedidos.forEach(function(p) {
+              const est = (p.estado || '').toLowerCase();
+              const badgeClass =
+                est === 'preparación' ? 'badge-estado badge-prep' :
+                est === 'listo para entrega' ? 'badge-estado badge-entrega' :
+                est === 'finalizado' ? 'badge-estado badge-final' :
+                'badge-estado badge-otro';
+            %>
+              <tr>
+                <td>#<%= p.id_carrito %></td>
+                <td><%= p.fecha_compra ? new Date(p.fecha_compra).toLocaleDateString('es-AR') : '-' %></td>
+                <td><span class="<%= badgeClass %>"><%= p.estado %></span></td>
+                <td>$<%= fmtARS(p.total) %></td>
+                <td>
+                  <div class="acciones-pedido">
+                    <a class="btn-mini" href="/carrito/pago-exito?pedido=<%= p.id_carrito %>">Ver detalle</a>
+                    <a class="btn-mini" href="/carrito/comprobante/<%= p.id_carrito %>">📄 Comprobante</a>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
 
+      <!-- Mobile: cards -->
+      <div class="mobile-only">
+        <div class="orders-cards">
+          <% pedidos.forEach(function(p) {
+            const est = (p.estado || '').toLowerCase();
+            const badgeClass =
+              est === 'preparación' ? 'badge-estado badge-prep' :
+              est === 'listo para entrega' ? 'badge-estado badge-entrega' :
+              est === 'finalizado' ? 'badge-estado badge-final' :
+              'badge-estado badge-otro';
+          %>
+            <article class="order-card">
+              <div class="order-card__top">
+                <div>
+                  <div class="order-card__id">Pedido #<%= p.id_carrito %></div>
+                  <div class="order-card__meta">
+                    <span><i class="fas fa-calendar-alt"></i> <%= p.fecha_compra ? new Date(p.fecha_compra).toLocaleDateString('es-AR') : '-' %></span>
+                    <span><i class="fas fa-money-bill-wave"></i> $<%= fmtARS(p.total) %></span>
+                  </div>
+                </div>
+                <div><span class="<%= badgeClass %>"><%= p.estado %></span></div>
+              </div>
 
-                            <td>
-                                <button class="btn-eliminar" data-id="<%= producto.id %>">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    <% }) %>
-                </tbody>
-            </table>
-
-            <div class="carrito-footer">
-  <div class="total-container">
-    <label><strong>Total del pedido:</strong></label>
-    <input type="text" id="total-carrito" value="$<%= fmtARS(total) %>" readonly>
-
-  </div>
-
-  <button id="continuar-envio" class="btn-finalizar">
-    Continuar con el Envío
-  </button>
-</div>
-
-        </div>  
-
-        <!-- Mensaje de carrito vacío -->
-        <div id="mensaje-carrito-vacio" <%= productos.length === 0 ? '' : 'style="display:none;"' %>>
-            <p style="text-align: center; font-size: 1.2rem; color: #888;">
-                🛒 CARRITO DE COMPRAS VACÍO
-            </p>
+              <div class="order-card__actions">
+                <a class="btn-mini" href="/carrito/pago-exito?pedido=<%= p.id_carrito %>">Ver detalle</a>
+                <a class="btn-mini" href="/carrito/comprobante/<%= p.id_carrito %>">📄 Comprobante</a>
+              </div>
+            </article>
+          <% }) %>
         </div>
+      </div>
 
-        <!-- ✅ Apartado: Pedidos del usuario (historial + estado + comprobante) -->
-        <hr style="margin:24px 0; opacity:.25;">
+    <% } else { %>
+      <p style="opacity:.75;">Todavía no tenés pedidos anteriores.</p>
+    <% } %>
 
-        <h2 style="margin:0 0 8px 0;">📦 Mis pedidos</h2>
-        <p style="margin:0 0 14px 0; opacity:.75;">
-          Acá podés ver el estado de tus compras y descargar el comprobante cuando lo necesites.
-        </p>
+    <!-- Cargar SweetAlert2 antes que carrito.js -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        <% if (pedidos && pedidos.length > 0) { %>
-          <table class="carrito-tabla">
-            <thead>
-  <tr>
-    <th>N° Pedido</th>
-    <th>Fecha</th>
-    <th>Estado</th>
-    <th>Total</th>
-    <th>Resumen</th>
-  </tr>
-</thead>
+    <script>
+      // Mobile CTA -> reutiliza el botón original (sin tocar tu backend)
+      (function(){
+        const btnDesktop = document.getElementById('continuar-envio');
+        const btnMobile = document.getElementById('continuar-envio-mobile');
+        if(btnMobile && btnDesktop){
+          btnMobile.addEventListener('click', () => btnDesktop.click());
+        }
+      })();
+    </script>
 
-            <tbody>
-              <% pedidos.forEach(function(p) { 
-                   const est = (p.estado || '').toLowerCase();
-                   const badgeClass =
-                     est === 'preparación' ? 'badge-estado badge-prep' :
-                     est === 'listo para entrega' ? 'badge-estado badge-entrega' :
-                     est === 'finalizado' ? 'badge-estado badge-final' :
-                     'badge-estado badge-otro';
-              %>
-                <tr>
-                  <td>#<%= p.id_carrito %></td>
-                  <td><%= p.fecha_compra ? new Date(p.fecha_compra).toLocaleDateString('es-AR') : '-' %></td>
-                  <td><span class="<%= badgeClass %>"><%= p.estado %></span></td>
-                  <td>$<%= fmtARS(p.total) %></td>
-
-                  <td>
-                    <div class="acciones-pedido">
-                      <a class="btn-mini" href="/carrito/pago-exito?pedido=<%= p.id_carrito %>">
-  Ver detalle
-</a>
-
-<a class="btn-mini" href="/carrito/comprobante/<%= p.id_carrito %>">
-  📄 Comprobante
-</a>
-                    </div>
-                  </td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        <% } else { %>
-          <p style="opacity:.75;">Todavía no tenés pedidos anteriores.</p>
-        <% } %>
-
-        <!-- Cargar SweetAlert2 antes que carrito.js -->
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script src="/js/carrito.js?v=20260108b"></script>
-
-
-
-    </main>
+    <script src="/js/carrito.js?v=20260108b"></script>
+  </main>
 </body>
