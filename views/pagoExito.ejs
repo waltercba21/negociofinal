@@ -43,7 +43,7 @@
       .carrito-container{
         max-width: 980px;
         margin: 28px auto;
-        padding: 0 16px 160px; /* sticky */
+        padding: 0 16px 160px;
         color: var(--af-text);
         font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       }
@@ -74,11 +74,9 @@
         text-align:center;
       }
 
-      /* Helpers */
       .desktop-only{ display:block; }
       .mobile-only{ display:none; }
 
-      /* Tabla (desktop) */
       .carrito-tabla{
         width: 100%;
         border-collapse: separate;
@@ -130,7 +128,6 @@
         font-weight: 950;
       }
 
-      /* Estado */
       .estado-pedido{
         margin-top: 14px;
         border: 1px solid var(--af-border);
@@ -167,7 +164,6 @@
       .badge-final{ background:#d4edda; color:#155724; }
       .badge-otro{ background:#eee; color:#444; }
 
-      /* Botones */
       .btn-row{
         display:flex;
         gap:10px;
@@ -208,7 +204,6 @@
       }
       .btn-ghost:hover{ background: rgba(15,23,42,.04); filter:none; }
 
-      /* Mobile cards */
       .cart-cards{ display:flex; flex-direction:column; gap: 12px; }
 
       .cart-card{
@@ -288,7 +283,6 @@
       }
       .totals-line.total strong{ color: var(--af-primary); font-size: 16px; }
 
-      /* Sticky CTA mobile */
       .sticky-checkout{
         position: fixed;
         left: 0;
@@ -329,7 +323,7 @@
         .desktop-only{ display:none; }
         .mobile-only{ display:block; }
 
-        .btn-row{ display:none; } /* usamos sticky */
+        .btn-row{ display:none; }
       }
     </style>
 
@@ -342,7 +336,6 @@
 
       <% if (productosList.length > 0) { %>
 
-        <!-- ===== Desktop tabla ===== -->
         <div class="desktop-only">
           <table class="carrito-tabla">
             <thead>
@@ -379,7 +372,6 @@
           </table>
         </div>
 
-        <!-- ===== Mobile cards ===== -->
         <div class="mobile-only">
           <div class="cart-cards">
             <% productosList.forEach(function(producto) { %>
@@ -430,7 +422,6 @@
         </div>
       <% } %>
 
-      <!-- Acciones (desktop) -->
       <div class="btn-row">
         <a href="/carrito" class="btn-finalizar btn-ghost">
           🛒 Volver al carrito
@@ -453,7 +444,6 @@
 
       <% if (pedidosList.length > 0) { %>
 
-        <!-- Desktop historial -->
         <div class="desktop-only">
           <table class="carrito-tabla">
             <thead>
@@ -494,7 +484,6 @@
           </table>
         </div>
 
-        <!-- Mobile historial -->
         <div class="mobile-only">
           <div class="cart-cards">
             <% pedidosList.forEach(function(p) {
@@ -545,14 +534,10 @@
                 return;
               }
 
+              // ✅ IMPORTANTE: pedimos el PDF directo. Si el endpoint devuelve PDF, NO intentes parsear JSON.
               const response = await fetch(`/carrito/comprobante/${pedidoId}`);
               if (!response.ok) {
-                let msg = "No se pudo descargar el comprobante.";
-                try {
-                  const d = await response.json();
-                  if (d && d.error) msg = d.error;
-                } catch (e) {}
-                alert(msg);
+                alert("No se pudo descargar el comprobante.");
                 return;
               }
 
@@ -574,7 +559,6 @@
 
     </div>
 
-    <!-- Sticky acciones (mobile) -->
     <div class="sticky-checkout mobile-only">
       <div class="sticky-checkout__inner">
         <div class="sticky-total">
@@ -599,7 +583,6 @@
     </div>
 
     <script>
-      // Sticky button -> dispara el botón real (misma lógica)
       (function () {
         const sticky = document.getElementById('descargar-comprobante-sticky');
         const realBtn = document.getElementById('descargar-comprobante');

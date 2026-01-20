@@ -729,11 +729,75 @@ finalizarCompra: async (req, res) => {
     return res.status(500).json({ error: "Error al finalizar la compra" });
   }
 },
-
- vistaPagoExitoso: async (req, res) => {
+vistaPagoExitoso: async (req, res) => {
   try {
     const id_usuario = req.session.usuario.id;
-    const pedidoId = Number(req.query.pedido) || Number(req.session.ultimoPedidoId);
+
+    // ✅ MercadoPago suele devolver status/collection_status + external_reference
+    const mpApproved =
+      req.query.collection_status === "approved" ||
+      req.query.status === "approved" ||
+      req.query.payment_status === "approved";
+
+    const mpRef =
+      Number(req.query.external_reference) ||
+      Number(req.query.pedido) ||
+      Number(req.session.ultimoPedidoId) ||
+      null;
+
+    // ✅ Si MP aprobó, cerramos el carrito ACTIVO del usuario (idempotente + seguro)
+    if (mpApproved && mpRef) {
+      const lockKey = `pagoCerrado_${mpRef}`;
+
+      if (!req.session[lockKey]) {
+        // Traemos carrito activo real del usuario para evitar cerrar un id ajeno
+        const carritoActivo = await new Promise((resolve, reject) => {
+          carrito.obtenerCarritoActivo(id_usuario, (err, rows) => {
+            if (err) return reject(err);
+            resolve(rows || []);
+          });
+        });
+
+        const id_carrito_activo = carritoActivo?.[0]?.id ? Number(carritoActivo[0].id) : null;
+        const estadoActivo = carritoActivo?.[0]?.estado || null;
+
+        // Solo cerramos si coincide con el carrito activo y está realmente "carrito"
+        if (id_carrito_activo && id_carrito_activo === mpRef && estadoActivo === "carrito") {
+          // ✅ IMPORTANTÍSIMO: cuando se acredita pago, el pedido entra como "pendiente"
+          // para que el admin lo vea como "por preparar" y siga tu flujo.
+          const nuevoEstado = "pendiente";
+
+          await new Promise((resolve, reject) => {
+            carrito.cerrarCarrito(mpRef, nuevoEstado, (err) => (err ? reject(err) : resolve()));
+          });
+
+          await new Promise((resolve, reject) => {
+            carrito.crearCarrito(id_usuario, (err) => (err ? reject(err) : resolve()));
+          });
+
+          req.session.ultimoPedidoId = mpRef;
+
+          // ✅ Notificar admin (campanita / contador / refresh)
+          try {
+            io.emit("nuevoPedido", {
+              mensaje: `📦 Nuevo pedido recibido (${mpRef})`,
+              id_carrito: mpRef,
+              usuario: id_usuario,
+              estado: nuevoEstado,
+            });
+            io.emit("actualizarNotificacion");
+          } catch (_) {
+            // si io no está disponible por alguna razón, no cortamos el flujo
+          }
+        }
+
+        // evita doble cierre por refresh aunque el carrito ya no coincida
+        req.session[lockKey] = true;
+      }
+    }
+
+    // ✅ Siempre intentamos mostrar el pedido de esta compra (mpRef primero)
+    const pedidoId = mpRef;
 
     let pedido = null;
 
@@ -758,7 +822,12 @@ finalizarCompra: async (req, res) => {
     }
 
     if (!pedido) {
-      return res.render("pagoExito", { productos: [], estadoCarrito: null, total: 0, pedidoId: null });
+      return res.render("pagoExito", {
+        productos: [],
+        estadoCarrito: null,
+        total: 0,
+        pedidoId: null
+      });
     }
 
     const productos = await new Promise((resolve, reject) => {
@@ -768,7 +837,9 @@ finalizarCompra: async (req, res) => {
       });
     });
 
-    const total = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0).toFixed(2);
+    const total = productos
+      .reduce((acc, p) => acc + (Number(p.total) || 0), 0)
+      .toFixed(2);
 
     return res.render("pagoExito", {
       productos,
@@ -781,6 +852,7 @@ finalizarCompra: async (req, res) => {
     res.status(500).send("Error al cargar la página de pago exitoso.");
   }
 },
+
 generarComprobante: async (req, res) => {
   try {
     const id_usuario = req.session.usuario.id;
@@ -889,83 +961,6 @@ generarComprobante: async (req, res) => {
             res.json({ mensaje: "Pedido marcado como finalizado" });
         });
     },
-    generarComprobante: async (req, res) => {
-        try {
-            console.log("📄 Generando PDF del comprobante...");
-    
-            const id_usuario = req.session.usuario.id;
-            console.log(`📌 Usuario autenticado, ID: ${id_usuario}`);
-    
-            // Obtener el último carrito del usuario
-            const carritos = await new Promise((resolve, reject) => {
-                carrito.obtenerUltimoPedido(id_usuario, (error, carrito) => {
-                    if (error) {
-                        console.error("❌ Error al obtener el último carrito:", error);
-                        reject(error);
-                    } else {
-                        console.log("✅ Último carrito obtenido correctamente:", carrito);
-                        resolve(carrito);
-                    }
-                });
-            });
-    
-            if (!carritos || carritos.length === 0) {
-                console.warn("⚠️ No se encontró un carrito finalizado para este usuario.");
-                return res.status(404).json({ error: "No se encontró un pedido reciente." });
-            }
-    
-            const carritoData = carritos[0];
-    
-            // Obtener los productos del carrito
-            const productos = await new Promise((resolve, reject) => {
-                carrito.obtenerProductosCarrito(carritoData.id_carrito, (error, productos) => {
-                    if (error) {
-                        console.error("❌ Error al obtener los productos del carrito:", error);
-                        reject(error);
-                    } else {
-                        console.log("✅ Productos obtenidos:", productos);
-                        resolve(productos);
-                    }
-                });
-            });
-    
-            console.log("📄 Generando PDF en memoria...");
-            const doc = new PDFDocument();
-            res.setHeader("Content-Type", "application/pdf");
-            res.setHeader("Content-Disposition", `attachment; filename=comprobante_${carritoData.id_carrito}.pdf`);
-    
-            // Enviar el PDF directamente como respuesta
-            doc.pipe(res);
-    
-            doc.fontSize(20).text("AUTOFAROS", { align: "center" });
-            doc.fontSize(14).text("COMPROBANTE DE RETIRO", { align: "center" });
-            doc.fontSize(10).text("NO VÁLIDO COMO FACTURA", { align: "center" });
-    
-            doc.moveDown().fontSize(12).text(`Fecha: ${new Date(carritoData.fecha_compra).toLocaleDateString()}`);
-            doc.text(`Número de Pedido: ${carritoData.id_carrito}`);
-            doc.text(`Estado: ${carritoData.estado}`);
-            doc.text(`Tipo de Envío: ${carritoData.tipo_envio}`);
-            if (carritoData.direccion) {
-                doc.text(`Dirección de Envío: ${carritoData.direccion}`);
-            }
-            doc.moveDown();
-    
-            doc.fontSize(12).text("Productos comprados:", { underline: true });
-            productos.forEach((producto, index) => {
-                doc.text(`${index + 1}. ${producto.nombre} - ${producto.cantidad} x $${producto.precio_venta} = $${producto.total}`);
-            });
-    
-            const totalCompra = productos.reduce((acc, p) => acc + p.total, 0).toFixed(2);
-            doc.moveDown();
-            doc.text(`Total: $${totalCompra}`, { bold: true });
-    
-            doc.end();
-            console.log("✅ PDF generado y enviado al usuario.");
-    
-        } catch (error) {
-            console.error("❌ Error al generar el comprobante:", error);
-            res.status(500).json({ error: "Error al generar el comprobante" });
-        }
-    }
+   
     
 };
