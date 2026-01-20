@@ -350,5 +350,17 @@ actualizarEnvio: (id_carrito, tipo_envio, direccion, callback) => {
     pool.query(q2, [tipo_envio, direccion ?? null, id_carrito], callback);
   });
 },
+  obtenerPorId: (id, cb) => {
+    const q = `
+      SELECT id, nombre, apellido, email, celular, direccion, localidad, provincia
+      FROM usuarios
+      WHERE id = ?
+      LIMIT 1
+    `;
+    pool.query(q, [id], (err, rows) => {
+      if (err) return cb(err);
+      cb(null, rows && rows.length ? rows[0] : null);
+    });
+  },
 
 };

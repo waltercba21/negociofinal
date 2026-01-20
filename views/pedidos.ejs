@@ -133,22 +133,18 @@
   box-shadow:0 0 0 4px rgba(15,23,42,.06);
   transform:translateY(-1px);
 }
-
-/* Colores aproximados por texto (desktop moderno) */
-.tabla-pedidos tbody td:nth-child(4):is(:contains("pendiente")){ }
+/* Estado como pill (base) */
 .tabla-pedidos tbody tr td:nth-child(4){
-  /* base pill */
   display:inline-flex;
   align-items:center;
   padding:7px 10px;
   border-radius:999px;
   border:1px solid rgba(2,6,23,.10);
   background:rgba(2,6,23,.03);
+  font-weight:800;
+  letter-spacing:.2px;
 }
 
-/* Fallback sin :has/:contains: te queda pill neutra pero prolija */
-
-/* Acciones */
 .tabla-pedidos tbody td:nth-child(5){
   background:inherit;
 }

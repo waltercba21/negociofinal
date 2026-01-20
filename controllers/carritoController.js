@@ -540,34 +540,43 @@ actualizarDireccionEnvio: (req, res) => {
   });
 },
 
-   confirmarDatos: (req, res) => {
+ confirmarDatos: (req, res) => {
   if (!req.session?.usuario?.id) return res.status(401).send("Debes iniciar sesión para acceder a esta página.");
-
   const id_usuario = req.session.usuario.id;
 
-  carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
-    if (error) return res.status(500).send("Error al obtener el carrito");
+  usuarioModel.obtenerPorId(id_usuario, (errU, usuario) => {
+    if (errU) return res.status(500).send("Error al obtener datos del usuario");
+    if (!usuario) return res.status(404).send("Usuario no encontrado");
 
-    if (!carritos || carritos.length === 0) {
-      return res.render("confirmarDatos", { productos: [], envio: null, total: 0, cantidadProductosCarrito: 0 });
+    // 🔒 obligatorio
+    if (!usuario.celular || !usuario.direccion) {
+      return res.redirect('/perfil/editar?completar=1'); // ajustá ruta
     }
 
-    const id_carrito = carritos[0].id;
+    carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
+      if (error) return res.status(500).send("Error al obtener el carrito");
 
-    carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
-      if (error) return res.status(500).send("Error al obtener productos del carrito");
+      if (!carritos || carritos.length === 0) {
+        return res.render("confirmarDatos", { productos: [], envio: null, total: 0, cantidadProductosCarrito: 0, usuario });
+      }
 
-      const subtotal = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0);
-      const total = subtotal.toFixed(2);
-      const cantidadTotal = productos.reduce((acc, p) => acc + (Number(p.cantidad) || 0), 0);
+      const id_carrito = carritos[0].id;
 
-      carrito.obtenerEnvioCarrito(id_carrito, (error, envio) => {
-        if (error) return res.status(500).send("Error al obtener datos de envío");
+      carrito.obtenerProductosCarrito(id_carrito, (error, productos) => {
+        if (error) return res.status(500).send("Error al obtener productos del carrito");
 
-        if (envio && envio.tipo_envio === 'delivery') envio.costo_envio = COSTO_DELIVERY;
-        if (envio && envio.tipo_envio !== 'delivery') envio.costo_envio = 0;
+        const subtotal = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0);
+        const total = subtotal.toFixed(2);
+        const cantidadTotal = productos.reduce((acc, p) => acc + (Number(p.cantidad) || 0), 0);
 
-        return res.render("confirmarDatos", { productos, envio, total, cantidadProductosCarrito: cantidadTotal });
+        carrito.obtenerEnvioCarrito(id_carrito, (error, envio) => {
+          if (error) return res.status(500).send("Error al obtener datos de envío");
+
+          if (envio && envio.tipo_envio === 'delivery') envio.costo_envio = COSTO_DELIVERY;
+          if (envio && envio.tipo_envio !== 'delivery') envio.costo_envio = 0;
+
+          return res.render("confirmarDatos", { productos, envio, total, cantidadProductosCarrito: cantidadTotal, usuario });
+        });
       });
     });
   });

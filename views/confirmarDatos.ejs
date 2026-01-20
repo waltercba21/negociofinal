@@ -14,6 +14,9 @@
 
   const totalFinal = subtotal + costoEnvio;
 
+  // Datos usuario (vienen del controller)
+  const user = (typeof usuario !== 'undefined' && usuario) ? usuario : null;
+
   const fmtARS = (n) =>
     Number(n || 0).toLocaleString('es-AR', {
       minimumFractionDigits: 2,
@@ -72,7 +75,7 @@
       .desktop-only{ display:block; }
       .mobile-only{ display:none; }
 
-      /* Resumen envio */
+      /* Resumen envio / datos usuario */
       .envio-resumen{
         border: 1px solid var(--af-border);
         border-radius: 16px;
@@ -358,6 +361,42 @@
     </div>
 
     <div class="wrap">
+
+      <!-- ✅ Datos personales (NUEVO) -->
+      <section class="envio-resumen">
+        <h3>👤 Datos personales</h3>
+
+        <div class="envio-grid">
+          <div class="envio-item">
+            <small>Nombre</small>
+            <div>
+              <%= user ? ((user.nombre || '') + ' ' + (user.apellido || '')).trim() : '-' %>
+            </div>
+          </div>
+
+          <div class="envio-item">
+            <small>Email</small>
+            <div><%= user ? (user.email || '-') : '-' %></div>
+          </div>
+
+          <div class="envio-item">
+            <small>Teléfono</small>
+            <div><%= user ? (user.celular || 'FALTA CARGAR') : 'FALTA CARGAR' %></div>
+          </div>
+
+          <div class="envio-item">
+            <small>Dirección</small>
+            <div>
+              <%= user ? (user.direccion || 'FALTA CARGAR') : 'FALTA CARGAR' %>
+              <% if (user && (user.localidad || user.provincia)) { %>
+                <div style="color:var(--af-muted);font-weight:900;margin-top:4px;">
+                  <%= user.localidad || '' %><%= (user.localidad && user.provincia) ? ', ' : '' %><%= user.provincia || '' %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <!-- Resumen de envío -->
       <section class="envio-resumen">
