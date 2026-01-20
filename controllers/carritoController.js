@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const COSTO_DELIVERY = 5000;
-
+const pool = require("../config/conexion");
 
 console.log("✅ Módulo 'carrito' cargado correctamente.");
 
@@ -731,11 +731,6 @@ finalizarCompra: async (req, res) => {
 },
 vistaPagoExitoso: async (req, res) => {
   try {
-    const id_usuario = req.session.usuario.id;
-
-    // 🔎 Diagnóstico: mirá exactamente qué te devuelve MP
-    console.log("✅ MP RETURN query:", req.query);
-
     const mpApproved =
       req.query.collection_status === "approved" ||
       req.query.status === "approved" ||
@@ -744,119 +739,107 @@ vistaPagoExitoso: async (req, res) => {
     const mpRef =
       Number(req.query.external_reference) ||
       Number(req.query.pedido) ||
-      Number(req.session.ultimoPedidoId) ||
+      Number(req.query.session.ultimoPedidoId) ||
       null;
 
+    console.log("✅ MP RETURN query:", req.query);
     console.log("✅ mpApproved:", mpApproved, "| mpRef:", mpRef);
 
-    // ✅ Si MP aprobó, cerramos el carrito (idempotente)
-    // Fallback: si mpRef no viene, cerramos el carrito activo del usuario
-    if (mpApproved) {
-      // Si no viene mpRef, buscamos el carrito activo del usuario
-      let targetCarritoId = mpRef;
+    // ✅ si no viene mpRef, no podemos cerrar nada de forma segura
+    if (mpApproved && mpRef) {
+      // 1) obtener el carrito y su usuario_id desde DB (funciona aunque no haya sesión)
+      const carritoDB = await new Promise((resolve, reject) => {
+        pool.query(
+          "SELECT id, usuario_id, estado FROM carritos WHERE id = ? LIMIT 1",
+          [mpRef],
+          (err, rows) => (err ? reject(err) : resolve(rows?.[0] || null))
+        );
+      });
 
-      if (!targetCarritoId) {
-        const carritoActivo = await new Promise((resolve, reject) => {
-          carrito.obtenerCarritoActivo(id_usuario, (err, rows) => {
-            if (err) return reject(err);
-            resolve(rows || []);
-          });
-        });
+      if (carritoDB && carritoDB.estado === "carrito") {
+        const id_usuario_carrito = Number(carritoDB.usuario_id);
+        const lockKey = `pagoCerrado_${mpRef}`;
 
-        targetCarritoId = carritoActivo?.[0]?.id ? Number(carritoActivo[0].id) : null;
-        console.log("⚠️ mpRef no vino. Fallback carrito activo:", targetCarritoId);
-      }
+        // si hay sesión usamos lock en sesión; si no hay sesión, cerramos igual (idempotente por WHERE estado='carrito')
+        const canUseSession = !!(req.session && req.session.usuario);
+        const alreadyLocked = canUseSession ? !!req.session[lockKey] : false;
 
-      if (targetCarritoId) {
-        const lockKey = `pagoCerrado_${targetCarritoId}`;
-
-        if (!req.session[lockKey]) {
-          const nuevoEstado = "pendiente"; // ✅ para que admin lo vea y lo prepare
+        if (!alreadyLocked) {
+          const nuevoEstado = "pendiente";
 
           const affected = await new Promise((resolve, reject) => {
-            carrito.cerrarCarrito(id_usuario, targetCarritoId, nuevoEstado, (err, rowsAffected) => {
+            carrito.cerrarCarrito(id_usuario_carrito, mpRef, nuevoEstado, (err, rowsAffected) => {
               if (err) return reject(err);
               resolve(rowsAffected || 0);
             });
           });
 
-          console.log("✅ cerrarCarrito affectedRows:", affected);
-
           if (affected > 0) {
             await new Promise((resolve, reject) => {
-              carrito.crearCarrito(id_usuario, (err) => (err ? reject(err) : resolve()));
+              carrito.crearCarrito(id_usuario_carrito, (err) => (err ? reject(err) : resolve()));
             });
 
-            req.session.ultimoPedidoId = targetCarritoId;
+            // si hay sesión del usuario, guardamos ultimoPedidoId
+            if (canUseSession) {
+              req.session.ultimoPedidoId = mpRef;
+              req.session[lockKey] = true;
+            }
 
-            // 🔔 Notificar admin
+            // 🔔 admin
             try {
               io.emit("nuevoPedido", {
-                mensaje: `📦 Nuevo pedido recibido (${targetCarritoId})`,
-                id_carrito: targetCarritoId,
-                usuario: id_usuario,
+                mensaje: `📦 Nuevo pedido recibido (${mpRef})`,
+                id_carrito: mpRef,
+                usuario: id_usuario_carrito,
                 estado: nuevoEstado,
               });
               io.emit("actualizarNotificacion");
-            } catch (e) {
-              console.log("⚠️ io no disponible para emitir:", e?.message || e);
-            }
+            } catch (_) {}
           }
-
-          req.session[lockKey] = true;
         }
-      } else {
-        console.log("❌ No se pudo determinar carrito a cerrar (sin mpRef y sin carrito activo).");
       }
     }
 
-    // ✅ Mostrar pedido: prioriza el pedidoId (mpRef o ultimoPedidoId)
-    const pedidoId = Number(req.query.external_reference) ||
-      Number(req.query.pedido) ||
-      Number(req.session.ultimoPedidoId) ||
-      null;
+    // ✅ Render: si hay sesión, mostramos el pedido y productos. Si no hay sesión, mostramos igual por mpRef.
+    const pedidoId = mpRef || null;
 
+    if (!pedidoId) {
+      return res.render("pagoExito", { productos: [], estadoCarrito: null, total: 0, pedidoId: null });
+    }
+
+    // si hay sesión, validamos por usuario; si no, lo leemos directo por carrito id (sin exponer datos sensibles)
     let pedido = null;
 
-    if (pedidoId) {
+    if (req.session?.usuario?.id) {
+      const id_usuario = req.session.usuario.id;
       pedido = await new Promise((resolve, reject) => {
         carrito.obtenerPedidoUsuarioPorId(id_usuario, pedidoId, (err, row) => {
           if (err) reject(err);
           else resolve(row);
         });
       });
-    }
-
-    // fallback: último pedido NO activo
-    if (!pedido) {
-      const ult = await new Promise((resolve, reject) => {
-        carrito.obtenerUltimoPedido(id_usuario, (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        });
+    } else {
+      pedido = await new Promise((resolve, reject) => {
+        pool.query(
+          "SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra FROM carritos WHERE id = ? LIMIT 1",
+          [pedidoId],
+          (err, rows) => (err ? reject(err) : resolve(rows?.[0] || null))
+        );
       });
-      pedido = ult && ult.length ? ult[0] : null;
     }
 
     if (!pedido) {
-      return res.render("pagoExito", {
-        productos: [],
-        estadoCarrito: null,
-        total: 0,
-        pedidoId: null
-      });
+      return res.render("pagoExito", { productos: [], estadoCarrito: null, total: 0, pedidoId });
     }
 
     const productos = await new Promise((resolve, reject) => {
       carrito.obtenerProductosCarrito(pedido.id_carrito, (err, rows) => {
         if (err) reject(err);
-        else resolve(rows);
+        else resolve(rows || []);
       });
     });
 
-    const total = productos
-      .reduce((acc, p) => acc + (Number(p.total) || 0), 0)
-      .toFixed(2);
+    const total = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0).toFixed(2);
 
     return res.render("pagoExito", {
       productos,
@@ -870,7 +853,6 @@ vistaPagoExitoso: async (req, res) => {
     res.status(500).send("Error al cargar la página de pago exitoso.");
   }
 },
-
 generarComprobante: async (req, res) => {
   try {
     const id_usuario = req.session.usuario.id;
