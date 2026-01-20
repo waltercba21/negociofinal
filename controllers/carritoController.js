@@ -1,12 +1,17 @@
 const carrito = require('../models/carrito'); // ✅ Esta línea debe estar al inicio del archivo
 const mercadopago = require('mercadopago');
 const producto = require('../models/producto');
-const { io } = require('../app');
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const COSTO_DELIVERY = 5000;
 const pool = require("../config/conexion");
+
+function getIO(req) {
+  const io = req.app.get("io");
+  if (!io) console.log("⚠️ [SOCKET] io no disponible en req.app");
+  return io;
+}
 
 mercadopago.configure({
     access_token: process.env.MP_ACCESS_TOKEN
@@ -713,12 +718,17 @@ finalizarCompra: async (req, res) => {
 
     req.session.ultimoPedidoId = id_carrito;
 
-    io.emit("nuevoPedido", {
-      mensaje: `📦 Nuevo pedido recibido (${id_carrito})`,
-      id_carrito,
-      usuario: id_usuario,
-      estado: nuevoEstado,
-    });
+   const io = getIO(req);
+if (io) {
+  io.emit("nuevoPedido", {
+    mensaje: `📦 Nuevo pedido recibido (${mpRef})`,
+    id_carrito: mpRef,
+    usuario: id_usuario_carrito,
+    estado: nuevoEstado,
+  });
+  io.emit("actualizarNotificacion");
+}
+
 
     return res.redirect(`/carrito/pago-exito?pedido=${id_carrito}`);
   } catch (error) {
@@ -841,13 +851,17 @@ vistaPagoExitoso: async (req, res) => {
             // 🔔 admin
             try {
               console.log(`[${trace}] 🔔 Emitiendo sockets (nuevoPedido + actualizarNotificacion)...`);
-              io.emit("nuevoPedido", {
-                mensaje: `📦 Nuevo pedido recibido (${mpRef})`,
-                id_carrito: mpRef,
-                usuario: id_usuario_carrito,
-                estado: nuevoEstado,
-              });
-              io.emit("actualizarNotificacion");
+             const io = getIO(req);
+if (io) {
+  io.emit("nuevoPedido", {
+    mensaje: `📦 Nuevo pedido recibido (${mpRef})`,
+    id_carrito: mpRef,
+    usuario: id_usuario_carrito,
+    estado: nuevoEstado,
+  });
+  io.emit("actualizarNotificacion");
+}
+
               console.log(`[${trace}] ✅ sockets emit OK`);
             } catch (e) {
               console.log(`[${trace}] ⚠️ io emit falló/no disponible:`, e?.message || e);

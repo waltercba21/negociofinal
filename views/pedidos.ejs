@@ -22,8 +22,7 @@
               const est = (pedido.estado || '').toLowerCase();
             %>
 
-              <% // Si todavía te llegan carritos abiertos desde backend, los ocultamos como “parche”:
-                 // Ideal: filtrarlo en el controlador/modelo (WHERE estado <> 'carrito')
+              <% // Si llegan carritos abiertos desde backend, los ocultamos:
                  if (est === 'carrito') { %>
                 <% return; %>
               <% } %>
@@ -41,8 +40,11 @@
                     <button onclick='confirmarPedido("<%= pedido.id_pedido %>")'>✅ Confirmar</button>
                   <% } %>
 
+                  <% if (est === 'confirmado') { %>
+                    <button onclick='prepararPedido("<%= pedido.id_pedido %>")'>📦 En preparación</button>
+                  <% } %>
+
                   <% if (est === 'preparación') { %>
-                    <button onclick='prepararPedido("<%= pedido.id_pedido %>")'>📦 Preparar</button>
                     <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
                   <% } %>
 
