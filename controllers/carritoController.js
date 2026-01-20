@@ -8,8 +8,6 @@ const PDFDocument = require('pdfkit');
 const COSTO_DELIVERY = 5000;
 const pool = require("../config/conexion");
 
-console.log("✅ Módulo 'carrito' cargado correctamente.");
-
 mercadopago.configure({
     access_token: process.env.MP_ACCESS_TOKEN
 });
@@ -30,7 +28,7 @@ module.exports = {
                         return res.status(500).send('Error al crear el carrito');
                     }
                     console.log(`Carrito creado con ID: ${nuevoCarritoId}`);
-                    res.redirect('/carrito'); // Redirigir a la vista del carrito
+                    res.redirect('/carrito'); 
                 });
             } else {
                 res.redirect('/carrito');
@@ -713,7 +711,6 @@ finalizarCompra: async (req, res) => {
       });
     });
 
-    // Guardar pedido para comprobante/vista pago éxito
     req.session.ultimoPedidoId = id_carrito;
 
     io.emit("nuevoPedido", {
@@ -730,63 +727,120 @@ finalizarCompra: async (req, res) => {
   }
 },
 vistaPagoExitoso: async (req, res) => {
+  // ID de seguimiento para correlacionar logs
+  const trace = `payok_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
   try {
+    console.log(`\n================ [${trace}] /carrito/pago-exito =================`);
+    console.log(`[${trace}] ✅ ENTER vistaPagoExitoso`);
+    console.log(`[${trace}] ✅ req.originalUrl:`, req.originalUrl);
+    console.log(`[${trace}] ✅ req.method:`, req.method);
+    console.log(`[${trace}] ✅ req.query:`, req.query);
+    console.log(`[${trace}] ✅ req.session exists:`, !!req.session);
+    console.log(
+      `[${trace}] ✅ session.usuario:`,
+      req.session?.usuario ? { id: req.session.usuario.id, email: req.session.usuario.email || null } : null
+    );
+    console.log(`[${trace}] ✅ sessionID:`, req.sessionID || null);
+
+    // ✅ MercadoPago suele devolver status/collection_status + external_reference
     const mpApproved =
       req.query.collection_status === "approved" ||
       req.query.status === "approved" ||
       req.query.payment_status === "approved";
 
+    // ⚠️ OJO: antes tenías un bug: Number(req.query.session.ultimoPedidoId) (eso NO existe)
+    // y además si esto revienta, lo vamos a ver en logs.
     const mpRef =
       Number(req.query.external_reference) ||
       Number(req.query.pedido) ||
-      Number(req.query.session.ultimoPedidoId) ||
+      Number(req.session?.ultimoPedidoId) ||
       null;
 
-    console.log("✅ MP RETURN query:", req.query);
-    console.log("✅ mpApproved:", mpApproved, "| mpRef:", mpRef);
+    console.log(`[${trace}] ✅ mpApproved:`, mpApproved);
+    console.log(`[${trace}] ✅ mpRef (external_reference/pedido/session):`, mpRef);
 
-    // ✅ si no viene mpRef, no podemos cerrar nada de forma segura
+    // ✅ Si MP aprobó y tenemos referencia, intentamos cerrar el carrito seguro
     if (mpApproved && mpRef) {
+      console.log(`[${trace}] 🔒 Intentando cierre idempotente de carrito...`);
+
       // 1) obtener el carrito y su usuario_id desde DB (funciona aunque no haya sesión)
       const carritoDB = await new Promise((resolve, reject) => {
         pool.query(
-          "SELECT id, usuario_id, estado FROM carritos WHERE id = ? LIMIT 1",
+          "SELECT id, usuario_id, estado, es_pedido, actualizado_en FROM carritos WHERE id = ? LIMIT 1",
           [mpRef],
           (err, rows) => (err ? reject(err) : resolve(rows?.[0] || null))
         );
       });
 
-      if (carritoDB && carritoDB.estado === "carrito") {
+      console.log(`[${trace}] 📦 carritoDB:`, carritoDB);
+
+      if (!carritoDB) {
+        console.log(`[${trace}] ❌ No existe carrito con id=mpRef (${mpRef}). No cierro.`);
+      } else if (carritoDB.estado !== "carrito") {
+        console.log(
+          `[${trace}] ⚠️ Carrito id=${mpRef} NO está en 'carrito' (estado=${carritoDB.estado}, es_pedido=${carritoDB.es_pedido}). Nada que cerrar.`
+        );
+      } else {
         const id_usuario_carrito = Number(carritoDB.usuario_id);
         const lockKey = `pagoCerrado_${mpRef}`;
 
-        // si hay sesión usamos lock en sesión; si no hay sesión, cerramos igual (idempotente por WHERE estado='carrito')
         const canUseSession = !!(req.session && req.session.usuario);
         const alreadyLocked = canUseSession ? !!req.session[lockKey] : false;
 
+        console.log(`[${trace}] ✅ canUseSession:`, canUseSession);
+        console.log(`[${trace}] ✅ alreadyLocked:`, alreadyLocked);
+
         if (!alreadyLocked) {
           const nuevoEstado = "pendiente";
+          console.log(`[${trace}] ✅ Cerrando carrito -> estado='${nuevoEstado}', es_pedido=1`);
 
-          const affected = await new Promise((resolve, reject) => {
-            carrito.cerrarCarrito(id_usuario_carrito, mpRef, nuevoEstado, (err, rowsAffected) => {
-              if (err) return reject(err);
-              resolve(rowsAffected || 0);
+          let affected = 0;
+          try {
+            affected = await new Promise((resolve, reject) => {
+              // REQUIERE modelo: cerrarCarrito(usuario_id, id_carrito, nuevoEstado, cb) -> rowsAffected
+              carrito.cerrarCarrito(id_usuario_carrito, mpRef, nuevoEstado, (err, rowsAffected) => {
+                if (err) return reject(err);
+                resolve(rowsAffected || 0);
+              });
             });
+          } catch (e) {
+            console.error(`[${trace}] ❌ Error en carrito.cerrarCarrito:`, e);
+            throw e;
+          }
+
+          console.log(`[${trace}] ✅ cerrarCarrito affectedRows:`, affected);
+
+          // Re-leemos para confirmar
+          const carritoAfter = await new Promise((resolve, reject) => {
+            pool.query(
+              "SELECT id, usuario_id, estado, es_pedido, actualizado_en FROM carritos WHERE id = ? LIMIT 1",
+              [mpRef],
+              (err, rows) => (err ? reject(err) : resolve(rows?.[0] || null))
+            );
           });
 
+          console.log(`[${trace}] 📦 carritoAfter:`, carritoAfter);
+
           if (affected > 0) {
-            await new Promise((resolve, reject) => {
-              carrito.crearCarrito(id_usuario_carrito, (err) => (err ? reject(err) : resolve()));
+            console.log(`[${trace}] 🛒 Creando nuevo carrito vacío para usuario_id=${id_usuario_carrito}...`);
+
+            const newId = await new Promise((resolve, reject) => {
+              carrito.crearCarrito(id_usuario_carrito, (err, insertId) => (err ? reject(err) : resolve(insertId)));
             });
 
-            // si hay sesión del usuario, guardamos ultimoPedidoId
+            console.log(`[${trace}] ✅ crearCarrito insertId:`, newId);
+
             if (canUseSession) {
               req.session.ultimoPedidoId = mpRef;
               req.session[lockKey] = true;
+              console.log(`[${trace}] ✅ session.ultimoPedidoId set:`, req.session.ultimoPedidoId);
+              console.log(`[${trace}] ✅ session lock set:`, req.session[lockKey]);
             }
 
             // 🔔 admin
             try {
+              console.log(`[${trace}] 🔔 Emitiendo sockets (nuevoPedido + actualizarNotificacion)...`);
               io.emit("nuevoPedido", {
                 mensaje: `📦 Nuevo pedido recibido (${mpRef})`,
                 id_carrito: mpRef,
@@ -794,53 +848,80 @@ vistaPagoExitoso: async (req, res) => {
                 estado: nuevoEstado,
               });
               io.emit("actualizarNotificacion");
-            } catch (_) {}
+              console.log(`[${trace}] ✅ sockets emit OK`);
+            } catch (e) {
+              console.log(`[${trace}] ⚠️ io emit falló/no disponible:`, e?.message || e);
+            }
+          } else {
+            console.log(
+              `[${trace}] ⚠️ affected=0: No se cerró nada. Posibles causas: el modelo cerrarCarrito no está actualizado (WHERE), o el carrito ya cambió de estado.`
+            );
           }
+        } else {
+          console.log(`[${trace}] ⚠️ Ya estaba lockeado por sesión, no cierro de nuevo.`);
         }
       }
+    } else {
+      console.log(
+        `[${trace}] ⚠️ No cierro: mpApproved=${mpApproved} y mpRef=${mpRef}. Si mpApproved=false o mpRef=null, NO hay creación de pedido.`
+      );
     }
 
     // ✅ Render: si hay sesión, mostramos el pedido y productos. Si no hay sesión, mostramos igual por mpRef.
     const pedidoId = mpRef || null;
+    console.log(`[${trace}] ✅ Render pedidoId:`, pedidoId);
 
     if (!pedidoId) {
+      console.log(`[${trace}] ⚠️ No hay pedidoId, render vacío.`);
       return res.render("pagoExito", { productos: [], estadoCarrito: null, total: 0, pedidoId: null });
     }
 
-    // si hay sesión, validamos por usuario; si no, lo leemos directo por carrito id (sin exponer datos sensibles)
     let pedido = null;
 
     if (req.session?.usuario?.id) {
       const id_usuario = req.session.usuario.id;
+      console.log(`[${trace}] 🔎 Buscando pedido por usuario (obtenerPedidoUsuarioPorId):`, { id_usuario, pedidoId });
+
       pedido = await new Promise((resolve, reject) => {
         carrito.obtenerPedidoUsuarioPorId(id_usuario, pedidoId, (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
+          if (err) return reject(err);
+          resolve(row);
         });
       });
+
+      console.log(`[${trace}] ✅ pedido (por usuario):`, pedido);
     } else {
+      console.log(`[${trace}] 🔎 Sin sesión: leyendo pedido directo por id...`);
       pedido = await new Promise((resolve, reject) => {
         pool.query(
-          "SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra FROM carritos WHERE id = ? LIMIT 1",
+          "SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra, es_pedido FROM carritos WHERE id = ? LIMIT 1",
           [pedidoId],
           (err, rows) => (err ? reject(err) : resolve(rows?.[0] || null))
         );
       });
+      console.log(`[${trace}] ✅ pedido (directo):`, pedido);
     }
 
     if (!pedido) {
+      console.log(`[${trace}] ⚠️ No se encontró pedido para render. Render vacío con pedidoId.`);
       return res.render("pagoExito", { productos: [], estadoCarrito: null, total: 0, pedidoId });
     }
 
+    console.log(`[${trace}] 🧾 obtenerProductosCarrito carrito_id=${pedido.id_carrito}...`);
     const productos = await new Promise((resolve, reject) => {
       carrito.obtenerProductosCarrito(pedido.id_carrito, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows || []);
+        if (err) return reject(err);
+        resolve(rows || []);
       });
     });
 
-    const total = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0).toFixed(2);
+    console.log(`[${trace}] ✅ productos.length:`, productos.length);
+    if (productos.length) console.log(`[${trace}] ✅ productos sample[0]:`, productos[0]);
 
+    const total = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0).toFixed(2);
+    console.log(`[${trace}] ✅ total:`, total);
+
+    console.log(`[${trace}] ✅ Render OK pagoExito`);
     return res.render("pagoExito", {
       productos,
       estadoCarrito: pedido.estado,
@@ -849,10 +930,13 @@ vistaPagoExitoso: async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Error al cargar la vista de pago exitoso:", error);
+    console.error(`[${trace}] ❌ Error al cargar la vista de pago exitoso:`, error);
     res.status(500).send("Error al cargar la página de pago exitoso.");
+  } finally {
+    console.log(`================ [${trace}] END =================\n`);
   }
 },
+
 generarComprobante: async (req, res) => {
   try {
     const id_usuario = req.session.usuario.id;

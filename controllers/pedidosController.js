@@ -17,20 +17,31 @@ function emitirEstado(req, payload) {
 }
 
 module.exports = {
-  obtenerPedidos: (req, res) => {
-    pedidos.obtenerPedidos((error, rows) => {
-      if (error) return res.status(500).json({ error: "Error al obtener los pedidos" });
-      return res.render("pedidos", { pedidos: rows || [] });
-    });
-  },
+obtenerPedidos: (req, res) => {
+  pedidos.obtenerPedidos((error, rows) => {
+    console.log("📌 [ADMIN] obtenerPedidos() rows:", rows?.length || 0);
+    if (rows && rows.length) {
+      console.log("📌 [ADMIN] estados:", rows.map(r => r.estado));
+    }
 
-  obtenerPedidosPendientes: (req, res) => {
-    pedidos.obtenerCantidadPedidosPendientes((error, cantidad) => {
-      if (error) return res.status(500).json({ error: "Error al obtener pedidos pendientes" });
-      res.json({ cantidad });
-    });
-  },
-// ✅ confirmar pedido (pendiente -> confirmado) + descontar stock
+    if (error) {
+      console.error("❌ [ADMIN] Error al obtener pedidos:", error);
+      return res.status(500).json({ error: "Error al obtener los pedidos" });
+    }
+    return res.render("pedidos", { pedidos: rows || [] });
+  });
+},
+obtenerPedidosPendientes: (req, res) => {
+  pedidos.obtenerCantidadPedidosPendientes((error, cantidad) => {
+    console.log("🔔 [ADMIN] cantidad pendientes:", cantidad);
+    if (error) {
+      console.error("❌ [ADMIN] Error al obtener pendientes:", error);
+      return res.status(500).json({ error: "Error al obtener pedidos pendientes" });
+    }
+    res.json({ cantidad });
+  });
+},
+
 confirmarPedido: (req, res) => {
   const id_pedido = Number(req.params.id);
 
