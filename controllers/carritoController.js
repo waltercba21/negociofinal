@@ -544,7 +544,7 @@ actualizarDireccionEnvio: (req, res) => {
   if (!req.session?.usuario?.id) return res.status(401).send("Debes iniciar sesión para acceder a esta página.");
   const id_usuario = req.session.usuario.id;
 
-  usuarioModel.obtenerPorId(id_usuario, (errU, usuario) => {
+  carrito.obtenerPorId(id_usuario, (errU, usuario) => {
     if (errU) return res.status(500).send("Error al obtener datos del usuario");
     if (!usuario) return res.status(404).send("Usuario no encontrado");
 
