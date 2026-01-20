@@ -733,7 +733,9 @@ vistaPagoExitoso: async (req, res) => {
   try {
     const id_usuario = req.session.usuario.id;
 
-    // ✅ MercadoPago suele devolver status/collection_status + external_reference
+    // 🔎 Diagnóstico: mirá exactamente qué te devuelve MP
+    console.log("✅ MP RETURN query:", req.query);
+
     const mpApproved =
       req.query.collection_status === "approved" ||
       req.query.status === "approved" ||
@@ -745,12 +747,15 @@ vistaPagoExitoso: async (req, res) => {
       Number(req.session.ultimoPedidoId) ||
       null;
 
-    // ✅ Si MP aprobó, cerramos el carrito ACTIVO del usuario (idempotente + seguro)
-    if (mpApproved && mpRef) {
-      const lockKey = `pagoCerrado_${mpRef}`;
+    console.log("✅ mpApproved:", mpApproved, "| mpRef:", mpRef);
 
-      if (!req.session[lockKey]) {
-        // Traemos carrito activo real del usuario para evitar cerrar un id ajeno
+    // ✅ Si MP aprobó, cerramos el carrito (idempotente)
+    // Fallback: si mpRef no viene, cerramos el carrito activo del usuario
+    if (mpApproved) {
+      // Si no viene mpRef, buscamos el carrito activo del usuario
+      let targetCarritoId = mpRef;
+
+      if (!targetCarritoId) {
         const carritoActivo = await new Promise((resolve, reject) => {
           carrito.obtenerCarritoActivo(id_usuario, (err, rows) => {
             if (err) return reject(err);
@@ -758,46 +763,58 @@ vistaPagoExitoso: async (req, res) => {
           });
         });
 
-        const id_carrito_activo = carritoActivo?.[0]?.id ? Number(carritoActivo[0].id) : null;
-        const estadoActivo = carritoActivo?.[0]?.estado || null;
+        targetCarritoId = carritoActivo?.[0]?.id ? Number(carritoActivo[0].id) : null;
+        console.log("⚠️ mpRef no vino. Fallback carrito activo:", targetCarritoId);
+      }
 
-        // Solo cerramos si coincide con el carrito activo y está realmente "carrito"
-        if (id_carrito_activo && id_carrito_activo === mpRef && estadoActivo === "carrito") {
-          // ✅ IMPORTANTÍSIMO: cuando se acredita pago, el pedido entra como "pendiente"
-          // para que el admin lo vea como "por preparar" y siga tu flujo.
-          const nuevoEstado = "pendiente";
+      if (targetCarritoId) {
+        const lockKey = `pagoCerrado_${targetCarritoId}`;
 
-          await new Promise((resolve, reject) => {
-            carrito.cerrarCarrito(mpRef, nuevoEstado, (err) => (err ? reject(err) : resolve()));
-          });
+        if (!req.session[lockKey]) {
+          const nuevoEstado = "pendiente"; // ✅ para que admin lo vea y lo prepare
 
-          await new Promise((resolve, reject) => {
-            carrito.crearCarrito(id_usuario, (err) => (err ? reject(err) : resolve()));
-          });
-
-          req.session.ultimoPedidoId = mpRef;
-
-          // ✅ Notificar admin (campanita / contador / refresh)
-          try {
-            io.emit("nuevoPedido", {
-              mensaje: `📦 Nuevo pedido recibido (${mpRef})`,
-              id_carrito: mpRef,
-              usuario: id_usuario,
-              estado: nuevoEstado,
+          const affected = await new Promise((resolve, reject) => {
+            carrito.cerrarCarrito(id_usuario, targetCarritoId, nuevoEstado, (err, rowsAffected) => {
+              if (err) return reject(err);
+              resolve(rowsAffected || 0);
             });
-            io.emit("actualizarNotificacion");
-          } catch (_) {
-            // si io no está disponible por alguna razón, no cortamos el flujo
-          }
-        }
+          });
 
-        // evita doble cierre por refresh aunque el carrito ya no coincida
-        req.session[lockKey] = true;
+          console.log("✅ cerrarCarrito affectedRows:", affected);
+
+          if (affected > 0) {
+            await new Promise((resolve, reject) => {
+              carrito.crearCarrito(id_usuario, (err) => (err ? reject(err) : resolve()));
+            });
+
+            req.session.ultimoPedidoId = targetCarritoId;
+
+            // 🔔 Notificar admin
+            try {
+              io.emit("nuevoPedido", {
+                mensaje: `📦 Nuevo pedido recibido (${targetCarritoId})`,
+                id_carrito: targetCarritoId,
+                usuario: id_usuario,
+                estado: nuevoEstado,
+              });
+              io.emit("actualizarNotificacion");
+            } catch (e) {
+              console.log("⚠️ io no disponible para emitir:", e?.message || e);
+            }
+          }
+
+          req.session[lockKey] = true;
+        }
+      } else {
+        console.log("❌ No se pudo determinar carrito a cerrar (sin mpRef y sin carrito activo).");
       }
     }
 
-    // ✅ Siempre intentamos mostrar el pedido de esta compra (mpRef primero)
-    const pedidoId = mpRef;
+    // ✅ Mostrar pedido: prioriza el pedidoId (mpRef o ultimoPedidoId)
+    const pedidoId = Number(req.query.external_reference) ||
+      Number(req.query.pedido) ||
+      Number(req.session.ultimoPedidoId) ||
+      null;
 
     let pedido = null;
 
@@ -847,6 +864,7 @@ vistaPagoExitoso: async (req, res) => {
       total,
       pedidoId: pedido.id_carrito
     });
+
   } catch (error) {
     console.error("❌ Error al cargar la vista de pago exitoso:", error);
     res.status(500).send("Error al cargar la página de pago exitoso.");

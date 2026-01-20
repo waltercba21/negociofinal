@@ -48,14 +48,18 @@ obtenerPedidoUsuarioPorId: (usuario_id, id_carrito, callback) => {
     callback(null, rows && rows.length ? rows[0] : null);
   });
 },
-cerrarCarrito: (id_carrito, nuevoEstado, callback) => {
+cerrarCarrito: (usuario_id, id_carrito, nuevoEstado, callback) => {
   const query = `
     UPDATE carritos
     SET estado = ?, es_pedido = 1, actualizado_en = NOW()
-    WHERE id = ?
+    WHERE id = ? AND usuario_id = ? AND estado = 'carrito'
   `;
-  pool.query(query, [nuevoEstado, id_carrito], callback);
+  pool.query(query, [nuevoEstado, id_carrito, usuario_id], (err, result) => {
+    if (err) return callback(err);
+    callback(null, result.affectedRows || 0); // ✅ devuelve cuántas filas cerró
+  });
 },
+
 crearCarrito: (usuario_id, callback) => {
   const query = `
     INSERT INTO carritos (usuario_id, estado, actualizado_en)
