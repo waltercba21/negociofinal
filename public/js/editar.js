@@ -271,11 +271,13 @@ if (!window.__EDITAR_INIT__) {
     var n = parseFloat(String(v ?? '').replace(',', '.'));
     return isNaN(n) ? 0 : n;
   }
-  function redondearAlCentenar(valor) {
-    var n = toNumber(valor);
-    var resto = n % 100;
-    return (resto < 50) ? (n - resto) : (n + (100 - resto));
-  }
+function redondearAlCentenar(valor) {
+  var n = toNumber(valor);
+  var resto = n % 100;
+  n = (resto < 50) ? (n - resto) : (n + (100 - resto));
+  return Math.ceil(n); // asegura entero, sin cambiar tu lógica de centena
+}
+
   function asegurarHidden($wrap, cls, name, defVal) {
     var $el = $wrap.find('.' + cls);
     if ($el.length === 0) {
@@ -327,7 +329,7 @@ if (!window.__EDITAR_INIT__) {
   // ===== Inicialización general =====
   $(function(){
     console.log('[EDITAR][INIT]');
-
+    window.__EDITAR_FIRST_LOAD__ = true;
     $('form').off('keydown.preventEnter').on('keydown.preventEnter', function(e){
       if ((e.key === 'Enter' || e.keyCode === 13) &&
           (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
@@ -689,31 +691,54 @@ if (!window.__EDITAR_INIT__) {
   }
 
   // ===== Precio final (utilidad) =====
-  function actualizarPrecioFinal() {
-    var $proveedor;
-    var $radioChecked = $('.proveedor-designado-radio:checked');
-    if (window.__seleccionManualProveedor__ && $radioChecked.length) {
-      $proveedor = $radioChecked.closest('.proveedor');
-    } else {
-      $proveedor = getProveedorConCostoIvaMasBajo();
-    }
-    if (!$proveedor || !$proveedor.length) return;
+function actualizarPrecioFinal(opts) {
+  opts = opts || {};
 
-    var baseUnit = toNumber($proveedor.find('.costo_iva').val()); // SIEMPRE unidad
-    if (!baseUnit) return;
-
-    var utilidad = toNumber($('#utilidad').val());
-    var precioFinal = baseUnit * (1 + (utilidad / 100));
-    precioFinal = redondearAlCentenar(precioFinal);
-
-    $('#precio_venta, input[name="precio_venta"]').val(precioFinal).trigger('input').trigger('change');
-
-    console.log('[EDITAR][PV] presGanador=', ($proveedor.data('presentacion')||$proveedor.find('.presentacion').val()||'unidad'),
-                'baseUnidad=', baseUnit, 'utilidad=', utilidad, '→ PV=', precioFinal);
-
-    actualizarProveedorAsignado();
-    syncIVAProductoConAsignado();
+  var esPrimerLoad = (window.__EDITAR_FIRST_LOAD__ === true);
+  function finalizarPrimerLoad() {
+    if (esPrimerLoad) window.__EDITAR_FIRST_LOAD__ = false;
   }
+
+  var $proveedor;
+  var $radioChecked = $('.proveedor-designado-radio:checked');
+  if (window.__seleccionManualProveedor__ && $radioChecked.length) {
+    $proveedor = $radioChecked.closest('.proveedor');
+  } else {
+    $proveedor = getProveedorConCostoIvaMasBajo();
+  }
+
+  if (!$proveedor || !$proveedor.length) { finalizarPrimerLoad(); return; }
+
+  var baseUnit = toNumber($proveedor.find('.costo_iva').val()); // SIEMPRE unidad
+  if (!baseUnit) { finalizarPrimerLoad(); return; }
+
+  var utilidad = toNumber($('#utilidad').val());
+  var precioFinal = baseUnit * (1 + (utilidad / 100));
+  precioFinal = redondearAlCentenar(precioFinal);
+
+  // ✅ CLAVE: en el primer load NO pisamos el precio_venta si ya vino desde BD
+  var $pv = $('#precio_venta, input[name="precio_venta"]').first();
+  var pvActual = toNumber($pv.val());
+  var debeEscribirPV = (opts.forceWrite === true) || (!esPrimerLoad) || (pvActual <= 0);
+
+  if (debeEscribirPV) {
+    $pv.val(precioFinal).trigger('input').trigger('change');
+  } else {
+    // dejamos el PV tal cual vino de la BD
+    console.log('[EDITAR][PV] (skip primer load) PV BD=', pvActual, 'calc=', precioFinal);
+  }
+
+  console.log('[EDITAR][PV] presGanador=',
+    ($proveedor.data('presentacion') || $proveedor.find('.presentacion').val() || 'unidad'),
+    'baseUnidad=', baseUnit, 'utilidad=', utilidad, '→ PV=', precioFinal
+  );
+
+  actualizarProveedorAsignado();
+  syncIVAProductoConAsignado();
+
+  finalizarPrimerLoad();
+}
+
 
   // ===== Sincroniza IVA del producto según el proveedor asignado =====
   function syncIVAProductoConAsignado() {
