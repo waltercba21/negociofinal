@@ -1022,7 +1022,8 @@ obtenerPorFiltrosYProveedor: function (
   proveedorId
 ) {
   return new Promise((resolve, reject) => {
-    const params = [proveedorId];
+    const params = [Number(proveedorId)];
+
     let sql = `
       SELECT
         p.id,
@@ -1040,14 +1041,14 @@ obtenerPorFiltrosYProveedor: function (
         p.calidad_original,
         p.calidad_vic,
 
-        -- ✅ Datos del proveedor seleccionado (para pedido manual)
-        pp.codigo       AS codigo,
-        pp.precio_lista AS precio_lista,
-        pp.descuento    AS descuento,
-        pp.costo_neto   AS costo_neto,
-        pp.costo_iva    AS costo_iva,
-        pp.iva          AS iva,
-        pp.presentacion AS presentacion,
+        -- Datos del proveedor seleccionado (para pedido manual)
+        pp.codigo        AS codigo,
+        pp.precio_lista  AS precio_lista,
+        pp.descuento     AS descuento,
+        pp.costo_neto    AS costo_neto,
+        pp.costo_iva     AS costo_iva,
+        pp.iva           AS iva,
+        pp.presentacion  AS presentacion,
         pp.factor_unidad AS factor_unidad
       FROM productos p
       INNER JOIN producto_proveedor pp
@@ -1060,10 +1061,27 @@ obtenerPorFiltrosYProveedor: function (
     if (marca_id)     { sql += ` AND p.marca_id = ?`;     params.push(Number(marca_id)); }
     if (modelo_id)    { sql += ` AND p.modelo_id = ?`;    params.push(Number(modelo_id)); }
 
+    // ✅ Búsqueda tolerante: por tokens (palabras), en cualquier orden
     if (busqueda_nombre && String(busqueda_nombre).trim().length) {
-      const like = `%${String(busqueda_nombre).trim()}%`;
-      sql += ` AND (p.nombre LIKE ? OR pp.codigo LIKE ?)`;
-      params.push(like, like);
+      const raw = String(busqueda_nombre)
+        .trim()
+        .replace(/\s+/g, ' ');
+
+      const tokens = raw
+        .split(' ')
+        .map(t => t.trim())
+        .filter(t => t.length >= 2);
+
+      if (tokens.length) {
+        sql += ` AND (`;
+        tokens.forEach((t, idx) => {
+          if (idx > 0) sql += ` AND `;
+          sql += `(p.nombre LIKE ? OR pp.codigo LIKE ?)`;
+          const likeTok = `%${t}%`;
+          params.push(likeTok, likeTok);
+        });
+        sql += `)`;
+      }
     }
 
     sql += ` ORDER BY p.id DESC LIMIT ?`;
