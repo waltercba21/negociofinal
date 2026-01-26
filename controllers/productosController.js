@@ -2719,8 +2719,7 @@ recomendacionesProveedorPDF: async (req, res) => {
       producto.obtenerMasVendidosPorProveedor(conexion, { proveedor_id, desde, hasta, limit: 100 })
     ]);
 
-    // ✅ Prioridad: los más vendidos van SIEMPRE en el bloque 2.
-    // Para no duplicar, los quitamos del bloque de stock bajo.
+    // ✅ Prioridad: los más vendidos van siempre en el bloque 2 (no se duplican en el bloque 1)
     const vendidosIds = new Set((masVendidos || []).map(p => String(p.id)));
     const stockBajo = (stockBajoRaw || []).filter(p => !vendidosIds.has(String(p.id)));
 
@@ -2732,15 +2731,8 @@ recomendacionesProveedorPDF: async (req, res) => {
     const doc = new PDFDocument({ margin: 36, size: 'A4' });
     doc.pipe(buffer);
 
-    const titulo = `LISTADO PARA PEDIDO - ${provNombre}`;
-    doc.fontSize(15).text(titulo, { align: 'center' });
-    doc.moveDown(0.3);
-
-    const rango = `Stock ≤ ${stock_max}` +
-      (desde || hasta ? ` | Fechas: ${desde || '…'} → ${hasta || '…'}` : '');
-    doc.fontSize(10).fillColor('#444').text(rango, { align: 'center' });
-    doc.fillColor('black');
-    doc.moveDown(1);
+    const L = doc.page.margins.left;
+    const W = doc.page.width - doc.page.margins.left - doc.page.margins.right;
 
     const ensure = (h = 18) => {
       const bottom = doc.page.height - doc.page.margins.bottom;
@@ -2749,26 +2741,44 @@ recomendacionesProveedorPDF: async (req, res) => {
 
     const hr = () => {
       doc.moveDown(0.3);
-      doc.moveTo(doc.page.margins.left, doc.y)
-        .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+      doc.moveTo(L, doc.y)
+        .lineTo(L + W, doc.y)
         .strokeColor('#dfe7f2')
         .stroke();
       doc.strokeColor('black');
       doc.moveDown(0.6);
     };
 
-    const section = (t) => {
+    // ✅ Subtítulos centrados y sin caracteres raros (evitamos "≤")
+    const sectionCentered = (t) => {
       ensure(30);
-      doc.fontSize(12).fillColor('#1f487e').text(t);
+      doc.x = L;
+      doc.fontSize(12).fillColor('#1f487e').text(t, L, doc.y, { width: W, align: 'center' });
       doc.fillColor('black');
-      doc.moveDown(0.4);
+      doc.moveDown(0.5);
     };
 
-    // 1) Stock bajo (≤ X) EXCLUYENDO los más vendidos
-    section(`1) PRODUCTOS CON STOCK ≤ ${stock_max} (EXCLUYENDO MÁS VENDIDOS)`);
+    // ====== TÍTULO (centrado) ======
+    doc.x = L;
+    doc.fontSize(15).text(`LISTADO PEDIDO - ${provNombre}`, L, doc.y, { width: W, align: 'center' });
+    doc.moveDown(0.3);
+
+    const dDesde = desde || '...';
+    const dHasta = hasta || '...';
+    doc.fontSize(10).fillColor('#444').text(
+      `Stock Menos o Igual a ${stock_max} desde ${dDesde} / ${dHasta}`,
+      L,
+      doc.y,
+      { width: W, align: 'center' }
+    );
+    doc.fillColor('black');
+    doc.moveDown(1);
+
+    // ====== 1) LISTADO DE PRODUCTOS ======
+    sectionCentered('Listado de Productos');
     doc.fontSize(9);
 
-    const X = 36, WN = 330, WC = 110, WS = 60;
+    const X = L, WN = 330, WC = 110, WS = 60;
     doc.text('Producto', X, doc.y, { width: WN });
     doc.text('Código',   X + WN, doc.y, { width: WC });
     doc.text('Stock',    X + WN + WC, doc.y, { width: WS, align: 'right' });
@@ -2785,14 +2795,14 @@ recomendacionesProveedorPDF: async (req, res) => {
 
     if (!(stockBajo || []).length) {
       doc.fontSize(9).fillColor('#666')
-        .text('Sin resultados (o todos los productos con stock bajo están dentro de los más vendidos).')
+        .text('Sin resultados.', L, doc.y, { width: W })
         .fillColor('black');
     }
 
     doc.moveDown(0.8);
 
-    // 2) Más vendidos (TODOS los más vendidos entre fechas)
-    section('2) PRODUCTOS RECOMENDADOS POR SER LOS MÁS VENDIDOS (ENTRE FECHAS)');
+    // ====== 2) MÁS VENDIDOS ======
+    sectionCentered('Productos Mas Vendidos Para Pedir');
     doc.fontSize(9);
 
     const WV = 70;
@@ -2812,7 +2822,7 @@ recomendacionesProveedorPDF: async (req, res) => {
 
     if (!(masVendidos || []).length) {
       doc.fontSize(9).fillColor('#666')
-        .text('Sin ventas registradas en el rango seleccionado.')
+        .text('Sin ventas registradas en el rango seleccionado.', L, doc.y, { width: W })
         .fillColor('black');
     }
 
@@ -2833,6 +2843,7 @@ recomendacionesProveedorPDF: async (req, res) => {
     return res.status(500).send('Error al generar PDF');
   }
 },
+
 
 
 
