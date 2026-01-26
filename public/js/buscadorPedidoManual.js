@@ -19,6 +19,14 @@ const searchWrap = document.getElementById('pmSearchWrap');
 const btnPdfProveedor = document.getElementById('btn-pdf-proveedor');
 const btnContinuar = document.getElementById('btn-continuar');
 
+function fechaPedidoStr() {
+  return new Intl.DateTimeFormat('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date());
+}
+
 function proveedorValido(val) {
   return /^\d+$/.test(String(val || ''));
 }
@@ -225,7 +233,10 @@ function upsertProductoDesdeResultado(producto, cantidad) {
 
 function proveedorNombreSeleccionado() {
   const opt = proveedorSelect?.selectedOptions?.[0];
-  return opt ? opt.textContent.trim() : 'Proveedor';
+  if (!opt) return 'Proveedor';
+
+  // Ej: "LAM (Desc: 61.52%)" => "LAM"
+  return opt.textContent.replace(/\s*\(Desc:.*\)\s*$/i, '').trim();
 }
 
 function construirDatosPedido() {
@@ -303,19 +314,25 @@ function generarPDFInterno() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  doc.setFontSize(18);
-  doc.text('Pedido Confirmado (Interno)', 10, 10);
+  const provName = proveedorNombreSeleccionado();
+  const fecha = fechaPedidoStr();
+
+  doc.setFontSize(16);
+  doc.text(`PEDIDO INTERNO - ${provName}`, 10, 12);
+
+  doc.setFontSize(11);
+  doc.text(`Fecha: ${fecha}`, 10, 20);
 
   const headers = [['Código', 'Producto', 'Costo Neto', 'Cantidad', 'Precio Total']];
   const rows = productosSeleccionados.map((p) => [
     obtenerCodigoPorProveedor(p),
     p.nombre,
     money(Number(p.costo_neto) || 0),
-    p.cantidad,
+    String(p.cantidad),
     money(Number(p.precioTotal) || 0),
   ]);
 
-  doc.autoTable({ head: headers, body: rows, startY: 20 });
+  doc.autoTable({ head: headers, body: rows, startY: 26 });
 
   const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
   doc.setFontSize(12);
@@ -323,17 +340,18 @@ function generarPDFInterno() {
 
   doc.save('pedido_confirmado.pdf');
 }
-
 function generarPDFProveedor() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
   const provName = proveedorNombreSeleccionado();
+  const fecha = fechaPedidoStr();
 
   doc.setFontSize(16);
-  doc.text('Pedido para Proveedor', 10, 12);
+  doc.text(`PEDIDO PARA "${provName}"`, 10, 12);
+
   doc.setFontSize(11);
-  doc.text(`Proveedor: ${provName}`, 10, 20);
+  doc.text(`Fecha: ${fecha}`, 10, 20);
 
   const headers = [['Código', 'Producto', 'Cantidad']];
   const rows = productosSeleccionados.map((p) => [
