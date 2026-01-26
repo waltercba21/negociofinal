@@ -1,4 +1,3 @@
-<!-- Vista estilizada de Pedido Manual -->
 <%- include('./layouts/head.ejs') %>
 <%- include('./layouts/header.ejs') %>
 
@@ -118,7 +117,6 @@
     }
     .pm-clear:hover{ color: var(--pm-text); }
 
-    /* Dropdown estable */
     .pm-results{
       position:absolute;
       left:0; right:0;
@@ -224,7 +222,6 @@
       color: var(--pm-accent);
     }
 
-    /* Tabla fija (no cambia ancho por texto/números) */
     .pm-table-wrap{ overflow:auto; border-radius: var(--pm-radius); }
     .pm-table{
       width:100%;
@@ -270,10 +267,7 @@
       font-weight: 900;
     }
 
-    .pm-num{
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-    }
+    .pm-num{ font-variant-numeric: tabular-nums; white-space: nowrap; }
     .pm-right{ text-align:right; }
 
     .pm-qty-input{
@@ -303,21 +297,12 @@
     }
     .pm-icon-btn:hover{ box-shadow: 0 10px 20px rgba(2,6,23,.10); transform: translateY(-1px); }
 
-    .pm-footer{
-      display:flex;
-      justify-content:flex-end;
-      align-items:center;
-      gap: 12px;
-      flex-wrap:wrap;
-    }
-
     .pm-total{
       font-weight: 1000;
       font-size: 16px;
       color: var(--pm-text);
       font-variant-numeric: tabular-nums;
     }
-
     .pm-empty{
       padding: 14px 12px;
       color: var(--pm-muted);
@@ -332,12 +317,23 @@
       <div class="pm-header">
         <div>
           <h2 class="pm-title">Pedido a Proveedor</h2>
-          <p class="pm-sub">Seleccioná proveedor, buscá por código o nombre, definí cantidad en la lista y agregá al pedido.</p>
+          <p class="pm-sub">Seleccioná proveedor, buscá por código o nombre, definí cantidad y agregá al pedido.</p>
         </div>
 
         <div class="pm-actions">
           <a href="/productos/historialPedidos" class="pm-btn" aria-label="Ver historial de pedidos">Historial</a>
-          <button id="btn-confirmar" class="pm-btn pm-btn-primary" type="button">Confirmar</button>
+
+          <button id="btn-confirmar" class="pm-btn pm-btn-primary" type="button">
+            Confirmar (PDF interno)
+          </button>
+
+          <button id="btn-pdf-proveedor" class="pm-btn" type="button">
+            Pedido para proveedor
+          </button>
+
+          <button id="btn-continuar" class="pm-btn pm-btn-danger" type="button">
+            Continuar
+          </button>
         </div>
       </div>
 
@@ -363,7 +359,7 @@
             <div id="contenedor-productos" class="pm-results" hidden>
               <div class="pm-results-head">
                 <div class="pm-results-title">Resultados</div>
-                <div class="pm-results-note">Tip: podés escribir “OPTICA FIRE 04/14”</div>
+                <div class="pm-results-note">Tip: “OPTICA FIRE 04/14”</div>
               </div>
               <div class="pm-results-list" id="pmResultsList"></div>
             </div>

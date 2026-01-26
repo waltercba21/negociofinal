@@ -1,6 +1,7 @@
 let productosSeleccionados = [];
 let timer;
 let lastResults = [];
+let pedidoGuardado = false;
 
 const entradaBusqueda = document.getElementById('entradaBusqueda');
 const proveedorSelect = document.querySelector('.proveedores');
@@ -14,6 +15,9 @@ const totalPedidoEl = document.getElementById('total-pedido');
 const btnConfirmar = document.getElementById('btn-confirmar');
 const btnClearSearch = document.getElementById('btnClearSearch');
 const searchWrap = document.getElementById('pmSearchWrap');
+
+const btnPdfProveedor = document.getElementById('btn-pdf-proveedor');
+const btnContinuar = document.getElementById('btn-continuar');
 
 function proveedorValido(val) {
   return /^\d+$/.test(String(val || ''));
@@ -195,16 +199,14 @@ async function buscarProductos() {
   const resp = await fetch(url);
   const productos = await resp.json();
 
-  // Opcional: no ocultar los ya agregados; se muestran como "En pedido" con botón Actualizar
   renderResultados(productos || []);
 }
 
-function upsertProductoDesdeResultado(producto, cantidad, modo) {
+function upsertProductoDesdeResultado(producto, cantidad) {
   const cant = clampInt(cantidad, 1);
 
   const existente = getSelById(producto.id);
   if (existente) {
-    // ✅ modo update: setea cantidad directamente (lo pedido)
     existente.cantidad = cant;
     calcularTotalesProducto(existente);
   } else {
@@ -215,10 +217,144 @@ function upsertProductoDesdeResultado(producto, cantidad, modo) {
   }
 
   renderTabla();
-  // refresca resultados para reflejar "En pedido" y qty
+
   if (entradaBusqueda.value.trim()) {
     renderResultados(lastResults);
   }
+}
+
+function proveedorNombreSeleccionado() {
+  const opt = proveedorSelect?.selectedOptions?.[0];
+  return opt ? opt.textContent.trim() : 'Proveedor';
+}
+
+function construirDatosPedido() {
+  const proveedor_id = proveedorSelect.value;
+
+  if (!proveedorValido(proveedor_id)) {
+    alert('Seleccioná un proveedor');
+    return null;
+  }
+
+  if (productosSeleccionados.length === 0) {
+    alert('No hay productos seleccionados');
+    return null;
+  }
+
+  const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
+
+  return {
+    proveedor_id,
+    total,
+    productos: productosSeleccionados.map((p) => ({
+      id: p.id,
+      cantidad: p.cantidad,
+      costo_neto: p.costo_neto,
+      codigo: p.codigo,
+    })),
+  };
+}
+
+async function guardarPedidoSiHaceFalta() {
+  if (pedidoGuardado) return { ok: true, savedNow: false };
+
+  const datosPedido = construirDatosPedido();
+  if (!datosPedido) return { ok: false, savedNow: false };
+
+  try {
+    const respuesta = await fetch('/productos/guardarPedido', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datosPedido),
+    });
+
+    if (!respuesta.ok) {
+      const errorData = await respuesta.json().catch(() => ({}));
+      alert('Error al guardar el pedido: ' + (errorData.message || ''));
+      return { ok: false, savedNow: false };
+    }
+
+    pedidoGuardado = true;
+    alert('Pedido guardado con éxito');
+    return { ok: true, savedNow: true };
+  } catch (error) {
+    console.error('Error al guardar el pedido:', error);
+    alert('Error en la conexión con el servidor');
+    return { ok: false, savedNow: false };
+  }
+}
+
+function resetAll() {
+  productosSeleccionados = [];
+  lastResults = [];
+  pedidoGuardado = false;
+
+  renderTabla();
+  limpiarInputYResultados();
+
+  if (proveedorSelect) proveedorSelect.selectedIndex = 0;
+
+  entradaBusqueda.disabled = true;
+  entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+  hidePanel();
+}
+
+function generarPDFInterno() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text('Pedido Confirmado (Interno)', 10, 10);
+
+  const headers = [['Código', 'Producto', 'Costo Neto', 'Cantidad', 'Precio Total']];
+  const rows = productosSeleccionados.map((p) => [
+    obtenerCodigoPorProveedor(p),
+    p.nombre,
+    money(Number(p.costo_neto) || 0),
+    p.cantidad,
+    money(Number(p.precioTotal) || 0),
+  ]);
+
+  doc.autoTable({ head: headers, body: rows, startY: 20 });
+
+  const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
+  doc.setFontSize(12);
+  doc.text(`Total Pedido: ${money(total)}`, 10, doc.previousAutoTable.finalY + 10);
+
+  doc.save('pedido_confirmado.pdf');
+}
+
+function generarPDFProveedor() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const provName = proveedorNombreSeleccionado();
+
+  doc.setFontSize(16);
+  doc.text('Pedido para Proveedor', 10, 12);
+  doc.setFontSize(11);
+  doc.text(`Proveedor: ${provName}`, 10, 20);
+
+  const headers = [['Código', 'Producto', 'Cantidad']];
+  const rows = productosSeleccionados.map((p) => [
+    obtenerCodigoPorProveedor(p),
+    p.nombre,
+    String(p.cantidad),
+  ]);
+
+  doc.autoTable({
+    head: headers,
+    body: rows,
+    startY: 26,
+    styles: { fontSize: 9 },
+    columnStyles: {
+      0: { cellWidth: 35 },
+      1: { cellWidth: 125 },
+      2: { cellWidth: 25, halign: 'right' },
+    },
+  });
+
+  doc.save('pedido_para_proveedor.pdf');
 }
 
 // --- Estado inicial
@@ -232,6 +368,7 @@ proveedorSelect.addEventListener('change', () => {
   productosSeleccionados = [];
   renderTabla();
   limpiarInputYResultados();
+  pedidoGuardado = false;
 
   if (proveedorValido(proveedorSelect.value)) {
     entradaBusqueda.disabled = false;
@@ -282,7 +419,7 @@ resultsList.addEventListener('click', (e) => {
   const btn = e.target.closest('button.pm-add');
   if (!btn) return;
 
-  upsertProductoDesdeResultado(producto, cantidad, btn.dataset.action);
+  upsertProductoDesdeResultado(producto, cantidad);
 });
 
 // ✅ No bloquear foco: permite escribir en inputs y clickear botones
@@ -290,7 +427,6 @@ contenedorProductos.addEventListener('mousedown', (e) => {
   if (e.target.closest('input, button, a, select, textarea, label')) return;
   e.preventDefault();
 });
-
 
 // --- Tabla: cambiar cantidad escribiendo (sin re-render completo)
 tablaBody.addEventListener('input', (e) => {
@@ -305,18 +441,15 @@ tablaBody.addEventListener('input', (e) => {
   if (!p) return;
 
   const val = input.value;
-  // durante escritura: si está vacío, no recalcular todavía
   if (val === '') return;
 
   p.cantidad = clampInt(val, 1);
   calcularTotalesProducto(p);
 
-  // actualiza total fila + footer, sin reconstruir tabla
   const rowTotal = tr.querySelector('.row-total');
   if (rowTotal) rowTotal.textContent = money(p.precioTotal);
   actualizarTotalPedido();
 
-  // también sincroniza dropdown si está abierto
   if (!contenedorProductos.hidden) renderResultados(lastResults);
 });
 
@@ -340,74 +473,19 @@ tablaBody.addEventListener('click', (e) => {
   if (!contenedorProductos.hidden) renderResultados(lastResults);
 });
 
-// --- Confirmar pedido (igual, pero mantiene cantidades)
+// --- Botones PDF + reset
 btnConfirmar.addEventListener('click', async () => {
-  const proveedor_id = proveedorSelect.value;
-
-  if (!proveedorValido(proveedor_id)) {
-    alert('Seleccioná un proveedor');
-    return;
-  }
-
-  if (productosSeleccionados.length === 0) {
-    alert('No hay productos seleccionados');
-    return;
-  }
-
-  const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
-
-  const datosPedido = {
-    proveedor_id,
-    total,
-    productos: productosSeleccionados.map((p) => ({
-      id: p.id,
-      cantidad: p.cantidad,
-      costo_neto: p.costo_neto,
-      codigo: p.codigo,
-    })),
-  };
-
-  try {
-    const respuesta = await fetch('/productos/guardarPedido', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datosPedido),
-    });
-
-    if (respuesta.ok) {
-      alert('Pedido guardado con éxito');
-      generarPDF();
-    } else {
-      const errorData = await respuesta.json();
-      alert('Error al guardar el pedido: ' + (errorData.message || ''));
-    }
-  } catch (error) {
-    console.error('Error al guardar el pedido:', error);
-    alert('Error en la conexión con el servidor');
-  }
+  const { ok } = await guardarPedidoSiHaceFalta();
+  if (!ok) return;
+  generarPDFInterno();
 });
 
-function generarPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+btnPdfProveedor.addEventListener('click', async () => {
+  const { ok } = await guardarPedidoSiHaceFalta();
+  if (!ok) return;
+  generarPDFProveedor();
+});
 
-  doc.setFontSize(18);
-  doc.text('Pedido Confirmado', 10, 10);
-
-  const headers = [['Código', 'Producto', 'Costo Neto', 'Cantidad', 'Precio Total']];
-  const rows = productosSeleccionados.map((p) => [
-    obtenerCodigoPorProveedor(p),
-    p.nombre,
-    money(Number(p.costo_neto) || 0),
-    p.cantidad,
-    money(Number(p.precioTotal) || 0),
-  ]);
-
-  doc.autoTable({ head: headers, body: rows, startY: 20 });
-
-  const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
-  doc.setFontSize(12);
-  doc.text(`Total Pedido: ${money(total)}`, 10, doc.previousAutoTable.finalY + 10);
-
-  doc.save('pedido_confirmado.pdf');
-}
+btnContinuar.addEventListener('click', () => {
+  resetAll();
+});
