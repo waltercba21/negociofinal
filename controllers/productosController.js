@@ -538,22 +538,38 @@ lista: async function (req, res) {
           });
         }
       },      
- buscar: async (req, res) => {
+buscar: async (req, res) => {
   try {
-    const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
+    const { q: busqueda_nombre, categoria_id, marca_id, modelo_id, proveedor_id } = req.query;
     req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
 
     const limite = req.query.limite ? parseInt(req.query.limite, 10) : 100;
 
-    // Productos por filtros
-    const productos = await producto.obtenerPorFiltros(
-      conexion,
-      categoria_id,
-      marca_id,
-      modelo_id,
-      busqueda_nombre,
-      limite
-    );
+    // ✅ NUEVO: si viene proveedor_id => filtra por producto_proveedor (NO afecta otros usos)
+    let productos;
+    const provIdNum = Number(proveedor_id);
+
+    if (proveedor_id != null && proveedor_id !== '' && Number.isFinite(provIdNum) && provIdNum > 0) {
+      productos = await producto.obtenerPorFiltrosYProveedor(
+        conexion,
+        categoria_id,
+        marca_id,
+        modelo_id,
+        busqueda_nombre,
+        limite,
+        provIdNum
+      );
+    } else {
+      // ✅ comportamiento original intacto
+      productos = await producto.obtenerPorFiltros(
+        conexion,
+        categoria_id,
+        marca_id,
+        modelo_id,
+        busqueda_nombre,
+        limite
+      );
+    }
 
     // Imágenes (si hay IDs)
     const productoIds = productos.map(p => p.id);
@@ -563,21 +579,17 @@ lista: async function (req, res) {
 
     // Enriquecer cada producto
     for (const prod of productos) {
-      // Imágenes del producto
       prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
 
-      // Todos los proveedores del producto
       const proveedores = (await producto.obtenerProveedoresPorProducto(conexion, prod.id)) || [];
       prod.proveedores = proveedores;
 
-      // Proveedor asignado (por ID en el propio producto)
       let provAsignado = null;
       if (prod.proveedor_id != null) {
         provAsignado =
           proveedores.find(p => Number(p.id ?? p.proveedor_id) === Number(prod.proveedor_id)) || null;
       }
 
-      // Fallback: proveedor más barato si no hay asignado o no aparece en la lista
       let provMasBarato = null;
       try {
         provMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
@@ -587,7 +599,6 @@ lista: async function (req, res) {
 
       const provParaCard = provAsignado || provMasBarato || null;
 
-      // Campos para la card
       prod.proveedor_nombre =
         provParaCard?.proveedor_nombre ??
         provParaCard?.nombre_proveedor ??
@@ -596,14 +607,12 @@ lista: async function (req, res) {
 
       prod.codigo_proveedor = provParaCard?.codigo ?? provParaCard?.codigo_proveedor ?? '-';
 
-      // Exportar explícitamente el asignado para que el front lo priorice
       prod.proveedor_asignado_id = prod.proveedor_id ?? null;
 
-      // Enviar utilidad cruda para cálculo exacto en el front
       prod.utilidad = Number(prod.utilidad) || 0;
     }
 
-    // ✅ LOG de búsquedas (consultados): guarda hasta 20 productos retornados por el buscador
+    // LOG búsquedas (igual)
     try {
       const termino = (req.query.q || '').toString().trim();
       const usuario_id = req.session?.usuario?.id || null;
@@ -612,7 +621,6 @@ lista: async function (req, res) {
         const ids = productos.slice(0, 20).map(p => Number(p.id)).filter(Boolean);
 
         if (ids.length) {
-          // fire-and-forget para no frenar la respuesta
           producto
             .registrarConsultasBusqueda(conexion, { productoIds: ids, termino, usuario_id })
             .catch(e => console.warn('⚠️ No se pudo registrar búsqueda:', e.code || e.message));

@@ -972,6 +972,110 @@ obtenerProveedores: function(conexion) {
         });
     });
 },
+buscarPorProveedor: function (conexion, proveedorId, q) {
+  return new Promise((resolve, reject) => {
+    const like = `%${q}%`;
+
+    const sql = `
+      SELECT
+        p.id,
+        p.nombre,
+        MAX(pp.codigo)       AS codigo,
+        MAX(pp.precio_lista) AS precio_lista,
+        MAX(pp.descuento)    AS descuento,
+        MAX(pp.costo_neto)   AS costo_neto,
+        MAX(pp.costo_iva)    AS costo_iva,
+        MAX(pp.iva)          AS iva,
+        MAX(pp.presentacion) AS presentacion,
+        MAX(pp.factor_unidad) AS factor_unidad,
+        GROUP_CONCAT(i.imagen) AS imagenes
+      FROM productos p
+      JOIN producto_proveedor pp
+        ON pp.producto_id = p.id
+       AND pp.proveedor_id = ?
+      LEFT JOIN imagenes_producto i
+        ON i.producto_id = p.id
+      WHERE (p.nombre LIKE ? OR pp.codigo LIKE ?)
+      GROUP BY p.id, p.nombre
+      ORDER BY p.nombre ASC
+      LIMIT 30
+    `;
+
+    conexion.query(sql, [proveedorId, like, like], (error, rows) => {
+      if (error) return reject(error);
+
+      rows.forEach(r => {
+        r.imagenes = r.imagenes ? r.imagenes.split(',') : [];
+      });
+
+      resolve(rows);
+    });
+  });
+},
+obtenerPorFiltrosYProveedor: function (
+  conexion,
+  categoria_id,
+  marca_id,
+  modelo_id,
+  busqueda_nombre,
+  limite,
+  proveedorId
+) {
+  return new Promise((resolve, reject) => {
+    const params = [proveedorId];
+    let sql = `
+      SELECT
+        p.id,
+        p.nombre,
+        p.descripcion,
+        p.categoria_id,
+        p.marca_id,
+        p.modelo_id,
+        p.proveedor_id,
+        p.utilidad,
+        p.estado,
+        p.stock_actual,
+        p.stock_minimo,
+        p.oferta,
+        p.calidad_original,
+        p.calidad_vic,
+
+        -- ✅ Datos del proveedor seleccionado (para pedido manual)
+        pp.codigo       AS codigo,
+        pp.precio_lista AS precio_lista,
+        pp.descuento    AS descuento,
+        pp.costo_neto   AS costo_neto,
+        pp.costo_iva    AS costo_iva,
+        pp.iva          AS iva,
+        pp.presentacion AS presentacion,
+        pp.factor_unidad AS factor_unidad
+      FROM productos p
+      INNER JOIN producto_proveedor pp
+        ON pp.producto_id = p.id
+       AND pp.proveedor_id = ?
+      WHERE 1=1
+    `;
+
+    if (categoria_id) { sql += ` AND p.categoria_id = ?`; params.push(Number(categoria_id)); }
+    if (marca_id)     { sql += ` AND p.marca_id = ?`;     params.push(Number(marca_id)); }
+    if (modelo_id)    { sql += ` AND p.modelo_id = ?`;    params.push(Number(modelo_id)); }
+
+    if (busqueda_nombre && String(busqueda_nombre).trim().length) {
+      const like = `%${String(busqueda_nombre).trim()}%`;
+      sql += ` AND (p.nombre LIKE ? OR pp.codigo LIKE ?)`;
+      params.push(like, like);
+    }
+
+    sql += ` ORDER BY p.id DESC LIMIT ?`;
+    params.push(Number(limite) || 100);
+
+    conexion.query(sql, params, (error, rows) => {
+      if (error) return reject(error);
+      resolve(rows || []);
+    });
+  });
+},
+
 obtenerProveedorMasBarato : async (conexion, productoId) => {
     try {
       const query = `

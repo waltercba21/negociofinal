@@ -1,77 +1,12 @@
-let productosOriginales = [];
 let productosSeleccionados = [];
 let timer;
-
-window.onload = async () => {
-  const respuesta = await fetch('/productos/api/buscar');
-  productosOriginales = await respuesta.json();
-};
 
 const entradaBusqueda = document.getElementById('entradaBusqueda');
 const contenedorProductos = document.getElementById('contenedor-productos');
 const proveedorSelect = document.querySelector('.proveedores');
-  
-entradaBusqueda.addEventListener('input', (e) => {
-  const proveedor_id = proveedorSelect.value;
 
-  clearTimeout(timer);
-  timer = setTimeout(async () => {
-    const busqueda = e.target.value.trim();
-    contenedorProductos.innerHTML = '';
-
-    if (busqueda) {
-      const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
-      const respuesta = await fetch(url);
-      const productos = await respuesta.json();
-
-      // Excluir productos que ya están en la tabla
-      const productosFiltrados = productos.filter(
-        (p) => !productosSeleccionados.some((sel) => sel.id === p.id)
-      );
-
-      mostrarProductos(productosFiltrados);
-    }
-  }, 300);
-});
-
-// Mantener abierto mientras el puntero esté en el contenedor
-contenedorProductos.addEventListener('mouseenter', () => clearTimeout(timer));
-contenedorProductos.addEventListener('mouseleave', limpiarBusqueda);
-
-function mostrarProductos(productos) {
-  contenedorProductos.innerHTML = '';
-
-  if (productos.length === 0) {
-    contenedorProductos.innerHTML = '<p>No hay productos disponibles</p>';
-    return;
-  }
-
-  productos.forEach((producto) => {
-    const divProducto = document.createElement('div');
-    divProducto.classList.add('producto-sugerido'); // Cambiamos la clase
-
-    divProducto.innerHTML = `
-      <img src="${producto.imagenes && producto.imagenes.length > 0 ? `/uploads/productos/${producto.imagenes[0].imagen || producto.imagenes[0]}` : '/ruta/imagen-defecto.jpg'}" alt="${producto.nombre}">
-      <span>${producto.nombre}</span>
-    `;
-
-    divProducto.addEventListener('click', () => agregarProductoATabla(producto));
-    contenedorProductos.appendChild(divProducto);
-  });
-}
-
-
-function agregarProductoATabla(producto) {
-  // Verificar si el producto ya está agregado
-  if (productosSeleccionados.some((p) => p.id === producto.id)) {
-    alert('Este producto ya está agregado al pedido.');
-    return;
-  }
-
-  producto.cantidad = 1;
-  producto.precioTotal = parseFloat(producto.costo_neto) || 0;
-  productosSeleccionados.push(producto);
-  actualizarTabla();
+function proveedorValido(val) {
+  return /^\d+$/.test(String(val || ''));
 }
 
 function limpiarBusqueda() {
@@ -80,10 +15,54 @@ function limpiarBusqueda() {
 }
 
 function formatearNumero(num) {
-  const entero = Math.round(num); // redondea al entero más cercano
+  const entero = Math.round(Number(num || 0));
   return entero.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+function obtenerCodigoPorProveedor(producto) {
+  // En este flujo, el API ya debe traer `codigo` del proveedor seleccionado
+  return producto.codigo || '—';
+}
+
+function mostrarProductos(productos) {
+  contenedorProductos.innerHTML = '';
+
+  if (!productos || productos.length === 0) {
+    contenedorProductos.innerHTML = '<p>No hay productos disponibles</p>';
+    return;
+  }
+
+  productos.forEach((producto) => {
+    const divProducto = document.createElement('div');
+    divProducto.classList.add('producto-sugerido');
+
+    const img =
+      producto.imagenes && Array.isArray(producto.imagenes) && producto.imagenes.length > 0
+        ? `/uploads/productos/${producto.imagenes[0].imagen || producto.imagenes[0]}`
+        : '/ruta/imagen-defecto.jpg';
+
+    divProducto.innerHTML = `
+      <img src="${img}" alt="${producto.nombre}">
+      <span>${producto.nombre}</span>
+    `;
+
+    divProducto.addEventListener('click', () => agregarProductoATabla(producto));
+    contenedorProductos.appendChild(divProducto);
+  });
+}
+
+function agregarProductoATabla(producto) {
+  if (productosSeleccionados.some((p) => p.id === producto.id)) {
+    alert('Este producto ya está agregado al pedido.');
+    return;
+  }
+
+  producto.cantidad = 1;
+  producto.precioTotal = parseFloat(producto.costo_neto) || 0;
+
+  productosSeleccionados.push(producto);
+  actualizarTabla();
+}
 
 function actualizarTabla() {
   const tablaBody = document.getElementById('tabla-pedido-body');
@@ -94,17 +73,16 @@ function actualizarTabla() {
 
     const fila = document.createElement('tr');
     fila.innerHTML = `
-      <td>${obtenerCodigoPorProveedor(producto, proveedorSelect.value)}</td>
+      <td>${obtenerCodigoPorProveedor(producto)}</td>
       <td>${producto.nombre}</td>
       <td>$${formatearNumero(parseFloat(producto.costo_neto))}</td>
-     <td>
-  <div class="cantidad-controles">
-    <button class="btn-cantidad btn-menos" onclick="cambiarCantidad(${index}, -1)">−</button>
-    <span class="cantidad-numero">${producto.cantidad}</span>
-    <button class="btn-cantidad btn-mas" onclick="cambiarCantidad(${index}, 1)">+</button>
-  </div>
-</td>
-
+      <td>
+        <div class="cantidad-controles">
+          <button class="btn-cantidad btn-menos" onclick="cambiarCantidad(${index}, -1)">−</button>
+          <span class="cantidad-numero">${producto.cantidad}</span>
+          <button class="btn-cantidad btn-mas" onclick="cambiarCantidad(${index}, 1)">+</button>
+        </div>
+      </td>
       <td>$<span id="precio-total-${producto.id}">${formatearNumero(precioTotal)}</span></td>
       <td><button onclick="eliminarProducto(${index})" class="btn btn-danger">Eliminar</button></td>
     `;
@@ -113,50 +91,100 @@ function actualizarTabla() {
 
   actualizarTotalPedido();
 }
-function obtenerCodigoPorProveedor(producto, proveedor_id) {
-  if (producto.proveedores && Array.isArray(producto.proveedores)) {
-    const proveedorEncontrado = producto.proveedores.find(p => p.id == proveedor_id);
-    return proveedorEncontrado ? proveedorEncontrado.codigo : '—';
-  }
-  return producto.codigo || '—';
-} 
 
-function cambiarCantidad(index, cambio) {
+window.cambiarCantidad = function (index, cambio) {
   const producto = productosSeleccionados[index];
   producto.cantidad += cambio;
 
   if (producto.cantidad < 1) {
     productosSeleccionados.splice(index, 1);
   } else {
-    producto.precioTotal = parseFloat(producto.costo_neto) * producto.cantidad;
+    producto.precioTotal = (parseFloat(producto.costo_neto) || 0) * producto.cantidad;
   }
 
   actualizarTabla();
-}
+};
 
-function eliminarProducto(index) {
+window.eliminarProducto = function (index) {
   productosSeleccionados.splice(index, 1);
   actualizarTabla();
-}
+};
 
 function actualizarTotalPedido() {
-  let total = productosSeleccionados.reduce(
+  const total = productosSeleccionados.reduce(
     (sum, producto) => sum + (parseFloat(producto.precioTotal) || 0),
     0
   );
   document.getElementById('total-pedido').innerText = `$${formatearNumero(total)}`;
 }
 
+// --- UX: deshabilitar búsqueda hasta elegir proveedor
+entradaBusqueda.disabled = true;
+entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+
+proveedorSelect.addEventListener('change', () => {
+  limpiarBusqueda();
+  contenedorProductos.innerHTML = '';
+  productosSeleccionados = []; // pedido = 1 proveedor
+  actualizarTabla();
+
+  if (proveedorValido(proveedorSelect.value)) {
+    entradaBusqueda.disabled = false;
+    entradaBusqueda.placeholder = 'Buscar por código o nombre...';
+    entradaBusqueda.focus();
+  } else {
+    entradaBusqueda.disabled = true;
+    entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+  }
+});
+
+// --- Búsqueda filtrada por proveedor
+entradaBusqueda.addEventListener('input', (e) => {
+  clearTimeout(timer);
+
+  timer = setTimeout(async () => {
+    const proveedor_id = proveedorSelect.value;
+
+    contenedorProductos.innerHTML = '';
+
+    if (!proveedorValido(proveedor_id)) return;
+
+    const busqueda = e.target.value.trim();
+    if (!busqueda) return;
+
+    const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}&proveedor_id=${encodeURIComponent(proveedor_id)}&limite=30`;
+
+
+    const respuesta = await fetch(url);
+    const productos = await respuesta.json();
+
+    const productosFiltrados = (productos || []).filter(
+      (p) => !productosSeleccionados.some((sel) => sel.id === p.id)
+    );
+
+    mostrarProductos(productosFiltrados);
+  }, 250);
+});
+
+contenedorProductos.addEventListener('mouseenter', () => clearTimeout(timer));
+contenedorProductos.addEventListener('mouseleave', limpiarBusqueda);
+
+// Confirmar pedido
 document.getElementById('btn-confirmar').addEventListener('click', async function () {
-  const proveedor_id = document.querySelector('.proveedores').value;
+  const proveedor_id = proveedorSelect.value;
+
+  if (!proveedorValido(proveedor_id)) {
+    alert('Seleccioná un proveedor');
+    return;
+  }
 
   if (productosSeleccionados.length === 0) {
     alert('No hay productos seleccionados');
     return;
   }
 
-  let total = productosSeleccionados.reduce(
-    (sum, producto) => sum + parseFloat(producto.precioTotal),
+  const total = productosSeleccionados.reduce(
+    (sum, producto) => sum + (parseFloat(producto.precioTotal) || 0),
     0
   );
 
@@ -167,6 +195,7 @@ document.getElementById('btn-confirmar').addEventListener('click', async functio
       id: producto.id,
       cantidad: producto.cantidad,
       costo_neto: producto.costo_neto,
+      codigo: producto.codigo,
     })),
   };
 
@@ -182,7 +211,7 @@ document.getElementById('btn-confirmar').addEventListener('click', async functio
       generarPDF();
     } else {
       const errorData = await respuesta.json();
-      alert('Error al guardar el pedido: ' + errorData.message);
+      alert('Error al guardar el pedido: ' + (errorData.message || ''));
     }
   } catch (error) {
     console.error('Error al guardar el pedido:', error);
@@ -191,6 +220,7 @@ document.getElementById('btn-confirmar').addEventListener('click', async functio
 });
 
 function generarPDF() {
+  const proveedor_id = proveedorSelect.value;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
@@ -199,23 +229,20 @@ function generarPDF() {
 
   const headers = [['Código', 'Producto', 'Costo Neto', 'Cantidad', 'Precio Total']];
   const rows = productosSeleccionados.map((producto) => [
-    producto.codigo,
+    obtenerCodigoPorProveedor(producto, proveedor_id),
     producto.nombre,
     `$${formatearNumero(parseFloat(producto.costo_neto))}`,
     producto.cantidad,
     `$${formatearNumero(parseFloat(producto.precioTotal))}`,
   ]);
 
-  doc.autoTable({
-    head: headers,
-    body: rows,
-    startY: 20,
-  });
+  doc.autoTable({ head: headers, body: rows, startY: 20 });
 
-  let total = productosSeleccionados.reduce(
-    (sum, producto) => sum + parseFloat(producto.precioTotal),
+  const total = productosSeleccionados.reduce(
+    (sum, producto) => sum + (parseFloat(producto.precioTotal) || 0),
     0
   );
+
   doc.setFontSize(12);
   doc.text(`Total Pedido: $${formatearNumero(total)}`, 10, doc.previousAutoTable.finalY + 10);
 
