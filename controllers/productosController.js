@@ -2714,13 +2714,16 @@ recomendacionesProveedorPDF: async (req, res) => {
     const prov = proveedores.find(p => String(p.id) === String(proveedor_id));
     const provNombre = prov ? prov.nombre : `Proveedor ${proveedor_id}`;
 
-    const [stockBajoRaw, masVendidos] = await Promise.all([
+    const [stockBajoRaw, masVendidosRaw] = await Promise.all([
       producto.obtenerProductosProveedorConStockHasta(conexion, { proveedor_id, stock_max }),
       producto.obtenerMasVendidosPorProveedor(conexion, { proveedor_id, desde, hasta, limit: 100 })
     ]);
 
-    // ✅ Prioridad: los más vendidos van siempre en el bloque 2 (no se duplican en el bloque 1)
-    const vendidosIds = new Set((masVendidos || []).map(p => String(p.id)));
+    // ✅ FILTRO: los más vendidos también deben cumplir stock_actual <= stock_max
+    const masVendidos = (masVendidosRaw || []).filter(p => Number(p.stock_actual || 0) <= stock_max);
+
+    // ✅ No duplicar: si está en "más vendidos" va en bloque 2, se saca del bloque 1
+    const vendidosIds = new Set(masVendidos.map(p => String(p.id)));
     const stockBajo = (stockBajoRaw || []).filter(p => !vendidosIds.has(String(p.id)));
 
     const buffer = new streamBuffers.WritableStreamBuffer({
@@ -2749,7 +2752,6 @@ recomendacionesProveedorPDF: async (req, res) => {
       doc.moveDown(0.6);
     };
 
-    // ✅ Subtítulos centrados y sin caracteres raros (evitamos "≤")
     const sectionCentered = (t) => {
       ensure(30);
       doc.x = L;
@@ -2758,7 +2760,7 @@ recomendacionesProveedorPDF: async (req, res) => {
       doc.moveDown(0.5);
     };
 
-    // ====== TÍTULO (centrado) ======
+    // ====== TÍTULO ======
     doc.x = L;
     doc.fontSize(15).text(`LISTADO PEDIDO - ${provNombre}`, L, doc.y, { width: W, align: 'center' });
     doc.moveDown(0.3);
@@ -2801,7 +2803,7 @@ recomendacionesProveedorPDF: async (req, res) => {
 
     doc.moveDown(0.8);
 
-    // ====== 2) MÁS VENDIDOS ======
+    // ====== 2) MÁS VENDIDOS (FILTRADOS POR STOCK) ======
     sectionCentered('Productos Mas Vendidos Para Pedir');
     doc.fontSize(9);
 
@@ -2822,7 +2824,7 @@ recomendacionesProveedorPDF: async (req, res) => {
 
     if (!(masVendidos || []).length) {
       doc.fontSize(9).fillColor('#666')
-        .text('Sin ventas registradas en el rango seleccionado.', L, doc.y, { width: W })
+        .text('Sin ventas en el rango (o no hay más vendidos con stock dentro del umbral).', L, doc.y, { width: W })
         .fillColor('black');
     }
 
@@ -2843,10 +2845,5 @@ recomendacionesProveedorPDF: async (req, res) => {
     return res.status(500).send('Error al generar PDF');
   }
 },
-
-
-
-
-
 
 } 
