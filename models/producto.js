@@ -2663,11 +2663,10 @@ obtenerProveedoresOrdenadosPorCosto : function (conexion, productoId) {
     });
   });
 },
-// 1) Stock bajo por proveedor (productos que el proveedor vende)
 obtenerProductosProveedorConStockHasta: function (conexion, { proveedor_id, stock_max }) {
   return new Promise((resolve, reject) => {
     const prov = parseInt(proveedor_id, 10);
-    const max = parseInt(stock_max, 10);
+    const max  = parseInt(stock_max, 10);
 
     if (!prov || !Number.isFinite(max)) return resolve([]);
 
@@ -2682,14 +2681,15 @@ obtenerProductosProveedorConStockHasta: function (conexion, { proveedor_id, stoc
       FROM producto_proveedor pp
       INNER JOIN productos p ON p.id = pp.producto_id
       WHERE pp.proveedor_id = ?
-        AND p.stock_actual BETWEEN 1 AND ?
+        AND p.stock_actual >= 0
+        AND p.stock_actual <= ?
       ORDER BY p.stock_actual ASC, p.nombre ASC
     `;
+
     conexion.query(sql, [prov, max], (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
 
-// 2) Más vendidos del “catálogo” del proveedor (entre fechas)
 obtenerMasVendidosPorProveedor: function (conexion, { proveedor_id, desde = null, hasta = null, limit = 100 }) {
   return new Promise((resolve, reject) => {
     const prov = parseInt(proveedor_id, 10);
@@ -2713,23 +2713,27 @@ obtenerMasVendidosPorProveedor: function (conexion, { proveedor_id, desde = null
       SELECT
         p.id,
         p.nombre,
+        p.stock_actual,
         SUM(v.cantidad) AS total_vendido
       FROM (
+        /* FACTURAS */
         SELECT fi.producto_id, fi.cantidad, fm.fecha
         FROM factura_items fi
         INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
 
         UNION ALL
 
+        /* PRESUPUESTOS */
         SELECT pi.producto_id, pi.cantidad, pm.fecha
         FROM presupuesto_items pi
         INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
       ) v
       INNER JOIN productos p ON p.id = v.producto_id
-      INNER JOIN producto_proveedor pp ON pp.producto_id = p.id AND pp.proveedor_id = ?
+      INNER JOIN producto_proveedor pp
+        ON pp.producto_id = p.id AND pp.proveedor_id = ?
       WHERE 1=1
       ${whereFechas}
-      GROUP BY p.id, p.nombre
+      GROUP BY p.id, p.nombre, p.stock_actual
       ORDER BY total_vendido DESC
       LIMIT ${safeLimit}
     `;

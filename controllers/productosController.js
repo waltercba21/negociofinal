@@ -2676,46 +2676,24 @@ recomendacionesProveedor: async (req, res) => {
 
     const proveedor_id = getFirst(req.query.proveedor_id) || '';
     let stock_max = parseInt(getFirst(req.query.stock_max) || '6', 10);
-    const desde = getFirst(req.query.desde) || null;
-    const hasta = getFirst(req.query.hasta) || null;
+    const desde = getFirst(req.query.desde) || '';
+    const hasta = getFirst(req.query.hasta) || '';
 
     if (!Number.isFinite(stock_max) || stock_max < 1) stock_max = 1;
     if (stock_max > 100) stock_max = 100;
 
     const proveedores = await producto.obtenerProveedores(conexion);
 
-    // Si no eligió proveedor todavía, render vacío (pero con el selector cargado)
-    if (!proveedor_id) {
-      return res.render('recomendacionesProveedor', {
-        proveedores,
-        filtros: { proveedor_id: '', stock_max, desde: desde || '', hasta: hasta || '' },
-        stockBajo: [],
-        masVendidos: [],
-        masBuscados: []
-      });
-    }
-
-    const [stockBajo, masVendidos, masBuscados] = await Promise.all([
-      producto.obtenerProductosProveedorConStockHasta(conexion, { proveedor_id, stock_max }),
-      producto.obtenerMasVendidosPorProveedor(conexion, { proveedor_id, desde, hasta, limit: 100 }),
-      producto.obtenerMasBuscadosPorProveedor(conexion, { proveedor_id, desde, hasta, limit: 100 })
-        .catch(() => []) // si aún no existe la tabla/log, no rompe la vista
-    ]);
-
-    res.render('recomendacionesProveedor', {
+    return res.render('recomendacionesProveedor', {
       proveedores,
-      filtros: { proveedor_id, stock_max, desde: desde || '', hasta: hasta || '' },
-      stockBajo,
-      masVendidos,
-      masBuscados
+      filtros: { proveedor_id, stock_max, desde, hasta }
     });
 
   } catch (error) {
     console.error('❌ Error en recomendacionesProveedor:', error);
-    res.status(500).send('Error al generar recomendaciones');
+    return res.status(500).send('Error al mostrar filtros');
   }
 },
-
 recomendacionesProveedorPDF: async (req, res) => {
   const PDFDocument = require('pdfkit');
   const streamBuffers = require('stream-buffers');
@@ -2736,12 +2714,14 @@ recomendacionesProveedorPDF: async (req, res) => {
     const prov = proveedores.find(p => String(p.id) === String(proveedor_id));
     const provNombre = prov ? prov.nombre : `Proveedor ${proveedor_id}`;
 
-    const [stockBajo, masVendidos, masBuscados] = await Promise.all([
+    const [stockBajo, masVendidosRaw] = await Promise.all([
       producto.obtenerProductosProveedorConStockHasta(conexion, { proveedor_id, stock_max }),
-      producto.obtenerMasVendidosPorProveedor(conexion, { proveedor_id, desde, hasta, limit: 100 }),
-      producto.obtenerMasBuscadosPorProveedor(conexion, { proveedor_id, desde, hasta, limit: 100 })
-        .catch(() => [])
+      producto.obtenerMasVendidosPorProveedor(conexion, { proveedor_id, desde, hasta, limit: 100 })
     ]);
+
+    // Excluir de recomendados los que ya están en el listado de stock bajo
+    const stockIds = new Set((stockBajo || []).map(p => String(p.id)));
+    const masVendidos = (masVendidosRaw || []).filter(p => !stockIds.has(String(p.id)));
 
     const buffer = new streamBuffers.WritableStreamBuffer({
       initialSize: 1024 * 1024,
@@ -2751,7 +2731,7 @@ recomendacionesProveedorPDF: async (req, res) => {
     const doc = new PDFDocument({ margin: 36, size: 'A4' });
     doc.pipe(buffer);
 
-    const titulo = `RECOMENDACIÓN DE PEDIDO - ${provNombre}`;
+    const titulo = `LISTADO PARA PEDIDO - ${provNombre}`;
     doc.fontSize(15).text(titulo, { align: 'center' });
     doc.moveDown(0.3);
 
@@ -2783,78 +2763,66 @@ recomendacionesProveedorPDF: async (req, res) => {
       doc.moveDown(0.4);
     };
 
-    // 1) Stock bajo
-    section('1) PRODUCTOS PARA PEDIR (STOCK BAJO)');
+    // 1) Stock bajo (≤ X)
+    section(`1) PRODUCTOS CON STOCK ≤ ${stock_max}`);
     doc.fontSize(9);
-    const X1 = 36, WN = 300, WC = 90, WS = 60, WP = 60;
-    doc.text('Producto', X1, doc.y, { width: WN });
-    doc.text('Código',   X1+WN, doc.y, { width: WC });
-    doc.text('Stock',    X1+WN+WC, doc.y, { width: WS, align: 'right' });
-    doc.text('Pedir',    X1+WN+WC+WS, doc.y, { width: WP, align: 'right' });
+
+    const X = 36, WN = 330, WC = 110, WS = 60;
+    doc.text('Producto', X, doc.y, { width: WN });
+    doc.text('Código',   X + WN, doc.y, { width: WC });
+    doc.text('Stock',    X + WN + WC, doc.y, { width: WS, align: 'right' });
     hr();
 
     (stockBajo || []).forEach(p => {
       ensure(18);
-      const pedir = Math.max(0, stock_max - (Number(p.stock_actual) || 0));
       const y = doc.y;
-      doc.fontSize(8).text(p.nombre || '-', X1, y, { width: WN });
-      doc.text(p.codigo_proveedor || p.codigo || '-', X1+WN, y, { width: WC });
-      doc.text(String(Number(p.stock_actual || 0)), X1+WN+WC, y, { width: WS, align: 'right' });
-      doc.text(String(pedir), X1+WN+WC+WS, y, { width: WP, align: 'right' });
+      doc.fontSize(8).text(p.nombre || '-', X, y, { width: WN });
+      doc.text(p.codigo_proveedor || p.codigo || '-', X + WN, y, { width: WC });
+      doc.text(String(Number(p.stock_actual || 0)), X + WN + WC, y, { width: WS, align: 'right' });
       doc.moveDown(0.6);
     });
-    if (!(stockBajo || []).length) doc.fontSize(9).fillColor('#666').text('Sin resultados.').fillColor('black');
+
+    if (!(stockBajo || []).length) {
+      doc.fontSize(9).fillColor('#666').text('Sin resultados.').fillColor('black');
+    }
 
     doc.moveDown(0.8);
 
-    // 2) Más vendidos
-    section('2) MÁS VENDIDOS (ENTRE FECHAS)');
+    // 2) Recomendados por ventas (sin repetir los del bloque 1)
+    section('2) RECOMENDADOS POR VENTAS (ENTRE FECHAS)');
     doc.fontSize(9);
+
     const WV = 70;
-    doc.text('Producto', X1, doc.y, { width: WN+WC });
-    doc.text('Vendido', X1+WN+WC, doc.y, { width: WV, align: 'right' });
+    doc.text('Producto', X, doc.y, { width: WN + WC - 40 });
+    doc.text('Vendido',  X + (WN + WC - 40), doc.y, { width: WV, align: 'right' });
+    doc.text('Stock',    X + (WN + WC - 40) + WV, doc.y, { width: 60, align: 'right' });
     hr();
 
     (masVendidos || []).forEach(p => {
       ensure(18);
       const y = doc.y;
-      doc.fontSize(8).text(p.nombre || '-', X1, y, { width: WN+WC });
-      doc.text(String(Number(p.total_vendido || 0)), X1+WN+WC, y, { width: WV, align: 'right' });
+      doc.fontSize(8).text(p.nombre || '-', X, y, { width: WN + WC - 40 });
+      doc.text(String(Number(p.total_vendido || 0)), X + (WN + WC - 40), y, { width: WV, align: 'right' });
+      doc.text(String(Number(p.stock_actual || 0)), X + (WN + WC - 40) + WV, y, { width: 60, align: 'right' });
       doc.moveDown(0.6);
     });
-    if (!(masVendidos || []).length) doc.fontSize(9).fillColor('#666').text('Sin datos en el rango.').fillColor('black');
 
-    doc.moveDown(0.8);
-
-    // 3) Más buscados
-    section('3) MÁS BUSCADOS / CONSULTADOS (ENTRE FECHAS)');
-    doc.fontSize(9);
-    const WB = 70;
-    doc.text('Producto', X1, doc.y, { width: WN+WC });
-    doc.text('Buscado', X1+WN+WC, doc.y, { width: WB, align: 'right' });
-    hr();
-
-    (masBuscados || []).forEach(p => {
-      ensure(18);
-      const y = doc.y;
-      doc.fontSize(8).text(p.nombre || '-', X1, y, { width: WN+WC });
-      doc.text(String(Number(p.total_buscado || 0)), X1+WN+WC, y, { width: WB, align: 'right' });
-      doc.moveDown(0.6);
-    });
-    if (!(masBuscados || []).length) doc.fontSize(9).fillColor('#666').text('Sin datos (o sin log de búsquedas).').fillColor('black');
+    if (!(masVendidos || []).length) {
+      doc.fontSize(9).fillColor('#666').text('Sin recomendaciones adicionales (o no hubo ventas en el rango).').fillColor('black');
+    }
 
     doc.end();
 
     buffer.on('finish', function () {
       const pdfData = buffer.getContents();
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="RECOMENDACION_${provNombre.replace(/\s+/g,'_')}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="PEDIDO_${provNombre.replace(/\s+/g,'_')}.pdf"`);
       res.send(pdfData);
     });
 
   } catch (error) {
     console.error('❌ Error en recomendacionesProveedorPDF:', error);
-    res.status(500).send('Error al generar PDF');
+    return res.status(500).send('Error al generar PDF');
   }
 },
 
