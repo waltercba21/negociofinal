@@ -543,7 +543,7 @@ lista: async function (req, res) {
     const { q: busqueda_nombre, categoria_id, marca_id, modelo_id } = req.query;
     req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
 
-    const limite = req.query.limite ? parseInt(req.query.limite) : 100;
+    const limite = req.query.limite ? parseInt(req.query.limite, 10) : 100;
 
     // Productos por filtros
     const productos = await producto.obtenerPorFiltros(
@@ -567,16 +567,14 @@ lista: async function (req, res) {
       prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
 
       // Todos los proveedores del producto
-      const proveedores = await producto.obtenerProveedoresPorProducto(conexion, prod.id) || [];
+      const proveedores = (await producto.obtenerProveedoresPorProducto(conexion, prod.id)) || [];
       prod.proveedores = proveedores;
 
       // Proveedor asignado (por ID en el propio producto)
       let provAsignado = null;
       if (prod.proveedor_id != null) {
-        // algunos modelos devuelven 'id', otros 'proveedor_id' dentro del objeto proveedor
-        provAsignado = proveedores.find(p =>
-          Number(p.id ?? p.proveedor_id) === Number(prod.proveedor_id)
-        ) || null;
+        provAsignado =
+          proveedores.find(p => Number(p.id ?? p.proveedor_id) === Number(prod.proveedor_id)) || null;
       }
 
       // Fallback: proveedor más barato si no hay asignado o no aparece en la lista
@@ -590,15 +588,13 @@ lista: async function (req, res) {
       const provParaCard = provAsignado || provMasBarato || null;
 
       // Campos para la card
-      prod.proveedor_nombre = provParaCard?.proveedor_nombre
-        ?? provParaCard?.nombre_proveedor
-        ?? provParaCard?.nombre
-        ?? 'Sin proveedor';
+      prod.proveedor_nombre =
+        provParaCard?.proveedor_nombre ??
+        provParaCard?.nombre_proveedor ??
+        provParaCard?.nombre ??
+        'Sin proveedor';
 
-      // el código del proveedor puede venir como 'codigo' o 'codigo_proveedor'
-      prod.codigo_proveedor = provParaCard?.codigo
-        ?? provParaCard?.codigo_proveedor
-        ?? '-';
+      prod.codigo_proveedor = provParaCard?.codigo ?? provParaCard?.codigo_proveedor ?? '-';
 
       // Exportar explícitamente el asignado para que el front lo priorice
       prod.proveedor_asignado_id = prod.proveedor_id ?? null;
@@ -607,25 +603,29 @@ lista: async function (req, res) {
       prod.utilidad = Number(prod.utilidad) || 0;
     }
 
-    res.json(productos);
     // ✅ LOG de búsquedas (consultados): guarda hasta 20 productos retornados por el buscador
-try {
-  const termino = (req.query.q || '').toString().trim();
-  const usuario_id = req.session?.usuario?.id || null;
+    try {
+      const termino = (req.query.q || '').toString().trim();
+      const usuario_id = req.session?.usuario?.id || null;
 
-  if (termino.length >= 2 && Array.isArray(productos) && productos.length) {
-    const ids = productos.slice(0, 20).map(p => Number(p.id)).filter(Boolean);
-    if (ids.length) {
-      await producto.registrarConsultasBusqueda(conexion, { productoIds: ids, termino, usuario_id });
+      if (termino.length >= 2 && Array.isArray(productos) && productos.length) {
+        const ids = productos.slice(0, 20).map(p => Number(p.id)).filter(Boolean);
+
+        if (ids.length) {
+          // fire-and-forget para no frenar la respuesta
+          producto
+            .registrarConsultasBusqueda(conexion, { productoIds: ids, termino, usuario_id })
+            .catch(e => console.warn('⚠️ No se pudo registrar búsqueda:', e.code || e.message));
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ No se pudo registrar búsqueda:', e.code || e.message);
     }
-  }
-} catch (e) {
-  console.warn('⚠️ No se pudo registrar búsqueda:', e.code || e.message);
-}
 
+    return res.json(productos);
   } catch (error) {
     console.error("❌ Error en /productos/api/buscar:", error);
-    res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
+    return res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
   }
 },
 
