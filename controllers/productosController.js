@@ -2714,14 +2714,15 @@ recomendacionesProveedorPDF: async (req, res) => {
     const prov = proveedores.find(p => String(p.id) === String(proveedor_id));
     const provNombre = prov ? prov.nombre : `Proveedor ${proveedor_id}`;
 
-    const [stockBajo, masVendidosRaw] = await Promise.all([
+    const [stockBajoRaw, masVendidos] = await Promise.all([
       producto.obtenerProductosProveedorConStockHasta(conexion, { proveedor_id, stock_max }),
       producto.obtenerMasVendidosPorProveedor(conexion, { proveedor_id, desde, hasta, limit: 100 })
     ]);
 
-    // Excluir de recomendados los que ya están en el listado de stock bajo
-    const stockIds = new Set((stockBajo || []).map(p => String(p.id)));
-    const masVendidos = (masVendidosRaw || []).filter(p => !stockIds.has(String(p.id)));
+    // ✅ Prioridad: los más vendidos van SIEMPRE en el bloque 2.
+    // Para no duplicar, los quitamos del bloque de stock bajo.
+    const vendidosIds = new Set((masVendidos || []).map(p => String(p.id)));
+    const stockBajo = (stockBajoRaw || []).filter(p => !vendidosIds.has(String(p.id)));
 
     const buffer = new streamBuffers.WritableStreamBuffer({
       initialSize: 1024 * 1024,
@@ -2763,8 +2764,8 @@ recomendacionesProveedorPDF: async (req, res) => {
       doc.moveDown(0.4);
     };
 
-    // 1) Stock bajo (≤ X)
-    section(`1) PRODUCTOS CON STOCK ≤ ${stock_max}`);
+    // 1) Stock bajo (≤ X) EXCLUYENDO los más vendidos
+    section(`1) PRODUCTOS CON STOCK ≤ ${stock_max} (EXCLUYENDO MÁS VENDIDOS)`);
     doc.fontSize(9);
 
     const X = 36, WN = 330, WC = 110, WS = 60;
@@ -2783,13 +2784,15 @@ recomendacionesProveedorPDF: async (req, res) => {
     });
 
     if (!(stockBajo || []).length) {
-      doc.fontSize(9).fillColor('#666').text('Sin resultados.').fillColor('black');
+      doc.fontSize(9).fillColor('#666')
+        .text('Sin resultados (o todos los productos con stock bajo están dentro de los más vendidos).')
+        .fillColor('black');
     }
 
     doc.moveDown(0.8);
 
-    // 2) Recomendados por ventas (sin repetir los del bloque 1)
-    section('2) RECOMENDADOS POR VENTAS (ENTRE FECHAS)');
+    // 2) Más vendidos (TODOS los más vendidos entre fechas)
+    section('2) PRODUCTOS RECOMENDADOS POR SER LOS MÁS VENDIDOS (ENTRE FECHAS)');
     doc.fontSize(9);
 
     const WV = 70;
@@ -2808,7 +2811,9 @@ recomendacionesProveedorPDF: async (req, res) => {
     });
 
     if (!(masVendidos || []).length) {
-      doc.fontSize(9).fillColor('#666').text('Sin recomendaciones adicionales (o no hubo ventas en el rango).').fillColor('black');
+      doc.fontSize(9).fillColor('#666')
+        .text('Sin ventas registradas en el rango seleccionado.')
+        .fillColor('black');
     }
 
     doc.end();
@@ -2816,7 +2821,10 @@ recomendacionesProveedorPDF: async (req, res) => {
     buffer.on('finish', function () {
       const pdfData = buffer.getContents();
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="PEDIDO_${provNombre.replace(/\s+/g,'_')}.pdf"`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="PEDIDO_${provNombre.replace(/\s+/g, '_')}.pdf"`
+      );
       res.send(pdfData);
     });
 
@@ -2825,6 +2833,7 @@ recomendacionesProveedorPDF: async (req, res) => {
     return res.status(500).send('Error al generar PDF');
   }
 },
+
 
 
 
