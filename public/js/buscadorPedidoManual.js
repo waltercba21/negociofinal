@@ -285,10 +285,12 @@ resultsList.addEventListener('click', (e) => {
   upsertProductoDesdeResultado(producto, cantidad, btn.dataset.action);
 });
 
-// Evitar que el click en panel cierre por blur/otros
+// ✅ No bloquear foco: permite escribir en inputs y clickear botones
 contenedorProductos.addEventListener('mousedown', (e) => {
+  if (e.target.closest('input, button, a, select, textarea, label')) return;
   e.preventDefault();
 });
+
 
 // --- Tabla: cambiar cantidad escribiendo (sin re-render completo)
 tablaBody.addEventListener('input', (e) => {
