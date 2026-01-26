@@ -1,0 +1,157 @@
+<%- include('./layouts/head.ejs') %>
+<%- include('./layouts/header.ejs') %>
+
+<style>
+  .rp-wrap{max-width:1200px;margin:18px auto;padding:0 12px}
+  .rp-card{background:#fff;border:1px solid rgba(31,72,126,.12);border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.06);padding:14px;margin-bottom:14px}
+  .rp-title{margin:0 0 10px 0;font-weight:800;color:#1f487e}
+  .rp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;align-items:end}
+  .rp-label{font-weight:700;font-size:.9rem;color:#29486f;margin-bottom:4px;display:block}
+  .rp-input{width:100%;padding:.45rem .55rem;border-radius:10px;border:1px solid #dfe7f2}
+  .rp-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .rp-btn{border-radius:10px;font-weight:800;padding:9px 12px;border:1px solid rgba(2,6,23,.12);background:#fff;cursor:pointer}
+  .rp-btn.primary{background:#1f487e;color:#fff;border-color:#1f487e}
+  .rp-btn.pdf{background:#0b6e4f;color:#fff;border-color:#0b6e4f}
+  .rp-table{width:100%;border-collapse:collapse;font-size:.92rem}
+  .rp-table th,.rp-table td{padding:9px;border-bottom:1px solid #eef2f7}
+  .rp-table th{background:#f6f8fb;text-align:left;color:#1f487e;font-size:.9rem}
+  .rp-num{text-align:right}
+  .rp-muted{color:#6b7280;font-size:.9rem}
+</style>
+
+<div class="rp-wrap">
+  <div class="rp-card">
+    <h3 class="rp-title">Recomendación de pedido por proveedor</h3>
+
+    <form method="GET" action="/productos/recomendacionesProveedor">
+      <div class="rp-grid">
+        <div>
+          <label class="rp-label" for="proveedor_id">Proveedor</label>
+          <select class="rp-input" id="proveedor_id" name="proveedor_id" required>
+            <option value="">Seleccionar…</option>
+            <% (proveedores || []).forEach(p => { %>
+              <option value="<%= p.id %>" <%= String(filtros?.proveedor_id||'')===String(p.id) ? 'selected' : '' %>>
+                <%= p.nombre %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div>
+          <label class="rp-label" for="stock_max">Listar productos con stock ≤</label>
+          <select class="rp-input" id="stock_max" name="stock_max">
+            <% [1,2,3,4,5,6].forEach(n => { %>
+              <option value="<%= n %>" <%= String(filtros?.stock_max||'6')===String(n) ? 'selected' : '' %>><%= n %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div>
+          <label class="rp-label" for="desde">Desde</label>
+          <input class="rp-input" type="date" id="desde" name="desde" value="<%= filtros?.desde || '' %>">
+        </div>
+
+        <div>
+          <label class="rp-label" for="hasta">Hasta</label>
+          <input class="rp-input" type="date" id="hasta" name="hasta" value="<%= filtros?.hasta || '' %>">
+        </div>
+      </div>
+
+      <div class="rp-actions">
+        <button class="rp-btn primary" type="submit">Filtrar</button>
+
+        <button
+          class="rp-btn pdf"
+          type="submit"
+          formaction="/productos/recomendacionesProveedor/pdf"
+          formmethod="GET"
+          formtarget="_blank"
+          title="Genera PDF con stock bajo + top vendidos + top buscados">
+          Generar PDF
+        </button>
+      </div>
+
+      <div class="rp-muted" style="margin-top:8px;">
+        El PDF incluye 3 bloques: <strong>Stock bajo</strong>, <strong>Más vendidos</strong> y <strong>Más buscados</strong> (según búsquedas registradas).
+      </div>
+    </form>
+  </div>
+
+  <div class="rp-card">
+    <h4 class="rp-title">1) Productos para pedir (stock bajo)</h4>
+    <table class="rp-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Código</th>
+          <th class="rp-num">Stock</th>
+          <th class="rp-num">Sugerido pedir</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!(stockBajo||[]).length) { %>
+          <tr><td colspan="4" class="rp-muted">Sin resultados con los filtros actuales.</td></tr>
+        <% } else { %>
+          <% stockBajo.forEach(p => { %>
+            <tr>
+              <td><%= p.nombre %></td>
+              <td><%= p.codigo_proveedor || p.codigo || '-' %></td>
+              <td class="rp-num"><%= Number(p.stock_actual || 0) %></td>
+              <td class="rp-num"><%= Math.max(0, Number(filtros.stock_max||6) - Number(p.stock_actual||0)) %></td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rp-card">
+    <h4 class="rp-title">2) Más vendidos del proveedor (entre fechas)</h4>
+    <table class="rp-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th class="rp-num">Total vendido</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!(masVendidos||[]).length) { %>
+          <tr><td colspan="2" class="rp-muted">Sin datos para ese rango.</td></tr>
+        <% } else { %>
+          <% masVendidos.forEach(p => { %>
+            <tr>
+              <td><%= p.nombre %></td>
+              <td class="rp-num"><%= Number(p.total_vendido||0) %></td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rp-card">
+    <h4 class="rp-title">3) Más buscados/consultados (entre fechas)</h4>
+    <table class="rp-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th class="rp-num">Total buscado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!(masBuscados||[]).length) { %>
+          <tr><td colspan="2" class="rp-muted">Sin datos (o todavía no hay log de búsquedas).</td></tr>
+        <% } else { %>
+          <% masBuscados.forEach(p => { %>
+            <tr>
+              <td><%= p.nombre %></td>
+              <td class="rp-num"><%= Number(p.total_buscado||0) %></td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('./layouts/footer.ejs') %>

@@ -2379,8 +2379,6 @@ insertarBusquedaTexto: function (conexion, { q, origen, user_id, ip }) {
     conexion.query(sql, [q, origen || 'texto', user_id, ip], (err, r) => err ? reject(err) : resolve(r.insertId));
   });
 },
-
-// Inserta búsqueda con selección de producto
 insertarBusquedaProducto: function (conexion, { producto_id, q, user_id, ip }) {
   return new Promise((resolve, reject) => {
     const sql = `INSERT INTO busquedas_producto (producto_id, q, user_id, ip) VALUES (?, ?, ?, ?)`;
@@ -2664,7 +2662,145 @@ obtenerProveedoresOrdenadosPorCosto : function (conexion, productoId) {
       resolve(rows || []);
     });
   });
-}
+},
+// 1) Stock bajo por proveedor (productos que el proveedor vende)
+obtenerProductosProveedorConStockHasta: function (conexion, { proveedor_id, stock_max }) {
+  return new Promise((resolve, reject) => {
+    const prov = parseInt(proveedor_id, 10);
+    const max = parseInt(stock_max, 10);
+
+    if (!prov || !Number.isFinite(max)) return resolve([]);
+
+    const sql = `
+      SELECT
+        p.id,
+        p.nombre,
+        p.stock_actual,
+        p.stock_minimo,
+        pp.codigo AS codigo_proveedor,
+        pp.precio_lista
+      FROM producto_proveedor pp
+      INNER JOIN productos p ON p.id = pp.producto_id
+      WHERE pp.proveedor_id = ?
+        AND p.stock_actual BETWEEN 1 AND ?
+      ORDER BY p.stock_actual ASC, p.nombre ASC
+    `;
+    conexion.query(sql, [prov, max], (err, rows) => (err ? reject(err) : resolve(rows)));
+  });
+},
+
+// 2) Más vendidos del “catálogo” del proveedor (entre fechas)
+obtenerMasVendidosPorProveedor: function (conexion, { proveedor_id, desde = null, hasta = null, limit = 100 }) {
+  return new Promise((resolve, reject) => {
+    const prov = parseInt(proveedor_id, 10);
+    if (!prov) return resolve([]);
+
+    const filtros = [];
+    const params = [prov];
+
+    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    const d1 = isDate(desde) ? desde : null;
+    const d2 = isDate(hasta) ? hasta : null;
+
+    if (d1 && d2) { filtros.push(`v.fecha BETWEEN ? AND ?`); params.push(d1, d2); }
+    else if (d1)  { filtros.push(`v.fecha >= ?`);           params.push(d1); }
+    else if (d2)  { filtros.push(`v.fecha <= ?`);           params.push(d2); }
+
+    const whereFechas = filtros.length ? `AND ${filtros.join(' AND ')}` : '';
+    const safeLimit = Math.max(1, Math.min(parseInt(limit, 10) || 100, 500));
+
+    const sql = `
+      SELECT
+        p.id,
+        p.nombre,
+        SUM(v.cantidad) AS total_vendido
+      FROM (
+        SELECT fi.producto_id, fi.cantidad, fm.fecha
+        FROM factura_items fi
+        INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
+
+        UNION ALL
+
+        SELECT pi.producto_id, pi.cantidad, pm.fecha
+        FROM presupuesto_items pi
+        INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
+      ) v
+      INNER JOIN productos p ON p.id = v.producto_id
+      INNER JOIN producto_proveedor pp ON pp.producto_id = p.id AND pp.proveedor_id = ?
+      WHERE 1=1
+      ${whereFechas}
+      GROUP BY p.id, p.nombre
+      ORDER BY total_vendido DESC
+      LIMIT ${safeLimit}
+    `;
+
+    conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+  });
+},
+
+// 3) Más buscados/consultados del proveedor (entre fechas) — usa busquedas_producto_log
+obtenerMasBuscadosPorProveedor: function (conexion, { proveedor_id, desde = null, hasta = null, limit = 100 }) {
+  return new Promise((resolve, reject) => {
+    const prov = parseInt(proveedor_id, 10);
+    if (!prov) return resolve([]);
+
+    const filtros = [];
+    const params = [prov];
+
+    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    const d1 = isDate(desde) ? desde : null;
+    const d2 = isDate(hasta) ? hasta : null;
+
+    if (d1 && d2) { filtros.push(`b.fecha BETWEEN ? AND ?`); params.push(d1, d2); }
+    else if (d1)  { filtros.push(`b.fecha >= ?`);           params.push(d1); }
+    else if (d2)  { filtros.push(`b.fecha <= ?`);           params.push(d2); }
+
+    const whereFechas = filtros.length ? `AND ${filtros.join(' AND ')}` : '';
+    const safeLimit = Math.max(1, Math.min(parseInt(limit, 10) || 100, 500));
+
+    const sql = `
+      SELECT
+        p.id,
+        p.nombre,
+        COUNT(*) AS total_buscado
+      FROM busquedas_producto_log b
+      INNER JOIN productos p ON p.id = b.producto_id
+      INNER JOIN producto_proveedor pp ON pp.producto_id = p.id AND pp.proveedor_id = ?
+      WHERE 1=1
+      ${whereFechas}
+      GROUP BY p.id, p.nombre
+      ORDER BY total_buscado DESC
+      LIMIT ${safeLimit}
+    `;
+
+    conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+  });
+},
+
+// 4) Registrar consultas de búsqueda (consultados)
+registrarConsultasBusqueda: function (conexion, { productoIds = [], termino = null, usuario_id = null }) {
+  return new Promise((resolve, reject) => {
+    const ids = Array.isArray(productoIds)
+      ? productoIds.map(n => parseInt(n, 10)).filter(Number.isInteger).slice(0, 50)
+      : [];
+
+    if (!ids.length) return resolve({ inserted: 0 });
+
+    const values = ids.map(() => `(?, ?, ?, NOW())`).join(',');
+    const params = [];
+    ids.forEach(id => {
+      params.push(id, termino ? String(termino).slice(0,255) : null, usuario_id ? parseInt(usuario_id,10) : null);
+    });
+
+    const sql = `
+      INSERT INTO busquedas_producto_log (producto_id, termino, usuario_id, fecha)
+      VALUES ${values}
+    `;
+
+    conexion.query(sql, params, (err, r) => (err ? reject(err) : resolve(r)));
+  });
+},
+
 
 
 }

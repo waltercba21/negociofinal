@@ -48,6 +48,9 @@ router.put('/api/facturas/:id', productosController.editarFacturas);
 router.delete('/api/facturas/:id', productosController.deleteFactura);
  
 router.get('/masVendidos', productosController.masVendidos);
+router.get('/recomendacionesProveedor', productosController.recomendacionesProveedor);
+router.get('/recomendacionesProveedor/pdf', productosController.recomendacionesProveedorPDF);
+
 
 router.get('/generarPDF', productosController.generarPDF);
 router.get('/generarPDFProveedor', productosController.generarPDFProveedor);
