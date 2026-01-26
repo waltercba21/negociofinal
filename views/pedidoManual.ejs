@@ -1,60 +1,420 @@
 <!-- Vista estilizada de Pedido Manual -->
 <%- include('./layouts/head.ejs') %>
 <%- include('./layouts/header.ejs') %>
+
 <body>
-  <main class="pedido-container">
-    <h2 class="titulo-pedido">Pedido a Proveedor</h2>
-    <div class="boton-historial-pedidos">
-  <a href="/productos/historialPedidos" class="btn btn-secondary">Ver Historial de Pedidos</a>
-</div>
+  <style>
+    :root{
+      --pm-brand:#1F487E;
+      --pm-accent:#d90429;
+      --pm-bg:#f6f8fc;
+      --pm-card:#ffffff;
+      --pm-text:#0f172a;
+      --pm-muted:#64748b;
+      --pm-border: rgba(15,23,42,.10);
+      --pm-shadow: 0 10px 30px rgba(2,6,23,.08);
+      --pm-radius:16px;
+      --pm-tap:44px;
+    }
 
+    .pm-page{ background: var(--pm-bg); padding: 18px 12px 28px; }
+    .pm-wrap{ max-width: 1180px; margin: 0 auto; display: grid; gap: 14px; }
 
-    <div class="grupo-form">
-      <label for="proveedores">Proveedor:</label>
-      <select class="proveedores select-pedido" name="proveedores[]">
-        <option selected disabled>Seleccione un proveedor</option>
-        <% proveedores.forEach(function(proveedor) { %>
-          <option value="<%= proveedor.id %>"><%= proveedor.nombre %> (Desc: <%= proveedor.descuento || 0 %>%)</option>
-        <% }); %>
-      </select>
-    </div>
+    .pm-header{
+      background: var(--pm-card);
+      border: 1px solid var(--pm-border);
+      border-radius: var(--pm-radius);
+      box-shadow: var(--pm-shadow);
+      padding: 16px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+    }
+    .pm-title{ margin:0; font-size: 22px; line-height: 1.15; color: var(--pm-text); font-weight: 800; letter-spacing:.2px; }
+    .pm-sub{ margin:6px 0 0; color: var(--pm-muted); font-size: 13px; }
 
-    <div class="buscador-pedido">
-      <input type="text" id="entradaBusqueda" class="input-busqueda" placeholder="¿Qué estás buscando?" autocomplete="off">
-    </div>
+    .pm-actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .pm-btn{
+      height: var(--pm-tap);
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid var(--pm-border);
+      background: #fff;
+      color: var(--pm-text);
+      font-weight: 700;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+      text-decoration:none;
+      user-select:none;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    .pm-btn:hover{ transform: translateY(-1px); box-shadow: 0 8px 20px rgba(2,6,23,.10); border-color: rgba(31,72,126,.25); }
+    .pm-btn-primary{
+      background: linear-gradient(135deg, var(--pm-brand), #003f7d);
+      color:#fff;
+      border-color: transparent;
+    }
+    .pm-btn-primary:hover{ border-color: transparent; }
+    .pm-btn-danger{
+      background: rgba(217,4,41,.08);
+      color: var(--pm-accent);
+      border-color: rgba(217,4,41,.22);
+    }
 
-    <div id="contenedor-productos"></div>
+    .pm-card{
+      background: var(--pm-card);
+      border: 1px solid var(--pm-border);
+      border-radius: var(--pm-radius);
+      box-shadow: var(--pm-shadow);
+      padding: 14px;
+    }
 
-    <div class="tabla-contenedor">
-      <table id="tabla-pedido" class="tabla-pedido">
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Precio Unitario</th>
-            <th>Cantidad</th>
-            <th>Total</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-pedido-body"></tbody>
-        <tfoot>
-          <tr>
-            <td colspan="5" class="text-right">Total del pedido:</td>
-            <td id="total-pedido" class="total-pedido-num">$0</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
+    .pm-controls{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 12px;
+      align-items:end;
+    }
+    @media (max-width: 860px){
+      .pm-controls{ grid-template-columns: 1fr; }
+      .pm-actions{ width:100%; justify-content:flex-start; }
+    }
 
-    <div class="boton-confirmar-pedido">
-      <button id="btn-confirmar" class="btn-confirmar">CONFIRMAR</button>
-    </div>
+    .pm-label{ display:block; font-size: 12px; font-weight: 800; color: var(--pm-muted); margin: 0 0 6px; letter-spacing:.2px; }
+
+    .pm-select, .pm-input{
+      width: 100%;
+      height: var(--pm-tap);
+      border-radius: 12px;
+      border: 1px solid var(--pm-border);
+      background: #fff;
+      padding: 0 12px;
+      outline: none;
+      transition: border-color .12s ease, box-shadow .12s ease;
+      color: var(--pm-text);
+      font-weight: 700;
+    }
+    .pm-select:focus, .pm-input:focus{
+      border-color: rgba(31,72,126,.45);
+      box-shadow: 0 0 0 4px rgba(31,72,126,.12);
+    }
+
+    .pm-search{ position: relative; }
+    .pm-searchbox{ position: relative; }
+    .pm-clear{
+      position:absolute; right: 10px; top: 50%;
+      transform: translateY(-50%);
+      width: 34px; height: 34px;
+      border-radius: 999px;
+      border: 1px solid var(--pm-border);
+      background:#fff;
+      cursor:pointer;
+      font-weight:900;
+      color: var(--pm-muted);
+      display:none;
+    }
+    .pm-clear:hover{ color: var(--pm-text); }
+
+    /* Dropdown estable */
+    .pm-results{
+      position:absolute;
+      left:0; right:0;
+      top: calc(var(--pm-tap) + 10px);
+      background:#fff;
+      border: 1px solid var(--pm-border);
+      border-radius: 14px;
+      box-shadow: 0 18px 40px rgba(2,6,23,.14);
+      overflow:hidden;
+      max-height: 360px;
+      z-index: 50;
+    }
+    .pm-results[hidden]{ display:none; }
+
+    .pm-results-head{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--pm-border);
+      background: rgba(2,6,23,.02);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .pm-results-title{ font-weight:900; color: var(--pm-text); font-size: 12px; letter-spacing:.2px; }
+    .pm-results-note{ font-size: 12px; color: var(--pm-muted); }
+
+    .pm-results-list{ max-height: 308px; overflow:auto; }
+
+    .pm-item{
+      display:grid;
+      grid-template-columns: 44px 1fr 92px 110px;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(15,23,42,.07);
+      align-items:center;
+    }
+    .pm-item:last-child{ border-bottom:0; }
+    .pm-item:hover{ background: rgba(31,72,126,.05); }
+
+    .pm-item img{
+      width:44px; height:44px; border-radius: 12px;
+      object-fit: cover;
+      border: 1px solid rgba(15,23,42,.08);
+      background: rgba(2,6,23,.02);
+    }
+    .pm-item-name{
+      font-weight: 900;
+      color: var(--pm-text);
+      font-size: 13px;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pm-item-meta{
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--pm-muted);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .pm-pill{
+      display:inline-flex;
+      align-items:center;
+      height: 22px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      border: 1px solid rgba(31,72,126,.18);
+      background: rgba(31,72,126,.08);
+      color: var(--pm-brand);
+    }
+
+    .pm-qty{
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid var(--pm-border);
+      padding: 0 10px;
+      font-weight: 900;
+      width: 92px;
+      text-align: center;
+      outline:none;
+      font-variant-numeric: tabular-nums;
+    }
+    .pm-qty:focus{ border-color: rgba(31,72,126,.45); box-shadow: 0 0 0 4px rgba(31,72,126,.12); }
+
+    .pm-add{
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid rgba(31,72,126,.18);
+      background: rgba(31,72,126,.08);
+      color: var(--pm-brand);
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .pm-add:hover{ transform: translateY(-1px); box-shadow: 0 10px 20px rgba(2,6,23,.10); }
+    .pm-add[data-variant="update"]{
+      border-color: rgba(217,4,41,.22);
+      background: rgba(217,4,41,.08);
+      color: var(--pm-accent);
+    }
+
+    /* Tabla fija (no cambia ancho por texto/números) */
+    .pm-table-wrap{ overflow:auto; border-radius: var(--pm-radius); }
+    .pm-table{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      background:#fff;
+      border: 1px solid var(--pm-border);
+      border-radius: var(--pm-radius);
+      overflow:hidden;
+    }
+    .pm-table thead th{
+      background: rgba(2,6,23,.03);
+      font-size: 12px;
+      letter-spacing:.2px;
+      color: var(--pm-muted);
+      font-weight: 900;
+      text-align:left;
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--pm-border);
+      white-space: nowrap;
+    }
+    .pm-table tbody td{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(15,23,42,.07);
+      vertical-align: middle;
+      color: var(--pm-text);
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .pm-table tbody tr:hover{ background: rgba(31,72,126,.04); }
+    .pm-table tfoot td{
+      padding: 12px 12px;
+      background: rgba(2,6,23,.02);
+      font-weight: 900;
+      color: var(--pm-text);
+    }
+
+    .pm-td-name{
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 900;
+    }
+
+    .pm-num{
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .pm-right{ text-align:right; }
+
+    .pm-qty-input{
+      width: 96px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--pm-border);
+      text-align:center;
+      font-weight: 900;
+      outline:none;
+      font-variant-numeric: tabular-nums;
+    }
+    .pm-qty-input:focus{ border-color: rgba(31,72,126,.45); box-shadow: 0 0 0 4px rgba(31,72,126,.12); }
+
+    .pm-icon-btn{
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid rgba(217,4,41,.22);
+      background: rgba(217,4,41,.08);
+      color: var(--pm-accent);
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 900;
+    }
+    .pm-icon-btn:hover{ box-shadow: 0 10px 20px rgba(2,6,23,.10); transform: translateY(-1px); }
+
+    .pm-footer{
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+      gap: 12px;
+      flex-wrap:wrap;
+    }
+
+    .pm-total{
+      font-weight: 1000;
+      font-size: 16px;
+      color: var(--pm-text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pm-empty{
+      padding: 14px 12px;
+      color: var(--pm-muted);
+      font-weight: 800;
+      font-size: 13px;
+    }
+  </style>
+
+  <main class="pm-page">
+    <section class="pm-wrap">
+
+      <div class="pm-header">
+        <div>
+          <h2 class="pm-title">Pedido a Proveedor</h2>
+          <p class="pm-sub">Seleccioná proveedor, buscá por código o nombre, definí cantidad en la lista y agregá al pedido.</p>
+        </div>
+
+        <div class="pm-actions">
+          <a href="/productos/historialPedidos" class="pm-btn" aria-label="Ver historial de pedidos">Historial</a>
+          <button id="btn-confirmar" class="pm-btn pm-btn-primary" type="button">Confirmar</button>
+        </div>
+      </div>
+
+      <div class="pm-card">
+        <div class="pm-controls">
+          <div>
+            <label class="pm-label" for="proveedores">Proveedor</label>
+            <select class="proveedores pm-select" name="proveedores[]">
+              <option selected disabled>Seleccione un proveedor</option>
+              <% proveedores.forEach(function(proveedor) { %>
+                <option value="<%= proveedor.id %>"><%= proveedor.nombre %> (Desc: <%= proveedor.descuento || 0 %>%)</option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div class="pm-search" id="pmSearchWrap">
+            <label class="pm-label" for="entradaBusqueda">Buscar producto</label>
+            <div class="pm-searchbox">
+              <input type="text" id="entradaBusqueda" class="pm-input" placeholder="Seleccioná un proveedor para buscar..." autocomplete="off">
+              <button id="btnClearSearch" class="pm-clear" type="button" aria-label="Limpiar búsqueda">×</button>
+            </div>
+
+            <div id="contenedor-productos" class="pm-results" hidden>
+              <div class="pm-results-head">
+                <div class="pm-results-title">Resultados</div>
+                <div class="pm-results-note">Tip: podés escribir “OPTICA FIRE 04/14”</div>
+              </div>
+              <div class="pm-results-list" id="pmResultsList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pm-card">
+        <div class="pm-table-wrap">
+          <table id="tabla-pedido" class="pm-table">
+            <colgroup>
+              <col style="width: 14%">
+              <col style="width: 42%">
+              <col style="width: 14%">
+              <col style="width: 12%">
+              <col style="width: 14%">
+              <col style="width: 4%">
+            </colgroup>
+
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Producto</th>
+                <th class="pm-right">Unitario</th>
+                <th class="pm-right">Cantidad</th>
+                <th class="pm-right">Total</th>
+                <th class="pm-right">×</th>
+              </tr>
+            </thead>
+
+            <tbody id="tabla-pedido-body">
+              <tr><td colspan="6" class="pm-empty">No hay productos en el pedido.</td></tr>
+            </tbody>
+
+            <tfoot>
+              <tr>
+                <td colspan="4" class="pm-right">Total del pedido:</td>
+                <td id="total-pedido" class="pm-right pm-total">$0</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </section>
   </main>
 
   <%- include('./layouts/footer.ejs') %>
-  <script src="/js/buscadorPedidoManual.js"></script>
-  
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+  <script src="/js/buscadorPedidoManual.js"></script>
 </body>

@@ -1,17 +1,28 @@
 let productosSeleccionados = [];
 let timer;
+let lastResults = [];
 
 const entradaBusqueda = document.getElementById('entradaBusqueda');
-const contenedorProductos = document.getElementById('contenedor-productos');
 const proveedorSelect = document.querySelector('.proveedores');
+
+const contenedorProductos = document.getElementById('contenedor-productos'); // panel
+const resultsList = document.getElementById('pmResultsList'); // lista interna
+
+const tablaBody = document.getElementById('tabla-pedido-body');
+const totalPedidoEl = document.getElementById('total-pedido');
+
+const btnConfirmar = document.getElementById('btn-confirmar');
+const btnClearSearch = document.getElementById('btnClearSearch');
+const searchWrap = document.getElementById('pmSearchWrap');
 
 function proveedorValido(val) {
   return /^\d+$/.test(String(val || ''));
 }
 
-function limpiarBusqueda() {
-  entradaBusqueda.value = '';
-  contenedorProductos.innerHTML = '';
+function clampInt(n, min, max) {
+  const x = parseInt(n, 10);
+  if (Number.isNaN(x)) return min;
+  return Math.max(min, typeof max === 'number' ? Math.min(max, x) : x);
 }
 
 function formatearNumero(num) {
@@ -19,114 +30,208 @@ function formatearNumero(num) {
   return entero.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+function money(num) {
+  return `$${formatearNumero(num)}`;
+}
+
 function obtenerCodigoPorProveedor(producto) {
-  // En este flujo, el API ya debe traer `codigo` del proveedor seleccionado
   return producto.codigo || '—';
 }
 
-function mostrarProductos(productos) {
-  contenedorProductos.innerHTML = '';
+function getSelById(id) {
+  return productosSeleccionados.find(p => Number(p.id) === Number(id)) || null;
+}
 
-  if (!productos || productos.length === 0) {
-    contenedorProductos.innerHTML = '<p>No hay productos disponibles</p>';
+function calcularTotalesProducto(p) {
+  const costo = Number(p.costo_neto) || 0;
+  const cant = Number(p.cantidad) || 1;
+  p.precioTotal = costo * cant;
+}
+
+function actualizarTotalPedido() {
+  const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
+  totalPedidoEl.innerText = money(total);
+}
+
+function renderTabla() {
+  if (!productosSeleccionados.length) {
+    tablaBody.innerHTML = `<tr><td colspan="6" class="pm-empty">No hay productos en el pedido.</td></tr>`;
+    actualizarTotalPedido();
     return;
   }
 
-  productos.forEach((producto) => {
-    const divProducto = document.createElement('div');
-    divProducto.classList.add('producto-sugerido');
+  const rowsHtml = productosSeleccionados.map((p) => {
+    const code = obtenerCodigoPorProveedor(p);
+    const nombre = (p.nombre || '').toString();
+    const unit = Number(p.costo_neto) || 0;
+    const total = Number(p.precioTotal) || 0;
 
-    const img =
-      producto.imagenes && Array.isArray(producto.imagenes) && producto.imagenes.length > 0
-        ? `/uploads/productos/${producto.imagenes[0].imagen || producto.imagenes[0]}`
-        : '/ruta/imagen-defecto.jpg';
-
-    divProducto.innerHTML = `
-      <img src="${img}" alt="${producto.nombre}">
-      <span>${producto.nombre}</span>
+    return `
+      <tr data-id="${p.id}">
+        <td class="pm-num">${code}</td>
+        <td class="pm-td-name" title="${nombre.replace(/"/g, '&quot;')}">${nombre}</td>
+        <td class="pm-right pm-num">${money(unit)}</td>
+        <td class="pm-right">
+          <input
+            class="pm-qty-input"
+            type="number"
+            min="1"
+            step="1"
+            inputmode="numeric"
+            value="${p.cantidad}"
+            aria-label="Cantidad"
+          />
+        </td>
+        <td class="pm-right pm-num"><span class="row-total">${money(total)}</span></td>
+        <td class="pm-right">
+          <button class="pm-icon-btn" type="button" data-action="remove" aria-label="Eliminar">×</button>
+        </td>
+      </tr>
     `;
+  }).join('');
 
-    divProducto.addEventListener('click', () => agregarProductoATabla(producto));
-    contenedorProductos.appendChild(divProducto);
-  });
-}
-
-function agregarProductoATabla(producto) {
-  if (productosSeleccionados.some((p) => p.id === producto.id)) {
-    alert('Este producto ya está agregado al pedido.');
-    return;
-  }
-
-  producto.cantidad = 1;
-  producto.precioTotal = parseFloat(producto.costo_neto) || 0;
-
-  productosSeleccionados.push(producto);
-  actualizarTabla();
-}
-
-function actualizarTabla() {
-  const tablaBody = document.getElementById('tabla-pedido-body');
-  tablaBody.innerHTML = '';
-
-  productosSeleccionados.forEach((producto, index) => {
-    const precioTotal = parseFloat(producto.precioTotal) || 0;
-
-    const fila = document.createElement('tr');
-    fila.innerHTML = `
-      <td>${obtenerCodigoPorProveedor(producto)}</td>
-      <td>${producto.nombre}</td>
-      <td>$${formatearNumero(parseFloat(producto.costo_neto))}</td>
-      <td>
-        <div class="cantidad-controles">
-          <button class="btn-cantidad btn-menos" onclick="cambiarCantidad(${index}, -1)">−</button>
-          <span class="cantidad-numero">${producto.cantidad}</span>
-          <button class="btn-cantidad btn-mas" onclick="cambiarCantidad(${index}, 1)">+</button>
-        </div>
-      </td>
-      <td>$<span id="precio-total-${producto.id}">${formatearNumero(precioTotal)}</span></td>
-      <td><button onclick="eliminarProducto(${index})" class="btn btn-danger">Eliminar</button></td>
-    `;
-    tablaBody.appendChild(fila);
-  });
-
+  tablaBody.innerHTML = rowsHtml;
   actualizarTotalPedido();
 }
 
-window.cambiarCantidad = function (index, cambio) {
-  const producto = productosSeleccionados[index];
-  producto.cantidad += cambio;
-
-  if (producto.cantidad < 1) {
-    productosSeleccionados.splice(index, 1);
-  } else {
-    producto.precioTotal = (parseFloat(producto.costo_neto) || 0) * producto.cantidad;
-  }
-
-  actualizarTabla();
-};
-
-window.eliminarProducto = function (index) {
-  productosSeleccionados.splice(index, 1);
-  actualizarTabla();
-};
-
-function actualizarTotalPedido() {
-  const total = productosSeleccionados.reduce(
-    (sum, producto) => sum + (parseFloat(producto.precioTotal) || 0),
-    0
-  );
-  document.getElementById('total-pedido').innerText = `$${formatearNumero(total)}`;
+function showPanel() {
+  if (!contenedorProductos) return;
+  contenedorProductos.hidden = false;
 }
 
-// --- UX: deshabilitar búsqueda hasta elegir proveedor
+function hidePanel() {
+  if (!contenedorProductos) return;
+  contenedorProductos.hidden = true;
+}
+
+function setClearVisible() {
+  btnClearSearch.style.display = entradaBusqueda.value.trim().length ? 'inline-flex' : 'none';
+}
+
+function limpiarResultados() {
+  lastResults = [];
+  if (resultsList) resultsList.innerHTML = '';
+  hidePanel();
+}
+
+function limpiarInputYResultados() {
+  entradaBusqueda.value = '';
+  setClearVisible();
+  limpiarResultados();
+}
+
+function imgSrc(producto) {
+  const imgs = producto.imagenes;
+  if (imgs && Array.isArray(imgs) && imgs.length > 0) {
+    const first = imgs[0];
+    const name = first && typeof first === 'object' ? first.imagen : first;
+    if (name) return `/uploads/productos/${name}`;
+  }
+  return '/ruta/imagen-defecto.jpg';
+}
+
+function renderResultados(productos) {
+  lastResults = Array.isArray(productos) ? productos : [];
+
+  if (!lastResults.length) {
+    resultsList.innerHTML = `<div class="pm-empty">Sin resultados.</div>`;
+    showPanel();
+    return;
+  }
+
+  const html = lastResults.map((p) => {
+    const sel = getSelById(p.id);
+    const qtyValue = sel ? sel.cantidad : 1;
+
+    return `
+      <div class="pm-item" data-id="${p.id}">
+        <img src="${imgSrc(p)}" alt="${(p.nombre || '').toString().replace(/"/g, '&quot;')}">
+        <div>
+          <div class="pm-item-name">${(p.nombre || '').toString()}</div>
+          <div class="pm-item-meta">
+            <span class="pm-pill">Cod: ${obtenerCodigoPorProveedor(p)}</span>
+            &nbsp;•&nbsp; Unit: ${money(Number(p.costo_neto) || 0)}
+            ${sel ? '&nbsp;•&nbsp;<span class="pm-pill">En pedido</span>' : ''}
+          </div>
+        </div>
+
+        <input
+          class="pm-qty"
+          type="number"
+          min="1"
+          step="1"
+          inputmode="numeric"
+          value="${qtyValue}"
+          aria-label="Cantidad para agregar"
+        />
+
+        <button
+          class="pm-add"
+          type="button"
+          data-action="${sel ? 'update' : 'add'}"
+          data-variant="${sel ? 'update' : 'add'}"
+        >${sel ? 'Actualizar' : 'Agregar'}</button>
+      </div>
+    `;
+  }).join('');
+
+  resultsList.innerHTML = html;
+  showPanel();
+}
+
+async function buscarProductos() {
+  const proveedor_id = proveedorSelect.value;
+  if (!proveedorValido(proveedor_id)) return;
+
+  const q = entradaBusqueda.value.trim();
+  setClearVisible();
+
+  if (!q) {
+    limpiarResultados();
+    return;
+  }
+
+  const url = `/productos/api/buscar?q=${encodeURIComponent(q)}&proveedor_id=${encodeURIComponent(proveedor_id)}&limite=30`;
+  const resp = await fetch(url);
+  const productos = await resp.json();
+
+  // Opcional: no ocultar los ya agregados; se muestran como "En pedido" con botón Actualizar
+  renderResultados(productos || []);
+}
+
+function upsertProductoDesdeResultado(producto, cantidad, modo) {
+  const cant = clampInt(cantidad, 1);
+
+  const existente = getSelById(producto.id);
+  if (existente) {
+    // ✅ modo update: setea cantidad directamente (lo pedido)
+    existente.cantidad = cant;
+    calcularTotalesProducto(existente);
+  } else {
+    const nuevo = { ...producto };
+    nuevo.cantidad = cant;
+    calcularTotalesProducto(nuevo);
+    productosSeleccionados.push(nuevo);
+  }
+
+  renderTabla();
+  // refresca resultados para reflejar "En pedido" y qty
+  if (entradaBusqueda.value.trim()) {
+    renderResultados(lastResults);
+  }
+}
+
+// --- Estado inicial
 entradaBusqueda.disabled = true;
 entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+hidePanel();
+setClearVisible();
 
+// --- Proveedor change: resetea pedido (1 proveedor por pedido)
 proveedorSelect.addEventListener('change', () => {
-  limpiarBusqueda();
-  contenedorProductos.innerHTML = '';
-  productosSeleccionados = []; // pedido = 1 proveedor
-  actualizarTabla();
+  productosSeleccionados = [];
+  renderTabla();
+  limpiarInputYResultados();
 
   if (proveedorValido(proveedorSelect.value)) {
     entradaBusqueda.disabled = false;
@@ -138,39 +243,103 @@ proveedorSelect.addEventListener('change', () => {
   }
 });
 
-// --- Búsqueda filtrada por proveedor
-entradaBusqueda.addEventListener('input', (e) => {
+// --- Input búsqueda con debounce
+entradaBusqueda.addEventListener('input', () => {
   clearTimeout(timer);
-
-  timer = setTimeout(async () => {
-    const proveedor_id = proveedorSelect.value;
-
-    contenedorProductos.innerHTML = '';
-
-    if (!proveedorValido(proveedor_id)) return;
-
-    const busqueda = e.target.value.trim();
-    if (!busqueda) return;
-
-    const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}&proveedor_id=${encodeURIComponent(proveedor_id)}&limite=30`;
-
-
-    const respuesta = await fetch(url);
-    const productos = await respuesta.json();
-
-    const productosFiltrados = (productos || []).filter(
-      (p) => !productosSeleccionados.some((sel) => sel.id === p.id)
-    );
-
-    mostrarProductos(productosFiltrados);
-  }, 250);
+  timer = setTimeout(() => {
+    buscarProductos().catch(console.error);
+  }, 220);
 });
 
-contenedorProductos.addEventListener('mouseenter', () => clearTimeout(timer));
-contenedorProductos.addEventListener('mouseleave', limpiarBusqueda);
+entradaBusqueda.addEventListener('focus', () => {
+  if (entradaBusqueda.value.trim() && (lastResults.length || resultsList.innerHTML.trim().length)) showPanel();
+});
 
-// Confirmar pedido
-document.getElementById('btn-confirmar').addEventListener('click', async function () {
+btnClearSearch.addEventListener('click', () => {
+  limpiarInputYResultados();
+  entradaBusqueda.focus();
+});
+
+// --- Cerrar panel al click fuera (sin borrar lo escrito)
+document.addEventListener('mousedown', (e) => {
+  if (!searchWrap.contains(e.target)) {
+    hidePanel();
+  }
+});
+
+// --- Click en resultados (delegación)
+resultsList.addEventListener('click', (e) => {
+  const item = e.target.closest('.pm-item');
+  if (!item) return;
+
+  const id = Number(item.dataset.id);
+  const producto = lastResults.find(p => Number(p.id) === id);
+  if (!producto) return;
+
+  const qtyInput = item.querySelector('.pm-qty');
+  const cantidad = qtyInput ? qtyInput.value : 1;
+
+  const btn = e.target.closest('button.pm-add');
+  if (!btn) return;
+
+  upsertProductoDesdeResultado(producto, cantidad, btn.dataset.action);
+});
+
+// Evitar que el click en panel cierre por blur/otros
+contenedorProductos.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+});
+
+// --- Tabla: cambiar cantidad escribiendo (sin re-render completo)
+tablaBody.addEventListener('input', (e) => {
+  const input = e.target.closest('.pm-qty-input');
+  if (!input) return;
+
+  const tr = input.closest('tr');
+  const id = tr?.dataset?.id;
+  if (!id) return;
+
+  const p = getSelById(id);
+  if (!p) return;
+
+  const val = input.value;
+  // durante escritura: si está vacío, no recalcular todavía
+  if (val === '') return;
+
+  p.cantidad = clampInt(val, 1);
+  calcularTotalesProducto(p);
+
+  // actualiza total fila + footer, sin reconstruir tabla
+  const rowTotal = tr.querySelector('.row-total');
+  if (rowTotal) rowTotal.textContent = money(p.precioTotal);
+  actualizarTotalPedido();
+
+  // también sincroniza dropdown si está abierto
+  if (!contenedorProductos.hidden) renderResultados(lastResults);
+});
+
+tablaBody.addEventListener('change', (e) => {
+  const input = e.target.closest('.pm-qty-input');
+  if (!input) return;
+  if (input.value === '' || Number(input.value) < 1) input.value = 1;
+});
+
+tablaBody.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action="remove"]');
+  if (!btn) return;
+
+  const tr = btn.closest('tr');
+  const id = tr?.dataset?.id;
+  if (!id) return;
+
+  productosSeleccionados = productosSeleccionados.filter(p => Number(p.id) !== Number(id));
+  renderTabla();
+
+  if (!contenedorProductos.hidden) renderResultados(lastResults);
+});
+
+// --- Confirmar pedido (igual, pero mantiene cantidades)
+btnConfirmar.addEventListener('click', async () => {
   const proveedor_id = proveedorSelect.value;
 
   if (!proveedorValido(proveedor_id)) {
@@ -183,19 +352,16 @@ document.getElementById('btn-confirmar').addEventListener('click', async functio
     return;
   }
 
-  const total = productosSeleccionados.reduce(
-    (sum, producto) => sum + (parseFloat(producto.precioTotal) || 0),
-    0
-  );
+  const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
 
   const datosPedido = {
     proveedor_id,
     total,
-    productos: productosSeleccionados.map((producto) => ({
-      id: producto.id,
-      cantidad: producto.cantidad,
-      costo_neto: producto.costo_neto,
-      codigo: producto.codigo,
+    productos: productosSeleccionados.map((p) => ({
+      id: p.id,
+      cantidad: p.cantidad,
+      costo_neto: p.costo_neto,
+      codigo: p.codigo,
     })),
   };
 
@@ -220,7 +386,6 @@ document.getElementById('btn-confirmar').addEventListener('click', async functio
 });
 
 function generarPDF() {
-  const proveedor_id = proveedorSelect.value;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
@@ -228,23 +393,19 @@ function generarPDF() {
   doc.text('Pedido Confirmado', 10, 10);
 
   const headers = [['Código', 'Producto', 'Costo Neto', 'Cantidad', 'Precio Total']];
-  const rows = productosSeleccionados.map((producto) => [
-    obtenerCodigoPorProveedor(producto, proveedor_id),
-    producto.nombre,
-    `$${formatearNumero(parseFloat(producto.costo_neto))}`,
-    producto.cantidad,
-    `$${formatearNumero(parseFloat(producto.precioTotal))}`,
+  const rows = productosSeleccionados.map((p) => [
+    obtenerCodigoPorProveedor(p),
+    p.nombre,
+    money(Number(p.costo_neto) || 0),
+    p.cantidad,
+    money(Number(p.precioTotal) || 0),
   ]);
 
   doc.autoTable({ head: headers, body: rows, startY: 20 });
 
-  const total = productosSeleccionados.reduce(
-    (sum, producto) => sum + (parseFloat(producto.precioTotal) || 0),
-    0
-  );
-
+  const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
   doc.setFontSize(12);
-  doc.text(`Total Pedido: $${formatearNumero(total)}`, 10, doc.previousAutoTable.finalY + 10);
+  doc.text(`Total Pedido: ${money(total)}`, 10, doc.previousAutoTable.finalY + 10);
 
   doc.save('pedido_confirmado.pdf');
 }
