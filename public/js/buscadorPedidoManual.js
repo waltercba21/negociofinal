@@ -19,8 +19,31 @@ const searchWrap = document.getElementById('pmSearchWrap');
 const btnPdfProveedor = document.getElementById('btn-pdf-proveedor');
 const btnContinuar = document.getElementById('btn-continuar');
 
+// edición
 const pedidoIdInput = document.getElementById('pedido_id');
-const pedidoBadge = document.getElementById('pmPedidoBadge');
+const pedidoBadgeEl = document.getElementById('pmPedidoBadge');
+
+let currentPedidoId = pedidoIdInput?.value ? Number(pedidoIdInput.value) : null;
+
+function setPedidoId(id) {
+  currentPedidoId = id ? Number(id) : null;
+
+  if (pedidoIdInput) pedidoIdInput.value = currentPedidoId ? String(currentPedidoId) : '';
+
+  if (pedidoBadgeEl) {
+    if (currentPedidoId) {
+      pedidoBadgeEl.hidden = false;
+      pedidoBadgeEl.textContent = `Pedido #${currentPedidoId}`;
+    } else {
+      pedidoBadgeEl.hidden = true;
+      pedidoBadgeEl.textContent = '';
+    }
+  }
+}
+
+function markDirty() {
+  pedidoGuardado = false;
+}
 
 function fechaPedidoStr() {
   return new Intl.DateTimeFormat('es-AR', {
@@ -49,6 +72,11 @@ function money(num) {
   return `$${formatearNumero(num)}`;
 }
 
+function fmtUnit(val) {
+  const n = Number(val);
+  return Number.isFinite(n) && n > 0 ? money(n) : '—';
+}
+
 function obtenerCodigoPorProveedor(producto) {
   return producto.codigo || '—';
 }
@@ -65,12 +93,10 @@ function calcularTotalesProducto(p) {
 
 function actualizarTotalPedido() {
   const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
-  if (totalPedidoEl) totalPedidoEl.innerText = money(total);
+  totalPedidoEl.innerText = money(total);
 }
 
 function renderTabla() {
-  if (!tablaBody) return;
-
   if (!productosSeleccionados.length) {
     tablaBody.innerHTML = `<tr><td colspan="6" class="pm-empty">No hay productos en el pedido.</td></tr>`;
     actualizarTotalPedido();
@@ -80,14 +106,14 @@ function renderTabla() {
   const rowsHtml = productosSeleccionados.map((p) => {
     const code = obtenerCodigoPorProveedor(p);
     const nombre = (p.nombre || '').toString();
-    const unit = Number(p.costo_neto) || 0;
+    const unitTxt = fmtUnit(p.costo_neto);
     const total = Number(p.precioTotal) || 0;
 
     return `
       <tr data-id="${p.id}">
         <td class="pm-num">${code}</td>
         <td class="pm-td-name" title="${nombre.replace(/"/g, '&quot;')}">${nombre}</td>
-        <td class="pm-right pm-num">${money(unit)}</td>
+        <td class="pm-right pm-num">${unitTxt}</td>
         <td class="pm-right">
           <input
             class="pm-qty-input"
@@ -122,7 +148,6 @@ function hidePanel() {
 }
 
 function setClearVisible() {
-  if (!btnClearSearch || !entradaBusqueda) return;
   btnClearSearch.style.display = entradaBusqueda.value.trim().length ? 'inline-flex' : 'none';
 }
 
@@ -133,7 +158,6 @@ function limpiarResultados() {
 }
 
 function limpiarInputYResultados() {
-  if (!entradaBusqueda) return;
   entradaBusqueda.value = '';
   setClearVisible();
   limpiarResultados();
@@ -150,8 +174,6 @@ function imgSrc(producto) {
 }
 
 function renderResultados(productos) {
-  if (!resultsList) return;
-
   lastResults = Array.isArray(productos) ? productos : [];
 
   if (!lastResults.length) {
@@ -171,7 +193,7 @@ function renderResultados(productos) {
           <div class="pm-item-name">${(p.nombre || '').toString()}</div>
           <div class="pm-item-meta">
             <span class="pm-pill">Cod: ${obtenerCodigoPorProveedor(p)}</span>
-            &nbsp;•&nbsp; Unit: ${money(Number(p.costo_neto) || 0)}
+            &nbsp;•&nbsp; Unit: ${fmtUnit(p.costo_neto)}
             ${sel ? '&nbsp;•&nbsp;<span class="pm-pill">En pedido</span>' : ''}
           </div>
         </div>
@@ -200,40 +222,9 @@ function renderResultados(productos) {
   showPanel();
 }
 
-function getPedidoId() {
-  const v = pedidoIdInput?.value;
-  return proveedorValido(v) ? Number(v) : null;
-}
-
-function setPedidoId(id) {
-  const newId = proveedorValido(id) ? String(id) : '';
-  if (pedidoIdInput) pedidoIdInput.value = newId;
-
-  if (pedidoBadge) {
-    if (newId) {
-      pedidoBadge.hidden = false;
-      pedidoBadge.innerText = `Pedido #${newId}`;
-    } else {
-      pedidoBadge.hidden = true;
-    }
-  }
-}
-
-function enableSearch() {
-  if (!entradaBusqueda) return;
-  entradaBusqueda.disabled = false;
-  entradaBusqueda.placeholder = 'Buscar por código o nombre...';
-}
-
-function disableSearch() {
-  if (!entradaBusqueda) return;
-  entradaBusqueda.disabled = true;
-  entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
-}
-
 async function buscarProductos() {
-  const proveedor_id = proveedorSelect?.value;
-  if (!proveedorValido(proveedor_id) || !entradaBusqueda) return;
+  const proveedor_id = proveedorSelect.value;
+  if (!proveedorValido(proveedor_id)) return;
 
   const q = entradaBusqueda.value.trim();
   setClearVisible();
@@ -244,19 +235,10 @@ async function buscarProductos() {
   }
 
   const url = `/productos/api/buscar?q=${encodeURIComponent(q)}&proveedor_id=${encodeURIComponent(proveedor_id)}&limite=30`;
+  const resp = await fetch(url);
+  const productos = await resp.json();
 
-  try {
-    const resp = await fetch(url);
-    const productos = await resp.json().catch(() => []);
-    renderResultados(productos || []);
-  } catch (e) {
-    console.error('Error buscando productos:', e);
-    renderResultados([]);
-  }
-}
-
-function marcarNoGuardado() {
-  pedidoGuardado = false;
+  renderResultados(productos || []);
 }
 
 function upsertProductoDesdeResultado(producto, cantidad) {
@@ -265,6 +247,10 @@ function upsertProductoDesdeResultado(producto, cantidad) {
   const existente = getSelById(producto.id);
   if (existente) {
     existente.cantidad = cant;
+    // si el costo viene 0, igual queda; el fix real está en backend
+    if (producto.costo_neto != null) existente.costo_neto = producto.costo_neto;
+    if (producto.codigo != null) existente.codigo = producto.codigo;
+
     calcularTotalesProducto(existente);
   } else {
     const nuevo = { ...producto };
@@ -273,10 +259,10 @@ function upsertProductoDesdeResultado(producto, cantidad) {
     productosSeleccionados.push(nuevo);
   }
 
-  marcarNoGuardado();
+  markDirty();
   renderTabla();
 
-  if (entradaBusqueda && entradaBusqueda.value.trim()) {
+  if (entradaBusqueda.value.trim()) {
     renderResultados(lastResults);
   }
 }
@@ -284,13 +270,11 @@ function upsertProductoDesdeResultado(producto, cantidad) {
 function proveedorNombreSeleccionado() {
   const opt = proveedorSelect?.selectedOptions?.[0];
   if (!opt) return 'Proveedor';
-
-  // Ej: "LAM (Desc: 61.52%)" => "LAM"
   return opt.textContent.replace(/\s*\(Desc:.*\)\s*$/i, '').trim();
 }
 
 function construirDatosPedido() {
-  const proveedor_id = proveedorSelect?.value;
+  const proveedor_id = proveedorSelect.value;
 
   if (!proveedorValido(proveedor_id)) {
     alert('Seleccioná un proveedor');
@@ -305,12 +289,13 @@ function construirDatosPedido() {
   const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
 
   return {
-    pedido_id: getPedidoId(),
+    pedido_id: currentPedidoId || null, // ✅ clave para editar el pedido existente
     proveedor_id,
     total,
     productos: productosSeleccionados.map((p) => ({
       id: p.id,
       cantidad: p.cantidad,
+      // no se usa en DB, pero lo dejo por si lo querés loguear / mostrar
       costo_neto: p.costo_neto,
       codigo: p.codigo,
     })),
@@ -330,17 +315,18 @@ async function guardarPedidoSiHaceFalta() {
       body: JSON.stringify(datosPedido),
     });
 
-    const data = await respuesta.json().catch(() => ({}));
-
     if (!respuesta.ok) {
-      alert('Error al guardar el pedido: ' + (data.message || ''));
+      const errorData = await respuesta.json().catch(() => ({}));
+      alert('Error al guardar el pedido: ' + (errorData.message || ''));
       return { ok: false, savedNow: false };
     }
 
-    if (data && data.pedido_id) setPedidoId(data.pedido_id);
+    const data = await respuesta.json().catch(() => ({}));
+    if (data && data.pedido_id) {
+      setPedidoId(data.pedido_id);
+    }
 
     pedidoGuardado = true;
-    alert('Pedido guardado con éxito');
     return { ok: true, savedNow: true };
   } catch (error) {
     console.error('Error al guardar el pedido:', error);
@@ -354,13 +340,15 @@ function resetAll() {
   lastResults = [];
   pedidoGuardado = false;
 
+  setPedidoId(null);
+
   renderTabla();
   limpiarInputYResultados();
 
   if (proveedorSelect) proveedorSelect.selectedIndex = 0;
 
-  setPedidoId(null);
-  disableSearch();
+  entradaBusqueda.disabled = true;
+  entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
   hidePanel();
 }
 
@@ -381,7 +369,7 @@ function generarPDFInterno() {
   const rows = productosSeleccionados.map((p) => [
     obtenerCodigoPorProveedor(p),
     p.nombre,
-    money(Number(p.costo_neto) || 0),
+    fmtUnit(p.costo_neto),
     String(p.cantidad),
     money(Number(p.precioTotal) || 0),
   ]);
@@ -430,100 +418,95 @@ function generarPDFProveedor() {
   doc.save('pedido_para_proveedor.pdf');
 }
 
-function getPreload() {
-  if (window.__PEDIDO_PRELOAD__ && typeof window.__PEDIDO_PRELOAD__ === 'object') {
-    return window.__PEDIDO_PRELOAD__;
+// ✅ PRELOAD edición (Editar desde historial)
+function aplicarPreloadEdicion() {
+  const preload = window.__PEDIDO_PRELOAD__;
+  if (!preload || !preload.pedidoId) return;
+
+  const pid = Number(preload.pedidoId) || null;
+  setPedidoId(pid);
+
+  // set proveedor
+  if (preload.proveedorId != null) {
+    proveedorSelect.value = String(preload.proveedorId);
   }
-  const el = document.getElementById('pedido-preload');
-  if (!el) return null;
-  try {
-    return JSON.parse(el.textContent || '');
-  } catch {
-    return null;
+
+  if (proveedorValido(proveedorSelect.value)) {
+    entradaBusqueda.disabled = false;
+    entradaBusqueda.placeholder = 'Buscar por código o nombre...';
+  } else {
+    entradaBusqueda.disabled = true;
+    entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
   }
+
+  // items
+  const items = Array.isArray(preload.items) ? preload.items : [];
+  productosSeleccionados = items.map((it) => {
+    const p = { ...it };
+    p.id = Number(p.id);
+    p.cantidad = clampInt(p.cantidad, 1);
+    calcularTotalesProducto(p);
+    return p;
+  });
+
+  pedidoGuardado = true; // ya existe en DB
+  renderTabla();
 }
 
 // --- Estado inicial
-disableSearch();
+entradaBusqueda.disabled = true;
+entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
 hidePanel();
 setClearVisible();
 renderTabla();
+aplicarPreloadEdicion();
 
-// --- Preload (editar pedido desde historial)
-(function aplicarPreloadEdicion() {
-  const preload = getPreload();
-  if (!preload || !preload.pedidoId) {
-    // si el EJS marcó proveedor selected, habilitar búsqueda
-    if (proveedorValido(proveedorSelect?.value)) enableSearch();
-    return;
-  }
-
-  setPedidoId(preload.pedidoId);
-
-  if (proveedorValido(preload.proveedorId) && proveedorSelect) {
-    proveedorSelect.value = String(preload.proveedorId);
-    enableSearch();
-  } else {
-    disableSearch();
-  }
-
-  if (Array.isArray(preload.items) && preload.items.length) {
-    productosSeleccionados = preload.items.map((it) => {
-      const p = { ...it };
-      p.cantidad = clampInt(p.cantidad, 1);
-      calcularTotalesProducto(p);
-      return p;
-    });
-    renderTabla();
-  }
-
-  // ya existe en DB al entrar por "Editar"
-  pedidoGuardado = true;
-})();
-
-// --- Proveedor change: resetea productos (1 proveedor por pedido)
-proveedorSelect?.addEventListener('change', () => {
+// --- Proveedor change: resetea pedido (1 proveedor por pedido)
+proveedorSelect.addEventListener('change', () => {
   productosSeleccionados = [];
   renderTabla();
   limpiarInputYResultados();
-  marcarNoGuardado();
+
+  // si cambiaste el proveedor, no tiene sentido mantener el pedido anterior
+  setPedidoId(null);
+  pedidoGuardado = false;
 
   if (proveedorValido(proveedorSelect.value)) {
-    enableSearch();
+    entradaBusqueda.disabled = false;
+    entradaBusqueda.placeholder = 'Buscar por código o nombre...';
     entradaBusqueda.focus();
   } else {
-    disableSearch();
+    entradaBusqueda.disabled = true;
+    entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
   }
 });
 
 // --- Input búsqueda con debounce
-entradaBusqueda?.addEventListener('input', () => {
-  setClearVisible();
+entradaBusqueda.addEventListener('input', () => {
   clearTimeout(timer);
   timer = setTimeout(() => {
     buscarProductos().catch(console.error);
   }, 220);
 });
 
-entradaBusqueda?.addEventListener('focus', () => {
-  if (entradaBusqueda.value.trim() && (lastResults.length || (resultsList?.innerHTML || '').trim().length)) showPanel();
+entradaBusqueda.addEventListener('focus', () => {
+  if (entradaBusqueda.value.trim() && (lastResults.length || resultsList.innerHTML.trim().length)) showPanel();
 });
 
-btnClearSearch?.addEventListener('click', () => {
+btnClearSearch.addEventListener('click', () => {
   limpiarInputYResultados();
-  entradaBusqueda?.focus();
+  entradaBusqueda.focus();
 });
 
 // --- Cerrar panel al click fuera (sin borrar lo escrito)
 document.addEventListener('mousedown', (e) => {
-  if (!searchWrap) return;
   if (!searchWrap.contains(e.target)) {
     hidePanel();
   }
 });
 
 // --- Click en resultados (delegación)
-resultsList?.addEventListener('click', (e) => {
+resultsList.addEventListener('click', (e) => {
   const item = e.target.closest('.pm-item');
   if (!item) return;
 
@@ -531,23 +514,23 @@ resultsList?.addEventListener('click', (e) => {
   const producto = lastResults.find(p => Number(p.id) === id);
   if (!producto) return;
 
-  const btn = e.target.closest('button.pm-add');
-  if (!btn) return;
-
   const qtyInput = item.querySelector('.pm-qty');
   const cantidad = qtyInput ? qtyInput.value : 1;
+
+  const btn = e.target.closest('button.pm-add');
+  if (!btn) return;
 
   upsertProductoDesdeResultado(producto, cantidad);
 });
 
 // ✅ No bloquear foco: permite escribir en inputs y clickear botones
-contenedorProductos?.addEventListener('mousedown', (e) => {
+contenedorProductos.addEventListener('mousedown', (e) => {
   if (e.target.closest('input, button, a, select, textarea, label')) return;
   e.preventDefault();
 });
 
 // --- Tabla: cambiar cantidad escribiendo (sin re-render completo)
-tablaBody?.addEventListener('input', (e) => {
+tablaBody.addEventListener('input', (e) => {
   const input = e.target.closest('.pm-qty-input');
   if (!input) return;
 
@@ -568,17 +551,18 @@ tablaBody?.addEventListener('input', (e) => {
   if (rowTotal) rowTotal.textContent = money(p.precioTotal);
   actualizarTotalPedido();
 
-  marcarNoGuardado();
-  if (!contenedorProductos?.hidden) renderResultados(lastResults);
+  markDirty();
+
+  if (!contenedorProductos.hidden) renderResultados(lastResults);
 });
 
-tablaBody?.addEventListener('change', (e) => {
+tablaBody.addEventListener('change', (e) => {
   const input = e.target.closest('.pm-qty-input');
   if (!input) return;
   if (input.value === '' || Number(input.value) < 1) input.value = 1;
 });
 
-tablaBody?.addEventListener('click', (e) => {
+tablaBody.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-action="remove"]');
   if (!btn) return;
 
@@ -587,25 +571,25 @@ tablaBody?.addEventListener('click', (e) => {
   if (!id) return;
 
   productosSeleccionados = productosSeleccionados.filter(p => Number(p.id) !== Number(id));
+  markDirty();
   renderTabla();
-  marcarNoGuardado();
 
-  if (!contenedorProductos?.hidden) renderResultados(lastResults);
+  if (!contenedorProductos.hidden) renderResultados(lastResults);
 });
 
 // --- Botones PDF + reset
-btnConfirmar?.addEventListener('click', async () => {
+btnConfirmar.addEventListener('click', async () => {
   const { ok } = await guardarPedidoSiHaceFalta();
   if (!ok) return;
   generarPDFInterno();
 });
 
-btnPdfProveedor?.addEventListener('click', async () => {
+btnPdfProveedor.addEventListener('click', async () => {
   const { ok } = await guardarPedidoSiHaceFalta();
   if (!ok) return;
   generarPDFProveedor();
 });
 
-btnContinuar?.addEventListener('click', () => {
+btnContinuar.addEventListener('click', () => {
   resetAll();
 });
