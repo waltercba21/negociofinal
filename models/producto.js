@@ -1041,19 +1041,37 @@ obtenerPorFiltrosYProveedor: function (
         p.calidad_original,
         p.calidad_vic,
 
-        -- Datos del proveedor seleccionado (para pedido manual)
-        pp.codigo        AS codigo,
-        pp.precio_lista  AS precio_lista,
-        pp.descuento     AS descuento,
-        pp.costo_neto    AS costo_neto,
+        pp.codigo       AS codigo,
+        pp.precio_lista AS precio_lista,
+
+        COALESCE(NULLIF(pp.descuento, 0), dp.descuento, 0) AS descuento,
+
+        -- ✅ costo_neto NORMALIZADO A UNIDAD:
+        -- si pp.costo_neto está 0 => se calcula desde precio_lista y descuento
+        CEIL(
+          (
+            COALESCE(
+              NULLIF(pp.costo_neto, 0),
+              CEIL(pp.precio_lista * (1 - (COALESCE(NULLIF(pp.descuento, 0), dp.descuento, 0) / 100)))
+            )
+          )
+          * (CASE
+              WHEN LOWER(COALESCE(pp.presentacion, 'unidad')) = 'juego' THEN 0.5
+              ELSE 1
+            END)
+        ) AS costo_neto,
+
         pp.costo_iva     AS costo_iva,
         pp.iva           AS iva,
         pp.presentacion  AS presentacion,
         pp.factor_unidad AS factor_unidad
+
       FROM productos p
       INNER JOIN producto_proveedor pp
         ON pp.producto_id = p.id
        AND pp.proveedor_id = ?
+      LEFT JOIN descuentos_proveedor dp
+        ON dp.proveedor_id = pp.proveedor_id
       WHERE 1=1
     `;
 
@@ -1061,16 +1079,9 @@ obtenerPorFiltrosYProveedor: function (
     if (marca_id)     { sql += ` AND p.marca_id = ?`;     params.push(Number(marca_id)); }
     if (modelo_id)    { sql += ` AND p.modelo_id = ?`;    params.push(Number(modelo_id)); }
 
-    // ✅ Búsqueda tolerante: por tokens (palabras), en cualquier orden
     if (busqueda_nombre && String(busqueda_nombre).trim().length) {
-      const raw = String(busqueda_nombre)
-        .trim()
-        .replace(/\s+/g, ' ');
-
-      const tokens = raw
-        .split(' ')
-        .map(t => t.trim())
-        .filter(t => t.length >= 2);
+      const raw = String(busqueda_nombre).trim().replace(/\s+/g, ' ');
+      const tokens = raw.split(' ').map(t => t.trim()).filter(t => t.length >= 2);
 
       if (tokens.length) {
         sql += ` AND (`;
