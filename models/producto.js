@@ -1430,65 +1430,105 @@ obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor, ca
   contarPorCategoria: function(conexion, categoria, callback) {
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 }, 
-obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
-    return new Promise((resolve, reject) => {
-        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original FROM productos'; 
-        sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
-        sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
-        sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
-        sql += ' WHERE 1=1';
-        const parametros = []; 
-        
-        // Añadir logs para cada filtro
-        if (categoria) {
-            sql += ' AND categoria_id = ?';
-            parametros.push(categoria);
-        }
-        if (marca && marca !== '' && !isNaN(parseInt(marca))) {
-            sql += ' AND marca_id = ?';
-            parametros.push(parseInt(marca));
-        }
-        if (modelo && modelo !== '' && !isNaN(parseInt(modelo))) {
-            sql += ' AND modelo_id = ?';
-            parametros.push(parseInt(modelo));
-        }
-        if (busqueda_nombre && typeof busqueda_nombre === 'string') {
-            const palabras = busqueda_nombre.split(' ');
-            palabras.forEach(palabra => {
-                if (palabra !== undefined && palabra !== null && palabra !== '') {
-                    sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
-                    parametros.push('%' + palabra + '%', '%' + palabra + '%');
-                }
-            });
-        }
-        
-        sql += ' ORDER BY productos.nombre ASC'; // Ordena los productos alfabéticamente
-        if (limite && typeof limite === 'number' && limite > 0 && limite % 1 === 0) {
-            sql += ' LIMIT ?';
-            parametros.push(limite);
-        }
-        conexion.query(sql, parametros, (error, productos) => {
-            if (error) {
-                reject(error);
-            } else {
-                const productosAgrupados = productos.reduce((acc, producto) => {
-                    const productoExistente = acc.find(p => p.id === producto.id);
-                    if (productoExistente) {
-                        if (producto.imagen) {
-                            productoExistente.imagenes.push({ imagen: producto.imagen });
-                        }
-                    } else {
-                        producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
-                        producto.codigo = producto.codigo || '';
-                        acc.push(producto);
-                    }
-                    return acc;
-                }, []);
-                resolve(productosAgrupados);
-            }
+obtenerPorFiltrosYProveedor: function (
+  conexion,
+  categoria_id,
+  marca_id,
+  modelo_id,
+  busqueda_nombre,
+  limite,
+  proveedorId
+) {
+  return new Promise((resolve, reject) => {
+    const params = [Number(proveedorId)];
+
+    let sql = `
+      SELECT
+        p.id,
+        p.nombre,
+        p.descripcion,
+        p.categoria_id,
+        p.marca_id,
+        p.modelo_id,
+        p.proveedor_id,
+        p.utilidad,
+        p.estado,
+        p.stock_actual,
+        p.stock_minimo,
+        p.oferta,
+        p.calidad_original,
+        p.calidad_vic,
+
+        pp.codigo       AS codigo,
+        pp.precio_lista AS precio_lista,
+
+        COALESCE(NULLIF(pp.descuento, 0), dp.descuento, 0) AS descuento,
+
+        CEIL(
+          COALESCE(
+            NULLIF(pp.costo_neto, 0),
+            NULLIF(p.costo_neto, 0),
+            (pp.precio_lista * (1 - (COALESCE(NULLIF(pp.descuento, 0), dp.descuento, 0) / 100)))
+          )
+          *
+          (CASE
+            WHEN COALESCE(NULLIF(pp.factor_unidad, 0), 0) > 0 THEN pp.factor_unidad
+            WHEN LOWER(COALESCE(pp.presentacion, 'unidad')) = 'juego' THEN 0.5
+            ELSE 1
+          END)
+        ) AS costo_neto,
+
+        pp.costo_iva     AS costo_iva,
+        pp.iva           AS iva,
+        pp.presentacion  AS presentacion,
+        pp.factor_unidad AS factor_unidad
+
+      FROM productos p
+      INNER JOIN producto_proveedor pp
+        ON pp.producto_id = p.id
+       AND pp.proveedor_id = ?
+
+      -- ✅ FIX: dp reducido a 1 fila por proveedor_id para que NO duplique
+      LEFT JOIN (
+        SELECT proveedor_id, MAX(descuento) AS descuento
+        FROM descuentos_proveedor
+        GROUP BY proveedor_id
+      ) dp
+        ON dp.proveedor_id = pp.proveedor_id
+
+      WHERE 1=1
+    `;
+
+    if (categoria_id) { sql += ` AND p.categoria_id = ?`; params.push(Number(categoria_id)); }
+    if (marca_id)     { sql += ` AND p.marca_id = ?`;     params.push(Number(marca_id)); }
+    if (modelo_id)    { sql += ` AND p.modelo_id = ?`;    params.push(Number(modelo_id)); }
+
+    if (busqueda_nombre && String(busqueda_nombre).trim().length) {
+      const raw = String(busqueda_nombre).trim().replace(/\s+/g, ' ');
+      const tokens = raw.split(' ').map(t => t.trim()).filter(t => t.length >= 2);
+
+      if (tokens.length) {
+        sql += ` AND (`;
+        tokens.forEach((t, idx) => {
+          if (idx > 0) sql += ` AND `;
+          sql += `(p.nombre LIKE ? OR pp.codigo LIKE ?)`;
+          const likeTok = `%${t}%`;
+          params.push(likeTok, likeTok);
         });
+        sql += `)`;
+      }
+    }
+
+    sql += ` ORDER BY p.id DESC LIMIT ?`;
+    params.push(Number(limite) || 100);
+
+    conexion.query(sql, params, (error, rows) => {
+      if (error) return reject(error);
+      resolve(rows || []);
     });
+  });
 },
+
 eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {

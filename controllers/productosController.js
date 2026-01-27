@@ -545,7 +545,6 @@ buscar: async (req, res) => {
 
     const limite = req.query.limite ? parseInt(req.query.limite, 10) : 100;
 
-    // ✅ NUEVO: si viene proveedor_id => filtra por producto_proveedor (NO afecta otros usos)
     let productos;
     const provIdNum = Number(proveedor_id);
 
@@ -560,7 +559,6 @@ buscar: async (req, res) => {
         provIdNum
       );
     } else {
-      // ✅ comportamiento original intacto
       productos = await producto.obtenerPorFiltros(
         conexion,
         categoria_id,
@@ -569,6 +567,16 @@ buscar: async (req, res) => {
         busqueda_nombre,
         limite
       );
+    }
+
+    // ✅ FIX extra: deduplicar por id (por si existen duplicados en producto_proveedor)
+    if (Array.isArray(productos) && productos.length) {
+      const map = new Map();
+      for (const p of productos) {
+        if (!p || p.id == null) continue;
+        map.set(Number(p.id), p);
+      }
+      productos = Array.from(map.values());
     }
 
     // Imágenes (si hay IDs)
