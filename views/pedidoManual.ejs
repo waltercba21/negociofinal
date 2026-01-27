@@ -30,7 +30,21 @@
       justify-content:space-between;
       gap: 14px;
     }
+    .pm-title-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .pm-title{ margin:0; font-size: 22px; line-height: 1.15; color: var(--pm-text); font-weight: 800; letter-spacing:.2px; }
+    .pm-badge{
+      display:inline-flex;
+      align-items:center;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(31,72,126,.18);
+      background: rgba(31,72,126,.08);
+      color: var(--pm-brand);
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing:.2px;
+    }
     .pm-sub{ margin:6px 0 0; color: var(--pm-muted); font-size: 13px; }
 
     .pm-actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
@@ -142,7 +156,6 @@
     }
     .pm-results-title{ font-weight:900; color: var(--pm-text); font-size: 12px; letter-spacing:.2px; }
     .pm-results-note{ font-size: 12px; color: var(--pm-muted); }
-
     .pm-results-list{ max-height: 308px; overflow:auto; }
 
     .pm-item{
@@ -266,7 +279,6 @@
       text-overflow: ellipsis;
       font-weight: 900;
     }
-
     .pm-num{ font-variant-numeric: tabular-nums; white-space: nowrap; }
     .pm-right{ text-align:right; }
 
@@ -314,14 +326,38 @@
   <main class="pm-page">
     <section class="pm-wrap">
 
+      <!-- datos iniciales (edición) -->
+      <input type="hidden" id="pedido_id" value="<%= pedidoId || '' %>">
+      <script id="pedido-preload" type="application/json">
+  <%- JSON.stringify({
+    pedidoId: pedidoId || null,
+    proveedorId: proveedorId || null,
+    items: pedidoItems || []
+  }) %>
+</script>
+
+<script>
+  window.__PEDIDO_PRELOAD__ = JSON.parse(
+    document.getElementById('pedido-preload').textContent
+  );
+</script>
+
+
+
       <div class="pm-header">
         <div>
-          <h2 class="pm-title">Pedido a Proveedor</h2>
-          <p class="pm-sub">Seleccioná proveedor, buscá por código o nombre, definí cantidad y agregá al pedido.</p>
+          <div class="pm-title-row">
+            <h2 class="pm-title">Pedido a Proveedor</h2>
+            <span id="pmPedidoBadge" class="pm-badge" <%= pedidoId ? '' : 'hidden' %>>
+  Pedido #<%= pedidoId || '' %>
+</span>
+
+          </div>
+          <p class="pm-sub">Podés guardar y retomar el pedido luego desde Historial (Editar).</p>
         </div>
 
         <div class="pm-actions">
-          <a href="/productos/historialPedidos" class="pm-btn" aria-label="Ver historial de pedidos">Historial</a>
+          <a href="/productos/historialPedidos" class="pm-btn">Historial</a>
 
           <button id="btn-confirmar" class="pm-btn pm-btn-primary" type="button">
             Confirmar (PDF interno)
@@ -332,7 +368,7 @@
           </button>
 
           <button id="btn-continuar" class="pm-btn pm-btn-danger" type="button">
-            Finalizar
+            Finalizar (limpiar)
           </button>
         </div>
       </div>

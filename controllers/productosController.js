@@ -2519,52 +2519,50 @@ descargarPDFNuevos : async (req, res) => {
     }
   },
 generarPedidoManual: async (req, res) => {
-    try {
-        const proveedores = await producto.obtenerProveedores(conexion);
-        res.render('pedidoManual', { proveedores });
-    } catch (error) {
-        console.error("Error al generar el pedido manual:", error);
-        res.status(500).send("Error al generar el pedido manual: " + error.message);
+  try {
+    const proveedores = await producto.obtenerProveedores(conexion);
+
+    const pedidoId = req.query.pedido_id ? Number(req.query.pedido_id) : null;
+
+    let proveedorId = null;
+    let pedidoItems = [];
+
+    if (pedidoId) {
+      const pedido = await producto.obtenerPedidoPorId(conexion, pedidoId);
+      if (pedido) {
+        proveedorId = pedido.proveedor_id;
+        pedidoItems = await producto.obtenerItemsPedido(conexion, pedidoId, proveedorId);
+      }
     }
+
+    res.render('pedidoManual', { proveedores, pedidoId, proveedorId, pedidoItems });
+  } catch (error) {
+    console.error("Error al generar el pedido manual:", error);
+    res.status(500).send("Error al generar el pedido manual: " + error.message);
+  }
 },
 guardarPedido: async (req, res) => {
-    try {
-        const { proveedor_id, total, productos } = req.body;
-        
-        if (!proveedor_id || !total || productos.length === 0) {
-            return res.status(400).json({ message: 'Datos del pedido incompletos' });
-        }
+  try {
+    const { pedido_id, proveedor_id, total, productos } = req.body;
 
-        // Crear el pedido y obtener el ID del nuevo pedido
-        const pedido_id = await producto.crearPedido(proveedor_id, total);
-        
-        // Verificar que el pedido se creó correctamente
-        if (!pedido_id) {
-            throw new Error('No se pudo crear el pedido');
-        }
-
-        // Iterar sobre los productos y crear los items del pedido
-        for (let item of productos) { // Cambié 'producto' por 'item' para evitar el conflicto de nombres
-            const { id, cantidad, costo_neto } = item;
-
-            // Validar que los datos de cada producto sean correctos
-            if (!id || !cantidad || !costo_neto) {
-                throw new Error('Datos de producto incompletos');
-            }
-
-            // Calcular el subtotal
-            const subtotal = cantidad * parseFloat(costo_neto);
-
-            // Crear el item del pedido
-            await producto.crearPedidoItem(pedido_id, id, cantidad, costo_neto, subtotal);
-        }
-
-        res.status(200).json({ message: 'Pedido guardado con éxito', pedido_id });
-    } catch (err) {
-        console.error('Error en guardarPedido:', err.message);
-        res.status(500).json({ message: 'Error al guardar el pedido', error: err.message });
+    if (!proveedor_id || !Array.isArray(productos) || productos.length === 0) {
+      return res.status(400).json({ message: 'Datos incompletos' });
     }
+
+    const pedidoId = await producto.upsertPedido(conexion, {
+      pedido_id: pedido_id ? Number(pedido_id) : null,
+      proveedor_id: Number(proveedor_id),
+      total: Number(total) || 0,
+      productos
+    });
+
+    return res.json({ pedido_id: pedidoId });
+  } catch (e) {
+    console.error('❌ guardarPedido:', e);
+    return res.status(500).json({ message: e.message });
+  }
 },
+
 historialPedidos: async (req, res) => {
   try {
     const { fechaDesde, fechaHasta, proveedor } = req.query;

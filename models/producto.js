@@ -2307,7 +2307,73 @@ obtenerProveedoresPorProducto: async (conexion, producto_id) => {
       console.error('❌ Error al obtener historial filtrado:', error);
       return [];
     }
-  },
+  }, 
+  obtenerPedidoPorId: async function (conexion, pedidoId) {
+  const sql = `SELECT id, proveedor_id, fecha, total FROM pedidos WHERE id = ? LIMIT 1`;
+  const [rows] = await conexion.promise().query(sql, [pedidoId]);
+  return rows?.[0] || null;
+},
+
+// Ajustá el nombre de tabla si no es "pedidos_items"
+obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
+  const sql = `
+    SELECT
+      pi.producto_id AS id,
+      p.nombre,
+      pi.cantidad,
+      pp.codigo,
+      pp.costo_neto
+    FROM pedidos_items pi
+    JOIN productos p ON p.id = pi.producto_id
+    LEFT JOIN producto_proveedor pp
+      ON pp.producto_id = pi.producto_id
+     AND pp.proveedor_id = ?
+    WHERE pi.pedido_id = ?
+    ORDER BY p.nombre ASC
+  `;
+  const [rows] = await conexion.promise().query(sql, [proveedorId, pedidoId]);
+  return rows || [];
+},
+
+// Upsert pedido + reemplaza items (simple y robusto)
+upsertPedido: async function (conexion, { pedido_id, proveedor_id, total, productos }) {
+  const cx = conexion.promise();
+
+  await cx.beginTransaction();
+  try {
+    let pedidoId = pedido_id;
+
+    if (!pedidoId) {
+      const [ins] = await cx.query(
+        `INSERT INTO pedidos (proveedor_id, fecha, total) VALUES (?, NOW(), ?)`,
+        [proveedor_id, total]
+      );
+      pedidoId = ins.insertId;
+    } else {
+      await cx.query(
+        `UPDATE pedidos SET proveedor_id = ?, total = ?, fecha = NOW() WHERE id = ?`,
+        [proveedor_id, total, pedidoId]
+      );
+
+      // reemplazo items
+      await cx.query(`DELETE FROM pedidos_items WHERE pedido_id = ?`, [pedidoId]);
+    }
+
+    // insertar items
+    const values = productos.map(p => [pedidoId, Number(p.id), Number(p.cantidad) || 1]);
+    await cx.query(
+      `INSERT INTO pedidos_items (pedido_id, producto_id, cantidad) VALUES ?`,
+      [values]
+    );
+
+    await cx.commit();
+    return pedidoId;
+  } catch (e) {
+    await cx.rollback();
+    throw e;
+  }
+},
+
   obtenerDetallePedido: (pedidoId) => {
     return new Promise((resolve, reject) => {
       const sql = `

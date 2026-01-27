@@ -82,4 +82,7 @@ router.post('/generarPresupuestoPDF', productosController.generarPresupuestoPDF)
 router.post('/actualizarPreciosExcel', cargar, productosController.actualizarPreciosExcel);
 
 router.get('/actualizados/nuevos.pdf', productosController.descargarPDFNuevos);
+
+
+
 module.exports = router;
