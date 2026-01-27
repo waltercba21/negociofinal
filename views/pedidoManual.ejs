@@ -378,10 +378,13 @@
           <div>
             <label class="pm-label" for="proveedores">Proveedor</label>
             <select class="proveedores pm-select" name="proveedores[]">
-              <option selected disabled>Seleccione un proveedor</option>
-              <% proveedores.forEach(function(proveedor) { %>
-                <option value="<%= proveedor.id %>"><%= proveedor.nombre %> (Desc: <%= proveedor.descuento || 0 %>%)</option>
-              <% }); %>
+              <option value="" disabled <%= proveedorId ? '' : 'selected' %>>Seleccione un proveedor</option>
+<% proveedores.forEach(function(proveedor) { %>
+  <option value="<%= proveedor.id %>" <%= String(proveedorId || '') === String(proveedor.id) ? 'selected' : '' %>>
+    <%= proveedor.nombre %> (Desc: <%= proveedor.descuento || 0 %>%)
+  </option>
+<% }); %>
+
             </select>
           </div>
 

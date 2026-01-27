@@ -19,6 +19,9 @@ const searchWrap = document.getElementById('pmSearchWrap');
 const btnPdfProveedor = document.getElementById('btn-pdf-proveedor');
 const btnContinuar = document.getElementById('btn-continuar');
 
+const pedidoIdInput = document.getElementById('pedido_id');
+const pedidoBadge = document.getElementById('pmPedidoBadge');
+
 function fechaPedidoStr() {
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
@@ -62,10 +65,12 @@ function calcularTotalesProducto(p) {
 
 function actualizarTotalPedido() {
   const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
-  totalPedidoEl.innerText = money(total);
+  if (totalPedidoEl) totalPedidoEl.innerText = money(total);
 }
 
 function renderTabla() {
+  if (!tablaBody) return;
+
   if (!productosSeleccionados.length) {
     tablaBody.innerHTML = `<tr><td colspan="6" class="pm-empty">No hay productos en el pedido.</td></tr>`;
     actualizarTotalPedido();
@@ -117,6 +122,7 @@ function hidePanel() {
 }
 
 function setClearVisible() {
+  if (!btnClearSearch || !entradaBusqueda) return;
   btnClearSearch.style.display = entradaBusqueda.value.trim().length ? 'inline-flex' : 'none';
 }
 
@@ -127,6 +133,7 @@ function limpiarResultados() {
 }
 
 function limpiarInputYResultados() {
+  if (!entradaBusqueda) return;
   entradaBusqueda.value = '';
   setClearVisible();
   limpiarResultados();
@@ -143,6 +150,8 @@ function imgSrc(producto) {
 }
 
 function renderResultados(productos) {
+  if (!resultsList) return;
+
   lastResults = Array.isArray(productos) ? productos : [];
 
   if (!lastResults.length) {
@@ -191,9 +200,40 @@ function renderResultados(productos) {
   showPanel();
 }
 
+function getPedidoId() {
+  const v = pedidoIdInput?.value;
+  return proveedorValido(v) ? Number(v) : null;
+}
+
+function setPedidoId(id) {
+  const newId = proveedorValido(id) ? String(id) : '';
+  if (pedidoIdInput) pedidoIdInput.value = newId;
+
+  if (pedidoBadge) {
+    if (newId) {
+      pedidoBadge.hidden = false;
+      pedidoBadge.innerText = `Pedido #${newId}`;
+    } else {
+      pedidoBadge.hidden = true;
+    }
+  }
+}
+
+function enableSearch() {
+  if (!entradaBusqueda) return;
+  entradaBusqueda.disabled = false;
+  entradaBusqueda.placeholder = 'Buscar por código o nombre...';
+}
+
+function disableSearch() {
+  if (!entradaBusqueda) return;
+  entradaBusqueda.disabled = true;
+  entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+}
+
 async function buscarProductos() {
-  const proveedor_id = proveedorSelect.value;
-  if (!proveedorValido(proveedor_id)) return;
+  const proveedor_id = proveedorSelect?.value;
+  if (!proveedorValido(proveedor_id) || !entradaBusqueda) return;
 
   const q = entradaBusqueda.value.trim();
   setClearVisible();
@@ -204,10 +244,19 @@ async function buscarProductos() {
   }
 
   const url = `/productos/api/buscar?q=${encodeURIComponent(q)}&proveedor_id=${encodeURIComponent(proveedor_id)}&limite=30`;
-  const resp = await fetch(url);
-  const productos = await resp.json();
 
-  renderResultados(productos || []);
+  try {
+    const resp = await fetch(url);
+    const productos = await resp.json().catch(() => []);
+    renderResultados(productos || []);
+  } catch (e) {
+    console.error('Error buscando productos:', e);
+    renderResultados([]);
+  }
+}
+
+function marcarNoGuardado() {
+  pedidoGuardado = false;
 }
 
 function upsertProductoDesdeResultado(producto, cantidad) {
@@ -224,9 +273,10 @@ function upsertProductoDesdeResultado(producto, cantidad) {
     productosSeleccionados.push(nuevo);
   }
 
+  marcarNoGuardado();
   renderTabla();
 
-  if (entradaBusqueda.value.trim()) {
+  if (entradaBusqueda && entradaBusqueda.value.trim()) {
     renderResultados(lastResults);
   }
 }
@@ -240,7 +290,7 @@ function proveedorNombreSeleccionado() {
 }
 
 function construirDatosPedido() {
-  const proveedor_id = proveedorSelect.value;
+  const proveedor_id = proveedorSelect?.value;
 
   if (!proveedorValido(proveedor_id)) {
     alert('Seleccioná un proveedor');
@@ -255,6 +305,7 @@ function construirDatosPedido() {
   const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
 
   return {
+    pedido_id: getPedidoId(),
     proveedor_id,
     total,
     productos: productosSeleccionados.map((p) => ({
@@ -279,11 +330,14 @@ async function guardarPedidoSiHaceFalta() {
       body: JSON.stringify(datosPedido),
     });
 
+    const data = await respuesta.json().catch(() => ({}));
+
     if (!respuesta.ok) {
-      const errorData = await respuesta.json().catch(() => ({}));
-      alert('Error al guardar el pedido: ' + (errorData.message || ''));
+      alert('Error al guardar el pedido: ' + (data.message || ''));
       return { ok: false, savedNow: false };
     }
+
+    if (data && data.pedido_id) setPedidoId(data.pedido_id);
 
     pedidoGuardado = true;
     alert('Pedido guardado con éxito');
@@ -305,8 +359,8 @@ function resetAll() {
 
   if (proveedorSelect) proveedorSelect.selectedIndex = 0;
 
-  entradaBusqueda.disabled = true;
-  entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+  setPedidoId(null);
+  disableSearch();
   hidePanel();
 }
 
@@ -340,6 +394,7 @@ function generarPDFInterno() {
 
   doc.save('pedido_confirmado.pdf');
 }
+
 function generarPDFProveedor() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -375,55 +430,100 @@ function generarPDFProveedor() {
   doc.save('pedido_para_proveedor.pdf');
 }
 
+function getPreload() {
+  if (window.__PEDIDO_PRELOAD__ && typeof window.__PEDIDO_PRELOAD__ === 'object') {
+    return window.__PEDIDO_PRELOAD__;
+  }
+  const el = document.getElementById('pedido-preload');
+  if (!el) return null;
+  try {
+    return JSON.parse(el.textContent || '');
+  } catch {
+    return null;
+  }
+}
+
 // --- Estado inicial
-entradaBusqueda.disabled = true;
-entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+disableSearch();
 hidePanel();
 setClearVisible();
+renderTabla();
 
-// --- Proveedor change: resetea pedido (1 proveedor por pedido)
-proveedorSelect.addEventListener('change', () => {
+// --- Preload (editar pedido desde historial)
+(function aplicarPreloadEdicion() {
+  const preload = getPreload();
+  if (!preload || !preload.pedidoId) {
+    // si el EJS marcó proveedor selected, habilitar búsqueda
+    if (proveedorValido(proveedorSelect?.value)) enableSearch();
+    return;
+  }
+
+  setPedidoId(preload.pedidoId);
+
+  if (proveedorValido(preload.proveedorId) && proveedorSelect) {
+    proveedorSelect.value = String(preload.proveedorId);
+    enableSearch();
+  } else {
+    disableSearch();
+  }
+
+  if (Array.isArray(preload.items) && preload.items.length) {
+    productosSeleccionados = preload.items.map((it) => {
+      const p = { ...it };
+      p.cantidad = clampInt(p.cantidad, 1);
+      calcularTotalesProducto(p);
+      return p;
+    });
+    renderTabla();
+  }
+
+  // ya existe en DB al entrar por "Editar"
+  pedidoGuardado = true;
+})();
+
+// --- Proveedor change: resetea productos (1 proveedor por pedido)
+proveedorSelect?.addEventListener('change', () => {
   productosSeleccionados = [];
   renderTabla();
   limpiarInputYResultados();
-  pedidoGuardado = false;
+  marcarNoGuardado();
 
   if (proveedorValido(proveedorSelect.value)) {
-    entradaBusqueda.disabled = false;
-    entradaBusqueda.placeholder = 'Buscar por código o nombre...';
+    enableSearch();
     entradaBusqueda.focus();
   } else {
-    entradaBusqueda.disabled = true;
-    entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+    disableSearch();
   }
 });
 
 // --- Input búsqueda con debounce
-entradaBusqueda.addEventListener('input', () => {
+entradaBusqueda?.addEventListener('input', () => {
+  setClearVisible();
   clearTimeout(timer);
   timer = setTimeout(() => {
     buscarProductos().catch(console.error);
   }, 220);
 });
 
-entradaBusqueda.addEventListener('focus', () => {
-  if (entradaBusqueda.value.trim() && (lastResults.length || resultsList.innerHTML.trim().length)) showPanel();
+entradaBusqueda?.addEventListener('focus', () => {
+  if (entradaBusqueda.value.trim() && (lastResults.length || (resultsList?.innerHTML || '').trim().length)) showPanel();
 });
 
-btnClearSearch.addEventListener('click', () => {
+btnClearSearch?.addEventListener('click', () => {
   limpiarInputYResultados();
-  entradaBusqueda.focus();
+  entradaBusqueda?.focus();
 });
 
 // --- Cerrar panel al click fuera (sin borrar lo escrito)
 document.addEventListener('mousedown', (e) => {
+  if (!searchWrap) return;
   if (!searchWrap.contains(e.target)) {
     hidePanel();
   }
 });
 
 // --- Click en resultados (delegación)
-resultsList.addEventListener('click', (e) => {
+resultsList?.addEventListener('click', (e) => {
   const item = e.target.closest('.pm-item');
   if (!item) return;
 
@@ -431,23 +531,23 @@ resultsList.addEventListener('click', (e) => {
   const producto = lastResults.find(p => Number(p.id) === id);
   if (!producto) return;
 
-  const qtyInput = item.querySelector('.pm-qty');
-  const cantidad = qtyInput ? qtyInput.value : 1;
-
   const btn = e.target.closest('button.pm-add');
   if (!btn) return;
+
+  const qtyInput = item.querySelector('.pm-qty');
+  const cantidad = qtyInput ? qtyInput.value : 1;
 
   upsertProductoDesdeResultado(producto, cantidad);
 });
 
 // ✅ No bloquear foco: permite escribir en inputs y clickear botones
-contenedorProductos.addEventListener('mousedown', (e) => {
+contenedorProductos?.addEventListener('mousedown', (e) => {
   if (e.target.closest('input, button, a, select, textarea, label')) return;
   e.preventDefault();
 });
 
 // --- Tabla: cambiar cantidad escribiendo (sin re-render completo)
-tablaBody.addEventListener('input', (e) => {
+tablaBody?.addEventListener('input', (e) => {
   const input = e.target.closest('.pm-qty-input');
   if (!input) return;
 
@@ -468,16 +568,17 @@ tablaBody.addEventListener('input', (e) => {
   if (rowTotal) rowTotal.textContent = money(p.precioTotal);
   actualizarTotalPedido();
 
-  if (!contenedorProductos.hidden) renderResultados(lastResults);
+  marcarNoGuardado();
+  if (!contenedorProductos?.hidden) renderResultados(lastResults);
 });
 
-tablaBody.addEventListener('change', (e) => {
+tablaBody?.addEventListener('change', (e) => {
   const input = e.target.closest('.pm-qty-input');
   if (!input) return;
   if (input.value === '' || Number(input.value) < 1) input.value = 1;
 });
 
-tablaBody.addEventListener('click', (e) => {
+tablaBody?.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-action="remove"]');
   if (!btn) return;
 
@@ -487,23 +588,24 @@ tablaBody.addEventListener('click', (e) => {
 
   productosSeleccionados = productosSeleccionados.filter(p => Number(p.id) !== Number(id));
   renderTabla();
+  marcarNoGuardado();
 
-  if (!contenedorProductos.hidden) renderResultados(lastResults);
+  if (!contenedorProductos?.hidden) renderResultados(lastResults);
 });
 
 // --- Botones PDF + reset
-btnConfirmar.addEventListener('click', async () => {
+btnConfirmar?.addEventListener('click', async () => {
   const { ok } = await guardarPedidoSiHaceFalta();
   if (!ok) return;
   generarPDFInterno();
 });
 
-btnPdfProveedor.addEventListener('click', async () => {
+btnPdfProveedor?.addEventListener('click', async () => {
   const { ok } = await guardarPedidoSiHaceFalta();
   if (!ok) return;
   generarPDFProveedor();
 });
 
-btnContinuar.addEventListener('click', () => {
+btnContinuar?.addEventListener('click', () => {
   resetAll();
 });
