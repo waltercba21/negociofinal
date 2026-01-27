@@ -1,90 +1,295 @@
 <%- include('./layouts/head.ejs') %>
 <%- include('./layouts/header.ejs') %>
 
-<main class="container mt-4">
-  <h2>Historial de Pedidos</h2>
+<style>
+  :root{
+    --pm-brand:#1F487E;
+    --pm-accent:#d90429;
+    --pm-bg:#f6f8fc;
+    --pm-card:#ffffff;
+    --pm-text:#0f172a;
+    --pm-muted:#64748b;
+    --pm-border: rgba(15,23,42,.10);
+    --pm-shadow: 0 10px 30px rgba(2,6,23,.08);
+    --pm-radius:16px;
+    --pm-tap:44px;
+  }
 
-  <form method="get" class="mb-3 d-flex gap-2">
-    <label for="fechaDesde">Desde:</label>
-    <input type="date" name="fechaDesde" id="fechaDesde" value="<%= fechaDesde || '' %>">
+  .hp-page{ background: var(--pm-bg); padding: 18px 12px 28px; }
+  .hp-wrap{ max-width: 1180px; margin: 0 auto; display:grid; gap:14px; }
 
-    <label for="fechaHasta">Hasta:</label>
-    <input type="date" name="fechaHasta" id="fechaHasta" value="<%= fechaHasta || '' %>">
+  .hp-header{
+    background: var(--pm-card);
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-radius);
+    box-shadow: var(--pm-shadow);
+    padding: 16px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .hp-title{ margin:0; font-size: 22px; color: var(--pm-text); font-weight: 900; }
+  .hp-sub{ margin:6px 0 0; color: var(--pm-muted); font-size: 13px; }
 
-    <label for="proveedor">Proveedor:</label>
-    <select name="proveedor" id="proveedor">
-      <option value="">Todos</option>
-      <% proveedores.forEach(p => { %>
-        <option value="<%= p.id %>" <%= proveedorSeleccionado == p.id ? 'selected' : '' %>><%= p.nombre %></option>
-      <% }) %>
-    </select>
+  .hp-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .hp-btn{
+    height: var(--pm-tap);
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--pm-border);
+    background: #fff;
+    color: var(--pm-text);
+    font-weight: 800;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    user-select:none;
+  }
+  .hp-btn:hover{ transform: translateY(-1px); box-shadow: 0 8px 20px rgba(2,6,23,.10); border-color: rgba(31,72,126,.25); }
+  .hp-btn-primary{
+    background: linear-gradient(135deg, var(--pm-brand), #003f7d);
+    color:#fff;
+    border-color: transparent;
+  }
+  .hp-btn-primary:hover{ border-color: transparent; }
+  .hp-btn-danger{
+    background: rgba(217,4,41,.08);
+    color: var(--pm-accent);
+    border-color: rgba(217,4,41,.22);
+  }
 
-    <button class="btn btn-primary">Filtrar</button>
-  </form>
+  .hp-card{
+    background: var(--pm-card);
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-radius);
+    box-shadow: var(--pm-shadow);
+    padding: 14px;
+  }
 
-  <% if (historial.length === 0) { %>
-    <p>No hay pedidos que coincidan con los filtros.</p>
-  <% } else { %>
-    <table class="table table-bordered">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Proveedor</th>
-          <th>Total</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% historial.forEach(pedido => { %>
-          <tr>
-            <td><%= new Date(pedido.fecha).toLocaleDateString() %></td>
-            <td><%= pedido.proveedor %></td>
-            <td>$<%= Number(pedido.total).toLocaleString('es-AR') %></td>
-            <td>
-              <a href="/productos/verPedido/<%= pedido.pedido_id %>" class="btn btn-sm btn-info">Ver Detalle</a>
-            </td>
-            <td>
-  <a href="/productos/verPedido/<%= pedido.pedido_id %>" class="btn btn-sm btn-info">Ver Detalle</a>
-  <button class="btn btn-sm btn-danger btn-eliminar-pedido" data-id="<%= pedido.pedido_id %>">Eliminar</button>
-</td>
+  .hp-form{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr auto auto;
+    gap: 10px;
+    align-items:end;
+  }
+  @media (max-width: 980px){
+    .hp-form{ grid-template-columns: 1fr; }
+  }
 
+  .hp-label{ display:block; font-size: 12px; font-weight: 900; color: var(--pm-muted); margin: 0 0 6px; letter-spacing:.2px; }
+  .hp-input, .hp-select{
+    width:100%;
+    height: var(--pm-tap);
+    border-radius: 12px;
+    border: 1px solid var(--pm-border);
+    padding: 0 12px;
+    font-weight: 800;
+    outline:none;
+    background:#fff;
+    color: var(--pm-text);
+  }
+  .hp-input:focus, .hp-select:focus{
+    border-color: rgba(31,72,126,.45);
+    box-shadow: 0 0 0 4px rgba(31,72,126,.12);
+  }
 
+  .hp-table-wrap{ overflow:auto; border-radius: var(--pm-radius); }
+  .hp-table{
+    width:100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-radius);
+    overflow:hidden;
+    background:#fff;
+  }
+  .hp-table thead th{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: rgba(2,6,23,.03);
+    font-size: 12px;
+    letter-spacing:.2px;
+    color: var(--pm-muted);
+    font-weight: 900;
+    text-align:left;
+    padding: 12px;
+    border-bottom: 1px solid var(--pm-border);
+    white-space: nowrap;
+  }
+  .hp-table tbody td{
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(15,23,42,.07);
+    font-weight: 800;
+    color: var(--pm-text);
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hp-table tbody tr:hover{ background: rgba(31,72,126,.04); }
+  .hp-num{ font-variant-numeric: tabular-nums; }
+  .hp-right{ text-align:right; }
 
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  <% } %>
+  .hp-pill{
+    display:inline-flex;
+    align-items:center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(31,72,126,.18);
+    background: rgba(31,72,126,.08);
+    color: var(--pm-brand);
+    font-weight: 900;
+    font-size: 12px;
+  }
+
+  .hp-actions-cell{ display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+  .hp-mini{
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1px solid var(--pm-border);
+    background:#fff;
+    font-weight: 900;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    transition: transform .12s ease, box-shadow .12s ease;
+    user-select:none;
+  }
+  .hp-mini:hover{ box-shadow: 0 10px 20px rgba(2,6,23,.10); transform: translateY(-1px); }
+  .hp-mini.info{ border-color: rgba(31,72,126,.25); background: rgba(31,72,126,.08); color: var(--pm-brand); }
+  .hp-mini.edit{ border-color: rgba(2,6,23,.12); background: rgba(2,6,23,.04); color: var(--pm-text); }
+  .hp-mini.danger{ border-color: rgba(217,4,41,.22); background: rgba(217,4,41,.08); color: var(--pm-accent); }
+
+  .hp-empty{ color: var(--pm-muted); font-weight: 800; padding: 10px 2px; }
+</style>
+
+<main class="hp-page">
+  <section class="hp-wrap">
+
+    <div class="hp-header">
+      <div>
+        <h2 class="hp-title">Historial de Pedidos</h2>
+        <p class="hp-sub">Filtrá por fechas y proveedor. Usá “Editar” para retomar un pedido.</p>
+      </div>
+
+      <div class="hp-actions">
+        <a class="hp-btn" href="/productos/generarPedidoManual">Nuevo pedido</a>
+        <button class="hp-btn hp-btn-primary" type="submit" form="hpFilters">Filtrar</button>
+        <a class="hp-btn hp-btn-danger" href="/productos/historialPedidos">Limpiar</a>
+      </div>
+    </div>
+
+    <div class="hp-card">
+      <form id="hpFilters" method="get" class="hp-form">
+        <div>
+          <label class="hp-label" for="fechaDesde">Desde</label>
+          <input class="hp-input" type="date" name="fechaDesde" id="fechaDesde" value="<%= fechaDesde || '' %>">
+        </div>
+
+        <div>
+          <label class="hp-label" for="fechaHasta">Hasta</label>
+          <input class="hp-input" type="date" name="fechaHasta" id="fechaHasta" value="<%= fechaHasta || '' %>">
+        </div>
+
+        <div>
+          <label class="hp-label" for="proveedor">Proveedor</label>
+          <select class="hp-select" name="proveedor" id="proveedor">
+            <option value="">Todos</option>
+            <% proveedores.forEach(p => { %>
+              <option value="<%= p.id %>" <%= proveedorSeleccionado == p.id ? 'selected' : '' %>><%= p.nombre %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div></div>
+        <div></div>
+      </form>
+    </div>
+
+    <div class="hp-card">
+      <% if (!historial || historial.length === 0) { %>
+        <div class="hp-empty">No hay pedidos que coincidan con los filtros.</div>
+      <% } else { %>
+        <div class="hp-table-wrap">
+          <table class="hp-table">
+            <colgroup>
+              <col style="width: 14%">
+              <col style="width: 18%">
+              <col style="width: 34%">
+              <col style="width: 14%">
+              <col style="width: 20%">
+            </colgroup>
+
+            <thead>
+              <tr>
+                <th>Pedido</th>
+                <th>Fecha</th>
+                <th>Proveedor</th>
+                <th class="hp-right">Total</th>
+                <th class="hp-right">Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% historial.forEach(pedido => { %>
+                <tr>
+                  <td class="hp-num">#<%= pedido.pedido_id %></td>
+                  <td class="hp-num"><%= new Date(pedido.fecha).toLocaleDateString('es-AR') %></td>
+
+                  <td title="<%= pedido.proveedor %>">
+                    <span class="hp-pill"><%= pedido.proveedor %></span>
+                  </td>
+
+                  <td class="hp-right hp-num">$<%= Number(pedido.total).toLocaleString('es-AR') %></td>
+
+                  <td class="hp-right">
+                    <div class="hp-actions-cell">
+                      <a class="hp-mini info" href="/productos/verPedido/<%= pedido.pedido_id %>">Ver</a>
+                      <a class="hp-mini edit" href="/productos/generarPedidoManual?pedido_id=<%= pedido.pedido_id %>">Editar</a>
+                      <button class="hp-mini danger btn-eliminar-pedido" type="button" data-id="<%= pedido.pedido_id %>">Eliminar</button>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+  </section>
 </main>
 
 <%- include('./layouts/footer.ejs') %>
+
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const botonesEliminar = document.querySelectorAll('.btn-eliminar-pedido');
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn-eliminar-pedido');
+  if (!btn) return;
 
-  botonesEliminar.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
+  const id = btn.dataset.id;
+  if (!id) return;
 
-      if (confirm('¿Estás seguro de que quieres eliminar este pedido? Esta acción no se puede deshacer.')) {
-        fetch(`/productos/eliminarPedido/${id}`, {
-          method: 'DELETE'
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.affectedRows > 0) {
-            alert('Pedido eliminado correctamente');
-            location.reload();
-          } else {
-            alert('No se pudo eliminar el pedido');
-          }
-        })
-        .catch(err => {
-          console.error('Error al eliminar el pedido:', err);
-          alert('Error al eliminar el pedido');
-        });
+  if (!confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.')) return;
+
+  fetch(`/productos/eliminarPedido/${id}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.affectedRows > 0) {
+        location.reload();
+      } else {
+        alert('No se pudo eliminar el pedido');
       }
-    });
-  });
+    })
+    .catch(() => alert('Error al eliminar el pedido'));
 });
 </script>
