@@ -19,31 +19,9 @@ const searchWrap = document.getElementById('pmSearchWrap');
 const btnPdfProveedor = document.getElementById('btn-pdf-proveedor');
 const btnContinuar = document.getElementById('btn-continuar');
 
-// edición
+// Edición (si viene desde historial)
 const pedidoIdInput = document.getElementById('pedido_id');
-const pedidoBadgeEl = document.getElementById('pmPedidoBadge');
-
-let currentPedidoId = pedidoIdInput?.value ? Number(pedidoIdInput.value) : null;
-
-function setPedidoId(id) {
-  currentPedidoId = id ? Number(id) : null;
-
-  if (pedidoIdInput) pedidoIdInput.value = currentPedidoId ? String(currentPedidoId) : '';
-
-  if (pedidoBadgeEl) {
-    if (currentPedidoId) {
-      pedidoBadgeEl.hidden = false;
-      pedidoBadgeEl.textContent = `Pedido #${currentPedidoId}`;
-    } else {
-      pedidoBadgeEl.hidden = true;
-      pedidoBadgeEl.textContent = '';
-    }
-  }
-}
-
-function markDirty() {
-  pedidoGuardado = false;
-}
+const pedidoBadge = document.getElementById('pmPedidoBadge');
 
 function fechaPedidoStr() {
   return new Intl.DateTimeFormat('es-AR', {
@@ -72,9 +50,10 @@ function money(num) {
   return `$${formatearNumero(num)}`;
 }
 
-function fmtUnit(val) {
-  const n = Number(val);
-  return Number.isFinite(n) && n > 0 ? money(n) : '—';
+function moneyOrDash(num) {
+  const x = Number(num);
+  if (!Number.isFinite(x) || x <= 0) return '—';
+  return money(x);
 }
 
 function obtenerCodigoPorProveedor(producto) {
@@ -93,10 +72,30 @@ function calcularTotalesProducto(p) {
 
 function actualizarTotalPedido() {
   const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
-  totalPedidoEl.innerText = money(total);
+  if (totalPedidoEl) totalPedidoEl.innerText = money(total);
+}
+
+function setPedidoIdUI(id) {
+  if (pedidoIdInput) pedidoIdInput.value = id ? String(id) : '';
+  if (pedidoBadge) {
+    if (id) {
+      pedidoBadge.style.display = 'inline-flex';
+      pedidoBadge.textContent = `Pedido #${id}`;
+    } else {
+      pedidoBadge.style.display = 'none';
+      pedidoBadge.textContent = '';
+    }
+  }
+}
+
+function getPedidoIdUI() {
+  const v = pedidoIdInput ? String(pedidoIdInput.value || '').trim() : '';
+  return /^\d+$/.test(v) ? Number(v) : null;
 }
 
 function renderTabla() {
+  if (!tablaBody) return;
+
   if (!productosSeleccionados.length) {
     tablaBody.innerHTML = `<tr><td colspan="6" class="pm-empty">No hay productos en el pedido.</td></tr>`;
     actualizarTotalPedido();
@@ -106,14 +105,14 @@ function renderTabla() {
   const rowsHtml = productosSeleccionados.map((p) => {
     const code = obtenerCodigoPorProveedor(p);
     const nombre = (p.nombre || '').toString();
-    const unitTxt = fmtUnit(p.costo_neto);
+    const unit = Number(p.costo_neto) || 0;
     const total = Number(p.precioTotal) || 0;
 
     return `
       <tr data-id="${p.id}">
         <td class="pm-num">${code}</td>
         <td class="pm-td-name" title="${nombre.replace(/"/g, '&quot;')}">${nombre}</td>
-        <td class="pm-right pm-num">${unitTxt}</td>
+        <td class="pm-right pm-num">${moneyOrDash(unit)}</td>
         <td class="pm-right">
           <input
             class="pm-qty-input"
@@ -148,6 +147,7 @@ function hidePanel() {
 }
 
 function setClearVisible() {
+  if (!btnClearSearch || !entradaBusqueda) return;
   btnClearSearch.style.display = entradaBusqueda.value.trim().length ? 'inline-flex' : 'none';
 }
 
@@ -158,6 +158,7 @@ function limpiarResultados() {
 }
 
 function limpiarInputYResultados() {
+  if (!entradaBusqueda) return;
   entradaBusqueda.value = '';
   setClearVisible();
   limpiarResultados();
@@ -174,6 +175,8 @@ function imgSrc(producto) {
 }
 
 function renderResultados(productos) {
+  if (!resultsList) return;
+
   lastResults = Array.isArray(productos) ? productos : [];
 
   if (!lastResults.length) {
@@ -193,7 +196,7 @@ function renderResultados(productos) {
           <div class="pm-item-name">${(p.nombre || '').toString()}</div>
           <div class="pm-item-meta">
             <span class="pm-pill">Cod: ${obtenerCodigoPorProveedor(p)}</span>
-            &nbsp;•&nbsp; Unit: ${fmtUnit(p.costo_neto)}
+            &nbsp;•&nbsp; Unit: ${moneyOrDash(p.costo_neto)}
             ${sel ? '&nbsp;•&nbsp;<span class="pm-pill">En pedido</span>' : ''}
           </div>
         </div>
@@ -223,6 +226,8 @@ function renderResultados(productos) {
 }
 
 async function buscarProductos() {
+  if (!proveedorSelect || !entradaBusqueda) return;
+
   const proveedor_id = proveedorSelect.value;
   if (!proveedorValido(proveedor_id)) return;
 
@@ -247,10 +252,6 @@ function upsertProductoDesdeResultado(producto, cantidad) {
   const existente = getSelById(producto.id);
   if (existente) {
     existente.cantidad = cant;
-    // si el costo viene 0, igual queda; el fix real está en backend
-    if (producto.costo_neto != null) existente.costo_neto = producto.costo_neto;
-    if (producto.codigo != null) existente.codigo = producto.codigo;
-
     calcularTotalesProducto(existente);
   } else {
     const nuevo = { ...producto };
@@ -259,10 +260,9 @@ function upsertProductoDesdeResultado(producto, cantidad) {
     productosSeleccionados.push(nuevo);
   }
 
-  markDirty();
   renderTabla();
 
-  if (entradaBusqueda.value.trim()) {
+  if (entradaBusqueda && entradaBusqueda.value.trim()) {
     renderResultados(lastResults);
   }
 }
@@ -270,11 +270,13 @@ function upsertProductoDesdeResultado(producto, cantidad) {
 function proveedorNombreSeleccionado() {
   const opt = proveedorSelect?.selectedOptions?.[0];
   if (!opt) return 'Proveedor';
+
+  // Ej: "LAM (Desc: 61.52%)" => "LAM"
   return opt.textContent.replace(/\s*\(Desc:.*\)\s*$/i, '').trim();
 }
 
 function construirDatosPedido() {
-  const proveedor_id = proveedorSelect.value;
+  const proveedor_id = proveedorSelect?.value;
 
   if (!proveedorValido(proveedor_id)) {
     alert('Seleccioná un proveedor');
@@ -289,13 +291,12 @@ function construirDatosPedido() {
   const total = productosSeleccionados.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
 
   return {
-    pedido_id: currentPedidoId || null, // ✅ clave para editar el pedido existente
+    pedido_id: getPedidoIdUI(),
     proveedor_id,
     total,
     productos: productosSeleccionados.map((p) => ({
       id: p.id,
       cantidad: p.cantidad,
-      // no se usa en DB, pero lo dejo por si lo querés loguear / mostrar
       costo_neto: p.costo_neto,
       codigo: p.codigo,
     })),
@@ -323,10 +324,11 @@ async function guardarPedidoSiHaceFalta() {
 
     const data = await respuesta.json().catch(() => ({}));
     if (data && data.pedido_id) {
-      setPedidoId(data.pedido_id);
+      setPedidoIdUI(data.pedido_id);
     }
 
     pedidoGuardado = true;
+    alert('Pedido guardado con éxito');
     return { ok: true, savedNow: true };
   } catch (error) {
     console.error('Error al guardar el pedido:', error);
@@ -340,15 +342,17 @@ function resetAll() {
   lastResults = [];
   pedidoGuardado = false;
 
-  setPedidoId(null);
-
+  setPedidoIdUI(null);
   renderTabla();
   limpiarInputYResultados();
 
   if (proveedorSelect) proveedorSelect.selectedIndex = 0;
 
-  entradaBusqueda.disabled = true;
-  entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+  if (entradaBusqueda) {
+    entradaBusqueda.disabled = true;
+    entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+  }
+
   hidePanel();
 }
 
@@ -369,7 +373,7 @@ function generarPDFInterno() {
   const rows = productosSeleccionados.map((p) => [
     obtenerCodigoPorProveedor(p),
     p.nombre,
-    fmtUnit(p.costo_neto),
+    moneyOrDash(p.costo_neto),
     String(p.cantidad),
     money(Number(p.precioTotal) || 0),
   ]);
@@ -418,178 +422,191 @@ function generarPDFProveedor() {
   doc.save('pedido_para_proveedor.pdf');
 }
 
-// ✅ PRELOAD edición (Editar desde historial)
-function aplicarPreloadEdicion() {
-  const preload = window.__PEDIDO_PRELOAD__;
-  if (!preload || !preload.pedidoId) return;
-
-  const pid = Number(preload.pedidoId) || null;
-  setPedidoId(pid);
-
-  // set proveedor
-  if (preload.proveedorId != null) {
-    proveedorSelect.value = String(preload.proveedorId);
-  }
-
-  if (proveedorValido(proveedorSelect.value)) {
-    entradaBusqueda.disabled = false;
-    entradaBusqueda.placeholder = 'Buscar por código o nombre...';
-  } else {
-    entradaBusqueda.disabled = true;
-    entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
-  }
-
-  // items
-  const items = Array.isArray(preload.items) ? preload.items : [];
-  productosSeleccionados = items.map((it) => {
-    const p = { ...it };
-    p.id = Number(p.id);
-    p.cantidad = clampInt(p.cantidad, 1);
-    calcularTotalesProducto(p);
-    return p;
-  });
-
-  pedidoGuardado = true; // ya existe en DB
-  renderTabla();
-}
-
 // --- Estado inicial
-entradaBusqueda.disabled = true;
-entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+if (entradaBusqueda) {
+  entradaBusqueda.disabled = true;
+  entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+}
 hidePanel();
 setClearVisible();
 renderTabla();
-aplicarPreloadEdicion();
 
 // --- Proveedor change: resetea pedido (1 proveedor por pedido)
-proveedorSelect.addEventListener('change', () => {
-  productosSeleccionados = [];
-  renderTabla();
-  limpiarInputYResultados();
+if (proveedorSelect) {
+  proveedorSelect.addEventListener('change', () => {
+    productosSeleccionados = [];
+    renderTabla();
+    limpiarInputYResultados();
+    pedidoGuardado = false;
+    setPedidoIdUI(null);
 
-  // si cambiaste el proveedor, no tiene sentido mantener el pedido anterior
-  setPedidoId(null);
-  pedidoGuardado = false;
-
-  if (proveedorValido(proveedorSelect.value)) {
-    entradaBusqueda.disabled = false;
-    entradaBusqueda.placeholder = 'Buscar por código o nombre...';
-    entradaBusqueda.focus();
-  } else {
-    entradaBusqueda.disabled = true;
-    entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
-  }
-});
+    if (entradaBusqueda) {
+      if (proveedorValido(proveedorSelect.value)) {
+        entradaBusqueda.disabled = false;
+        entradaBusqueda.placeholder = 'Buscar por código o nombre...';
+        entradaBusqueda.focus();
+      } else {
+        entradaBusqueda.disabled = true;
+        entradaBusqueda.placeholder = 'Seleccioná un proveedor para buscar...';
+      }
+    }
+  });
+}
 
 // --- Input búsqueda con debounce
-entradaBusqueda.addEventListener('input', () => {
-  clearTimeout(timer);
-  timer = setTimeout(() => {
-    buscarProductos().catch(console.error);
-  }, 220);
-});
+if (entradaBusqueda) {
+  entradaBusqueda.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      buscarProductos().catch(console.error);
+    }, 220);
+  });
 
-entradaBusqueda.addEventListener('focus', () => {
-  if (entradaBusqueda.value.trim() && (lastResults.length || resultsList.innerHTML.trim().length)) showPanel();
-});
+  entradaBusqueda.addEventListener('focus', () => {
+    if (entradaBusqueda.value.trim() && (lastResults.length || (resultsList && resultsList.innerHTML.trim().length))) showPanel();
+  });
+}
 
-btnClearSearch.addEventListener('click', () => {
-  limpiarInputYResultados();
-  entradaBusqueda.focus();
-});
+if (btnClearSearch && entradaBusqueda) {
+  btnClearSearch.addEventListener('click', () => {
+    limpiarInputYResultados();
+    entradaBusqueda.focus();
+  });
+}
 
 // --- Cerrar panel al click fuera (sin borrar lo escrito)
 document.addEventListener('mousedown', (e) => {
-  if (!searchWrap.contains(e.target)) {
+  if (searchWrap && !searchWrap.contains(e.target)) {
     hidePanel();
   }
 });
 
 // --- Click en resultados (delegación)
-resultsList.addEventListener('click', (e) => {
-  const item = e.target.closest('.pm-item');
-  if (!item) return;
+if (resultsList) {
+  resultsList.addEventListener('click', (e) => {
+    const item = e.target.closest('.pm-item');
+    if (!item) return;
 
-  const id = Number(item.dataset.id);
-  const producto = lastResults.find(p => Number(p.id) === id);
-  if (!producto) return;
+    const id = Number(item.dataset.id);
+    const producto = lastResults.find(p => Number(p.id) === id);
+    if (!producto) return;
 
-  const qtyInput = item.querySelector('.pm-qty');
-  const cantidad = qtyInput ? qtyInput.value : 1;
+    const qtyInput = item.querySelector('.pm-qty');
+    const cantidad = qtyInput ? qtyInput.value : 1;
 
-  const btn = e.target.closest('button.pm-add');
-  if (!btn) return;
+    const btn = e.target.closest('button.pm-add');
+    if (!btn) return;
 
-  upsertProductoDesdeResultado(producto, cantidad);
-});
+    upsertProductoDesdeResultado(producto, cantidad);
+  });
+}
 
 // ✅ No bloquear foco: permite escribir en inputs y clickear botones
-contenedorProductos.addEventListener('mousedown', (e) => {
-  if (e.target.closest('input, button, a, select, textarea, label')) return;
-  e.preventDefault();
-});
+if (contenedorProductos) {
+  contenedorProductos.addEventListener('mousedown', (e) => {
+    if (e.target.closest('input, button, a, select, textarea, label')) return;
+    e.preventDefault();
+  });
+}
 
 // --- Tabla: cambiar cantidad escribiendo (sin re-render completo)
-tablaBody.addEventListener('input', (e) => {
-  const input = e.target.closest('.pm-qty-input');
-  if (!input) return;
+if (tablaBody) {
+  tablaBody.addEventListener('input', (e) => {
+    const input = e.target.closest('.pm-qty-input');
+    if (!input) return;
 
-  const tr = input.closest('tr');
-  const id = tr?.dataset?.id;
-  if (!id) return;
+    const tr = input.closest('tr');
+    const id = tr?.dataset?.id;
+    if (!id) return;
 
-  const p = getSelById(id);
-  if (!p) return;
+    const p = getSelById(id);
+    if (!p) return;
 
-  const val = input.value;
-  if (val === '') return;
+    const val = input.value;
+    if (val === '') return;
 
-  p.cantidad = clampInt(val, 1);
-  calcularTotalesProducto(p);
+    p.cantidad = clampInt(val, 1);
+    calcularTotalesProducto(p);
 
-  const rowTotal = tr.querySelector('.row-total');
-  if (rowTotal) rowTotal.textContent = money(p.precioTotal);
-  actualizarTotalPedido();
+    const rowTotal = tr.querySelector('.row-total');
+    if (rowTotal) rowTotal.textContent = money(p.precioTotal);
+    actualizarTotalPedido();
 
-  markDirty();
+    if (contenedorProductos && !contenedorProductos.hidden) renderResultados(lastResults);
+  });
 
-  if (!contenedorProductos.hidden) renderResultados(lastResults);
-});
+  tablaBody.addEventListener('change', (e) => {
+    const input = e.target.closest('.pm-qty-input');
+    if (!input) return;
+    if (input.value === '' || Number(input.value) < 1) input.value = 1;
+  });
 
-tablaBody.addEventListener('change', (e) => {
-  const input = e.target.closest('.pm-qty-input');
-  if (!input) return;
-  if (input.value === '' || Number(input.value) < 1) input.value = 1;
-});
+  tablaBody.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action="remove"]');
+    if (!btn) return;
 
-tablaBody.addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-action="remove"]');
-  if (!btn) return;
+    const tr = btn.closest('tr');
+    const id = tr?.dataset?.id;
+    if (!id) return;
 
-  const tr = btn.closest('tr');
-  const id = tr?.dataset?.id;
-  if (!id) return;
+    productosSeleccionados = productosSeleccionados.filter(p => Number(p.id) !== Number(id));
+    renderTabla();
 
-  productosSeleccionados = productosSeleccionados.filter(p => Number(p.id) !== Number(id));
-  markDirty();
-  renderTabla();
-
-  if (!contenedorProductos.hidden) renderResultados(lastResults);
-});
+    if (contenedorProductos && !contenedorProductos.hidden) renderResultados(lastResults);
+  });
+}
 
 // --- Botones PDF + reset
-btnConfirmar.addEventListener('click', async () => {
-  const { ok } = await guardarPedidoSiHaceFalta();
-  if (!ok) return;
-  generarPDFInterno();
-});
+if (btnConfirmar) {
+  btnConfirmar.addEventListener('click', async () => {
+    const { ok } = await guardarPedidoSiHaceFalta();
+    if (!ok) return;
+    generarPDFInterno();
+  });
+}
 
-btnPdfProveedor.addEventListener('click', async () => {
-  const { ok } = await guardarPedidoSiHaceFalta();
-  if (!ok) return;
-  generarPDFProveedor();
-});
+if (btnPdfProveedor) {
+  btnPdfProveedor.addEventListener('click', async () => {
+    const { ok } = await guardarPedidoSiHaceFalta();
+    if (!ok) return;
+    generarPDFProveedor();
+  });
+}
 
-btnContinuar.addEventListener('click', () => {
-  resetAll();
-});
+if (btnContinuar) {
+  btnContinuar.addEventListener('click', () => {
+    resetAll();
+  });
+}
+
+// --- PRELOAD (editar pedido existente)
+(function initFromPreload() {
+  const preload = window.__PEDIDO_PRELOAD__;
+  if (!preload || typeof preload !== 'object') return;
+
+  // proveedor
+  if (proveedorSelect && proveedorValido(preload.proveedorId)) {
+    proveedorSelect.value = String(preload.proveedorId);
+    if (entradaBusqueda) {
+      entradaBusqueda.disabled = false;
+      entradaBusqueda.placeholder = 'Buscar por código o nombre...';
+    }
+  }
+
+  // pedido_id
+  if (preload.pedidoId) {
+    setPedidoIdUI(preload.pedidoId);
+    pedidoGuardado = true; // ya existe en DB
+  }
+
+  // items
+  if (Array.isArray(preload.items) && preload.items.length) {
+    productosSeleccionados = preload.items.map((it) => {
+      const p = { ...it };
+      p.cantidad = clampInt(it.cantidad, 1);
+      calcularTotalesProducto(p);
+      return p;
+    });
+    renderTabla();
+  }
+})();
