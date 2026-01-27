@@ -2314,7 +2314,6 @@ obtenerProveedoresPorProducto: async (conexion, producto_id) => {
   return rows?.[0] || null;
 },
 
-// Ajustá el nombre de tabla si no es "pedidos_items"
 obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
   const sql = `
     SELECT
@@ -2323,7 +2322,7 @@ obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
       pi.cantidad,
       pp.codigo,
       pp.costo_neto
-    FROM pedidos_items pi
+    FROM pedido_items pi
     JOIN productos p ON p.id = pi.producto_id
     LEFT JOIN producto_proveedor pp
       ON pp.producto_id = pi.producto_id
@@ -2356,13 +2355,13 @@ upsertPedido: async function (conexion, { pedido_id, proveedor_id, total, produc
       );
 
       // reemplazo items
-      await cx.query(`DELETE FROM pedidos_items WHERE pedido_id = ?`, [pedidoId]);
+      await cx.query(`DELETE FROM pedido_items WHERE pedido_id = ?`, [pedidoId]);
     }
 
     // insertar items
     const values = productos.map(p => [pedidoId, Number(p.id), Number(p.cantidad) || 1]);
     await cx.query(
-      `INSERT INTO pedidos_items (pedido_id, producto_id, cantidad) VALUES ?`,
+      `INSERT INTO pedido_items (pedido_id, producto_id, cantidad) VALUES ?`,
       [values]
     );
 
