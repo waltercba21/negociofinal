@@ -983,7 +983,7 @@ buscarPorProveedor: function (conexion, proveedorId, q) {
         MAX(pp.codigo)       AS codigo,
         MAX(pp.precio_lista) AS precio_lista,
         MAX(pp.descuento)    AS descuento,
-        MAX(pp.costo_neto)   AS costo_neto,
+        COALESCE(NULLIF(MAX(pp.costo_neto),0), MAX(p.costo_neto), 0) AS costo_neto,
         MAX(pp.costo_iva)    AS costo_iva,
         MAX(pp.iva)          AS iva,
         MAX(pp.presentacion) AS presentacion,
@@ -1046,19 +1046,22 @@ obtenerPorFiltrosYProveedor: function (
 
         COALESCE(NULLIF(pp.descuento, 0), dp.descuento, 0) AS descuento,
 
-        -- ✅ costo_neto NORMALIZADO A UNIDAD:
-        -- si pp.costo_neto está 0 => se calcula desde precio_lista y descuento
+        -- ✅ costo_neto con fallback:
+        -- 1) si pp.costo_neto > 0 usa ese
+        -- 2) sino usa p.costo_neto (como en VER PEDIDO)
+        -- 3) sino calcula desde precio_lista/descuento
         CEIL(
-          (
-            COALESCE(
-              NULLIF(pp.costo_neto, 0),
-              CEIL(pp.precio_lista * (1 - (COALESCE(NULLIF(pp.descuento, 0), dp.descuento, 0) / 100)))
-            )
+          COALESCE(
+            NULLIF(pp.costo_neto, 0),
+            NULLIF(p.costo_neto, 0),
+            (pp.precio_lista * (1 - (COALESCE(NULLIF(pp.descuento, 0), dp.descuento, 0) / 100)))
           )
-          * (CASE
-              WHEN LOWER(COALESCE(pp.presentacion, 'unidad')) = 'juego' THEN 0.5
-              ELSE 1
-            END)
+          *
+          (CASE
+            WHEN COALESCE(NULLIF(pp.factor_unidad, 0), 0) > 0 THEN pp.factor_unidad
+            WHEN LOWER(COALESCE(pp.presentacion, 'unidad')) = 'juego' THEN 0.5
+            ELSE 1
+          END)
         ) AS costo_neto,
 
         pp.costo_iva     AS costo_iva,
@@ -2324,7 +2327,6 @@ obtenerProveedoresPorProducto: async (conexion, producto_id) => {
   const [rows] = await conexion.promise().query(sql, [pedidoId]);
   return rows?.[0] || null;
 },
-
 obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
   const sql = `
     SELECT
@@ -2332,7 +2334,7 @@ obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
       p.nombre,
       pi.cantidad,
       pp.codigo,
-      pp.costo_neto
+      COALESCE(NULLIF(pp.costo_neto,0), p.costo_neto) AS costo_neto
     FROM pedido_items pi
     JOIN productos p ON p.id = pi.producto_id
     LEFT JOIN producto_proveedor pp
@@ -2345,7 +2347,6 @@ obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
   return rows || [];
 },
 
-// Upsert pedido + reemplaza items (simple y robusto)
 upsertPedido: async function (conexion, { pedido_id, proveedor_id, total, productos }) {
   const cx = conexion.promise();
 
