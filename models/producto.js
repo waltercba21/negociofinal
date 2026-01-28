@@ -2334,49 +2334,49 @@ obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
 },
 upsertPedido: function (conexion, pedido, items) {
   return new Promise((resolve, reject) => {
-
-    // Permite que "conexion" sea pool o una conexión directa
     const getCx = (cb) => {
-      if (conexion && typeof conexion.getConnection === 'function') {
-        return conexion.getConnection(cb); // pool -> conexión
-      }
+      if (conexion && typeof conexion.getConnection === 'function') return conexion.getConnection(cb); // pool
       return cb(null, conexion); // conexión directa
     };
 
     const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
-    // Normaliza items
-    let lista = items;
-    if (typeof lista === 'string') {
-      try { lista = JSON.parse(lista); } catch (_) { lista = []; }
-    }
+    // items pueden venir como arg o dentro del pedido (pedido.productos)
+    let lista = items ?? pedido?.productos ?? pedido?.items ?? [];
+    if (typeof lista === 'string') { try { lista = JSON.parse(lista); } catch { lista = []; } }
     if (!Array.isArray(lista)) lista = [];
 
-    const proveedor_id = Number(pedido?.proveedor_id ?? pedido?.proveedorId ?? pedido?.id_proveedor ?? 0) || 0;
-    const fecha = pedido?.fecha ?? null;
-    let pedido_id = Number(pedido?.id ?? 0) || null;
+    const proveedor_id = Number(pedido?.proveedor_id ?? pedido?.proveedorId ?? 0) || 0;
+
+    // ✅ pedido_id viene del frontend como "pedido_id"
+    let pedido_id = Number(pedido?.id ?? pedido?.pedido_id ?? pedido?.pedidoId ?? 0) || null;
 
     if (!proveedor_id) return reject(new Error('proveedor_id inválido'));
 
+    // ✅ producto_id en el frontend viene como "id"
     const normItems = lista
-      .filter(it => it && (it.producto_id != null || it.id_producto != null))
+      .filter(it => it && (it.producto_id != null || it.id_producto != null || it.id != null))
       .map(it => {
-        const producto_id = Number(it.producto_id ?? it.id_producto) || 0;
+        const producto_id = Number(it.producto_id ?? it.id_producto ?? it.id) || 0;
         const cantidad = parseInt(it.cantidad, 10) > 0 ? parseInt(it.cantidad, 10) : 1;
 
-        // precio_unitario: prioriza precio_unitario, sino costo_neto, sino precio
-        const precio_unitario = round2(
-          it.precio_unitario ?? it.precioUnitario ?? it.costo_neto ?? it.costoNeto ?? it.precio ?? 0
-        );
-
+        // precio unitario: en tu pedido manual es costo_neto
+        const precio_unitario = round2(it.precio_unitario ?? it.costo_neto ?? 0);
         const subtotal = round2(precio_unitario * cantidad);
 
         return { producto_id, cantidad, precio_unitario, subtotal };
       })
       .filter(it => it.producto_id > 0);
 
-    // total obligatorio en pedidos
-    const total = round2(normItems.reduce((acc, it) => acc + it.subtotal, 0));
+    if (!normItems.length) {
+      return reject(new Error('El pedido llegó sin productos (revisar keys: se espera productos[].id)'));
+    }
+
+    // total: usá el que manda el front si existe, sino recalculá
+    const totalReq = Number(pedido?.total);
+    const total = Number.isFinite(totalReq) && totalReq > 0
+      ? round2(totalReq)
+      : round2(normItems.reduce((acc, it) => acc + it.subtotal, 0));
 
     getCx((err, cx) => {
       if (err) return reject(err);
@@ -2386,42 +2386,31 @@ upsertPedido: function (conexion, pedido, items) {
 
       const release = () => { if (typeof cx.release === 'function') cx.release(); };
 
-      const rollback = (e) => {
-        cx.rollback(() => {
-          release();
-          reject(e);
-        });
-      };
-
-      const commit = () => {
-        cx.commit((e) => {
-          if (e) return rollback(e);
-          release();
-          resolve({ ok: true, pedido_id, total });
-        });
-      };
+      const rollback = (e) => cx.rollback(() => { release(); reject(e); });
+      const commit = () => cx.commit((e) => {
+        if (e) return rollback(e);
+        release();
+        resolve({ ok: true, pedido_id, total });
+      });
 
       cx.beginTransaction((e) => {
         if (e) { release(); return reject(e); }
 
         const sqlPedido = pedido_id
-          ? `UPDATE pedidos SET proveedor_id=?, total=?, fecha=COALESCE(?, fecha) WHERE id=?`
-          : `INSERT INTO pedidos (proveedor_id, total, fecha) VALUES (?, ?, COALESCE(?, CURRENT_TIMESTAMP))`;
+          ? `UPDATE pedidos SET proveedor_id=?, total=? WHERE id=?`
+          : `INSERT INTO pedidos (proveedor_id, total) VALUES (?, ?)`;
 
         const paramsPedido = pedido_id
-          ? [proveedor_id, total, fecha, pedido_id]
-          : [proveedor_id, total, fecha];
+          ? [proveedor_id, total, pedido_id]
+          : [proveedor_id, total];
 
         cx.query(sqlPedido, paramsPedido, (e2, rPedido) => {
           if (e2) return rollback(e2);
 
           if (!pedido_id) pedido_id = rPedido.insertId;
 
-          // Reemplazo total de items
           cx.query(`DELETE FROM pedido_items WHERE pedido_id=?`, [pedido_id], (e3) => {
             if (e3) return rollback(e3);
-
-            if (!normItems.length) return commit();
 
             const values = normItems.map(it => ([
               pedido_id,
