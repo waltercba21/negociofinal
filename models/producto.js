@@ -2334,54 +2334,105 @@ obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
 },
 upsertPedido: function (conexion, pedido, items) {
   return new Promise((resolve, reject) => {
-    // ✅ obtener conexión REAL del pool
-    if (typeof conexion.getConnection !== 'function') {
-      return reject(new Error('La variable "conexion" no es un pool con getConnection().'));
+
+    // Permite que "conexion" sea pool o una conexión directa
+    const getCx = (cb) => {
+      if (conexion && typeof conexion.getConnection === 'function') {
+        return conexion.getConnection(cb); // pool -> conexión
+      }
+      return cb(null, conexion); // conexión directa
+    };
+
+    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+    // Normaliza items
+    let lista = items;
+    if (typeof lista === 'string') {
+      try { lista = JSON.parse(lista); } catch (_) { lista = []; }
     }
+    if (!Array.isArray(lista)) lista = [];
 
-    conexion.getConnection((err, cx) => {
+    const proveedor_id = Number(pedido?.proveedor_id ?? pedido?.proveedorId ?? pedido?.id_proveedor ?? 0) || 0;
+    const fecha = pedido?.fecha ?? null;
+    let pedido_id = Number(pedido?.id ?? 0) || null;
+
+    if (!proveedor_id) return reject(new Error('proveedor_id inválido'));
+
+    const normItems = lista
+      .filter(it => it && (it.producto_id != null || it.id_producto != null))
+      .map(it => {
+        const producto_id = Number(it.producto_id ?? it.id_producto) || 0;
+        const cantidad = parseInt(it.cantidad, 10) > 0 ? parseInt(it.cantidad, 10) : 1;
+
+        // precio_unitario: prioriza precio_unitario, sino costo_neto, sino precio
+        const precio_unitario = round2(
+          it.precio_unitario ?? it.precioUnitario ?? it.costo_neto ?? it.costoNeto ?? it.precio ?? 0
+        );
+
+        const subtotal = round2(precio_unitario * cantidad);
+
+        return { producto_id, cantidad, precio_unitario, subtotal };
+      })
+      .filter(it => it.producto_id > 0);
+
+    // total obligatorio en pedidos
+    const total = round2(normItems.reduce((acc, it) => acc + it.subtotal, 0));
+
+    getCx((err, cx) => {
       if (err) return reject(err);
+      if (!cx || typeof cx.beginTransaction !== 'function') {
+        return reject(new Error('No se pudo obtener una conexión con beginTransaction()'));
+      }
 
-      const rollback = (e) => cx.rollback(() => { cx.release(); reject(e); });
-      const commit = () => cx.commit((e) => { if (e) return rollback(e); cx.release(); resolve({ ok: true, pedido_id }); });
+      const release = () => { if (typeof cx.release === 'function') cx.release(); };
 
-      let pedido_id = Number(pedido?.id) || null;
+      const rollback = (e) => {
+        cx.rollback(() => {
+          release();
+          reject(e);
+        });
+      };
+
+      const commit = () => {
+        cx.commit((e) => {
+          if (e) return rollback(e);
+          release();
+          resolve({ ok: true, pedido_id, total });
+        });
+      };
 
       cx.beginTransaction((e) => {
-        if (e) { cx.release(); return reject(e); }
+        if (e) { release(); return reject(e); }
 
-        // 1) Insert/Update pedido (AJUSTÁ campos/tabla a los tuyos)
         const sqlPedido = pedido_id
-          ? `UPDATE pedidos SET proveedor_id=?, fecha=?, notas=? WHERE id=?`
-          : `INSERT INTO pedidos (proveedor_id, fecha, notas) VALUES (?,?,?)`;
+          ? `UPDATE pedidos SET proveedor_id=?, total=?, fecha=COALESCE(?, fecha) WHERE id=?`
+          : `INSERT INTO pedidos (proveedor_id, total, fecha) VALUES (?, ?, COALESCE(?, CURRENT_TIMESTAMP))`;
 
         const paramsPedido = pedido_id
-          ? [pedido.proveedor_id, pedido.fecha, pedido.notas || '', pedido_id]
-          : [pedido.proveedor_id, pedido.fecha, pedido.notas || ''];
+          ? [proveedor_id, total, fecha, pedido_id]
+          : [proveedor_id, total, fecha];
 
         cx.query(sqlPedido, paramsPedido, (e2, rPedido) => {
           if (e2) return rollback(e2);
 
           if (!pedido_id) pedido_id = rPedido.insertId;
 
-          // 2) Borrar items anteriores
-          cx.query(`DELETE FROM pedidos_items WHERE pedido_id=?`, [pedido_id], (e3) => {
+          // Reemplazo total de items
+          cx.query(`DELETE FROM pedido_items WHERE pedido_id=?`, [pedido_id], (e3) => {
             if (e3) return rollback(e3);
 
-            const lista = Array.isArray(items) ? items : [];
-            if (!lista.length) return commit();
+            if (!normItems.length) return commit();
 
-            // 3) Insertar items nuevos (AJUSTÁ columnas a las tuyas)
-            const values = lista.map(it => ([
+            const values = normItems.map(it => ([
               pedido_id,
-              Number(it.producto_id),
-              Number(it.cantidad) || 1,
-              it.codigo || null,
-              Number(it.costo_neto) || 0
+              it.producto_id,
+              it.cantidad,
+              it.precio_unitario,
+              it.subtotal
             ]));
 
             cx.query(
-              `INSERT INTO pedidos_items (pedido_id, producto_id, cantidad, codigo, costo_neto) VALUES ?`,
+              `INSERT INTO pedido_items (pedido_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?`,
               [values],
               (e4) => {
                 if (e4) return rollback(e4);
@@ -2394,7 +2445,6 @@ upsertPedido: function (conexion, pedido, items) {
     });
   });
 },
-
 
   obtenerDetallePedido: (pedidoId) => {
     return new Promise((resolve, reject) => {
