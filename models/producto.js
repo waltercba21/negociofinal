@@ -2320,7 +2320,7 @@ obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
       p.nombre,
       pi.cantidad,
       pp.codigo,
-      pp.costo_neto
+      COALESCE(NULLIF(pp.costo_neto,0), p.costo_neto) AS costo_neto
     FROM pedido_items pi
     JOIN productos p ON p.id = pi.producto_id
     LEFT JOIN producto_proveedor pp
@@ -2332,6 +2332,7 @@ obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
   const [rows] = await conexion.promise().query(sql, [proveedorId, pedidoId]);
   return rows || [];
 },
+
 upsertPedido: function (conexion, pedido, items) {
   return new Promise((resolve, reject) => {
     const getCx = (cb) => {
