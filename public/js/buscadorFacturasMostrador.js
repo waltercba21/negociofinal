@@ -471,8 +471,8 @@ document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
   checkbox.addEventListener('change', calcularTotal);
 });
 
-// 🔒 Bloquea Enter en todos los inputs excepto en la búsqueda
-document.querySelectorAll('input:not(#entradaBusqueda)').forEach(input => {
+
+document.querySelectorAll('input:not(#entradaBusqueda):not(#headerEntradaBusqueda)').forEach(input => {
   input.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -480,3 +480,4 @@ document.querySelectorAll('input:not(#entradaBusqueda)').forEach(input => {
     }
   });
 });
+
