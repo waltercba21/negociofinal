@@ -2332,45 +2332,69 @@ obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
   const [rows] = await conexion.promise().query(sql, [proveedorId, pedidoId]);
   return rows || [];
 },
-
-// Upsert pedido + reemplaza items (simple y robusto)
-upsertPedido: async function (conexion, { pedido_id, proveedor_id, total, productos }) {
-  const cx = conexion.promise();
-
-  await cx.beginTransaction();
-  try {
-    let pedidoId = pedido_id;
-
-    if (!pedidoId) {
-      const [ins] = await cx.query(
-        `INSERT INTO pedidos (proveedor_id, fecha, total) VALUES (?, NOW(), ?)`,
-        [proveedor_id, total]
-      );
-      pedidoId = ins.insertId;
-    } else {
-      await cx.query(
-        `UPDATE pedidos SET proveedor_id = ?, total = ?, fecha = NOW() WHERE id = ?`,
-        [proveedor_id, total, pedidoId]
-      );
-
-      // reemplazo items
-      await cx.query(`DELETE FROM pedido_items WHERE pedido_id = ?`, [pedidoId]);
+upsertPedido: function (conexion, pedido, items) {
+  return new Promise((resolve, reject) => {
+    // ✅ obtener conexión REAL del pool
+    if (typeof conexion.getConnection !== 'function') {
+      return reject(new Error('La variable "conexion" no es un pool con getConnection().'));
     }
 
-    // insertar items
-    const values = productos.map(p => [pedidoId, Number(p.id), Number(p.cantidad) || 1]);
-    await cx.query(
-      `INSERT INTO pedido_items (pedido_id, producto_id, cantidad) VALUES ?`,
-      [values]
-    );
+    conexion.getConnection((err, cx) => {
+      if (err) return reject(err);
 
-    await cx.commit();
-    return pedidoId;
-  } catch (e) {
-    await cx.rollback();
-    throw e;
-  }
+      const rollback = (e) => cx.rollback(() => { cx.release(); reject(e); });
+      const commit = () => cx.commit((e) => { if (e) return rollback(e); cx.release(); resolve({ ok: true, pedido_id }); });
+
+      let pedido_id = Number(pedido?.id) || null;
+
+      cx.beginTransaction((e) => {
+        if (e) { cx.release(); return reject(e); }
+
+        // 1) Insert/Update pedido (AJUSTÁ campos/tabla a los tuyos)
+        const sqlPedido = pedido_id
+          ? `UPDATE pedidos SET proveedor_id=?, fecha=?, notas=? WHERE id=?`
+          : `INSERT INTO pedidos (proveedor_id, fecha, notas) VALUES (?,?,?)`;
+
+        const paramsPedido = pedido_id
+          ? [pedido.proveedor_id, pedido.fecha, pedido.notas || '', pedido_id]
+          : [pedido.proveedor_id, pedido.fecha, pedido.notas || ''];
+
+        cx.query(sqlPedido, paramsPedido, (e2, rPedido) => {
+          if (e2) return rollback(e2);
+
+          if (!pedido_id) pedido_id = rPedido.insertId;
+
+          // 2) Borrar items anteriores
+          cx.query(`DELETE FROM pedidos_items WHERE pedido_id=?`, [pedido_id], (e3) => {
+            if (e3) return rollback(e3);
+
+            const lista = Array.isArray(items) ? items : [];
+            if (!lista.length) return commit();
+
+            // 3) Insertar items nuevos (AJUSTÁ columnas a las tuyas)
+            const values = lista.map(it => ([
+              pedido_id,
+              Number(it.producto_id),
+              Number(it.cantidad) || 1,
+              it.codigo || null,
+              Number(it.costo_neto) || 0
+            ]));
+
+            cx.query(
+              `INSERT INTO pedidos_items (pedido_id, producto_id, cantidad, codigo, costo_neto) VALUES ?`,
+              [values],
+              (e4) => {
+                if (e4) return rollback(e4);
+                commit();
+              }
+            );
+          });
+        });
+      });
+    });
+  });
 },
+
 
   obtenerDetallePedido: (pedidoId) => {
     return new Promise((resolve, reject) => {
