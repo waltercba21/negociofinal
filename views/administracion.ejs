@@ -4,80 +4,81 @@
 <body>
   <!-- ========= ESTILOS AISLADOS DEL PANEL (namespace .af-admin) ========= -->
 <style>
-/* ========================= ADMIN UI v2 (DESKTOP) ========================= */
+/* ========================= ADMIN UI v3 (DESKTOP) ========================= */
 /* Namespace: solo afecta dentro de <main class="... af-admin"> */
 .af-admin{
   --brand:#1f487e;
   --brand2:#0f2f55;
   --accent:#d90429;
 
-  --bg:#f3f6fb;
+  --bg:#0b1220;
+  --surface:rgba(255,255,255,.92);
   --card:#ffffff;
+
   --text:#0f172a;
   --muted:rgba(15,23,42,.65);
 
-  --bdr:1px solid rgba(15,23,42,.10);
-  --shadow:0 10px 26px rgba(2,6,23,.10);
+  --line:rgba(2,6,23,.10);
+  --shadow:0 18px 45px rgba(2,6,23,.16);
+  --shadow2:0 10px 26px rgba(2,6,23,.12);
 
-  --r:16px;
-  --r2:18px;
+  --r12:12px;
+  --r16:16px;
+  --r20:20px;
 
   --pad:14px;
   --gap:14px;
 
-  background:var(--bg);
-  padding:18px;
-  border-radius:18px;
+  background:
+    radial-gradient(1100px 520px at 20% -10%, rgba(31,72,126,.35), transparent 60%),
+    radial-gradient(900px 520px at 95% 10%, rgba(217,4,41,.18), transparent 55%),
+    linear-gradient(180deg, #070b14 0%, #0b1220 100%);
+  padding:22px;
+  border-radius:20px;
   color:var(--text);
   font-size:14px;
 }
 
-/* Forzar grid (tu clase original puede ser flex) */
+/* Grid principal (compacto, sin “bloques gigantes”) */
 .af-admin .contenedor-admin-flex.af-admin__grid{
   display:grid !important;
-  grid-template-columns: 340px 420px minmax(420px, 1fr);
+  grid-template-columns: 320px 420px minmax(460px, 1fr);
   gap:var(--gap);
   align-items:start;
 }
 
-/* Toolbar/acciones que metiste suelta arriba: que no rompa el grid */
-.af-admin .af-admin__grid > .af-actions-row{
+/* Barra superior (acciones globales) */
+.af-admin .af-actions-row{
   grid-column:1 / -1;
-  background:linear-gradient(90deg, rgba(31,72,126,.08), rgba(217,4,41,.06));
-  border:1px solid rgba(31,72,126,.14);
+  background: rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.14);
   border-radius:18px;
-  padding:12px 14px;
+  padding:10px 12px;
   display:flex;
   align-items:center;
-  justify-content:flex-end;
+  justify-content:space-between;
   gap:10px;
+  box-shadow: 0 10px 26px rgba(2,6,23,.18);
+  backdrop-filter: blur(10px);
+}
+.af-admin .af-actions-row a.btn{
+  border-radius:999px !important;
 }
 
-/* Tarjeta base */
+/* Tarjetas */
 .af-admin .af-card{
-  background:var(--card);
-  border:var(--bdr);
-  border-radius:var(--r2);
+  background:var(--surface);
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:var(--r20);
   box-shadow:var(--shadow);
   padding:var(--pad);
   overflow:hidden;
   position:relative;
   max-width:100%;
+  backdrop-filter: blur(10px);
 }
 
-/* Título */
-.af-admin .af-card__title{
-  margin:0 0 12px 0;
-  font-weight:900;
-  color:var(--brand);
-  letter-spacing:.2px;
-  font-size:1.05rem;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-/* Línea superior sutil */
+/* Encabezado de tarjeta (título + línea de color) */
 .af-admin .af-card::before{
   content:"";
   position:absolute;
@@ -86,80 +87,99 @@
   background:linear-gradient(90deg, rgba(31,72,126,.85), rgba(217,4,41,.55));
 }
 
-/* ========================= ORDEN / TAMAÑOS ========================= */
+.af-admin .af-card__title{
+  margin:0 0 12px 0;
+  font-weight:950;
+  color:rgba(255,255,255,.92);
+  letter-spacing:.2px;
+  font-size:1.03rem;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:14px;
+  background:linear-gradient(90deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+  border:1px solid rgba(255,255,255,.12);
+}
+
+/* Ajustes por panel */
 .af-admin .panel-proveedores{ grid-column:1; }
 .af-admin .panel-facturas{ grid-column:2; }
 .af-admin .panel-notas-credito{ grid-column:2; }
 .af-admin .panel-presupuestos{ grid-column:3; }
 .af-admin .panel-listados{ grid-column:3; }
-
-/* Catálogos ocupa 2 columnas, pero sin inflarse */
 .af-admin .panel-catalogos{ grid-column:1 / span 2; padding:0; }
-.af-admin .panel-catalogos .af-card__title{ padding:var(--pad); padding-bottom:0; }
+.af-admin .panel-catalogos .af-card__title{ margin:14px 14px 0; }
 
-/* Grid interno catálogos: compacto y prolijo */
+/* Catálogos interno (compacto) */
 .af-admin .af-catgrid{
   display:grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap:12px;
-  padding:var(--pad);
+  padding:14px;
 }
 .af-admin .af-subcard{
-  border:1px solid rgba(15,23,42,.10);
-  background:linear-gradient(180deg,#ffffff,#f7fbff);
-  border-radius:14px;
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(2,6,23,.10);
+  border-radius:16px;
   padding:12px;
-  box-shadow:0 8px 16px rgba(2,6,23,.06);
+  box-shadow: var(--shadow2);
 }
 .af-admin .af-subcard .af-card__title{
-  font-size:.98rem;
-  margin-bottom:10px;
+  margin:0 0 10px 0;
+  padding:9px 10px;
+  font-size:.95rem;
 }
 
-/* ========================= FORMULARIOS (LABEL ARRIBA, SIEMPRE) ========================= */
+/* Formularios: label arriba y spacing consistente */
 .af-admin .mb-3{ margin-bottom:12px !important; }
 .af-admin .form-label{
   display:block;
   margin:0 0 6px 0;
-  font-weight:800;
-  color:rgba(15,23,42,.78);
+  font-weight:900;
+  color:rgba(255,255,255,.86);
+  text-shadow:0 1px 0 rgba(2,6,23,.25);
 }
 
+/* Inputs */
 .af-admin .form-control,
 .af-admin .form-select{
   width:100%;
   border-radius:14px;
-  border:1px solid rgba(15,23,42,.14);
+  border:1px solid rgba(2,6,23,.14);
   background:#fff;
   padding:10px 12px;
   line-height:1.15;
-  box-shadow:0 1px 0 rgba(2,6,23,.02);
   outline:none;
+  box-shadow:0 1px 0 rgba(2,6,23,.02);
 }
-
 .af-admin .form-control:focus,
 .af-admin .form-select:focus{
   border-color:rgba(31,72,126,.55);
-  box-shadow:0 0 0 4px rgba(31,72,126,.12);
+  box-shadow:0 0 0 4px rgba(31,72,126,.18);
 }
 
-/* Resultados list-group: se ve “app-like” */
-#afResultadosDummy {}
-#afResultadosDummy2 {}
-#afResultadosDummy3 {}
+/* Secciones: evitar “bloques altos” */
+.af-admin section.af-card .d-flex.justify-content-end{
+  gap:10px;
+}
+.af-admin section.af-card button.btn{
+  white-space:nowrap;
+}
 
+/* List group resultados: estilo app */
 .af-admin #resultadosBusqueda,
 .af-admin #resultadosBusquedaPresupuesto{
   border-radius:14px;
   overflow:hidden;
-  border:1px solid rgba(15,23,42,.10);
+  border:1px solid rgba(2,6,23,.10);
   background:#fff;
+  box-shadow:0 10px 20px rgba(2,6,23,.10);
 }
-
 .af-admin #resultadosBusqueda .list-group-item,
 .af-admin #resultadosBusquedaPresupuesto .list-group-item{
   border:0;
-  border-bottom:1px solid rgba(15,23,42,.08);
+  border-bottom:1px solid rgba(2,6,23,.08);
   padding:10px 12px;
 }
 .af-admin #resultadosBusqueda .list-group-item:last-child,
@@ -167,31 +187,29 @@
   border-bottom:0;
 }
 
-/* Detalle proveedor */
+/* Detalle proveedor (más “card” y menos bloque suelto) */
 .af-admin #detalleProveedor{
   margin-top:10px;
   padding:10px 12px;
   border-radius:14px;
-  border:1px dashed rgba(31,72,126,.25);
-  background:#fbfdff;
-  color:rgba(15,23,42,.86);
+  border:1px dashed rgba(31,72,126,.35);
+  background:rgba(255,255,255,.92);
+  color:rgba(2,6,23,.86);
 }
 
-/* ========================= BOTONES (MODERNOS) ========================= */
+/* Botones modernos */
 .af-admin .btn{
   border-radius:999px;
   padding:10px 14px;
-  font-weight:900;
+  font-weight:950;
   letter-spacing:.15px;
   border:1px solid transparent;
   transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
 }
-.af-admin .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 20px rgba(2,6,23,.12); }
+.af-admin .btn:hover{ transform:translateY(-1px); box-shadow:0 14px 26px rgba(2,6,23,.16); }
 .af-admin .btn:active{ transform:translateY(0); box-shadow:none; }
+.af-admin .btn-sm{ padding:8px 12px; }
 
-.af-admin .btn-sm{ padding:8px 12px; font-weight:900; }
-
-/* Colores */
 .af-admin .btn-primary{
   background:linear-gradient(180deg, rgba(31,72,126,1), rgba(15,47,85,1));
   border-color:rgba(15,47,85,1);
@@ -210,20 +228,18 @@
   border-color:#b91c1c;
 }
 .af-admin .btn-outline-primary{
-  background:#fff;
+  background:rgba(255,255,255,.92);
   border-color:rgba(31,72,126,.35);
-  color:var(--brand);
+  color:#0f2f55;
 }
-.af-admin .btn-outline-primary:hover{
-  background:rgba(31,72,126,.06);
-}
+.af-admin .btn-outline-primary:hover{ background:rgba(31,72,126,.08); }
 .af-admin .btn-outline-secondary{
-  background:#fff;
-  border-color:rgba(15,23,42,.20);
-  color:rgba(15,23,42,.78);
+  background:rgba(255,255,255,.92);
+  border-color:rgba(2,6,23,.18);
+  color:rgba(2,6,23,.78);
 }
 
-/* Botones “Listados” (tus clases existentes) */
+/* Botones “Listados” */
 .af-admin .btn-admin-facturas,
 .af-admin .btn-admin-presupuestos,
 .af-admin .btn-admin-vencimientos{
@@ -237,29 +253,25 @@
 }
 .af-admin .btn-admin-facturas:hover,
 .af-admin .btn-admin-presupuestos:hover,
-.af-admin .btn-admin-vencimientos:hover{
-  filter:brightness(1.03);
-}
+.af-admin .btn-admin-vencimientos:hover{ filter:brightness(1.03); }
 
-/* Acciones proveedor: que parezca toolbar */
+/* Toolbar proveedor */
 .af-admin .acciones-proveedor{
   display:flex !important;
   gap:10px;
   flex-wrap:wrap;
   padding:10px;
   border-radius:16px;
-  border:1px solid rgba(31,72,126,.14);
-  background:linear-gradient(180deg,#ffffff,#f7fbff);
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
 }
 
-/* Alinear footer botones */
-.af-admin .d-flex.justify-content-end{ gap:10px; }
-
-/* ========================= MODALES ========================= */
+/* Modales */
 .af-admin .modal-content{
   border-radius:18px;
   border:1px solid rgba(15,23,42,.10);
-  box-shadow:0 18px 50px rgba(2,6,23,.18);
+  box-shadow:0 18px 50px rgba(2,6,23,.22);
   overflow:hidden;
 }
 .af-admin .modal-proveedor-header{
@@ -268,6 +280,7 @@
 }
 .af-admin .btn-close-white{ filter:invert(1); opacity:.95; }
 
+/* Tablas dentro de modales */
 .af-admin .table thead th{
   background:#f2f6ff;
   font-weight:950;
@@ -276,7 +289,7 @@
 .af-admin .table td,
 .af-admin .table th{
   vertical-align:middle;
-  padding:.5rem .6rem;
+  padding:.55rem .65rem;
 }
 
 </style>
