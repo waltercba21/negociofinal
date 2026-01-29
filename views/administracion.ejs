@@ -4,227 +4,296 @@
 <body>
   <!-- ========= ESTILOS AISLADOS DEL PANEL (namespace .af-admin) ========= -->
 <style>
-  /* ================== ADMIN LAYOUT (COMPACT-READY) ================== */
-  .af-admin {
-    /* Escala base */
-    --af-font-size: 14px;
-    --af-gap: 16px;
-    --af-col-min: 300px;         /* ↓ antes 340px */
-    --af-card-pad: 16px;
-    --af-card-br: 12px;
-    --af-card-bg: #fff;
-    --af-card-shadow: 0 6px 18px rgba(0,0,0,.08);
-    --af-border: 1px solid rgba(31,72,126,.12);
-    --af-title: #1f487e;
-  }
+/* ================== ADMIN UI (desktop-only) ================== */
+.af-admin{
+  --brand:#1f487e;
+  --brand-2:#0f2f55;
+  --accent:#d90429;
 
-  .af-admin__grid {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(var(--af-col-min), 1fr));
-    gap: var(--af-gap);
-    align-items: start;
-  }
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:rgba(15,23,42,.68);
 
-  .af-card {
-    background: var(--af-card-bg);
-    border-radius: var(--af-card-br);
-    box-shadow: var(--af-card-shadow);
-    border: var(--af-border);
-    padding: var(--af-card-pad);
-    position: relative;
-    overflow: hidden;
-  }
+  --bdr:1px solid rgba(31,72,126,.14);
+  --shadow:0 10px 26px rgba(2,6,23,.10);
+  --shadow-2:0 16px 40px rgba(2,6,23,.12);
 
-  .af-card__title {
-    margin: 0 0 10px 0;
-    color: var(--af-title);
-    font-weight: 700;
-    /* Tipografía adaptable y más chica */
-    font-size: clamp(0.95rem, 1.2vw, 1.05rem);
-    letter-spacing: .2px;
-  }
+  --r:14px;
+  --r2:18px;
 
-  /* ===== Controles / Formularios más compactos ===== */
-  .af-admin .form-label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #29486f;
-    margin-bottom: .35rem;
-  }
+  --gap:16px;
+  --pad:16px;
 
-  .af-admin .form-control,
-  .af-admin .form-select {
-    font-size: 0.9rem;
-    padding: .35rem .5rem;             /* ↓ padding */
-    height: auto;                       /* evita alturas gigantes de BS */
-    line-height: 1.25;
-  }
-
-  .af-admin .mb-3 { margin-bottom: .75rem !important; }
-
-  /* ===== Botones compactos ===== */
-  .af-actions-row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 10px;
-  }
-
-  .btn-admin-facturas,
-  .btn-admin-presupuestos,
-  .btn-admin-vencimientos {
-    background: #1f487e;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;                 /* ↓ padding */
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 0.92rem;                /* ↓ tamaño */
-    transition: transform .15s ease, box-shadow .15s ease;
-  }
-  .btn-admin-facturas:hover,
-  .btn-admin-presupuestos:hover,
-  .btn-admin-vencimientos:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(0,0,0,.12);
-  }
-
-  .af-admin .btn { border-radius: 10px; }
-  .af-admin .btn.btn-primary,
-  .af-admin .btn.btn-success,
-  .af-admin .btn.btn-warning,
-  .af-admin .btn.btn-danger,
-  .af-admin .btn.btn-outline-secondary {
-    padding: 8px 12px;                 /* ↓ padding global */
-    font-size: 0.92rem;
-  }
-
-  /* ===== Tablas en modales más densas ===== */
-  .af-modal .table th, .af-modal .table td {
-    vertical-align: middle;
-    padding: .4rem .5rem;              /* ↓ padding celda */
-    font-size: 0.9rem;
-  }
-  .af-modal .table thead th { font-weight: 700; }
-
-  /* ===== Header de modales ===== */
-  .af-modal .modal-proveedor-header { background:#1f487e; color:#fff; }
-  .af-modal .btn-close-white { filter: invert(1); }
-
-  /* ===== Ajustes finos ===== */
-  .af-card .d-grid .btn-primary { border-radius: 10px; font-weight: 700; }
-  .af-card .gap-2 { gap: .5rem !important; }
-
-  /* ================================================================
-     1) MODO COMPACTO AUTOMÁTICO PARA MONITORES PEQUEÑOS
-        (ej. 1366×768 o menos)
-     ================================================================ */
-  @media (max-width: 1366px) {
-    .af-admin {
-      --af-font-size: 13px;
-      --af-gap: 12px;
-      --af-col-min: 260px;            /* ↓ aún más chico: entran 3 columnas */
-      --af-card-pad: 12px;
-      --af-card-br: 10px;
-    }
-    .af-card__title {
-      font-size: clamp(0.9rem, 1.2vw, 1rem);
-      margin-bottom: 8px;
-    }
-    .af-admin .form-label { font-size: 0.85rem; }
-    .af-admin .form-control,
-    .af-admin .form-select {
-      font-size: 0.85rem;
-      padding: .3rem .45rem;
-      line-height: 1.2;
-    }
-    .af-admin .mb-3 { margin-bottom: .6rem !important; }
-
-    .btn-admin-facturas,
-    .btn-admin-presupuestos,
-    .btn-admin-vencimientos,
-    .af-admin .btn {
-      font-size: 0.88rem;
-      padding: 7px 10px;
-    }
-
-    .af-modal .table th, .af-modal .table td {
-      font-size: 0.85rem;
-      padding: .35rem .45rem;
-    }
-  }
-
-  /* ================================================================
-     2) MODO COMPACTO FORZADO (opcional)
-        Agregá la clase .af-admin--compact al <main class="af-admin ...">
-     ================================================================ */
-  .af-admin.af-admin--compact {
-    --af-font-size: 13px;
-    --af-gap: 12px;
-    --af-col-min: 260px;
-    --af-card-pad: 12px;
-    --af-card-br: 10px;
-  }
-  .af-admin.af-admin--compact .af-card__title {
-    font-size: clamp(0.9rem, 1.1vw, 1rem);
-    margin-bottom: 8px;
-  }
-  .af-admin.af-admin--compact .form-label { font-size: 0.85rem; }
-  .af-admin.af-admin--compact .form-control,
-  .af-admin.af-admin--compact .form-select {
-    font-size: 0.85rem;
-    padding: .3rem .45rem;
-    line-height: 1.2;
-  }
-  .af-admin.af-admin--compact .mb-3 { margin-bottom: .6rem !important; }
-  .af-admin.af-admin--compact .btn,
-  .af-admin.af-admin--compact .btn-admin-facturas,
-  .af-admin.af-admin--compact .btn-admin-presupuestos,
-  .af-admin.af-admin--compact .btn-admin-vencimientos {
-    font-size: 0.88rem;
-    padding: 7px 10px;
-  }
-  .af-admin.af-admin--compact .af-modal .table th,
-  .af-admin.af-admin--compact .af-modal .table td {
-    font-size: 0.85rem;
-    padding: .35rem .45rem;
-  }
-
-  /* ================================================================
-     3) ULTRA-COMPACTO para 1280px (si todavía no entran 3 columnas)
-     ================================================================ */
-  @media (max-width: 1280px) {
-    .af-admin {
-      --af-col-min: 240px;            /* último ajuste para forzar 3 cols */
-    }
-  }
-  /* ===== Panel Catálogos: grid y sub-tarjetas ===== */
-.panel-catalogos { padding: 0; } /* ya es .af-card externo */
-.af-catgrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--af-gap);
-  padding: var(--af-card-pad);
+  font-size:14px;
+  color:var(--text);
 }
 
-.af-subcard {
-  background: #f9fbff;
-  border: 1px solid rgba(31,72,126,.12);
-  border-radius: 10px;
-  padding: 12px;
+/* Fondo general del panel (solo dentro del admin) */
+.af-admin{
+  background:var(--bg);
+  padding:18px 18px 28px;
+  border-radius:18px;
 }
 
-.af-subcard .af-card__title {
-  font-size: clamp(0.92rem, 1.1vw, 1rem);
-  margin-bottom: 8px;
+/* Grid principal: 3 columnas “cómodo” en desktop */
+.af-admin__grid{
+  display:grid !important;
+  grid-template-columns: 360px 360px 1fr;
+  gap:var(--gap);
+  align-items:start;
 }
 
-@media (max-width: 1366px) {
-  .af-catgrid {
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  }
+/* Tarjetas base */
+.af-card{
+  background:var(--card);
+  border:var(--bdr);
+  border-radius:var(--r2);
+  box-shadow:var(--shadow);
+  padding:var(--pad);
+  overflow:hidden;
+  position:relative;
 }
+
+/* Header de tarjeta */
+.af-card__title{
+  margin:0 0 12px 0;
+  font-weight:800;
+  letter-spacing:.2px;
+  color:var(--brand);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:1.05rem;
+}
+
+/* Línea superior decorativa sutil */
+.af-card::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto 0;
+  height:3px;
+  background:linear-gradient(90deg, rgba(31,72,126,.9), rgba(217,4,41,.55));
+}
+
+/* Subtarjetas (catálogos) */
+.af-subcard{
+  background:linear-gradient(180deg,#ffffff, #f8fbff);
+  border:1px solid rgba(31,72,126,.12);
+  border-radius:14px;
+  padding:12px;
+  box-shadow:0 8px 18px rgba(2,6,23,.06);
+}
+.af-subcard .af-card__title{
+  font-size:.98rem;
+  margin-bottom:10px;
+}
+
+/* Grid interno de catálogos */
+.af-catgrid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:12px;
+  margin-top:8px;
+}
+
+/* Labels + inputs (compacto y prolijo) */
+.af-admin .form-label{
+  font-weight:700;
+  color:rgba(15,23,42,.78);
+  margin-bottom:.35rem;
+}
+.af-admin .form-control,
+.af-admin .form-select{
+  border-radius:12px;
+  border:1px solid rgba(15,23,42,.14);
+  background:#fff;
+  padding:.52rem .65rem;
+  line-height:1.2;
+  box-shadow:0 1px 0 rgba(2,6,23,.02);
+}
+.af-admin .form-control:focus,
+.af-admin .form-select:focus{
+  border-color:rgba(31,72,126,.55);
+  box-shadow:0 0 0 .2rem rgba(31,72,126,.12);
+}
+
+/* Espaciado más limpio */
+.af-admin .mb-3{ margin-bottom:.85rem !important; }
+
+/* Acciones tipo “toolbar” */
+.acciones-proveedor,
+.af-actions-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.acciones-proveedor{
+  padding:10px;
+  border:1px solid rgba(31,72,126,.12);
+  background:linear-gradient(180deg,#ffffff,#f7fbff);
+  border-radius:14px;
+}
+
+/* Botones (unificados) */
+.af-admin .btn{
+  border-radius:12px;
+  font-weight:800;
+  letter-spacing:.1px;
+  padding:9px 12px;
+  border:1px solid transparent;
+  transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.af-admin .btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 10px 20px rgba(2,6,23,.10);
+}
+.af-admin .btn:active{ transform:translateY(0); box-shadow:none; }
+
+/* Variantes bootstrap “afinadas” */
+.af-admin .btn-primary{ background:var(--brand); border-color:var(--brand); }
+.af-admin .btn-success{ filter:saturate(1.05); }
+.af-admin .btn-warning{ filter:saturate(1.05); }
+.af-admin .btn-danger{ filter:saturate(1.05); }
+.af-admin .btn-outline-secondary{
+  border-color:rgba(15,23,42,.22);
+  color:rgba(15,23,42,.78);
+  background:#fff;
+}
+.af-admin .btn-outline-primary{
+  border-color:rgba(31,72,126,.35);
+  color:var(--brand);
+  background:#fff;
+}
+
+/* Botones grandes del bloque “Listados” */
+.btn-admin-facturas,
+.btn-admin-presupuestos,
+.btn-admin-vencimientos{
+  background:var(--brand);
+  color:#fff;
+  border:none;
+  padding:10px 12px;
+  border-radius:12px;
+  font-weight:900;
+}
+.btn-admin-facturas:hover,
+.btn-admin-presupuestos:hover,
+.btn-admin-vencimientos:hover{
+  filter:brightness(1.03);
+}
+
+/* Botón “Buscar” full */
+.af-admin .d-grid .btn{
+  padding:11px 12px;
+  border-radius:14px;
+}
+
+/* Bloque detalle proveedor */
+#detalleProveedor{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px dashed rgba(31,72,126,.22);
+  background:#fbfdff;
+  color:rgba(15,23,42,.86);
+}
+
+/* ================== FORMS 2-COLUMN dentro de tarjetas largas ================== */
+/* Para Factura / Presupuesto / Nota: que se lean rápido */
+.panel-facturas .mb-3,
+.panel-presupuestos .mb-3,
+.panel-notas-credito .mb-3{
+  display:grid;
+  grid-template-columns: 170px 1fr;
+  align-items:center;
+  gap:10px;
+}
+.panel-facturas .form-label,
+.panel-presupuestos .form-label,
+.panel-notas-credito .form-label{
+  margin:0;
+}
+
+/* Botones dentro de esas tarjetas alineados bien */
+.panel-facturas .d-flex.justify-content-end,
+.panel-presupuestos .d-flex.justify-content-end,
+.panel-notas-credito .d-flex.justify-content-end{
+  margin-top:10px !important;
+}
+
+/* ================== MODALES (más limpios) ================== */
+.af-modal .modal-content{
+  border-radius:18px;
+  border:1px solid rgba(15,23,42,.10);
+  box-shadow:var(--shadow-2);
+  overflow:hidden;
+}
+.af-modal .modal-proveedor-header{
+  background:linear-gradient(90deg, var(--brand), var(--brand-2));
+  color:#fff;
+}
+.af-modal .btn-close-white{ filter:invert(1); opacity:.95; }
+.af-modal .modal-body{ background:#fff; }
+.af-modal .modal-footer{
+  background:#fbfdff;
+  border-top:1px solid rgba(15,23,42,.08);
+}
+
+/* Tablas en modales */
+.af-modal .table{
+  border-color:rgba(15,23,42,.12);
+}
+.af-modal .table thead th{
+  background:#f2f6ff;
+  font-weight:900;
+  color:rgba(15,23,42,.82);
+}
+.af-modal .table td,
+.af-modal .table th{
+  vertical-align:middle;
+  padding:.45rem .55rem;
+  font-size:.92rem;
+}
+
+/* Resultados de búsqueda (list-group) */
+#resultadosBusqueda,
+#resultadosBusquedaPresupuesto{
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(15,23,42,.10);
+}
+#resultadosBusqueda .list-group-item,
+#resultadosBusquedaPresupuesto .list-group-item{
+  border:0;
+  border-bottom:1px solid rgba(15,23,42,.08);
+}
+#resultadosBusqueda .list-group-item:last-child,
+#resultadosBusquedaPresupuesto .list-group-item:last-child{ border-bottom:0; }
+
+/* ================== UBICACIÓN / ORDEN VISUAL ================== */
+/* Primera columna: Proveedores + Catálogos */
+.panel-proveedores{ grid-column:1; }
+.panel-catalogos{ grid-column:1 / span 2; }
+
+/* Segunda columna: Facturas + Notas crédito */
+.panel-facturas{ grid-column:2; }
+.panel-notas-credito{ grid-column:2; }
+
+/* Tercera columna: Presupuestos + Listados (más ancho) */
+.panel-presupuestos{ grid-column:3; }
+.panel-listados{ grid-column:3; }
+
+/* Ajustes de listados para lectura rápida */
+.panel-listados .mb-3{
+  display:grid;
+  grid-template-columns: 130px 1fr;
+  align-items:center;
+  gap:10px;
+}
+.panel-listados .form-label{ margin:0; }
+.panel-listados .af-actions-row{ margin-top:6px; }
 
 </style>
 
