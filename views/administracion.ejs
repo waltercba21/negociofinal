@@ -205,6 +205,196 @@
 
     /* (Opcional) ajustar tamaños de modal */
     .af-modal-xl{ max-width: 1200px; }
+    /* ========================= MODALES (ADMIN PROLIJO) ========================= */
+/* Pegá esto AL FINAL de tu <style> para que pise lo anterior */
+
+.af-admin .modal-dialog{ margin-top: 24px; }
+.af-admin .modal-content{
+  border-radius:18px;
+  border:1px solid rgba(15,23,42,.10);
+  box-shadow:0 22px 60px rgba(2,6,23,.20);
+  overflow:hidden;
+  background:#fff;
+}
+
+/* Header con un solo degrade */
+.af-admin .modal-header{
+  background:linear-gradient(180deg, var(--brand), var(--brand2));
+  color:#fff;
+  border-bottom:0;
+  padding:14px 16px;
+}
+.af-admin .modal-title{
+  font-weight:950;
+  letter-spacing:.2px;
+  margin:0;
+}
+.af-admin .btn-close{
+  filter:invert(1);
+  opacity:.95;
+}
+
+/* Body ordenado */
+.af-admin .modal-body{
+  padding:16px;
+  background:linear-gradient(180deg, rgba(31,72,126,.04), rgba(15,47,85,.02));
+}
+
+/* Secciones internas dentro del modal (paneles) */
+.af-admin .af-modal-panel{
+  background:#fff;
+  border:1px solid rgba(2,6,23,.10);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 10px 22px rgba(2,6,23,.10);
+}
+
+/* Labels e inputs (sin letras blancas) */
+.af-admin .form-label{
+  display:block;
+  margin:0 0 6px 0;
+  font-weight:900;
+  color:rgba(15,23,42,.82);
+}
+
+.af-admin .form-control,
+.af-admin .form-select{
+  border-radius:14px;
+  border:1px solid rgba(15,23,42,.14);
+  padding:10px 12px;
+  background:#fff;
+  color:rgba(15,23,42,.92);
+  box-shadow:0 1px 0 rgba(2,6,23,.02);
+}
+.af-admin .form-control::placeholder{
+  color:rgba(15,23,42,.45);
+}
+.af-admin .form-control:focus,
+.af-admin .form-select:focus{
+  border-color:rgba(31,72,126,.55);
+  box-shadow:0 0 0 4px rgba(31,72,126,.14);
+  outline:0;
+}
+
+/* Grillas de campos (más prolijo visualmente) */
+.af-admin .row.g-3{ --bs-gutter-x: 12px; --bs-gutter-y: 12px; }
+
+/* Footer */
+.af-admin .modal-footer{
+  padding:12px 16px;
+  background:#fff;
+  border-top:1px solid rgba(2,6,23,.08);
+  gap:10px;
+}
+
+/* Botones modernos (un solo esquema de color) */
+.af-admin .btn{
+  border-radius:999px !important;
+  min-height:44px;
+  padding:10px 14px;
+  font-weight:950;
+  letter-spacing:.15px;
+  border:1px solid transparent;
+  transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  box-shadow:0 10px 20px rgba(2,6,23,.10);
+}
+.af-admin .btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 26px rgba(2,6,23,.14);
+}
+.af-admin .btn:active{ transform:translateY(0); box-shadow:0 8px 16px rgba(2,6,23,.10); }
+
+.af-admin .btn-primary{
+  background:linear-gradient(180deg, var(--brand), var(--brand2));
+  border-color:rgba(15,47,85,.85);
+}
+.af-admin .btn-success{
+  background:linear-gradient(180deg, var(--brand), var(--brand2));
+  border-color:rgba(15,47,85,.85);
+}
+.af-admin .btn-warning{
+  background:#fff;
+  border:1px solid rgba(31,72,126,.28) !important;
+  color:rgba(15,23,42,.88) !important;
+}
+.af-admin .btn-danger{
+  background:#fff;
+  border:1px solid rgba(31,72,126,.28) !important;
+  color:rgba(15,23,42,.88) !important;
+}
+.af-admin .btn-outline-secondary{
+  background:#fff;
+  border:1px solid rgba(2,6,23,.18) !important;
+  color:rgba(15,23,42,.80) !important;
+  box-shadow:none;
+}
+.af-admin .btn-outline-secondary:hover{
+  background:rgba(2,6,23,.03);
+}
+
+/* Botones pequeños */
+.af-admin .btn.btn-sm{
+  min-height:38px;
+  padding:8px 12px;
+  font-weight:900;
+  box-shadow:0 8px 16px rgba(2,6,23,.10);
+}
+
+/* Tablas dentro de modales */
+.af-admin .table{
+  background:#fff;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid rgba(2,6,23,.10);
+  box-shadow:0 10px 22px rgba(2,6,23,.10);
+}
+.af-admin .table thead th{
+  background:linear-gradient(180deg, rgba(31,72,126,.10), rgba(15,47,85,.06));
+  color:rgba(15,23,42,.82);
+  font-weight:950;
+  border-bottom:1px solid rgba(2,6,23,.10);
+}
+.af-admin .table td, .af-admin .table th{
+  vertical-align:middle;
+  padding:.6rem .7rem;
+  border-color:rgba(2,6,23,.08);
+}
+.af-admin .table tbody tr:hover td{
+  background:rgba(31,72,126,.04);
+}
+
+/* List-group de resultados de búsqueda */
+.af-admin #resultadosBusqueda,
+.af-admin #resultadosBusquedaPresupuesto{
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(2,6,23,.10);
+  background:#fff;
+  box-shadow:0 12px 24px rgba(2,6,23,.12);
+  max-height:260px;
+  overflow:auto;
+}
+.af-admin #resultadosBusqueda .list-group-item,
+.af-admin #resultadosBusquedaPresupuesto .list-group-item{
+  border:0;
+  border-bottom:1px solid rgba(2,6,23,.08);
+  padding:10px 12px;
+  cursor:pointer;
+}
+.af-admin #resultadosBusqueda .list-group-item:hover,
+.af-admin #resultadosBusquedaPresupuesto .list-group-item:hover{
+  background:rgba(31,72,126,.06);
+}
+
+/* Bloque detalle proveedor */
+.af-admin #detalleProveedor{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px dashed rgba(31,72,126,.30);
+  background:#fff;
+  color:rgba(15,23,42,.88);
+}
+
   </style>
 
   <main class="af-admin">
