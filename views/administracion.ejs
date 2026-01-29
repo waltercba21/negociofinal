@@ -4,48 +4,57 @@
 <body>
   <!-- ========= ESTILOS AISLADOS DEL PANEL (namespace .af-admin) ========= -->
 <style>
-/* ================== ADMIN UI (desktop-only) ================== */
+/* ========================= ADMIN UI v2 (DESKTOP) ========================= */
+/* Namespace: solo afecta dentro de <main class="... af-admin"> */
 .af-admin{
   --brand:#1f487e;
-  --brand-2:#0f2f55;
+  --brand2:#0f2f55;
   --accent:#d90429;
 
-  --bg:#f4f7fb;
+  --bg:#f3f6fb;
   --card:#ffffff;
   --text:#0f172a;
-  --muted:rgba(15,23,42,.68);
+  --muted:rgba(15,23,42,.65);
 
-  --bdr:1px solid rgba(31,72,126,.14);
+  --bdr:1px solid rgba(15,23,42,.10);
   --shadow:0 10px 26px rgba(2,6,23,.10);
-  --shadow-2:0 16px 40px rgba(2,6,23,.12);
 
-  --r:14px;
+  --r:16px;
   --r2:18px;
 
-  --gap:16px;
-  --pad:16px;
+  --pad:14px;
+  --gap:14px;
 
-  font-size:14px;
-  color:var(--text);
-}
-
-/* Fondo general del panel (solo dentro del admin) */
-.af-admin{
   background:var(--bg);
-  padding:18px 18px 28px;
+  padding:18px;
   border-radius:18px;
+  color:var(--text);
+  font-size:14px;
 }
 
-/* Grid principal: 3 columnas “cómodo” en desktop */
-.af-admin__grid{
+/* Forzar grid (tu clase original puede ser flex) */
+.af-admin .contenedor-admin-flex.af-admin__grid{
   display:grid !important;
-  grid-template-columns: 360px 360px 1fr;
+  grid-template-columns: 340px 420px minmax(420px, 1fr);
   gap:var(--gap);
   align-items:start;
 }
 
-/* Tarjetas base */
-.af-card{
+/* Toolbar/acciones que metiste suelta arriba: que no rompa el grid */
+.af-admin .af-admin__grid > .af-actions-row{
+  grid-column:1 / -1;
+  background:linear-gradient(90deg, rgba(31,72,126,.08), rgba(217,4,41,.06));
+  border:1px solid rgba(31,72,126,.14);
+  border-radius:18px;
+  padding:12px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+/* Tarjeta base */
+.af-admin .af-card{
   background:var(--card);
   border:var(--bdr);
   border-radius:var(--r2);
@@ -53,247 +62,222 @@
   padding:var(--pad);
   overflow:hidden;
   position:relative;
+  max-width:100%;
 }
 
-/* Header de tarjeta */
-.af-card__title{
+/* Título */
+.af-admin .af-card__title{
   margin:0 0 12px 0;
-  font-weight:800;
-  letter-spacing:.2px;
+  font-weight:900;
   color:var(--brand);
+  letter-spacing:.2px;
+  font-size:1.05rem;
   display:flex;
   align-items:center;
   gap:10px;
-  font-size:1.05rem;
 }
 
-/* Línea superior decorativa sutil */
-.af-card::before{
+/* Línea superior sutil */
+.af-admin .af-card::before{
   content:"";
   position:absolute;
-  inset:0 0 auto 0;
+  left:0; right:0; top:0;
   height:3px;
-  background:linear-gradient(90deg, rgba(31,72,126,.9), rgba(217,4,41,.55));
+  background:linear-gradient(90deg, rgba(31,72,126,.85), rgba(217,4,41,.55));
 }
 
-/* Subtarjetas (catálogos) */
-.af-subcard{
-  background:linear-gradient(180deg,#ffffff, #f8fbff);
-  border:1px solid rgba(31,72,126,.12);
+/* ========================= ORDEN / TAMAÑOS ========================= */
+.af-admin .panel-proveedores{ grid-column:1; }
+.af-admin .panel-facturas{ grid-column:2; }
+.af-admin .panel-notas-credito{ grid-column:2; }
+.af-admin .panel-presupuestos{ grid-column:3; }
+.af-admin .panel-listados{ grid-column:3; }
+
+/* Catálogos ocupa 2 columnas, pero sin inflarse */
+.af-admin .panel-catalogos{ grid-column:1 / span 2; padding:0; }
+.af-admin .panel-catalogos .af-card__title{ padding:var(--pad); padding-bottom:0; }
+
+/* Grid interno catálogos: compacto y prolijo */
+.af-admin .af-catgrid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:12px;
+  padding:var(--pad);
+}
+.af-admin .af-subcard{
+  border:1px solid rgba(15,23,42,.10);
+  background:linear-gradient(180deg,#ffffff,#f7fbff);
   border-radius:14px;
   padding:12px;
-  box-shadow:0 8px 18px rgba(2,6,23,.06);
+  box-shadow:0 8px 16px rgba(2,6,23,.06);
 }
-.af-subcard .af-card__title{
+.af-admin .af-subcard .af-card__title{
   font-size:.98rem;
   margin-bottom:10px;
 }
 
-/* Grid interno de catálogos */
-.af-catgrid{
-  display:grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap:12px;
-  margin-top:8px;
+/* ========================= FORMULARIOS (LABEL ARRIBA, SIEMPRE) ========================= */
+.af-admin .mb-3{ margin-bottom:12px !important; }
+.af-admin .form-label{
+  display:block;
+  margin:0 0 6px 0;
+  font-weight:800;
+  color:rgba(15,23,42,.78);
 }
 
-/* Labels + inputs (compacto y prolijo) */
-.af-admin .form-label{
-  font-weight:700;
-  color:rgba(15,23,42,.78);
-  margin-bottom:.35rem;
-}
 .af-admin .form-control,
 .af-admin .form-select{
-  border-radius:12px;
+  width:100%;
+  border-radius:14px;
   border:1px solid rgba(15,23,42,.14);
   background:#fff;
-  padding:.52rem .65rem;
-  line-height:1.2;
+  padding:10px 12px;
+  line-height:1.15;
   box-shadow:0 1px 0 rgba(2,6,23,.02);
+  outline:none;
 }
+
 .af-admin .form-control:focus,
 .af-admin .form-select:focus{
   border-color:rgba(31,72,126,.55);
-  box-shadow:0 0 0 .2rem rgba(31,72,126,.12);
+  box-shadow:0 0 0 4px rgba(31,72,126,.12);
 }
 
-/* Espaciado más limpio */
-.af-admin .mb-3{ margin-bottom:.85rem !important; }
+/* Resultados list-group: se ve “app-like” */
+#afResultadosDummy {}
+#afResultadosDummy2 {}
+#afResultadosDummy3 {}
 
-/* Acciones tipo “toolbar” */
-.acciones-proveedor,
-.af-actions-row{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-.acciones-proveedor{
-  padding:10px;
-  border:1px solid rgba(31,72,126,.12);
-  background:linear-gradient(180deg,#ffffff,#f7fbff);
+.af-admin #resultadosBusqueda,
+.af-admin #resultadosBusquedaPresupuesto{
   border-radius:14px;
-}
-
-/* Botones (unificados) */
-.af-admin .btn{
-  border-radius:12px;
-  font-weight:800;
-  letter-spacing:.1px;
-  padding:9px 12px;
-  border:1px solid transparent;
-  transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
-}
-.af-admin .btn:hover{
-  transform:translateY(-1px);
-  box-shadow:0 10px 20px rgba(2,6,23,.10);
-}
-.af-admin .btn:active{ transform:translateY(0); box-shadow:none; }
-
-/* Variantes bootstrap “afinadas” */
-.af-admin .btn-primary{ background:var(--brand); border-color:var(--brand); }
-.af-admin .btn-success{ filter:saturate(1.05); }
-.af-admin .btn-warning{ filter:saturate(1.05); }
-.af-admin .btn-danger{ filter:saturate(1.05); }
-.af-admin .btn-outline-secondary{
-  border-color:rgba(15,23,42,.22);
-  color:rgba(15,23,42,.78);
-  background:#fff;
-}
-.af-admin .btn-outline-primary{
-  border-color:rgba(31,72,126,.35);
-  color:var(--brand);
+  overflow:hidden;
+  border:1px solid rgba(15,23,42,.10);
   background:#fff;
 }
 
-/* Botones grandes del bloque “Listados” */
-.btn-admin-facturas,
-.btn-admin-presupuestos,
-.btn-admin-vencimientos{
-  background:var(--brand);
-  color:#fff;
-  border:none;
+.af-admin #resultadosBusqueda .list-group-item,
+.af-admin #resultadosBusquedaPresupuesto .list-group-item{
+  border:0;
+  border-bottom:1px solid rgba(15,23,42,.08);
   padding:10px 12px;
-  border-radius:12px;
-  font-weight:900;
 }
-.btn-admin-facturas:hover,
-.btn-admin-presupuestos:hover,
-.btn-admin-vencimientos:hover{
-  filter:brightness(1.03);
+.af-admin #resultadosBusqueda .list-group-item:last-child,
+.af-admin #resultadosBusquedaPresupuesto .list-group-item:last-child{
+  border-bottom:0;
 }
 
-/* Botón “Buscar” full */
-.af-admin .d-grid .btn{
-  padding:11px 12px;
-  border-radius:14px;
-}
-
-/* Bloque detalle proveedor */
-#detalleProveedor{
+/* Detalle proveedor */
+.af-admin #detalleProveedor{
   margin-top:10px;
   padding:10px 12px;
   border-radius:14px;
-  border:1px dashed rgba(31,72,126,.22);
+  border:1px dashed rgba(31,72,126,.25);
   background:#fbfdff;
   color:rgba(15,23,42,.86);
 }
 
-/* ================== FORMS 2-COLUMN dentro de tarjetas largas ================== */
-/* Para Factura / Presupuesto / Nota: que se lean rápido */
-.panel-facturas .mb-3,
-.panel-presupuestos .mb-3,
-.panel-notas-credito .mb-3{
-  display:grid;
-  grid-template-columns: 170px 1fr;
-  align-items:center;
-  gap:10px;
+/* ========================= BOTONES (MODERNOS) ========================= */
+.af-admin .btn{
+  border-radius:999px;
+  padding:10px 14px;
+  font-weight:900;
+  letter-spacing:.15px;
+  border:1px solid transparent;
+  transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
 }
-.panel-facturas .form-label,
-.panel-presupuestos .form-label,
-.panel-notas-credito .form-label{
-  margin:0;
+.af-admin .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 20px rgba(2,6,23,.12); }
+.af-admin .btn:active{ transform:translateY(0); box-shadow:none; }
+
+.af-admin .btn-sm{ padding:8px 12px; font-weight:900; }
+
+/* Colores */
+.af-admin .btn-primary{
+  background:linear-gradient(180deg, rgba(31,72,126,1), rgba(15,47,85,1));
+  border-color:rgba(15,47,85,1);
+}
+.af-admin .btn-success{
+  background:linear-gradient(180deg, #16a34a, #0f7a36);
+  border-color:#0f7a36;
+}
+.af-admin .btn-warning{
+  background:linear-gradient(180deg, #f59e0b, #d97706);
+  border-color:#d97706;
+  color:#111827;
+}
+.af-admin .btn-danger{
+  background:linear-gradient(180deg, #ef4444, #b91c1c);
+  border-color:#b91c1c;
+}
+.af-admin .btn-outline-primary{
+  background:#fff;
+  border-color:rgba(31,72,126,.35);
+  color:var(--brand);
+}
+.af-admin .btn-outline-primary:hover{
+  background:rgba(31,72,126,.06);
+}
+.af-admin .btn-outline-secondary{
+  background:#fff;
+  border-color:rgba(15,23,42,.20);
+  color:rgba(15,23,42,.78);
 }
 
-/* Botones dentro de esas tarjetas alineados bien */
-.panel-facturas .d-flex.justify-content-end,
-.panel-presupuestos .d-flex.justify-content-end,
-.panel-notas-credito .d-flex.justify-content-end{
-  margin-top:10px !important;
-}
-
-/* ================== MODALES (más limpios) ================== */
-.af-modal .modal-content{
-  border-radius:18px;
-  border:1px solid rgba(15,23,42,.10);
-  box-shadow:var(--shadow-2);
-  overflow:hidden;
-}
-.af-modal .modal-proveedor-header{
-  background:linear-gradient(90deg, var(--brand), var(--brand-2));
+/* Botones “Listados” (tus clases existentes) */
+.af-admin .btn-admin-facturas,
+.af-admin .btn-admin-presupuestos,
+.af-admin .btn-admin-vencimientos{
+  width:100%;
+  border-radius:16px;
+  padding:12px 14px;
+  font-weight:950;
+  border:1px solid rgba(15,47,85,.22);
+  background:linear-gradient(180deg, rgba(31,72,126,1), rgba(15,47,85,1));
   color:#fff;
 }
-.af-modal .btn-close-white{ filter:invert(1); opacity:.95; }
-.af-modal .modal-body{ background:#fff; }
-.af-modal .modal-footer{
-  background:#fbfdff;
-  border-top:1px solid rgba(15,23,42,.08);
+.af-admin .btn-admin-facturas:hover,
+.af-admin .btn-admin-presupuestos:hover,
+.af-admin .btn-admin-vencimientos:hover{
+  filter:brightness(1.03);
 }
 
-/* Tablas en modales */
-.af-modal .table{
-  border-color:rgba(15,23,42,.12);
+/* Acciones proveedor: que parezca toolbar */
+.af-admin .acciones-proveedor{
+  display:flex !important;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:10px;
+  border-radius:16px;
+  border:1px solid rgba(31,72,126,.14);
+  background:linear-gradient(180deg,#ffffff,#f7fbff);
 }
-.af-modal .table thead th{
+
+/* Alinear footer botones */
+.af-admin .d-flex.justify-content-end{ gap:10px; }
+
+/* ========================= MODALES ========================= */
+.af-admin .modal-content{
+  border-radius:18px;
+  border:1px solid rgba(15,23,42,.10);
+  box-shadow:0 18px 50px rgba(2,6,23,.18);
+  overflow:hidden;
+}
+.af-admin .modal-proveedor-header{
+  background:linear-gradient(90deg, var(--brand), var(--brand2));
+  color:#fff;
+}
+.af-admin .btn-close-white{ filter:invert(1); opacity:.95; }
+
+.af-admin .table thead th{
   background:#f2f6ff;
-  font-weight:900;
+  font-weight:950;
   color:rgba(15,23,42,.82);
 }
-.af-modal .table td,
-.af-modal .table th{
+.af-admin .table td,
+.af-admin .table th{
   vertical-align:middle;
-  padding:.45rem .55rem;
-  font-size:.92rem;
+  padding:.5rem .6rem;
 }
-
-/* Resultados de búsqueda (list-group) */
-#resultadosBusqueda,
-#resultadosBusquedaPresupuesto{
-  border-radius:14px;
-  overflow:hidden;
-  border:1px solid rgba(15,23,42,.10);
-}
-#resultadosBusqueda .list-group-item,
-#resultadosBusquedaPresupuesto .list-group-item{
-  border:0;
-  border-bottom:1px solid rgba(15,23,42,.08);
-}
-#resultadosBusqueda .list-group-item:last-child,
-#resultadosBusquedaPresupuesto .list-group-item:last-child{ border-bottom:0; }
-
-/* ================== UBICACIÓN / ORDEN VISUAL ================== */
-/* Primera columna: Proveedores + Catálogos */
-.panel-proveedores{ grid-column:1; }
-.panel-catalogos{ grid-column:1 / span 2; }
-
-/* Segunda columna: Facturas + Notas crédito */
-.panel-facturas{ grid-column:2; }
-.panel-notas-credito{ grid-column:2; }
-
-/* Tercera columna: Presupuestos + Listados (más ancho) */
-.panel-presupuestos{ grid-column:3; }
-.panel-listados{ grid-column:3; }
-
-/* Ajustes de listados para lectura rápida */
-.panel-listados .mb-3{
-  display:grid;
-  grid-template-columns: 130px 1fr;
-  align-items:center;
-  gap:10px;
-}
-.panel-listados .form-label{ margin:0; }
-.panel-listados .af-actions-row{ margin-top:6px; }
 
 </style>
 
