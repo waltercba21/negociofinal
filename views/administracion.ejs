@@ -2,943 +2,957 @@
 <%- include('./layouts/header.ejs') %>
 
 <body>
-  <!-- ========= ESTILOS AISLADOS DEL PANEL (namespace .af-admin) ========= -->
-<style>
-/* ========================= ADMIN UI v3 (DESKTOP) ========================= */
-/* Namespace: solo afecta dentro de <main class="... af-admin"> */
-.af-admin{
-  --brand:#1f487e;
-  --brand2:#0f2f55;
-  --accent:#d90429;
+  <style>
+    /* ========================= ADMIN DASH (DESKTOP) ========================= */
+    :root{
+      --brand:#1f487e;
+      --brand2:#0f2f55;
 
-  --bg:#0b1220;
-  --surface:rgba(255,255,255,.92);
-  --card:#ffffff;
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:rgba(15,23,42,.65);
+      --line:rgba(2,6,23,.10);
 
-  --text:#0f172a;
-  --muted:rgba(15,23,42,.65);
+      --shadow:0 14px 30px rgba(2,6,23,.10);
+      --shadow2:0 10px 22px rgba(2,6,23,.10);
 
-  --line:rgba(2,6,23,.10);
-  --shadow:0 18px 45px rgba(2,6,23,.16);
-  --shadow2:0 10px 26px rgba(2,6,23,.12);
+      --r14:14px;
+      --r18:18px;
+      --tap:44px;
+    }
 
-  --r12:12px;
-  --r16:16px;
-  --r20:20px;
+    /* Fondo claro (sin negro) */
+    .af-admin{
+      background:var(--bg);
+      padding:18px;
+      border-radius:18px;
+      color:var(--text);
+      font-size:14px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
 
-  --pad:14px;
-  --gap:14px;
+    /* Header del panel */
+    .af-topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:14px 16px;
+      border-radius:18px;
+      background:linear-gradient(90deg, rgba(31,72,126,.10), rgba(15,47,85,.06));
+      border:1px solid rgba(31,72,126,.18);
+      box-shadow:var(--shadow2);
+      margin-bottom:14px;
+    }
+    .af-topbar h1{
+      margin:0;
+      font-size:16px;
+      font-weight:950;
+      letter-spacing:.2px;
+      color:rgba(15,23,42,.88);
+    }
+    .af-topbar .af-topbar-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
 
-  background:
-    radial-gradient(1100px 520px at 20% -10%, rgba(31,72,126,.35), transparent 60%),
-    radial-gradient(900px 520px at 95% 10%, rgba(217,4,41,.18), transparent 55%),
-    linear-gradient(180deg, #070b14 0%, #0b1220 100%);
-  padding:22px;
-  border-radius:20px;
-  color:var(--text);
-  font-size:14px;
-}
+    /* Dashboard: solo botones/tarjetas */
+    .af-dash{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:14px;
+    }
 
-/* Grid principal (compacto, sin “bloques gigantes”) */
-.af-admin .contenedor-admin-flex.af-admin__grid{
-  display:grid !important;
-  grid-template-columns: 320px 420px minmax(460px, 1fr);
-  gap:var(--gap);
-  align-items:start;
-}
+    .af-tile{
+      border-radius:18px;
+      background:var(--card);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:120px;
+    }
 
-/* Barra superior (acciones globales) */
-.af-admin .af-actions-row{
-  grid-column:1 / -1;
-  background: rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.14);
-  border-radius:18px;
-  padding:10px 12px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  box-shadow: 0 10px 26px rgba(2,6,23,.18);
-  backdrop-filter: blur(10px);
-}
-.af-admin .af-actions-row a.btn{
-  border-radius:999px !important;
-}
+    .af-tile .af-tile-title{
+      margin:0;
+      font-weight:950;
+      letter-spacing:.15px;
+      color:rgba(15,23,42,.90);
+      font-size:15px;
+    }
+    .af-tile .af-tile-desc{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.25;
+    }
 
-/* Tarjetas */
-.af-admin .af-card{
-  background:var(--surface);
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:var(--r20);
-  box-shadow:var(--shadow);
-  padding:var(--pad);
-  overflow:hidden;
-  position:relative;
-  max-width:100%;
-  backdrop-filter: blur(10px);
-}
+    .af-tile .af-tile-actions{
+      margin-top:auto;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
 
-/* Encabezado de tarjeta (título + línea de color) */
-.af-admin .af-card::before{
-  content:"";
-  position:absolute;
-  left:0; right:0; top:0;
-  height:3px;
-  background:linear-gradient(90deg, rgba(31,72,126,.85), rgba(217,4,41,.55));
-}
+    /* Botón principal (un solo esquema en degrade) */
+    .af-btn{
+      appearance:none;
+      border:1px solid transparent;
+      border-radius:999px;
+      min-height:var(--tap);
+      padding:10px 14px;
+      font-weight:950;
+      letter-spacing:.15px;
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .af-btn:hover{ transform:translateY(-1px); box-shadow:0 14px 26px rgba(2,6,23,.12); }
+    .af-btn:active{ transform:translateY(0); box-shadow:none; }
 
-.af-admin .af-card__title{
-  margin:0 0 12px 0;
-  font-weight:950;
-  color:rgba(255,255,255,.92);
-  letter-spacing:.2px;
-  font-size:1.03rem;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px 12px;
-  border-radius:14px;
-  background:linear-gradient(90deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
-  border:1px solid rgba(255,255,255,.12);
-}
+    .af-btn--primary{
+      color:#fff;
+      background:linear-gradient(180deg, var(--brand), var(--brand2));
+      border-color:rgba(15,47,85,.85);
+      box-shadow:0 10px 22px rgba(2,6,23,.14);
+    }
 
-/* Ajustes por panel */
-.af-admin .panel-proveedores{ grid-column:1; }
-.af-admin .panel-facturas{ grid-column:2; }
-.af-admin .panel-notas-credito{ grid-column:2; }
-.af-admin .panel-presupuestos{ grid-column:3; }
-.af-admin .panel-listados{ grid-column:3; }
-.af-admin .panel-catalogos{ grid-column:1 / span 2; padding:0; }
-.af-admin .panel-catalogos .af-card__title{ margin:14px 14px 0; }
+    .af-btn--ghost{
+      color:rgba(15,23,42,.85);
+      background:#fff;
+      border:1px solid rgba(31,72,126,.25);
+    }
 
-/* Catálogos interno (compacto) */
-.af-admin .af-catgrid{
-  display:grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap:12px;
-  padding:14px;
-}
-.af-admin .af-subcard{
-  background:rgba(255,255,255,.92);
-  border:1px solid rgba(2,6,23,.10);
-  border-radius:16px;
-  padding:12px;
-  box-shadow: var(--shadow2);
-}
-.af-admin .af-subcard .af-card__title{
-  margin:0 0 10px 0;
-  padding:9px 10px;
-  font-size:.95rem;
-}
+    /* Modales (prolijos, sin colorinche) */
+    .af-admin .modal-content{
+      border-radius:18px;
+      border:1px solid rgba(15,23,42,.10);
+      box-shadow:0 18px 50px rgba(2,6,23,.18);
+      overflow:hidden;
+    }
+    .af-admin .modal-header{
+      background:linear-gradient(180deg, var(--brand), var(--brand2));
+      color:#fff;
+      border-bottom:0;
+    }
+    .af-admin .btn-close{ filter:invert(1); opacity:.95; }
 
-/* Formularios: label arriba y spacing consistente */
-.af-admin .mb-3{ margin-bottom:12px !important; }
-.af-admin .form-label{
-  display:block;
-  margin:0 0 6px 0;
-  font-weight:900;
-  color:rgba(255,255,255,.86);
-  text-shadow:0 1px 0 rgba(2,6,23,.25);
-}
+    /* Labels: oscuros sobre fondo claro (sin blanco) */
+    .af-admin .form-label{
+      display:block;
+      margin:0 0 6px 0;
+      font-weight:900;
+      color:rgba(15,23,42,.80);
+    }
 
-/* Inputs */
-.af-admin .form-control,
-.af-admin .form-select{
-  width:100%;
-  border-radius:14px;
-  border:1px solid rgba(2,6,23,.14);
-  background:#fff;
-  padding:10px 12px;
-  line-height:1.15;
-  outline:none;
-  box-shadow:0 1px 0 rgba(2,6,23,.02);
-}
-.af-admin .form-control:focus,
-.af-admin .form-select:focus{
-  border-color:rgba(31,72,126,.55);
-  box-shadow:0 0 0 4px rgba(31,72,126,.18);
-}
+    .af-admin .form-control,
+    .af-admin .form-select{
+      border-radius:14px;
+      border:1px solid rgba(15,23,42,.14);
+      padding:10px 12px;
+      background:#fff;
+      outline:none;
+      box-shadow:0 1px 0 rgba(2,6,23,.02);
+    }
+    .af-admin .form-control:focus,
+    .af-admin .form-select:focus{
+      border-color:rgba(31,72,126,.55);
+      box-shadow:0 0 0 4px rgba(31,72,126,.12);
+    }
 
-/* Secciones: evitar “bloques altos” */
-.af-admin section.af-card .d-flex.justify-content-end{
-  gap:10px;
-}
-.af-admin section.af-card button.btn{
-  white-space:nowrap;
-}
+    /* Resultados búsqueda */
+    .af-admin #resultadosBusqueda,
+    .af-admin #resultadosBusquedaPresupuesto{
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(15,23,42,.10);
+      background:#fff;
+      box-shadow:0 10px 20px rgba(2,6,23,.10);
+    }
+    .af-admin #resultadosBusqueda .list-group-item,
+    .af-admin #resultadosBusquedaPresupuesto .list-group-item{
+      border:0;
+      border-bottom:1px solid rgba(15,23,42,.08);
+      padding:10px 12px;
+    }
+    .af-admin #resultadosBusqueda .list-group-item:last-child,
+    .af-admin #resultadosBusquedaPresupuesto .list-group-item:last-child{
+      border-bottom:0;
+    }
 
-/* List group resultados: estilo app */
-.af-admin #resultadosBusqueda,
-.af-admin #resultadosBusquedaPresupuesto{
-  border-radius:14px;
-  overflow:hidden;
-  border:1px solid rgba(2,6,23,.10);
-  background:#fff;
-  box-shadow:0 10px 20px rgba(2,6,23,.10);
-}
-.af-admin #resultadosBusqueda .list-group-item,
-.af-admin #resultadosBusquedaPresupuesto .list-group-item{
-  border:0;
-  border-bottom:1px solid rgba(2,6,23,.08);
-  padding:10px 12px;
-}
-.af-admin #resultadosBusqueda .list-group-item:last-child,
-.af-admin #resultadosBusquedaPresupuesto .list-group-item:last-child{
-  border-bottom:0;
-}
+    /* Tablas modal */
+    .af-admin .table thead th{
+      background:#f2f6ff;
+      font-weight:950;
+      color:rgba(15,23,42,.82);
+    }
+    .af-admin .table td,
+    .af-admin .table th{
+      vertical-align:middle;
+      padding:.55rem .65rem;
+    }
 
-/* Detalle proveedor (más “card” y menos bloque suelto) */
-.af-admin #detalleProveedor{
-  margin-top:10px;
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px dashed rgba(31,72,126,.35);
-  background:rgba(255,255,255,.92);
-  color:rgba(2,6,23,.86);
-}
+    /* Compacto */
+    .af-admin .mb-3{ margin-bottom:12px !important; }
+    .af-admin .modal-footer{ gap:10px; }
 
-/* Botones modernos */
-.af-admin .btn{
-  border-radius:999px;
-  padding:10px 14px;
-  font-weight:950;
-  letter-spacing:.15px;
-  border:1px solid transparent;
-  transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
-}
-.af-admin .btn:hover{ transform:translateY(-1px); box-shadow:0 14px 26px rgba(2,6,23,.16); }
-.af-admin .btn:active{ transform:translateY(0); box-shadow:none; }
-.af-admin .btn-sm{ padding:8px 12px; }
+    /* (Opcional) ajustar tamaños de modal */
+    .af-modal-xl{ max-width: 1200px; }
+  </style>
 
-.af-admin .btn-primary{
-  background:linear-gradient(180deg, rgba(31,72,126,1), rgba(15,47,85,1));
-  border-color:rgba(15,47,85,1);
-}
-.af-admin .btn-success{
-  background:linear-gradient(180deg, #16a34a, #0f7a36);
-  border-color:#0f7a36;
-}
-.af-admin .btn-warning{
-  background:linear-gradient(180deg, #f59e0b, #d97706);
-  border-color:#d97706;
-  color:#111827;
-}
-.af-admin .btn-danger{
-  background:linear-gradient(180deg, #ef4444, #b91c1c);
-  border-color:#b91c1c;
-}
-.af-admin .btn-outline-primary{
-  background:rgba(255,255,255,.92);
-  border-color:rgba(31,72,126,.35);
-  color:#0f2f55;
-}
-.af-admin .btn-outline-primary:hover{ background:rgba(31,72,126,.08); }
-.af-admin .btn-outline-secondary{
-  background:rgba(255,255,255,.92);
-  border-color:rgba(2,6,23,.18);
-  color:rgba(2,6,23,.78);
-}
-
-/* Botones “Listados” */
-.af-admin .btn-admin-facturas,
-.af-admin .btn-admin-presupuestos,
-.af-admin .btn-admin-vencimientos{
-  width:100%;
-  border-radius:16px;
-  padding:12px 14px;
-  font-weight:950;
-  border:1px solid rgba(15,47,85,.22);
-  background:linear-gradient(180deg, rgba(31,72,126,1), rgba(15,47,85,1));
-  color:#fff;
-}
-.af-admin .btn-admin-facturas:hover,
-.af-admin .btn-admin-presupuestos:hover,
-.af-admin .btn-admin-vencimientos:hover{ filter:brightness(1.03); }
-
-/* Toolbar proveedor */
-.af-admin .acciones-proveedor{
-  display:flex !important;
-  gap:10px;
-  flex-wrap:wrap;
-  padding:10px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.10);
-  backdrop-filter: blur(10px);
-}
-
-/* Modales */
-.af-admin .modal-content{
-  border-radius:18px;
-  border:1px solid rgba(15,23,42,.10);
-  box-shadow:0 18px 50px rgba(2,6,23,.22);
-  overflow:hidden;
-}
-.af-admin .modal-proveedor-header{
-  background:linear-gradient(90deg, var(--brand), var(--brand2));
-  color:#fff;
-}
-.af-admin .btn-close-white{ filter:invert(1); opacity:.95; }
-
-/* Tablas dentro de modales */
-.af-admin .table thead th{
-  background:#f2f6ff;
-  font-weight:950;
-  color:rgba(15,23,42,.82);
-}
-.af-admin .table td,
-.af-admin .table th{
-  vertical-align:middle;
-  padding:.55rem .65rem;
-}
-
-</style>
-
-  <!-- ========================= FIN ESTILOS AISLADOS ======================= -->
-
-  <main class="contenedor-proveedores af-admin">
-    <!-- Forzamos el grid aunque tu CSS global haya cambiado -->
-    <div class="contenedor-admin-flex af-admin__grid">
-
-      <!-- =============== PROVEEDORES =============== -->
-              <!-- Botón de acceso al Panel de Objetivos -->
-      <div class="af-actions-row" style="margin-bottom:12px;">
-      <a href="/administracion/objetivos" class="btn btn-outline-primary" style="font-weight:700;border-radius:10px;">
-       🎯 Objetivos del Negocio
-      </a>
+  <main class="af-admin">
+    <div class="af-topbar">
+      <h1>Administración</h1>
+      <div class="af-topbar-actions">
+        <a href="/administracion/objetivos" class="af-btn af-btn--ghost">🎯 Objetivos</a>
       </div>
-      <section class="panel-proveedores af-card" data-af="proveedores">
-        <h5 class="af-card__title">Proveedor</h5>
+    </div>
 
-        <div class="acciones-proveedor d-flex gap-2 mb-2">
-          <button id="btnNuevoProveedor" class="btn btn-sm btn-success">+ Nuevo</button>
-          <button id="btnEditarProveedor" class="btn btn-sm btn-warning" disabled>Editar</button>
-          <button id="btnEliminarProveedorDirecto" class="btn btn-sm btn-danger" disabled>Eliminar</button>
+    <!-- ================= DASHBOARD (solo botones) ================= -->
+    <section class="af-dash">
+      <div class="af-tile">
+        <h3 class="af-tile-title">Proveedor</h3>
+        <p class="af-tile-desc">Seleccionar proveedor, ver descuento y gestionar alta/edición/baja.</p>
+        <div class="af-tile-actions">
+          <button class="af-btn af-btn--primary" data-open="modalGestionProveedor">Abrir</button>
         </div>
+      </div>
 
-        <select id="selectProveedor" class="form-select mb-2">
-          <option value="">Cargando...</option>
-        </select>
-
-        <div id="detalleProveedor" class="detalle-proveedor">
-          <p id="bloqueDescuentoProveedor" class="d-none">
-            <strong>Descuento:</strong> <span id="descuentoProveedorView">-</span>
-          </p>
+      <div class="af-tile">
+        <h3 class="af-tile-title">Catálogos</h3>
+        <p class="af-tile-desc">Categorías, Marcas y Modelos.</p>
+        <div class="af-tile-actions">
+          <button class="af-btn af-btn--primary" data-open="modalCatalogos">Abrir</button>
         </div>
-      </section>
+      </div>
 
+      <div class="af-tile">
+        <h3 class="af-tile-title">Factura</h3>
+        <p class="af-tile-desc">Registrar factura y cargar productos.</p>
+        <div class="af-tile-actions">
+          <button class="af-btn af-btn--primary" data-open="modalFactura">Abrir</button>
+        </div>
+      </div>
 
+      <div class="af-tile">
+        <h3 class="af-tile-title">Nota de crédito</h3>
+        <p class="af-tile-desc">Registrar nota de crédito vinculada a factura.</p>
+        <div class="af-tile-actions">
+          <button class="af-btn af-btn--primary" data-open="modalNotaCredito">Abrir</button>
+        </div>
+      </div>
 
-      <!-- MODAL PROVEEDOR -->
-      <div class="modal fade af-modal" id="modalProveedor" tabindex="-1" aria-labelledby="modalProveedorLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content modal-proveedor-content">
-            <div class="modal-header modal-proveedor-header">
-              <h5 class="modal-title" id="modalProveedorLabel">
-                <i class="bi bi-person-lines-fill me-2"></i>Datos del Proveedor
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      <div class="af-tile">
+        <h3 class="af-tile-title">Presupuesto</h3>
+        <p class="af-tile-desc">Registrar presupuesto y cargar productos.</p>
+        <div class="af-tile-actions">
+          <button class="af-btn af-btn--primary" data-open="modalPresupuesto">Abrir</button>
+        </div>
+      </div>
+
+      <div class="af-tile">
+        <h3 class="af-tile-title">Listados</h3>
+        <p class="af-tile-desc">Buscar documentos y generar PDFs/resúmenes.</p>
+        <div class="af-tile-actions">
+          <button class="af-btn af-btn--primary" data-open="modalListados">Abrir</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MODAL: GESTIÓN PROVEEDOR (selector + toolbar) ================= -->
+    <div class="modal fade" id="modalGestionProveedor" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Proveedor</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="d-flex gap-2 mb-2 flex-wrap">
+              <button id="btnNuevoProveedor" class="btn btn-sm btn-success">+ Nuevo</button>
+              <button id="btnEditarProveedor" class="btn btn-sm btn-warning" disabled>Editar</button>
+              <button id="btnEliminarProveedorDirecto" class="btn btn-sm btn-danger" disabled>Eliminar</button>
             </div>
 
-            <form id="formProveedor" class="modal-proveedor-form needs-validation" novalidate>
-              <input type="hidden" name="id" id="proveedorId">
-              <div class="modal-body modal-proveedor-body">
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <label for="nombre" class="form-label">Nombre / Empresa</label>
-                    <input type="text" class="form-control" name="nombre" id="nombre" autocomplete="off" required>
-                  </div>
-                  <div class="col-md-4">
-                    <label for="contacto" class="form-label">Contacto</label>
-                    <input type="text" class="form-control" name="contacto" autocomplete="off" id="contacto">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="telefono" class="form-label">Teléfono</label>
-                    <input type="text" class="form-control" name="telefono" autocomplete="off" id="telefono">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="mail" class="form-label">Email</label>
-                    <input type="email" class="form-control" name="mail" autocomplete="off" id="mail">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="direccion" class="form-label">Dirección</label>
-                    <input type="text" class="form-control" name="direccion" autocomplete="off" id="direccion">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="ciudad" class="form-label">Ciudad</label>
-                    <input type="text" class="form-control" name="ciudad" autocomplete="off" id="ciudad">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="provincia" class="form-label">Provincia</label>
-                    <input type="text" class="form-control" name="provincia" autocomplete="off" id="provincia">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="cuit" class="form-label">CUIT</label>
-                    <input type="text" class="form-control" name="cuit" autocomplete="off" id="cuit">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="banco" class="form-label">Banco</label>
-                    <input type="text" class="form-control" name="banco" autocomplete="off" id="banco">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="cbu" class="form-label">CBU</label>
-                    <input type="text" class="form-control" name="cbu" autocomplete="off" id="cbu">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="alias" class="form-label">Alias</label>
-                    <input type="text" class="form-control" name="alias" autocomplete="off" id="alias">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="descuento" class="form-label">Descuento (%)</label>
-                    <input type="number" class="form-control" autocomplete="off" name="descuento" id="descuento" min="0" max="100" step="0.01">
-                  </div>
+            <select id="selectProveedor" class="form-select mb-2">
+              <option value="">Cargando...</option>
+            </select>
+
+            <div id="detalleProveedor" class="p-2" style="border:1px dashed rgba(31,72,126,.25);border-radius:14px;background:#fbfdff;">
+              <p id="bloqueDescuentoProveedor" class="d-none mb-0">
+                <strong>Descuento:</strong> <span id="descuentoProveedorView">-</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MODAL PROVEEDOR (EXISTENTE) ================= -->
+    <div class="modal fade" id="modalProveedor" tabindex="-1" aria-labelledby="modalProveedorLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalProveedorLabel">Datos del Proveedor</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+
+          <form id="formProveedor" class="needs-validation" novalidate>
+            <input type="hidden" name="id" id="proveedorId">
+            <div class="modal-body">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="nombre" class="form-label">Nombre / Empresa</label>
+                  <input type="text" class="form-control" name="nombre" id="nombre" autocomplete="off" required>
+                </div>
+                <div class="col-md-4">
+                  <label for="contacto" class="form-label">Contacto</label>
+                  <input type="text" class="form-control" name="contacto" autocomplete="off" id="contacto">
+                </div>
+                <div class="col-md-4">
+                  <label for="telefono" class="form-label">Teléfono</label>
+                  <input type="text" class="form-control" name="telefono" autocomplete="off" id="telefono">
+                </div>
+                <div class="col-md-4">
+                  <label for="mail" class="form-label">Email</label>
+                  <input type="email" class="form-control" name="mail" autocomplete="off" id="mail">
+                </div>
+                <div class="col-md-4">
+                  <label for="direccion" class="form-label">Dirección</label>
+                  <input type="text" class="form-control" name="direccion" autocomplete="off" id="direccion">
+                </div>
+                <div class="col-md-4">
+                  <label for="ciudad" class="form-label">Ciudad</label>
+                  <input type="text" class="form-control" name="ciudad" autocomplete="off" id="ciudad">
+                </div>
+                <div class="col-md-4">
+                  <label for="provincia" class="form-label">Provincia</label>
+                  <input type="text" class="form-control" name="provincia" autocomplete="off" id="provincia">
+                </div>
+                <div class="col-md-4">
+                  <label for="cuit" class="form-label">CUIT</label>
+                  <input type="text" class="form-control" name="cuit" autocomplete="off" id="cuit">
+                </div>
+                <div class="col-md-4">
+                  <label for="banco" class="form-label">Banco</label>
+                  <input type="text" class="form-control" name="banco" autocomplete="off" id="banco">
+                </div>
+                <div class="col-md-4">
+                  <label for="cbu" class="form-label">CBU</label>
+                  <input type="text" class="form-control" name="cbu" autocomplete="off" id="cbu">
+                </div>
+                <div class="col-md-4">
+                  <label for="alias" class="form-label">Alias</label>
+                  <input type="text" class="form-control" name="alias" autocomplete="off" id="alias">
+                </div>
+                <div class="col-md-4">
+                  <label for="descuento" class="form-label">Descuento (%)</label>
+                  <input type="number" class="form-control" autocomplete="off" name="descuento" id="descuento" min="0" max="100" step="0.01">
                 </div>
               </div>
-
-              <div class="modal-footer modal-proveedor-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                  <i class="bi bi-x-circle me-1"></i>Cancelar
-                </button>
-                <div class="d-flex gap-2">
-                  <button type="button" class="btn btn-danger d-none" id="btnEliminarProveedor">
-                    <i class="bi bi-trash me-1"></i>Eliminar
-                  </button>
-                  <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check2-circle me-1"></i>Guardar Cambios
-                  </button>
-                </div>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      </div>
-
-<!-- =============== CATALOGOS =============== -->
-<section class="panel-catalogos af-card" data-af="catalogos">
-  <h5 class="af-card__title">Catálogos (Categorías, Marcas, Modelos)</h5>
-
-  <div class="af-catgrid">
-    <!-- CATEGORIAS -->
-    <div class="af-subcard">
-      <h6 class="af-card__title">Categorías</h6>
-      <div class="d-flex gap-2 mb-2 flex-wrap">
-        <button id="btnNuevaCategoria" class="btn btn-sm btn-success">+ Nueva</button>
-        <button id="btnEditarCategoria" class="btn btn-sm btn-warning" disabled>Editar</button>
-        <button id="btnEliminarCategoria" class="btn btn-sm btn-danger" disabled>Eliminar</button>
-      </div>
-      <select id="selectCategoria" class="form-select">
-        <option value="">Cargando...</option>
-      </select>
-    </div>
-
-    <!-- MARCAS -->
-    <div class="af-subcard">
-      <h6 class="af-card__title">Marcas</h6>
-      <div class="d-flex gap-2 mb-2 flex-wrap">
-        <button id="btnNuevaMarca" class="btn btn-sm btn-success">+ Nueva</button>
-        <button id="btnEditarMarca" class="btn btn-sm btn-warning" disabled>Editar</button>
-        <button id="btnEliminarMarca" class="btn btn-sm btn-danger" disabled>Eliminar</button>
-      </div>
-      <select id="selectMarca" class="form-select">
-        <option value="">Cargando...</option>
-      </select>
-    </div>
-
-    <!-- MODELOS -->
-    <div class="af-subcard">
-      <h6 class="af-card__title">Modelos</h6>
-      <div class="d-flex gap-2 mb-2 flex-wrap">
-        <button id="btnNuevoModelo" class="btn btn-sm btn-success">+ Nuevo</button>
-        <button id="btnEditarModelo" class="btn btn-sm btn-warning" disabled>Editar</button>
-        <button id="btnEliminarModelo" class="btn btn-sm btn-danger" disabled>Eliminar</button>
-      </div>
-      <div class="mb-2">
-        <label class="form-label">Filtrar por marca</label>
-        <select id="filtroMarcaModelos" class="form-select">
-          <option value="">Todas</option>
-        </select>
-      </div>
-      <select id="selectModelo" class="form-select">
-        <option value="">Cargando...</option>
-      </select>
-    </div>
-  </div>
-</section>
-
-
-<!-- ===== Modales Catálogos (mismo estilo que Proveedores) ===== -->
-<div class="modal fade af-modal" id="modalCategoria" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="formCategoria" class="modal-content">
-      <div class="modal-header modal-proveedor-header">
-        <h5 class="modal-title">Categoría</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="categoriaId">
-        <div class="mb-3">
-          <label class="form-label">Nombre</label>
-          <input class="form-control" id="categoriaNombre" required>
-        </div>
-      </div>
-      <div class="modal-footer modal-proveedor-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-success">Guardar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div class="modal fade af-modal" id="modalMarca" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="formMarca" class="modal-content">
-      <div class="modal-header modal-proveedor-header">
-        <h5 class="modal-title">Marca</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="marcaId">
-        <div class="mb-3">
-          <label class="form-label">Nombre</label>
-          <input class="form-control" id="marcaNombre" required>
-        </div>
-      </div>
-      <div class="modal-footer modal-proveedor-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-success">Guardar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div class="modal fade af-modal" id="modalModelo" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="formModelo" class="modal-content">
-      <div class="modal-header modal-proveedor-header">
-        <h5 class="modal-title">Modelo</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="modeloId">
-        <div class="mb-3">
-          <label class="form-label">Marca</label>
-          <select id="modeloMarcaId" class="form-select" required></select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Nombre</label>
-          <input class="form-control" id="modeloNombre" required>
-        </div>
-      </div>
-      <div class="modal-footer modal-proveedor-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-success">Guardar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-      <!-- =============== FACTURAS =============== -->
-      <section class="panel-facturas af-card" data-af="facturas">
-        <h5 class="af-card__title">Registrar Factura</h5>
-
-        <div class="mb-3">
-          <label for="facturaProveedor" class="form-label">Proveedor</label>
-          <select id="facturaProveedor" class="form-select">
-            <option value="">Seleccionar proveedor...</option>
-            <% proveedores.forEach(p => { %>
-              <option value="<%= p.id %>"><%= p.nombre %></option>
-            <% }) %>
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label for="facturaFecha" class="form-label">Fecha Factura</label>
-          <input type="date" id="facturaFecha" class="form-control">
-        </div>
-
-        <div class="mb-3">
-          <label for="facturaFechaPago" class="form-label">Fecha Vencimiento</label>
-          <input type="date" id="facturaFechaPago" class="form-control">
-        </div>
-
-        <div class="mb-3">
-          <label for="facturaNumero" class="form-label">Número de factura</label>
-          <input type="text" id="facturaNumero" class="form-control">
-        </div>
-
-        <div class="mb-3">
-          <label for="facturaImporteTotal" class="form-label">Importe total con IVA</label>
-          <input type="number" step="0.01" id="facturaImporteTotal" class="form-control">
-        </div>
-
-        <div class="mb-3">
-          <label for="facturaIVA" class="form-label">IVA</label>
-          <select id="facturaIVA" class="form-select">
-            <option value="">Seleccionar IVA...</option>
-            <option value="21">21%</option>
-            <option value="10.5">10.5%</option>
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label for="facturaImporteBruto" class="form-label">Importe bruto</label>
-          <input type="number" step="0.01" id="facturaImporteBruto" class="form-control">
-        </div>
-
-        <button id="btnAgregarProductosFactura" class="btn btn-primary ms-0 mb-2">Agregar Productos</button>
-
-        <div class="mb-3">
-          <label for="facturaCondicion" class="form-label">Estado del pago</label>
-          <select id="facturaCondicion" class="form-select">
-            <option value="pendiente" selected>PENDIENTE</option>
-            <option value="pagado">PAGADO</option>
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label for="facturaAdministrador" class="form-label">Administrador</label>
-          <select id="facturaAdministrador" class="form-select" required>
-            <option value="">Seleccionar administrador...</option>
-            <option value="GERARDO">GERARDO</option>
-            <option value="CHACHO">CHACHO</option>
-            <option value="WALTER">WALTER</option>
-          </select>
-        </div>
-
-        <div class="d-flex justify-content-end mt-3">
-          <button id="btnGuardarFactura" class="btn btn-success">Guardar Factura</button>
-        </div>
-      </section>
-
-      <!-- MODAL Productos Factura -->
-      <div class="modal fade af-modal" id="modalProductosFactura" tabindex="-1" aria-labelledby="modalProductosFacturaLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-proveedor-dialog">
-          <div class="modal-content modal-proveedor-content">
-            <div class="modal-header modal-proveedor-header">
-              <h5 class="modal-title" id="modalProductosFacturaLabel">
-                <i class="bi bi-box-seam me-2"></i>Productos de la Factura
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
 
-            <div class="modal-body modal-proveedor-body">
-              <div class="mb-3 position-relative">
-                <label for="buscadorProducto" class="form-label">Buscar producto</label>
-                <input type="text" class="form-control" id="buscadorProducto" placeholder="Escribí el nombre o código...">
-                <div id="resultadosBusqueda" class="list-group mt-1"></div>
-              </div>
-
-              <div class="table-responsive mt-4">
-                <table class="table table-bordered table-sm align-middle text-center" id="tablaProductosFactura">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Código Prov.</th>
-                      <th>Producto</th>
-                      <th>Imagen</th>
-                      <th>Cantidad</th>
-                      <th>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody></tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="modal-footer modal-proveedor-footer">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
-              <button type="button" class="btn btn-success" id="btnConfirmarProductosFactura">Confirmar Productos</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- =============== NOTAS DE CRÉDITO =============== -->
-<section class="panel-notas-credito af-card" data-af="notas-credito">
-  <h5 class="af-card__title">Registrar Nota de Crédito</h5>
-
-  <div class="mb-3">
-    <label for="notaCreditoProveedor" class="form-label">Proveedor</label>
-    <select id="notaCreditoProveedor" class="form-select">
-      <option value="">Seleccionar proveedor...</option>
-      <% proveedores.forEach(p => { %>
-        <option value="<%= p.id %>"><%= p.nombre %></option>
-      <% }) %>
-    </select>
-  </div>
-
-  <div class="mb-3">
-    <label for="notaCreditoFecha" class="form-label">Fecha Nota de Crédito</label>
-    <input type="date" id="notaCreditoFecha" class="form-control">
-  </div>
-
-  <div class="mb-3">
-    <label for="notaCreditoNumero" class="form-label">Número de Nota de Crédito</label>
-    <input type="text" id="notaCreditoNumero" class="form-control" placeholder="Ej: 001-00001234">
-  </div>
-
-  <div class="mb-3">
-    <label for="notaCreditoFacturaNumero" class="form-label">Corresponde a Factura Nº</label>
-    <input type="text" id="notaCreditoFacturaNumero" class="form-control" placeholder="Ej: 001-00005678">
-  </div>
-
-  <div class="mb-3">
-    <label for="notaCreditoTipo" class="form-label">Tipo de Nota de Crédito</label>
-    <select id="notaCreditoTipo" class="form-select">
-      <option value="">Seleccionar tipo...</option>
-      <option value="descuento">Por descuento</option>
-      <option value="devolucion_mercaderia">Por devolución de mercadería</option>
-      <option value="diferencia_precio">Por diferencia de precio</option>
-    </select>
-  </div>
-
-  <div class="mb-3">
-    <label for="notaCreditoIVA" class="form-label">IVA</label>
-    <select id="notaCreditoIVA" class="form-select">
-      <option value="">Seleccionar IVA...</option>
-      <option value="21">21%</option>
-      <option value="10.5">10.5%</option>
-    </select>
-  </div>
-
-  <div class="mb-3">
-    <label for="notaCreditoImporteTotal" class="form-label">Importe total (con IVA)</label>
-    <input type="number" step="0.01" id="notaCreditoImporteTotal" class="form-control">
-  </div>
-
-  <div class="mb-3">
-    <label for="notaCreditoAdministrador" class="form-label">Administrador</label>
-    <select id="notaCreditoAdministrador" class="form-select" required>
-      <option value="">Seleccionar administrador...</option>
-      <option value="GERARDO">GERARDO</option>
-      <option value="CHACHO">CHACHO</option>
-      <option value="WALTER">WALTER</option>
-    </select>
-  </div>
-
-  <div class="d-flex justify-content-end mt-3">
-    <button id="btnGuardarNotaCredito" class="btn btn-success">Guardar Nota de Crédito</button>
-  </div>
-</section>
-
-      <!-- =============== PRESUPUESTOS =============== -->
-      <section class="panel-presupuestos af-card" data-af="presupuestos">
-        <h5 class="af-card__title">Registrar Presupuesto</h5>
-
-        <div class="mb-3">
-          <label for="presupuestoProveedor" class="form-label">Proveedor</label>
-          <select id="presupuestoProveedor" class="form-select">
-            <option value="">Seleccionar proveedor...</option>
-            <% proveedores.forEach(p => { %>
-              <option value="<%= p.id %>"><%= p.nombre %></option>
-            <% }) %>
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label for="presupuestoFecha" class="form-label">Fecha del presupuesto</label>
-          <input type="date" id="presupuestoFecha" class="form-control">
-        </div>
-
-        <div class="mb-3">
-          <label for="presupuestoFechaPago" class="form-label">Fecha Vencimiento</label>
-          <input type="date" id="presupuestoFechaPago" class="form-control">
-        </div>
-
-        <div class="mb-3">
-          <label for="presupuestoNumero" class="form-label">Número</label>
-          <input type="text" id="presupuestoNumero" class="form-control">
-        </div>
-
-        <div class="mb-3">
-          <label for="presupuestoImporte" class="form-label">Importe total</label>
-          <input type="number" step="0.01" id="presupuestoImporte" class="form-control">
-        </div>
-
-        <button id="btnAgregarProductosPresupuesto" class="btn btn-primary ms-0 mb-2">Agregar Productos</button>
-
-        <div class="mb-3">
-          <label for="presupuestoCondicion" class="form-label">Estado del pago</label>
-          <select id="presupuestoCondicion" class="form-select">
-            <option value="pendiente" selected>PENDIENTE</option>
-            <option value="pagado">PAGADO</option>
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label for="presupuestoAdministrador" class="form-label">Administrador</label>
-          <select id="presupuestoAdministrador" class="form-select" required>
-            <option value="">Seleccionar administrador...</option>
-            <option value="GERARDO">GERARDO</option>
-            <option value="CHACHO">CHACHO</option>
-            <option value="WALTER">WALTER</option>
-          </select>
-        </div>
-
-        <div class="d-flex justify-content-end mt-3">
-          <button id="btnGuardarPresupuesto" class="btn btn-success">Guardar Presupuesto</button>
-        </div>
-      </section>
-
-      <!-- MODAL Productos Presupuesto -->
-      <div class="modal fade af-modal" id="modalProductosPresupuesto" tabindex="-1" aria-labelledby="modalProductosPresupuestoLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-proveedor-dialog">
-          <div class="modal-content modal-proveedor-content">
-            <div class="modal-header modal-proveedor-header">
-              <h5 class="modal-title" id="modalProductosPresupuestoLabel">
-                <i class="bi bi-box-seam me-2"></i>Productos del Presupuesto
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-
-            <div class="modal-body modal-proveedor-body">
-              <div class="mb-3 position-relative">
-                <label for="buscadorProductoPresupuesto" class="form-label">Buscar producto</label>
-                <input type="text" class="form-control" id="buscadorProductoPresupuesto" placeholder="Escribí el nombre o código...">
-                <div id="resultadosBusquedaPresupuesto" class="list-group mt-1"></div>
-              </div>
-
-              <div class="table-responsive mt-4">
-                <table class="table table-bordered table-sm align-middle text-center" id="tablaProductosPresupuesto">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Código Prov.</th>
-                      <th>Producto</th>
-                      <th>Imagen</th>
-                      <th>Cantidad</th>
-                      <th>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody></tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="modal-footer modal-proveedor-footer">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
-              <button type="button" class="btn btn-success" id="btnConfirmarProductosPresupuesto">Confirmar Productos</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- =============== LISTADOS =============== -->
-      <section class="panel-listados af-card" data-af="listados">
-        <h5 class="af-card__title">Listado de Facturas y Presupuestos</h5>
-
-        <div class="mb-3">
-          <label for="filtroProveedor" class="form-label">Proveedor</label>
-          <select id="filtroProveedor" class="form-select">
-            <option value="">Todos los proveedores</option>
-            <% proveedores.forEach(p => { %>
-              <option value="<%= p.id %>"><%= p.nombre %></option>
-            <% }) %>
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label for="filtroTipo" class="form-label">Tipo</label>
-          <select id="filtroTipo" class="form-select">
-            <option value="">Todos</option>
-            <option value="factura">Facturas</option>
-            <option value="presupuesto">Presupuestos</option>
-            <option value="nota_credito">Notas de Crédito</option>
-
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label for="filtroNumero" class="form-label">Número</label>
-          <input type="text" id="filtroNumero" class="form-control" placeholder="Ej: 001-12345">
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Fecha Desde</label>
-          <input type="date" id="filtroFechaDesde" class="form-control">
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Fecha Hasta</label>
-          <input type="date" id="filtroFechaHasta" class="form-control">
-        </div>
-
-        <div class="mb-3">
-          <label for="filtroCondicion" class="form-label">Condición</label>
-          <select id="filtroCondicion" class="form-select">
-            <option value="">Todas</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="pagado">Pagado</option>
-          </select>
-        </div>
-
-        <div class="af-actions-row">
-          <button id="btnGenerarPDFResumenFacturas" class="btn-admin-facturas">📄 Resumen Facturas</button>
-          <button id="btnGenerarPDFResumenPresupuestos" class="btn-admin-presupuestos">📝 Resumen Presupuestos</button>
-          <button id="btnVerVencimientos" class="btn-admin-vencimientos">📆 Ver Vencimientos</button>
-        </div>
-
-        <div class="d-grid mt-3">
-          <button class="btn btn-primary" id="btnBuscarListados">Buscar</button>
-        </div>
-      </section>
-
-      <!-- MODAL Resultados Listados -->
-      <div class="modal fade af-modal" id="modalResultadosListados" tabindex="-1" aria-labelledby="modalResultadosListadosLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-proveedor-dialog">
-          <div class="modal-content modal-proveedor-content">
-            <div class="modal-header modal-proveedor-header">
-              <h5 class="modal-title" id="modalResultadosListadosLabel">
-                <i class="bi bi-journal-text me-2"></i>Resultados de la búsqueda
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-
-            <div class="modal-body modal-proveedor-body">
-              <div class="row" id="contenedorResultadosListados"></div>
-
-              <div class="d-flex justify-content-between align-items-center mt-4">
-                <button class="btn btn-outline-secondary" id="btnAnteriorPagina" disabled>← Anterior</button>
-                <span id="indicadorPagina" class="fw-bold">Página 1</span>
-                <button class="btn btn-outline-secondary" id="btnSiguientePagina" disabled>Siguiente →</button>
-              </div>
-            </div>
-
-            <div class="modal-footer modal-proveedor-footer">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- MODAL Detalle Documento -->
-      <div class="modal fade af-modal" id="modalDetalleDocumento" tabindex="-1" aria-labelledby="modalDetalleDocumentoLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content modal-proveedor-content">
-            <div class="modal-header modal-proveedor-header">
-              <h5 class="modal-title" id="modalDetalleDocumentoLabel">
-                <i class="bi bi-file-earmark-text me-2"></i>Detalle del Documento
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body" id="contenedorDetalleDocumento"></div>
             <div class="modal-footer">
-              <a id="btnImprimirDetallePDF" href="#" target="_blank" class="btn btn-outline-secondary mt-3">
-                <i class="bi bi-printer me-1"></i> Imprimir Comprobante
-              </a>
-
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-              <button type="button" id="btnHabilitarEdicion" class="btn btn-warning">Editar</button>
-              <button type="button" id="btnEliminarDocumento" class="btn btn-danger">Eliminar</button>
-              <button type="button" id="btnGuardarCambiosDocumento" class="btn btn-success d-none">Guardar Cambios</button>
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-danger d-none" id="btnEliminarProveedor">Eliminar</button>
+                <button type="submit" class="btn btn-success">Guardar Cambios</button>
+              </div>
             </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MODAL: CATALOGOS (selector + acciones) ================= -->
+    <div class="modal fade" id="modalCatalogos" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog af-modal-xl modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Catálogos (Categorías, Marcas, Modelos)</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="row g-3">
+              <!-- CATEGORIAS -->
+              <div class="col-md-4">
+                <div class="p-3" style="border:1px solid rgba(2,6,23,.10);border-radius:18px;background:#fff;box-shadow:var(--shadow2);">
+                  <h6 class="mb-2" style="font-weight:950;color:rgba(15,23,42,.88);">Categorías</h6>
+                  <div class="d-flex gap-2 mb-2 flex-wrap">
+                    <button id="btnNuevaCategoria" class="btn btn-sm btn-success">+ Nueva</button>
+                    <button id="btnEditarCategoria" class="btn btn-sm btn-warning" disabled>Editar</button>
+                    <button id="btnEliminarCategoria" class="btn btn-sm btn-danger" disabled>Eliminar</button>
+                  </div>
+                  <select id="selectCategoria" class="form-select">
+                    <option value="">Cargando...</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- MARCAS -->
+              <div class="col-md-4">
+                <div class="p-3" style="border:1px solid rgba(2,6,23,.10);border-radius:18px;background:#fff;box-shadow:var(--shadow2);">
+                  <h6 class="mb-2" style="font-weight:950;color:rgba(15,23,42,.88);">Marcas</h6>
+                  <div class="d-flex gap-2 mb-2 flex-wrap">
+                    <button id="btnNuevaMarca" class="btn btn-sm btn-success">+ Nueva</button>
+                    <button id="btnEditarMarca" class="btn btn-sm btn-warning" disabled>Editar</button>
+                    <button id="btnEliminarMarca" class="btn btn-sm btn-danger" disabled>Eliminar</button>
+                  </div>
+                  <select id="selectMarca" class="form-select">
+                    <option value="">Cargando...</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- MODELOS -->
+              <div class="col-md-4">
+                <div class="p-3" style="border:1px solid rgba(2,6,23,.10);border-radius:18px;background:#fff;box-shadow:var(--shadow2);">
+                  <h6 class="mb-2" style="font-weight:950;color:rgba(15,23,42,.88);">Modelos</h6>
+                  <div class="d-flex gap-2 mb-2 flex-wrap">
+                    <button id="btnNuevoModelo" class="btn btn-sm btn-success">+ Nuevo</button>
+                    <button id="btnEditarModelo" class="btn btn-sm btn-warning" disabled>Editar</button>
+                    <button id="btnEliminarModelo" class="btn btn-sm btn-danger" disabled>Eliminar</button>
+                  </div>
+
+                  <div class="mb-2">
+                    <label class="form-label">Filtrar por marca</label>
+                    <select id="filtroMarcaModelos" class="form-select">
+                      <option value="">Todas</option>
+                    </select>
+                  </div>
+
+                  <select id="selectModelo" class="form-select">
+                    <option value="">Cargando...</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
           </div>
         </div>
       </div>
+    </div>
 
-    </div> <!-- /af-admin__grid -->
+    <!-- ===== Modales Catálogos (EXISTENTES) ===== -->
+    <div class="modal fade" id="modalCategoria" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="formCategoria" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Categoría</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="categoriaId">
+            <div class="mb-3">
+              <label class="form-label">Nombre</label>
+              <input class="form-control" id="categoriaNombre" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalMarca" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="formMarca" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Marca</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="marcaId">
+            <div class="mb-3">
+              <label class="form-label">Nombre</label>
+              <input class="form-control" id="marcaNombre" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalModelo" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="formModelo" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Modelo</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="modeloId">
+            <div class="mb-3">
+              <label class="form-label">Marca</label>
+              <select id="modeloMarcaId" class="form-select" required></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Nombre</label>
+              <input class="form-control" id="modeloNombre" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ================= MODAL: FACTURA ================= -->
+    <div class="modal fade" id="modalFactura" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Registrar Factura</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="facturaProveedor" class="form-label">Proveedor</label>
+              <select id="facturaProveedor" class="form-select">
+                <option value="">Seleccionar proveedor...</option>
+                <% proveedores.forEach(p => { %>
+                  <option value="<%= p.id %>"><%= p.nombre %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="facturaFecha" class="form-label">Fecha Factura</label>
+                <input type="date" id="facturaFecha" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="facturaFechaPago" class="form-label">Fecha Vencimiento</label>
+                <input type="date" id="facturaFechaPago" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="facturaNumero" class="form-label">Número de factura</label>
+                <input type="text" id="facturaNumero" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="facturaImporteTotal" class="form-label">Importe total con IVA</label>
+                <input type="number" step="0.01" id="facturaImporteTotal" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="facturaIVA" class="form-label">IVA</label>
+                <select id="facturaIVA" class="form-select">
+                  <option value="">Seleccionar IVA...</option>
+                  <option value="21">21%</option>
+                  <option value="10.5">10.5%</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="facturaImporteBruto" class="form-label">Importe bruto</label>
+                <input type="number" step="0.01" id="facturaImporteBruto" class="form-control">
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3 flex-wrap">
+              <button id="btnAgregarProductosFactura" class="btn btn-primary">Agregar Productos</button>
+
+              <div class="ms-auto d-flex gap-2 flex-wrap">
+                <div style="min-width:220px;">
+                  <label for="facturaCondicion" class="form-label">Estado del pago</label>
+                  <select id="facturaCondicion" class="form-select">
+                    <option value="pendiente" selected>PENDIENTE</option>
+                    <option value="pagado">PAGADO</option>
+                  </select>
+                </div>
+
+                <div style="min-width:220px;">
+                  <label for="facturaAdministrador" class="form-label">Administrador</label>
+                  <select id="facturaAdministrador" class="form-select" required>
+                    <option value="">Seleccionar administrador...</option>
+                    <option value="GERARDO">GERARDO</option>
+                    <option value="CHACHO">CHACHO</option>
+                    <option value="WALTER">WALTER</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button id="btnGuardarFactura" class="btn btn-success">Guardar Factura</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL Productos Factura (EXISTENTE) -->
+    <div class="modal fade" id="modalProductosFactura" tabindex="-1" aria-labelledby="modalProductosFacturaLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalProductosFacturaLabel">Productos de la Factura</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="mb-3 position-relative">
+              <label for="buscadorProducto" class="form-label">Buscar producto</label>
+              <input type="text" class="form-control" id="buscadorProducto" placeholder="Escribí el nombre o código...">
+              <div id="resultadosBusqueda" class="list-group mt-1"></div>
+            </div>
+
+            <div class="table-responsive mt-4">
+              <table class="table table-bordered table-sm align-middle text-center" id="tablaProductosFactura">
+                <thead class="table-light">
+                  <tr>
+                    <th>Código Prov.</th>
+                    <th>Producto</th>
+                    <th>Imagen</th>
+                    <th>Cantidad</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-success" id="btnConfirmarProductosFactura">Confirmar Productos</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MODAL: NOTA DE CRÉDITO ================= -->
+    <div class="modal fade" id="modalNotaCredito" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Registrar Nota de Crédito</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="notaCreditoProveedor" class="form-label">Proveedor</label>
+              <select id="notaCreditoProveedor" class="form-select">
+                <option value="">Seleccionar proveedor...</option>
+                <% proveedores.forEach(p => { %>
+                  <option value="<%= p.id %>"><%= p.nombre %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="notaCreditoFecha" class="form-label">Fecha Nota de Crédito</label>
+                <input type="date" id="notaCreditoFecha" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="notaCreditoNumero" class="form-label">Número de Nota de Crédito</label>
+                <input type="text" id="notaCreditoNumero" class="form-control" placeholder="Ej: 001-00001234">
+              </div>
+              <div class="col-md-6">
+                <label for="notaCreditoFacturaNumero" class="form-label">Corresponde a Factura Nº</label>
+                <input type="text" id="notaCreditoFacturaNumero" class="form-control" placeholder="Ej: 001-00005678">
+              </div>
+              <div class="col-md-6">
+                <label for="notaCreditoTipo" class="form-label">Tipo</label>
+                <select id="notaCreditoTipo" class="form-select">
+                  <option value="">Seleccionar tipo...</option>
+                  <option value="descuento">Por descuento</option>
+                  <option value="devolucion_mercaderia">Por devolución de mercadería</option>
+                  <option value="diferencia_precio">Por diferencia de precio</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="notaCreditoIVA" class="form-label">IVA</label>
+                <select id="notaCreditoIVA" class="form-select">
+                  <option value="">Seleccionar IVA...</option>
+                  <option value="21">21%</option>
+                  <option value="10.5">10.5%</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="notaCreditoImporteTotal" class="form-label">Importe total (con IVA)</label>
+                <input type="number" step="0.01" id="notaCreditoImporteTotal" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="notaCreditoAdministrador" class="form-label">Administrador</label>
+                <select id="notaCreditoAdministrador" class="form-select" required>
+                  <option value="">Seleccionar administrador...</option>
+                  <option value="GERARDO">GERARDO</option>
+                  <option value="CHACHO">CHACHO</option>
+                  <option value="WALTER">WALTER</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button id="btnGuardarNotaCredito" class="btn btn-success">Guardar Nota de Crédito</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MODAL: PRESUPUESTO ================= -->
+    <div class="modal fade" id="modalPresupuesto" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Registrar Presupuesto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="presupuestoProveedor" class="form-label">Proveedor</label>
+              <select id="presupuestoProveedor" class="form-select">
+                <option value="">Seleccionar proveedor...</option>
+                <% proveedores.forEach(p => { %>
+                  <option value="<%= p.id %>"><%= p.nombre %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="presupuestoFecha" class="form-label">Fecha del presupuesto</label>
+                <input type="date" id="presupuestoFecha" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="presupuestoFechaPago" class="form-label">Fecha Vencimiento</label>
+                <input type="date" id="presupuestoFechaPago" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="presupuestoNumero" class="form-label">Número</label>
+                <input type="text" id="presupuestoNumero" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="presupuestoImporte" class="form-label">Importe total</label>
+                <input type="number" step="0.01" id="presupuestoImporte" class="form-control">
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3 flex-wrap">
+              <button id="btnAgregarProductosPresupuesto" class="btn btn-primary">Agregar Productos</button>
+
+              <div class="ms-auto d-flex gap-2 flex-wrap">
+                <div style="min-width:220px;">
+                  <label for="presupuestoCondicion" class="form-label">Estado del pago</label>
+                  <select id="presupuestoCondicion" class="form-select">
+                    <option value="pendiente" selected>PENDIENTE</option>
+                    <option value="pagado">PAGADO</option>
+                  </select>
+                </div>
+
+                <div style="min-width:220px;">
+                  <label for="presupuestoAdministrador" class="form-label">Administrador</label>
+                  <select id="presupuestoAdministrador" class="form-select" required>
+                    <option value="">Seleccionar administrador...</option>
+                    <option value="GERARDO">GERARDO</option>
+                    <option value="CHACHO">CHACHO</option>
+                    <option value="WALTER">WALTER</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button id="btnGuardarPresupuesto" class="btn btn-success">Guardar Presupuesto</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL Productos Presupuesto (EXISTENTE) -->
+    <div class="modal fade" id="modalProductosPresupuesto" tabindex="-1" aria-labelledby="modalProductosPresupuestoLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalProductosPresupuestoLabel">Productos del Presupuesto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="mb-3 position-relative">
+              <label for="buscadorProductoPresupuesto" class="form-label">Buscar producto</label>
+              <input type="text" class="form-control" id="buscadorProductoPresupuesto" placeholder="Escribí el nombre o código...">
+              <div id="resultadosBusquedaPresupuesto" class="list-group mt-1"></div>
+            </div>
+
+            <div class="table-responsive mt-4">
+              <table class="table table-bordered table-sm align-middle text-center" id="tablaProductosPresupuesto">
+                <thead class="table-light">
+                  <tr>
+                    <th>Código Prov.</th>
+                    <th>Producto</th>
+                    <th>Imagen</th>
+                    <th>Cantidad</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-success" id="btnConfirmarProductosPresupuesto">Confirmar Productos</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MODAL: LISTADOS ================= -->
+    <div class="modal fade" id="modalListados" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Listado de Facturas y Presupuestos</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="filtroProveedor" class="form-label">Proveedor</label>
+              <select id="filtroProveedor" class="form-select">
+                <option value="">Todos los proveedores</option>
+                <% proveedores.forEach(p => { %>
+                  <option value="<%= p.id %>"><%= p.nombre %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="filtroTipo" class="form-label">Tipo</label>
+                <select id="filtroTipo" class="form-select">
+                  <option value="">Todos</option>
+                  <option value="factura">Facturas</option>
+                  <option value="presupuesto">Presupuestos</option>
+                  <option value="nota_credito">Notas de Crédito</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label for="filtroNumero" class="form-label">Número</label>
+                <input type="text" id="filtroNumero" class="form-control" placeholder="Ej: 001-12345">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Fecha Desde</label>
+                <input type="date" id="filtroFechaDesde" class="form-control">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Fecha Hasta</label>
+                <input type="date" id="filtroFechaHasta" class="form-control">
+              </div>
+
+              <div class="col-md-6">
+                <label for="filtroCondicion" class="form-label">Condición</label>
+                <select id="filtroCondicion" class="form-select">
+                  <option value="">Todas</option>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="pagado">Pagado</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3 flex-wrap">
+              <button id="btnGenerarPDFResumenFacturas" class="btn btn-primary">📄 Resumen Facturas</button>
+              <button id="btnGenerarPDFResumenPresupuestos" class="btn btn-primary">📝 Resumen Presupuestos</button>
+              <button id="btnVerVencimientos" class="btn btn-primary">📆 Vencimientos</button>
+              <button class="btn btn-success ms-auto" id="btnBuscarListados">Buscar</button>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL Resultados Listados (EXISTENTE) -->
+    <div class="modal fade" id="modalResultadosListados" tabindex="-1" aria-labelledby="modalResultadosListadosLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalResultadosListadosLabel">Resultados de la búsqueda</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="row" id="contenedorResultadosListados"></div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+              <button class="btn btn-outline-secondary" id="btnAnteriorPagina" disabled>← Anterior</button>
+              <span id="indicadorPagina" class="fw-bold">Página 1</span>
+              <button class="btn btn-outline-secondary" id="btnSiguientePagina" disabled>Siguiente →</button>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL Detalle Documento (EXISTENTE) -->
+    <div class="modal fade" id="modalDetalleDocumento" tabindex="-1" aria-labelledby="modalDetalleDocumentoLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalDetalleDocumentoLabel">Detalle del Documento</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="contenedorDetalleDocumento"></div>
+          <div class="modal-footer">
+            <a id="btnImprimirDetallePDF" href="#" target="_blank" class="btn btn-outline-secondary mt-3">Imprimir Comprobante</a>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" id="btnHabilitarEdicion" class="btn btn-warning">Editar</button>
+            <button type="button" id="btnEliminarDocumento" class="btn btn-danger">Eliminar</button>
+            <button type="button" id="btnGuardarCambiosDocumento" class="btn btn-success d-none">Guardar Cambios</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <%- include('./layouts/footer.ejs') %>
+
+  <!-- Tus JS existentes -->
   <script src="/js/proveedores.js"></script>
   <script src="/js/facturasAdministracion.js"></script>
   <script src="/js/presupuestosAdministracion.js"></script>
@@ -946,6 +960,21 @@
   <script src="/js/catalogosAdmin.js"></script>
   <script src="/js/notasCreditoAdministracion.js?v=20260109_1"></script>
 
+  <!-- JS NUEVO: abrir modales desde los tiles -->
+  <script>
+    (function(){
+      function openModal(id){
+        const el = document.getElementById(id);
+        if (!el || !window.bootstrap) return;
+        bootstrap.Modal.getOrCreateInstance(el).show();
+      }
 
-
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-open]');
+        if(!btn) return;
+        e.preventDefault();
+        openModal(btn.getAttribute('data-open'));
+      });
+    })();
+  </script>
 </body>
