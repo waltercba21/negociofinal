@@ -399,13 +399,6 @@ if (!CAN_INIT) {
 function mostrarProductos(productos) {
   contenedorProductos.innerHTML = '';
 
-  // ✅ NUEVO: resultado único de escobillas por vehículo
-  // Si el backend devuelve { tipo:'escobillas', ... } no es un array.
-  if (productos && typeof productos === 'object' && !Array.isArray(productos) && productos.tipo === 'escobillas') {
-    mostrarEscobillasCompat(productos);
-    return;
-  }
-
   if (!Array.isArray(productos) || productos.length === 0) {
     const contenedorVacio = document.createElement('div');
     contenedorVacio.className = 'no-result';
@@ -579,61 +572,6 @@ function mostrarProductos(productos) {
     _initProveedorButton(producto.id);
   });
 }
-function mostrarEscobillasCompat(data) {
-  contenedorProductos.innerHTML = '';
-
-  if (!data || !data.ok) {
-    const contenedorVacio = document.createElement('div');
-    contenedorVacio.className = 'no-result';
-    contenedorVacio.innerHTML = `
-      <img src="/images/noEncontrado.png" alt="Sin compatibilidad" class="imagen-no-result">
-      <p>${(data && data.motivo) ? data.motivo : 'No se pudo resolver la compatibilidad.'}</p>
-    `;
-    contenedorProductos.appendChild(contenedorVacio);
-    return;
-  }
-
-  const v = data.vehiculo || {};
-  const p = data.principal || {};
-  const kits = Array.isArray(data.kits) ? data.kits : [];
-
-  function linea(titulo, it) {
-    if (!it) return `<div style="padding:10px 0;border-top:1px solid #e6e6e6;opacity:.85">${titulo}: <strong>—</strong></div>`;
-    const codigo = it.codigo || it.codigo_norm || '—';
-    const tech = it.tecnologia ? ` <span style="opacity:.7">(${it.tecnologia})</span>` : '';
-    const prod = it.producto
-      ? ` · <a href="/productos/${it.producto.id}" target="_blank" rel="noopener">ver producto</a>`
-      : '';
-    return `<div style="padding:10px 0;border-top:1px solid #e6e6e6;">${titulo}: <strong>${codigo}</strong>${tech}${prod}</div>`;
-  }
-
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.style.padding = '16px';
-  card.style.borderRadius = '16px';
-
-  card.innerHTML = `
-    <div style="font-weight:900;font-size:18px;margin-bottom:6px;">
-      Escobillas para ${v.marca || ''} ${v.modelo || ''}${v.anio ? ' (' + v.anio + ')' : ''}
-    </div>
-    <div style="opacity:.75;margin-bottom:10px;">Compatibilidad por posiciones</div>
-
-    ${linea('Conductor', p.conductor)}
-    ${linea('Acompañante', p.acompanante)}
-    ${linea('Trasera', p.trasera)}
-
-    <div style="padding:10px 0;border-top:1px solid #e6e6e6;">
-      Kit delantero: ${
-        kits.length
-          ? kits.map(k => `<strong>${k.tecnologia}</strong> · <a href="/productos/${k.producto.id}" target="_blank" rel="noopener">${k.producto.nombre}</a>`).join(' | ')
-          : '<strong>—</strong>'
-      }
-    </div>
-  `;
-
-  contenedorProductos.appendChild(card);
-}
-
 
 function moverCarrusel(index, direccion) {
   const carousel = document.getElementById(`carousel-${index}`);

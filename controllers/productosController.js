@@ -1,8 +1,6 @@
 const conexion = require('../config/conexion');
 const producto = require('../models/producto');
 const carrito = require('../models/carrito'); 
-const escobillasLookup = require('../models/escobillasLookup');
-const escobillasCompat = require('../models/escobillasCompat');
 var borrar = require('fs');
 const PDFDocument = require('pdfkit');
 const blobStream  = require('blob-stream');
@@ -545,14 +543,6 @@ buscar: async (req, res) => {
     const { q: busqueda_nombre, categoria_id, marca_id, modelo_id, proveedor_id } = req.query;
     req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
 
-    const qRaw = (busqueda_nombre || '').toString().trim();
-
-    // ✅ NUEVO: si es búsqueda por vehículo de escobillas, devolver “resultado único”
-    if (qRaw) {
-      const esc = await escobillasLookup.tryBuscar(conexion, qRaw);
-      if (esc) return res.json(esc); // objeto {tipo:'escobillas', ...}
-    }
-
     const limite = req.query.limite ? parseInt(req.query.limite, 10) : 100;
 
     // ✅ si viene proveedor_id => filtra por producto_proveedor
@@ -816,8 +806,6 @@ guardar: async function (req, res) {
         )
       );
     }
-    // === ESCOBILLAS: guardar compatibilidad (si vino del form) ===
-await escobillasCompat.saveFromRequest(conexion, productoId, req.body);
 
     return res.redirect("/productos/panelControl");
   } catch (error) {
@@ -894,8 +882,6 @@ editar: function (req, res) {
         producto.obtenerModelosPorMarca(conexion, productoResult.marca),
         producto.obtenerDescuentosProveedor(conexion),
         producto.obtenerStock(conexion, req.params.id),
-        escobillasCompat.getCodigosProducto(conexion, req.params.id),
-        escobillasCompat.getKitProducto(conexion, req.params.id)
       ]).then(
         ([
           categoriasResult,
@@ -904,8 +890,6 @@ editar: function (req, res) {
           modelosResult,
           descuentosProveedoresResult,
           stockResult,
-          escobillasCodigos,
-          escobillasKit
         ]) => {
           if (responseSent) return;
 
@@ -922,8 +906,6 @@ editar: function (req, res) {
             modelos: modelosResult,
             descuentosProveedor: descuentosProveedoresResult,
             stock: stockResult,
-            escobillasCodigos,
-            escobillasKit
           });
         }
       );
@@ -1189,8 +1171,6 @@ actualizar: async function (req, res) {
         console.log('[ACTUALIZAR] El producto quedó sin imágenes.');
       }
     }
-    // === ESCOBILLAS: guardar compatibilidad (si vino del form) ===
-await escobillasCompat.saveFromRequest(conexion, productoId, req.body);
 
     // ---------- Redirect ----------
     const pagina = req.body.pagina || 1;

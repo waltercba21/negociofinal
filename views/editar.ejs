@@ -248,7 +248,8 @@
 
             <div class="form-group-crear">
               <label for="descripcion">Descripción</label>
-              <input id="descripcion" class="form-control" type="text" name="descripcion" value="<%= producto ? producto.descripcion : '' %>">
+              <textarea id="descripcion" class="form-control" name="descripcion" rows="6"><%= producto ? producto.descripcion : '' %></textarea>
+
             </div>
 
             <div class="form-group-crear">

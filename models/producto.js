@@ -1041,7 +1041,6 @@ obtenerPorFiltrosYProveedor: function (
         p.calidad_original,
         p.calidad_vic,
 
-        -- Datos del proveedor seleccionado (para pedido manual)
         pp.codigo        AS codigo,
         pp.precio_lista  AS precio_lista,
         pp.descuento     AS descuento,
@@ -1061,24 +1060,18 @@ obtenerPorFiltrosYProveedor: function (
     if (marca_id)     { sql += ` AND p.marca_id = ?`;     params.push(Number(marca_id)); }
     if (modelo_id)    { sql += ` AND p.modelo_id = ?`;    params.push(Number(modelo_id)); }
 
-    // ✅ Búsqueda tolerante: por tokens (palabras), en cualquier orden
+    // ✅ BUSCAR EN nombre + descripcion + codigo proveedor
     if (busqueda_nombre && String(busqueda_nombre).trim().length) {
-      const raw = String(busqueda_nombre)
-        .trim()
-        .replace(/\s+/g, ' ');
-
-      const tokens = raw
-        .split(' ')
-        .map(t => t.trim())
-        .filter(t => t.length >= 2);
+      const raw = String(busqueda_nombre).trim().replace(/\s+/g, ' ');
+      const tokens = raw.split(' ').map(t => t.trim()).filter(t => t.length >= 2);
 
       if (tokens.length) {
         sql += ` AND (`;
         tokens.forEach((t, idx) => {
           if (idx > 0) sql += ` AND `;
-          sql += `(p.nombre LIKE ? OR pp.codigo LIKE ?)`;
+          sql += `(p.nombre LIKE ? OR p.descripcion LIKE ? OR pp.codigo LIKE ?)`;
           const likeTok = `%${t}%`;
-          params.push(likeTok, likeTok);
+          params.push(likeTok, likeTok, likeTok);
         });
         sql += `)`;
       }
@@ -1417,64 +1410,66 @@ obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor, ca
   conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
 }, 
 obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
-    return new Promise((resolve, reject) => {
-        let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original FROM productos'; 
-        sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
-        sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
-        sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
-        sql += ' WHERE 1=1';
-        const parametros = []; 
-        
-        // Añadir logs para cada filtro
-        if (categoria) {
-            sql += ' AND categoria_id = ?';
-            parametros.push(categoria);
+  return new Promise((resolve, reject) => {
+    let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original FROM productos'; 
+    sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
+    sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
+    sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
+    sql += ' WHERE 1=1';
+    const parametros = []; 
+    
+    if (categoria) {
+      sql += ' AND categoria_id = ?';
+      parametros.push(categoria);
+    }
+    if (marca && marca !== '' && !isNaN(parseInt(marca))) {
+      sql += ' AND marca_id = ?';
+      parametros.push(parseInt(marca));
+    }
+    if (modelo && modelo !== '' && !isNaN(parseInt(modelo))) {
+      sql += ' AND modelo_id = ?';
+      parametros.push(parseInt(modelo));
+    }
+
+    // ✅ BUSCAR EN nombre + descripcion + codigo proveedor
+    if (busqueda_nombre && typeof busqueda_nombre === 'string') {
+      const palabras = busqueda_nombre.split(' ');
+      palabras.forEach(palabra => {
+        if (palabra !== undefined && palabra !== null && palabra !== '') {
+          sql += ' AND (productos.nombre LIKE ? OR productos.descripcion LIKE ? OR producto_proveedor.codigo LIKE ?)';
+          parametros.push('%' + palabra + '%', '%' + palabra + '%', '%' + palabra + '%');
         }
-        if (marca && marca !== '' && !isNaN(parseInt(marca))) {
-            sql += ' AND marca_id = ?';
-            parametros.push(parseInt(marca));
+      });
+    }
+    
+    sql += ' ORDER BY productos.nombre ASC';
+    if (limite && typeof limite === 'number' && limite > 0 && limite % 1 === 0) {
+      sql += ' LIMIT ?';
+      parametros.push(limite);
+    }
+
+    conexion.query(sql, parametros, (error, productos) => {
+      if (error) return reject(error);
+
+      const productosAgrupados = productos.reduce((acc, producto) => {
+        const productoExistente = acc.find(p => p.id === producto.id);
+        if (productoExistente) {
+          if (producto.imagen) {
+            productoExistente.imagenes.push({ imagen: producto.imagen });
+          }
+        } else {
+          producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
+          producto.codigo = producto.codigo || '';
+          acc.push(producto);
         }
-        if (modelo && modelo !== '' && !isNaN(parseInt(modelo))) {
-            sql += ' AND modelo_id = ?';
-            parametros.push(parseInt(modelo));
-        }
-        if (busqueda_nombre && typeof busqueda_nombre === 'string') {
-            const palabras = busqueda_nombre.split(' ');
-            palabras.forEach(palabra => {
-                if (palabra !== undefined && palabra !== null && palabra !== '') {
-                    sql += ' AND (productos.nombre LIKE ? OR producto_proveedor.codigo LIKE ?)';
-                    parametros.push('%' + palabra + '%', '%' + palabra + '%');
-                }
-            });
-        }
-        
-        sql += ' ORDER BY productos.nombre ASC'; // Ordena los productos alfabéticamente
-        if (limite && typeof limite === 'number' && limite > 0 && limite % 1 === 0) {
-            sql += ' LIMIT ?';
-            parametros.push(limite);
-        }
-        conexion.query(sql, parametros, (error, productos) => {
-            if (error) {
-                reject(error);
-            } else {
-                const productosAgrupados = productos.reduce((acc, producto) => {
-                    const productoExistente = acc.find(p => p.id === producto.id);
-                    if (productoExistente) {
-                        if (producto.imagen) {
-                            productoExistente.imagenes.push({ imagen: producto.imagen });
-                        }
-                    } else {
-                        producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
-                        producto.codigo = producto.codigo || '';
-                        acc.push(producto);
-                    }
-                    return acc;
-                }, []);
-                resolve(productosAgrupados);
-            }
-        });
+        return acc;
+      }, []);
+
+      resolve(productosAgrupados);
     });
+  });
 },
+
 eliminarFactura: (id) => {
     return new Promise((resolve, reject) => {
         conexion.getConnection((err, conexion) => {
