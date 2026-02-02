@@ -1,6 +1,8 @@
 const conexion = require('../config/conexion');
 const producto = require('../models/producto');
-const carrito = require('../models/carrito'); // Ajusta la ruta según corresponda
+const carrito = require('../models/carrito'); 
+const escobillasLookup = require('../models/escobillasLookup');
+const escobillasCompat = require('../models/escobillasCompat');
 var borrar = require('fs');
 const PDFDocument = require('pdfkit');
 const blobStream  = require('blob-stream');
@@ -543,9 +545,17 @@ buscar: async (req, res) => {
     const { q: busqueda_nombre, categoria_id, marca_id, modelo_id, proveedor_id } = req.query;
     req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
 
+    const qRaw = (busqueda_nombre || '').toString().trim();
+
+    // ✅ NUEVO: si es búsqueda por vehículo de escobillas, devolver “resultado único”
+    if (qRaw) {
+      const esc = await escobillasLookup.tryBuscar(conexion, qRaw);
+      if (esc) return res.json(esc); // objeto {tipo:'escobillas', ...}
+    }
+
     const limite = req.query.limite ? parseInt(req.query.limite, 10) : 100;
 
-    // ✅ NUEVO: si viene proveedor_id => filtra por producto_proveedor (NO afecta otros usos)
+    // ✅ si viene proveedor_id => filtra por producto_proveedor
     let productos;
     const provIdNum = Number(proveedor_id);
 
@@ -560,7 +570,6 @@ buscar: async (req, res) => {
         provIdNum
       );
     } else {
-      // ✅ comportamiento original intacto
       productos = await producto.obtenerPorFiltros(
         conexion,
         categoria_id,
@@ -571,13 +580,11 @@ buscar: async (req, res) => {
       );
     }
 
-    // Imágenes (si hay IDs)
     const productoIds = productos.map(p => p.id);
     const todasLasImagenes = productoIds.length
       ? await producto.obtenerImagenesProducto(conexion, productoIds)
       : [];
 
-    // Enriquecer cada producto
     for (const prod of productos) {
       prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
 
@@ -606,13 +613,11 @@ buscar: async (req, res) => {
         'Sin proveedor';
 
       prod.codigo_proveedor = provParaCard?.codigo ?? provParaCard?.codigo_proveedor ?? '-';
-
       prod.proveedor_asignado_id = prod.proveedor_id ?? null;
-
       prod.utilidad = Number(prod.utilidad) || 0;
     }
 
-    // LOG búsquedas (igual)
+    // LOG búsquedas
     try {
       const termino = (req.query.q || '').toString().trim();
       const usuario_id = req.session?.usuario?.id || null;
@@ -811,6 +816,8 @@ guardar: async function (req, res) {
         )
       );
     }
+    // === ESCOBILLAS: guardar compatibilidad (si vino del form) ===
+await escobillasCompat.saveFromRequest(conexion, productoId, req.body);
 
     return res.redirect("/productos/panelControl");
   } catch (error) {
@@ -827,87 +834,108 @@ guardar: async function (req, res) {
             res.status(500).json({ success: false, error: error.message });
         }
     },
-editar: function(req, res) {
+editar: function (req, res) {
   let productoResult;
   let responseSent = false;
 
-  producto.retornarDatosId(conexion, req.params.id).then(result => {
-    if (!result) {
-      res.status(404).send("No se encontró el producto");
-      responseSent = true;
-      return;
-    }
+  producto
+    .retornarDatosId(conexion, req.params.id)
+    .then(result => {
+      if (!result) {
+        res.status(404).send("No se encontró el producto");
+        responseSent = true;
+        return;
+      }
 
-    // Copia y normalización suave (no tocamos IVA aquí)
-    productoResult = { ...result };
-    productoResult.precio_lista  = Math.round(Number(productoResult.precio_lista  || 0));
-    productoResult.costo_neto    = Math.round(Number(productoResult.costo_neto    || 0));
-    productoResult.costo_iva     = Math.round(Number(productoResult.costo_iva     || 0));
-    productoResult.utilidad      = Math.round(Number(productoResult.utilidad      || 0));
-    productoResult.precio_venta  = Math.round(Number(productoResult.precio_venta  || 0));
-    productoResult.calidad_original_fitam = result.calidad_original_fitam;
-    productoResult.calidad_vic    = result.calidad_vic;
+      // Copia y normalización suave (no tocamos IVA aquí)
+      productoResult = { ...result };
+      productoResult.precio_lista = Math.round(Number(productoResult.precio_lista || 0));
+      productoResult.costo_neto   = Math.round(Number(productoResult.costo_neto   || 0));
+      productoResult.costo_iva    = Math.round(Number(productoResult.costo_iva    || 0));
+      productoResult.utilidad     = Math.round(Number(productoResult.utilidad     || 0));
+      productoResult.precio_venta = Math.round(Number(productoResult.precio_venta || 0));
+      productoResult.calidad_original_fitam = result.calidad_original_fitam;
+      productoResult.calidad_vic  = result.calidad_vic;
 
-    // params de navegación
-    productoResult.paginaActual = req.query.pagina;
-    productoResult.busqueda     = req.query.busqueda;
+      // params de navegación
+      productoResult.paginaActual = req.query.pagina;
+      productoResult.busqueda     = req.query.busqueda;
 
-    // Traer proveedores del producto (DEBE incluir pp.iva)
-    return producto.retornarDatosProveedores(conexion, req.params.id);
-
-  }).then(productoProveedoresResult => {
-    if (responseSent) return;
-
-    // Normalización de filas proveedor-producto
-    productoProveedoresResult.forEach(pp => {
-      pp.precio_lista = Math.floor(Number(pp.precio_lista || 0));
-      if (isFinite(pp.descuento))  pp.descuento  = Math.floor(Number(pp.descuento));
-      if (isFinite(pp.costo_neto)) pp.costo_neto = Math.floor(Number(pp.costo_neto));
-
-      // 👇 Asegurar IVA-numérico por proveedor (tolerar "10,5")
-      const ivaRaw = (pp.iva !== undefined && pp.iva !== null)
-        ? pp.iva
-        : (productoResult.IVA ?? 21);
-      pp.iva = Number(String(ivaRaw).replace(',', '.'));
-      if (!Number.isFinite(pp.iva) || pp.iva <= 0) pp.iva = 21;
-    });
-
-    console.log('[GET /editar] IVA por proveedor ->',
-      productoProveedoresResult.map(pp => ({ prov: pp.proveedor_id, iva: pp.iva })));
-
-    // Cargas auxiliares
-    return Promise.all([
-      producto.obtenerCategorias(conexion),
-      producto.obtenerMarcas(conexion),
-      producto.obtenerProveedores(conexion),
-      producto.obtenerModelosPorMarca(conexion, productoResult.marca), // (siempre usaste esto)
-      producto.obtenerDescuentosProveedor(conexion),
-      producto.obtenerStock(conexion, req.params.id)
-    ]).then(([categoriasResult, marcasResult, proveedoresResult, modelosResult, descuentosProveedoresResult, stockResult]) => {
+      // Traer proveedores del producto (DEBE incluir pp.iva)
+      return producto.retornarDatosProveedores(conexion, req.params.id);
+    })
+    .then(productoProveedoresResult => {
       if (responseSent) return;
-      console.log('🔁 GET /productos/editar/:id');
-      console.log('🧩 req.query.pagina:', req.query.pagina);
-      console.log('🧩 req.query.busqueda:', req.query.busqueda);
 
-      res.render('editar', {
-        producto: productoResult,
-        productoProveedores: productoProveedoresResult, // 👈 usamos este en EJS
-        categorias: categoriasResult,
-        marcas: marcasResult,
-        proveedores: proveedoresResult,
-        modelos: modelosResult,
-        descuentosProveedor: descuentosProveedoresResult,
-        stock: stockResult
+      // Normalización de filas proveedor-producto
+      (productoProveedoresResult || []).forEach(pp => {
+        pp.precio_lista = Math.floor(Number(pp.precio_lista || 0));
+        if (isFinite(pp.descuento))  pp.descuento  = Math.floor(Number(pp.descuento));
+        if (isFinite(pp.costo_neto)) pp.costo_neto = Math.floor(Number(pp.costo_neto));
+
+        // Asegurar IVA-numérico por proveedor (tolerar "10,5")
+        const ivaRaw = (pp.iva !== undefined && pp.iva !== null)
+          ? pp.iva
+          : (productoResult.IVA ?? 21);
+
+        pp.iva = Number(String(ivaRaw).replace(',', '.'));
+        if (!Number.isFinite(pp.iva) || pp.iva <= 0) pp.iva = 21;
       });
-    });
 
-  }).catch(error => {
-    if (!responseSent) {
-      console.error(error);
-      res.status(500).send("Error al obtener los datos: " + error.message);
-    }
-  });
+      console.log(
+        '[GET /editar] IVA por proveedor ->',
+        (productoProveedoresResult || []).map(pp => ({ prov: pp.proveedor_id, iva: pp.iva }))
+      );
+
+      return Promise.all([
+        producto.obtenerCategorias(conexion),
+        producto.obtenerMarcas(conexion),
+        producto.obtenerProveedores(conexion),
+        producto.obtenerModelosPorMarca(conexion, productoResult.marca),
+        producto.obtenerDescuentosProveedor(conexion),
+        producto.obtenerStock(conexion, req.params.id),
+        escobillasCompat.getCodigosProducto(conexion, req.params.id),
+        escobillasCompat.getKitProducto(conexion, req.params.id)
+      ]).then(
+        ([
+          categoriasResult,
+          marcasResult,
+          proveedoresResult,
+          modelosResult,
+          descuentosProveedoresResult,
+          stockResult,
+          escobillasCodigos,
+          escobillasKit
+        ]) => {
+          if (responseSent) return;
+
+          console.log('🔁 GET /productos/editar/:id');
+          console.log('🧩 req.query.pagina:', req.query.pagina);
+          console.log('🧩 req.query.busqueda:', req.query.busqueda);
+
+          res.render('editar', {
+            producto: productoResult,
+            productoProveedores: productoProveedoresResult, // 👈 usamos este en EJS
+            categorias: categoriasResult,
+            marcas: marcasResult,
+            proveedores: proveedoresResult,
+            modelos: modelosResult,
+            descuentosProveedor: descuentosProveedoresResult,
+            stock: stockResult,
+            escobillasCodigos,
+            escobillasKit
+          });
+        }
+      );
+    })
+    .catch(error => {
+      if (!responseSent) {
+        console.error(error);
+        res.status(500).send("Error al obtener los datos: " + error.message);
+      }
+    });
 },
+
 actualizar: async function (req, res) {
   console.log("===== Inicio del controlador actualizar =====");
   try {

@@ -102,14 +102,89 @@
               </div>
 
               <div class="form-group-crear">
-                <label for="categoria">Categoría</label>
-                <select id="categoria" name="categoria">
-                  <option value="" selected>Selecciona una categoría</option>
-                  <% categorias.forEach(function(categoria) { %>
-                    <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
-                  <% }); %>
-                </select>
-              </div>
+  <label for="categoria">Categoría:</label>
+  <select id="categoria" name="categoria" required>
+    <option value="">Seleccione una categoría</option>
+    <% categorias.forEach(function(categoria) { %>
+      <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
+    <% }); %>
+  </select>
+</div>
+
+<!-- =========================
+     ESCOBILLAS (TRICO)
+     Se muestra solo si la categoría elegida contiene "escobill"
+========================= -->
+<div id="escobillasSection" class="form-group-crear" style="display:none; margin-top:12px;">
+  <div style="padding:12px; border:1px solid #e6e6e6; border-radius:10px;">
+    <h4 style="margin:0 0 10px 0;">Datos de Escobillas (TRICO)</h4>
+
+    <div class="form-group-crear">
+      <label for="esc_formato">Formato:</label>
+      <select id="esc_formato" name="esc_formato">
+        <option value="unidad">Unidad</option>
+        <option value="kit">Kit (Conductor + Acompañante)</option>
+      </select>
+    </div>
+
+    <!-- Unidad -->
+    <div id="esc_unidad_block">
+      <div class="form-group-crear">
+        <label for="esc_tecnologia">Tecnología:</label>
+        <select id="esc_tecnologia" name="esc_tecnologia">
+          <option value="FLEX">FLEX</option>
+          <option value="STEEL">STEEL</option>
+          <option value="REAR">REAR (Trasera)</option>
+        </select>
+      </div>
+
+      <div class="form-group-crear">
+        <label for="esc_codigo">Código TRICO:</label>
+        <input
+          type="text"
+          id="esc_codigo"
+          name="esc_codigo"
+          placeholder="Ej: 10707"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+
+    <!-- Kit -->
+    <div id="esc_kit_block" style="display:none;">
+      <div class="form-group-crear">
+        <label for="esc_kit_tecnologia">Tecnología del kit:</label>
+        <select id="esc_kit_tecnologia" name="esc_kit_tecnologia">
+          <option value="FLEX">FLEX</option>
+          <option value="STEEL">STEEL</option>
+        </select>
+      </div>
+
+      <div class="form-group-crear">
+        <label for="esc_kit_conductor">Código TRICO Conductor:</label>
+        <input
+          type="text"
+          id="esc_kit_conductor"
+          name="esc_kit_conductor"
+          placeholder="Ej: 10707"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="form-group-crear">
+        <label for="esc_kit_acompanante">Código TRICO Acompañante:</label>
+        <input
+          type="text"
+          id="esc_kit_acompanante"
+          name="esc_kit_acompanante"
+          placeholder="Ej: 10708"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
 
               <div class="form-group-crear">
                 <label for="marca">Marca</label>
