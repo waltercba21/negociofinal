@@ -431,6 +431,10 @@ function mostrarProductos(productos) {
     card.dataset.proveedorAsignadoId = producto.proveedor_id || '';
     card.dataset.utilidad = (producto.utilidad ?? 0);
 
+    // ✅ aplicaciones/descripcion
+    const descAplic = String(producto.descripcion || '').trim();
+    const tieneDescAplic = descAplic.length > 0;
+
     // galería
     let imagenesHTML = '';
     const imgsRaw = Array.isArray(producto.imagenes) ? producto.imagenes : [];
@@ -551,6 +555,17 @@ function mostrarProductos(productos) {
 
       ${stockInfo}
 
+      ${tieneDescAplic ? `
+        <div class="acciones-aplicaciones" style="display:flex;justify-content:center;margin-top:10px;">
+          <button type="button" class="btn-aplicaciones"
+            title="Ver vehículos compatibles"
+            style="display:inline-flex;align-items:center;gap:8px;border:2px solid var(--border-strong, #d0d5dd);background:var(--surface, #fff);padding:8px 12px;border-radius:12px;cursor:pointer;font-weight:800;">
+            <i class="fa-solid fa-car"></i>
+            <span>Ver aplicaciones</span>
+          </button>
+        </div>
+      ` : ''}
+
       <div class="acciones-compartir">
         <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" 
            title="Consultar por WhatsApp" target="_blank" class="whatsapp">
@@ -569,8 +584,45 @@ function mostrarProductos(productos) {
 
     contenedorProductos.appendChild(card);
 
+    // ✅ click para ver aplicaciones
+    if (tieneDescAplic) {
+      const btnApps = card.querySelector('.btn-aplicaciones');
+      if (btnApps) {
+        btnApps.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          mostrarAplicacionesModal(producto.nombre || 'Aplicaciones', descAplic);
+        });
+      }
+    }
+
     _initProveedorButton(producto.id);
   });
+}
+
+
+function _escapeHtml(str){
+  return String(str ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function mostrarAplicacionesModal(titulo, texto) {
+  const contenido = String(texto ?? '').trim();
+  if (!contenido) return;
+
+  if (typeof Swal !== 'undefined' && Swal.fire) {
+    Swal.fire({
+      title: titulo || 'Aplicaciones',
+      html: `<pre style="text-align:left;white-space:pre-wrap;max-height:60vh;overflow:auto;margin:0;font-family:inherit;">${_escapeHtml(contenido)}</pre>`,
+      width: 900,
+      confirmButtonText: 'Cerrar'
+    });
+  } else {
+    alert(contenido);
+  }
 }
 
 function moverCarrusel(index, direccion) {

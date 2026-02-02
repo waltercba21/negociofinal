@@ -47,8 +47,16 @@
         <p class="precio">
           <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %>
         </p>
-        
       </div>
+
+      <% const descAplic = (producto.descripcion || '').trim(); %>
+      <% if (descAplic) { %>
+        <hr>
+        <div class="descripcion-producto" style="text-align:left;margin-top:10px;">
+          <h6 style="margin:0 0 8px 0;font-weight:800;">Aplicaciones</h6>
+          <pre style="white-space:pre-wrap;margin:0;line-height:1.35;"><%= descAplic %></pre>
+        </div>
+      <% } %>
 
       <% if (isUserLoggedIn) { %>
         <% if (isAdminUser) { %>
