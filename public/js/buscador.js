@@ -1,18 +1,3 @@
-const escobillas = require('../models/escobillas');
-
-// dentro del handler:
-const q = (req.query.q || '').trim();
-
-if (escobillas.esConsultaEscobilla(q)) {
-  const r = await escobillas.buscarEscobillasPorVehiculo(conexion, q);
-
-  // Si encontró aplicación, devolvés esto (ideal)
-  if (r.ok) return res.json({ tipo: 'escobillas', ...r });
-
-  // Si no encontró, podés hacer fallback a tu búsqueda normal de productos:
-  // (no corto acá para no romper comportamiento)
-}
-
 /* ==========================================
    DEBUG helpers
 ========================================== */
@@ -30,7 +15,6 @@ const IVA_PROVIDER_OVERRIDE = {
   'DM LAMPARAS': 10.5,
   // Agregá acá otros que correspondan...
 };
-
 
 /* ==========================================
    Estado global / selectors
