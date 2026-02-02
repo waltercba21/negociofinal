@@ -1189,6 +1189,8 @@ actualizar: async function (req, res) {
         console.log('[ACTUALIZAR] El producto quedó sin imágenes.');
       }
     }
+    // === ESCOBILLAS: guardar compatibilidad (si vino del form) ===
+await escobillasCompat.saveFromRequest(conexion, productoId, req.body);
 
     // ---------- Redirect ----------
     const pagina = req.body.pagina || 1;

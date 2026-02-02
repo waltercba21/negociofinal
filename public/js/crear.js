@@ -399,22 +399,142 @@ if (!window.__CREAR_INIT__) {
     /* ================================
        INICIALIZACIÓN
     ================================= */
-    $(function () {
-      // DEBUG: chequear existencia de inputs clave
-      console.log('[CREAR][INIT] #precio_venta?', document.getElementById('precio_venta') ? 'OK' : 'NO');
-      console.log('[CREAR][INIT] name=precio_venta?', document.querySelector('input[name="precio_venta"]') ? 'OK' : 'NO');
+ $(function () {
+  // DEBUG: chequear existencia de inputs clave
+  console.log('[CREAR][INIT] #precio_venta?', document.getElementById('precio_venta') ? 'OK' : 'NO');
+  console.log('[CREAR][INIT] name=precio_venta?', document.querySelector('input[name="precio_venta"]') ? 'OK' : 'NO');
 
-      $('.proveedor').each(function () {
-        var $w = $(this);
-        var pres = ($w.find('.presentacion').val() || 'unidad').toLowerCase();
-        var factor = (pres === 'juego') ? 0.5 : 1;
-        asegurarHidden($w, 'factor_unidad', 'factor_unidad[]', factor).val(factor);
-        asegurarVisibleCostoIVA($w);
-        recalcularConIVA($w);
+  $('.proveedor').each(function () {
+    var $w = $(this);
+    var pres = ($w.find('.presentacion').val() || 'unidad').toLowerCase();
+    var factor = (pres === 'juego') ? 0.5 : 1;
+    asegurarHidden($w, 'factor_unidad', 'factor_unidad[]', factor).val(factor);
+    asegurarVisibleCostoIVA($w);
+    recalcularConIVA($w);
+  });
+
+  actualizarProveedorAsignado();
+  actualizarPrecioFinal();
+
+  // ==============================
+  // ESCOBILLAS: UI + payload hidden
+  // ==============================
+  (function initEscobillasCreate(){
+    var $cat = $('#categoria');
+    var $sec = $('#escobillasSection');
+    if (!$cat.length || !$sec.length) return;
+
+    var $form = $cat.closest('form');
+
+    var $tipo   = $('#escobillas_tipo');
+    var $codJson= $('#escobillas_codigos_json');
+    var $kitJson= $('#escobillas_kit_json');
+
+    function findEscobillasCatId(){
+      var id = null;
+      $cat.find('option').each(function(){
+        var txt = ($(this).text() || '').toLowerCase();
+        if (txt.includes('escobill')) { id = $(this).val(); return false; }
       });
-      actualizarProveedorAsignado();
-      actualizarPrecioFinal();
-    });
+      return id;
+    }
+
+    var ESC_CAT_ID = findEscobillasCatId();
+
+    function setReq($el, on){ if ($el && $el.length) $el.prop('required', !!on); }
+
+    function clearAll(){
+      $('#esc_formato').val('unidad');
+      $('#esc_tecnologia').val('FLEX');
+      $('#esc_codigo').val('');
+
+      $('#esc_kit_tecnologia').val('FLEX');
+      $('#esc_kit_conductor').val('');
+      $('#esc_kit_acompanante').val('');
+
+      $tipo.val('');
+      $codJson.val('');
+      $kitJson.val('');
+    }
+
+    function buildHidden(){
+      var isEsc = ESC_CAT_ID && String($cat.val()) === String(ESC_CAT_ID);
+      if (!isEsc) { clearAll(); return; }
+
+      var formato = String($('#esc_formato').val() || 'unidad').toLowerCase();
+
+      if (formato === 'kit') {
+        $tipo.val('kit');
+
+        var obj = {
+          tecnologia: String($('#esc_kit_tecnologia').val() || 'FLEX').toUpperCase(),
+          conductor: ($('#esc_kit_conductor').val() || '').trim(),
+          acompanante: ($('#esc_kit_acompanante').val() || '').trim(),
+          prioridad: 10
+        };
+
+        $kitJson.val(JSON.stringify(obj));
+        $codJson.val('[]');
+      } else {
+        $tipo.val('unidad');
+
+        var arr = [];
+        var cod = ($('#esc_codigo').val() || '').trim();
+        if (cod) {
+          arr.push({
+            codigo: cod,
+            tecnologia: String($('#esc_tecnologia').val() || 'FLEX').toUpperCase(),
+            prioridad: 10
+          });
+        }
+
+        $codJson.val(JSON.stringify(arr));
+        $kitJson.val('');
+      }
+    }
+
+    function toggleFormato(){
+      var formato = String($('#esc_formato').val() || 'unidad').toLowerCase();
+      var isKit = (formato === 'kit');
+
+      $('#esc_unidad_block').toggle(!isKit);
+      $('#esc_kit_block').toggle(isKit);
+
+      setReq($('#esc_codigo'), !isKit);
+      setReq($('#esc_tecnologia'), !isKit);
+
+      setReq($('#esc_kit_conductor'), isKit);
+      setReq($('#esc_kit_acompanante'), isKit);
+      setReq($('#esc_kit_tecnologia'), isKit);
+
+      buildHidden();
+    }
+
+    function toggleSection(){
+      var isEsc = ESC_CAT_ID && String($cat.val()) === String(ESC_CAT_ID);
+
+      $sec.toggle(!!isEsc);
+      $sec.find('input,select,textarea').prop('disabled', !isEsc);
+
+      if (isEsc) toggleFormato();
+      else clearAll();
+    }
+
+    $cat.on('change.escobillas', toggleSection);
+    $('#esc_formato').on('change.escobillas', toggleFormato);
+    $('#esc_tecnologia,#esc_codigo,#esc_kit_tecnologia,#esc_kit_conductor,#esc_kit_acompanante')
+      .on('input.escobillas change.escobillas', buildHidden);
+
+    if ($form.length) {
+      $form.on('submit.escobillas', function(){
+        toggleSection();
+        buildHidden();
+      });
+    }
+
+    toggleSection();
+  })();
+});
 
   } // if (window.jQuery)
 } // GUARD
