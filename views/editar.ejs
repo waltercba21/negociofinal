@@ -265,7 +265,107 @@
                   <option value="<%= categoria.id %>" <%= producto && producto.categoria_id == categoria.id ? 'selected' : '' %>><%= categoria.nombre %></option>
                 <% }); %>
               </select>
-            </div>
+            </div> 
+            <%
+  const _escCod = Array.isArray(escobillasCodigos) ? escobillasCodigos : [];
+  const _escKit = (escobillasKit && typeof escobillasKit === 'object') ? escobillasKit : null;
+
+  const _hasKit = !!(_escKit && _escKit.conductor && _escKit.acompanante);
+  const _tipoInit = _hasKit ? 'kit' : (_escCod.length ? 'unidad' : '');
+
+  const _uni = _escCod.length ? _escCod[0] : null;
+  const _uniTec = (_uni && _uni.tecnologia) ? _uni.tecnologia : 'FLEX';
+  const _uniCod = (_uni && _uni.codigo) ? _uni.codigo : '';
+
+  const _kitTec = (_hasKit && _escKit.tecnologia) ? _escKit.tecnologia : 'FLEX';
+  const _kitCon = (_hasKit && _escKit.conductor) ? _escKit.conductor : '';
+  const _kitAco = (_hasKit && _escKit.acompanante) ? _escKit.acompanante : '';
+
+  const _codJsonInit = JSON.stringify(_escCod || []);
+  const _kitJsonInit = _hasKit ? JSON.stringify(_escKit) : '';
+%>
+
+<div id="escobillasSection" class="form-group-crear" style="display:none; margin-top:12px;">
+  <div style="padding:12px; border:1px solid #e6e6e6; border-radius:10px;">
+    <h4 style="margin:0 0 10px 0;">Datos de Escobillas (TRICO)</h4>
+
+    <!-- Hidden payload que usa el backend -->
+    <input type="hidden" id="escobillas_tipo" name="escobillas_tipo" value="<%= _tipoInit %>">
+    <input type="hidden" id="escobillas_codigos_json" name="escobillas_codigos_json" value="<%= _codJsonInit %>">
+    <input type="hidden" id="escobillas_kit_json" name="escobillas_kit_json" value="<%= _kitJsonInit %>">
+
+    <div class="form-group-crear">
+      <label for="esc_formato">Formato:</label>
+      <select id="esc_formato" class="form-control" name="esc_formato">
+        <option value="unidad" <%= (!_tipoInit || _tipoInit === 'unidad') ? 'selected' : '' %>>Unidad</option>
+        <option value="kit" <%= (_tipoInit === 'kit') ? 'selected' : '' %>>Kit (Conductor + Acompañante)</option>
+      </select>
+    </div>
+
+    <!-- Unidad -->
+    <div id="esc_unidad_block">
+      <div class="form-group-crear">
+        <label for="esc_tecnologia">Tecnología:</label>
+        <select id="esc_tecnologia" class="form-control" name="esc_tecnologia">
+          <option value="FLEX"  <%= String(_uniTec).toUpperCase()==='FLEX' ? 'selected' : '' %>>FLEX</option>
+          <option value="STEEL" <%= String(_uniTec).toUpperCase()==='STEEL' ? 'selected' : '' %>>STEEL</option>
+          <option value="REAR"  <%= String(_uniTec).toUpperCase()==='REAR' ? 'selected' : '' %>>REAR (Trasera)</option>
+        </select>
+      </div>
+
+      <div class="form-group-crear">
+        <label for="esc_codigo">Código TRICO:</label>
+        <input
+          type="text"
+          id="esc_codigo"
+          class="form-control"
+          name="esc_codigo"
+          placeholder="Ej: 10707"
+          autocomplete="off"
+          value="<%= _uniCod %>"
+        />
+      </div>
+    </div>
+
+    <!-- Kit -->
+    <div id="esc_kit_block" style="display:none;">
+      <div class="form-group-crear">
+        <label for="esc_kit_tecnologia">Tecnología del kit:</label>
+        <select id="esc_kit_tecnologia" class="form-control" name="esc_kit_tecnologia">
+          <option value="FLEX"  <%= String(_kitTec).toUpperCase()==='FLEX' ? 'selected' : '' %>>FLEX</option>
+          <option value="STEEL" <%= String(_kitTec).toUpperCase()==='STEEL' ? 'selected' : '' %>>STEEL</option>
+        </select>
+      </div>
+
+      <div class="form-group-crear">
+        <label for="esc_kit_conductor">Código TRICO Conductor:</label>
+        <input
+          type="text"
+          id="esc_kit_conductor"
+          class="form-control"
+          name="esc_kit_conductor"
+          placeholder="Ej: 10707"
+          autocomplete="off"
+          value="<%= _kitCon %>"
+        />
+      </div>
+
+      <div class="form-group-crear">
+        <label for="esc_kit_acompanante">Código TRICO Acompañante:</label>
+        <input
+          type="text"
+          id="esc_kit_acompanante"
+          class="form-control"
+          name="esc_kit_acompanante"
+          placeholder="Ej: 10708"
+          autocomplete="off"
+          value="<%= _kitAco %>"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
 
             <div class="form-group-crear">
               <label for="marca">Marca</label>

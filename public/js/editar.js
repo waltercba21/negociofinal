@@ -367,7 +367,182 @@ function redondearAlCentenar(valor) {
     if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
     actualizarPrecioFinal();
     syncIVAProductoConAsignado();
+    initEscobillasEditar();
+
   });
+  function initEscobillasEditar() {
+  var $cat = $('#categoria');
+  var $sec = $('#escobillasSection');
+  if (!$cat.length || !$sec.length) return;
+
+  var $tipo    = $('#escobillas_tipo');
+  var $codJson = $('#escobillas_codigos_json');
+  var $kitJson = $('#escobillas_kit_json');
+
+  function getEscobillasCategoriaId() {
+    var id = null;
+    $cat.find('option').each(function () {
+      var txt = ($(this).text() || '').trim().toLowerCase();
+      if (txt.includes('escobill')) {
+        id = $(this).val();
+        return false;
+      }
+    });
+    return id;
+  }
+
+  var ESC_CAT_ID = getEscobillasCategoriaId();
+
+  function setEnabled(enabled) {
+    $sec.find('input, select, textarea').prop('disabled', !enabled);
+  }
+
+  function setReq($el, on) {
+    if ($el && $el.length) $el.prop('required', !!on);
+  }
+
+  function hydrateFromHidden() {
+    var tipo = String($tipo.val() || '').toLowerCase();
+
+    // Si inputs están vacíos, los hidratamos desde los hidden JSON
+    if (tipo === 'kit') {
+      var con = ($('#esc_kit_conductor').val() || '').trim();
+      var aco = ($('#esc_kit_acompanante').val() || '').trim();
+      if ((!con || !aco) && $kitJson.val()) {
+        try {
+          var obj = JSON.parse($kitJson.val() || 'null');
+          if (obj) {
+            $('#esc_kit_tecnologia').val(String(obj.tecnologia || 'FLEX').toUpperCase());
+            $('#esc_kit_conductor').val((obj.conductor || '').trim());
+            $('#esc_kit_acompanante').val((obj.acompanante || '').trim());
+          }
+        } catch (e) {}
+      }
+      $('#esc_formato').val('kit');
+    } else {
+      var cod = ($('#esc_codigo').val() || '').trim();
+      if (!cod && $codJson.val()) {
+        try {
+          var arr = JSON.parse($codJson.val() || '[]');
+          var it = Array.isArray(arr) && arr.length ? arr[0] : null;
+          if (it) {
+            $('#esc_tecnologia').val(String(it.tecnologia || 'FLEX').toUpperCase());
+            $('#esc_codigo').val((it.codigo || '').trim());
+          }
+        } catch (e) {}
+      }
+      if (!$('#esc_formato').val()) $('#esc_formato').val('unidad');
+    }
+  }
+
+  function buildHidden() {
+    var isEsc = !!ESC_CAT_ID && String($cat.val()) === String(ESC_CAT_ID);
+    if (!isEsc) return;
+
+    var formato = String($('#esc_formato').val() || 'unidad').toLowerCase();
+
+    if (formato === 'kit') {
+      $tipo.val('kit');
+
+      var obj = {
+        tecnologia: String($('#esc_kit_tecnologia').val() || 'FLEX').toUpperCase(),
+        conductor: ($('#esc_kit_conductor').val() || '').trim(),
+        acompanante: ($('#esc_kit_acompanante').val() || '').trim(),
+        prioridad: 10
+      };
+
+      $kitJson.val(JSON.stringify(obj));
+      $codJson.val('[]');
+    } else {
+      $tipo.val('unidad');
+
+      var arr = [];
+      var cod = ($('#esc_codigo').val() || '').trim();
+      if (cod) {
+        arr.push({
+          codigo: cod,
+          tecnologia: String($('#esc_tecnologia').val() || 'FLEX').toUpperCase(),
+          prioridad: 10
+        });
+      }
+
+      $codJson.val(JSON.stringify(arr));
+      $kitJson.val('');
+    }
+  }
+
+  function toggleFormato() {
+    var formato = String($('#esc_formato').val() || 'unidad').toLowerCase();
+    var isKit = (formato === 'kit');
+
+    $('#esc_unidad_block').toggle(!isKit);
+    $('#esc_kit_block').toggle(isKit);
+
+    setReq($('#esc_codigo'), !isKit);
+    setReq($('#esc_tecnologia'), !isKit);
+
+    setReq($('#esc_kit_conductor'), isKit);
+    setReq($('#esc_kit_acompanante'), isKit);
+    setReq($('#esc_kit_tecnologia'), isKit);
+
+    buildHidden();
+  }
+
+  function clearAll() {
+    $('#esc_formato').val('unidad');
+    $('#esc_tecnologia').val('FLEX');
+    $('#esc_codigo').val('');
+
+    $('#esc_kit_tecnologia').val('FLEX');
+    $('#esc_kit_conductor').val('');
+    $('#esc_kit_acompanante').val('');
+
+    $tipo.val('');
+    $codJson.val('');
+    $kitJson.val('');
+  }
+
+  function toggleSection() {
+    ESC_CAT_ID = ESC_CAT_ID || getEscobillasCategoriaId();
+    var isEsc = !!ESC_CAT_ID && String($cat.val()) === String(ESC_CAT_ID);
+
+    $sec.toggle(isEsc);
+    setEnabled(isEsc);
+
+    if (isEsc) {
+      hydrateFromHidden();
+      toggleFormato();
+      buildHidden();
+    } else {
+      clearAll();
+    }
+  }
+
+  // Eventos
+  $cat.off('change.escobillasEditar').on('change.escobillasEditar', toggleSection);
+
+  $('#esc_formato')
+    .off('change.escobillasEditarFormato')
+    .on('change.escobillasEditarFormato', function () {
+      toggleFormato();
+    });
+
+  $('#esc_tecnologia,#esc_codigo,#esc_kit_tecnologia,#esc_kit_conductor,#esc_kit_acompanante')
+    .off('input.escobillasEditar change.escobillasEditar')
+    .on('input.escobillasEditar change.escobillasEditar', buildHidden);
+
+  // Antes de submit, garantizamos hidden correcto
+  var $form = $('form');
+  if ($form.length) {
+    $form.off('submit.escobillasEditar').on('submit.escobillasEditar', function () {
+      toggleSection();
+      buildHidden();
+    });
+  }
+
+  // Init
+  toggleSection();
+}
 
   // ===== Delegación de eventos =====
   $(document)
