@@ -1,6 +1,7 @@
 const conexion = require('../config/conexion');
 const producto = require('../models/producto');
 const carrito = require('../models/carrito'); 
+const escobillasCompat = require('../models/escobillasCompat');
 var borrar = require('fs');
 const PDFDocument = require('pdfkit');
 const blobStream  = require('blob-stream');
