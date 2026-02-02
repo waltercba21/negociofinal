@@ -5,7 +5,7 @@
 
 <style>
 /* =========================
-   DETALLE - Layout Pro
+   DETALLE - Layout Pro (v2)
 ========================= */
 .detalle-page{
   max-width: 1180px;
@@ -23,7 +23,7 @@
 
 .detalle-grid{
   display: grid;
-  grid-template-columns: 1.15fr .85fr;
+  grid-template-columns: 1.2fr .8fr;
   gap: 0;
 }
 
@@ -63,16 +63,16 @@
 .badge-soft i{ opacity: .8; }
 
 .detalle-title{
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 1000;
-  line-height: 1.1;
+  line-height: 1.08;
   letter-spacing: .4px;
   text-transform: uppercase;
   margin: 6px 0 10px;
 }
 
 .detalle-price{
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 1000;
   margin: 8px 0 14px;
 }
@@ -83,15 +83,8 @@
   margin: 12px 0;
 }
 
-.detalle-actions{
-  display:flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-
 /* =========================
-   Carrusel grande (detalle)
+   Galería grande + thumbs
 ========================= */
 .detalle-galeria{
   position: relative;
@@ -104,23 +97,31 @@
   background: rgba(0,0,0,.02);
 }
 
-.detalle-galeria .carousel-wrapper{
+/* Forzamos alto del contenedor/carrusel (por si el CSS global lo achica) */
+.detalle-galeria .carousel-wrapper,
+.detalle-galeria .carousel{
+  height: 520px !important;
   background: #f4f6f8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .detalle-galeria .carousel__image{
   width: 100%;
-  height: 440px;
+  height: 520px !important;
+  max-height: 520px !important;
   object-fit: contain;
   display: block;
   background: #f4f6f8;
 }
 
+/* Botones */
 .detalle-galeria .carousel__button{
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 2;
+  z-index: 3;
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -138,22 +139,76 @@
 .detalle-galeria .carousel__button--left{ left: 12px; }
 .detalle-galeria .carousel__button--right{ right: 12px; }
 
-/* =========================
-   Botón "Ver aplicaciones"
-========================= */
-.acciones-aplicaciones{
-  margin: 10px 0 6px;
+.detalle-thumbs{
+  margin-top: 10px;
   display:flex;
-  justify-content:flex-start;
+  gap: 8px;
+  overflow:auto;
+  padding-bottom: 4px;
 }
-.btn-aplicaciones{
-  width: 100%;
-  max-width: 420px;
+.detalle-thumb{
+  width: 70px;
+  height: 70px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.85);
   display:flex;
   align-items:center;
   justify-content:center;
+  cursor:pointer;
+  flex: 0 0 auto;
+  transition: transform .08s ease, box-shadow .12s ease;
+}
+.detalle-thumb:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(0,0,0,.10);
+}
+.detalle-thumb img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+}
+.detalle-thumb.is-active{
+  outline: 2px solid rgba(0,0,0,.35);
+  outline-offset: 2px;
+}
+
+/* =========================
+   Aplicaciones (preview + botón)
+========================= */
+.apps-card{
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 16px;
+  background: rgba(255,255,255,.92);
+  padding: 12px 12px 10px;
+}
+
+.apps-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
   gap:10px;
-  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.apps-title{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  font-weight: 1000;
+  letter-spacing: .2px;
+  text-transform: uppercase;
+  font-size: 13px;
+  opacity: .92;
+}
+.apps-title i{ opacity:.75; }
+
+.btn-aplicaciones{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding: 10px 12px;
   border-radius: 14px;
   border: 1px solid rgba(0,0,0,.12);
   background: rgba(255,255,255,.92);
@@ -162,6 +217,7 @@
   font-weight: 1000;
   letter-spacing: .2px;
   transition: transform .08s ease, box-shadow .12s ease;
+  white-space: nowrap;
 }
 .btn-aplicaciones:hover{
   transform: translateY(-1px);
@@ -169,16 +225,59 @@
 }
 .btn-aplicaciones i{ font-size: 15px; }
 
-.apps-hint{
-  margin: 8px 0 0;
+.apps-preview{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:grid;
+  gap: 8px;
+}
+.apps-item{
   display:flex;
   gap:10px;
-  align-items:flex-start;
-  opacity: .85;
-  font-size: 13px;
-  line-height: 1.3;
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: rgba(0,0,0,.03);
 }
-.apps-hint i{ margin-top:2px; }
+.apps-item i{
+  width: 18px;
+  margin-top: 1px;
+  opacity: .7;
+}
+.apps-item span{
+  font-weight: 700;
+  line-height: 1.25;
+  opacity: .9;
+}
+
+.apps-more{
+  margin-top: 8px;
+  font-size: 13px;
+  opacity: .8;
+  font-weight: 800;
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.apps-more i{ opacity:.7; }
+
+.desc-block{
+  margin-top: 6px;
+}
+.desc-title{
+  font-weight:1000;
+  margin-bottom: 6px;
+  opacity:.9;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: .2px;
+}
+.desc-text{
+  white-space: pre-line;
+  font-weight:650;
+  opacity:.85;
+  line-height: 1.35;
+}
 
 /* =========================
    SweetAlert2 custom modal
@@ -224,27 +323,66 @@
 }
 
 /* =========================
-   Ajustes responsive mínimos
+   Responsive mínimo
 ========================= */
 @media (max-width: 980px){
   .detalle-grid{ grid-template-columns: 1fr; }
   .detalle-left{ border-right: none; border-bottom: 1px solid rgba(0,0,0,.06); }
-  .detalle-galeria .carousel__image{ height: 360px; }
+  .detalle-galeria .carousel-wrapper,
+  .detalle-galeria .carousel{ height: 420px !important; }
+  .detalle-galeria .carousel__image{ height: 420px !important; max-height: 420px !important; }
 }
 </style>
 
 <%
-  const descripcion = (producto.descripcion || '').trim();
+  // Limpieza fuerte para que NO se vea "\t", "\\t", "\\n", tags, etc.
+  const _raw = (producto.descripcion || '').toString();
+
+  const _cleanDescripcion = _raw
+    .replace(/\\t/g, ' ')
+    .replace(/\t/g, ' ')
+    .replace(/\\n/g, '\n')
+    .replace(/\r/g, '')
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/?[^>]+>/g, '')
+    .replace(/"\s*>/g, '')        // arregla casos tipo: "B">
+    .replace(/\u00A0/g, ' ')
+    .replace(/[ ]{2,}/g, ' ')
+    .trim();
+
   const esEscobilla = /escobill/i.test(producto.categoria_nombre || '') || /escobill/i.test(producto.nombre || '');
-  const tieneAplic = esEscobilla && descripcion.length > 0;
+  const tieneAplic = esEscobilla && _cleanDescripcion.length > 0;
+
+  function normalizeAplicaciones(raw){
+    let s = String(raw ?? '').trim();
+    if (!s) return { subtitle:'', lines:[] };
+
+    // si viene todo en una línea, separar antes de marcas MAYÚSCULAS (HONDA, CHEVROLET, etc.)
+    if (!s.includes('\n')) {
+      const m = s.match(/\b[A-ZÁÉÍÓÚÑ]{2,}\b/);
+      if (m && typeof m.index === 'number' && m.index > 0) {
+        const subtitle = s.slice(0, m.index).trim();
+        const rest = s.slice(m.index).trim().replace(/\s+(?=[A-ZÁÉÍÓÚÑ]{2,}\b)/g, '\n');
+        s = subtitle + '\n' + rest;
+      } else {
+        s = s.replace(/\s{2,}/g, '\n');
+      }
+    }
+
+    const lines = s.split('\n').map(x => x.trim()).filter(Boolean);
+    let subtitle = '';
+    if (lines.length >= 2 && /^(escobilla|kit|rear)/i.test(lines[0])) subtitle = lines.shift();
+    return { subtitle, lines };
+  }
+
+  const appsData = normalizeAplicaciones(_cleanDescripcion);
+  const preview = (appsData.lines || []).slice(0, 5);
 
   const label = producto.oferta ? 'OFERTA' : (producto.calidad_original ? 'CALIDAD FITAM' : (producto.calidad_vic ? 'CALIDAD VIC' : ''));
 %>
 
 <main class="detalle-page">
-
   <section class="detalle-shell">
-
     <div class="detalle-grid">
 
       <!-- IZQUIERDA: GALERIA GRANDE -->
@@ -259,9 +397,11 @@
             <div class="carousel-container">
               <div class="carousel-wrapper">
                 <div class="carousel" id="carousel-detalle">
-                  <% producto.imagenes.forEach((imagen, i) => { %>
+                  <% producto.imagenes.forEach((imgObj, i) => { 
+                       const file = (imgObj && (imgObj.imagen || imgObj.archivo || imgObj.url)) ? (imgObj.imagen || imgObj.archivo || imgObj.url) : imgObj;
+                  %>
                     <img class="carousel__image <%= i !== 0 ? 'hidden' : '' %>"
-                         src="/uploads/productos/<%= imagen.imagen %>"
+                         src="/uploads/productos/<%= file %>"
                          alt="<%= producto.nombre %>"
                          onerror="this.src='/images/noEncontrado.png'">
                   <% }) %>
@@ -273,8 +413,18 @@
               <i class="fas fa-chevron-right"></i>
             </button>
 
-          <% } else { %>
+            <!-- thumbs -->
+            <div class="detalle-thumbs" id="thumbs-detalle">
+              <% producto.imagenes.forEach((imgObj, i) => {
+                   const file = (imgObj && (imgObj.imagen || imgObj.archivo || imgObj.url)) ? (imgObj.imagen || imgObj.archivo || imgObj.url) : imgObj;
+              %>
+                <button type="button" class="detalle-thumb <%= i === 0 ? 'is-active' : '' %>" data-idx="<%= i %>" title="Ver imagen <%= i+1 %>">
+                  <img src="/uploads/productos/<%= file %>" alt="<%= producto.nombre %>" onerror="this.src='/images/noEncontrado.png'">
+                </button>
+              <% }) %>
+            </div>
 
+          <% } else { %>
             <div class="carousel-container">
               <div class="carousel-wrapper">
                 <img class="carousel__image"
@@ -282,8 +432,8 @@
                      alt="<%= producto.nombre %>">
               </div>
             </div>
-
           <% } %>
+
         </div>
       </div>
 
@@ -307,35 +457,63 @@
         <h1 class="detalle-title"><%= producto.nombre %></h1>
 
         <div class="detalle-price">
-          <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %>
+          <%= new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(producto.precio_venta || 0) %>
         </div>
 
         <div class="detalle-sep"></div>
 
         <% if (tieneAplic) { %>
-          <div class="acciones-aplicaciones">
-            <button type="button" class="btn-aplicaciones" id="btnAppsDetalle"
-                    data-titulo="<%= producto.nombre %>"
-                    data-aplicaciones='<%- JSON.stringify(descripcion) %>'>
-              <i class="fa-solid fa-car"></i>
-              <span>Ver aplicaciones</span>
-            </button>
-          </div>
+          <div class="apps-card">
+            <div class="apps-head">
+              <div class="apps-title">
+                <i class="fa-solid fa-car"></i>
+                <span>Aplicaciones</span>
+              </div>
 
-          <div class="apps-hint">
-            <i class="fa-solid fa-circle-info"></i>
-            <span>Compatible con múltiples vehículos. “Ver aplicaciones” abre el listado completo y ordenado.</span>
-          </div>
-
-        <% } else if (descripcion) { %>
-
-          <div style="margin-top: 6px;">
-            <div style="font-weight:1000; margin-bottom: 6px; opacity:.9;">Descripción</div>
-            <div style="white-space: pre-line; font-weight:650; opacity:.85; line-height: 1.35;">
-              <%= descripcion %>
+              <button type="button" class="btn-aplicaciones" id="btnAppsDetalle"
+                data-titulo="<%= producto.nombre %>"
+                data-aplicaciones="<%= encodeURIComponent(_cleanDescripcion) %>">
+                <i class="fa-solid fa-list"></i>
+                <span>Ver todas</span>
+              </button>
             </div>
+
+            <% if (appsData.subtitle) { %>
+              <div class="apps-more" style="margin-top:-2px;margin-bottom:8px;">
+                <i class="fa-solid fa-circle-info"></i>
+                <span><%= appsData.subtitle %></span>
+              </div>
+            <% } %>
+
+            <ul class="apps-preview">
+              <% if (preview.length) { %>
+                <% preview.forEach(l => { %>
+                  <li class="apps-item">
+                    <i class="fa-solid fa-car"></i>
+                    <span><%= l %></span>
+                  </li>
+                <% }) %>
+              <% } else { %>
+                <li class="apps-item">
+                  <i class="fa-solid fa-car"></i>
+                  <span>Sin aplicaciones cargadas.</span>
+                </li>
+              <% } %>
+            </ul>
+
+            <% if ((appsData.lines || []).length > preview.length) { %>
+              <div class="apps-more">
+                <i class="fa-solid fa-ellipsis"></i>
+                <span>Y <%= (appsData.lines.length - preview.length) %> más…</span>
+              </div>
+            <% } %>
           </div>
 
+        <% } else if (_cleanDescripcion) { %>
+          <div class="desc-block">
+            <div class="desc-title">Descripción</div>
+            <div class="desc-text"><%= _cleanDescripcion %></div>
+          </div>
         <% } %>
 
         <div class="detalle-sep"></div>
@@ -357,9 +535,7 @@
 
       </div>
     </div>
-
   </section>
-
 </main>
 
 <%- include ./layouts/footer.ejs %>
@@ -368,6 +544,61 @@
 <script src="/js/detalle.js"></script>
 
 <script>
+/* =========================
+   Carrusel Detalle (fallback)
+========================= */
+(function(){
+  const carrusel = document.getElementById('carousel-detalle');
+  if(!carrusel) return;
+
+  const imgs = Array.from(carrusel.querySelectorAll('.carousel__image'));
+  const thumbsWrap = document.getElementById('thumbs-detalle');
+  const thumbs = thumbsWrap ? Array.from(thumbsWrap.querySelectorAll('.detalle-thumb')) : [];
+  let idx = Math.max(0, imgs.findIndex(img => !img.classList.contains('hidden')));
+
+  function setActiveThumb(i){
+    thumbs.forEach(b => b.classList.toggle('is-active', Number(b.dataset.idx) === i));
+  }
+
+  function show(i){
+    if(!imgs.length) return;
+    idx = (i + imgs.length) % imgs.length;
+    imgs.forEach((img, n) => img.classList.toggle('hidden', n !== idx));
+    setActiveThumb(idx);
+  }
+
+  // Si ya existe moverCarruselDetalle en /js/detalle.js, no lo pisamos.
+  window.moverCarruselDetalle = window.moverCarruselDetalle || function(dir){
+    show(idx + dir);
+  };
+
+  if(thumbs.length){
+    thumbsWrap.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('.detalle-thumb');
+      if(!btn) return;
+      const i = Number(btn.dataset.idx);
+      if(Number.isFinite(i)) show(i);
+    }, { passive:true });
+  }
+
+  // Zoom al click sobre imagen
+  carrusel.addEventListener('click', (ev) => {
+    const img = ev.target.closest('img.carousel__image');
+    if(!img) return;
+    if(typeof Swal === 'undefined') return;
+
+    Swal.fire({
+      imageUrl: img.src,
+      imageAlt: img.alt || 'Imagen',
+      showConfirmButton: false,
+      showCloseButton: true,
+      width: 'min(980px, 96vw)',
+      backdrop: true
+    });
+  }, { passive:true });
+
+})();
+
 /* =========================
    Modal Aplicaciones (UX)
 ========================= */
@@ -384,9 +615,18 @@ function _normalizeAplicaciones(raw){
   let s = String(raw ?? '').trim();
   if (!s) return { subtitle: '', lines: [] };
 
-  s = s.replace(/<br\s*\/?\s*>/gi, '\n').replace(/\r/g, '');
+  // limpieza adicional (por si queda algo)
+  s = s
+    .replace(/\\t/g,' ')
+    .replace(/\t/g,' ')
+    .replace(/\\n/g,'\n')
+    .replace(/\r/g,'')
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/?[^>]+>/g,'')
+    .replace(/"\s*>/g,'')
+    .replace(/[ ]{2,}/g,' ')
+    .trim();
 
-  // Si NO hay saltos: separar antes de MARCAS en MAYÚSCULAS (HONDA, CHEVROLET, etc.)
   if (!s.includes('\n')) {
     const m = s.match(/\b[A-ZÁÉÍÓÚÑ]{2,}\b/);
     if (m && typeof m.index === 'number' && m.index > 0) {
@@ -407,7 +647,7 @@ function _normalizeAplicaciones(raw){
 function _buildAplicacionesHtml(raw){
   const { subtitle, lines } = _normalizeAplicaciones(raw);
 
-  const items = (lines || []).slice(0, 400).map(l => `
+  const items = (lines || []).slice(0, 600).map(l => `
     <li class="af-apps-li">
       <span class="af-apps-ico"><i class="fa-solid fa-car"></i></span>
       <span class="af-apps-txt">${_escapeHtml(l)}</span>
@@ -424,7 +664,7 @@ function _buildAplicacionesHtml(raw){
 
 function mostrarAplicacionesModal(titulo, raw){
   const contenido = String(raw ?? '').trim();
-  if (!contenido) return;
+  if (!contenido || typeof Swal === 'undefined') return;
 
   Swal.fire({
     title: titulo || 'Aplicaciones',
@@ -446,10 +686,10 @@ document.addEventListener('click', (ev) => {
   if (!btn) return;
 
   const titulo = (btn.dataset.titulo || 'Aplicaciones').toString();
-  const raw = (btn.dataset.aplicaciones || '').toString();
+  const rawEnc = (btn.dataset.aplicaciones || '').toString();
 
-  let texto = raw;
-  try { texto = JSON.parse(raw); } catch(_) {}
+  let texto = '';
+  try { texto = decodeURIComponent(rawEnc); } catch(_) { texto = rawEnc; }
 
   mostrarAplicacionesModal(titulo, texto);
 }, { passive:true });
