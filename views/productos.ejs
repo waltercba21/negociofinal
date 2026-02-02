@@ -3,282 +3,6 @@
 
 <body data-is-admin-user="<%= isAdminUser %>" data-is-user-logged-in="<%= isUserLoggedIn %>">
 
-<main>
-<h2 class="titulo-principal">Busca Tus Productos</h2>
-
-<div class="contenedor-busqueda-general">
-  <!-- Buscador por texto -->
-  <div class="contenedor-busqueda">
-    <div class="buscador-con-icono">
-      <i class="fas fa-search"></i>
-      <% const q = (typeof req !== 'undefined' && req.query && req.query.q) ? String(req.query.q) : ''; %>
-
-      <input type="text" id="entradaBusqueda" autocomplete="off" placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" value="<%= q %>">
-      <button type="button" id="botonLimpiar" class="boton-limpiar" aria-label="Limpiar búsqueda">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-  </div>
-  <!-- Selectores -->
-  <div class="contenedor-selectores">
-    <form id="formulario-filtros" class="formulario-filtros">
-      <select name="categoria" id="categoria_id">
-        <option value="">Selecciona una categoría</option>
-        <% categorias.forEach(function(categoria) { %>
-          <option value="<%= categoria.id %>" <%= categoriaSeleccionada === categoria.nombre ? 'selected' : '' %>>
-            <%= categoria.nombre %>
-          </option>
-        <% }); %>
-      </select>
-
-      <select name="marca" id="marca_id">
-        <option value="">Selecciona una marca</option>
-        <% marcas.forEach(function(marca) { %>
-          <option value="<%= marca.id %>" <%= modelo && modelo.marca_id === marca.id ? 'selected' : '' %>>
-            <%= marca.nombre %>
-          </option>
-        <% }); %>
-      </select>
-
-      <select name="modelo" id="modelo_id">
-        <option value="">Selecciona un modelo</option>
-        <% modelosPorMarca.forEach(function(modeloItem) { %>
-          <option value="<%= modeloItem.id %>" <%= modelo && modelo.id === modeloItem.id ? 'selected' : '' %>>
-            <%= modeloItem.nombre %>
-          </option>
-        <% }); %>
-      </select>
-    </form>
-  </div>
-  
-</div>
-
-
-<div id="contenedor-productos" class="contenedor-productos">
-<% if (productos && productos.length > 0) { %>
-  <% productos.forEach(function(producto, index) { %>
-
-    <div class="card
-  <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
-  <%= producto.calidad_vic ? 'calidad_vic' : '' %>
-  <%= producto.oferta ? 'producto-oferta' : '' %>"
-  data-label="<%= producto.oferta ? 'OFERTA' : (producto.calidad_original ? 'CALIDAD FITAM' : (producto.calidad_vic ? 'CALIDAD VIC' : '')) %>"
-  data-precio-venta="<%= producto.precio_venta %>"
-  data-proveedor-asignado-id="<%= producto.proveedor_id %>"
-  data-utilidad="<%= producto.utilidad %>">
-
-
-      <div class="cover-card">
-        <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-          <div class="carousel-container">
-            <button class="carousel__button carousel__button--left" onclick="moverCarrusel('<%= index %>', -1)">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-
-            <div class="carousel-wrapper">
-              <div class="carousel" id="carousel-<%= index %>">
-                <% producto.imagenes.forEach(function(imagen, i) { %>
-                  <img class="carousel__image <%= i !== 0 ? 'hidden' : '' %>" src="/uploads/productos/<%= imagen.imagen %>" alt="<%= producto.nombre %>">
-                <% }); %>
-              </div>
-            </div>
-
-            <button class="carousel__button carousel__button--right" onclick="moverCarrusel('<%= index %>', 1)">
-              <i class="fas fa-chevron-right"></i>
-            </button>
-          </div>
-        <% } else { %>
-          <div class="carousel-wrapper">
-            <img class="carousel__image" src="/ruta/valida/a/imagen/por/defecto.jpg" alt="<%= producto.nombre %>">
-          </div>
-        <% } %>
-      </div>
-
-      <div class="titulo-producto">
-        <h3><%= producto.nombre %></h3>
-      </div>
-
-      <hr>
-
-      <div class="categoria-producto">
-        <h6><%= producto.categoria_nombre || "Sin categoría" %></h6>
-      </div>
-
-      <div class="precio-producto">
-        <p><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %></p>
-      </div>
-
-      <% if (isAdminUser) { %>
-        <div class="codigo-admin">
-          <p>
-            <strong>Proveedor:</strong>
-            <span class="prov-nombre" data-producto-id="<%= producto.id %>">
-              <%= producto.proveedor_nombre %>
-            </span>
-          </p>
-          <p>
-            <strong>Código:</strong>
-            <span class="prov-codigo" data-producto-id="<%= producto.id %>">
-              <%= producto.codigo_proveedor %>
-            </span>
-          </p>
-          <div class="prov-actions">
-  <button type="button"
-          class="btn-siguiente-proveedor"
-          data-producto-id="<%= producto.id %>">
-    Siguiente proveedor
-  </button>
-  <small class="prov-idx" data-producto-id="<%= producto.id %>" style="display:block;opacity:.7;margin-top:4px"></small>
-</div>
-<p class="prov-simulacion" data-producto-id="<%= producto.id %>" style="margin-top:6px;font-weight:700;"></p>
-
-            <small class="prov-idx"
-                   data-producto-id="<%= producto.id %>"
-                   style="display:block;opacity:.7;margin-top:4px"></small>
-          </div>
-        </div>
-      <% } %>
-
-      <% if (isUserLoggedIn) { %>
-        <% if (isAdminUser) { %>
-          <div class="cantidad-producto">
-            <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
-          </div>
-          <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
-            <p>Stock Disponible: <%= producto.stock_actual %></p>
-          </div>
-        <% } else { %>
-          <div class="semaforo-stock">
-            <i class="fa-solid fa-thumbs-<%= producto.stock_actual >= producto.stock_minimo ? 'up' : 'down' %> <%= producto.stock_actual >= producto.stock_minimo ? 'verde' : 'rojo' %>"></i>
-            <span class="texto-semaforo">
-              <%= producto.stock_actual >= producto.stock_minimo ? "PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA" : "PRODUCTO PENDIENTE DE INGRESO O A PEDIDO" %>
-            </span>
-          </div>
-          <div class="cantidad-producto">
-            <% const puedeComprar = (producto.stock_actual >= producto.stock_minimo) && (producto.stock_actual > 0); %>
-
-<div class="cantidad-producto">
-  <input type="number"
-         class="cantidad-input"
-         value="<%= puedeComprar ? 1 : 0 %>"
-         min="<%= puedeComprar ? 1 : 0 %>"
-         max="<%= producto.stock_actual %>"
-         step="1"
-         <%= puedeComprar ? '' : 'disabled' %>>
-
-  <button class="agregar-carrito"
-          <%= puedeComprar ? '' : 'disabled' %>
-          data-id="<%= producto.id %>"
-          data-nombre="<%= producto.nombre %>"
-          data-precio="<%= producto.precio_venta %>"
-          data-stock="<%= producto.stock_actual %>"
-          data-stockmin="<%= producto.stock_minimo %>">
-    Agregar al carrito
-  </button>
-
-  <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
-</div>
-
-
-          <div class="acciones-compartir">
-            <!-- WhatsApp -->
-            <a href="https://wa.me/543513820440?text=¡Hola! QUIERO CONSULTAR POR ESTE PRODUCTO: <%= producto.nombre %> 👉 https://www.autofaros.com.ar/productos/<%= producto.id %>"
-               title="Consultar por WhatsApp"
-               target="_blank"
-               class="whatsapp">
-              <i class="fab fa-whatsapp"></i>
-            </a>
-          
-            <!-- Facebook -->
-            <a href="https://www.facebook.com/profile.php?id=100063665395970"
-               title="Visitar nuestro Facebook"
-               target="_blank"
-               class="facebook">
-              <i class="fab fa-facebook"></i>
-            </a>
-          
-            <!-- Instagram -->
-            <a href="https://www.instagram.com/autofaros_cordoba"
-               title="Seguir en Instagram"
-               target="_blank"
-               class="instagram">
-              <i class="fab fa-instagram"></i>
-            </a>
-          
-          </div>
-          
-          
-        <% } %>
-      <% } %>
-
-    </div>
-
-  <% }); %>
-  <% } else if (seHizoBusqueda) { %>
-    <div class="no-result">
-      <img src="/images/noEncontrado.png" alt="Producto no encontrado" class="imagen-no-result">
-      <p>No se encontraron productos. Probá con otros filtros o palabras clave.</p>
-    </div>
-  <% } %>
-  
-  
-</div>
-<% if (numeroDePaginas > 1) { %>
-  <nav aria-label="Paginación de productos" class="my-4">
-    <ul class="pagination justify-content-center">
-      <% 
-        const baseUrl = req.originalUrl.replace(/([?&])pagina=\d+/,'$1').replace(/[?&]$/, '');
-        const joiner  = baseUrl.includes('?') ? '&' : '?';
-      %>
-
-      <!-- Anterior -->
-      <li class="page-item <%= pagina === 1 ? 'disabled' : '' %>">
-        <a class="page-link" href="<%= pagina === 1 ? '#' : baseUrl + joiner + 'pagina=' + (pagina - 1) %>" aria-label="Anterior">
-          <span aria-hidden="true">&laquo;</span>
-        </a>
-      </li>
-
-      <!-- Números de página -->
-      <% for (let i = 1; i <= numeroDePaginas; i++) { %>
-        <li class="page-item <%= i === pagina ? 'active' : '' %>">
-          <a class="page-link" href="<%= baseUrl + joiner + 'pagina=' + i %>"><%= i %></a>
-        </li>
-      <% } %>
-
-      <!-- Siguiente -->
-      <li class="page-item <%= pagina === numeroDePaginas ? 'disabled' : '' %>">
-        <a class="page-link" href="<%= pagina === numeroDePaginas ? '#' : baseUrl + joiner + 'pagina=' + (pagina + 1) %>" aria-label="Siguiente">
-          <span aria-hidden="true">&raquo;</span>
-        </a>
-      </li>
-    </ul>
-  </nav>
-<% } %>
-
-</main>
-
-<%- include ./layouts/footer.ejs %>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script src="/js/buscador.js?v=20260107b"></script>
-<script src="/js/selectores.js?v=20260107b"></script>
-<script src="/js/agregarAlCarrito.js?v=20260107b"></script>
-
-
-<script>
-function moverCarrusel(index, direccion) {
-  const carrusel = document.getElementById('carousel-' + index);
-  const imagenes = carrusel.querySelectorAll('.carousel__image');
-  let activa = Array.from(imagenes).findIndex(img => !img.classList.contains('hidden'));
-
-  imagenes[activa].classList.add('hidden');
-  activa = (activa + direccion + imagenes.length) % imagenes.length;
-  imagenes[activa].classList.remove('hidden');
-}
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
 /* =========================
    Aplicaciones (Escobillas)
@@ -298,7 +22,7 @@ function moverCarrusel(index, direccion) {
   gap:10px;
   padding: 11px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.10);
+  border: 1px solid rgba(0,0,0,.12);
   background: rgba(255,255,255,.92);
   backdrop-filter: blur(6px);
   cursor:pointer;
@@ -318,7 +42,7 @@ function moverCarrusel(index, direccion) {
   display:flex;
   gap:10px;
   align-items:flex-start;
-  opacity: .9;
+  opacity: .85;
   font-size: 13px;
   line-height: 1.3;
 }
@@ -381,6 +105,377 @@ function moverCarrusel(index, direccion) {
   font-weight: 900 !important;
 }
 </style>
+
+<main>
+  <h2 class="titulo-principal">Busca Tus Productos</h2>
+
+  <div class="contenedor-busqueda-general">
+    <div class="contenedor-busqueda">
+      <div class="buscador-con-icono">
+        <i class="fas fa-search"></i>
+        <% const q = (typeof req !== 'undefined' && req.query && req.query.q) ? String(req.query.q) : ''; %>
+
+        <input type="text" id="entradaBusqueda" autocomplete="off" placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" value="<%= q %>">
+        <button type="button" id="botonLimpiar" class="boton-limpiar" aria-label="Limpiar búsqueda">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="contenedor-selectores">
+      <form id="formulario-filtros" class="formulario-filtros">
+        <select name="categoria" id="categoria_id">
+          <option value="">Selecciona una categoría</option>
+          <% categorias.forEach(function(categoria) { %>
+            <option value="<%= categoria.id %>" <%= categoriaSeleccionada === categoria.nombre ? 'selected' : '' %>>
+              <%= categoria.nombre %>
+            </option>
+          <% }); %>
+        </select>
+
+        <select name="marca" id="marca_id">
+          <option value="">Selecciona una marca</option>
+          <% marcas.forEach(function(marca) { %>
+            <option value="<%= marca.id %>" <%= modelo && modelo.marca_id === marca.id ? 'selected' : '' %>>
+              <%= marca.nombre %>
+            </option>
+          <% }); %>
+        </select>
+
+        <select name="modelo" id="modelo_id">
+          <option value="">Selecciona un modelo</option>
+          <% modelosPorMarca.forEach(function(modeloItem) { %>
+            <option value="<%= modeloItem.id %>" <%= modelo && modelo.id === modeloItem.id ? 'selected' : '' %>>
+              <%= modeloItem.nombre %>
+            </option>
+          <% }); %>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <div id="contenedor-productos" class="contenedor-productos">
+    <% if (productos && productos.length > 0) { %>
+      <% productos.forEach(function(producto, index) { %>
+
+        <div class="card
+          <%= producto.calidad_original ? 'calidad-original-fitam' : '' %>
+          <%= producto.calidad_vic ? 'calidad_vic' : '' %>
+          <%= producto.oferta ? 'producto-oferta' : '' %>"
+          data-label="<%= producto.oferta ? 'OFERTA' : (producto.calidad_original ? 'CALIDAD FITAM' : (producto.calidad_vic ? 'CALIDAD VIC' : '')) %>"
+          data-precio-venta="<%= producto.precio_venta %>"
+          data-proveedor-asignado-id="<%= producto.proveedor_id %>"
+          data-utilidad="<%= producto.utilidad %>">
+
+          <div class="cover-card">
+            <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+              <div class="carousel-container">
+                <button class="carousel__button carousel__button--left" onclick="moverCarrusel('<%= index %>', -1)">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+
+                <div class="carousel-wrapper">
+                  <div class="carousel" id="carousel-<%= index %>">
+                    <% producto.imagenes.forEach(function(imagen, i) { %>
+                      <img class="carousel__image <%= i !== 0 ? 'hidden' : '' %>" src="/uploads/productos/<%= imagen.imagen %>" alt="<%= producto.nombre %>">
+                    <% }); %>
+                  </div>
+                </div>
+
+                <button class="carousel__button carousel__button--right" onclick="moverCarrusel('<%= index %>', 1)">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            <% } else { %>
+              <div class="carousel-wrapper">
+                <img class="carousel__image" src="/images/noEncontrado.png" alt="<%= producto.nombre %>">
+              </div>
+            <% } %>
+          </div>
+
+          <div class="titulo-producto">
+            <h3><%= producto.nombre %></h3>
+          </div>
+
+          <hr>
+
+          <div class="categoria-producto">
+            <h6><%= producto.categoria_nombre || "Sin categoría" %></h6>
+          </div>
+
+          <div class="precio-producto">
+            <p><%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %></p>
+          </div>
+
+          <%
+            const descAplicSSR = (producto.descripcion || '').trim();
+            const esEscobillaSSR = /escobill/i.test(producto.categoria_nombre || '') || /escobill/i.test(producto.nombre || '');
+            const tieneAplicSSR = esEscobillaSSR && descAplicSSR.length > 0;
+          %>
+
+          <% if (tieneAplicSSR) { %>
+            <div class="acciones-aplicaciones">
+              <button type="button"
+                class="btn-aplicaciones"
+                data-titulo="<%= producto.nombre %>"
+                data-aplicaciones='<%- JSON.stringify(descAplicSSR) %>'>
+                <i class="fa-solid fa-car"></i>
+                <span>Ver aplicaciones</span>
+              </button>
+            </div>
+          <% } %>
+
+          <% if (isAdminUser) { %>
+            <div class="codigo-admin">
+              <p>
+                <strong>Proveedor:</strong>
+                <span class="prov-nombre" data-producto-id="<%= producto.id %>">
+                  <%= producto.proveedor_nombre %>
+                </span>
+              </p>
+              <p>
+                <strong>Código:</strong>
+                <span class="prov-codigo" data-producto-id="<%= producto.id %>">
+                  <%= producto.codigo_proveedor %>
+                </span>
+              </p>
+
+              <div class="prov-actions">
+                <button type="button"
+                        class="btn-siguiente-proveedor"
+                        data-producto-id="<%= producto.id %>">
+                  Siguiente proveedor
+                </button>
+                <small class="prov-idx" data-producto-id="<%= producto.id %>" style="display:block;opacity:.7;margin-top:4px"></small>
+              </div>
+
+              <p class="prov-simulacion" data-producto-id="<%= producto.id %>" style="margin-top:6px;font-weight:700;"></p>
+            </div>
+          <% } %>
+
+          <% if (isUserLoggedIn) { %>
+            <% if (isAdminUser) { %>
+              <div class="cantidad-producto">
+                <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
+              </div>
+
+              <div class="stock-producto <%= producto.stock_actual < producto.stock_minimo ? 'bajo-stock' : 'suficiente-stock' %>">
+                <p>Stock Disponible: <%= producto.stock_actual %></p>
+              </div>
+            <% } else { %>
+
+              <div class="semaforo-stock">
+                <i class="fa-solid fa-thumbs-<%= producto.stock_actual >= producto.stock_minimo ? 'up' : 'down' %> <%= producto.stock_actual >= producto.stock_minimo ? 'verde' : 'rojo' %>"></i>
+                <span class="texto-semaforo">
+                  <%= producto.stock_actual >= producto.stock_minimo ? "PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA" : "PRODUCTO PENDIENTE DE INGRESO O A PEDIDO" %>
+                </span>
+              </div>
+
+              <% const puedeComprar = (producto.stock_actual >= producto.stock_minimo) && (producto.stock_actual > 0); %>
+
+              <div class="cantidad-producto">
+                <input type="number"
+                       class="cantidad-input"
+                       value="<%= puedeComprar ? 1 : 0 %>"
+                       min="<%= puedeComprar ? 1 : 0 %>"
+                       max="<%= producto.stock_actual %>"
+                       step="1"
+                       <%= puedeComprar ? '' : 'disabled' %>>
+
+                <button class="agregar-carrito"
+                        <%= puedeComprar ? '' : 'disabled' %>
+                        data-id="<%= producto.id %>"
+                        data-nombre="<%= producto.nombre %>"
+                        data-precio="<%= producto.precio_venta %>"
+                        data-stock="<%= producto.stock_actual %>"
+                        data-stockmin="<%= producto.stock_minimo %>">
+                  Agregar al carrito
+                </button>
+
+                <a href="/productos/<%= producto.id %>" class="card-link">Ver detalles</a>
+              </div>
+
+              <div class="acciones-compartir">
+                <a href="https://wa.me/543513820440?text=¡Hola! QUIERO CONSULTAR POR ESTE PRODUCTO: <%= producto.nombre %> 👉 https://www.autofaros.com.ar/productos/<%= producto.id %>"
+                   title="Consultar por WhatsApp"
+                   target="_blank"
+                   class="whatsapp">
+                  <i class="fab fa-whatsapp"></i>
+                </a>
+
+                <a href="https://www.facebook.com/profile.php?id=100063665395970"
+                   title="Visitar nuestro Facebook"
+                   target="_blank"
+                   class="facebook">
+                  <i class="fab fa-facebook"></i>
+                </a>
+
+                <a href="https://www.instagram.com/autofaros_cordoba"
+                   title="Seguir en Instagram"
+                   target="_blank"
+                   class="instagram">
+                  <i class="fab fa-instagram"></i>
+                </a>
+              </div>
+            <% } %>
+          <% } %>
+
+        </div>
+
+      <% }); %>
+    <% } else if (seHizoBusqueda) { %>
+      <div class="no-result">
+        <img src="/images/noEncontrado.png" alt="Producto no encontrado" class="imagen-no-result">
+        <p>No se encontraron productos. Probá con otros filtros o palabras clave.</p>
+      </div>
+    <% } %>
+  </div>
+
+  <% if (numeroDePaginas > 1) { %>
+    <nav aria-label="Paginación de productos" class="my-4">
+      <ul class="pagination justify-content-center">
+        <% 
+          const baseUrl = req.originalUrl.replace(/([?&])pagina=\d+/,'$1').replace(/[?&]$/, '');
+          const joiner  = baseUrl.includes('?') ? '&' : '?';
+        %>
+
+        <li class="page-item <%= pagina === 1 ? 'disabled' : '' %>">
+          <a class="page-link" href="<%= pagina === 1 ? '#' : baseUrl + joiner + 'pagina=' + (pagina - 1) %>" aria-label="Anterior">
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+
+        <% for (let i = 1; i <= numeroDePaginas; i++) { %>
+          <li class="page-item <%= i === pagina ? 'active' : '' %>">
+            <a class="page-link" href="<%= baseUrl + joiner + 'pagina=' + i %>"><%= i %></a>
+          </li>
+        <% } %>
+
+        <li class="page-item <%= pagina === numeroDePaginas ? 'disabled' : '' %>">
+          <a class="page-link" href="<%= pagina === numeroDePaginas ? '#' : baseUrl + joiner + 'pagina=' + (pagina + 1) %>" aria-label="Siguiente">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  <% } %>
+
+</main>
+
+<%- include ./layouts/footer.ejs %>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script src="/js/buscador.js?v=20260107b"></script>
+<script src="/js/selectores.js?v=20260107b"></script>
+<script src="/js/agregarAlCarrito.js?v=20260107b"></script>
+
+<script>
+function moverCarrusel(index, direccion) {
+  const carrusel = document.getElementById('carousel-' + index);
+  if (!carrusel) return;
+  const imagenes = carrusel.querySelectorAll('.carousel__image');
+  if (!imagenes || imagenes.length === 0) return;
+
+  let activa = Array.from(imagenes).findIndex(img => !img.classList.contains('hidden'));
+  if (activa < 0) activa = 0;
+
+  imagenes[activa].classList.add('hidden');
+  activa = (activa + direccion + imagenes.length) % imagenes.length;
+  imagenes[activa].classList.remove('hidden');
+}
+
+/* =========================
+   Modal Aplicaciones (UX)
+========================= */
+function _escapeHtml(str){
+  return String(str ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function _normalizeAplicaciones(raw){
+  let s = String(raw ?? '').trim();
+  if (!s) return { subtitle: '', lines: [] };
+
+  // soportar <br>
+  s = s.replace(/<br\s*\/?\s*>/gi, '\n').replace(/\r/g, '');
+
+  // Si NO hay saltos: separar antes de MARCAS en MAYÚSCULAS (HONDA, CHEVROLET, etc.)
+  if (!s.includes('\n')) {
+    const m = s.match(/\b[A-ZÁÉÍÓÚÑ]{2,}\b/);
+    if (m && typeof m.index === 'number' && m.index > 0) {
+      const subtitle = s.slice(0, m.index).trim();
+      const rest = s.slice(m.index).trim().replace(/\s+(?=[A-ZÁÉÍÓÚÑ]{2,}\b)/g, '\n');
+      s = subtitle + '\n' + rest;
+    } else {
+      s = s.replace(/\s{2,}/g, '\n');
+    }
+  }
+
+  const lines = s.split('\n').map(x => x.trim()).filter(Boolean);
+  let subtitle = '';
+
+  if (lines.length >= 2 && /^(escobilla|kit|rear)/i.test(lines[0])) {
+    subtitle = lines.shift();
+  }
+  return { subtitle, lines };
+}
+
+function _buildAplicacionesHtml(raw){
+  const { subtitle, lines } = _normalizeAplicaciones(raw);
+
+  const items = (lines || []).slice(0, 400).map(l => `
+    <li class="af-apps-li">
+      <span class="af-apps-ico"><i class="fa-solid fa-car"></i></span>
+      <span class="af-apps-txt">${_escapeHtml(l)}</span>
+    </li>
+  `).join('');
+
+  return `
+    <div class="af-apps-wrap">
+      ${subtitle ? `<div class="af-apps-subtitle">${_escapeHtml(subtitle)}</div>` : ''}
+      <ul class="af-apps-ul">${items || '<li class="af-apps-li"><span class="af-apps-txt">Sin aplicaciones cargadas.</span></li>'}</ul>
+    </div>
+  `;
+}
+
+function mostrarAplicacionesModal(titulo, raw){
+  const contenido = String(raw ?? '').trim();
+  if (!contenido) return;
+
+  Swal.fire({
+    title: titulo || 'Aplicaciones',
+    html: _buildAplicacionesHtml(contenido),
+    width: 'min(980px, 94vw)',
+    showCloseButton: true,
+    confirmButtonText: 'Cerrar',
+    customClass: {
+      popup: 'af-apps-modal',
+      title: 'af-apps-title',
+      htmlContainer: 'af-apps-body',
+      confirmButton: 'af-apps-confirm'
+    }
+  });
+}
+
+// Delegación: funciona tanto para cards SSR como para cards que agregue buscador.js
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.btn-aplicaciones');
+  if (!btn) return;
+
+  const titulo = (btn.dataset.titulo || 'Aplicaciones').toString();
+  const raw = (btn.dataset.aplicaciones || '').toString();
+
+  let texto = raw;
+  try { texto = JSON.parse(raw); } catch(_) {}
+
+  mostrarAplicacionesModal(titulo, texto);
+}, { passive: true });
+</script>
 
 </body>
 </html>

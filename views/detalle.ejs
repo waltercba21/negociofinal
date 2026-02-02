@@ -3,6 +3,89 @@
 
 <body data-is-admin-user="<%= isAdminUser %>" data-is-user-logged-in="<%= isUserLoggedIn %>">
 
+<style>
+/* Reutilizamos el mismo look del modal/botón */
+.acciones-aplicaciones{
+  margin: 12px 0 6px;
+  display:flex;
+  justify-content:center;
+}
+.btn-aplicaciones{
+  width: 100%;
+  max-width: 380px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(6px);
+  cursor:pointer;
+  font-weight: 900;
+  letter-spacing: .2px;
+  transition: transform .08s ease, box-shadow .12s ease;
+}
+.btn-aplicaciones:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(0,0,0,.12);
+}
+.btn-aplicaciones i{ font-size: 15px; }
+
+.apps-hint{
+  max-width: 520px;
+  margin: 8px auto 0;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  opacity: .85;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.apps-hint i{ margin-top:2px; }
+
+.af-apps-modal.swal2-popup{
+  border-radius: 18px;
+  padding: 18px 18px 14px;
+}
+.af-apps-title{
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+.af-apps-body{ text-align:left; margin-top:10px; }
+.af-apps-wrap{ width:100%; }
+.af-apps-subtitle{
+  font-weight: 800;
+  opacity: .75;
+  margin-bottom: 10px;
+}
+.af-apps-ul{
+  list-style:none;
+  padding:0;
+  margin:0;
+  max-height: 56vh;
+  overflow:auto;
+  padding-right:6px;
+}
+.af-apps-li{
+  display:flex;
+  gap:10px;
+  padding: 9px 10px;
+  border-radius: 12px;
+}
+.af-apps-li:nth-child(odd){ background: rgba(0,0,0,.03); }
+.af-apps-ico{ width:22px; display:flex; justify-content:center; opacity:.75; }
+.af-apps-txt{ flex:1; font-weight:600; line-height:1.25; }
+.af-apps-confirm.swal2-confirm{
+  border-radius: 12px !important;
+  padding: 10px 16px !important;
+  font-weight: 900 !important;
+}
+</style>
+
 <main class="detalle-container">
 
   <div class="card 
@@ -49,12 +132,31 @@
         </p>
       </div>
 
-      <% const descAplic = (producto.descripcion || '').trim(); %>
-      <% if (descAplic) { %>
-        <hr>
-        <div class="descripcion-producto" style="text-align:left;margin-top:10px;">
-          <h6 style="margin:0 0 8px 0;font-weight:800;">Aplicaciones</h6>
-          <pre style="white-space:pre-wrap;margin:0;line-height:1.35;"><%= descAplic %></pre>
+      <%
+        const descripcion = (producto.descripcion || '').trim();
+        const esEscobilla = /escobill/i.test(producto.categoria_nombre || '') || /escobill/i.test(producto.nombre || '');
+        const tieneAplic = esEscobilla && descripcion.length > 0;
+      %>
+
+      <% if (tieneAplic) { %>
+        <div class="acciones-aplicaciones">
+          <button type="button" class="btn-aplicaciones" id="btnAppsDetalle"
+                  data-titulo="<%= producto.nombre %>"
+                  data-aplicaciones='<%- JSON.stringify(descripcion) %>'>
+            <i class="fa-solid fa-car"></i>
+            <span>Ver aplicaciones</span>
+          </button>
+        </div>
+
+        <div class="apps-hint">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>Esta escobilla puede aplicar a múltiples vehículos. Tocá “Ver aplicaciones” para ver el listado completo.</span>
+        </div>
+
+      <% } else if (descripcion) { %>
+        <div style="max-width: 520px; margin: 12px auto 0; text-align:left;">
+          <h4 style="margin:0 0 6px; font-weight:900;">Descripción</h4>
+          <p style="margin:0; white-space: pre-line; opacity:.9; font-weight:600;"><%= descripcion %></p>
         </div>
       <% } %>
 
@@ -79,109 +181,95 @@
 
 <%- include ./layouts/footer.ejs %>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/js/detalle.js"></script>
-<style>
+
+<script>
 /* =========================
-   Aplicaciones (Escobillas)
+   Modal Aplicaciones (UX)
 ========================= */
-.acciones-aplicaciones{
-  margin: 10px 0 6px;
-  display:flex;
-  justify-content:center;
+function _escapeHtml(str){
+  return String(str ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
 }
 
-.btn-aplicaciones{
-  width: 100%;
-  max-width: 360px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  padding: 11px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.10);
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(6px);
-  cursor:pointer;
-  font-weight: 800;
-  letter-spacing: .2px;
-  transition: transform .08s ease, box-shadow .12s ease;
-}
-.btn-aplicaciones:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 12px 26px rgba(0,0,0,.12);
-}
-.btn-aplicaciones i{ font-size: 15px; }
+function _normalizeAplicaciones(raw){
+  let s = String(raw ?? '').trim();
+  if (!s) return { subtitle: '', lines: [] };
 
-.apps-hint{
-  max-width: 420px;
-  margin: 8px auto 0;
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-  opacity: .9;
-  font-size: 13px;
-  line-height: 1.3;
-}
-.apps-hint i{ margin-top: 2px; }
+  s = s.replace(/<br\s*\/?\s*>/gi, '\n').replace(/\r/g, '');
 
-/* =========================
-   SweetAlert2 custom modal
-========================= */
-.af-apps-modal.swal2-popup{
-  border-radius: 18px;
-  padding: 18px 18px 14px;
+  if (!s.includes('\n')) {
+    const m = s.match(/\b[A-ZÁÉÍÓÚÑ]{2,}\b/);
+    if (m && typeof m.index === 'number' && m.index > 0) {
+      const subtitle = s.slice(0, m.index).trim();
+      const rest = s.slice(m.index).trim().replace(/\s+(?=[A-ZÁÉÍÓÚÑ]{2,}\b)/g, '\n');
+      s = subtitle + '\n' + rest;
+    } else {
+      s = s.replace(/\s{2,}/g, '\n');
+    }
+  }
+
+  const lines = s.split('\n').map(x => x.trim()).filter(Boolean);
+  let subtitle = '';
+  if (lines.length >= 2 && /^(escobilla|kit|rear)/i.test(lines[0])) subtitle = lines.shift();
+  return { subtitle, lines };
 }
-.af-apps-title{
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: .4px;
-  text-transform: uppercase;
+
+function _buildAplicacionesHtml(raw){
+  const { subtitle, lines } = _normalizeAplicaciones(raw);
+
+  const items = (lines || []).slice(0, 400).map(l => `
+    <li class="af-apps-li">
+      <span class="af-apps-ico"><i class="fa-solid fa-car"></i></span>
+      <span class="af-apps-txt">${_escapeHtml(l)}</span>
+    </li>
+  `).join('');
+
+  return `
+    <div class="af-apps-wrap">
+      ${subtitle ? `<div class="af-apps-subtitle">${_escapeHtml(subtitle)}</div>` : ''}
+      <ul class="af-apps-ul">${items || '<li class="af-apps-li"><span class="af-apps-txt">Sin aplicaciones cargadas.</span></li>'}</ul>
+    </div>
+  `;
 }
-.af-apps-body{
-  text-align: left;
-  margin-top: 10px;
+
+function mostrarAplicacionesModal(titulo, raw){
+  const contenido = String(raw ?? '').trim();
+  if (!contenido) return;
+
+  Swal.fire({
+    title: titulo || 'Aplicaciones',
+    html: _buildAplicacionesHtml(contenido),
+    width: 'min(980px, 94vw)',
+    showCloseButton: true,
+    confirmButtonText: 'Cerrar',
+    customClass: {
+      popup: 'af-apps-modal',
+      title: 'af-apps-title',
+      htmlContainer: 'af-apps-body',
+      confirmButton: 'af-apps-confirm'
+    }
+  });
 }
-.af-apps-wrap{ width: 100%; }
-.af-apps-subtitle{
-  font-weight: 800;
-  opacity: .75;
-  margin-bottom: 10px;
-}
-.af-apps-ul{
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  max-height: 52vh;
-  overflow: auto;
-  padding-right: 6px;
-}
-.af-apps-li{
-  display:flex;
-  gap:10px;
-  padding: 9px 10px;
-  border-radius: 12px;
-}
-.af-apps-li:nth-child(odd){
-  background: rgba(0,0,0,.03);
-}
-.af-apps-ico{
-  width: 22px;
-  display:flex;
-  justify-content:center;
-  opacity: .75;
-}
-.af-apps-txt{
-  flex:1;
-  font-weight: 600;
-  line-height: 1.25;
-}
-.af-apps-confirm.swal2-confirm{
-  border-radius: 12px !important;
-  padding: 10px 16px !important;
-  font-weight: 900 !important;
-}
-</style>
+
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('#btnAppsDetalle');
+  if (!btn) return;
+
+  const titulo = (btn.dataset.titulo || 'Aplicaciones').toString();
+  const raw = (btn.dataset.aplicaciones || '').toString();
+
+  let texto = raw;
+  try { texto = JSON.parse(raw); } catch(_) {}
+
+  mostrarAplicacionesModal(titulo, texto);
+}, { passive:true });
+</script>
 
 </body>
 </html>
