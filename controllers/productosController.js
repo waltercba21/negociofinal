@@ -823,120 +823,102 @@ guardar: async function (req, res) {
             res.status(500).json({ success: false, error: error.message });
         }
     },
-editar: function (req, res) {
-  let productoResult;
-  let responseSent = false;
+editar: async function (req, res) {
+  try {
+    const id = Number(req.params.id);
+    const result = await producto.retornarDatosId(conexion, id);
 
-  producto
-    .retornarDatosId(conexion, req.params.id)
-    .then(result => {
-      if (!result) {
-        res.status(404).send("No se encontró el producto");
-        responseSent = true;
-        return null;
-      }
+    if (!result) return res.status(404).send("No se encontró el producto");
 
-      productoResult = { ...result };
+    // Copia + normalización suave (no tocamos IVA acá)
+    const productoResult = { ...result };
+    productoResult.precio_lista = Math.round(Number(productoResult.precio_lista || 0));
+    productoResult.costo_neto   = Math.round(Number(productoResult.costo_neto   || 0));
+    productoResult.costo_iva    = Math.round(Number(productoResult.costo_iva    || 0));
+    productoResult.utilidad     = Math.round(Number(productoResult.utilidad     || 0));
+    productoResult.precio_venta = Math.round(Number(productoResult.precio_venta || 0));
+    productoResult.calidad_original_fitam = result.calidad_original_fitam;
+    productoResult.calidad_vic            = result.calidad_vic;
 
-      // Normalización suave
-      productoResult.precio_lista = Math.round(Number(productoResult.precio_lista || 0));
-      productoResult.costo_neto   = Math.round(Number(productoResult.costo_neto   || 0));
-      productoResult.costo_iva    = Math.round(Number(productoResult.costo_iva    || 0));
-      productoResult.utilidad     = Math.round(Number(productoResult.utilidad     || 0));
-      productoResult.precio_venta = Math.round(Number(productoResult.precio_venta || 0));
+    // params navegación (evitar undefined)
+    productoResult.paginaActual = req.query.pagina   || '';
+    productoResult.busqueda     = req.query.busqueda || '';
 
-      productoResult.calidad_original_fitam = result.calidad_original_fitam;
-      productoResult.calidad_vic            = result.calidad_vic;
+    // proveedores del producto
+    const productoProveedoresResult = await producto.retornarDatosProveedores(conexion, id);
+    const productoProveedores = Array.isArray(productoProveedoresResult) ? productoProveedoresResult : [];
 
-      // navegación (evitar undefined)
-      productoResult.paginaActual = req.query.pagina   || '';
-      productoResult.busqueda     = req.query.busqueda || '';
+    productoProveedores.forEach(pp => {
+      pp.precio_lista = Math.floor(Number(pp.precio_lista || 0));
+      if (isFinite(pp.descuento))  pp.descuento  = Math.floor(Number(pp.descuento));
+      if (isFinite(pp.costo_neto)) pp.costo_neto = Math.floor(Number(pp.costo_neto));
 
-      return producto.retornarDatosProveedores(conexion, req.params.id);
-    })
-    .then(productoProveedoresResult => {
-      if (responseSent) return;
+      const ivaRaw = (pp.iva !== undefined && pp.iva !== null)
+        ? pp.iva
+        : (productoResult.IVA ?? 21);
 
-      const productoProveedores = Array.isArray(productoProveedoresResult)
-        ? productoProveedoresResult
-        : [];
-
-      // Normalización de filas proveedor-producto
-      productoProveedores.forEach(pp => {
-        pp.precio_lista = Math.floor(Number(pp.precio_lista || 0));
-        if (isFinite(pp.descuento))  pp.descuento  = Math.floor(Number(pp.descuento));
-        if (isFinite(pp.costo_neto)) pp.costo_neto = Math.floor(Number(pp.costo_neto));
-
-        // IVA por proveedor (tolerar "10,5")
-        const ivaRaw = (pp.iva !== undefined && pp.iva !== null)
-          ? pp.iva
-          : (productoResult.IVA ?? 21);
-
-        pp.iva = Number(String(ivaRaw).replace(',', '.'));
-        if (!Number.isFinite(pp.iva) || pp.iva <= 0) pp.iva = 21;
-      });
-
-      // 👇 IMPORTANTE: traer escobillasCodigos / escobillasKit
-      const escCodPromise = escobillasCompat
-        .getCodigosProducto(conexion, req.params.id)
-        .catch(err => {
-          console.error('❌ getCodigosProducto:', err.message);
-          return [];
-        });
-
-      const escKitPromise = escobillasCompat
-        .getKitProducto(conexion, req.params.id)
-        .catch(err => {
-          console.error('❌ getKitProducto:', err.message);
-          return null;
-        });
-
-      return Promise.all([
-        producto.obtenerCategorias(conexion),
-        producto.obtenerMarcas(conexion),
-        producto.obtenerProveedores(conexion),
-        producto.obtenerModelosPorMarca(conexion, productoResult.marca),
-        producto.obtenerDescuentosProveedor(conexion),
-        producto.obtenerStock(conexion, req.params.id),
-        escCodPromise,
-        escKitPromise
-      ]).then(([
-        categoriasResult,
-        marcasResult,
-        proveedoresResult,
-        modelosResult,
-        descuentosProveedoresResult,
-        stockResult,
-        escobillasCodigos,
-        escobillasKit
-      ]) => {
-        if (responseSent) return;
-
-        res.render('editar', {
-          producto: productoResult,
-          productoProveedores,
-
-          categorias: categoriasResult,
-          marcas: marcasResult,
-          proveedores: proveedoresResult,
-          modelos: modelosResult,
-          descuentosProveedor: descuentosProveedoresResult,
-          stock: stockResult,
-
-          // ✅ claves que tu editar.ejs está esperando
-          escobillasCodigos: Array.isArray(escobillasCodigos) ? escobillasCodigos : [],
-          escobillasKit: (escobillasKit && typeof escobillasKit === 'object') ? escobillasKit : null
-        });
-      });
-    })
-    .catch(error => {
-      if (!responseSent) {
-        console.error(error);
-        res.status(500).send("Error al obtener los datos: " + error.message);
-      }
+      pp.iva = Number(String(ivaRaw).replace(',', '.'));
+      if (!Number.isFinite(pp.iva) || pp.iva <= 0) pp.iva = 21;
     });
-},
 
+    const marcaId = productoResult.marca_id ?? productoResult.marca ?? null;
+
+    // escobillas: si falla (tablas inexistentes) NO romper la vista
+    const escCodPromise = escobillasCompat
+      .getCodigosProducto(conexion, id)
+      .catch(err => {
+        console.error('❌ getCodigosProducto:', err.message);
+        return [];
+      });
+
+    const escKitPromise = escobillasCompat
+      .getKitProducto(conexion, id)
+      .catch(err => {
+        console.error('❌ getKitProducto:', err.message);
+        return null;
+      });
+
+    const [
+      categoriasResult,
+      marcasResult,
+      proveedoresResult,
+      modelosResult,
+      descuentosProveedoresResult,
+      stockResult,
+      escobillasCodigosRaw,
+      escobillasKitRaw
+    ] = await Promise.all([
+      producto.obtenerCategorias(conexion),
+      producto.obtenerMarcas(conexion),
+      producto.obtenerProveedores(conexion),
+      producto.obtenerModelosPorMarca(conexion, marcaId),
+      producto.obtenerDescuentosProveedor(conexion),
+      producto.obtenerStock(conexion, id),
+      escCodPromise,
+      escKitPromise
+    ]);
+
+    res.render('editar', {
+      producto: productoResult,
+      productoProveedores,
+
+      categorias: categoriasResult,
+      marcas: marcasResult,
+      proveedores: proveedoresResult,
+      modelos: modelosResult,
+      descuentosProveedor: descuentosProveedoresResult,
+      stock: stockResult,
+
+      // ✅ SIEMPRE definidas (evita "escobillasCodigos is not defined")
+      escobillasCodigos: Array.isArray(escobillasCodigosRaw) ? escobillasCodigosRaw : [],
+      escobillasKit: (escobillasKitRaw && typeof escobillasKitRaw === 'object') ? escobillasKitRaw : null
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error al obtener los datos: " + error.message);
+  }
+},
 
 actualizar: async function (req, res) {
   console.log("===== Inicio del controlador actualizar =====");

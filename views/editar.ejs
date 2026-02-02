@@ -267,17 +267,27 @@
                 <% }); %>
               </select>
             </div> 
- <%
-  const _escCod =
-    (typeof escobillasCodigos !== 'undefined' && Array.isArray(escobillasCodigos))
-      ? escobillasCodigos
-      : [];
+<%
+  const _escCod = Array.isArray(escobillasCodigos) ? escobillasCodigos : [];
+  const _escKit = (escobillasKit && typeof escobillasKit === 'object') ? escobillasKit : null;
 
-  const _escKit =
-    (typeof escobillasKit !== 'undefined' && escobillasKit && typeof escobillasKit === 'object')
-      ? escobillasKit
-      : null;
+  // ✅ defaults para que NUNCA explote la vista
+  const _tipoInit = _escKit ? 'kit' : 'unidad';
+
+  // unidad (si tu query trae: { codigo, tecnologia, prioridad })
+  const _uniTec = (_escCod[0] && _escCod[0].tecnologia) ? String(_escCod[0].tecnologia) : 'FLEX';
+  const _uniCod = (_escCod[0] && _escCod[0].codigo) ? String(_escCod[0].codigo) : '';
+
+  // kit (si tu query trae: { tecnologia, conductor, acompanante, prioridad })
+  const _kitTec = (_escKit && _escKit.tecnologia) ? String(_escKit.tecnologia) : 'FLEX';
+  const _kitCon = (_escKit && _escKit.conductor) ? String(_escKit.conductor) : '';
+  const _kitAco = (_escKit && _escKit.acompanante) ? String(_escKit.acompanante) : '';
+
+  // IMPORTANTÍSIMO: no usar <%= para JSON, porque EJS escapa comillas y rompe JSON.parse()
+  const _codJsonInit = JSON.stringify(_escCod || []);
+  const _kitJsonInit = JSON.stringify(_escKit || {});
 %>
+
 
 <div id="escobillasSection" class="form-group-crear" style="display:none; margin-top:12px;">
   <div style="padding:12px; border:1px solid #e6e6e6; border-radius:10px;">
