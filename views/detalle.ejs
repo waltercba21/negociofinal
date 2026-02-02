@@ -4,15 +4,151 @@
 <body data-is-admin-user="<%= isAdminUser %>" data-is-user-logged-in="<%= isUserLoggedIn %>">
 
 <style>
-/* Reutilizamos el mismo look del modal/botón */
-.acciones-aplicaciones{
-  margin: 12px 0 6px;
+/* =========================
+   DETALLE - Layout Pro
+========================= */
+.detalle-page{
+  max-width: 1180px;
+  margin: 26px auto 40px;
+  padding: 0 14px;
+}
+
+.detalle-shell{
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.16);
+  overflow: hidden;
+}
+
+.detalle-grid{
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 0;
+}
+
+.detalle-left{
+  padding: 18px;
+  border-right: 1px solid rgba(0,0,0,.06);
+  background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.75));
+}
+
+.detalle-right{
+  padding: 18px 18px 16px;
+}
+
+.detalle-badges{
   display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-bottom: 10px;
+}
+
+.badge-soft{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.85);
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: .2px;
+  text-transform: uppercase;
+  opacity: .95;
+}
+
+.badge-soft i{ opacity: .8; }
+
+.detalle-title{
+  font-size: 26px;
+  font-weight: 1000;
+  line-height: 1.1;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  margin: 6px 0 10px;
+}
+
+.detalle-price{
+  font-size: 28px;
+  font-weight: 1000;
+  margin: 8px 0 14px;
+}
+
+.detalle-sep{
+  height: 1px;
+  background: rgba(0,0,0,.08);
+  margin: 12px 0;
+}
+
+.detalle-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+/* =========================
+   Carrusel grande (detalle)
+========================= */
+.detalle-galeria{
+  position: relative;
+}
+
+.detalle-galeria .carousel-container{
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(0,0,0,.02);
+}
+
+.detalle-galeria .carousel-wrapper{
+  background: #f4f6f8;
+}
+
+.detalle-galeria .carousel__image{
+  width: 100%;
+  height: 440px;
+  object-fit: contain;
+  display: block;
+  background: #f4f6f8;
+}
+
+.detalle-galeria .carousel__button{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  display:flex;
+  align-items:center;
   justify-content:center;
+  box-shadow: 0 12px 26px rgba(0,0,0,.12);
+}
+.detalle-galeria .carousel__button:hover{ filter: brightness(1.03); }
+.detalle-galeria .carousel__button i{ font-size: 16px; }
+.detalle-galeria .carousel__button--left{ left: 12px; }
+.detalle-galeria .carousel__button--right{ right: 12px; }
+
+/* =========================
+   Botón "Ver aplicaciones"
+========================= */
+.acciones-aplicaciones{
+  margin: 10px 0 6px;
+  display:flex;
+  justify-content:flex-start;
 }
 .btn-aplicaciones{
   width: 100%;
-  max-width: 380px;
+  max-width: 420px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -23,7 +159,7 @@
   background: rgba(255,255,255,.92);
   backdrop-filter: blur(6px);
   cursor:pointer;
-  font-weight: 900;
+  font-weight: 1000;
   letter-spacing: .2px;
   transition: transform .08s ease, box-shadow .12s ease;
 }
@@ -34,8 +170,7 @@
 .btn-aplicaciones i{ font-size: 15px; }
 
 .apps-hint{
-  max-width: 520px;
-  margin: 8px auto 0;
+  margin: 8px 0 0;
   display:flex;
   gap:10px;
   align-items:flex-start;
@@ -45,20 +180,23 @@
 }
 .apps-hint i{ margin-top:2px; }
 
+/* =========================
+   SweetAlert2 custom modal
+========================= */
 .af-apps-modal.swal2-popup{
   border-radius: 18px;
   padding: 18px 18px 14px;
 }
 .af-apps-title{
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 1000;
   letter-spacing: .4px;
   text-transform: uppercase;
 }
 .af-apps-body{ text-align:left; margin-top:10px; }
 .af-apps-wrap{ width:100%; }
 .af-apps-subtitle{
-  font-weight: 800;
+  font-weight: 900;
   opacity: .75;
   margin-bottom: 10px;
 }
@@ -78,104 +216,149 @@
 }
 .af-apps-li:nth-child(odd){ background: rgba(0,0,0,.03); }
 .af-apps-ico{ width:22px; display:flex; justify-content:center; opacity:.75; }
-.af-apps-txt{ flex:1; font-weight:600; line-height:1.25; }
+.af-apps-txt{ flex:1; font-weight:650; line-height:1.25; }
 .af-apps-confirm.swal2-confirm{
   border-radius: 12px !important;
   padding: 10px 16px !important;
-  font-weight: 900 !important;
+  font-weight: 1000 !important;
+}
+
+/* =========================
+   Ajustes responsive mínimos
+========================= */
+@media (max-width: 980px){
+  .detalle-grid{ grid-template-columns: 1fr; }
+  .detalle-left{ border-right: none; border-bottom: 1px solid rgba(0,0,0,.06); }
+  .detalle-galeria .carousel__image{ height: 360px; }
 }
 </style>
 
-<main class="detalle-container">
+<%
+  const descripcion = (producto.descripcion || '').trim();
+  const esEscobilla = /escobill/i.test(producto.categoria_nombre || '') || /escobill/i.test(producto.nombre || '');
+  const tieneAplic = esEscobilla && descripcion.length > 0;
 
-  <div class="card 
-      <%= producto.calidad_original ? 'calidad-original-fitam' : '' %> 
-      <%= producto.calidad_vic ? 'calidad_vic' : '' %> 
-      <%= producto.oferta ? 'producto-oferta' : '' %>"
-      data-label="<%= producto.oferta ? 'OFERTA' : producto.calidad_original ? 'CALIDAD FITAM' : producto.calidad_vic ? 'CALIDAD VIC' : '' %>">
+  const label = producto.oferta ? 'OFERTA' : (producto.calidad_original ? 'CALIDAD FITAM' : (producto.calidad_vic ? 'CALIDAD VIC' : ''));
+%>
 
-      <div class="cover-card">
-        <% if (producto.imagenes && producto.imagenes.length > 0) { %>
-          <div class="carousel-container">
-            <button class="carousel__button" onclick="moverCarruselDetalle(-1)">
+<main class="detalle-page">
+
+  <section class="detalle-shell">
+
+    <div class="detalle-grid">
+
+      <!-- IZQUIERDA: GALERIA GRANDE -->
+      <div class="detalle-left">
+        <div class="detalle-galeria">
+
+          <% if (producto.imagenes && producto.imagenes.length > 0) { %>
+            <button class="carousel__button carousel__button--left" onclick="moverCarruselDetalle(-1)">
               <i class="fas fa-chevron-left"></i>
             </button>
 
-            <div class="carousel-wrapper">
-              <div class="carousel" id="carousel-detalle">
-                <% producto.imagenes.forEach((imagen, i) => { %>
-                  <img class="carousel__image <%= i !== 0 ? 'hidden' : '' %>" src="/uploads/productos/<%= imagen.imagen %>" alt="<%= producto.nombre %>">
-                <% }) %>
+            <div class="carousel-container">
+              <div class="carousel-wrapper">
+                <div class="carousel" id="carousel-detalle">
+                  <% producto.imagenes.forEach((imagen, i) => { %>
+                    <img class="carousel__image <%= i !== 0 ? 'hidden' : '' %>"
+                         src="/uploads/productos/<%= imagen.imagen %>"
+                         alt="<%= producto.nombre %>"
+                         onerror="this.src='/images/noEncontrado.png'">
+                  <% }) %>
+                </div>
               </div>
             </div>
 
-            <button class="carousel__button" onclick="moverCarruselDetalle(1)">
+            <button class="carousel__button carousel__button--right" onclick="moverCarruselDetalle(1)">
               <i class="fas fa-chevron-right"></i>
             </button>
-          </div>
-        <% } %>
-      </div>
 
-      <div class="titulo-producto">
-        <h3 class="nombre"><%= producto.nombre %></h3>
-      </div>
+          <% } else { %>
 
-      <hr>
+            <div class="carousel-container">
+              <div class="carousel-wrapper">
+                <img class="carousel__image"
+                     src="/images/noEncontrado.png"
+                     alt="<%= producto.nombre %>">
+              </div>
+            </div>
 
-      <div class="categoria-producto">
-        <h6 class="categoria"><%= producto.categoria_nombre || "Sin categoría" %></h6>
-      </div>
-
-      <div class="precio-producto">
-        <p class="precio">
-          <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %>
-        </p>
-      </div>
-
-      <%
-        const descripcion = (producto.descripcion || '').trim();
-        const esEscobilla = /escobill/i.test(producto.categoria_nombre || '') || /escobill/i.test(producto.nombre || '');
-        const tieneAplic = esEscobilla && descripcion.length > 0;
-      %>
-
-      <% if (tieneAplic) { %>
-        <div class="acciones-aplicaciones">
-          <button type="button" class="btn-aplicaciones" id="btnAppsDetalle"
-                  data-titulo="<%= producto.nombre %>"
-                  data-aplicaciones='<%- JSON.stringify(descripcion) %>'>
-            <i class="fa-solid fa-car"></i>
-            <span>Ver aplicaciones</span>
-          </button>
+          <% } %>
         </div>
+      </div>
 
-        <div class="apps-hint">
-          <i class="fa-solid fa-circle-info"></i>
-          <span>Esta escobilla puede aplicar a múltiples vehículos. Tocá “Ver aplicaciones” para ver el listado completo.</span>
-        </div>
+      <!-- DERECHA: INFO ORDENADA -->
+      <div class="detalle-right">
 
-      <% } else if (descripcion) { %>
-        <div style="max-width: 520px; margin: 12px auto 0; text-align:left;">
-          <h4 style="margin:0 0 6px; font-weight:900;">Descripción</h4>
-          <p style="margin:0; white-space: pre-line; opacity:.9; font-weight:600;"><%= descripcion %></p>
-        </div>
-      <% } %>
+        <div class="detalle-badges">
+          <span class="badge-soft">
+            <i class="fa-solid fa-tag"></i>
+            <%= producto.categoria_nombre || "Sin categoría" %>
+          </span>
 
-      <% if (isUserLoggedIn) { %>
-        <% if (isAdminUser) { %>
-          <div class="stock-producto <%= producto.stock_actual >= producto.stock_minimo ? 'suficiente-stock' : 'bajo-stock' %>">
-            <p>Stock Disponible: <%= producto.stock_actual %></p>
-          </div>
-        <% } else { %>
-          <div class="semaforo-stock">
-            <i class="fa-solid fa-thumbs-<%= producto.stock_actual >= producto.stock_minimo ? 'up verde' : 'down rojo' %>"></i>
-            <span class="texto-semaforo">
-              <%= producto.stock_actual >= producto.stock_minimo ? "PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA" : "PRODUCTO PENDIENTE DE INGRESO O A PEDIDO" %>
+          <% if (label) { %>
+            <span class="badge-soft">
+              <i class="fa-solid fa-star"></i>
+              <%= label %>
             </span>
-          </div>
-        <% } %>
-      <% } %>
+          <% } %>
+        </div>
 
-  </div>
+        <h1 class="detalle-title"><%= producto.nombre %></h1>
+
+        <div class="detalle-price">
+          <%= new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio_venta || 0) %>
+        </div>
+
+        <div class="detalle-sep"></div>
+
+        <% if (tieneAplic) { %>
+          <div class="acciones-aplicaciones">
+            <button type="button" class="btn-aplicaciones" id="btnAppsDetalle"
+                    data-titulo="<%= producto.nombre %>"
+                    data-aplicaciones='<%- JSON.stringify(descripcion) %>'>
+              <i class="fa-solid fa-car"></i>
+              <span>Ver aplicaciones</span>
+            </button>
+          </div>
+
+          <div class="apps-hint">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Compatible con múltiples vehículos. “Ver aplicaciones” abre el listado completo y ordenado.</span>
+          </div>
+
+        <% } else if (descripcion) { %>
+
+          <div style="margin-top: 6px;">
+            <div style="font-weight:1000; margin-bottom: 6px; opacity:.9;">Descripción</div>
+            <div style="white-space: pre-line; font-weight:650; opacity:.85; line-height: 1.35;">
+              <%= descripcion %>
+            </div>
+          </div>
+
+        <% } %>
+
+        <div class="detalle-sep"></div>
+
+        <% if (isUserLoggedIn) { %>
+          <% if (isAdminUser) { %>
+            <div class="stock-producto <%= producto.stock_actual >= producto.stock_minimo ? 'suficiente-stock' : 'bajo-stock' %>">
+              <p>Stock Disponible: <%= producto.stock_actual %></p>
+            </div>
+          <% } else { %>
+            <div class="semaforo-stock">
+              <i class="fa-solid fa-thumbs-<%= producto.stock_actual >= producto.stock_minimo ? 'up verde' : 'down rojo' %>"></i>
+              <span class="texto-semaforo">
+                <%= producto.stock_actual >= producto.stock_minimo ? "PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA" : "PRODUCTO PENDIENTE DE INGRESO O A PEDIDO" %>
+              </span>
+            </div>
+          <% } %>
+        <% } %>
+
+      </div>
+    </div>
+
+  </section>
 
 </main>
 
@@ -203,6 +386,7 @@ function _normalizeAplicaciones(raw){
 
   s = s.replace(/<br\s*\/?\s*>/gi, '\n').replace(/\r/g, '');
 
+  // Si NO hay saltos: separar antes de MARCAS en MAYÚSCULAS (HONDA, CHEVROLET, etc.)
   if (!s.includes('\n')) {
     const m = s.match(/\b[A-ZÁÉÍÓÚÑ]{2,}\b/);
     if (m && typeof m.index === 'number' && m.index > 0) {
