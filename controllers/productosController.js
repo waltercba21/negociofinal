@@ -921,7 +921,6 @@ editar: async function (req, res) {
 },
 
 actualizar: async function (req, res) {
-  console.log("===== Inicio del controlador actualizar =====");
   try {
     const productoId = numInt(req.params.id || req.body.id);
     if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
@@ -936,18 +935,6 @@ actualizar: async function (req, res) {
     const arrCNeto  = toArray(req.body.costo_neto);             // neto SIN IVA (front)
     const arrCIva   = toArray(req.body.costo_iva);              // CON IVA por UNIDAD (front)
 
-    console.log('[ACTUALIZAR][INPUT] proveedores        =', provIds);
-    console.log('[ACTUALIZAR][INPUT] precio_lista[]     =', plist);
-    console.log('[ACTUALIZAR][INPUT] codigo[]           =', codigos);
-    console.log('[ACTUALIZAR][INPUT] IVA[]              =', arrIVA);
-    console.log('[ACTUALIZAR][INPUT] presentacion[]     =', arrPres);
-    console.log('[ACTUALIZAR][INPUT] factor_unidad[]    =', arrFactor);
-    console.log('[ACTUALIZAR][INPUT] costo_neto[]       =', arrCNeto);
-    console.log('[ACTUALIZAR][INPUT] costo_iva[] (unit) =', arrCIva);
-    console.log('[ACTUALIZAR][INPUT] IVA_producto       =', req.body.IVA_producto);
-    console.log('[ACTUALIZAR][INPUT] proveedor_designado(hidden)=', req.body.proveedor_designado);
-
-    // ---------- 1) Datos escalares del producto ----------
     const datosProducto = {
       id               : productoId,
       nombre           : req.body.nombre ?? null,
@@ -965,18 +952,15 @@ actualizar: async function (req, res) {
       calidad_vic      : req.body.calidad_vic ? 1 : 0
       // IVA del producto lo seteamos más abajo
     };
-    console.log('[ACTUALIZAR] datosProducto (sin IVA aún)=', datosProducto);
     await producto.actualizar(conexion, datosProducto);
 
     // ---------- 2) Eliminar proveedores marcados ----------
     const aEliminarProv = toArray(req.body.eliminar_proveedores).map(numInt).filter(Boolean);
-    console.log('[ACTUALIZAR] eliminar_proveedores[] =', aEliminarProv);
     if (aEliminarProv.length){
       const sqlDel = `
         DELETE FROM producto_proveedor
         WHERE producto_id = ? AND proveedor_id IN (${aEliminarProv.map(()=>'?').join(',')})
       `;
-      console.log('[ACTUALIZAR][SQL] DELETE producto_proveedor', { sql: sqlDel, params: [productoId, ...aEliminarProv] });
       await conexion.promise().query(sqlDel, [productoId, ...aEliminarProv]);
     }
 
@@ -1019,13 +1003,11 @@ actualizar: async function (req, res) {
       const factor       = normalizarFactor(presentacion, arrFactor[i]);
 
       const params = [ productoId, proveedor_id, precio_lista, codigo, iva, presentacion, factor ];
-      console.log(`[ACTUALIZAR][SQL] UPSERT fila ${i}:`, params);
       await conexion.promise().query(sqlUpsert, params);
     }
 
     // ---------- 4) Proveedor asignado + IVA del producto ----------
     let proveedorAsignado = numInt(req.body.proveedor_designado) || 0;
-    console.log('[ACTUALIZAR] proveedor_designado (pre) =', proveedorAsignado);
 
     // si no hay manual, elegir por menor costo_iva (ya normalizado a UNIDAD por el front)
     if (!proveedorAsignado) {
@@ -1042,34 +1024,25 @@ actualizar: async function (req, res) {
           if (pid){ proveedorAsignado = pid; break; }
         }
       }
-      console.log('[ACTUALIZAR] proveedor_designado (auto)=', proveedorAsignado);
     }
 
     // IVA del producto (hidden seteado por el front al proveedor ganador)
     const ivaProductoHidden = numOr0(req.body.IVA_producto);
-    console.log('[ACTUALIZAR] IVA_producto (hidden)=', ivaProductoHidden);
 
     let ivaProducto = 21;
     if (ivaProductoHidden > 0) {
       ivaProducto = ivaProductoHidden;
-      console.log('[ACTUALIZAR] IVA elegido por hidden =', ivaProducto);
     } else if (proveedorAsignado) {
       let idx = provIds.findIndex(v => numInt(v) === proveedorAsignado);
       if (idx < 0) idx = 0;
       const ivaIdxRaw = arrIVA[idx] ?? 21;
       ivaProducto = Number(String(ivaIdxRaw).replace(',', '.')) || 21;
-      console.log('[ACTUALIZAR] IVA elegido por índice =', ivaProducto, '(idx=', idx, ')');
     } else {
       const iva0 = arrIVA[0] ?? 21;
       ivaProducto = Number(String(iva0).replace(',', '.')) || 21;
-      console.log('[ACTUALIZAR] IVA elegido default/primero =', ivaProducto);
     }
 
     await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado || null, IVA: ivaProducto });
-    console.log('[ACTUALIZAR] productos.proveedor_id =', proveedorAsignado, ' | productos.IVA =', ivaProducto);
-
-    // ---------- 4.b) ACTUALIZAR costos en tabla productos (por UNIDAD) del proveedor asignado ----------
-    // OJO: acá usamos proveedorAsignado y provIds ya definidos arriba
     let idxAsignado = provIds.findIndex(v => numInt(v) === (proveedorAsignado || 0));
     if (idxAsignado < 0) {
       idxAsignado = Math.max(0, provIds.findIndex(v => numInt(v))); // primer válido
@@ -1080,21 +1053,15 @@ actualizar: async function (req, res) {
       ? (Number(arrFactor[idxAsignado]) || (presAsig === 'juego' ? 0.5 : 1))
       : 1;
 
-    const cnRaw      = (idxAsignado >= 0) ? numOr0(arrCNeto[idxAsignado]) : 0; // SIN IVA
-    const cnUnidad   = Math.ceil(cnRaw * factorAsig);                           // normalizar a UNIDAD si era juego
-    const civaUnidad = (idxAsignado >= 0) ? Math.ceil(numOr0(arrCIva[idxAsignado])) : 0; // CON IVA por UNIDAD (ya normalizado por front)
-
-    console.log('[ACTUALIZAR] costos asignado → idx=', idxAsignado,
-                'pres=', presAsig, 'factor=', factorAsig,
-                'costo_neto(unidad)=', cnUnidad, 'costo_iva(unidad)=', civaUnidad);
+    const cnRaw      = (idxAsignado >= 0) ? numOr0(arrCNeto[idxAsignado]) : 0; 
+    const cnUnidad   = Math.ceil(cnRaw * factorAsig);                          
+    const civaUnidad = (idxAsignado >= 0) ? Math.ceil(numOr0(arrCIva[idxAsignado])) : 0; 
 
     await producto.actualizar(conexion, {
       id: productoId,
       costo_neto: cnUnidad,
       costo_iva : civaUnidad
     });
-
-    // ---------- 5) IMÁGENES (igual que ya tenías) ----------
     {
       const path = require('path');
       const fs   = require('fs');
@@ -1109,15 +1076,17 @@ actualizar: async function (req, res) {
             [...aEliminarImgs, productoId]
           );
           (rows || []).forEach(r => {
-            try {
-              const p = (r.imagen || '').toString();
-              if (!p) return;
-              const abs = path.isAbsolute(p)
-                ? p
-                : path.join(__dirname, '..', 'public', p.replace(/^\/+/, ''));
-              if (fs.existsSync(abs)) fs.unlinkSync(abs);
-            } catch (_) {}
-          });
+  try {
+    const p = (r.imagen || '').toString();
+    if (!p) return; 
+    const fileName = p
+      .replace(/^\/+/, '')
+      .replace(/^uploads\/productos\//, '')
+      .replace(/^\/?uploads\/productos\//, '');
+                  const abs = path.join(process.cwd(), 'uploads', 'productos', fileName);
+    if (fs.existsSync(abs)) fs.unlinkSync(abs);
+  } catch (_) {}
+});
         } catch (e) {
           console.warn('[ACTUALIZAR] No se pudo recuperar nombres de archivo para borrar:', e.message);
         }
@@ -1173,6 +1142,15 @@ actualizar: async function (req, res) {
         console.log('[ACTUALIZAR] El producto quedó sin imágenes.');
       }
     }
+    // ---------- 6) ESCOBILLAS (códigos / kit) ----------
+// ✅ FIX: en EDITAR se estaban enviando los hidden (escobillas_*),
+// pero nunca se persistían en BD porque faltaba llamar a saveFromRequest.
+try {
+  await escobillasCompat.saveFromRequest(conexion, productoId, req.body);
+} catch (e) {
+  // No frenamos el guardado del producto si las tablas de escobillas no están
+  console.error('[ACTUALIZAR][ESCOBILLAS] No se pudo guardar:', e.message);
+}
 
     // ---------- Redirect ----------
     const pagina = req.body.pagina || 1;

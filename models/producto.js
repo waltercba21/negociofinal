@@ -360,64 +360,68 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
       });
     });
   }, 
-   actualizar: function (conexion, datos, archivo) {
-    return new Promise((resolve, reject) => {
-      if (!isSet(datos.id)) {
-        return reject(new Error('Los datos del producto deben incluir un ID'));
-      }
+actualizar: function (conexion, datos, archivo) {
+  return new Promise((resolve, reject) => {
+    if (!isSet(datos.id)) {
+      return reject(new Error('Los datos del producto deben incluir un ID'));
+    }
 
-      let query = "UPDATE productos SET ";
-      const params = [];
-      let first = true;
+    let query = "UPDATE productos SET ";
+    const params = [];
+    let first = true;
 
-      const add = (sqlFrag, val) => {
-        query += first ? sqlFrag : ", " + sqlFrag;
-        params.push(val);
-        first = false;
-      };
+    const add = (sqlFrag, val) => {
+      query += first ? sqlFrag : ", " + sqlFrag;
+      params.push(val);
+      first = false;
+    };
 
-      if (isSet(datos.nombre)) add("nombre=?", datos.nombre);
-      if (isSet(datos.codigo)) add("codigo=?", datos.codigo);
-      if (isSet(datos.categoria_id)) add("categoria_id=?", datos.categoria_id);
-      if (isSet(datos.marca_id)) add("marca_id=?", datos.marca_id);
-      if (isSet(datos.modelo_id)) add("modelo_id=?", datos.modelo_id);
+    if (isSet(datos.nombre)) add("nombre=?", datos.nombre);
 
-      if (isSet(datos.precio_venta)) add("precio_venta=?", parseDecimal(datos.precio_venta, 0));
-      if (isSet(datos.utilidad)) add("utilidad=?", parseDecimal(datos.utilidad, 0));
-      if (isSet(datos.descuentos_proveedor_id)) add("descuentos_proveedor_id=?", datos.descuentos_proveedor_id);
-      if (isSet(datos.costo_neto)) add("costo_neto=?", parseDecimal(datos.costo_neto, 0));
+    // ✅ FIX: faltaba actualizar descripcion, por eso en EDITAR no se guardaba
+    if (isSet(datos.descripcion)) add("descripcion=?", datos.descripcion);
 
-      // IVA de referencia del producto (no confundir con iva por proveedor)
-      if (isSet(datos.IVA)) add("IVA=?", parseDecimal(datos.IVA, 21));
+    if (isSet(datos.codigo)) add("codigo=?", datos.codigo);
+    if (isSet(datos.categoria_id)) add("categoria_id=?", datos.categoria_id);
+    if (isSet(datos.marca_id)) add("marca_id=?", datos.marca_id);
+    if (isSet(datos.modelo_id)) add("modelo_id=?", datos.modelo_id);
 
-      if (isSet(datos.costo_iva)) add("costo_iva=?", parseDecimal(datos.costo_iva, 0));
-      if (isSet(datos.estado)) add("estado=?", datos.estado);
-      if (isSet(datos.stock_minimo)) add("stock_minimo=?", parseInt(datos.stock_minimo, 10) || 0);
-      if (isSet(datos.stock_actual)) add("stock_actual=?", parseInt(datos.stock_actual, 10) || 0);
+    if (isSet(datos.precio_venta)) add("precio_venta=?", parseDecimal(datos.precio_venta, 0));
+    if (isSet(datos.utilidad)) add("utilidad=?", parseDecimal(datos.utilidad, 0));
+    if (isSet(datos.descuentos_proveedor_id)) add("descuentos_proveedor_id=?", datos.descuentos_proveedor_id);
+    if (isSet(datos.costo_neto)) add("costo_neto=?", parseDecimal(datos.costo_neto, 0));
 
-      if (archivo && isSet(archivo.filename)) add("imagen=?", archivo.filename);
+    // IVA de referencia del producto (no confundir con iva por proveedor)
+    if (isSet(datos.IVA)) add("IVA=?", parseDecimal(datos.IVA, 21));
 
-      if (isSet(datos.calidad_original)) add("calidad_original=?", datos.calidad_original ? 1 : 0);
-      if (isSet(datos.calidad_vic)) add("calidad_vic=?", datos.calidad_vic ? 1 : 0);
+    if (isSet(datos.costo_iva)) add("costo_iva=?", parseDecimal(datos.costo_iva, 0));
+    if (isSet(datos.estado)) add("estado=?", datos.estado);
+    if (isSet(datos.stock_minimo)) add("stock_minimo=?", parseInt(datos.stock_minimo, 10) || 0);
+    if (isSet(datos.stock_actual)) add("stock_actual=?", parseInt(datos.stock_actual, 10) || 0);
 
-      if (isSet(datos.proveedor_id)) add("proveedor_id=?", datos.proveedor_id);
+    if (archivo && isSet(archivo.filename)) add("imagen=?", archivo.filename);
 
-      if (isSet(datos.oferta)) add("oferta=?", datos.oferta ? 1 : 0);
+    if (isSet(datos.calidad_original)) add("calidad_original=?", datos.calidad_original ? 1 : 0);
+    if (isSet(datos.calidad_vic)) add("calidad_vic=?", datos.calidad_vic ? 1 : 0);
 
-      query += " WHERE id=?";
-      params.push(datos.id);
+    if (isSet(datos.proveedor_id)) add("proveedor_id=?", datos.proveedor_id);
 
-      // Si no se actualiza ningún campo, evitamos romper (aunque debería venir al menos 1)
-      if (first) {
-        return resolve({ affectedRows: 0, warning: 'Sin campos para actualizar' });
-      }
+    if (isSet(datos.oferta)) add("oferta=?", datos.oferta ? 1 : 0);
 
-      conexion.query(query, params, (error, results) => {
-        if (error) return reject(error);
-        resolve(results);
-      });
+    query += " WHERE id=?";
+    params.push(datos.id);
+
+    if (first) {
+      return resolve({ affectedRows: 0, warning: 'Sin campos para actualizar' });
+    }
+
+    conexion.query(query, params, (error, results) => {
+      if (error) return reject(error);
+      resolve(results);
     });
-  },
+  });
+},
+
  actualizarProductoProveedor: function (conexion, datos) {
     return new Promise((resolve, reject) => {
       const producto_id  = Number(datos.producto_id) || 0;
@@ -1810,28 +1814,43 @@ editarFactura: (id, nombre_cliente, fecha, total, items) => {
   });
 },
 retornarDatosId: function(conexion, id) { 
-    return new Promise((resolve, reject) => {
-        conexion.query('SELECT productos.*, IFNULL(productos.costo_neto, 0) AS costo_neto, IFNULL(productos.costo_iva, 0) AS costo_iva, IFNULL(productos.utilidad, 0) AS utilidad, productos.precio_venta, imagenes_producto.id AS imagen_id, imagenes_producto.imagen FROM productos LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE productos.id = ?', [id], function(error, results, fields) {
-            if (error) {
-                reject(error);
-            } else {
-                if (results.length > 0) {
-                    let producto = results[0];
-                    producto.imagenes = results.map(result => {
-                        let imagenRuta = result.imagen ? path.join('/uploads/productos', result.imagen) : '/ruta/a/imagen/por/defecto';
-                        return {
-                            id: result.imagen_id,
-                            imagen: imagenRuta
-                        };
-                    });
-                    resolve(producto);
-                } else {
-                    resolve(null);
-                }
-            }
-        });
+  return new Promise((resolve, reject) => {
+    const sql = `
+      SELECT
+        productos.*,
+        IFNULL(productos.costo_neto, 0) AS costo_neto,
+        IFNULL(productos.costo_iva, 0) AS costo_iva,
+        IFNULL(productos.utilidad, 0) AS utilidad,
+        productos.precio_venta,
+        imagenes_producto.id AS imagen_id,
+        imagenes_producto.imagen
+      FROM productos
+      LEFT JOIN imagenes_producto
+        ON productos.id = imagenes_producto.producto_id
+      WHERE productos.id = ?
+      -- ✅ FIX: respetar el orden guardado (posicion)
+      ORDER BY IFNULL(imagenes_producto.posicion, 999999), imagenes_producto.id ASC
+    `;
+
+    conexion.query(sql, [id], function(error, results) {
+      if (error) return reject(error);
+      if (!results || results.length === 0) return resolve(null);
+
+      const producto = results[0];
+
+      // ✅ FIX: no inventar imagen por defecto; si no hay imagen, devolver []
+      producto.imagenes = (results || [])
+        .filter(r => !!r.imagen)
+        .map(r => ({
+          id: r.imagen_id,
+          imagen: path.join('/uploads/productos', r.imagen)
+        }));
+
+      resolve(producto);
     });
+  });
 },
+
 obtenerImagenesProducto: function(conexion, ids) {
     return new Promise((resolve, reject) => {
         if (!ids || ids.length === 0) {
