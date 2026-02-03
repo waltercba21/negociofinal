@@ -339,8 +339,38 @@
     </div>
   </main>
 
-  <%- include ./layouts/footer.ejs %>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.10.2/Sortable.min.js"></script>
-  <script src="/js/crear.js"></script>
+ <%- include ./layouts/footer.ejs %>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.10.2/Sortable.min.js"></script>
+<script src="/js/crear.js"></script>
+
+<!-- ✅ FIX ENTER EN DESCRIPCIÓN -->
+<script>
+  (function () {
+    var ta = document.getElementById('descripcion');
+    if (!ta) return;
+
+    ta.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+
+      // Forzamos salto de línea aunque algún script global bloquee Enter
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      var start = ta.selectionStart;
+      var end = ta.selectionEnd;
+
+      if (typeof start !== 'number' || typeof end !== 'number') {
+        ta.value += "\n";
+        return;
+      }
+
+      ta.value = ta.value.slice(0, start) + "\n" + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = start + 1;
+
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+    }, true);
+  })();
+</script>
+
 </body>

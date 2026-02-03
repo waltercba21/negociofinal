@@ -924,9 +924,12 @@
   <script>
     // Si al entrar la marca ya está seleccionada, refrescamos modelos por marca
     (function initModeloSeleccionado() {
-      var marcaSel = document.getElementById('marca')?.value;
-      var modeloSel = document.getElementById('modelo_id')?.getAttribute('data-selected');
+      var marcaEl = document.getElementById('marca');
+      var modeloEl = document.getElementById('modelo_id');
+      var marcaSel = marcaEl ? marcaEl.value : '';
+      var modeloSel = modeloEl ? modeloEl.getAttribute('data-selected') : '';
       if (!marcaSel || !modeloSel) return;
+
       $.get('/productos/modelos/' + marcaSel, function (modelosPorMarca) {
         var $modelo = $('#modelo_id');
         $modelo.empty().append('<option value="">Selecciona un modelo...</option>');
@@ -936,5 +939,36 @@
         });
       });
     })();
-  </script>
+</script>
+
+<!-- ✅ FIX ENTER EN DESCRIPCIÓN -->
+<script>
+  (function () {
+    var ta = document.getElementById('descripcion');
+    if (!ta) return;
+
+    ta.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+
+      // Forzamos salto de línea aunque algún script global bloquee Enter
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      var start = ta.selectionStart;
+      var end = ta.selectionEnd;
+
+      if (typeof start !== 'number' || typeof end !== 'number') {
+        ta.value += "\n";
+        return;
+      }
+
+      ta.value = ta.value.slice(0, start) + "\n" + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = start + 1;
+
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+    }, true);
+  })();
+</script>
+
 </body>
+
