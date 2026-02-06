@@ -48,10 +48,11 @@
       <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
       <a class="nav-link" href="/administracion/gastos" id="gastos-btn">GASTOS</a>
       <a class="nav-link" href="/administracion" id="admin-btn">ADMINISTRACIÓN</a>
-      <a class="nav-link pedidos-icon" href="/pedidos" id="pedidos-btn">
-        PEDIDOS
-        <span id="pedido-notificacion" class="pedido-alerta" style="display: none;">0</span>
-      </a>
+      <a href="/pedidos" class="nav-link pedidos-link" style="position:relative;">
+  PEDIDOS
+  <span id="badge-pedidos" class="badge-pedidos" style="display:none;">0</span>
+</a>
+
     <% } %>
 
     <% if (!isLogged) { %>
@@ -131,4 +132,50 @@
       }, { passive: true });
     })();
   </script>
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+  const badge = document.getElementById('badge-pedidos');
+  if (!badge) return; // si esta página no tiene el botón, no hace nada
+
+  async function actualizarBadgePedidos() {
+    try {
+      const res = await fetch('/pedidos/cantidad', { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) return;
+      const data = await res.json();
+      const n = Number(data.cantidad || 0);
+
+      badge.textContent = n;
+      badge.style.display = (n > 0) ? 'inline-flex' : 'none';
+    } catch (_) {}
+  }
+
+  function toastPedido(texto) {
+    if (typeof Swal === 'undefined') return;
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'info',
+      title: texto,
+      showConfirmButton: false,
+      timer: 3200,
+      timerProgressBar: true
+    });
+  }
+
+  actualizarBadgePedidos();
+
+  const socket = io();
+
+  socket.on('nuevoPedido', (payload = {}) => {
+    // payload esperado: { mensaje, id_carrito, usuario, estado } (lo emite carritoController)
+    toastPedido(payload.mensaje || `📦 Nuevo pedido #${payload.id_carrito || ''}`);
+    actualizarBadgePedidos();
+  });
+
+  socket.on('actualizarNotificacion', () => {
+    actualizarBadgePedidos();
+  });
+});
+</script>
+
 </header>

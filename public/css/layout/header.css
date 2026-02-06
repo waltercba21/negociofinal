@@ -320,6 +320,21 @@ header .icons p{
   box-shadow: 0 12px 22px rgba(217,4,41,.22);
   border: 2px solid rgba(255,255,255,.95);
 }
+.badge-pedidos{
+  position:absolute;
+  top:-6px;
+  right:-10px;
+  min-width:18px;
+  height:18px;
+  padding:0 6px;
+  border-radius:999px;
+  background:#e53935;
+  color:#fff;
+  font-size:12px;
+  line-height:18px;
+  text-align:center;
+  font-weight:700;
+}
 
 /* ================== MOBILE ================== */
 .nav-auth{ display:none; }
