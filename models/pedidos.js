@@ -1,5 +1,8 @@
 const pool = require('../config/conexion');
 
+const COSTO_DELIVERY = Number(process.env.COSTO_DELIVERY || 3000);
+
+
 module.exports = {
  obtenerPedidos: (callback) => {
     const query = `
