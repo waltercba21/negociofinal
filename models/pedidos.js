@@ -1,8 +1,7 @@
 const pool = require('../config/conexion');
 
 module.exports = {
-  // ✅ Solo pedidos reales: excluye carritos abiertos
-  obtenerPedidos: (callback) => {
+ obtenerPedidos: (callback) => {
     const query = `
       SELECT 
         c.id AS id_pedido,
@@ -10,22 +9,26 @@ module.exports = {
         c.usuario_id,
         c.estado,
         c.tipo_envio,
-        COALESCE(SUM(pc.cantidad * p.precio_venta), 0) AS total,
+        c.direccion,
+
+        COALESCE(SUM(pc.cantidad * p.precio_venta), 0) AS subtotal_productos,
+        CASE WHEN c.tipo_envio = 'delivery' THEN ? ELSE 0 END AS costo_envio,
+        COALESCE(SUM(pc.cantidad * p.precio_venta), 0)
+          + CASE WHEN c.tipo_envio = 'delivery' THEN ? ELSE 0 END AS total,
+
         COALESCE(c.actualizado_en, c.creado_en) AS fecha
       FROM carritos c
       JOIN usuarios u ON c.usuario_id = u.id
       LEFT JOIN productos_carrito pc ON c.id = pc.carrito_id
       LEFT JOIN productos p ON pc.producto_id = p.id
       WHERE c.estado <> 'carrito'
-      GROUP BY c.id, u.nombre, u.apellido, c.usuario_id, c.estado, c.tipo_envio, c.actualizado_en, c.creado_en
+        AND c.es_pedido = 1
+      GROUP BY c.id, u.nombre, u.apellido, c.usuario_id, c.estado, c.tipo_envio, c.direccion, c.actualizado_en, c.creado_en
       ORDER BY fecha DESC;
     `;
 
-    pool.query(query, (error, resultados) => {
-      if (error) {
-        console.error("❌ Error al obtener pedidos:", error);
-        return callback(error, null);
-      }
+    pool.query(query, [COSTO_DELIVERY, COSTO_DELIVERY], (error, resultados) => {
+      if (error) return callback(error, null);
       callback(null, resultados);
     });
   },
@@ -44,11 +47,19 @@ module.exports = {
     });
   },
 
-  obtenerDetallePedido: (id_carrito, callback) => {
+    obtenerDetallePedido: (id_carrito, callback) => {
     const query = `
-      SELECT u.nombre AS cliente, c.creado_en AS fecha,
-             pp_min.codigo, p.nombre AS nombre_producto, pc.cantidad, p.precio_venta,
-             (pc.cantidad * p.precio_venta) AS subtotal
+      SELECT
+        u.nombre AS cliente,
+        c.creado_en AS fecha,
+        c.tipo_envio,
+        c.direccion,
+
+        pp_min.codigo,
+        p.nombre AS nombre_producto,
+        pc.cantidad,
+        p.precio_venta,
+        (pc.cantidad * p.precio_venta) AS subtotal
       FROM carritos c
       JOIN usuarios u ON c.usuario_id = u.id
       JOIN productos_carrito pc ON c.id = pc.carrito_id
@@ -71,12 +82,11 @@ module.exports = {
       if (error) return callback(error, null);
       if (!resultados || resultados.length === 0) return callback(null, null);
 
-      const cliente = resultados[0].cliente;
-      const fecha = resultados[0].fecha;
-      let total = 0;
+      const { cliente, fecha, tipo_envio, direccion } = resultados[0];
 
+      let totalProductos = 0;
       const productos = resultados.map(r => {
-        total += Number(r.subtotal || 0);
+        totalProductos += Number(r.subtotal || 0);
         return {
           codigo: r.codigo || 'SIN CÓDIGO',
           nombre: r.nombre_producto,
@@ -86,11 +96,21 @@ module.exports = {
         };
       });
 
-      callback(null, { cliente, fecha, total, productos });
+      const costo_envio = (tipo_envio === 'delivery') ? COSTO_DELIVERY : 0;
+      const total = totalProductos + costo_envio;
+
+      callback(null, {
+        cliente,
+        fecha,
+        tipo_envio,
+        direccion,
+        costo_envio,
+        total_productos: totalProductos,
+        total, // total final (productos + envío)
+        productos
+      });
     });
   },
-
-  // ✅ Contador de “pedidos a atender” (excluye carrito y finalizado)
   obtenerCantidadPedidosPendientes: (callback) => {
     const query = `
       SELECT COUNT(*) AS cantidad

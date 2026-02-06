@@ -319,96 +319,127 @@
   font-variant-numeric: tabular-nums;
 }
 </style>
-  <main class="admin-container">
-    <div class="pedidos-admin">
-      <h2 class="titulo-pedidos">Pedidos Recibidos</h2>
+ <main class="admin-container">
+  <div class="pedidos-admin">
+    <h2 class="titulo-pedidos">Pedidos Recibidos</h2>
 
-      <table class="tabla-pedidos">
+    <table class="tabla-pedidos">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Envío</th>
+          <th>Dirección</th>
+          <th>Estado</th>
+          <th>Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% 
+          const norm = (s) => (s ?? '')
+            .toString()
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // quita tildes (preparación -> preparacion)
+            .replace(/[_-]+/g,' ')
+            .replace(/\s+/g,' ')
+            .trim();
+        %>
+
+        <% if (pedidos && pedidos.length > 0) { %>
+          <% pedidos.forEach(pedido => { 
+            const estN = norm(pedido.estado);
+
+            // si llega algo "carrito", lo ocultamos
+            if (estN === 'carrito') return;
+
+            const tipoEnvio = (pedido.tipo_envio === 'delivery') ? 'Delivery' : 'Retiro en local';
+            const direccion = (pedido.tipo_envio === 'delivery') ? (pedido.direccion || '-') : '-';
+
+            const subtotalProductos = Number(pedido.subtotal_productos ?? 0);
+            const costoEnvio = Number(pedido.costo_envio ?? 0);
+            const totalFinal = Number(
+              pedido.total ?? pedido.total_final ?? (subtotalProductos + costoEnvio) ?? 0
+            );
+          %>
+
+            <tr>
+              <td><%= pedido.id_pedido %></td>
+              <td><%= pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-AR') : '' %></td>
+              <td><%= pedido.cliente %></td>
+              <td><%= tipoEnvio %></td>
+              <td><%= direccion %></td>
+              <td><%= pedido.estado %></td>
+              <td>$<%= totalFinal.toLocaleString('es-AR') %></td>
+
+              <td style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn-ver-detalle" data-carrito-id="<%= pedido.id_pedido %>">🛠 Ver Detalle</button>
+
+                <% if (estN === 'pendiente') { %>
+                  <button onclick='confirmarPedido("<%= pedido.id_pedido %>")'>✅ Confirmar</button>
+                <% } %>
+
+                <% if (estN === 'confirmado') { %>
+                  <button onclick='prepararPedido("<%= pedido.id_pedido %>")'>📦 En preparación</button>
+                <% } %>
+
+                <% if (estN === 'preparacion') { %>
+                  <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
+                <% } %>
+
+                <% if (estN === 'listo para entrega') { %>
+                  <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
+                <% } %>
+
+                <% if (estN === 'finalizado') { %>
+                  <span style="padding:6px 10px;border-radius:999px;font-weight:700;background:#d4edda;color:#155724;">
+                    ✅ FINALIZADO
+                  </span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="8">No hay pedidos.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="modal-preparar" class="modal">
+    <div class="modal-contenido">
+      <span class="cerrar-modal" onclick="cerrarModal()">&times;</span>
+      <h3>Detalle del Pedido</h3>
+
+      <p><strong>Cliente:</strong> <span id="nombre-cliente"></span></p>
+      <p><strong>Fecha:</strong> <span id="fecha-pedido"></span></p>
+
+      <p><strong>Envío:</strong> <span id="tipo-envio"></span></p>
+      <p><strong>Dirección:</strong> <span id="direccion-envio"></span></p>
+
+      <table class="tabla-detalle">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Fecha</th>
-            <th>Cliente</th>
-            <th>Estado</th>
-            <th>Acciones</th>
+            <th>Código</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario</th>
+            <th>Subtotal</th>
           </tr>
         </thead>
-        <tbody>
-          <% if (pedidos.length > 0) { %>
-            <% pedidos.forEach(pedido => { 
-              const est = (pedido.estado || '').toLowerCase();
-            %>
-
-              <% // Si llegan carritos abiertos desde backend, los ocultamos:
-                 if (est === 'carrito') { %>
-                <% return; %>
-              <% } %>
-
-              <tr>
-                <td><%= pedido.id_pedido %></td>
-                <td><%= pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-AR') : '' %></td>
-                <td><%= pedido.cliente %></td>
-                <td><%= pedido.estado %></td>
-
-                <td style="display:flex; gap:8px; flex-wrap:wrap;">
-                  <button class="btn-ver-detalle" data-carrito-id="<%= pedido.id_pedido %>">🛠 Ver Detalle</button>
-
-                  <% if (est === 'pendiente') { %>
-                    <button onclick='confirmarPedido("<%= pedido.id_pedido %>")'>✅ Confirmar</button>
-                  <% } %>
-
-                  <% if (est === 'confirmado') { %>
-                    <button onclick='prepararPedido("<%= pedido.id_pedido %>")'>📦 En preparación</button>
-                  <% } %>
-
-                  <% if (est === 'preparación') { %>
-                    <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
-                  <% } %>
-
-                  <% if (est === 'listo para entrega') { %>
-                    <button onclick='finalizarPedido("<%= pedido.id_pedido %>")'>✅ Finalizar</button>
-                  <% } %>
-
-                  <% if (est === 'finalizado') { %>
-                    <span style="padding:6px 10px;border-radius:999px;font-weight:700;background:#d4edda;color:#155724;">
-                      ✅ FINALIZADO
-                    </span>
-                  <% } %>
-                </td>
-              </tr>
-            <% }) %>
-          <% } else { %>
-            <tr><td colspan="5">No hay pedidos.</td></tr>
-          <% } %>
-        </tbody>
+        <tbody id="detalle-productos"></tbody>
       </table>
+
+      <p><strong>Subtotal productos:</strong> <span id="subtotal-productos"></span></p>
+      <p><strong>Costo envío:</strong> <span id="costo-envio"></span></p>
+
+      <p class="total-final">Total: <span id="total-final"></span></p>
     </div>
+  </div>
+</main>
 
-    <div id="modal-preparar" class="modal">
-      <div class="modal-contenido">
-        <span class="cerrar-modal" onclick="cerrarModal()">&times;</span>
-        <h3>Detalle del Pedido</h3>
-
-        <p><strong>Cliente:</strong> <span id="nombre-cliente"></span></p>
-        <p><strong>Fecha:</strong> <span id="fecha-pedido"></span></p>
-
-        <table class="tabla-detalle">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Precio Unitario</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody id="detalle-productos"></tbody>
-        </table>
-
-        <p class="total-final">Total: <span id="total-final"></span></p>
-      </div>
-    </div>
-  </main>
 
   <%- include('./layouts/footer.ejs') %>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -424,87 +455,116 @@
   </style>
 
   <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      function cerrarModal() {
-        document.getElementById("modal-preparar").style.display = "none";
-      }
-      window.cerrarModal = cerrarModal;
+  window.addEventListener("DOMContentLoaded", () => {
+    const $ = (id) => document.getElementById(id);
 
-      document.getElementById("modal-preparar").addEventListener("click", (e) => {
-        if (e.target.id === "modal-preparar") cerrarModal();
+    function money(n) {
+      return `$${Number(n || 0).toLocaleString('es-AR')}`;
+    }
+
+    function formatFecha(v) {
+      if (!v) return '-';
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? String(v) : d.toLocaleString('es-AR');
+    }
+
+    function cerrarModal() {
+      const modal = $("modal-preparar");
+      if (modal) modal.style.display = "none";
+    }
+    window.cerrarModal = cerrarModal;
+
+    const modal = $("modal-preparar");
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target && e.target.id === "modal-preparar") cerrarModal();
       });
+    }
 
-      document.querySelectorAll('.btn-ver-detalle').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const carritoId = btn.dataset.carritoId;
-          try {
-            const response = await fetch(`/pedidos/${carritoId}/detalle`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
+    document.querySelectorAll('.btn-ver-detalle').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const carritoId = btn.dataset.carritoId;
 
-            const cuerpoTabla = document.querySelector('#detalle-productos');
-            cuerpoTabla.innerHTML = '';
+        try {
+          const response = await fetch(`/pedidos/${carritoId}/detalle`);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
 
-            document.getElementById('nombre-cliente').textContent = data.cliente || '-';
-            document.getElementById('fecha-pedido').textContent = data.fecha || '-';
-            document.getElementById('total-final').textContent = `$${Number(data.total || 0).toLocaleString('es-AR')}`;
+          const cuerpoTabla = document.querySelector('#detalle-productos');
+          if (cuerpoTabla) cuerpoTabla.innerHTML = '';
 
-            (data.productos || []).forEach(producto => {
-              const fila = document.createElement('tr');
-              fila.innerHTML = `
-                <td>${producto.codigo ?? ''}</td>
-                <td>${producto.nombre ?? ''}</td>
-                <td>${producto.cantidad ?? 0}</td>
-                <td>$${Number(producto.precio_unitario || 0).toLocaleString('es-AR')}</td>
-                <td>$${Number(producto.subtotal || 0).toLocaleString('es-AR')}</td>
-              `;
-              cuerpoTabla.appendChild(fila);
-            });
+          // Datos principales
+          if ($('nombre-cliente')) $('nombre-cliente').textContent = data.cliente || '-';
+          if ($('fecha-pedido')) $('fecha-pedido').textContent = formatFecha(data.fecha);
 
-            document.getElementById("modal-preparar").style.display = "block";
-          } catch (err) {
-            Swal.fire('Error', 'No se pudo cargar el detalle del pedido.', 'error');
-          }
-        });
+          // Envío
+          const esDelivery = (data.tipo_envio === 'delivery');
+          if ($('tipo-envio')) $('tipo-envio').textContent = esDelivery ? 'Delivery' : 'Retiro en local';
+          if ($('direccion-envio')) $('direccion-envio').textContent = esDelivery ? (data.direccion || '-') : '-';
+
+          // Totales (según el model corregido)
+          if ($('subtotal-productos')) $('subtotal-productos').textContent = money(data.total_productos);
+          if ($('costo-envio')) $('costo-envio').textContent = money(data.costo_envio);
+          if ($('total-final')) $('total-final').textContent = money(data.total);
+
+          // Productos
+          (data.productos || []).forEach(producto => {
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+              <td>${producto.codigo ?? ''}</td>
+              <td>${producto.nombre ?? ''}</td>
+              <td>${producto.cantidad ?? 0}</td>
+              <td>${money(producto.precio_unitario)}</td>
+              <td>${money(producto.subtotal)}</td>
+            `;
+            if (cuerpoTabla) cuerpoTabla.appendChild(fila);
+          });
+
+          if (modal) modal.style.display = "block";
+        } catch (err) {
+          Swal.fire('Error', 'No se pudo cargar el detalle del pedido.', 'error');
+        }
       });
-
-      async function postJson(url) {
-        const res = await fetch(url, { method: 'POST' });
-        let data = null;
-        try { data = await res.json(); } catch (_) {}
-        if (!res.ok) throw new Error((data && data.error) ? data.error : `Error HTTP ${res.status}`);
-        return data || {};
-      }
-
-      window.confirmarPedido = async function(id) {
-        try {
-          const data = await postJson(`/pedidos/confirmar/${id}`);
-          Swal.fire('Pedido confirmado', data.mensaje || 'OK', 'success');
-          setTimeout(() => location.reload(), 900);
-        } catch (err) {
-          Swal.fire('Error', err.message || 'No se pudo confirmar.', 'error');
-        }
-      }
-
-      window.prepararPedido = async function(id) {
-        try {
-          const data = await postJson(`/pedidos/marcar-preparado/${id}`);
-          Swal.fire('En preparación', data.mensaje || 'OK', 'info');
-          setTimeout(() => location.reload(), 900);
-        } catch (err) {
-          Swal.fire('Error', err.message || 'No se pudo preparar.', 'error');
-        }
-      }
-
-      window.finalizarPedido = async function(id) {
-        try {
-          const data = await postJson(`/pedidos/finalizar/${id}`);
-          Swal.fire('Pedido finalizado', data.mensaje || 'OK', 'success');
-          setTimeout(() => location.reload(), 900);
-        } catch (err) {
-          Swal.fire('Error', err.message || 'No se pudo finalizar.', 'error');
-        }
-      }
     });
-  </script>
+
+    async function postJson(url) {
+      const res = await fetch(url, { method: 'POST' });
+      let data = null;
+      try { data = await res.json(); } catch (_) {}
+      if (!res.ok) throw new Error((data && data.error) ? data.error : `Error HTTP ${res.status}`);
+      return data || {};
+    }
+
+    window.confirmarPedido = async function(id) {
+      try {
+        const data = await postJson(`/pedidos/confirmar/${id}`);
+        Swal.fire('Pedido confirmado', data.mensaje || 'OK', 'success');
+        setTimeout(() => location.reload(), 900);
+      } catch (err) {
+        Swal.fire('Error', err.message || 'No se pudo confirmar.', 'error');
+      }
+    }
+
+    window.prepararPedido = async function(id) {
+      try {
+        const data = await postJson(`/pedidos/marcar-preparado/${id}`);
+        Swal.fire('En preparación', data.mensaje || 'OK', 'info');
+        setTimeout(() => location.reload(), 900);
+      } catch (err) {
+        Swal.fire('Error', err.message || 'No se pudo preparar.', 'error');
+      }
+    }
+
+    window.finalizarPedido = async function(id) {
+      try {
+        const data = await postJson(`/pedidos/finalizar/${id}`);
+        Swal.fire('Pedido finalizado', data.mensaje || 'OK', 'success');
+        setTimeout(() => location.reload(), 900);
+      } catch (err) {
+        Swal.fire('Error', err.message || 'No se pudo finalizar.', 'error');
+      }
+    }
+  });
+</script>
+
 </body>
