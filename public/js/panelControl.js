@@ -231,48 +231,41 @@ document.addEventListener('DOMContentLoaded', () => {
   let searchResults = [];
   let searchPage = 1;
 
-  function renderSearchPagination() {
-    if (!paginacionEl) return;
+function renderSearchPagination() {
+  if (!paginacionEl) return;
 
-    const totalPages = Math.max(1, Math.ceil(searchResults.length / PAGE_SIZE));
+  const totalPages = Math.ceil(searchResults.length / PAGE_SIZE);
 
-    const btn = (label, page, disabled, active) => `
-      <button
-        type="button"
-        class="panel-page-btn ${active ? 'is-active' : ''}"
-        ${disabled ? 'disabled' : ''}
-        data-page="${page}"
-      >${label}</button>
-    `;
-
-    let html = `<div class="panel-pages">`;
-    html += btn('«', 1, searchPage === 1, false);
-    html += btn('‹', Math.max(1, searchPage - 1), searchPage === 1, false);
-
-    // ventana simple de páginas
-    const total = totalPages;
-    const start = Math.max(1, searchPage - 2);
-    const end = Math.min(total, searchPage + 2);
-
-    for (let p = start; p <= end; p++) {
-      html += btn(String(p), p, false, p === searchPage);
-    }
-
-    html += btn('›', Math.min(total, searchPage + 1), searchPage === total, false);
-    html += btn('»', total, searchPage === total, false);
-    html += `</div>`;
-
-    paginacionEl.innerHTML = html;
-
-    paginacionEl.querySelectorAll('button[data-page]').forEach(b => {
-      b.addEventListener('click', () => {
-        const p = Number(b.dataset.page);
-        if (!Number.isFinite(p)) return;
-        searchPage = p;
-        renderSearchPage();
-      });
-    });
+  if (totalPages <= 1) {
+    paginacionEl.innerHTML = '';
+    return;
   }
+
+  const prev = (searchPage > 1)
+    ? `<a href="#" data-page="${searchPage - 1}">&laquo;</a>`
+    : `<span>&laquo;</span>`;
+
+  const next = (searchPage < totalPages)
+    ? `<a href="#" data-page="${searchPage + 1}">&raquo;</a>`
+    : `<span>&raquo;</span>`;
+
+  paginacionEl.innerHTML = `
+    ${prev}
+    <span class="active">${searchPage}</span>
+    <span>de ${totalPages}</span>
+    ${next}
+  `;
+
+  paginacionEl.querySelectorAll('a[data-page]').forEach(a => {
+    a.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const p = Number(a.dataset.page);
+      if (!Number.isFinite(p) || p < 1 || p > totalPages) return;
+      searchPage = p;
+      renderSearchPage();
+    });
+  });
+}
 
   function renderSearchPage() {
     const busquedaActual = (inputBusqueda?.value || '').trim();
