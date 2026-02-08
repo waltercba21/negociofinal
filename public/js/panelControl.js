@@ -127,25 +127,43 @@ function buildEditUrl(id, paginaActual, busquedaActual) {
   return `/productos/editar/${id}${q ? `?${q}` : ''}`;
 }
 
-function renderPanelListado(contenedor, lista, paginaActual, busquedaActual) {
+function renderPanelListado(contenedor, lista, paginaOrOpts, busquedaMaybe) {
   if (!contenedor) return;
 
-  if (!Array.isArray(lista) || lista.length === 0) {
+  // Soporta: renderPanelListado(contenedor, lista, pagina, busqueda)
+  // y también: renderPanelListado(contenedor, lista, { paginaActual, busquedaActual })
+  let paginaActual = 1;
+  let busquedaActual = '';
+
+  if (paginaOrOpts && typeof paginaOrOpts === 'object') {
+    paginaActual = Number(paginaOrOpts.paginaActual || 1) || 1;
+    busquedaActual = String(paginaOrOpts.busquedaActual || '');
+  } else {
+    paginaActual = Number(paginaOrOpts || 1) || 1;
+    busquedaActual = String(busquedaMaybe || '');
+  }
+
+  const arr = Array.isArray(lista) ? lista : [];
+
+  if (arr.length === 0) {
     contenedor.innerHTML = `<div class="panel-alert">No hay productos para mostrar.</div>`;
-    bindDeleteButton();
+    bindDeleteButton(document);
     return;
   }
 
-  const rows = lista.map(p => {
+  const rows = arr.map(p => {
     const categoria = p.categoria || p.categoria_nombre || 'Sin categoría';
     const nombre = p.nombre || '';
-    const precio = (p.precio_venta != null && p.precio_venta !== '')
-      ? `$${formatPrecio(p.precio_venta)}`
-      : '$0';
 
-    const imagenHtml = (p.imagenes && p.imagenes.length > 0)
+    const precioNum = Number(p.precio_venta);
+    const precio = Number.isFinite(precioNum) ? `$${formatPrecio(precioNum)}` : '$0';
+
+    // ✅ soporta imagenes como ["a.jpg"] o como [{producto_id, imagen:"a.jpg"}]
+    const img = firstImageFilename(p);
+
+    const imagenHtml = img
       ? `<div class="panel-image-container">
-           <img src="/uploads/productos/${p.imagenes[0]}"
+           <img src="/uploads/productos/${img}"
                 alt="Imagen de ${nombre}"
                 class="product-image" />
          </div>`
@@ -153,7 +171,7 @@ function renderPanelListado(contenedor, lista, paginaActual, busquedaActual) {
            <span class="no-image">(Sin imagen)</span>
          </div>`;
 
-    const action = buildEditUrl(p.id, paginaActual || 1, busquedaActual || '');
+    const action = buildEditUrl(p.id, paginaActual, busquedaActual);
 
     return `
       <div class="panel-row">
@@ -198,8 +216,9 @@ function renderPanelListado(contenedor, lista, paginaActual, busquedaActual) {
     </div>
   `;
 
-  bindDeleteButton();
+  bindDeleteButton(document);
 }
+
 
 
 
@@ -310,8 +329,17 @@ function renderSearchPagination() {
       }
 
       try {
-        const respuesta = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda) + '&limite=1000');
-        searchResults = await respuesta.json();
+        const current = new URLSearchParams(window.location.search);
+const proveedor = current.get('proveedor');
+const categoria = current.get('categoria');
+
+let url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda) + '&limite=1000';
+
+if (proveedor && proveedor !== 'TODOS') url += '&proveedor_id=' + encodeURIComponent(proveedor);
+if (categoria && categoria !== '' && categoria !== 'TODAS') url += '&categoria_id=' + encodeURIComponent(categoria);
+
+const respuesta = await fetch(url);
+
       } catch (err) {
         console.error('Error al buscar productos:', err);
         searchResults = [];
