@@ -1215,12 +1215,25 @@ try {
   // No frenamos el guardado del producto si las tablas de escobillas no están
   console.error('[ACTUALIZAR][ESCOBILLAS] No se pudo guardar:', e.message);
 }
+// ---------- Redirect ----------
+const params = new URLSearchParams();
 
-    // ---------- Redirect ----------
-    const pagina = req.body.pagina || 1;
-    const busqueda = req.body.busqueda ? encodeURIComponent(req.body.busqueda) : '';
-    console.log("===== Fin actualizar (OK) =====");
-    return res.redirect(`/productos/panelControl?pagina=${pagina}&busqueda=${busqueda}`);
+const pagina = Number(req.body.pagina || req.query.pagina || 1);
+if (Number.isFinite(pagina) && pagina > 0) params.set('pagina', String(pagina));
+
+const busqueda = (typeof req.body.busqueda === 'string' ? req.body.busqueda : (typeof req.query.busqueda === 'string' ? req.query.busqueda : '')).trim();
+if (busqueda) params.set('busqueda', busqueda);
+
+// Si en el POST no vienen, no rompe; si los empezás a mandar, ya quedan preservados.
+const proveedor = (typeof req.body.proveedorSeleccionado === 'string' ? req.body.proveedorSeleccionado : (typeof req.query.proveedor === 'string' ? req.query.proveedor : '')).trim();
+if (proveedor) params.set('proveedor', proveedor);
+
+const categoria = (typeof req.body.categoriaSeleccionada === 'string' ? req.body.categoriaSeleccionada : (typeof req.query.categoria === 'string' ? req.query.categoria : '')).trim();
+if (categoria) params.set('categoria', categoria);
+
+console.log("===== Fin actualizar (OK) =====");
+return res.redirect(`/productos/panelControl?${params.toString()}`);
+
   } catch (error) {
     console.error("===== Error durante la ejecución en actualizar =====");
     console.error(error);

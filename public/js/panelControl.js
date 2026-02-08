@@ -104,68 +104,67 @@ function firstImageFilename(producto) {
   return null;
 }
 
-function formatPrecio(v) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return '-';
+function formatPrecio(value) {
+  const n = Number(value || 0);
   return Math.round(n).toLocaleString('es-AR');
 }
 
 function buildEditUrl(id, paginaActual, busquedaActual) {
+  const current = new URLSearchParams(window.location.search);
   const qs = new URLSearchParams();
+
+  // Preservar filtros actuales del panel (si están en la URL)
+  const proveedor = current.get('proveedor');
+  const categoria = current.get('categoria');
+  if (proveedor) qs.set('proveedor', proveedor);
+  if (categoria) qs.set('categoria', categoria);
+
+  // Preservar estado de paginado/búsqueda
   if (paginaActual) qs.set('pagina', String(paginaActual));
   if (busquedaActual) qs.set('busqueda', busquedaActual);
-  return `/productos/editar/${id}?${qs.toString()}`;
+
+  const q = qs.toString();
+  return `/productos/editar/${id}${q ? `?${q}` : ''}`;
 }
 
-function renderPanelListado(contenedor, productos, { paginaActual = 1, busquedaActual = '' } = {}) {
+function renderPanelListado(contenedor, lista, paginaActual, busquedaActual) {
   if (!contenedor) return;
 
-  const lista = Array.isArray(productos) ? productos : [];
-
-  if (lista.length === 0) {
+  if (!Array.isArray(lista) || lista.length === 0) {
     contenedor.innerHTML = `<div class="panel-alert">No hay productos para mostrar.</div>`;
+    bindDeleteButton();
     return;
   }
 
-  let html = `
-    <div class="panel-header">
-      <div class="panel-col panel-col-small">✔</div>
-      <div class="panel-col">Categoría</div>
-      <div class="panel-col">Nombre</div>
-      <div class="panel-col">Imagen</div>
-      <div class="panel-col">Precio</div>
-      <div class="panel-col">Acciones</div>
-    </div>
-  `;
-
-  for (const p of lista) {
+  const rows = lista.map(p => {
     const categoria = p.categoria || p.categoria_nombre || 'Sin categoría';
-    const img = firstImageFilename(p);
-
-    const imgHtml = img
-      ? `<div class="panel-image-container">
-           <img src="/uploads/productos/${img}" alt="Imagen de ${p.nombre || ''}" class="product-image" />
-         </div>`
-      : `<div class="panel-image-container"><span class="no-image">(Sin imagen)</span></div>`;
-
+    const nombre = p.nombre || '';
     const precio = (p.precio_venta != null && p.precio_venta !== '')
-      ? '$' + parseInt(p.precio_venta, 10)
+      ? `$${formatPrecio(p.precio_venta)}`
       : '$0';
 
-    const qs = new URLSearchParams({ pagina: String(paginaActual || 1) });
-    if (busquedaActual) qs.set('busqueda', busquedaActual);
-    const action = `/productos/editar/${p.id}?${qs.toString()}`;
+    const imagenHtml = (p.imagenes && p.imagenes.length > 0)
+      ? `<div class="panel-image-container">
+           <img src="/uploads/productos/${p.imagenes[0]}"
+                alt="Imagen de ${nombre}"
+                class="product-image" />
+         </div>`
+      : `<div class="panel-image-container">
+           <span class="no-image">(Sin imagen)</span>
+         </div>`;
 
-    html += `
+    const action = buildEditUrl(p.id, paginaActual || 1, busquedaActual || '');
+
+    return `
       <div class="panel-row">
         <div class="panel-col panel-col-small">
           <input type="checkbox" class="product-check" value="${p.id}" />
         </div>
 
         <div class="panel-text-small-bold">${categoria}</div>
-        <div class="panel-text-small-bold">${p.nombre || '-'}</div>
+        <div class="panel-text-small-bold">${nombre}</div>
 
-        <div class="panel-col">${imgHtml}</div>
+        <div class="panel-col">${imagenHtml}</div>
 
         <div class="panel-col panel-price">${precio}</div>
 
@@ -178,9 +177,20 @@ function renderPanelListado(contenedor, productos, { paginaActual = 1, busquedaA
         </div>
       </div>
     `;
-  }
+  }).join('');
 
-  html += `
+  contenedor.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-col panel-col-small">✔</div>
+      <div class="panel-col">Categoría</div>
+      <div class="panel-col">Nombre</div>
+      <div class="panel-col">Imagen</div>
+      <div class="panel-col">Precio</div>
+      <div class="panel-col">Acciones</div>
+    </div>
+
+    ${rows}
+
     <div class="panel-actions">
       <button id="delete-selected" class="btn-delete" type="button">
         Eliminar seleccionados
@@ -188,9 +198,9 @@ function renderPanelListado(contenedor, productos, { paginaActual = 1, busquedaA
     </div>
   `;
 
-  contenedor.innerHTML = html;
-  bindDeleteButton(contenedor);
+  bindDeleteButton();
 }
+
 
 
 // -----------------------------
