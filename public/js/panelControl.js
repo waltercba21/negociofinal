@@ -97,134 +97,169 @@ function bindDeleteButton(scope = document) {
     }
   });
 }
-
 // -------------------------------------------------------------------
-// 1) Buscador dinámico + render de resultados
+// 1) Buscador dinámico + render (mismo markup que EJS)
 // -------------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', function () {
-  const urlParams = new URLSearchParams(window.location.search);
-  const searchValue = urlParams.get('busqueda');
-  const contenedorProductos = document.querySelector('.panel-container');
-  const inputBusqueda = document.getElementById('entradaBusqueda');
+function firstImageFilename(prod) {
+  const imgs = prod?.imagenes;
+  if (!imgs || !Array.isArray(imgs) || imgs.length === 0) return null;
 
-  if (searchValue && inputBusqueda) {
-    inputBusqueda.value = searchValue;
+  const first = imgs[0];
+  if (typeof first === 'string') return first;
+  if (first && typeof first === 'object' && typeof first.imagen === 'string') return first.imagen;
+
+  return null;
+}
+
+function formatPrecio(valor) {
+  const n = Number(valor);
+  if (!Number.isFinite(n)) return 'N/A';
+  return '$' + Math.trunc(n).toLocaleString('de-DE');
+}
+
+function buildEditUrl(id, paginaActual, busquedaActual) {
+  const p = Number.isFinite(Number(paginaActual)) && Number(paginaActual) > 0 ? Number(paginaActual) : 1;
+  const b = (busquedaActual || '').trim();
+  const qs = new URLSearchParams({ pagina: String(p) });
+  if (b) qs.set('busqueda', b);
+  return `/productos/editar/${id}?${qs.toString()}`;
+}
+
+function renderPanelListado(contenedor, productos, { paginaActual = 1, busquedaActual = '' } = {}) {
+  if (!contenedor) return;
+
+  const lista = Array.isArray(productos) ? productos : [];
+
+  if (lista.length === 0) {
+    contenedor.innerHTML = `<div class="panel-alert">No hay productos para mostrar.</div>`;
+    return;
   }
 
-  let timer;
-  inputBusqueda?.addEventListener('input', function (e) {
-    clearTimeout(timer);
-    timer = setTimeout(async () => {
-      const busqueda = e.target.value.trim();
-      contenedorProductos.innerHTML = '';
+  let html = `
+    <div class="panel-header">
+      <div class="panel-col panel-col-small">✔</div>
+      <div class="panel-col">Categoría</div>
+      <div class="panel-col">Nombre</div>
+      <div class="panel-col">Imagen</div>
+      <div class="panel-col">Precio</div>
+      <div class="panel-col">Acciones</div>
+    </div>
+  `;
 
-      let productos = [];
-      if (!busqueda) return;
+  for (const p of lista) {
+    const categoria = p.categoria || p.categoria_nombre || 'Sin categoría';
+    const img = firstImageFilename(p);
+    const imgHtml = img
+      ? `<div class="panel-image-container">
+           <img src="/uploads/productos/${img}" alt="Imagen de ${p.nombre || ''}" class="product-image" />
+         </div>`
+      : `<div class="panel-image-container"><span class="no-image">(Sin imagen)</span></div>`;
 
-      try {
-        const respuesta = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda));
-        productos = await respuesta.json();
-      } catch (err) {
-        console.error('Error al buscar productos:', err);
-      }
+    const precio = formatPrecio(p.precio_venta);
+    const editUrl = buildEditUrl(p.id, paginaActual, busquedaActual);
 
-      if (productos.length === 0) {
-        contenedorProductos.innerHTML = '<div class="alert alert-warning text-center mt-4">No se encontraron productos para esta búsqueda.</div>';
-        return;
-      }
+    html += `
+      <div class="panel-row">
+        <div class="panel-col panel-col-small">
+          <input type="checkbox" class="product-check" value="${p.id}" />
+        </div>
 
-      // Render encabezado
-      const encabezado = `
-        <div class="row fw-bold border-bottom py-2 text-center d-none d-md-flex">
-          <div class="col-md-1">✔</div>
-          <div class="col-md-2">Categoría</div>
-          <div class="col-md-3">Nombre</div>
-          <div class="col-md-2">Imagen</div>
-          <div class="col-md-2">Precio</div>
-          <div class="col-md-2">Acciones</div>
-        </div>`;
-      contenedorProductos.insertAdjacentHTML('beforeend', encabezado);
+        <div class="panel-text-small-bold">${categoria}</div>
+        <div class="panel-text-small-bold">${p.nombre || '-'}</div>
 
-      const paginaActual = 1;
-      const busquedaActual = document.getElementById('entradaBusqueda')?.value.trim() || '';
+        <div class="panel-col">${imgHtml}</div>
 
-      // Render productos
-      productos.forEach(producto => {
-        const categoria = producto.categoria_nombre || 'Sin categoría';
-        let imagenURL = '/img/default.jpg';
+        <div class="panel-col panel-price">${precio}</div>
 
-        if (producto.imagenes && producto.imagenes.length > 0) {
-          const primera = producto.imagenes[0];
-          imagenURL = typeof primera === 'string'
-            ? `/uploads/productos/${primera}`
-            : (primera.imagen ? `/uploads/productos/${primera.imagen}` : imagenURL);
-        }
+        <div class="panel-col">
+          <a class="btn-edit" href="${editUrl}">
+            <i class="fas fa-edit"></i> Editar
+          </a>
+        </div>
+      </div>
+    `;
+  }
 
-        const precio = producto.precio_venta
-          ? `$${Math.floor(producto.precio_venta).toLocaleString('de-DE')}`
-          : 'Precio no disponible';
+  html += `
+    <div class="panel-actions">
+      <button id="delete-selected" class="btn-delete" type="button">Eliminar seleccionados</button>
+    </div>
+  `;
 
-        const action = `/productos/editar/${producto.id}?pagina=${paginaActual}&busqueda=${encodeURIComponent(busquedaActual)}`;
+  contenedor.innerHTML = html;
+  bindDeleteButton(contenedor);
+}
 
-        const fila = `
-          <div class="row align-items-center border rounded p-2 mb-2 shadow-sm gx-2">
-            <div class="col-12 col-md-1 text-center">
-              <input type="checkbox" class="form-check-input product-check" value="${producto.id}" />
-            </div>
-            <div class="col-12 col-md-2 text-center fw-bold">${categoria}</div>
-            <div class="col-12 col-md-3 text-center">${producto.nombre}</div>
-            <div class="col-12 col-md-2 text-center">
-              <img src="${imagenURL}" alt="Imagen de ${producto.nombre}" class="img-thumbnail" style="max-width: 80px;" />
-            </div>
-            <div class="col-12 col-md-2 text-center fw-semibold text-success">${precio}</div>
-            <div class="col-12 col-md-2 text-center">
-              <a href="${action}" class="btn btn-sm btn-warning">
-                <i class="fas fa-edit"></i> Editar
-              </a>
-            </div>
-          </div>`;
-        contenedorProductos.insertAdjacentHTML('beforeend', fila);
-      });
+document.addEventListener('DOMContentLoaded', function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const contenedorProductos = document.querySelector('.panel-container');
+  const inputBusqueda = document.getElementById('entradaBusqueda');
+  const paginacion = document.querySelector('.panel-paginacion');
 
-      // Insertar botón Eliminar
-      const eliminarHTML = `
-        <div class="panel-actions mt-3 text-center">
-          <button id="delete-selected" class="btn-delete btn btn-danger" type="button">
-            Eliminar seleccionados
-          </button>
-        </div>`;
-      contenedorProductos.insertAdjacentHTML('beforeend', eliminarHTML);
-
-      // ✅ Conectar el botón de esta sección dinámica
-      bindDeleteButton(contenedorProductos);
-
-    }, 300);
-  });
-
-  // ✅ Conectar el botón del listado inicial (EJS) por si no se usa el buscador
-  bindDeleteButton(document);
-});
-
-// ----------------------------------------------------------
-// 2) Inicializaciones (prefill buscador + carga de productos)
-// ----------------------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
+  // Guardar listado original (para restaurar al borrar búsqueda)
   const dataEl = document.getElementById('productos-data');
   if (dataEl) {
     try {
       window.productosOriginales = JSON.parse(dataEl.textContent);
     } catch (e) {
       console.warn('No se pudo parsear productos-data:', e);
+      window.productosOriginales = [];
     }
+  } else {
+    window.productosOriginales = [];
   }
 
-  const inputBusqueda = document.getElementById('entradaBusqueda');
-  const busquedaActual = (typeof busquedaActualDesdeServidor !== 'undefined' && busquedaActualDesdeServidor)
-    ? JSON.parse(busquedaActualDesdeServidor)
-    : (typeof window.busquedaActualDesdeServidor !== 'undefined' ? window.busquedaActualDesdeServidor : '');
+  const paginaActual = Number(urlParams.get('pagina') || 1) || 1;
 
-  if (busquedaActual && inputBusqueda) {
-    inputBusqueda.value = busquedaActual;
+  // Botón eliminar del listado inicial (server-render)
+  bindDeleteButton(document);
+
+  let timer;
+  inputBusqueda?.addEventListener('input', function (e) {
+    clearTimeout(timer);
+
+    timer = setTimeout(async () => {
+      const busqueda = (e.target.value || '').trim();
+
+      // Mostrar/ocultar paginación según modo
+      if (paginacion) {
+        if (busqueda) paginacion.classList.add('d-none');
+        else paginacion.classList.remove('d-none');
+      }
+
+      // Si no hay búsqueda => restaurar listado original
+      if (!busqueda) {
+        renderPanelListado(contenedorProductos, window.productosOriginales, {
+          paginaActual,
+          busquedaActual: ''
+        });
+        return;
+      }
+
+      try {
+        const respuesta = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda));
+        const productos = await respuesta.json();
+
+        if (!Array.isArray(productos) || productos.length === 0) {
+          contenedorProductos.innerHTML = `<div class="panel-alert">No se encontraron productos para esta búsqueda.</div>`;
+          return;
+        }
+
+        renderPanelListado(contenedorProductos, productos, {
+          paginaActual,
+          busquedaActual: busqueda
+        });
+      } catch (err) {
+        console.error('Error al buscar productos:', err);
+        contenedorProductos.innerHTML = `<div class="panel-alert">Error al buscar productos.</div>`;
+      }
+    }, 300);
+  });
+
+  // Si viene ?busqueda=... en la URL (volver desde Editar), disparar búsqueda
+  const searchValue = (urlParams.get('busqueda') || '').trim();
+  if (searchValue && inputBusqueda) {
+    inputBusqueda.value = searchValue;
     inputBusqueda.dispatchEvent(new Event('input'));
   }
 });
