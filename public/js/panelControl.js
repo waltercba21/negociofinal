@@ -190,69 +190,202 @@ function renderPanelListado(contenedor, productos, { paginaActual = 1, busquedaA
   bindDeleteButton(contenedor);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+// -------------------------------------------------------------------
+// 1) Buscador dinámico + render (grid del EJS) + paginado en búsqueda
+// -------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
+
   const contenedorProductos = document.querySelector('.panel-container');
   const inputBusqueda = document.getElementById('entradaBusqueda');
-  const paginacion = document.querySelector('.panel-paginacion');
 
-  // Guardar listado original (para restaurar al borrar búsqueda)
+  const paginacionEl = document.querySelector('.panel-paginacion');
+  const paginacionOriginalHTML = paginacionEl ? paginacionEl.innerHTML : '';
+
+  const paginaActual = Number(urlParams.get('pagina') || 1) || 1;
+
+  const PAGE_SIZE = 30; // igual al server
+  let searchResults = [];
+  let searchPage = 1;
+
+  // Guardar listado original (JSON embebido por EJS)
+  let productosOriginales = [];
   const dataEl = document.getElementById('productos-data');
   if (dataEl) {
     try {
-      window.productosOriginales = JSON.parse(dataEl.textContent);
+      productosOriginales = JSON.parse(dataEl.textContent) || [];
     } catch (e) {
       console.warn('No se pudo parsear productos-data:', e);
-      window.productosOriginales = [];
+      productosOriginales = [];
     }
-  } else {
-    window.productosOriginales = [];
+  }
+  window.productosOriginales = productosOriginales;
+
+  function restoreServerPagination() {
+    if (paginacionEl) paginacionEl.innerHTML = paginacionOriginalHTML;
   }
 
-  const paginaActual = Number(urlParams.get('pagina') || 1) || 1;
+  function firstImageFilename(prod) {
+    const imgs = prod?.imagenes;
+    if (!imgs || !Array.isArray(imgs) || imgs.length === 0) return null;
+
+    const first = imgs[0];
+    if (typeof first === 'string') return first;
+    if (first && typeof first === 'object' && typeof first.imagen === 'string') return first.imagen;
+    return null;
+  }
+
+  function renderPanelListado(productos, busquedaActual) {
+    if (!contenedorProductos) return;
+
+    const lista = Array.isArray(productos) ? productos : [];
+
+    if (lista.length === 0) {
+      contenedorProductos.innerHTML = `<div class="panel-alert">No hay productos para mostrar.</div>`;
+      return;
+    }
+
+    let html = `
+      <div class="panel-header">
+        <div class="panel-col panel-col-small">✔</div>
+        <div class="panel-col">Categoría</div>
+        <div class="panel-col">Nombre</div>
+        <div class="panel-col">Imagen</div>
+        <div class="panel-col">Precio</div>
+        <div class="panel-col">Acciones</div>
+      </div>
+    `;
+
+    for (const p of lista) {
+      const categoria = p.categoria || p.categoria_nombre || 'Sin categoría';
+      const img = firstImageFilename(p);
+
+      const imgHtml = img
+        ? `<div class="panel-image-container">
+             <img src="/uploads/productos/${img}" alt="Imagen de ${p.nombre || ''}" class="product-image" />
+           </div>`
+        : `<div class="panel-image-container"><span class="no-image">(Sin imagen)</span></div>`;
+
+      const precio = (p.precio_venta != null && p.precio_venta !== '')
+        ? `$${parseInt(p.precio_venta, 10)}`
+        : '$0';
+
+      const qs = new URLSearchParams({ pagina: String(paginaActual) });
+      if (busquedaActual) qs.set('busqueda', busquedaActual);
+
+      const action = `/productos/editar/${p.id}?${qs.toString()}`;
+
+      html += `
+        <div class="panel-row">
+          <div class="panel-col panel-col-small">
+            <input type="checkbox" class="product-check" value="${p.id}" />
+          </div>
+
+          <div class="panel-text-small-bold">${categoria}</div>
+          <div class="panel-text-small-bold">${p.nombre || '-'}</div>
+
+          <div class="panel-col">${imgHtml}</div>
+
+          <div class="panel-col panel-price">${precio}</div>
+
+          <div class="panel-col">
+            <form method="get" action="${action}">
+              <button class="btn-edit" type="submit">
+                <i class="fas fa-edit"></i> Editar
+              </button>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="panel-actions">
+        <button id="delete-selected" class="btn-delete" type="button">Eliminar seleccionados</button>
+      </div>
+    `;
+
+    contenedorProductos.innerHTML = html;
+    bindDeleteButton(contenedorProductos);
+  }
+
+  function renderSearchPagination() {
+    if (!paginacionEl) return;
+
+    const totalPages = Math.ceil(searchResults.length / PAGE_SIZE);
+
+    if (totalPages <= 1) {
+      paginacionEl.innerHTML = '';
+      return;
+    }
+
+    const prev = (searchPage > 1)
+      ? `<a href="#" data-page="${searchPage - 1}">&laquo;</a>`
+      : `<span>&laquo;</span>`;
+
+    const next = (searchPage < totalPages)
+      ? `<a href="#" data-page="${searchPage + 1}">&raquo;</a>`
+      : `<span>&raquo;</span>`;
+
+    paginacionEl.innerHTML = `
+      ${prev}
+      <span class="active">${searchPage}</span>
+      <span>de ${totalPages}</span>
+      ${next}
+    `;
+
+    paginacionEl.querySelectorAll('a[data-page]').forEach(a => {
+      a.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        searchPage = Number(a.dataset.page) || 1;
+        renderSearchPage();
+      });
+    });
+  }
+
+  function renderSearchPage() {
+    const busquedaActual = (inputBusqueda?.value || '').trim();
+    const start = (searchPage - 1) * PAGE_SIZE;
+    const pageItems = searchResults.slice(start, start + PAGE_SIZE);
+
+    renderPanelListado(pageItems, busquedaActual);
+    renderSearchPagination();
+  }
 
   // Botón eliminar del listado inicial (server-render)
   bindDeleteButton(document);
 
   let timer;
-  inputBusqueda?.addEventListener('input', function (e) {
+  inputBusqueda?.addEventListener('input', (e) => {
     clearTimeout(timer);
 
     timer = setTimeout(async () => {
       const busqueda = (e.target.value || '').trim();
 
-      // Mostrar/ocultar paginación según modo
-      if (paginacion) {
-        if (busqueda) paginacion.classList.add('d-none');
-        else paginacion.classList.remove('d-none');
-      }
-
-      // Si no hay búsqueda => restaurar listado original
+      // Si está vacío: restaurar listado original + paginación server
       if (!busqueda) {
-        renderPanelListado(contenedorProductos, window.productosOriginales, {
-          paginaActual,
-          busquedaActual: ''
-        });
+        restoreServerPagination();
+        renderPanelListado(productosOriginales, '');
         return;
       }
 
+      // Modo búsqueda: traer resultados + paginado client-side
       try {
-        const respuesta = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda));
-        const productos = await respuesta.json();
-
-        if (!Array.isArray(productos) || productos.length === 0) {
-          contenedorProductos.innerHTML = `<div class="panel-alert">No se encontraron productos para esta búsqueda.</div>`;
-          return;
-        }
-
-        renderPanelListado(contenedorProductos, productos, {
-          paginaActual,
-          busquedaActual: busqueda
-        });
+        const resp = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda) + '&limite=1000');
+        searchResults = await resp.json();
       } catch (err) {
         console.error('Error al buscar productos:', err);
-        contenedorProductos.innerHTML = `<div class="panel-alert">Error al buscar productos.</div>`;
+        searchResults = [];
       }
+
+      if (!Array.isArray(searchResults) || searchResults.length === 0) {
+        if (paginacionEl) paginacionEl.innerHTML = '';
+        contenedorProductos.innerHTML = `<div class="panel-alert">No se encontraron productos para esta búsqueda.</div>`;
+        return;
+      }
+
+      searchPage = 1;
+      renderSearchPage();
     }, 300);
   });
 
@@ -263,6 +396,7 @@ document.addEventListener('DOMContentLoaded', function () {
     inputBusqueda.dispatchEvent(new Event('input'));
   }
 });
+
 
 // ----------------------------------------------------------
 // 3) Lógica del formulario de reportes PDF (validaciones)
