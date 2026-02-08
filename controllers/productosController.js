@@ -1624,6 +1624,7 @@ getProductosPorCategoria : async (req, res) => {
 generarPDFProveedor: async function (req, res) {
   const PDFDocument = require('pdfkit');
   const streamBuffers = require('stream-buffers');
+
   const buffer = new streamBuffers.WritableStreamBuffer({
     initialSize: 1024 * 1024,
     incrementAmount: 1024 * 1024
@@ -1635,16 +1636,28 @@ generarPDFProveedor: async function (req, res) {
   // Normalización
   const proveedorIdRaw = req.query.proveedor;
   const categoriaIdRaw = req.query.categoria;
-  const tipo = req.query.tipo;
+  const tipo = String(req.query.tipo || 'stock');
 
   const proveedorId = (!proveedorIdRaw || proveedorIdRaw === 'TODOS') ? null : proveedorIdRaw;
   const categoriaId = (!categoriaIdRaw || categoriaIdRaw === 'TODAS' || categoriaIdRaw === '') ? null : categoriaIdRaw;
 
+  let errorResponseSent = false;
+
+  // Enviar PDF al finalizar (solo si NO hubo error 500)
+  buffer.on('finish', function () {
+    if (errorResponseSent) return;
+    const pdfData = buffer.getContents();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
+    res.send(pdfData);
+  });
+
   try {
     const proveedores = await producto.obtenerProveedores(conexion);
     const categorias  = await producto.obtenerCategorias(conexion);
-    const proveedor   = proveedorId ? proveedores.find(p => String(p.id) === String(proveedorId)) : null;
-    const categoria   = categoriaId ? categorias.find(c => String(c.id) === String(categoriaId)) : null;
+
+    const proveedor = proveedorId ? proveedores.find(p => String(p.id) === String(proveedorId)) : null;
+    const categoria = categoriaId ? categorias.find(c => String(c.id) === String(categoriaId)) : null;
 
     const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
     const nombreCategoria = categoria ? categoria.nombre : 'Todas las categorías';
@@ -1653,10 +1666,13 @@ generarPDFProveedor: async function (req, res) {
     const titulos = {
       pedido: `Faltantes (Proveedor más barato) - ${nombreProveedor}${categoria ? ' - ' + nombreCategoria : ''}`,
       asignado: `Faltantes del proveedor asignado - ${nombreProveedor}${categoria ? ' - ' + nombreCategoria : ''}`,
+      asignadoCompleto: `Listado completo del proveedor asignado - ${nombreProveedor}${categoria ? ' - ' + nombreCategoria : ''}`,
+      asignadoPorCategoria: `Proveedor asignado por categoría - ${nombreProveedor}${categoria ? ' - ' + nombreCategoria : ''}`,
       porCategoria: `Stock por categoría - ${nombreCategoria}${proveedor ? ' - ' + nombreProveedor : ''}`,
       categoriaProveedorMasBarato: `Proveedor más barato por categoría - ${nombreProveedor} - ${nombreCategoria}`,
       stock: `Stock - ${nombreProveedor}${categoria ? ' - ' + nombreCategoria : ''}`
     };
+
     const titulo = titulos[tipo] || titulos.stock;
 
     doc.fontSize(14).text(titulo, { align: 'center', width: doc.page.width - 60 });
@@ -1664,26 +1680,47 @@ generarPDFProveedor: async function (req, res) {
 
     // === Obtener productos según tipo ===
     let productos = [];
+
     if (tipo === 'pedido') {
       // faltantes con proveedor más barato (ya viene filtrado por stock en SQL)
       productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
+
     } else if (tipo === 'asignado') {
       if (!proveedorId) {
         productos = [];
       } else {
-        // solo asignados a ese proveedor
         productos = await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId);
-        // faltantes: coerción numérica segura (null/strings → 0)
+        // faltantes: coerción numérica segura
         productos = productos.filter(p => (Number(p.stock_actual) || 0) < (Number(p.stock_minimo) || 0));
       }
+
+    } else if (tipo === 'asignadoCompleto') {
+      if (!proveedorId) {
+        productos = [];
+      } else {
+        // listado completo (sin filtrar faltantes)
+        productos = await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId);
+      }
+
+    } else if (tipo === 'asignadoPorCategoria') {
+      // requiere proveedor + categoría (el front lo valida)
+      if (!proveedorId || !categoriaId) {
+        productos = [];
+      } else {
+        productos = await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId);
+      }
+
     } else if (tipo === 'porCategoria') {
+      // ✅ coherente con la UI: si no hay categoría, no devolver “fallback” por proveedor
       productos = categoriaId
         ? await producto.obtenerProductosPorCategoria(conexion, categoriaId)
-        : await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, null);
+        : [];
+
     } else if (tipo === 'categoriaProveedorMasBarato') {
       productos = (proveedorId && categoriaId)
         ? await producto.obtenerProductosPorCategoriaYProveedorMasBarato(conexion, proveedorId, categoriaId)
         : [];
+
     } else {
       // stock completo/filtrado
       productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
@@ -1697,22 +1734,10 @@ generarPDFProveedor: async function (req, res) {
     if (!productos.length) {
       doc.fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
       doc.end();
-      buffer.on('finish', function () {
-        const pdfData = buffer.getContents();
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-        res.send(pdfData);
-      });
       return;
     }
 
     // Helpers de render
-    const formatearMoneda = (n) => {
-      const num = Number(n);
-      if (!Number.isFinite(num)) return 'N/A';
-      return '$' + num.toFixed(2);
-    };
-
     const drawHeader = (cols) => {
       doc.fontSize(10).fillColor('black');
       const y = doc.y;
@@ -1768,10 +1793,10 @@ generarPDFProveedor: async function (req, res) {
       drawHeader(COLS_STOCK);
       productos.forEach(p => {
         drawRow([
-          { t: (p.codigo_proveedor || p.codigo || '-'),             w: 80 },
-          { t: p.nombre || '-',                                     w: 290 },
-          { t: String(Number(p.stock_minimo) || 0),                 w: 80, a: 'center' },
-          { t: String(Number(p.stock_actual) || 0),                 w: 90, a: 'center' },
+          { t: (p.codigo_proveedor || p.codigo || '-'), w: 80 },
+          { t: p.nombre || '-',                         w: 290 },
+          { t: String(Number(p.stock_minimo) || 0),     w: 80, a: 'center' },
+          { t: String(Number(p.stock_actual) || 0),     w: 90, a: 'center' },
         ]);
       });
     }
@@ -1780,17 +1805,11 @@ generarPDFProveedor: async function (req, res) {
 
   } catch (error) {
     console.error('❌ Error al generar el PDF:', error);
+    errorResponseSent = true;
+    try { doc.end(); } catch (e) {}
     return res.status(500).send('Error al generar el PDF');
   }
-
-  buffer.on('finish', function () {
-    const pdfData = buffer.getContents();
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-    res.send(pdfData);
-  });
 },
-
 
 presupuestoMostrador: async function(req, res) {
     try {
