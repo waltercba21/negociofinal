@@ -1178,82 +1178,55 @@ try {
     },
 panelControl: async (req, res) => {
   try {
-    let proveedores = await producto.obtenerProveedores(conexion);
-    let categorias = await producto.obtenerCategorias(conexion);
+    const proveedores = await producto.obtenerProveedores(conexion);
+    const categorias  = await producto.obtenerCategorias(conexion);
 
-    const proveedorSeleccionado = req.query.proveedor || req.session.proveedorSeleccionado || null;
-    const categoriaSeleccionada = req.query.categoria || req.session.categoriaSeleccionada || null;
-    let paginaActual = req.query.pagina ? Number(req.query.pagina) : (req.session.paginaActual || 1);
+    const proveedorSeleccionado =
+      req.query.proveedor || req.session.proveedorSeleccionado || null;
 
-    if (isNaN(paginaActual) || paginaActual < 1) {
-      paginaActual = 1;
-    }
+    const categoriaSeleccionada =
+      req.query.categoria || req.session.categoriaSeleccionada || null;
 
+    let paginaActual = Number(req.query.pagina || req.session.paginaActual || 1);
+    if (!Number.isFinite(paginaActual) || paginaActual < 1) paginaActual = 1;
     req.session.paginaActual = paginaActual;
 
-    let busqueda = '';
-
-    // 🔥 ESTA PARTE NUEVA
-    if (!req.query.busqueda && req.session.busqueda) {
-      console.log("🧹 Limpiando búsqueda de la sesión...");
-      req.session.busqueda = null;
-    }
-
-    // 📚 Después sigue el flujo normal
-    if (typeof req.query.busqueda === 'string') {
-      busqueda = req.query.busqueda.trim();
-      req.session.busqueda = busqueda;
-    } else if (typeof req.session.busqueda === 'string') {
-      busqueda = req.session.busqueda.trim();
-    }
-
-    console.log("🧩 Busqueda recibida en panelControl:", busqueda);
+    // ✅ Solo para conservar el query en links (Editar) y para que el front dispare búsqueda al cargar
+    const busquedaActual =
+      (typeof req.query.busqueda === 'string') ? req.query.busqueda.trim() : '';
 
     const productosPorPagina = 30;
     const saltar = (paginaActual - 1) * productosPorPagina;
 
-    let productos;
-    if (busqueda) {
-      productos = await producto.obtenerPorFiltros(conexion, categoriaSeleccionada, null, null, busqueda, 1000);
+    // ✅ Siempre paginado normal (la búsqueda la hace panelControl.js vía /productos/api/buscar)
+    let productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
 
-      const productoIds = productos.map(p => p.id);
-      if (productoIds.length > 0) {
-        const imagenesPorProducto = await producto.obtenerImagenesProducto(conexion, productoIds);
+    productos = productos.map(p => ({
+      ...p,
+      categoria: p.categoria || p.categoria_nombre || 'Sin categoría',
+      imagenes: Array.isArray(p.imagenes)
+        ? p.imagenes
+        : (p.imagen ? [p.imagen] : [])
+    }));
 
-        productos = productos.map(producto => ({
-          ...producto,
-          imagenes: imagenesPorProducto
-            .filter(img => img.producto_id === producto.id)
-            .map(img => img.imagen),
-          categoria: producto.categoria || producto.categoria_nombre || 'Sin categoría'
-        }));
-      }
-    } else {
-      productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
-
-      productos = productos.map(producto => ({
-        ...producto,
-        categoria: producto.categoria || producto.categoria_nombre || 'Sin categoría',
-        imagenes: Array.isArray(producto.imagenes)
-          ? producto.imagenes
-          : (producto.imagen ? [producto.imagen] : [])
-      }));
-    }
-
-    let numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
+    const numeroDePaginas = await producto.calcularNumeroDePaginas(
+      conexion,
+      productosPorPagina,
+      categoriaSeleccionada
+    );
 
     req.session.proveedorSeleccionado = proveedorSeleccionado;
     req.session.categoriaSeleccionada = categoriaSeleccionada;
 
-    res.render('panelControl', {
-      proveedores: proveedores,
-      proveedorSeleccionado: proveedorSeleccionado,
-      categorias: categorias,
-      categoriaSeleccionada: categoriaSeleccionada,
-      numeroDePaginas: numeroDePaginas,
-      productos: productos,
-      paginaActual: paginaActual,
-      busquedaActual: busqueda,
+    return res.render('panelControl', {
+      proveedores,
+      proveedorSeleccionado,
+      categorias,
+      categoriaSeleccionada,
+      numeroDePaginas,
+      productos,
+      paginaActual,
+      busquedaActual
     });
 
   } catch (error) {
@@ -1261,6 +1234,7 @@ panelControl: async (req, res) => {
     return res.status(500).send('Error: ' + error.message);
   }
 },
+
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
     if (!consulta) {

@@ -2013,20 +2013,24 @@ eliminarImagen : function(id) {
         });
     });
 },
-calcularNumeroDePaginas: function(conexion, productosPorPagina) {
-    return new Promise((resolve, reject) => {
-        // Cuenta todos los productos en la base de datos
-        conexion.query('SELECT COUNT(*) AS total FROM productos', function(error, results, fields) {
-            if (error) {
-                reject(error);
-            } else {
-                const totalProductos = results[0].total;
-                const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
-                resolve(numeroDePaginas);
-            }
-        });
+calcularNumeroDePaginas: function(conexion, productosPorPagina, categoriaId = null) {
+  return new Promise((resolve, reject) => {
+    let sql = 'SELECT COUNT(*) AS total FROM productos';
+    const params = [];
+
+    if (categoriaId) {
+      sql += ' WHERE categoria_id = ?';
+      params.push(categoriaId);
+    }
+
+    conexion.query(sql, params, (error, results) => {
+      if (error) return reject(error);
+      const total = results?.[0]?.total || 0;
+      resolve(Math.ceil(total / productosPorPagina));
     });
+  });
 },
+
 obtenerProductosOferta: (conexion, callback) => {
     const query = `
     SELECT p.*, GROUP_CONCAT(i.imagen) AS imagenes
