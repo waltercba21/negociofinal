@@ -939,21 +939,32 @@ ajustarStockPorOperacion: function(conexion, productoId, cantidad) {
             });
         });
     },
-obtenerProductosPorProveedorYCategoría: function (conexion, proveedor, categoria) {
-    const query = `
-        SELECT productos.*, producto_proveedor.codigo AS codigo_proveedor, producto_proveedor.precio_lista, productos.precio_venta
-        FROM productos 
-        INNER JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id
-        WHERE producto_proveedor.proveedor_id = ? 
-        AND productos.categoria_id = ?
-        ORDER BY productos.nombre ASC
-    `;
-    const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return queryPromise(query, [proveedor, categoria])
-        .then(result => {
-            return result;
-        });
+obtenerProductosPorProveedorYCategoría: function (conexion, proveedor, categoria = null) {
+  let query = `
+    SELECT
+      productos.*,
+      producto_proveedor.codigo AS codigo_proveedor,
+      producto_proveedor.precio_lista,
+      productos.precio_venta
+    FROM productos
+    INNER JOIN producto_proveedor
+      ON productos.id = producto_proveedor.producto_id
+    WHERE producto_proveedor.proveedor_id = ?
+  `;
+
+  const params = [proveedor];
+
+  if (categoria && categoria !== 'TODAS' && categoria !== '') {
+    query += ` AND productos.categoria_id = ? `;
+    params.push(categoria);
+  }
+
+  query += ` ORDER BY productos.nombre ASC `;
+
+  const queryPromise = util.promisify(conexion.query).bind(conexion);
+  return queryPromise(query, params).then(result => result);
 },
+
 obtenerProveedores: function(conexion) {
     return new Promise((resolve, reject) => {
         const query = `

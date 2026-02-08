@@ -1382,28 +1382,36 @@ eliminarImagen: function(req, res) {
     });
 },
 modificarPorProveedor: async function (req, res) {
-    try {
-        let proveedores = await producto.obtenerProveedores(conexion);
-        let productos = [];
-        let proveedorSeleccionado = req.query.proveedor ? req.query.proveedor : null;
-        let proveedor = {};
+  try {
+    let proveedores = await producto.obtenerProveedores(conexion);
+    let productos = [];
+    let proveedorSeleccionado = req.query.proveedor ? req.query.proveedor : null;
+    let proveedor = {};
 
-        if (proveedorSeleccionado) {
-            proveedor = proveedores.find(p => p.id == proveedorSeleccionado) || {};
-            productos = await producto.obtenerProductosPorProveedorYCategoría(conexion, proveedorSeleccionado);
-        }
+    // (opcional) si más adelante agregás dropdown de categoría en esta vista
+    const categoriaSeleccionada = req.query.categoria ? req.query.categoria : null;
 
-        res.render('modificarPorProveedor', { 
-            proveedores, 
-            productos, 
-            proveedor, 
-            proveedorSeleccionado  // 👉 Enviamos esta variable a la vista
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Hubo un error al obtener los datos');
+    if (proveedorSeleccionado) {
+      proveedor = proveedores.find(p => p.id == proveedorSeleccionado) || {};
+      productos = await producto.obtenerProductosPorProveedorYCategoría(
+        conexion,
+        proveedorSeleccionado,
+        categoriaSeleccionada // null => trae todas las categorías
+      );
     }
+
+    res.render('modificarPorProveedor', {
+      proveedores,
+      productos,
+      proveedor,
+      proveedorSeleccionado
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Hubo un error al obtener los datos');
+  }
 },
+
 actualizarPorProveedor: function (req, res) {
     console.log("📌 Datos recibidos:", req.body);
 
