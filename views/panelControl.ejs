@@ -234,6 +234,60 @@
   padding:.35rem .5rem;
   border-radius:10px;
 }
+/* ===================== Reportes e importación (unificado) ===================== */
+#panel-reportes .reportes-top{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:10px;
+}
+
+#panel-reportes .reportes-filtros{
+  display:grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap:10px;
+  align-items:end;
+}
+
+#panel-reportes label span{ display:block; margin:0 0 4px 0; }
+
+#panel-reportes select{
+  width:100%;
+  font-size:.9rem;
+  padding:.35rem .5rem;
+  border-radius:10px;
+  border: 1px solid rgba(31,72,126,.25);
+}
+
+#panel-reportes .reportes-actions{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+}
+
+#panel-reportes .reportes-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+  margin-top:12px;
+}
+
+#panel-reportes .reportes-card{
+  border: 1px solid rgba(31,72,126,.12);
+  border-radius:12px;
+  padding:12px;
+  background:#fbfdff;
+}
+
+#panel-reportes .reportes-card h5{
+  font-size:.95rem;
+  font-weight:700;
+  margin:0 0 8px 0;
+  color:#1f487e;
+}
+
+#panel-reportes .reportes-card-wide{ grid-column:1 / -1; }
+
   /* ===================== Breakpoints (más compacto en resoluciones comunes) ===================== */
 
   /* 1600px: leves ajustes */
@@ -305,58 +359,60 @@
       <a href="/productos/masVendidos" class="btn btn-success panel-control">Ver productos más vendidos</a>
       <a href="/productos/recomendacionesProveedor" class="btn btn-warning panel-control">Recomendación pedido por proveedor</a>
     </div>
+<!-- =======================
+     REPORTES / IMPORTACIÓN (UNIFICADO)
+======================== -->
+<div class="form-control" id="panel-reportes">
 
-    <!-- =======================
-         FILTROS GLOBALES
-    ======================== -->
-    <div class="form-control" id="filtros-globales">
-      <h4>Filtros globales</h4>
+  <div class="reportes-top">
+    <h4>Reportes e importación</h4>
+    <small class="text-muted d-block">
+      Los filtros impactan en: Lista de precios, Stock proveedor y Actualización por Excel.
+    </small>
+  </div>
 
-      <div class="filtros-globales-grid">
-        <label for="filtroProveedor">
-          <span>Proveedor</span>
-          <select id="filtroProveedor">
-            <option value="TODOS" <%= (!proveedorSeleccionado || String(proveedorSeleccionado) === 'TODOS') ? 'selected' : '' %>>
-              Todos los proveedores
-            </option>
-            <% proveedores.forEach(proveedor => { %>
-              <option value="<%= proveedor.id %>" <%= String(proveedor.id) === String(proveedorSeleccionado) ? 'selected' : '' %>>
-                <%= proveedor.nombre %>
-              </option>
-            <% }); %>
-          </select>
-        </label>
+  <!-- Filtros (mantener IDs: los usa panelControl.js) -->
+  <div class="reportes-filtros">
+    <label for="filtroProveedor">
+      <span>Proveedor</span>
+      <select id="filtroProveedor">
+        <option value="TODOS" <%= (!proveedorSeleccionado || String(proveedorSeleccionado) === 'TODOS') ? 'selected' : '' %>>
+          Todos los proveedores
+        </option>
+        <% proveedores.forEach(proveedor => { %>
+          <option value="<%= proveedor.id %>" <%= String(proveedor.id) === String(proveedorSeleccionado) ? 'selected' : '' %>>
+            <%= proveedor.nombre %>
+          </option>
+        <% }); %>
+      </select>
+    </label>
 
-        <label for="filtroCategoria">
-          <span>Categoría</span>
-          <select id="filtroCategoria">
-            <option value="" <%= (!categoriaSeleccionada || String(categoriaSeleccionada) === '' || String(categoriaSeleccionada) === 'TODAS') ? 'selected' : '' %>>
-              Todas las categorías
-            </option>
-            <% categorias.forEach(categoria => { %>
-              <option value="<%= categoria.id %>" <%= String(categoria.id) === String(categoriaSeleccionada) ? 'selected' : '' %>>
-                <%= categoria.nombre %>
-              </option>
-            <% }); %>
-          </select>
-        </label>
+    <label for="filtroCategoria">
+      <span>Categoría</span>
+      <select id="filtroCategoria">
+        <option value="" <%= (!categoriaSeleccionada || String(categoriaSeleccionada) === '' || String(categoriaSeleccionada) === 'TODAS') ? 'selected' : '' %>>
+          Todas las categorías
+        </option>
+        <% categorias.forEach(categoria => { %>
+          <option value="<%= categoria.id %>" <%= String(categoria.id) === String(categoriaSeleccionada) ? 'selected' : '' %>>
+            <%= categoria.nombre %>
+          </option>
+        <% }); %>
+      </select>
+    </label>
 
-        <div class="filtros-globales-actions">
-          <button type="button" class="btn btn-primary" id="btnAplicarFiltros">Aplicar</button>
-          <button type="button" class="btn btn-outline-secondary" id="btnLimpiarFiltros">Limpiar</button>
-        </div>
-      </div>
-
-      <small class="text-muted d-block" style="margin-top:6px;">
-        Estos filtros se usan en: Lista de precios, Stock proveedor y Actualización por Excel.
-      </small>
+    <div class="reportes-actions">
+      <button type="button" class="btn btn-primary" id="btnAplicarFiltros">Aplicar</button>
+      <button type="button" class="btn btn-outline-secondary" id="btnLimpiarFiltros">Limpiar</button>
     </div>
+  </div>
 
-    <!-- =======================
-         LISTA DE PRECIOS (PDF)
-    ======================== -->
-    <div class="form-control">
-      <h4>Generar Lista Precios</h4>
+  <div class="reportes-grid">
+
+    <!-- Lista de precios (PDF) -->
+    <div class="reportes-card">
+      <h5>Lista de precios (PDF)</h5>
+
       <form method="get" action="/productos/generarPDF" id="form-lista-precios">
         <input type="hidden" name="proveedor" class="inp-proveedor-global">
         <input type="hidden" name="categoria" class="inp-categoria-global">
@@ -365,11 +421,10 @@
       </form>
     </div>
 
-    <!-- =======================
-         ACTUALIZAR EXCEL
-    ======================== -->
-    <div class="form-control">
-      <h4>Actualizar Precios con Excel</h4>
+    <!-- Excel -->
+    <div class="reportes-card">
+      <h5>Actualizar precios (Excel)</h5>
+
       <form
         method="post"
         action="/productos/actualizarPreciosExcel"
@@ -384,27 +439,20 @@
         <button type="submit" class="btn btn-primary">Actualizar precios</button>
 
         <small class="text-muted d-block" style="margin-top:6px;">
-          Requiere seleccionar un proveedor específico en los filtros globales.
+          Requiere seleccionar un proveedor específico en los filtros (arriba).
         </small>
       </form>
     </div>
 
-    <!-- =======================
-         STOCK PROVEEDOR (PDF)
-    ======================== -->
-    <div class="form-control" id="contenedor-pdf-stock-proveedor">
-      <h4>Generar Stock Proveedor</h4>
+    <!-- Stock proveedor (PDF) -->
+    <div class="reportes-card reportes-card-wide" id="contenedor-pdf-stock-proveedor">
+      <h5>Stock proveedor (PDF)</h5>
 
       <form method="get" action="/productos/generarPDFProveedor" id="form-pdf-stock-proveedor">
-        <!-- usa filtros globales -->
         <input type="hidden" name="proveedor" class="inp-proveedor-global">
         <input type="hidden" name="categoria" class="inp-categoria-global">
 
-        <small class="text-muted d-block" style="margin:0 0 10px 0;">
-          Usa los filtros globales (Proveedor / Categoría) de arriba para generar este reporte.
-        </small>
-
-        <fieldset style="border:0; padding:0; margin-top:14px;">
+        <fieldset style="border:0; padding:0; margin-top:10px;">
           <legend style="font-size:0.95rem; font-weight:600; margin-bottom:6px;">Tipo de reporte</legend>
 
           <div class="opciones-reporte" style="display:grid; gap:6px;">
@@ -415,20 +463,18 @@
 
             <label>
               <input type="radio" name="tipo" value="asignadoCompleto">
-              <strong>Asignados al proveedor (con categoría)</strong> — Lista <em>todos</em> los productos asignados
-              al proveedor elegido (opcionalmente filtrados por categoría).
+              <strong>Asignados al proveedor (con categoría)</strong> — Lista todos los productos asignados
+              al proveedor (opcionalmente filtrados por categoría).
             </label>
 
             <label>
               <input type="radio" name="tipo" value="asignado">
-              <strong>Faltantes del proveedor asignado</strong> — Solo productos asignados al proveedor cuya
-              existencia está por debajo del stock mínimo.
+              <strong>Faltantes del proveedor asignado</strong> — Asignados al proveedor cuya existencia está por debajo del stock mínimo.
             </label>
 
             <label>
               <input type="radio" name="tipo" value="pedido">
-              <strong>Faltantes del proveedor más barato</strong> — Productos por debajo del mínimo considerando
-              al proveedor con mejor costo.
+              <strong>Faltantes del proveedor más barato</strong> — Por debajo del mínimo considerando al proveedor con mejor costo.
             </label>
 
             <label>
@@ -448,6 +494,9 @@
         </div>
       </form>
     </div>
+
+  </div>
+</div>
 
     <!-- =======================
          BUSCADOR + PAGINADO + LISTADO

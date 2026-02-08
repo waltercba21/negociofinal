@@ -939,30 +939,36 @@ ajustarStockPorOperacion: function(conexion, productoId, cantidad) {
             });
         });
     },
-obtenerProductosPorProveedorYCategoría: function (conexion, proveedor, categoria = null) {
-  let query = `
+obtenerProductosPorProveedorDetalle: async function (conexion, proveedorId, categoriaId = null) {
+  let sql = `
     SELECT
-      productos.*,
-      producto_proveedor.codigo AS codigo_proveedor,
-      producto_proveedor.precio_lista,
-      productos.precio_venta
-    FROM productos
-    INNER JOIN producto_proveedor
-      ON productos.id = producto_proveedor.producto_id
-    WHERE producto_proveedor.proveedor_id = ?
+      p.*,
+      pp.codigo AS codigo_proveedor,
+      pp.precio_lista,
+      p.precio_venta
+    FROM productos p
+    INNER JOIN producto_proveedor pp
+      ON p.id = pp.producto_id
+    WHERE pp.proveedor_id = ?
   `;
 
-  const params = [proveedor];
+  const params = [proveedorId];
 
-  if (categoria && categoria !== 'TODAS' && categoria !== '') {
-    query += ` AND productos.categoria_id = ? `;
-    params.push(categoria);
+  if (categoriaId && categoriaId !== 'TODAS' && categoriaId !== '') {
+    sql += ` AND p.categoria_id = ? `;
+    params.push(categoriaId);
   }
 
-  query += ` ORDER BY productos.nombre ASC `;
+  sql += ` ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC, p.nombre ASC `;
 
-  const queryPromise = util.promisify(conexion.query).bind(conexion);
-  return queryPromise(query, params).then(result => result);
+  const [rows] = await conexion.promise().query(sql, params);
+  return rows;
+},
+
+// ✅ Alias temporal (para no romper nada si quedara alguna llamada vieja).
+// Cuando confirmes que ya no se usa, lo eliminamos.
+obtenerProductosPorProveedorYCategoría: function (conexion, proveedorId, categoriaId = null) {
+  return this.obtenerProductosPorProveedorDetalle(conexion, proveedorId, categoriaId);
 },
 
 obtenerProveedores: function(conexion) {

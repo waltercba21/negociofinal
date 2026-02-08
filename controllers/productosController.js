@@ -1181,15 +1181,19 @@ panelControl: async (req, res) => {
     const proveedores = await producto.obtenerProveedores(conexion);
     const categorias  = await producto.obtenerCategorias(conexion);
 
+    // ✅ El estado vive en la URL (query). Evitamos "fantasmas" por session.
+    const proveedorRaw = (typeof req.query.proveedor === 'string') ? req.query.proveedor : null;
+    const categoriaRaw = (typeof req.query.categoria === 'string') ? req.query.categoria : null;
+
     const proveedorSeleccionado =
-      req.query.proveedor || req.session.proveedorSeleccionado || null;
+      (!proveedorRaw || proveedorRaw === 'TODOS') ? null : String(proveedorRaw);
 
     const categoriaSeleccionada =
-      req.query.categoria || req.session.categoriaSeleccionada || null;
+      (!categoriaRaw || categoriaRaw === '' || categoriaRaw === 'TODAS') ? null : String(categoriaRaw);
 
-    let paginaActual = Number(req.query.pagina || req.session.paginaActual || 1);
+    // ✅ Paginado: solo query. Si no viene, es 1.
+    let paginaActual = Number(req.query.pagina || 1);
     if (!Number.isFinite(paginaActual) || paginaActual < 1) paginaActual = 1;
-    req.session.paginaActual = paginaActual;
 
     // Solo para conservar el query en links (Editar) y para que el front dispare búsqueda al cargar
     const busquedaActual =
@@ -1198,7 +1202,7 @@ panelControl: async (req, res) => {
     const productosPorPagina = 30;
     const saltar = (paginaActual - 1) * productosPorPagina;
 
-    // Siempre paginado normal (la búsqueda la hace panelControl.js vía /productos/api/buscar)
+    // Listado paginado (filtro solo por categoría)
     let productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
 
     productos = productos.map(p => ({
@@ -1208,9 +1212,6 @@ panelControl: async (req, res) => {
     }));
 
     const numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
-
-    req.session.proveedorSeleccionado = proveedorSeleccionado;
-    req.session.categoriaSeleccionada = categoriaSeleccionada;
 
     return res.render('panelControl', {
       proveedores,
@@ -1384,7 +1385,6 @@ eliminarImagen: function(req, res) {
 modificarPorProveedor: async function (req, res) {
   try {
     const proveedores = await producto.obtenerProveedores(conexion);
-
     let productos = [];
     const proveedorSeleccionado = req.query.proveedor ? String(req.query.proveedor) : null;
     const proveedor = proveedorSeleccionado
@@ -1395,11 +1395,12 @@ modificarPorProveedor: async function (req, res) {
     const categoriaSeleccionada = req.query.categoria ? String(req.query.categoria) : null;
 
     if (proveedorSeleccionado) {
-      productos = await producto.obtenerProductosPorProveedorYCategoría(
-        conexion,
-        proveedorSeleccionado,
-        categoriaSeleccionada
-      );
+      productos = await producto.obtenerProductosPorProveedorDetalle(
+  conexion,
+  proveedorSeleccionado,
+  categoriaSeleccionada
+);
+
 
       // ✅ Adjuntar imágenes desde imagenes_producto
       const ids = (productos || []).map(p => Number(p.id)).filter(Boolean);
