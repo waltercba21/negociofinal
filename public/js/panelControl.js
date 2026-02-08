@@ -117,58 +117,81 @@ function buildEditUrl(id, paginaActual, busquedaActual) {
   return `/productos/editar/${id}?${qs.toString()}`;
 }
 
-function renderPanelListado(contenedor, productos, { paginaActual, busquedaActual }) {
+function renderPanelListado(contenedor, productos, { paginaActual = 1, busquedaActual = '' } = {}) {
   if (!contenedor) return;
 
-  const items = Array.isArray(productos) ? productos : [];
+  const lista = Array.isArray(productos) ? productos : [];
 
-  const cards = items.map(p => {
-    const img = firstImageFilename(p);
-    const imgHtml = img
-      ? `<img class="panel-card-img" src="/uploads/productos/${img}" alt="Imagen">`
-      : `<div class="panel-card-img panel-card-img--empty">Sin imagen</div>`;
+  if (lista.length === 0) {
+    contenedor.innerHTML = `<div class="panel-alert">No hay productos para mostrar.</div>`;
+    return;
+  }
 
-    const editUrl = buildEditUrl(p.id, paginaActual, busquedaActual);
-
-    return `
-      <div class="panel-card">
-        <label class="panel-check">
-          <input type="checkbox" class="product-check" value="${p.id}">
-          <span></span>
-        </label>
-
-        ${imgHtml}
-
-        <div class="panel-card-body">
-          <div class="panel-card-title">${p.nombre || '-'}</div>
-          <div class="panel-card-meta">
-            <div><b>Categoría:</b> ${p.categoria || p.categoria_nombre || 'Sin categoría'}</div>
-            <div><b>Precio:</b> $ ${formatPrecio(p.precio_venta)}</div>
-            <div><b>Stock:</b> ${Number.isFinite(Number(p.stock_actual)) ? Number(p.stock_actual) : '-'}</div>
-            <div><b>Proveedor:</b> ${p.proveedor_nombre || 'Sin proveedor'}</div>
-            <div><b>Código:</b> ${p.codigo_proveedor || '-'}</div>
-          </div>
-
-          <div class="panel-card-actions">
-            <a class="btn btn-primary" href="${editUrl}">Editar</a>
-            <a class="btn btn-outline-secondary" href="/productos/${p.id}">Ver</a>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  contenedor.innerHTML = `
-    <div class="panel-actions-top">
-      <button id="delete-selected" class="btn btn-danger" type="button">Eliminar seleccionados</button>
-    </div>
-    <div class="panel-grid">
-      ${cards || `<div class="panel-alert">No hay productos para mostrar.</div>`}
+  let html = `
+    <div class="panel-header">
+      <div class="panel-col panel-col-small">✔</div>
+      <div class="panel-col">Categoría</div>
+      <div class="panel-col">Nombre</div>
+      <div class="panel-col">Imagen</div>
+      <div class="panel-col">Precio</div>
+      <div class="panel-col">Acciones</div>
     </div>
   `;
 
+  for (const p of lista) {
+    const categoria = p.categoria || p.categoria_nombre || 'Sin categoría';
+    const img = firstImageFilename(p);
+
+    const imgHtml = img
+      ? `<div class="panel-image-container">
+           <img src="/uploads/productos/${img}" alt="Imagen de ${p.nombre || ''}" class="product-image" />
+         </div>`
+      : `<div class="panel-image-container"><span class="no-image">(Sin imagen)</span></div>`;
+
+    const precio = (p.precio_venta != null && p.precio_venta !== '')
+      ? '$' + parseInt(p.precio_venta, 10)
+      : '$0';
+
+    const qs = new URLSearchParams({ pagina: String(paginaActual || 1) });
+    if (busquedaActual) qs.set('busqueda', busquedaActual);
+    const action = `/productos/editar/${p.id}?${qs.toString()}`;
+
+    html += `
+      <div class="panel-row">
+        <div class="panel-col panel-col-small">
+          <input type="checkbox" class="product-check" value="${p.id}" />
+        </div>
+
+        <div class="panel-text-small-bold">${categoria}</div>
+        <div class="panel-text-small-bold">${p.nombre || '-'}</div>
+
+        <div class="panel-col">${imgHtml}</div>
+
+        <div class="panel-col panel-price">${precio}</div>
+
+        <div class="panel-col">
+          <form method="get" action="${action}">
+            <button class="btn-edit" type="submit">
+              <i class="fas fa-edit"></i> Editar
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  html += `
+    <div class="panel-actions">
+      <button id="delete-selected" class="btn-delete" type="button">
+        Eliminar seleccionados
+      </button>
+    </div>
+  `;
+
+  contenedor.innerHTML = html;
   bindDeleteButton(contenedor);
 }
+
 
 // -----------------------------
 // Search con paginación propia
