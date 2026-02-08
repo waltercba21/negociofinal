@@ -1383,32 +1383,62 @@ eliminarImagen: function(req, res) {
 },
 modificarPorProveedor: async function (req, res) {
   try {
-    let proveedores = await producto.obtenerProveedores(conexion);
-    let productos = [];
-    let proveedorSeleccionado = req.query.proveedor ? req.query.proveedor : null;
-    let proveedor = {};
+    const proveedores = await producto.obtenerProveedores(conexion);
 
-    // (opcional) si más adelante agregás dropdown de categoría en esta vista
-    const categoriaSeleccionada = req.query.categoria ? req.query.categoria : null;
+    let productos = [];
+    const proveedorSeleccionado = req.query.proveedor ? String(req.query.proveedor) : null;
+    const proveedor = proveedorSeleccionado
+      ? (proveedores.find(p => String(p.id) === proveedorSeleccionado) || {})
+      : {};
+
+    // (opcional) si en el futuro agregás categoría en esta vista
+    const categoriaSeleccionada = req.query.categoria ? String(req.query.categoria) : null;
 
     if (proveedorSeleccionado) {
-      proveedor = proveedores.find(p => p.id == proveedorSeleccionado) || {};
       productos = await producto.obtenerProductosPorProveedorYCategoría(
         conexion,
         proveedorSeleccionado,
-        categoriaSeleccionada // null => trae todas las categorías
+        categoriaSeleccionada
       );
+
+      // ✅ Adjuntar imágenes desde imagenes_producto
+      const ids = (productos || []).map(p => Number(p.id)).filter(Boolean);
+
+      if (ids.length) {
+        const imgsRows = await producto.obtenerImagenesProducto(conexion, ids);
+
+        const mapImgs = new Map();
+        for (const r of (imgsRows || [])) {
+          const id = Number(r.producto_id);
+          if (!mapImgs.has(id)) mapImgs.set(id, []);
+          if (r.imagen) mapImgs.get(id).push(r.imagen); // filename
+        }
+
+        productos = productos.map(p => {
+          const arr = mapImgs.get(Number(p.id)) || [];
+          return {
+            ...p,
+            imagenes: arr,           // ✅ array de filenames
+            imagen: arr[0] || null   // ✅ compat si alguna vista usa producto.imagen
+          };
+        });
+      } else {
+        productos = productos.map(p => ({ ...p, imagenes: [], imagen: null }));
+      }
     }
 
-    res.render('modificarPorProveedor', {
+    return res.render('modificarPorProveedor', {
       proveedores,
       productos,
       proveedor,
-      proveedorSeleccionado
+      proveedorSeleccionado,
+      success: req.query.success || null,
+      errorMsg: req.query.error || null
     });
+
   } catch (error) {
     console.error(error);
-    res.status(500).send('Hubo un error al obtener los datos');
+    return res.status(500).send('Hubo un error al obtener los datos');
   }
 },
 

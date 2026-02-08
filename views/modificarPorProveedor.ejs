@@ -1,117 +1,308 @@
 <%- include ./layouts/head.ejs %>
 <%- include ./layouts/header.ejs %>
+
 <body>
- <main>
-<div class="modificar-container"> 
-    <br/>
-    <br/>
-    <form action="/productos/modificarPorProveedor" method="GET" class="modificar-form">
-    <label for="proveedor" class="modificar-label">Seleccione un proveedor:</label>
-    <select name="proveedor" id="proveedor" class="modificar-select">
-        <option value="">-- Seleccione --</option>
-        <% proveedores.forEach(function(proveedor) { %>
-            <option value="<%= proveedor.id %>" <%= proveedor.id == (proveedorSeleccionado || '') ? 'selected' : '' %>>
-                <%= proveedor.nombre %>
-            </option>
-        <% }); %>
-    </select>  
-    <input type="submit" value="Ver productos" class="modificar-input">
-</form>
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --brand:#1f487e;
+      --line:#e6edf6;
+      --ok:#0b6e4f;
+      --err:#b42318;
+      --shadow: 0 10px 25px rgba(15, 23, 42, .08);
+      --r:14px;
+    }
 
-  
-  <br/>
-  
-  <!-- Formulario POST para modificar precios por proveedor -->
-  <form method="post" action="/productos/actualizarPorProveedor" class="modificar-form">
-    <!-- Aseguramos que siempre haya un proveedor seleccionado -->
-    <input type="hidden" name="proveedor" id="proveedorHidden" value="<%= proveedorSeleccionado ? proveedorSeleccionado : '' %>">
+    main{ background:var(--bg); min-height: calc(100vh - 120px); padding: 18px 0; }
+    .mp-wrap{ max-width: 1400px; margin: 0 auto; padding: 0 12px; }
+    .mp-top{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+      margin-bottom: 12px;
+    }
+    .mp-title h2{ margin:0; font-size: 1.25rem; font-weight:800; color:var(--text); }
+    .mp-title p{ margin:4px 0 0 0; color:var(--muted); font-size:.95rem; }
+    .mp-link{
+      text-decoration:none; color:var(--brand); font-weight:800;
+      background: #fff; border:1px solid var(--line); border-radius: 12px;
+      padding: 10px 12px; box-shadow: 0 4px 14px rgba(15,23,42,.06);
+    }
 
-    <label for="porcentaje" class="modificar-label">Porcentaje de cambio:</label>
-    <input type="number" id="porcentaje" name="porcentaje" min="0" max="100" step="0.01" required class="modificar-input" style="text-align: right;">
-    <span class="modificar-span">%</span>
+    .mp-card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
 
-    <label for="tipoCambio" class="modificar-label">Tipo de cambio:</label>
-    <select name="tipoCambio" id="tipoCambio" class="modificar-select">
-        <option value="aumento">Aumento</option>
-        <option value="descuento">Descuento</option>
-    </select>
+    .mp-alert{
+      border-radius: 12px;
+      padding: 10px 12px;
+      border:1px solid var(--line);
+      background:#fff;
+      margin-bottom: 12px;
+      font-weight:700;
+    }
+    .mp-alert--ok{ border-color: rgba(11,110,79,.25); color: var(--ok); }
+    .mp-alert--err{ border-color: rgba(180,35,24,.25); color: var(--err); }
 
-    <button type="submit" class="btn btn-primary modificar-btn">OK</button>
-</form>
-    <br/>
-    <br/>
-    <table class="table table-light modificar-table">
-    <thead class="thead-light modificar-thead">
-      <tr class="modificar-tr">
-        <th class="modificar-th">#</th>
-        <th class="modificar-th">Nombre</th>
-        <th class="modificar-th">Imagen</th>
-        <th class="modificar-th">Código</th>
-        <th class="modificar-th">Precio</th> 
-      </tr>
-    </thead>
-    <tbody class="modificar-tbody">
-        <% for( let producto = 0; producto< productos.length; producto++ ) { %>
-          <tr class="modificar-tr">
-            <td class="modificar-td"><%= productos[producto].id %></td> 
-            <td class="modificar-td"><%= productos[producto].nombre %></td>
-            <td class="modificar-td">
-              <img class="img-thumbnail modificar-img" width= '150' src="/uploads/productos/<%= productos[producto].imagen %>" alt="">
-            </td>
-            <td class="modificar-td"><%= productos[producto].codigo %></td>
-            <td class="modificar-td">
-              <form action="/productos/actualizarPrecio" method="post" class="modificar-form">
-                <input type="hidden" name="id" value="<%= productos[producto].id %>" class="modificar-input">
-                <input type="hidden" name="proveedor" value="<%= proveedor.id %>" class="modificar-input">
-                <input type="number" name="precio_venta" value="<%= productos[producto].precio_venta %>" class="modificar-input"> 
-                <button type="submit" class="modificar-btn">Guardar</button>
-            </form>
-            </td> 
-          </tr>
-        <% } %>
-    </tbody>
-  </table>
-</div>
-</main>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    .mp-grid{ display:grid; grid-template-columns: 1fr 220px; gap:12px; align-items:end; }
+    .mp-grid3{ display:grid; grid-template-columns: 1fr 1fr 220px; gap:12px; align-items:end; }
 
-<script>
-   document.addEventListener("DOMContentLoaded", function () {
-        let selectProveedor = document.getElementById("proveedor");
-        let hiddenProveedor = document.getElementById("proveedorHidden");
+    .mp-field span{ display:block; font-size:.9rem; font-weight:800; color: #1e293b; margin-bottom: 6px; }
+    .mp-field select, .mp-field input{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 10px;
+      font-size:.95rem;
+      outline:none;
+      background:#fff;
+    }
+    .mp-field select:focus, .mp-field input:focus{ border-color: rgba(31,72,126,.35); box-shadow: 0 0 0 3px rgba(31,72,126,.12); }
 
-        if (selectProveedor && hiddenProveedor) {
-            selectProveedor.addEventListener("change", function () {
-                hiddenProveedor.value = selectProveedor.value;
+    .mp-actions{ display:flex; justify-content:flex-end; gap:10px; }
+    .mp-btn{
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight:900;
+      border:1px solid var(--line);
+      cursor:pointer;
+      background:#fff;
+      color: var(--brand);
+    }
+    .mp-btn--primary{
+      background: var(--brand);
+      border-color: var(--brand);
+      color:#fff;
+    }
+    .mp-btn--ghost{
+      background:#fff;
+      color: var(--brand);
+      border-color: rgba(31,72,126,.22);
+      padding: 9px 10px;
+      white-space:nowrap;
+    }
+
+    .mp-hint{ margin: 10px 0 0 0; color: var(--muted); font-size:.9rem; }
+
+    .mp-tableHead{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    .mp-tableHead h3{ margin:0; font-size: 1.05rem; font-weight:900; color:var(--text); }
+    .mp-tools{ display:flex; align-items:center; gap:10px; }
+    .mp-count{ color: var(--muted); font-weight:800; }
+
+    .mp-tableWrap{ overflow:auto; border:1px solid var(--line); border-radius: 14px; }
+    table{ width:100%; border-collapse:separate; border-spacing:0; min-width: 980px; background:#fff; }
+    thead th{
+      position: sticky; top:0; z-index:1;
+      background:#f2f6fb;
+      color: var(--brand);
+      font-size:.9rem;
+      text-align:left;
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 900;
+    }
+    tbody td{
+      padding: 10px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+      font-size:.95rem;
+      color: var(--text);
+    }
+    tbody tr:hover{ background:#fbfdff; }
+    .mp-mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:.9rem; color:#334155; }
+    .mp-num{ font-weight:900; color:#0f172a; }
+    .mp-img{
+      width: 84px; height: 54px; object-fit: contain; display:block;
+      background:#fff; border:1px solid var(--line); border-radius: 12px; padding:6px;
+    }
+    .mp-noimg{
+      display:inline-flex; align-items:center; justify-content:center;
+      width: 84px; height: 54px;
+      border:1px dashed rgba(100,116,139,.45);
+      border-radius: 12px;
+      color: var(--muted);
+      font-weight:800;
+      font-size:.8rem;
+      background:#fff;
+    }
+    .mp-rowform{ display:flex; gap:8px; align-items:center; justify-content:flex-end; }
+    .mp-rowform input{
+      width: 130px;
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px 10px;
+      font-weight:900;
+    }
+    .mp-empty{
+      padding: 14px;
+      color: var(--muted);
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      text-align:center;
+      font-weight:800;
+    }
+  </style>
+
+  <main>
+    <div class="mp-wrap">
+      <div class="mp-top">
+        <div class="mp-title">
+          <h2>Modificar producto por proveedor</h2>
+          <p>Seleccioná un proveedor para listar sus productos y actualizar precios.</p>
+        </div>
+        <a class="mp-link" href="/productos/panelControl">Volver al Panel</a>
+      </div>
+
+      <% if (errorMsg) { %>
+        <div class="mp-alert mp-alert--err"><%= errorMsg %></div>
+      <% } %>
+
+      <% if (success) { %>
+        <div class="mp-alert mp-alert--ok"><%= success %></div>
+      <% } %>
+
+      <div class="mp-card">
+        <form method="get" action="/productos/modificarPorProveedor" class="mp-grid">
+          <label class="mp-field">
+            <span>Proveedor</span>
+            <select name="proveedor" id="mp-prov" required>
+              <option value="">Seleccionar…</option>
+              <% proveedores.forEach(p => { %>
+                <option value="<%= p.id %>" <%= String(p.id) === String(proveedorSeleccionado) ? 'selected' : '' %>>
+                  <%= p.nombre %>
+                </option>
+              <% }) %>
+            </select>
+          </label>
+
+          <div class="mp-actions">
+            <button class="mp-btn mp-btn--primary" type="submit">Cargar</button>
+          </div>
+        </form>
+      </div>
+
+      <% if (proveedorSeleccionado) { %>
+
+        <div class="mp-card">
+          <h3 style="margin:0 0 8px 0; font-weight:900; color:var(--text);">Actualización masiva</h3>
+
+          <form method="post" action="/productos/actualizarPorProveedor" class="mp-grid3">
+            <input type="hidden" name="proveedor" value="<%= proveedorSeleccionado %>">
+
+            <label class="mp-field">
+              <span>Tipo</span>
+              <select name="tipoCambio" required>
+                <option value="aumento">Aumentar</option>
+                <option value="descuento">Descontar</option>
+              </select>
+            </label>
+
+            <label class="mp-field">
+              <span>Porcentaje (%)</span>
+              <input type="number" name="porcentaje" step="0.01" min="0" required placeholder="Ej: 10">
+            </label>
+
+            <div class="mp-actions">
+              <button class="mp-btn mp-btn--primary" type="submit">Aplicar</button>
+            </div>
+          </form>
+
+          <p class="mp-hint">Esto impacta los productos del proveedor seleccionado (según tu lógica actual del backend).</p>
+        </div>
+
+        <div class="mp-card">
+          <div class="mp-tableHead">
+            <h3>Productos — <%= proveedor.nombre || 'Proveedor' %></h3>
+            <div class="mp-tools">
+              <input id="mp-filter" class="mp-field" style="margin:0" placeholder="Filtrar por nombre o código…" autocomplete="off">
+              <span class="mp-count"><%= (productos || []).length %> items</span>
+            </div>
+          </div>
+
+          <div class="mp-tableWrap">
+            <table id="mp-table">
+              <thead>
+                <tr>
+                  <th style="width:110px;">Imagen</th>
+                  <th>Producto</th>
+                  <th style="width:170px;">Código proveedor</th>
+                  <th style="width:150px;">Precio lista</th>
+                  <th style="width:240px; text-align:right;">Precio venta</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% (productos || []).forEach(pr => { %>
+                  <tr>
+                    <td>
+                      <% if (pr.imagenes && pr.imagenes.length > 0) { %>
+                        <img class="mp-img" src="/uploads/productos/<%= pr.imagenes[0] %>" alt="Imagen de <%= pr.nombre %>">
+                      <% } else { %>
+                        <span class="mp-noimg">Sin imagen</span>
+                      <% } %>
+                    </td>
+
+                    <td>
+                      <div style="font-weight:900;"><%= pr.nombre %></div>
+                      <div style="color:var(--muted); font-size:.86rem; font-weight:800;">
+                        ID: <%= pr.id %>
+                      </div>
+                    </td>
+
+                    <td class="mp-mono"><%= pr.codigo_proveedor || '-' %></td>
+
+                    <td class="mp-num">
+                      $<%= Math.round(Number(pr.precio_lista || 0)).toLocaleString('es-AR') %>
+                    </td>
+
+                    <td style="text-align:right;">
+                      <form method="post" action="/productos/actualizarPrecio" class="mp-rowform">
+                        <input type="hidden" name="id" value="<%= pr.id %>">
+                        <input type="hidden" name="proveedor" value="<%= proveedorSeleccionado %>">
+                        <input type="number" name="precio_venta" step="1"
+                          value="<%= Math.round(Number(pr.precio_venta || 0)) %>" required>
+                        <button class="mp-btn mp-btn--ghost" type="submit">Guardar</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <script>
+          (function(){
+            const input = document.getElementById('mp-filter');
+            const table = document.getElementById('mp-table');
+            if(!input || !table) return;
+
+            input.addEventListener('input', () => {
+              const q = (input.value || '').trim().toLowerCase();
+              const rows = table.querySelectorAll('tbody tr');
+              rows.forEach(tr => {
+                const txt = tr.innerText.toLowerCase();
+                tr.style.display = (!q || txt.includes(q)) ? '' : 'none';
+              });
             });
+          })();
+        </script>
 
-            // Para asegurar que el hidden se actualiza correctamente al cargar la página
-            hiddenProveedor.value = selectProveedor.value;
-        }
-    });
-    document.addEventListener("DOMContentLoaded", function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has("success")) {
-            Swal.fire({
-                title: "¡Éxito!",
-                text: urlParams.get("success"),
-                icon: "success",
-                confirmButtonText: "OK"
-            }).then(() => {
-                window.location.href = "/productos/modificarPorProveedor?proveedor=" + urlParams.get("proveedor");
-            });
-        }
+      <% } else { %>
+        <div class="mp-empty">Seleccioná un proveedor para ver el listado.</div>
+      <% } %>
 
-        if (urlParams.has("error")) {
-            Swal.fire({
-                title: "Error",
-                text: urlParams.get("error"),
-                icon: "error",
-                confirmButtonText: "OK"
-            });
-        }
-    });
-</script>
+    </div>
+  </main>
 
-<%- include ./layouts/footer.ejs %>
+  <%- include ./layouts/footer.ejs %>
 </body>
