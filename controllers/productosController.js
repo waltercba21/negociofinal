@@ -1191,29 +1191,23 @@ panelControl: async (req, res) => {
     if (!Number.isFinite(paginaActual) || paginaActual < 1) paginaActual = 1;
     req.session.paginaActual = paginaActual;
 
-    // ✅ Solo para conservar el query en links (Editar) y para que el front dispare búsqueda al cargar
+    // Solo para conservar el query en links (Editar) y para que el front dispare búsqueda al cargar
     const busquedaActual =
       (typeof req.query.busqueda === 'string') ? req.query.busqueda.trim() : '';
 
     const productosPorPagina = 30;
     const saltar = (paginaActual - 1) * productosPorPagina;
 
-    // ✅ Siempre paginado normal (la búsqueda la hace panelControl.js vía /productos/api/buscar)
+    // Siempre paginado normal (la búsqueda la hace panelControl.js vía /productos/api/buscar)
     let productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
 
     productos = productos.map(p => ({
       ...p,
       categoria: p.categoria || p.categoria_nombre || 'Sin categoría',
-      imagenes: Array.isArray(p.imagenes)
-        ? p.imagenes
-        : (p.imagen ? [p.imagen] : [])
+      imagenes: Array.isArray(p.imagenes) ? p.imagenes : (p.imagen ? [p.imagen] : [])
     }));
 
-    const numeroDePaginas = await producto.calcularNumeroDePaginas(
-      conexion,
-      productosPorPagina,
-      categoriaSeleccionada
-    );
+    const numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
 
     req.session.proveedorSeleccionado = proveedorSeleccionado;
     req.session.categoriaSeleccionada = categoriaSeleccionada;

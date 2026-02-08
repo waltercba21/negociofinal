@@ -1,10 +1,10 @@
 // ================================
-// panelControl.js (versión corregida)
+// panelControl.js (UNIFICADO)
 // ================================
 
-// ---------------------------------------------
-// Helpers: selección, request y binding único
-// ---------------------------------------------
+// -----------------------------
+// Helpers: selección + delete
+// -----------------------------
 function getSelectedIds() {
   return Array.from(document.querySelectorAll('.product-check'))
     .filter(cb => cb.checked)
@@ -18,7 +18,6 @@ async function requestDelete(ids) {
     body: JSON.stringify({ ids })
   });
 
-  // Robustez: aceptar JSON o texto
   const ct = res.headers.get('content-type') || '';
   let payload = null;
 
@@ -29,16 +28,15 @@ async function requestDelete(ids) {
     payload = { success: res.ok, message: text };
   }
 
-  // Consideramos éxito si res.ok y (o no hay payload, o payload.success != false)
   const ok = res.ok && (!payload || payload.success !== false);
   if (!ok) {
     const msg = (payload && (payload.message || payload.error)) || 'Error al eliminar productos.';
     throw new Error(msg);
   }
+
   return payload || { success: true };
 }
 
-// Evitar dobles bindings: usar data-bound
 function bindDeleteButton(scope = document) {
   const btn = scope.querySelector('#delete-selected');
   if (!btn || btn.dataset.bound === '1') return;
@@ -48,33 +46,22 @@ function bindDeleteButton(scope = document) {
     const ids = getSelectedIds();
 
     if (ids.length === 0) {
-      if (typeof Swal !== 'undefined') {
-        Swal.fire('Sin selección', 'No seleccionaste ningún producto.', 'info');
-      } else {
-        alert('No seleccionaste ningún producto.');
-      }
+      if (typeof Swal !== 'undefined') Swal.fire('Sin selección', 'No seleccionaste ningún producto.', 'info');
+      else alert('No seleccionaste ningún producto.');
       return;
     }
 
-    // Confirmación
     const confirmar = async () => {
       try {
         btn.disabled = true;
-        const res = await requestDelete(ids);
-        if (typeof Swal !== 'undefined') {
-          await Swal.fire('Eliminados', 'Productos eliminados correctamente.', 'success');
-        } else {
-          alert('Productos eliminados correctamente.');
-        }
-        // Refrescamos la vista (mantiene querystring si lo hubiera)
+        await requestDelete(ids);
+        if (typeof Swal !== 'undefined') await Swal.fire('Eliminados', 'Productos eliminados correctamente.', 'success');
+        else alert('Productos eliminados correctamente.');
         location.reload();
       } catch (err) {
         console.error(err);
-        if (typeof Swal !== 'undefined') {
-          Swal.fire('Error', String(err.message || 'Hubo un problema al eliminar.'), 'error');
-        } else {
-          alert('Error: ' + (err.message || 'Hubo un problema al eliminar.'));
-        }
+        if (typeof Swal !== 'undefined') Swal.fire('Error', String(err.message || 'Hubo un problema al eliminar.'), 'error');
+        else alert('Error: ' + (err.message || 'Hubo un problema al eliminar.'));
       } finally {
         btn.disabled = false;
       }
@@ -97,247 +84,168 @@ function bindDeleteButton(scope = document) {
     }
   });
 }
-// -------------------------------------------------------------------
-// 1) Buscador dinámico + render (mismo markup que EJS)
-// -------------------------------------------------------------------
-function firstImageFilename(prod) {
-  const imgs = prod?.imagenes;
-  if (!imgs || !Array.isArray(imgs) || imgs.length === 0) return null;
 
-  const first = imgs[0];
-  if (typeof first === 'string') return first;
-  if (first && typeof first === 'object' && typeof first.imagen === 'string') return first.imagen;
+// -----------------------------
+// Helpers: render cards
+// -----------------------------
+function firstImageFilename(producto) {
+  const imgs = producto?.imagenes;
+  if (!imgs) return null;
+
+  // Si vienen como strings: ["a.jpg", "b.jpg"]
+  if (Array.isArray(imgs) && typeof imgs[0] === 'string') return imgs[0] || null;
+
+  // Si vienen como objetos: [{imagen:"a.jpg"}, ...]
+  if (Array.isArray(imgs) && typeof imgs[0] === 'object') return imgs[0]?.imagen || null;
+
+  // Si viene una sola
+  if (typeof imgs === 'string') return imgs;
 
   return null;
 }
 
-function formatPrecio(valor) {
-  const n = Number(valor);
-  if (!Number.isFinite(n)) return 'N/A';
-  return '$' + Math.trunc(n).toLocaleString('de-DE');
+function formatPrecio(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return '-';
+  return Math.round(n).toLocaleString('es-AR');
 }
 
 function buildEditUrl(id, paginaActual, busquedaActual) {
-  const p = Number.isFinite(Number(paginaActual)) && Number(paginaActual) > 0 ? Number(paginaActual) : 1;
-  const b = (busquedaActual || '').trim();
-  const qs = new URLSearchParams({ pagina: String(p) });
-  if (b) qs.set('busqueda', b);
+  const qs = new URLSearchParams();
+  if (paginaActual) qs.set('pagina', String(paginaActual));
+  if (busquedaActual) qs.set('busqueda', busquedaActual);
   return `/productos/editar/${id}?${qs.toString()}`;
 }
 
-function renderPanelListado(contenedor, productos, { paginaActual = 1, busquedaActual = '' } = {}) {
+function renderPanelListado(contenedor, productos, { paginaActual, busquedaActual }) {
   if (!contenedor) return;
 
-  const lista = Array.isArray(productos) ? productos : [];
+  const items = Array.isArray(productos) ? productos : [];
 
-  if (lista.length === 0) {
-    contenedor.innerHTML = `<div class="panel-alert">No hay productos para mostrar.</div>`;
-    return;
-  }
-
-  let html = `
-    <div class="panel-header">
-      <div class="panel-col panel-col-small">✔</div>
-      <div class="panel-col">Categoría</div>
-      <div class="panel-col">Nombre</div>
-      <div class="panel-col">Imagen</div>
-      <div class="panel-col">Precio</div>
-      <div class="panel-col">Acciones</div>
-    </div>
-  `;
-
-  for (const p of lista) {
-    const categoria = p.categoria || p.categoria_nombre || 'Sin categoría';
+  const cards = items.map(p => {
     const img = firstImageFilename(p);
     const imgHtml = img
-      ? `<div class="panel-image-container">
-           <img src="/uploads/productos/${img}" alt="Imagen de ${p.nombre || ''}" class="product-image" />
-         </div>`
-      : `<div class="panel-image-container"><span class="no-image">(Sin imagen)</span></div>`;
+      ? `<img class="panel-card-img" src="/uploads/productos/${img}" alt="Imagen">`
+      : `<div class="panel-card-img panel-card-img--empty">Sin imagen</div>`;
 
-    const precio = formatPrecio(p.precio_venta);
     const editUrl = buildEditUrl(p.id, paginaActual, busquedaActual);
 
-    html += `
-      <div class="panel-row">
-        <div class="panel-col panel-col-small">
-          <input type="checkbox" class="product-check" value="${p.id}" />
-        </div>
+    return `
+      <div class="panel-card">
+        <label class="panel-check">
+          <input type="checkbox" class="product-check" value="${p.id}">
+          <span></span>
+        </label>
 
-        <div class="panel-text-small-bold">${categoria}</div>
-        <div class="panel-text-small-bold">${p.nombre || '-'}</div>
+        ${imgHtml}
 
-        <div class="panel-col">${imgHtml}</div>
+        <div class="panel-card-body">
+          <div class="panel-card-title">${p.nombre || '-'}</div>
+          <div class="panel-card-meta">
+            <div><b>Categoría:</b> ${p.categoria || p.categoria_nombre || 'Sin categoría'}</div>
+            <div><b>Precio:</b> $ ${formatPrecio(p.precio_venta)}</div>
+            <div><b>Stock:</b> ${Number.isFinite(Number(p.stock_actual)) ? Number(p.stock_actual) : '-'}</div>
+            <div><b>Proveedor:</b> ${p.proveedor_nombre || 'Sin proveedor'}</div>
+            <div><b>Código:</b> ${p.codigo_proveedor || '-'}</div>
+          </div>
 
-        <div class="panel-col panel-price">${precio}</div>
-
-        <div class="panel-col">
-          <a class="btn-edit" href="${editUrl}">
-            <i class="fas fa-edit"></i> Editar
-          </a>
+          <div class="panel-card-actions">
+            <a class="btn btn-primary" href="${editUrl}">Editar</a>
+            <a class="btn btn-outline-secondary" href="/productos/${p.id}">Ver</a>
+          </div>
         </div>
       </div>
     `;
-  }
+  }).join('');
 
-  html += `
-    <div class="panel-actions">
-      <button id="delete-selected" class="btn-delete" type="button">Eliminar seleccionados</button>
+  contenedor.innerHTML = `
+    <div class="panel-actions-top">
+      <button id="delete-selected" class="btn btn-danger" type="button">Eliminar seleccionados</button>
+    </div>
+    <div class="panel-grid">
+      ${cards || `<div class="panel-alert">No hay productos para mostrar.</div>`}
     </div>
   `;
 
-  contenedor.innerHTML = html;
   bindDeleteButton(contenedor);
 }
 
-// -------------------------------------------------------------------
-// 1) Buscador dinámico + render (grid del EJS) + paginado en búsqueda
-// -------------------------------------------------------------------
+// -----------------------------
+// Search con paginación propia
+// -----------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  const urlParams = new URLSearchParams(window.location.search);
-
   const contenedorProductos = document.querySelector('.panel-container');
   const inputBusqueda = document.getElementById('entradaBusqueda');
-
   const paginacionEl = document.querySelector('.panel-paginacion');
+
+  if (!contenedorProductos) return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+
+  // Guardar paginación original (server-render)
   const paginacionOriginalHTML = paginacionEl ? paginacionEl.innerHTML : '';
-
-  const paginaActual = Number(urlParams.get('pagina') || 1) || 1;
-
-  const PAGE_SIZE = 30; // igual al server
-  let searchResults = [];
-  let searchPage = 1;
-
-  // Guardar listado original (JSON embebido por EJS)
-  let productosOriginales = [];
-  const dataEl = document.getElementById('productos-data');
-  if (dataEl) {
-    try {
-      productosOriginales = JSON.parse(dataEl.textContent) || [];
-    } catch (e) {
-      console.warn('No se pudo parsear productos-data:', e);
-      productosOriginales = [];
-    }
-  }
-  window.productosOriginales = productosOriginales;
 
   function restoreServerPagination() {
     if (paginacionEl) paginacionEl.innerHTML = paginacionOriginalHTML;
   }
 
-  function firstImageFilename(prod) {
-    const imgs = prod?.imagenes;
-    if (!imgs || !Array.isArray(imgs) || imgs.length === 0) return null;
-
-    const first = imgs[0];
-    if (typeof first === 'string') return first;
-    if (first && typeof first === 'object' && typeof first.imagen === 'string') return first.imagen;
-    return null;
+  // Guardar listado original (para restaurar al borrar búsqueda)
+  const dataEl = document.getElementById('productos-data');
+  let productosOriginales = [];
+  if (dataEl) {
+    try {
+      productosOriginales = JSON.parse(dataEl.textContent);
+    } catch (e) {
+      console.warn('No se pudo parsear productos-data:', e);
+      productosOriginales = [];
+    }
   }
 
-  function renderPanelListado(productos, busquedaActual) {
-    if (!contenedorProductos) return;
+  const paginaActual = Number(urlParams.get('pagina') || 1) || 1;
 
-    const lista = Array.isArray(productos) ? productos : [];
-
-    if (lista.length === 0) {
-      contenedorProductos.innerHTML = `<div class="panel-alert">No hay productos para mostrar.</div>`;
-      return;
-    }
-
-    let html = `
-      <div class="panel-header">
-        <div class="panel-col panel-col-small">✔</div>
-        <div class="panel-col">Categoría</div>
-        <div class="panel-col">Nombre</div>
-        <div class="panel-col">Imagen</div>
-        <div class="panel-col">Precio</div>
-        <div class="panel-col">Acciones</div>
-      </div>
-    `;
-
-    for (const p of lista) {
-      const categoria = p.categoria || p.categoria_nombre || 'Sin categoría';
-      const img = firstImageFilename(p);
-
-      const imgHtml = img
-        ? `<div class="panel-image-container">
-             <img src="/uploads/productos/${img}" alt="Imagen de ${p.nombre || ''}" class="product-image" />
-           </div>`
-        : `<div class="panel-image-container"><span class="no-image">(Sin imagen)</span></div>`;
-
-      const precio = (p.precio_venta != null && p.precio_venta !== '')
-        ? `$${parseInt(p.precio_venta, 10)}`
-        : '$0';
-
-      const qs = new URLSearchParams({ pagina: String(paginaActual) });
-      if (busquedaActual) qs.set('busqueda', busquedaActual);
-
-      const action = `/productos/editar/${p.id}?${qs.toString()}`;
-
-      html += `
-        <div class="panel-row">
-          <div class="panel-col panel-col-small">
-            <input type="checkbox" class="product-check" value="${p.id}" />
-          </div>
-
-          <div class="panel-text-small-bold">${categoria}</div>
-          <div class="panel-text-small-bold">${p.nombre || '-'}</div>
-
-          <div class="panel-col">${imgHtml}</div>
-
-          <div class="panel-col panel-price">${precio}</div>
-
-          <div class="panel-col">
-            <form method="get" action="${action}">
-              <button class="btn-edit" type="submit">
-                <i class="fas fa-edit"></i> Editar
-              </button>
-            </form>
-          </div>
-        </div>
-      `;
-    }
-
-    html += `
-      <div class="panel-actions">
-        <button id="delete-selected" class="btn-delete" type="button">Eliminar seleccionados</button>
-      </div>
-    `;
-
-    contenedorProductos.innerHTML = html;
-    bindDeleteButton(contenedorProductos);
-  }
+  // --- Modo búsqueda (paginación propia) ---
+  const PAGE_SIZE = 30;
+  let searchResults = [];
+  let searchPage = 1;
 
   function renderSearchPagination() {
     if (!paginacionEl) return;
 
-    const totalPages = Math.ceil(searchResults.length / PAGE_SIZE);
+    const totalPages = Math.max(1, Math.ceil(searchResults.length / PAGE_SIZE));
 
-    if (totalPages <= 1) {
-      paginacionEl.innerHTML = '';
-      return;
-    }
-
-    const prev = (searchPage > 1)
-      ? `<a href="#" data-page="${searchPage - 1}">&laquo;</a>`
-      : `<span>&laquo;</span>`;
-
-    const next = (searchPage < totalPages)
-      ? `<a href="#" data-page="${searchPage + 1}">&raquo;</a>`
-      : `<span>&raquo;</span>`;
-
-    paginacionEl.innerHTML = `
-      ${prev}
-      <span class="active">${searchPage}</span>
-      <span>de ${totalPages}</span>
-      ${next}
+    const btn = (label, page, disabled, active) => `
+      <button
+        type="button"
+        class="panel-page-btn ${active ? 'is-active' : ''}"
+        ${disabled ? 'disabled' : ''}
+        data-page="${page}"
+      >${label}</button>
     `;
 
-    paginacionEl.querySelectorAll('a[data-page]').forEach(a => {
-      a.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        searchPage = Number(a.dataset.page) || 1;
+    let html = `<div class="panel-pages">`;
+    html += btn('«', 1, searchPage === 1, false);
+    html += btn('‹', Math.max(1, searchPage - 1), searchPage === 1, false);
+
+    // ventana simple de páginas
+    const total = totalPages;
+    const start = Math.max(1, searchPage - 2);
+    const end = Math.min(total, searchPage + 2);
+
+    for (let p = start; p <= end; p++) {
+      html += btn(String(p), p, false, p === searchPage);
+    }
+
+    html += btn('›', Math.min(total, searchPage + 1), searchPage === total, false);
+    html += btn('»', total, searchPage === total, false);
+    html += `</div>`;
+
+    paginacionEl.innerHTML = html;
+
+    paginacionEl.querySelectorAll('button[data-page]').forEach(b => {
+      b.addEventListener('click', () => {
+        const p = Number(b.dataset.page);
+        if (!Number.isFinite(p)) return;
+        searchPage = p;
         renderSearchPage();
       });
     });
@@ -348,31 +256,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const start = (searchPage - 1) * PAGE_SIZE;
     const pageItems = searchResults.slice(start, start + PAGE_SIZE);
 
-    renderPanelListado(pageItems, busquedaActual);
+    renderPanelListado(contenedorProductos, pageItems, {
+      paginaActual,
+      busquedaActual
+    });
+
     renderSearchPagination();
   }
 
-  // Botón eliminar del listado inicial (server-render)
+  // Bind delete para el listado inicial server (por si existe botón en HTML)
   bindDeleteButton(document);
 
   let timer;
-  inputBusqueda?.addEventListener('input', (e) => {
+  inputBusqueda?.addEventListener('input', function (e) {
     clearTimeout(timer);
 
     timer = setTimeout(async () => {
       const busqueda = (e.target.value || '').trim();
 
-      // Si está vacío: restaurar listado original + paginación server
       if (!busqueda) {
         restoreServerPagination();
-        renderPanelListado(productosOriginales, '');
+        renderPanelListado(contenedorProductos, productosOriginales, {
+          paginaActual,
+          busquedaActual: ''
+        });
         return;
       }
 
-      // Modo búsqueda: traer resultados + paginado client-side
       try {
-        const resp = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda) + '&limite=1000');
-        searchResults = await resp.json();
+        const respuesta = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda) + '&limite=1000');
+        searchResults = await respuesta.json();
       } catch (err) {
         console.error('Error al buscar productos:', err);
         searchResults = [];
@@ -386,10 +299,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       searchPage = 1;
       renderSearchPage();
+
     }, 300);
   });
 
-  // Si viene ?busqueda=... en la URL (volver desde Editar), disparar búsqueda
+  // Si viene ?busqueda=... (volver desde Editar), disparar búsqueda
   const searchValue = (urlParams.get('busqueda') || '').trim();
   if (searchValue && inputBusqueda) {
     inputBusqueda.value = searchValue;
@@ -397,67 +311,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-
-// ----------------------------------------------------------
-// 3) Lógica del formulario de reportes PDF (validaciones)
-// ----------------------------------------------------------
+// -----------------------------
+// Validación PDF (si existe)
+// -----------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  let form = document.getElementById('form-pdf-stock-proveedor')
-           || document.querySelector('form[action="/productos/generarPDFProveedor"]');
-
+  const form = document.getElementById('form-pdf-stock-proveedor');
   if (!form) return;
 
-  const selProv = document.getElementById('pdf-prov-proveedor') || document.getElementById('proveedor');
-  const selCat  = document.getElementById('pdf-prov-categoria') || document.getElementById('categoria');
-
-  const radiosTipo = form.querySelectorAll('input[name="tipo"]');
-  const alertBox = document.getElementById('alertas-requeridos') || null;
-
-  function reglas(tipo) {
-    return {
-      requiereProveedor: ['pedido', 'asignado', 'asignadoPorCategoria', 'categoriaProveedorMasBarato', 'asignadoCompleto'].includes(tipo),
-      requiereCategoria: ['porCategoria', 'asignadoPorCategoria', 'categoriaProveedorMasBarato'].includes(tipo),
-    };
-  }
-
-  function validar() {
-    const tipo = form.querySelector('input[name="tipo"]:checked')?.value || 'stock';
-    const r = reglas(tipo);
-    const faltas = [];
-
-    const provVal = selProv?.value ?? 'TODOS';
-    const catVal  = selCat?.value ?? 'TODAS';
-
-    if (r.requiereProveedor && (provVal === 'TODOS' || provVal === '')) {
-      faltas.push('Seleccioná un proveedor.');
-    }
-    if (r.requiereCategoria && (catVal === 'TODAS' || catVal === '')) {
-      faltas.push('Seleccioná una categoría.');
-    }
-
-    if (alertBox) {
-      if (faltas.length) {
-        alertBox.textContent = 'Faltan datos: ' + faltas.join(' ');
-        alertBox.classList.remove('d-none');
-      } else {
-        alertBox.classList.add('d-none');
-        alertBox.textContent = '';
-      }
-    }
-    return faltas.length === 0;
-  }
-
-  radiosTipo.forEach(r => r.addEventListener('change', validar));
-  selProv?.addEventListener('change', validar);
-  selCat?.addEventListener('change', validar);
-
   form.addEventListener('submit', (e) => {
-    if (!validar()) {
+    const requeridos = Array.from(form.querySelectorAll('.alertas-requeridos'));
+    const faltan = requeridos.some(el => !String(el.value || '').trim());
+
+    if (faltan) {
       e.preventDefault();
-      e.stopPropagation();
-      if (!alertBox && typeof Swal !== 'undefined') {
-        Swal.fire('Datos incompletos', 'Revisá proveedor y/o categoría según el tipo elegido.', 'warning');
-      }
+      if (typeof Swal !== 'undefined') Swal.fire('Faltan datos', 'Completá los campos requeridos para generar el PDF.', 'warning');
+      else alert('Completá los campos requeridos para generar el PDF.');
     }
   });
 });
