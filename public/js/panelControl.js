@@ -327,21 +327,90 @@ function renderSearchPagination() {
   }
 });
 
-// -----------------------------
-// Validación PDF (si existe)
-// -----------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('form-pdf-stock-proveedor');
-  if (!form) return;
+  const selProv = document.getElementById('filtroProveedor');
+  const selCat  = document.getElementById('filtroCategoria');
+  const btnAplicar = document.getElementById('btnAplicarFiltros');
+  const btnLimpiar = document.getElementById('btnLimpiarFiltros');
 
-  form.addEventListener('submit', (e) => {
-    const requeridos = Array.from(form.querySelectorAll('.alertas-requeridos'));
-    const faltan = requeridos.some(el => !String(el.value || '').trim());
+  if (!selProv || !selCat) return;
 
-    if (faltan) {
+  const warn = (title, text) => {
+    if (typeof Swal !== 'undefined') Swal.fire(title, text, 'warning');
+    else alert(title + ': ' + text);
+  };
+
+  const syncHidden = () => {
+    const prov = selProv.value || 'TODOS';
+    const cat  = selCat.value || '';
+    document.querySelectorAll('.inp-proveedor-global').forEach(el => (el.value = prov));
+    document.querySelectorAll('.inp-categoria-global').forEach(el => (el.value = cat));
+  };
+
+  const applyFilters = (clear = false) => {
+    const params = new URLSearchParams(window.location.search);
+    params.delete('pagina');
+    params.delete('busqueda');
+
+    const prov = clear ? 'TODOS' : (selProv.value || 'TODOS');
+    const cat  = clear ? '' : (selCat.value || '');
+
+    if (prov !== 'TODOS') params.set('proveedor', prov);
+    else params.delete('proveedor');
+
+    if (cat) params.set('categoria', cat);
+    else params.delete('categoria');
+
+    window.location.search = params.toString();
+  };
+
+  // init + cambios
+  syncHidden();
+  selProv.addEventListener('change', syncHidden);
+  selCat.addEventListener('change', syncHidden);
+
+  // aplicar / limpiar
+  btnAplicar?.addEventListener('click', () => applyFilters(false));
+  btnLimpiar?.addEventListener('click', () => applyFilters(true));
+
+  // Lista precios: asegurar hidden antes de enviar
+  document.getElementById('form-lista-precios')?.addEventListener('submit', syncHidden);
+
+  // Excel: requiere proveedor numérico
+  const formExcel = document.getElementById('form-excel-precios');
+  formExcel?.addEventListener('submit', (e) => {
+    syncHidden();
+    const prov = selProv.value || 'TODOS';
+    if (!/^\d+$/.test(prov)) {
       e.preventDefault();
-      if (typeof Swal !== 'undefined') Swal.fire('Faltan datos', 'Completá los campos requeridos para generar el PDF.', 'warning');
-      else alert('Completá los campos requeridos para generar el PDF.');
+      warn('Proveedor requerido', 'Para actualizar con Excel, seleccioná un proveedor específico en los filtros globales.');
+    }
+  });
+
+  // Stock Proveedor PDF: validación por tipo
+  const formPdfProv = document.getElementById('form-pdf-stock-proveedor');
+  formPdfProv?.addEventListener('submit', (e) => {
+    syncHidden();
+
+    const prov = selProv.value || 'TODOS';
+    const cat  = selCat.value || '';
+
+    const tipo = formPdfProv.querySelector('input[name="tipo"]:checked')?.value || 'stock';
+
+    const provOk = /^\d+$/.test(prov);
+    const catOk  = /^\d+$/.test(cat);
+
+    const requiereProv = ['asignado', 'asignadoCompleto', 'asignadoPorCategoria', 'categoriaProveedorMasBarato'].includes(tipo);
+    const requiereCat  = ['asignadoPorCategoria', 'categoriaProveedorMasBarato', 'porCategoria'].includes(tipo);
+
+    if (requiereProv && !provOk) {
+      e.preventDefault();
+      warn('Faltan datos', 'Este reporte requiere seleccionar un proveedor en los filtros globales.');
+      return;
+    }
+    if (requiereCat && !catOk) {
+      e.preventDefault();
+      warn('Faltan datos', 'Este reporte requiere seleccionar una categoría en los filtros globales.');
     }
   });
 });
