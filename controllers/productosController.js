@@ -261,7 +261,71 @@ function pickCheapestProveedorIdServer(body) {
   }
   return ganador || 0;
 }
+function normalizarIdFiltro(raw, tokensNull = ['TODOS', 'TODAS', '']) {
+  if (raw === undefined || raw === null) return null;
+  const v = String(raw).trim();
+  if (!v) return null;
+  if (tokensNull.includes(v)) return null;
+  return v;
+}
 
+async function obtenerNombresFiltros({ proveedorId, categoriaId }) {
+  const [proveedores, categorias] = await Promise.all([
+    producto.obtenerProveedores(conexion),
+    producto.obtenerCategorias(conexion),
+  ]);
+
+  const proveedorSel = proveedorId
+    ? proveedores.find(p => String(p.id) === String(proveedorId))
+    : null;
+
+  const categoriaSel = categoriaId
+    ? categorias.find(c => String(c.id) === String(categoriaId))
+    : null;
+
+  return {
+    proveedores,
+    categorias,
+    proveedorSel,
+    categoriaSel,
+    nombreProveedor: proveedorSel ? proveedorSel.nombre : 'Todos los proveedores',
+    nombreCategoria: categoriaSel ? categoriaSel.nombre : 'Todas las categorías',
+  };
+}
+
+function crearPDFResponse(res, { filename = 'productos.pdf', margin = 30 } = {}) {
+  const buffer = new streamBuffers.WritableStreamBuffer({
+    initialSize: 1024 * 1024,
+    incrementAmount: 1024 * 1024
+  });
+
+  const doc = new PDFDocument({ margin });
+  doc.pipe(buffer);
+
+  let cancelado = false;
+
+  buffer.on('finish', () => {
+    if (cancelado || res.headersSent) return;
+
+    const pdfData = buffer.getContents();
+    if (!pdfData) {
+      return res.status(500).send('No se pudo generar el PDF');
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.send(pdfData);
+  });
+
+  const fail500 = (error, msg = 'Error al generar el PDF') => {
+    cancelado = true;
+    console.error('❌', msg, error);
+    try { doc.end(); } catch {}
+    if (!res.headersSent) return res.status(500).send(msg);
+  };
+
+  return { doc, fail500, cancelar: () => (cancelado = true) };
+}
 
 module.exports = {
     index: async (req, res) => {
@@ -1509,44 +1573,24 @@ obtenerModelosPorMarca: function(req, res) {
       });
   },
 generarPDF: async function (req, res) {
-  const PDFDocument = require('pdfkit');
-  const streamBuffers = require('stream-buffers');
+  const { doc, fail500 } = crearPDFResponse(res, { filename: 'lista_precios.pdf', margin: 30 });
 
-  const buffer = new streamBuffers.WritableStreamBuffer({
-    initialSize: 1024 * 1024,
-    incrementAmount: 1024 * 1024
-  });
-
-  const doc = new PDFDocument({ margin: 30 });
-  doc.pipe(buffer);
-
-  // Normalización de parámetros
-  const proveedorIdRaw = req.query.proveedor;
-  const categoriaIdRaw  = req.query.categoria;
-
-  const proveedorId = (!proveedorIdRaw || proveedorIdRaw === 'TODOS') ? null : proveedorIdRaw;
-  const categoriaId  = (!categoriaIdRaw  || categoriaIdRaw === '' || categoriaIdRaw === 'TODAS') ? null : categoriaIdRaw;
+  // Normalización
+  const proveedorId = normalizarIdFiltro(req.query.proveedor, ['TODOS', '']);
+  const categoriaId = normalizarIdFiltro(req.query.categoria, ['TODAS', '']);
 
   try {
-    // Nombres bonitos
-    const proveedores = await producto.obtenerProveedores(conexion);
-    const categorias  = await producto.obtenerCategorias(conexion);
-
-    const proveedorSel = proveedorId ? proveedores.find(p => String(p.id) === String(proveedorId)) : null;
-    const categoriaSel = categoriaId ? categorias.find(c => String(c.id) === String(categoriaId)) : null;
-
-    const nombreProveedor = proveedorSel ? proveedorSel.nombre : 'Todos los proveedores';
-    const nombreCategoria = categoriaSel ? categoriaSel.nombre : 'Todas las categorías';
+    const { nombreProveedor, nombreCategoria, categoriaSel } = await obtenerNombresFiltros({ proveedorId, categoriaId });
 
     // Título
     const titulo = `Lista de precios - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`;
     doc.fontSize(16).text(titulo, { align: 'center', width: doc.page.width - 60 });
     doc.moveDown(1.2);
 
-    // 🔑 Traer productos (ahora el modelo acepta proveedor=null para "solo categoría")
+    // Productos
     let productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
 
-    // Deduplicar por código/ID (defensivo)
+    // Deduplicar defensivo
     if (Array.isArray(productos)) {
       const vistos = new Set();
       productos = productos.filter(p => {
@@ -1561,28 +1605,20 @@ generarPDF: async function (req, res) {
 
     if (!productos.length) {
       doc.fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
-      doc.end();
-      buffer.on('finish', function () {
-        const pdfData = buffer.getContents();
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-        res.send(pdfData);
-      });
+      doc.end(); // el helper envía el PDF
       return;
     }
 
-    // ===== Helpers de layout / formato =====
+    // Layout / formato
     const fmtAr = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 });
-
     const formatearMoneda = (n) => {
       const num = Number(n);
       if (!Number.isFinite(num)) return 'N/A';
       return fmtAr.format(num);
     };
 
-    // Coordenadas/anchos (ajustadas: Descripción más a la izquierda y más ancha)
     const X_COD   = 40,  W_COD = 100;
-    const X_DESC  = 150, W_DESC = 280;   // ← más a la izquierda y más ancha que antes
+    const X_DESC  = 150, W_DESC = 280;
     const X_PLIST = 430, W_PLIST = 80;
     const X_PVENT = 515, W_PVENT = 80;
 
@@ -1598,7 +1634,6 @@ generarPDF: async function (req, res) {
       doc.moveDown(0.4);
     };
 
-    // ensurePage ahora acepta alto de próxima fila
     const ensurePage = (rowH = 18) => {
       const bottom = doc.page.height - doc.page.margins.bottom;
       if (doc.y + rowH > bottom) {
@@ -1609,44 +1644,33 @@ generarPDF: async function (req, res) {
 
     drawHeader();
 
-    // ===== Filas con alto dinámico (evita solapado de renglones) =====
     productos.forEach(p => {
       const nombre = p.nombre || '-';
       const codigo = p.codigo_proveedor || '-';
       const precioLista = formatearMoneda(p.precio_lista);
       const precioVenta = formatearMoneda(p.precio_venta);
 
-      // Calculamos el alto que ocupará la descripción
       const descHeight = doc.heightOfString(nombre, { width: W_DESC, align: 'left' });
-      const baseRowH = 16;                     // alto mínimo de fila
+      const baseRowH = 16;
       const rowH = Math.max(baseRowH, descHeight);
 
-      ensurePage(rowH + 4);                    // +4 de padding inferior
+      ensurePage(rowH + 4);
 
       const y = doc.y;
       doc.fontSize(8).fillColor('black');
 
-      doc.text(codigo,       X_COD,  y, { width: W_COD });
-      doc.text(nombre,       X_DESC, y, { width: W_DESC });
+      doc.text(codigo,       X_COD,   y, { width: W_COD });
+      doc.text(nombre,       X_DESC,  y, { width: W_DESC });
       doc.text(precioLista,  X_PLIST, y, { width: W_PLIST, align: 'right' });
       doc.text(precioVenta,  X_PVENT, y, { width: W_PVENT, align: 'right' });
 
-      // Avanzamos en Y manualmente según el alto de la fila
       doc.y = y + rowH + 4;
     });
 
     doc.end();
   } catch (error) {
-    console.error('❌ Error en generarPDF:', error);
-    return res.status(500).send('Error al generar el PDF');
+    return fail500(error, 'Error al generar el PDF');
   }
-
-  buffer.on('finish', function () {
-    const pdfData = buffer.getContents();
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-    res.send(pdfData);
-  });
 },
 
 getProductosPorCategoria : async (req, res) => {
@@ -1659,57 +1683,27 @@ getProductosPorCategoria : async (req, res) => {
       }
     });
   },
-// productosController.js
 generarPDFProveedor: async function (req, res) {
-  const PDFDocument = require('pdfkit');
-  const streamBuffers = require('stream-buffers');
-
-  const buffer = new streamBuffers.WritableStreamBuffer({
-    initialSize: 1024 * 1024,
-    incrementAmount: 1024 * 1024
-  });
-
-  const doc = new PDFDocument({ margin: 30 });
-  doc.pipe(buffer);
+  const { doc, fail500 } = crearPDFResponse(res, { filename: 'stock_proveedor.pdf', margin: 30 });
 
   // Normalización
-  const proveedorIdRaw = req.query.proveedor;
-  const categoriaIdRaw = req.query.categoria;
+  const proveedorId = normalizarIdFiltro(req.query.proveedor, ['TODOS', '']);
+  const categoriaId = normalizarIdFiltro(req.query.categoria, ['TODAS', '']);
   const tipo = String(req.query.tipo || 'stock');
 
-  const proveedorId = (!proveedorIdRaw || proveedorIdRaw === 'TODOS') ? null : proveedorIdRaw;
-  const categoriaId = (!categoriaIdRaw || categoriaIdRaw === 'TODAS' || categoriaIdRaw === '') ? null : categoriaIdRaw;
-
-  let errorResponseSent = false;
-
-  // Enviar PDF al finalizar (solo si NO hubo error 500)
-  buffer.on('finish', function () {
-    if (errorResponseSent) return;
-    const pdfData = buffer.getContents();
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=productos.pdf');
-    res.send(pdfData);
-  });
-
   try {
-    const proveedores = await producto.obtenerProveedores(conexion);
-    const categorias  = await producto.obtenerCategorias(conexion);
-
-    const proveedor = proveedorId ? proveedores.find(p => String(p.id) === String(proveedorId)) : null;
-    const categoria = categoriaId ? categorias.find(c => String(c.id) === String(categoriaId)) : null;
-
-    const nombreProveedor = proveedor ? proveedor.nombre : 'Todos los proveedores';
-    const nombreCategoria = categoria ? categoria.nombre : 'Todas las categorías';
+    const { nombreProveedor, nombreCategoria, proveedorSel, categoriaSel } =
+      await obtenerNombresFiltros({ proveedorId, categoriaId });
 
     // Título
     const titulos = {
-      pedido: `Faltantes (Proveedor más barato) - ${nombreProveedor}${categoria ? ' - ' + nombreCategoria : ''}`,
-      asignado: `Faltantes del proveedor asignado - ${nombreProveedor}${categoria ? ' - ' + nombreCategoria : ''}`,
-      asignadoCompleto: `Listado completo del proveedor asignado - ${nombreProveedor}${categoria ? ' - ' + nombreCategoria : ''}`,
-      asignadoPorCategoria: `Proveedor asignado por categoría - ${nombreProveedor}${categoria ? ' - ' + nombreCategoria : ''}`,
-      porCategoria: `Stock por categoría - ${nombreCategoria}${proveedor ? ' - ' + nombreProveedor : ''}`,
+      pedido: `Faltantes (Proveedor más barato) - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`,
+      asignado: `Faltantes del proveedor asignado - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`,
+      asignadoCompleto: `Listado completo del proveedor asignado - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`,
+      asignadoPorCategoria: `Proveedor asignado por categoría - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`,
+      porCategoria: `Stock por categoría - ${nombreCategoria}${proveedorSel ? ' - ' + nombreProveedor : ''}`,
       categoriaProveedorMasBarato: `Proveedor más barato por categoría - ${nombreProveedor} - ${nombreCategoria}`,
-      stock: `Stock - ${nombreProveedor}${categoria ? ' - ' + nombreCategoria : ''}`
+      stock: `Stock - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`
     };
 
     const titulo = titulos[tipo] || titulos.stock;
@@ -1717,40 +1711,29 @@ generarPDFProveedor: async function (req, res) {
     doc.fontSize(14).text(titulo, { align: 'center', width: doc.page.width - 60 });
     doc.moveDown(1.5);
 
-    // === Obtener productos según tipo ===
+    // Productos según tipo
     let productos = [];
 
     if (tipo === 'pedido') {
-      // faltantes con proveedor más barato (ya viene filtrado por stock en SQL)
       productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
 
     } else if (tipo === 'asignado') {
-      if (!proveedorId) {
-        productos = [];
-      } else {
-        productos = await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId);
-        // faltantes: coerción numérica segura
-        productos = productos.filter(p => (Number(p.stock_actual) || 0) < (Number(p.stock_minimo) || 0));
-      }
+      productos = proveedorId
+        ? await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId)
+        : [];
+      productos = productos.filter(p => (Number(p.stock_actual) || 0) < (Number(p.stock_minimo) || 0));
 
     } else if (tipo === 'asignadoCompleto') {
-      if (!proveedorId) {
-        productos = [];
-      } else {
-        // listado completo (sin filtrar faltantes)
-        productos = await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId);
-      }
+      productos = proveedorId
+        ? await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId)
+        : [];
 
     } else if (tipo === 'asignadoPorCategoria') {
-      // requiere proveedor + categoría (el front lo valida)
-      if (!proveedorId || !categoriaId) {
-        productos = [];
-      } else {
-        productos = await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId);
-      }
+      productos = (proveedorId && categoriaId)
+        ? await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId)
+        : [];
 
     } else if (tipo === 'porCategoria') {
-      // ✅ coherente con la UI: si no hay categoría, no devolver “fallback” por proveedor
       productos = categoriaId
         ? await producto.obtenerProductosPorCategoria(conexion, categoriaId)
         : [];
@@ -1761,11 +1744,10 @@ generarPDFProveedor: async function (req, res) {
         : [];
 
     } else {
-      // stock completo/filtrado
       productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
     }
 
-    // Deduplicar por ID por las dudas
+    // Dedupe por ID (defensivo)
     productos = (productos || []).filter((v, i, self) =>
       i === self.findIndex(t => String(t.id || '') === String(v.id || ''))
     );
@@ -1776,7 +1758,7 @@ generarPDFProveedor: async function (req, res) {
       return;
     }
 
-    // Helpers de render
+    // Render
     const drawHeader = (cols) => {
       doc.fontSize(10).fillColor('black');
       const y = doc.y;
@@ -1804,7 +1786,6 @@ generarPDFProveedor: async function (req, res) {
       doc.moveDown(0.6);
     };
 
-    // Columnas
     const COLS_STOCK = [
       { t: 'Código',       w: 80 },
       { t: 'Descripción',  w: 290 },
@@ -1818,7 +1799,6 @@ generarPDFProveedor: async function (req, res) {
       { t: 'Stock Act.',   w: 100, a: 'center' },
     ];
 
-    // Render según tipo
     if (tipo === 'porCategoria' || tipo === 'categoriaProveedorMasBarato') {
       drawHeader(COLS_SIMPLE);
       productos.forEach(p => {
@@ -1841,12 +1821,8 @@ generarPDFProveedor: async function (req, res) {
     }
 
     doc.end();
-
   } catch (error) {
-    console.error('❌ Error al generar el PDF:', error);
-    errorResponseSent = true;
-    try { doc.end(); } catch (e) {}
-    return res.status(500).send('Error al generar el PDF');
+    return fail500(error, 'Error al generar el PDF');
   }
 },
 
