@@ -333,17 +333,27 @@ function renderSearchPagination() {
 const proveedor = current.get('proveedor');
 const categoria = current.get('categoria');
 
-let url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda) + '&limite=1000';
+let abortCtrl = null;
+
+
+let url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda) + '&limite=300&simple=1';
 
 if (proveedor && proveedor !== 'TODOS') url += '&proveedor_id=' + encodeURIComponent(proveedor);
 if (categoria && categoria !== '' && categoria !== 'TODAS') url += '&categoria_id=' + encodeURIComponent(categoria);
 
-const respuesta = await fetch(url, { headers: { Accept: 'application/json' } });
+abortCtrl?.abort();
+abortCtrl = new AbortController();
+
+const respuesta = await fetch(url, {
+  headers: { Accept: 'application/json' },
+  signal: abortCtrl.signal
+});
 
 const data = await respuesta.json().catch(() => null);
 if (!respuesta.ok) throw new Error(data?.error || 'Error al buscar productos.');
 
 searchResults = Array.isArray(data) ? data : [];
+
 
 
       } catch (err) {

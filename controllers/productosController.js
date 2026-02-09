@@ -604,10 +604,23 @@ lista: async function (req, res) {
       },      
 buscar: async (req, res) => {
   try {
-    const { q: busqueda_nombre, categoria_id, marca_id, modelo_id, proveedor_id } = req.query;
-    req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id };
+    const { q, categoria_id, marca_id, modelo_id, proveedor_id } = req.query;
 
-    const limite = req.query.limite ? parseInt(req.query.limite, 10) : 100;
+    const busqueda_nombre = (q ?? '').toString().trim();
+    const simple =
+      String(req.query.simple || '').toLowerCase() === '1' ||
+      String(req.query.simple || '').toLowerCase() === 'true';
+
+    // Guardar params si existe sesión (no rompe nada)
+    if (req.session) {
+      req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id, proveedor_id };
+    }
+
+    const limiteRaw = parseInt(req.query.limite, 10);
+    const maxLimit = simple ? 300 : 500;
+    const limite = Number.isFinite(limiteRaw)
+      ? Math.max(1, Math.min(limiteRaw, maxLimit))
+      : (simple ? 300 : 100);
 
     // ✅ si viene proveedor_id => filtra por producto_proveedor
     let productos;
@@ -634,13 +647,63 @@ buscar: async (req, res) => {
       );
     }
 
-    const productoIds = productos.map(p => p.id);
+    const productoIds = (productos || []).map(p => Number(p.id)).filter(Boolean);
+
     const todasLasImagenes = productoIds.length
       ? await producto.obtenerImagenesProducto(conexion, productoIds)
       : [];
 
-    for (const prod of productos) {
-      prod.imagenes = todasLasImagenes.filter(img => img.producto_id === prod.id);
+    // ✅ index imágenes por producto_id (evita O(n²))
+    const imgsById = new Map();
+    for (const row of (todasLasImagenes || [])) {
+      const pid = Number(row.producto_id);
+      if (!pid) continue;
+      if (!imgsById.has(pid)) imgsById.set(pid, []);
+      imgsById.get(pid).push(row);
+    }
+
+    const registrarLogBusqueda = () => {
+      try {
+        const termino = busqueda_nombre;
+        const usuario_id = req.session?.usuario?.id || null;
+
+        if (termino.length >= 2 && Array.isArray(productos) && productos.length) {
+          const ids = productos.slice(0, 20).map(p => Number(p.id)).filter(Boolean);
+          if (ids.length) {
+            producto
+              .registrarConsultasBusqueda(conexion, { productoIds: ids, termino, usuario_id })
+              .catch(e => console.warn('⚠️ No se pudo registrar búsqueda:', e.code || e.message));
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ No se pudo registrar búsqueda:', e.code || e.message);
+      }
+    };
+
+    // ✅ Modo liviano (para panel)
+    if (simple) {
+      const out = (productos || []).map(p => {
+        const rows = imgsById.get(Number(p.id)) || [];
+        const filenames = rows
+          .map(r => r.imagen || r.filename || r.nombre || r.path)
+          .filter(Boolean);
+
+        return {
+          id: p.id,
+          nombre: p.nombre,
+          precio_venta: p.precio_venta,
+          categoria: p.categoria || p.categoria_nombre || p.nombre_categoria || null,
+          imagenes: filenames
+        };
+      });
+
+      registrarLogBusqueda();
+      return res.json(out);
+    }
+
+    // ✅ Modo completo (mantiene comportamiento previo)
+    for (const prod of (productos || [])) {
+      prod.imagenes = imgsById.get(Number(prod.id)) || [];
 
       const proveedores = (await producto.obtenerProveedoresPorProducto(conexion, prod.id)) || [];
       prod.proveedores = proveedores;
@@ -671,24 +734,7 @@ buscar: async (req, res) => {
       prod.utilidad = Number(prod.utilidad) || 0;
     }
 
-    // LOG búsquedas
-    try {
-      const termino = (req.query.q || '').toString().trim();
-      const usuario_id = req.session?.usuario?.id || null;
-
-      if (termino.length >= 2 && Array.isArray(productos) && productos.length) {
-        const ids = productos.slice(0, 20).map(p => Number(p.id)).filter(Boolean);
-
-        if (ids.length) {
-          producto
-            .registrarConsultasBusqueda(conexion, { productoIds: ids, termino, usuario_id })
-            .catch(e => console.warn('⚠️ No se pudo registrar búsqueda:', e.code || e.message));
-        }
-      }
-    } catch (e) {
-      console.warn('⚠️ No se pudo registrar búsqueda:', e.code || e.message);
-    }
-
+    registrarLogBusqueda();
     return res.json(productos);
   } catch (error) {
     console.error("❌ Error en /productos/api/buscar:", error);
