@@ -93,6 +93,16 @@
     font-size: .92rem;
     border-radius: 10px;
   }
+  .panel-top-grid{
+  display:grid;
+  grid-template-columns: 360px 1fr;
+  gap:14px;
+  align-items:start;
+  margin-bottom:14px;
+}
+.panel-top-grid > .form-control{ margin-bottom:0; }
+.panel-top-grid .form-control.botones{ grid-template-columns: 1fr; }
+
 
   /* ===================== Listado (paginador + buscador + grilla) ===================== */
 
@@ -350,153 +360,108 @@
 </style>
 
 <main>
+ <main>
   <div class="container">
-    <div class="form-control botones">
-      <a href="/productos/crear" class="btn btn-primary panel-control">Crear un nuevo producto</a>
-      <a href="/productos/modificarPorProveedor" class="btn btn-primary panel-control">Modificar producto por proveedor</a>
-      <a href="/productos/generarPedidoManual" class="btn btn-primary panel-control">Generar Pedido Manual</a>
-      <a href="/productos/historialPedidos" class="btn btn-primary panel-control">Historial Pedidos</a>
-      <a href="/productos/masVendidos" class="btn btn-success panel-control">Ver productos más vendidos</a>
-      <a href="/productos/recomendacionesProveedor" class="btn btn-warning panel-control">Recomendación pedido por proveedor</a>
-    </div>
-<!-- =======================
-     REPORTES / IMPORTACIÓN (UNIFICADO)
-======================== -->
-<div class="form-control" id="panel-reportes">
 
-  <div class="reportes-top">
-    <h4>Reportes e importación</h4>
-    <small class="text-muted d-block">
-      Los filtros impactan en: Lista de precios, Stock proveedor y Actualización por Excel.
-    </small>
-  </div>
+    <div class="panel-top-grid">
+      <!-- ACCIONES -->
+      <div class="form-control botones">
+        <a href="/productos/crear" class="btn btn-primary panel-control">Crear un nuevo producto</a>
+        <a href="/productos/modificarPorProveedor" class="btn btn-primary panel-control">Modificar producto por proveedor</a>
+        <a href="/productos/generarPedidoManual" class="btn btn-primary panel-control">Generar Pedido Manual</a>
+        <a href="/productos/historialPedidos" class="btn btn-primary panel-control">Historial Pedidos</a>
+        <a href="/productos/masVendidos" class="btn btn-success panel-control">Ver productos más vendidos</a>
+        <a href="/productos/recomendacionesProveedor" class="btn btn-warning panel-control">Recomendación pedido por proveedor</a>
+      </div>
 
-  <!-- Filtros (mantener IDs: los usa panelControl.js) -->
-  <div class="reportes-filtros">
-    <label for="filtroProveedor">
-      <span>Proveedor</span>
-      <select id="filtroProveedor">
-        <option value="TODOS" <%= (!proveedorSeleccionado || String(proveedorSeleccionado) === 'TODOS') ? 'selected' : '' %>>
-          Todos los proveedores
-        </option>
-        <% proveedores.forEach(proveedor => { %>
-          <option value="<%= proveedor.id %>" <%= String(proveedor.id) === String(proveedorSeleccionado) ? 'selected' : '' %>>
-            <%= proveedor.nombre %>
-          </option>
-        <% }); %>
-      </select>
-    </label>
-
-    <label for="filtroCategoria">
-      <span>Categoría</span>
-      <select id="filtroCategoria">
-        <option value="" <%= (!categoriaSeleccionada || String(categoriaSeleccionada) === '' || String(categoriaSeleccionada) === 'TODAS') ? 'selected' : '' %>>
-          Todas las categorías
-        </option>
-        <% categorias.forEach(categoria => { %>
-          <option value="<%= categoria.id %>" <%= String(categoria.id) === String(categoriaSeleccionada) ? 'selected' : '' %>>
-            <%= categoria.nombre %>
-          </option>
-        <% }); %>
-      </select>
-    </label>
-
-    <div class="reportes-actions">
-      <button type="button" class="btn btn-primary" id="btnAplicarFiltros">Aplicar</button>
-      <button type="button" class="btn btn-outline-secondary" id="btnLimpiarFiltros">Limpiar</button>
-    </div>
-  </div>
-
-  <div class="reportes-grid">
-
-    <!-- Lista de precios (PDF) -->
-    <div class="reportes-card">
-      <h5>Lista de precios (PDF)</h5>
-
-      <form method="get" action="/productos/generarPDF" id="form-lista-precios">
-        <input type="hidden" name="proveedor" class="inp-proveedor-global">
-        <input type="hidden" name="categoria" class="inp-categoria-global">
-
-        <button type="submit" class="btn btn-primary">Generar PDF</button>
-      </form>
-    </div>
-
-    <!-- Excel -->
-    <div class="reportes-card">
-      <h5>Actualizar precios (Excel)</h5>
-
-      <form
-        method="post"
-        action="/productos/actualizarPreciosExcel"
-        enctype="multipart/form-data"
-        id="form-excel-precios"
-      >
-        <input type="hidden" name="proveedor" class="inp-proveedor-global">
-
-        <label for="archivo">Subir lista de precios</label>
-        <input type="file" id="archivo" name="archivos[]" accept=".xlsx,.pdf">
-
-        <button type="submit" class="btn btn-primary">Actualizar precios</button>
-
-        <small class="text-muted d-block" style="margin-top:6px;">
-          Requiere seleccionar un proveedor específico en los filtros (arriba).
-        </small>
-      </form>
-    </div>
-
-    <!-- Stock proveedor (PDF) -->
-    <div class="reportes-card reportes-card-wide" id="contenedor-pdf-stock-proveedor">
-      <h5>Stock proveedor (PDF)</h5>
-
-      <form method="get" action="/productos/generarPDFProveedor" id="form-pdf-stock-proveedor">
-        <input type="hidden" name="proveedor" class="inp-proveedor-global">
-        <input type="hidden" name="categoria" class="inp-categoria-global">
-
-        <fieldset style="border:0; padding:0; margin-top:10px;">
-          <legend style="font-size:0.95rem; font-weight:600; margin-bottom:6px;">Tipo de reporte</legend>
-
-          <div class="opciones-reporte" style="display:grid; gap:6px;">
-            <label>
-              <input type="radio" name="tipo" value="stock" checked>
-              <strong>Stock completo</strong> — Muestra todo el stock (aplica filtros si elegís proveedor/categoría).
-            </label>
-
-            <label>
-              <input type="radio" name="tipo" value="asignadoCompleto">
-              <strong>Asignados al proveedor (con categoría)</strong> — Lista todos los productos asignados
-              al proveedor (opcionalmente filtrados por categoría).
-            </label>
-
-            <label>
-              <input type="radio" name="tipo" value="asignado">
-              <strong>Faltantes del proveedor asignado</strong> — Asignados al proveedor cuya existencia está por debajo del stock mínimo.
-            </label>
-
-            <label>
-              <input type="radio" name="tipo" value="pedido">
-              <strong>Faltantes del proveedor más barato</strong> — Por debajo del mínimo considerando al proveedor con mejor costo.
-            </label>
-
-            <label>
-              <input type="radio" name="tipo" value="porCategoria">
-              <strong>Listado por categoría (todos los proveedores)</strong> — Ignora el proveedor y lista según categoría.
-            </label>
-
-            <label>
-              <input type="radio" name="tipo" value="categoriaProveedorMasBarato">
-              <strong>Proveedor más barato por categoría</strong> — Requiere proveedor y categoría.
-            </label>
-          </div>
-        </fieldset>
-
-        <div style="margin-top:14px;">
-          <button type="submit" class="btn btn-primary">Generar PDF</button>
+      <!-- REPORTES / IMPORTACIÓN -->
+      <div class="form-control" id="panel-reportes">
+        <div class="reportes-top">
+          <h4>Reportes e importación</h4>
+          <small class="text-muted d-block">
+            Los filtros impactan en: Lista de precios, Stock proveedor y Actualización por Excel.
+          </small>
         </div>
-      </form>
+
+        <div class="reportes-filtros">
+          <label for="filtroProveedor">
+            <span>Proveedor</span>
+            <select id="filtroProveedor">
+              <option value="TODOS" <%= (!proveedorSeleccionado || String(proveedorSeleccionado) === 'TODOS') ? 'selected' : '' %>>
+                Todos los proveedores
+              </option>
+              <% proveedores.forEach(proveedor => { %>
+                <option value="<%= proveedor.id %>" <%= String(proveedor.id) === String(proveedorSeleccionado) ? 'selected' : '' %>>
+                  <%= proveedor.nombre %>
+                </option>
+              <% }); %>
+            </select>
+          </label>
+
+          <label for="filtroCategoria">
+            <span>Categoría</span>
+            <select id="filtroCategoria">
+              <option value="" <%= (!categoriaSeleccionada || String(categoriaSeleccionada) === '' || String(categoriaSeleccionada) === 'TODAS') ? 'selected' : '' %>>
+                Todas las categorías
+              </option>
+              <% categorias.forEach(categoria => { %>
+                <option value="<%= categoria.id %>" <%= String(categoria.id) === String(categoriaSeleccionada) ? 'selected' : '' %>>
+                  <%= categoria.nombre %>
+                </option>
+              <% }); %>
+            </select>
+          </label>
+
+          <div class="reportes-actions">
+            <button type="button" class="btn btn-primary" id="btnAplicarFiltros">Aplicar</button>
+            <button type="button" class="btn btn-outline-secondary" id="btnLimpiarFiltros">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="reportes-grid">
+          <div class="reportes-card">
+            <h5>Lista de precios (PDF)</h5>
+            <form method="get" action="/productos/generarPDF" id="form-lista-precios">
+              <input type="hidden" name="proveedor" class="inp-proveedor-global">
+              <input type="hidden" name="categoria" class="inp-categoria-global">
+              <button type="submit" class="btn btn-primary">Generar PDF</button>
+            </form>
+          </div>
+
+          <div class="reportes-card">
+            <h5>Actualizar precios (Excel)</h5>
+            <form method="post" action="/productos/actualizarPreciosExcel" enctype="multipart/form-data" id="form-actualizar-excel">
+              <input type="hidden" name="proveedor" class="inp-proveedor-global">
+              <label for="archivo">Subir lista</label>
+              <input type="file" id="archivo" name="archivos[]" accept=".xlsx,.pdf">
+              <button type="submit" class="btn btn-primary">Actualizar</button>
+            </form>
+          </div>
+
+          <div class="reportes-card">
+            <h5>Stock proveedor (PDF)</h5>
+
+            <form method="get" action="/productos/generarPDFProveedor" id="form-pdf-stock-proveedor">
+              <input type="hidden" name="proveedor" class="inp-proveedor-global">
+              <input type="hidden" name="categoria" class="inp-categoria-global">
+
+              <div class="opciones-reporte">
+                <label><input type="radio" name="tipo" value="stock" checked> <strong>Stock completo</strong></label>
+                <label><input type="radio" name="tipo" value="asignadoCompleto"> <strong>Asignados al proveedor (con categoría)</strong></label>
+                <label><input type="radio" name="tipo" value="asignado"> <strong>Faltantes del proveedor asignado</strong></label>
+                <label><input type="radio" name="tipo" value="pedido"> <strong>Faltantes del proveedor más barato</strong></label>
+                <label><input type="radio" name="tipo" value="porCategoria"> <strong>Listado por categoría</strong></label>
+                <label><input type="radio" name="tipo" value="categoriaProveedorMasBarato"> <strong>Proveedor más barato por categoría</strong></label>
+              </div>
+
+              <button type="submit" class="btn btn-primary">Generar PDF</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
 
-  </div>
-</div>
+    <!-- A PARTIR DE ACÁ sigue tu sección: BUSCADOR + PAGINADO + LISTADO -->
 
     <!-- =======================
          BUSCADOR + PAGINADO + LISTADO
