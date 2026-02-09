@@ -1288,7 +1288,8 @@ panelControl: async (req, res) => {
       imagenes: Array.isArray(p.imagenes) ? p.imagenes : (p.imagen ? [p.imagen] : [])
     }));
 
-    const numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina);
+    const numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina, categoriaSeleccionada);
+
 
     return res.render('panelControl', {
       proveedores,
