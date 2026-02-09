@@ -384,8 +384,6 @@ searchResults = Array.isArray(data) ? data : [];
 document.addEventListener('DOMContentLoaded', () => {
   const selProv = document.getElementById('filtroProveedor');
   const selCat  = document.getElementById('filtroCategoria');
-  const btnAplicar = document.getElementById('btnAplicarFiltros');
-  const btnLimpiar = document.getElementById('btnLimpiarFiltros');
 
   if (!selProv || !selCat) return;
 
@@ -401,13 +399,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.inp-categoria-global').forEach(el => (el.value = cat));
   };
 
-  const applyFilters = (clear = false) => {
+  const applyFilters = () => {
     const params = new URLSearchParams(window.location.search);
     params.delete('pagina');
     params.delete('busqueda');
 
-    const prov = clear ? 'TODOS' : (selProv.value || 'TODOS');
-    const cat  = clear ? '' : (selCat.value || '');
+    const prov = (selProv.value || 'TODOS');
+    const cat  = (selCat.value || '');
 
     if (prov !== 'TODOS') params.set('proveedor', prov);
     else params.delete('proveedor');
@@ -415,24 +413,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cat) params.set('categoria', cat);
     else params.delete('categoria');
 
-    window.location.search = params.toString();
+    const next = params.toString();
+    const current = window.location.search.replace(/^\?/, '');
+    if (next === current) return;
+
+    window.location.search = next;
   };
 
-  // init + cambios
+  // init + cambios (auto-aplica al cambiar)
   syncHidden();
-  selProv.addEventListener('change', syncHidden);
-  selCat.addEventListener('change', syncHidden);
-
-  // aplicar / limpiar
-  btnAplicar?.addEventListener('click', () => applyFilters(false));
-  btnLimpiar?.addEventListener('click', () => applyFilters(true));
+  selProv.addEventListener('change', () => { syncHidden(); applyFilters(); });
+  selCat.addEventListener('change',  () => { syncHidden(); applyFilters(); });
 
   // Lista precios: asegurar hidden antes de enviar
   document.getElementById('form-lista-precios')?.addEventListener('submit', syncHidden);
 
   // Excel: requiere proveedor numérico
   const formExcel = document.getElementById('form-actualizar-excel');
-
   formExcel?.addEventListener('submit', (e) => {
     syncHidden();
     const prov = selProv.value || 'TODOS';

@@ -110,11 +110,14 @@
   }
 
   #panel-reportes .reportes-filtros{
-    display:grid;
-    grid-template-columns:1fr 1fr auto;
-    gap:10px;
-    align-items:end;
-  }
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  align-items:end;
+}
+
+/* Sin acciones extra (aplica auto al cambiar filtros) */
+
 
   #panel-reportes label span{
     display:block;
@@ -316,7 +319,8 @@
 <div class="form-control" id="panel-acciones">
   <h4>Acciones</h4>
 
-  <details class="accion-grupo" open>
+  <details class="accion-grupo">
+
     <summary class="btn btn-primary accion-summary">
       <div class="accion-summary-text">
         <span class="accion-title">Realizar pedido a proveedor</span>
@@ -358,39 +362,37 @@
         </div>
 
         <div class="reportes-filtros">
-          <label for="filtroProveedor">
-            <span>Proveedor</span>
-            <select id="filtroProveedor">
-              <option value="TODOS" <%= (!proveedorSeleccionado || String(proveedorSeleccionado) === 'TODOS') ? 'selected' : '' %>>
-                Todos los proveedores
-              </option>
-              <% proveedores.forEach(proveedor => { %>
-                <option value="<%= proveedor.id %>" <%= String(proveedor.id) === String(proveedorSeleccionado) ? 'selected' : '' %>>
-                  <%= proveedor.nombre %>
-                </option>
-              <% }); %>
-            </select>
-          </label>
+  <label for="filtroProveedor">
+    <span>Proveedor</span>
+    <select id="filtroProveedor">
+      <option value="TODOS" <%= (!proveedorSeleccionado || String(proveedorSeleccionado) === 'TODOS') ? 'selected' : '' %>>
+        Todos los proveedores
+      </option>
+      <% proveedores.forEach(proveedor => { %>
+        <option value="<%= proveedor.id %>" <%= String(proveedor.id) === String(proveedorSeleccionado) ? 'selected' : '' %>>
+          <%= proveedor.nombre %>
+        </option>
+      <% }); %>
+    </select>
+  </label>
 
-          <label for="filtroCategoria">
-            <span>Categoría</span>
-            <select id="filtroCategoria">
-              <option value="" <%= (!categoriaSeleccionada || String(categoriaSeleccionada) === '' || String(categoriaSeleccionada) === 'TODAS') ? 'selected' : '' %>>
-                Todas las categorías
-              </option>
-              <% categorias.forEach(categoria => { %>
-                <option value="<%= categoria.id %>" <%= String(categoria.id) === String(categoriaSeleccionada) ? 'selected' : '' %>>
-                  <%= categoria.nombre %>
-                </option>
-              <% }); %>
-            </select>
-          </label>
+  <label for="filtroCategoria">
+    <span>Categoría</span>
+    <select id="filtroCategoria">
+      <option value="" <%= (!categoriaSeleccionada || String(categoriaSeleccionada) === '' || String(categoriaSeleccionada) === 'TODAS') ? 'selected' : '' %>>
+        Todas las categorías
+      </option>
+      <% categorias.forEach(categoria => { %>
+        <option value="<%= categoria.id %>" <%= String(categoria.id) === String(categoriaSeleccionada) ? 'selected' : '' %>>
+          <%= categoria.nombre %>
+        </option>
+      <% }); %>
+    </select>
+  </label>
 
-          <div class="reportes-actions">
-            <button type="button" class="btn btn-primary" id="btnAplicarFiltros">Aplicar</button>
-            <button type="button" class="btn btn-outline-secondary" id="btnLimpiarFiltros">Limpiar</button>
-          </div>
-        </div>
+  <!-- Sin botones aplicar/limpiar: los filtros se aplican automáticamente al cambiar -->
+</div>
+
 
         <div class="reportes-grid">
           <div class="reportes-card reportes-card-wide">
