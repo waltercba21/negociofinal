@@ -2,112 +2,201 @@
 <%- include ./layouts/header.ejs %>
 
 <body>
-  <style>
-  /* ======================== PANEL CONTROL — MODO COMPACTO UNIVERSAL ======================== */
-  /* Pensado para el HTML actual del panel (botones + 3 formularios + listado tipo grid).      */
-  /* No requiere cambiar tu markup y evita colisionar con otras vistas ajustando selectores.   */
+<style>
+  /* ======================== PANEL CONTROL — ESTILO UNIFICADO (DESKTOP) ======================== */
+  /* Sin media queries. Enfocado a pantallas grandes. Evita repeticiones y selectores redundantes. */
 
-  /* ---------- Contenedor general ---------- */
-  main > .container {
-    max-width: 1400px;              /* limita ancho en pantallas muy grandes */
-    padding-left: 10px;
-    padding-right: 10px;
+  :root{
+    --pc-primary: #1f487e;
+    --pc-border: rgba(31,72,126,.12);
+    --pc-border-strong: rgba(31,72,126,.25);
+    --pc-bg-soft: #fbfdff;
+    --pc-bg-head: #f6f8fb;
+    --pc-text: #29486f;
+    --pc-shadow: 0 6px 18px rgba(0,0,0,.06);
+    --pc-radius: 12px;
+    --pc-radius-sm: 10px;
   }
 
-  /* ---------- Tarjetas/segmentos de la parte superior (reutilizan .form-control como caja) ---------- */
-  main > .container > .form-control {
-    box-shadow: 0 6px 18px rgba(0,0,0,.06);
-    border: 1px solid rgba(31,72,126,.12);
-    border-radius: 12px;
-    padding: 14px;                  /* compacto */
+  /* ---------- Contenedor general ---------- */
+  main > .container{
+    max-width: 1400px;
+    padding: 0 10px;
+  }
+
+  /* ---------- Tarjetas del panel (usa .form-control como caja) ---------- */
+  main > .container > .form-control{
+    box-shadow: var(--pc-shadow);
+    border: 1px solid var(--pc-border);
+    border-radius: var(--pc-radius);
+    padding: 14px;
     margin-bottom: 14px;
     background: #fff;
   }
 
-  main > .container > .form-control h4 {
-    font-size: 1rem;                /* ↓ títulos más chicos */
-    font-weight: 700;
-    color: #1f487e;
+  main > .container > .form-control h4{
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--pc-primary);
     margin: 0 0 10px 0;
   }
 
-  /* ---------- Grupo de botones principales ---------- */
-.form-control.botones {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
-  align-items: stretch;            /* cada celda estira su contenido */
-}
+  /* ---------- Layout superior: Acciones (izq) + Reportes (der) ---------- */
+  .panel-top-grid{
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 14px;
+    align-items: start;
+    margin-bottom: 14px;
+  }
+  .panel-top-grid > .form-control{ margin-bottom: 0; }
 
-.form-control.botones .panel-control.btn {
-  display: flex;                   /* permite centrar contenido */
-  align-items: center;             /* centrado vertical */
-  justify-content: center;         /* centrado horizontal */
-  text-align: center;              /* centra líneas múltiples */
-  height: 100%;                    /* ocupa toda la celda del grid */
-  min-height: 48px;                /* alto mínimo consistente */
-  line-height: 1.2;                /* evita texto “estirado” */
-  padding: 10px 12px;              /* cómodo pero compacto */
-  white-space: normal;             /* permite 2+ líneas si hace falta */
-}
+  /* ===================== ACCIONES (panel lateral agrupado) ===================== */
+  #panel-acciones{ display: grid; gap: 12px; }
 
-  /* ---------- Formularios (selects, inputs, file) ---------- */
-  main > .container > .form-control label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #29486f;
+  #panel-acciones .accion-grupo{
+    border: 1px solid var(--pc-border);
+    border-radius: var(--pc-radius);
+    background: #fff;
+    overflow: hidden;
+  }
+
+  #panel-acciones summary{ list-style: none; cursor: pointer; }
+  #panel-acciones summary::-webkit-details-marker{ display: none; }
+
+  #panel-acciones .accion-summary{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 0;
+    text-align: left;
+    font-weight: 800;
+    min-height: 50px;
+    white-space: normal;
+  }
+
+  #panel-acciones .accion-summary-text{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  #panel-acciones .accion-title{ font-weight: 900; font-size: .95rem; }
+  #panel-acciones .accion-subtitle{ font-weight: 700; font-size: .82rem; opacity: .85; }
+
+  #panel-acciones .accion-caret{
+    font-size: .95rem;
+    opacity: .85;
+    transition: transform .15s ease;
+  }
+  #panel-acciones details[open] .accion-caret{ transform: rotate(180deg); }
+
+  #panel-acciones .accion-sub{
+    padding: 10px;
+    display: grid;
+    gap: 8px;
+    background: var(--pc-bg-soft);
+    border-top: 1px solid var(--pc-border);
+  }
+  #panel-acciones .accion-sub .btn{ width: 100%; }
+
+  /* ===================== REPORTES / IMPORTACIÓN ===================== */
+  #panel-reportes .reportes-top{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  #panel-reportes .reportes-filtros{
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+
+  #panel-reportes .reportes-actions{
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  #panel-reportes .reportes-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  #panel-reportes .reportes-card{
+    border: 1px solid var(--pc-border);
+    border-radius: var(--pc-radius);
+    padding: 12px;
+    background: var(--pc-bg-soft);
+  }
+
+  #panel-reportes .reportes-card h5{
+    font-size: .95rem;
+    font-weight: 900;
+    margin: 0 0 8px 0;
+    color: var(--pc-primary);
+  }
+
+  #panel-reportes .reportes-card-wide{ grid-column: 1 / -1; }
+
+  /* ===================== FORMULARIOS (común) ===================== */
+  main > .container label{
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--pc-text);
     margin: 0 8px 4px 0;
   }
-  main > .container > .form-control select,
-  main > .container > .form-control input[type="file"] {
-    font-size: 0.9rem;
-    padding: .35rem .5rem;          /* compacto */
-    height: auto;
-    line-height: 1.25;
-    border-radius: 10px;
-  }
-  main > .container > .form-control button.btn {
-    padding: 8px 12px;
-    font-size: 0.92rem;
-    border-radius: 10px;
-    font-weight: 700;
+
+  /* Labels tipo "span" usados en filtros */
+  #panel-reportes label span{
+    display: block;
+    margin: 0 0 4px 0;
   }
 
-  /* ---------- Bloque: Generar Stock Proveedor (PDF) ---------- */
-  #contenedor-pdf-stock-proveedor .grupo-campos {
-    gap: 10px !important;
-  }
-  #contenedor-pdf-stock-proveedor .form-select {
+  main > .container select,
+  main > .container input[type="file"],
+  main > .container input[type="text"]{
+    font-size: .9rem;
     padding: .35rem .5rem;
-    font-size: .9rem;
+    line-height: 1.25;
+    border-radius: var(--pc-radius-sm);
+    border: 1px solid var(--pc-border-strong);
+    outline: none;
   }
-  #contenedor-pdf-stock-proveedor legend {
-    font-size: .95rem;
-    margin-bottom: 6px;
-  }
-  #contenedor-pdf-stock-proveedor .opciones-reporte label {
-    font-size: .9rem;
-  }
-  #contenedor-pdf-stock-proveedor button.btn {
+
+  main > .container button.btn{
     padding: 8px 12px;
     font-size: .92rem;
-    border-radius: 10px;
+    border-radius: var(--pc-radius-sm);
+    font-weight: 800;
   }
-  .panel-top-grid{
-  display:grid;
-  grid-template-columns: 360px 1fr;
-  gap:14px;
-  align-items:start;
-  margin-bottom:14px;
-}
-.panel-top-grid > .form-control{ margin-bottom:0; }
-.panel-top-grid .form-control.botones{ grid-template-columns: 1fr; }
 
+  /* ===================== BUSCADOR + CTA NUEVO PRODUCTO ===================== */
+  .panel-search-row{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .panel-search-row #entradaBusqueda{ flex: 1; margin: 0; }
 
-  /* ===================== Listado (paginador + buscador + grilla) ===================== */
+  .btn-new-product{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: var(--pc-radius-sm);
+    font-weight: 900;
+    padding: 10px 12px;
+    white-space: nowrap;
+  }
 
-  /* Paginación */
-  .panel-paginacion {
+  /* ===================== PAGINACIÓN ===================== */
+  .panel-paginacion{
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
@@ -116,103 +205,101 @@
     margin-bottom: 10px;
     user-select: none;
   }
+
   .panel-paginacion a,
-  .panel-paginacion span {
+  .panel-paginacion span{
     padding: 4px 8px;
     font-size: .9rem;
     border: 1px solid #dfe7f2;
     border-radius: 8px;
-    color: #1f487e;
+    color: var(--pc-primary);
     text-decoration: none;
     background: #fff;
   }
-  .panel-paginacion span.active {
-    background: #1f487e;
-    border-color: #1f487e;
+
+  .panel-paginacion span.active{
+    background: var(--pc-primary);
+    border-color: var(--pc-primary);
     color: #fff;
   }
 
-  /* Buscador */
-  .panel-buscador #entradaBusqueda {
-    font-size: .95rem;
-    padding: .45rem .6rem;
-    height: auto;
-    line-height: 1.25;
-    border-radius: 10px;
-  }
-
-  /* Contenedor del listado con scroll horizontal de respaldo (no corta columnas) */
-  .panel-container {
-    overflow-x: auto;               /* si no entra, permite desplazamiento horizontal */
+  /* ===================== LISTADO (grilla) ===================== */
+  .panel-container{
+    overflow-x: auto;
     padding-bottom: 6px;
   }
 
-  /* Cabecera y filas como grilla compacta */
   .panel-header,
-  .panel-row {
+  .panel-row{
     display: grid;
-    grid-template-columns: 36px 1.1fr 2fr 120px .9fr 140px; /* ✔ col de check | categoría | nombre | imagen | precio | acciones */
+    grid-template-columns: 36px 1.1fr 2fr 120px .9fr 140px;
     gap: 8px;
     align-items: center;
-    min-width: 900px;               /* asegura estructura estable en pantallas muy chicas */
+    min-width: 900px;
   }
 
-  .panel-header {
+  .panel-header{
     position: sticky;
     top: 0;
     z-index: 1;
-    background: #f6f8fb;
+    background: var(--pc-bg-head);
     border: 1px solid #e5edf7;
-    border-radius: 10px;
+    border-radius: var(--pc-radius-sm);
     padding: 8px;
-    font-weight: 700;
+    font-weight: 900;
     font-size: .9rem;
-    color: #1f487e;
+    color: var(--pc-primary);
   }
 
-  .panel-row {
+  .panel-row{
     border-bottom: 1px solid #eef2f7;
     padding: 8px 2px;
     font-size: .92rem;
   }
 
-  .panel-col-small { width: 36px; text-align: center; }
-  .panel-text-small-bold { font-weight: 600; font-size: .9rem; }
+  .panel-col-small{ width: 36px; text-align: center; }
+  .panel-text-small-bold{ font-weight: 800; font-size: .9rem; }
 
-  .panel-image-container {
+  .panel-image-container{
     width: 100%;
     max-width: 120px;
     margin: 0 auto;
   }
-  .product-image {
+
+  .product-image{
     display: block;
     width: 100%;
-    height: 70px;                   /* altura fija compacta */
+    height: 70px;
     object-fit: contain;
   }
 
-  .panel-price { font-weight: 700; color: #0b6e4f; }
+  .panel-price{ font-weight: 900; color: #0b6e4f; }
 
-  /* Acciones */
-  .btn-edit {
+  /* Acciones de fila */
+  .btn-edit{
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
     font-size: .85rem;
-    font-weight: 700;
+    font-weight: 900;
     border: 1px solid #d0d7e2;
     border-radius: 8px;
     background: #fff;
-    color: #1f487e;
+    color: var(--pc-primary);
     cursor: pointer;
   }
 
-  .panel-actions { display: flex; justify-content: flex-end; padding-top: 10px; }
-  .btn-delete {
+  .panel-actions{
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 10px;
+  }
+
+  .btn-delete{
     padding: 6px 10px;
     font-size: .85rem;
-    font-weight: 700;
+    font-weight: 900;
     border-radius: 8px;
     border: 1px solid #f2d7da;
     background: #fff;
@@ -220,144 +307,14 @@
     cursor: pointer;
   }
 
-  .panel-alert {
+  .panel-alert{
     font-size: .95rem;
     color: #6b7280;
     padding: 10px;
     text-align: center;
   }
-  #filtros-globales .filtros-globales-grid{
-  display:grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap:10px;
-  align-items:end;
-}
-#filtros-globales label span{ display:block; margin:0 0 4px 0; }
-#filtros-globales .filtros-globales-actions{
-  display:flex;
-  gap:8px;
-  justify-content:flex-end;
-}
-#filtros-globales select{
-  width:100%;
-  font-size:.9rem;
-  padding:.35rem .5rem;
-  border-radius:10px;
-}
-/* ===================== Reportes e importación (unificado) ===================== */
-#panel-reportes .reportes-top{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-bottom:10px;
-}
-
-#panel-reportes .reportes-filtros{
-  display:grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap:10px;
-  align-items:end;
-}
-
-#panel-reportes label span{ display:block; margin:0 0 4px 0; }
-
-#panel-reportes select{
-  width:100%;
-  font-size:.9rem;
-  padding:.35rem .5rem;
-  border-radius:10px;
-  border: 1px solid rgba(31,72,126,.25);
-}
-
-#panel-reportes .reportes-actions{
-  display:flex;
-  gap:8px;
-  justify-content:flex-end;
-}
-
-#panel-reportes .reportes-grid{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:12px;
-  margin-top:12px;
-}
-
-#panel-reportes .reportes-card{
-  border: 1px solid rgba(31,72,126,.12);
-  border-radius:12px;
-  padding:12px;
-  background:#fbfdff;
-}
-
-#panel-reportes .reportes-card h5{
-  font-size:.95rem;
-  font-weight:700;
-  margin:0 0 8px 0;
-  color:#1f487e;
-}
-
-#panel-reportes .reportes-card-wide{ grid-column:1 / -1; }
-
-  /* ===================== Breakpoints (más compacto en resoluciones comunes) ===================== */
-
-  /* 1600px: leves ajustes */
-  @media (max-width: 1600px) {
-    .panel-header,
-    .panel-row {
-      grid-template-columns: 36px 1fr 1.8fr 110px .85fr 130px;
-    }
-  }
-
-  /* 1366px: tamaño típico de monitores chicos */
-  @media (max-width: 1366px) {
-    main > .container { max-width: 98vw; }
-    .form-control.botones { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-
-    .panel-header,
-    .panel-row {
-      grid-template-columns: 34px 1fr 1.6fr 100px .8fr 120px;
-      gap: 7px;
-      min-width: 860px;
-    }
-    .panel-header { font-size: .88rem; padding: 7px; }
-    .panel-row    { font-size: .9rem;  padding: 7px 2px; }
-    .panel-image-container { max-width: 100px; }
-    .product-image { height: 64px; }
-    .btn-edit, .btn-delete { padding: 6px 9px; font-size: .83rem; }
-  }
-
-  /* 1280px: aún más angosto */
-  @media (max-width: 1280px) {
-    .panel-header,
-    .panel-row {
-      grid-template-columns: 32px .9fr 1.4fr 90px .75fr 110px;
-      min-width: 820px;
-    }
-    .panel-image-container { max-width: 90px; }
-    .product-image { height: 58px; }
-  }
-
-  /* 1024px: notebooks compactas */
-  @media (max-width: 1024px) {
-    .form-control.botones { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-    .panel-header,
-    .panel-row {
-      grid-template-columns: 30px .9fr 1.3fr 84px .7fr 104px;
-      gap: 6px;
-      min-width: 780px;
-    }
-    .panel-image-container { max-width: 84px; }
-    .product-image { height: 54px; }
-  }
-
-  /* 768px: tablets / si se usa en móvil, se mantiene scroll horizontal y se baja tipografía */
-  @media (max-width: 768px) {
-    main > .container > .form-control { padding: 12px; }
-    .form-control.botones .panel-control.btn { font-size: .9rem; padding: 7px 9px; }
-    .panel-header { font-size: .85rem; }
-    .panel-row    { font-size: .88rem; }
-  }
 </style>
+
 
  <main>
   <div class="container">
@@ -502,15 +459,19 @@
         <% } %>
       </div>
 
-      <div class="panel-buscador mb-4">
-        <input
-          type="text"
-          id="entradaBusqueda"
-          class="form-control"
-          autocomplete="off"
-          placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile"
-        />
-      </div>
+      <div class="panel-buscador mb-4 panel-search-row">
+  <input
+    type="text"
+    id="entradaBusqueda"
+    class="form-control"
+    autocomplete="off"
+    placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile"
+  />
+  <a href="/productos/crear" class="btn btn-primary btn-new-product">
+    <i class="fas fa-plus"></i> Nuevo producto
+  </a>
+</div>
+
 
       <div class="panel-container">
         <% if (productos && productos.length > 0) { %>
