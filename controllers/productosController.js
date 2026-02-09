@@ -1,14 +1,13 @@
 const conexion = require('../config/conexion');
 const producto = require('../models/producto');
-const carrito = require('../models/carrito'); 
+const carrito = require('../models/carrito');
 const escobillasCompat = require('../models/escobillasCompat');
-var borrar = require('fs');
-const PDFDocument = require('pdfkit');
-const blobStream  = require('blob-stream');
-var streamBuffers = require('stream-buffers');
-const xlsx = require('xlsx');
+
 const fs = require('fs');
-const pdfParse = require('pdf-parse');
+const PDFDocument = require('pdfkit');
+const streamBuffers = require('stream-buffers');
+const xlsx = require('xlsx');
+
 
 const adminEmails = ['walter@autofaros.com.ar'];
 
@@ -1320,70 +1319,19 @@ panelControl: async (req, res) => {
     return res.status(500).send('Error: ' + error.message);
   }
 },
-
-buscarPorNombre: function (req, res) {
-    const consulta = req.query.query; 
-    if (!consulta) {
-      producto.obtenerTodos(conexion, (error, productos) => {
-        if (error) {
-          console.error(error);
-          res.status(500).send('Error interno del servidor');
-          return;
-        }
-        productos.forEach(producto => {
-          producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('de-DE');
-        });
-        res.json({ productos });
-      });
-    } else {
-      producto.obtenerPorNombre(conexion, consulta, (error, productos) => {
-        if (error) {
-          res.status(500).send('Error interno del servidor');
-          return;
-        }
-        productos.forEach(producto => {
-          producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('de-DE');
-        });
-        res.json({ productos });
-      }); 
-    }   
-  },
-  buscarProductos : async (req, res) => {
-    try {
-      const consulta = req.query.query;
-      let productos;
-      if (!consulta) {
-        productos = await producto.findAll({
-          attributes: ['id', 'nombre', 'imagen', 'precio_venta'], 
-        });
-      } else {
-        productos = await producto.findAll({
-          where: {
-            nombre: {
-              [Op.iLike]: '%' + consulta + '%'
-            }
-          },
-          attributes: ['id', 'nombre', 'imagen', 'precio_venta'], 
-        });
-      }
-      res.json(productos);
-    } catch (error) {
-      console.error('Hubo un problema con la búsqueda de productos:', error);
-      res.status(500).send('Hubo un problema con la búsqueda de productos');
-    }
-  },
 todos: function (req, res) {
-    producto.obtener(conexion, function (error, productos) {
-        if (error) {
-            console.log('Error al obtener productos:', error);
-        } else {
-            productos.forEach(producto => {
-                producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('de-DE');
-            });
-            res.render('productos', { productos: productos });
-        }
-    });
+  producto.obtener(conexion, function (error, productos) {
+    if (error) {
+      console.log('Error al obtener productos:', error);
+    } else {
+      productos.forEach(producto => {
+        producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('de-DE');
+      });
+      res.render('productos', { productos: productos });
+    }
+  });
 },
+
 eliminarProveedor: async function (req, res) {
   try {
     const proveedorId = Number(req.params.id || req.body.proveedorId || 0);
