@@ -4,316 +4,307 @@
 <body>
 <style>
   /* ======================== PANEL CONTROL — ESTILO UNIFICADO (DESKTOP) ======================== */
-  /* Sin media queries. Enfocado a pantallas grandes. Evita repeticiones y selectores redundantes. */
-
   :root{
-    --pc-primary: #1f487e;
-    --pc-border: rgba(31,72,126,.12);
-    --pc-border-strong: rgba(31,72,126,.25);
-    --pc-bg-soft: #fbfdff;
-    --pc-bg-head: #f6f8fb;
-    --pc-text: #29486f;
-    --pc-shadow: 0 6px 18px rgba(0,0,0,.06);
-    --pc-radius: 12px;
-    --pc-radius-sm: 10px;
+    --pc-primary:#1f487e;
+    --pc-border:rgba(31,72,126,.12);
+    --pc-border-strong:rgba(31,72,126,.25);
+    --pc-bg-soft:#fbfdff;
+    --pc-bg-head:#f6f8fb;
+    --pc-text:#29486f;
+    --pc-shadow:0 6px 18px rgba(0,0,0,.06);
+    --pc-radius:12px;
+    --pc-radius-sm:10px;
   }
 
-  /* ---------- Contenedor general ---------- */
+  /* Contenedor */
   main > .container{
-    max-width: 1400px;
-    padding: 0 10px;
+    max-width:1400px;
+    padding:0 10px;
   }
 
-  /* ---------- Tarjetas del panel (usa .form-control como caja) ---------- */
-  main > .container > .form-control{
-    box-shadow: var(--pc-shadow);
-    border: 1px solid var(--pc-border);
-    border-radius: var(--pc-radius);
-    padding: 14px;
-    margin-bottom: 14px;
-    background: #fff;
+  /* Cajas tipo “tarjeta” (solo DIVs .form-control usados como contenedor) */
+  main > .container > .form-control,
+  .panel-top-grid > .form-control{
+    box-shadow:var(--pc-shadow);
+    border:1px solid var(--pc-border);
+    border-radius:var(--pc-radius);
+    padding:14px;
+    margin-bottom:14px;
+    background:#fff;
   }
 
-  main > .container > .form-control h4{
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--pc-primary);
-    margin: 0 0 10px 0;
+  main > .container > .form-control h4,
+  .panel-top-grid > .form-control h4{
+    font-size:1rem;
+    font-weight:900;
+    color:var(--pc-primary);
+    margin:0 0 10px 0;
   }
 
-  /* ---------- Layout superior: Acciones (izq) + Reportes (der) ---------- */
+  /* Layout superior */
   .panel-top-grid{
-    display: grid;
-    grid-template-columns: 360px 1fr;
-    gap: 14px;
-    align-items: start;
-    margin-bottom: 14px;
+    display:grid;
+    grid-template-columns:360px 1fr;
+    gap:14px;
+    align-items:start;
+    margin-bottom:14px;
   }
-  .panel-top-grid > .form-control{ margin-bottom: 0; }
+  .panel-top-grid > .form-control{ margin-bottom:0; }
 
-  /* ===================== ACCIONES (panel lateral agrupado) ===================== */
-  #panel-acciones{ display: grid; gap: 12px; }
+  /* ===================== ACCIONES (agrupadas) ===================== */
+  #panel-acciones{ display:grid; gap:12px; }
 
   #panel-acciones .accion-grupo{
-    border: 1px solid var(--pc-border);
-    border-radius: var(--pc-radius);
-    background: #fff;
-    overflow: hidden;
+    border:1px solid var(--pc-border);
+    border-radius:var(--pc-radius);
+    background:#fff;
+    overflow:hidden;
   }
 
-  #panel-acciones summary{ list-style: none; cursor: pointer; }
-  #panel-acciones summary::-webkit-details-marker{ display: none; }
+  #panel-acciones summary{ list-style:none; cursor:pointer; }
+  #panel-acciones summary::-webkit-details-marker{ display:none; }
 
   #panel-acciones .accion-summary{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 12px;
-    border-radius: 0;
-    text-align: left;
-    font-weight: 800;
-    min-height: 50px;
-    white-space: normal;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:12px;
+    border-radius:0;
+    text-align:left;
+    font-weight:900;
+    min-height:50px;
+    white-space:normal;
   }
 
   #panel-acciones .accion-summary-text{
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
   }
-  #panel-acciones .accion-title{ font-weight: 900; font-size: .95rem; }
-  #panel-acciones .accion-subtitle{ font-weight: 700; font-size: .82rem; opacity: .85; }
+  #panel-acciones .accion-title{ font-weight:900; font-size:.95rem; }
+  #panel-acciones .accion-subtitle{ font-weight:700; font-size:.82rem; opacity:.85; }
 
   #panel-acciones .accion-caret{
-    font-size: .95rem;
-    opacity: .85;
-    transition: transform .15s ease;
+    font-size:.95rem;
+    opacity:.85;
+    transition:transform .15s ease;
   }
-  #panel-acciones details[open] .accion-caret{ transform: rotate(180deg); }
+  #panel-acciones details[open] .accion-caret{ transform:rotate(180deg); }
 
   #panel-acciones .accion-sub{
-    padding: 10px;
-    display: grid;
-    gap: 8px;
-    background: var(--pc-bg-soft);
-    border-top: 1px solid var(--pc-border);
+    padding:10px;
+    display:grid;
+    gap:8px;
+    background:var(--pc-bg-soft);
+    border-top:1px solid var(--pc-border);
   }
-  #panel-acciones .accion-sub .btn{ width: 100%; }
+  #panel-acciones .accion-sub .btn{ width:100%; }
 
   /* ===================== REPORTES / IMPORTACIÓN ===================== */
   #panel-reportes .reportes-top{
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-bottom:10px;
   }
 
   #panel-reportes .reportes-filtros{
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: 10px;
-    align-items: end;
+    display:grid;
+    grid-template-columns:1fr 1fr auto;
+    gap:10px;
+    align-items:end;
+  }
+
+  #panel-reportes label span{
+    display:block;
+    margin:0 0 4px 0;
   }
 
   #panel-reportes .reportes-actions{
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
   }
 
   #panel-reportes .reportes-grid{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 12px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:12px;
   }
 
   #panel-reportes .reportes-card{
-    border: 1px solid var(--pc-border);
-    border-radius: var(--pc-radius);
-    padding: 12px;
-    background: var(--pc-bg-soft);
+    border:1px solid var(--pc-border);
+    border-radius:var(--pc-radius);
+    padding:12px;
+    background:var(--pc-bg-soft);
   }
 
   #panel-reportes .reportes-card h5{
-    font-size: .95rem;
-    font-weight: 900;
-    margin: 0 0 8px 0;
-    color: var(--pc-primary);
+    font-size:.95rem;
+    font-weight:900;
+    margin:0 0 8px 0;
+    color:var(--pc-primary);
   }
 
-  #panel-reportes .reportes-card-wide{ grid-column: 1 / -1; }
+  #panel-reportes .reportes-card-wide{ grid-column:1 / -1; }
 
-  /* ===================== FORMULARIOS (común) ===================== */
-  main > .container label{
-    font-size: .9rem;
-    font-weight: 700;
-    color: var(--pc-text);
-    margin: 0 8px 4px 0;
+  /* ===================== Inputs/Selects/Files (solo dentro de contenedores) ===================== */
+  .panel-top-grid select,
+  .panel-top-grid input[type="file"],
+  .panel-busqueda input[type="text"],
+  #panel-reportes select{
+    font-size:.9rem;
+    padding:.35rem .5rem;
+    line-height:1.25;
+    border-radius:var(--pc-radius-sm);
+    border:1px solid var(--pc-border-strong);
+    outline:none;
   }
 
-  /* Labels tipo "span" usados en filtros */
-  #panel-reportes label span{
-    display: block;
-    margin: 0 0 4px 0;
+  .panel-top-grid label,
+  #panel-reportes label{
+    font-size:.9rem;
+    font-weight:700;
+    color:var(--pc-text);
+    margin:0 8px 4px 0;
   }
 
-  main > .container select,
-  main > .container input[type="file"],
-  main > .container input[type="text"]{
-    font-size: .9rem;
-    padding: .35rem .5rem;
-    line-height: 1.25;
-    border-radius: var(--pc-radius-sm);
-    border: 1px solid var(--pc-border-strong);
-    outline: none;
-  }
-
-  main > .container button.btn{
-    padding: 8px 12px;
-    font-size: .92rem;
-    border-radius: var(--pc-radius-sm);
-    font-weight: 800;
-  }
-
-  /* ===================== BUSCADOR + CTA NUEVO PRODUCTO ===================== */
+  /* ===================== Buscador + CTA Nuevo producto ===================== */
   .panel-search-row{
-    display: flex;
-    gap: 10px;
-    align-items: center;
+    display:flex;
+    gap:10px;
+    align-items:center;
   }
-  .panel-search-row #entradaBusqueda{ flex: 1; margin: 0; }
+  .panel-search-row #entradaBusqueda{ flex:1; margin:0; }
 
   .btn-new-product{
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border-radius: var(--pc-radius-sm);
-    font-weight: 900;
-    padding: 10px 12px;
-    white-space: nowrap;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border-radius:var(--pc-radius-sm);
+    font-weight:900;
+    padding:10px 12px;
+    white-space:nowrap;
   }
 
-  /* ===================== PAGINACIÓN ===================== */
+  /* ===================== Paginación ===================== */
   .panel-paginacion{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-    user-select: none;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:10px;
+    user-select:none;
   }
-
   .panel-paginacion a,
   .panel-paginacion span{
-    padding: 4px 8px;
-    font-size: .9rem;
-    border: 1px solid #dfe7f2;
-    border-radius: 8px;
-    color: var(--pc-primary);
-    text-decoration: none;
-    background: #fff;
+    padding:4px 8px;
+    font-size:.9rem;
+    border:1px solid #dfe7f2;
+    border-radius:8px;
+    color:var(--pc-primary);
+    text-decoration:none;
+    background:#fff;
   }
-
   .panel-paginacion span.active{
-    background: var(--pc-primary);
-    border-color: var(--pc-primary);
-    color: #fff;
+    background:var(--pc-primary);
+    border-color:var(--pc-primary);
+    color:#fff;
   }
 
-  /* ===================== LISTADO (grilla) ===================== */
+  /* ===================== Listado ===================== */
   .panel-container{
-    overflow-x: auto;
-    padding-bottom: 6px;
+    overflow-x:auto;
+    padding-bottom:6px;
   }
 
   .panel-header,
   .panel-row{
-    display: grid;
-    grid-template-columns: 36px 1.1fr 2fr 120px .9fr 140px;
-    gap: 8px;
-    align-items: center;
-    min-width: 900px;
+    display:grid;
+    grid-template-columns:36px 1.1fr 2fr 120px .9fr 140px;
+    gap:8px;
+    align-items:center;
+    min-width:900px;
   }
 
   .panel-header{
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--pc-bg-head);
-    border: 1px solid #e5edf7;
-    border-radius: var(--pc-radius-sm);
-    padding: 8px;
-    font-weight: 900;
-    font-size: .9rem;
-    color: var(--pc-primary);
+    position:sticky;
+    top:0;
+    z-index:1;
+    background:var(--pc-bg-head);
+    border:1px solid #e5edf7;
+    border-radius:var(--pc-radius-sm);
+    padding:8px;
+    font-weight:900;
+    font-size:.9rem;
+    color:var(--pc-primary);
   }
 
   .panel-row{
-    border-bottom: 1px solid #eef2f7;
-    padding: 8px 2px;
-    font-size: .92rem;
+    border-bottom:1px solid #eef2f7;
+    padding:8px 2px;
+    font-size:.92rem;
   }
 
-  .panel-col-small{ width: 36px; text-align: center; }
-  .panel-text-small-bold{ font-weight: 800; font-size: .9rem; }
+  .panel-col-small{ width:36px; text-align:center; }
+  .panel-text-small-bold{ font-weight:800; font-size:.9rem; }
 
   .panel-image-container{
-    width: 100%;
-    max-width: 120px;
-    margin: 0 auto;
+    width:100%;
+    max-width:120px;
+    margin:0 auto;
   }
-
   .product-image{
-    display: block;
-    width: 100%;
-    height: 70px;
-    object-fit: contain;
+    display:block;
+    width:100%;
+    height:70px;
+    object-fit:contain;
   }
 
-  .panel-price{ font-weight: 900; color: #0b6e4f; }
+  .panel-price{ font-weight:900; color:#0b6e4f; }
 
-  /* Acciones de fila */
   .btn-edit{
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    font-size: .85rem;
-    font-weight: 900;
-    border: 1px solid #d0d7e2;
-    border-radius: 8px;
-    background: #fff;
-    color: var(--pc-primary);
-    cursor: pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 10px;
+    font-size:.85rem;
+    font-weight:900;
+    border:1px solid #d0d7e2;
+    border-radius:8px;
+    background:#fff;
+    color:var(--pc-primary);
+    cursor:pointer;
   }
 
   .panel-actions{
-    display: flex;
-    justify-content: flex-end;
-    padding-top: 10px;
+    display:flex;
+    justify-content:flex-end;
+    padding-top:10px;
   }
 
   .btn-delete{
-    padding: 6px 10px;
-    font-size: .85rem;
-    font-weight: 900;
-    border-radius: 8px;
-    border: 1px solid #f2d7da;
-    background: #fff;
-    color: #dc3545;
-    cursor: pointer;
+    padding:6px 10px;
+    font-size:.85rem;
+    font-weight:900;
+    border-radius:8px;
+    border:1px solid #f2d7da;
+    background:#fff;
+    color:#dc3545;
+    cursor:pointer;
   }
 
   .panel-alert{
-    font-size: .95rem;
-    color: #6b7280;
-    padding: 10px;
-    text-align: center;
+    font-size:.95rem;
+    color:#6b7280;
+    padding:10px;
+    text-align:center;
   }
 </style>
+
 
 
  <main>
@@ -321,14 +312,41 @@
 
     <div class="panel-top-grid">
       <!-- ACCIONES -->
-      <div class="form-control botones">
-        <a href="/productos/crear" class="btn btn-primary panel-control">Crear un nuevo producto</a>
-        <a href="/productos/modificarPorProveedor" class="btn btn-primary panel-control">Modificar producto por proveedor</a>
-        <a href="/productos/generarPedidoManual" class="btn btn-primary panel-control">Generar Pedido Manual</a>
-        <a href="/productos/historialPedidos" class="btn btn-primary panel-control">Historial Pedidos</a>
-        <a href="/productos/masVendidos" class="btn btn-success panel-control">Ver productos más vendidos</a>
-        <a href="/productos/recomendacionesProveedor" class="btn btn-warning panel-control">Recomendación pedido por proveedor</a>
+      <!-- ACCIONES (agrupadas) -->
+<div class="form-control" id="panel-acciones">
+  <h4>Acciones</h4>
+
+  <details class="accion-grupo" open>
+    <summary class="btn btn-primary accion-summary">
+      <div class="accion-summary-text">
+        <span class="accion-title">Realizar pedido a proveedor</span>
+        <span class="accion-subtitle">Nuevo pedido / Historial</span>
       </div>
+      <span class="accion-caret">▾</span>
+    </summary>
+
+    <div class="accion-sub">
+      <a href="/productos/generarPedidoManual" class="btn btn-outline-primary">Realizar pedido</a>
+      <a href="/productos/historialPedidos" class="btn btn-outline-primary">Historial de pedidos</a>
+    </div>
+  </details>
+
+  <details class="accion-grupo">
+    <summary class="btn btn-success accion-summary">
+      <div class="accion-summary-text">
+        <span class="accion-title">Ventas</span>
+        <span class="accion-subtitle">Más vendidos / Recomendación</span>
+      </div>
+      <span class="accion-caret">▾</span>
+    </summary>
+
+    <div class="accion-sub">
+      <a href="/productos/masVendidos" class="btn btn-outline-success">Productos más vendidos</a>
+      <a href="/productos/recomendacionesProveedor" class="btn btn-outline-warning">Recomendación de pedido</a>
+    </div>
+  </details>
+</div>
+
 
       <!-- REPORTES / IMPORTACIÓN -->
       <div class="form-control" id="panel-reportes">
@@ -375,7 +393,7 @@
         </div>
 
         <div class="reportes-grid">
-          <div class="reportes-card">
+          <div class="reportes-card reportes-card-wide">
             <h5>Lista de precios (PDF)</h5>
             <form method="get" action="/productos/generarPDF" id="form-lista-precios">
               <input type="hidden" name="proveedor" class="inp-proveedor-global">
@@ -384,7 +402,7 @@
             </form>
           </div>
 
-          <div class="reportes-card">
+          <div class="reportes-card reportes-card-wide">
             <h5>Actualizar precios (Excel)</h5>
             <form method="post" action="/productos/actualizarPreciosExcel" enctype="multipart/form-data" id="form-actualizar-excel">
               <input type="hidden" name="proveedor" class="inp-proveedor-global">
@@ -394,7 +412,7 @@
             </form>
           </div>
 
-          <div class="reportes-card">
+          <div class="reportes-card reportes-card-wide">
             <h5>Stock proveedor (PDF)</h5>
 
             <form method="get" action="/productos/generarPDFProveedor" id="form-pdf-stock-proveedor">
@@ -413,6 +431,16 @@
               <button type="submit" class="btn btn-primary">Generar PDF</button>
             </form>
           </div>
+          <div class="reportes-card reportes-card-wide">
+  <h5>Edición manual por proveedor</h5>
+  <p class="text-muted d-block" style="margin:0 0 10px 0; font-size:.9rem;">
+    Ajustes manuales por proveedor sin importar Excel.
+  </p>
+  <a href="/productos/modificarPorProveedor" class="btn btn-outline-primary">
+    Abrir herramienta
+  </a>
+</div>
+
         </div>
       </div>
     </div>
