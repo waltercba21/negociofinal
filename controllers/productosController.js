@@ -1258,7 +1258,6 @@ panelControl: async (req, res) => {
     const proveedores = await producto.obtenerProveedores(conexion);
     const categorias  = await producto.obtenerCategorias(conexion);
 
-    // ✅ El estado vive en la URL (query). Evitamos "fantasmas" por session.
     const proveedorRaw = (typeof req.query.proveedor === 'string') ? req.query.proveedor : null;
     const categoriaRaw = (typeof req.query.categoria === 'string') ? req.query.categoria : null;
 
@@ -1268,28 +1267,41 @@ panelControl: async (req, res) => {
     const categoriaSeleccionada =
       (!categoriaRaw || categoriaRaw === '' || categoriaRaw === 'TODAS') ? null : String(categoriaRaw);
 
-    // ✅ Paginado: solo query. Si no viene, es 1.
     let paginaActual = Number(req.query.pagina || 1);
     if (!Number.isFinite(paginaActual) || paginaActual < 1) paginaActual = 1;
 
-    // Solo para conservar el query en links (Editar) y para que el front dispare búsqueda al cargar
     const busquedaActual =
       (typeof req.query.busqueda === 'string') ? req.query.busqueda.trim() : '';
 
     const productosPorPagina = 30;
+
+    // ✅ calcular páginas con filtros (categoría + proveedor)
+    const numeroDePaginas = await producto.calcularNumeroDePaginas(
+      conexion,
+      productosPorPagina,
+      categoriaSeleccionada,
+      proveedorSeleccionado
+    );
+
+    // ✅ clamp si la página quedó fuera de rango por los filtros
+    if (paginaActual > numeroDePaginas) paginaActual = numeroDePaginas;
+
     const saltar = (paginaActual - 1) * productosPorPagina;
 
-    // Listado paginado (filtro solo por categoría)
-    let productos = await producto.obtenerTodos(conexion, saltar, productosPorPagina, categoriaSeleccionada);
+    // ✅ listado paginado con filtros (categoría + proveedor)
+    let productos = await producto.obtenerTodos(
+      conexion,
+      saltar,
+      productosPorPagina,
+      categoriaSeleccionada,
+      proveedorSeleccionado
+    );
 
     productos = productos.map(p => ({
       ...p,
       categoria: p.categoria || p.categoria_nombre || 'Sin categoría',
       imagenes: Array.isArray(p.imagenes) ? p.imagenes : (p.imagen ? [p.imagen] : [])
     }));
-
-    const numeroDePaginas = await producto.calcularNumeroDePaginas(conexion, productosPorPagina, categoriaSeleccionada);
-
 
     return res.render('panelControl', {
       proveedores,
@@ -1307,6 +1319,7 @@ panelControl: async (req, res) => {
     return res.status(500).send('Error: ' + error.message);
   }
 },
+
 
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 

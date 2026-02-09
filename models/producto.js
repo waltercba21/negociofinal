@@ -917,28 +917,71 @@ ajustarStockPorOperacion: function(conexion, productoId, cantidad) {
             });
         });
     }, 
-      obtenerTodos: function(conexion, saltar, productosPorPagina, categoriaSeleccionada) {
-        return new Promise((resolve, reject) => {
-            let consulta = 'SELECT productos.*, categorias.nombre AS categoria, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
-            let parametros = [saltar, productosPorPagina];
-            if (categoriaSeleccionada) {
-                consulta += ' WHERE categoria_id = ?';
-                parametros.unshift(categoriaSeleccionada);
-            }
-            consulta += ' GROUP BY productos.id ORDER BY id DESC LIMIT ?, ?';
-            conexion.query(consulta, parametros, function(error, resultados) {
-                if (error) {
-                    reject(error);
-                } else {
-                    // Divide las imágenes en un array
-                    resultados.forEach(producto => {
-                        producto.imagenes = producto.imagenes ? producto.imagenes.split(',') : [];
-                    });
-                    resolve(resultados);
-                }
-            });
-        });
-    },
+obtenerTodos: function (conexion, saltar, productosPorPagina, categoriaSeleccionada = null, proveedorSeleccionado = null) {
+  // ✅ Compatibilidad con llamada vieja: obtenerTodos(conexion, callback)
+  if (typeof saltar === 'function') {
+    const cb = saltar;
+    const sql = `SELECT id, nombre, imagen, precio_venta FROM productos ORDER BY id DESC`;
+    return conexion.query(sql, cb);
+  }
+
+  return new Promise((resolve, reject) => {
+    let consulta = `
+      SELECT
+        productos.*,
+        categorias.nombre AS categoria,
+        GROUP_CONCAT(
+          imagenes_producto.imagen
+          ORDER BY IFNULL(imagenes_producto.posicion, 999999), imagenes_producto.id
+          SEPARATOR ','
+        ) AS imagenes
+      FROM productos
+      LEFT JOIN categorias ON productos.categoria_id = categorias.id
+      LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
+    `;
+
+    const where = [];
+    const params = [];
+
+    const catNum = Number(categoriaSeleccionada);
+    if (Number.isFinite(catNum) && catNum > 0) {
+      where.push(`productos.categoria_id = ?`);
+      params.push(catNum);
+    }
+
+    const provNum = Number(proveedorSeleccionado);
+    if (Number.isFinite(provNum) && provNum > 0) {
+      // ✅ filtra por relación producto_proveedor (mismo criterio que /productos/api/buscar)
+      where.push(`
+        EXISTS (
+          SELECT 1
+          FROM producto_proveedor pp
+          WHERE pp.producto_id = productos.id
+            AND pp.proveedor_id = ?
+        )
+      `);
+      params.push(provNum);
+    }
+
+    if (where.length) {
+      consulta += ` WHERE ${where.join(' AND ')} `;
+    }
+
+    consulta += ` GROUP BY productos.id ORDER BY productos.id DESC LIMIT ?, ?`;
+    params.push(Number(saltar) || 0, Number(productosPorPagina) || 30);
+
+    conexion.query(consulta, params, (error, resultados) => {
+      if (error) return reject(error);
+
+      (resultados || []).forEach(p => {
+        p.imagenes = p.imagenes ? String(p.imagenes).split(',') : [];
+      });
+
+      resolve(resultados || []);
+    });
+  });
+},
+
 obtenerProductosPorProveedorDetalle: async function (conexion, proveedorId, categoriaId = null) {
   let sql = `
     SELECT
@@ -2030,23 +2073,45 @@ eliminarImagen : function(id) {
         });
     });
 },
-calcularNumeroDePaginas: function(conexion, productosPorPagina, categoriaId = null) {
+calcularNumeroDePaginas: function (conexion, productosPorPagina, categoriaId = null, proveedorId = null) {
   return new Promise((resolve, reject) => {
     let sql = 'SELECT COUNT(*) AS total FROM productos';
+    const where = [];
     const params = [];
 
-    if (categoriaId) {
-      sql += ' WHERE categoria_id = ?';
-      params.push(categoriaId);
+    const catNum = Number(categoriaId);
+    if (Number.isFinite(catNum) && catNum > 0) {
+      where.push('categoria_id = ?');
+      params.push(catNum);
+    }
+
+    const provNum = Number(proveedorId);
+    if (Number.isFinite(provNum) && provNum > 0) {
+      where.push(`
+        EXISTS (
+          SELECT 1
+          FROM producto_proveedor pp
+          WHERE pp.producto_id = productos.id
+            AND pp.proveedor_id = ?
+        )
+      `);
+      params.push(provNum);
+    }
+
+    if (where.length) {
+      sql += ' WHERE ' + where.join(' AND ');
     }
 
     conexion.query(sql, params, (error, results) => {
       if (error) return reject(error);
+
       const total = results?.[0]?.total || 0;
-      resolve(Math.ceil(total / productosPorPagina));
+      const pages = Math.max(1, Math.ceil(total / (Number(productosPorPagina) || 30)));
+      resolve(pages);
     });
   });
 },
+
 
 obtenerProductosOferta: (conexion, callback) => {
     const query = `
