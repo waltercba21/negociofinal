@@ -1258,6 +1258,7 @@ panelControl: async (req, res) => {
     const proveedores = await producto.obtenerProveedores(conexion);
     const categorias  = await producto.obtenerCategorias(conexion);
 
+    // Estado por URL (query)
     const proveedorRaw = (typeof req.query.proveedor === 'string') ? req.query.proveedor : null;
     const categoriaRaw = (typeof req.query.categoria === 'string') ? req.query.categoria : null;
 
@@ -1283,7 +1284,6 @@ panelControl: async (req, res) => {
       proveedorSeleccionado
     );
 
-    // ✅ clamp si la página quedó fuera de rango por los filtros
     if (paginaActual > numeroDePaginas) paginaActual = numeroDePaginas;
 
     const saltar = (paginaActual - 1) * productosPorPagina;
@@ -1297,8 +1297,9 @@ panelControl: async (req, res) => {
       proveedorSeleccionado
     );
 
+    // Normalización para la vista (imágenes + categoría)
     productos = productos.map(p => ({
-      ...p,
+      ...p, // ✅ IMPORTANTE: tres puntos (no ".p")
       categoria: p.categoria || p.categoria_nombre || 'Sin categoría',
       imagenes: Array.isArray(p.imagenes) ? p.imagenes : (p.imagen ? [p.imagen] : [])
     }));
@@ -1319,7 +1320,6 @@ panelControl: async (req, res) => {
     return res.status(500).send('Error: ' + error.message);
   }
 },
-
 
 buscarPorNombre: function (req, res) {
     const consulta = req.query.query; 
