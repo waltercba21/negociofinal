@@ -421,7 +421,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('form-lista-precios')?.addEventListener('submit', syncHidden);
 
   // Excel: requiere proveedor numérico
-  const formExcel = document.getElementById('form-excel-precios');
+  const formExcel = document.getElementById('form-actualizar-excel');
+
   formExcel?.addEventListener('submit', (e) => {
     syncHidden();
     const prov = selProv.value || 'TODOS';
