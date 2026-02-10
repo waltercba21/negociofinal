@@ -1,159 +1,167 @@
 // services/padron.js
+"use strict";
+
 const https = require("https");
+const { URL } = require("url");
 const wsaa = require("./wsaa");
 
+// URLs oficiales (HOMO / PROD)
+const URL_HOMO = "https://awshomo.arca.gov.ar/sr-padron/webservices/personaServiceA5";
+const URL_PROD = "https://aws.arca.gov.ar/sr-padron/webservices/personaServiceA5";
+
+// Namespace correcto (según manual)
+const NS_A5 = "http://a5.soap.ws.server.puc.sr/";
+
+// Service ID para pedir TA a WSAA (según manual)
+const WSAA_SERVICE_ID = "ws_sr_constancia_inscripcion";
+
+function isProd() {
+  return String(process.env.ARCA_ENV || "homo").toLowerCase() === "prod";
+}
+
+function endpoint() {
+  return isProd() ? URL_PROD : URL_HOMO;
+}
+
+function stripXml(xml) {
+  return String(xml || "").replace(/\r?\n/g, " ").trim();
+}
+
+// Extrae tag simple <tag>valor</tag> (sin importar prefijos)
 function pickTag(xml, tag) {
   const r = new RegExp(
     `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
     "i"
   );
-  const m = xml.match(r);
+  const m = String(xml || "").match(r);
   return m ? m[1].trim() : "";
 }
 
+// Extrae un bloque completo <tag>...</tag>
 function pickBlock(xml, tag) {
   const r = new RegExp(
     `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
     "i"
   );
-  const m = xml.match(r);
+  const m = String(xml || "").match(r);
   return m ? m[1] : "";
 }
 
-function formatDomicilio(domXml) {
-  if (!domXml) return null;
-  const dir = pickTag(domXml, "direccion") || "";
-  const loc = pickTag(domXml, "localidad") || "";
-  const prov =
-    pickTag(domXml, "descripcionProvincia") ||
-    pickTag(domXml, "provincia") ||
-    "";
-  const cp = pickTag(domXml, "codPostal") || "";
-  const parts = [dir, loc, prov, cp].map(s => (s || "").trim()).filter(Boolean);
-  return parts.length ? parts.join(", ") : null;
-}
-
-function getPadronUrl() {
-  if (process.env.ARCA_PADRON_URL) return process.env.ARCA_PADRON_URL;
-  const env = String(process.env.ARCA_ENV || "homo").toLowerCase();
-  const host = env === "prod" ? "aws.arca.gov.ar" : "awshomo.arca.gov.ar";
-  // URL del servicio A5 (sin ?wsdl)
-  return `https://${host}/sr-padron/webservices/personaServiceA5`;
-}
-
 function postXml(urlStr, xml) {
-  const u = new URL(urlStr);
   return new Promise((resolve, reject) => {
+    const u = new URL(urlStr);
+    const body = Buffer.from(xml, "utf8");
+
+    // IMPORTANTE:
+    // - SOAP 1.1 => Content-Type text/xml
+    // - SOAPAction debe existir; si va vacío, mandalo como '""'
     const req = https.request(
       {
         method: "POST",
         hostname: u.hostname,
-        path: u.pathname + (u.search || ""),
+        path: u.pathname + u.search,
         headers: {
           "Content-Type": "text/xml; charset=utf-8",
-          "Content-Length": Buffer.byteLength(xml),
-          SOAPAction: ""
-        }
+          "Content-Length": String(body.length),
+          "SOAPAction": '""',
+          "Accept": "text/xml",
+          "Connection": "close",
+        },
       },
       (res) => {
-        let data = "";
-        res.on("data", (c) => (data += c));
-        res.on("end", () => resolve({ status: res.statusCode, raw: data }));
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          const raw = Buffer.concat(chunks).toString("utf8");
+          resolve({ status: res.statusCode || 0, raw });
+        });
       }
     );
+
     req.on("error", reject);
-    req.write(xml);
+    req.write(body);
     req.end();
   });
 }
 
 async function dummy() {
-  const url = getPadronUrl();
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:a5="http://a5.soap.ws.server.puc.sr.arca.gov.ar/">
+  const xml = `
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="${NS_A5}">
   <soapenv:Header/>
   <soapenv:Body>
     <a5:dummy/>
   </soapenv:Body>
-</soapenv:Envelope>`;
-  const out = await postXml(url, xml);
-  const fault = pickTag(out.raw, "faultstring");
-  return { ...out, fault: fault || null };
+</soapenv:Envelope>`.trim();
+
+  const { status, raw } = await postXml(endpoint(), xml);
+
+  if (status >= 400) {
+    const err = new Error(stripXml(raw) || `HTTP ${status}`);
+    err.status = status;
+    err.raw = raw;
+    throw err;
+  }
+
+  return { raw };
 }
 
-async function getPersonaV2({ idPersona, cuitRepresentada }) {
-  const url = getPadronUrl();
+async function getPersonaV2({ cuitRepresentada, idPersona }) {
+  const cuitRep = Number(cuitRepresentada || 0);
+  const idPers = Number(idPersona || 0);
+  if (!cuitRep || !idPers) throw new Error("Faltan cuitRepresentada / idPersona");
 
-  // Servicio WSAA del padrón/constancia (recomendado) + fallback legacy
-  const servicesToTry = ["ws_sr_constancia_inscripcion", "ws_sr_padron_a5"];
+  // TA de WSAA para el service id correcto
+  const ta = await wsaa.getTA(WSAA_SERVICE_ID);
+  const token = ta?.token;
+  const sign = ta?.sign;
+  if (!token || !sign) throw new Error("No se pudo obtener token/sign (WSAA)");
 
-  let last = null;
-
-  for (const svc of servicesToTry) {
-    const { token, sign } = await wsaa.getTokenSign(svc); // si wsaa ignora args, no rompe
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:a5="http://a5.soap.ws.server.puc.sr.arca.gov.ar/">
+  const xml = `
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="${NS_A5}">
   <soapenv:Header/>
   <soapenv:Body>
     <a5:getPersona_v2>
       <token>${token}</token>
       <sign>${sign}</sign>
-      <cuitRepresentada>${cuitRepresentada}</cuitRepresentada>
-      <idPersona>${idPersona}</idPersona>
+      <cuitRepresentada>${cuitRep}</cuitRepresentada>
+      <idPersona>${idPers}</idPersona>
     </a5:getPersona_v2>
   </soapenv:Body>
-</soapenv:Envelope>`;
+</soapenv:Envelope>`.trim();
 
-    const out = await postXml(url, xml);
-    const fault = pickTag(out.raw, "faultstring");
-    if (fault) {
-      last = { ok: false, fault, raw: out.raw, service: svc };
-      continue;
-    }
+  const { status, raw } = await postXml(endpoint(), xml);
 
-    const personaReturn = pickBlock(out.raw, "personaReturn") || out.raw;
-
-    // Errores propios del servicio (cuando no hay datos / no autorizado, etc.)
-    const errConst = pickBlock(personaReturn, "errorConstancia");
-    const errMsg = pickTag(errConst, "error");
-    if (errMsg) {
-      last = { ok: false, error: errMsg, raw: out.raw, service: svc };
-      continue;
-    }
-
-    const dg = pickBlock(personaReturn, "datosGenerales");
-    if (!dg) {
-      last = { ok: false, error: "Respuesta sin datosGenerales", raw: out.raw, service: svc };
-      continue;
-    }
-
-    const razonSocial = pickTag(dg, "razonSocial") || null;
-    const nombre = pickTag(dg, "nombre") || null;
-    const apellido = pickTag(dg, "apellido") || null;
-
-    const nombreCompleto =
-      razonSocial ||
-      [apellido, nombre].filter(Boolean).join(" ").trim() ||
-      null;
-
-    const dom = pickBlock(dg, "domicilioFiscal") || pickBlock(dg, "domicilio");
-    const domicilio = formatDomicilio(dom);
-
-    return {
-      ok: true,
-      data: {
-        nombre: nombreCompleto,
-        razon_social: razonSocial || nombreCompleto,
-        domicilio
-      },
-      raw: out.raw,
-      service: svc
-    };
+  if (status >= 400) {
+    // Si viene SOAP Fault, devolvemos algo legible
+    const fault = pickTag(raw, "faultstring") || stripXml(raw);
+    const err = new Error(fault || `HTTP ${status}`);
+    err.status = status;
+    err.raw = raw;
+    throw err;
   }
 
-  return last || { ok: false, error: "Sin respuesta", raw: "" };
+  // Parse mínimo (razón social/nombre + domicilio fiscal)
+  const razonSocial = pickTag(raw, "razonSocial");
+  const nombre = pickTag(raw, "nombre");
+  const apellido = pickTag(raw, "apellido");
+
+  // domicilioFiscal es un bloque con tags internos (direccion, localidad, codPostal, etc.)
+  const domBlock = pickBlock(raw, "domicilioFiscal");
+  const direccion = pickTag(domBlock, "direccion");
+  const localidad = pickTag(domBlock, "localidad");
+  const codPostal = pickTag(domBlock, "codPostal");
+
+  const domicilio = [direccion, localidad, codPostal].filter(Boolean).join(" · ") || null;
+
+  return {
+    raw,
+    razon_social: razonSocial || null,
+    nombre: (apellido || nombre) ? [apellido, nombre].filter(Boolean).join(" ") : null,
+    domicilio,
+  };
 }
 
-module.exports = { dummy, getPersonaV2 };
+module.exports = {
+  dummy,
+  getPersonaV2,
+};
