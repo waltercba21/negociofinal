@@ -1,8 +1,11 @@
 // services/padron.js
 require("dotenv").config();
+
 const https = require("https");
 const { URL } = require("url");
 const wsaa = require("./wsaa");
+
+const NS_A5 = "http://a5.soap.ws.server.puc.sr/"; // namespace correcto (WSDL A5)
 
 function pickTag(xml, tag) {
   const r = new RegExp(
@@ -31,7 +34,7 @@ function formatDomicilio(domXml) {
     pickTag(domXml, "provincia") ||
     "";
   const cp = pickTag(domXml, "codPostal") || "";
-  const parts = [dir, loc, prov, cp].map(s => (s || "").trim()).filter(Boolean);
+  const parts = [dir, loc, prov, cp].map((s) => (s || "").trim()).filter(Boolean);
   return parts.length ? parts.join(", ") : null;
 }
 
@@ -39,17 +42,16 @@ function getPadronUrl() {
   if (process.env.ARCA_PADRON_URL) return process.env.ARCA_PADRON_URL;
 
   const env = String(process.env.ARCA_ENV || "homo").toLowerCase();
+  // Padrón A5 está en AFIP (homo/prod)
   const host = env === "prod" ? "aws.afip.gov.ar" : "awshomo.afip.gov.ar";
-
-  // endpoint A5 (sin ?WSDL)
   return `https://${host}/sr-padron/webservices/personaServiceA5`;
 }
 
 function postXml(urlStr, xml, timeoutMs = 20000) {
-  const u = new URL(urlStr);
-  const body = Buffer.from(xml, "utf8");
-
   return new Promise((resolve, reject) => {
+    const u = new URL(urlStr);
+    const body = Buffer.from(xml, "utf8");
+
     const req = https.request(
       {
         method: "POST",
@@ -58,11 +60,11 @@ function postXml(urlStr, xml, timeoutMs = 20000) {
         path: u.pathname + (u.search || ""),
         headers: {
           "Content-Type": "text/xml; charset=utf-8",
-          "Content-Length": body.length,
-          // importante: presente y con comillas
-          SOAPAction: '""',
-          Connection: "close",
           Accept: "text/xml",
+          // CLAVE: debe existir y con comillas
+          SOAPAction: '""',
+          "Content-Length": body.length,
+          Connection: "close",
         },
         timeout: timeoutMs,
       },
@@ -84,9 +86,6 @@ function postXml(urlStr, xml, timeoutMs = 20000) {
   });
 }
 
-// namespace correcto según WSDL A5
-const NS_A5 = "http://a5.soap.ws.server.puc.sr/";
-
 async function dummy() {
   const url = getPadronUrl();
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -96,6 +95,7 @@ async function dummy() {
     <a5:dummy/>
   </soapenv:Body>
 </soapenv:Envelope>`;
+
   const out = await postXml(url, xml);
   const fault = pickTag(out.raw, "faultstring");
   return { ...out, fault: fault || null };
@@ -104,9 +104,8 @@ async function dummy() {
 async function getPersonaV2({ idPersona, cuitRepresentada }) {
   const url = getPadronUrl();
 
-  // service WSAA correcto para A5/constancia
+  // WSAA service correcto para constancia
   const servicesToTry = ["ws_sr_constancia_inscripcion", "ws_sr_padron_a5"];
-
   let last = null;
 
   for (const svc of servicesToTry) {
@@ -126,10 +125,9 @@ async function getPersonaV2({ idPersona, cuitRepresentada }) {
 </soapenv:Envelope>`;
 
     const out = await postXml(url, xml);
-
-    const fault = pickTag(out.raw, "faultstring") || pickTag(out.raw, "FaultString");
+    const fault = pickTag(out.raw, "faultstring");
     if (fault) {
-      last = { ok: false, fault, raw: out.raw, service: svc };
+      last = { ok: false, fault, raw: out.raw, service: svc, status: out.status };
       continue;
     }
 
@@ -138,13 +136,13 @@ async function getPersonaV2({ idPersona, cuitRepresentada }) {
     const errConst = pickBlock(personaReturn, "errorConstancia");
     const errMsg = pickTag(errConst, "error");
     if (errMsg) {
-      last = { ok: false, error: errMsg, raw: out.raw, service: svc };
+      last = { ok: false, error: errMsg, raw: out.raw, service: svc, status: out.status };
       continue;
     }
 
     const dg = pickBlock(personaReturn, "datosGenerales");
     if (!dg) {
-      last = { ok: false, error: "Respuesta sin datosGenerales", raw: out.raw, service: svc };
+      last = { ok: false, error: "Respuesta sin datosGenerales", raw: out.raw, service: svc, status: out.status };
       continue;
     }
 
@@ -153,9 +151,7 @@ async function getPersonaV2({ idPersona, cuitRepresentada }) {
     const apellido = pickTag(dg, "apellido") || null;
 
     const nombreCompleto =
-      razonSocial ||
-      [apellido, nombre].filter(Boolean).join(" ").trim() ||
-      null;
+      razonSocial || [apellido, nombre].filter(Boolean).join(" ").trim() || null;
 
     const dom = pickBlock(dg, "domicilioFiscal") || pickBlock(dg, "domicilio");
     const domicilio = formatDomicilio(dom);
@@ -169,6 +165,7 @@ async function getPersonaV2({ idPersona, cuitRepresentada }) {
       },
       raw: out.raw,
       service: svc,
+      status: out.status,
     };
   }
 
