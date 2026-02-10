@@ -158,6 +158,8 @@ async function emitirFacturaBMinima() {
 </soapenv:Envelope>`;
 
   const ultimoResp = await postXml(WSFE_URL, ultimoReq);
+  fs.writeFileSync(path.join(__dirname, 'wsfe_ultimo_from_node.xml'), ultimoResp);
+
   const cbteNroStr = pickTag(ultimoResp, 'CbteNro');
   const next = Number(cbteNroStr || 0) + 1;
 
@@ -220,6 +222,7 @@ async function emitirFacturaBMinima() {
 </soapenv:Envelope>`;
 
   const caeResp = await postXml(WSFE_URL, caeReq);
+  fs.writeFileSync(path.join(__dirname, 'wsfe_cae_from_node.xml'), caeResp);
 
   const resultado = pickTag(caeResp, 'Resultado');
   const cae = pickTag(caeResp, 'CAE');
