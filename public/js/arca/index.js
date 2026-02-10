@@ -144,6 +144,126 @@ if (pdfBtn) {
     if (!id) return;
 
     const { isConfirmed, value } = await Swal.fire({
+      didOpen: () => {
+  const hint    = document.getElementById("sw_hint");
+  const inpCbte = document.getElementById("sw_cbte");
+  const inpTipo = document.getElementById("sw_doc_tipo");
+  const inpNro  = document.getElementById("sw_doc_nro");
+  const selCond = document.getElementById("sw_cond");
+  const inpNom  = document.getElementById("sw_nombre");
+
+  const setHint = (t) => { if (hint) hint.textContent = t || ""; };
+
+  async function loadCondIvaOptions() {
+    const cbteTipo = Number(inpCbte.value || 0);
+    selCond.innerHTML = `<option value="">Cargando...</option>`;
+
+    const r = await fetch(`/arca/params/cond-iva-receptor?cbte_tipo=${cbteTipo}`);
+    const data = await r.json();
+    const rows = Array.isArray(data.rows) ? data.rows.slice() : [];
+
+    // Para B, agregamos Consumidor Final (5) porque tu endpoint no lo trae en B
+    if (cbteTipo === 6 && !rows.some(x => Number(x.id) === 5)) {
+      rows.unshift({ id: 5, desc: "Consumidor Final", cmp_clase: "B/C" });
+    }
+
+    selCond.innerHTML = rows.map(o =>
+      `<option value="${o.id}">${o.id} - ${o.desc}</option>`
+    ).join("");
+
+    // default seguro
+    if (cbteTipo === 6 && rows.some(o => Number(o.id) === 5)) selCond.value = "5";
+    else if (cbteTipo === 1 && rows.some(o => Number(o.id) === 1)) selCond.value = "1";
+    else selCond.value = rows[0]?.id ? String(rows[0].id) : "";
+  }
+
+  function applyRules() {
+    const cbteTipo = Number(inpCbte.value || 0);
+
+    if (cbteTipo === 1) {
+      inpTipo.value = "80"; // A => CUIT
+      setHint("Factura A: DocTipo 80 (CUIT) + Cond IVA válida (ej. 1).");
+      return;
+    }
+
+    if (cbteTipo === 6) {
+      setHint("Factura B: recomendado CF (DocTipo 99, DocNro 0, Cond IVA 5).");
+      if (Number(inpTipo.value || 0) === 99) inpNro.value = "0";
+      return;
+    }
+
+    setHint("");
+  }
+
+  let t = null;
+
+  async function buscarReceptorCache() {
+    const doc_tipo = Number(inpTipo.value || 0);
+    const doc_nro  = Number(String(inpNro.value || "").trim() || 0);
+
+    // No buscar CF o inválidos
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return;
+    if (!Number.isFinite(doc_nro) || doc_nro <= 0) { setHint(""); return; }
+    if (doc_tipo === 99 && doc_nro === 0) { setHint(""); return; }
+
+    setHint("Buscando receptor en cache…");
+
+    try {
+      const rr = await fetch(`/arca/receptor?doc_tipo=${doc_tipo}&doc_nro=${doc_nro}`);
+      if (!rr.ok) throw new Error("no-cache");
+      const data = await rr.json();
+
+      const nombre = (data.razon_social || data.nombre || "").trim();
+      if (nombre) inpNom.value = nombre;
+
+      // si el cache trae cond_iva_id, setearla (si no existe, la agregamos como opción)
+      const cond = Number(data.cond_iva_id || 0);
+      if (cond > 0) {
+        if (![...selCond.options].some(o => Number(o.value) === cond)) {
+          const opt = document.createElement("option");
+          opt.value = String(cond);
+          opt.textContent = `${cond} - (cache)`;
+          selCond.appendChild(opt);
+        }
+
+        // Si estamos en B y cache trae 1 (RI) => pasar a A automáticamente
+        if (Number(inpCbte.value) === 6 && cond === 1) {
+          inpCbte.value = "1";
+          applyRules();
+          await loadCondIvaOptions();
+        }
+
+        selCond.value = String(cond);
+      }
+
+      setHint("Receptor cargado desde cache.");
+    } catch {
+      // no bloquear, solo informar
+      setHint("Sin cache (podés completar a mano).");
+    }
+  }
+
+  function scheduleBuscar() {
+    clearTimeout(t);
+    t = setTimeout(buscarReceptorCache, 350);
+  }
+
+  inpCbte.addEventListener("input", async () => {
+    applyRules();
+    await loadCondIvaOptions();
+  });
+
+  inpTipo.addEventListener("input", scheduleBuscar);
+  inpNro.addEventListener("input", scheduleBuscar);
+
+  // init
+  (async () => {
+    applyRules();
+    await loadCondIvaOptions();
+    scheduleBuscar();
+  })();
+},
+
       title: `Emitir ARCA — Factura #${id}`,
       confirmButtonText: "Emitir",
       showCancelButton: true,
@@ -160,8 +280,9 @@ if (pdfBtn) {
     <label>Doc nro (CF=0)</label>
     <input id="sw_doc_nro" class="swal2-input" value="0" />
 
-    <label>Cond IVA receptor (MVP: 5)</label>
-    <input id="sw_cond" class="swal2-input" value="5" />
+    <label>Cond IVA receptor</label>
+    <select id="sw_cond" class="swal2-input"></select>
+
 
     <label>Receptor (nombre / razón social)</label>
     <input id="sw_nombre" class="swal2-input" placeholder="Opcional / autocompleta si está en cache" />
