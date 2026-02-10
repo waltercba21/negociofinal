@@ -1,97 +1,113 @@
 // scripts/arca_test_emitir_b.js
-require('dotenv').config();
+require("dotenv").config();
 
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const https = require('https');
-const { execFile } = require('child_process');
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const https = require("https");
+const { execFile } = require("child_process");
 
-const ENV = process.env.ARCA_ENV || 'homo';
-const CUIT = process.env.ARCA_CUIT;
-const PTO_VTA = Number(process.env.ARCA_PTO_VTA || 2);
+const ENV = process.env.ARCA_ENV || "homo";
+const CUIT = String(process.env.ARCA_CUIT || "").trim();
+const PTO_VTA = Number(process.env.ARCA_PTO_VTA || 0);
 
 const CERT = process.env.ARCA_CERT_PATH;
-const KEY  = process.env.ARCA_KEY_PATH;
+const KEY = process.env.ARCA_KEY_PATH;
 
-if (!CUIT || !CERT || !KEY) {
-  console.error('Faltan ARCA_CUIT / ARCA_CERT_PATH / ARCA_KEY_PATH en .env');
+if (!CUIT || !PTO_VTA || !CERT || !KEY) {
+  console.error("Faltan variables ARCA_* en .env");
+  process.exit(1);
+}
+if (!fs.existsSync(CERT)) {
+  console.error("No existe ARCA_CERT_PATH:", CERT);
+  process.exit(1);
+}
+if (!fs.existsSync(KEY)) {
+  console.error("No existe ARCA_KEY_PATH:", KEY);
   process.exit(1);
 }
 
-const WSAA_URL = (ENV === 'prod')
-  ? 'https://wsaa.afip.gov.ar/ws/services/LoginCms'
-  : 'https://wsaahomo.afip.gov.ar/ws/services/LoginCms';
+const WSAA_URL =
+  ENV === "prod"
+    ? "https://wsaa.afip.gov.ar/ws/services/LoginCms"
+    : "https://wsaahomo.afip.gov.ar/ws/services/LoginCms";
 
-const WSFE_URL = (ENV === 'prod')
-  ? 'https://servicios1.afip.gov.ar/wsfev1/service.asmx'
-  : 'https://wswhomo.afip.gov.ar/wsfev1/service.asmx';
+const WSFE_URL =
+  ENV === "prod"
+    ? "https://servicios1.afip.gov.ar/wsfev1/service.asmx"
+    : "https://wswhomo.afip.gov.ar/wsfev1/service.asmx";
 
 function postXml(url, xml, soapAction) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
 
     const headers = {
-      'Content-Type': 'text/xml; charset=utf-8',
-      'Content-Length': Buffer.byteLength(xml),
+      "Content-Type": "text/xml; charset=utf-8",
+      "Content-Length": Buffer.byteLength(xml),
     };
-    if (soapAction) headers['SOAPAction'] = `"${soapAction}"`;
 
-    const req = https.request({
-      method: 'POST',
-      hostname: u.hostname,
-      path: u.pathname + u.search,
-      headers
-    }, (res) => {
-      let data = '';
-      res.on('data', (c) => data += c);
-      res.on('end', () => resolve(data));
-    });
+    // ASMX necesita SOAPAction válido (no vacío)
+    if (soapAction) headers["SOAPAction"] = `"${soapAction}"`;
 
-    req.on('error', reject);
+    const req = https.request(
+      {
+        method: "POST",
+        hostname: u.hostname,
+        path: u.pathname + u.search,
+        headers,
+      },
+      (res) => {
+        let data = "";
+        res.on("data", (c) => (data += c));
+        res.on("end", () => resolve(data));
+      }
+    );
+
+    req.on("error", reject);
     req.write(xml);
     req.end();
   });
 }
 
-
 function run(cmd, args, opts = {}) {
   return new Promise((resolve, reject) => {
     execFile(cmd, args, { ...opts }, (err, stdout, stderr) => {
-      if (err) return reject(new Error(`${cmd} ${args.join(' ')}\n${stderr || err.message}`));
+      if (err) return reject(new Error(stderr || err.message));
       resolve(stdout);
     });
   });
 }
 
-function nowISOSeconds(d = new Date()) {
-  // ISO sin milisegundos
-  return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+// ISO con -03:00 (Argentina)
+function isoAR(d) {
+  const t = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+  return t.toISOString().replace(/\.\d{3}Z$/, "-03:00");
 }
+
+// Soporta tags normales y escapados (&lt;token&gt;)
 function pickTag(xml, tag) {
   const r1 = new RegExp(
     `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
-    'i'
+    "i"
   );
   const m1 = xml.match(r1);
   if (m1) return m1[1].trim();
 
   const r2 = new RegExp(
     `&lt;(?:(?:\\w+):)?${tag}[^&]*&gt;([\\s\\S]*?)&lt;\\/(?:(?:\\w+):)?${tag}&gt;`,
-    'i'
+    "i"
   );
   const m2 = xml.match(r2);
   if (m2) return m2[1].trim();
 
-  return '';
+  return "";
 }
 
-
-async function getTokenSign(service = 'wsfe') {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'arca-'));
-  const traPath = path.join(tmp, 'tra.xml');
-  const cmsPath = path.join(tmp, 'tra.cms');
-  const b64Path = path.join(tmp, 'tra.cms.b64');
+async function getTokenSign(service = "wsfe") {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "arca-"));
+  const traPath = path.join(tmp, "tra.xml");
+  const cmsPath = path.join(tmp, "tra.cms");
+  const b64Path = path.join(tmp, "tra.cms.b64");
 
   const gen = new Date(Date.now() - 5 * 60 * 1000);
   const exp = new Date(Date.now() + 10 * 60 * 1000);
@@ -99,28 +115,33 @@ async function getTokenSign(service = 'wsfe') {
   const tra = `<?xml version="1.0" encoding="UTF-8"?>
 <loginTicketRequest version="1.0">
   <header>
-    <uniqueId>${Math.floor(Date.now()/1000)}</uniqueId>
-    <generationTime>${nowISOSeconds(gen)}</generationTime>
-    <expirationTime>${nowISOSeconds(exp)}</expirationTime>
+    <uniqueId>${Math.floor(Date.now() / 1000)}</uniqueId>
+    <generationTime>${isoAR(gen)}</generationTime>
+    <expirationTime>${isoAR(exp)}</expirationTime>
   </header>
   <service>${service}</service>
 </loginTicketRequest>`;
 
   fs.writeFileSync(traPath, tra);
 
-  // openssl smime -sign ...
-  await run('openssl', [
-    'smime', '-sign',
-    '-signer', CERT,
-    '-inkey', KEY,
-    '-in', traPath,
-    '-out', cmsPath,
-    '-outform', 'DER',
-    '-nodetach'
+  await run("openssl", [
+    "smime",
+    "-sign",
+    "-signer",
+    CERT,
+    "-inkey",
+    KEY,
+    "-in",
+    traPath,
+    "-out",
+    cmsPath,
+    "-outform",
+    "DER",
+    "-nodetach",
   ]);
 
-  await run('openssl', ['base64', '-in', cmsPath, '-out', b64Path, '-A']);
-  const cmsB64 = fs.readFileSync(b64Path, 'utf8').trim();
+  await run("openssl", ["base64", "-in", cmsPath, "-out", b64Path, "-A"]);
+  const cmsB64 = fs.readFileSync(b64Path, "utf8").trim();
 
   const soap = `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://wsaa.view.sua.dvadac.desein.afip.gov">
@@ -132,23 +153,20 @@ async function getTokenSign(service = 'wsfe') {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  const resp = await postXml(WSAA_URL, soap, 'urn:LoginCms');
-f
-  fs.writeFileSync(path.join(__dirname, 'wsaa_loginCms.response.xml'), resp);
+  const resp = await postXml(WSAA_URL, soap, "urn:LoginCms");
+  fs.writeFileSync(path.join(__dirname, "wsaa_loginCms.response.xml"), resp);
 
-  const token = pickTag(resp, 'token');
-  const sign  = pickTag(resp, 'sign');
+  const token = pickTag(resp, "token");
+  const sign = pickTag(resp, "sign");
 
-  if (!token || !sign) {
-    throw new Error('WSAA no devolvió token/sign. Revisar certificado/relaciones/servicio.');
-  }
+  if (!token || !sign) throw new Error("WSAA no devolvió token/sign");
   return { token, sign };
 }
 
 async function emitirFacturaBMinima() {
-  const { token, sign } = await getTokenSign('wsfe');
+  const { token, sign } = await getTokenSign("wsfe");
 
-  // obtener último B (CbteTipo 6) y sumar 1
+  // 1) Último comprobante autorizado (Factura B = 6)
   const ultimoReq = `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
   <soapenv:Header/>
@@ -165,17 +183,22 @@ async function emitirFacturaBMinima() {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  const ultimoResp = await postXml(WSFE_URL, ultimoReq, 'http://ar.gov.afip.dif.FEV1/FECompUltimoAutorizado');
+  const ultimoResp = await postXml(
+    WSFE_URL,
+    ultimoReq,
+    "http://ar.gov.afip.dif.FEV1/FECompUltimoAutorizado"
+  );
+  fs.writeFileSync(path.join(__dirname, "wsfe_ultimo_from_node.xml"), ultimoResp);
 
-  fs.writeFileSync(path.join(__dirname, 'wsfe_ultimo_from_node.xml'), ultimoResp);
+  const ultStr = pickTag(ultimoResp, "CbteNro");
+  if (ultStr === "") throw new Error("No pude leer CbteNro (ver wsfe_ultimo_from_node.xml)");
+  const next = Number(ultStr || 0) + 1;
 
+  const fch = new Date()
+    .toLocaleDateString("en-CA", { timeZone: "America/Argentina/Cordoba" })
+    .replace(/-/g, "");
 
-  const cbteNroStr = pickTag(ultimoResp, 'CbteNro');
-  const next = Number(cbteNroStr || 0) + 1;
-
-  const fch = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Cordoba' }).replaceAll('-', '');
-
-  // CondicionIVAReceptorId es obligatoria (RG 5616 / versión actual WSFE). :contentReference[oaicite:1]{index=1}
+  // 2) Solicitar CAE (Factura B mínima). CondicionIVAReceptorId=5 (Consumidor Final)
   const caeReq = `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
   <soapenv:Header/>
@@ -197,7 +220,6 @@ async function emitirFacturaBMinima() {
         <ar:FeDetReq>
           <ar:FECAEDetRequest>
             <ar:Concepto>1</ar:Concepto>
-
             <ar:DocTipo>99</ar:DocTipo>
             <ar:DocNro>0</ar:DocNro>
             <ar:CondicionIVAReceptorId>5</ar:CondicionIVAReceptorId>
@@ -226,21 +248,22 @@ async function emitirFacturaBMinima() {
           </ar:FECAEDetRequest>
         </ar:FeDetReq>
       </ar:FeCAEReq>
-
     </ar:FECAESolicitar>
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  const caeResp = await postXml(WSFE_URL, caeReq, 'http://ar.gov.afip.dif.FEV1/FECAESolicitar');
+  const caeResp = await postXml(
+    WSFE_URL,
+    caeReq,
+    "http://ar.gov.afip.dif.FEV1/FECAESolicitar"
+  );
+  fs.writeFileSync(path.join(__dirname, "wsfe_cae_from_node.xml"), caeResp);
 
-  fs.writeFileSync(path.join(__dirname, 'wsfe_cae_from_node.xml'), caeResp);
-
-
-  const resultado = pickTag(caeResp, 'Resultado');
-  const cae = pickTag(caeResp, 'CAE');
-  const caeVto = pickTag(caeResp, 'CAEFchVto');
-  const obsCode = pickTag(caeResp, 'Code');
-  const obsMsg  = pickTag(caeResp, 'Msg');
+  const resultado = pickTag(caeResp, "Resultado");
+  const cae = pickTag(caeResp, "CAE");
+  const caeVto = pickTag(caeResp, "CAEFchVto");
+  const obsCode = pickTag(caeResp, "Code");
+  const obsMsg = pickTag(caeResp, "Msg");
 
   return { next, resultado, cae, caeVto, obsCode, obsMsg };
 }
@@ -250,7 +273,7 @@ async function emitirFacturaBMinima() {
     const r = await emitirFacturaBMinima();
     console.log(r);
   } catch (e) {
-    console.error(e.message);
+    console.error(e.stack || e.message || e);
     process.exit(1);
   }
 })();
