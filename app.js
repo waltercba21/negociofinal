@@ -21,6 +21,8 @@ const pedidosRoutes = require('./routes/pedidos');
 const whatsappRoutes = require('./routes/whatsapp');
 const analyticsRoutes = require('./routes/analytics');
 const reportesRoutes = require('./routes/reportes');
+const arcaRoutes = require('./routes/arcaRoutes');
+
 
 const app = express();
 const server = require('http').Server(app);
@@ -99,6 +101,7 @@ app.use('/pedidos', pedidosRoutes);
 app.use('/whatsapp', express.urlencoded({ extended: true }), whatsappRoutes);
 app.use('/analytics', analyticsRoutes);
 app.use('/reportes', reportesRoutes);
+app.use('/arca', arcaRoutes);
 
 // --- WebSockets ---
 io.on('connection', (socket) => {
