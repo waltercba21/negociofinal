@@ -14,6 +14,61 @@ const PTO_VTA = Number(process.env.ARCA_PTO_VTA || 0);
 const CERT = process.env.ARCA_CERT_PATH;
 const KEY = process.env.ARCA_KEY_PATH;
 
+const TA_CACHE = path.join(__dirname, "ta_wsfe.json");
+const TOKEN_PATH = process.env.ARCA_TOKEN_PATH || "";
+const SIGN_PATH  = process.env.ARCA_SIGN_PATH  || "";
+
+function tokenExpEpoch(tokenB64) {
+  try {
+    const xml = Buffer.from(tokenB64, "base64").toString("utf8");
+    const m = xml.match(/exp_time="(\d+)"/);
+    return m ? Number(m[1]) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function tokenIsValid(tokenB64, skewSec = 60) {
+  const exp = tokenExpEpoch(tokenB64);
+  if (!exp) return false;
+  const now = Math.floor(Date.now() / 1000);
+  return exp - skewSec > now;
+}
+
+function loadTaFromCache(service) {
+  if (!fs.existsSync(TA_CACHE)) return null;
+  try {
+    const j = JSON.parse(fs.readFileSync(TA_CACHE, "utf8"));
+    if (j.service !== service) return null;
+    if (!j.token || !j.sign) return null;
+    if (!tokenIsValid(j.token)) return null;
+    return { token: j.token, sign: j.sign };
+  } catch {
+    return null;
+  }
+}
+
+function saveTaToCache(service, token, sign) {
+  fs.writeFileSync(
+    TA_CACHE,
+    JSON.stringify(
+      { service, token, sign, exp: tokenExpEpoch(token), savedAt: new Date().toISOString() },
+      null,
+      2
+    )
+  );
+}
+
+function loadTaFromFiles() {
+  if (!TOKEN_PATH || !SIGN_PATH) return null;
+  if (!fs.existsSync(TOKEN_PATH) || !fs.existsSync(SIGN_PATH)) return null;
+  const token = fs.readFileSync(TOKEN_PATH, "utf8").trim();
+  const sign  = fs.readFileSync(SIGN_PATH, "utf8").trim();
+  if (!token || !sign) return null;
+  if (!tokenIsValid(token)) return null;
+  return { token, sign };
+}
+
 if (!CUIT || !PTO_VTA || !CERT || !KEY) {
   console.error("Faltan variables ARCA_* en .env");
   process.exit(1);
@@ -115,6 +170,9 @@ function pickEscaped(xml, tag) {
 }
 
 async function getTokenSign(service = "wsfe") {
+  const cached = loadTaFromCache(service) || loadTaFromFiles();
+if (cached) return cached;
+
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "arca-"));
   const traPath = path.join(tmp, "tra.xml");
   const cmsPath = path.join(tmp, "tra.cms");
@@ -171,8 +229,19 @@ async function getTokenSign(service = "wsfe") {
 const sign  = pickTag(resp, "sign")  || pickEscaped(resp, "sign");
 
 
-  if (!token || !sign) throw new Error("WSAA no devolvió token/sign");
+  if (token && sign) {
+  saveTaToCache(service, token, sign);
   return { token, sign };
+}
+
+// si WSAA responde alreadyAuthenticated, reutilizamos TA guardado
+if (/alreadyAuthenticated/i.test(resp)) {
+  const reuse = loadTaFromCache(service) || loadTaFromFiles();
+  if (reuse) return reuse;
+}
+
+throw new Error("WSAA no devolvió token/sign");
+
 }
 
 async function emitirFacturaBMinima() {
