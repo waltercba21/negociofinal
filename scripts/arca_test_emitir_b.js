@@ -68,6 +68,22 @@ function loadTaFromFiles() {
   if (!tokenIsValid(token)) return null;
   return { token, sign };
 }
+function yyyymmddAR(d = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Argentina/Cordoba",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+
+  const y = parts.find(p => p.type === "year")?.value;
+  const m = parts.find(p => p.type === "month")?.value;
+  const day = parts.find(p => p.type === "day")?.value;
+
+  const f = `${y}${m}${day}`;
+  if (!/^\d{8}$/.test(f)) throw new Error(`CbteFch inválido generado: "${f}"`);
+  return f;
+}
 
 if (!CUIT || !PTO_VTA || !CERT || !KEY) {
   console.error("Faltan variables ARCA_* en .env");
@@ -275,9 +291,8 @@ async function emitirFacturaBMinima() {
   if (ultStr === "") throw new Error("No pude leer CbteNro (ver wsfe_ultimo_from_node.xml)");
   const next = Number(ultStr || 0) + 1;
 
-  const fch = new Date()
-    .toLocaleDateString("en-CA", { timeZone: "America/Argentina/Cordoba" })
-    .replace(/-/g, "");
+  const fch = yyyymmddAR();
+
 
   // 2) Solicitar CAE (Factura B mínima). CondicionIVAReceptorId=5 (Consumidor Final)
   const caeReq = `<?xml version="1.0" encoding="utf-8"?>
