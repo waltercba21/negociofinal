@@ -1,4 +1,6 @@
 // controllers/arcaController.js
+require("dotenv").config();
+
 const pool = require("../config/conexion");
 const util = require("util");
 
@@ -20,10 +22,52 @@ function round2(n) {
   return Math.round((x + Number.EPSILON) * 100) / 100;
 }
 
-async function getNext(pto_vta, cbte_tipo) {
+function pickTag(xml, tag) {
+  const r = new RegExp(
+    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+    "i"
+  );
+  const m = xml.match(r);
+  return m ? m[1].trim() : "";
+}
+
+function maxYMD(a, b) {
+  // ambos YYYYMMDD (strings)
+  if (!/^\d{8}$/.test(a)) return b;
+  if (!/^\d{8}$/.test(b)) return a;
+  return a >= b ? a : b;
+}
+
+async function getNextAndDates(pto_vta, cbte_tipo) {
   const ult = await wsfe.FECompUltimoAutorizado(pto_vta, cbte_tipo);
   const ultimo = Number(ult.ultimo || 0);
-  return { ultimo, next: ultimo + 1 };
+  const next = ultimo + 1;
+
+  let lastCbteFch = null;
+
+  if (ultimo > 0) {
+    const cons = await wsfe.FECompConsultar(pto_vta, cbte_tipo, ultimo);
+    const f = pickTag(cons.raw, "CbteFch");
+    if (/^\d{8}$/.test(f)) lastCbteFch = f;
+  }
+
+  const today = wsfe.yyyymmddARFromDate(new Date());
+  const env = String(process.env.ARCA_ENV || "homo").toLowerCase();
+  const isProd = env === "prod";
+
+  // En PROD no emitimos si el último comprobante quedó con fecha futura (situación a corregir).
+  if (isProd && lastCbteFch && lastCbteFch > today) {
+    const err = new Error(
+      `Último comprobante (${ultimo}) tiene fecha futura ${lastCbteFch}. Corregir reloj/emisión previa.`
+    );
+    err.code = "LAST_DATE_IN_FUTURE";
+    throw err;
+  }
+
+  // Fecha sugerida: en HOMO permitimos usar la del último si fuera mayor (para destrabar pruebas).
+  const cbte_fch = lastCbteFch ? maxYMD(today, lastCbteFch) : today;
+
+  return { ultimo, next, cbte_fch, lastCbteFch, today };
 }
 
 /**
@@ -31,7 +75,7 @@ async function getNext(pto_vta, cbte_tipo) {
  * - IVA fijo 21% (Id 5 en WSFE)
  * - No toca stock
  *
- * Body esperado (mínimo):
+ * Body mínimo:
  * {
  *   "doc_tipo": 99,
  *   "doc_nro": 0,
@@ -47,7 +91,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       return res.status(400).json({ error: "facturaId inválido" });
     }
 
-    // Evitar doble emisión por link
+    // Evitar doble emisión por link (solo bloquea si ya EMITIDO)
     const existente = await arcaModel.buscarPorFacturaMostradorId(facturaId);
     if (existente && existente.estado === "EMITIDO") {
       return res.status(409).json({
@@ -58,40 +102,34 @@ async function emitirDesdeFacturaMostrador(req, res) {
       });
     }
 
-    const cbte_tipo = Number(req.body.cbte_tipo || 6); // Factura B (6)
+    const cbte_tipo = Number(req.body.cbte_tipo || 6); // Factura B
     const doc_tipo = Number(req.body.doc_tipo);
     const doc_nro = Number(req.body.doc_nro);
     const receptor_cond_iva_id = Number(req.body.receptor_cond_iva_id || 5);
     const receptor_nombre = req.body.receptor_nombre || null;
 
-    if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) {
+    if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0)
       return res.status(400).json({ error: "cbte_tipo inválido" });
-    }
-    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) {
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0)
       return res.status(400).json({ error: "doc_tipo inválido" });
-    }
-    if (!Number.isFinite(doc_nro) || doc_nro < 0) {
+    if (!Number.isFinite(doc_nro) || doc_nro < 0)
       return res.status(400).json({ error: "doc_nro inválido" });
-    }
-    if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
+    if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0)
       return res.status(400).json({ error: "receptor_cond_iva_id inválido" });
-    }
 
     const pto_vta = Number(process.env.ARCA_PTO_VTA || 0);
     const cuit_emisor = Number(process.env.ARCA_CUIT || 0);
-    if (!Number.isFinite(pto_vta) || pto_vta <= 0) {
+    if (!Number.isFinite(pto_vta) || pto_vta <= 0)
       return res.status(500).json({ error: "ARCA_PTO_VTA no configurado" });
-    }
-    if (!Number.isFinite(cuit_emisor) || cuit_emisor <= 0) {
+    if (!Number.isFinite(cuit_emisor) || cuit_emisor <= 0)
       return res.status(500).json({ error: "ARCA_CUIT no configurado" });
-    }
 
     const ambiente =
       String(process.env.ARCA_ENV || "homo").toUpperCase() === "PROD"
         ? "PROD"
         : "HOMO";
 
-    // Traer factura + items con producto_id
+    // Traer factura + items
     const rows = await query(
       `
       SELECT
@@ -112,7 +150,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
         .json({ error: "Factura no encontrada o sin items" });
     }
 
-    // MVP: IVA fijo 21%
+    // MVP IVA 21%
     const alic = 21;
 
     const itemsCalc = rows.map((r) => {
@@ -136,13 +174,12 @@ async function emitirDesdeFacturaMostrador(req, res) {
     const imp_neto = round2(itemsCalc.reduce((a, i) => a + i.imp_neto, 0));
     const imp_iva = round2(itemsCalc.reduce((a, i) => a + i.imp_iva, 0));
 
-    // Fecha del comprobante: SIEMPRE HOY (AR) en esta etapa para evitar 10016 por fecha vieja
-    const cbte_fch = wsfe.yyyymmddARFromDate(new Date());
+    // Obtener nro y fecha sugerida coherente con el último emitido
+    let info = await getNextAndDates(pto_vta, cbte_tipo);
+    let next = info.next;
+    let cbte_fch = info.cbte_fch;
 
-    // 1) Obtener próximo número
-    let { next } = await getNext(pto_vta, cbte_tipo);
-
-    // 2) Insertar cabecera PENDIENTE + items + req_json
+    // Guardar cabecera PENDIENTE + items
     const reqObj = {
       fuente: "facturas_mostrador",
       factura_mostrador_id: facturaId,
@@ -156,6 +193,11 @@ async function emitirDesdeFacturaMostrador(req, res) {
       totales: { imp_total, imp_neto, imp_iva },
       iva_mvp: { alicuota: 21, wsfe_id: 5 },
       items: itemsCalc,
+      debug: {
+        ultimo_autorizado: info.ultimo,
+        last_cbte_fch: info.lastCbteFch,
+        today: info.today,
+      },
     };
     let req_json = JSON.stringify(reqObj, null, 2);
 
@@ -183,7 +225,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
     await arcaModel.insertarItems(arcaId, itemsCalc);
 
-    // 3) Solicitar CAE (1er intento)
+    // Intento 1
     let cae = await wsfe.FECAESolicitar({
       ptoVta: pto_vta,
       cbteTipo: cbte_tipo,
@@ -200,11 +242,20 @@ async function emitirDesdeFacturaMostrador(req, res) {
       monCotiz: "1.000",
     });
 
-    // Reintento automático (una vez) si ARCA dice que nro/fecha no corresponde al próximo (10016)
+    // Reintento 1 vez si 10016 (recalcula nro+fecha a partir del último real)
     if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
-      ({ next } = await getNext(pto_vta, cbte_tipo));
+      info = await getNextAndDates(pto_vta, cbte_tipo);
+      next = info.next;
+      cbte_fch = info.cbte_fch;
 
       reqObj.cbte_nro = next;
+      reqObj.cbte_fch = cbte_fch;
+      reqObj.debug = {
+        ultimo_autorizado: info.ultimo,
+        last_cbte_fch: info.lastCbteFch,
+        today: info.today,
+        retry: true,
+      };
       req_json = JSON.stringify(reqObj, null, 2);
 
       await query(
@@ -212,7 +263,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
         [next, cbte_fch, req_json, arcaId]
       );
 
-      const cae2 = await wsfe.FECAESolicitar({
+      cae = await wsfe.FECAESolicitar({
         ptoVta: pto_vta,
         cbteTipo: cbte_tipo,
         docTipo: doc_tipo,
@@ -227,8 +278,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
         monId: "PES",
         monCotiz: "1.000",
       });
-
-      cae = cae2;
     }
 
     const estado = cae.resultado === "A" ? "EMITIDO" : "RECHAZADO";
@@ -246,7 +295,12 @@ async function emitirDesdeFacturaMostrador(req, res) {
     return res.json({
       arca_id: arcaId,
       estado,
+      pto_vta,
+      cbte_tipo,
+      cbte_fch,
       cbte_nro: next,
+      ultimo_autorizado: info.ultimo,
+      last_cbte_fch: info.lastCbteFch,
       resultado: cae.resultado || null,
       cae: cae.cae || null,
       cae_vto: cae.caeVto || null,
@@ -274,6 +328,7 @@ async function statusPorFacturaMostrador(req, res) {
       estado: row.estado,
       cbte_tipo: row.cbte_tipo,
       cbte_nro: row.cbte_nro,
+      cbte_fch: row.cbte_fch,
       resultado: row.resultado,
       cae: row.cae,
       cae_vto: row.cae_vto,
