@@ -344,27 +344,48 @@ async function listarFacturasMostrador(req, res) {
     const offset = Math.max(parseInt(req.query.offset || "0", 10), 0);
 
     const rows = await query(
-  `
-  SELECT
-    id,
-    nombre_cliente,
-    DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-    total,
-    metodos_pago,
-    DATE_FORMAT(creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en
-  FROM facturas_mostrador
-  ORDER BY id DESC
-  LIMIT ? OFFSET ?
-  `,
-  [limit, offset]
-);
+      `
+      SELECT
+        fm.id,
+        fm.nombre_cliente,
+        DATE_FORMAT(fm.fecha, '%Y-%m-%d') AS fecha,
+        fm.total,
+        fm.metodos_pago,
+        DATE_FORMAT(fm.creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en,
 
+        ac.estado      AS arca_estado,
+        ac.resultado   AS arca_resultado,
+        ac.cae         AS arca_cae,
+        ac.cae_vto     AS arca_cae_vto,
+        ac.cbte_tipo   AS arca_cbte_tipo,
+        ac.cbte_nro    AS arca_cbte_nro,
+        ac.obs_code    AS arca_obs_code,
+        ac.obs_msg     AS arca_obs_msg
+      FROM facturas_mostrador fm
+      LEFT JOIN (
+        SELECT t1.*
+        FROM arca_comprobantes t1
+        JOIN (
+          SELECT factura_mostrador_id, MAX(id) AS max_id
+          FROM arca_comprobantes
+          GROUP BY factura_mostrador_id
+        ) t2
+          ON t1.factura_mostrador_id = t2.factura_mostrador_id
+         AND t1.id = t2.max_id
+      ) ac
+        ON ac.factura_mostrador_id = fm.id
+      ORDER BY fm.id DESC
+      LIMIT ? OFFSET ?
+      `,
+      [limit, offset]
+    );
 
     return res.json({ rows, limit, offset });
   } catch (e) {
     return res.status(500).json({ error: e.message || "Error listando facturas" });
   }
 }
+
 
 // GET /arca/ui/facturas/:id
 async function detalleFacturaMostrador(req, res) {
@@ -373,10 +394,18 @@ async function detalleFacturaMostrador(req, res) {
     if (!facturaId) return res.status(400).json({ error: "id inválido" });
 
     const cab = await query(
-      `SELECT id, nombre_cliente, fecha, total, metodos_pago, creado_en
-       FROM facturas_mostrador WHERE id=? LIMIT 1`,
-      [facturaId]
-    );
+  `SELECT
+     id,
+     nombre_cliente,
+     DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+     total,
+     metodos_pago,
+     DATE_FORMAT(creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en
+   FROM facturas_mostrador
+   WHERE id=? LIMIT 1`,
+  [facturaId]
+);
+
     if (!cab.length) return res.status(404).json({ error: "Factura no encontrada" });
 
     const items = await query(
