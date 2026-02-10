@@ -1,19 +1,15 @@
 // services/padron.js
-"use strict";
 require("dotenv").config();
 
 const https = require("https");
 const { URL } = require("url");
-const { getTokenSign } = require("./wsaa");
-
-const ENV = String(process.env.ARCA_ENV || "homo").toLowerCase();
+const wsaa = require("./wsaa");
 
 const PADRON_URL =
-  ENV === "prod"
-    ? "https://aws.arca.gov.ar/sr-padron/webservices/personaServiceA5"
-    : "https://awshomo.arca.gov.ar/sr-padron/webservices/personaServiceA5";
+  process.env.ARCA_PADRON_URL ||
+  "https://awshomo.arca.gob.ar/sr-padron/webservices/personaServiceA5";
 
-const NS_A5 = "http://a5.soap.ws.server.puc.sr/";
+const SERVICE = process.env.ARCA_PADRON_SERVICE || "ws_sr_padron";
 
 function pickTag(xml, tag) {
   const r = new RegExp(
@@ -21,106 +17,136 @@ function pickTag(xml, tag) {
     "i"
   );
   const m = String(xml || "").match(r);
-  return m ? m[1].trim() : "";
+  return m ? String(m[1] || "").trim() : "";
 }
 
-function pickBlock(xml, tag) {
-  const r = new RegExp(
-    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
-    "i"
-  );
-  const m = String(xml || "").match(r);
-  return m ? m[1] : "";
-}
-
-function postXml(urlStr, xml) {
-  return new Promise((resolve, reject) => {
-    const u = new URL(urlStr);
-    const body = Buffer.from(xml, "utf8");
+function postXml({ url, xml, soapAction = '""', timeoutMs = 20000 }) {
+  return new Promise((resolve) => {
+    const u = new URL(url);
 
     const req = https.request(
       {
         method: "POST",
         hostname: u.hostname,
+        port: u.port || 443,
         path: u.pathname + u.search,
         headers: {
           "Content-Type": "text/xml; charset=utf-8",
-          "Content-Length": String(body.length),
-          // IMPORTANTE: este servicio exige SOAPAction (aunque sea vacío)
-          SOAPAction: '""',
           Accept: "text/xml",
-          Connection: "close",
+          // IMPORTANTE: el WS reclama que exista SOAPAction (aunque sea vacío con comillas)
+          SOAPAction: soapAction, // => SOAPAction: ""
+          "Connection": "close",
         },
+        timeout: timeoutMs,
       },
       (res) => {
-        const chunks = [];
-        res.on("data", (c) => chunks.push(c));
-        res.on("end", () => {
-          const raw = Buffer.concat(chunks).toString("utf8");
-          resolve({ status: res.statusCode || 0, raw });
-        });
+        let data = "";
+        res.setEncoding("utf8");
+        res.on("data", (c) => (data += c));
+        res.on("end", () =>
+          resolve({ status: res.statusCode || 0, raw: data || "" })
+        );
       }
     );
 
-    req.on("error", reject);
-    req.write(body);
+    req.on("timeout", () => {
+      req.destroy();
+      resolve({ status: 0, raw: "", error: "timeout" });
+    });
+
+    req.on("error", (err) => {
+      resolve({ status: 0, raw: "", error: err.message || "request error" });
+    });
+
+    req.write(xml);
     req.end();
   });
 }
 
+async function getTokenSign(serviceName) {
+  if (wsaa && typeof wsaa.getTokenSign === "function") return wsaa.getTokenSign(serviceName);
+  if (wsaa && typeof wsaa.getTA === "function") return wsaa.getTA(serviceName);
+  throw new Error("wsaa: falta export getTokenSign/getTA");
+}
+
+/**
+ * Padron A5 - getPersona_v2
+ * Devuelve: { ok:true, data:{ razon_social, nombre, domicilio }, raw }
+ * o:        { ok:false, fault|error, status, raw }
+ */
 async function getPersonaV2({ idPersona, cuitRepresentada }) {
   try {
-    const idPers = Number(idPersona || 0);
-    const cuitRep = Number(cuitRepresentada || process.env.ARCA_CUIT || 0);
+    const id = Number(idPersona || 0);
+    const cuitRep = Number(cuitRepresentada || 0);
+    if (!id || !cuitRep) {
+      return { ok: false, error: "idPersona/cuitRepresentada inválidos", status: 0, raw: "" };
+    }
 
-    if (!idPers) return { ok: false, error: "idPersona inválido" };
-    if (!cuitRep) return { ok: false, error: "ARCA_CUIT (cuitRepresentada) inválido" };
+    const ta = await getTokenSign(SERVICE);
+    const token = ta.token;
+    const sign = ta.sign;
 
-    // TA para padrón (service id correcto)
-    const { token, sign } = await getTokenSign("ws_sr_constancia_inscripcion");
-    if (!token || !sign) return { ok: false, error: "No se pudo obtener token/sign (WSAA)" };
-
-    const xml = `
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="${NS_A5}">
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="http://a5.soap.ws.server.puc.sr/">
   <soapenv:Header/>
   <soapenv:Body>
     <a5:getPersona_v2>
       <token>${token}</token>
       <sign>${sign}</sign>
       <cuitRepresentada>${cuitRep}</cuitRepresentada>
-      <idPersona>${idPers}</idPersona>
+      <idPersona>${id}</idPersona>
     </a5:getPersona_v2>
   </soapenv:Body>
-</soapenv:Envelope>`.trim();
+</soapenv:Envelope>`;
 
-    const { status, raw } = await postXml(PADRON_URL, xml);
+    const resp = await postXml({ url: PADRON_URL, xml, soapAction: '""' });
 
-    const fault = pickTag(raw, "faultstring");
-    if (fault) return { ok: false, fault, raw, status };
-    if (status >= 400) return { ok: false, error: `HTTP ${status}`, raw, status };
+    // Fault SOAP
+    const fault = pickTag(resp.raw, "faultstring") || pickTag(resp.raw, "FaultString");
+    if (fault) {
+      return { ok: false, fault, status: resp.status, raw: resp.raw, service: SERVICE };
+    }
 
-    const razonSocial = pickTag(raw, "razonSocial") || null;
-    const nombre = pickTag(raw, "nombre") || null;
-    const apellido = pickTag(raw, "apellido") || null;
+    // Campos típicos (dependen de la respuesta)
+    const razon_social =
+      pickTag(resp.raw, "razonSocial") ||
+      pickTag(resp.raw, "razon_social") ||
+      pickTag(resp.raw, "denominacion");
 
-    const domBlock = pickBlock(raw, "domicilioFiscal");
-    const direccion = pickTag(domBlock, "direccion");
-    const localidad = pickTag(domBlock, "localidad");
-    const codPostal = pickTag(domBlock, "codPostal");
-    const domicilio = [direccion, localidad, codPostal].filter(Boolean).join(" · ") || null;
+    const nombre =
+      pickTag(resp.raw, "nombre") ||
+      pickTag(resp.raw, "nombrePersona") ||
+      pickTag(resp.raw, "apellidoNombre");
+
+    const domicilio =
+      pickTag(resp.raw, "direccion") ||
+      pickTag(resp.raw, "domicilio") ||
+      pickTag(resp.raw, "domicilioFiscal");
+
+    if (!razon_social && !nombre) {
+      // Si no hay fault, pero tampoco datos, devolvemos raw para diagnóstico
+      return {
+        ok: false,
+        error: "Respuesta sin datos (ver raw)",
+        status: resp.status,
+        raw: resp.raw,
+        service: SERVICE,
+      };
+    }
 
     return {
       ok: true,
+      status: resp.status,
+      raw: resp.raw,
+      service: SERVICE,
       data: {
-        razon_social: razonSocial,
-        nombre: (apellido || nombre) ? [apellido, nombre].filter(Boolean).join(" ") : null,
-        domicilio,
+        razon_social: razon_social || null,
+        nombre: nombre || null,
+        domicilio: domicilio || null,
       },
-      raw,
-      status,
     };
   } catch (e) {
-    return { ok: false, error: e.message || "Error padrón" };
+    return { ok: false, error: e.message || "Error padrón", status: 0, raw: "", service: SERVICE };
   }
 }
 
