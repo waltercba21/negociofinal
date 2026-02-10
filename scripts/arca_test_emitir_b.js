@@ -35,10 +35,10 @@ function postXml(url, xml) {
       hostname: u.hostname,
       path: u.pathname + u.search,
       headers: {
-        'Content-Type': 'text/xml; charset=utf-8',
-        'Content-Length': Buffer.byteLength(xml),
-        'SOAPAction': '""',
-      }
+  'Content-Type': 'text/xml; charset=utf-8',
+  'Content-Length': Buffer.byteLength(xml),
+}
+
     }, (res) => {
       let data = '';
       res.on('data', (c) => data += c);
@@ -162,6 +162,7 @@ async function emitirFacturaBMinima() {
   const ultimoResp = await postXml(WSFE_URL, ultimoReq);
   fs.writeFileSync(path.join(__dirname, 'wsfe_ultimo_from_node.xml'), ultimoResp);
 
+
   const cbteNroStr = pickTag(ultimoResp, 'CbteNro');
   const next = Number(cbteNroStr || 0) + 1;
 
@@ -225,6 +226,7 @@ async function emitirFacturaBMinima() {
 
   const caeResp = await postXml(WSFE_URL, caeReq);
   fs.writeFileSync(path.join(__dirname, 'wsfe_cae_from_node.xml'), caeResp);
+
 
   const resultado = pickTag(caeResp, 'Resultado');
   const cae = pickTag(caeResp, 'CAE');
