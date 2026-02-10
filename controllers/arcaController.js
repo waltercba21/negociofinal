@@ -32,7 +32,6 @@ function pickTag(xml, tag) {
 }
 
 function maxYMD(a, b) {
-  // ambos YYYYMMDD (strings)
   if (!/^\d{8}$/.test(a)) return b;
   if (!/^\d{8}$/.test(b)) return a;
   return a >= b ? a : b;
@@ -55,7 +54,7 @@ async function getNextAndDates(pto_vta, cbte_tipo) {
   const env = String(process.env.ARCA_ENV || "homo").toLowerCase();
   const isProd = env === "prod";
 
-  // En PROD no emitimos si el último comprobante quedó con fecha futura (situación a corregir).
+  // En PROD no emitimos si el último comprobante quedó con fecha futura
   if (isProd && lastCbteFch && lastCbteFch > today) {
     const err = new Error(
       `Último comprobante (${ultimo}) tiene fecha futura ${lastCbteFch}. Corregir reloj/emisión previa.`
@@ -64,25 +63,15 @@ async function getNextAndDates(pto_vta, cbte_tipo) {
     throw err;
   }
 
-  // Fecha sugerida: en HOMO permitimos usar la del último si fuera mayor (para destrabar pruebas).
+  // En HOMO: permitimos usar la del último si fuera mayor (para destrabar pruebas)
   const cbte_fch = lastCbteFch ? maxYMD(today, lastCbteFch) : today;
 
   return { ultimo, next, cbte_fch, lastCbteFch, today };
 }
 
 /**
- * MVP: emitir FACTURA B desde facturas_mostrador
- * - IVA fijo 21% (Id 5 en WSFE)
- * - No toca stock
- *
- * Body mínimo:
- * {
- *   "doc_tipo": 99,
- *   "doc_nro": 0,
- *   "receptor_cond_iva_id": 5,
- *   "receptor_nombre": "Consumidor Final" (opcional),
- *   "cbte_tipo": 6 (opcional, default 6)
- * }
+ * POST /arca/emitir-desde-factura/:id
+ * MVP: FACTURA B, IVA fijo 21%, no toca stock
  */
 async function emitirDesdeFacturaMostrador(req, res) {
   try {
@@ -91,14 +80,15 @@ async function emitirDesdeFacturaMostrador(req, res) {
       return res.status(400).json({ error: "facturaId inválido" });
     }
 
-    // Evitar doble emisión por link (solo bloquea si ya EMITIDO)
-    const existente = await arcaModel.buscarPorFacturaMostradorId(facturaId);
-    if (existente && existente.estado === "EMITIDO") {
+    // Bloqueo seguro de duplicados
+    const existente = await arcaModel.buscarUltimoPorFacturaMostradorId(facturaId);
+    if (existente && (existente.estado === "PENDIENTE" || existente.estado === "EMITIDO")) {
       return res.status(409).json({
-        error: "Ya existe un comprobante ARCA emitido para esta factura",
+        error: `Ya existe un comprobante ARCA en estado ${existente.estado} para esta factura`,
         arca_id: existente.id,
+        estado: existente.estado,
         cae: existente.cae,
-        cbte_nro: existente.cbte_nro,
+        cbte_nro: existente.cbte_nro
       });
     }
 
@@ -125,9 +115,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       return res.status(500).json({ error: "ARCA_CUIT no configurado" });
 
     const ambiente =
-      String(process.env.ARCA_ENV || "homo").toUpperCase() === "PROD"
-        ? "PROD"
-        : "HOMO";
+      String(process.env.ARCA_ENV || "homo").toUpperCase() === "PROD" ? "PROD" : "HOMO";
 
     // Traer factura + items
     const rows = await query(
@@ -145,9 +133,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
     );
 
     if (!rows.length) {
-      return res
-        .status(404)
-        .json({ error: "Factura no encontrada o sin items" });
+      return res.status(404).json({ error: "Factura no encontrada o sin items" });
     }
 
     // MVP IVA 21%
@@ -174,12 +160,11 @@ async function emitirDesdeFacturaMostrador(req, res) {
     const imp_neto = round2(itemsCalc.reduce((a, i) => a + i.imp_neto, 0));
     const imp_iva = round2(itemsCalc.reduce((a, i) => a + i.imp_iva, 0));
 
-    // Obtener nro y fecha sugerida coherente con el último emitido
+    // Obtener nro y fecha coherente con el último emitido
     let info = await getNextAndDates(pto_vta, cbte_tipo);
     let next = info.next;
     let cbte_fch = info.cbte_fch;
 
-    // Guardar cabecera PENDIENTE + items
     const reqObj = {
       fuente: "facturas_mostrador",
       factura_mostrador_id: facturaId,
@@ -199,6 +184,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
         today: info.today,
       },
     };
+
     let req_json = JSON.stringify(reqObj, null, 2);
 
     const arcaId = await arcaModel.crearComprobante({
@@ -242,7 +228,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       monCotiz: "1.000",
     });
 
-    // Reintento 1 vez si 10016 (recalcula nro+fecha a partir del último real)
+    // Reintento si 10016
     if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
       info = await getNextAndDates(pto_vta, cbte_tipo);
       next = info.next;
@@ -320,7 +306,7 @@ async function statusPorFacturaMostrador(req, res) {
       return res.status(400).json({ error: "facturaId inválido" });
     }
 
-    const row = await arcaModel.buscarPorFacturaMostradorId(facturaId);
+    const row = await arcaModel.buscarUltimoPorFacturaMostradorId(facturaId);
     if (!row) return res.status(404).json({ error: "Sin comprobante ARCA asociado" });
 
     return res.json({
@@ -340,4 +326,102 @@ async function statusPorFacturaMostrador(req, res) {
   }
 }
 
-module.exports = { emitirDesdeFacturaMostrador, statusPorFacturaMostrador };
+// ===== UI / API para pantalla =====
+
+// GET /arca
+async function vistaArcaIndex(req, res) {
+  try {
+    return res.render("arca/index");
+  } catch (e) {
+    return res.status(500).send(e.message || "Error renderizando ARCA");
+  }
+}
+
+// GET /arca/ui/facturas?limit=50&offset=0
+async function listarFacturasMostrador(req, res) {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || "50", 10), 200);
+    const offset = Math.max(parseInt(req.query.offset || "0", 10), 0);
+
+    const rows = await query(
+      `
+      SELECT id, nombre_cliente, fecha, total, metodos_pago, creado_en
+      FROM facturas_mostrador
+      ORDER BY id DESC
+      LIMIT ? OFFSET ?
+      `,
+      [limit, offset]
+    );
+
+    return res.json({ rows, limit, offset });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || "Error listando facturas" });
+  }
+}
+
+// GET /arca/ui/facturas/:id
+async function detalleFacturaMostrador(req, res) {
+  try {
+    const facturaId = Number(req.params.id || 0);
+    if (!facturaId) return res.status(400).json({ error: "id inválido" });
+
+    const cab = await query(
+      `SELECT id, nombre_cliente, fecha, total, metodos_pago, creado_en
+       FROM facturas_mostrador WHERE id=? LIMIT 1`,
+      [facturaId]
+    );
+    if (!cab.length) return res.status(404).json({ error: "Factura no encontrada" });
+
+    const items = await query(
+      `
+      SELECT
+        fi.id, fi.factura_id, fi.producto_id,
+        COALESCE(p.nombre,'(sin nombre)') AS descripcion,
+        fi.cantidad, fi.precio_unitario, fi.subtotal
+      FROM factura_items fi
+      LEFT JOIN productos p ON p.id = fi.producto_id
+      WHERE fi.factura_id = ?
+      ORDER BY fi.id ASC
+      `,
+      [facturaId]
+    );
+
+    return res.json({ factura: cab[0], items });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || "Error detalle factura" });
+  }
+}
+
+// GET /arca/ui/arca-por-factura/:id
+async function historialArcaPorFactura(req, res) {
+  try {
+    const facturaId = Number(req.params.id || 0);
+    if (!facturaId) return res.status(400).json({ error: "id inválido" });
+
+    const rows = await query(
+      `
+      SELECT id, factura_mostrador_id, ambiente, pto_vta, cbte_tipo, cbte_nro, cbte_fch,
+             doc_tipo, doc_nro, imp_total, imp_neto, imp_iva,
+             resultado, cae, cae_vto, obs_code, obs_msg, estado, created_at
+      FROM arca_comprobantes
+      WHERE factura_mostrador_id=?
+      ORDER BY id DESC
+      LIMIT 20
+      `,
+      [facturaId]
+    );
+
+    return res.json({ rows });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || "Error historial ARCA" });
+  }
+}
+
+module.exports = {
+  emitirDesdeFacturaMostrador,
+  statusPorFacturaMostrador,
+  vistaArcaIndex,
+  listarFacturasMostrador,
+  detalleFacturaMostrador,
+  historialArcaPorFactura,
+};

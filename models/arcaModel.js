@@ -109,10 +109,18 @@ async function buscarPorFacturaMostradorId(facturaId) {
   );
   return rows && rows[0] ? rows[0] : null;
 }
+async function buscarUltimoPorFacturaMostradorId(facturaId) {
+  const rows = await query(
+    `SELECT * FROM arca_comprobantes WHERE factura_mostrador_id=? ORDER BY id DESC LIMIT 1`,
+    [facturaId]
+  );
+  return rows && rows[0] ? rows[0] : null;
+}
 
 module.exports = {
   crearComprobante,
   insertarItems,
   actualizarRespuesta,
   buscarPorFacturaMostradorId,
+  buscarUltimoPorFacturaMostradorId,
 };
