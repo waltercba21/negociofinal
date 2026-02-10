@@ -678,44 +678,75 @@ async function descargarPDFComprobante(req, res) {
     return res.status(500).send(e.message || "Error generando PDF");
   }
 }
-// GET /arca/receptor?doc_tipo=80&doc_nro=XXXXXXXXXXX[&resolve=1]
 async function buscarReceptor(req, res) {
   try {
-    const doc_tipo = Number(req.query.doc_tipo);
-    const doc_nro = Number(req.query.doc_nro);
+    const doc_tipo = Number(req.query.doc_tipo || 0);
+    const doc_nro = Number(req.query.doc_nro || 0);
     const resolve = String(req.query.resolve || "0") === "1";
+    const debug = String(req.query.debug || "0") === "1";
 
-    if (!Number.isFinite(doc_tipo) || !Number.isFinite(doc_nro) || doc_nro <= 0) {
-      return res.status(400).json({ error: "Parámetros inválidos" });
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) {
+      return res.status(400).json({ error: "doc_tipo inválido" });
+    }
+    if (!Number.isFinite(doc_nro) || doc_nro <= 0) {
+      return res.status(400).json({ error: "doc_nro inválido" });
     }
 
     // 1) cache
-    let row = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-    if (row) return res.json(row);
+    const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+    if (cache) return res.json(cache);
 
-    // 2) resolve (solo CUIT)
-    if (resolve && doc_tipo === 80) {
-      const data = await padron.getPersonaV2(doc_nro);
-      if (data) {
-        await arcaModel.upsertReceptorCache({
-          doc_tipo,
-          doc_nro,
-          razon_social: data.razon_social || data.nombre || null,
-          nombre: data.nombre || null,
-          cond_iva_id: null, // se elige con FEParamGetCondicionIvaReceptor
-          domicilio: data.domicilio || null,
-        });
-        row = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-        if (row) return res.json(row);
-      }
+    // 2) si no pide resolver, termina acá
+    if (!resolve) return res.status(404).json({ error: "No encontrado en cache" });
+
+    // 3) resolver contra padrón (solo CUIT por ahora)
+    if (doc_tipo !== 80) {
+      return res.status(400).json({
+        error: "resolve=1 solo soporta CUIT (doc_tipo=80)"
+      });
     }
 
-    return res.status(404).json({ error: "No encontrado en cache" });
+    const cuitRepresentada = Number(process.env.ARCA_CUIT || 0);
+    if (!Number.isFinite(cuitRepresentada) || cuitRepresentada <= 0) {
+      return res.status(500).json({ error: "ARCA_CUIT no configurado" });
+    }
+
+    const out = await padron.getPersonaV2({ idPersona: doc_nro, cuitRepresentada });
+
+    if (!out || !out.ok) {
+      const payload = {
+        error: out?.fault || out?.error || "No se pudo resolver en padrón",
+        service: out?.service || null
+      };
+      if (debug) payload.raw = out?.raw || null;
+      return res.status(out?.fault ? 502 : 404).json(payload);
+    }
+
+    // Nota: cond_iva_id no lo infiero del padrón (evita mappings incorrectos)
+    await arcaModel.upsertReceptorCache({
+      doc_tipo,
+      doc_nro,
+      nombre: out.data.nombre || null,
+      razon_social: out.data.razon_social || null,
+      cond_iva_id: null,
+      domicilio: out.data.domicilio || null
+    });
+
+    const saved = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+    return res.json(saved || {
+      doc_tipo,
+      doc_nro,
+      nombre: out.data.nombre || null,
+      razon_social: out.data.razon_social || null,
+      cond_iva_id: null,
+      domicilio: out.data.domicilio || null
+    });
   } catch (e) {
-    console.error("❌ buscarReceptor:", e);
-    return res.status(500).json({ error: e.message || "Error interno" });
+    console.error("❌ ARCA buscarReceptor:", e);
+    return res.status(500).json({ error: e.message || "Error receptor" });
   }
 }
+
 
 async function paramsCondIvaReceptor(req, res) {
   try {

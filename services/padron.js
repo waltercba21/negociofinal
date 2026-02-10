@@ -1,50 +1,64 @@
 // services/padron.js
-require("dotenv").config();
-
 const https = require("https");
 const wsaa = require("./wsaa");
 
-const ENV = String(process.env.ARCA_ENV || "homo").toLowerCase() === "prod" ? "prod" : "homo";
-
-function baseUrl() {
-  // ARCA / AWS padrón (personaServiceA5)
-  // En docs actuales se usa personaServiceA5 para constancia/padrón. :contentReference[oaicite:2]{index=2}
-  return ENV === "prod"
-    ? "https://aws.arca.gov.ar/sr-padron/webservices/personaServiceA5"
-    : "https://awshomo.arca.gov.ar/sr-padron/webservices/personaServiceA5";
-}
-
 function pickTag(xml, tag) {
-  const r = new RegExp(`<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`, "i");
-  const m = String(xml || "").match(r);
+  const r = new RegExp(
+    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+    "i"
+  );
+  const m = xml.match(r);
   return m ? m[1].trim() : "";
 }
 
 function pickBlock(xml, tag) {
-  const r = new RegExp(`<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`, "i");
-  const m = String(xml || "").match(r);
+  const r = new RegExp(
+    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+    "i"
+  );
+  const m = xml.match(r);
   return m ? m[1] : "";
 }
 
-async function postSoap(urlStr, xml) {
-  const url = new URL(urlStr);
+function formatDomicilio(domXml) {
+  if (!domXml) return null;
+  const dir = pickTag(domXml, "direccion") || "";
+  const loc = pickTag(domXml, "localidad") || "";
+  const prov =
+    pickTag(domXml, "descripcionProvincia") ||
+    pickTag(domXml, "provincia") ||
+    "";
+  const cp = pickTag(domXml, "codPostal") || "";
+  const parts = [dir, loc, prov, cp].map(s => (s || "").trim()).filter(Boolean);
+  return parts.length ? parts.join(", ") : null;
+}
 
+function getPadronUrl() {
+  if (process.env.ARCA_PADRON_URL) return process.env.ARCA_PADRON_URL;
+  const env = String(process.env.ARCA_ENV || "homo").toLowerCase();
+  const host = env === "prod" ? "aws.arca.gov.ar" : "awshomo.arca.gov.ar";
+  // URL del servicio A5 (sin ?wsdl)
+  return `https://${host}/sr-padron/webservices/personaServiceA5`;
+}
+
+function postXml(urlStr, xml) {
+  const u = new URL(urlStr);
   return new Promise((resolve, reject) => {
     const req = https.request(
       {
         method: "POST",
-        hostname: url.hostname,
-        path: url.pathname,
+        hostname: u.hostname,
+        path: u.pathname + (u.search || ""),
         headers: {
           "Content-Type": "text/xml; charset=utf-8",
           "Content-Length": Buffer.byteLength(xml),
-          // SOAPAction no siempre es obligatorio; si tu entorno lo pide, agregalo acá.
-        },
+          SOAPAction: ""
+        }
       },
       (res) => {
         let data = "";
         res.on("data", (c) => (data += c));
-        res.on("end", () => resolve(data));
+        res.on("end", () => resolve({ status: res.statusCode, raw: data }));
       }
     );
     req.on("error", reject);
@@ -53,69 +67,93 @@ async function postSoap(urlStr, xml) {
   });
 }
 
-function parsePersona(xml) {
-  // Datos generales
-  const dg = pickBlock(xml, "datosGenerales");
-  const nombre = pickTag(dg, "nombre");
-  const apellido = pickTag(dg, "apellido");
-
-  // Para jurídicas a veces viene “apellido”/“nombre” con la denominación.
-  const razon = pickTag(dg, "razonSocial") || "";
-  const display = (razon || `${nombre} ${apellido}`).trim() || apellido || nombre || null;
-
-  // Domicilio fiscal
-  const df = pickBlock(xml, "domicilioFiscal");
-  const direccion = pickTag(df, "direccion") || pickTag(df, "domicilio") || "";
-  const localidad = pickTag(df, "localidad") || "";
-  const cp = pickTag(df, "codPostal") || "";
-  const prov = pickTag(df, "descripcionProvincia") || pickTag(df, "provincia") || "";
-
-  const domicilio = [direccion, localidad, prov, cp].filter(Boolean).join(", ") || null;
-
-  return {
-    nombre: display,
-    razon_social: razon || display || null,
-    domicilio,
-  };
+async function dummy() {
+  const url = getPadronUrl();
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:a5="http://a5.soap.ws.server.puc.sr.arca.gov.ar/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <a5:dummy/>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+  const out = await postXml(url, xml);
+  const fault = pickTag(out.raw, "faultstring");
+  return { ...out, fault: fault || null };
 }
 
-// Consulta “getPersona_v2”
-async function getPersonaV2(cuitConsultado) {
-  const cuitRep = Number(process.env.ARCA_CUIT || 0);
-  if (!cuitRep) throw new Error("ARCA_CUIT no configurado");
+async function getPersonaV2({ idPersona, cuitRepresentada }) {
+  const url = getPadronUrl();
 
-  const service = "ws_sr_constancia_inscripcion";
-  const { token, sign } = await wsaa.getTokenSign(service);
+  // Servicio WSAA del padrón/constancia (recomendado) + fallback legacy
+  const servicesToTry = ["ws_sr_constancia_inscripcion", "ws_sr_padron_a5"];
 
-  const soap = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="http://a5.soap.ws.server.puc.sr">
+  let last = null;
+
+  for (const svc of servicesToTry) {
+    const { token, sign } = await wsaa.getTokenSign(svc); // si wsaa ignora args, no rompe
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:a5="http://a5.soap.ws.server.puc.sr.arca.gov.ar/">
   <soapenv:Header/>
   <soapenv:Body>
     <a5:getPersona_v2>
       <token>${token}</token>
       <sign>${sign}</sign>
-      <cuitRepresentada>${cuitRep}</cuitRepresentada>
-      <idPersona>${Number(cuitConsultado)}</idPersona>
+      <cuitRepresentada>${cuitRepresentada}</cuitRepresentada>
+      <idPersona>${idPersona}</idPersona>
     </a5:getPersona_v2>
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  const raw = await postSoap(baseUrl(), soap);
+    const out = await postXml(url, xml);
+    const fault = pickTag(out.raw, "faultstring");
+    if (fault) {
+      last = { ok: false, fault, raw: out.raw, service: svc };
+      continue;
+    }
 
-  const fault = pickTag(raw, "faultstring");
-  if (fault) {
-    const err = new Error(fault);
-    err.code = "PADRON_FAULT";
-    throw err;
+    const personaReturn = pickBlock(out.raw, "personaReturn") || out.raw;
+
+    // Errores propios del servicio (cuando no hay datos / no autorizado, etc.)
+    const errConst = pickBlock(personaReturn, "errorConstancia");
+    const errMsg = pickTag(errConst, "error");
+    if (errMsg) {
+      last = { ok: false, error: errMsg, raw: out.raw, service: svc };
+      continue;
+    }
+
+    const dg = pickBlock(personaReturn, "datosGenerales");
+    if (!dg) {
+      last = { ok: false, error: "Respuesta sin datosGenerales", raw: out.raw, service: svc };
+      continue;
+    }
+
+    const razonSocial = pickTag(dg, "razonSocial") || null;
+    const nombre = pickTag(dg, "nombre") || null;
+    const apellido = pickTag(dg, "apellido") || null;
+
+    const nombreCompleto =
+      razonSocial ||
+      [apellido, nombre].filter(Boolean).join(" ").trim() ||
+      null;
+
+    const dom = pickBlock(dg, "domicilioFiscal") || pickBlock(dg, "domicilio");
+    const domicilio = formatDomicilio(dom);
+
+    return {
+      ok: true,
+      data: {
+        nombre: nombreCompleto,
+        razon_social: razonSocial || nombreCompleto,
+        domicilio
+      },
+      raw: out.raw,
+      service: svc
+    };
   }
 
-  // Si no trae datosGenerales, lo tratamos como “no encontrado”
-  const dg = pickBlock(raw, "datosGenerales");
-  if (!dg) return null;
-
-  return { ...parsePersona(raw), raw };
+  return last || { ok: false, error: "Sin respuesta", raw: "" };
 }
 
-module.exports = {
-  getPersonaV2,
-};
+module.exports = { dummy, getPersonaV2 };
