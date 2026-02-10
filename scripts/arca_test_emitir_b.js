@@ -63,19 +63,24 @@ function nowISOSeconds(d = new Date()) {
   // ISO sin milisegundos
   return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
-
 function pickTag(xml, tag) {
-  // soporta <tag>...</tag> y &lt;tag&gt;...&lt;/tag&gt;
-  const r1 = new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, 'i');
+  const r1 = new RegExp(
+    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+    'i'
+  );
   const m1 = xml.match(r1);
   if (m1) return m1[1].trim();
 
-  const r2 = new RegExp(`&lt;${tag}&gt;([\\s\\S]*?)&lt;\\/${tag}&gt;`, 'i');
+  const r2 = new RegExp(
+    `&lt;(?:(?:\\w+):)?${tag}[^&]*&gt;([\\s\\S]*?)&lt;\\/(?:(?:\\w+):)?${tag}&gt;`,
+    'i'
+  );
   const m2 = xml.match(r2);
   if (m2) return m2[1].trim();
 
   return '';
 }
+
 
 async function getTokenSign(service = 'wsfe') {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'arca-'));
