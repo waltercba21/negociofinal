@@ -5,11 +5,18 @@ const https = require("https");
 const { URL } = require("url");
 const wsaa = require("./wsaa");
 
+const env = String(process.env.ARCA_ENV || "homo").toLowerCase();
+const PADRON_BASE = env === "prod" ? "https://aws.arca.gov.ar" : "https://awshomo.arca.gov.ar";
+
+// Endpoint correcto (A5)
 const PADRON_URL =
   process.env.ARCA_PADRON_URL ||
-  "https://awshomo.arca.gob.ar/sr-padron/webservices/personaServiceA5";
+  `${PADRON_BASE}/sr-padron/webservices/personaServiceA5`;
 
-const SERVICE = process.env.ARCA_PADRON_SERVICE || "ws_sr_padron";
+// ID de servicio para pedir TA (WSAA)
+const SERVICE =
+  process.env.ARCA_PADRON_SERVICE ||
+  "ws_sr_constancia_inscripcion";
 
 function pickTag(xml, tag) {
   const r = new RegExp(
@@ -23,6 +30,7 @@ function pickTag(xml, tag) {
 function postXml({ url, xml, soapAction = '""', timeoutMs = 20000 }) {
   return new Promise((resolve) => {
     const u = new URL(url);
+    const body = Buffer.from(xml, "utf8");
 
     const req = https.request(
       {
@@ -33,9 +41,10 @@ function postXml({ url, xml, soapAction = '""', timeoutMs = 20000 }) {
         headers: {
           "Content-Type": "text/xml; charset=utf-8",
           Accept: "text/xml",
-          // IMPORTANTE: el WS reclama que exista SOAPAction (aunque sea vacío con comillas)
-          SOAPAction: soapAction, // => SOAPAction: ""
-          "Connection": "close",
+          // Debe EXISTIR aunque sea vacío (con comillas)
+          SOAPAction: soapAction, // => ""
+          "Content-Length": body.length,
+          Connection: "close",
         },
         timeout: timeoutMs,
       },
@@ -58,7 +67,7 @@ function postXml({ url, xml, soapAction = '""', timeoutMs = 20000 }) {
       resolve({ status: 0, raw: "", error: err.message || "request error" });
     });
 
-    req.write(xml);
+    req.write(body);
     req.end();
   });
 }
@@ -69,11 +78,7 @@ async function getTokenSign(serviceName) {
   throw new Error("wsaa: falta export getTokenSign/getTA");
 }
 
-/**
- * Padron A5 - getPersona_v2
- * Devuelve: { ok:true, data:{ razon_social, nombre, domicilio }, raw }
- * o:        { ok:false, fault|error, status, raw }
- */
+// Consulta CUIT (idPersona) en padrón A5
 async function getPersonaV2({ idPersona, cuitRepresentada }) {
   try {
     const id = Number(idPersona || 0);
@@ -101,13 +106,9 @@ async function getPersonaV2({ idPersona, cuitRepresentada }) {
 
     const resp = await postXml({ url: PADRON_URL, xml, soapAction: '""' });
 
-    // Fault SOAP
     const fault = pickTag(resp.raw, "faultstring") || pickTag(resp.raw, "FaultString");
-    if (fault) {
-      return { ok: false, fault, status: resp.status, raw: resp.raw, service: SERVICE };
-    }
+    if (fault) return { ok: false, fault, status: resp.status, raw: resp.raw, service: SERVICE };
 
-    // Campos típicos (dependen de la respuesta)
     const razon_social =
       pickTag(resp.raw, "razonSocial") ||
       pickTag(resp.raw, "razon_social") ||
@@ -124,14 +125,7 @@ async function getPersonaV2({ idPersona, cuitRepresentada }) {
       pickTag(resp.raw, "domicilioFiscal");
 
     if (!razon_social && !nombre) {
-      // Si no hay fault, pero tampoco datos, devolvemos raw para diagnóstico
-      return {
-        ok: false,
-        error: "Respuesta sin datos (ver raw)",
-        status: resp.status,
-        raw: resp.raw,
-        service: SERVICE,
-      };
+      return { ok: false, error: "Respuesta sin datos (ver raw)", status: resp.status, raw: resp.raw, service: SERVICE };
     }
 
     return {
