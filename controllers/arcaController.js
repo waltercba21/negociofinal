@@ -9,6 +9,51 @@ const wsfe = require("../services/wsfe");
 
 const PDFDocument = require("pdfkit");
 const QRCode = require("qrcode");
+const _condIvaCache = {
+  ts: 0,
+  rows: null,
+  raw: null
+};
+
+function claseFromCbteTipo(cbteTipo) {
+  const t = Number(cbteTipo);
+  if ([1,2,3,4,5].includes(t)) return "A";     // Fact A / ND A / NC A / ...
+  if ([6,7,8,9,10].includes(t)) return "B";    // Fact B / ND B / NC B / ...
+  if ([11,12,13,14,15].includes(t)) return "C"; // Fact C / ND C / NC C / ...
+  return null;
+}
+
+function parseCondIvaFromXml(xml) {
+  const blocks = String(xml || "").match(/<CondicionIvaReceptor>([\s\S]*?)<\/CondicionIvaReceptor>/gi) || [];
+  const out = blocks.map(b => {
+    const id = Number(pickTag(b, "Id") || 0);
+    const desc = pickTag(b, "Desc") || "";
+    const cmpClase = pickTag(b, "Cmp_Clase") || "";
+    return { id, desc, cmp_clase: cmpClase };
+  }).filter(x => x.id > 0);
+
+  // fallback por si el tag cambiara (muy raro)
+  return out;
+}
+
+async function getCondIvaReceptorCached() {
+  const TTL = 6 * 60 * 60 * 1000; // 6 horas
+  const now = Date.now();
+
+  if (_condIvaCache.rows && (now - _condIvaCache.ts) < TTL) {
+    return _condIvaCache.rows;
+  }
+
+  const r = await wsfe.FEParamGetCondicionIvaReceptor();
+  const raw = r.raw || r.xml || r; // por si tu wrapper devuelve distinto
+  const rows = Array.isArray(r.rows) ? r.rows : parseCondIvaFromXml(raw);
+
+  _condIvaCache.ts = now;
+  _condIvaCache.rows = rows;
+  _condIvaCache.raw = raw;
+
+  return rows;
+}
 
 function getQuery() {
   if (pool.promise && typeof pool.promise === "function") {
@@ -652,6 +697,24 @@ async function buscarReceptor(req, res) {
     return res.status(500).json({ error: e.message || "Error receptor" });
   }
 }
+async function paramsCondIvaReceptor(req, res) {
+  try {
+    const cbte_tipo = Number(req.query.cbte_tipo || 0);
+    if (!cbte_tipo) return res.status(400).json({ error: "cbte_tipo requerido" });
+
+    const clase = claseFromCbteTipo(cbte_tipo);
+    const all = await getCondIvaReceptorCached();
+
+    const rows = clase
+      ? all.filter(x => String(x.cmp_clase || "").toUpperCase().includes(clase))
+      : all;
+
+    return res.json({ cbte_tipo, clase, rows });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || "Error params" });
+  }
+}
+
 
 module.exports = {
   emitirDesdeFacturaMostrador,
@@ -662,4 +725,5 @@ module.exports = {
   historialArcaPorFactura,
   descargarPDFComprobante,
   buscarReceptor,
+  paramsCondIvaReceptor,
 };

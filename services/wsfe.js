@@ -227,6 +227,33 @@ async function FECompConsultar(ptoVta = PTO_VTA_DEFAULT, cbteTipo, cbteNro) {
   );
   return { raw: resp };
 }
+async function FEParamGetCondicionIvaReceptor() {
+  const a = await auth();
+
+  const soap = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <ar:FEParamGetCondicionIvaReceptor>
+      <ar:Auth>
+        <ar:Token>${a.token}</ar:Token>
+        <ar:Sign>${a.sign}</ar:Sign>
+        <ar:Cuit>${a.cuit}</ar:Cuit>
+      </ar:Auth>
+    </ar:FEParamGetCondicionIvaReceptor>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+  const resp = await postXml(
+    WSFE_URL,
+    soap,
+    "http://ar.gov.afip.dif.FEV1/FEParamGetCondicionIvaReceptor"
+  );
+
+  // Devolvemos el XML crudo; lo parseás en el controller con pickTag/regex.
+  return { raw: resp };
+}
+
 
 module.exports = {
   WSFE_URL,
@@ -234,5 +261,7 @@ module.exports = {
   FEDummy,
   FECompUltimoAutorizado,
   FECAESolicitar,
-  FECompConsultar
+  FECompConsultar,
+  FEParamGetCondicionIvaReceptor
 };
+
