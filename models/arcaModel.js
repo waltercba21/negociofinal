@@ -48,6 +48,7 @@ async function crearComprobante(data) {
   return r.insertId || (r[0] && r[0].insertId);
 }
 
+
 async function insertarItems(arcaId, items) {
   if (!items || !items.length) return 0;
 
