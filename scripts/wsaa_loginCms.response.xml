@@ -1,15 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><loginCmsResponse xmlns="http://wsaa.view.sua.dvadac.desein.afip.gov"><loginCmsReturn>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
-&lt;loginTicketResponse version=&quot;1.0&quot;&gt;
-    &lt;header&gt;
-        &lt;source&gt;CN=wsaahomo, O=AFIP, C=AR, SERIALNUMBER=CUIT 33693450239&lt;/source&gt;
-        &lt;destination&gt;SERIALNUMBER=CUIT 20320992681, CN=autofaros2026&lt;/destination&gt;
-        &lt;uniqueId&gt;1350274246&lt;/uniqueId&gt;
-        &lt;generationTime&gt;2026-02-09T22:10:18.097-03:00&lt;/generationTime&gt;
-        &lt;expirationTime&gt;2026-02-10T10:10:18.097-03:00&lt;/expirationTime&gt;
-    &lt;/header&gt;
-    &lt;credentials&gt;
-        &lt;token&gt;PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgc3JjPSJDTj13c2FhaG9tbywgTz1BRklQLCBDPUFSLCBTRVJJQUxOVU1CRVI9Q1VJVCAzMzY5MzQ1MDIzOSIgZHN0PSJDTj13c2ZlLCBPPUFGSVAsIEM9QVIiIHVuaXF1ZV9pZD0iMjc4NjcwOTM1MCIgZ2VuX3RpbWU9IjE3NzA2ODU3NTgiIGV4cF90aW1lPSIxNzcwNzI5MDE4Ii8+CiAgICA8b3BlcmF0aW9uIHR5cGU9ImxvZ2luIiB2YWx1ZT0iZ3JhbnRlZCI+CiAgICAgICAgPGxvZ2luIGVudGl0eT0iMzM2OTM0NTAyMzkiIHNlcnZpY2U9IndzZmUiIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAzMjA5OTI2ODEsIENOPWF1dG9mYXJvczIwMjYiIGF1dGhtZXRob2Q9ImNtcyIgcmVnbWV0aG9kPSIyMiI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24ga2V5PSIzMDcxODc2MzcxOCIgcmVsdHlwZT0iNCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgo=&lt;/token&gt;
-        &lt;sign&gt;evcwLTrtymZwzLuuOsSDGxUjgYsbKyxJKDlnpVPLY8DdkNJOaXnVJtIwTJrlNJ3HYsHb47fSN0SofVgk39kgWlvp1V4LxjK1wSmNtfTzZ1e0BHpQqTohy0GQZ1Hejrm4iTV4okzvRm9kh2QBvtOu6meVuLsq0m4QEcLymBTGLe4=&lt;/sign&gt;
-    &lt;/credentials&gt;
-&lt;/loginTicketResponse&gt;
-</loginCmsReturn></loginCmsResponse></soapenv:Body></soapenv:Envelope>
+<?xml version="1.0" encoding="utf-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+ <soapenv:Body>
+  <soapenv:Fault>
+   <faultcode xmlns:ns1="http://xml.apache.org/axis/">ns1:Client.NoSOAPAction</faultcode>
+   <faultstring>no SOAPAction header!</faultstring>
+   <detail>
+    <ns2:hostname xmlns:ns2="http://xml.apache.org/axis/">wsaaext1.homo.afip.gov.ar</ns2:hostname>
+   </detail>
+  </soapenv:Fault>
+ </soapenv:Body>
+</soapenv:Envelope>

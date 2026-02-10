@@ -27,28 +27,33 @@ const WSFE_URL = (ENV === 'prod')
   ? 'https://servicios1.afip.gov.ar/wsfev1/service.asmx'
   : 'https://wswhomo.afip.gov.ar/wsfev1/service.asmx';
 
-function postXml(url, xml) {
+function postXml(url, xml, soapAction) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
+
+    const headers = {
+      'Content-Type': 'text/xml; charset=utf-8',
+      'Content-Length': Buffer.byteLength(xml),
+    };
+    if (soapAction) headers['SOAPAction'] = `"${soapAction}"`;
+
     const req = https.request({
       method: 'POST',
       hostname: u.hostname,
       path: u.pathname + u.search,
-      headers: {
-  'Content-Type': 'text/xml; charset=utf-8',
-  'Content-Length': Buffer.byteLength(xml),
-}
-
+      headers
     }, (res) => {
       let data = '';
       res.on('data', (c) => data += c);
       res.on('end', () => resolve(data));
     });
+
     req.on('error', reject);
     req.write(xml);
     req.end();
   });
 }
+
 
 function run(cmd, args, opts = {}) {
   return new Promise((resolve, reject) => {
@@ -127,7 +132,8 @@ async function getTokenSign(service = 'wsfe') {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  const resp = await postXml(WSAA_URL, soap);
+  const resp = await postXml(WSAA_URL, soap, 'urn:LoginCms');
+f
   fs.writeFileSync(path.join(__dirname, 'wsaa_loginCms.response.xml'), resp);
 
   const token = pickTag(resp, 'token');
@@ -159,7 +165,8 @@ async function emitirFacturaBMinima() {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  const ultimoResp = await postXml(WSFE_URL, ultimoReq);
+  const ultimoResp = await postXml(WSFE_URL, ultimoReq, 'http://ar.gov.afip.dif.FEV1/FECompUltimoAutorizado');
+
   fs.writeFileSync(path.join(__dirname, 'wsfe_ultimo_from_node.xml'), ultimoResp);
 
 
@@ -224,7 +231,8 @@ async function emitirFacturaBMinima() {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  const caeResp = await postXml(WSFE_URL, caeReq);
+  const caeResp = await postXml(WSFE_URL, caeReq, 'http://ar.gov.afip.dif.FEV1/FECAESolicitar');
+
   fs.writeFileSync(path.join(__dirname, 'wsfe_cae_from_node.xml'), caeResp);
 
 
