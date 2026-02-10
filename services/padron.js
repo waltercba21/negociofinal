@@ -1,22 +1,8 @@
 // services/padron.js
 require("dotenv").config();
-
 const https = require("https");
 const { URL } = require("url");
 const wsaa = require("./wsaa");
-
-const env = String(process.env.ARCA_ENV || "homo").toLowerCase();
-const PADRON_BASE = env === "prod" ? "https://aws.arca.gov.ar" : "https://awshomo.arca.gov.ar";
-
-// Endpoint correcto (A5)
-const PADRON_URL =
-  process.env.ARCA_PADRON_URL ||
-  `${PADRON_BASE}/sr-padron/webservices/personaServiceA5`;
-
-// ID de servicio para pedir TA (WSAA)
-const SERVICE =
-  process.env.ARCA_PADRON_SERVICE ||
-  "ws_sr_constancia_inscripcion";
 
 function pickTag(xml, tag) {
   const r = new RegExp(
@@ -27,24 +13,56 @@ function pickTag(xml, tag) {
   return m ? String(m[1] || "").trim() : "";
 }
 
-function postXml({ url, xml, soapAction = '""', timeoutMs = 20000 }) {
-  return new Promise((resolve) => {
-    const u = new URL(url);
-    const body = Buffer.from(xml, "utf8");
+function pickBlock(xml, tag) {
+  const r = new RegExp(
+    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+    "i"
+  );
+  const m = String(xml || "").match(r);
+  return m ? String(m[1] || "") : "";
+}
 
+function formatDomicilio(domXml) {
+  if (!domXml) return null;
+  const dir = pickTag(domXml, "direccion") || "";
+  const loc = pickTag(domXml, "localidad") || "";
+  const prov =
+    pickTag(domXml, "descripcionProvincia") ||
+    pickTag(domXml, "provincia") ||
+    "";
+  const cp = pickTag(domXml, "codPostal") || "";
+  const parts = [dir, loc, prov, cp].map(s => (s || "").trim()).filter(Boolean);
+  return parts.length ? parts.join(", ") : null;
+}
+
+function getPadronUrl() {
+  if (process.env.ARCA_PADRON_URL) return process.env.ARCA_PADRON_URL;
+
+  const env = String(process.env.ARCA_ENV || "homo").toLowerCase();
+  const host = env === "prod" ? "aws.afip.gov.ar" : "awshomo.afip.gov.ar";
+
+  // endpoint A5 (sin ?WSDL)
+  return `https://${host}/sr-padron/webservices/personaServiceA5`;
+}
+
+function postXml(urlStr, xml, timeoutMs = 20000) {
+  const u = new URL(urlStr);
+  const body = Buffer.from(xml, "utf8");
+
+  return new Promise((resolve, reject) => {
     const req = https.request(
       {
         method: "POST",
         hostname: u.hostname,
         port: u.port || 443,
-        path: u.pathname + u.search,
+        path: u.pathname + (u.search || ""),
         headers: {
           "Content-Type": "text/xml; charset=utf-8",
-          Accept: "text/xml",
-          // Debe EXISTIR aunque sea vacío (con comillas)
-          SOAPAction: soapAction, // => ""
           "Content-Length": body.length,
+          // importante: presente y con comillas
+          SOAPAction: '""',
           Connection: "close",
+          Accept: "text/xml",
         },
         timeout: timeoutMs,
       },
@@ -52,96 +70,109 @@ function postXml({ url, xml, soapAction = '""', timeoutMs = 20000 }) {
         let data = "";
         res.setEncoding("utf8");
         res.on("data", (c) => (data += c));
-        res.on("end", () =>
-          resolve({ status: res.statusCode || 0, raw: data || "" })
-        );
+        res.on("end", () => resolve({ status: res.statusCode || 0, raw: data || "" }));
       }
     );
 
     req.on("timeout", () => {
-      req.destroy();
-      resolve({ status: 0, raw: "", error: "timeout" });
+      req.destroy(new Error("timeout"));
     });
-
-    req.on("error", (err) => {
-      resolve({ status: 0, raw: "", error: err.message || "request error" });
-    });
+    req.on("error", reject);
 
     req.write(body);
     req.end();
   });
 }
 
-async function getTokenSign(serviceName) {
-  if (wsaa && typeof wsaa.getTokenSign === "function") return wsaa.getTokenSign(serviceName);
-  if (wsaa && typeof wsaa.getTA === "function") return wsaa.getTA(serviceName);
-  throw new Error("wsaa: falta export getTokenSign/getTA");
+// namespace correcto según WSDL A5
+const NS_A5 = "http://a5.soap.ws.server.puc.sr/";
+
+async function dummy() {
+  const url = getPadronUrl();
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="${NS_A5}">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <a5:dummy/>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+  const out = await postXml(url, xml);
+  const fault = pickTag(out.raw, "faultstring");
+  return { ...out, fault: fault || null };
 }
 
-// Consulta CUIT (idPersona) en padrón A5
 async function getPersonaV2({ idPersona, cuitRepresentada }) {
-  try {
-    const id = Number(idPersona || 0);
-    const cuitRep = Number(cuitRepresentada || 0);
-    if (!id || !cuitRep) {
-      return { ok: false, error: "idPersona/cuitRepresentada inválidos", status: 0, raw: "" };
-    }
+  const url = getPadronUrl();
 
-    const ta = await getTokenSign(SERVICE);
-    const token = ta.token;
-    const sign = ta.sign;
+  // service WSAA correcto para A5/constancia
+  const servicesToTry = ["ws_sr_constancia_inscripcion", "ws_sr_padron_a5"];
+
+  let last = null;
+
+  for (const svc of servicesToTry) {
+    const { token, sign } = await wsaa.getTokenSign(svc);
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="http://a5.soap.ws.server.puc.sr/">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="${NS_A5}">
   <soapenv:Header/>
   <soapenv:Body>
     <a5:getPersona_v2>
       <token>${token}</token>
       <sign>${sign}</sign>
-      <cuitRepresentada>${cuitRep}</cuitRepresentada>
-      <idPersona>${id}</idPersona>
+      <cuitRepresentada>${cuitRepresentada}</cuitRepresentada>
+      <idPersona>${idPersona}</idPersona>
     </a5:getPersona_v2>
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-    const resp = await postXml({ url: PADRON_URL, xml, soapAction: '""' });
+    const out = await postXml(url, xml);
 
-    const fault = pickTag(resp.raw, "faultstring") || pickTag(resp.raw, "FaultString");
-    if (fault) return { ok: false, fault, status: resp.status, raw: resp.raw, service: SERVICE };
-
-    const razon_social =
-      pickTag(resp.raw, "razonSocial") ||
-      pickTag(resp.raw, "razon_social") ||
-      pickTag(resp.raw, "denominacion");
-
-    const nombre =
-      pickTag(resp.raw, "nombre") ||
-      pickTag(resp.raw, "nombrePersona") ||
-      pickTag(resp.raw, "apellidoNombre");
-
-    const domicilio =
-      pickTag(resp.raw, "direccion") ||
-      pickTag(resp.raw, "domicilio") ||
-      pickTag(resp.raw, "domicilioFiscal");
-
-    if (!razon_social && !nombre) {
-      return { ok: false, error: "Respuesta sin datos (ver raw)", status: resp.status, raw: resp.raw, service: SERVICE };
+    const fault = pickTag(out.raw, "faultstring") || pickTag(out.raw, "FaultString");
+    if (fault) {
+      last = { ok: false, fault, raw: out.raw, service: svc };
+      continue;
     }
+
+    const personaReturn = pickBlock(out.raw, "personaReturn") || out.raw;
+
+    const errConst = pickBlock(personaReturn, "errorConstancia");
+    const errMsg = pickTag(errConst, "error");
+    if (errMsg) {
+      last = { ok: false, error: errMsg, raw: out.raw, service: svc };
+      continue;
+    }
+
+    const dg = pickBlock(personaReturn, "datosGenerales");
+    if (!dg) {
+      last = { ok: false, error: "Respuesta sin datosGenerales", raw: out.raw, service: svc };
+      continue;
+    }
+
+    const razonSocial = pickTag(dg, "razonSocial") || null;
+    const nombre = pickTag(dg, "nombre") || null;
+    const apellido = pickTag(dg, "apellido") || null;
+
+    const nombreCompleto =
+      razonSocial ||
+      [apellido, nombre].filter(Boolean).join(" ").trim() ||
+      null;
+
+    const dom = pickBlock(dg, "domicilioFiscal") || pickBlock(dg, "domicilio");
+    const domicilio = formatDomicilio(dom);
 
     return {
       ok: true,
-      status: resp.status,
-      raw: resp.raw,
-      service: SERVICE,
       data: {
-        razon_social: razon_social || null,
-        nombre: nombre || null,
-        domicilio: domicilio || null,
+        nombre: nombreCompleto,
+        razon_social: razonSocial || nombreCompleto,
+        domicilio,
       },
+      raw: out.raw,
+      service: svc,
     };
-  } catch (e) {
-    return { ok: false, error: e.message || "Error padrón", status: 0, raw: "", service: SERVICE };
   }
+
+  return last || { ok: false, error: "Sin respuesta", raw: "" };
 }
 
-module.exports = { getPersonaV2 };
+module.exports = { dummy, getPersonaV2 };
