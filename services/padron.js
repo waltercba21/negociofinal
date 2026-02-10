@@ -1,17 +1,27 @@
-// services/padron.js
+// services/wsaa.js
 require("dotenv").config();
 
-const wsaa = require("./wsaa");
+const fs = require("fs");
+const path = require("path");
+const https = require("https");
+const { execFile } = require("child_process");
 
-// --- URLs (HOMO/PROD) ---
+const CERT_PATH = process.env.ARCA_CMS_CERT || "";
+const KEY_PATH  = process.env.ARCA_CMS_KEY  || "";
+
 const ENV = String(process.env.ARCA_ENV || "HOMO").toUpperCase();
-const PADRON_URL =
-  process.env.ARCA_PADRON_URL ||
-  (ENV === "PROD"
-    ? "https://aws.afip.gov.ar/sr-padron/webservices/personaServiceA5"
-    : "https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA5");
 
-// --- helpers XML ---
+const WSAA_URL =
+  process.env.ARCA_WSAA_URL ||
+  (ENV === "PROD"
+    ? "https://wsaa.afip.gov.ar/ws/services/LoginCms"
+    : "https://wsaahomo.afip.gov.ar/ws/services/LoginCms");
+
+const CACHE_PATH =
+  process.env.ARCA_TA_CACHE_PATH ||
+  path.join(__dirname, "ta_cache.json");
+
+// ---------- helpers ----------
 function pickTag(xml, tag) {
   const r = new RegExp(
     `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
@@ -21,213 +31,200 @@ function pickTag(xml, tag) {
   return m ? m[1].trim() : "";
 }
 
-function pickBlock(xml, tag) {
-  const r = new RegExp(
-    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
-    "i"
-  );
-  const m = String(xml || "").match(r);
-  return m ? m[1] : "";
+function isoNowPlus(minutes) {
+  const d = new Date(Date.now() + minutes * 60 * 1000);
+  return d.toISOString();
 }
 
-function formatDomicilio(domXml) {
-  if (!domXml) return null;
-  const calle = pickTag(domXml, "calle") || "";
-  const nro = pickTag(domXml, "numero") || "";
-  const piso = pickTag(domXml, "piso") || "";
-  const dpto = pickTag(domXml, "depto") || "";
-  const localidad = pickTag(domXml, "localidad") || pickTag(domXml, "descripcionLocalidad") || "";
-  const provincia = pickTag(domXml, "descripcionProvincia") || pickTag(domXml, "provincia") || "";
-  const cp = pickTag(domXml, "codPostal") || pickTag(domXml, "codigoPostal") || "";
+function buildTRA(service) {
+  const uniqueId = Math.floor(Date.now() / 1000);
+  const generationTime = isoNowPlus(-10);
+  const expirationTime = isoNowPlus(10);
 
-  const linea1 = [calle, nro].filter(Boolean).join(" ").trim();
-  const linea2 = [piso ? `Piso ${piso}` : "", dpto ? `Dto ${dpto}` : ""].filter(Boolean).join(" ").trim();
-  const linea3 = [localidad, provincia].filter(Boolean).join(", ").trim();
-  const linea4 = cp ? `CP ${cp}` : "";
-
-  const parts = [linea1, linea2, linea3, linea4].filter(Boolean);
-  return parts.length ? parts.join(" · ") : null;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<loginTicketRequest version="1.0">
+  <header>
+    <uniqueId>${uniqueId}</uniqueId>
+    <generationTime>${generationTime}</generationTime>
+    <expirationTime>${expirationTime}</expirationTime>
+  </header>
+  <service>${service}</service>
+</loginTicketRequest>`;
 }
 
-// --- HTTP SOAP ---
-async function postXml(url, xml, soapActionValue) {
-  // soapActionValue puede ser "" (vacío) y AUN ASÍ se manda el header
-  const soapAction = soapActionValue === undefined ? undefined : String(soapActionValue);
-  const headers = {
-    "Content-Type": "text/xml; charset=utf-8",
-    Accept: "text/xml",
-  };
+function ensureCertKey() {
+  if (!CERT_PATH || !KEY_PATH) throw new Error("Faltan ARCA_CMS_CERT / ARCA_CMS_KEY en .env");
+  if (!fs.existsSync(CERT_PATH)) throw new Error(`No existe CERT: ${CERT_PATH}`);
+  if (!fs.existsSync(KEY_PATH)) throw new Error(`No existe KEY: ${KEY_PATH}`);
+}
 
-  if (soapAction !== undefined) {
-    // Asegurar comillas como espera SOAP 1.1 en .NET
-    headers["SOAPAction"] = soapAction.startsWith('"') ? soapAction : `"${soapAction}"`;
+function signTRAWithOpenSSL(traXml) {
+  ensureCertKey();
+
+  const openssl = process.env.ARCA_OPENSSL || "openssl";
+  const tmpDir = path.join(__dirname, ".tmp_wsaa");
+  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+
+  const traPath = path.join(tmpDir, `tra_${Date.now()}.xml`);
+  const outDer  = path.join(tmpDir, `tra_${Date.now()}.p7s`);
+
+  fs.writeFileSync(traPath, traXml, "utf8");
+
+  return new Promise((resolve, reject) => {
+    // PKCS#7 DER
+    const args = [
+      "smime",
+      "-sign",
+      "-signer", CERT_PATH,
+      "-inkey", KEY_PATH,
+      "-in", traPath,
+      "-out", outDer,
+      "-outform", "DER",
+      "-nodetach",
+      "-binary",
+    ];
+
+    execFile(openssl, args, { windowsHide: true }, (err, stdout, stderr) => {
+      try { fs.unlinkSync(traPath); } catch {}
+      if (err) {
+        const msg = (stderr || err.message || "").trim();
+        return reject(new Error(msg || "Error ejecutando openssl (WSAA)"));
+      }
+      try {
+        const der = fs.readFileSync(outDer);
+        try { fs.unlinkSync(outDer); } catch {}
+        resolve(der.toString("base64"));
+      } catch (e) {
+        reject(new Error(e.message || "No se pudo leer el CMS generado"));
+      }
+    });
+  });
+}
+
+function loadCache() {
+  try {
+    if (!fs.existsSync(CACHE_PATH)) return {};
+    return JSON.parse(fs.readFileSync(CACHE_PATH, "utf8") || "{}");
+  } catch {
+    return {};
   }
-
-  const res = await fetch(url, { method: "POST", headers, body: xml });
-  const text = await res.text();
-  return { status: res.status, text };
 }
 
-// Reintenta con SOAPAction alternativos si aparece “no SOAPAction header!”
-async function postXmlWithSoapActionFallback(url, xml, actions) {
-  let last = null;
-
-  for (const act of actions) {
-    const out = await postXml(url, xml, act);
-    const raw = out.text || "";
-
-    // detectamos el error típico
-    const fault = pickTag(raw, "faultstring") || "";
-    const msg = fault || raw;
-
-    last = { ...out, raw, usedSoapAction: act, fault: fault || null };
-
-    if (!/no soapaction header/i.test(msg)) {
-      return last; // dejamos de reintentar si no es ese error
-    }
+function saveCache(obj) {
+  try {
+    fs.writeFileSync(CACHE_PATH, JSON.stringify(obj, null, 2), "utf8");
+  } catch {
+    // no-op
   }
-
-  return last; // devolvemos el último intento
 }
 
-// --- API ---
-async function dummy() {
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-  <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="http://a5.soap.ws.server.puc.sr/">
-    <soapenv:Header/>
-    <soapenv:Body>
-      <a5:dummy/>
-    </soapenv:Body>
-  </soapenv:Envelope>`;
-
-  // En algunos servidores el dummy funciona con SOAPAction vacío
-  const out = await postXmlWithSoapActionFallback(PADRON_URL, xml, ["", "dummy"]);
-  const fault = pickTag(out.raw, "faultstring");
-  return { status: out.status, fault: fault || null };
+function isValid(entry) {
+  if (!entry || !entry.token || !entry.sign || !entry.expirationTime) return false;
+  const exp = Date.parse(entry.expirationTime);
+  if (!Number.isFinite(exp)) return false;
+  // margen de 60s
+  return exp - Date.now() > 60 * 1000;
 }
 
-async function getPersonaV2({ idPersona, cuitRepresentada, debug = false }) {
-  // Importante: service (WSAA) puede variar según lo habilitado en tu certificado
-  const serviceHint = String(process.env.ARCA_PADRON_SERVICE || "").trim();
-  const servicesToTry = [serviceHint, "ws_sr_padron_a5", "ws_sr_constancia_inscripcion"].filter(Boolean);
-
-  // SOAPAction candidatos para getPersona_v2
-  const soapActions = [
-    "", // -> header SOAPAction: "" (vacío)
-    "getPersona_v2",
-    "urn:getPersona_v2",
-    "http://a5.soap.ws.server.puc.sr/getPersona_v2",
-  ];
-
-  let last = null;
-
-  for (const svc of servicesToTry) {
-    try {
-      const ts = await wsaa.getTokenSign(svc);
-
-      const soap = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="http://a5.soap.ws.server.puc.sr/">
+function postSoapLoginCms(in0Base64, soapActionValue) {
+  const envelope = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:wsaa="http://wsaa.view.sua.dvadac.desein.afip.gov">
   <soapenv:Header/>
   <soapenv:Body>
-    <urn:getPersona_v2>
-      <token>${ts.token}</token>
-      <sign>${ts.sign}</sign>
-      <cuitRepresentada>${Number(cuitRepresentada || 0)}</cuitRepresentada>
-      <idPersona>${Number(idPersona || 0)}</idPersona>
-    </urn:getPersona_v2>
+    <wsaa:loginCms>
+      <wsaa:in0>${in0Base64}</wsaa:in0>
+    </wsaa:loginCms>
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-      const out = await postXmlWithSoapActionFallback(PADRON_URL, soap, soapActions);
+  const body = Buffer.from(envelope, "utf8");
+  const url = new URL(WSAA_URL);
 
-      const fault = pickTag(out.raw, "faultstring");
-      if (fault) {
-        last = {
-          ok: false,
-          fault,
-          raw: debug ? out.raw : null,
-          service: svc,
-          status: out.status,
-          usedSoapAction: debug ? out.usedSoapAction : undefined,
-        };
-        continue;
-      }
-
-      // Respuesta
-      const personaReturn = pickBlock(out.raw, "getPersona_v2Return");
-      if (!personaReturn) {
-        last = {
-          ok: false,
-          error: "Respuesta sin getPersona_v2Return",
-          raw: debug ? out.raw : null,
-          service: svc,
-          status: out.status,
-          usedSoapAction: debug ? out.usedSoapAction : undefined,
-        };
-        continue;
-      }
-
-      const errConst = pickBlock(personaReturn, "errorConstancia");
-      const errMsg = pickTag(errConst, "error");
-      if (errMsg) {
-        last = {
-          ok: false,
-          error: errMsg,
-          raw: debug ? out.raw : null,
-          service: svc,
-          status: out.status,
-          usedSoapAction: debug ? out.usedSoapAction : undefined,
-        };
-        continue;
-      }
-
-      const dg = pickBlock(personaReturn, "datosGenerales");
-      if (!dg) {
-        last = {
-          ok: false,
-          error: "Respuesta sin datosGenerales",
-          raw: debug ? out.raw : null,
-          service: svc,
-          status: out.status,
-          usedSoapAction: debug ? out.usedSoapAction : undefined,
-        };
-        continue;
-      }
-
-      const razonSocial = pickTag(dg, "razonSocial") || null;
-      const nombre = pickTag(dg, "nombre") || null;
-      const apellido = pickTag(dg, "apellido") || null;
-
-      const nombreCompleto =
-        razonSocial || [apellido, nombre].filter(Boolean).join(" ").trim() || null;
-
-      const dom = pickBlock(dg, "domicilioFiscal") || pickBlock(dg, "domicilio");
-      const domicilio = formatDomicilio(dom);
-
-      return {
-        ok: true,
-        data: {
-          nombre: nombreCompleto,
-          razon_social: razonSocial || nombreCompleto,
-          domicilio,
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        method: "POST",
+        hostname: url.hostname,
+        path: url.pathname,
+        headers: {
+          "Content-Type": "text/xml; charset=utf-8",
+          "Content-Length": body.length,
+          // CLAVE: SOAPAction presente (aunque sea vacío)
+          "SOAPAction": soapActionValue === undefined ? '""' : `"${soapActionValue}"`,
         },
-        raw: debug ? out.raw : null,
-        service: svc,
-        status: out.status,
-        usedSoapAction: debug ? out.usedSoapAction : undefined,
-      };
-    } catch (e) {
-      last = {
-        ok: false,
-        error: e.message || String(e),
-        raw: null,
-        service: svc,
-        status: null,
-      };
+      },
+      (res) => {
+        let data = "";
+        res.setEncoding("utf8");
+        res.on("data", (c) => (data += c));
+        res.on("end", () => resolve({ status: res.statusCode, raw: data }));
+      }
+    );
+
+    req.on("error", (e) => reject(e));
+    req.write(body);
+    req.end();
+  });
+}
+
+async function loginCms(service, debug = false) {
+  const tra = buildTRA(service);
+  const cmsB64 = await signTRAWithOpenSSL(tra);
+
+  // fallback SOAPAction (algunos servers exigen algo distinto)
+  const tries = [undefined, "", "loginCms"];
+
+  let last = null;
+  for (const act of tries) {
+    const out = await postSoapLoginCms(cmsB64, act);
+    const fault = pickTag(out.raw, "faultstring");
+    last = { ...out, fault: fault || null, usedSoapAction: act === undefined ? '""' : act };
+
+    if (!fault && !/no soapaction header/i.test(out.raw || "")) {
+      return { ...last, tra, cmsB64 };
     }
   }
 
-  return last || { ok: false, error: "Sin respuesta", raw: null };
+  const msg = last?.fault || "no SOAPAction header!";
+  const err = new Error(msg);
+  err.raw = debug ? last?.raw : null;
+  err.status = last?.status || null;
+  err.usedSoapAction = last?.usedSoapAction;
+  throw err;
 }
 
-module.exports = { dummy, getPersonaV2 };
+// ---------- API ----------
+async function getTokenSign(service, opts = {}) {
+  const debug = !!opts.debug;
+
+  const cache = loadCache();
+  if (isValid(cache[service])) return cache[service];
+
+  const out = await loginCms(service, debug);
+
+  const loginTicketResponse = pickTag(out.raw, "loginTicketResponse");
+  const token = pickTag(loginTicketResponse, "token") || pickTag(out.raw, "token");
+  const sign  = pickTag(loginTicketResponse, "sign")  || pickTag(out.raw, "sign");
+  const expirationTime =
+    pickTag(loginTicketResponse, "expirationTime") || pickTag(out.raw, "expirationTime");
+
+  if (!token || !sign || !expirationTime) {
+    const fault = pickTag(out.raw, "faultstring") || "Respuesta WSAA inválida";
+    const err = new Error(fault);
+    err.raw = debug ? out.raw : null;
+    throw err;
+  }
+
+  cache[service] = { token, sign, expirationTime };
+  saveCache(cache);
+
+  return cache[service];
+}
+
+// compat
+async function getTA(service, opts = {}) {
+  return getTokenSign(service, opts);
+}
+
+module.exports = { getTokenSign, getTA };
