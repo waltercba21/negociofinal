@@ -79,9 +79,11 @@ function run(cmd, args, opts = {}) {
 }
 
 // ISO con -03:00 (Argentina)
-function isoAR(d) {
-  const t = new Date(d.getTime() - 3 * 60 * 60 * 1000);
-  return t.toISOString().replace(/\.\d{3}Z$/, "-03:00");
+function isoAR(d = new Date()) {
+  const s = d
+    .toLocaleString("sv-SE", { timeZone: "America/Argentina/Cordoba" }) // "YYYY-MM-DD HH:mm:ss"
+    .replace(" ", "T");
+  return `${s}-03:00`;
 }
 
 // Soporta tags normales y escapados (&lt;token&gt;)
@@ -101,6 +103,15 @@ function pickTag(xml, tag) {
   if (m2) return m2[1].trim();
 
   return "";
+}
+function pickEscaped(xml, tag) {
+  const open = `&lt;${tag}&gt;`;
+  const close = `&lt;/${tag}&gt;`;
+  const i = xml.indexOf(open);
+  if (i < 0) return "";
+  const j = xml.indexOf(close, i + open.length);
+  if (j < 0) return "";
+  return xml.slice(i + open.length, j).trim();
 }
 
 async function getTokenSign(service = "wsfe") {
@@ -156,8 +167,9 @@ async function getTokenSign(service = "wsfe") {
   const resp = await postXml(WSAA_URL, soap, "urn:LoginCms");
   fs.writeFileSync(path.join(__dirname, "wsaa_loginCms.response.xml"), resp);
 
-  const token = pickTag(resp, "token");
-  const sign = pickTag(resp, "sign");
+  const token = pickTag(resp, "token") || pickEscaped(resp, "token");
+const sign  = pickTag(resp, "sign")  || pickEscaped(resp, "sign");
+
 
   if (!token || !sign) throw new Error("WSAA no devolvió token/sign");
   return { token, sign };
