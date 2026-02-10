@@ -1,33 +1,20 @@
 // services/padron.js
 "use strict";
+require("dotenv").config();
 
 const https = require("https");
 const { URL } = require("url");
-const wsaa = require("./wsaa");
+const { getTokenSign } = require("./wsaa");
 
-// URLs oficiales (HOMO / PROD)
-const URL_HOMO = "https://awshomo.arca.gov.ar/sr-padron/webservices/personaServiceA5";
-const URL_PROD = "https://aws.arca.gov.ar/sr-padron/webservices/personaServiceA5";
+const ENV = String(process.env.ARCA_ENV || "homo").toLowerCase();
 
-// Namespace correcto (según manual)
+const PADRON_URL =
+  ENV === "prod"
+    ? "https://aws.arca.gov.ar/sr-padron/webservices/personaServiceA5"
+    : "https://awshomo.arca.gov.ar/sr-padron/webservices/personaServiceA5";
+
 const NS_A5 = "http://a5.soap.ws.server.puc.sr/";
 
-// Service ID para pedir TA a WSAA (según manual)
-const WSAA_SERVICE_ID = "ws_sr_constancia_inscripcion";
-
-function isProd() {
-  return String(process.env.ARCA_ENV || "homo").toLowerCase() === "prod";
-}
-
-function endpoint() {
-  return isProd() ? URL_PROD : URL_HOMO;
-}
-
-function stripXml(xml) {
-  return String(xml || "").replace(/\r?\n/g, " ").trim();
-}
-
-// Extrae tag simple <tag>valor</tag> (sin importar prefijos)
 function pickTag(xml, tag) {
   const r = new RegExp(
     `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
@@ -37,7 +24,6 @@ function pickTag(xml, tag) {
   return m ? m[1].trim() : "";
 }
 
-// Extrae un bloque completo <tag>...</tag>
 function pickBlock(xml, tag) {
   const r = new RegExp(
     `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
@@ -52,9 +38,6 @@ function postXml(urlStr, xml) {
     const u = new URL(urlStr);
     const body = Buffer.from(xml, "utf8");
 
-    // IMPORTANTE:
-    // - SOAP 1.1 => Content-Type text/xml
-    // - SOAPAction debe existir; si va vacío, mandalo como '""'
     const req = https.request(
       {
         method: "POST",
@@ -63,9 +46,10 @@ function postXml(urlStr, xml) {
         headers: {
           "Content-Type": "text/xml; charset=utf-8",
           "Content-Length": String(body.length),
-          "SOAPAction": '""',
-          "Accept": "text/xml",
-          "Connection": "close",
+          // IMPORTANTE: este servicio exige SOAPAction (aunque sea vacío)
+          SOAPAction: '""',
+          Accept: "text/xml",
+          Connection: "close",
         },
       },
       (res) => {
@@ -84,39 +68,19 @@ function postXml(urlStr, xml) {
   });
 }
 
-async function dummy() {
-  const xml = `
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="${NS_A5}">
-  <soapenv:Header/>
-  <soapenv:Body>
-    <a5:dummy/>
-  </soapenv:Body>
-</soapenv:Envelope>`.trim();
+async function getPersonaV2({ idPersona, cuitRepresentada }) {
+  try {
+    const idPers = Number(idPersona || 0);
+    const cuitRep = Number(cuitRepresentada || process.env.ARCA_CUIT || 0);
 
-  const { status, raw } = await postXml(endpoint(), xml);
+    if (!idPers) return { ok: false, error: "idPersona inválido" };
+    if (!cuitRep) return { ok: false, error: "ARCA_CUIT (cuitRepresentada) inválido" };
 
-  if (status >= 400) {
-    const err = new Error(stripXml(raw) || `HTTP ${status}`);
-    err.status = status;
-    err.raw = raw;
-    throw err;
-  }
+    // TA para padrón (service id correcto)
+    const { token, sign } = await getTokenSign("ws_sr_constancia_inscripcion");
+    if (!token || !sign) return { ok: false, error: "No se pudo obtener token/sign (WSAA)" };
 
-  return { raw };
-}
-
-async function getPersonaV2({ cuitRepresentada, idPersona }) {
-  const cuitRep = Number(cuitRepresentada || 0);
-  const idPers = Number(idPersona || 0);
-  if (!cuitRep || !idPers) throw new Error("Faltan cuitRepresentada / idPersona");
-
-  // TA de WSAA para el service id correcto
-  const ta = await wsaa.getTA(WSAA_SERVICE_ID);
-  const token = ta?.token;
-  const sign = ta?.sign;
-  if (!token || !sign) throw new Error("No se pudo obtener token/sign (WSAA)");
-
-  const xml = `
+    const xml = `
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="${NS_A5}">
   <soapenv:Header/>
   <soapenv:Body>
@@ -129,39 +93,35 @@ async function getPersonaV2({ cuitRepresentada, idPersona }) {
   </soapenv:Body>
 </soapenv:Envelope>`.trim();
 
-  const { status, raw } = await postXml(endpoint(), xml);
+    const { status, raw } = await postXml(PADRON_URL, xml);
 
-  if (status >= 400) {
-    // Si viene SOAP Fault, devolvemos algo legible
-    const fault = pickTag(raw, "faultstring") || stripXml(raw);
-    const err = new Error(fault || `HTTP ${status}`);
-    err.status = status;
-    err.raw = raw;
-    throw err;
+    const fault = pickTag(raw, "faultstring");
+    if (fault) return { ok: false, fault, raw, status };
+    if (status >= 400) return { ok: false, error: `HTTP ${status}`, raw, status };
+
+    const razonSocial = pickTag(raw, "razonSocial") || null;
+    const nombre = pickTag(raw, "nombre") || null;
+    const apellido = pickTag(raw, "apellido") || null;
+
+    const domBlock = pickBlock(raw, "domicilioFiscal");
+    const direccion = pickTag(domBlock, "direccion");
+    const localidad = pickTag(domBlock, "localidad");
+    const codPostal = pickTag(domBlock, "codPostal");
+    const domicilio = [direccion, localidad, codPostal].filter(Boolean).join(" · ") || null;
+
+    return {
+      ok: true,
+      data: {
+        razon_social: razonSocial,
+        nombre: (apellido || nombre) ? [apellido, nombre].filter(Boolean).join(" ") : null,
+        domicilio,
+      },
+      raw,
+      status,
+    };
+  } catch (e) {
+    return { ok: false, error: e.message || "Error padrón" };
   }
-
-  // Parse mínimo (razón social/nombre + domicilio fiscal)
-  const razonSocial = pickTag(raw, "razonSocial");
-  const nombre = pickTag(raw, "nombre");
-  const apellido = pickTag(raw, "apellido");
-
-  // domicilioFiscal es un bloque con tags internos (direccion, localidad, codPostal, etc.)
-  const domBlock = pickBlock(raw, "domicilioFiscal");
-  const direccion = pickTag(domBlock, "direccion");
-  const localidad = pickTag(domBlock, "localidad");
-  const codPostal = pickTag(domBlock, "codPostal");
-
-  const domicilio = [direccion, localidad, codPostal].filter(Boolean).join(" · ") || null;
-
-  return {
-    raw,
-    razon_social: razonSocial || null,
-    nombre: (apellido || nombre) ? [apellido, nombre].filter(Boolean).join(" ") : null,
-    domicilio,
-  };
 }
 
-module.exports = {
-  dummy,
-  getPersonaV2,
-};
+module.exports = { getPersonaV2 };
