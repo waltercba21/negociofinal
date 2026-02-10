@@ -5,11 +5,11 @@ const util = require("util");
 function getQuery() {
   // mysql2
   if (pool.promise && typeof pool.promise === "function") {
-    return (sql, params=[]) => pool.promise().query(sql, params).then(([rows]) => rows);
+    return (sql, params = []) => pool.promise().query(sql, params).then(([rows]) => rows);
   }
   // mysql (callbacks)
   const q = util.promisify(pool.query).bind(pool);
-  return (sql, params=[]) => q(sql, params);
+  return (sql, params = []) => q(sql, params);
 }
 const query = getQuery();
 
@@ -20,7 +20,7 @@ async function crearComprobante(data) {
      doc_tipo, doc_nro, receptor_nombre, receptor_cond_iva_id,
      imp_total, imp_neto, imp_iva, imp_exento, mon_id, mon_cotiz,
      req_json, estado)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
   const params = [
     data.factura_mostrador_id ?? null,
@@ -41,7 +41,7 @@ async function crearComprobante(data) {
     data.mon_id ?? "PES",
     data.mon_cotiz ?? 1,
     data.req_json ?? null,
-    data.estado ?? "PENDIENTE"
+    data.estado ?? "PENDIENTE",
   ];
 
   const r = await query(sql, params);
@@ -49,27 +49,35 @@ async function crearComprobante(data) {
 }
 
 async function insertarItems(arcaId, items) {
-  if (!items.length) return 0;
-  const sql = `
+  if (!items || !items.length) return 0;
+
+  const sqlBase = `
     INSERT INTO arca_comprobante_items
     (arca_comprobante_id, producto_id, descripcion, cantidad, precio_unitario, bonif,
      iva_alicuota, imp_neto, imp_iva, imp_total)
-    VALUES ?
+    VALUES
   `;
-  const values = items.map(it => ([
-    arcaId,
-    it.producto_id ?? null,
-    it.descripcion,
-    it.cantidad,
-    it.precio_unitario,
-    it.bonif ?? 0,
-    it.iva_alicuota,
-    it.imp_neto,
-    it.imp_iva,
-    it.imp_total
-  ]));
 
-  const r = await query(sql, [values]);
+  const placeholders = items.map(() => "(?,?,?,?,?,?,?,?,?,?)").join(",");
+  const sql = sqlBase + placeholders;
+
+  const params = [];
+  for (const it of items) {
+    params.push(
+      arcaId,
+      it.producto_id ?? null,
+      it.descripcion,
+      it.cantidad,
+      it.precio_unitario,
+      it.bonif ?? 0,
+      it.iva_alicuota,
+      it.imp_neto,
+      it.imp_iva,
+      it.imp_total
+    );
+  }
+
+  const r = await query(sql, params);
   return r.affectedRows || 0;
 }
 
@@ -88,7 +96,7 @@ async function actualizarRespuesta(arcaId, patch) {
     patch.obs_msg ?? null,
     patch.resp_xml ?? null,
     patch.estado ?? null,
-    arcaId
+    arcaId,
   ];
   return query(sql, params);
 }
@@ -105,5 +113,5 @@ module.exports = {
   crearComprobante,
   insertarItems,
   actualizarRespuesta,
-  buscarPorFacturaMostradorId
+  buscarPorFacturaMostradorId,
 };
