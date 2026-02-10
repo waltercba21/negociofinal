@@ -126,6 +126,17 @@
         </div>
       `;
     }).join("") : `<div class="muted">Sin intentos ARCA.</div>`;
+ const pdfBtn = document.getElementById("btnPDF");
+if (pdfBtn) {
+  if (rows.length && rows[0].estado === "EMITIDO") {
+    pdfBtn.style.display = "inline-flex";
+    pdfBtn.href = `/arca/pdf/${rows[0].id}`;
+  } else {
+    pdfBtn.style.display = "none";
+    pdfBtn.href = "#";
+  }
+}
+
   }
 
   async function emitirSeleccionada() {

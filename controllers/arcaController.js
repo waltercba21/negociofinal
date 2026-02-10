@@ -7,6 +7,9 @@ const util = require("util");
 const arcaModel = require("../models/arcaModel");
 const wsfe = require("../services/wsfe");
 
+const PDFDocument = require("pdfkit");
+const QRCode = require("qrcode");
+
 function getQuery() {
   if (pool.promise && typeof pool.promise === "function") {
     return (sql, params = []) =>
@@ -452,6 +455,139 @@ async function historialArcaPorFactura(req, res) {
     return res.status(500).json({ error: e.message || "Error historial ARCA" });
   }
 }
+function ymdToHuman(yyyymmdd) {
+  if (!yyyymmdd || !/^\d{8}$/.test(String(yyyymmdd))) return "-";
+  const s = String(yyyymmdd);
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+}
+
+function ymdToISO(yyyymmdd) {
+  // AFIP QR usa YYYY-MM-DD
+  return ymdToHuman(yyyymmdd);
+}
+
+function buildAfipQrUrl(c) {
+  const payload = {
+    ver: 1,
+    fecha: ymdToISO(c.cbte_fch),
+    cuit: Number(c.cuit_emisor),
+    ptoVta: Number(c.pto_vta),
+    tipoCmp: Number(c.cbte_tipo),
+    nroCmp: Number(c.cbte_nro),
+    importe: Number(c.imp_total),
+    moneda: String(c.mon_id || "PES"),
+    cotiz: Number(c.mon_cotiz || 1),
+    tipoDocRec: Number(c.doc_tipo),
+    nroDocRec: Number(c.doc_nro),
+    tipoCodAut: "E",
+    codAut: String(c.cae),
+  };
+
+  const b64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+  return `https://www.afip.gob.ar/fe/qr/?p=${encodeURIComponent(b64)}`;
+}
+
+async function descargarPDFComprobante(req, res) {
+  try {
+    const arcaId = Number(req.params.arcaId || 0);
+    if (!arcaId) return res.status(400).send("arcaId inválido");
+
+    const cab = await query(
+      `SELECT * FROM arca_comprobantes WHERE id=? LIMIT 1`,
+      [arcaId]
+    );
+    if (!cab.length) return res.status(404).send("Comprobante no encontrado");
+
+    const c = cab[0];
+
+    if (c.estado !== "EMITIDO") {
+      return res.status(409).send("Solo PDF si está EMITIDO");
+    }
+
+    const items = await query(
+      `SELECT descripcion, cantidad, precio_unitario, iva_alicuota, imp_neto, imp_iva, imp_total
+       FROM arca_comprobante_items
+       WHERE arca_comprobante_id=?
+       ORDER BY id ASC`,
+      [arcaId]
+    );
+
+    // QR
+    const qrUrl = buildAfipQrUrl(c);
+    const qrDataUrl = await QRCode.toDataURL(qrUrl, { margin: 1, width: 180 });
+    const qrBase64 = qrDataUrl.split(",")[1];
+    const qrBuffer = Buffer.from(qrBase64, "base64");
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="ARCA_${c.pto_vta}-${c.cbte_tipo}-${c.cbte_nro}.pdf"`
+    );
+
+    const doc = new PDFDocument({ margin: 40 });
+    doc.pipe(res);
+
+    // Encabezado
+    doc.fontSize(16).text("Comprobante electrónico", 40, 40);
+    doc.fontSize(10).fillColor("#444");
+
+    doc.text(`Ambiente: ${c.ambiente}  |  CUIT emisor: ${c.cuit_emisor}`);
+    doc.text(`PtoVta: ${c.pto_vta}  |  Tipo: ${c.cbte_tipo}  |  Nro: ${c.cbte_nro}`);
+    doc.text(`Fecha: ${ymdToHuman(c.cbte_fch)}  |  CAE: ${c.cae}  |  Vto CAE: ${ymdToHuman(c.cae_vto)}`);
+
+    // QR a la derecha
+    doc.image(qrBuffer, 430, 40, { width: 120 });
+
+    doc.moveDown(1.2);
+    doc.fillColor("#000").fontSize(11).text("Receptor", { underline: true });
+    doc.fontSize(10).text(`DocTipo: ${c.doc_tipo}  |  DocNro: ${c.doc_nro}`);
+    if (c.receptor_nombre) doc.text(`Nombre / Razón social: ${c.receptor_nombre}`);
+    if (c.receptor_cond_iva_id) doc.text(`Cond. IVA ID: ${c.receptor_cond_iva_id}`);
+
+    doc.moveDown(0.8);
+    doc.fontSize(11).text("Items", { underline: true });
+    doc.moveDown(0.4);
+
+    // Tabla simple
+    const startY = doc.y;
+    doc.fontSize(9).fillColor("#333");
+    doc.text("Descripción", 40, startY);
+    doc.text("Cant.", 320, startY, { width: 40, align: "right" });
+    doc.text("P.Unit", 370, startY, { width: 70, align: "right" });
+    doc.text("Total", 450, startY, { width: 90, align: "right" });
+    doc.moveDown(0.2);
+    doc.moveTo(40, doc.y).lineTo(550, doc.y).strokeColor("#ddd").stroke();
+    doc.moveDown(0.5);
+
+    doc.fillColor("#000");
+    for (const it of items) {
+      const y = doc.y;
+      doc.fontSize(9).text(String(it.descripcion || ""), 40, y, { width: 260 });
+      doc.text(String(it.cantidad), 320, y, { width: 40, align: "right" });
+      doc.text(Number(it.precio_unitario).toFixed(2), 370, y, { width: 70, align: "right" });
+      doc.text(Number(it.imp_total).toFixed(2), 450, y, { width: 90, align: "right" });
+      doc.moveDown(0.7);
+    }
+
+    doc.moveDown(0.4);
+    doc.moveTo(40, doc.y).lineTo(550, doc.y).strokeColor("#ddd").stroke();
+    doc.moveDown(0.6);
+
+    doc.fontSize(10);
+    doc.text(`Neto: ${Number(c.imp_neto).toFixed(2)}`, { align: "right" });
+    doc.text(`IVA: ${Number(c.imp_iva).toFixed(2)}`, { align: "right" });
+    if (Number(c.imp_exento || 0) > 0) doc.text(`Exento: ${Number(c.imp_exento).toFixed(2)}`, { align: "right" });
+    doc.fontSize(12).text(`TOTAL: ${Number(c.imp_total).toFixed(2)}`, { align: "right" });
+
+    doc.moveDown(0.8);
+    doc.fontSize(8).fillColor("#666").text(qrUrl, { width: 510 });
+
+    doc.end();
+  } catch (e) {
+    console.error("❌ PDF ARCA:", e);
+    return res.status(500).send(e.message || "Error generando PDF");
+  }
+}
 
 module.exports = {
   emitirDesdeFacturaMostrador,
@@ -460,4 +596,5 @@ module.exports = {
   listarFacturasMostrador,
   detalleFacturaMostrador,
   historialArcaPorFactura,
+  descargarPDFComprobante,
 };

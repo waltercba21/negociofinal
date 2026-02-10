@@ -26,4 +26,6 @@ router.get("/ui/arca-por-factura/:id", arcaController.historialArcaPorFactura);
 // Pantalla ARCA (si la montás como app.use('/arca', arcaRoutes) => esto queda en GET /arca)
 router.get("/", arcaController.vistaArcaIndex);
 
+router.get("/pdf/:arcaId", arcaController.descargarPDFComprobante);
+
 module.exports = router;
