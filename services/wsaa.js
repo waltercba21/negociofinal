@@ -2,39 +2,150 @@
 require("dotenv").config();
 
 const fs = require("fs");
-const os = require("os");
 const path = require("path");
-const https = require("https");
+const crypto = require("crypto");
 const { execFile } = require("child_process");
+const util = require("util");
 
-const ENV = (process.env.ARCA_ENV || "homo").toLowerCase();
-const CERT = process.env.ARCA_CERT_PATH;
-const KEY  = process.env.ARCA_KEY_PATH;
+const execFileAsync = util.promisify(execFile);
 
-const WSAA_URL =
-  ENV === "prod"
-    ? "https://wsaa.afip.gov.ar/ws/services/LoginCms"
-    : "https://wsaahomo.afip.gov.ar/ws/services/LoginCms";
+const ENV = String(process.env.ARCA_ENV || "homo").toLowerCase() === "prod" ? "prod" : "homo";
 
-// Cache por archivo (simple, suficiente para empezar)
-const TA_CACHE_DIR = path.join(__dirname, ".cache");
-const TA_CACHE = path.join(TA_CACHE_DIR, `ta_wsfe_${ENV}.json`);
+const CERT_PATH = process.env.ARCA_CMS_CERT || "";
+const KEY_PATH  = process.env.ARCA_CMS_KEY  || "";
 
-function postXml(url, xml, soapAction) {
-  return new Promise((resolve, reject) => {
-    const u = new URL(url);
-    const headers = {
-      "Content-Type": "text/xml; charset=utf-8",
-      "Content-Length": Buffer.byteLength(xml),
-    };
-    if (soapAction) headers["SOAPAction"] = `"${soapAction}"`;
+const WSAA_PROD = process.env.ARCA_WSAA_URL_PROD || "https://wsaa.afip.gov.ar/ws/services/LoginCms";
+const WSAA_HOMO = process.env.ARCA_WSAA_URL_HOMO || "https://wsaahomo.afip.gov.ar/ws/services/LoginCms";
 
+function wsaaUrl() {
+  return ENV === "prod" ? WSAA_PROD : WSAA_HOMO;
+}
+
+function cacheDir() {
+  return path.join(__dirname, "..", "cache");
+}
+
+function taCachePath(service) {
+  // un archivo por servicio para no pisarse (wsfe vs padrón)
+  const safe = String(service || "wsfe").replace(/[^a-z0-9_\\-]/gi, "_");
+  return path.join(cacheDir(), `ta_${safe}_${ENV}.json`);
+}
+
+function ensureCacheDir() {
+  const dir = cacheDir();
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+function loadTaFromCache(service) {
+  try {
+    const p = taCachePath(service);
+    if (!fs.existsSync(p)) return null;
+    const j = JSON.parse(fs.readFileSync(p, "utf8"));
+    if (!j || j.service !== service) return null;
+
+    // expiración (por seguridad: 1h antes)
+    const exp = j.expirationTime ? new Date(j.expirationTime).getTime() : 0;
+    if (!exp) return null;
+
+    const now = Date.now();
+    if (now >= (exp - 60 * 60 * 1000)) return null;
+
+    return j;
+  } catch {
+    return null;
+  }
+}
+
+function saveTaToCache(service, taObj) {
+  ensureCacheDir();
+  const p = taCachePath(service);
+  fs.writeFileSync(p, JSON.stringify({ ...taObj, service }, null, 2), "utf8");
+}
+
+// Crea TRA (loginTicketRequest)
+function buildTRA(service) {
+  const uniq = crypto.randomBytes(8).toString("hex");
+  const now = new Date();
+  const genTime = new Date(now.getTime() - 60 * 1000).toISOString();
+  const expTime = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<loginTicketRequest version="1.0">
+  <header>
+    <uniqueId>${parseInt(uniq, 16)}</uniqueId>
+    <generationTime>${genTime}</generationTime>
+    <expirationTime>${expTime}</expirationTime>
+  </header>
+  <service>${service}</service>
+</loginTicketRequest>`;
+}
+
+async function signTRA(traXml) {
+  if (!CERT_PATH || !KEY_PATH) {
+    throw new Error("Faltan ARCA_CMS_CERT / ARCA_CMS_KEY en .env");
+  }
+
+  ensureCacheDir();
+  const tmpTra = path.join(cacheDir(), `tra_${Date.now()}.xml`);
+  const tmpCms = path.join(cacheDir(), `tra_${Date.now()}.cms`);
+
+  fs.writeFileSync(tmpTra, traXml, "utf8");
+
+  // openssl smime -sign -in tra.xml -signer cert -inkey key -outform DER -out tra.cms
+  await execFileAsync("openssl", [
+    "smime", "-sign",
+    "-in", tmpTra,
+    "-signer", CERT_PATH,
+    "-inkey", KEY_PATH,
+    "-nodetach",
+    "-outform", "DER",
+    "-out", tmpCms
+  ]);
+
+  const cms = fs.readFileSync(tmpCms).toString("base64");
+
+  try { fs.unlinkSync(tmpTra); } catch {}
+  try { fs.unlinkSync(tmpCms); } catch {}
+
+  return cms;
+}
+
+function pickTag(xml, tag) {
+  const r = new RegExp(`<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`, "i");
+  const m = String(xml || "").match(r);
+  return m ? m[1].trim() : "";
+}
+
+async function loginCms(service) {
+  const cached = loadTaFromCache(service);
+  if (cached) return cached;
+
+  const tra = buildTRA(service);
+  const cms = await signTRA(tra);
+
+  const soapBody = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsaa="http://wsaa.view.sua.dvadac.desein.afip.gov">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <wsaa:loginCms>
+      <wsaa:in0>${cms}</wsaa:in0>
+    </wsaa:loginCms>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+  const https = require("https");
+  const url = new URL(wsaaUrl());
+
+  const respXml = await new Promise((resolve, reject) => {
     const req = https.request(
       {
         method: "POST",
-        hostname: u.hostname,
-        path: u.pathname + u.search,
-        headers,
+        hostname: url.hostname,
+        path: url.pathname,
+        headers: {
+          "Content-Type": "text/xml; charset=utf-8",
+          "Content-Length": Buffer.byteLength(soapBody),
+        },
       },
       (res) => {
         let data = "";
@@ -42,169 +153,30 @@ function postXml(url, xml, soapAction) {
         res.on("end", () => resolve(data));
       }
     );
-
     req.on("error", reject);
-    req.write(xml);
+    req.write(soapBody);
     req.end();
   });
-}
 
-function run(cmd, args, opts = {}) {
-  return new Promise((resolve, reject) => {
-    execFile(cmd, args, { ...opts }, (err, stdout, stderr) => {
-      if (err) return reject(new Error(stderr || err.message));
-      resolve(stdout);
-    });
-  });
-}
+  const token = pickTag(respXml, "token");
+  const sign = pickTag(respXml, "sign");
+  const expTime = pickTag(respXml, "expirationTime");
 
-function isoAR(d = new Date()) {
-  const s = d
-    .toLocaleString("sv-SE", { timeZone: "America/Argentina/Cordoba" })
-    .replace(" ", "T");
-  return `${s}-03:00`;
-}
-
-// Soporta tags normales y escapados (&lt;token&gt;)
-function pickTag(xml, tag) {
-  const r1 = new RegExp(
-    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
-    "i"
-  );
-  const m1 = xml.match(r1);
-  if (m1) return m1[1].trim();
-
-  const r2 = new RegExp(
-    `&lt;(?:(?:\\w+):)?${tag}[^&]*&gt;([\\s\\S]*?)&lt;\\/(?:(?:\\w+):)?${tag}&gt;`,
-    "i"
-  );
-  const m2 = xml.match(r2);
-  if (m2) return m2[1].trim();
-  return "";
-}
-
-function tokenExpEpoch(tokenB64) {
-  try {
-    const xml = Buffer.from(tokenB64, "base64").toString("utf8");
-    const m = xml.match(/exp_time="(\d+)"/);
-    return m ? Number(m[1]) : 0;
-  } catch {
-    return 0;
-  }
-}
-
-function tokenIsValid(tokenB64, skewSec = 60) {
-  const exp = tokenExpEpoch(tokenB64);
-  if (!exp) return false;
-  const now = Math.floor(Date.now() / 1000);
-  return exp - skewSec > now;
-}
-
-function loadTaFromCache(service) {
-  if (!fs.existsSync(TA_CACHE)) return null;
-  try {
-    const j = JSON.parse(fs.readFileSync(TA_CACHE, "utf8"));
-    if (j.service !== service) return null;
-    if (!j.token || !j.sign) return null;
-    if (!tokenIsValid(j.token)) return null;
-    return { token: j.token, sign: j.sign };
-  } catch {
-    return null;
-  }
-}
-
-function saveTaToCache(service, token, sign) {
-  if (!fs.existsSync(TA_CACHE_DIR)) fs.mkdirSync(TA_CACHE_DIR, { recursive: true });
-  fs.writeFileSync(
-    TA_CACHE,
-    JSON.stringify(
-      { service, token, sign, exp: tokenExpEpoch(token), savedAt: new Date().toISOString() },
-      null,
-      2
-    )
-  );
-}
-
-// opcional: si ya tenés token/sign pre-generados
-function loadTaFromFiles() {
-  const TOKEN_PATH = process.env.ARCA_TOKEN_PATH || "";
-  const SIGN_PATH  = process.env.ARCA_SIGN_PATH  || "";
-  if (!TOKEN_PATH || !SIGN_PATH) return null;
-  if (!fs.existsSync(TOKEN_PATH) || !fs.existsSync(SIGN_PATH)) return null;
-  const token = fs.readFileSync(TOKEN_PATH, "utf8").trim();
-  const sign  = fs.readFileSync(SIGN_PATH, "utf8").trim();
-  if (!token || !sign) return null;
-  if (!tokenIsValid(token)) return null;
-  return { token, sign };
-}
-
-async function getTokenSign(service = "wsfe") {
-  const cached = loadTaFromCache(service) || loadTaFromFiles();
-  if (cached) return cached;
-
-  if (!CERT || !KEY) throw new Error("Faltan ARCA_CERT_PATH / ARCA_KEY_PATH");
-
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "arca-"));
-  const traPath = path.join(tmp, "tra.xml");
-  const cmsPath = path.join(tmp, "tra.cms");
-  const b64Path = path.join(tmp, "tra.cms.b64");
-
-  const gen = new Date(Date.now() - 5 * 60 * 1000);
-  const exp = new Date(Date.now() + 10 * 60 * 1000);
-
-  const tra = `<?xml version="1.0" encoding="UTF-8"?>
-<loginTicketRequest version="1.0">
-  <header>
-    <uniqueId>${Math.floor(Date.now() / 1000)}</uniqueId>
-    <generationTime>${isoAR(gen)}</generationTime>
-    <expirationTime>${isoAR(exp)}</expirationTime>
-  </header>
-  <service>${service}</service>
-</loginTicketRequest>`;
-
-  fs.writeFileSync(traPath, tra);
-
-  await run("openssl", [
-    "smime",
-    "-sign",
-    "-signer", CERT,
-    "-inkey", KEY,
-    "-in", traPath,
-    "-out", cmsPath,
-    "-outform", "DER",
-    "-nodetach",
-  ]);
-
-  await run("openssl", ["base64", "-in", cmsPath, "-out", b64Path, "-A"]);
-  const cmsB64 = fs.readFileSync(b64Path, "utf8").trim();
-
-  const soap = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://wsaa.view.sua.dvadac.desein.afip.gov">
-  <soapenv:Header/>
-  <soapenv:Body>
-    <ws:loginCms>
-      <ws:in0>${cmsB64}</ws:in0>
-    </ws:loginCms>
-  </soapenv:Body>
-</soapenv:Envelope>`;
-
-  const resp = await postXml(WSAA_URL, soap, "urn:LoginCms");
-
-  const token = pickTag(resp, "token");
-  const sign  = pickTag(resp, "sign");
-
-  if (token && sign) {
-    saveTaToCache(service, token, sign);
-    return { token, sign };
+  if (!token || !sign) {
+    const fault = pickTag(respXml, "faultstring") || "WSAA loginCms sin token/sign";
+    throw new Error(fault);
   }
 
-  // si WSAA responde alreadyAuthenticated, reutilizamos TA guardado
-  if (/alreadyAuthenticated/i.test(resp)) {
-    const reuse = loadTaFromCache(service) || loadTaFromFiles();
-    if (reuse) return reuse;
-  }
-
-  throw new Error("WSAA no devolvió token/sign");
+  const ta = { token, sign, expirationTime: expTime || null };
+  saveTaToCache(service, ta);
+  return ta;
 }
 
-module.exports = { getTokenSign };
+async function getTokenSign(service) {
+  const ta = await loginCms(service);
+  return { token: ta.token, sign: ta.sign };
+}
+
+module.exports = {
+  getTokenSign,
+};

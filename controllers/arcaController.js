@@ -6,6 +6,7 @@ const util = require("util");
 
 const arcaModel = require("../models/arcaModel");
 const wsfe = require("../services/wsfe");
+const padron = require("../services/padron");
 
 const PDFDocument = require("pdfkit");
 const QRCode = require("qrcode");
@@ -677,26 +678,45 @@ async function descargarPDFComprobante(req, res) {
     return res.status(500).send(e.message || "Error generando PDF");
   }
 }
+// GET /arca/receptor?doc_tipo=80&doc_nro=XXXXXXXXXXX[&resolve=1]
 async function buscarReceptor(req, res) {
   try {
     const doc_tipo = Number(req.query.doc_tipo);
     const doc_nro = Number(req.query.doc_nro);
+    const resolve = String(req.query.resolve || "0") === "1";
 
-    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) {
-      return res.status(400).json({ error: "doc_tipo inválido" });
-    }
-    if (!Number.isFinite(doc_nro) || doc_nro <= 0) {
-      return res.status(400).json({ error: "doc_nro inválido" });
+    if (!Number.isFinite(doc_tipo) || !Number.isFinite(doc_nro) || doc_nro <= 0) {
+      return res.status(400).json({ error: "Parámetros inválidos" });
     }
 
-    const row = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-    if (!row) return res.status(404).json({ error: "No encontrado en cache" });
+    // 1) cache
+    let row = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+    if (row) return res.json(row);
 
-    return res.json(row);
+    // 2) resolve (solo CUIT)
+    if (resolve && doc_tipo === 80) {
+      const data = await padron.getPersonaV2(doc_nro);
+      if (data) {
+        await arcaModel.upsertReceptorCache({
+          doc_tipo,
+          doc_nro,
+          razon_social: data.razon_social || data.nombre || null,
+          nombre: data.nombre || null,
+          cond_iva_id: null, // se elige con FEParamGetCondicionIvaReceptor
+          domicilio: data.domicilio || null,
+        });
+        row = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+        if (row) return res.json(row);
+      }
+    }
+
+    return res.status(404).json({ error: "No encontrado en cache" });
   } catch (e) {
-    return res.status(500).json({ error: e.message || "Error receptor" });
+    console.error("❌ buscarReceptor:", e);
+    return res.status(500).json({ error: e.message || "Error interno" });
   }
 }
+
 async function paramsCondIvaReceptor(req, res) {
   try {
     const cbte_tipo = Number(req.query.cbte_tipo || 0);
