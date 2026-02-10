@@ -128,6 +128,8 @@ async function getTokenSign(service = 'wsfe') {
 </soapenv:Envelope>`;
 
   const resp = await postXml(WSAA_URL, soap);
+  fs.writeFileSync(path.join(__dirname, 'wsaa_loginCms.response.xml'), resp);
+
   const token = pickTag(resp, 'token');
   const sign  = pickTag(resp, 'sign');
 
