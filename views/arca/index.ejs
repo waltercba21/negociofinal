@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ARCA</title>
+
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    .wrap{max-width:1400px;margin:0 auto;padding:16px}
+    .top{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:12px}
+    h1{margin:0;font-size:20px}
+    .sub{margin:4px 0 0;color:#667085;font-size:13px}
+
+    .grid{display:grid;grid-template-columns:1fr 430px;gap:12px;align-items:start}
+    .card{background:#fff;border:1px solid #e8ecf3;border-radius:14px;box-shadow:0 6px 18px rgba(16,24,40,.05)}
+    .hd{padding:12px;border-bottom:1px solid #eef2f8;display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .bd{padding:12px}
+
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .inp{height:38px;border:1px solid #e3e8f2;border-radius:10px;padding:0 10px;outline:none}
+    .btn{height:38px;border:1px solid #d8def0;border-radius:10px;background:#fff;padding:0 12px;font-weight:700;cursor:pointer}
+    .btnP{background:#3b82f6;border-color:#3b82f6;color:#fff}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+
+    .tableWrap{max-height:72vh;overflow:auto}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    th,td{padding:10px;border-bottom:1px solid #eef2f8;font-size:13px;vertical-align:top}
+    th{position:sticky;top:0;background:#fbfcff;z-index:1;text-align:left;color:#667085;font-weight:800}
+    tr.row{cursor:pointer}
+    tr.row:hover td{background:#fbfdff}
+    .muted{color:#667085}
+
+    .badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-weight:800;font-size:12px;border:1px solid #e3e8f2}
+    .b-ok{background:#ecfdf3;border-color:#abefc6;color:#067647}
+    .b-bad{background:#fef3f2;border-color:#fecdca;color:#b42318}
+    .b-pend{background:#fffaeb;border-color:#fedf89;color:#b54708}
+    .b-none{background:#f2f4f7;border-color:#e4e7ec;color:#344054}
+
+    .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px}
+    .k{color:#667085;font-weight:800}
+    .v{color:#101828;font-weight:700}
+    .hr{height:1px;background:#eef2f8;margin:12px 0}
+
+    .items th,.items td{font-size:12.5px;padding:8px}
+    .hist{display:flex;flex-direction:column;gap:8px}
+    .histItem{border:1px solid #eef2f8;border-radius:12px;padding:10px}
+    .histTop{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .histMeta{font-size:12.5px;color:#667085}
+    .histObs{margin-top:6px;font-size:12.5px;color:#344054}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>ARCA — Emisión desde facturas del mostrador</h1>
+        <p class="sub">Módulo paralelo: emite y audita en arca_* (no toca stock).</p>
+      </div>
+      <div class="controls">
+        <input id="arcaSearch" class="inp" placeholder="Buscar por ID o vendedor..." />
+        <button id="arcaReload" class="btn">Recargar</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LISTA -->
+      <section class="card">
+        <div class="hd">
+          <strong>Últimas facturas</strong>
+          <div class="controls">
+            <button id="arcaPrev" class="btn">‹</button>
+            <span id="arcaPage" class="muted">0–0</span>
+            <button id="arcaNext" class="btn">›</button>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:86px">ID</th>
+                <th style="width:110px">Fecha</th>
+                <th>Vendedor</th>
+                <th style="width:110px">Total</th>
+                <th style="width:120px">Pago</th>
+                <th style="width:150px">ARCA</th>
+              </tr>
+            </thead>
+            <tbody id="arcaTbody">
+              <tr><td colspan="6" class="muted">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- DETALLE -->
+      <aside class="card">
+        <div class="hd">
+          <strong>Detalle</strong>
+          <div class="controls">
+            <button id="btnEmitir" class="btn btnP" disabled>Emitir ARCA</button>
+          </div>
+        </div>
+        <div class="bd">
+          <div id="arcaEmpty" class="muted">Seleccioná una factura del listado.</div>
+
+          <div id="arcaDetail" style="display:none">
+            <div class="kv">
+              <div class="k">Factura ID</div><div class="v" id="dId">-</div>
+              <div class="k">Fecha</div><div class="v" id="dFecha">-</div>
+              <div class="k">Vendedor</div><div class="v" id="dVend">-</div>
+              <div class="k">Pago</div><div class="v" id="dPago">-</div>
+              <div class="k">Total</div><div class="v" id="dTotal">-</div>
+            </div>
+
+            <div class="hr"></div>
+
+            <strong style="font-size:13px">Items</strong>
+            <table class="items" style="width:100%;margin-top:8px">
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th style="width:70px">Cant.</th>
+                  <th style="width:90px">P.Unit</th>
+                  <th style="width:90px">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody id="itemsTbody"></tbody>
+            </table>
+
+            <div class="hr"></div>
+
+            <strong style="font-size:13px">Historial ARCA</strong>
+            <div id="arcaHist" class="hist" style="margin-top:8px"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="/js/arca/index.js"></script>
+</body>
+</html>
