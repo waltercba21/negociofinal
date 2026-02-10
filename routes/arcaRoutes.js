@@ -28,4 +28,6 @@ router.get("/", arcaController.vistaArcaIndex);
 
 router.get("/pdf/:arcaId", arcaController.descargarPDFComprobante);
 
+router.get("/receptor", arcaController.buscarReceptor);
+
 module.exports = router;

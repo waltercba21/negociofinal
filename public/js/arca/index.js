@@ -150,29 +150,41 @@ if (pdfBtn) {
       cancelButtonText: "Cancelar",
       focusConfirm: false,
       html: `
-        <div style="display:grid;gap:10px;text-align:left">
-          <label>Cbte tipo (6=B)</label>
-          <input id="sw_cbte" class="swal2-input" value="6" />
-          <label>Doc tipo (99=CF, 80=CUIT)</label>
-          <input id="sw_doc_tipo" class="swal2-input" value="99" />
-          <label>Doc nro (CF=0)</label>
-          <input id="sw_doc_nro" class="swal2-input" value="0" />
-          <label>Cond IVA receptor (MVP: 5)</label>
-          <input id="sw_cond" class="swal2-input" value="5" />
-        </div>
-      `,
+  <div style="display:grid;gap:10px;text-align:left">
+    <label>Cbte tipo (6=B, 1=A)</label>
+    <input id="sw_cbte" class="swal2-input" value="6" />
+
+    <label>Doc tipo (99=CF, 80=CUIT, 96=DNI)</label>
+    <input id="sw_doc_tipo" class="swal2-input" value="99" />
+
+    <label>Doc nro (CF=0)</label>
+    <input id="sw_doc_nro" class="swal2-input" value="0" />
+
+    <label>Cond IVA receptor (MVP: 5)</label>
+    <input id="sw_cond" class="swal2-input" value="5" />
+
+    <label>Receptor (nombre / razón social)</label>
+    <input id="sw_nombre" class="swal2-input" placeholder="Opcional / autocompleta si está en cache" />
+
+    <div id="sw_hint" style="font-size:12px;color:#667085"></div>
+  </div>
+`,
+
       preConfirm: () => {
         const cbte_tipo = Number(document.getElementById("sw_cbte").value);
         const doc_tipo = Number(document.getElementById("sw_doc_tipo").value);
         const doc_nro = Number(document.getElementById("sw_doc_nro").value);
         const receptor_cond_iva_id = Number(document.getElementById("sw_cond").value);
+        const receptor_nombre = (document.getElementById("sw_nombre").value || "").trim() || null;
+
+
 
         if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) return Swal.showValidationMessage("cbte_tipo inválido");
         if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return Swal.showValidationMessage("doc_tipo inválido");
         if (!Number.isFinite(doc_nro) || doc_nro < 0) return Swal.showValidationMessage("doc_nro inválido");
         if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) return Swal.showValidationMessage("condición IVA inválida");
 
-        return { cbte_tipo, doc_tipo, doc_nro, receptor_cond_iva_id };
+        return { cbte_tipo, doc_tipo, doc_nro, receptor_cond_iva_id, receptor_nombre };
       }
     });
 
@@ -188,6 +200,55 @@ if (pdfBtn) {
       });
 
       await Swal.fire({
+        didOpen: () => {
+  const hint = document.getElementById("sw_hint");
+  const inpTipo = document.getElementById("sw_doc_tipo");
+  const inpNro  = document.getElementById("sw_doc_nro");
+  const inpCond = document.getElementById("sw_cond");
+  const inpNom  = document.getElementById("sw_nombre");
+
+  let t = null;
+
+  async function buscar() {
+    const doc_tipo = Number(inpTipo.value);
+    const doc_nro  = Number(inpNro.value);
+
+    // No buscar Consumidor Final (99/0) o inválidos
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return;
+    if (!Number.isFinite(doc_nro) || doc_nro <= 0) {
+      hint.textContent = "";
+      return;
+    }
+
+    hint.textContent = "Buscando receptor en cache…";
+
+    try {
+      const r = await fetch(`/arca/receptor?doc_tipo=${doc_tipo}&doc_nro=${doc_nro}`);
+      if (!r.ok) throw new Error("no-cache");
+
+      const data = await r.json();
+      const nombre = data.razon_social || data.nombre || "";
+      if (nombre) inpNom.value = nombre;
+      if (data.cond_iva_id) inpCond.value = String(data.cond_iva_id);
+
+      hint.textContent = "Receptor cargado desde cache.";
+    } catch {
+      hint.textContent = "Sin cache (podés completar a mano y emitir igual).";
+    }
+  }
+
+  function schedule() {
+    clearTimeout(t);
+    t = setTimeout(buscar, 350);
+  }
+
+  inpTipo.addEventListener("input", schedule);
+  inpNro.addEventListener("input", schedule);
+
+  // Primera corrida
+  schedule();
+},
+
         icon: resp.estado === "EMITIDO" ? "success" : "error",
         title: resp.estado,
         html: resp.estado === "EMITIDO"

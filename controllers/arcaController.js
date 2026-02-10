@@ -298,6 +298,18 @@ async function emitirDesdeFacturaMostrador(req, res) {
     });
   } catch (e) {
     console.error("❌ ARCA emitirDesdeFacturaMostrador:", e);
+    // Cache receptor (si tiene documento real)
+if (doc_nro > 0) {
+  await arcaModel.upsertReceptorCache({
+    doc_tipo,
+    doc_nro,
+    razon_social: receptor_nombre || null,  // para A suele ser razón social
+    nombre: receptor_nombre || null,
+    cond_iva_id: receptor_cond_iva_id || null,
+    domicilio: null
+  });
+}
+
     return res.status(500).json({ error: e.message || "Error interno" });
   }
 }
@@ -588,6 +600,26 @@ async function descargarPDFComprobante(req, res) {
     return res.status(500).send(e.message || "Error generando PDF");
   }
 }
+async function buscarReceptor(req, res) {
+  try {
+    const doc_tipo = Number(req.query.doc_tipo);
+    const doc_nro = Number(req.query.doc_nro);
+
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) {
+      return res.status(400).json({ error: "doc_tipo inválido" });
+    }
+    if (!Number.isFinite(doc_nro) || doc_nro <= 0) {
+      return res.status(400).json({ error: "doc_nro inválido" });
+    }
+
+    const row = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+    if (!row) return res.status(404).json({ error: "No encontrado en cache" });
+
+    return res.json(row);
+  } catch (e) {
+    return res.status(500).json({ error: e.message || "Error receptor" });
+  }
+}
 
 module.exports = {
   emitirDesdeFacturaMostrador,
@@ -597,4 +629,5 @@ module.exports = {
   detalleFacturaMostrador,
   historialArcaPorFactura,
   descargarPDFComprobante,
+  buscarReceptor,
 };

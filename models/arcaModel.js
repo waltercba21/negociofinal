@@ -116,6 +116,39 @@ async function buscarUltimoPorFacturaMostradorId(facturaId) {
   );
   return rows && rows[0] ? rows[0] : null;
 }
+async function buscarReceptorCache(doc_tipo, doc_nro) {
+  const rows = await query(
+    `SELECT doc_tipo, doc_nro, nombre, razon_social, cond_iva_id, domicilio, updated_at
+     FROM arca_receptores_cache
+     WHERE doc_tipo=? AND doc_nro=?
+     LIMIT 1`,
+    [doc_tipo, doc_nro]
+  );
+  return rows && rows[0] ? rows[0] : null;
+}
+
+async function upsertReceptorCache(data) {
+  const sql = `
+    INSERT INTO arca_receptores_cache
+      (doc_tipo, doc_nro, nombre, razon_social, cond_iva_id, domicilio, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, NOW())
+    ON DUPLICATE KEY UPDATE
+      nombre=VALUES(nombre),
+      razon_social=VALUES(razon_social),
+      cond_iva_id=VALUES(cond_iva_id),
+      domicilio=VALUES(domicilio),
+      updated_at=NOW()
+  `;
+  const params = [
+    data.doc_tipo,
+    data.doc_nro,
+    data.nombre ?? null,
+    data.razon_social ?? null,
+    data.cond_iva_id ?? null,
+    data.domicilio ?? null,
+  ];
+  return query(sql, params);
+}
 
 module.exports = {
   crearComprobante,
@@ -123,4 +156,7 @@ module.exports = {
   actualizarRespuesta,
   buscarPorFacturaMostradorId,
   buscarUltimoPorFacturaMostradorId,
+  buscarReceptorCache,
+  upsertReceptorCache,
 };
+
