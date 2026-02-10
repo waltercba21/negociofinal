@@ -344,14 +344,21 @@ async function listarFacturasMostrador(req, res) {
     const offset = Math.max(parseInt(req.query.offset || "0", 10), 0);
 
     const rows = await query(
-      `
-      SELECT id, nombre_cliente, fecha, total, metodos_pago, creado_en
-      FROM facturas_mostrador
-      ORDER BY id DESC
-      LIMIT ? OFFSET ?
-      `,
-      [limit, offset]
-    );
+  `
+  SELECT
+    id,
+    nombre_cliente,
+    DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+    total,
+    metodos_pago,
+    DATE_FORMAT(creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en
+  FROM facturas_mostrador
+  ORDER BY id DESC
+  LIMIT ? OFFSET ?
+  `,
+  [limit, offset]
+);
+
 
     return res.json({ rows, limit, offset });
   } catch (e) {
